@@ -48,9 +48,4 @@ public class IfElse extends Passthrough {
         return "" + condition + " ? " + trueTerm + " : " + falseTerm;
     }
 
-    @Override
-    public String toDebugString() {
-        return "{" + condition.toDebugString() + " ? " + trueTerm.toDebugString() + " : " + falseTerm.toDebugString() + "}";
-    }
-
 }

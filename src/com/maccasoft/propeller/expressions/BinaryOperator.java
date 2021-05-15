@@ -30,9 +30,4 @@ public abstract class BinaryOperator extends Expression {
         return "" + term1 + " " + getLexeme() + " " + term2;
     }
 
-    @Override
-    public String toDebugString() {
-        return "{" + term1.toDebugString() + " " + getLexeme() + " " + term2.toDebugString() + "}";
-    }
-
 }

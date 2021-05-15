@@ -37,9 +37,4 @@ public class CharacterLiteral extends Literal {
         return "'" + escaped + "'";
     }
 
-    @Override
-    public String toDebugString() {
-        return toString();
-    }
-
 }

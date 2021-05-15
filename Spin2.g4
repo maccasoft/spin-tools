@@ -112,58 +112,36 @@ buff            RES     16            'reserve 16 registers, advance cog address
 
  */
 
-data: ('DAT' | 'dat')+ NL* (org | orgh | orgf | directive | line | longData | byteData | wordData | fit)* ;
+data: ('DAT' | 'dat')+ NL* (directive | dataLine)* ;
 
-line
+dataLine
     : label NL+
-    | label? condition? opcode dst ',' src ',' index effect? NL+
-    | label? condition? opcode dst ',' src effect? NL+
-    | label? condition? opcode dst effect? NL+
+    | label? condition? opcode argument ',' argument ',' argument effect? NL+
+    | label? condition? opcode argument ',' argument effect? NL+
+    | label? condition? opcode argument effect? NL+
     | label? condition? opcode effect? NL+
+    | label? directive dataValue (',' dataValue)* NL+
     ;
 
 typeValue: value=expression ('[' count=expression ']')? ;
 
-org
-    : ('ORG' | 'org') (address=expression (',' limit=expression)? )? NL+
-    ;
-
-orgh
-    : ('ORGH' | 'orgh') (address=expression (',' limit=expression)? )? NL+
-    ;
-
-orgf
-    : ('ORGF' | 'orgf') (address=expression)? NL+
-    ;
-
-fit
-    : ('FIT' | 'fit') (limit=expression)? NL+
-    ;
-
-longData
-    : label? ('LONG' | 'long') (singleValue | arrayValue) (',' (singleValue | arrayValue))* NL+
-    ;
-
-wordData
-    : label? ('WORD' | 'word') (singleValue | arrayValue) (',' (singleValue | arrayValue))* NL+
-    ;
-
-byteData
-    : label? ('BYTE' | 'byte') (singleValue | arrayValue) (',' (singleValue | arrayValue))* NL+
-    ;
-
-singleValue: expression ;
-
-arrayValue: expression '[' count=expression ']' ;
+dataValue: expression ('[' count=expression ']')? ;
 
 directive
-    : label? name=('RES' | 'res') count=expression NL+
+    : ('LONG' | 'long')
+    | ('WORD' | 'word')
+    | ('BYTE' | 'byte')
+    | ('RES' | 'res')
     ;
 
 label: {_input.LT(1).getCharPositionInLine() == 0}? '.'? VARIABLE ;
 
 opcode
-    : ('nop')
+    : ('ORG' | 'org')
+    | ('ORGH' | 'orgh')
+    | ('ORGF' | 'orgf')
+    | ('FIT' | 'fit')
+    | ('nop')
     | ('ror')
     | ('rol')
     | ('shr')
@@ -583,11 +561,9 @@ effect
     | ('xorc') | ('xorz')
     ;
 
-dst: ('##' | '#')? '\\'? expression ;
+argument: prefix? expression ;
 
-src: ('##' | '#')? '\\'? expression ;
-
-index: '#' expression ;
+prefix: ('##' | '#') '\\'? ;
 
 type: ('LONG' | 'long' | 'WORD' | 'word' | 'BYTE' | 'byte') ; 
 

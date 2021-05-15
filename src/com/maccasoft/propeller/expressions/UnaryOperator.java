@@ -24,9 +24,4 @@ public abstract class UnaryOperator extends Expression {
         return getLexeme() + term;
     }
 
-    @Override
-    public String toDebugString() {
-        return getLexeme() + term.toDebugString();
-    }
-
 }

@@ -46,9 +46,4 @@ public class Sequence extends BinaryOperator {
         return "" + term1 + ", " + term2;
     }
 
-    @Override
-    public String toDebugString() {
-        return "{" + term1.toDebugString() + ", " + term2.toDebugString() + "}";
-    }
-
 }

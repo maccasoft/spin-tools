@@ -45,9 +45,4 @@ public class NumberLiteral extends Literal {
         return value.toString();
     }
 
-    @Override
-    public String toDebugString() {
-        return toString();
-    }
-
 }

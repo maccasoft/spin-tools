@@ -10,12 +10,12 @@ public class ContextLiteral extends Literal {
 
     @Override
     public Number getNumber() {
-        return new Integer(context.getAddress());
+        return context.getAddress();
     }
 
     @Override
-    public String toDebugString() {
-        return "";
+    public String toString() {
+        return Integer.toString(getNumber().intValue());
     }
 
 }

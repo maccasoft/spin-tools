@@ -34,9 +34,4 @@ public class Identifier extends Passthrough {
         return name;
     }
 
-    @Override
-    public String toDebugString() {
-        return toString();
-    }
-
 }

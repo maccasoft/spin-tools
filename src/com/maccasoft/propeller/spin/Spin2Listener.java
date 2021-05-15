@@ -108,15 +108,15 @@ public interface Spin2Listener extends ParseTreeListener {
 	 */
 	void exitData(Spin2Parser.DataContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#line}.
+	 * Enter a parse tree produced by {@link Spin2Parser#dataLine}.
 	 * @param ctx the parse tree
 	 */
-	void enterLine(Spin2Parser.LineContext ctx);
+	void enterDataLine(Spin2Parser.DataLineContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#line}.
+	 * Exit a parse tree produced by {@link Spin2Parser#dataLine}.
 	 * @param ctx the parse tree
 	 */
-	void exitLine(Spin2Parser.LineContext ctx);
+	void exitDataLine(Spin2Parser.DataLineContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#typeValue}.
 	 * @param ctx the parse tree
@@ -128,95 +128,15 @@ public interface Spin2Listener extends ParseTreeListener {
 	 */
 	void exitTypeValue(Spin2Parser.TypeValueContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#org}.
+	 * Enter a parse tree produced by {@link Spin2Parser#dataValue}.
 	 * @param ctx the parse tree
 	 */
-	void enterOrg(Spin2Parser.OrgContext ctx);
+	void enterDataValue(Spin2Parser.DataValueContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#org}.
+	 * Exit a parse tree produced by {@link Spin2Parser#dataValue}.
 	 * @param ctx the parse tree
 	 */
-	void exitOrg(Spin2Parser.OrgContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#orgh}.
-	 * @param ctx the parse tree
-	 */
-	void enterOrgh(Spin2Parser.OrghContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#orgh}.
-	 * @param ctx the parse tree
-	 */
-	void exitOrgh(Spin2Parser.OrghContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#orgf}.
-	 * @param ctx the parse tree
-	 */
-	void enterOrgf(Spin2Parser.OrgfContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#orgf}.
-	 * @param ctx the parse tree
-	 */
-	void exitOrgf(Spin2Parser.OrgfContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#fit}.
-	 * @param ctx the parse tree
-	 */
-	void enterFit(Spin2Parser.FitContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#fit}.
-	 * @param ctx the parse tree
-	 */
-	void exitFit(Spin2Parser.FitContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#longData}.
-	 * @param ctx the parse tree
-	 */
-	void enterLongData(Spin2Parser.LongDataContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#longData}.
-	 * @param ctx the parse tree
-	 */
-	void exitLongData(Spin2Parser.LongDataContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#wordData}.
-	 * @param ctx the parse tree
-	 */
-	void enterWordData(Spin2Parser.WordDataContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#wordData}.
-	 * @param ctx the parse tree
-	 */
-	void exitWordData(Spin2Parser.WordDataContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#byteData}.
-	 * @param ctx the parse tree
-	 */
-	void enterByteData(Spin2Parser.ByteDataContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#byteData}.
-	 * @param ctx the parse tree
-	 */
-	void exitByteData(Spin2Parser.ByteDataContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#singleValue}.
-	 * @param ctx the parse tree
-	 */
-	void enterSingleValue(Spin2Parser.SingleValueContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#singleValue}.
-	 * @param ctx the parse tree
-	 */
-	void exitSingleValue(Spin2Parser.SingleValueContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#arrayValue}.
-	 * @param ctx the parse tree
-	 */
-	void enterArrayValue(Spin2Parser.ArrayValueContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#arrayValue}.
-	 * @param ctx the parse tree
-	 */
-	void exitArrayValue(Spin2Parser.ArrayValueContext ctx);
+	void exitDataValue(Spin2Parser.DataValueContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#directive}.
 	 * @param ctx the parse tree
@@ -268,35 +188,25 @@ public interface Spin2Listener extends ParseTreeListener {
 	 */
 	void exitEffect(Spin2Parser.EffectContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#dst}.
+	 * Enter a parse tree produced by {@link Spin2Parser#argument}.
 	 * @param ctx the parse tree
 	 */
-	void enterDst(Spin2Parser.DstContext ctx);
+	void enterArgument(Spin2Parser.ArgumentContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#dst}.
+	 * Exit a parse tree produced by {@link Spin2Parser#argument}.
 	 * @param ctx the parse tree
 	 */
-	void exitDst(Spin2Parser.DstContext ctx);
+	void exitArgument(Spin2Parser.ArgumentContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#src}.
+	 * Enter a parse tree produced by {@link Spin2Parser#prefix}.
 	 * @param ctx the parse tree
 	 */
-	void enterSrc(Spin2Parser.SrcContext ctx);
+	void enterPrefix(Spin2Parser.PrefixContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#src}.
+	 * Exit a parse tree produced by {@link Spin2Parser#prefix}.
 	 * @param ctx the parse tree
 	 */
-	void exitSrc(Spin2Parser.SrcContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#index}.
-	 * @param ctx the parse tree
-	 */
-	void enterIndex(Spin2Parser.IndexContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#index}.
-	 * @param ctx the parse tree
-	 */
-	void exitIndex(Spin2Parser.IndexContext ctx);
+	void exitPrefix(Spin2Parser.PrefixContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#type}.
 	 * @param ctx the parse tree

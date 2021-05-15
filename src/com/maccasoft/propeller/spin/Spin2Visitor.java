@@ -71,11 +71,11 @@ public interface Spin2Visitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitData(Spin2Parser.DataContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#line}.
+	 * Visit a parse tree produced by {@link Spin2Parser#dataLine}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitLine(Spin2Parser.LineContext ctx);
+	T visitDataLine(Spin2Parser.DataLineContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#typeValue}.
 	 * @param ctx the parse tree
@@ -83,59 +83,11 @@ public interface Spin2Visitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTypeValue(Spin2Parser.TypeValueContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#org}.
+	 * Visit a parse tree produced by {@link Spin2Parser#dataValue}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitOrg(Spin2Parser.OrgContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#orgh}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOrgh(Spin2Parser.OrghContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#orgf}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOrgf(Spin2Parser.OrgfContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#fit}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFit(Spin2Parser.FitContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#longData}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitLongData(Spin2Parser.LongDataContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#wordData}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitWordData(Spin2Parser.WordDataContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#byteData}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitByteData(Spin2Parser.ByteDataContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#singleValue}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitSingleValue(Spin2Parser.SingleValueContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#arrayValue}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitArrayValue(Spin2Parser.ArrayValueContext ctx);
+	T visitDataValue(Spin2Parser.DataValueContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#directive}.
 	 * @param ctx the parse tree
@@ -167,23 +119,17 @@ public interface Spin2Visitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitEffect(Spin2Parser.EffectContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#dst}.
+	 * Visit a parse tree produced by {@link Spin2Parser#argument}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitDst(Spin2Parser.DstContext ctx);
+	T visitArgument(Spin2Parser.ArgumentContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#src}.
+	 * Visit a parse tree produced by {@link Spin2Parser#prefix}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitSrc(Spin2Parser.SrcContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#index}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIndex(Spin2Parser.IndexContext ctx);
+	T visitPrefix(Spin2Parser.PrefixContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#type}.
 	 * @param ctx the parse tree
