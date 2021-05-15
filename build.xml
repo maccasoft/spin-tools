@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="build">
+
+    <target name="build">
+    </target>
+
+    <target name="build-antlr">
+        <java classname="org.antlr.v4.Tool" fork="true" failonerror="true" classpath="lib/antlr-4.9.2-complete.jar">
+            <arg value="-o"/>
+            <arg value="src/com/maccasoft/propeller/spin"/>
+            <arg value="-package"/>
+            <arg value="com.maccasoft.propeller.spin"/>
+            <arg value="-visitor"/>
+            <arg value="-listener"/>
+            <arg line="Spin2.g4"/>
+        </java>
+    </target>
+</project>
