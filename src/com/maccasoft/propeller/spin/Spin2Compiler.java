@@ -16,6 +16,7 @@ import java.util.List;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addpins;
 import com.maccasoft.propeller.expressions.And;
+import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Identifier;
@@ -35,16 +36,80 @@ import com.maccasoft.propeller.spin.Spin2Parser.ConstantContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantsContext;
 import com.maccasoft.propeller.spin.Spin2Parser.DataLineContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ExpressionContext;
+import com.maccasoft.propeller.spin.Spin2Parser.ProgContext;
 
 @SuppressWarnings({
     "unchecked", "rawtypes"
 })
 public class Spin2Compiler extends Spin2BaseVisitor {
 
-    Spin2Context scope = new Spin2Context();
+    Spin2Context scope = new Spin2GlobalContext();
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
 
     public Spin2Compiler() {
+
+    }
+
+    @Override
+    public Object visitProg(ProgContext ctx) {
+        super.visitProg(ctx);
+
+        int _clkfreq = 20000000;
+        if (scope.hasSymbol("_clkfreq")) {
+            _clkfreq = scope.getSymbol("_clkfreq").getNumber().intValue();
+        }
+        scope.addSymbol("clkmode_", new NumberLiteral(getClockMode(20000000, _clkfreq)));
+
+        int address = 0;
+        for (Spin2PAsmLine line : source) {
+            address = line.resolve(address);
+        }
+
+        return null;
+    }
+
+    int getClockMode(int xinfreq, int clkfreq) {
+        int divd;
+        int zzzz = 11; // 0b10_11
+        double e, post, mult, Fpfd, Fvco, Fout;
+        double result_mult = 0;
+        //double result_Fout = 0;
+        int result_pppp = 0, result_divd = 0;
+        double error = 1e9;
+
+        for (int pppp = 0; pppp <= 15; pppp++) {
+            if (pppp == 0) {
+                post = 1.0;
+            }
+            else {
+                post = pppp * 2.0;
+            }
+            for (divd = 64; divd >= 1; --divd) {
+                Fpfd = Math.round(xinfreq / (double) divd);
+                mult = Math.round(clkfreq * post / Fpfd);
+                Fvco = Math.round(Fpfd * mult);
+                Fout = Math.round(Fvco / post);
+                e = Math.abs(Fout - clkfreq);
+                if ((e <= error) && (Fpfd >= 250000) && (mult <= 1024) && (Fvco > 99e6) && ((Fvco <= 201e6) || (Fvco <= clkfreq + 1e6))) {
+                    result_divd = divd;
+                    result_mult = mult;
+                    result_pppp = (pppp - 1) & 15;
+                    //result_Fout = Fout;
+                    error = e;
+                }
+            }
+        }
+        if (error > 100000.0) {
+            throw new RuntimeException(String.format("Unable to find clock settings for freq %f Hz with input freq %f Hz", clkfreq, xinfreq));
+        }
+
+        int D = result_divd - 1;
+        int M = ((int) result_mult) - 1;
+        int clkmode = zzzz | (result_pppp << 4) | (M << 8) | (D << 18) | (1 << 24);
+
+        //int finalfreq = (int) Math.round(result_Fout);
+
+        return clkmode;
     }
 
     @Override
@@ -86,7 +151,13 @@ public class Spin2Compiler extends Spin2BaseVisitor {
     public Object visitDataLine(DataLineContext ctx) {
         Spin2PAsmLineBuilderVisitor lineBuilder = new Spin2PAsmLineBuilderVisitor(new Spin2Context(scope));
         ctx.accept(lineBuilder);
-        source.add(lineBuilder.getLine());
+
+        Spin2PAsmLine line = lineBuilder.getLine();
+        if (line.getLabel() != null) {
+            scope.addSymbol(line.getLabel(), new ContextLiteral(line.getScope()));
+        }
+        source.addAll(line.expand());
+
         return null;
     }
 

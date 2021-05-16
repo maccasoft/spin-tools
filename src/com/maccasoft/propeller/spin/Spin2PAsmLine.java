@@ -10,7 +10,13 @@
 
 package com.maccasoft.propeller.spin;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collections;
 import java.util.List;
+
+import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.spin.instructions.Empty;
 
 public class Spin2PAsmLine {
 
@@ -21,6 +27,11 @@ public class Spin2PAsmLine {
     List<Spin2PAsmExpression> arguments;
     String effect;
 
+    Spin2PAsmInstructionFactory instructionFactory;
+    Spin2InstructionObject instructionObject;
+
+    String originalText;
+
     public Spin2PAsmLine(Spin2Context scope, String label, String condition, String mnemonic, List<Spin2PAsmExpression> arguments, String effect) {
         this.scope = scope;
         this.label = label;
@@ -28,6 +39,80 @@ public class Spin2PAsmLine {
         this.mnemonic = mnemonic;
         this.arguments = arguments;
         this.effect = effect;
+    }
+
+    public Spin2Context getScope() {
+        return scope;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public String getCondition() {
+        return condition;
+    }
+
+    public String getMnemonic() {
+        return mnemonic;
+    }
+
+    public List<Spin2PAsmExpression> getArguments() {
+        return arguments;
+    }
+
+    public String getEffect() {
+        return effect;
+    }
+
+    public Spin2PAsmInstructionFactory getInstructionFactory() {
+        if (instructionFactory == null) {
+            Expression exp = mnemonic != null ? scope.getSymbol(mnemonic) : new Empty();
+            if (exp instanceof Spin2PAsmInstructionFactory) {
+                instructionFactory = (Spin2PAsmInstructionFactory) exp;
+            }
+            else {
+                instructionFactory = new Empty();
+            }
+        }
+        return instructionFactory;
+    }
+
+    public List<Spin2PAsmLine> expand() {
+        try {
+            return getInstructionFactory().expand(this);
+        } catch (Exception e) {
+            return Collections.singletonList(this);
+        }
+    }
+
+    public int resolve(int address) {
+        try {
+            if (instructionObject == null) {
+                instructionObject = getInstructionFactory().createObject(scope, arguments);
+            }
+            if (instructionObject != null) {
+                return instructionObject.resolve(address);
+            }
+        } catch (Exception e) {
+            System.err.println(this);
+            e.printStackTrace();
+        }
+        return address;
+    }
+
+    public void generateObjectCode(OutputStream output) throws IOException {
+        try {
+            if (instructionObject == null) {
+                instructionObject = getInstructionFactory().createObject(scope, arguments);
+            }
+            if (instructionObject != null) {
+                instructionObject.generateObjectCode(output);
+            }
+        } catch (Exception e) {
+            System.err.println(this);
+            e.printStackTrace();
+        }
     }
 
     @Override

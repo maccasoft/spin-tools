@@ -16,6 +16,7 @@ import java.util.Map;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.NumberLiteral;
 
 public class Spin2Context implements Context {
 
@@ -43,6 +44,10 @@ public class Spin2Context implements Context {
         Expression exp = symbols.get(name.toLowerCase());
         if (exp == null && parent != null) {
             exp = parent.getSymbol(name);
+        }
+        if (exp == null) {
+            System.out.println("Symbol " + name + " not found!");
+            exp = new NumberLiteral(0);
         }
         return exp;
     }

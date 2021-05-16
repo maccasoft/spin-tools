@@ -65,7 +65,7 @@ public class Spin2PAsmLineBuilderVisitor extends Spin2BaseVisitor {
     @Override
     public Object visitArgument(ArgumentContext ctx) {
         Expression expression = Spin2Compiler.compileExpression(scope, ctx.expression());
-        arguments.add(new Spin2PAsmExpression(ctx.prefix() != null ? ctx.prefix().getText() : null, expression));
+        arguments.add(new Spin2PAsmExpression(ctx.prefix() != null ? ctx.prefix().getText() : null, expression, null));
         return null;
     }
 
@@ -78,7 +78,8 @@ public class Spin2PAsmLineBuilderVisitor extends Spin2BaseVisitor {
     @Override
     public Object visitDataValue(DataValueContext ctx) {
         Expression expression = Spin2Compiler.compileExpression(scope, ctx.expression(0));
-        arguments.add(new Spin2PAsmExpression(null, expression));
+        Expression count = ctx.expression().size() > 1 ? Spin2Compiler.compileExpression(scope, ctx.expression(1)) : null;
+        arguments.add(new Spin2PAsmExpression(null, expression, count));
         return null;
     }
 

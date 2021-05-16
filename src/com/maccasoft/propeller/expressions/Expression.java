@@ -37,14 +37,6 @@ public abstract class Expression {
         return false;
     }
 
-    public int getHubAddress() {
-        return getNumber().intValue();
-    }
-
-    public int getCogAddress() {
-        return getNumber().intValue();
-    }
-
     public List<Expression> getList() {
         List<Expression> list = new ArrayList<>();
         addToList(list);
