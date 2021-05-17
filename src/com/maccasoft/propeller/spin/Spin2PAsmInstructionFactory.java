@@ -53,6 +53,6 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
         return list;
     }
 
-    public abstract Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments);
+    public abstract Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect);
 
 }

@@ -21,11 +21,15 @@ public abstract class Spin2InstructionObject {
     public static final BitField o = new BitField(0b00001111111000000000000000000000); // instruction
     public static final BitField c = new BitField(0b00000000000100000000000000000000); // write c
     public static final BitField z = new BitField(0b00000000000010000000000000000000); // write z
+    public static final BitField cz = new BitField(0b00000000000110000000000000000000); // write cz
     public static final BitField l = new BitField(0b00000000000001000000000000000000); // literal
     public static final BitField i = new BitField(0b00000000000001000000000000000000);
     public static final BitField d = new BitField(0b00000000000000111111111000000000); // destination
     public static final BitField s = new BitField(0b00000000000000000000000111111111); // source
 
+    public static final BitField czi = new BitField(0b00000000000111000000000000000000); // write czi
+
+    public static final BitField n = new BitField(0b00000000001110000000000000000000); // write cz
     public static final BitField w = new BitField(0b00000000011000000000000000000000);
 
     public static final BitField r = new BitField(0b00000000000100000000000000000000); // relative/absolute
@@ -43,6 +47,21 @@ public abstract class Spin2InstructionObject {
         return s.setValue(value, SSSSSSSS);
     }
 
+    public static int encode(int IIIIIII, int CZ, boolean I, int DDDDDDDD, int SSSSSSSS) {
+        int value = e.setValue(0, 0b1111);
+        value = o.setValue(value, IIIIIII);
+        value = cz.setValue(value, CZ);
+        value = l.setBoolean(value, I);
+        value = d.setValue(value, DDDDDDDD);
+        return s.setValue(value, SSSSSSSS);
+    }
+
+    public static int encode(int IIIIIII, int CZ) {
+        int value = e.setValue(0, 0b1111);
+        value = o.setValue(value, IIIIIII);
+        return value = cz.setValue(value, CZ);
+    }
+
     public static int encode(int IIIIIII) {
         int value = e.setValue(0, 0b1111);
         return o.setValue(value, IIIIIII);
@@ -50,6 +69,36 @@ public abstract class Spin2InstructionObject {
 
     public static int encodeAddress(int value, boolean R, int address) {
         return a.setValue(r.setBoolean(value, R), address);
+    }
+
+    public static int decode(byte[] b) {
+        return b[0] | (b[1] << 8) | (b[1] << 16) | (b[1] << 24);
+    }
+
+    public static String decodeToString(byte[] b) {
+        return decodeToString((b[0] & 0xFF) | ((b[1] & 0xFF) << 8) | ((b[2] & 0xFF) << 16) | ((b[3] & 0xFF) << 24));
+    }
+
+    public static String decodeToString(int value) {
+        return String.format("%s_%s_%s%s%s_%s_%s",
+            toBinary(e.getValue(value), 4),
+            toBinary(o.getValue(value), 7),
+            toBinary(c.getValue(value), 1),
+            toBinary(z.getValue(value), 1),
+            toBinary(i.getValue(value), 1),
+            toBinary(d.getValue(value), 9),
+            toBinary(s.getValue(value), 9));
+    }
+
+    static String toBinary(int value, int size) {
+        StringBuilder sb = new StringBuilder(Integer.toBinaryString(value));
+        if (sb.length() > size) {
+            sb.setLength(size);
+        }
+        while (sb.length() < size) {
+            sb.insert(0, '0');
+        }
+        return sb.toString();
     }
 
     protected final Spin2Context context;
@@ -61,6 +110,22 @@ public abstract class Spin2InstructionObject {
     public int resolve(int address) {
         context.setAddress(address);
         return address + 1;
+    }
+
+    protected int encodeEffect(String effect) {
+        if (effect == null) {
+            return 0b00;
+        }
+        else if ("wcz".equals(effect)) {
+            return 0b11;
+        }
+        else if (effect.contains("wc") || "andc".equals(effect) || "orc".equals(effect) || "xor".equals(effect)) {
+            return 0b10;
+        }
+        else if (effect.contains("wz") || "andz".equals(effect) || "orz".equals(effect) || "xorz".equals(effect)) {
+            return 0b01;
+        }
+        return 0;
     }
 
     public int getSize() {

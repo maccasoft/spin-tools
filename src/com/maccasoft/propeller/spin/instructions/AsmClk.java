@@ -28,7 +28,7 @@ import com.maccasoft.propeller.spin.Spin2PAsmLine;
 public class AsmClk extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments) {
+    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
         throw new RuntimeException("Invalid arguments");
     }
 

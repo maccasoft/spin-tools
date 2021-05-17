@@ -89,7 +89,7 @@ public class Spin2PAsmLine {
     public int resolve(int address) {
         try {
             if (instructionObject == null) {
-                instructionObject = getInstructionFactory().createObject(scope, arguments);
+                instructionObject = getInstructionFactory().createObject(scope, arguments, effect);
             }
             if (instructionObject != null) {
                 return instructionObject.resolve(address);
@@ -104,7 +104,7 @@ public class Spin2PAsmLine {
     public void generateObjectCode(OutputStream output) throws IOException {
         try {
             if (instructionObject == null) {
-                instructionObject = getInstructionFactory().createObject(scope, arguments);
+                instructionObject = getInstructionFactory().createObject(scope, arguments, effect);
             }
             if (instructionObject != null) {
                 instructionObject.generateObjectCode(output);

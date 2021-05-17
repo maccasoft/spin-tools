@@ -20,8 +20,8 @@ import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
 public class Hubset extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments) {
-        if (arguments.size() == 1) {
+    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
+        if (arguments.size() == 1 && effect == null) {
             return new Hubset_(context, arguments.get(0));
         }
         throw new RuntimeException("Invalid arguments");
@@ -51,8 +51,7 @@ public class Hubset extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = encode(0b1101011, false, false, argument.isLiteral(), 0b000000000, 0b000000000);
-            value = d.setValue(value, argument.getInteger());
+            int value = encode(0b1101011, 0b00, argument.isLiteral(), argument.getInteger(), 0b000000000);
             if (argument.isLongLiteral()) {
                 byte[] prefix = new Augd.Augd_(context, argument).getBytes();
                 return getBytes(prefix, value);

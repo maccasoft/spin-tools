@@ -17,27 +17,34 @@ import com.maccasoft.propeller.spin.Spin2InstructionObject;
 import com.maccasoft.propeller.spin.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
 
-public class Empty extends Spin2PAsmInstructionFactory {
+/*
+ * OPCODE
+ */
+public class NoArg_NE extends Spin2PAsmInstructionFactory {
+
+    int opcode;
+
+    public NoArg_NE(int opcode) {
+        this.opcode = opcode;
+    }
 
     @Override
     public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
-        return new Empty_(context);
+        if (arguments.size() == 0 && effect == null) {
+            return new NoArg_NE_(context);
+        }
+        throw new RuntimeException("Invalid arguments");
     }
 
-    public static class Empty_ extends Spin2InstructionObject {
+    public class NoArg_NE_ extends Spin2InstructionObject {
 
-        public Empty_(Spin2Context context) {
+        public NoArg_NE_(Spin2Context context) {
             super(context);
         }
 
         @Override
-        public int resolve(int address) {
-            return address;
-        }
-
-        @Override
         public byte[] getBytes() {
-            return new byte[0];
+            return getBytes(opcode);
         }
 
     }

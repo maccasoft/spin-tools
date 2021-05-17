@@ -16,28 +16,39 @@ import com.maccasoft.propeller.spin.Spin2Context;
 import com.maccasoft.propeller.spin.Spin2InstructionObject;
 import com.maccasoft.propeller.spin.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
+import com.maccasoft.propeller.spin.Spin2PAsmSchema;
 
-public class Waitct1 extends Spin2PAsmInstructionFactory {
+/*
+ * OPCODE         {WC/WZ/WCZ}
+ */
+public class NoArg_E extends Spin2PAsmInstructionFactory {
+
+    int opcode;
+
+    public NoArg_E(int opcode) {
+        this.opcode = opcode;
+    }
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments) {
-        if (arguments.size() == 0) {
-            return new Waitct1_(context);
+    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
+        if (Spin2PAsmSchema.WC_WZ_WCZ.check(arguments, effect)) {
+            return new NoArg_(context, effect);
         }
         throw new RuntimeException("Invalid arguments");
     }
 
-    public static class Waitct1_ extends Spin2InstructionObject {
+    public class NoArg_ extends Spin2InstructionObject {
 
-        // EEEE 1101011 CZ0 000010001 000100100
+        String effect;
 
-        public Waitct1_(Spin2Context context) {
+        public NoArg_(Spin2Context context, String effect) {
             super(context);
+            this.effect = effect;
         }
 
         @Override
         public byte[] getBytes() {
-            return getBytes(encode(0b1101011, false, false, false, 0b000010001, 0b000100100));
+            return getBytes(czi.setValue(opcode, encodeEffect(effect)));
         }
 
     }

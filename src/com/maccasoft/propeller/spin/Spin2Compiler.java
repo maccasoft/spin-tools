@@ -10,8 +10,13 @@
 
 package com.maccasoft.propeller.spin;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addpins;
@@ -239,6 +244,72 @@ public class Spin2Compiler extends Spin2BaseVisitor {
             return new Identifier(s, scope);
         }
         return new NumberLiteral(0);
+    }
+
+    public static void main(String[] args) {
+        Spin2Compiler compiler = new Spin2Compiler();
+        try {
+            String text = ""
+                + "CON\n"
+                + "\n"
+                + "    _clkfreq = 160_000_000\n"
+                + "\n"
+                + "    delay    = _clkfreq / 2\n"
+                + "\n"
+                + "DAT\n"
+                + "\n"
+                + "                org   $000\n"
+                + "\n"
+                + "start\n"
+                + "                asmclk                      ' set clock\n"
+                + "\n"
+                + "                getct   ct                  ' get current timer\n"
+                + ".loop           drvnot  #56                 ' toggle output\n"
+                + "                addct1  ct, ##delay         ' set delay to timer 1\n"
+                + "                waitct1                     ' wait for timer 1 expire\n"
+                + "                jmp     #\\.loop\n"
+                + "\n"
+                + "ct              res     1\n";
+
+            CharStream input = CharStreams.fromString(text);
+            //CharStream input = CharStreams.fromFileName("/home/marco/Propeller/M6502-P2/apple1/m6502_apple1_cvbs.spin2"):
+
+            Spin2Lexer lexer = new Spin2Lexer(input);
+            lexer.removeErrorListeners();
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            Spin2Parser parser = new Spin2Parser(tokens);
+            //parser.removeErrorListeners();
+
+            parser.prog().accept(compiler);
+
+            int total = 0;
+            for (Spin2PAsmLine line : compiler.source) {
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                line.generateObjectCode(os);
+                byte[] code = os.toByteArray();
+
+                int address = line.getScope().getAddress();
+                System.out.print(String.format("%06X %03X ", total, address++));
+                for (int i = 0; i < code.length; i++) {
+                    if (i > 0 && (i % 4) == 0) {
+                        System.out.println(" |");
+                        System.out.print(String.format("%06X %03X ", total, address++));
+                    }
+                    System.out.print(String.format(" %02X", code[i]));
+                    total++;
+                }
+                if (code.length == 0 || (code.length % 4) != 0) {
+                    for (int i = 0; i < 4 - (code.length % 4); i++) {
+                        System.out.print("   ");
+                    }
+                }
+                System.out.println(" | " + line);
+            }
+            System.out.print(String.format("%06X\n", total));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

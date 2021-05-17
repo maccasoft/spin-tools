@@ -20,8 +20,8 @@ import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
 public class Nop extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments) {
-        if (arguments.size() == 0) {
+    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
+        if (arguments.size() == 0 && effect == null) {
             return new Nop_(context);
         }
         throw new RuntimeException("Invalid arguments");
@@ -37,7 +37,7 @@ public class Nop extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            return getBytes(encode(0b0000000, false, false, false, 0b00000000, 0b00000000));
+            return getBytes(encode(0b0000000, 0b00, false, 0b00000000, 0b00000000));
         }
 
     }

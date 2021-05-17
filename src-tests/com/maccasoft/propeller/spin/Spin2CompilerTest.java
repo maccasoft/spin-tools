@@ -43,7 +43,7 @@ class Spin2CompilerTest {
         Spin2Parser parser = parseText("CON\nEnableFlow = 8\n");
         parser.prog().accept(compiler);
 
-        Assertions.assertEquals(new Integer(8), compiler.scope.getSymbol("EnableFlow").getNumber());
+        Assertions.assertEquals(8, compiler.scope.getInteger("EnableFlow"));
     }
 
     @Test
@@ -53,8 +53,8 @@ class Spin2CompilerTest {
         Spin2Parser parser = parseText("CON\nPWM_base = 8\nPWM_pins = PWM_base ADDPINS 7\n");
         parser.prog().accept(compiler);
 
-        Assertions.assertEquals(new Integer(8), compiler.scope.getSymbol("PWM_base").getNumber());
-        Assertions.assertEquals(new Integer(8 + (7 << 6)), compiler.scope.getSymbol("PWM_pins").getNumber());
+        Assertions.assertEquals(8, compiler.scope.getInteger("PWM_base"));
+        Assertions.assertEquals(8 + (7 << 6), compiler.scope.getInteger("PWM_pins"));
     }
 
     @Test
@@ -64,8 +64,8 @@ class Spin2CompilerTest {
         Spin2Parser parser = parseText("CON\nPWM_pins = PWM_base ADDPINS 7\nPWM_base = 8\n");
         parser.prog().accept(compiler);
 
-        Assertions.assertEquals(new Integer(8), compiler.scope.getSymbol("PWM_base").getNumber());
-        Assertions.assertEquals(new Integer(8 + (7 << 6)), compiler.scope.getSymbol("PWM_pins").getNumber());
+        Assertions.assertEquals(8, compiler.scope.getInteger("PWM_base"));
+        Assertions.assertEquals(8 + (7 << 6), compiler.scope.getInteger("PWM_pins"));
     }
 
     @Test
@@ -75,10 +75,10 @@ class Spin2CompilerTest {
         Spin2Parser parser = parseText("CON  #0,a,b,c,d\n");
         parser.prog().accept(compiler);
 
-        Assertions.assertEquals(new Integer(0), compiler.scope.getSymbol("a").getNumber());
-        Assertions.assertEquals(new Integer(1), compiler.scope.getSymbol("b").getNumber());
-        Assertions.assertEquals(new Integer(2), compiler.scope.getSymbol("c").getNumber());
-        Assertions.assertEquals(new Integer(3), compiler.scope.getSymbol("d").getNumber());
+        Assertions.assertEquals(0, compiler.scope.getInteger("a"));
+        Assertions.assertEquals(1, compiler.scope.getInteger("b"));
+        Assertions.assertEquals(2, compiler.scope.getInteger("c"));
+        Assertions.assertEquals(3, compiler.scope.getInteger("d"));
     }
 
     @Test
@@ -90,10 +90,10 @@ class Spin2CompilerTest {
             + "     #1,e,f,g,h\n");
         parser.prog().accept(compiler);
 
-        Assertions.assertEquals(new Integer(1), compiler.scope.getSymbol("e").getNumber());
-        Assertions.assertEquals(new Integer(2), compiler.scope.getSymbol("f").getNumber());
-        Assertions.assertEquals(new Integer(3), compiler.scope.getSymbol("g").getNumber());
-        Assertions.assertEquals(new Integer(4), compiler.scope.getSymbol("h").getNumber());
+        Assertions.assertEquals(1, compiler.scope.getInteger("e"));
+        Assertions.assertEquals(2, compiler.scope.getInteger("f"));
+        Assertions.assertEquals(3, compiler.scope.getInteger("g"));
+        Assertions.assertEquals(4, compiler.scope.getInteger("h"));
     }
 
     @Test
@@ -105,10 +105,10 @@ class Spin2CompilerTest {
             + "     #4[2],i,j,k,l\n");
         parser.prog().accept(compiler);
 
-        Assertions.assertEquals(new Integer(4), compiler.scope.getSymbol("i").getNumber());
-        Assertions.assertEquals(new Integer(6), compiler.scope.getSymbol("j").getNumber());
-        Assertions.assertEquals(new Integer(8), compiler.scope.getSymbol("k").getNumber());
-        Assertions.assertEquals(new Integer(10), compiler.scope.getSymbol("l").getNumber());
+        Assertions.assertEquals(4, compiler.scope.getInteger("i"));
+        Assertions.assertEquals(6, compiler.scope.getInteger("j"));
+        Assertions.assertEquals(8, compiler.scope.getInteger("k"));
+        Assertions.assertEquals(10, compiler.scope.getInteger("l"));
     }
 
     @Test
@@ -126,13 +126,13 @@ class Spin2CompilerTest {
             + "     w\n");
         parser.prog().accept(compiler);
 
-        Assertions.assertEquals(new Integer(16), compiler.scope.getSymbol("q").getNumber());
-        Assertions.assertEquals(new Integer(17), compiler.scope.getSymbol("r").getNumber());
-        Assertions.assertEquals(new Integer(17), compiler.scope.getSymbol("s").getNumber());
-        Assertions.assertEquals(new Integer(18), compiler.scope.getSymbol("t").getNumber());
-        Assertions.assertEquals(new Integer(19), compiler.scope.getSymbol("u").getNumber());
-        Assertions.assertEquals(new Integer(21), compiler.scope.getSymbol("v").getNumber());
-        Assertions.assertEquals(new Integer(22), compiler.scope.getSymbol("w").getNumber());
+        Assertions.assertEquals(16, compiler.scope.getInteger("q"));
+        Assertions.assertEquals(17, compiler.scope.getInteger("r"));
+        Assertions.assertEquals(17, compiler.scope.getInteger("s"));
+        Assertions.assertEquals(18, compiler.scope.getInteger("t"));
+        Assertions.assertEquals(19, compiler.scope.getInteger("u"));
+        Assertions.assertEquals(21, compiler.scope.getInteger("v"));
+        Assertions.assertEquals(22, compiler.scope.getInteger("w"));
     }
 
     @Test
@@ -145,14 +145,14 @@ class Spin2CompilerTest {
             + "CON  e0,e1,e2\n");
         parser.prog().accept(compiler);
 
-        Assertions.assertEquals(new Integer(1), compiler.scope.getSymbol("e").getNumber());
-        Assertions.assertEquals(new Integer(2), compiler.scope.getSymbol("f").getNumber());
-        Assertions.assertEquals(new Integer(3), compiler.scope.getSymbol("g").getNumber());
-        Assertions.assertEquals(new Integer(4), compiler.scope.getSymbol("h").getNumber());
+        Assertions.assertEquals(1, compiler.scope.getInteger("e"));
+        Assertions.assertEquals(2, compiler.scope.getInteger("f"));
+        Assertions.assertEquals(3, compiler.scope.getInteger("g"));
+        Assertions.assertEquals(4, compiler.scope.getInteger("h"));
 
-        Assertions.assertEquals(new Integer(0), compiler.scope.getSymbol("e0").getNumber());
-        Assertions.assertEquals(new Integer(1), compiler.scope.getSymbol("e1").getNumber());
-        Assertions.assertEquals(new Integer(2), compiler.scope.getSymbol("e2").getNumber());
+        Assertions.assertEquals(0, compiler.scope.getInteger("e0"));
+        Assertions.assertEquals(1, compiler.scope.getInteger("e1"));
+        Assertions.assertEquals(2, compiler.scope.getInteger("e2"));
     }
 
     @Test

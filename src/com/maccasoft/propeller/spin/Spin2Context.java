@@ -36,6 +36,9 @@ public class Spin2Context implements Context {
     }
 
     public void addSymbol(String name, Expression value) {
+        if (symbols.containsKey(name.toLowerCase())) {
+            throw new RuntimeException("Symbol " + name + " already defined");
+        }
         symbols.put(name.toLowerCase(), value);
     }
 
@@ -59,6 +62,11 @@ public class Spin2Context implements Context {
             result = parent.hasSymbol(name);
         }
         return result;
+    }
+
+    public int getInteger(String name) {
+        Expression result = getSymbol(name.toLowerCase());
+        return result != null ? result.getNumber().intValue() : 0;
     }
 
     public void setAddress(int address) {

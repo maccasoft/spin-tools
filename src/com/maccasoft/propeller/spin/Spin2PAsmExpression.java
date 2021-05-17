@@ -55,6 +55,37 @@ public class Spin2PAsmExpression {
         return expression.getNumber().intValue();
     }
 
+    public byte[] getByte() {
+        int value = expression.getNumber().intValue();
+        return new byte[] {
+            (byte) (value & 0xFF)
+        };
+    }
+
+    public byte[] getWord() {
+        int value = expression.getNumber().intValue();
+        return new byte[] {
+            (byte) (value & 0xFF),
+            (byte) ((value >> 8) & 0xFF)
+        };
+    }
+
+    public byte[] getLong() {
+        int value;
+        if (expression.getNumber() instanceof Double) {
+            value = Float.floatToIntBits(expression.getNumber().floatValue());
+        }
+        else {
+            value = expression.getNumber().intValue();
+        }
+        return new byte[] {
+            (byte) (value & 0xFF),
+            (byte) ((value >> 8) & 0xFF),
+            (byte) ((value >> 16) & 0xFF),
+            (byte) ((value >> 24) & 0xFF)
+        };
+    }
+
     @Override
     public String toString() {
         return (prefix != null ? prefix : "") + expression.toString() + (count != null ? "[" + count.toString() + "]" : "");

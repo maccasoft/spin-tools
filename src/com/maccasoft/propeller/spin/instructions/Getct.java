@@ -20,9 +20,9 @@ import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
 public class Getct extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments) {
+    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
         if (arguments.size() == 1) {
-            return new Getct_(context, arguments.get(0));
+            return new Getct_(context, arguments.get(0), effect);
         }
         throw new RuntimeException("Invalid arguments");
     }
@@ -30,18 +30,19 @@ public class Getct extends Spin2PAsmInstructionFactory {
     public static class Getct_ extends Spin2InstructionObject {
 
         Spin2PAsmExpression argument;
+        String effect;
 
-        public Getct_(Spin2Context context, Spin2PAsmExpression argument) {
+        public Getct_(Spin2Context context, Spin2PAsmExpression argument, String effect) {
             super(context);
             this.argument = argument;
+            this.effect = effect;
         }
 
         // EEEE 1101011 C00 DDDDDDDDD 000011010
 
         @Override
         public byte[] getBytes() {
-            int value = encode(0b1101011, false, false, false, 0b000000000, 0b000011010);
-            return getBytes(d.setValue(value, argument.getInteger()));
+            return getBytes(encode(0b1101011, "wc".equals(effect), false, false, argument.getInteger(), 0b000011010));
         }
 
     }
