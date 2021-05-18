@@ -20,43 +20,47 @@ import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
 public class Hubset extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         if (arguments.size() == 1 && effect == null) {
-            return new Hubset_(context, arguments.get(0));
+            return new Hubset_D_(context, condition, arguments.get(0));
         }
         throw new RuntimeException("Invalid arguments");
     }
 
-    public static class Hubset_ extends Spin2InstructionObject {
+    /*
+     * HUBSET  {#}D
+     */
+    public class Hubset_D_ extends Spin2InstructionObject {
 
-        Spin2PAsmExpression argument;
+        String condition;
+        Spin2PAsmExpression dst;
 
-        public Hubset_(Spin2Context context, Spin2PAsmExpression argument) {
+        public Hubset_D_(Spin2Context context, String condition, Spin2PAsmExpression dst) {
             super(context);
-            this.argument = argument;
+            this.condition = condition;
+            this.dst = dst;
         }
 
         @Override
         public int resolve(int address) {
             super.resolve(address);
-            return address + (argument.isLongLiteral() ? 2 : 1);
+            return address + (dst.isLongLiteral() ? 2 : 1);
         }
 
         @Override
         public int getSize() {
-            return argument.isLongLiteral() ? 8 : 4;
+            return dst.isLongLiteral() ? 8 : 4;
         }
 
         // EEEE 1101011 00L DDDDDDDDD 000000000
 
         @Override
         public byte[] getBytes() {
-            int value = encode(0b1101011, 0b00, argument.isLiteral(), argument.getInteger(), 0b000000000);
-            if (argument.isLongLiteral()) {
-                byte[] prefix = new Augd.Augd_(context, argument).getBytes();
-                return getBytes(prefix, value);
-            }
-            return getBytes(value);
+            int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+            value = o.setValue(value, 0b1101011);
+            value = l.setBoolean(value, dst.isLiteral());
+            value = d.setValue(value, dst.getInteger());
+            return dst.isLongLiteral() ? getBytes(encodeAugd(condition, dst.getInteger()), value) : getBytes(value);
         }
 
     }

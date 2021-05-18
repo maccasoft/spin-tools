@@ -16,49 +16,56 @@ import com.maccasoft.propeller.spin.Spin2Context;
 import com.maccasoft.propeller.spin.Spin2InstructionObject;
 import com.maccasoft.propeller.spin.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
+import com.maccasoft.propeller.spin.Spin2PAsmSchema;
 
 public class Waitx extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
-        if (arguments.size() == 1) {
-            return new Waitx_(context, arguments.get(0), effect);
+    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+        if (arguments.size() == 1 && (effect == null || Spin2PAsmSchema.E_WC_WZ_WCZ.contains(effect.toLowerCase()))) {
+            return new Waitx_D_(context, condition, arguments.get(0), effect);
         }
         throw new RuntimeException("Invalid arguments");
     }
 
-    public static class Waitx_ extends Spin2InstructionObject {
+    /*
+     * WAITX   {#}D     {WC/WZ/WCZ}
+     */
+    public class Waitx_D_ extends Spin2InstructionObject {
 
-        Spin2PAsmExpression argument;
+        String condition;
+        Spin2PAsmExpression dst;
         String effect;
 
-        public Waitx_(Spin2Context context, Spin2PAsmExpression argument, String effect) {
+        public Waitx_D_(Spin2Context context, String condition, Spin2PAsmExpression dst, String effect) {
             super(context);
-            this.argument = argument;
+            this.condition = condition;
+            this.dst = dst;
             this.effect = effect;
         }
 
         @Override
         public int resolve(int address) {
             super.resolve(address);
-            return address + (argument.isLongLiteral() ? 2 : 1);
+            return address + (dst.isLongLiteral() ? 2 : 1);
         }
 
         @Override
         public int getSize() {
-            return argument.isLongLiteral() ? 8 : 4;
+            return dst.isLongLiteral() ? 8 : 4;
         }
 
         // EEEE 1101011 CZL DDDDDDDDD 000011111
 
         @Override
         public byte[] getBytes() {
-            int value = encode(0b1101011, encodeEffect(effect), argument.isLiteral(), argument.getInteger(), 0b000011111);
-            if (argument.isLongLiteral()) {
-                byte[] prefix = new Augd.Augd_(context, argument).getBytes();
-                return getBytes(prefix, value);
-            }
-            return getBytes(value);
+            int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+            value = o.setValue(value, 0b1101011);
+            value = cz.setValue(value, encodeEffect(effect));
+            value = l.setBoolean(value, dst.isLiteral());
+            value = d.setValue(value, dst.getInteger());
+            value = s.setValue(value, 0b000011111);
+            return dst.isLongLiteral() ? getBytes(encodeAugd(condition, dst.getInteger()), value) : getBytes(value);
         }
 
     }

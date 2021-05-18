@@ -10,7 +10,6 @@
 
 package com.maccasoft.propeller.spin;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,34 +24,6 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
         return Collections.singletonList(line);
     }
 
-    protected List<Spin2PAsmLine> augsExpand(Spin2PAsmLine line, Spin2PAsmExpression argument) {
-        List<Spin2PAsmLine> list = new ArrayList<Spin2PAsmLine>();
-
-        if (argument.isLongLiteral()) {
-            list.add(new Spin2PAsmLine(
-                line.getScope(), line.getLabel(), line.getCondition(), "augs",
-                Collections.singletonList(argument),
-                null));
-        }
-        list.add(line);
-
-        return list;
-    }
-
-    protected List<Spin2PAsmLine> augdExpand(Spin2PAsmLine line, Spin2PAsmExpression argument) {
-        List<Spin2PAsmLine> list = new ArrayList<Spin2PAsmLine>();
-
-        if (argument.isLongLiteral()) {
-            list.add(new Spin2PAsmLine(
-                line.getScope(), line.getLabel(), line.getCondition(), "augd",
-                Collections.singletonList(argument),
-                null));
-        }
-        list.add(line);
-
-        return list;
-    }
-
-    public abstract Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect);
+    public abstract Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect);
 
 }

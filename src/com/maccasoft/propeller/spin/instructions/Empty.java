@@ -20,7 +20,7 @@ import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
 public class Empty extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         return new Empty_(context);
     }
 

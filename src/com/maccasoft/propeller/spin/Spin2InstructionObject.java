@@ -29,7 +29,7 @@ public abstract class Spin2InstructionObject {
 
     public static final BitField czi = new BitField(0b00000000000111000000000000000000); // write czi
 
-    public static final BitField n = new BitField(0b00000000001110000000000000000000); // write cz
+    public static final BitField nnn = new BitField(0b00000000001110000000000000000000);
     public static final BitField w = new BitField(0b00000000011000000000000000000000);
 
     public static final BitField r = new BitField(0b00000000000100000000000000000000); // relative/absolute
@@ -54,21 +54,6 @@ public abstract class Spin2InstructionObject {
         value = l.setBoolean(value, I);
         value = d.setValue(value, DDDDDDDD);
         return s.setValue(value, SSSSSSSS);
-    }
-
-    public static int encode(int IIIIIII, int CZ) {
-        int value = e.setValue(0, 0b1111);
-        value = o.setValue(value, IIIIIII);
-        return value = cz.setValue(value, CZ);
-    }
-
-    public static int encode(int IIIIIII) {
-        int value = e.setValue(0, 0b1111);
-        return o.setValue(value, IIIIIII);
-    }
-
-    public static int encodeAddress(int value, boolean R, int address) {
-        return a.setValue(r.setBoolean(value, R), address);
     }
 
     public static int decode(byte[] b) {
@@ -137,10 +122,35 @@ public abstract class Spin2InstructionObject {
         output.write(object, 0, object.length);
     }
 
+    protected int encodeAugs(String condition, int number) {
+        int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+        value = o.setValue(value, 0b1111000);
+        return x.setValue(value, number >> 9);
+    }
+
+    protected int encodeAugd(String condition, int number) {
+        int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+        value = o.setValue(value, 0b1111100);
+        return x.setValue(value, number >> 9);
+    }
+
     public abstract byte[] getBytes();
 
     protected byte[] getBytes(int value) {
         return new byte[] {
+            (byte) (value & 0xFF),
+            (byte) ((value >> 8) & 0xFF),
+            (byte) ((value >> 16) & 0xFF),
+            (byte) ((value >> 24) & 0xFF)
+        };
+    }
+
+    protected byte[] getBytes(int prefix, int value) {
+        return new byte[] {
+            (byte) (prefix & 0xFF),
+            (byte) ((prefix >> 8) & 0xFF),
+            (byte) ((prefix >> 16) & 0xFF),
+            (byte) ((prefix >> 24) & 0xFF),
             (byte) (value & 0xFF),
             (byte) ((value >> 8) & 0xFF),
             (byte) ((value >> 16) & 0xFF),

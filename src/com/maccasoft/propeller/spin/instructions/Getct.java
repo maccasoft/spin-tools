@@ -20,21 +20,26 @@ import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
 public class Getct extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
-        if (arguments.size() == 1) {
-            return new Getct_(context, arguments.get(0), effect);
+    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+        if (arguments.size() == 1 && (effect == null || "wc".equalsIgnoreCase(effect))) {
+            return new Getct_D_(context, condition, arguments.get(0), effect);
         }
         throw new RuntimeException("Invalid arguments");
     }
 
-    public static class Getct_ extends Spin2InstructionObject {
+    /*
+     * GETCT   D               {WC}
+     */
+    public class Getct_D_ extends Spin2InstructionObject {
 
-        Spin2PAsmExpression argument;
+        String condition;
+        Spin2PAsmExpression dst;
         String effect;
 
-        public Getct_(Spin2Context context, Spin2PAsmExpression argument, String effect) {
+        public Getct_D_(Spin2Context context, String condition, Spin2PAsmExpression dst, String effect) {
             super(context);
-            this.argument = argument;
+            this.condition = condition;
+            this.dst = dst;
             this.effect = effect;
         }
 
@@ -42,7 +47,12 @@ public class Getct extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            return getBytes(encode(0b1101011, "wc".equals(effect), false, false, argument.getInteger(), 0b000011010));
+            int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+            value = o.setValue(value, 0b1101011);
+            value = c.setBoolean(value, "wc".equalsIgnoreCase(effect));
+            value = d.setValue(value, dst.getInteger());
+            value = s.setValue(value, 0b000011010);
+            return getBytes(value);
         }
 
     }

@@ -15,23 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.BitField;
-
 public abstract class Spin2PAsmSchema {
-
-    public static final BitField e = new BitField(0b11110000000000000000000000000000); // condition
-    public static final BitField o = new BitField(0b00001111111000000000000000000000); // instruction
-    public static final BitField czi = new BitField(0b00000000000111000000000000000000); // czi
-    public static final BitField d = new BitField(0b00000000000000111111111000000000); // destination
-    public static final BitField s = new BitField(0b00000000000000000000000111111111); // source
-
-    public static int encode(int IIIIIII, int CZI, int DDDDDDDD, int SSSSSSSS) {
-        int value = e.setValue(0, 0b1111);
-        value = o.setValue(value, IIIIIII);
-        value = czi.setValue(value, CZI);
-        value = d.setValue(value, DDDDDDDD);
-        return s.setValue(value, SSSSSSSS);
-    }
 
     public static Set<String> E_WC_WZ_WCZ = new HashSet<String>(Arrays.asList(new String[] {
         "wc", "wz", "wcz",
@@ -39,19 +23,19 @@ public abstract class Spin2PAsmSchema {
         "wz,wc"
     }));
 
-    static Set<String> E_WC_WZ = new HashSet<String>(Arrays.asList(new String[] {
+    public static Set<String> E_WC_WZ = new HashSet<String>(Arrays.asList(new String[] {
         "wc", "wz"
     }));
 
-    static Set<String> E_ANDC_ANDZ = new HashSet<String>(Arrays.asList(new String[] {
+    public static Set<String> E_ANDC_ANDZ = new HashSet<String>(Arrays.asList(new String[] {
         "andc", "andz"
     }));
 
-    static Set<String> E_ORC_ORZ = new HashSet<String>(Arrays.asList(new String[] {
+    public static Set<String> E_ORC_ORZ = new HashSet<String>(Arrays.asList(new String[] {
         "orc", "orz"
     }));
 
-    static Set<String> E_XORC_XORZ = new HashSet<String>(Arrays.asList(new String[] {
+    public static Set<String> E_XORC_XORZ = new HashSet<String>(Arrays.asList(new String[] {
         "xorc", "xorz"
     }));
 
@@ -59,6 +43,21 @@ public abstract class Spin2PAsmSchema {
         "wcz",
     }));
 
+    /**
+     * OPCODE
+     */
+    public static Spin2PAsmSchema NONE = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 0 && effect == null;
+        }
+
+    };
+
+    /**
+     * OPCODE  D,{#}S   {WC/WZ/WCZ}
+     */
     public static Spin2PAsmSchema D_S_WC_WZ_WCZ = new Spin2PAsmSchema() {
 
         @Override
@@ -68,6 +67,45 @@ public abstract class Spin2PAsmSchema {
 
     };
 
+    /**
+     * OPCODE  D,{#}S   {WCZ}
+     */
+    public static Spin2PAsmSchema D_S_WCZ = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 2 && arguments.get(0).prefix == null && (effect == null || E_WCZ.contains(effect.toLowerCase()));
+        }
+
+    };
+
+    /**
+     * OPCODE  D,{#}S    {WC}
+     */
+    public static Spin2PAsmSchema D_S_WC = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 2 && arguments.get(0).prefix == null && (effect == null || "wc".equalsIgnoreCase(effect));
+        }
+
+    };
+
+    /**
+     * OPCODE  D,{#}S    {WZ}
+     */
+    public static Spin2PAsmSchema D_S_WZ = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 2 && arguments.get(0).prefix == null && (effect == null || "wz".equalsIgnoreCase(effect));
+        }
+
+    };
+
+    /**
+     * OPCODE  D        {WC/WZ/WCZ}
+     */
     public static Spin2PAsmSchema D_WC_WZ_WCZ = new Spin2PAsmSchema() {
 
         @Override
@@ -77,6 +115,21 @@ public abstract class Spin2PAsmSchema {
 
     };
 
+    /**
+     * OPCODE           {WC/WZ/WCZ}
+     */
+    public static Spin2PAsmSchema WC_WZ_WCZ = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 0 && (effect == null || E_WC_WZ_WCZ.contains(effect.toLowerCase()));
+        }
+
+    };
+
+    /**
+     * OPCODE  D,{#}S
+     */
     public static Spin2PAsmSchema D_S = new Spin2PAsmSchema() {
 
         @Override
@@ -86,6 +139,21 @@ public abstract class Spin2PAsmSchema {
 
     };
 
+    /**
+     * OPCODE  {#}S
+     */
+    public static Spin2PAsmSchema S = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 1 && effect == null;
+        }
+
+    };
+
+    /**
+     * OPCODE  D
+     */
     public static Spin2PAsmSchema D = new Spin2PAsmSchema() {
 
         @Override
@@ -95,11 +163,14 @@ public abstract class Spin2PAsmSchema {
 
     };
 
-    public static Spin2PAsmSchema WC_WZ_WCZ = new Spin2PAsmSchema() {
+    /**
+     * OPCODE  D,{#}S,#N
+     */
+    public static Spin2PAsmSchema D_S_N = new Spin2PAsmSchema() {
 
         @Override
         public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
-            return arguments.size() == 0 && (effect == null || E_WC_WZ_WCZ.contains(effect.toLowerCase()));
+            return arguments.size() == 3 && arguments.get(0).prefix == null && "#".equals(arguments.get(2).prefix) && effect == null;
         }
 
     };

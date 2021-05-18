@@ -11,22 +11,7 @@
 package com.maccasoft.propeller.spin;
 
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.spin.instructions.AsmClk;
-import com.maccasoft.propeller.spin.instructions.Augd;
-import com.maccasoft.propeller.spin.instructions.Augs;
-import com.maccasoft.propeller.spin.instructions.Branch_D_A;
-import com.maccasoft.propeller.spin.instructions.Getct;
-import com.maccasoft.propeller.spin.instructions.Hubset;
-import com.maccasoft.propeller.spin.instructions.NoArg_E;
-import com.maccasoft.propeller.spin.instructions.NoArg_NE;
-import com.maccasoft.propeller.spin.instructions.Nop;
-import com.maccasoft.propeller.spin.instructions.Org;
-import com.maccasoft.propeller.spin.instructions.Pins;
-import com.maccasoft.propeller.spin.instructions.Res;
-import com.maccasoft.propeller.spin.instructions.Std_E;
-import com.maccasoft.propeller.spin.instructions.Std_NE;
-import com.maccasoft.propeller.spin.instructions.TriArg;
-import com.maccasoft.propeller.spin.instructions.Waitx;
+import com.maccasoft.propeller.spin.instructions.*;
 
 public class Spin2GlobalContext extends Spin2Context {
 
@@ -37,419 +22,382 @@ public class Spin2GlobalContext extends Spin2Context {
         addSymbol("org", new Org());
         addSymbol("res", new Res());
 
+        // Instructions
         addSymbol("nop", new Nop());
-        addSymbol("ror", new Std_E(P2Asm.encode(0b0000000, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("rol", new Std_E(P2Asm.encode(0b0000001, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("shr", new Std_E(P2Asm.encode(0b0000010, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("shl", new Std_E(P2Asm.encode(0b0000011, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("rcr", new Std_E(P2Asm.encode(0b0000100, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("rcl", new Std_E(P2Asm.encode(0b0000101, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("sar", new Std_E(P2Asm.encode(0b0000110, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("sal", new Std_E(P2Asm.encode(0b0000111, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("add", new Std_E(P2Asm.encode(0b0001000, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("addx", new Std_E(P2Asm.encode(0b0001001, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("adds", new Std_E(P2Asm.encode(0b0001010, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("addsx", new Std_E(P2Asm.encode(0b0001011, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("sub", new Std_E(P2Asm.encode(0b0001100, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("subx", new Std_E(P2Asm.encode(0b0001101, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("subs", new Std_E(P2Asm.encode(0b0001110, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("subsx", new Std_E(P2Asm.encode(0b0001111, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("cmp", new Std_E(P2Asm.encode(0b0010000, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("cmpx", new Std_E(P2Asm.encode(0b0010001, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("cmps", new Std_E(P2Asm.encode(0b0010010, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("cmpsx", new Std_E(P2Asm.encode(0b0010011, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("cmpr", new Std_E(P2Asm.encode(0b0010100, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("cmpm", new Std_E(P2Asm.encode(0b0010101, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("subr", new Std_E(P2Asm.encode(0b0010110, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("cmpsub", new Std_E(P2Asm.encode(0b0010111, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("fge", new Std_E(P2Asm.encode(0b0011000, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("fle", new Std_E(P2Asm.encode(0b0011001, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("fges", new Std_E(P2Asm.encode(0b0011010, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("fles", new Std_E(P2Asm.encode(0b0011011, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("sumc", new Std_E(P2Asm.encode(0b0011100, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("sumnc", new Std_E(P2Asm.encode(0b0011101, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("sumz", new Std_E(P2Asm.encode(0b0011110, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("sumnz", new Std_E(P2Asm.encode(0b0011111, 0b000, 0b000000000, 0b000000000), false));
-
-        /*
-        TESTB   D,{#}S         WC/WZ    Math and Logic          P2Asm.encode(0b0100000, 0b000, 0b000000000, 0b000000000)
-        TESTBN  D,{#}S         WC/WZ    Math and Logic          P2Asm.encode(0b0100001, 0b000, 0b000000000, 0b000000000)
-        TESTB   D,{#}S     ANDC/ANDZ    Math and Logic          P2Asm.encode(0b0100010, 0b000, 0b000000000, 0b000000000)
-        TESTBN  D,{#}S     ANDC/ANDZ    Math and Logic          P2Asm.encode(0b0100011, 0b000, 0b000000000, 0b000000000)
-        TESTB   D,{#}S       ORC/ORZ    Math and Logic          P2Asm.encode(0b0100100, 0b000, 0b000000000, 0b000000000)
-        TESTBN  D,{#}S       ORC/ORZ    Math and Logic          P2Asm.encode(0b0100101, 0b000, 0b000000000, 0b000000000)
-        TESTB   D,{#}S     XORC/XORZ    Math and Logic          P2Asm.encode(0b0100110, 0b000, 0b000000000, 0b000000000)
-        TESTBN  D,{#}S     XORC/XORZ    Math and Logic          P2Asm.encode(0b0100111, 0b000, 0b000000000, 0b000000000)
-        BITL    D,{#}S         {WCZ}    Math and Logic          P2Asm.encode(0b0100000, 0b000, 0b000000000, 0b000000000)
-        BITH    D,{#}S         {WCZ}    Math and Logic          P2Asm.encode(0b0100001, 0b000, 0b000000000, 0b000000000)
-        BITC    D,{#}S         {WCZ}    Math and Logic          P2Asm.encode(0b0100010, 0b000, 0b000000000, 0b000000000)
-        BITNC   D,{#}S         {WCZ}    Math and Logic          P2Asm.encode(0b0100011, 0b000, 0b000000000, 0b000000000)
-        BITZ    D,{#}S         {WCZ}    Math and Logic          P2Asm.encode(0b0100100, 0b000, 0b000000000, 0b000000000)
-        BITNZ   D,{#}S         {WCZ}    Math and Logic          P2Asm.encode(0b0100101, 0b000, 0b000000000, 0b000000000)
-        BITRND  D,{#}S         {WCZ}    Math and Logic          P2Asm.encode(0b0100110, 0b000, 0b000000000, 0b000000000)
-        BITNOT  D,{#}S         {WCZ}    Math and Logic          P2Asm.encode(0b0100111, 0b000, 0b000000000, 0b000000000)
-        */
-
-        addSymbol("and", new Std_E(P2Asm.encode(0b0101000, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("andn", new Std_E(P2Asm.encode(0b0101001, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("or", new Std_E(P2Asm.encode(0b0101010, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("xor", new Std_E(P2Asm.encode(0b0101011, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("muxc", new Std_E(P2Asm.encode(0b0101100, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("muxnc", new Std_E(P2Asm.encode(0b0101101, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("muxz", new Std_E(P2Asm.encode(0b0101110, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("muxnz", new Std_E(P2Asm.encode(0b0101111, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("mov", new Std_E(P2Asm.encode(0b0110000, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("not", new Std_E(P2Asm.encode(0b0110001, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("abs", new Std_E(P2Asm.encode(0b0110010, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("neg", new Std_E(P2Asm.encode(0b0110011, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("negc", new Std_E(P2Asm.encode(0b0110100, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("negnc", new Std_E(P2Asm.encode(0b0110101, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("negz", new Std_E(P2Asm.encode(0b0110110, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("negnz", new Std_E(P2Asm.encode(0b0110111, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("incmod", new Std_E(P2Asm.encode(0b0111000, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("decmod", new Std_E(P2Asm.encode(0b0111001, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("zerox", new Std_E(P2Asm.encode(0b0111010, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("signx", new Std_E(P2Asm.encode(0b0111011, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("encod", new Std_E(P2Asm.encode(0b0111100, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("ones", new Std_E(P2Asm.encode(0b0111101, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("test", new Std_E(P2Asm.encode(0b0111110, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("testn", new Std_E(P2Asm.encode(0b0111111, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("setnib", new TriArg(P2Asm.encode(0b1000000, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("getnib", new TriArg(P2Asm.encode(0b1000010, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("rolnib", new TriArg(P2Asm.encode(0b1000100, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("setbyte", new TriArg(P2Asm.encode(0b1000110, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("getbyte", new TriArg(P2Asm.encode(0b1000111, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("rolbyte", new TriArg(P2Asm.encode(0b1001000, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("setword", new TriArg(P2Asm.encode(0b1001001, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("getword", new TriArg(P2Asm.encode(0b1001001, 0b100, 0b000000000, 0b000000000), false));
-        addSymbol("rolword", new TriArg(P2Asm.encode(0b1001010, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("altsn", new Std_NE(P2Asm.encode(0b1001010, 0b100, 0b000000000, 0b000000000), true));
-        addSymbol("altgn", new Std_NE(P2Asm.encode(0b1001010, 0b110, 0b000000000, 0b000000000), true));
-        addSymbol("altsb", new Std_NE(P2Asm.encode(0b1001011, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("altgb", new Std_NE(P2Asm.encode(0b1001011, 0b010, 0b000000000, 0b000000000), true));
-        addSymbol("altsw", new Std_NE(P2Asm.encode(0b1001011, 0b100, 0b000000000, 0b000000000), true));
-        addSymbol("altgw", new Std_NE(P2Asm.encode(0b1001011, 0b110, 0b000000000, 0b000000000), true));
-        addSymbol("altr", new Std_NE(P2Asm.encode(0b1001100, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("altd", new Std_NE(P2Asm.encode(0b1001100, 0b010, 0b000000000, 0b000000000), true));
-        addSymbol("alts", new Std_NE(P2Asm.encode(0b1001100, 0b100, 0b000000000, 0b000000000), true));
-        addSymbol("altb", new Std_NE(P2Asm.encode(0b1001100, 0b110, 0b000000000, 0b000000000), true));
-        addSymbol("alti", new Std_NE(P2Asm.encode(0b1001101, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("setr", new Std_NE(P2Asm.encode(0b1001101, 0b010, 0b000000000, 0b000000000), false));
-        addSymbol("setd", new Std_NE(P2Asm.encode(0b1001101, 0b100, 0b000000000, 0b000000000), false));
-        addSymbol("sets", new Std_NE(P2Asm.encode(0b1001101, 0b110, 0b000000000, 0b000000000), false));
-        addSymbol("decod", new Std_NE(P2Asm.encode(0b1001110, 0b000, 0b000000000, 0b000000000), true));
-        addSymbol("bmask", new Std_NE(P2Asm.encode(0b1001110, 0b010, 0b000000000, 0b000000000), true));
-        addSymbol("crcbit", new Std_NE(P2Asm.encode(0b1001110, 0b100, 0b000000000, 0b000000000), false));
-        addSymbol("crcnib", new Std_NE(P2Asm.encode(0b1001110, 0b110, 0b000000000, 0b000000000), false));
-        addSymbol("muxnits", new Std_NE(P2Asm.encode(0b1001111, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("muxnibs", new Std_NE(P2Asm.encode(0b1001111, 0b010, 0b000000000, 0b000000000), false));
-        addSymbol("muxq", new Std_NE(P2Asm.encode(0b1001111, 0b100, 0b000000000, 0b000000000), false));
-        addSymbol("movbyts", new Std_NE(P2Asm.encode(0b1001111, 0b110, 0b000000000, 0b000000000), false));
-
-        /*
-        MUL     D,{#}S          {WZ}    Math and Logic          P2Asm.encode(0b1010000, 0b000, 0b000000000, 0b000000000)
-        MULS    D,{#}S          {WZ}    Math and Logic          P2Asm.encode(0b1010000, 0b100, 0b000000000, 0b000000000)
-        SCA     D,{#}S          {WZ}    Math and Logic          P2Asm.encode(0b1010001, 0b000, 0b000000000, 0b000000000)
-        SCAS    D,{#}S          {WZ}    Math and Logic          P2Asm.encode(0b1010001, 0b100, 0b000000000, 0b000000000)
-        */
-
-        addSymbol("addpix", new Std_NE(P2Asm.encode(0b1010010, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("mulpix", new Std_NE(P2Asm.encode(0b1010010, 0b010, 0b000000000, 0b000000000), false));
-        addSymbol("blnpix", new Std_NE(P2Asm.encode(0b1010010, 0b100, 0b000000000, 0b000000000), false));
-        addSymbol("mixpix", new Std_NE(P2Asm.encode(0b1010010, 0b110, 0b000000000, 0b000000000), false));
-        addSymbol("addct1", new Std_NE(P2Asm.encode(0b1010011, 0b000, 0b000000000, 0b000000000), false));
-        addSymbol("addct2", new Std_NE(P2Asm.encode(0b1010011, 0b010, 0b000000000, 0b000000000), false));
-        addSymbol("addct3", new Std_NE(P2Asm.encode(0b1010011, 0b100, 0b000000000, 0b000000000), false));
-
-        /*
-        WMLONG  D,{#}S/P                Hub RAM - Write         P2Asm.encode(0b1010011, 0b110, 0b000000000, 0b000000000)
-        RQPIN   D,{#}S          {WC}    Smart Pins              P2Asm.encode(0b1010100, 0b000, 0b000000000, 0b000000000)
-        RDPIN   D,{#}S          {WC}    Smart Pins              P2Asm.encode(0b1010100, 0b010, 0b000000000, 0b000000000)
-        RDLUT   D,{#}S/P {WC/WZ/WCZ}    Lookup Table            P2Asm.encode(0b1010101, 0b000, 0b000000000, 0b000000000)
-        RDBYTE  D,{#}S/P {WC/WZ/WCZ}    Hub RAM - Read          P2Asm.encode(0b1010110, 0b000, 0b000000000, 0b000000000)
-        RDWORD  D,{#}S/P {WC/WZ/WCZ}    Hub RAM - Read          P2Asm.encode(0b1010111, 0b000, 0b000000000, 0b000000000)
-        RDLONG  D,{#}S/P {WC/WZ/WCZ}    Hub RAM - Read          P2Asm.encode(0b1011000, 0b000, 0b000000000, 0b000000000)
-        POPA    D        {WC/WZ/WCZ}    Hub RAM - Read          P2Asm.encode(0b1011000, 0b001, 0b000000000, 0b101011111)
-        POPB    D        {WC/WZ/WCZ}    Hub RAM - Read          P2Asm.encode(0b1011000, 0b001, 0b000000000, 0b111011111)
-        CALLD   D,{#}S   {WC/WZ/WCZ}    Branch S - Call         P2Asm.encode(0b1011001, 0b000, 0b000000000, 0b000000000)
-        */
-
-        addSymbol("resi3", new NoArg_NE(P2Asm.encode(0b1011001, 0b110, 0b111110000, 0b111110001)));
-        addSymbol("resi2", new NoArg_NE(P2Asm.encode(0b1011001, 0b110, 0b111110010, 0b111110011)));
-        addSymbol("resi1", new NoArg_NE(P2Asm.encode(0b1011001, 0b110, 0b111110100, 0b111110101)));
-        addSymbol("resi0", new NoArg_NE(P2Asm.encode(0b1011001, 0b110, 0b111111110, 0b111111111)));
-        addSymbol("reti3", new NoArg_NE(P2Asm.encode(0b1011001, 0b110, 0b111111111, 0b111110001)));
-        addSymbol("reti2", new NoArg_NE(P2Asm.encode(0b1011001, 0b110, 0b111111111, 0b111110011)));
-        addSymbol("reti1", new NoArg_NE(P2Asm.encode(0b1011001, 0b110, 0b111111111, 0b111110101)));
-        addSymbol("reti0", new NoArg_NE(P2Asm.encode(0b1011001, 0b110, 0b111111111, 0b111111111)));
-
-        /*
-        CALLPA  {#}D,{#}S               Branch S - Call         P2Asm.encode(0b1011010, 0b000, 0b000000000, 0b000000000)
-        CALLPB  {#}D,{#}S               Branch S - Call         P2Asm.encode(0b1011010, 0b100, 0b000000000, 0b000000000)
-        DJZ     D,{#}S                  Branch S - Mod & Test   P2Asm.encode(0b1011011, 0b000, 0b000000000, 0b000000000)
-        DJNZ    D,{#}S                  Branch S - Mod & Test   P2Asm.encode(0b1011011, 0b010, 0b000000000, 0b000000000)
-        DJF     D,{#}S                  Branch S - Mod & Test   P2Asm.encode(0b1011011, 0b100, 0b000000000, 0b000000000)
-        DJNF    D,{#}S                  Branch S - Mod & Test   P2Asm.encode(0b1011011, 0b110, 0b000000000, 0b000000000)
-        IJZ     D,{#}S                  Branch S - Mod & Test   P2Asm.encode(0b1011100, 0b000, 0b000000000, 0b000000000)
-        IJNZ    D,{#}S                  Branch S - Mod & Test   P2Asm.encode(0b1011100, 0b010, 0b000000000, 0b000000000)
-        TJZ     D,{#}S                  Branch S - Test         P2Asm.encode(0b1011100, 0b100, 0b000000000, 0b000000000)
-        TJNZ    D,{#}S                  Branch S - Test         P2Asm.encode(0b1011100, 0b110, 0b000000000, 0b000000000)
-        TJF     D,{#}S                  Branch S - Test         P2Asm.encode(0b1011101, 0b000, 0b000000000, 0b000000000)
-        TJNF    D,{#}S                  Branch S - Test         P2Asm.encode(0b1011101, 0b010, 0b000000000, 0b000000000)
-        TJS     D,{#}S                  Branch S - Test         P2Asm.encode(0b1011101, 0b100, 0b000000000, 0b000000000)
-        TJNS    D,{#}S                  Branch S - Test         P2Asm.encode(0b1011101, 0b110, 0b000000000, 0b000000000)
-        TJV     D,{#}S                  Branch S - Test         P2Asm.encode(0b1011110, 0b000, 0b000000000, 0b000000000)
-        JINT    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000000000, 0b000000000)
-        JCT1    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000000001, 0b000000000)
-        JCT2    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000000010, 0b000000000)
-        JCT3    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000000011, 0b000000000)
-        JSE1    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000000100, 0b000000000)
-        JSE2    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000000101, 0b000000000)
-        JSE3    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000000110, 0b000000000)
-        JSE4    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000000111, 0b000000000)
-        JPAT    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000001000, 0b000000000)
-        JFBW    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000001001, 0b000000000)
-        JXMT    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000001010, 0b000000000)
-        JXFI    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000001011, 0b000000000)
-        JXRO    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000001100, 0b000000000)
-        JXRL    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000001101, 0b000000000)
-        JATN    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000001110, 0b000000000)
-        JQMT    {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000001111, 0b000000000)
-        JNINT   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000010000, 0b000000000)
-        JNCT1   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000010001, 0b000000000)
-        JNCT2   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000010010, 0b000000000)
-        JNCT3   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000010011, 0b000000000)
-        JNSE1   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000010100, 0b000000000)
-        JNSE2   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000010101, 0b000000000)
-        JNSE3   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000010110, 0b000000000)
-        JNSE4   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000010111, 0b000000000)
-        JNPAT   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000011000, 0b000000000)
-        JNFBW   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000011001, 0b000000000)
-        JNXMT   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000011010, 0b000000000)
-        JNXFI   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000011011, 0b000000000)
-        JNXRO   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000011100, 0b000000000)
-        JNXRL   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000011101, 0b000000000)
-        JNATN   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000011110, 0b000000000)
-        JNQMT   {#}S                    Events - Branch         P2Asm.encode(0b1011110, 0b010, 0b000011111, 0b000000000)
-        <empty> {#}D,{#}S               Miscellaneous           P2Asm.encode(0b1011110, 0b100, 0b000000000, 0b000000000)
-        <empty> {#}D,{#}S               Miscellaneous           P2Asm.encode(0b1011111, 0b000, 0b000000000, 0b000000000)
-        SETPAT  {#}D,{#}S               Events - Configuration  P2Asm.encode(0b1011111, 0b100, 0b000000000, 0b000000000)
-        AKPIN   {#}S                    Smart Pins              P2Asm.encode(0b1100000, 0b010, 0b000000001, 0b000000000)
-        WRPIN   {#}D,{#}S               Smart Pins              P2Asm.encode(0b1100000, 0b000, 0b000000000, 0b000000000)
-        WXPIN   {#}D,{#}S               Smart Pins              P2Asm.encode(0b1100000, 0b100, 0b000000000, 0b000000000)
-        WYPIN   {#}D,{#}S               Smart Pins              P2Asm.encode(0b1100001, 0b000, 0b000000000, 0b000000000)
-        WRLUT   {#}D,{#}S/P             Lookup Table            P2Asm.encode(0b1100001, 0b100, 0b000000000, 0b000000000)
-        WRBYTE  {#}D,{#}S/P             Hub RAM - Write         P2Asm.encode(0b1100010, 0b000, 0b000000000, 0b000000000)
-        WRWORD  {#}D,{#}S/P             Hub RAM - Write         P2Asm.encode(0b1100010, 0b100, 0b000000000, 0b000000000)
-        WRLONG  {#}D,{#}S/P             Hub RAM - Write         P2Asm.encode(0b1100011, 0b000, 0b000000000, 0b000000000)
-        PUSHA   {#}D                    Hub RAM - Write         P2Asm.encode(0b1100011, 0b001, 0b000000000, 0b101100001)
-        PUSHB   {#}D                    Hub RAM - Write         P2Asm.encode(0b1100011, 0b001, 0b000000000, 0b111100001)
-        RDFAST  {#}D,{#}S               Hub FIFO - New Read     P2Asm.encode(0b1100011, 0b100, 0b000000000, 0b000000000)
-        WRFAST  {#}D,{#}S               Hub FIFO - New Write    P2Asm.encode(0b1100100, 0b000, 0b000000000, 0b000000000)
-        FBLOCK  {#}D,{#}S               Hub FIFO - New Block    P2Asm.encode(0b1100100, 0b100, 0b000000000, 0b000000000)
-        XINIT   {#}D,{#}S               Streamer                P2Asm.encode(0b1100101, 0b000, 0b000000000, 0b000000000)
-        */
-
-        addSymbol("xstop", new NoArg_NE(P2Asm.encode(0b1100101, 0b011, 0b000000000, 0b000000000)));
-
-        /*
-        XZERO   {#}D,{#}S               Streamer                P2Asm.encode(0b1100101, 0b100, 0b000000000, 0b000000000)
-        XCONT   {#}D,{#}S               Streamer                P2Asm.encode(0b1100110, 0b000, 0b000000000, 0b000000000)
-        REP     {#}D,{#}S               Branch Repeat           P2Asm.encode(0b1100110, 0b100, 0b000000000, 0b000000000)
-        COGINIT {#}D,{#}S       {WC}    Hub Control - Cogs      P2Asm.encode(0b1100111, 0b000, 0b000000000, 0b000000000)
-        QMUL    {#}D,{#}S               CORDIC Solver           P2Asm.encode(0b1101000, 0b000, 0b000000000, 0b000000000)
-        QDIV    {#}D,{#}S               CORDIC Solver           P2Asm.encode(0b1101000, 0b100, 0b000000000, 0b000000000)
-        QFRAC   {#}D,{#}S               CORDIC Solver           P2Asm.encode(0b1101001, 0b000, 0b000000000, 0b000000000)
-        QSQRT   {#}D,{#}S               CORDIC Solver           P2Asm.encode(0b1101001, 0b100, 0b000000000, 0b000000000)
-        QROTATE {#}D,{#}S               CORDIC Solver           P2Asm.encode(0b1101010, 0b000, 0b000000000, 0b000000000)
-        QVECTOR {#}D,{#}S               CORDIC Solver           P2Asm.encode(0b1101010, 0b100, 0b000000000, 0b000000000)
-        HUBSET  {#}D                    Hub Control - Multi     P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000000000)
-        COGID   {#}D            {WC}    Hub Control - Cogs      P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000000001)
-        COGSTOP {#}D                    Hub Control - Cogs      P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000000011)
-        LOCKNEW D               {WC}    Hub Control - Locks     P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000000100)
-        LOCKRET {#}D                    Hub Control - Locks     P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000000101)
-        LOCKTRY {#}D            {WC}    Hub Control - Locks     P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000000110)
-        LOCKREL {#}D            {WC}    Hub Control - Locks     P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000000111)
-        QLOG    {#}D                    CORDIC Solver           P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000001110)
-        QEXP    {#}D                    CORDIC Solver           P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000001111)
-        RFBYTE  D        {WC/WZ/WCZ}    Hub FIFO - Read         P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000010000)
-        RFWORD  D        {WC/WZ/WCZ}    Hub FIFO - Read         P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000010001)
-        RFLONG  D        {WC/WZ/WCZ}    Hub FIFO - Read         P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000010010)
-        RFVAR   D        {WC/WZ/WCZ}    Hub FIFO - Read         P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000010011)
-        RFVARS  D        {WC/WZ/WCZ}    Hub FIFO - Read         P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000010100)
-        WFBYTE  {#}D                    Hub FIFO - Write        P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000010101)
-        WFWORD  {#}D                    Hub FIFO - Write        P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000010110)
-        WFLONG  {#}D                    Hub FIFO - Write        P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000010111)
-        GETQX   D        {WC/WZ/WCZ}    CORDIC Solver           P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000011000)
-        GETQY   D        {WC/WZ/WCZ}    CORDIC Solver           P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000011001)
-        GETCT   D               {WC}    Miscellaneous           P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000011010)
-        GETRND  D        {WC/WZ/WCZ}    Miscellaneous           P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000011011)
-        GETRND            WC/WZ/WCZ     Miscellaneous           P2Asm.encode(0b1101011, 0b001, 0b000000000, 0b000011011)
-        SETDACS {#}D                    Smart Pins              P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000011100)
-        SETXFRQ {#}D                    Streamer                P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000011101)
-        GETXACC D                       Streamer                P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000011110)
-        WAITX   {#}D     {WC/WZ/WCZ}    Miscellaneous           P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000011111)
-        SETSE1  {#}D                    Events - Configuration  P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000100000)
-        SETSE2  {#}D                    Events - Configuration  P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000100001)
-        SETSE3  {#}D                    Events - Configuration  P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000100010)
-        SETSE4  {#}D                    Events - Configuration  P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000100011)
-        */
-
-        addSymbol("pollint", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000100100)));
-        addSymbol("pollct1", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000000001, 0b000100100)));
-        addSymbol("pollct2", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000000010, 0b000100100)));
-        addSymbol("pollct3", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000000011, 0b000100100)));
-        addSymbol("pollse1", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000000100, 0b000100100)));
-        addSymbol("pollse2", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000000101, 0b000100100)));
-        addSymbol("pollse3", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000000110, 0b000100100)));
-        addSymbol("pollse4", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000000111, 0b000100100)));
-        addSymbol("pollpat", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000001000, 0b000100100)));
-        addSymbol("pollfbw", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000001001, 0b000100100)));
-        addSymbol("pollxmt", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000001010, 0b000100100)));
-        addSymbol("pollxfi", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000001011, 0b000100100)));
-        addSymbol("pollxro", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000001100, 0b000100100)));
-        addSymbol("pollxrl", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000001101, 0b000100100)));
-        addSymbol("pollatn", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000001110, 0b000100100)));
-        addSymbol("pollqmt", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000001111, 0b000100100)));
-        addSymbol("waitint", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000010000, 0b000100100)));
-        addSymbol("waitct1", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000010001, 0b000100100)));
-        addSymbol("waitct2", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000010010, 0b000100100)));
-        addSymbol("waitct3", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000010011, 0b000100100)));
-        addSymbol("waitse1", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000010100, 0b000100100)));
-        addSymbol("waitse2", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000010101, 0b000100100)));
-        addSymbol("waitse3", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000010110, 0b000100100)));
-        addSymbol("waitse4", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000010111, 0b000100100)));
-        addSymbol("waitpat", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000011000, 0b000100100)));
-        addSymbol("waitfbw", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000011001, 0b000100100)));
-        addSymbol("waitxmt", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000011010, 0b000100100)));
-        addSymbol("waitxfi", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000011011, 0b000100100)));
-        addSymbol("waitxro", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000011100, 0b000100100)));
-        addSymbol("waitxrl", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000011101, 0b000100100)));
-        addSymbol("waitatn", new NoArg_E(P2Asm.encode(0b1101011, 0b000, 0b000011110, 0b000100100)));
-
-        addSymbol("allowi", new NoArg_NE(P2Asm.encode(0b1101011, 0b000, 0b000100000, 0b000100100)));
-        addSymbol("stalli", new NoArg_NE(P2Asm.encode(0b1101011, 0b000, 0b000100001, 0b000100100)));
-        addSymbol("trgint1", new NoArg_NE(P2Asm.encode(0b1101011, 0b000, 0b000100010, 0b000100100)));
-        addSymbol("trgint2", new NoArg_NE(P2Asm.encode(0b1101011, 0b000, 0b000100011, 0b000100100)));
-        addSymbol("trgint3", new NoArg_NE(P2Asm.encode(0b1101011, 0b000, 0b000100100, 0b000100100)));
-        addSymbol("nixint1", new NoArg_NE(P2Asm.encode(0b1101011, 0b000, 0b000100101, 0b000100100)));
-        addSymbol("nixint2", new NoArg_NE(P2Asm.encode(0b1101011, 0b000, 0b000100110, 0b000100100)));
-        addSymbol("nixint3", new NoArg_NE(P2Asm.encode(0b1101011, 0b000, 0b000100111, 0b000100100)));
-
-        /*
-        SETINT1 {#}D                    Interrupts              P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000100101)
-        SETINT2 {#}D                    Interrupts              P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000100110)
-        SETINT3 {#}D                    Interrupts              P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000100111)
-        SETQ    {#}D                    Miscellaneous           P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000101000)
-        SETQ2   {#}D                    Miscellaneous           P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000101001)
-        PUSH    {#}D                    Miscellaneous           P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000101010)
-        POP     D        {WC/WZ/WCZ}    Miscellaneous           P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000101011)
-        RET              {WC/WZ/WCZ}    Branch Return           P2Asm.encode(0b1101011, 0b001, 0b000000000, 0b000101101)
-        RETA             {WC/WZ/WCZ}    Branch Return           P2Asm.encode(0b1101011, 0b001, 0b000000000, 0b000101110)
-        RETB             {WC/WZ/WCZ}    Branch Return           P2Asm.encode(0b1101011, 0b001, 0b000000000, 0b000101111)
-        JMPREL  {#}D                    Branch D - Jump         P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000110000)
-        SKIP    {#}D                    Branch D - Skip         P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000110001)
-        SKIPF   {#}D                    Branch D - Jump+Skip    P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000110010)
-        EXECF   {#}D                    Branch D - Call+Skip    P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000110011)
-        GETPTR  D                       Hub FIFO                P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000110100)
-        GETBRK  D          WC/WZ/WCZ    Interrupts              P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000110101)
-        COGBRK  {#}D                    Interrupts              P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000110101)
-        BRK     {#}D                    Interrupts              P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000110110)
-        SETLUTS {#}D                    Lookup Table            P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000110111)
-        SETCY   {#}D                    Color Space Converter   P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000111000)
-        SETCI   {#}D                    Color Space Converter   P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000111001)
-        SETCQ   {#}D                    Color Space Converter   P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000111010)
-        SETCFRQ {#}D                    Color Space Converter   P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000111011)
-        SETCMOD {#}D                    Color Space Converter   P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000111100)
-        SETPIV  {#}D                    Pixel Mixer             P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000111101)
-        SETPIX  {#}D                    Pixel Mixer             P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000111110)
-        COGATN  {#}D                    Events - Attention      P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000111111)
-        TESTP   {#}D           WC/WZ    Pins                    P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000000)
-        TESTPN  {#}D           WC/WZ    Pins                    P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000001)
-        TESTP   {#}D       ANDC/ANDZ    Pins                    P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000010)
-        TESTPN  {#}D       ANDC/ANDZ    Pins                    P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000011)
-        TESTP   {#}D         ORC/ORZ    Pins                    P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000100)
-        TESTPN  {#}D         ORC/ORZ    Pins                    P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000101)
-        TESTP   {#}D       XORC/XORZ    Pins                    P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000110)
-        TESTPN  {#}D       XORC/XORZ    Pins                    P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000111)
-        */
-
-        addSymbol("dirl", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000000)));
-        addSymbol("dirh", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000001)));
-        addSymbol("dirc", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000010)));
-        addSymbol("dirnc", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000011)));
-        addSymbol("dirz", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000100)));
-        addSymbol("dirnz", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000101)));
-        addSymbol("dirrnd", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000110)));
-        addSymbol("dirnot", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001000111)));
-        addSymbol("outl", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001001000)));
-        addSymbol("outh", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001001001)));
-        addSymbol("outc", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001001010)));
-        addSymbol("outnc", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001001011)));
-        addSymbol("outz", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001001100)));
-        addSymbol("outnz", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001001101)));
-        addSymbol("outrnd", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001001110)));
-        addSymbol("outnot", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001001111)));
-        addSymbol("fltl", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001010000)));
-        addSymbol("flth", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001010001)));
-        addSymbol("fltc", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001010010)));
-        addSymbol("fltnc", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001010011)));
-        addSymbol("fltz", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001010100)));
-        addSymbol("fltnz", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001010101)));
-        addSymbol("fltrnd", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001010110)));
-        addSymbol("fltnot", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001010111)));
-        addSymbol("drvl", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001011000)));
-        addSymbol("drvh", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001011001)));
-        addSymbol("drvc", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001011010)));
-        addSymbol("drvnc", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001011011)));
-        addSymbol("drvz", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001011100)));
-        addSymbol("drvnz", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001011101)));
-        addSymbol("drvrnd", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001011110)));
-        addSymbol("drvnot", new Pins(P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001011111)));
-
-        /*
-        SPLITB  D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001100000)
-        MERGEB  D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001100001)
-        SPLITW  D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001100010)
-        MERGEW  D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001100011)
-        SEUSSF  D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001100100)
-        SEUSSR  D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001100101)
-        RGBSQZ  D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001100110)
-        RGBEXP  D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001100111)
-        XORO32  D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001101000)
-        REV     D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001101001)
-        RCZR    D        {WC/WZ/WCZ}    Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001101010)
-        RCZL    D        {WC/WZ/WCZ}    Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001101011)
-        WRC     D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001101100)
-        WRNC    D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001101101)
-        WRZ     D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001101110)
-        WRNZ    D                       Math and Logic          P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001101111)
-        MODCZ   c,z      {WC/WZ/WCZ}    Math and Logic          P2Asm.encode(0b1101011, 0b001, 0b000000000, 0b001101111)
-        MODC    c               {WC}    Math and Logic          P2Asm.encode(0b1101011, 0b001, 0b000000000, 0b001101111)
-        MODZ    z               {WZ}    Math and Logic          P2Asm.encode(0b1101011, 0b001, 0b000000000, 0b001101111)
-        SETSCP  {#}D                    Smart Pins              P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001110000)
-        GETSCP  D                       Smart Pins              P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b001110001)
-        */
-
-        addSymbol("jmp", new Branch_D_A(P2Asm.encode(0b1101100, 0b000, 0b000000000, 0b000000000), P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000101100)));
-        addSymbol("call", new Branch_D_A(P2Asm.encode(0b1101101, 0b000, 0b000000000, 0b000000000), P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000101101)));
-        addSymbol("calla", new Branch_D_A(P2Asm.encode(0b1101110, 0b000, 0b000000000, 0b000000000), P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000101110)));
-        addSymbol("callb", new Branch_D_A(P2Asm.encode(0b1101111, 0b000, 0b000000000, 0b000000000), P2Asm.encode(0b1101011, 0b000, 0b000000000, 0b000101111)));
-
-        /*
-        CALLD   PA/PB/PTRA/PTRB,#{\}A   Branch A - Call         P2Asm.encode(0b1110000, 0b000, 0b000000000, 0b000000000)
-        LOC     PA/PB/PTRA/PTRB,#{\}A   Math and Logic          P2Asm.encode(0b1110100, 0b000, 0b000000000, 0b000000000)
-         */
-
+        addSymbol("ror", new Ror());
+        addSymbol("rol", new Rol());
+        addSymbol("shr", new Shr());
+        addSymbol("shl", new Shl());
+        addSymbol("rcr", new Rcr());
+        addSymbol("rcl", new Rcl());
+        addSymbol("sar", new Sar());
+        addSymbol("sal", new Sal());
+        addSymbol("add", new Add());
+        addSymbol("addx", new Addx());
+        addSymbol("adds", new Adds());
+        addSymbol("addsx", new Addsx());
+        addSymbol("sub", new Sub());
+        addSymbol("subx", new Subx());
+        addSymbol("subs", new Subs());
+        addSymbol("subsx", new Subsx());
+        addSymbol("cmp", new Cmp());
+        addSymbol("cmpx", new Cmpx());
+        addSymbol("cmps", new Cmps());
+        addSymbol("cmpsx", new Cmpsx());
+        addSymbol("cmpr", new Cmpr());
+        addSymbol("cmpm", new Cmpm());
+        addSymbol("subr", new Subr());
+        addSymbol("cmpsub", new Cmpsub());
+        addSymbol("fge", new Fge());
+        addSymbol("fle", new Fle());
+        addSymbol("fges", new Fges());
+        addSymbol("fles", new Fles());
+        addSymbol("sumc", new Sumc());
+        addSymbol("sumnc", new Sumnc());
+        addSymbol("sumz", new Sumz());
+        addSymbol("sumnz", new Sumnz());
+        //addSymbol("testb", new Testb());
+        //addSymbol("testbn", new Testbn());
+        addSymbol("bitl", new Bitl());
+        addSymbol("bith", new Bith());
+        addSymbol("bitc", new Bitc());
+        addSymbol("bitnc", new Bitnc());
+        addSymbol("bitz", new Bitz());
+        addSymbol("bitnz", new Bitnz());
+        addSymbol("bitrnd", new Bitrnd());
+        addSymbol("bitnot", new Bitnot());
+        addSymbol("and", new And());
+        addSymbol("andn", new Andn());
+        addSymbol("or", new Or());
+        addSymbol("xor", new Xor());
+        addSymbol("muxc", new Muxc());
+        addSymbol("muxnc", new Muxnc());
+        addSymbol("muxz", new Muxz());
+        addSymbol("muxnz", new Muxnz());
+        addSymbol("mov", new Mov());
+        addSymbol("not", new Not());
+        addSymbol("abs", new Abs());
+        addSymbol("neg", new Neg());
+        addSymbol("negc", new Negc());
+        addSymbol("negnc", new Negnc());
+        addSymbol("negz", new Negz());
+        addSymbol("negnz", new Negnz());
+        addSymbol("incmod", new Incmod());
+        addSymbol("decmod", new Decmod());
+        addSymbol("zerox", new Zerox());
+        addSymbol("signx", new Signx());
+        addSymbol("encod", new Encod());
+        addSymbol("ones", new Ones());
+        addSymbol("test", new Test());
+        addSymbol("testn", new Testn());
+        //addSymbol("setnib", new Setnib());
+        addSymbol("getnib", new Getnib());
+        //addSymbol("rolnib", new Rolnib());
+        //addSymbol("setbyte", new Setbyte());
+        addSymbol("getbyte", new Getbyte());
+        //addSymbol("rolbyte", new Rolbyte());
+        //addSymbol("setword", new Setword());
+        addSymbol("getword", new Getword());
+        //addSymbol("rolword", new Rolword());
+        addSymbol("altsn", new Altsn());
+        addSymbol("altgn", new Altgn());
+        addSymbol("altsb", new Altsb());
+        addSymbol("altgb", new Altgb());
+        addSymbol("altsw", new Altsw());
+        addSymbol("altgw", new Altgw());
+        addSymbol("altr", new Altr());
+        addSymbol("altd", new Altd());
+        addSymbol("alts", new Alts());
+        addSymbol("altb", new Altb());
+        addSymbol("alti", new Alti());
+        addSymbol("setr", new Setr());
+        addSymbol("setd", new Setd());
+        addSymbol("sets", new Sets());
+        addSymbol("decod", new Decod());
+        addSymbol("bmask", new Bmask());
+        addSymbol("crcbit", new Crcbit());
+        addSymbol("crcnib", new Crcnib());
+        addSymbol("muxnits", new Muxnits());
+        addSymbol("muxnibs", new Muxnibs());
+        addSymbol("muxq", new Muxq());
+        addSymbol("movbyts", new Movbyts());
+        addSymbol("mul", new Mul());
+        addSymbol("muls", new Muls());
+        addSymbol("sca", new Sca());
+        addSymbol("scas", new Scas());
+        addSymbol("addpix", new Addpix());
+        addSymbol("mulpix", new Mulpix());
+        addSymbol("blnpix", new Blnpix());
+        addSymbol("mixpix", new Mixpix());
+        addSymbol("addct1", new Addct1());
+        addSymbol("addct2", new Addct2());
+        addSymbol("addct3", new Addct3());
+        //addSymbol("wmlong", new Wmlong());
+        addSymbol("rqpin", new Rqpin());
+        addSymbol("rdpin", new Rdpin());
+        //addSymbol("rdlut", new Rdlut());
+        //addSymbol("rdbyte", new Rdbyte());
+        //addSymbol("rdword", new Rdword());
+        //addSymbol("rdlong", new Rdlong());
+        //addSymbol("popa", new Popa());
+        //addSymbol("popb", new Popb());
+        //addSymbol("calld", new Calld());
+        addSymbol("resi3", new Resi3());
+        addSymbol("resi2", new Resi2());
+        addSymbol("resi1", new Resi1());
+        addSymbol("resi0", new Resi0());
+        addSymbol("reti3", new Reti3());
+        addSymbol("reti2", new Reti2());
+        addSymbol("reti1", new Reti1());
+        addSymbol("reti0", new Reti0());
+        //addSymbol("callpa", new Callpa());
+        //addSymbol("callpb", new Callpb());
+        addSymbol("djz", new Djz());
+        addSymbol("djnz", new Djnz());
+        addSymbol("djf", new Djf());
+        addSymbol("djnf", new Djnf());
+        addSymbol("ijz", new Ijz());
+        addSymbol("ijnz", new Ijnz());
+        addSymbol("tjz", new Tjz());
+        addSymbol("tjnz", new Tjnz());
+        addSymbol("tjf", new Tjf());
+        addSymbol("tjnf", new Tjnf());
+        addSymbol("tjs", new Tjs());
+        addSymbol("tjns", new Tjns());
+        addSymbol("tjv", new Tjv());
+        addSymbol("jint", new Jint());
+        addSymbol("jct1", new Jct1());
+        addSymbol("jct2", new Jct2());
+        addSymbol("jct3", new Jct3());
+        addSymbol("jse1", new Jse1());
+        addSymbol("jse2", new Jse2());
+        addSymbol("jse3", new Jse3());
+        addSymbol("jse4", new Jse4());
+        addSymbol("jpat", new Jpat());
+        addSymbol("jfbw", new Jfbw());
+        addSymbol("jxmt", new Jxmt());
+        addSymbol("jxfi", new Jxfi());
+        addSymbol("jxro", new Jxro());
+        addSymbol("jxrl", new Jxrl());
+        addSymbol("jatn", new Jatn());
+        addSymbol("jqmt", new Jqmt());
+        addSymbol("jnint", new Jnint());
+        addSymbol("jnct1", new Jnct1());
+        addSymbol("jnct2", new Jnct2());
+        addSymbol("jnct3", new Jnct3());
+        addSymbol("jnse1", new Jnse1());
+        addSymbol("jnse2", new Jnse2());
+        addSymbol("jnse3", new Jnse3());
+        addSymbol("jnse4", new Jnse4());
+        addSymbol("jnpat", new Jnpat());
+        addSymbol("jnfbw", new Jnfbw());
+        addSymbol("jnxmt", new Jnxmt());
+        addSymbol("jnxfi", new Jnxfi());
+        addSymbol("jnxro", new Jnxro());
+        addSymbol("jnxrl", new Jnxrl());
+        addSymbol("jnatn", new Jnatn());
+        addSymbol("jnqmt", new Jnqmt());
+        //addSymbol("setpat", new Setpat());
+        addSymbol("akpin", new Akpin());
+        //addSymbol("wrpin", new Wrpin());
+        //addSymbol("wxpin", new Wxpin());
+        //addSymbol("wypin", new Wypin());
+        //addSymbol("wrlut", new Wrlut());
+        //addSymbol("wrbyte", new Wrbyte());
+        //addSymbol("wrword", new Wrword());
+        //addSymbol("wrlong", new Wrlong());
+        //addSymbol("pusha", new Pusha());
+        //addSymbol("pushb", new Pushb());
+        //addSymbol("rdfast", new Rdfast());
+        //addSymbol("wrfast", new Wrfast());
+        //addSymbol("fblock", new Fblock());
+        //addSymbol("xinit", new Xinit());
+        addSymbol("xstop", new Xstop());
+        //        addSymbol("xzero", new Xzero());
+        //addSymbol("xcont", new Xcont());
+        //addSymbol("rep", new Rep());
+        //addSymbol("coginit", new Coginit());
+        //addSymbol("qmul", new Qmul());
+        //addSymbol("qdiv", new Qdiv());
+        //addSymbol("qfrac", new Qfrac());
+        //addSymbol("qsqrt", new Qsqrt());
+        //addSymbol("qrotate", new Qrotate());
+        //addSymbol("qvector", new Qvector());
+        addSymbol("hubset", new Hubset());
+        //addSymbol("cogid", new Cogid());
+        //addSymbol("cogstop", new Cogstop());
+        //addSymbol("locknew", new Locknew());
+        //addSymbol("lockret", new Lockret());
+        //addSymbol("locktry", new Locktry());
+        //addSymbol("lockrel", new Lockrel());
+        //addSymbol("qlog", new Qlog());
+        //addSymbol("qexp", new Qexp());
+        //addSymbol("rfbyte", new Rfbyte());
+        //addSymbol("rfword", new Rfword());
+        //addSymbol("rflong", new Rflong());
+        //addSymbol("rfvar", new Rfvar());
+        //addSymbol("rfvars", new Rfvars());
+        //addSymbol("wfbyte", new Wfbyte());
+        //addSymbol("wfword", new Wfword());
+        //addSymbol("wflong", new Wflong());
+        //addSymbol("getqx", new Getqx());
+        //addSymbol("getqy", new Getqy());
+        addSymbol("getct", new Getct());
+        //addSymbol("getrnd", new Getrnd());
+        //addSymbol("setdacs", new Setdacs());
+        //addSymbol("setxfrq", new Setxfrq());
+        addSymbol("getxacc", new Getxacc());
+        addSymbol("waitx", new Waitx());
+        //addSymbol("setse1", new Setse1());
+        //addSymbol("setse2", new Setse2());
+        //addSymbol("setse3", new Setse3());
+        //addSymbol("setse4", new Setse4());
+        addSymbol("pollint", new Pollint());
+        addSymbol("pollct1", new Pollct1());
+        addSymbol("pollct2", new Pollct2());
+        addSymbol("pollct3", new Pollct3());
+        addSymbol("pollse1", new Pollse1());
+        addSymbol("pollse2", new Pollse2());
+        addSymbol("pollse3", new Pollse3());
+        addSymbol("pollse4", new Pollse4());
+        addSymbol("pollpat", new Pollpat());
+        addSymbol("pollfbw", new Pollfbw());
+        addSymbol("pollxmt", new Pollxmt());
+        addSymbol("pollxfi", new Pollxfi());
+        addSymbol("pollxro", new Pollxro());
+        addSymbol("pollxrl", new Pollxrl());
+        addSymbol("pollatn", new Pollatn());
+        addSymbol("pollqmt", new Pollqmt());
+        addSymbol("waitint", new Waitint());
+        addSymbol("waitct1", new Waitct1());
+        addSymbol("waitct2", new Waitct2());
+        addSymbol("waitct3", new Waitct3());
+        addSymbol("waitse1", new Waitse1());
+        addSymbol("waitse2", new Waitse2());
+        addSymbol("waitse3", new Waitse3());
+        addSymbol("waitse4", new Waitse4());
+        addSymbol("waitpat", new Waitpat());
+        addSymbol("waitfbw", new Waitfbw());
+        addSymbol("waitxmt", new Waitxmt());
+        addSymbol("waitxfi", new Waitxfi());
+        addSymbol("waitxro", new Waitxro());
+        addSymbol("waitxrl", new Waitxrl());
+        addSymbol("waitatn", new Waitatn());
+        addSymbol("allowi", new Allowi());
+        addSymbol("stalli", new Stalli());
+        addSymbol("trgint1", new Trgint1());
+        addSymbol("trgint2", new Trgint2());
+        addSymbol("trgint3", new Trgint3());
+        addSymbol("nixint1", new Nixint1());
+        addSymbol("nixint2", new Nixint2());
+        addSymbol("nixint3", new Nixint3());
+        //addSymbol("setint1", new Setint1());
+        //addSymbol("setint2", new Setint2());
+        //addSymbol("setint3", new Setint3());
+        //addSymbol("setq", new Setq());
+        //addSymbol("setq2", new Setq2());
+        //addSymbol("push", new Push());
+        //addSymbol("pop", new Pop());
+        addSymbol("jmp", new Jmp());
+        //addSymbol("call", new Call());
+        addSymbol("ret", new Ret());
+        //addSymbol("calla", new Calla());
+        addSymbol("reta", new Reta());
+        //addSymbol("callb", new Callb());
+        addSymbol("retb", new Retb());
+        //addSymbol("jmprel", new Jmprel());
+        //addSymbol("skip", new Skip());
+        //addSymbol("skipf", new Skipf());
+        //addSymbol("execf", new Execf());
+        addSymbol("getptr", new Getptr());
+        //addSymbol("getbrk", new Getbrk());
+        //addSymbol("cogbrk", new Cogbrk());
+        //addSymbol("brk", new Brk());
+        //addSymbol("setluts", new Setluts());
+        //addSymbol("setcy", new Setcy());
+        //addSymbol("setci", new Setci());
+        //addSymbol("setcq", new Setcq());
+        //addSymbol("setcfrq", new Setcfrq());
+        //addSymbol("setcmod", new Setcmod());
+        //addSymbol("setpiv", new Setpiv());
+        //addSymbol("setpix", new Setpix());
+        //addSymbol("cogatn", new Cogatn());
+        //addSymbol("testp", new Testp());
+        //addSymbol("testpn", new Testpn());
+        //addSymbol("dirl", new Dirl());
+        //addSymbol("dirh", new Dirh());
+        //addSymbol("dirc", new Dirc());
+        //addSymbol("dirnc", new Dirnc());
+        //addSymbol("dirz", new Dirz());
+        //addSymbol("dirnz", new Dirnz());
+        //addSymbol("dirrnd", new Dirrnd());
+        //addSymbol("dirnot", new Dirnot());
+        //addSymbol("outl", new Outl());
+        //addSymbol("outh", new Outh());
+        //addSymbol("outc", new Outc());
+        //addSymbol("outnc", new Outnc());
+        //addSymbol("outz", new Outz());
+        //addSymbol("outnz", new Outnz());
+        //addSymbol("outrnd", new Outrnd());
+        //addSymbol("outnot", new Outnot());
+        //addSymbol("fltl", new Fltl());
+        //addSymbol("flth", new Flth());
+        //addSymbol("fltc", new Fltc());
+        //addSymbol("fltnc", new Fltnc());
+        //addSymbol("fltz", new Fltz());
+        //addSymbol("fltnz", new Fltnz());
+        //addSymbol("fltrnd", new Fltrnd());
+        //addSymbol("fltnot", new Fltnot());
+        //addSymbol("drvl", new Drvl());
+        //addSymbol("drvh", new Drvh());
+        //addSymbol("drvc", new Drvc());
+        //addSymbol("drvnc", new Drvnc());
+        //addSymbol("drvz", new Drvz());
+        //addSymbol("drvnz", new Drvnz());
+        //addSymbol("drvrnd", new Drvrnd());
+        addSymbol("drvnot", new Drvnot());
+        addSymbol("splitb", new Splitb());
+        addSymbol("mergeb", new Mergeb());
+        addSymbol("splitw", new Splitw());
+        addSymbol("mergew", new Mergew());
+        addSymbol("seussf", new Seussf());
+        addSymbol("seussr", new Seussr());
+        addSymbol("rgbsqz", new Rgbsqz());
+        addSymbol("rgbexp", new Rgbexp());
+        addSymbol("xoro32", new Xoro32());
+        addSymbol("rev", new Rev());
+        addSymbol("rczr", new Rczr());
+        addSymbol("rczl", new Rczl());
+        addSymbol("wrc", new Wrc());
+        addSymbol("wrnc", new Wrnc());
+        addSymbol("wrz", new Wrz());
+        addSymbol("wrnz", new Wrnz());
+        //addSymbol("modcz", new Modcz());
+        //addSymbol("modc", new Modc());
+        //addSymbol("modz", new Modz());
+        //addSymbol("setscp", new Setscp());
+        addSymbol("getscp", new Getscp());
+        //addSymbol("loc", new Loc());
         addSymbol("augs", new Augs());
         addSymbol("augd", new Augd());
 
-        // Hub control
-        addSymbol("hubset", new Hubset());
-
-        // Misc.
-        addSymbol("getct", new Getct());
-        addSymbol("waitx", new Waitx());
+        // Registers
+        addSymbol("ijmp3", new NumberLiteral(0x1F0));
+        addSymbol("iret3", new NumberLiteral(0x1F1));
+        addSymbol("ijmp2", new NumberLiteral(0x1F2));
+        addSymbol("iret2", new NumberLiteral(0x1F3));
+        addSymbol("ijmp1", new NumberLiteral(0x1F4));
+        addSymbol("iret1", new NumberLiteral(0x1F5));
+        addSymbol("pa", new NumberLiteral(0x1F6));
+        addSymbol("pb", new NumberLiteral(0x1F7));
+        addSymbol("ptra", new NumberLiteral(0x1F8));
+        addSymbol("ptrb", new NumberLiteral(0x1F9));
+        addSymbol("dira", new NumberLiteral(0x1FA));
+        addSymbol("dirb", new NumberLiteral(0x1FB));
+        addSymbol("outa", new NumberLiteral(0x1FC));
+        addSymbol("outb", new NumberLiteral(0x1FD));
+        addSymbol("ina", new NumberLiteral(0x1FE));
+        addSymbol("inb", new NumberLiteral(0x1FF));
 
         // Conditions
         addSymbol("_ret_", 0b0000);

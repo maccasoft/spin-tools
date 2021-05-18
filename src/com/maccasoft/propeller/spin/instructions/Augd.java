@@ -20,19 +20,24 @@ import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
 public class Augd extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         if (arguments.size() == 1 && "#".equals(arguments.get(0).getPrefix()) && effect == null) {
-            return new Augd_(context, arguments.get(0));
+            return new Augd_(context, condition, arguments.get(0));
         }
         throw new RuntimeException("Invalid arguments");
     }
 
+    /*
+     * AUGD    #n
+     */
     public static class Augd_ extends Spin2InstructionObject {
 
+        String condition;
         Spin2PAsmExpression argument;
 
-        public Augd_(Spin2Context context, Spin2PAsmExpression argument) {
+        public Augd_(Spin2Context context, String condition, Spin2PAsmExpression argument) {
             super(context);
+            this.condition = condition;
             this.argument = argument;
         }
 
@@ -40,7 +45,7 @@ public class Augd extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            return getBytes(x.setValue(encode(0b1111100), argument.getInteger() >> 9));
+            return getBytes(encodeAugd(condition, argument.getInteger()));
         }
 
     }

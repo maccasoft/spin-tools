@@ -16,28 +16,32 @@ import com.maccasoft.propeller.spin.Spin2Context;
 import com.maccasoft.propeller.spin.Spin2InstructionObject;
 import com.maccasoft.propeller.spin.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
+import com.maccasoft.propeller.spin.Spin2PAsmSchema;
 
 public class Nop extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, List<Spin2PAsmExpression> arguments, String effect) {
-        if (arguments.size() == 0 && effect == null) {
+    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+        if (Spin2PAsmSchema.NONE.check(arguments, effect)) {
             return new Nop_(context);
         }
         throw new RuntimeException("Invalid arguments");
     }
 
-    public static class Nop_ extends Spin2InstructionObject {
-
-        // 0000 0000000 000 000000000 000000000
+    /*
+     * NOP
+     */
+    public class Nop_ extends Spin2InstructionObject {
 
         public Nop_(Spin2Context context) {
             super(context);
         }
 
+        // 0000 0000000 000 000000000 000000000
+
         @Override
         public byte[] getBytes() {
-            return getBytes(encode(0b0000000, 0b00, false, 0b00000000, 0b00000000));
+            return getBytes(0);
         }
 
     }
