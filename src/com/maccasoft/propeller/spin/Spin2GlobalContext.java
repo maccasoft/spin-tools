@@ -22,6 +22,7 @@ public class Spin2GlobalContext extends Spin2Context {
         addSymbol("asmclk", new AsmClk());
 
         addSymbol("org", new Org());
+        addSymbol("orgh", new Orgh());
         addSymbol("res", new Res());
 
         // Instructions

@@ -51,8 +51,16 @@ public class Jmp extends Spin2PAsmInstructionFactory {
         public byte[] getBytes() {
             int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
             value = o.setValue(value, 0b1101100);
-            value = r.setBoolean(value, !dst.getPrefix().endsWith("\\"));
-            value = a.setValue(value, dst.getPrefix().endsWith("\\") ? dst.getInteger() : (dst.getInteger() - context.getSymbol("$").getNumber().intValue() - 1) * 4);
+            int addr = dst.getInteger();
+            int ours = context.getSymbol("$").getNumber().intValue();
+            if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
+                value = r.setBoolean(value, false);
+                value = a.setValue(value, addr);
+            }
+            else {
+                value = r.setBoolean(value, !dst.isAbsolute());
+                value = a.setValue(value, dst.isAbsolute() ? addr : (addr - ours - 1) * 4);
+            }
             return getBytes(value);
         }
 

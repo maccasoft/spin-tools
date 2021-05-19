@@ -36,6 +36,10 @@ public class Spin2PAsmExpression {
         return prefix != null && prefix.startsWith("##");
     }
 
+    public boolean isAbsolute() {
+        return prefix != null && prefix.endsWith("\\");
+    }
+
     public Expression getExpression() {
         return expression;
     }

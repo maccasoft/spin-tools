@@ -43,6 +43,8 @@ import com.maccasoft.propeller.spin.Spin2Parser.ConstantContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantsContext;
 import com.maccasoft.propeller.spin.Spin2Parser.DataLineContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ExpressionContext;
+import com.maccasoft.propeller.spin.Spin2Parser.OrgContext;
+import com.maccasoft.propeller.spin.Spin2Parser.OrghContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ProgContext;
 
 @SuppressWarnings({
@@ -161,6 +163,52 @@ public class Spin2Compiler extends Spin2BaseVisitor {
     }
 
     @Override
+    public Object visitOrg(OrgContext ctx) {
+        List<Spin2PAsmExpression> arguments = new ArrayList<Spin2PAsmExpression>();
+        for (ExpressionContext exp : ctx.expression()) {
+            Expression expression = Spin2Compiler.compileExpression(scope, exp);
+            arguments.add(new Spin2PAsmExpression(null, expression, null));
+        }
+        source.add(new Spin2PAsmLine(scope, null, null, ctx.getStart().getText(), arguments, null));
+        return super.visitOrg(ctx);
+    }
+
+    @Override
+    public Object visitOrgh(OrghContext ctx) {
+        List<Spin2PAsmExpression> arguments = new ArrayList<Spin2PAsmExpression>();
+        for (ExpressionContext exp : ctx.expression()) {
+            Expression expression = Spin2Compiler.compileExpression(scope, exp);
+            arguments.add(new Spin2PAsmExpression(null, expression, null));
+        }
+        source.add(new Spin2PAsmLine(scope, null, null, ctx.getStart().getText(), arguments, null));
+
+        ctx.accept(new Spin2BaseVisitor() {
+
+            @Override
+            public Object visitDataLine(DataLineContext ctx) {
+                Spin2PAsmLineBuilderVisitor lineBuilder = new Spin2PAsmLineBuilderVisitor(new Spin2Context(scope));
+                ctx.accept(lineBuilder);
+
+                Spin2PAsmLine line = lineBuilder.getLine();
+                if (line.getLabel() != null) {
+                    try {
+                        scope.addSymbol(line.getLabel(), new ContextLiteral(line.getScope()));
+                        scope.addSymbol("@" + line.getLabel(), new ContextLiteral(line.getScope()));
+                    } catch (RuntimeException e) {
+                        System.err.println(line);
+                        e.printStackTrace();
+                    }
+                }
+                source.addAll(line.expand());
+
+                return null;
+            }
+        });
+
+        return null;
+    }
+
+    @Override
     public Object visitDataLine(DataLineContext ctx) {
         Spin2PAsmLineBuilderVisitor lineBuilder = new Spin2PAsmLineBuilderVisitor(new Spin2Context(scope));
         ctx.accept(lineBuilder);
@@ -171,6 +219,7 @@ public class Spin2Compiler extends Spin2BaseVisitor {
                 scope.addSymbol(line.getLabel(), new ContextLiteral(line.getScope()));
             } catch (RuntimeException e) {
                 System.err.println(line);
+                e.printStackTrace();
             }
         }
         source.addAll(line.expand());
@@ -179,6 +228,9 @@ public class Spin2Compiler extends Spin2BaseVisitor {
     }
 
     public static Expression compileExpression(Spin2Context scope, ExpressionContext ctx) {
+        if (ctx.getStart().getText().startsWith("@")) {
+            return new Identifier(ctx.getText(), scope);
+        }
         if (ctx.operator != null) {
             String op = ctx.operator.getText();
             if (ctx.left == null) {
@@ -268,7 +320,6 @@ public class Spin2Compiler extends Spin2BaseVisitor {
                 + "CON\n"
                 + "\n"
                 + "    _clkfreq = 160_000_000\n"
-                + "\n"
                 + "    delay    = _clkfreq / 2\n"
                 + "\n"
                 + "DAT\n"
@@ -277,14 +328,22 @@ public class Spin2Compiler extends Spin2BaseVisitor {
                 + "\n"
                 + "start\n"
                 + "                asmclk                      ' set clock\n"
+                + "                jmp     #@main              ' jump to hub program\n"
+                + "\n"
+                + "ct              res     1\n"
+                + "\n"
+                + "' HUB Program\n"
+                + "\n"
+                + "                orgh    $400\n"
+                + "\n"
+                + "main\n"
                 + "\n"
                 + "                getct   ct                  ' get current timer\n"
                 + ".loop           drvnot  #56                 ' toggle output\n"
                 + "                addct1  ct, ##delay         ' set delay to timer 1\n"
                 + "                waitct1                     ' wait for timer 1 expire\n"
-                + "                jmp     #\\.loop\n"
-                + "\n"
-                + "ct              res     1\n";
+                + "                jmp     #.loop\n"
+                + "\n";
 
             CharStream input = CharStreams.fromString(text);
 
@@ -296,30 +355,39 @@ public class Spin2Compiler extends Spin2BaseVisitor {
 
             parser.prog().accept(compiler);
 
-            int total = 0;
+            int address = 0;
             for (Spin2PAsmLine line : compiler.source) {
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
                 line.generateObjectCode(os);
                 byte[] code = os.toByteArray();
 
-                int address = line.getScope().getAddress();
-                System.out.print(String.format("%06X %03X ", total, address++));
-                for (int i = 0; i < code.length; i++) {
-                    if (i > 0 && (i % 4) == 0) {
-                        System.out.println(" |");
-                        System.out.print(String.format("%06X %03X ", total, address++));
-                    }
-                    System.out.print(String.format(" %02X", code[i]));
-                    total++;
-                }
-                if (code.length == 0 || (code.length % 4) != 0) {
-                    for (int i = 0; i < 4 - (code.length % 4); i++) {
-                        System.out.print("   ");
-                    }
-                }
+                int addr = line.getScope().getAddress();
+
+                int index = 0;
+                System.out.print(String.format("%06X %03X ", address, addr++));
+                System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+                System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+                System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+                System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
                 System.out.println(" | " + line);
+                while (index < code.length) {
+                    System.out.print(String.format("%06X %03X ", address + index, addr++));
+                    System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+                    System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+                    System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+                    System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+                    System.out.println(" | ");
+                }
+                if (index > 4 && (index % 4) != 0) {
+                    while ((index % 4) != 0) {
+                        System.out.print("   ");
+                        index++;
+                    }
+                    System.out.println(" | ");
+                }
+
+                address += code.length;
             }
-            System.out.print(String.format("%06X\n", total));
 
         } catch (Exception e) {
             e.printStackTrace();

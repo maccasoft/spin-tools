@@ -17,23 +17,41 @@ import com.maccasoft.propeller.spin.Spin2InstructionObject;
 import com.maccasoft.propeller.spin.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin.Spin2PAsmInstructionFactory;
 
-public class Empty extends Spin2PAsmInstructionFactory {
+public class Orgh extends Spin2PAsmInstructionFactory {
 
     @Override
     public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
-        return new Empty_(context);
+        if (arguments.size() == 0) {
+            return new Pins_(context, null, null);
+        }
+        if (arguments.size() == 1) {
+            return new Pins_(context, arguments.get(0), null);
+        }
+        if (arguments.size() == 2) {
+            return new Pins_(context, arguments.get(0), arguments.get(1));
+        }
+        throw new RuntimeException("Invalid arguments");
     }
 
-    public static class Empty_ extends Spin2InstructionObject {
+    public class Pins_ extends Spin2InstructionObject {
 
-        public Empty_(Spin2Context context) {
+        Spin2PAsmExpression arg0;
+        Spin2PAsmExpression arg1;
+
+        public Pins_(Spin2Context context, Spin2PAsmExpression arg0, Spin2PAsmExpression arg1) {
             super(context);
+            this.arg0 = arg0;
+            this.arg1 = arg1;
         }
 
         @Override
         public int resolve(int address) {
-            context.setAddress(address);
-            return address;
+            return Math.max(arg0 != null ? arg0.getInteger() : 0x400, address);
+        }
+
+        @Override
+        public int getSize() {
+            return 0;
         }
 
         @Override
