@@ -286,14 +286,13 @@ public class Spin2Compiler extends Spin2BaseVisitor {
                 + "\n"
                 + "ct              res     1\n";
 
-            //CharStream input = CharStreams.fromString(text);
-            CharStream input = CharStreams.fromFileName("/home/marco/Propeller/M6502-P2/apple1/m6502_apple1_cvbs.spin2");
+            CharStream input = CharStreams.fromString(text);
 
             Spin2Lexer lexer = new Spin2Lexer(input);
             lexer.removeErrorListeners();
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             Spin2Parser parser = new Spin2Parser(tokens);
-            //parser.removeErrorListeners();
+            parser.removeErrorListeners();
 
             parser.prog().accept(compiler);
 
