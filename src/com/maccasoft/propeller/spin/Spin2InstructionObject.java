@@ -22,8 +22,8 @@ public abstract class Spin2InstructionObject {
     public static final BitField c = new BitField(0b00000000000100000000000000000000); // write c
     public static final BitField z = new BitField(0b00000000000010000000000000000000); // write z
     public static final BitField cz = new BitField(0b00000000000110000000000000000000); // write cz
-    public static final BitField l = new BitField(0b00000000000001000000000000000000); // literal
-    public static final BitField i = new BitField(0b00000000000001000000000000000000);
+    public static final BitField l = new BitField(0b00000000000010000000000000000000); // d literal
+    public static final BitField i = new BitField(0b00000000000001000000000000000000); // s immediate
     public static final BitField d = new BitField(0b00000000000000111111111000000000); // destination
     public static final BitField s = new BitField(0b00000000000000000000000111111111); // source
 
@@ -42,7 +42,7 @@ public abstract class Spin2InstructionObject {
         value = o.setValue(value, IIIIIII);
         value = c.setBoolean(value, C);
         value = z.setBoolean(value, Z);
-        value = l.setBoolean(value, I);
+        value = i.setBoolean(value, I);
         value = d.setValue(value, DDDDDDDD);
         return s.setValue(value, SSSSSSSS);
     }
@@ -51,7 +51,7 @@ public abstract class Spin2InstructionObject {
         int value = e.setValue(0, 0b1111);
         value = o.setValue(value, IIIIIII);
         value = cz.setValue(value, CZ);
-        value = l.setBoolean(value, I);
+        value = i.setBoolean(value, I);
         value = d.setValue(value, DDDDDDDD);
         return s.setValue(value, SSSSSSSS);
     }
@@ -138,6 +138,23 @@ public abstract class Spin2InstructionObject {
 
     protected byte[] getBytes(int value) {
         return new byte[] {
+            (byte) (value & 0xFF),
+            (byte) ((value >> 8) & 0xFF),
+            (byte) ((value >> 16) & 0xFF),
+            (byte) ((value >> 24) & 0xFF)
+        };
+    }
+
+    protected byte[] getBytes(int prefix1, int prefix2, int value) {
+        return new byte[] {
+            (byte) (prefix1 & 0xFF),
+            (byte) ((prefix1 >> 8) & 0xFF),
+            (byte) ((prefix1 >> 16) & 0xFF),
+            (byte) ((prefix1 >> 24) & 0xFF),
+            (byte) (prefix2 & 0xFF),
+            (byte) ((prefix2 >> 8) & 0xFF),
+            (byte) ((prefix2 >> 16) & 0xFF),
+            (byte) ((prefix2 >> 24) & 0xFF),
             (byte) (value & 0xFF),
             (byte) ((value >> 8) & 0xFF),
             (byte) ((value >> 16) & 0xFF),

@@ -96,7 +96,7 @@ public class Getnib extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
             value = o.setValue(value, 0b1000010);
             value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, 0);
+            value = s.setValue(value, 0b000000000);
             return getBytes(value);
         }
 

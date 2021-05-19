@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +54,12 @@ public class Spin2Compiler extends Spin2BaseVisitor {
 
     public Spin2Compiler() {
 
+    }
+
+    public void generateObjectCode(OutputStream os) throws Exception {
+        for (Spin2PAsmLine line : source) {
+            line.generateObjectCode(os);
+        }
     }
 
     @Override

@@ -27,20 +27,15 @@ public abstract class Spin2PAsmSchema {
         "wc", "wz"
     }));
 
-    public static Set<String> E_ANDC_ANDZ = new HashSet<String>(Arrays.asList(new String[] {
-        "andc", "andz"
-    }));
-
-    public static Set<String> E_ORC_ORZ = new HashSet<String>(Arrays.asList(new String[] {
-        "orc", "orz"
-    }));
-
-    public static Set<String> E_XORC_XORZ = new HashSet<String>(Arrays.asList(new String[] {
-        "xorc", "xorz"
-    }));
-
     public static Set<String> E_WCZ = new HashSet<String>(Arrays.asList(new String[] {
         "wcz",
+    }));
+
+    public static Set<String> E_TEST_OP = new HashSet<String>(Arrays.asList(new String[] {
+        "wc", "wz",
+        "andc", "andz",
+        "orc", "orz",
+        "xorc", "xorz"
     }));
 
     /**
@@ -116,6 +111,42 @@ public abstract class Spin2PAsmSchema {
     };
 
     /**
+     * OPCODE  D               {WC}
+     */
+    public static Spin2PAsmSchema D_WC = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 1 && arguments.get(0).prefix == null && (effect == null || "wc".equalsIgnoreCase(effect));
+        }
+
+    };
+
+    /**
+     * OPCODE  D               {WZ}
+     */
+    public static Spin2PAsmSchema D_WZ = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 1 && arguments.get(0).prefix == null && (effect == null || "wz".equalsIgnoreCase(effect));
+        }
+
+    };
+
+    /**
+     * OPCODE  {#}D            {WC}
+     */
+    public static Spin2PAsmSchema LD_WC = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 1 && (effect == null || "wc".equalsIgnoreCase(effect));
+        }
+
+    };
+
+    /**
      * OPCODE           {WC/WZ/WCZ}
      */
     public static Spin2PAsmSchema WC_WZ_WCZ = new Spin2PAsmSchema() {
@@ -164,6 +195,30 @@ public abstract class Spin2PAsmSchema {
     };
 
     /**
+     * OPCODE  {#}D
+     */
+    public static Spin2PAsmSchema LD = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 1 && effect == null;
+        }
+
+    };
+
+    /**
+     * OPCODE  {#}D           {WCZ}
+     */
+    public static Spin2PAsmSchema LD_WCZ = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 1 && (effect == null || "wcz".equalsIgnoreCase(effect));
+        }
+
+    };
+
+    /**
      * OPCODE  D,{#}S,#N
      */
     public static Spin2PAsmSchema D_S_N = new Spin2PAsmSchema() {
@@ -171,6 +226,60 @@ public abstract class Spin2PAsmSchema {
         @Override
         public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
             return arguments.size() == 3 && arguments.get(0).prefix == null && "#".equals(arguments.get(2).prefix) && effect == null;
+        }
+
+    };
+
+    /**
+     * OPCODE  {#}D,{#}S       {WC}
+     */
+    public static Spin2PAsmSchema LD_IS_WC = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 2 && (effect == null || "wc".equalsIgnoreCase(effect));
+        }
+
+    };
+
+    /**
+     * OPCODE  {#}D,{#}S
+     */
+    public static Spin2PAsmSchema LD_S = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 2 && effect == null;
+        }
+
+    };
+
+    /**
+     * OPCODE  D,{#}S         WC/WZ
+     * OPCODE  D,{#}S     ANDC/ANDZ
+     * OPCODE  D,{#}S       ORC/ORZ
+     * OPCODE  D,{#}S     XORC/XORZ
+     */
+    public static Spin2PAsmSchema TEST_OP = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 2 && arguments.get(0).prefix == null && (effect == null || E_TEST_OP.contains(effect.toLowerCase()));
+        }
+
+    };
+
+    /**
+     * OPCODE  {#]D           WC/WZ
+     * OPCODE  {#]D       ANDC/ANDZ
+     * OPCODE  {#]D         ORC/ORZ
+     * OPCODE  {#]D       XORC/XORZ
+     */
+    public static Spin2PAsmSchema TEST_OP2 = new Spin2PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin2PAsmExpression> arguments, String effect) {
+            return arguments.size() == 1 && (effect == null || E_TEST_OP.contains(effect.toLowerCase()));
         }
 
     };

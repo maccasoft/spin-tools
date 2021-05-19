@@ -62,7 +62,7 @@ public class Waitx extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
             value = o.setValue(value, 0b1101011);
             value = cz.setValue(value, encodeEffect(effect));
-            value = l.setBoolean(value, dst.isLiteral());
+            value = i.setBoolean(value, dst.isLiteral());
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0b000011111);
             return dst.isLongLiteral() ? getBytes(encodeAugd(condition, dst.getInteger()), value) : getBytes(value);

@@ -99,7 +99,7 @@ public class Getword extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1001001);
             value = czi.setValue(value, 0b100);
             value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, 0);
+            value = s.setValue(value, 0b000000000);
             return getBytes(value);
         }
 

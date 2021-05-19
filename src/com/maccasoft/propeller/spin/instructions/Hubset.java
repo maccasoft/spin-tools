@@ -58,7 +58,7 @@ public class Hubset extends Spin2PAsmInstructionFactory {
         public byte[] getBytes() {
             int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
             value = o.setValue(value, 0b1101011);
-            value = l.setBoolean(value, dst.isLiteral());
+            value = i.setBoolean(value, dst.isLiteral());
             value = d.setValue(value, dst.getInteger());
             return dst.isLongLiteral() ? getBytes(encodeAugd(condition, dst.getInteger()), value) : getBytes(value);
         }
