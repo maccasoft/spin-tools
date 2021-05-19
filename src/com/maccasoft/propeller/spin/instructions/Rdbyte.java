@@ -64,9 +64,15 @@ public class Rdbyte extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
             value = o.setValue(value, 0b1010110);
             value = cz.setValue(value, encodeEffect(effect));
-            value = i.setBoolean(value, src.isLiteral());
+            if (isPtr(src)) {
+                value = i.setValue(value, 1);
+                value = s.setValue(value, encodePtr(src));
+            }
+            else {
+                value = i.setBoolean(value, src.isLiteral());
+                value = s.setValue(value, src.getInteger());
+            }
             value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 

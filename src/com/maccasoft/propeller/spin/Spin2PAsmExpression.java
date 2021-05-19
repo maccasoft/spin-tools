@@ -40,11 +40,10 @@ public class Spin2PAsmExpression {
         return expression;
     }
 
-    public boolean hasCount() {
-        return count != null;
-    }
-
     public int getCount() {
+        if (count == null) {
+            return 1;
+        }
         return count.getNumber().intValue();
     }
 

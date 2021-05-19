@@ -22,6 +22,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addpins;
 import com.maccasoft.propeller.expressions.And;
+import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
@@ -166,7 +167,11 @@ public class Spin2Compiler extends Spin2BaseVisitor {
 
         Spin2PAsmLine line = lineBuilder.getLine();
         if (line.getLabel() != null) {
-            scope.addSymbol(line.getLabel(), new ContextLiteral(line.getScope()));
+            try {
+                scope.addSymbol(line.getLabel(), new ContextLiteral(line.getScope()));
+            } catch (RuntimeException e) {
+                System.err.println(line);
+            }
         }
         source.addAll(line.expand());
 
@@ -240,6 +245,9 @@ public class Spin2Compiler extends Spin2BaseVisitor {
                 }
                 return new NumberLiteral(Long.parseLong(s.substring(1).replace("_", ""), 16));
             }
+            else if (s.startsWith("\"")) {
+                return new CharacterLiteral(s.charAt(1));
+            }
             else if ((s.charAt(0) >= '0' && s.charAt(0) <= '9')) {
                 if (s.contains(".")) {
                     return new NumberLiteral(Double.parseDouble(s.replace("_", "")));
@@ -278,8 +286,8 @@ public class Spin2Compiler extends Spin2BaseVisitor {
                 + "\n"
                 + "ct              res     1\n";
 
-            CharStream input = CharStreams.fromString(text);
-            //CharStream input = CharStreams.fromFileName("/home/marco/Propeller/M6502-P2/apple1/m6502_apple1_cvbs.spin2"):
+            //CharStream input = CharStreams.fromString(text);
+            CharStream input = CharStreams.fromFileName("/home/marco/Propeller/M6502-P2/apple1/m6502_apple1_cvbs.spin2");
 
             Spin2Lexer lexer = new Spin2Lexer(input);
             lexer.removeErrorListeners();

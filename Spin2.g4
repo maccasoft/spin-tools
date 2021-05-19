@@ -589,12 +589,19 @@ atom
     | QUAD
     | STRING
     | '$'
-    | VARIABLE ('++' | '--')?
+    | VARIABLE
+    | PTR
+    | PTR ('[' expression ']')?
+    | PTR ('++' | '--') ('[' expression ']')?
+    | PTR ('[' expression ']')? ('++' | '--')
+    | ('++' | '--') PTR ('[' expression ']')?
     ;
 
 BLOCK_COMMENT: '{' .*? '}' -> channel(HIDDEN) ;
 
 COMMENT: '\'' ~ [\r\n]* -> channel(HIDDEN) ;
+
+PTR: 'ptra' | 'PTRA' | 'ptrb' | 'PTRB' ;
 
 VARIABLE: '.'? LETTER ( LETTER | DIGIT )* ;
 

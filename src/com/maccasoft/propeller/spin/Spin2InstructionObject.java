@@ -185,4 +185,67 @@ public abstract class Spin2InstructionObject {
         };
     }
 
+    protected boolean isPtr(Spin2PAsmExpression expression) {
+        String str = expression.toString().toLowerCase();
+        return str.contains("ptra") || str.contains("ptrb");
+    }
+
+    protected int encodePtr(Spin2PAsmExpression expression) {
+        int result = 0;
+    
+        String str = expression.toString().toLowerCase();
+        if (str.contains("ptra")) {
+            result = 0b100000000;
+        }
+        if (str.contains("ptrb")) {
+            result = 0b110000000;
+        }
+        if (str.contains("[")) {
+            int s = str.indexOf('[');
+            int e = str.indexOf(']');
+            int o = Integer.parseInt(str.substring(s + 1, e));
+            if (str.contains("++")) {
+                if (o < 0) {
+                    o = 32 + o;
+                }
+                result |= o & 0x1FF;
+                result |= 0b001000000;
+                if (!str.startsWith("++")) {
+                    result |= 0b000100000;
+                }
+            }
+            else if (str.contains("--")) {
+                o = -o;
+                if (o < 0) {
+                    o = 32 + o;
+                }
+                result |= o & 0x1FF;
+                result |= 0b001000000;
+                if (!str.startsWith("--")) {
+                    result |= 0b000100000;
+                }
+            }
+            else {
+                if (o < 0) {
+                    o = 64 + o;
+                }
+                result |= o & 0x3FF;
+            }
+        }
+        else if (str.contains("++")) {
+            result |= 0b001000001;
+            if (!str.startsWith("++")) {
+                result |= 0b000100000;
+            }
+        }
+        else if (str.contains("--")) {
+            result |= 0b001011111;
+            if (!str.startsWith("--")) {
+                result |= 0b000100000;
+            }
+        }
+    
+        return result;
+    }
+
 }

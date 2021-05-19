@@ -70,9 +70,15 @@ public class Wrword extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1100010);
             value = c.setValue(value, 1);
             value = l.setBoolean(value, dst.isLiteral());
-            value = i.setBoolean(value, src.isLiteral());
+            if (isPtr(src)) {
+                value = i.setValue(value, 1);
+                value = s.setValue(value, encodePtr(src));
+            }
+            else {
+                value = i.setBoolean(value, src.isLiteral());
+                value = s.setValue(value, src.getInteger());
+            }
             value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
             if (dst.isLongLiteral() && src.isLongLiteral()) {
                 return getBytes(encodeAugd(condition, dst.getInteger()), encodeAugs(condition, src.getInteger()), value);
             }
