@@ -12,6 +12,8 @@ package com.maccasoft.propeller.spin;
 
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.spin.instructions.*;
+import com.maccasoft.propeller.spin.instructions.Byte;
+import com.maccasoft.propeller.spin.instructions.Long;
 
 public class Spin2GlobalContext extends Spin2Context {
 
@@ -380,6 +382,11 @@ public class Spin2GlobalContext extends Spin2Context {
         addSymbol("loc", new Loc());
         addSymbol("augs", new Augs());
         addSymbol("augd", new Augd());
+
+        // Directives
+        addSymbol("long", new Long());
+        addSymbol("word", new Word());
+        addSymbol("byte", new Byte());
 
         // Registers
         addSymbol("ijmp3", new NumberLiteral(0x1F0));
