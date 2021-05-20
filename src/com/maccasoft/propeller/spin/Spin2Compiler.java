@@ -43,8 +43,6 @@ import com.maccasoft.propeller.spin.Spin2Parser.ConstantContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantsContext;
 import com.maccasoft.propeller.spin.Spin2Parser.DataLineContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ExpressionContext;
-import com.maccasoft.propeller.spin.Spin2Parser.OrgContext;
-import com.maccasoft.propeller.spin.Spin2Parser.OrghContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ProgContext;
 
 @SuppressWarnings({
@@ -163,52 +161,6 @@ public class Spin2Compiler extends Spin2BaseVisitor {
     }
 
     @Override
-    public Object visitOrg(OrgContext ctx) {
-        List<Spin2PAsmExpression> arguments = new ArrayList<Spin2PAsmExpression>();
-        for (ExpressionContext exp : ctx.expression()) {
-            Expression expression = Spin2Compiler.compileExpression(scope, exp);
-            arguments.add(new Spin2PAsmExpression(null, expression, null));
-        }
-        source.add(new Spin2PAsmLine(scope, null, null, ctx.getStart().getText(), arguments, null));
-        return super.visitOrg(ctx);
-    }
-
-    @Override
-    public Object visitOrgh(OrghContext ctx) {
-        List<Spin2PAsmExpression> arguments = new ArrayList<Spin2PAsmExpression>();
-        for (ExpressionContext exp : ctx.expression()) {
-            Expression expression = Spin2Compiler.compileExpression(scope, exp);
-            arguments.add(new Spin2PAsmExpression(null, expression, null));
-        }
-        source.add(new Spin2PAsmLine(scope, null, null, ctx.getStart().getText(), arguments, null));
-
-        ctx.accept(new Spin2BaseVisitor() {
-
-            @Override
-            public Object visitDataLine(DataLineContext ctx) {
-                Spin2PAsmLineBuilderVisitor lineBuilder = new Spin2PAsmLineBuilderVisitor(new Spin2Context(scope));
-                ctx.accept(lineBuilder);
-
-                Spin2PAsmLine line = lineBuilder.getLine();
-                if (line.getLabel() != null) {
-                    try {
-                        scope.addSymbol(line.getLabel(), new ContextLiteral(line.getScope()));
-                        scope.addSymbol("@" + line.getLabel(), new ContextLiteral(line.getScope()));
-                    } catch (RuntimeException e) {
-                        System.err.println(line);
-                        e.printStackTrace();
-                    }
-                }
-                source.addAll(line.expand());
-
-                return null;
-            }
-        });
-
-        return null;
-    }
-
-    @Override
     public Object visitDataLine(DataLineContext ctx) {
         Spin2PAsmLineBuilderVisitor lineBuilder = new Spin2PAsmLineBuilderVisitor(new Spin2Context(scope));
         ctx.accept(lineBuilder);
@@ -217,6 +169,7 @@ public class Spin2Compiler extends Spin2BaseVisitor {
         if (line.getLabel() != null) {
             try {
                 scope.addSymbol(line.getLabel(), new ContextLiteral(line.getScope()));
+                scope.addSymbol("@" + line.getLabel(), new ContextLiteral(line.getScope()));
             } catch (RuntimeException e) {
                 System.err.println(line);
                 e.printStackTrace();
@@ -345,7 +298,8 @@ public class Spin2Compiler extends Spin2BaseVisitor {
                 + "                jmp     #.loop\n"
                 + "\n";
 
-            CharStream input = CharStreams.fromString(text);
+            //CharStream input = CharStreams.fromString(text);
+            CharStream input = CharStreams.fromFileName("/home/marco/Propeller/M6502-P2/apple1/m6502_apple1_cvbs.spin2");
 
             Spin2Lexer lexer = new Spin2Lexer(input);
             lexer.removeErrorListeners();

@@ -108,26 +108,6 @@ public interface Spin2Listener extends ParseTreeListener {
 	 */
 	void exitData(Spin2Parser.DataContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#org}.
-	 * @param ctx the parse tree
-	 */
-	void enterOrg(Spin2Parser.OrgContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#org}.
-	 * @param ctx the parse tree
-	 */
-	void exitOrg(Spin2Parser.OrgContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#orgh}.
-	 * @param ctx the parse tree
-	 */
-	void enterOrgh(Spin2Parser.OrghContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#orgh}.
-	 * @param ctx the parse tree
-	 */
-	void exitOrgh(Spin2Parser.OrghContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#dataLine}.
 	 * @param ctx the parse tree
 	 */

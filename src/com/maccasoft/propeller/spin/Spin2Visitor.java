@@ -71,18 +71,6 @@ public interface Spin2Visitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitData(Spin2Parser.DataContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#org}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOrg(Spin2Parser.OrgContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#orgh}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOrgh(Spin2Parser.OrghContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#dataLine}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
