@@ -181,9 +181,6 @@ public class Spin2Compiler extends Spin2BaseVisitor {
     }
 
     public static Expression compileExpression(Spin2Context scope, ExpressionContext ctx) {
-        if (ctx.getStart().getText().startsWith("@")) {
-            return new Identifier(ctx.getText(), scope);
-        }
         if (ctx.operator != null) {
             String op = ctx.operator.getText();
             if (ctx.left == null) {
@@ -260,6 +257,9 @@ public class Spin2Compiler extends Spin2BaseVisitor {
                 else {
                     return new NumberLiteral(Long.parseLong(s.replace("_", "")));
                 }
+            }
+            if (ctx.getStart().getText().startsWith("@")) {
+                return new Identifier(ctx.getStart().getText() + s, scope);
             }
             return new Identifier(s, scope);
         }
