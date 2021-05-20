@@ -25,7 +25,7 @@ public class IfElse extends Passthrough {
     }
 
     public boolean isTrue() {
-        return condition.getNumber().intValue() != 0;
+        return condition.getNumber().longValue() != 0;
     }
 
     @Override

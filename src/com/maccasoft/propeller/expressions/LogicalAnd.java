@@ -8,8 +8,8 @@ public class LogicalAnd extends BinaryOperator {
 
     @Override
     public Number getNumber() {
-        int value1 = term1.getNumber().intValue();
-        int value2 = term2.getNumber().intValue();
+        long value1 = term1.getNumber().longValue();
+        long value2 = term2.getNumber().longValue();
         return (value1 != 0 && value2 != 0) ? -1 : 0;
     }
 

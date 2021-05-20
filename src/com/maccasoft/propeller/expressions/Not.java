@@ -8,7 +8,7 @@ public class Not extends UnaryOperator {
 
     @Override
     public Number getNumber() {
-        return ~term.getNumber().intValue();
+        return ~term.getNumber().longValue();
     }
 
     @Override

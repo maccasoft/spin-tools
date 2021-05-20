@@ -8,8 +8,8 @@ public class LessOrEquals extends BinaryOperator {
 
     @Override
     public Number getNumber() {
-        if (term1.getNumber() instanceof Integer && term2.getNumber() instanceof Integer) {
-            return term1.getNumber().intValue() <= term2.getNumber().intValue() ? -1 : 0;
+        if (term1.getNumber() instanceof Long && term2.getNumber() instanceof Long) {
+            return term1.getNumber().longValue() <= term2.getNumber().longValue() ? -1 : 0;
         }
         return term1.getNumber().doubleValue() <= term2.getNumber().doubleValue() ? -1 : 0;
     }

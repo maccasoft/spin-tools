@@ -8,8 +8,8 @@ public class Negative extends UnaryOperator {
 
     @Override
     public Number getNumber() {
-        if (term.getNumber() instanceof Integer) {
-            return -term.getNumber().intValue();
+        if (term.getNumber() instanceof Long) {
+            return -term.getNumber().longValue();
         }
         return -term.getNumber().doubleValue();
     }

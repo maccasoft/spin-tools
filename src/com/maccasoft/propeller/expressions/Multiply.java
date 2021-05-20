@@ -16,10 +16,10 @@ public class Multiply extends BinaryOperator {
 
     @Override
     public Number getNumber() {
-        if (!(term1.getNumber() instanceof Double) && !(term2.getNumber() instanceof Double)) {
-            return term1.getNumber().intValue() * term2.getNumber().intValue();
+        if ((term1.getNumber() instanceof Long) && (term2.getNumber() instanceof Long)) {
+            return term1.getNumber().longValue() * term2.getNumber().longValue();
         }
-        return term1.getNumber().floatValue() * term2.getNumber().floatValue();
+        return term1.getNumber().doubleValue() * term2.getNumber().doubleValue();
     }
 
     @Override

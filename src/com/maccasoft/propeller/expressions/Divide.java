@@ -17,11 +17,11 @@ public class Divide extends BinaryOperator {
     @Override
     public Number getNumber() {
         Number divisor = term2.getNumber();
-        if (!(term1.getNumber() instanceof Double) && !(divisor instanceof Double)) {
-            if (divisor.intValue() == 0) {
+        if ((term1.getNumber() instanceof Long) && (divisor instanceof Long)) {
+            if (divisor.longValue() == 0) {
                 throw new EvaluationException("Division by zero.");
             }
-            return term1.getNumber().intValue() / divisor.intValue();
+            return term1.getNumber().longValue() / divisor.longValue();
         }
         if (divisor.doubleValue() == 0) {
             throw new EvaluationException("Division by zero.");

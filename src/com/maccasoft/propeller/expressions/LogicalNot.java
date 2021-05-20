@@ -8,7 +8,7 @@ public class LogicalNot extends UnaryOperator {
 
     @Override
     public Number getNumber() {
-        return term.getNumber().intValue() == 0 ? -1 : 0;
+        return term.getNumber().longValue() == 0 ? -1 : 0;
     }
 
     @Override

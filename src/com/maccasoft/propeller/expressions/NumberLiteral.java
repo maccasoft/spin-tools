@@ -36,11 +36,11 @@ public class NumberLiteral extends Literal {
     public String toString() {
         switch (base) {
             case 2:
-                return "%" + Integer.toBinaryString(value.intValue());
+                return "%" + Long.toBinaryString(value.longValue());
             case 4:
-                return "%%" + Integer.toString(value.intValue(), 4);
+                return "%%" + Long.toString(value.longValue(), 4);
             case 16:
-                return "$" + Integer.toHexString(value.intValue());
+                return "$" + Long.toHexString(value.longValue());
         }
         return value.toString();
     }

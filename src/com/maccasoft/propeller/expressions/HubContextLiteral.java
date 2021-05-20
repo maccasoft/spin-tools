@@ -15,7 +15,7 @@ public class HubContextLiteral extends Literal {
 
     @Override
     public String toString() {
-        return Integer.toString(getNumber().intValue());
+        return Long.toString(getNumber().longValue());
     }
 
 }

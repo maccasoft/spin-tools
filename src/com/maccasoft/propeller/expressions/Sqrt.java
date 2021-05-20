@@ -9,14 +9,14 @@ public class Sqrt extends UnaryOperator {
     @Override
     public Number getNumber() {
         if (term.getNumber() instanceof Double) {
-            return new Long(Math.round(term.getNumber().doubleValue())).intValue();
+            return Math.sqrt(term.getNumber().doubleValue());
         }
-        return term.getNumber();
+        return Math.sqrt(term.getNumber().doubleValue());
     }
 
     @Override
     public String getLexeme() {
-        return "round";
+        return "sqrt";
     }
 
 }

@@ -8,7 +8,7 @@ public class Addpins extends BinaryOperator {
 
     @Override
     public Number getNumber() {
-        return (term1.getNumber().intValue() & 0x3F) | ((term2.getNumber().intValue() & 0x1F) << 6);
+        return (term1.getNumber().longValue() & 0x3F) | ((term2.getNumber().longValue() & 0x1F) << 6);
     }
 
     @Override

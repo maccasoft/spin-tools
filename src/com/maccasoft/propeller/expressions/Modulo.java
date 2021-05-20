@@ -18,10 +18,10 @@ public class Modulo extends BinaryOperator {
     public Number getNumber() {
         Number divisor = term2.getNumber();
         if (!(term1.getNumber() instanceof Double) && !(divisor instanceof Double)) {
-            if (divisor.intValue() == 0) {
+            if (divisor.longValue() == 0) {
                 throw new EvaluationException("Division by zero.");
             }
-            return term1.getNumber().intValue() % divisor.intValue();
+            return term1.getNumber().longValue() % divisor.longValue();
         }
         if (divisor.doubleValue() == 0) {
             throw new EvaluationException("Division by zero.");

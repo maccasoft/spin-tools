@@ -9,7 +9,7 @@ public class Trunc extends UnaryOperator {
     @Override
     public Number getNumber() {
         if (term.getNumber() instanceof Double) {
-            return new Double(Math.floor(term.getNumber().doubleValue())).intValue();
+            return new Double(Math.floor(term.getNumber().doubleValue())).longValue();
         }
         return term.getNumber();
     }

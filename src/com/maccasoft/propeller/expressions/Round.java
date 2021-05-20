@@ -9,7 +9,7 @@ public class Round extends UnaryOperator {
     @Override
     public Number getNumber() {
         if (term.getNumber() instanceof Double) {
-            return new Long(Math.round(term.getNumber().doubleValue())).intValue();
+            return new Long(Math.round(term.getNumber().doubleValue())).longValue();
         }
         return term.getNumber();
     }
