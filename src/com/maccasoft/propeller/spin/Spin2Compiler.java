@@ -172,9 +172,6 @@ public class Spin2Compiler extends Spin2BaseVisitor {
 
                 if (ctx.name != null) {
                     if (ctx.exp != null) {
-                        if ("ntsc_blank".equals(ctx.name.getText())) {
-                            System.out.println(ctx.name.getText());
-                        }
                         Expression expression = buildExpression(scope, ctx.exp);
                         scope.addSymbol(ctx.name.getText(), expression);
                     }

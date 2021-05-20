@@ -128,437 +128,442 @@ typeValue: value=expression ('[' count=expression ']')? ;
 dataValue: expression ('[' count=expression ']')? ;
 
 directive
-    : ('LONG' | 'long')
-    | ('WORD' | 'word')
-    | ('BYTE' | 'byte')
-    | ('RES' | 'res')
+    : 'LONG'    | 'long'
+    | 'WORD'    | 'word'
+    | 'BYTE'    | 'byte'
+    | 'RES'     | 'res'
     ;
 
 label: {_input.LT(1).getCharPositionInLine() == 0}? '.'? VARIABLE ;
 
 opcode
-    : ('ORG' | 'org')
-    | ('ORGH' | 'orgh')
-    | ('ORGF' | 'orgf')
-    | ('FIT' | 'fit')
-    | ('nop')
-    | ('ror')
-    | ('rol')
-    | ('shr')
-    | ('shl')
-    | ('rcr')
-    | ('rcl')
-    | ('sar')
-    | ('sal')
-    | ('ADD' | 'add')
-    | ('ADDX' | 'addx')
-    | ('ADDS' | 'adds')
-    | ('ADDSX' | 'addsx')
-    | ('sub')
-    | ('subx')
-    | ('subs')
-    | ('subsx')
-    | ('cmp')
-    | ('cmpx')
-    | ('cmps')
-    | ('cmpsx')
-    | ('cmpr')
-    | ('cmpm')
-    | ('subr')
-    | ('cmpsub')
-    | ('fge')
-    | ('fle')
-    | ('fges')
-    | ('fles')
-    | ('sumc')
-    | ('sumnc')
-    | ('sumz')
-    | ('sumnz')
-    | ('testb')
-    | ('testbn')
-    | ('bitl')
-    | ('bith')
-    | ('bitc')
-    | ('bitnc')
-    | ('bitz')
-    | ('bitnz')
-    | ('bitrnd')
-    | ('bitnot')
-    | ('and')
-    | ('andn')
-    | ('or')
-    | ('xor')
-    | ('muxc')
-    | ('muxnc')
-    | ('muxz')
-    | ('muxnz')
-    | ('MOV' | 'mov')
-    | ('NOT' | 'not')
-    | ('ABS' | 'abs')
-    | ('neg')
-    | ('negc')
-    | ('negnc')
-    | ('negz')
-    | ('negnz')
-    | ('incmod')
-    | ('decmod')
-    | ('zerox')
-    | ('signx')
-    | ('encod')
-    | ('ones')
-    | ('test')
-    | ('testn')
-    | ('setnib')
-    | ('getnib')
-    | ('rolnib')
-    | ('setbyte')
-    | ('getbyte')
-    | ('rolbyte')
-    | ('setword')
-    | ('getword')
-    | ('rolword')
-    | ('altsn')
-    | ('altgn')
-    | ('altsb')
-    | ('altgb')
-    | ('altsw')
-    | ('altgw')
-    | ('altr')
-    | ('altd')
-    | ('alts')
-    | ('altb')
-    | ('alti')
-    | ('setr')
-    | ('setd')
-    | ('sets')
-    | ('decod')
-    | ('bmask')
-    | ('crcbit')
-    | ('crcnib')
-    | ('muxnits')
-    | ('muxnibs')
-    | ('muxq')
-    | ('movbyts')
-    | ('mul')
-    | ('muls')
-    | ('sca')
-    | ('scas')
-    | ('addpix')
-    | ('mulpix')
-    | ('blnpix')
-    | ('mixpix')
-    | ('addct1')
-    | ('addct2')
-    | ('addct3')
-    | ('wmlong')
-    | ('rqpin')
-    | ('rdpin')
-    | ('rdlut')
-    | ('rdbyte')
-    | ('rdword')
-    | ('rdlong')
-    | ('popa')
-    | ('popb')
-    | ('calld')
-    | ('resi3')
-    | ('resi2')
-    | ('resi1')
-    | ('resi0')
-    | ('reti3')
-    | ('reti2')
-    | ('reti1')
-    | ('reti0')
-    | ('callpa')
-    | ('callpb')
-    | ('djz')
-    | ('djnz')
-    | ('djf')
-    | ('djnf')
-    | ('ijz')
-    | ('ijnz')
-    | ('tjz')
-    | ('tjnz')
-    | ('tjf')
-    | ('tjnf')
-    | ('tjs')
-    | ('tjns')
-    | ('tjv')
-    | ('jint')
-    | ('jct1')
-    | ('jct2')
-    | ('jct3')
-    | ('jse1')
-    | ('jse2')
-    | ('jse3')
-    | ('jse4')
-    | ('jpat')
-    | ('jfbw')
-    | ('jxmt')
-    | ('jxfi')
-    | ('jxro')
-    | ('jxrl')
-    | ('jatn')
-    | ('jqmt')
-    | ('jnint')
-    | ('jnct1')
-    | ('jnct2')
-    | ('jnct3')
-    | ('jnse1')
-    | ('jnse2')
-    | ('jnse3')
-    | ('jnse4')
-    | ('jnpat')
-    | ('jnfbw')
-    | ('jnxmt')
-    | ('jnxfi')
-    | ('jnxro')
-    | ('jnxrl')
-    | ('jnatn')
-    | ('jnqmt')
-    | ('setpat')
-    | ('akpin')
-    | ('wrpin')
-    | ('wxpin')
-    | ('wypin')
-    | ('wrlut')
-    | ('wrbyte')
-    | ('wrword')
-    | ('wrlong')
-    | ('pusha')
-    | ('pushb')
-    | ('rdfast')
-    | ('wrfast')
-    | ('fblock')
-    | ('xinit')
-    | ('xstop')
-    | ('xzero')
-    | ('xcont')
-    | ('rep')
-    | ('coginit')
-    | ('qmul')
-    | ('qdiv')
-    | ('qfrac')
-    | ('qsqrt')
-    | ('qrotate')
-    | ('qvector')
-    | ('hubset')
-    | ('cogid')
-    | ('cogstop')
-    | ('locknew')
-    | ('lockret')
-    | ('locktry')
-    | ('lockrel')
-    | ('qlog')
-    | ('qexp')
-    | ('rfbyte')
-    | ('rfword')
-    | ('rflong')
-    | ('rfvar')
-    | ('rfvars')
-    | ('wfbyte')
-    | ('wfword')
-    | ('wflong')
-    | ('getqx')
-    | ('getqy')
-    | ('getct')
-    | ('getrnd')
-    | ('setdacs')
-    | ('setxfrq')
-    | ('getxacc')
-    | ('waitx')
-    | ('setse1')
-    | ('setse2')
-    | ('setse3')
-    | ('setse4')
-    | ('pollint')
-    | ('pollct1')
-    | ('pollct2')
-    | ('pollct3')
-    | ('pollse1')
-    | ('pollse2')
-    | ('pollse3')
-    | ('pollse4')
-    | ('pollpat')
-    | ('pollfbw')
-    | ('pollxmt')
-    | ('pollxfi')
-    | ('pollxro')
-    | ('pollxrl')
-    | ('pollatn')
-    | ('pollqmt')
-    | ('waitint')
-    | ('waitct1')
-    | ('waitct2')
-    | ('waitct3')
-    | ('waitse1')
-    | ('waitse2')
-    | ('waitse3')
-    | ('waitse4')
-    | ('waitpat')
-    | ('waitfbw')
-    | ('waitxmt')
-    | ('waitxfi')
-    | ('waitxro')
-    | ('waitxrl')
-    | ('waitatn')
-    | ('allowi')
-    | ('stalli')
-    | ('trgint1')
-    | ('trgint2')
-    | ('trgint3')
-    | ('nixint1')
-    | ('nixint2')
-    | ('nixint3')
-    | ('setint1')
-    | ('setint2')
-    | ('setint3')
-    | ('setq')
-    | ('setq2')
-    | ('push')
-    | ('pop')
-    | ('JMP' | 'jmp')
-    | ('call')
-    | ('ret')
-    | ('calla')
-    | ('reta')
-    | ('callb')
-    | ('retb')
-    | ('jmprel')
-    | ('skip')
-    | ('skipf')
-    | ('execf')
-    | ('getptr')
-    | ('getbrk')
-    | ('cogbrk')
-    | ('brk')
-    | ('setluts')
-    | ('setcy')
-    | ('setci')
-    | ('setcq')
-    | ('setcfrq')
-    | ('setcmod')
-    | ('setpiv')
-    | ('setpix')
-    | ('cogatn')
-    | ('testp')
-    | ('testpn')
-    | ('dirl')
-    | ('dirh')
-    | ('dirc')
-    | ('dirnc')
-    | ('dirz')
-    | ('dirnz')
-    | ('dirrnd')
-    | ('dirnot')
-    | ('outl')
-    | ('outh')
-    | ('outc')
-    | ('outnc')
-    | ('outz')
-    | ('outnz')
-    | ('outrnd')
-    | ('outnot')
-    | ('fltl')
-    | ('flth')
-    | ('fltc')
-    | ('fltnc')
-    | ('fltz')
-    | ('fltnz')
-    | ('fltrnd')
-    | ('fltnot')
-    | ('drvl')
-    | ('drvh')
-    | ('drvc')
-    | ('drvnc')
-    | ('drvz')
-    | ('drvnz')
-    | ('drvrnd')
-    | ('drvnot')
-    | ('splitb')
-    | ('mergeb')
-    | ('splitw')
-    | ('mergew')
-    | ('seussf')
-    | ('seussr')
-    | ('rgbsqz')
-    | ('rgbexp')
-    | ('xoro32')
-    | ('rev')
-    | ('rczr')
-    | ('rczl')
-    | ('wrc')
-    | ('wrnc')
-    | ('wrz')
-    | ('wrnz')
-    | ('modcz')
-    | ('modc')
-    | ('modz')
-    | ('setscp')
-    | ('getscp')
-    | ('calld')
-    | ('loc')
-    | ('augs')
-    | ('augd')
-    | ('asmclk')
+    : 'ORG'     | 'org'
+    | 'ORGH'    | 'orgh'
+    | 'ORGF'    | 'orgf'
+    | 'FIT'     | 'fit'
+    | 'NOP'     | 'nop'
+    | 'ROR'     | 'ror'
+    | 'ROL'     | 'rol'
+    | 'SHR'     | 'shr'
+    | 'SHL'     | 'shl'
+    | 'RCR'     | 'rcr'
+    | 'RCL'     | 'rcl'
+    | 'SAR'     | 'sar'
+    | 'SAL'     | 'sal'
+    | 'ADD'     | 'add'
+    | 'ADDX'    | 'addx'
+    | 'ADDS'    | 'adds'
+    | 'ADDSX'   | 'addsx'
+    | 'SUB'     | 'sub'
+    | 'SUBX'    | 'subx'
+    | 'SUBS'    | 'subs'
+    | 'SUBSX'   | 'subsx'
+    | 'CMP'     | 'cmp'
+    | 'CMPX'    | 'cmpx'
+    | 'CMPS'    | 'cmps'
+    | 'CMPSX'   | 'cmpsx'
+    | 'CMPR'    | 'cmpr'
+    | 'CMPM'    | 'cmpm'
+    | 'SUBR'    | 'subr'
+    | 'CMPSUB'  | 'cmpsub'
+    | 'FGE'     | 'fge'
+    | 'FLE'     | 'fle'
+    | 'FGES'    | 'fges'
+    | 'FLES'    | 'fles'
+    | 'SUMC'    | 'sumc'
+    | 'SUMNC'   | 'sumnc'
+    | 'SUMZ'    | 'sumz'
+    | 'SUMNZ'   | 'sumnz'
+    | 'TESTB'   | 'testb'
+    | 'TESTBN'  | 'testbn'
+    | 'BITL'    | 'bitl'
+    | 'BITH'    | 'bith'
+    | 'BITC'    | 'bitc'
+    | 'BITNC'   | 'bitnc'
+    | 'BITZ'    | 'bitz'
+    | 'BITNZ'   | 'bitnz'
+    | 'BITRND'  | 'bitrnd'
+    | 'BITNOT'  | 'bitnot'
+    | 'AND'     | 'and'
+    | 'ANDN'    | 'andn'
+    | 'OR'      | 'or'
+    | 'XOR'     | 'xor'
+    | 'MUXC'    | 'muxc'
+    | 'MUXNC'   | 'muxnc'
+    | 'MUXZ'    | 'muxz'
+    | 'MUXNZ'   | 'muxnz'
+    | 'MOV'     | 'mov'
+    | 'NOT'     | 'not'
+    | 'ABS'     | 'abs'
+    | 'NEG'     | 'neg'
+    | 'NEGC'    | 'negc'
+    | 'NEGNC'   | 'negnc'
+    | 'NEGZ'    | 'negz'
+    | 'NEGNZ'   | 'negnz'
+    | 'INCMOD'  | 'incmod'
+    | 'DECMOD'  | 'decmod'
+    | 'ZEROX'   | 'zerox'
+    | 'SIGNX'   | 'signx'
+    | 'ENCOD'   | 'encod'
+    | 'ONES'    | 'ones'
+    | 'TEST'    | 'test'
+    | 'TESTN'   | 'testn'
+    | 'SETNIB'  | 'setnib'
+    | 'GETNIB'  | 'getnib'
+    | 'ROLNIB'  | 'rolnib'
+    | 'SETBYTE' | 'setbyte'
+    | 'GETBYTE' | 'getbyte'
+    | 'ROLBYTE' | 'rolbyte'
+    | 'SETWORD' | 'setword'
+    | 'GETWORD' | 'getword'
+    | 'ROLWORD' | 'rolword'
+    | 'ALTSN'   | 'altsn'
+    | 'ALTGN'   | 'altgn'
+    | 'ALTSB'   | 'altsb'
+    | 'ALTGB'   | 'altgb'
+    | 'ALTSW'   | 'altsw'
+    | 'ALTGW'   | 'altgw'
+    | 'ALTR'    | 'altr'
+    | 'ALTD'    | 'altd'
+    | 'ALTS'    | 'alts'
+    | 'ALTB'    | 'altb'
+    | 'ALTI'    | 'alti'
+    | 'SETR'    | 'setr'
+    | 'SETD'    | 'setd'
+    | 'SETS'    | 'sets'
+    | 'DECOD'   | 'decod'
+    | 'BMASK'   | 'bmask'
+    | 'CRCBIT'  | 'crcbit'
+    | 'CRCNIB'  | 'crcnib'
+    | 'MUXNITS' | 'muxnits'
+    | 'MUXNIBS' | 'muxnibs'
+    | 'MUXQ'    | 'muxq'
+    | 'MOVBYTS' | 'movbyts'
+    | 'MUL'     | 'mul'
+    | 'MULS'    | 'muls'
+    | 'SCA'     | 'sca'
+    | 'SCAS'    | 'scas'
+    | 'ADDPIX'  | 'addpix'
+    | 'MULPIX'  | 'mulpix'
+    | 'BLNPIX'  | 'blnpix'
+    | 'MIXPIX'  | 'mixpix'
+    | 'ADDCT1'  | 'addct1'
+    | 'ADDCT2'  | 'addct2'
+    | 'ADDCT3'  | 'addct3'
+    | 'WMLONG'  | 'wmlong'
+    | 'RQPIN'   | 'rqpin'
+    | 'RDPIN'   | 'rdpin'
+    | 'RDLUT'   | 'rdlut'
+    | 'RDBYTE'  | 'rdbyte'
+    | 'RDWORD'  | 'rdword'
+    | 'RDLONG'  | 'rdlong'
+    | 'POPA'    | 'popa'
+    | 'POPB'    | 'popb'
+    | 'CALLD'   | 'calld'
+    | 'RESI3'   | 'resi3'
+    | 'RESI2'   | 'resi2'
+    | 'RESI1'   | 'resi1'
+    | 'RESI0'   | 'resi0'
+    | 'RETI3'   | 'reti3'
+    | 'RETI2'   | 'reti2'
+    | 'RETI1'   | 'reti1'
+    | 'RETI0'   | 'reti0'
+    | 'CALLPA'  | 'callpa'
+    | 'CALLPB'  | 'callpb'
+    | 'DJZ'     | 'djz'
+    | 'DJNZ'    | 'djnz'
+    | 'DJF'     | 'djf'
+    | 'DJNF'    | 'djnf'
+    | 'IJZ'     | 'ijz'
+    | 'IJNZ'    | 'ijnz'
+    | 'TJZ'     | 'tjz'
+    | 'TJNZ'    | 'tjnz'
+    | 'TJF'     | 'tjf'
+    | 'TJNF'    | 'tjnf'
+    | 'TJS'     | 'tjs'
+    | 'TJNS'    | 'tjns'
+    | 'TJV'     | 'tjv'
+    | 'JINT'    | 'jint'
+    | 'JCT1'    | 'jct1'
+    | 'JCT2'    | 'jct2'
+    | 'JCT3'    | 'jct3'
+    | 'JSE1'    | 'jse1'
+    | 'JSE2'    | 'jse2'
+    | 'JSE3'    | 'jse3'
+    | 'JSE4'    | 'jse4'
+    | 'JPAT'    | 'jpat'
+    | 'JFBW'    | 'jfbw'
+    | 'JXMT'    | 'jxmt'
+    | 'JXFI'    | 'jxfi'
+    | 'JXRO'    | 'jxro'
+    | 'JXRL'    | 'jxrl'
+    | 'JATN'    | 'jatn'
+    | 'JQMT'    | 'jqmt'
+    | 'JNINT'   | 'jnint'
+    | 'JNCT1'   | 'jnct1'
+    | 'JNCT2'   | 'jnct2'
+    | 'JNCT3'   | 'jnct3'
+    | 'JNSE1'   | 'jnse1'
+    | 'JNSE2'   | 'jnse2'
+    | 'JNSE3'   | 'jnse3'
+    | 'JNSE4'   | 'jnse4'
+    | 'JNPAT'   | 'jnpat'
+    | 'JNFBW'   | 'jnfbw'
+    | 'JNXMT'   | 'jnxmt'
+    | 'JNXFI'   | 'jnxfi'
+    | 'JNXRO'   | 'jnxro'
+    | 'JNXRL'   | 'jnxrl'
+    | 'JNATN'   | 'jnatn'
+    | 'JNQMT'   | 'jnqmt'
+    | 'SETPAT'  | 'setpat'
+    | 'AKPIN'   | 'akpin'
+    | 'WRPIN'   | 'wrpin'
+    | 'WXPIN'   | 'wxpin'
+    | 'WYPIN'   | 'wypin'
+    | 'WRLUT'   | 'wrlut'
+    | 'WRBYTE'  | 'wrbyte'
+    | 'WRWORD'  | 'wrword'
+    | 'WRLONG'  | 'wrlong'
+    | 'PUSHA'   | 'pusha'
+    | 'PUSHB'   | 'pushb'
+    | 'RDFAST'  | 'rdfast'
+    | 'WRFAST'  | 'wrfast'
+    | 'FBLOCK'  | 'fblock'
+    | 'XINIT'   | 'xinit'
+    | 'XSTOP'   | 'xstop'
+    | 'XZERO'   | 'xzero'
+    | 'XCONT'   | 'xcont'
+    | 'REP'     | 'rep'
+    | 'COGINIT' | 'coginit'
+    | 'QMUL'    | 'qmul'
+    | 'QDIV'    | 'qdiv'
+    | 'QFRAC'   | 'qfrac'
+    | 'QSQRT'   | 'qsqrt'
+    | 'QROTATE' | 'qrotate'
+    | 'QVECTOR' | 'qvector'
+    | 'HUBSET'  | 'hubset'
+    | 'COGID'   | 'cogid'
+    | 'COGSTOP' | 'cogstop'
+    | 'LOCKNEW' | 'locknew'
+    | 'LOCKRET' | 'lockret'
+    | 'LOCKTRY' | 'locktry'
+    | 'LOCKREL' | 'lockrel'
+    | 'QLOG'    | 'qlog'
+    | 'QEXP'    | 'qexp'
+    | 'RFBYTE'  | 'rfbyte'
+    | 'RFWORD'  | 'rfword'
+    | 'RFLONG'  | 'rflong'
+    | 'RFVAR'   | 'rfvar'
+    | 'RFVARS'  | 'rfvars'
+    | 'WFBYTE'  | 'wfbyte'
+    | 'WFWORD'  | 'wfword'
+    | 'WFLONG'  | 'wflong'
+    | 'GETQX'   | 'getqx'
+    | 'GETQY'   | 'getqy'
+    | 'GETCT'   | 'getct'
+    | 'GETRND'  | 'getrnd'
+    | 'SETDACS' | 'setdacs'
+    | 'SETXFRQ' | 'setxfrq'
+    | 'GETXACC' | 'getxacc'
+    | 'WAITX'   | 'waitx'
+    | 'SETSE1'  | 'setse1'
+    | 'SETSE2'  | 'setse2'
+    | 'SETSE3'  | 'setse3'
+    | 'SETSE4'  | 'setse4'
+    | 'POLLINT' | 'pollint'
+    | 'POLLCT1' | 'pollct1'
+    | 'POLLCT2' | 'pollct2'
+    | 'POLLCT3' | 'pollct3'
+    | 'POLLSE1' | 'pollse1'
+    | 'POLLSE2' | 'pollse2'
+    | 'POLLSE3' | 'pollse3'
+    | 'POLLSE4' | 'pollse4'
+    | 'POLLPAT' | 'pollpat'
+    | 'POLLFBW' | 'pollfbw'
+    | 'POLLXMT' | 'pollxmt'
+    | 'POLLXFI' | 'pollxfi'
+    | 'POLLXRO' | 'pollxro'
+    | 'POLLXRL' | 'pollxrl'
+    | 'POLLATN' | 'pollatn'
+    | 'POLLQMT' | 'pollqmt'
+    | 'WAITINT' | 'waitint'
+    | 'WAITCT1' | 'waitct1'
+    | 'WAITCT2' | 'waitct2'
+    | 'WAITCT3' | 'waitct3'
+    | 'WAITSE1' | 'waitse1'
+    | 'WAITSE2' | 'waitse2'
+    | 'WAITSE3' | 'waitse3'
+    | 'WAITSE4' | 'waitse4'
+    | 'WAITPAT' | 'waitpat'
+    | 'WAITFBW' | 'waitfbw'
+    | 'WAITXMT' | 'waitxmt'
+    | 'WAITXFI' | 'waitxfi'
+    | 'WAITXRO' | 'waitxro'
+    | 'WAITXRL' | 'waitxrl'
+    | 'WAITATN' | 'waitatn'
+    | 'ALLOWI'  | 'allowi'
+    | 'STALLI'  | 'stalli'
+    | 'TRGINT1' | 'trgint1'
+    | 'TRGINT2' | 'trgint2'
+    | 'TRGINT3' | 'trgint3'
+    | 'NIXINT1' | 'nixint1'
+    | 'NIXINT2' | 'nixint2'
+    | 'NIXINT3' | 'nixint3'
+    | 'SETINT1' | 'setint1'
+    | 'SETINT2' | 'setint2'
+    | 'SETINT3' | 'setint3'
+    | 'SETQ'    | 'setq'
+    | 'SETQ2'   | 'setq2'
+    | 'PUSH'    | 'push'
+    | 'POP'     | 'pop'
+    | 'JMP'     | 'jmp'
+    | 'CALL'    | 'call'
+    | 'RET'     | 'ret'
+    | 'CALLA'   | 'calla'
+    | 'RETA'    | 'reta'
+    | 'CALLB'   | 'callb'
+    | 'RETB'    | 'retb'
+    | 'JMPREL'  | 'jmprel'
+    | 'SKIP'    | 'skip'
+    | 'SKIPF'   | 'skipf'
+    | 'EXECF'   | 'execf'
+    | 'GETPTR'  | 'getptr'
+    | 'GETBRK'  | 'getbrk'
+    | 'COGBRK'  | 'cogbrk'
+    | 'BRK'     | 'brk'
+    | 'SETLUTS' | 'setluts'
+    | 'SETCY'   | 'setcy'
+    | 'SETCI'   | 'setci'
+    | 'SETCQ'   | 'setcq'
+    | 'SETCFRQ' | 'setcfrq'
+    | 'SETCMOD' | 'setcmod'
+    | 'SETPIV'  | 'setpiv'
+    | 'SETPIX'  | 'setpix'
+    | 'COGATN'  | 'cogatn'
+    | 'TESTP'   | 'testp'
+    | 'TESTPN'  | 'testpn'
+    | 'DIRL'    | 'dirl'
+    | 'DIRH'    | 'dirh'
+    | 'DIRC'    | 'dirc'
+    | 'DIRNC'   | 'dirnc'
+    | 'DIRZ'    | 'dirz'
+    | 'DIRNZ'   | 'dirnz'
+    | 'DIRRND'  | 'dirrnd'
+    | 'DIRNOT'  | 'dirnot'
+    | 'OUTL'    | 'outl'
+    | 'OUTH'    | 'outh'
+    | 'OUTC'    | 'outc'
+    | 'OUTNC'   | 'outnc'
+    | 'OUTZ'    | 'outz'
+    | 'OUTNZ'   | 'outnz'
+    | 'OUTRND'  | 'outrnd'
+    | 'OUTNOT'  | 'outnot'
+    | 'FLTL'    | 'fltl'
+    | 'FLTH'    | 'flth'
+    | 'FLTC'    | 'fltc'
+    | 'FLTNC'   | 'fltnc'
+    | 'FLTZ'    | 'fltz'
+    | 'FLTNZ'   | 'fltnz'
+    | 'FLTRND'  | 'fltrnd'
+    | 'FLTNOT'  | 'fltnot'
+    | 'DRVL'    | 'drvl'
+    | 'DRVH'    | 'drvh'
+    | 'DRVC'    | 'drvc'
+    | 'DRVNC'   | 'drvnc'
+    | 'DRVZ'    | 'drvz'
+    | 'DRVNZ'   | 'drvnz'
+    | 'DRVRND'  | 'drvrnd'
+    | 'DRVNOT'  | 'drvnot'
+    | 'SPLITB'  | 'splitb'
+    | 'MERGEB'  | 'mergeb'
+    | 'SPLITW'  | 'splitw'
+    | 'MERGEW'  | 'mergew'
+    | 'SEUSSF'  | 'seussf'
+    | 'SEUSSR'  | 'seussr'
+    | 'RGBSQZ'  | 'rgbsqz'
+    | 'RGBEXP'  | 'rgbexp'
+    | 'XORO32'  | 'xoro32'
+    | 'REV'     | 'rev'
+    | 'RCZR'    | 'rczr'
+    | 'RCZL'    | 'rczl'
+    | 'WRC'     | 'wrc'
+    | 'WRNC'    | 'wrnc'
+    | 'WRZ'     | 'wrz'
+    | 'WRNZ'    | 'wrnz'
+    | 'MODCZ'   | 'modcz'
+    | 'MODC'    | 'modc'
+    | 'MODZ'    | 'modz'
+    | 'SETSCP'  | 'setscp'
+    | 'GETSCP'  | 'getscp'
+    | 'LOC'     | 'loc'
+    | 'AUGS'    | 'augs'
+    | 'AUGD'    | 'augd'
+    | 'ASMCLK'  | 'asmclk'
     ;
 
 condition
-    : {_input.LT(1).getCharPositionInLine() != 0}? (('_ret_')
-    | ('if_nc_and_nz')
-    | ('if_nz_and_nc')
-    | ('if_gt')
-    | ('if_a')
-    | ('if_00')
-    | ('if_nc_and_z')
-    | ('if_z_and_nc')
-    | ('if_01')
-    | ('if_nc')
-    | ('if_ge')
-    | ('if_ae')
-    | ('if_0x')
-    | ('if_c_and_nz')
-    | ('if_nz_and_c')
-    | ('if_10')
-    | ('if_nz')
-    | ('if_ne')
-    | ('if_x0')
-    | ('if_c_ne_z')
-    | ('if_z_ne_c')
-    | ('if_diff')
-    | ('if_nc_or_nz')
-    | ('if_nz_or_nc')
-    | ('if_not_11')
-    | ('if_c_and_z')
-    | ('if_z_and_c')
-    | ('if_11')
-    | ('if_c_eq_z')
-    | ('if_z_eq_c')
-    | ('if_same')
-    | ('if_z')
-    | ('if_e')
-    | ('if_x1')
-    | ('if_nc_or_z')
-    | ('if_z_or_nc')
-    | ('if_not_10')
-    | ('if_c')
-    | ('if_lt')
-    | ('if_b')
-    | ('if_1x')
-    | ('if_c_or_nz')
-    | ('if_nz_or_c')
-    | ('if_not_01')
-    | ('if_c_or_z')
-    | ('if_z_or_c')
-    | ('if_le')
-    | ('if_be')
-    | ('if_not_00'))
+    : {_input.LT(1).getCharPositionInLine() != 0}?
+    ( '_RET_'        | '_ret_'
+    | 'IF_NC_AND_NZ' | 'if_nc_and_nz'
+    | 'IF_NZ_AND_NC' | 'if_nz_and_nc'
+    | 'IF_GT'        | 'if_gt'
+    | 'IF_A'         | 'if_a'
+    | 'IF_00'        | 'if_00'
+    | 'IF_NC_AND_Z'  | 'if_nc_and_z'
+    | 'IF_Z_AND_NC'  | 'if_z_and_nc'
+    | 'IF_01'        | 'if_01'
+    | 'IF_NC'        | 'if_nc'
+    | 'IF_GE'        | 'if_ge'
+    | 'IF_AE'        | 'if_ae'
+    | 'IF_0X'        | 'if_0x'
+    | 'IF_C_AND_NZ'  | 'if_c_and_nz'
+    | 'IF_NZ_AND_C'  | 'if_nz_and_c'
+    | 'IF_10'        | 'if_10'
+    | 'IF_NZ'        | 'if_nz'
+    | 'IF_NE'        | 'if_ne'
+    | 'IF_X0'        | 'if_x0'
+    | 'IF_C_NE_Z'    | 'if_c_ne_z'
+    | 'IF_Z_NE_C'    | 'if_z_ne_c'
+    | 'IF_DIFF'      | 'if_diff'
+    | 'IF_NC_OR_NZ'  | 'if_nc_or_nz'
+    | 'IF_NZ_OR_NC'  | 'if_nz_or_nc'
+    | 'IF_NOT_11'    | 'if_not_11'
+    | 'IF_C_AND_Z'   | 'if_c_and_z'
+    | 'IF_Z_AND_C'   | 'if_z_and_c'
+    | 'IF_11'        | 'if_11'
+    | 'IF_C_EQ_Z'    | 'if_c_eq_z'
+    | 'IF_Z_EQ_C'    | 'if_z_eq_c'
+    | 'IF_SAME'      | 'if_same'
+    | 'IF_Z'         | 'if_z'
+    | 'IF_E'         | 'if_e'
+    | 'IF_X1'        | 'if_x1'
+    | 'IF_NC_OR_Z'   | 'if_nc_or_z'
+    | 'IF_Z_OR_NC'   | 'if_z_or_nc'
+    | 'IF_NOT_10'    | 'if_not_10'
+    | 'IF_C'         | 'if_c'
+    | 'IF_LT'        | 'if_lt'
+    | 'IF_B'         | 'if_b'
+    | 'IF_1X'        | 'if_1x'
+    | 'IF_C_OR_NZ'   | 'if_c_or_nz'
+    | 'IF_NZ_OR_C'   | 'if_nz_or_c'
+    | 'IF_NOT_01'    | 'if_not_01'
+    | 'IF_C_OR_Z'    | 'if_c_or_z'
+    | 'IF_Z_OR_C'    | 'if_z_or_c'
+    | 'IF_LE'        | 'if_le'
+    | 'IF_BE'        | 'if_be'
+    | 'IF_NOT_00'    | 'if_not_00' )
     ;
 
 effect
-    : ('wc' (',' 'wz')? ) | ('wz' (',' 'wc')? ) | ('wcz')
-    | ('andc') | ('andz')
-    | ('orc') | ('orz')
-    | ('xorc') | ('xorz')
+    : 'WC' (',' 'WZ')? | 'wc' (',' 'wz')? 
+    | 'WZ' (',' 'WC')? | 'wz' (',' 'wc')? 
+    | 'WCZ'            | 'wcz'
+    | 'ANDC'           | 'andc' 
+    | 'ANDZ'           | 'andz'
+    | 'ORC'            | 'orc'
+    | 'ORZ'            | 'orz'
+    | 'XORC'           | 'xorc' 
+    | 'XORZ'           | 'xorz'
     ;
 
 argument: prefix? expression ;
@@ -576,7 +581,7 @@ expression
     | left=expression operator=('ADDBITS' | 'addbits' | 'ADDPINS' | 'addpins') right=expression
     | left=expression operator=('<' | '+<' | '<=' | '+<=' | '==' | '<>' | '>=' | '+>=' | '>' | '+>' | '<=>') right=expression
     | left=expression operator=('&&'| 'and' | '^^' | 'xor' | '||' | 'or') right=expression
-    | left=expression operator='?' expression operator=':' right=expression
+    | left=expression operator='?' middle=expression operator=':' right=expression
     | operator=('FLOAT' | 'float' | 'ROUND' | 'round' | 'TRUNC' | 'trunc') '(' exp=expression ')'
     | '(' exp=expression ')'
     | ('@')? atom
@@ -589,19 +594,19 @@ atom
     | QUAD
     | STRING
     | '$'
-    | VARIABLE
     | PTR
     | PTR ('[' expression ']')?
     | PTR ('++' | '--') ('[' expression ']')?
     | PTR ('[' expression ']')? ('++' | '--')
     | ('++' | '--') PTR ('[' expression ']')?
+    | VARIABLE
     ;
 
 BLOCK_COMMENT: '{' .*? '}' -> channel(HIDDEN) ;
 
 COMMENT: '\'' ~ [\r\n]* -> channel(HIDDEN) ;
 
-PTR: 'ptra' | 'PTRA' | 'ptrb' | 'PTRB' ;
+PTR: 'PTRA' | 'ptra' | 'PTRB' | 'ptrb' ;
 
 VARIABLE: '.'? LETTER ( LETTER | DIGIT )* ;
 
