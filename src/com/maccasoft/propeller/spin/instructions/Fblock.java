@@ -46,20 +46,14 @@ public class Fblock extends Spin2PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address) {
-            super.resolve(address);
+        public int getSize() {
             if (dst.isLongLiteral() && src.isLongLiteral()) {
-                return address + 3;
+                return 12;
             }
             if (dst.isLongLiteral() || src.isLongLiteral()) {
-                return address + 2;
+                return 8;
             }
-            return address + 1;
-        }
-
-        @Override
-        public int getSize() {
-            return src.isLongLiteral() ? 8 : 4;
+            return 4;
         }
 
         // EEEE 1100100 1LI DDDDDDDDD SSSSSSSSS

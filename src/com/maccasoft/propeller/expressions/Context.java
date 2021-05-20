@@ -8,4 +8,6 @@ public interface Context {
 
     public int getAddress();
 
+    public int getHubAddress();
+
 }

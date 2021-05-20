@@ -59,7 +59,12 @@ public class Jmp extends Spin2PAsmInstructionFactory {
             }
             else {
                 value = r.setBoolean(value, !dst.isAbsolute());
-                value = a.setValue(value, dst.isAbsolute() ? addr : (addr - ours - 1) * 4);
+                if (dst.isAbsolute()) {
+                    value = a.setValue(value, addr);
+                }
+                else {
+                    value = a.setValue(value, addr < 0x400 ? (addr - ours - 1) * 4 : addr - ours - 4);
+                }
             }
             return getBytes(value);
         }

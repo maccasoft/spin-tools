@@ -35,16 +35,6 @@ public class Long extends Spin2PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address) {
-            int size = 0;
-            for (Spin2PAsmExpression exp : arguments) {
-                size += exp.getCount();
-            }
-            super.resolve(address);
-            return address + size;
-        }
-
-        @Override
         public int getSize() {
             int size = 0;
             for (Spin2PAsmExpression exp : arguments) {

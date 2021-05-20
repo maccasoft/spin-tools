@@ -33,9 +33,8 @@ public class Empty extends Spin2PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address) {
-            context.setAddress(address);
-            return address;
+        public int getSize() {
+            return 0;
         }
 
         @Override

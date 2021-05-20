@@ -26,6 +26,7 @@ import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
@@ -77,9 +78,22 @@ public class Spin2Compiler extends Spin2BaseVisitor {
         }
         scope.addSymbol("clkmode_", new NumberLiteral(getClockMode(20000000, _clkfreq)));
 
-        int address = 0;
+        int address = 0, hubAddress = 0;
         for (Spin2PAsmLine line : source) {
-            address = line.resolve(address);
+            line.getScope().setHubAddress(hubAddress);
+            address = line.resolve(address < 0x400 ? address : hubAddress);
+            if (address < 0x400) {
+                hubAddress += line.getInstructionObject().getSize();
+            }
+            else {
+                hubAddress += line.getInstructionObject().getSize();
+                if (address > hubAddress) {
+                    hubAddress = address;
+                }
+                else {
+                    address = hubAddress;
+                }
+            }
         }
 
         return null;
@@ -176,7 +190,7 @@ public class Spin2Compiler extends Spin2BaseVisitor {
                     scope = scope.getParent();
                 }
                 scope.addSymbol(line.getLabel(), new ContextLiteral(line.getScope()));
-                scope.addSymbol("@" + line.getLabel(), new ContextLiteral(line.getScope()));
+                scope.addSymbol("@" + line.getLabel(), new HubContextLiteral(line.getScope()));
                 if (!line.isLocalLabel()) {
                     scope = new Spin2Context(scope);
                 }
@@ -318,23 +332,25 @@ public class Spin2Compiler extends Spin2BaseVisitor {
 
             parser.prog().accept(compiler);
 
-            int address = 0;
             for (Spin2PAsmLine line : compiler.source) {
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
                 line.generateObjectCode(os);
                 byte[] code = os.toByteArray();
 
+                int address = line.getScope().getHubAddress();
                 int addr = line.getScope().getAddress();
 
                 int index = 0;
-                System.out.print(String.format("%06X %03X ", address, addr++));
+                System.out.print(String.format("%06X ", address));
+                System.out.print(addr < 0x400 ? String.format("%03X ", addr++) : "    ");
                 System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
                 System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
                 System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
                 System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
                 System.out.println(" | " + line);
                 while (index < code.length) {
-                    System.out.print(String.format("%06X %03X ", address + index, addr++));
+                    System.out.print(String.format("%06X ", address + index));
+                    System.out.print(addr < 0x400 ? String.format("%03X ", addr++) : "    ");
                     System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
                     System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
                     System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
@@ -348,8 +364,6 @@ public class Spin2Compiler extends Spin2BaseVisitor {
                     }
                     System.out.println(" | ");
                 }
-
-                address += code.length;
             }
 
         } catch (Exception e) {

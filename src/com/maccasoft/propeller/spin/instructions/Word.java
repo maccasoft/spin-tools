@@ -22,33 +22,29 @@ public class Word extends Spin2PAsmInstructionFactory {
 
     @Override
     public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
-        return new Long_(context, arguments);
+        return new Word_(context, arguments);
     }
 
-    public class Long_ extends Spin2InstructionObject {
+    public class Word_ extends Spin2InstructionObject {
 
         List<Spin2PAsmExpression> arguments;
 
-        public Long_(Spin2Context context, List<Spin2PAsmExpression> arguments) {
+        public Word_(Spin2Context context, List<Spin2PAsmExpression> arguments) {
             super(context);
             this.arguments = arguments;
         }
 
         @Override
         public int resolve(int address) {
-            int size = 0;
-            for (Spin2PAsmExpression exp : arguments) {
-                size += 4 * exp.getCount();
-            }
-            super.resolve(address);
-            return address + size;
+            context.setAddress(address);
+            return address + (getSize() + 1) / 4;
         }
 
         @Override
         public int getSize() {
             int size = 0;
             for (Spin2PAsmExpression exp : arguments) {
-                size += 4 * exp.getCount();
+                size += 2 * exp.getCount();
             }
             return size;
         }

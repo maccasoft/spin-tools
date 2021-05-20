@@ -43,12 +43,6 @@ public class Jmprel extends Spin2PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address) {
-            super.resolve(address);
-            return address + (dst.isLongLiteral() ? 2 : 1);
-        }
-
-        @Override
         public int getSize() {
             return dst.isLongLiteral() ? 8 : 4;
         }

@@ -16,6 +16,7 @@ import java.util.Map;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 
 public class Spin2Context implements Context {
@@ -27,12 +28,15 @@ public class Spin2Context implements Context {
     int address;
     boolean set;
 
+    int hubAddress;
+
     public Spin2Context() {
     }
 
     public Spin2Context(Spin2Context parent) {
         this.parent = parent;
         symbols.put("$", new ContextLiteral(this));
+        symbols.put("@$", new HubContextLiteral(this));
     }
 
     public Spin2Context getParent() {
@@ -80,6 +84,15 @@ public class Spin2Context implements Context {
     @Override
     public int getAddress() {
         return address;
+    }
+
+    @Override
+    public int getHubAddress() {
+        return hubAddress;
+    }
+
+    public void setHubAddress(int hubAddress) {
+        this.hubAddress = hubAddress;
     }
 
 }

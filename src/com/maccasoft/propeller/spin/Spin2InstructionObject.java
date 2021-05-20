@@ -204,7 +204,11 @@ public abstract class Spin2InstructionObject {
 
     public int resolve(int address) {
         context.setAddress(address);
-        return address + 1;
+        return context.getAddress() + (getSize() + 3) / 4;
+    }
+
+    public int getSize() {
+        return 4;
     }
 
     protected int encodeEffect(String effect) {
@@ -221,10 +225,6 @@ public abstract class Spin2InstructionObject {
             return 0b01;
         }
         return 0;
-    }
-
-    public int getSize() {
-        return 4;
     }
 
     public void generateObjectCode(OutputStream output) throws IOException {

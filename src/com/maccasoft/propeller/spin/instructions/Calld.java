@@ -81,7 +81,12 @@ public class Calld extends Spin2PAsmInstructionFactory {
             }
             else {
                 value = r.setBoolean(value, !src.isAbsolute());
-                value = a.setValue(value, src.isAbsolute() ? addr : (addr - ours - 1) * 4);
+                if (src.isAbsolute()) {
+                    value = a.setValue(value, addr);
+                }
+                else {
+                    value = a.setValue(value, addr < 0x400 ? (addr - ours - 1) * 4 : addr - ours - 4);
+                }
             }
             return getBytes(value);
         }

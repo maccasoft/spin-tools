@@ -17,7 +17,7 @@ public class Spin2GlobalContext extends Spin2Context {
     public Spin2GlobalContext() {
 
         // Registers
-
+        
         addSymbol("ijmp3", new NumberLiteral(0x1F0));
         addSymbol("iret3", new NumberLiteral(0x1F1));
         addSymbol("ijmp2", new NumberLiteral(0x1F2));
