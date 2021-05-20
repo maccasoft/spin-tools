@@ -36,15 +36,15 @@ public class Spin2Context implements Context {
     }
 
     public void addSymbol(String name, Expression value) {
-        if (symbols.containsKey(name.toLowerCase())) {
+        if (symbols.containsKey(name)) {
             throw new RuntimeException("Symbol " + name + " already defined");
         }
-        symbols.put(name.toLowerCase(), value);
+        symbols.put(name, value);
     }
 
     @Override
     public Expression getSymbol(String name) {
-        Expression exp = symbols.get(name.toLowerCase());
+        Expression exp = symbols.get(name);
         if (exp == null && parent != null) {
             exp = parent.getSymbol(name);
         }
@@ -57,7 +57,7 @@ public class Spin2Context implements Context {
 
     @Override
     public boolean hasSymbol(String name) {
-        boolean result = symbols.containsKey(name.toLowerCase());
+        boolean result = symbols.containsKey(name);
         if (result == false && parent != null) {
             result = parent.hasSymbol(name);
         }
@@ -65,7 +65,7 @@ public class Spin2Context implements Context {
     }
 
     public int getInteger(String name) {
-        Expression result = getSymbol(name.toLowerCase());
+        Expression result = getSymbol(name);
         return result != null ? result.getNumber().intValue() : 0;
     }
 

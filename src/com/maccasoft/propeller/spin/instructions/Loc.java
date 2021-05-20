@@ -48,7 +48,7 @@ public class Loc extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
             value = o.setValue(value, 0b1110100 | encodeDst(dst.getExpression().toString()));
             int addr = src.getInteger();
             int ours = context.getSymbol("$").getNumber().intValue();

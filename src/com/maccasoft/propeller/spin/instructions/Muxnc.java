@@ -61,7 +61,7 @@ public class Muxnc extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
             value = o.setValue(value, 0b0101101);
             value = cz.setValue(value, encodeEffect(effect));
             value = i.setBoolean(value, src.isLiteral());

@@ -64,7 +64,7 @@ public class Rolword extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
             value = o.setValue(value, 0b1001010);
             value = c.setValue(value, 0);
             value = z.setValue(value, n.getInteger());
@@ -94,7 +94,7 @@ public class Rolword extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
             value = o.setValue(value, 0b1001010);
             value = czi.setValue(value, 0b000);
             value = d.setValue(value, dst.getInteger());

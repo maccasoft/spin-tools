@@ -61,7 +61,7 @@ public class Muls extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
             value = o.setValue(value, 0b1010000);
             value = c.setValue(value, 1);
             value = z.setBoolean(value, "wz".equalsIgnoreCase(effect));

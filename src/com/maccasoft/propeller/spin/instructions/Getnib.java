@@ -64,7 +64,7 @@ public class Getnib extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
             value = o.setValue(value, 0b1000010);
             value = nnn.setValue(value, n.getInteger());
             value = i.setBoolean(value, src.isLiteral());
@@ -93,7 +93,7 @@ public class Getnib extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
             value = o.setValue(value, 0b1000010);
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0b000000000);

@@ -26,7 +26,7 @@ public class Identifier extends Passthrough {
 
     @Override
     public Expression resolve() {
-        return context.getSymbol(name.toLowerCase());
+        return context.getSymbol(name);
     }
 
     @Override

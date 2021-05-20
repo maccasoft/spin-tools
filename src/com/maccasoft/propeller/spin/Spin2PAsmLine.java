@@ -15,9 +15,6 @@ import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 
-import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin.instructions.Empty;
-
 public class Spin2PAsmLine {
 
     Spin2Context scope;
@@ -67,13 +64,7 @@ public class Spin2PAsmLine {
 
     public Spin2PAsmInstructionFactory getInstructionFactory() {
         if (instructionFactory == null) {
-            Expression exp = mnemonic != null ? scope.getSymbol(mnemonic) : new Empty();
-            if (exp instanceof Spin2PAsmInstructionFactory) {
-                instructionFactory = (Spin2PAsmInstructionFactory) exp;
-            }
-            else {
-                instructionFactory = new Empty();
-            }
+            instructionFactory = Spin2PAsmInstructionFactory.get(mnemonic);
         }
         return instructionFactory;
     }

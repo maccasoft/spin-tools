@@ -12,6 +12,8 @@ package com.maccasoft.propeller.spin;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.BitField;
 
@@ -86,6 +88,114 @@ public abstract class Spin2InstructionObject {
         return sb.toString();
     }
 
+    // Conditions
+    public static Map<String, Integer> conditions = new HashMap<String, Integer>();
+    static {
+        conditions.put("_ret_", 0b0000);
+        conditions.put("if_nc_and_nz", 0b0001);
+        conditions.put("if_nz_and_nc", 0b0001);
+        conditions.put("if_gt", 0b0001);
+        conditions.put("if_a", 0b0001);
+        conditions.put("if_00", 0b0001);
+        conditions.put("if_nc_and_z", 0b0010);
+        conditions.put("if_z_and_nc", 0b0010);
+        conditions.put("if_01", 0b0010);
+        conditions.put("if_nc", 0b0011);
+        conditions.put("if_ge", 0b0011);
+        conditions.put("if_ae", 0b0011);
+        conditions.put("if_0x", 0b0011);
+        conditions.put("if_c_and_nz", 0b0100);
+        conditions.put("if_nz_and_c", 0b0100);
+        conditions.put("if_10", 0b0100);
+        conditions.put("if_nz", 0b0101);
+        conditions.put("if_ne", 0b0101);
+        conditions.put("if_x0", 0b0101);
+        conditions.put("if_c_ne_z", 0b0110);
+        conditions.put("if_z_ne_c", 0b0110);
+        conditions.put("if_diff", 0b0110);
+        conditions.put("if_nc_or_nz", 0b0111);
+        conditions.put("if_nz_or_nc", 0b0111);
+        conditions.put("if_not_11", 0b0111);
+        conditions.put("if_c_and_z", 0b1000);
+        conditions.put("if_z_and_c", 0b1000);
+        conditions.put("if_11", 0b1000);
+        conditions.put("if_c_eq_z", 0b1001);
+        conditions.put("if_z_eq_c", 0b1001);
+        conditions.put("if_same", 0b1001);
+        conditions.put("if_z", 0b1010);
+        conditions.put("if_e", 0b1010);
+        conditions.put("if_x1", 0b1010);
+        conditions.put("if_nc_or_z", 0b1011);
+        conditions.put("if_z_or_nc", 0b1011);
+        conditions.put("if_not_10", 0b1011);
+        conditions.put("if_c", 0b1100);
+        conditions.put("if_lt", 0b1100);
+        conditions.put("if_b", 0b1100);
+        conditions.put("if_1x", 0b1100);
+        conditions.put("if_c_or_nz", 0b1101);
+        conditions.put("if_nz_or_c", 0b1101);
+        conditions.put("if_not_01", 0b1101);
+        conditions.put("if_c_or_z", 0b1110);
+        conditions.put("if_z_or_c", 0b1110);
+        conditions.put("if_le", 0b1110);
+        conditions.put("if_be", 0b1110);
+        conditions.put("if_not_00", 0b1110);
+    }
+
+    // Mod
+    public static Map<String, Integer> mod = new HashMap<String, Integer>();
+    static {
+        mod.put("_clr", 0b0000);
+        mod.put("_nc_and_nz", 0b0001);
+        mod.put("_nz_and_nc", 0b0001);
+        mod.put("_gt", 0b0001);
+        mod.put("_a", 0b0001);
+        mod.put("_00", 0b0001);
+        mod.put("_nc_and_z", 0b0010);
+        mod.put("_z_and_nc", 0b0010);
+        mod.put("_01", 0b0010);
+        mod.put("_nc", 0b0011);
+        mod.put("_ge", 0b0011);
+        mod.put("_ae", 0b0011);
+        mod.put("_0x", 0b0011);
+        mod.put("_c_and_nz", 0b0100);
+        mod.put("_nz_and_c", 0b0100);
+        mod.put("_10", 0b0100);
+        mod.put("_nz", 0b0101);
+        mod.put("_ne", 0b0101);
+        mod.put("_x0", 0b0101);
+        mod.put("_c_ne_z", 0b0110);
+        mod.put("_z_ne_c", 0b0110);
+        mod.put("_diff", 0b0110);
+        mod.put("_nc_or_nz", 0b0111);
+        mod.put("_nz_or_nc", 0b0111);
+        mod.put("_not_11", 0b0111);
+        mod.put("_c_and_z", 0b1000);
+        mod.put("_z_and_c", 0b1000);
+        mod.put("_11", 0b1000);
+        mod.put("_c_eq_z", 0b1001);
+        mod.put("_z_eq_c", 0b1001);
+        mod.put("_same", 0b1001);
+        mod.put("_z", 0b1010);
+        mod.put("_e", 0b1010);
+        mod.put("_x1", 0b1010);
+        mod.put("_nc_or_z", 0b1011);
+        mod.put("_z_or_nc", 0b1011);
+        mod.put("_not_10", 0b1011);
+        mod.put("_c", 0b1100);
+        mod.put("_lt", 0b1100);
+        mod.put("_b", 0b1100);
+        mod.put("_1x", 0b1100);
+        mod.put("_c_or_nz", 0b1101);
+        mod.put("_nz_or_c", 0b1101);
+        mod.put("_not_01", 0b1101);
+        mod.put("_c_or_z", 0b1110);
+        mod.put("_z_or_c", 0b1110);
+        mod.put("_le", 0b1110);
+        mod.put("_be", 0b1110);
+        mod.put("_not_00", 0b1110);
+    }
+
     protected final Spin2Context context;
 
     public Spin2InstructionObject(Spin2Context context) {
@@ -123,13 +233,13 @@ public abstract class Spin2InstructionObject {
     }
 
     protected int encodeAugs(String condition, int number) {
-        int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+        int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
         value = o.setValue(value, 0b1111000);
         return x.setValue(value, number >> 9);
     }
 
     protected int encodeAugd(String condition, int number) {
-        int value = e.setValue(0, condition == null ? 0b1111 : context.getInteger(condition));
+        int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
         value = o.setValue(value, 0b1111100);
         return x.setValue(value, number >> 9);
     }
@@ -192,7 +302,7 @@ public abstract class Spin2InstructionObject {
 
     protected int encodePtr(Spin2PAsmExpression expression) {
         int result = 0;
-    
+
         String str = expression.toString().toLowerCase();
         if (str.contains("ptra")) {
             result = 0b100000000;
@@ -244,7 +354,7 @@ public abstract class Spin2InstructionObject {
                 result |= 0b000100000;
             }
         }
-    
+
         return result;
     }
 
