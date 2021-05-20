@@ -145,6 +145,10 @@ public class Spin2Compiler extends Spin2BaseVisitor {
 
     @Override
     public Object visitConstants(ConstantsContext ctx) {
+        while (scope.getParent() != null) {
+            scope = scope.getParent();
+        }
+
         ctx.accept(new Spin2BaseVisitor() {
             int enumValue = 0, enumIncrement = 1;
 
