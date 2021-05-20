@@ -16,7 +16,7 @@ public class Multiply extends BinaryOperator {
 
     @Override
     public Number getNumber() {
-        if (term1.getNumber() instanceof Integer && term2.getNumber() instanceof Integer) {
+        if (!(term1.getNumber() instanceof Double) && !(term2.getNumber() instanceof Double)) {
             return term1.getNumber().intValue() * term2.getNumber().intValue();
         }
         return term1.getNumber().floatValue() * term2.getNumber().floatValue();

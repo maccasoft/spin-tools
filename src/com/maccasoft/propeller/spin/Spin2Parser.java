@@ -6186,8 +6186,8 @@ public class Spin2Parser extends Parser {
 	public static class ExpressionContext extends ParserRuleContext {
 		public ExpressionContext left;
 		public Token operator;
-		public ExpressionContext right;
 		public ExpressionContext exp;
+		public ExpressionContext right;
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
 		}
@@ -6269,7 +6269,7 @@ public class Spin2Parser extends Parser {
 					consume();
 				}
 				setState(794);
-				((ExpressionContext)_localctx).right = expression(12);
+				((ExpressionContext)_localctx).exp = expression(12);
 				}
 				break;
 			case T__503:
@@ -6303,7 +6303,7 @@ public class Spin2Parser extends Parser {
 				setState(800);
 				match(T__509);
 				setState(801);
-				expression(0);
+				((ExpressionContext)_localctx).exp = expression(0);
 				setState(802);
 				match(T__510);
 				}

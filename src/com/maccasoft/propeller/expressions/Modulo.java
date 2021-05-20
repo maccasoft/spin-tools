@@ -17,7 +17,7 @@ public class Modulo extends BinaryOperator {
     @Override
     public Number getNumber() {
         Number divisor = term2.getNumber();
-        if (term1.getNumber() instanceof Integer && divisor instanceof Integer) {
+        if (!(term1.getNumber() instanceof Double) && !(divisor instanceof Double)) {
             if (divisor.intValue() == 0) {
                 throw new EvaluationException("Division by zero.");
             }

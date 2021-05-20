@@ -10,15 +10,11 @@
 
 package com.maccasoft.propeller.spin;
 
-import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-
+import com.maccasoft.propeller.expressions.Abs;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addpins;
 import com.maccasoft.propeller.expressions.And;
@@ -26,8 +22,13 @@ import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.Frac;
+import com.maccasoft.propeller.expressions.Group;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
+import com.maccasoft.propeller.expressions.LogicalAnd;
+import com.maccasoft.propeller.expressions.LogicalOr;
+import com.maccasoft.propeller.expressions.LogicalXor;
 import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.Negative;
@@ -35,8 +36,11 @@ import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Positive;
 import com.maccasoft.propeller.expressions.Round;
+import com.maccasoft.propeller.expressions.Sca;
+import com.maccasoft.propeller.expressions.Scas;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
+import com.maccasoft.propeller.expressions.Sqrt;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.Xor;
@@ -75,6 +79,9 @@ public class Spin2Compiler extends Spin2BaseVisitor {
         int _clkfreq = 20000000;
         if (scope.hasSymbol("_clkfreq")) {
             _clkfreq = scope.getSymbol("_clkfreq").getNumber().intValue();
+        }
+        if (scope.hasSymbol("_CLKFREQ")) {
+            _clkfreq = scope.getSymbol("_CLKFREQ").getNumber().intValue();
         }
         scope.addSymbol("clkmode_", new NumberLiteral(getClockMode(20000000, _clkfreq)));
 
@@ -165,7 +172,10 @@ public class Spin2Compiler extends Spin2BaseVisitor {
 
                 if (ctx.name != null) {
                     if (ctx.exp != null) {
-                        Expression expression = compileExpression(scope, ctx.exp);
+                        if ("ntsc_blank".equals(ctx.name.getText())) {
+                            System.out.println(ctx.name.getText());
+                        }
+                        Expression expression = buildExpression(scope, ctx.exp);
                         scope.addSymbol(ctx.name.getText(), expression);
                     }
                     else {
@@ -208,58 +218,88 @@ public class Spin2Compiler extends Spin2BaseVisitor {
         return null;
     }
 
-    public static Expression compileExpression(Spin2Context scope, ExpressionContext ctx) {
+    public static Expression buildExpression(Spin2Context scope, ExpressionContext ctx) {
         if (ctx.operator != null) {
             String op = ctx.operator.getText();
-            if (ctx.left == null) {
+            if (ctx.exp != null) {
                 if ("+".equals(op)) {
-                    return new Positive(compileExpression(scope, ctx.right));
+                    return new Positive(buildExpression(scope, ctx.exp));
                 }
                 else if ("-".equals(op)) {
-                    return new Negative(compileExpression(scope, ctx.right));
+                    return new Negative(buildExpression(scope, ctx.exp));
+                }
+                else if ("abs".equalsIgnoreCase(op)) {
+                    return new Abs(buildExpression(scope, ctx.exp));
+                }
+                else if ("sqrt".equalsIgnoreCase(op)) {
+                    return new Sqrt(buildExpression(scope, ctx.exp));
+                }
+                else if ("float".equalsIgnoreCase(op)) {
+                    return new com.maccasoft.propeller.expressions.Float(buildExpression(scope, ctx.exp));
+                }
+                else if ("round".equalsIgnoreCase(op)) {
+                    return new Round(buildExpression(scope, ctx.exp));
+                }
+                else if ("trunc".equalsIgnoreCase(op)) {
+                    return new Trunc(buildExpression(scope, ctx.exp));
                 }
             }
             else {
-                if ("+".equals(op)) {
-                    return new Add(compileExpression(scope, ctx.left), compileExpression(scope, ctx.right));
-                }
-                else if ("-".equals(op)) {
-                    return new Subtract(compileExpression(scope, ctx.left), compileExpression(scope, ctx.right));
-                }
-                else if ("/".equals(op)) {
-                    return new Divide(compileExpression(scope, ctx.left), compileExpression(scope, ctx.right));
-                }
-                else if ("*".equals(op)) {
-                    return new Multiply(compileExpression(scope, ctx.left), compileExpression(scope, ctx.right));
-                }
-                else if ("|".equals(op)) {
-                    return new Or(compileExpression(scope, ctx.left), compileExpression(scope, ctx.right));
-                }
-                else if ("^".equals(op)) {
-                    return new Xor(compileExpression(scope, ctx.left), compileExpression(scope, ctx.right));
-                }
-                else if ("&".equals(op)) {
-                    return new And(compileExpression(scope, ctx.left), compileExpression(scope, ctx.right));
-                }
-                else if (">>".equals(op)) {
-                    return new ShiftRight(compileExpression(scope, ctx.left), compileExpression(scope, ctx.right));
+                if (">>".equals(op)) {
+                    return new ShiftRight(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
                 }
                 else if ("<<".equals(op)) {
-                    return new ShiftLeft(compileExpression(scope, ctx.left), compileExpression(scope, ctx.right));
+                    return new ShiftLeft(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
+                }
+                else if ("&".equals(op)) {
+                    return new And(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
+                }
+                else if ("^".equals(op)) {
+                    return new Xor(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
+                }
+                else if ("|".equals(op)) {
+                    return new Or(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
+                }
+                else if ("*".equals(op)) {
+                    return new Multiply(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
+                }
+                else if ("/".equals(op)) {
+                    return new Divide(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
                 }
                 else if ("//".equals(op)) {
-                    return new Modulo(compileExpression(scope, ctx.left), compileExpression(scope, ctx.right));
+                    return new Modulo(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
+                }
+                else if ("+".equals(op)) {
+                    return new Add(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
+                }
+                else if ("-".equals(op)) {
+                    return new Subtract(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
                 }
                 else if ("addpins".equalsIgnoreCase(op)) {
-                    return new Addpins(compileExpression(scope, ctx.left), compileExpression(scope, ctx.right));
+                    return new Addpins(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
                 }
-                else if ("round".equalsIgnoreCase(op)) {
-                    return new Round(compileExpression(scope, ctx.exp));
+                else if ("frac".equalsIgnoreCase(op)) {
+                    return new Frac(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
                 }
-                else if ("trunc".equalsIgnoreCase(op)) {
-                    return new Trunc(compileExpression(scope, ctx.exp));
+                else if ("sca".equalsIgnoreCase(op)) {
+                    return new Sca(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
+                }
+                else if ("scas".equalsIgnoreCase(op)) {
+                    return new Scas(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
+                }
+                else if ("&&".equals(op) || "and".equalsIgnoreCase(op)) {
+                    return new LogicalAnd(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
+                }
+                else if ("^^".equals(op) || "xor".equalsIgnoreCase(op)) {
+                    return new LogicalXor(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
+                }
+                else if ("||".equals(op) || "or".equalsIgnoreCase(op)) {
+                    return new LogicalOr(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
                 }
             }
+        }
+        else if ("(".equals(ctx.getStart().getText())) {
+            return new Group(buildExpression(scope, ctx.exp));
         }
         else if (ctx.atom() != null) {
             String s = ctx.atom().getText();
@@ -293,86 +333,4 @@ public class Spin2Compiler extends Spin2BaseVisitor {
         }
         return new NumberLiteral(0);
     }
-
-    public static void main(String[] args) {
-        Spin2Compiler compiler = new Spin2Compiler();
-        try {
-            String text = ""
-                + "CON\n"
-                + "\n"
-                + "    _clkfreq = 160_000_000\n"
-                + "    delay    = _clkfreq / 2\n"
-                + "\n"
-                + "DAT\n"
-                + "\n"
-                + "                org   $000\n"
-                + "\n"
-                + "start\n"
-                + "                asmclk                      ' set clock\n"
-                + "                jmp     #@main              ' jump to hub program\n"
-                + "\n"
-                + "ct              res     1\n"
-                + "\n"
-                + "' HUB Program\n"
-                + "\n"
-                + "                orgh    $400\n"
-                + "\n"
-                + "main\n"
-                + "\n"
-                + "                getct   ct                  ' get current timer\n"
-                + ".loop           drvnot  #56                 ' toggle output\n"
-                + "                addct1  ct, ##delay         ' set delay to timer 1\n"
-                + "                waitct1                     ' wait for timer 1 expire\n"
-                + "                jmp     #.loop\n"
-                + "\n";
-
-            CharStream input = CharStreams.fromString(text);
-
-            Spin2Lexer lexer = new Spin2Lexer(input);
-            lexer.removeErrorListeners();
-            CommonTokenStream tokens = new CommonTokenStream(lexer);
-            Spin2Parser parser = new Spin2Parser(tokens);
-            parser.removeErrorListeners();
-
-            parser.prog().accept(compiler);
-
-            for (Spin2PAsmLine line : compiler.source) {
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                line.generateObjectCode(os);
-                byte[] code = os.toByteArray();
-
-                int address = line.getScope().getHubAddress();
-                int addr = line.getScope().getAddress();
-
-                int index = 0;
-                System.out.print(String.format("%06X ", address));
-                System.out.print(addr < 0x400 ? String.format("%03X ", addr++) : "    ");
-                System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-                System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-                System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-                System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-                System.out.println(" | " + line);
-                while (index < code.length) {
-                    System.out.print(String.format("%06X ", address + index));
-                    System.out.print(addr < 0x400 ? String.format("%03X ", addr++) : "    ");
-                    System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-                    System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-                    System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-                    System.out.print((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-                    System.out.println(" | ");
-                }
-                if (index > 4 && (index % 4) != 0) {
-                    while ((index % 4) != 0) {
-                        System.out.print("   ");
-                        index++;
-                    }
-                    System.out.println(" | ");
-                }
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 }

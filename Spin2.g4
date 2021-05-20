@@ -568,7 +568,7 @@ prefix: ('##' | '#') '\\'? ;
 type: ('LONG' | 'long' | 'WORD' | 'word' | 'BYTE' | 'byte') ; 
 
 expression
-    : operator=('+' | '-' | '!!' | '!' | '~' | 'ABS' | 'abs' | 'ENCOD' | 'encod' | 'DECOD' | 'decod' | 'RMASK' | 'rmask' | 'ONES' | 'ones' | 'SQRT' | 'sqrt' | 'QLOG' | 'qlog' | 'QEXP' | 'qexp') right=expression
+    : operator=('+' | '-' | '!!' | '!' | '~' | 'ABS' | 'abs' | 'ENCOD' | 'encod' | 'DECOD' | 'decod' | 'RMASK' | 'rmask' | 'ONES' | 'ones' | 'SQRT' | 'sqrt' | 'QLOG' | 'qlog' | 'QEXP' | 'qexp') exp=expression
     | left=expression operator=('>>' | '<<' | 'sar' | 'ror' | 'rol' | 'rev' | 'zerox' | 'signx' ) right=expression
     | left=expression operator=('&' | '^' | '|') right=expression
     | left=expression operator=('*' | '/' | '+/' | '//' | '+//' | 'sca' | 'scas' | 'frac') right=expression
@@ -578,7 +578,7 @@ expression
     | left=expression operator=('&&'| 'and' | '^^' | 'xor' | '||' | 'or') right=expression
     | left=expression operator='?' expression operator=':' right=expression
     | operator=('FLOAT' | 'float' | 'ROUND' | 'round' | 'TRUNC' | 'trunc') '(' exp=expression ')'
-    | '(' expression ')'
+    | '(' exp=expression ')'
     | ('@')? atom
     ;
 
