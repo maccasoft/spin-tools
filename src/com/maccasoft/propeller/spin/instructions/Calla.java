@@ -50,7 +50,7 @@ public class Calla extends Spin2PAsmInstructionFactory {
         @Override
         public byte[] getBytes() {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
-            value = o.setValue(value, 0b1101011);
+            value = o.setValue(value, 0b1101110);
             int addr = dst.getInteger();
             int ours = context.getSymbol("$").getNumber().intValue();
             if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {

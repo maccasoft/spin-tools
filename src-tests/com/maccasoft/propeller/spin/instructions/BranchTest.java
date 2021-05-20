@@ -104,6 +104,25 @@ class BranchTest {
         }), Spin2InstructionObject.decodeToString(compile("DAT\n  org $10\n    jmprel #$1\n")));
     }
 
+    @Test
+    void testAbsoluteAddress() throws Exception {
+        Assertions.assertEquals(Spin2InstructionObject.decodeToString(new byte[] {
+            (byte) 0x12, (byte) 0x00, (byte) 0xA0, (byte) 0xFD
+        }), Spin2InstructionObject.decodeToString(compile("DAT\n  org $10\n    call #\\$12\n")));
+
+        Assertions.assertEquals(Spin2InstructionObject.decodeToString(new byte[] {
+            (byte) 0x12, (byte) 0x00, (byte) 0xC0, (byte) 0xFD
+        }), Spin2InstructionObject.decodeToString(compile("DAT\n  org $10\n    calla #\\$12\n")));
+
+        Assertions.assertEquals(Spin2InstructionObject.decodeToString(new byte[] {
+            (byte) 0x12, (byte) 0x00, (byte) 0xE0, (byte) 0xFD
+        }), Spin2InstructionObject.decodeToString(compile("DAT\n  org $10\n    callb #\\$12\n")));
+
+        Assertions.assertEquals(Spin2InstructionObject.decodeToString(new byte[] {
+            (byte) 0x12, (byte) 0x00, (byte) 0x80, (byte) 0xFD
+        }), Spin2InstructionObject.decodeToString(compile("DAT\n  org $10\n    jmp #\\$12\n")));
+    }
+
     byte[] compile(String text) throws Exception {
         Spin2Compiler compiler = new Spin2Compiler();
 

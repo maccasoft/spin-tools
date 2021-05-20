@@ -50,9 +50,22 @@ public class Call extends Spin2PAsmInstructionFactory {
         @Override
         public byte[] getBytes() {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
-            value = o.setValue(value, 0b1101011);
-            value = r.setBoolean(value, !dst.getPrefix().endsWith("\\"));
-            value = a.setValue(value, dst.getPrefix().endsWith("\\") ? dst.getInteger() : (dst.getInteger() - context.getSymbol("$").getNumber().intValue() - 1) * 4);
+            value = o.setValue(value, 0b1101101);
+            int addr = dst.getInteger();
+            int ours = context.getSymbol("$").getNumber().intValue();
+            if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
+                value = r.setBoolean(value, false);
+                value = a.setValue(value, addr);
+            }
+            else {
+                value = r.setBoolean(value, !dst.isAbsolute());
+                if (dst.isAbsolute()) {
+                    value = a.setValue(value, addr);
+                }
+                else {
+                    value = a.setValue(value, addr < 0x400 ? (addr - ours - 1) * 4 : addr - ours - 4);
+                }
+            }
             return getBytes(value);
         }
 
