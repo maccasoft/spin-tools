@@ -46,6 +46,10 @@ public class Spin2PAsmLine {
         return label;
     }
 
+    public boolean isLocalLabel() {
+        return label != null && label.startsWith(".");
+    }
+
     public String getCondition() {
         return condition;
     }

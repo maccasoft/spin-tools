@@ -32,7 +32,11 @@ public class Spin2Context implements Context {
 
     public Spin2Context(Spin2Context parent) {
         this.parent = parent;
-        addSymbol("$", new ContextLiteral(this));
+        symbols.put("$", new ContextLiteral(this));
+    }
+
+    public Spin2Context getParent() {
+        return parent;
     }
 
     public void addSymbol(String name, Expression value) {

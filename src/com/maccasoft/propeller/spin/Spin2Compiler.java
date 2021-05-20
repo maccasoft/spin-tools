@@ -67,6 +67,10 @@ public class Spin2Compiler extends Spin2BaseVisitor {
     public Object visitProg(ProgContext ctx) {
         super.visitProg(ctx);
 
+        while (scope.getParent() != null) {
+            scope = scope.getParent();
+        }
+
         int _clkfreq = 20000000;
         if (scope.hasSymbol("_clkfreq")) {
             _clkfreq = scope.getSymbol("_clkfreq").getNumber().intValue();
@@ -168,8 +172,14 @@ public class Spin2Compiler extends Spin2BaseVisitor {
         Spin2PAsmLine line = lineBuilder.getLine();
         if (line.getLabel() != null) {
             try {
+                if (!line.isLocalLabel() && scope.getParent() != null) {
+                    scope = scope.getParent();
+                }
                 scope.addSymbol(line.getLabel(), new ContextLiteral(line.getScope()));
                 scope.addSymbol("@" + line.getLabel(), new ContextLiteral(line.getScope()));
+                if (!line.isLocalLabel()) {
+                    scope = new Spin2Context(scope);
+                }
             } catch (RuntimeException e) {
                 System.err.println(line);
                 e.printStackTrace();
@@ -298,8 +308,7 @@ public class Spin2Compiler extends Spin2BaseVisitor {
                 + "                jmp     #.loop\n"
                 + "\n";
 
-            //CharStream input = CharStreams.fromString(text);
-            CharStream input = CharStreams.fromFileName("/home/marco/Propeller/M6502-P2/apple1/m6502_apple1_cvbs.spin2");
+            CharStream input = CharStreams.fromString(text);
 
             Spin2Lexer lexer = new Spin2Lexer(input);
             lexer.removeErrorListeners();
