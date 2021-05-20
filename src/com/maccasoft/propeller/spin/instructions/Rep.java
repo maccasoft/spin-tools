@@ -52,9 +52,20 @@ public class Rep extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
             value = o.setValue(value, 0b1100110);
             value = c.setValue(value, 1);
-            value = l.setBoolean(value, dst.isLiteral());
             value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
+
+            String symbol = dst.getExpression().toString();
+            if (symbol.startsWith("@")) {
+                int addr = context.getSymbol(symbol.substring(1)).getNumber().intValue();
+                int ours = context.getSymbol("$").getNumber().intValue();
+                value = l.setBoolean(value, true);
+                value = d.setValue(value, dst.isLiteral() ? addr - ours : addr - ours - 1);
+            }
+            else {
+                value = l.setBoolean(value, dst.isLiteral());
+                value = d.setValue(value, dst.getInteger());
+            }
+
             value = s.setValue(value, src.getInteger());
             return getBytes(value);
         }
