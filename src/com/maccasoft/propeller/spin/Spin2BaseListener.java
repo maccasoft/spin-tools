@@ -124,6 +124,66 @@ public class Spin2BaseListener implements Spin2Listener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterMethod(Spin2Parser.MethodContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitMethod(Spin2Parser.MethodContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterParameters(Spin2Parser.ParametersContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitParameters(Spin2Parser.ParametersContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterResult(Spin2Parser.ResultContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitResult(Spin2Parser.ResultContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterLocalvars(Spin2Parser.LocalvarsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitLocalvars(Spin2Parser.LocalvarsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterLocalvar(Spin2Parser.LocalvarContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitLocalvar(Spin2Parser.LocalvarContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterData(Spin2Parser.DataContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -148,42 +208,6 @@ public class Spin2BaseListener implements Spin2Listener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterTypeValue(Spin2Parser.TypeValueContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitTypeValue(Spin2Parser.TypeValueContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterDataValue(Spin2Parser.DataValueContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitDataValue(Spin2Parser.DataValueContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterDirective(Spin2Parser.DirectiveContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitDirective(Spin2Parser.DirectiveContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterLabel(Spin2Parser.LabelContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -191,18 +215,6 @@ public class Spin2BaseListener implements Spin2Listener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitLabel(Spin2Parser.LabelContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterOpcode(Spin2Parser.OpcodeContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitOpcode(Spin2Parser.OpcodeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -220,13 +232,13 @@ public class Spin2BaseListener implements Spin2Listener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterEffect(Spin2Parser.EffectContext ctx) { }
+	@Override public void enterOpcode(Spin2Parser.OpcodeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitEffect(Spin2Parser.EffectContext ctx) { }
+	@Override public void exitOpcode(Spin2Parser.OpcodeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -256,13 +268,25 @@ public class Spin2BaseListener implements Spin2Listener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterType(Spin2Parser.TypeContext ctx) { }
+	@Override public void enterEffect(Spin2Parser.EffectContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitType(Spin2Parser.TypeContext ctx) { }
+	@Override public void exitEffect(Spin2Parser.EffectContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterDataValue(Spin2Parser.DataValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDataValue(Spin2Parser.DataValueContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

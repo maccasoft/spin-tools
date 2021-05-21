@@ -396,7 +396,12 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
     }
 
     public static Spin2PAsmInstructionFactory get(String mnemonic) {
-        return mnemonic != null ? symbols.get(mnemonic.toLowerCase()) : Empty.instance;
+        Spin2PAsmInstructionFactory factory = mnemonic != null ? symbols.get(mnemonic.toLowerCase()) : Empty.instance;
+        if (factory == null) {
+            System.err.println("Can't find factory for mnemonic " + mnemonic + "");
+            factory = Empty.instance;
+        }
+        return factory;
     }
 
     public Spin2PAsmInstructionFactory() {

@@ -16,9 +16,10 @@ import java.util.List;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin.Spin2Parser.ArgumentContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ConditionContext;
+import com.maccasoft.propeller.spin.Spin2Parser.DataLineContext;
 import com.maccasoft.propeller.spin.Spin2Parser.DataValueContext;
-import com.maccasoft.propeller.spin.Spin2Parser.DirectiveContext;
 import com.maccasoft.propeller.spin.Spin2Parser.EffectContext;
+import com.maccasoft.propeller.spin.Spin2Parser.ExpressionContext;
 import com.maccasoft.propeller.spin.Spin2Parser.LabelContext;
 import com.maccasoft.propeller.spin.Spin2Parser.OpcodeContext;
 
@@ -34,8 +35,11 @@ public class Spin2PAsmLineBuilderVisitor extends Spin2BaseVisitor {
     List<Spin2PAsmExpression> arguments = new ArrayList<Spin2PAsmExpression>();
     String effect;
 
-    public Spin2PAsmLineBuilderVisitor(Spin2Context scope) {
+    public Spin2PAsmLineBuilderVisitor(Spin2Context scope, DataLineContext ctx) {
         this.scope = scope;
+        if (ctx.directive != null) {
+            this.mnemonic = ctx.directive.getText();
+        }
     }
 
     @Override
@@ -57,15 +61,16 @@ public class Spin2PAsmLineBuilderVisitor extends Spin2BaseVisitor {
     }
 
     @Override
-    public Object visitDirective(DirectiveContext ctx) {
-        mnemonic = ctx.getText();
+    public Object visitArgument(ArgumentContext ctx) {
+        Expression expression = Spin2Compiler.buildExpression(scope, ctx.expression());
+        arguments.add(new Spin2PAsmExpression(ctx.prefix() != null ? ctx.prefix().getText() : null, expression, null));
         return null;
     }
 
     @Override
-    public Object visitArgument(ArgumentContext ctx) {
-        Expression expression = Spin2Compiler.buildExpression(scope, ctx.expression());
-        arguments.add(new Spin2PAsmExpression(ctx.prefix() != null ? ctx.prefix().getText() : null, expression, null));
+    public Object visitExpression(ExpressionContext ctx) {
+        Expression expression = Spin2Compiler.buildExpression(scope, ctx);
+        arguments.add(new Spin2PAsmExpression(null, expression, null));
         return null;
     }
 

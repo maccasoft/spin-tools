@@ -123,14 +123,34 @@ class Spin2CompilerFunctionalTest {
         Assertions.assertArrayEquals(expected, result);
     }
 
+    @Test
+    void testCompileBlinkSpin() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "    _clkfreq = 160_000_000\n"
+            + "\n"
+            + "PUB main() | ct\n"
+            //+ "\n"
+            //+ "    ct := getct()                   ' get current timer\n"
+            //+ "    repeat\n"
+            //+ "        pint(56)                    ' toggle pin 56\n"
+            //+ "        waitct(ct += _clkfreq / 2)  ' wait half second"
+            + "\n";
+
+        byte[] expected = new byte[] {};
+
+        byte[] result = compile(text);
+        Assertions.assertArrayEquals(expected, result);
+    }
+
     byte[] compile(String text) throws Exception {
         Spin2Compiler compiler = new Spin2Compiler();
 
         Spin2Lexer lexer = new Spin2Lexer(CharStreams.fromString(text));
-        lexer.removeErrorListeners();
+        //lexer.removeErrorListeners();
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         Spin2Parser parser = new Spin2Parser(tokens);
-        parser.removeErrorListeners();
+        //parser.removeErrorListeners();
 
         parser.prog().accept(compiler);
 

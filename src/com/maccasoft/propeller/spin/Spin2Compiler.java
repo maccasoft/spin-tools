@@ -191,7 +191,7 @@ public class Spin2Compiler extends Spin2BaseVisitor {
 
     @Override
     public Object visitDataLine(DataLineContext ctx) {
-        Spin2PAsmLineBuilderVisitor lineBuilder = new Spin2PAsmLineBuilderVisitor(new Spin2Context(scope));
+        Spin2PAsmLineBuilderVisitor lineBuilder = new Spin2PAsmLineBuilderVisitor(new Spin2Context(scope), ctx);
         ctx.accept(lineBuilder);
 
         Spin2PAsmLine line = lineBuilder.getLine();
@@ -213,6 +213,10 @@ public class Spin2Compiler extends Spin2BaseVisitor {
         source.addAll(line.expand());
 
         return null;
+    }
+
+    public List<Spin2PAsmLine> getSource() {
+        return source;
     }
 
     public static Expression buildExpression(Spin2Context scope, ExpressionContext ctx) {
