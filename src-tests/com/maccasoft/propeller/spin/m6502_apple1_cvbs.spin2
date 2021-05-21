@@ -1,0 +1,1945 @@
+{
+    MOS6502 CPU / Apple-1 Emulator
+
+    Copyright (c) 2021 by Marco Maccaferri <macca@maccasoft.com>
+}
+
+CON
+
+    _CLKFREQ      = 160_000_000
+
+    CVBS_PIN      = 48 addpins 1
+
+    PS2_DATA      = 25
+    PS2_CLOCK     = 24
+
+    LEFT_CTRL   = %0000_0001
+    LEFT_SHIFT  = %0000_0010
+    LEFT_ALT    = %0000_0100
+    LEFT_GUI    = %0000_1000
+    RIGHT_CTRL  = %0001_0000
+    RIGHT_SHIFT = %0010_0000
+    RIGHT_ALT   = %0100_0000
+    RIGHT_GUI   = %1000_0000
+
+    REGP_N = 7
+    REGP_V = 6
+    REGP_B = 4
+    REGP_D = 3
+    REGP_I = 2
+    REGP_Z = 1
+    REGP_C = 0
+
+
+DAT             org     $000, $1F0
+
+cog_6502
+                asmclk
+
+                add     ptrb, ##@lut_6502 - @cog_6502
+                setq2   #$200-1
+                rdlong  0, ptrb
+
+                coginit #1, ##@ntsc_driver  ' start video driver on cog #1
+                waitatn                     ' wait for init complete
+                setluts #1                  ' enable lut sharing
+
+                getct   ts                  ' timer reference for clock throttling
+                mov     _I, #4              ' reset cycles
+
+                mov     _P, #%00110000      ' initial flags
+                mov     _S, #$FF            ' initial stack pointer
+
+                mov     ptrb, ##$FFFC       ' read reset vector
+                add     ptrb, ram_addr      ' |
+                rdword  ptrb, ptrb          ' |
+                add     ptrb, ram_addr      ' |
+
+                rep     @.loop, #8          ' ready to single-step
+                push    #.loop
+
+.loop           nop
+                nop
+
+                add     _T, _I              ' update total cycles count
+
+                mul     _I, _I_CLK          ' clock throttling
+                addct1  ts, _I              ' |
+                waitct1                     ' |
+
+                rdbyte  t1, ptrb++          ' fetch instruction
+
+                rdlut   t1, t1              ' decode instruction
+
+                getnib  _I, t1, #7          ' get cycles count
+                setnib  t1, #0, #7          ' |
+
+                execf   t1                  ' execute instruction
+
+
+'
+'
+' Instructions
+'
+i_adc_abs       call    #\_fetch_abs        ' %1_1111110
+i_adc_abs_x     call    #\_fetch_abs_x      ' %1_111110
+i_adc_abs_y     call    #\_fetch_abs_y      ' %1_11110
+i_adc_ind_x     call    #\_fetch_ind_x      ' %1_1110
+i_adc_ind_y     call    #\_fetch_ind_y      ' %1_110
+i_adc_zpg       call    #\_fetch_zpg        ' %1_10
+i_adc_zpg_x     call    #\_fetch_zpg_x      ' %1_0
+i_adc_imm       rdbyte  t1, ptrb++          ' %0
+
+_adc            testb   _P, #REGP_C     wc
+
+                testb   _P, #REGP_D     wz
+        if_z    jmp     #_adc_dec
+
+                getbyte t3, _A, #0          ' t3 = sum
+                addx    t3, t1              ' |
+                testb   t3, #7          wz  ' affects N
+                bitz    _P, #REGP_N         ' |
+
+                getbyte t2, _A, #0          ' t2 = ~(A ^ operand)
+                xor     t2, t1              ' |
+                xor     t2, #$FF            ' |
+                getbyte t4, _A, #0          ' t4 = A ^ sum
+                xor     t4, t3
+                and     t2, t4              ' t2 = ~(A ^ operand) & (A ^ sum)
+                testb   t2, #7          wz  ' affects V
+                bitz    _P, #REGP_V         ' |
+
+                testb   t3, #8          wz  ' affects C
+                bitz    _P, #REGP_C         ' |
+
+                getbyte _A, t3, #0
+
+                test    _A, #$FF        wz  ' affects Z
+        _ret_   bitz    _P, #REGP_Z         ' |
+
+_adc_dec        mov     t2, _A              ' t2 = lo
+                and     t2, #$0F
+                mov     t4, t1
+                and     t4, #$0F
+                addx    t2, t4
+
+                mov     t3, _A              ' t3 = hi
+                and     t3, #$F0
+                mov     t4, t1
+                and     t4, #$F0
+                add     t3, t4
+
+                cmp     t2, #$09        wcz
+        if_a    add     t2, #$06
+        if_a    add     t3, #$10
+
+                testb   t3, #7          wz  ' affects N
+                bitz    _P, #REGP_N         ' |
+
+                getbyte t5, _A, #0          ' t5 = ~(A ^ operand)
+                xor     t5, t1              ' |
+                xor     t5, #$FF            ' |
+                getbyte t4, _A, #0          ' t4 = A ^ hi
+                xor     t4, t3
+                and     t5, t4              ' t5 = ~(A ^ operand) & (A ^ hi)
+                testb   t5, #7          wz  ' affects V
+                bitz    _P, #REGP_V         ' |
+
+                cmp     t3, #$90        wcz
+        if_a    add     t3, #$60
+
+                testb   t3, #8          wz  ' affects C
+                bitz    _P, #REGP_C         ' |
+
+                getnib  _A, t2, #0
+                add     _A, t3
+
+                and     _A, #$FF        wz  ' affects Z
+        _ret_   bitz    _P, #REGP_Z         ' |
+
+i_log_abs       call    #\_fetch_abs        ' %xxx_1_1111110
+i_log_zpg       call    #\_fetch_zpg        ' %xxx_1_111110
+i_log_abs_x     call    #\_fetch_abs_x      ' %xxx_1_11110
+i_log_abs_y     call    #\_fetch_abs_y      ' %xxx_1_1110
+i_log_ind_x     call    #\_fetch_ind_x      ' %xxx_1_110
+i_log_ind_y     call    #\_fetch_ind_y      ' %xxx_1_10
+i_log_zpg_x     call    #\_fetch_zpg_x      ' %xxx_1_0
+i_log_imm       rdbyte  t1, ptrb++          ' %xxx_0
+                and     t1, _A              '  110 AND
+                xor     t1, _A              '  101 EOR
+                or      t1, _A              '  011 ORA
+                getbyte _A, t1, #0
+                jmp     #_flags
+
+i_asl_abs       call    #\_fetch_abs        ' %01_000_1_1110
+i_asl_zpg       call    #\_fetch_zpg        ' %01_000_1_110
+i_asl_abs_x     call    #\_fetch_abs_x      ' %01_000_1_10
+i_asl_zpg_x     call    #\_fetch_zpg_x      ' %01_000_1_0
+i_asl           getbyte t1, _A, #0          ' %10_000_0
+
+                testb   t1, #7          wz
+                shl     t1, #1
+                bitz    _P, #REGP_C
+
+                getbyte _A, t1, #0
+                call    #\_write
+                jmp     #_flags
+                                            '       SC NVZC
+i_branch        rdbyte  t1, ptrb++          ' BCC: %10_1110_0
+                                            ' BCS: %01_1110_0
+                                            ' BNE: %10_1101_0
+                                            ' BEQ: %01_1101_0
+                testb   _P, #REGP_C     wc  ' BPL: %10_0111_0
+                testb   _P, #REGP_Z     wc  ' BMI: %01_0111_0
+                testb   _P, #REGP_V     wc  ' BVC: %10_1011_0
+                testb   _P, #REGP_N     wc  ' BVS: %01_1011_0
+        if_c    ret                         ' Clear
+        if_nc   ret                         ' Set
+
+                add     _I, #1
+                sub     ptrb, ram_addr
+                signx   t1, #7
+                add     ptrb, t1
+                cmpsub  ptrb, ##$10000
+        _ret_   add     ptrb, ram_addr
+
+i_bit_abs       call    #\_fetch_abs
+i_bit_zpg       call    #\_fetch_zpg
+_bit            test    _A, t1          wz
+                bitz    _P, #REGP_Z
+                and     t1, #%11000000
+                and     _P, #%00111111
+        _ret_   or      _P, t1
+
+i_brk           add     ptrb, #1
+                sub     ptrb, ram_addr
+                getbyte t1, ptrb, #1        ' PCH -> (S)
+                call    #_push_t1
+                getbyte t1, ptrb, #0        ' PCL -> (S)
+                call    #_push_t1
+                getbyte t1, _P, #0          ' P -> (S)
+                bith    t1, #REGP_B         ' B=1
+                call    #_push_t1
+
+                bith    _P, #REGP_I         ' I=1
+
+                mov     t2, ##$FFFE
+                add     t2, ram_addr
+                rdword  ptrb, t2
+        _ret_   add     ptrb, ram_addr
+
+i_clc   _ret_   bitl    _P, #REGP_C
+i_cld   _ret_   bitl    _P, #REGP_D
+i_cli   _ret_   bitl    _P, #REGP_I
+i_clv   _ret_   bitl    _P, #REGP_V
+
+i_cmp_abs       call    #\_fetch_abs        ' %xxx_0_1_1111110
+i_cmp_abs_x     call    #\_fetch_abs_x      ' %xxx_0_1_111110
+i_cmp_abs_y     call    #\_fetch_abs_y      ' %xxx_0_1_11110
+i_cmp_ind_x     call    #\_fetch_ind_x      ' %xxx_0_1_1110
+i_cmp_ind_y     call    #\_fetch_ind_y      ' %xxx_0_1_110
+i_cmp_zpg       call    #\_fetch_zpg        ' %xxx_0_1_10
+i_cmp_zpg_x     call    #\_fetch_zpg_x      ' %xxx_0_1_0
+i_cmp_imm       rdbyte  t1, ptrb++          ' %xxx_00
+                mov     t2, t1
+                getbyte t1, _A, #0          '  110 CMP
+                getbyte t1, _X, #0          '  101 CPX
+                getbyte t1, _Y, #0          '  011 CPY
+                sub     t1, t2
+                testb   t1, #8          wz
+                bitnz   _P, #REGP_C
+                jmp     #_flags
+
+i_dec_zpg       call    #\_fetch_zpg        ' %xx_1110
+i_dec_abs_x     call    #\_fetch_abs_x      ' %xx_110
+i_dec_zpg_x     call    #\_fetch_zpg_x      ' %xx_10
+i_dec_abs       call    #\_fetch_abs        ' %xx_0
+                sub     t1, #1              '  10 DEC
+                add     t1, #1              '  01 INC
+                call    #\_write
+                jmp     #_flags
+
+                                            ' INX INY DEX DEY
+i_inde_xy       getbyte t1, _X, #0          '  0   1   0   1
+                getbyte t1, _Y, #0          '  1   0   1   0
+                add     t1, #1              '  0   0   1   1
+                sub     t1, #1              '  1   1   0   0
+                getbyte _X, t1, #0          '  0   1   0   1
+                getbyte _Y, t1, #0          '  1   0   1   0
+                jmp     #_flags
+
+i_jmp           rdword  ptrb, ptrb          ' 0 0
+                add     ptrb, ram_addr      ' 1 0
+                rdword  ptrb, ptrb          ' 1 0
+        _ret_   add     ptrb, ram_addr      ' 0 0
+
+i_jsr           rdword  t4, ptrb            ' t4 = new PC
+                add     ptrb, #1
+
+                sub     ptrb, ram_addr
+                getbyte t1, ptrb, #1        ' PCH -> (S)
+                call    #_push_t1
+                getbyte t1, ptrb, #0        ' PCL -> (S)
+                call    #_push_t1
+
+                mov     ptrb, t4
+        _ret_   add     ptrb, ram_addr
+
+i_ld_abs        call    #\_fetch_abs        ' %xxx_1_11111110
+i_ld_abs_x      call    #\_fetch_abs_x      ' %xxx_1_1111110
+i_ld_abs_y      call    #\_fetch_abs_y      ' %xxx_1_111110
+i_ld_zpg        call    #\_fetch_zpg        ' %xxx_1_11110
+i_ld_zpg_x      call    #\_fetch_zpg_x      ' %xxx_1_1110
+i_ld_zpg_y      call    #\_fetch_zpg_y      ' %xxx_1_110
+i_ld_ind_x      call    #\_fetch_ind_x      ' %xxx_1_10
+i_ld_ind_y      call    #\_fetch_ind_y      ' %xxx_1_0
+i_ld_imm        rdbyte  t1, ptrb++          ' %xxx_0
+                mov     _A, t1              '  110 LDA
+                mov     _X, t1              '  101 LDX
+                mov     _Y, t1              '  011 LDY
+                jmp     #_flags
+
+i_lsr_abs       call    #\_fetch_abs        ' %01_000_1_1110
+i_lsr_zpg       call    #\_fetch_zpg        ' %01_000_1_110
+i_lsr_abs_x     call    #\_fetch_abs_x      ' %01_000_1_10
+i_lsr_zpg_x     call    #\_fetch_zpg_x      ' %01_000_1_0
+i_lsr           getbyte t1, _A, #0          ' %10_000_0
+
+                testb   t1, #0          wz
+                shr     t1, #1
+                bitz    _P, #REGP_C
+
+                getbyte _A, t1, #0
+                call    #\_write
+                jmp     #_flags
+
+i_nop           ret
+
+i_push          getbyte t1, _A, #0
+                getbyte t1, _P, #0
+                jmp     #_push_t1
+
+i_pla           call    #_pop_t1
+                getbyte _A, t1, #0
+                jmp     #_flags
+
+i_plp           call    #_pop_t1
+                getbyte _P, t1, #0
+        _ret_   or      _P, #%00110000      ' always on flags
+
+i_rol_abs       call    #\_fetch_abs        ' %01_00000_1_1110
+i_rol_zpg       call    #\_fetch_zpg        ' %01_00000_1_110
+i_rol_abs_x     call    #\_fetch_abs_x      ' %01_00000_1_10
+i_rol_zpg_x     call    #\_fetch_zpg_x      ' %01_00000_1_0
+i_rol           getbyte t1, _A, #0          ' %10_00000_0
+
+                testb   _P, #REGP_C     wc
+                testb   t1, #7          wz
+                shl     t1, #1
+                bitc    t1, #0
+                bitz    _P, #REGP_C
+
+                getbyte _A, t1, #0
+                call    #\_write
+
+                jmp     #_flags
+
+
+i_ror_abs       call    #\_fetch_abs        ' %01_00000_1_1110
+i_ror_zpg       call    #\_fetch_zpg        ' %01_00000_1_110
+i_ror_abs_x     call    #\_fetch_abs_x      ' %01_00000_1_10
+i_ror_zpg_x     call    #\_fetch_zpg_x      ' %01_00000_1_0
+i_ror           getbyte t1, _A, #0          ' %10_00000_0
+
+                testb   _P, #REGP_C     wc
+                testb   t1, #0          wz
+                shr     t1, #1
+                bitc    t1, #7
+                bitz    _P, #REGP_C
+
+                getbyte _A, t1, #0
+                call    #\_write
+
+                jmp     #_flags
+
+i_rti           call    #_pop_t1            ' (S) -> P
+                mov     _P, t1
+                ' fall-through
+i_rts           call    #_pop_t1            ' (S) -> PCL
+                getbyte ptrb, t1, #0        ' |
+                call    #_pop_t1            ' (S) -> PCH
+                setbyte ptrb, t1, #1        ' |
+                incmod  ptrb, ##$FFFF       ' PC = PC + 1 (skip if RTI)
+        _ret_   add     ptrb, ram_addr
+
+i_sbc_abs       call    #\_fetch_abs        ' %1_1111110
+i_sbc_abs_x     call    #\_fetch_abs_x      ' %1_111110
+i_sbc_abs_y     call    #\_fetch_abs_y      ' %1_11110
+i_sbc_ind_x     call    #\_fetch_ind_x      ' %1_1110
+i_sbc_ind_y     call    #\_fetch_ind_y      ' %1_110
+i_sbc_zpg       call    #\_fetch_zpg        ' %1_10
+i_sbc_zpg_x     call    #\_fetch_zpg_x      ' %1_0
+i_sbc_imm       rdbyte  t1, ptrb++          ' %0
+
+_sbc            testbn  _P, #REGP_C     wc
+
+                getbyte t3, _A, #0          ' t3 = sum
+                subx    t3, t1              ' |
+                testb   t3, #7          wz  ' affects N
+                bitz    _P, #REGP_N         ' |
+
+                getbyte t2, _A, #0          ' t2 = (A ^ operand)
+                xor     t2, t1              ' |
+                getbyte t4, _A, #0          ' t4 = A ^ sum
+                xor     t4, t3
+                and     t2, t4              ' t2 = (A ^ operand) & (A ^ sum)
+                testb   t2, #7          wz  ' affects V
+                bitz    _P, #REGP_V         ' |
+
+                testb   t3, #8          wz  ' affects C
+                bitnz   _P, #REGP_C         ' |
+
+                test    t3, #$FF        wz  ' affects Z
+                bitz    _P, #REGP_Z         ' |
+
+                testb   _P, #REGP_D     wz
+        if_z    jmp     #_sbc_dec
+
+                getbyte _A, t3, #0
+
+                test    _A, #$FF        wz  ' affects Z
+        _ret_   bitz    _P, #REGP_Z         ' |
+
+_sbc_dec        mov     t2, _A              ' t2 = lo
+                and     t2, #$0F
+                mov     t4, t1
+                and     t4, #$0F
+                subx    t2, t4
+
+                mov     t3, _A              ' t3 = hi
+                and     t3, #$F0
+                mov     t4, t1
+                and     t4, #$F0
+                sub     t3, t4
+
+                test    t2, #$10        wz
+        if_nz   sub     t2, #$06
+        if_nz   sub     t3, #$01
+
+                test    t3, #$100       wz
+        if_nz   sub     t3, #$60
+
+                getbyte _A, t3, #0
+                setnib  _A, t2, #0
+
+                test    _A, #$FF        wz  ' affects Z
+        _ret_   bitz    _P, #REGP_Z         ' |
+
+i_sec   _ret_   bith    _P, #REGP_C
+i_sed   _ret_   bith    _P, #REGP_D
+i_sei   _ret_   bith    _P, #REGP_I
+
+i_st_abs        call    #\_fetch_abs        ' %xxx_11111110
+i_st_abs_x      call    #\_fetch_abs_x      ' %xxx_1111110
+i_st_abs_y      call    #\_fetch_abs_y      ' %xxx_111110
+i_st_zpg        call    #\_fetch_zpg        ' %xxx_11110
+i_st_zpg_x      call    #\_fetch_zpg_x      ' %xxx_1110
+i_st_zpg_y      call    #\_fetch_zpg_y      ' %xxx_110
+i_st_ind_x      call    #\_fetch_ind_x      ' %xxx_10
+i_st_ind_y      call    #\_fetch_ind_y      ' %xxx_0
+_st             mov     t1, _A              '  110 A
+                mov     t1, _X              '  101 X
+                mov     t1, _Y              '  011 Y
+                jmp     #\_write
+                                            ' TAX TAY TSX TXA TXS TYA
+i_taxya         getbyte t1, _A, #0          '  0   0   1   1   1   1
+                getbyte t1, _X, #0          '  1   1   1   0   0   1
+                getbyte t1, _Y, #0          '  1   1   1   1   1   0
+                getbyte t1, _S, #0          '  1   1   0   1   1   1
+                getbyte _A, t1, #0          '  1   1   1   0   1   0
+                getbyte _X, t1, #0          '  0   1   0   1   1   1
+                getbyte _Y, t1, #0          '  1   0   1   1   1   1
+                getbyte _S, t1, #0          '  1   1   1   1   0   1
+                jmp     #_flags             '                  1
+                ret
+
+'
+'
+' Common subroutines
+'
+_flags          test    t1, #$FF       wz   ' affects Z
+                bitz    _P, #REGP_Z         ' |
+                testb   t1, #7         wz   ' affects N
+        _ret_   bitz    _P, #REGP_N         ' |
+
+_fetch_abs      rdword  t2, ptrb++
+                jmp     #\_read
+
+_fetch_abs_x    rdword  t2, ptrb++
+
+                getbyte t3, t2, #0
+                add     t3, _X
+                cmp     t3, #$100       wc  ' page boundary
+        if_nc   add     _I, #1              ' add 1 cycle
+
+                add     t2, _X
+                jmp     #\_read
+
+_fetch_abs_y    rdword  t2, ptrb++
+
+                getbyte t3, t2, #0
+                add     t3, _Y
+                cmp     t3, #$100       wc  ' page boundary
+        if_nc   add     _I, #1              ' add 1 cycle
+
+                add     t2, _Y
+                jmp     #\_read
+
+_fetch_zpg      rdbyte  t2, ptrb++
+                jmp     #\_read
+
+_fetch_zpg_x    rdbyte  t2, ptrb++
+                add     t2, _X
+                and     t2, #$FF
+                jmp     #\_read
+
+_fetch_zpg_y    rdbyte  t2, ptrb++
+                add     t2, _Y
+                and     t2, #$FF
+                jmp     #\_read
+
+_fetch_ind_x    rdbyte  t3, ptrb++
+                add     t3, _X
+                getbyte t4, t3, #0
+                add     t4, ram_addr
+                rdbyte  t2, t4
+                add     t3, #1
+                getbyte t4, t3, #0
+                add     t4, ram_addr
+                rdbyte  t1, t4
+                setbyte t2, t1, #1
+                jmp     #\_read
+
+_fetch_ind_y    rdbyte  t3, ptrb++
+
+                getbyte t4, t3, #0
+                add     t4, ram_addr
+                rdbyte  t2, t4              ' t2 = low
+                add     t3, #1
+
+                getbyte t4, t3, #0
+                add     t4, ram_addr
+                rdbyte  t1, t4              ' t1 = high
+
+                add     t2, _Y
+                cmp     t2, #$100       wc  ' page boundary
+        if_nc   add     _I, #1              ' add 1 cycle
+
+                shl     t1, #8
+                add     t2, t1
+                and     t2, ##$FFFF
+                jmp     #\_read
+
+_push_t1        getbyte t2, _S, #0
+                add     t2, #$100
+                add     t2, ram_addr
+                wrbyte  t1, t2
+        _ret_   decmod  _S, #$FF
+
+_pop_t1         incmod  _S, #$FF
+                getbyte t2, _S, #0
+                add     t2, #$100
+                add     t2, ram_addr
+        _ret_   rdbyte  t1, t2
+
+'
+'
+' Initialized
+'
+ram_addr        long    ram_6502
+
+'
+'
+' CPU Registers
+'
+_A              long    $00     ' 8-bit working registers
+_X              long    $00
+_Y              long    $00
+
+_S              long    $FF     ' 8-bit stack pointer
+
+_P              long    $20     ' 8-bit flag register
+                                '   7 = N - negative
+                                '   6 = V - overflow
+                                '   5 = ?
+                                '   4 = B - break
+                                '   3 = D - decimal
+                                '   2 = I - interrupt
+                                '   1 = Z - zero
+                                '   0 = C - carry
+
+_PC             long    $0000   ' 16-bit program counter
+
+_T              long    0       ' total cycles
+_I              long    0       ' instruction cycles
+_I_CLK          long    _CLKFREQ / 960_000 ' effective cycle frequency
+
+'
+'
+' Temporaries
+'
+t1              res     1
+t2              res     1
+t3              res     1
+t4              res     1
+t5              res     1
+
+ts              res     1
+
+DAT             org     $200, $3F0
+
+lut_6502
+'
+' instruction         snippet                  skip pattern         cycles    encoding
+'--------------------------------------------------------------------------------------------
+                long  i_brk       |                      %0 << 10 | 7 << 28 ' 00 BRK
+                long  i_log_ind_x |              %011_1_110 << 10 | 2 << 28 ' 01 ORA ($nn,X)
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 02
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 03
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 04
+                long  i_log_zpg   |           %011_1_111110 << 10 | 3 << 28 ' 05 ORA $nn
+                long  i_asl_zpg   |           %01_000_1_110 << 10 | 5 << 28 ' 06 ASL $nn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 07
+                long  i_push      |                     %01 << 10 | 3 << 28 ' 08 PHP
+                long  i_log_imm   |                  %011_0 << 10 | 2 << 28 ' 09 ORA #$nn
+                long  i_asl       |               %10_000_0 << 10 | 2 << 28 ' 0A ASL
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 0B
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 0C
+                long  i_log_abs   |          %011_1_1111110 << 10 | 4 << 28 ' 0D ORA $nnnn
+                long  i_asl_abs   |          %01_000_1_1110 << 10 | 6 << 28 ' 0E ASL $nnnn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 0F
+
+                long  i_branch    |              %10_0111_0 << 10 | 3 << 28 ' 10 BPL $nn
+                long  i_log_ind_y |               %011_1_10 << 10 | 2 << 28 ' 11 ORA ($nn),Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 12
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 13
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 14
+                long  i_log_zpg_x |                %011_1_0 << 10 | 2 << 28 ' 15 ORA $nn,X
+                long  i_asl_zpg_x |             %01_000_1_0 << 10 | 6 << 28 ' 16 ASL $nn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 17
+                long  i_clc       |                      %0 << 10 | 2 << 28 ' 18 CLC
+                long  i_log_abs_y |             %011_1_1110 << 10 | 2 << 28 ' 19 ORA $nnnn,Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 1A
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 1B
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 1C
+                long  i_log_abs_x |            %011_1_11110 << 10 | 2 << 28 ' 1D ORA $nnnn,X
+                long  i_asl_abs_x |            %01_000_1_10 << 10 | 7 << 28 ' 1E ASL $nnnn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 1F
+
+                long  i_jsr       |                      %0 << 10 | 6 << 28 ' 20 JSR $nn
+                long  i_log_ind_x |              %110_1_110 << 10 | 6 << 28 ' 21 AND ($nn,X)
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 22
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 23
+                long  i_bit_zpg   |                      %0 << 10 | 3 << 28 ' 24 BIT $nn
+                long  i_log_zpg   |           %110_1_111110 << 10 | 3 << 28 ' 25 AND $nn
+                long  i_rol_zpg   |         %01_00000_1_110 << 10 | 5 << 28 ' 26 ROL $nn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 27
+                long  i_plp       |                      %0 << 10 | 4 << 28 ' 28 PLP
+                long  i_log_imm   |                  %110_0 << 10 | 2 << 28 ' 29 AND #$nn
+                long  i_rol       |             %10_00000_0 << 10 | 2 << 28 ' 2A ROL
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 2B
+                long  i_bit_abs   |                     %10 << 10 | 4 << 28 ' 2C BIT $nnnn
+                long  i_log_abs   |          %110_1_1111110 << 10 | 4 << 28 ' 2D AND $nnnn
+                long  i_rol_abs   |        %01_00000_1_1110 << 10 | 4 << 28 ' 2E ROL $nnnn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 2F
+
+                long  i_branch    |              %01_0111_0 << 10 | 3 << 28 ' 30 BMI $nn
+                long  i_log_ind_y |               %110_1_10 << 10 | 5 << 28 ' 31 AND ($nn),Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 32
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 33
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 34
+                long  i_log_zpg_x |                %110_1_0 << 10 | 4 << 28 ' 35 AND $nn,X
+                long  i_rol_zpg_x |           %01_00000_1_0 << 10 | 6 << 28 ' 36 ROL $nn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 37
+                long  i_sec       |                      %0 << 10 | 2 << 28 ' 38 SEC
+                long  i_log_abs_y |             %110_1_1110 << 10 | 4 << 28 ' 39 AND $nnnn,Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 3A
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 3B
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 3C
+                long  i_log_abs_x |            %110_1_11110 << 10 | 4 << 28 ' 3D AND $nnnn,X
+                long  i_rol_abs_x |          %01_00000_1_10 << 10 | 7 << 28 ' 3E ROL $nnnn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 3F
+
+                long  i_rti       |               %11000000 << 10 | 6 << 28 ' 40 RTI
+                long  i_log_ind_x |              %101_1_110 << 10 | 2 << 28 ' 41 EOR ($nn,X)
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 42
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 43
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 44
+                long  i_log_zpg   |           %101_1_111110 << 10 | 3 << 28 ' 45 EOR $nn
+                long  i_lsr_zpg   |           %01_000_1_110 << 10 | 2 << 28 ' 46 LSR $nn
+                long  i_halt      |                      %0 << 10 | 5 << 28 ' 47
+                long  i_push      |                     %10 << 10 | 3 << 28 ' 48 PHA
+                long  i_log_imm   |                  %101_0 << 10 | 2 << 28 ' 49 EOR #$nn
+                long  i_lsr       |               %10_000_0 << 10 | 2 << 28 ' 4A LSR
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 4B
+                long  i_jmp       |                   %0110 << 10 | 3 << 28 ' 4C JMP $nnnn
+                long  i_log_abs   |          %101_1_1111110 << 10 | 4 << 28 ' 4D EOR $nnnn
+                long  i_lsr_abs   |          %01_000_1_1110 << 10 | 6 << 28 ' 4E LSR $nnnn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 4F
+
+                long  i_branch    |              %10_1011_0 << 10 | 3 << 28 ' 50 BVC $nn
+                long  i_log_ind_y |               %101_1_10 << 10 | 2 << 28 ' 51 EOR ($nn),Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 52
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 53
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 54
+                long  i_log_zpg_x |                %101_1_0 << 10 | 2 << 28 ' 55 EOR $nn,X
+                long  i_lsr_zpg_x |             %01_000_1_0 << 10 | 6 << 28 ' 56 LSR $nn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 57
+                long  i_cli       |                      %0 << 10 | 2 << 28 ' 58 CLI
+                long  i_log_abs_y |             %101_1_1110 << 10 | 2 << 28 ' 59 EOR $nnnn,Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 5A
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 5B
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 5C
+                long  i_log_abs_x |            %101_1_11110 << 10 | 2 << 28 ' 5D EOR $nnnn,X
+                long  i_lsr_abs_x |            %01_000_1_10 << 10 | 7 << 28 ' 5E LSR $nnnn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 5F
+
+                long  i_rts       |                      %0 << 10 | 6 << 28 ' 60 RTS
+                long  i_adc_ind_x |                 %1_1110 << 10 | 6 << 28 ' 61 ADC ($nn,X)
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 62
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 63
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 64
+                long  i_adc_zpg   |                   %1_10 << 10 | 3 << 28 ' 65 ADC $nn
+                long  i_ror_zpg   |         %01_00000_1_110 << 10 | 5 << 28 ' 66 ROR $nn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 67
+                long  i_pla       |                      %0 << 10 | 4 << 28 ' 68 PLA
+                long  i_adc_imm   |                      %0 << 10 | 2 << 28 ' 69 ADC #$nn
+                long  i_ror       |             %10_00000_0 << 10 | 2 << 28 ' 6A ROR
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 6B
+                long  i_jmp       |                   %0000 << 10 | 5 << 28 ' 6C JMP ($nnnn)
+                long  i_adc_abs   |              %1_1111110 << 10 | 4 << 28 ' 6D ADC $nnnn
+                long  i_ror_abs   |        %01_00000_1_1110 << 10 | 6 << 28 ' 6E ROR $nnnn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 6F
+
+                long  i_branch    |              %01_1011_0 << 10 | 3 << 28 ' 70 BVS $nn
+                long  i_adc_ind_y |                  %1_110 << 10 | 5 << 28 ' 71 ADC ($nn),Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 72
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 73
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 74
+                long  i_adc_zpg_x |                    %1_0 << 10 | 4 << 28 ' 75 ADC $nn,X
+                long  i_ror_zpg_x |           %01_00000_1_0 << 10 | 6 << 28 ' 76 ROR $nn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 77
+                long  i_sei       |                      %0 << 10 | 2 << 28 ' 78 SEI
+                long  i_adc_abs_y |                %1_11110 << 10 | 4 << 28 ' 79 AND $nnnn,Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 7A
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 7B
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 7C
+                long  i_adc_abs_x |               %1_111110 << 10 | 4 << 28 ' 7D ADC $nnnn,X
+                long  i_ror_abs_x |          %01_00000_1_10 << 10 | 7 << 28 ' 7E ROR $nnnn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 7F
+
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 80
+                long  i_st_ind_x  |                 %110_10 << 10 | 6 << 28 ' 81 STA ($nn,X)
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 82
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 83
+                long  i_st_zpg    |              %011_11110 << 10 | 3 << 28 ' 84 STY $nn
+                long  i_st_zpg    |              %110_11110 << 10 | 3 << 28 ' 85 STA $nn
+                long  i_st_zpg    |              %101_11110 << 10 | 3 << 28 ' 86 STX $nn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 87
+                long  i_inde_xy   |               %01_01_01 << 10 | 2 << 28 ' 88 DEY
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 89
+                long  i_taxya     |              %1110_1101 << 10 | 2 << 28 ' 8A TXA
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 8B
+                long  i_st_abs    |           %011_11111110 << 10 | 4 << 28 ' 8C STY $nnnn
+                long  i_st_abs    |           %110_11111110 << 10 | 4 << 28 ' 8D STA $nnnn
+                long  i_st_abs    |           %101_11111110 << 10 | 4 << 28 ' 8E STX $nnnn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 8F
+
+                long  i_branch    |              %10_1110_0 << 10 | 3 << 28 ' 90 BCC $nn
+                long  i_st_ind_y  |                  %110_0 << 10 | 6 << 28 ' 91 STA ($nn),Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 92
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 93
+                long  i_st_zpg_x  |               %011_1110 << 10 | 4 << 28 ' 94 STY $nn,X
+                long  i_st_zpg_x  |               %110_1110 << 10 | 4 << 28 ' 95 STA $nn,X
+                long  i_st_zpg_y  |                %101_110 << 10 | 4 << 28 ' 96 STX $nn,Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 97
+                long  i_taxya     |              %1110_1011 << 10 | 2 << 28 ' 98 TYA
+                long  i_st_abs_y  |             %110_111110 << 10 | 5 << 28 ' 99 STA $nnnn,Y
+                long  i_taxya     |            %1_0111_1101 << 10 | 2 << 28 ' 9A TXS
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 9B
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 9C
+                long  i_st_abs_x  |            %110_1111110 << 10 | 5 << 28 ' 9D STA $nnnn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 9E
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' 9F
+
+                long  i_ld_imm    |                  %011_0 << 10 | 2 << 28 ' A0 LDY #nn
+                long  i_ld_ind_x  |               %110_1_10 << 10 | 6 << 28 ' A1 LDA ($nn,X)
+                long  i_ld_imm    |                  %101_0 << 10 | 2 << 28 ' A2 LDX #nn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' A3
+                long  i_ld_zpg    |            %011_1_11110 << 10 | 3 << 28 ' A4 LDY zpg
+                long  i_ld_zpg    |            %110_1_11110 << 10 | 3 << 28 ' A5 LDA zpg
+                long  i_ld_zpg    |            %101_1_11110 << 10 | 3 << 28 ' A6 LDX zpg
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' A7
+                long  i_taxya     |              %1011_1110 << 10 | 2 << 28 ' A8 TAY
+                long  i_ld_imm    |                  %110_0 << 10 | 2 << 28 ' A9 LDA #nn
+                long  i_taxya     |              %1101_1110 << 10 | 2 << 28 ' AA TAX
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' AB
+                long  i_ld_abs    |         %011_1_11111110 << 10 | 4 << 28 ' AC LDY nnnn
+                long  i_ld_abs    |         %110_1_11111110 << 10 | 4 << 28 ' AD LDA nnnn
+                long  i_ld_abs    |         %101_1_11111110 << 10 | 4 << 28 ' AE LDX nnnn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' AF
+
+                long  i_branch    |              %01_1110_0 << 10 | 3 << 28 ' B0 BCS $nn
+                long  i_ld_ind_y  |                %110_1_0 << 10 | 5 << 28 ' B1 LDA ($nn),Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' B2
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' B3
+                long  i_ld_zpg_x  |             %011_1_1110 << 10 | 4 << 28 ' B4 LDY $nn,Y
+                long  i_ld_zpg_x  |             %110_1_1110 << 10 | 4 << 28 ' B5 LDA $nn,X
+                long  i_ld_zpg_y  |              %101_1_110 << 10 | 4 << 28 ' B6 LDX $nn,Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' B7
+                long  i_clv       |                      %0 << 10 | 2 << 28 ' B8 CLV
+                long  i_ld_abs_y  |           %110_1_111110 << 10 | 4 << 28 ' B9 LDA $nnnn,Y
+                long  i_taxya     |              %1101_0111 << 10 | 2 << 28 ' BA TSX
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' BB
+                long  i_ld_abs_x  |          %011_1_1111110 << 10 | 4 << 28 ' BC LDY $nnnn,X
+                long  i_ld_abs_x  |          %110_1_1111110 << 10 | 4 << 28 ' BD LDA $nnnn,X
+                long  i_ld_abs_y  |           %101_1_111110 << 10 | 4 << 28 ' BE LDX $nnnn,Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' BF
+
+                long  i_cmp_imm   |                 %011_00 << 10 | 2 << 28 ' C0 CPY #$nn
+                long  i_cmp_ind_x |           %110_0_1_1110 << 10 | 6 << 28 ' C1 CMP ($nn,X)
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' C2
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' C3
+                long  i_cmp_zpg   |             %011_0_1_10 << 10 | 3 << 28 ' C4 CPY $nn
+                long  i_cmp_zpg   |             %110_0_1_10 << 10 | 3 << 28 ' C5 CMP $nn
+                long  i_dec_zpg   |                %10_1110 << 10 | 5 << 28 ' C6 DEC $nn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' C7
+                long  i_inde_xy   |               %01_10_01 << 10 | 2 << 28 ' C8 INY
+                long  i_cmp_imm   |                 %110_00 << 10 | 2 << 28 ' C9 CMP #$nn
+                long  i_inde_xy   |               %10_01_10 << 10 | 2 << 28 ' CA DEX
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' CB
+                long  i_cmp_abs   |        %011_0_1_1111110 << 10 | 4 << 28 ' CC CPY $nnnn
+                long  i_cmp_abs   |        %110_0_1_1111110 << 10 | 4 << 28 ' CD CMP $nnnn
+                long  i_dec_abs   |                   %10_0 << 10 | 6 << 28 ' CE DEC $nnnn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' CF
+
+                long  i_branch    |              %10_1101_0 << 10 | 3 << 28 ' D0 BNE $mm
+                long  i_cmp_ind_y |            %110_0_1_110 << 10 | 2 << 28 ' D1 CMP ($nn),Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' D2
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' D3
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' D4
+                long  i_cmp_zpg_x |              %110_0_1_0 << 10 | 2 << 28 ' D5 CMP $nn,X
+                long  i_dec_zpg_x |                  %10_10 << 10 | 6 << 28 ' D6 DEC $nn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' D7
+                long  i_cld       |                      %0 << 10 | 2 << 28 ' D8 CLD
+                long  i_cmp_abs_y |          %110_0_1_11110 << 10 | 4 << 28 ' D9 CMP $nnnn,Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' DA
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' DB
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' DC
+                long  i_cmp_abs_x |         %110_0_1_111110 << 10 | 4 << 28 ' DD CMP $nnnn,X
+                long  i_dec_abs_x |                 %10_110 << 10 | 7 << 28 ' DE DEC $nnnn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' DF
+
+                long  i_cmp_imm   |                 %101_00 << 10 | 2 << 28 ' E0 CPX #$nn
+                long  i_sbc_ind_x |                 %1_1110 << 10 | 6 << 28 ' E1 SBC ($nn,X)
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' E2
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' E3
+                long  i_cmp_zpg   |             %101_0_1_10 << 10 | 3 << 28 ' E4 CPX $nn
+                long  i_sbc_zpg   |                   %1_10 << 10 | 3 << 28 ' E5 SBC #$nn
+                long  i_dec_zpg   |                %01_1110 << 10 | 5 << 28 ' E6 INC $nn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' E7
+                long  i_inde_xy   |               %10_10_10 << 10 | 2 << 28 ' E8 INX
+                long  i_sbc_imm   |                      %0 << 10 | 2 << 28 ' E9 SBC #$nn
+                long  i_nop       |                      %0 << 10 | 2 << 28 ' EA NOP
+                long  i_halt      |                      %0 << 10 | 4 << 28 ' EB
+                long  i_cmp_abs   |        %101_0_1_1111110 << 10 | 2 << 28 ' EC CPX $nnnn
+                long  i_sbc_abs   |              %1_1111110 << 10 | 4 << 28 ' ED SBC $nnnn
+                long  i_dec_abs   |                   %01_0 << 10 | 6 << 28 ' EE INC $nnnn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' EF
+
+                long  i_branch    |              %01_1101_0 << 10 | 3 << 28 ' F0 BEQ $nn
+                long  i_sbc_ind_y |                  %1_110 << 10 | 5 << 28 ' F1 SBC ($nn),Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' F2
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' F3
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' F4
+                long  i_sbc_zpg_x |                    %1_0 << 10 | 4 << 28 ' F5 SBC $nn,X
+                long  i_dec_zpg_x |                  %01_10 << 10 | 6 << 28 ' F6 INC $nn,X
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' F7
+                long  i_sed       |                      %0 << 10 | 2 << 28 ' F8 SED
+                long  i_sbc_abs_y |                %1_11110 << 10 | 4 << 28 ' F9 SBC $nnnn,Y
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' FA
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' FB
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' FC
+                long  i_sbc_abs_x |               %1_111110 << 10 | 4 << 28 ' FD SBC $nnnn,X
+                long  i_dec_abs_x |                 %01_110 << 10 | 7 << 28 ' FE INC $nnnn
+                long  i_halt      |                      %0 << 10 | 2 << 28 ' FF
+
+'
+'
+' I/O Routines
+
+_read
+                cmp     t2, ##$D010     wz      ' pia address
+        if_nz   cmp     t2, ##$D011     wz
+        if_nz   cmp     t2, ##$D012     wz
+        if_nz   cmp     t2, ##$D013     wz
+        if_z    jmp     #.pia
+
+                getword t5, t2, #0
+                add     t5, ram_addr
+        _ret_   rdbyte  t1, t5
+
+.pia            mov     t5, t2                  ' translate to lut address
+                sub     t5, ##$CE14             ' $1FC-$1FF
+                rdlut   t1, t5
+                cmp     t2, ##$D010     wz      ' if read from keyboard
+        if_z    add     t5, #1                  ' clear ready flag
+        if_z    wrlut   #0, t5                  ' |
+                ret
+
+_write
+                cmp     t2, ##$D010     wz      ' pia address
+        if_nz   cmp     t2, ##$D011     wz
+        if_nz   cmp     t2, ##$D012     wz
+        if_nz   cmp     t2, ##$D013     wz
+        if_z    jmp     #.pia
+
+                getword t5, t2, #0
+                add     t5, ram_addr
+                cmp     t5, ##ram_top_6502   wc ' simulate rom or non existing ram
+        if_c    wrbyte  t1, t5
+                ret
+
+.pia            mov     t5, t2                  ' translate to lut address
+                sub     t5, ##$CE14             ' $1FC-$1FF
+        _ret_   wrlut   t1, t5
+
+i_halt          ret
+
+
+'
+'
+' NTSC + PS/2 Driver
+'
+DAT             org     $000, $1F0
+
+ntsc_driver
+                add     ptrb, ##@ntsc_lut - @ntsc_driver
+                setq2   #(@ntsc_lut_end - @ntsc_lut) / 4 -1
+                rdlong  0, ptrb             ' load palette into lut
+
+                setluts #1                  ' enable lut sharing with cog #0
+                cogatn  #%0000000_1         ' signal we are ready
+
+                setcmod #%11_1_0000         ' set colorspace converter to YIQ mode (composite)
+                setcy   _cy                 ' set colorspace converter y coefficients
+                setci   _ci                 ' set colorspace converter i coefficients
+                setcq   _cq                 ' set colorspace converter q coefficients
+                setcfrq _cf                 ' set colorspace converter frequency
+                setxfrq _xf                 ' set transfer frequency
+
+                cogid   _vx                 ' install cogid into dacmode
+                setnib  dacmode,_vx,#2
+                wrpin   dacmode,_pn         ' enable dac mode in pin(s)
+                drvl    _pn                 ' enable dac output(s)
+
+                mov     ijmp1,#field        ' set up streamer-empty interrupt
+                setint1 #10
+                xcont   #10,#0              ' do streamer instruction to start interrupt sequence
+'
+'
+'
+' PS/2 Keyboard loop
+'
+reset           mov     key, #0
+                mov     shift, #0
+                mov     state, #0
+
+loop            testpn  #PS2_DATA       wz  ' wait for initial receive
+        if_z    jmp     #$-1
+
+                mov     state, #0
+                getct   tout                ' safety timeout
+                addct1  tout, safe_tout
+
+.l1             calld   receive_ret, #receive
+                getbyte code, data, #0
+
+                cmp     data, #$F0      wz  ' release
+        if_z    bith    state, #31
+        if_z    jmp     #.l1
+
+                cmp     data, #$E1      wz
+        if_z    bith    state, #29
+        if_z    jmp     #ext1
+                cmp     data, #$E0      wz
+        if_z    bith    state, #28
+        if_z    jmp     #ext0
+
+                testb   state, #31      wc  ' test release
+
+                cmp     code, #$12      wz  ' left shift
+        if_z    muxnc   shift, #LEFT_SHIFT
+                cmp     code, #$59      wz  ' right shift
+        if_z    muxnc   shift, #RIGHT_SHIFT
+
+        if_c    jmp     #loop               ' ignore release
+
+                mov     tout, map
+                test    shift, #(LEFT_SHIFT | RIGHT_SHIFT)  wz
+        if_nz   add     tout, #$84
+                add     tout, data
+                rdbyte  key, tout       wz
+        if_z    jmp     #loop               ' ignore untranslated codes
+
+                or      key, #$80           ' send character to shared lut
+                wrlut   key, pia_kbd        ' |
+                wrlut   #$80, pia_kbdcr     ' |
+
+                jmp     #loop
+
+ext1            calld   receive_ret, #receive
+                setbyte code, data, #1
+                cmp     data, #$F0      wz  ' release
+        if_z    bith    state, #31
+        if_z    jmp     #ext1
+
+                ' fall through
+
+ext0            calld   receive_ret, #receive
+                setbyte code, data, #0
+                cmp     data, #$F0      wz  ' release
+        if_z    bith    state, #31
+        if_z    jmp     #ext0
+
+                jmp     #loop               ' extended codes are ignored
+
+receive         mov     bits, #11
+.l1             testpn  #PS2_CLOCK      wz  ' wait until clock low
+        if_nz   jct1    #reset              ' | check timeout
+        if_nz   jmp     #.l1                ' |
+                testp   #PS2_DATA       wc  ' sample data
+                rcr     data, #1
+.l2             testpn  #PS2_CLOCK      wz  ' wait until clock high
+        if_z    jct1    #reset              ' | check timeout
+        if_z    jmp     #.l2                ' |
+                djnz    bits, #.l1          ' another bit?
+
+                shr     data, #22           ' align byte
+                test    data, #$1FF     wc  ' test parity
+        if_nc   jmp     #reset
+                and     data, #$FF
+                jmp     receive_ret
+receive_ret     long    0
+
+code            long    0
+state           long    0
+shift           long    0
+key             long    0
+
+map             long    ps2_table
+safe_tout       long    _CLKFREQ / 10
+
+bits            long    0
+data            long    0
+tout            long    0
+
+'
+'
+' NTSC driver loop
+'
+field           callpa  #35, #blank         ' before-visible blank lines
+
+                mov     _sl, #0
+                mov     _vy, #192           ' visible lines
+                mov     _lb, _fifo_head
+
+.line           xcont   _bs, #1             ' horizontal sync
+                resi1                       ' |
+                xcont   _ds, #2             ' |
+                resi1                       ' |
+                xcont   _bc, #1             ' |
+                resi1                       ' |
+                xcont   _dc, #0             ' |
+                resi1                       ' |
+                xcont   _ac, #1             ' |
+                resi1                       ' |
+
+                xcont   _bv, #0             ' left border
+                resi1                       ' |
+
+                mov     _vx, #40
+                mov     _cp, _lb
+.l1             altgb   _cp, #_fifo
+                getbyte _ch, _fifo, #0
+                add     _cp, #1
+
+                rdlut   _bm+0, _ch          ' get bitmap from lut
+                add     _ch, #1             ' |
+                rdlut   _bm+1, _ch          ' |
+                altgb   _sl, #_bm           ' |
+                getbyte _ch, _bm, #0        ' |
+
+                xcont   _dv, _ch
+                resi1
+                djnz    _vx, #.l1
+
+                xcont   _av, #0             ' right border
+                resi1                       ' |
+
+                incmod  _sl, #7         wc
+        if_c    add     _lb, #40
+                cmpsub  _lb, ##24 * 40
+                djnz    _vy, #.line         ' another line?
+
+                callpa  #26, #blank         ' after-visible blank lines
+
+                incmod  _fc, #30            ' cursor blink timer
+                cmp     _fc, #20        wc  ' 2/3 on 1/3 off
+        if_c    mov     _ch, #$00           ' |
+        if_nc   mov     _ch, #$40           ' |
+                altsb   _fifo_tail, #_fifo  ' |
+                setbyte 0-0, _ch, #0        ' |
+
+                rdlut   _ch, pia_dsp        ' get character to display from shared lut
+                test    _ch, #$80       wz  ' test if valid
+        if_nz   and     _ch, #$7F           ' mask bit 7
+        if_nz   wrlut   _ch, pia_dsp        ' ack character received
+        if_nz   call    #fifo_write         ' insert into fifo
+
+                callpa  #6, #vhigh          ' initial high vertical syncs
+                callpa  #6, #vlow           ' low vertical syncs
+                callpa  #6, #vhigh          ' final high vertical syncs
+
+                jmp     #field              ' loop
+
+blank           xcont   _bs, #1             ' horizontal sync
+                resi1                       ' |
+                xcont   _ds, #2             ' |
+                resi1                       ' |
+                xcont   _bc, #1             ' |
+                resi1                       ' |
+                xcont   _dc, #0             ' |
+                resi1                       ' |
+                xcont   _ac, #1             ' |
+                resi1                       ' |
+                xcont   _db, #1             ' blank line
+                resi1                       ' |
+        _ret_   djnz    pa, #blank
+
+vhigh           xcont   _bs, #1             ' |
+                resi1                       ' |
+                xcont   _hl, #2             ' |
+                resi1                       ' |
+                xcont   _hh, #1             ' |
+                resi1                       ' |
+        _ret_   djnz    pa, #vhigh
+
+vlow            xcont   _bs, #1             ' |
+                resi1                       ' |
+                xcont   _ll, #2             ' |
+                resi1                       ' |
+                xcont   _lh, #1             ' |
+                resi1                       ' |
+        _ret_   djnz    pa, #vlow
+
+
+fifo_write      cmp     _ch, #$20       wc
+        if_c    mov     _ch, #$20
+                test    _ch, #%01000000 wz
+                muxz    _ch, #%00100000
+                and     _ch, #$3F
+                shl     _ch, #1             ' pre-shift for lut read
+
+.l1             altsb   _fifo_tail, #_fifo
+                setbyte 0-0, _ch, #0
+                incmod  _fifo_tail, ##(24 * 40)-1
+                incmod  _fifo_x, #40-1  wz
+  if_c_and_nz   jmp     #.l1
+
+                cmp     _fifo_tail, _fifo_head  wz
+        if_nz   ret
+
+.l2             altsb   _fifo_tail, #_fifo
+                setbyte 0-0, #$40, #0
+                add     _fifo_tail, #1
+                incmod  _fifo_x, #40-1  wc
+        if_nc   jmp     #.l2
+                sub     _fifo_tail, #40
+
+                add     _fifo_head, #40
+                cmpsub  _fifo_head, ##24 * 40
+
+                ret
+
+'
+'
+' Data
+'
+dacmode         long    p_dac_75r_2v+p_channel  '%0000_0000_000_101110000xxxx_01_00000_0
+
+_vx             long    0
+_vy             long    0
+
+_cb             long    ntsc_cb             ' colorburst reference color
+_cy             long    ntsc_cy             ' colorspace y coefficients
+_ci             long    ntsc_ci             ' colorspace i coefficients
+_cq             long    ntsc_cq             ' colorspace q coefficients
+_ca             long    ntsc_cq             ' colorspace q coefficients, alt for pal
+_cf             long    $05BA_2E7F          ' colorspace frequency setting
+_xf             long    $048E_8024          ' streamer frequency setting
+_bs             long    $7F01_0000 +   9    ' streamer command: before-sync
+_ds             long    $7F01_0000 +  27    ' streamer command: during-sync
+_bc             long    $7F01_0000 +   3    ' streamer command: before-colorburst
+_dc             long    $7F01_0000 +  15    ' streamer command: during-colorburst
+_ac             long    $7F01_0000 +   8    ' streamer command: after-colorburst
+_bv             long    $0F04_0000 +  30    ' streamer command: before-visible
+_dv             long    $0F04_0000 +   6    ' streamer command: during-visible
+_av             long    $0F04_0000 +  30    ' streamer command: after-visible
+_db             long    $7F01_0000 + 300    ' streamer command: during-blank
+_hf             long    $7F01_0000 + 181    ' streamer command: half-line
+_hl             long    $7F01_0000 +  13    ' streamer command: high-vsync-low
+_hh             long    $7F01_0000 + 159    ' streamer command: high-vsync-high
+_ll             long    $7F01_0000 + 154    ' streamer command: low-vsync-low
+_lh             long    $7F01_0000 +  18    ' streamer command: low-vsync-high
+_pn             long    CVBS_PIN            ' pin(s)
+
+_sl             long    0                   ' scanline counter
+_lb             long    0                   ' line buffer pointer
+_cp             long    0                   ' character pointer
+_bm             long    0[2]                ' character bitmap
+
+_ch             long    0
+_fc             long    0
+
+pia_kbd         long    $D010 - $CE14
+pia_kbdcr       long    $D011 - $CE14
+pia_dsp         long    $D012 - $CE14
+pia_dspcr       long    $D013 - $CE14
+
+_fifo_x         long    0
+_fifo_head      long    0
+_fifo_tail      long    0
+
+_fifo           byte    $40[24 * 40]
+
+DAT             org     $200, $3F0
+
+ntsc_lut        ' chr rom
+                byte    $1C, $22, $2C, $2A, $2A, $2A, $1C, $00  ' 40 = 00
+                byte    $08, $14, $22, $22, $3E, $22, $22, $00  ' 41 = 02
+                byte    $1E, $22, $22, $1E, $22, $22, $1E, $00  ' 42 = 04
+                byte    $1C, $22, $02, $02, $02, $22, $1C, $00  ' 43 = 06
+                byte    $1E, $22, $22, $22, $22, $22, $1E, $00  ' 44 = 08
+                byte    $3E, $02, $02, $1E, $02, $02, $3E, $00  ' 45 = 0A
+                byte    $3E, $02, $02, $1E, $02, $02, $02, $00  ' 46 = 0C
+                byte    $1C, $22, $02, $3A, $22, $22, $1C, $00  ' 47 = 0E
+                byte    $22, $22, $22, $3E, $22, $22, $22, $00  ' 48 = 10
+                byte    $1C, $08, $08, $08, $08, $08, $1C, $00  ' 49 = 12
+                byte    $38, $10, $10, $10, $10, $12, $0C, $00  ' 4A = 14
+                byte    $22, $12, $0A, $06, $0A, $12, $22, $00  ' 4B = 16
+                byte    $02, $02, $02, $02, $02, $02, $3E, $00  ' 4C = 18
+                byte    $22, $36, $2A, $2A, $22, $22, $22, $00  ' 4D = 1A
+                byte    $22, $22, $26, $2A, $32, $22, $22, $00  ' 4E = 1C
+                byte    $1C, $22, $22, $22, $22, $22, $1C, $00  ' 4F = 1E
+                byte    $1E, $22, $22, $1E, $02, $02, $02, $00  ' 50 = 20
+                byte    $1C, $22, $22, $22, $2A, $12, $2C, $00  ' 51 = 22
+                byte    $1E, $22, $22, $1E, $22, $22, $22, $00  ' 52 = 24
+                byte    $1C, $22, $02, $1C, $20, $22, $1C, $00  ' 53 = 26
+                byte    $3E, $08, $08, $08, $08, $08, $08, $00  ' 54 = 28
+                byte    $22, $22, $22, $22, $22, $22, $1C, $00  ' 55 = 2A
+                byte    $22, $22, $22, $22, $22, $14, $08, $00  ' 56 = 2C
+                byte    $22, $22, $22, $2A, $2A, $2A, $14, $00  ' 57 = 2E
+                byte    $22, $22, $14, $08, $14, $22, $22, $00  ' 58 = 30
+                byte    $22, $22, $22, $14, $08, $08, $08, $00  ' 59 = 32
+                byte    $3E, $20, $10, $08, $04, $02, $3E, $00  ' 5A = 34
+                byte    $3E, $06, $06, $06, $06, $06, $3E, $00  ' 5B = 36
+                byte    $00, $02, $04, $08, $10, $20, $00, $00  ' 5C = 38
+                byte    $3E, $30, $30, $30, $30, $30, $3E, $00  ' 5D = 3A
+                byte    $00, $00, $08, $14, $22, $00, $00, $00  ' 5E = 3C
+                byte    $00, $00, $00, $00, $00, $00, $3E, $00  ' 5F = 3E
+                byte    $00, $00, $00, $00, $00, $00, $00, $00  ' 20 = 40
+                byte    $08, $08, $08, $08, $08, $00, $08, $00  ' 21 = 42
+                byte    $14, $14, $14, $00, $00, $00, $00, $00  ' 22 = 44
+                byte    $14, $14, $3E, $14, $3E, $14, $14, $00  ' 23 = 46
+                byte    $08, $3C, $0A, $1C, $28, $1E, $08, $00  ' 24 = 48
+                byte    $06, $26, $10, $08, $04, $32, $30, $00  ' 25 = 4A
+                byte    $04, $0A, $0A, $04, $2A, $12, $2C, $00  ' 26 = 4C
+                byte    $08, $08, $08, $00, $00, $00, $00, $00  ' 27 = 4E
+                byte    $08, $04, $02, $02, $02, $04, $08, $00  ' 28 = 50
+                byte    $08, $10, $20, $20, $20, $10, $08, $00  ' 29 = 52
+                byte    $08, $2A, $1C, $08, $1C, $2A, $08, $00  ' 2A = 54
+                byte    $00, $08, $08, $3E, $08, $08, $00, $00  ' 2B = 56
+                byte    $00, $00, $00, $00, $08, $08, $04, $00  ' 2C = 58
+                byte    $00, $00, $00, $3E, $00, $00, $00, $00  ' 2D = 5A
+                byte    $00, $00, $00, $00, $00, $00, $08, $00  ' 2E = 5C
+                byte    $00, $20, $10, $08, $04, $02, $00, $00  ' 2F = 5E
+                byte    $1C, $22, $32, $2A, $26, $22, $1C, $00  ' 30 = 60
+                byte    $08, $0C, $08, $08, $08, $08, $1C, $00  ' 31 = 62
+                byte    $1C, $22, $20, $18, $04, $02, $3E, $00  ' 32 = 64
+                byte    $3E, $20, $10, $18, $20, $22, $1C, $00  ' 33 = 66
+                byte    $10, $18, $14, $12, $3E, $10, $10, $00  ' 34 = 68
+                byte    $3E, $02, $1E, $20, $20, $22, $1C, $00  ' 35 = 6A
+                byte    $38, $04, $02, $1E, $22, $22, $1C, $00  ' 36 = 6C
+                byte    $3E, $20, $10, $08, $04, $04, $04, $00  ' 37 = 6E
+                byte    $1C, $22, $22, $1C, $22, $22, $1C, $00  ' 38 = 70
+                byte    $1C, $22, $22, $3C, $20, $10, $0E, $00  ' 39 = 72
+                byte    $00, $08, $08, $00, $00, $08, $08, $00  ' 3A = 74
+                byte    $00, $00, $08, $00, $08, $08, $04, $00  ' 3B = 76
+                byte    $10, $08, $04, $02, $04, $08, $10, $00  ' 3C = 78
+                byte    $00, $00, $3E, $00, $3E, $00, $00, $00  ' 3D = 7A
+                byte    $04, $08, $10, $20, $10, $08, $04, $00  ' 3E = 7C
+                byte    $1C, $22, $10, $08, $08, $00, $08, $00  ' 3F = 7E
+
+                ' palette
+                long    $00_00_00_00        ' background
+                long    $F0_F0_F0_00        ' foreground
+ntsc_lut_end
+
+DAT             orgh
+
+'
+'
+' PS/2 Lookup table
+'
+ps2_table       ' normal
+                byte    $00, $00, $00, $00, $00, $00, $00, $00 ' 00-07
+                byte    $00, $00, $00, $00, $00, $09, "`", $00 ' 08-0F
+                byte    $00, $00, $00, $00, $00, "Q", "1", $00 ' 10-17
+                byte    $00, $00, "Z", "S", "A", "W", "2", $00 ' 18-1F
+                byte    $00, "C", "X", "D", "E", "4", "3", $00 ' 20-27
+                byte    $00, " ", "V", "F", "T", "R", "5", $00 ' 28-2F
+                byte    $00, "N", "B", "H", "G", "Y", "6", $00 ' 30-37
+                byte    $00, $00, "M", "J", "U", "7", "8", $00 ' 38-3F
+                byte    $00, ",", "K", "I", "O", "0", "9", $00 ' 40-47
+                byte    $00, ".", "/", "L", ";", "P", "-", $00 ' 48-4F
+                byte    $00, $00, $22, $00, "[", "=", $00, $00 ' 50-57
+                byte    $00, $00, $0D, "]", $00, "\", $00, $00 ' 58-5F
+                byte    $00, $00, $00, $00, $00, $00, $DF, $00 ' 60-67
+                byte    $00, "1", $00, "4", "7", $00, $00, $00 ' 68-6F
+                byte    "0", ".", "2", "5", "6", "8", $1B, $00 ' 70-77
+                byte    $00, "+", "3", "-", "*", "9", $00, $00 ' 78-7F
+                byte    $00, $00, $00, $00                     ' 80-83
+                ' shift
+                byte    $00, $00, $00, $00, $00, $00, $00, $00 ' 00-07
+                byte    $00, $00, $00, $00, $00, $09, "~", $00 ' 08-0F
+                byte    $00, $00, $00, $00, $00, "Q", "!", $00 ' 10-17
+                byte    $00, $00, "Z", "S", "A", "W", "@", $00 ' 18-1F
+                byte    $00, "C", "X", "D", "E", "$", "#", $00 ' 20-27
+                byte    $00, " ", "V", "F", "T", "R", "%", $00 ' 28-2F
+                byte    $00, "N", "B", "H", "G", "Y", "^", $00 ' 30-37
+                byte    $00, $00, "M", "J", "U", "&", "*", $00 ' 38-3F
+                byte    $00, "<", "K", "I", "O", ")", "(", $00 ' 40-47
+                byte    $00, ">", "?", "L", ":", "P", "_", $00 ' 48-4F
+                byte    $00, $00, "'", $00, "{", "+", $00, $00 ' 50-57
+                byte    $00, $00, $0D, "}", $00, "|", $00, $00 ' 58-5F
+                byte    $00, $00, $00, $00, $00, $00, $DF, $00 ' 60-67
+                byte    $00, "1", $00, "4", "7", $00, $00, $00 ' 68-6F
+                byte    "0", ".", "2", "5", "6", "8", $1B, $00 ' 70-77
+                byte    $00, "+", "3", "-", "*", "9", $00, $00 ' 78-7F
+                byte    $00,     $00,  $00,  $00                                         ' 80-83
+
+CON
+
+ntsc_blank_lev  = 40.0                                  'levels
+ntsc_black_lev  = ntsc_blank_lev + 7.5
+ntsc_peak_lev   = ntsc_blank_lev + 140.0
+ntsc_scale      = 127.0 / ntsc_peak_lev * 128.0
+ntsc_scale_cor  = ntsc_scale / 1.646                    'CORDIC prescale for IQ modulator
+
+ntsc_blank      = round(ntsc_scale * 2.0 * ntsc_blank_lev / ntsc_peak_lev)
+ntsc_black      = round(ntsc_scale * 2.0 * ntsc_black_lev / ntsc_peak_lev)
+
+ntsc_yr         = round(ntsc_scale     *  0.299)        'Y sums to 1
+ntsc_yg         = round(ntsc_scale     *  0.587)
+ntsc_yb         = round(ntsc_scale     *  0.114)
+
+ntsc_ir         = round(ntsc_scale_cor *  0.596)        'I sums to 0
+ntsc_ig         = round(ntsc_scale_cor * -0.274)
+ntsc_ib         = round(ntsc_scale_cor * -0.322)
+
+ntsc_qr         = round(ntsc_scale_cor *  0.212)        'Q sums to 0
+ntsc_qg         = round(ntsc_scale_cor * -0.523)
+ntsc_qb         = round(ntsc_scale_cor *  0.311)
+
+ntsc_cy         = (ntsc_yr & $FF) << 24 + (ntsc_yg & $FF) << 16 + (ntsc_yb & $FF) << 8 + ntsc_black
+ntsc_ci         = (ntsc_ir & $FF) << 24 + (ntsc_ig & $FF) << 16 + (ntsc_ib & $FF) << 8 + ntsc_blank
+ntsc_cq         = (ntsc_qr & $FF) << 24 + (ntsc_qg & $FF) << 16 + (ntsc_qb & $FF) << 8 + 128
+
+ntsc_cb         = $809000_01                            'colorburst reference color
+
+ntsc_cf         = 3_579_545                             'colorburst frequency
+ntsc_cc         = round(227.5 * 4.0)                    'color cycles per line * 4 to preserve fraction
+
+ntsc_bs         =  1_600_000                            'ps before sync
+ntsc_ds         =  4_700_000                            'ps during sync
+ntsc_bc         =    600_000                            'ps before colorburst
+ntsc_dc         =  2_500_000                            'ps during colorburst
+ntsc_ac         =  1_500_000                            'ps after colorburst
+ntsc_hl         =  2_300_000                            'ps during high vsync
+ntsc_ll         = 27_100_000                            'ps during low vsync
+ntsc_vs         = 6                                     'vsync pulses
+ntsc_dl         = 243                                   'display lines
+
+DAT             orgh
+'
+'
+' 6502 Memory Space
+'
+ram_6502
+
+                orgh    ram_6502 + $8000
+
+ram_top_6502
+
+                orgh    ram_6502 + $E000
+
+                ' BASIC $E000
+                byte    $4C, $B0, $E2, $AD, $11, $D0, $10, $FB
+                byte    $AD, $10, $D0, $60, $8A, $29, $20, $F0
+                byte    $23, $A9, $A0, $85, $E4, $4C, $C9, $E3
+                byte    $A9, $20, $C5, $24, $B0, $0C, $A9, $8D
+                byte    $A0, $07, $20, $C9, $E3, $A9, $A0, $88
+                byte    $D0, $F8, $A0, $00, $B1, $E2, $E6, $E2
+                byte    $D0, $02, $E6, $E3, $60, $20, $15, $E7
+                byte    $20, $76, $E5, $A5, $E2, $C5, $E6, $A5
+                byte    $E3, $E5, $E7, $B0, $EF, $20, $6D, $E0
+                byte    $4C, $3B, $E0, $A5, $CA, $85, $E2, $A5
+                byte    $CB, $85, $E3, $A5, $4C, $85, $E6, $A5
+                byte    $4D, $85, $E7, $D0, $DE, $20, $15, $E7
+                byte    $20, $6D, $E5, $A5, $E4, $85, $E2, $A5
+                byte    $E5, $85, $E3, $B0, $C7, $86, $D8, $A9
+                byte    $A0, $85, $FA, $20, $2A, $E0, $98, $85
+                byte    $E4, $20, $2A, $E0, $AA, $20, $2A, $E0
+                byte    $20, $1B, $E5, $20, $18, $E0, $84, $FA
+                byte    $AA, $10, $18, $0A, $10, $E9, $A5, $E4
+                byte    $D0, $03, $20, $11, $E0, $8A, $20, $C9
+                byte    $E3, $A9, $25, $20, $1A, $E0, $AA, $30
+                byte    $F5, $85, $E4, $C9, $01, $D0, $05, $A6
+                byte    $D8, $4C, $CD, $E3, $48, $84, $CE, $A2
+                byte    $ED, $86, $CF, $C9, $51, $90, $04, $C6
+                byte    $CF, $E9, $50, $48, $B1, $CE, $AA, $88
+                byte    $B1, $CE, $10, $FA, $E0, $C0, $B0, $04
+                byte    $E0, $00, $30, $F2, $AA, $68, $E9, $01
+                byte    $D0, $E9, $24, $E4, $30, $03, $20, $F8
+                byte    $EF, $B1, $CE, $10, $10, $AA, $29, $3F
+                byte    $85, $E4, $18, $69, $A0, $20, $C9, $E3
+                byte    $88, $E0, $C0, $90, $EC, $20, $0C, $E0
+                byte    $68, $C9, $5D, $F0, $A4, $C9, $28, $D0
+                byte    $8A, $F0, $9E, $20, $18, $E1, $95, $50
+                byte    $D5, $78, $90, $11, $A0, $2B, $4C, $E0
+                byte    $E3, $20, $34, $EE, $D5, $50, $90, $F4
+                byte    $20, $E4, $EF, $95, $78, $4C, $23, $E8
+                byte    $20, $34, $EE, $F0, $E7, $38, $E9, $01
+                byte    $60, $20, $18, $E1, $95, $50, $18, $F5
+                byte    $78, $4C, $02, $E1, $A0, $14, $D0, $D6
+                byte    $20, $18, $E1, $E8, $B5, $50, $85, $DA
+                byte    $65, $CE, $48, $A8, $B5, $78, $85, $DB
+                byte    $65, $CF, $48, $C4, $CA, $E5, $CB, $B0
+                byte    $E3, $A5, $DA, $69, $FE, $85, $DA, $A9
+                byte    $FF, $A8, $65, $DB, $85, $DB, $C8, $B1
+                byte    $DA, $D9, $CC, $00, $D0, $0F, $98, $F0
+                byte    $F5, $68, $91, $DA, $99, $CC, $00, $88
+                byte    $10, $F7, $E8, $60, $EA, $A0, $80, $D0
+                byte    $95, $A9, $00, $20, $0A, $E7, $A0, $02
+                byte    $94, $78, $20, $0A, $E7, $A9, $BF, $20
+                byte    $C9, $E3, $A0, $00, $20, $9E, $E2, $94
+                byte    $78, $EA, $EA, $EA, $B5, $51, $85, $CE
+                byte    $B5, $79, $85, $CF, $E8, $E8, $20, $BC
+                byte    $E1, $B5, $4E, $D5, $76, $B0, $15, $F6
+                byte    $4E, $A8, $B1, $CE, $B4, $50, $C4, $E4
+                byte    $90, $04, $A0, $83, $D0, $C1, $91, $DA
+                byte    $F6, $50, $90, $E5, $B4, $50, $8A, $91
+                byte    $DA, $E8, $E8, $60, $B5, $51, $85, $DA
+                byte    $38, $E9, $02, $85, $E4, $B5, $79, $85
+                byte    $DB, $E9, $00, $85, $E5, $A0, $00, $B1
+                byte    $E4, $18, $E5, $DA, $85, $E4, $60, $B5
+                byte    $53, $85, $CE, $B5, $7B, $85, $CF, $B5
+                byte    $51, $85, $DA, $B5, $79, $85, $DB, $E8
+                byte    $E8, $E8, $A0, $00, $94, $78, $94, $A0
+                byte    $C8, $94, $50, $B5, $4D, $D5, $75, $08
+                byte    $48, $B5, $4F, $D5, $77, $90, $07, $68
+                byte    $28, $B0, $02, $56, $50, $60, $A8, $B1
+                byte    $CE, $85, $E4, $68, $A8, $28, $B0, $F3
+                byte    $B1, $DA, $C5, $E4, $D0, $ED, $F6, $4F
+                byte    $F6, $4D, $B0, $D7, $20, $D7, $E1, $4C
+                byte    $36, $E7, $20, $54, $E2, $06, $CE, $26
+                byte    $CF, $90, $0D, $18, $A5, $E6, $65, $DA
+                byte    $85, $E6, $A5, $E7, $65, $DB, $85, $E7
+                byte    $88, $F0, $09, $06, $E6, $26, $E7, $10
+                byte    $E4, $4C, $7E, $E7, $A5, $E6, $20, $08
+                byte    $E7, $A5, $E7, $95, $A0, $06, $E5, $90
+                byte    $28, $4C, $6F, $E7, $A9, $55, $85, $E5
+                byte    $20, $5B, $E2, $A5, $CE, $85, $DA, $A5
+                byte    $CF, $85, $DB, $20, $15, $E7, $84, $E6
+                byte    $84, $E7, $A5, $CF, $10, $09, $CA, $06
+                byte    $E5, $20, $6F, $E7, $20, $15, $E7, $A0
+                byte    $10, $60, $20, $6C, $EE, $F0, $C5, $FF
+                byte    $C9, $84, $D0, $02, $46, $F8, $C9, $DF
+                byte    $F0, $11, $C9, $9B, $F0, $06, $99, $00
+                byte    $02, $C8, $10, $0A, $A0, $8B, $20, $C4
+                byte    $E3, $A0, $01, $88, $30, $F6, $20, $03
+                byte    $E0, $EA, $EA, $20, $C9, $E3, $C9, $8D
+                byte    $D0, $D6, $A9, $DF, $99, $00, $02, $60
+                byte    $20, $D3, $EF, $20, $CD, $E3, $46, $D9
+                byte    $A9, $BE, $20, $C9, $E3, $A0, $00, $84
+                byte    $FA, $24, $F8, $10, $0C, $A6, $F6, $A5
+                byte    $F7, $20, $1B, $E5, $A9, $A0, $20, $C9
+                byte    $E3, $A2, $FF, $9A, $20, $9E, $E2, $84
+                byte    $F1, $8A, $85, $C8, $A2, $20, $20, $91
+                byte    $E4, $A5, $C8, $69, $00, $85, $E0, $A9
+                byte    $00, $AA, $69, $02, $85, $E1, $A1, $E0
+                byte    $29, $F0, $C9, $B0, $F0, $03, $4C, $83
+                byte    $E8, $A0, $02, $B1, $E0, $99, $CD, $00
+                byte    $88, $D0, $F8, $20, $8A, $E3, $A5, $F1
+                byte    $E5, $C8, $C9, $04, $F0, $A8, $91, $E0
+                byte    $A5, $CA, $F1, $E0, $85, $E4, $A5, $CB
+                byte    $E9, $00, $85, $E5, $A5, $E4, $C5, $CC
+                byte    $A5, $E5, $E5, $CD, $90, $45, $A5, $CA
+                byte    $F1, $E0, $85, $E6, $A5, $CB, $E9, $00
+                byte    $85, $E7, $B1, $CA, $91, $E6, $E6, $CA
+                byte    $D0, $02, $E6, $CB, $A5, $E2, $C5, $CA
+                byte    $A5, $E3, $E5, $CB, $B0, $E0, $B5, $E4
+                byte    $95, $CA, $CA, $10, $F9, $B1, $E0, $A8
+                byte    $88, $B1, $E0, $91, $E6, $98, $D0, $F8
+                byte    $24, $F8, $10, $09, $B5, $F7, $75, $F5
+                byte    $95, $F7, $E8, $F0, $F7, $10, $7E, $00
+                byte    $00, $00, $00, $A0, $14, $D0, $71, $20
+                byte    $15, $E7, $A5, $E2, $85, $E6, $A5, $E3
+                byte    $85, $E7, $20, $75, $E5, $A5, $E2, $85
+                byte    $E4, $A5, $E3, $85, $E5, $D0, $0E, $20
+                byte    $15, $E7, $20, $6D, $E5, $A5, $E6, $85
+                byte    $E2, $A5, $E7, $85, $E3, $A0, $00, $A5
+                byte    $CA, $C5, $E4, $A5, $CB, $E5, $E5, $B0
+                byte    $16, $A5, $E4, $D0, $02, $C6, $E5, $C6
+                byte    $E4, $A5, $E6, $D0, $02, $C6, $E7, $C6
+                byte    $E6, $B1, $E4, $91, $E6, $90, $E0, $A5
+                byte    $E6, $85, $CA, $A5, $E7, $85, $CB, $60
+                byte    $20, $C9, $E3, $C8, $B9, $00, $EB, $30
+                byte    $F7, $C9, $8D, $D0, $06, $A9, $00, $85
+                byte    $24, $A9, $8D, $E6, $24, $2C, $12, $D0
+                byte    $30, $FB, $8D, $12, $D0, $60, $A0, $06
+                byte    $20, $D3, $EE, $24, $D9, $30, $03, $4C
+                byte    $B6, $E2, $4C, $9A, $EB, $2A, $69, $A0
+                byte    $DD, $00, $02, $D0, $53, $B1, $FE, $0A
+                byte    $30, $06, $88, $B1, $FE, $30, $29, $C8
+                byte    $86, $C8, $98, $48, $A2, $00, $A1, $FE
+                byte    $AA, $4A, $49, $48, $11, $FE, $C9, $C0
+                byte    $90, $01, $E8, $C8, $D0, $F3, $68, $A8
+                byte    $8A, $4C, $C0, $E4, $E6, $F1, $A6, $F1
+                byte    $F0, $BC, $9D, $00, $02, $60, $A6, $C8
+                byte    $A9, $A0, $E8, $DD, $00, $02, $B0, $FA
+                byte    $B1, $FE, $29, $3F, $4A, $D0, $B6, $BD
+                byte    $00, $02, $B0, $06, $69, $3F, $C9, $1A
+                byte    $90, $6F, $69, $4F, $C9, $0A, $90, $69
+                byte    $A6, $FD, $C8, $B1, $FE, $29, $E0, $C9
+                byte    $20, $F0, $7A, $B5, $A8, $85, $C8, $B5
+                byte    $D1, $85, $F1, $88, $B1, $FE, $0A, $10
+                byte    $FA, $88, $B0, $38, $0A, $30, $35, $B4
+                byte    $58, $84, $FF, $B4, $80, $E8, $10, $DA
+                byte    $F0, $B3, $C9, $7E, $B0, $22, $CA, $10
+                byte    $04, $A0, $06, $10, $29, $94, $80, $A4
+                byte    $FF, $94, $58, $A4, $C8, $94, $A8, $A4
+                byte    $F1, $94, $D1, $29, $1F, $A8, $B9, $20
+                byte    $EC, $0A, $A8, $A9, $76, $2A, $85, $FF
+                byte    $D0, $01, $C8, $C8, $86, $FD, $B1, $FE
+                byte    $30, $84, $D0, $05, $A0, $0E, $4C, $E0
+                byte    $E3, $C9, $03, $B0, $C3, $4A, $A6, $C8
+                byte    $E8, $BD, $00, $02, $90, $04, $C9, $A2
+                byte    $F0, $0A, $C9, $DF, $F0, $06, $86, $C8
+                byte    $20, $1C, $E4, $C8, $88, $A6, $FD, $B1
+                byte    $FE, $88, $0A, $10, $CF, $B4, $58, $84
+                byte    $FF, $B4, $80, $E8, $B1, $FE, $29, $9F
+                byte    $D0, $ED, $85, $F2, $85, $F3, $98, $48
+                byte    $86, $FD, $B4, $D0, $84, $C9, $18, $A9
+                byte    $0A, $85, $F9, $A2, $00, $C8, $B9, $00
+                byte    $02, $29, $0F, $65, $F2, $48, $8A, $65
+                byte    $F3, $30, $1C, $AA, $68, $C6, $F9, $D0
+                byte    $F2, $85, $F2, $86, $F3, $C4, $F1, $D0
+                byte    $DE, $A4, $C9, $C8, $84, $F1, $20, $1C
+                byte    $E4, $68, $A8, $A5, $F3, $B0, $A9, $A0
+                byte    $00, $10, $8B, $85, $F3, $86, $F2, $A2
+                byte    $04, $86, $C9, $A9, $B0, $85, $F9, $A5
+                byte    $F2, $DD, $63, $E5, $A5, $F3, $FD, $68
+                byte    $E5, $90, $0D, $85, $F3, $A5, $F2, $FD
+                byte    $63, $E5, $85, $F2, $E6, $F9, $D0, $E7
+                byte    $A5, $F9, $E8, $CA, $F0, $0E, $C9, $B0
+                byte    $F0, $02, $85, $C9, $24, $C9, $30, $04
+                byte    $A5, $FA, $F0, $0B, $20, $C9, $E3, $24
+                byte    $F8, $10, $04, $99, $00, $02, $C8, $CA
+                byte    $10, $C1, $60, $01, $0A, $64, $E8, $10
+                byte    $00, $00, $00, $03, $27, $A5, $CA, $85
+                byte    $E6, $A5, $CB, $85, $E7, $E8, $A5, $E7
+                byte    $85, $E5, $A5, $E6, $85, $E4, $C5, $4C
+                byte    $A5, $E5, $E5, $4D, $B0, $26, $A0, $01
+                byte    $B1, $E4, $E5, $CE, $C8, $B1, $E4, $E5
+                byte    $CF, $B0, $19, $A0, $00, $A5, $E6, $71
+                byte    $E4, $85, $E6, $90, $03, $E6, $E7, $18
+                byte    $C8, $A5, $CE, $F1, $E4, $C8, $A5, $CF
+                byte    $F1, $E4, $B0, $CA, $60, $46, $F8, $A5
+                byte    $4C, $85, $CA, $A5, $4D, $85, $CB, $A5
+                byte    $4A, $85, $CC, $A5, $4B, $85, $CD, $A9
+                byte    $00, $85, $FB, $85, $FC, $85, $FE, $A9
+                byte    $00, $85, $1D, $60, $A5, $D0, $69, $05
+                byte    $85, $D2, $A5, $D1, $69, $00, $85, $D3
+                byte    $A5, $D2, $C5, $CA, $A5, $D3, $E5, $CB
+                byte    $90, $03, $4C, $6B, $E3, $A5, $CE, $91
+                byte    $D0, $A5, $CF, $C8, $91, $D0, $A5, $D2
+                byte    $C8, $91, $D0, $A5, $D3, $C8, $91, $D0
+                byte    $A9, $00, $C8, $91, $D0, $C8, $91, $D0
+                byte    $A5, $D2, $85, $CC, $A5, $D3, $85, $CD
+                byte    $A5, $D0, $90, $43, $85, $CE, $84, $CF
+                byte    $20, $FF, $E6, $30, $0E, $C9, $40, $F0
+                byte    $0A, $4C, $28, $E6, $06, $C9, $49, $D0
+                byte    $07, $A9, $49, $85, $CF, $20, $FF, $E6
+                byte    $A5, $4B, $85, $D1, $A5, $4A, $85, $D0
+                byte    $C5, $CC, $A5, $D1, $E5, $CD, $B0, $94
+                byte    $B1, $D0, $C8, $C5, $CE, $D0, $06, $B1
+                byte    $D0, $C5, $CF, $F0, $0E, $C8, $B1, $D0
+                byte    $48, $C8, $B1, $D0, $85, $D1, $68, $A0
+                byte    $00, $F0, $DB, $A5, $D0, $69, $03, $20
+                byte    $0A, $E7, $A5, $D1, $69, $00, $95, $78
+                byte    $A5, $CF, $C9, $40, $D0, $1C, $88, $98
+                byte    $20, $0A, $E7, $88, $94, $78, $A0, $03
+                byte    $F6, $78, $C8, $B1, $D0, $30, $F9, $10
+                byte    $09, $A9, $00, $85, $D4, $85, $D5, $A2
+                byte    $20, $48, $A0, $00, $B1, $E0, $10, $18
+                byte    $0A, $30, $81, $20, $FF, $E6, $20, $08
+                byte    $E7, $20, $FF, $E6, $95, $A0, $24, $D4
+                byte    $10, $01, $CA, $20, $FF, $E6, $B0, $E6
+                byte    $C9, $28, $D0, $1F, $A5, $E0, $20, $0A
+                byte    $E7, $A5, $E1, $95, $78, $24, $D4, $30
+                byte    $0B, $A9, $01, $20, $0A, $E7, $A9, $00
+                byte    $95, $78, $F6, $78, $20, $FF, $E6, $30
+                byte    $F9, $B0, $D3, $24, $D4, $10, $06, $C9
+                byte    $04, $B0, $D0, $46, $D4, $A8, $85, $D6
+                byte    $B9, $98, $E9, $29, $55, $0A, $85, $D7
+                byte    $68, $A8, $B9, $98, $E9, $29, $AA, $C5
+                byte    $D7, $B0, $09, $98, $48, $20, $FF, $E6
+                byte    $A5, $D6, $90, $95, $B9, $10, $EA, $85
+                byte    $CE, $B9, $88, $EA, $85, $CF, $20, $FC
+                byte    $E6, $4C, $D8, $E6, $6C, $CE, $00, $E6
+                byte    $E0, $D0, $02, $E6, $E1, $B1, $E0, $60
+                byte    $94, $77, $CA, $30, $03, $95, $50, $60
+                byte    $A0, $66, $4C, $E0, $E3, $A0, $00, $B5
+                byte    $50, $85, $CE, $B5, $A0, $85, $CF, $B5
+                byte    $78, $F0, $0E, $85, $CF, $B1, $CE, $48
+                byte    $C8, $B1, $CE, $85, $CF, $68, $85, $CE
+                byte    $88, $E8, $60, $20, $4A, $E7, $20, $15
+                byte    $E7, $98, $20, $08, $E7, $95, $A0, $C5
+                byte    $CE, $D0, $06, $C5, $CF, $D0, $02, $F6
+                byte    $50, $60, $20, $82, $E7, $20, $59, $E7
+                byte    $20, $15, $E7, $24, $CF, $30, $1B, $CA
+                byte    $60, $20, $15, $E7, $A5, $CF, $D0, $04
+                byte    $A5, $CE, $F0, $F3, $A9, $FF, $20, $08
+                byte    $E7, $95, $A0, $24, $CF, $30, $E9, $20
+                byte    $15, $E7, $98, $38, $E5, $CE, $20, $08
+                byte    $E7, $98, $E5, $CF, $50, $23, $A0, $00
+                byte    $10, $90, $20, $6F, $E7, $20, $15, $E7
+                byte    $A5, $CE, $85, $DA, $A5, $CF, $85, $DB
+                byte    $20, $15, $E7, $18, $A5, $CE, $65, $DA
+                byte    $20, $08, $E7, $A5, $CF, $65, $DB, $70
+                byte    $DD, $95, $A0, $60, $20, $15, $E7, $A4
+                byte    $CE, $F0, $05, $88, $A5, $CF, $F0, $0C
+                byte    $60, $A5, $24, $09, $07, $A8, $C8, $A9
+                byte    $A0, $20, $C9, $E3, $C4, $24, $B0, $F7
+                byte    $60, $20, $B1, $E7, $20, $15, $E7, $A5
+                byte    $CF, $10, $0A, $A9, $AD, $20, $C9, $E3
+                byte    $20, $72, $E7, $50, $EF, $88, $84, $D5
+                byte    $86, $CF, $A6, $CE, $20, $1B, $E5, $A6
+                byte    $CF, $60, $20, $15, $E7, $A5, $CE, $85
+                byte    $F6, $A5, $CF, $85, $F7, $88, $84, $F8
+                byte    $C8, $A9, $0A, $85, $F4, $84, $F5, $60
+                byte    $20, $15, $E7, $A5, $CE, $A4, $CF, $10
+                byte    $F2, $20, $15, $E7, $B5, $50, $85, $DA
+                byte    $B5, $78, $85, $DB, $A5, $CE, $91, $DA
+                byte    $C8, $A5, $CF, $91, $DA, $E8, $60, $68
+                byte    $68, $24, $D5, $10, $05, $20, $CD, $E3
+                byte    $46, $D5, $60, $A0, $FF, $84, $D7, $60
+                byte    $20, $CD, $EF, $F0, $07, $A9, $25, $85
+                byte    $D6, $88, $84, $D4, $E8, $60, $A5, $CA
+                byte    $A4, $CB, $D0, $5A, $A0, $41, $A5, $FC
+                byte    $C9, $08, $B0, $5E, $A8, $E6, $FC, $A5
+                byte    $E0, $99, $00, $01, $A5, $E1, $99, $08
+                byte    $01, $A5, $DC, $99, $10, $01, $A5, $DD
+                byte    $99, $18, $01, $20, $15, $E7, $20, $6D
+                byte    $E5, $90, $04, $A0, $37, $D0, $3B, $A5
+                byte    $E4, $A4, $E5, $85, $DC, $84, $DD, $2C
+                byte    $11, $D0, $30, $4F, $18, $69, $03, $90
+                byte    $01, $C8, $A2, $FF, $86, $D9, $9A, $85
+                byte    $E0, $84, $E1, $20, $79, $E6, $24, $D9
+                byte    $10, $49, $18, $A0, $00, $A5, $DC, $71
+                byte    $DC, $A4, $DD, $90, $01, $C8, $C5, $4C
+                byte    $D0, $D1, $C4, $4D, $D0, $CD, $A0, $34
+                byte    $46, $D9, $4C, $E0, $E3, $A0, $4A, $A5
+                byte    $FC, $F0, $F7, $C6, $FC, $A8, $B9, $0F
+                byte    $01, $85, $DC, $B9, $17, $01, $85, $DD
+                byte    $BE, $FF, $00, $B9, $07, $01, $A8, $8A
+                byte    $4C, $7A, $E8, $A0, $63, $20, $C4, $E3
+                byte    $A0, $01, $B1, $DC, $AA, $C8, $B1, $DC
+                byte    $20, $1B, $E5, $4C, $B3, $E2, $C6, $FB
+                byte    $A0, $5B, $A5, $FB, $F0, $C4, $A8, $B5
+                byte    $50, $D9, $1F, $01, $D0, $F0, $B5, $78
+                byte    $D9, $27, $01, $D0, $E9, $B9, $2F, $01
+                byte    $85, $DA, $B9, $37, $01, $85, $DB, $20
+                byte    $15, $E7, $CA, $20, $93, $E7, $20, $01
+                byte    $E8, $CA, $A4, $FB, $B9, $67, $01, $95
+                byte    $9F, $B9, $5F, $01, $A0, $00, $20, $08
+                byte    $E7, $20, $82, $E7, $20, $59, $E7, $20
+                byte    $15, $E7, $A4, $FB, $A5, $CE, $F0, $05
+                byte    $59, $37, $01, $10, $12, $B9, $3F, $01
+                byte    $85, $DC, $B9, $47, $01, $85, $DD, $BE
+                byte    $4F, $01, $B9, $57, $01, $D0, $87, $C6
+                byte    $FB, $60, $A0, $54, $A5, $FB, $C9, $08
+                byte    $F0, $9A, $E6, $FB, $A8, $B5, $50, $99
+                byte    $20, $01, $B5, $78, $99, $28, $01, $60
+                byte    $20, $15, $E7, $A4, $FB, $A5, $CE, $99
+                byte    $5F, $01, $A5, $CF, $99, $67, $01, $A9
+                byte    $01, $99, $2F, $01, $A9, $00, $99, $37
+                byte    $01, $A5, $DC, $99, $3F, $01, $A5, $DD
+                byte    $99, $47, $01, $A5, $E0, $99, $4F, $01
+                byte    $A5, $E1, $99, $57, $01, $60, $20, $15
+                byte    $E7, $A4, $FB, $A5, $CE, $99, $2F, $01
+                byte    $A5, $CF, $4C, $66, $E9, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $AB, $03, $03, $03, $03
+                byte    $03, $03, $03, $03, $03, $03, $03, $03
+                byte    $03, $03, $3F, $3F, $C0, $C0, $3C, $3C
+                byte    $3C, $3C, $3C, $3C, $3C, $30, $0F, $C0
+                byte    $CC, $FF, $55, $00, $AB, $AB, $03, $03
+                byte    $FF, $FF, $55, $FF, $FF, $55, $CF, $CF
+                byte    $CF, $CF, $CF, $FF, $55, $C3, $C3, $C3
+                byte    $55, $F0, $F0, $CF, $56, $56, $56, $55
+                byte    $FF, $FF, $55, $03, $03, $03, $03, $03
+                byte    $03, $03, $FF, $FF, $FF, $03, $03, $03
+                byte    $03, $03, $03, $03, $03, $03, $03, $03
+                byte    $03, $03, $03, $03, $03, $00, $AB, $03
+                byte    $57, $03, $03, $03, $03, $07, $03, $03
+                byte    $03, $03, $03, $03, $03, $03, $03, $03
+                byte    $03, $03, $AA, $FF, $FF, $FF, $FF, $FF
+                byte    $17, $FF, $FF, $19, $5D, $35, $4B, $F2
+                byte    $EC, $87, $6F, $AD, $B7, $E2, $F8, $54
+                byte    $80, $96, $85, $82, $22, $10, $33, $4A
+                byte    $13, $06, $0B, $4A, $01, $40, $47, $7A
+                byte    $00, $FF, $23, $09, $5B, $16, $B6, $CB
+                byte    $FF, $FF, $FB, $FF, $FF, $24, $F6, $4E
+                byte    $59, $50, $00, $FF, $23, $A3, $6F, $36
+                byte    $23, $D7, $1C, $22, $C2, $AE, $BA, $23
+                byte    $FF, $FF, $21, $30, $1E, $03, $C4, $20
+                byte    $00, $C1, $FF, $FF, $FF, $A0, $30, $1E
+                byte    $A4, $D3, $B6, $BC, $AA, $3A, $01, $50
+                byte    $7E, $D8, $D8, $A5, $3C, $FF, $16, $5B
+                byte    $28, $03, $C4, $1D, $00, $0C, $4E, $00
+                byte    $3E, $00, $A6, $B0, $00, $BC, $C6, $57
+                byte    $8C, $01, $27, $FF, $FF, $FF, $FF, $FF
+                byte    $E8, $FF, $FF, $E8, $E0, $E0, $E0, $EF
+                byte    $EF, $E3, $E3, $E5, $E5, $E7, $E7, $EE
+                byte    $EF, $EF, $E7, $E7, $E2, $EF, $E7, $E7
+                byte    $EC, $EC, $EC, $E7, $EC, $EC, $EC, $E2
+                byte    $00, $FF, $E8, $E1, $E8, $E8, $EF, $EB
+                byte    $FF, $FF, $E0, $FF, $FF, $EF, $EE, $EF
+                byte    $E7, $E7, $00, $FF, $E8, $E7, $E7, $E7
+                byte    $E8, $E1, $E2, $EE, $EE, $EE, $EE, $E8
+                byte    $FF, $FF, $E1, $E1, $EF, $EE, $E7, $E8
+                byte    $EE, $E7, $FF, $FF, $FF, $EE, $E1, $EF
+                byte    $E7, $E8, $EF, $EF, $EB, $E9, $E8, $E9
+                byte    $E9, $E8, $E8, $E8, $E8, $FF, $E8, $E8
+                byte    $E8, $EE, $E7, $E8, $EF, $EF, $EE, $EF
+                byte    $EE, $EF, $EE, $EE, $EF, $EE, $EE, $EE
+                byte    $E1, $E8, $E8, $FF, $FF, $FF, $FF, $FF
+                byte    $BE, $B3, $B2, $B7, $B6, $37, $D4, $CF
+                byte    $CF, $A0, $CC, $CF, $CE, $47, $D3, $D9
+                byte    $CE, $D4, $C1, $58, $CD, $C5, $CD, $A0
+                byte    $C6, $D5, $CC, $4C, $D4, $CF, $CF, $A0
+                byte    $CD, $C1, $CE, $D9, $A0, $D0, $C1, $D2
+                byte    $C5, $CE, $53, $D3, $D4, $D2, $C9, $CE
+                byte    $47, $CE, $CF, $A0, $C5, $CE, $44, $C2
+                byte    $C1, $C4, $A0, $C2, $D2, $C1, $CE, $C3
+                byte    $48, $BE, $B8, $A0, $C7, $CF, $D3, $D5
+                byte    $C2, $53, $C2, $C1, $C4, $A0, $D2, $C5
+                byte    $D4, $D5, $D2, $4E, $BE, $B8, $A0, $C6
+                byte    $CF, $D2, $53, $C2, $C1, $C4, $A0, $CE
+                byte    $C5, $D8, $54, $D3, $D4, $CF, $D0, $D0
+                byte    $C5, $C4, $A0, $C1, $D4, $20, $AA, $AA
+                byte    $AA, $20, $A0, $C5, $D2, $D2, $0D, $BE
+                byte    $B2, $B5, $35, $D2, $C1, $CE, $C7, $45
+                byte    $C4, $C9, $4D, $D3, $D4, $D2, $A0, $CF
+                byte    $D6, $C6, $4C, $DC, $0D, $D2, $C5, $D4
+                byte    $D9, $D0, $C5, $A0, $CC, $C9, $CE, $C5
+                byte    $8D, $3F, $46, $D9, $90, $03, $4C, $C3
+                byte    $E8, $A6, $CF, $9A, $A6, $CE, $A0, $8D
+                byte    $D0, $02, $A0, $99, $20, $C4, $E3, $86
+                byte    $CE, $BA, $86, $CF, $A0, $FE, $84, $D9
+                byte    $C8, $84, $C8, $20, $99, $E2, $84, $F1
+                byte    $A2, $20, $A9, $30, $20, $91, $E4, $E6
+                byte    $D9, $A6, $CE, $A4, $C8, $0A, $85, $CE
+                byte    $C8, $B9, $00, $02, $C9, $74, $F0, $D2
+                byte    $49, $B0, $C9, $0A, $B0, $F0, $C8, $C8
+                byte    $84, $C8, $B9, $00, $02, $48, $B9, $FF
+                byte    $01, $A0, $00, $20, $08, $E7, $68, $95
+                byte    $A0, $A5, $CE, $C9, $C7, $D0, $03, $20
+                byte    $6F, $E7, $4C, $01, $E8, $FF, $FF, $FF
+                byte    $50, $20, $13, $EC, $D0, $15, $20, $0B
+                byte    $EC, $D0, $10, $20, $82, $E7, $20, $6F
+                byte    $E7, $50, $03, $20, $82, $E7, $20, $59
+                byte    $E7, $56, $50, $4C, $36, $E7, $FF, $FF
+                byte    $C1, $FF, $7F, $D1, $CC, $C7, $CF, $CE
+                byte    $C5, $9A, $98, $8B, $96, $95, $93, $BF
+                byte    $B2, $32, $2D, $2B, $BC, $B0, $AC, $BE
+                byte    $35, $8E, $61, $FF, $FF, $FF, $DD, $FB
+                byte    $20, $C9, $EF, $15, $4F, $10, $05, $20
+                byte    $C9, $EF, $35, $4F, $95, $50, $10, $CB
+                byte    $4C, $C9, $EF, $40, $60, $8D, $60, $8B
+                byte    $00, $7E, $8C, $33, $00, $00, $60, $03
+                byte    $BF, $12, $00, $40, $89, $C9, $47, $9D
+                byte    $17, $68, $9D, $0A, $00, $40, $60, $8D
+                byte    $60, $8B, $00, $7E, $8C, $3C, $00, $00
+                byte    $60, $03, $BF, $1B, $4B, $67, $B4, $A1
+                byte    $07, $8C, $07, $AE, $A9, $AC, $A8, $67
+                byte    $8C, $07, $B4, $AF, $AC, $B0, $67, $9D
+                byte    $B2, $AF, $AC, $AF, $A3, $67, $8C, $07
+                byte    $A5, $AB, $AF, $B0, $F4, $AE, $A9, $B2
+                byte    $B0, $7F, $0E, $27, $B4, $AE, $A9, $B2
+                byte    $B0, $7F, $0E, $28, $B4, $AE, $A9, $B2
+                byte    $B0, $64, $07, $A6, $A9, $67, $AF, $B4
+                byte    $AF, $A7, $78, $B4, $A5, $AC, $78, $7F
+                byte    $02, $AD, $A5, $B2, $67, $A2, $B5, $B3
+                byte    $AF, $A7, $EE, $B2, $B5, $B4, $A5, $B2
+                byte    $7E, $8C, $39, $B4, $B8, $A5, $AE, $67
+                byte    $B0, $A5, $B4, $B3, $27, $AF, $B4, $07
+                byte    $9D, $19, $B2, $AF, $A6, $7F, $05, $37
+                byte    $B4, $B5, $B0, $AE, $A9, $7F, $05, $28
+                byte    $B4, $B5, $B0, $AE, $A9, $7F, $05, $2A
+                byte    $B4, $B5, $B0, $AE, $A9, $E4, $AE, $A5
+                byte    $00, $FF, $FF, $47, $A2, $A1, $B4, $7F
+                byte    $0D, $30, $AD, $A9, $A4, $7F, $0D, $23
+                byte    $AD, $A9, $A4, $67, $AC, $AC, $A1, $A3
+                byte    $00, $40, $80, $C0, $C1, $80, $00, $47
+                byte    $8C, $68, $8C, $DB, $67, $9B, $68, $9B
+                byte    $50, $8C, $63, $8C, $7F, $01, $51, $07
+                byte    $88, $29, $84, $80, $C4, $80, $57, $71
+                byte    $07, $88, $14, $ED, $A5, $AD, $AF, $AC
+                byte    $ED, $A5, $AD, $A9, $A8, $F2, $AF, $AC
+                byte    $AF, $A3, $71, $08, $88, $AE, $A5, $AC
+                byte    $68, $83, $08, $68, $9D, $08, $71, $07
+                byte    $88, $60, $76, $B4, $AF, $AE, $76, $8D
+                byte    $76, $8B, $51, $07, $88, $19, $B8, $A4
+                byte    $AE, $B2, $F2, $B3, $B5, $F3, $A2, $A1
+                byte    $EE, $A7, $B3, $E4, $AE, $B2, $EB, $A5
+                byte    $A5, $B0, $51, $07, $88, $39, $81, $C1
+                byte    $4F, $7F, $0F, $2F, $00, $51, $06, $88
+                byte    $29, $C2, $0C, $82, $57, $8C, $6A, $8C
+                byte    $42, $AE, $A5, $A8, $B4, $60, $AE, $A5
+                byte    $A8, $B4, $4F, $7E, $1E, $35, $8C, $27
+                byte    $51, $07, $88, $09, $8B, $FE, $E4, $AF
+                byte    $AD, $F2, $AF, $E4, $AE, $A1, $DC, $DE
+                byte    $9C, $DD, $9C, $DE, $DD, $9E, $C3, $DD
+                byte    $CF, $CA, $CD, $CB, $00, $47, $9D, $AD
+                byte    $A5, $AD, $AF, $AC, $76, $9D, $AD, $A5
+                byte    $AD, $A9, $A8, $E6, $A6, $AF, $60, $8C
+                byte    $20, $AF, $B4, $B5, $A1, $F2, $AC, $A3
+                byte    $F2, $A3, $B3, $60, $8C, $20, $AC, $A5
+                byte    $A4, $EE, $B5, $B2, $60, $AE, $B5, $B2
+                byte    $F4, $B3, $A9, $AC, $60, $8C, $20, $B4
+                byte    $B3, $A9, $AC, $7A, $7E, $9A, $22, $20
+                byte    $00, $60, $03, $BF, $60, $03, $BF, $1F
+                byte    $20, $B1, $E7, $E8, $E8, $B5, $4F, $85
+                byte    $DA, $B5, $77, $85, $DB, $B4, $4E, $98
+                byte    $D5, $76, $B0, $09, $B1, $DA, $20, $C9
+                byte    $E3, $C8, $4C, $0F, $EE, $A9, $FF, $85
+                byte    $D5, $60, $E8, $A9, $00, $95, $78, $95
+                byte    $A0, $B5, $77, $38, $F5, $4F, $95, $50
+                byte    $4C, $23, $E8, $FF, $20, $15, $E7, $A5
+                byte    $CF, $D0, $28, $A5, $CE, $60, $20, $34
+                byte    $EE, $A4, $C8, $C9, $30, $B0, $21, $C0
+                byte    $28, $B0, $1D, $60, $EA, $EA, $20, $34
+                byte    $EE, $60, $EA, $8A, $A2, $01, $B4, $CE
+                byte    $94, $4C, $B4, $48, $94, $CA, $CA, $F0
+                byte    $F5, $AA, $60, $A0, $77, $4C, $E0, $E3
+                byte    $A0, $7B, $D0, $F9, $20, $54, $E2, $A5
+                byte    $DA, $D0, $07, $A5, $DB, $D0, $03, $4C
+                byte    $7E, $E7, $06, $CE, $26, $CF, $26, $E6
+                byte    $26, $E7, $A5, $E6, $C5, $DA, $A5, $E7
+                byte    $E5, $DB, $90, $0A, $85, $E7, $A5, $E6
+                byte    $E5, $DA, $85, $E6, $E6, $CE, $88, $D0
+                byte    $E1, $60, $FF, $FF, $FF, $FF, $FF, $FF
+                byte    $20, $15, $E7, $6C, $CE, $00, $A5, $4C
+                byte    $D0, $02, $C6, $4D, $C6, $4C, $A5, $48
+                byte    $D0, $02, $C6, $49, $C6, $48, $A0, $00
+                byte    $B1, $4C, $91, $48, $A5, $CA, $C5, $4C
+                byte    $A5, $CB, $E5, $4D, $90, $E0, $4C, $53
+                byte    $EE, $C9, $28, $B0, $9B, $A8, $A5, $C8
+                byte    $60, $EA, $EA, $98, $AA, $A0, $6E, $20
+                byte    $C4, $E3, $8A, $A8, $20, $C4, $E3, $A0
+                byte    $72, $4C, $C4, $E3, $20, $15, $E7, $06
+                byte    $CE, $26, $CF, $30, $FA, $B0, $DC, $D0
+                byte    $04, $C5, $CE, $B0, $D6, $60, $20, $15
+                byte    $E7, $B1, $CE, $94, $9F, $4C, $08, $E7
+                byte    $20, $34, $EE, $A5, $CE, $48, $20, $15
+                byte    $E7, $68, $91, $CE, $60, $FF, $FF, $FF
+                byte    $20, $6C, $EE, $A5, $CE, $85, $E6, $A5
+                byte    $CF, $85, $E7, $4C, $44, $E2, $20, $E4
+                byte    $EE, $4C, $34, $E1, $20, $E4, $EE, $B4
+                byte    $78, $B5, $50, $69, $FE, $B0, $01, $88
+                byte    $85, $DA, $84, $DB, $18, $65, $CE, $95
+                byte    $50, $98, $65, $CF, $95, $78, $A0, $00
+                byte    $B5, $50, $D1, $DA, $C8, $B5, $78, $F1
+                byte    $DA, $B0, $80, $4C, $23, $E8, $20, $15
+                byte    $E7, $A5, $4E, $20, $08, $E7, $A5, $4F
+                byte    $D0, $04, $C5, $4E, $69, $00, $29, $7F
+                byte    $85, $4F, $95, $A0, $A0, $11, $A5, $4F
+                byte    $0A, $18, $69, $40, $0A, $26, $4E, $26
+                byte    $4F, $88, $D0, $F2, $A5, $CE, $20, $08
+                byte    $E7, $A5, $CF, $95, $A0, $4C, $7A, $E2
+                byte    $20, $15, $E7, $A4, $CE, $C4, $4C, $A5
+                byte    $CF, $E5, $4D, $90, $1F, $84, $48, $A5
+                byte    $CF, $85, $49, $4C, $B6, $EE, $20, $15
+                byte    $E7, $A4, $CE, $C4, $CA, $A5, $CF, $E5
+                byte    $CB, $B0, $09, $84, $4A, $A5, $CF, $85
+                byte    $4B, $4C, $B7, $E5, $4C, $CB, $EE, $EA
+                byte    $EA, $EA, $EA, $20, $C9, $EF, $20, $71
+                byte    $E1, $4C, $BF, $EF, $20, $03, $EE, $A9
+                byte    $FF, $85, $C8, $A9, $74, $8D, $00, $02
+                byte    $60, $20, $36, $E7, $E8, $20, $36, $E7
+                byte    $B5, $50, $60, $A9, $00, $85, $4A, $85
+                byte    $4C, $A9, $08, $85, $4B, $A9, $10, $85
+                byte    $4D, $4C, $AD, $E5, $D5, $78, $D0, $01
+                byte    $18, $4C, $02, $E1, $20, $B7, $E5, $4C
+                byte    $36, $E8, $20, $B7, $E5, $4C, $5B, $E8
+                byte    $E0, $80, $D0, $01, $88, $4C, $0C, $E0
+
+                orgh    ram_6502 + $FF00
+
+                ' MONITOR $FF00
+                byte    $D8, $58, $A0, $7F, $8C, $12, $D0, $A9
+                byte    $A7, $8D, $11, $D0, $8D, $13, $D0, $C9
+                byte    $DF, $F0, $13, $C9, $9B, $F0, $03, $C8
+                byte    $10, $0F, $A9, $DC, $20, $EF, $FF, $A9
+                byte    $8D, $20, $EF, $FF, $A0, $01, $88, $30
+                byte    $F6, $AD, $11, $D0, $10, $FB, $AD, $10
+                byte    $D0, $99, $00, $02, $20, $EF, $FF, $C9
+                byte    $8D, $D0, $D4, $A0, $FF, $A9, $00, $AA
+                byte    $0A, $85, $2B, $C8, $B9, $00, $02, $C9
+                byte    $8D, $F0, $D4, $C9, $AE, $90, $F4, $F0
+                byte    $F0, $C9, $BA, $F0, $EB, $C9, $D2, $F0
+                byte    $3B, $86, $28, $86, $29, $84, $2A, $B9
+                byte    $00, $02, $49, $B0, $C9, $0A, $90, $06
+                byte    $69, $88, $C9, $FA, $90, $11, $0A, $0A
+                byte    $0A, $0A, $A2, $04, $0A, $26, $28, $26
+                byte    $29, $CA, $D0, $F8, $C8, $D0, $E0, $C4
+                byte    $2A, $F0, $97, $24, $2B, $50, $10, $A5
+                byte    $28, $81, $26, $E6, $26, $D0, $B5, $E6
+                byte    $27, $4C, $44, $FF, $6C, $24, $00, $30
+                byte    $2B, $A2, $02, $B5, $27, $95, $25, $95
+                byte    $23, $CA, $D0, $F7, $D0, $14, $A9, $8D
+                byte    $20, $EF, $FF, $A5, $25, $20, $DC, $FF
+                byte    $A5, $24, $20, $DC, $FF, $A9, $BA, $20
+                byte    $EF, $FF, $A9, $A0, $20, $EF, $FF, $A1
+                byte    $24, $20, $DC, $FF, $86, $2B, $A5, $24
+                byte    $C5, $28, $A5, $25, $E5, $29, $B0, $C1
+                byte    $E6, $24, $D0, $02, $E6, $25, $A5, $24
+                byte    $29, $07, $10, $C8, $48, $4A, $4A, $4A
+                byte    $4A, $20, $E5, $FF, $68, $29, $0F, $09
+                byte    $B0, $C9, $BA, $90, $02, $69, $06, $2C
+                byte    $12, $D0, $30, $FB, $8D, $12, $D0, $60
+                byte    $00, $00, $00, $0F, $00, $FF, $00, $00

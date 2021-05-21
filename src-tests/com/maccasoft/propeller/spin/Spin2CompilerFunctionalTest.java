@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -143,6 +144,42 @@ class Spin2CompilerFunctionalTest {
         Assertions.assertArrayEquals(expected, result);
     }
 
+    @Test
+    void testReference1() throws Exception {
+        String text = getResourceAsString("m6502_apple1_cvbs.spin2");
+        byte[] expected = getResource("m6502_apple1_cvbs.binary");
+        Assertions.assertTrue(compileAndCompare(text, expected));
+    }
+
+    @Test
+    void testReference2() throws Exception {
+        String text = getResourceAsString("m6502_apple1_vga.spin2");
+        byte[] expected = getResource("m6502_apple1_vga.binary");
+        Assertions.assertTrue(compileAndCompare(text, expected));
+    }
+
+    String getResourceAsString(String name) throws Exception {
+        InputStream is = getClass().getResourceAsStream(name);
+        try {
+            byte[] b = new byte[is.available()];
+            is.read(b);
+            return new String(b);
+        } finally {
+            is.close();
+        }
+    }
+
+    byte[] getResource(String name) throws Exception {
+        InputStream is = getClass().getResourceAsStream(name);
+        try {
+            byte[] b = new byte[is.available()];
+            is.read(b);
+            return b;
+        } finally {
+            is.close();
+        }
+    }
+
     byte[] compile(String text) throws Exception {
         Spin2Compiler compiler = new Spin2Compiler();
 
@@ -159,5 +196,85 @@ class Spin2CompilerFunctionalTest {
             line.generateObjectCode(os);
         }
         return os.toByteArray();
+    }
+
+    boolean compileAndCompare(String text, byte[] ref) throws Exception {
+        Spin2Compiler compiler = new Spin2Compiler();
+
+        Spin2Lexer lexer = new Spin2Lexer(CharStreams.fromString(text));
+        //lexer.removeErrorListeners();
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        Spin2Parser parser = new Spin2Parser(tokens);
+        //parser.removeErrorListeners();
+
+        parser.prog().accept(compiler);
+
+        boolean result = true;
+        for (Spin2PAsmLine line : compiler.getSource()) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            line.generateObjectCode(os);
+            byte[] code = os.toByteArray();
+
+            int address = line.getScope().getHubAddress();
+            int addr = line.getScope().getAddress();
+
+            int index = 0;
+
+            StringBuilder out = new StringBuilder();
+            out.append(String.format("%06X ", address));
+            out.append(addr < 0x400 ? String.format("%03X ", addr++) : "    ");
+
+            StringBuilder refbytes = new StringBuilder();
+            refbytes.append((index < code.length && address < ref.length) ? String.format(" %02X", ref[address]) : "   ");
+            refbytes.append((index + 1 < code.length && address + 1 < ref.length) ? String.format(" %02X", ref[address + 1]) : "   ");
+            refbytes.append((index + 2 < code.length && address + 2 < ref.length) ? String.format(" %02X", ref[address + 2]) : "   ");
+            refbytes.append((index + 3 < code.length && address + 3 < ref.length) ? String.format(" %02X", ref[address + 3]) : "   ");
+
+            StringBuilder ourbytes = new StringBuilder();
+            ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+            ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+            ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+            ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+
+            out.append(refbytes);
+            out.append(refbytes.toString().equals(ourbytes.toString()) ? " | " : " * ");
+            out.append(ourbytes);
+            out.append(" | " + line);
+
+            if (!refbytes.toString().equals(ourbytes.toString())) {
+                result = false;
+                System.out.println(out);
+            }
+
+            while (index < code.length) {
+                out = new StringBuilder();
+                out.append(String.format("%06X ", address + index));
+                out.append(addr < 0x400 ? String.format("%03X ", addr++) : "    ");
+
+                refbytes = new StringBuilder();
+                refbytes.append((index < code.length && address + index < ref.length) ? String.format(" %02X", ref[address + index]) : "   ");
+                refbytes.append((index + 1 < code.length && address + index + 1 < ref.length) ? String.format(" %02X", ref[address + index + 1]) : "   ");
+                refbytes.append((index + 2 < code.length && address + index + 2 < ref.length) ? String.format(" %02X", ref[address + index + 2]) : "   ");
+                refbytes.append((index + 3 < code.length && address + index + 3 < ref.length) ? String.format(" %02X", ref[address + index + 3]) : "   ");
+
+                ourbytes = new StringBuilder();
+                ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+                ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+                ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+                ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
+
+                out.append(refbytes);
+                out.append(refbytes.toString().equals(ourbytes.toString()) ? " | " : " * ");
+                out.append(ourbytes);
+                out.append(" | ");
+
+                if (!refbytes.toString().equals(ourbytes.toString())) {
+                    result = false;
+                    System.out.println(out);
+                }
+            }
+        }
+
+        return result;
     }
 }
