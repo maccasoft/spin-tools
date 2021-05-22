@@ -1,6 +1,6 @@
 package com.maccasoft.propeller.expressions;
 
-public class Round extends UnaryOperator {
+public class Round extends Function {
 
     public Round(Expression term) {
         super(term);

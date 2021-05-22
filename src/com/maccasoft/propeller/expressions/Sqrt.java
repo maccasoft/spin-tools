@@ -1,6 +1,6 @@
 package com.maccasoft.propeller.expressions;
 
-public class Sqrt extends UnaryOperator {
+public class Sqrt extends Function {
 
     public Sqrt(Expression term) {
         super(term);

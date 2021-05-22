@@ -1,6 +1,6 @@
 package com.maccasoft.propeller.expressions;
 
-public class Abs extends UnaryOperator {
+public class Abs extends Function {
 
     public Abs(Expression term) {
         super(term);

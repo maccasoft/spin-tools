@@ -1,6 +1,6 @@
 package com.maccasoft.propeller.expressions;
 
-public class Trunc extends UnaryOperator {
+public class Trunc extends Function {
 
     public Trunc(Expression term) {
         super(term);

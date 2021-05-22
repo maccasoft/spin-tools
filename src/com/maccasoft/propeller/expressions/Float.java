@@ -1,6 +1,6 @@
 package com.maccasoft.propeller.expressions;
 
-public class Float extends UnaryOperator {
+public class Float extends Function {
 
     public Float(Expression term) {
         super(term);
