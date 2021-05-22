@@ -28,7 +28,19 @@ public class Getbyte extends Spin2PAsmInstructionFactory {
         if (Spin2PAsmSchema.D.check(arguments, effect)) {
             return new Getbyte_D_(context, condition, arguments.get(0));
         }
-        throw new RuntimeException("Invalid arguments");
+        if (arguments.size() == 0 || arguments.size() == 2) {
+            throw new RuntimeException("Expected 1 or 3 operands, found " + arguments.size());
+        }
+        if (arguments.get(0).isLiteral()) {
+            throw new RuntimeException("Bad use of immediate for first operand");
+        }
+        if (arguments.size() == 3 && !arguments.get(2).isLiteral()) {
+            throw new RuntimeException("Third operand must be an immediate");
+        }
+        if (effect != null) {
+            throw new RuntimeException("Modifiers not allowed for this instruction");
+        }
+        throw new RuntimeException("Syntax error");
     }
 
     /*

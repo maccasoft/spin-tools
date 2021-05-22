@@ -25,7 +25,16 @@ public class Mov extends Spin2PAsmInstructionFactory {
         if (Spin2PAsmSchema.D_S_WC_WZ_WCZ.check(arguments, effect)) {
             return new Mov_(context, condition, arguments.get(0), arguments.get(1), effect);
         }
-        throw new RuntimeException("Invalid arguments");
+        if (arguments.size() != 2) {
+            throw new RuntimeException("Expected 2 operands, found " + arguments.size());
+        }
+        if (arguments.get(0).isLiteral()) {
+            throw new RuntimeException("Bad use of immediate for first operand");
+        }
+        if (effect != null && !Spin2PAsmSchema.E_WC_WZ_WCZ.contains(effect.toLowerCase())) {
+            throw new RuntimeException("Bad instruction modified");
+        }
+        throw new RuntimeException("Syntax error");
     }
 
     /*
