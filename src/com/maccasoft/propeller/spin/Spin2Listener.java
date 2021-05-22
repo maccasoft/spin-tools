@@ -148,6 +148,36 @@ public interface Spin2Listener extends ParseTreeListener {
 	 */
 	void exitLocalvar(Spin2Parser.LocalvarContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterStatement(Spin2Parser.StatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitStatement(Spin2Parser.StatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#assignment}.
+	 * @param ctx the parse tree
+	 */
+	void enterAssignment(Spin2Parser.AssignmentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#assignment}.
+	 * @param ctx the parse tree
+	 */
+	void exitAssignment(Spin2Parser.AssignmentContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#function}.
+	 * @param ctx the parse tree
+	 */
+	void enterFunction(Spin2Parser.FunctionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#function}.
+	 * @param ctx the parse tree
+	 */
+	void exitFunction(Spin2Parser.FunctionContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#data}.
 	 * @param ctx the parse tree
 	 */

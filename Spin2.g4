@@ -87,7 +87,7 @@ VAR  CogNum                     'The default variable size is LONG (32 bits).
 variables: ('VAR' | 'var')+ NL* variable* ;
 
 variable
-    : type=('LONG' | 'long' | 'WORD' | 'word' | 'BYTE' | 'byte') IDENTIFIER ('[' expression ']')? (',' IDENTIFIER ('[' expression ']')? )* NL+ 
+    : type=TYPE IDENTIFIER ('[' expression ']')? (',' IDENTIFIER ('[' expression ']')? )* NL+ 
     ;
 
 /* 
@@ -103,7 +103,7 @@ PRI StrCheck(StrPtrA, StrPtrB) : Pass | i, BYTE Str[64]
 
 */
 
-method: ('PUB' | 'pub' | 'PRI' | 'pri') name=IDENTIFIER '(' (parameters)? ')' (':' result)? ('|' localvars)? NL+ ;
+method: ('PUB' | 'pub' | 'PRI' | 'pri') name=IDENTIFIER '(' (parameters)? ')' (':' result)? ('|' localvars)? NL+ (statement)* ;
 
 parameters: IDENTIFIER (',' IDENTIFIER)* ;
 
@@ -111,7 +111,21 @@ result: IDENTIFIER (',' IDENTIFIER)* ;
 
 localvars: localvar (',' localvar)* ;
 
-localvar: align=('ALIGNW' | 'ALIGNL')? vartype=('LONG' | 'long' | 'WORD' | 'word' | 'BYTE' | 'byte')? name=IDENTIFIER ('[' count=expression ']')? ; 
+localvar: align=('ALIGNW' | 'ALIGNL')? vartype=TYPE? name=IDENTIFIER ('[' count=expression ']')? ; 
+
+statement
+    : 'repeat' NL+
+    | assignment
+    | function
+    ;
+
+assignment
+    : IDENTIFIER (':=' | '+=') (function | IDENTIFIER | expression) NL+
+    ;
+
+function
+    : IDENTIFIER '(' (IDENTIFIER (',' IDENTIFIER)* )? ')' NL+
+    ;
 
 /*
 
@@ -140,7 +154,7 @@ data: ('DAT' | 'dat')+ NL* dataLine* ;
 dataLine
     : label NL+
     | label? directive=('ORG' | 'org' | 'ORGH' | 'orgh') (expression (',' expression)? )? NL+
-    | label? directive=('LONG' | 'long' | 'WORD' | 'word' | 'BYTE' | 'byte') dataValue (',' dataValue)* NL+
+    | label? directive=TYPE dataValue (',' dataValue)* NL+
     | label? directive=('RES' | 'res') dataValue NL+
     | label? condition? opcode argument ',' argument ',' argument effect? NL+
     | label? condition? opcode argument ',' argument effect? NL+
@@ -175,7 +189,7 @@ expression
     | left=expression operator=('>>' | '<<') right=expression
     | left=expression operator=('&' | '^' | '|') right=expression
     | left=expression operator=('*' | '/' | '+/' | '//' | '+//') right=expression
-    | left=expression operator=('+' | '-' | '#>' | '<#') right=expression
+    | left=expression operator=('+=' | '+' | '-' | '#>' | '<#') right=expression
     | left=expression operator=('ADDBITS' | 'addbits' | 'ADDPINS' | 'addpins') right=expression
     | left=expression operator=('<' | '+<' | '<=' | '+<=' | '==' | '<>' | '>=' | '+>=' | '>' | '+>' | '<=>') right=expression
     | left=expression operator=('&&'|'^^'| '||') right=expression
@@ -208,6 +222,8 @@ fragment DIGIT : [0-9] ;
 BLOCK_COMMENT: '{' .*? '}' -> channel(HIDDEN) ;
 
 COMMENT: '\'' ~ [\r\n]* -> channel(HIDDEN) ;
+
+TYPE: 'LONG' | 'long' | 'WORD' | 'word' | 'BYTE' | 'byte' ;
 
 PTR: 'PTRA' | 'ptra' | 'PTRB' | 'ptrb' ;
 
