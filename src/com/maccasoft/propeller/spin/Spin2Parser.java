@@ -1,4 +1,4 @@
-// Generated from Spin2.g4 by ANTLR 4.9.2
+// Generated from Spin2Parser.g4 by ANTLR 4.9.2
 package com.maccasoft.propeller.spin;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -17,19 +17,16 @@ public class Spin2Parser extends Parser {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, T__8=9, 
-		T__9=10, T__10=11, T__11=12, T__12=13, T__13=14, T__14=15, T__15=16, T__16=17, 
-		T__17=18, T__18=19, T__19=20, T__20=21, T__21=22, T__22=23, T__23=24, 
-		T__24=25, T__25=26, T__26=27, T__27=28, T__28=29, T__29=30, T__30=31, 
-		T__31=32, T__32=33, T__33=34, T__34=35, T__35=36, T__36=37, T__37=38, 
-		T__38=39, T__39=40, T__40=41, T__41=42, T__42=43, T__43=44, T__44=45, 
-		T__45=46, T__46=47, T__47=48, T__48=49, T__49=50, T__50=51, T__51=52, 
-		T__52=53, T__53=54, T__54=55, T__55=56, T__56=57, T__57=58, T__58=59, 
-		T__59=60, T__60=61, T__61=62, T__62=63, T__63=64, T__64=65, T__65=66, 
-		T__66=67, T__67=68, T__68=69, T__69=70, T__70=71, T__71=72, T__72=73, 
-		T__73=74, T__74=75, T__75=76, T__76=77, T__77=78, T__78=79, T__79=80, 
-		BLOCK_COMMENT=81, COMMENT=82, TYPE=83, PTR=84, CONDITION=85, IDENTIFIER=86, 
-		STRING=87, QUAD=88, BIN=89, HEX=90, NUMBER=91, NL=92, WS=93;
+		INDENT=1, DEDENT=2, BLOCK_COMMENT=3, COMMENT=4, NL=5, WS=6, STRING=7, 
+		QUAD=8, BIN=9, HEX=10, NUMBER=11, LOGICAL_AND=12, LOGICAL_OR=13, LOGICAL_XOR=14, 
+		POUND_POUND=15, LEFT_SHIFT=16, RIGHT_SHIFT=17, PLUS_PLUS=18, MINUS_MINUS=19, 
+		ASSIGN=20, ADD_ASSIGN=21, BIN_AND=22, BIN_OR=23, BIN_XOR=24, AT=25, POUND=26, 
+		DOLLAR=27, PERCENT=28, EQUAL=29, DOT=30, COMMA=31, BACKSLASH=32, PLUS=33, 
+		MINUS=34, STAR=35, DIV=36, QUESTION=37, COLON=38, TILDE=39, UNDERSCORE=40, 
+		OPEN_BRACKET=41, CLOSE_BRACKET=42, OPEN_PAREN=43, CLOSE_PAREN=44, CON_START=45, 
+		VAR_START=46, OBJ_START=47, PUB_START=48, PRI_START=49, DAT_START=50, 
+		REPEAT=51, ADDPINS=52, FLOAT=53, ROUND=54, TRUNC=55, ORG=56, ORGH=57, 
+		RES=58, ALIGN=59, TYPE=60, PTR=61, CONDITION=62, IDENTIFIER=63;
 	public static final int
 		RULE_prog = 0, RULE_constants = 1, RULE_constant = 2, RULE_objects = 3, 
 		RULE_object = 4, RULE_reference = 5, RULE_filename = 6, RULE_variables = 7, 
@@ -51,30 +48,26 @@ public class Spin2Parser extends Parser {
 
 	private static String[] makeLiteralNames() {
 		return new String[] {
-			null, "'CON'", "'con'", "','", "'='", "'['", "']'", "'#'", "'OBJ'", "'obj'", 
-			"':'", "'VAR'", "'var'", "'PUB'", "'pub'", "'PRI'", "'pri'", "'('", "')'", 
-			"'|'", "'ALIGNW'", "'ALIGNL'", "'repeat'", "':='", "'+='", "'DAT'", "'dat'", 
-			"'ORG'", "'org'", "'ORGH'", "'orgh'", "'RES'", "'res'", "'.'", "'##'", 
-			"'\\'", "'+'", "'-'", "'!!'", "'!'", "'~'", "'>>'", "'<<'", "'&'", "'^'", 
-			"'*'", "'/'", "'+/'", "'//'", "'+//'", "'#>'", "'<#'", "'ADDBITS'", "'addbits'", 
-			"'ADDPINS'", "'addpins'", "'<'", "'+<'", "'<='", "'+<='", "'=='", "'<>'", 
-			"'>='", "'+>='", "'>'", "'+>'", "'<=>'", "'&&'", "'^^'", "'||'", "'?'", 
-			"'FLOAT'", "'float'", "'ROUND'", "'round'", "'TRUNC'", "'trunc'", "'@'", 
-			"'$'", "'++'", "'--'"
+			null, null, null, null, null, null, null, null, null, null, null, null, 
+			"'&&'", "'||'", "'^^'", "'##'", "'<<'", "'>>'", "'++'", "'--'", "':='", 
+			"'+='", "'&'", "'|'", "'^'", "'@'", "'#'", "'$'", "'%'", "'='", "'.'", 
+			"','", "'\\'", "'+'", "'-'", "'*'", "'/'", "'?'", "':'", "'~'", "'_'", 
+			"'['", "']'", "'('", "')'"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, "BLOCK_COMMENT", 
-			"COMMENT", "TYPE", "PTR", "CONDITION", "IDENTIFIER", "STRING", "QUAD", 
-			"BIN", "HEX", "NUMBER", "NL", "WS"
+			null, "INDENT", "DEDENT", "BLOCK_COMMENT", "COMMENT", "NL", "WS", "STRING", 
+			"QUAD", "BIN", "HEX", "NUMBER", "LOGICAL_AND", "LOGICAL_OR", "LOGICAL_XOR", 
+			"POUND_POUND", "LEFT_SHIFT", "RIGHT_SHIFT", "PLUS_PLUS", "MINUS_MINUS", 
+			"ASSIGN", "ADD_ASSIGN", "BIN_AND", "BIN_OR", "BIN_XOR", "AT", "POUND", 
+			"DOLLAR", "PERCENT", "EQUAL", "DOT", "COMMA", "BACKSLASH", "PLUS", "MINUS", 
+			"STAR", "DIV", "QUESTION", "COLON", "TILDE", "UNDERSCORE", "OPEN_BRACKET", 
+			"CLOSE_BRACKET", "OPEN_PAREN", "CLOSE_PAREN", "CON_START", "VAR_START", 
+			"OBJ_START", "PUB_START", "PRI_START", "DAT_START", "REPEAT", "ADDPINS", 
+			"FLOAT", "ROUND", "TRUNC", "ORG", "ORGH", "RES", "ALIGN", "TYPE", "PTR", 
+			"CONDITION", "IDENTIFIER"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -112,7 +105,7 @@ public class Spin2Parser extends Parser {
 	}
 
 	@Override
-	public String getGrammarFileName() { return "Spin2.g4"; }
+	public String getGrammarFileName() { return "Spin2Parser.g4"; }
 
 	@Override
 	public String[] getRuleNames() { return ruleNames; }
@@ -170,15 +163,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_prog; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterProg(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterProg(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitProg(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitProg(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitProg(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitProg(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -207,43 +200,37 @@ public class Spin2Parser extends Parser {
 			setState(69);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__0) | (1L << T__1) | (1L << T__7) | (1L << T__8) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << T__24) | (1L << T__25))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << CON_START) | (1L << VAR_START) | (1L << OBJ_START) | (1L << PUB_START) | (1L << PRI_START) | (1L << DAT_START))) != 0)) {
 				{
 				setState(67);
 				_errHandler.sync(this);
 				switch (_input.LA(1)) {
-				case T__0:
-				case T__1:
+				case CON_START:
 					{
 					setState(62);
 					constants();
 					}
 					break;
-				case T__7:
-				case T__8:
+				case OBJ_START:
 					{
 					setState(63);
 					objects();
 					}
 					break;
-				case T__10:
-				case T__11:
+				case VAR_START:
 					{
 					setState(64);
 					variables();
 					}
 					break;
-				case T__12:
-				case T__13:
-				case T__14:
-				case T__15:
+				case PUB_START:
+				case PRI_START:
 					{
 					setState(65);
 					method();
 					}
 					break;
-				case T__24:
-				case T__25:
+				case DAT_START:
 					{
 					setState(66);
 					data();
@@ -273,6 +260,10 @@ public class Spin2Parser extends Parser {
 	}
 
 	public static class ConstantsContext extends ParserRuleContext {
+		public List<TerminalNode> CON_START() { return getTokens(Spin2Parser.CON_START); }
+		public TerminalNode CON_START(int i) {
+			return getToken(Spin2Parser.CON_START, i);
+		}
 		public List<TerminalNode> NL() { return getTokens(Spin2Parser.NL); }
 		public TerminalNode NL(int i) {
 			return getToken(Spin2Parser.NL, i);
@@ -289,15 +280,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_constants; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterConstants(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterConstants(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitConstants(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitConstants(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitConstants(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitConstants(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -319,15 +310,7 @@ public class Spin2Parser extends Parser {
 					{
 					{
 					setState(74);
-					_la = _input.LA(1);
-					if ( !(_la==T__0 || _la==T__1) ) {
-					_errHandler.recoverInline(this);
-					}
-					else {
-						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-						_errHandler.reportMatch(this);
-						consume();
-					}
+					match(CON_START);
 					}
 					}
 					break;
@@ -355,7 +338,7 @@ public class Spin2Parser extends Parser {
 			setState(88);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==T__2 || _la==T__6 || _la==IDENTIFIER) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << INDENT) | (1L << POUND) | (1L << COMMA) | (1L << IDENTIFIER))) != 0)) {
 				{
 				{
 				setState(85);
@@ -385,6 +368,7 @@ public class Spin2Parser extends Parser {
 		public ExpressionContext multiplier;
 		public ExpressionContext start;
 		public ExpressionContext step;
+		public TerminalNode EQUAL() { return getToken(Spin2Parser.EQUAL, 0); }
 		public TerminalNode IDENTIFIER() { return getToken(Spin2Parser.IDENTIFIER, 0); }
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
@@ -392,25 +376,37 @@ public class Spin2Parser extends Parser {
 		public ExpressionContext expression(int i) {
 			return getRuleContext(ExpressionContext.class,i);
 		}
+		public List<TerminalNode> INDENT() { return getTokens(Spin2Parser.INDENT); }
+		public TerminalNode INDENT(int i) {
+			return getToken(Spin2Parser.INDENT, i);
+		}
+		public TerminalNode COMMA() { return getToken(Spin2Parser.COMMA, 0); }
 		public List<TerminalNode> NL() { return getTokens(Spin2Parser.NL); }
 		public TerminalNode NL(int i) {
 			return getToken(Spin2Parser.NL, i);
 		}
+		public List<TerminalNode> DEDENT() { return getTokens(Spin2Parser.DEDENT); }
+		public TerminalNode DEDENT(int i) {
+			return getToken(Spin2Parser.DEDENT, i);
+		}
+		public TerminalNode OPEN_BRACKET() { return getToken(Spin2Parser.OPEN_BRACKET, 0); }
+		public TerminalNode CLOSE_BRACKET() { return getToken(Spin2Parser.CLOSE_BRACKET, 0); }
+		public TerminalNode POUND() { return getToken(Spin2Parser.POUND, 0); }
 		public ConstantContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_constant; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterConstant(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterConstant(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitConstant(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitConstant(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitConstant(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitConstant(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -420,39 +416,61 @@ public class Spin2Parser extends Parser {
 		enterRule(_localctx, 4, RULE_constant);
 		int _la;
 		try {
-			setState(133);
+			setState(151);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,13,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,16,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(92);
+				setState(94);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if (_la==T__2) {
+				while (_la==INDENT) {
+					{
 					{
 					setState(91);
-					match(T__2);
+					match(INDENT);
+					}
+					}
+					setState(96);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
+				}
+				setState(98);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				if (_la==COMMA) {
+					{
+					setState(97);
+					match(COMMA);
 					}
 				}
 
-				setState(94);
-				((ConstantContext)_localctx).name = match(IDENTIFIER);
-				setState(95);
-				match(T__3);
-				setState(96);
-				((ConstantContext)_localctx).exp = expression(0);
 				setState(100);
+				((ConstantContext)_localctx).name = match(IDENTIFIER);
+				setState(101);
+				match(EQUAL);
+				setState(102);
+				((ConstantContext)_localctx).exp = expression(0);
+				setState(106);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				while (_la==NL) {
+				while (_la==DEDENT || _la==NL) {
 					{
 					{
-					setState(97);
-					match(NL);
+					setState(103);
+					_la = _input.LA(1);
+					if ( !(_la==DEDENT || _la==NL) ) {
+					_errHandler.recoverInline(this);
+					}
+					else {
+						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+						_errHandler.reportMatch(this);
+						consume();
 					}
 					}
-					setState(102);
+					}
+					setState(108);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
@@ -461,43 +479,65 @@ public class Spin2Parser extends Parser {
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(104);
+				setState(112);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if (_la==T__2) {
+				while (_la==INDENT) {
 					{
-					setState(103);
-					match(T__2);
-					}
-				}
-
-				setState(106);
-				((ConstantContext)_localctx).name = match(IDENTIFIER);
-				setState(111);
-				_errHandler.sync(this);
-				_la = _input.LA(1);
-				if (_la==T__4) {
 					{
-					setState(107);
-					match(T__4);
-					setState(108);
-					((ConstantContext)_localctx).multiplier = expression(0);
 					setState(109);
-					match(T__5);
+					match(INDENT);
 					}
+					}
+					setState(114);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
 				}
-
 				setState(116);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				while (_la==NL) {
+				if (_la==COMMA) {
+					{
+					setState(115);
+					match(COMMA);
+					}
+				}
+
+				setState(118);
+				((ConstantContext)_localctx).name = match(IDENTIFIER);
+				setState(123);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				if (_la==OPEN_BRACKET) {
+					{
+					setState(119);
+					match(OPEN_BRACKET);
+					setState(120);
+					((ConstantContext)_localctx).multiplier = expression(0);
+					setState(121);
+					match(CLOSE_BRACKET);
+					}
+				}
+
+				setState(128);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				while (_la==DEDENT || _la==NL) {
 					{
 					{
-					setState(113);
-					match(NL);
+					setState(125);
+					_la = _input.LA(1);
+					if ( !(_la==DEDENT || _la==NL) ) {
+					_errHandler.recoverInline(this);
+					}
+					else {
+						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+						_errHandler.reportMatch(this);
+						consume();
 					}
 					}
-					setState(118);
+					}
+					setState(130);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
@@ -506,35 +546,57 @@ public class Spin2Parser extends Parser {
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(119);
-				match(T__6);
-				setState(120);
-				((ConstantContext)_localctx).start = expression(0);
-				setState(125);
+				setState(134);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if (_la==T__4) {
+				while (_la==INDENT) {
 					{
-					setState(121);
-					match(T__4);
-					setState(122);
+					{
+					setState(131);
+					match(INDENT);
+					}
+					}
+					setState(136);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
+				}
+				setState(137);
+				match(POUND);
+				setState(138);
+				((ConstantContext)_localctx).start = expression(0);
+				setState(143);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				if (_la==OPEN_BRACKET) {
+					{
+					setState(139);
+					match(OPEN_BRACKET);
+					setState(140);
 					((ConstantContext)_localctx).step = expression(0);
-					setState(123);
-					match(T__5);
+					setState(141);
+					match(CLOSE_BRACKET);
 					}
 				}
 
-				setState(130);
+				setState(148);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				while (_la==NL) {
+				while (_la==DEDENT || _la==NL) {
 					{
 					{
-					setState(127);
-					match(NL);
+					setState(145);
+					_la = _input.LA(1);
+					if ( !(_la==DEDENT || _la==NL) ) {
+					_errHandler.recoverInline(this);
+					}
+					else {
+						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+						_errHandler.reportMatch(this);
+						consume();
 					}
 					}
-					setState(132);
+					}
+					setState(150);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
@@ -554,6 +616,10 @@ public class Spin2Parser extends Parser {
 	}
 
 	public static class ObjectsContext extends ParserRuleContext {
+		public List<TerminalNode> OBJ_START() { return getTokens(Spin2Parser.OBJ_START); }
+		public TerminalNode OBJ_START(int i) {
+			return getToken(Spin2Parser.OBJ_START, i);
+		}
 		public List<TerminalNode> NL() { return getTokens(Spin2Parser.NL); }
 		public TerminalNode NL(int i) {
 			return getToken(Spin2Parser.NL, i);
@@ -570,15 +636,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_objects; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterObjects(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterObjects(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitObjects(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitObjects(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitObjects(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitObjects(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -591,7 +657,7 @@ public class Spin2Parser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(136); 
+			setState(154); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -599,51 +665,43 @@ public class Spin2Parser extends Parser {
 				case 1:
 					{
 					{
-					setState(135);
-					_la = _input.LA(1);
-					if ( !(_la==T__7 || _la==T__8) ) {
-					_errHandler.recoverInline(this);
-					}
-					else {
-						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-						_errHandler.reportMatch(this);
-						consume();
-					}
+					setState(153);
+					match(OBJ_START);
 					}
 					}
 					break;
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(138); 
+				setState(156); 
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,14,_ctx);
+				_alt = getInterpreter().adaptivePredict(_input,17,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
-			setState(143);
+			setState(161);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==NL) {
 				{
 				{
-				setState(140);
+				setState(158);
 				match(NL);
 				}
 				}
-				setState(145);
+				setState(163);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(149);
+			setState(167);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==IDENTIFIER) {
 				{
 				{
-				setState(146);
+				setState(164);
 				object();
 				}
 				}
-				setState(151);
+				setState(169);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -664,14 +722,23 @@ public class Spin2Parser extends Parser {
 		public ReferenceContext reference() {
 			return getRuleContext(ReferenceContext.class,0);
 		}
+		public TerminalNode COLON() { return getToken(Spin2Parser.COLON, 0); }
 		public FilenameContext filename() {
 			return getRuleContext(FilenameContext.class,0);
+		}
+		public List<TerminalNode> OPEN_BRACKET() { return getTokens(Spin2Parser.OPEN_BRACKET); }
+		public TerminalNode OPEN_BRACKET(int i) {
+			return getToken(Spin2Parser.OPEN_BRACKET, i);
 		}
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
 		}
 		public ExpressionContext expression(int i) {
 			return getRuleContext(ExpressionContext.class,i);
+		}
+		public List<TerminalNode> CLOSE_BRACKET() { return getTokens(Spin2Parser.CLOSE_BRACKET); }
+		public TerminalNode CLOSE_BRACKET(int i) {
+			return getToken(Spin2Parser.CLOSE_BRACKET, i);
 		}
 		public List<TerminalNode> NL() { return getTokens(Spin2Parser.NL); }
 		public TerminalNode NL(int i) {
@@ -683,15 +750,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_object; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterObject(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterObject(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitObject(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitObject(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitObject(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitObject(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -703,41 +770,41 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(152);
+			setState(170);
 			reference();
-			setState(159);
+			setState(177);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==T__4) {
+			while (_la==OPEN_BRACKET) {
 				{
 				{
-				setState(153);
-				match(T__4);
-				setState(154);
+				setState(171);
+				match(OPEN_BRACKET);
+				setState(172);
 				expression(0);
-				setState(155);
-				match(T__5);
+				setState(173);
+				match(CLOSE_BRACKET);
 				}
 				}
-				setState(161);
+				setState(179);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(162);
-			match(T__9);
-			setState(163);
+			setState(180);
+			match(COLON);
+			setState(181);
 			filename();
-			setState(165); 
+			setState(183); 
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			do {
 				{
 				{
-				setState(164);
+				setState(182);
 				match(NL);
 				}
 				}
-				setState(167); 
+				setState(185); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			} while ( _la==NL );
@@ -762,15 +829,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_reference; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterReference(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterReference(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitReference(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitReference(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitReference(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitReference(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -781,7 +848,7 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(169);
+			setState(187);
 			match(IDENTIFIER);
 			}
 		}
@@ -804,15 +871,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_filename; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterFilename(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterFilename(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitFilename(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitFilename(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitFilename(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitFilename(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -823,7 +890,7 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(171);
+			setState(189);
 			match(STRING);
 			}
 		}
@@ -839,6 +906,10 @@ public class Spin2Parser extends Parser {
 	}
 
 	public static class VariablesContext extends ParserRuleContext {
+		public List<TerminalNode> VAR_START() { return getTokens(Spin2Parser.VAR_START); }
+		public TerminalNode VAR_START(int i) {
+			return getToken(Spin2Parser.VAR_START, i);
+		}
 		public List<TerminalNode> NL() { return getTokens(Spin2Parser.NL); }
 		public TerminalNode NL(int i) {
 			return getToken(Spin2Parser.NL, i);
@@ -855,15 +926,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_variables; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterVariables(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterVariables(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitVariables(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitVariables(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitVariables(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitVariables(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -876,7 +947,7 @@ public class Spin2Parser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(174); 
+			setState(192); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -884,51 +955,43 @@ public class Spin2Parser extends Parser {
 				case 1:
 					{
 					{
-					setState(173);
-					_la = _input.LA(1);
-					if ( !(_la==T__10 || _la==T__11) ) {
-					_errHandler.recoverInline(this);
-					}
-					else {
-						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-						_errHandler.reportMatch(this);
-						consume();
-					}
+					setState(191);
+					match(VAR_START);
 					}
 					}
 					break;
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(176); 
+				setState(194); 
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,19,_ctx);
+				_alt = getInterpreter().adaptivePredict(_input,22,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
-			setState(181);
+			setState(199);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==NL) {
 				{
 				{
-				setState(178);
+				setState(196);
 				match(NL);
 				}
 				}
-				setState(183);
+				setState(201);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(187);
+			setState(205);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==TYPE) {
 				{
 				{
-				setState(184);
+				setState(202);
 				variable();
 				}
 				}
-				setState(189);
+				setState(207);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -952,11 +1015,23 @@ public class Spin2Parser extends Parser {
 			return getToken(Spin2Parser.IDENTIFIER, i);
 		}
 		public TerminalNode TYPE() { return getToken(Spin2Parser.TYPE, 0); }
+		public List<TerminalNode> OPEN_BRACKET() { return getTokens(Spin2Parser.OPEN_BRACKET); }
+		public TerminalNode OPEN_BRACKET(int i) {
+			return getToken(Spin2Parser.OPEN_BRACKET, i);
+		}
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
 		}
 		public ExpressionContext expression(int i) {
 			return getRuleContext(ExpressionContext.class,i);
+		}
+		public List<TerminalNode> CLOSE_BRACKET() { return getTokens(Spin2Parser.CLOSE_BRACKET); }
+		public TerminalNode CLOSE_BRACKET(int i) {
+			return getToken(Spin2Parser.CLOSE_BRACKET, i);
+		}
+		public List<TerminalNode> COMMA() { return getTokens(Spin2Parser.COMMA); }
+		public TerminalNode COMMA(int i) {
+			return getToken(Spin2Parser.COMMA, i);
 		}
 		public List<TerminalNode> NL() { return getTokens(Spin2Parser.NL); }
 		public TerminalNode NL(int i) {
@@ -968,15 +1043,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_variable; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterVariable(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterVariable(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitVariable(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitVariable(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitVariable(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitVariable(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -988,65 +1063,65 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(190);
+			setState(208);
 			((VariableContext)_localctx).type = match(TYPE);
-			setState(191);
+			setState(209);
 			match(IDENTIFIER);
-			setState(196);
+			setState(214);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (_la==T__4) {
+			if (_la==OPEN_BRACKET) {
 				{
-				setState(192);
-				match(T__4);
-				setState(193);
+				setState(210);
+				match(OPEN_BRACKET);
+				setState(211);
 				expression(0);
-				setState(194);
-				match(T__5);
+				setState(212);
+				match(CLOSE_BRACKET);
 				}
 			}
 
-			setState(208);
+			setState(226);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==T__2) {
+			while (_la==COMMA) {
 				{
 				{
-				setState(198);
-				match(T__2);
-				setState(199);
+				setState(216);
+				match(COMMA);
+				setState(217);
 				match(IDENTIFIER);
-				setState(204);
+				setState(222);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if (_la==T__4) {
+				if (_la==OPEN_BRACKET) {
 					{
-					setState(200);
-					match(T__4);
-					setState(201);
+					setState(218);
+					match(OPEN_BRACKET);
+					setState(219);
 					expression(0);
-					setState(202);
-					match(T__5);
+					setState(220);
+					match(CLOSE_BRACKET);
 					}
 				}
 
 				}
 				}
-				setState(210);
+				setState(228);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(212); 
+			setState(230); 
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			do {
 				{
 				{
-				setState(211);
+				setState(229);
 				match(NL);
 				}
 				}
-				setState(214); 
+				setState(232); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			} while ( _la==NL );
@@ -1065,13 +1140,19 @@ public class Spin2Parser extends Parser {
 
 	public static class MethodContext extends ParserRuleContext {
 		public Token name;
+		public TerminalNode OPEN_PAREN() { return getToken(Spin2Parser.OPEN_PAREN, 0); }
+		public TerminalNode CLOSE_PAREN() { return getToken(Spin2Parser.CLOSE_PAREN, 0); }
+		public TerminalNode PUB_START() { return getToken(Spin2Parser.PUB_START, 0); }
+		public TerminalNode PRI_START() { return getToken(Spin2Parser.PRI_START, 0); }
 		public TerminalNode IDENTIFIER() { return getToken(Spin2Parser.IDENTIFIER, 0); }
 		public ParametersContext parameters() {
 			return getRuleContext(ParametersContext.class,0);
 		}
+		public TerminalNode COLON() { return getToken(Spin2Parser.COLON, 0); }
 		public ResultContext result() {
 			return getRuleContext(ResultContext.class,0);
 		}
+		public TerminalNode BIN_OR() { return getToken(Spin2Parser.BIN_OR, 0); }
 		public LocalvarsContext localvars() {
 			return getRuleContext(LocalvarsContext.class,0);
 		}
@@ -1091,15 +1172,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_method; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterMethod(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterMethod(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitMethod(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitMethod(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitMethod(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitMethod(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1111,9 +1192,9 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(216);
+			setState(234);
 			_la = _input.LA(1);
-			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15))) != 0)) ) {
+			if ( !(_la==PUB_START || _la==PRI_START) ) {
 			_errHandler.recoverInline(this);
 			}
 			else {
@@ -1121,71 +1202,71 @@ public class Spin2Parser extends Parser {
 				_errHandler.reportMatch(this);
 				consume();
 			}
-			setState(217);
+			setState(235);
 			((MethodContext)_localctx).name = match(IDENTIFIER);
-			setState(218);
-			match(T__16);
-			setState(220);
+			setState(236);
+			match(OPEN_PAREN);
+			setState(238);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==IDENTIFIER) {
 				{
-				setState(219);
+				setState(237);
 				parameters();
 				}
 			}
 
-			setState(222);
-			match(T__17);
-			setState(225);
+			setState(240);
+			match(CLOSE_PAREN);
+			setState(243);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (_la==T__9) {
+			if (_la==COLON) {
 				{
-				setState(223);
-				match(T__9);
-				setState(224);
+				setState(241);
+				match(COLON);
+				setState(242);
 				result();
 				}
 			}
 
-			setState(229);
+			setState(247);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (_la==T__18) {
+			if (_la==BIN_OR) {
 				{
-				setState(227);
-				match(T__18);
-				setState(228);
+				setState(245);
+				match(BIN_OR);
+				setState(246);
 				localvars();
 				}
 			}
 
-			setState(232); 
+			setState(250); 
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			do {
 				{
 				{
-				setState(231);
+				setState(249);
 				match(NL);
 				}
 				}
-				setState(234); 
+				setState(252); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			} while ( _la==NL );
-			setState(239);
+			setState(257);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==T__21 || _la==IDENTIFIER) {
+			while (_la==REPEAT || _la==IDENTIFIER) {
 				{
 				{
-				setState(236);
+				setState(254);
 				statement();
 				}
 				}
-				setState(241);
+				setState(259);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -1207,21 +1288,25 @@ public class Spin2Parser extends Parser {
 		public TerminalNode IDENTIFIER(int i) {
 			return getToken(Spin2Parser.IDENTIFIER, i);
 		}
+		public List<TerminalNode> COMMA() { return getTokens(Spin2Parser.COMMA); }
+		public TerminalNode COMMA(int i) {
+			return getToken(Spin2Parser.COMMA, i);
+		}
 		public ParametersContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_parameters; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterParameters(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterParameters(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitParameters(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitParameters(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitParameters(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitParameters(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1233,21 +1318,21 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(242);
+			setState(260);
 			match(IDENTIFIER);
-			setState(247);
+			setState(265);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==T__2) {
+			while (_la==COMMA) {
 				{
 				{
-				setState(243);
-				match(T__2);
-				setState(244);
+				setState(261);
+				match(COMMA);
+				setState(262);
 				match(IDENTIFIER);
 				}
 				}
-				setState(249);
+				setState(267);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -1269,21 +1354,25 @@ public class Spin2Parser extends Parser {
 		public TerminalNode IDENTIFIER(int i) {
 			return getToken(Spin2Parser.IDENTIFIER, i);
 		}
+		public List<TerminalNode> COMMA() { return getTokens(Spin2Parser.COMMA); }
+		public TerminalNode COMMA(int i) {
+			return getToken(Spin2Parser.COMMA, i);
+		}
 		public ResultContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_result; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterResult(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterResult(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitResult(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitResult(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitResult(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitResult(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1295,21 +1384,21 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(250);
+			setState(268);
 			match(IDENTIFIER);
-			setState(255);
+			setState(273);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==T__2) {
+			while (_la==COMMA) {
 				{
 				{
-				setState(251);
-				match(T__2);
-				setState(252);
+				setState(269);
+				match(COMMA);
+				setState(270);
 				match(IDENTIFIER);
 				}
 				}
-				setState(257);
+				setState(275);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -1333,21 +1422,25 @@ public class Spin2Parser extends Parser {
 		public LocalvarContext localvar(int i) {
 			return getRuleContext(LocalvarContext.class,i);
 		}
+		public List<TerminalNode> COMMA() { return getTokens(Spin2Parser.COMMA); }
+		public TerminalNode COMMA(int i) {
+			return getToken(Spin2Parser.COMMA, i);
+		}
 		public LocalvarsContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_localvars; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterLocalvars(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterLocalvars(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitLocalvars(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitLocalvars(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitLocalvars(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitLocalvars(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1359,21 +1452,21 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(258);
+			setState(276);
 			localvar();
-			setState(263);
+			setState(281);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==T__2) {
+			while (_la==COMMA) {
 				{
 				{
-				setState(259);
-				match(T__2);
-				setState(260);
+				setState(277);
+				match(COMMA);
+				setState(278);
 				localvar();
 				}
 				}
-				setState(265);
+				setState(283);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -1396,6 +1489,9 @@ public class Spin2Parser extends Parser {
 		public Token name;
 		public ExpressionContext count;
 		public TerminalNode IDENTIFIER() { return getToken(Spin2Parser.IDENTIFIER, 0); }
+		public TerminalNode OPEN_BRACKET() { return getToken(Spin2Parser.OPEN_BRACKET, 0); }
+		public TerminalNode CLOSE_BRACKET() { return getToken(Spin2Parser.CLOSE_BRACKET, 0); }
+		public TerminalNode ALIGN() { return getToken(Spin2Parser.ALIGN, 0); }
 		public TerminalNode TYPE() { return getToken(Spin2Parser.TYPE, 0); }
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
@@ -1406,15 +1502,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_localvar; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterLocalvar(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterLocalvar(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitLocalvar(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitLocalvar(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitLocalvar(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitLocalvar(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1426,48 +1522,39 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(267);
+			setState(285);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (_la==T__19 || _la==T__20) {
+			if (_la==ALIGN) {
 				{
-				setState(266);
-				((LocalvarContext)_localctx).align = _input.LT(1);
-				_la = _input.LA(1);
-				if ( !(_la==T__19 || _la==T__20) ) {
-					((LocalvarContext)_localctx).align = (Token)_errHandler.recoverInline(this);
-				}
-				else {
-					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-					_errHandler.reportMatch(this);
-					consume();
-				}
+				setState(284);
+				((LocalvarContext)_localctx).align = match(ALIGN);
 				}
 			}
 
-			setState(270);
+			setState(288);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==TYPE) {
 				{
-				setState(269);
+				setState(287);
 				((LocalvarContext)_localctx).vartype = match(TYPE);
 				}
 			}
 
-			setState(272);
+			setState(290);
 			((LocalvarContext)_localctx).name = match(IDENTIFIER);
-			setState(277);
+			setState(295);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (_la==T__4) {
+			if (_la==OPEN_BRACKET) {
 				{
-				setState(273);
-				match(T__4);
-				setState(274);
+				setState(291);
+				match(OPEN_BRACKET);
+				setState(292);
 				((LocalvarContext)_localctx).count = expression(0);
-				setState(275);
-				match(T__5);
+				setState(293);
+				match(CLOSE_BRACKET);
 				}
 			}
 
@@ -1485,6 +1572,7 @@ public class Spin2Parser extends Parser {
 	}
 
 	public static class StatementContext extends ParserRuleContext {
+		public TerminalNode REPEAT() { return getToken(Spin2Parser.REPEAT, 0); }
 		public List<TerminalNode> NL() { return getTokens(Spin2Parser.NL); }
 		public TerminalNode NL(int i) {
 			return getToken(Spin2Parser.NL, i);
@@ -1501,15 +1589,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_statement; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterStatement(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterStatement(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitStatement(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitStatement(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitStatement(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitStatement(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1519,25 +1607,25 @@ public class Spin2Parser extends Parser {
 		enterRule(_localctx, 28, RULE_statement);
 		int _la;
 		try {
-			setState(287);
+			setState(305);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,38,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,41,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(279);
-				match(T__21);
-				setState(281); 
+				setState(297);
+				match(REPEAT);
+				setState(299); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				do {
 					{
 					{
-					setState(280);
+					setState(298);
 					match(NL);
 					}
 					}
-					setState(283); 
+					setState(301); 
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				} while ( _la==NL );
@@ -1546,14 +1634,14 @@ public class Spin2Parser extends Parser {
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(285);
+				setState(303);
 				assignment();
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(286);
+				setState(304);
 				function();
 				}
 				break;
@@ -1575,6 +1663,8 @@ public class Spin2Parser extends Parser {
 		public TerminalNode IDENTIFIER(int i) {
 			return getToken(Spin2Parser.IDENTIFIER, i);
 		}
+		public TerminalNode ASSIGN() { return getToken(Spin2Parser.ASSIGN, 0); }
+		public TerminalNode ADD_ASSIGN() { return getToken(Spin2Parser.ADD_ASSIGN, 0); }
 		public FunctionContext function() {
 			return getRuleContext(FunctionContext.class,0);
 		}
@@ -1591,15 +1681,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_assignment; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterAssignment(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterAssignment(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitAssignment(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitAssignment(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitAssignment(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitAssignment(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1611,11 +1701,11 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(289);
+			setState(307);
 			match(IDENTIFIER);
-			setState(290);
+			setState(308);
 			_la = _input.LA(1);
-			if ( !(_la==T__22 || _la==T__23) ) {
+			if ( !(_la==ASSIGN || _la==ADD_ASSIGN) ) {
 			_errHandler.recoverInline(this);
 			}
 			else {
@@ -1623,39 +1713,39 @@ public class Spin2Parser extends Parser {
 				_errHandler.reportMatch(this);
 				consume();
 			}
-			setState(294);
+			setState(312);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,39,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,42,_ctx) ) {
 			case 1:
 				{
-				setState(291);
+				setState(309);
 				function();
 				}
 				break;
 			case 2:
 				{
-				setState(292);
+				setState(310);
 				match(IDENTIFIER);
 				}
 				break;
 			case 3:
 				{
-				setState(293);
+				setState(311);
 				expression(0);
 				}
 				break;
 			}
-			setState(297); 
+			setState(315); 
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			do {
 				{
 				{
-				setState(296);
+				setState(314);
 				match(NL);
 				}
 				}
-				setState(299); 
+				setState(317); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			} while ( _la==NL );
@@ -1677,9 +1767,15 @@ public class Spin2Parser extends Parser {
 		public TerminalNode IDENTIFIER(int i) {
 			return getToken(Spin2Parser.IDENTIFIER, i);
 		}
+		public TerminalNode OPEN_PAREN() { return getToken(Spin2Parser.OPEN_PAREN, 0); }
+		public TerminalNode CLOSE_PAREN() { return getToken(Spin2Parser.CLOSE_PAREN, 0); }
 		public List<TerminalNode> NL() { return getTokens(Spin2Parser.NL); }
 		public TerminalNode NL(int i) {
 			return getToken(Spin2Parser.NL, i);
+		}
+		public List<TerminalNode> COMMA() { return getTokens(Spin2Parser.COMMA); }
+		public TerminalNode COMMA(int i) {
+			return getToken(Spin2Parser.COMMA, i);
 		}
 		public FunctionContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -1687,15 +1783,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_function; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterFunction(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterFunction(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitFunction(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitFunction(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitFunction(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitFunction(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1708,39 +1804,39 @@ public class Spin2Parser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(301);
+			setState(319);
 			match(IDENTIFIER);
-			setState(302);
-			match(T__16);
-			setState(311);
+			setState(320);
+			match(OPEN_PAREN);
+			setState(329);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==IDENTIFIER) {
 				{
-				setState(303);
+				setState(321);
 				match(IDENTIFIER);
-				setState(308);
+				setState(326);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				while (_la==T__2) {
+				while (_la==COMMA) {
 					{
 					{
-					setState(304);
-					match(T__2);
-					setState(305);
+					setState(322);
+					match(COMMA);
+					setState(323);
 					match(IDENTIFIER);
 					}
 					}
-					setState(310);
+					setState(328);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
 				}
 			}
 
-			setState(313);
-			match(T__17);
-			setState(315); 
+			setState(331);
+			match(CLOSE_PAREN);
+			setState(333); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -1748,7 +1844,7 @@ public class Spin2Parser extends Parser {
 				case 1:
 					{
 					{
-					setState(314);
+					setState(332);
 					match(NL);
 					}
 					}
@@ -1756,9 +1852,9 @@ public class Spin2Parser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(317); 
+				setState(335); 
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,43,_ctx);
+				_alt = getInterpreter().adaptivePredict(_input,46,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
 			}
 		}
@@ -1774,6 +1870,10 @@ public class Spin2Parser extends Parser {
 	}
 
 	public static class DataContext extends ParserRuleContext {
+		public List<TerminalNode> DAT_START() { return getTokens(Spin2Parser.DAT_START); }
+		public TerminalNode DAT_START(int i) {
+			return getToken(Spin2Parser.DAT_START, i);
+		}
 		public List<TerminalNode> NL() { return getTokens(Spin2Parser.NL); }
 		public TerminalNode NL(int i) {
 			return getToken(Spin2Parser.NL, i);
@@ -1790,15 +1890,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_data; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterData(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterData(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitData(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitData(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitData(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitData(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1806,12 +1906,11 @@ public class Spin2Parser extends Parser {
 	public final DataContext data() throws RecognitionException {
 		DataContext _localctx = new DataContext(_ctx, getState());
 		enterRule(_localctx, 34, RULE_data);
-		int _la;
 		try {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(320); 
+			setState(338); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -1819,57 +1918,49 @@ public class Spin2Parser extends Parser {
 				case 1:
 					{
 					{
-					setState(319);
-					_la = _input.LA(1);
-					if ( !(_la==T__24 || _la==T__25) ) {
-					_errHandler.recoverInline(this);
-					}
-					else {
-						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-						_errHandler.reportMatch(this);
-						consume();
-					}
+					setState(337);
+					match(DAT_START);
 					}
 					}
 					break;
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(322); 
+				setState(340); 
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,44,_ctx);
+				_alt = getInterpreter().adaptivePredict(_input,47,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
-			setState(327);
+			setState(345);
 			_errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(_input,45,_ctx);
+			_alt = getInterpreter().adaptivePredict(_input,48,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					setState(324);
+					setState(342);
 					match(NL);
 					}
 					} 
 				}
-				setState(329);
+				setState(347);
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,45,_ctx);
+				_alt = getInterpreter().adaptivePredict(_input,48,_ctx);
 			}
-			setState(333);
+			setState(351);
 			_errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(_input,46,_ctx);
+			_alt = getInterpreter().adaptivePredict(_input,49,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					setState(330);
+					setState(348);
 					dataLine();
 					}
 					} 
 				}
-				setState(335);
+				setState(353);
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,46,_ctx);
+				_alt = getInterpreter().adaptivePredict(_input,49,_ctx);
 			}
 			}
 		}
@@ -1893,11 +1984,25 @@ public class Spin2Parser extends Parser {
 		public TerminalNode NL(int i) {
 			return getToken(Spin2Parser.NL, i);
 		}
+		public List<TerminalNode> DEDENT() { return getTokens(Spin2Parser.DEDENT); }
+		public TerminalNode DEDENT(int i) {
+			return getToken(Spin2Parser.DEDENT, i);
+		}
+		public TerminalNode ORG() { return getToken(Spin2Parser.ORG, 0); }
+		public TerminalNode ORGH() { return getToken(Spin2Parser.ORGH, 0); }
+		public List<TerminalNode> INDENT() { return getTokens(Spin2Parser.INDENT); }
+		public TerminalNode INDENT(int i) {
+			return getToken(Spin2Parser.INDENT, i);
+		}
 		public List<ExpressionContext> expression() {
 			return getRuleContexts(ExpressionContext.class);
 		}
 		public ExpressionContext expression(int i) {
 			return getRuleContext(ExpressionContext.class,i);
+		}
+		public List<TerminalNode> COMMA() { return getTokens(Spin2Parser.COMMA); }
+		public TerminalNode COMMA(int i) {
+			return getToken(Spin2Parser.COMMA, i);
 		}
 		public List<DataValueContext> dataValue() {
 			return getRuleContexts(DataValueContext.class);
@@ -1906,6 +2011,7 @@ public class Spin2Parser extends Parser {
 			return getRuleContext(DataValueContext.class,i);
 		}
 		public TerminalNode TYPE() { return getToken(Spin2Parser.TYPE, 0); }
+		public TerminalNode RES() { return getToken(Spin2Parser.RES, 0); }
 		public OpcodeContext opcode() {
 			return getRuleContext(OpcodeContext.class,0);
 		}
@@ -1927,15 +2033,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_dataLine; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterDataLine(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterDataLine(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitDataLine(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitDataLine(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitDataLine(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitDataLine(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -1946,15 +2052,15 @@ public class Spin2Parser extends Parser {
 		int _la;
 		try {
 			int _alt;
-			setState(454);
+			setState(559);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,73,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,90,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(336);
+				setState(354);
 				label();
-				setState(338); 
+				setState(356); 
 				_errHandler.sync(this);
 				_alt = 1;
 				do {
@@ -1962,7 +2068,7 @@ public class Spin2Parser extends Parser {
 					case 1:
 						{
 						{
-						setState(337);
+						setState(355);
 						match(NL);
 						}
 						}
@@ -1970,29 +2076,57 @@ public class Spin2Parser extends Parser {
 					default:
 						throw new NoViableAltException(this);
 					}
-					setState(340); 
+					setState(358); 
 					_errHandler.sync(this);
-					_alt = getInterpreter().adaptivePredict(_input,47,_ctx);
+					_alt = getInterpreter().adaptivePredict(_input,50,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
+				setState(363);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,51,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(360);
+						_la = _input.LA(1);
+						if ( !(_la==DEDENT || _la==NL) ) {
+						_errHandler.recoverInline(this);
+						}
+						else {
+							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+							_errHandler.reportMatch(this);
+							consume();
+						}
+						}
+						} 
+					}
+					setState(365);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,51,_ctx);
+				}
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(343);
+				setState(369);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,48,_ctx) ) {
-				case 1:
+				_la = _input.LA(1);
+				while (_la==INDENT) {
 					{
-					setState(342);
-					label();
+					{
+					setState(366);
+					match(INDENT);
 					}
-					break;
+					}
+					setState(371);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
 				}
-				setState(345);
+				setState(372);
 				((DataLineContext)_localctx).directive = _input.LT(1);
 				_la = _input.LA(1);
-				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__26) | (1L << T__27) | (1L << T__28) | (1L << T__29))) != 0)) ) {
+				if ( !(_la==ORG || _la==ORGH) ) {
 					((DataLineContext)_localctx).directive = (Token)_errHandler.recoverInline(this);
 				}
 				else {
@@ -2000,21 +2134,21 @@ public class Spin2Parser extends Parser {
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				setState(351);
+				setState(378);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__16) | (1L << T__32) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39))) != 0) || ((((_la - 71)) & ~0x3f) == 0 && ((1L << (_la - 71)) & ((1L << (T__70 - 71)) | (1L << (T__71 - 71)) | (1L << (T__72 - 71)) | (1L << (T__73 - 71)) | (1L << (T__74 - 71)) | (1L << (T__75 - 71)) | (1L << (T__76 - 71)) | (1L << (T__77 - 71)) | (1L << (T__78 - 71)) | (1L << (T__79 - 71)) | (1L << (PTR - 71)) | (1L << (IDENTIFIER - 71)) | (1L << (STRING - 71)) | (1L << (QUAD - 71)) | (1L << (BIN - 71)) | (1L << (HEX - 71)) | (1L << (NUMBER - 71)))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << STRING) | (1L << QUAD) | (1L << BIN) | (1L << HEX) | (1L << NUMBER) | (1L << PLUS_PLUS) | (1L << MINUS_MINUS) | (1L << AT) | (1L << DOLLAR) | (1L << DOT) | (1L << PLUS) | (1L << MINUS) | (1L << TILDE) | (1L << OPEN_PAREN) | (1L << FLOAT) | (1L << ROUND) | (1L << TRUNC) | (1L << PTR) | (1L << IDENTIFIER))) != 0)) {
 					{
-					setState(346);
+					setState(373);
 					expression(0);
-					setState(349);
+					setState(376);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
-					if (_la==T__2) {
+					if (_la==COMMA) {
 						{
-						setState(347);
-						match(T__2);
-						setState(348);
+						setState(374);
+						match(COMMA);
+						setState(375);
 						expression(0);
 						}
 					}
@@ -2022,109 +2156,6 @@ public class Spin2Parser extends Parser {
 					}
 				}
 
-				setState(354); 
-				_errHandler.sync(this);
-				_alt = 1;
-				do {
-					switch (_alt) {
-					case 1:
-						{
-						{
-						setState(353);
-						match(NL);
-						}
-						}
-						break;
-					default:
-						throw new NoViableAltException(this);
-					}
-					setState(356); 
-					_errHandler.sync(this);
-					_alt = getInterpreter().adaptivePredict(_input,51,_ctx);
-				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
-				}
-				break;
-			case 3:
-				enterOuterAlt(_localctx, 3);
-				{
-				setState(359);
-				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,52,_ctx) ) {
-				case 1:
-					{
-					setState(358);
-					label();
-					}
-					break;
-				}
-				setState(361);
-				((DataLineContext)_localctx).directive = match(TYPE);
-				setState(362);
-				dataValue();
-				setState(367);
-				_errHandler.sync(this);
-				_la = _input.LA(1);
-				while (_la==T__2) {
-					{
-					{
-					setState(363);
-					match(T__2);
-					setState(364);
-					dataValue();
-					}
-					}
-					setState(369);
-					_errHandler.sync(this);
-					_la = _input.LA(1);
-				}
-				setState(371); 
-				_errHandler.sync(this);
-				_alt = 1;
-				do {
-					switch (_alt) {
-					case 1:
-						{
-						{
-						setState(370);
-						match(NL);
-						}
-						}
-						break;
-					default:
-						throw new NoViableAltException(this);
-					}
-					setState(373); 
-					_errHandler.sync(this);
-					_alt = getInterpreter().adaptivePredict(_input,54,_ctx);
-				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
-				}
-				break;
-			case 4:
-				enterOuterAlt(_localctx, 4);
-				{
-				setState(376);
-				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,55,_ctx) ) {
-				case 1:
-					{
-					setState(375);
-					label();
-					}
-					break;
-				}
-				setState(378);
-				((DataLineContext)_localctx).directive = _input.LT(1);
-				_la = _input.LA(1);
-				if ( !(_la==T__30 || _la==T__31) ) {
-					((DataLineContext)_localctx).directive = (Token)_errHandler.recoverInline(this);
-				}
-				else {
-					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-					_errHandler.reportMatch(this);
-					consume();
-				}
-				setState(379);
-				dataValue();
 				setState(381); 
 				_errHandler.sync(this);
 				_alt = 1;
@@ -2143,56 +2174,270 @@ public class Spin2Parser extends Parser {
 					}
 					setState(383); 
 					_errHandler.sync(this);
-					_alt = getInterpreter().adaptivePredict(_input,56,_ctx);
+					_alt = getInterpreter().adaptivePredict(_input,55,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
+				setState(388);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,56,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(385);
+						_la = _input.LA(1);
+						if ( !(_la==DEDENT || _la==NL) ) {
+						_errHandler.recoverInline(this);
+						}
+						else {
+							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+							_errHandler.reportMatch(this);
+							consume();
+						}
+						}
+						} 
+					}
+					setState(390);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,56,_ctx);
+				}
+				}
+				break;
+			case 3:
+				enterOuterAlt(_localctx, 3);
+				{
+				setState(394);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,57,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(391);
+						match(INDENT);
+						}
+						} 
+					}
+					setState(396);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,57,_ctx);
+				}
+				setState(398);
+				_errHandler.sync(this);
+				switch ( getInterpreter().adaptivePredict(_input,58,_ctx) ) {
+				case 1:
+					{
+					setState(397);
+					label();
+					}
+					break;
+				}
+				setState(400);
+				((DataLineContext)_localctx).directive = match(TYPE);
+				setState(401);
+				dataValue();
+				setState(406);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				while (_la==COMMA) {
+					{
+					{
+					setState(402);
+					match(COMMA);
+					setState(403);
+					dataValue();
+					}
+					}
+					setState(408);
+					_errHandler.sync(this);
+					_la = _input.LA(1);
+				}
+				setState(410); 
+				_errHandler.sync(this);
+				_alt = 1;
+				do {
+					switch (_alt) {
+					case 1:
+						{
+						{
+						setState(409);
+						match(NL);
+						}
+						}
+						break;
+					default:
+						throw new NoViableAltException(this);
+					}
+					setState(412); 
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,60,_ctx);
+				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
+				setState(417);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,61,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(414);
+						_la = _input.LA(1);
+						if ( !(_la==DEDENT || _la==NL) ) {
+						_errHandler.recoverInline(this);
+						}
+						else {
+							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+							_errHandler.reportMatch(this);
+							consume();
+						}
+						}
+						} 
+					}
+					setState(419);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,61,_ctx);
+				}
+				}
+				break;
+			case 4:
+				enterOuterAlt(_localctx, 4);
+				{
+				setState(423);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,62,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(420);
+						match(INDENT);
+						}
+						} 
+					}
+					setState(425);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,62,_ctx);
+				}
+				setState(427);
+				_errHandler.sync(this);
+				switch ( getInterpreter().adaptivePredict(_input,63,_ctx) ) {
+				case 1:
+					{
+					setState(426);
+					label();
+					}
+					break;
+				}
+				setState(429);
+				((DataLineContext)_localctx).directive = match(RES);
+				setState(430);
+				dataValue();
+				setState(432); 
+				_errHandler.sync(this);
+				_alt = 1;
+				do {
+					switch (_alt) {
+					case 1:
+						{
+						{
+						setState(431);
+						match(NL);
+						}
+						}
+						break;
+					default:
+						throw new NoViableAltException(this);
+					}
+					setState(434); 
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,64,_ctx);
+				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
+				setState(439);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,65,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(436);
+						_la = _input.LA(1);
+						if ( !(_la==DEDENT || _la==NL) ) {
+						_errHandler.recoverInline(this);
+						}
+						else {
+							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+							_errHandler.reportMatch(this);
+							consume();
+						}
+						}
+						} 
+					}
+					setState(441);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,65,_ctx);
+				}
 				}
 				break;
 			case 5:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(386);
+				setState(445);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,57,_ctx) ) {
+				_alt = getInterpreter().adaptivePredict(_input,66,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(442);
+						match(INDENT);
+						}
+						} 
+					}
+					setState(447);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,66,_ctx);
+				}
+				setState(449);
+				_errHandler.sync(this);
+				switch ( getInterpreter().adaptivePredict(_input,67,_ctx) ) {
 				case 1:
 					{
-					setState(385);
+					setState(448);
 					label();
 					}
 					break;
 				}
-				setState(389);
+				setState(452);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,58,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,68,_ctx) ) {
 				case 1:
 					{
-					setState(388);
+					setState(451);
 					condition();
 					}
 					break;
 				}
-				setState(391);
+				setState(454);
 				opcode();
-				setState(392);
+				setState(455);
 				argument();
-				setState(393);
-				match(T__2);
-				setState(394);
+				setState(456);
+				match(COMMA);
+				setState(457);
 				argument();
-				setState(395);
-				match(T__2);
-				setState(396);
+				setState(458);
+				match(COMMA);
+				setState(459);
 				argument();
-				setState(398);
+				setState(461);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,59,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,69,_ctx) ) {
 				case 1:
 					{
-					setState(397);
+					setState(460);
 					effect();
 					}
 					break;
 				}
-				setState(401); 
+				setState(464); 
 				_errHandler.sync(this);
 				_alt = 1;
 				do {
@@ -2200,7 +2445,7 @@ public class Spin2Parser extends Parser {
 					case 1:
 						{
 						{
-						setState(400);
+						setState(463);
 						match(NL);
 						}
 						}
@@ -2208,54 +2453,94 @@ public class Spin2Parser extends Parser {
 					default:
 						throw new NoViableAltException(this);
 					}
-					setState(403); 
+					setState(466); 
 					_errHandler.sync(this);
-					_alt = getInterpreter().adaptivePredict(_input,60,_ctx);
+					_alt = getInterpreter().adaptivePredict(_input,70,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
+				setState(471);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,71,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(468);
+						_la = _input.LA(1);
+						if ( !(_la==DEDENT || _la==NL) ) {
+						_errHandler.recoverInline(this);
+						}
+						else {
+							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+							_errHandler.reportMatch(this);
+							consume();
+						}
+						}
+						} 
+					}
+					setState(473);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,71,_ctx);
+				}
 				}
 				break;
 			case 6:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(406);
+				setState(477);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,61,_ctx) ) {
+				_alt = getInterpreter().adaptivePredict(_input,72,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(474);
+						match(INDENT);
+						}
+						} 
+					}
+					setState(479);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,72,_ctx);
+				}
+				setState(481);
+				_errHandler.sync(this);
+				switch ( getInterpreter().adaptivePredict(_input,73,_ctx) ) {
 				case 1:
 					{
-					setState(405);
+					setState(480);
 					label();
 					}
 					break;
 				}
-				setState(409);
+				setState(484);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,62,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,74,_ctx) ) {
 				case 1:
 					{
-					setState(408);
+					setState(483);
 					condition();
 					}
 					break;
 				}
-				setState(411);
+				setState(486);
 				opcode();
-				setState(412);
+				setState(487);
 				argument();
-				setState(413);
-				match(T__2);
-				setState(414);
+				setState(488);
+				match(COMMA);
+				setState(489);
 				argument();
-				setState(416);
+				setState(491);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,63,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,75,_ctx) ) {
 				case 1:
 					{
-					setState(415);
+					setState(490);
 					effect();
 					}
 					break;
 				}
-				setState(419); 
+				setState(494); 
 				_errHandler.sync(this);
 				_alt = 1;
 				do {
@@ -2263,7 +2548,7 @@ public class Spin2Parser extends Parser {
 					case 1:
 						{
 						{
-						setState(418);
+						setState(493);
 						match(NL);
 						}
 						}
@@ -2271,50 +2556,90 @@ public class Spin2Parser extends Parser {
 					default:
 						throw new NoViableAltException(this);
 					}
-					setState(421); 
+					setState(496); 
 					_errHandler.sync(this);
-					_alt = getInterpreter().adaptivePredict(_input,64,_ctx);
+					_alt = getInterpreter().adaptivePredict(_input,76,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
+				setState(501);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,77,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(498);
+						_la = _input.LA(1);
+						if ( !(_la==DEDENT || _la==NL) ) {
+						_errHandler.recoverInline(this);
+						}
+						else {
+							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+							_errHandler.reportMatch(this);
+							consume();
+						}
+						}
+						} 
+					}
+					setState(503);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,77,_ctx);
+				}
 				}
 				break;
 			case 7:
 				enterOuterAlt(_localctx, 7);
 				{
-				setState(424);
+				setState(507);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,65,_ctx) ) {
+				_alt = getInterpreter().adaptivePredict(_input,78,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(504);
+						match(INDENT);
+						}
+						} 
+					}
+					setState(509);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,78,_ctx);
+				}
+				setState(511);
+				_errHandler.sync(this);
+				switch ( getInterpreter().adaptivePredict(_input,79,_ctx) ) {
 				case 1:
 					{
-					setState(423);
+					setState(510);
 					label();
 					}
 					break;
 				}
-				setState(427);
+				setState(514);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,66,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,80,_ctx) ) {
 				case 1:
 					{
-					setState(426);
+					setState(513);
 					condition();
 					}
 					break;
 				}
-				setState(429);
+				setState(516);
 				opcode();
-				setState(430);
+				setState(517);
 				argument();
-				setState(432);
+				setState(519);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,67,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,81,_ctx) ) {
 				case 1:
 					{
-					setState(431);
+					setState(518);
 					effect();
 					}
 					break;
 				}
-				setState(435); 
+				setState(522); 
 				_errHandler.sync(this);
 				_alt = 1;
 				do {
@@ -2322,7 +2647,7 @@ public class Spin2Parser extends Parser {
 					case 1:
 						{
 						{
-						setState(434);
+						setState(521);
 						match(NL);
 						}
 						}
@@ -2330,48 +2655,88 @@ public class Spin2Parser extends Parser {
 					default:
 						throw new NoViableAltException(this);
 					}
-					setState(437); 
+					setState(524); 
 					_errHandler.sync(this);
-					_alt = getInterpreter().adaptivePredict(_input,68,_ctx);
+					_alt = getInterpreter().adaptivePredict(_input,82,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
+				setState(529);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,83,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(526);
+						_la = _input.LA(1);
+						if ( !(_la==DEDENT || _la==NL) ) {
+						_errHandler.recoverInline(this);
+						}
+						else {
+							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+							_errHandler.reportMatch(this);
+							consume();
+						}
+						}
+						} 
+					}
+					setState(531);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,83,_ctx);
+				}
 				}
 				break;
 			case 8:
 				enterOuterAlt(_localctx, 8);
 				{
-				setState(440);
+				setState(535);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,69,_ctx) ) {
+				_alt = getInterpreter().adaptivePredict(_input,84,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(532);
+						match(INDENT);
+						}
+						} 
+					}
+					setState(537);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,84,_ctx);
+				}
+				setState(539);
+				_errHandler.sync(this);
+				switch ( getInterpreter().adaptivePredict(_input,85,_ctx) ) {
 				case 1:
 					{
-					setState(439);
+					setState(538);
 					label();
 					}
 					break;
 				}
-				setState(443);
+				setState(542);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,70,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,86,_ctx) ) {
 				case 1:
 					{
-					setState(442);
+					setState(541);
 					condition();
 					}
 					break;
 				}
-				setState(445);
+				setState(544);
 				opcode();
-				setState(447);
+				setState(546);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,71,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,87,_ctx) ) {
 				case 1:
 					{
-					setState(446);
+					setState(545);
 					effect();
 					}
 					break;
 				}
-				setState(450); 
+				setState(549); 
 				_errHandler.sync(this);
 				_alt = 1;
 				do {
@@ -2379,7 +2744,7 @@ public class Spin2Parser extends Parser {
 					case 1:
 						{
 						{
-						setState(449);
+						setState(548);
 						match(NL);
 						}
 						}
@@ -2387,10 +2752,34 @@ public class Spin2Parser extends Parser {
 					default:
 						throw new NoViableAltException(this);
 					}
-					setState(452); 
+					setState(551); 
 					_errHandler.sync(this);
-					_alt = getInterpreter().adaptivePredict(_input,72,_ctx);
+					_alt = getInterpreter().adaptivePredict(_input,88,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
+				setState(556);
+				_errHandler.sync(this);
+				_alt = getInterpreter().adaptivePredict(_input,89,_ctx);
+				while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+					if ( _alt==1 ) {
+						{
+						{
+						setState(553);
+						_la = _input.LA(1);
+						if ( !(_la==DEDENT || _la==NL) ) {
+						_errHandler.recoverInline(this);
+						}
+						else {
+							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+							_errHandler.reportMatch(this);
+							consume();
+						}
+						}
+						} 
+					}
+					setState(558);
+					_errHandler.sync(this);
+					_alt = getInterpreter().adaptivePredict(_input,89,_ctx);
+				}
 				}
 				break;
 			}
@@ -2408,21 +2797,22 @@ public class Spin2Parser extends Parser {
 
 	public static class LabelContext extends ParserRuleContext {
 		public TerminalNode IDENTIFIER() { return getToken(Spin2Parser.IDENTIFIER, 0); }
+		public TerminalNode DOT() { return getToken(Spin2Parser.DOT, 0); }
 		public LabelContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_label; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterLabel(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterLabel(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitLabel(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitLabel(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitLabel(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitLabel(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2434,19 +2824,19 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(456);
+			setState(561);
 			if (!(_input.LT(1).getCharPositionInLine() == 0)) throw new FailedPredicateException(this, "_input.LT(1).getCharPositionInLine() == 0");
-			setState(458);
+			setState(563);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (_la==T__32) {
+			if (_la==DOT) {
 				{
-				setState(457);
-				match(T__32);
+				setState(562);
+				match(DOT);
 				}
 			}
 
-			setState(460);
+			setState(565);
 			match(IDENTIFIER);
 			}
 		}
@@ -2469,15 +2859,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_condition; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterCondition(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterCondition(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitCondition(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitCondition(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitCondition(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitCondition(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2488,9 +2878,9 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(462);
+			setState(567);
 			if (!(_input.LT(1).getCharPositionInLine() != 0)) throw new FailedPredicateException(this, "_input.LT(1).getCharPositionInLine() != 0");
-			setState(463);
+			setState(568);
 			match(CONDITION);
 			}
 		}
@@ -2513,15 +2903,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_opcode; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterOpcode(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterOpcode(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitOpcode(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitOpcode(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitOpcode(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitOpcode(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2532,9 +2922,9 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(465);
+			setState(570);
 			if (!(_input.LT(1).getCharPositionInLine() != 0)) throw new FailedPredicateException(this, "_input.LT(1).getCharPositionInLine() != 0");
-			setState(466);
+			setState(571);
 			match(IDENTIFIER);
 			}
 		}
@@ -2562,15 +2952,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_argument; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterArgument(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterArgument(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitArgument(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitArgument(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitArgument(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitArgument(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2582,17 +2972,17 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(469);
+			setState(574);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (_la==T__6 || _la==T__33) {
+			if (_la==POUND_POUND || _la==POUND) {
 				{
-				setState(468);
+				setState(573);
 				prefix();
 				}
 			}
 
-			setState(471);
+			setState(576);
 			expression(0);
 			}
 		}
@@ -2608,21 +2998,24 @@ public class Spin2Parser extends Parser {
 	}
 
 	public static class PrefixContext extends ParserRuleContext {
+		public TerminalNode POUND_POUND() { return getToken(Spin2Parser.POUND_POUND, 0); }
+		public TerminalNode POUND() { return getToken(Spin2Parser.POUND, 0); }
+		public TerminalNode BACKSLASH() { return getToken(Spin2Parser.BACKSLASH, 0); }
 		public PrefixContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_prefix; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterPrefix(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterPrefix(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitPrefix(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitPrefix(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitPrefix(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitPrefix(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2634,9 +3027,9 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(473);
+			setState(578);
 			_la = _input.LA(1);
-			if ( !(_la==T__6 || _la==T__33) ) {
+			if ( !(_la==POUND_POUND || _la==POUND) ) {
 			_errHandler.recoverInline(this);
 			}
 			else {
@@ -2644,13 +3037,13 @@ public class Spin2Parser extends Parser {
 				_errHandler.reportMatch(this);
 				consume();
 			}
-			setState(475);
+			setState(580);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (_la==T__34) {
+			if (_la==BACKSLASH) {
 				{
-				setState(474);
-				match(T__34);
+				setState(579);
+				match(BACKSLASH);
 				}
 			}
 
@@ -2675,15 +3068,15 @@ public class Spin2Parser extends Parser {
 		@Override public int getRuleIndex() { return RULE_effect; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterEffect(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterEffect(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitEffect(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitEffect(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitEffect(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitEffect(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2691,23 +3084,12 @@ public class Spin2Parser extends Parser {
 	public final EffectContext effect() throws RecognitionException {
 		EffectContext _localctx = new EffectContext(_ctx, getState());
 		enterRule(_localctx, 48, RULE_effect);
-		int _la;
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(477);
+			setState(582);
 			if (!(_input.LT(1).getCharPositionInLine() != 0)) throw new FailedPredicateException(this, "_input.LT(1).getCharPositionInLine() != 0");
-			setState(479);
-			_errHandler.sync(this);
-			_la = _input.LA(1);
-			if (_la==T__32) {
-				{
-				setState(478);
-				match(T__32);
-				}
-			}
-
-			setState(481);
+			setState(583);
 			match(IDENTIFIER);
 			}
 		}
@@ -2730,21 +3112,23 @@ public class Spin2Parser extends Parser {
 		public ExpressionContext expression(int i) {
 			return getRuleContext(ExpressionContext.class,i);
 		}
+		public TerminalNode OPEN_BRACKET() { return getToken(Spin2Parser.OPEN_BRACKET, 0); }
+		public TerminalNode CLOSE_BRACKET() { return getToken(Spin2Parser.CLOSE_BRACKET, 0); }
 		public DataValueContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_dataValue; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterDataValue(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterDataValue(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitDataValue(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitDataValue(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitDataValue(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitDataValue(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2756,19 +3140,19 @@ public class Spin2Parser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(483);
+			setState(585);
 			expression(0);
-			setState(488);
+			setState(590);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (_la==T__4) {
+			if (_la==OPEN_BRACKET) {
 				{
-				setState(484);
-				match(T__4);
-				setState(485);
+				setState(586);
+				match(OPEN_BRACKET);
+				setState(587);
 				((DataValueContext)_localctx).count = expression(0);
-				setState(486);
-				match(T__5);
+				setState(588);
+				match(CLOSE_BRACKET);
 				}
 			}
 
@@ -2797,24 +3181,46 @@ public class Spin2Parser extends Parser {
 		public ExpressionContext expression(int i) {
 			return getRuleContext(ExpressionContext.class,i);
 		}
+		public TerminalNode PLUS() { return getToken(Spin2Parser.PLUS, 0); }
+		public TerminalNode MINUS() { return getToken(Spin2Parser.MINUS, 0); }
+		public TerminalNode TILDE() { return getToken(Spin2Parser.TILDE, 0); }
+		public TerminalNode OPEN_PAREN() { return getToken(Spin2Parser.OPEN_PAREN, 0); }
+		public TerminalNode CLOSE_PAREN() { return getToken(Spin2Parser.CLOSE_PAREN, 0); }
+		public TerminalNode FLOAT() { return getToken(Spin2Parser.FLOAT, 0); }
+		public TerminalNode ROUND() { return getToken(Spin2Parser.ROUND, 0); }
+		public TerminalNode TRUNC() { return getToken(Spin2Parser.TRUNC, 0); }
 		public AtomContext atom() {
 			return getRuleContext(AtomContext.class,0);
 		}
+		public TerminalNode AT() { return getToken(Spin2Parser.AT, 0); }
+		public TerminalNode LEFT_SHIFT() { return getToken(Spin2Parser.LEFT_SHIFT, 0); }
+		public TerminalNode RIGHT_SHIFT() { return getToken(Spin2Parser.RIGHT_SHIFT, 0); }
+		public TerminalNode BIN_AND() { return getToken(Spin2Parser.BIN_AND, 0); }
+		public TerminalNode BIN_XOR() { return getToken(Spin2Parser.BIN_XOR, 0); }
+		public TerminalNode BIN_OR() { return getToken(Spin2Parser.BIN_OR, 0); }
+		public TerminalNode STAR() { return getToken(Spin2Parser.STAR, 0); }
+		public TerminalNode DIV() { return getToken(Spin2Parser.DIV, 0); }
+		public TerminalNode ADDPINS() { return getToken(Spin2Parser.ADDPINS, 0); }
+		public TerminalNode LOGICAL_AND() { return getToken(Spin2Parser.LOGICAL_AND, 0); }
+		public TerminalNode LOGICAL_XOR() { return getToken(Spin2Parser.LOGICAL_XOR, 0); }
+		public TerminalNode LOGICAL_OR() { return getToken(Spin2Parser.LOGICAL_OR, 0); }
+		public TerminalNode QUESTION() { return getToken(Spin2Parser.QUESTION, 0); }
+		public TerminalNode COLON() { return getToken(Spin2Parser.COLON, 0); }
 		public ExpressionContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_expression; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterExpression(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterExpression(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitExpression(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitExpression(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitExpression(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitExpression(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -2835,19 +3241,17 @@ public class Spin2Parser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(506);
+			setState(608);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
-			case T__35:
-			case T__36:
-			case T__37:
-			case T__38:
-			case T__39:
+			case PLUS:
+			case MINUS:
+			case TILDE:
 				{
-				setState(491);
+				setState(593);
 				((ExpressionContext)_localctx).operator = _input.LT(1);
 				_la = _input.LA(1);
-				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39))) != 0)) ) {
+				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << PLUS) | (1L << MINUS) | (1L << TILDE))) != 0)) ) {
 					((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 				}
 				else {
@@ -2855,21 +3259,18 @@ public class Spin2Parser extends Parser {
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				setState(492);
-				((ExpressionContext)_localctx).exp = expression(12);
+				setState(594);
+				((ExpressionContext)_localctx).exp = expression(11);
 				}
 				break;
-			case T__70:
-			case T__71:
-			case T__72:
-			case T__73:
-			case T__74:
-			case T__75:
+			case FLOAT:
+			case ROUND:
+			case TRUNC:
 				{
-				setState(493);
+				setState(595);
 				((ExpressionContext)_localctx).operator = _input.LT(1);
 				_la = _input.LA(1);
-				if ( !(((((_la - 71)) & ~0x3f) == 0 && ((1L << (_la - 71)) & ((1L << (T__70 - 71)) | (1L << (T__71 - 71)) | (1L << (T__72 - 71)) | (1L << (T__73 - 71)) | (1L << (T__74 - 71)) | (1L << (T__75 - 71)))) != 0)) ) {
+				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << FLOAT) | (1L << ROUND) | (1L << TRUNC))) != 0)) ) {
 					((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 				}
 				else {
@@ -2877,48 +3278,48 @@ public class Spin2Parser extends Parser {
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				setState(494);
-				match(T__16);
-				setState(495);
+				setState(596);
+				match(OPEN_PAREN);
+				setState(597);
 				((ExpressionContext)_localctx).exp = expression(0);
-				setState(496);
-				match(T__17);
+				setState(598);
+				match(CLOSE_PAREN);
 				}
 				break;
-			case T__16:
+			case OPEN_PAREN:
 				{
-				setState(498);
-				match(T__16);
-				setState(499);
+				setState(600);
+				match(OPEN_PAREN);
+				setState(601);
 				((ExpressionContext)_localctx).exp = expression(0);
-				setState(500);
-				match(T__17);
+				setState(602);
+				match(CLOSE_PAREN);
 				}
 				break;
-			case T__32:
-			case T__76:
-			case T__77:
-			case T__78:
-			case T__79:
-			case PTR:
-			case IDENTIFIER:
 			case STRING:
 			case QUAD:
 			case BIN:
 			case HEX:
 			case NUMBER:
+			case PLUS_PLUS:
+			case MINUS_MINUS:
+			case AT:
+			case DOLLAR:
+			case DOT:
+			case PTR:
+			case IDENTIFIER:
 				{
-				setState(503);
+				setState(605);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if (_la==T__76) {
+				if (_la==AT) {
 					{
-					setState(502);
-					match(T__76);
+					setState(604);
+					match(AT);
 					}
 				}
 
-				setState(505);
+				setState(607);
 				atom();
 				}
 				break;
@@ -2926,29 +3327,29 @@ public class Spin2Parser extends Parser {
 				throw new NoViableAltException(this);
 			}
 			_ctx.stop = _input.LT(-1);
-			setState(537);
+			setState(636);
 			_errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(_input,82,_ctx);
+			_alt = getInterpreter().adaptivePredict(_input,98,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					if ( _parseListeners!=null ) triggerExitRuleEvent();
 					_prevctx = _localctx;
 					{
-					setState(535);
+					setState(634);
 					_errHandler.sync(this);
-					switch ( getInterpreter().adaptivePredict(_input,81,_ctx) ) {
+					switch ( getInterpreter().adaptivePredict(_input,97,_ctx) ) {
 					case 1:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						_localctx.left = _prevctx;
 						_localctx.left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
-						setState(508);
-						if (!(precpred(_ctx, 11))) throw new FailedPredicateException(this, "precpred(_ctx, 11)");
-						setState(509);
+						setState(610);
+						if (!(precpred(_ctx, 10))) throw new FailedPredicateException(this, "precpred(_ctx, 10)");
+						setState(611);
 						((ExpressionContext)_localctx).operator = _input.LT(1);
 						_la = _input.LA(1);
-						if ( !(_la==T__40 || _la==T__41) ) {
+						if ( !(_la==LEFT_SHIFT || _la==RIGHT_SHIFT) ) {
 							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 						}
 						else {
@@ -2956,8 +3357,8 @@ public class Spin2Parser extends Parser {
 							_errHandler.reportMatch(this);
 							consume();
 						}
-						setState(510);
-						((ExpressionContext)_localctx).right = expression(12);
+						setState(612);
+						((ExpressionContext)_localctx).right = expression(11);
 						}
 						break;
 					case 2:
@@ -2966,12 +3367,12 @@ public class Spin2Parser extends Parser {
 						_localctx.left = _prevctx;
 						_localctx.left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
-						setState(511);
-						if (!(precpred(_ctx, 10))) throw new FailedPredicateException(this, "precpred(_ctx, 10)");
-						setState(512);
+						setState(613);
+						if (!(precpred(_ctx, 9))) throw new FailedPredicateException(this, "precpred(_ctx, 9)");
+						setState(614);
 						((ExpressionContext)_localctx).operator = _input.LT(1);
 						_la = _input.LA(1);
-						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__18) | (1L << T__42) | (1L << T__43))) != 0)) ) {
+						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << BIN_AND) | (1L << BIN_OR) | (1L << BIN_XOR))) != 0)) ) {
 							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 						}
 						else {
@@ -2979,8 +3380,8 @@ public class Spin2Parser extends Parser {
 							_errHandler.reportMatch(this);
 							consume();
 						}
-						setState(513);
-						((ExpressionContext)_localctx).right = expression(11);
+						setState(615);
+						((ExpressionContext)_localctx).right = expression(10);
 						}
 						break;
 					case 3:
@@ -2989,12 +3390,12 @@ public class Spin2Parser extends Parser {
 						_localctx.left = _prevctx;
 						_localctx.left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
-						setState(514);
-						if (!(precpred(_ctx, 9))) throw new FailedPredicateException(this, "precpred(_ctx, 9)");
-						setState(515);
+						setState(616);
+						if (!(precpred(_ctx, 8))) throw new FailedPredicateException(this, "precpred(_ctx, 8)");
+						setState(617);
 						((ExpressionContext)_localctx).operator = _input.LT(1);
 						_la = _input.LA(1);
-						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__44) | (1L << T__45) | (1L << T__46) | (1L << T__47) | (1L << T__48))) != 0)) ) {
+						if ( !(_la==STAR || _la==DIV) ) {
 							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 						}
 						else {
@@ -3002,8 +3403,8 @@ public class Spin2Parser extends Parser {
 							_errHandler.reportMatch(this);
 							consume();
 						}
-						setState(516);
-						((ExpressionContext)_localctx).right = expression(10);
+						setState(618);
+						((ExpressionContext)_localctx).right = expression(9);
 						}
 						break;
 					case 4:
@@ -3012,12 +3413,12 @@ public class Spin2Parser extends Parser {
 						_localctx.left = _prevctx;
 						_localctx.left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
-						setState(517);
-						if (!(precpred(_ctx, 8))) throw new FailedPredicateException(this, "precpred(_ctx, 8)");
-						setState(518);
+						setState(619);
+						if (!(precpred(_ctx, 7))) throw new FailedPredicateException(this, "precpred(_ctx, 7)");
+						setState(620);
 						((ExpressionContext)_localctx).operator = _input.LT(1);
 						_la = _input.LA(1);
-						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__23) | (1L << T__35) | (1L << T__36) | (1L << T__49) | (1L << T__50))) != 0)) ) {
+						if ( !(_la==PLUS || _la==MINUS) ) {
 							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 						}
 						else {
@@ -3025,8 +3426,8 @@ public class Spin2Parser extends Parser {
 							_errHandler.reportMatch(this);
 							consume();
 						}
-						setState(519);
-						((ExpressionContext)_localctx).right = expression(9);
+						setState(621);
+						((ExpressionContext)_localctx).right = expression(8);
 						}
 						break;
 					case 5:
@@ -3035,21 +3436,12 @@ public class Spin2Parser extends Parser {
 						_localctx.left = _prevctx;
 						_localctx.left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
-						setState(520);
-						if (!(precpred(_ctx, 7))) throw new FailedPredicateException(this, "precpred(_ctx, 7)");
-						setState(521);
-						((ExpressionContext)_localctx).operator = _input.LT(1);
-						_la = _input.LA(1);
-						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__51) | (1L << T__52) | (1L << T__53) | (1L << T__54))) != 0)) ) {
-							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
-						}
-						else {
-							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-							_errHandler.reportMatch(this);
-							consume();
-						}
-						setState(522);
-						((ExpressionContext)_localctx).right = expression(8);
+						setState(622);
+						if (!(precpred(_ctx, 6))) throw new FailedPredicateException(this, "precpred(_ctx, 6)");
+						setState(623);
+						((ExpressionContext)_localctx).operator = match(ADDPINS);
+						setState(624);
+						((ExpressionContext)_localctx).right = expression(7);
 						}
 						break;
 					case 6:
@@ -3058,12 +3450,12 @@ public class Spin2Parser extends Parser {
 						_localctx.left = _prevctx;
 						_localctx.left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
-						setState(523);
-						if (!(precpred(_ctx, 6))) throw new FailedPredicateException(this, "precpred(_ctx, 6)");
-						setState(524);
+						setState(625);
+						if (!(precpred(_ctx, 5))) throw new FailedPredicateException(this, "precpred(_ctx, 5)");
+						setState(626);
 						((ExpressionContext)_localctx).operator = _input.LT(1);
 						_la = _input.LA(1);
-						if ( !(((((_la - 56)) & ~0x3f) == 0 && ((1L << (_la - 56)) & ((1L << (T__55 - 56)) | (1L << (T__56 - 56)) | (1L << (T__57 - 56)) | (1L << (T__58 - 56)) | (1L << (T__59 - 56)) | (1L << (T__60 - 56)) | (1L << (T__61 - 56)) | (1L << (T__62 - 56)) | (1L << (T__63 - 56)) | (1L << (T__64 - 56)) | (1L << (T__65 - 56)))) != 0)) ) {
+						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << LOGICAL_AND) | (1L << LOGICAL_OR) | (1L << LOGICAL_XOR))) != 0)) ) {
 							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
 						}
 						else {
@@ -3071,8 +3463,8 @@ public class Spin2Parser extends Parser {
 							_errHandler.reportMatch(this);
 							consume();
 						}
-						setState(525);
-						((ExpressionContext)_localctx).right = expression(7);
+						setState(627);
+						((ExpressionContext)_localctx).right = expression(6);
 						}
 						break;
 					case 7:
@@ -3081,47 +3473,24 @@ public class Spin2Parser extends Parser {
 						_localctx.left = _prevctx;
 						_localctx.left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
-						setState(526);
-						if (!(precpred(_ctx, 5))) throw new FailedPredicateException(this, "precpred(_ctx, 5)");
-						setState(527);
-						((ExpressionContext)_localctx).operator = _input.LT(1);
-						_la = _input.LA(1);
-						if ( !(((((_la - 67)) & ~0x3f) == 0 && ((1L << (_la - 67)) & ((1L << (T__66 - 67)) | (1L << (T__67 - 67)) | (1L << (T__68 - 67)))) != 0)) ) {
-							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
-						}
-						else {
-							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-							_errHandler.reportMatch(this);
-							consume();
-						}
-						setState(528);
-						((ExpressionContext)_localctx).right = expression(6);
-						}
-						break;
-					case 8:
-						{
-						_localctx = new ExpressionContext(_parentctx, _parentState);
-						_localctx.left = _prevctx;
-						_localctx.left = _prevctx;
-						pushNewRecursionContext(_localctx, _startState, RULE_expression);
-						setState(529);
+						setState(628);
 						if (!(precpred(_ctx, 4))) throw new FailedPredicateException(this, "precpred(_ctx, 4)");
-						setState(530);
-						((ExpressionContext)_localctx).operator = match(T__69);
-						setState(531);
+						setState(629);
+						((ExpressionContext)_localctx).operator = match(QUESTION);
+						setState(630);
 						((ExpressionContext)_localctx).middle = expression(0);
-						setState(532);
-						((ExpressionContext)_localctx).operator = match(T__9);
-						setState(533);
+						setState(631);
+						((ExpressionContext)_localctx).operator = match(COLON);
+						setState(632);
 						((ExpressionContext)_localctx).right = expression(5);
 						}
 						break;
 					}
 					} 
 				}
-				setState(539);
+				setState(638);
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,82,_ctx);
+				_alt = getInterpreter().adaptivePredict(_input,98,_ctx);
 			}
 			}
 		}
@@ -3142,26 +3511,32 @@ public class Spin2Parser extends Parser {
 		public TerminalNode BIN() { return getToken(Spin2Parser.BIN, 0); }
 		public TerminalNode QUAD() { return getToken(Spin2Parser.QUAD, 0); }
 		public TerminalNode STRING() { return getToken(Spin2Parser.STRING, 0); }
+		public TerminalNode DOLLAR() { return getToken(Spin2Parser.DOLLAR, 0); }
 		public TerminalNode PTR() { return getToken(Spin2Parser.PTR, 0); }
+		public TerminalNode OPEN_BRACKET() { return getToken(Spin2Parser.OPEN_BRACKET, 0); }
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
 		}
+		public TerminalNode CLOSE_BRACKET() { return getToken(Spin2Parser.CLOSE_BRACKET, 0); }
+		public TerminalNode PLUS_PLUS() { return getToken(Spin2Parser.PLUS_PLUS, 0); }
+		public TerminalNode MINUS_MINUS() { return getToken(Spin2Parser.MINUS_MINUS, 0); }
 		public TerminalNode IDENTIFIER() { return getToken(Spin2Parser.IDENTIFIER, 0); }
+		public TerminalNode DOT() { return getToken(Spin2Parser.DOT, 0); }
 		public AtomContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_atom; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).enterAtom(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).enterAtom(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof Spin2Listener ) ((Spin2Listener)listener).exitAtom(this);
+			if ( listener instanceof Spin2ParserListener ) ((Spin2ParserListener)listener).exitAtom(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof Spin2Visitor ) return ((Spin2Visitor<? extends T>)visitor).visitAtom(this);
+			if ( visitor instanceof Spin2ParserVisitor ) return ((Spin2ParserVisitor<? extends T>)visitor).visitAtom(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -3171,74 +3546,74 @@ public class Spin2Parser extends Parser {
 		enterRule(_localctx, 54, RULE_atom);
 		int _la;
 		try {
-			setState(582);
+			setState(681);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,88,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,104,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(540);
+				setState(639);
 				match(NUMBER);
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(541);
+				setState(640);
 				match(HEX);
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(542);
+				setState(641);
 				match(BIN);
 				}
 				break;
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(543);
+				setState(642);
 				match(QUAD);
 				}
 				break;
 			case 5:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(544);
+				setState(643);
 				match(STRING);
 				}
 				break;
 			case 6:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(545);
-				match(T__77);
+				setState(644);
+				match(DOLLAR);
 				}
 				break;
 			case 7:
 				enterOuterAlt(_localctx, 7);
 				{
-				setState(546);
+				setState(645);
 				match(PTR);
 				}
 				break;
 			case 8:
 				enterOuterAlt(_localctx, 8);
 				{
-				setState(547);
+				setState(646);
 				match(PTR);
-				setState(552);
+				setState(651);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,83,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,99,_ctx) ) {
 				case 1:
 					{
-					setState(548);
-					match(T__4);
-					setState(549);
+					setState(647);
+					match(OPEN_BRACKET);
+					setState(648);
 					expression(0);
-					setState(550);
-					match(T__5);
+					setState(649);
+					match(CLOSE_BRACKET);
 					}
 					break;
 				}
@@ -3247,11 +3622,11 @@ public class Spin2Parser extends Parser {
 			case 9:
 				enterOuterAlt(_localctx, 9);
 				{
-				setState(554);
+				setState(653);
 				match(PTR);
-				setState(555);
+				setState(654);
 				_la = _input.LA(1);
-				if ( !(_la==T__78 || _la==T__79) ) {
+				if ( !(_la==PLUS_PLUS || _la==MINUS_MINUS) ) {
 				_errHandler.recoverInline(this);
 				}
 				else {
@@ -3259,17 +3634,17 @@ public class Spin2Parser extends Parser {
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				setState(560);
+				setState(659);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,84,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,100,_ctx) ) {
 				case 1:
 					{
-					setState(556);
-					match(T__4);
-					setState(557);
+					setState(655);
+					match(OPEN_BRACKET);
+					setState(656);
 					expression(0);
-					setState(558);
-					match(T__5);
+					setState(657);
+					match(CLOSE_BRACKET);
 					}
 					break;
 				}
@@ -3278,25 +3653,25 @@ public class Spin2Parser extends Parser {
 			case 10:
 				enterOuterAlt(_localctx, 10);
 				{
-				setState(562);
+				setState(661);
 				match(PTR);
-				setState(567);
+				setState(666);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if (_la==T__4) {
+				if (_la==OPEN_BRACKET) {
 					{
-					setState(563);
-					match(T__4);
-					setState(564);
+					setState(662);
+					match(OPEN_BRACKET);
+					setState(663);
 					expression(0);
-					setState(565);
-					match(T__5);
+					setState(664);
+					match(CLOSE_BRACKET);
 					}
 				}
 
-				setState(569);
+				setState(668);
 				_la = _input.LA(1);
-				if ( !(_la==T__78 || _la==T__79) ) {
+				if ( !(_la==PLUS_PLUS || _la==MINUS_MINUS) ) {
 				_errHandler.recoverInline(this);
 				}
 				else {
@@ -3309,9 +3684,9 @@ public class Spin2Parser extends Parser {
 			case 11:
 				enterOuterAlt(_localctx, 11);
 				{
-				setState(570);
+				setState(669);
 				_la = _input.LA(1);
-				if ( !(_la==T__78 || _la==T__79) ) {
+				if ( !(_la==PLUS_PLUS || _la==MINUS_MINUS) ) {
 				_errHandler.recoverInline(this);
 				}
 				else {
@@ -3319,19 +3694,19 @@ public class Spin2Parser extends Parser {
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				setState(571);
+				setState(670);
 				match(PTR);
-				setState(576);
+				setState(675);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,86,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,102,_ctx) ) {
 				case 1:
 					{
-					setState(572);
-					match(T__4);
-					setState(573);
+					setState(671);
+					match(OPEN_BRACKET);
+					setState(672);
 					expression(0);
-					setState(574);
-					match(T__5);
+					setState(673);
+					match(CLOSE_BRACKET);
 					}
 					break;
 				}
@@ -3340,17 +3715,17 @@ public class Spin2Parser extends Parser {
 			case 12:
 				enterOuterAlt(_localctx, 12);
 				{
-				setState(579);
+				setState(678);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if (_la==T__32) {
+				if (_la==DOT) {
 					{
-					setState(578);
-					match(T__32);
+					setState(677);
+					match(DOT);
 					}
 				}
 
-				setState(581);
+				setState(680);
 				match(IDENTIFIER);
 				}
 				break;
@@ -3413,265 +3788,305 @@ public class Spin2Parser extends Parser {
 	private boolean expression_sempred(ExpressionContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 4:
-			return precpred(_ctx, 11);
-		case 5:
 			return precpred(_ctx, 10);
-		case 6:
+		case 5:
 			return precpred(_ctx, 9);
-		case 7:
+		case 6:
 			return precpred(_ctx, 8);
-		case 8:
+		case 7:
 			return precpred(_ctx, 7);
-		case 9:
+		case 8:
 			return precpred(_ctx, 6);
-		case 10:
+		case 9:
 			return precpred(_ctx, 5);
-		case 11:
+		case 10:
 			return precpred(_ctx, 4);
 		}
 		return true;
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3_\u024b\4\2\t\2\4"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3A\u02ae\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
 		"\4\32\t\32\4\33\t\33\4\34\t\34\4\35\t\35\3\2\7\2<\n\2\f\2\16\2?\13\2\3"+
 		"\2\3\2\3\2\3\2\3\2\7\2F\n\2\f\2\16\2I\13\2\3\2\3\2\3\3\6\3N\n\3\r\3\16"+
-		"\3O\3\3\7\3S\n\3\f\3\16\3V\13\3\3\3\7\3Y\n\3\f\3\16\3\\\13\3\3\4\5\4_"+
-		"\n\4\3\4\3\4\3\4\3\4\7\4e\n\4\f\4\16\4h\13\4\3\4\5\4k\n\4\3\4\3\4\3\4"+
-		"\3\4\3\4\5\4r\n\4\3\4\7\4u\n\4\f\4\16\4x\13\4\3\4\3\4\3\4\3\4\3\4\3\4"+
-		"\5\4\u0080\n\4\3\4\7\4\u0083\n\4\f\4\16\4\u0086\13\4\5\4\u0088\n\4\3\5"+
-		"\6\5\u008b\n\5\r\5\16\5\u008c\3\5\7\5\u0090\n\5\f\5\16\5\u0093\13\5\3"+
-		"\5\7\5\u0096\n\5\f\5\16\5\u0099\13\5\3\6\3\6\3\6\3\6\3\6\7\6\u00a0\n\6"+
-		"\f\6\16\6\u00a3\13\6\3\6\3\6\3\6\6\6\u00a8\n\6\r\6\16\6\u00a9\3\7\3\7"+
-		"\3\b\3\b\3\t\6\t\u00b1\n\t\r\t\16\t\u00b2\3\t\7\t\u00b6\n\t\f\t\16\t\u00b9"+
-		"\13\t\3\t\7\t\u00bc\n\t\f\t\16\t\u00bf\13\t\3\n\3\n\3\n\3\n\3\n\3\n\5"+
-		"\n\u00c7\n\n\3\n\3\n\3\n\3\n\3\n\3\n\5\n\u00cf\n\n\7\n\u00d1\n\n\f\n\16"+
-		"\n\u00d4\13\n\3\n\6\n\u00d7\n\n\r\n\16\n\u00d8\3\13\3\13\3\13\3\13\5\13"+
-		"\u00df\n\13\3\13\3\13\3\13\5\13\u00e4\n\13\3\13\3\13\5\13\u00e8\n\13\3"+
-		"\13\6\13\u00eb\n\13\r\13\16\13\u00ec\3\13\7\13\u00f0\n\13\f\13\16\13\u00f3"+
-		"\13\13\3\f\3\f\3\f\7\f\u00f8\n\f\f\f\16\f\u00fb\13\f\3\r\3\r\3\r\7\r\u0100"+
-		"\n\r\f\r\16\r\u0103\13\r\3\16\3\16\3\16\7\16\u0108\n\16\f\16\16\16\u010b"+
-		"\13\16\3\17\5\17\u010e\n\17\3\17\5\17\u0111\n\17\3\17\3\17\3\17\3\17\3"+
-		"\17\5\17\u0118\n\17\3\20\3\20\6\20\u011c\n\20\r\20\16\20\u011d\3\20\3"+
-		"\20\5\20\u0122\n\20\3\21\3\21\3\21\3\21\3\21\5\21\u0129\n\21\3\21\6\21"+
-		"\u012c\n\21\r\21\16\21\u012d\3\22\3\22\3\22\3\22\3\22\7\22\u0135\n\22"+
-		"\f\22\16\22\u0138\13\22\5\22\u013a\n\22\3\22\3\22\6\22\u013e\n\22\r\22"+
-		"\16\22\u013f\3\23\6\23\u0143\n\23\r\23\16\23\u0144\3\23\7\23\u0148\n\23"+
-		"\f\23\16\23\u014b\13\23\3\23\7\23\u014e\n\23\f\23\16\23\u0151\13\23\3"+
-		"\24\3\24\6\24\u0155\n\24\r\24\16\24\u0156\3\24\5\24\u015a\n\24\3\24\3"+
-		"\24\3\24\3\24\5\24\u0160\n\24\5\24\u0162\n\24\3\24\6\24\u0165\n\24\r\24"+
-		"\16\24\u0166\3\24\5\24\u016a\n\24\3\24\3\24\3\24\3\24\7\24\u0170\n\24"+
-		"\f\24\16\24\u0173\13\24\3\24\6\24\u0176\n\24\r\24\16\24\u0177\3\24\5\24"+
-		"\u017b\n\24\3\24\3\24\3\24\6\24\u0180\n\24\r\24\16\24\u0181\3\24\5\24"+
-		"\u0185\n\24\3\24\5\24\u0188\n\24\3\24\3\24\3\24\3\24\3\24\3\24\3\24\5"+
-		"\24\u0191\n\24\3\24\6\24\u0194\n\24\r\24\16\24\u0195\3\24\5\24\u0199\n"+
-		"\24\3\24\5\24\u019c\n\24\3\24\3\24\3\24\3\24\3\24\5\24\u01a3\n\24\3\24"+
-		"\6\24\u01a6\n\24\r\24\16\24\u01a7\3\24\5\24\u01ab\n\24\3\24\5\24\u01ae"+
-		"\n\24\3\24\3\24\3\24\5\24\u01b3\n\24\3\24\6\24\u01b6\n\24\r\24\16\24\u01b7"+
-		"\3\24\5\24\u01bb\n\24\3\24\5\24\u01be\n\24\3\24\3\24\5\24\u01c2\n\24\3"+
-		"\24\6\24\u01c5\n\24\r\24\16\24\u01c6\5\24\u01c9\n\24\3\25\3\25\5\25\u01cd"+
-		"\n\25\3\25\3\25\3\26\3\26\3\26\3\27\3\27\3\27\3\30\5\30\u01d8\n\30\3\30"+
-		"\3\30\3\31\3\31\5\31\u01de\n\31\3\32\3\32\5\32\u01e2\n\32\3\32\3\32\3"+
-		"\33\3\33\3\33\3\33\3\33\5\33\u01eb\n\33\3\34\3\34\3\34\3\34\3\34\3\34"+
-		"\3\34\3\34\3\34\3\34\3\34\3\34\3\34\5\34\u01fa\n\34\3\34\5\34\u01fd\n"+
-		"\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3"+
-		"\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\7"+
-		"\34\u021a\n\34\f\34\16\34\u021d\13\34\3\35\3\35\3\35\3\35\3\35\3\35\3"+
-		"\35\3\35\3\35\3\35\3\35\3\35\5\35\u022b\n\35\3\35\3\35\3\35\3\35\3\35"+
-		"\3\35\5\35\u0233\n\35\3\35\3\35\3\35\3\35\3\35\5\35\u023a\n\35\3\35\3"+
-		"\35\3\35\3\35\3\35\3\35\3\35\5\35\u0243\n\35\3\35\5\35\u0246\n\35\3\35"+
-		"\5\35\u0249\n\35\3\35\2\3\66\36\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36"+
-		" \"$&(*,.\60\62\64\668\2\26\3\2\3\4\3\2\n\13\3\2\r\16\3\2\17\22\3\2\26"+
-		"\27\3\2\31\32\3\2\33\34\3\2\35 \3\2!\"\4\2\t\t$$\3\2&*\3\2IN\3\2+,\4\2"+
-		"\25\25-.\3\2/\63\5\2\32\32&\'\64\65\3\2\669\3\2:D\3\2EG\3\2QR\2\u02a5"+
-		"\2=\3\2\2\2\4M\3\2\2\2\6\u0087\3\2\2\2\b\u008a\3\2\2\2\n\u009a\3\2\2\2"+
-		"\f\u00ab\3\2\2\2\16\u00ad\3\2\2\2\20\u00b0\3\2\2\2\22\u00c0\3\2\2\2\24"+
-		"\u00da\3\2\2\2\26\u00f4\3\2\2\2\30\u00fc\3\2\2\2\32\u0104\3\2\2\2\34\u010d"+
-		"\3\2\2\2\36\u0121\3\2\2\2 \u0123\3\2\2\2\"\u012f\3\2\2\2$\u0142\3\2\2"+
-		"\2&\u01c8\3\2\2\2(\u01ca\3\2\2\2*\u01d0\3\2\2\2,\u01d3\3\2\2\2.\u01d7"+
-		"\3\2\2\2\60\u01db\3\2\2\2\62\u01df\3\2\2\2\64\u01e5\3\2\2\2\66\u01fc\3"+
-		"\2\2\28\u0248\3\2\2\2:<\7^\2\2;:\3\2\2\2<?\3\2\2\2=;\3\2\2\2=>\3\2\2\2"+
-		">G\3\2\2\2?=\3\2\2\2@F\5\4\3\2AF\5\b\5\2BF\5\20\t\2CF\5\24\13\2DF\5$\23"+
-		"\2E@\3\2\2\2EA\3\2\2\2EB\3\2\2\2EC\3\2\2\2ED\3\2\2\2FI\3\2\2\2GE\3\2\2"+
-		"\2GH\3\2\2\2HJ\3\2\2\2IG\3\2\2\2JK\7\2\2\3K\3\3\2\2\2LN\t\2\2\2ML\3\2"+
-		"\2\2NO\3\2\2\2OM\3\2\2\2OP\3\2\2\2PT\3\2\2\2QS\7^\2\2RQ\3\2\2\2SV\3\2"+
-		"\2\2TR\3\2\2\2TU\3\2\2\2UZ\3\2\2\2VT\3\2\2\2WY\5\6\4\2XW\3\2\2\2Y\\\3"+
-		"\2\2\2ZX\3\2\2\2Z[\3\2\2\2[\5\3\2\2\2\\Z\3\2\2\2]_\7\5\2\2^]\3\2\2\2^"+
-		"_\3\2\2\2_`\3\2\2\2`a\7X\2\2ab\7\6\2\2bf\5\66\34\2ce\7^\2\2dc\3\2\2\2"+
-		"eh\3\2\2\2fd\3\2\2\2fg\3\2\2\2g\u0088\3\2\2\2hf\3\2\2\2ik\7\5\2\2ji\3"+
-		"\2\2\2jk\3\2\2\2kl\3\2\2\2lq\7X\2\2mn\7\7\2\2no\5\66\34\2op\7\b\2\2pr"+
-		"\3\2\2\2qm\3\2\2\2qr\3\2\2\2rv\3\2\2\2su\7^\2\2ts\3\2\2\2ux\3\2\2\2vt"+
-		"\3\2\2\2vw\3\2\2\2w\u0088\3\2\2\2xv\3\2\2\2yz\7\t\2\2z\177\5\66\34\2{"+
-		"|\7\7\2\2|}\5\66\34\2}~\7\b\2\2~\u0080\3\2\2\2\177{\3\2\2\2\177\u0080"+
-		"\3\2\2\2\u0080\u0084\3\2\2\2\u0081\u0083\7^\2\2\u0082\u0081\3\2\2\2\u0083"+
-		"\u0086\3\2\2\2\u0084\u0082\3\2\2\2\u0084\u0085\3\2\2\2\u0085\u0088\3\2"+
-		"\2\2\u0086\u0084\3\2\2\2\u0087^\3\2\2\2\u0087j\3\2\2\2\u0087y\3\2\2\2"+
-		"\u0088\7\3\2\2\2\u0089\u008b\t\3\2\2\u008a\u0089\3\2\2\2\u008b\u008c\3"+
-		"\2\2\2\u008c\u008a\3\2\2\2\u008c\u008d\3\2\2\2\u008d\u0091\3\2\2\2\u008e"+
-		"\u0090\7^\2\2\u008f\u008e\3\2\2\2\u0090\u0093\3\2\2\2\u0091\u008f\3\2"+
-		"\2\2\u0091\u0092\3\2\2\2\u0092\u0097\3\2\2\2\u0093\u0091\3\2\2\2\u0094"+
-		"\u0096\5\n\6\2\u0095\u0094\3\2\2\2\u0096\u0099\3\2\2\2\u0097\u0095\3\2"+
-		"\2\2\u0097\u0098\3\2\2\2\u0098\t\3\2\2\2\u0099\u0097\3\2\2\2\u009a\u00a1"+
-		"\5\f\7\2\u009b\u009c\7\7\2\2\u009c\u009d\5\66\34\2\u009d\u009e\7\b\2\2"+
-		"\u009e\u00a0\3\2\2\2\u009f\u009b\3\2\2\2\u00a0\u00a3\3\2\2\2\u00a1\u009f"+
-		"\3\2\2\2\u00a1\u00a2\3\2\2\2\u00a2\u00a4\3\2\2\2\u00a3\u00a1\3\2\2\2\u00a4"+
-		"\u00a5\7\f\2\2\u00a5\u00a7\5\16\b\2\u00a6\u00a8\7^\2\2\u00a7\u00a6\3\2"+
-		"\2\2\u00a8\u00a9\3\2\2\2\u00a9\u00a7\3\2\2\2\u00a9\u00aa\3\2\2\2\u00aa"+
-		"\13\3\2\2\2\u00ab\u00ac\7X\2\2\u00ac\r\3\2\2\2\u00ad\u00ae\7Y\2\2\u00ae"+
-		"\17\3\2\2\2\u00af\u00b1\t\4\2\2\u00b0\u00af\3\2\2\2\u00b1\u00b2\3\2\2"+
-		"\2\u00b2\u00b0\3\2\2\2\u00b2\u00b3\3\2\2\2\u00b3\u00b7\3\2\2\2\u00b4\u00b6"+
-		"\7^\2\2\u00b5\u00b4\3\2\2\2\u00b6\u00b9\3\2\2\2\u00b7\u00b5\3\2\2\2\u00b7"+
-		"\u00b8\3\2\2\2\u00b8\u00bd\3\2\2\2\u00b9\u00b7\3\2\2\2\u00ba\u00bc\5\22"+
-		"\n\2\u00bb\u00ba\3\2\2\2\u00bc\u00bf\3\2\2\2\u00bd\u00bb\3\2\2\2\u00bd"+
-		"\u00be\3\2\2\2\u00be\21\3\2\2\2\u00bf\u00bd\3\2\2\2\u00c0\u00c1\7U\2\2"+
-		"\u00c1\u00c6\7X\2\2\u00c2\u00c3\7\7\2\2\u00c3\u00c4\5\66\34\2\u00c4\u00c5"+
-		"\7\b\2\2\u00c5\u00c7\3\2\2\2\u00c6\u00c2\3\2\2\2\u00c6\u00c7\3\2\2\2\u00c7"+
-		"\u00d2\3\2\2\2\u00c8\u00c9\7\5\2\2\u00c9\u00ce\7X\2\2\u00ca\u00cb\7\7"+
-		"\2\2\u00cb\u00cc\5\66\34\2\u00cc\u00cd\7\b\2\2\u00cd\u00cf\3\2\2\2\u00ce"+
-		"\u00ca\3\2\2\2\u00ce\u00cf\3\2\2\2\u00cf\u00d1\3\2\2\2\u00d0\u00c8\3\2"+
-		"\2\2\u00d1\u00d4\3\2\2\2\u00d2\u00d0\3\2\2\2\u00d2\u00d3\3\2\2\2\u00d3"+
-		"\u00d6\3\2\2\2\u00d4\u00d2\3\2\2\2\u00d5\u00d7\7^\2\2\u00d6\u00d5\3\2"+
-		"\2\2\u00d7\u00d8\3\2\2\2\u00d8\u00d6\3\2\2\2\u00d8\u00d9\3\2\2\2\u00d9"+
-		"\23\3\2\2\2\u00da\u00db\t\5\2\2\u00db\u00dc\7X\2\2\u00dc\u00de\7\23\2"+
-		"\2\u00dd\u00df\5\26\f\2\u00de\u00dd\3\2\2\2\u00de\u00df\3\2\2\2\u00df"+
-		"\u00e0\3\2\2\2\u00e0\u00e3\7\24\2\2\u00e1\u00e2\7\f\2\2\u00e2\u00e4\5"+
-		"\30\r\2\u00e3\u00e1\3\2\2\2\u00e3\u00e4\3\2\2\2\u00e4\u00e7\3\2\2\2\u00e5"+
-		"\u00e6\7\25\2\2\u00e6\u00e8\5\32\16\2\u00e7\u00e5\3\2\2\2\u00e7\u00e8"+
-		"\3\2\2\2\u00e8\u00ea\3\2\2\2\u00e9\u00eb\7^\2\2\u00ea\u00e9\3\2\2\2\u00eb"+
-		"\u00ec\3\2\2\2\u00ec\u00ea\3\2\2\2\u00ec\u00ed\3\2\2\2\u00ed\u00f1\3\2"+
-		"\2\2\u00ee\u00f0\5\36\20\2\u00ef\u00ee\3\2\2\2\u00f0\u00f3\3\2\2\2\u00f1"+
-		"\u00ef\3\2\2\2\u00f1\u00f2\3\2\2\2\u00f2\25\3\2\2\2\u00f3\u00f1\3\2\2"+
-		"\2\u00f4\u00f9\7X\2\2\u00f5\u00f6\7\5\2\2\u00f6\u00f8\7X\2\2\u00f7\u00f5"+
-		"\3\2\2\2\u00f8\u00fb\3\2\2\2\u00f9\u00f7\3\2\2\2\u00f9\u00fa\3\2\2\2\u00fa"+
-		"\27\3\2\2\2\u00fb\u00f9\3\2\2\2\u00fc\u0101\7X\2\2\u00fd\u00fe\7\5\2\2"+
-		"\u00fe\u0100\7X\2\2\u00ff\u00fd\3\2\2\2\u0100\u0103\3\2\2\2\u0101\u00ff"+
-		"\3\2\2\2\u0101\u0102\3\2\2\2\u0102\31\3\2\2\2\u0103\u0101\3\2\2\2\u0104"+
-		"\u0109\5\34\17\2\u0105\u0106\7\5\2\2\u0106\u0108\5\34\17\2\u0107\u0105"+
-		"\3\2\2\2\u0108\u010b\3\2\2\2\u0109\u0107\3\2\2\2\u0109\u010a\3\2\2\2\u010a"+
-		"\33\3\2\2\2\u010b\u0109\3\2\2\2\u010c\u010e\t\6\2\2\u010d\u010c\3\2\2"+
-		"\2\u010d\u010e\3\2\2\2\u010e\u0110\3\2\2\2\u010f\u0111\7U\2\2\u0110\u010f"+
-		"\3\2\2\2\u0110\u0111\3\2\2\2\u0111\u0112\3\2\2\2\u0112\u0117\7X\2\2\u0113"+
-		"\u0114\7\7\2\2\u0114\u0115\5\66\34\2\u0115\u0116\7\b\2\2\u0116\u0118\3"+
-		"\2\2\2\u0117\u0113\3\2\2\2\u0117\u0118\3\2\2\2\u0118\35\3\2\2\2\u0119"+
-		"\u011b\7\30\2\2\u011a\u011c\7^\2\2\u011b\u011a\3\2\2\2\u011c\u011d\3\2"+
-		"\2\2\u011d\u011b\3\2\2\2\u011d\u011e\3\2\2\2\u011e\u0122\3\2\2\2\u011f"+
-		"\u0122\5 \21\2\u0120\u0122\5\"\22\2\u0121\u0119\3\2\2\2\u0121\u011f\3"+
-		"\2\2\2\u0121\u0120\3\2\2\2\u0122\37\3\2\2\2\u0123\u0124\7X\2\2\u0124\u0128"+
-		"\t\7\2\2\u0125\u0129\5\"\22\2\u0126\u0129\7X\2\2\u0127\u0129\5\66\34\2"+
-		"\u0128\u0125\3\2\2\2\u0128\u0126\3\2\2\2\u0128\u0127\3\2\2\2\u0129\u012b"+
-		"\3\2\2\2\u012a\u012c\7^\2\2\u012b\u012a\3\2\2\2\u012c\u012d\3\2\2\2\u012d"+
-		"\u012b\3\2\2\2\u012d\u012e\3\2\2\2\u012e!\3\2\2\2\u012f\u0130\7X\2\2\u0130"+
-		"\u0139\7\23\2\2\u0131\u0136\7X\2\2\u0132\u0133\7\5\2\2\u0133\u0135\7X"+
-		"\2\2\u0134\u0132\3\2\2\2\u0135\u0138\3\2\2\2\u0136\u0134\3\2\2\2\u0136"+
-		"\u0137\3\2\2\2\u0137\u013a\3\2\2\2\u0138\u0136\3\2\2\2\u0139\u0131\3\2"+
-		"\2\2\u0139\u013a\3\2\2\2\u013a\u013b\3\2\2\2\u013b\u013d\7\24\2\2\u013c"+
-		"\u013e\7^\2\2\u013d\u013c\3\2\2\2\u013e\u013f\3\2\2\2\u013f\u013d\3\2"+
-		"\2\2\u013f\u0140\3\2\2\2\u0140#\3\2\2\2\u0141\u0143\t\b\2\2\u0142\u0141"+
-		"\3\2\2\2\u0143\u0144\3\2\2\2\u0144\u0142\3\2\2\2\u0144\u0145\3\2\2\2\u0145"+
-		"\u0149\3\2\2\2\u0146\u0148\7^\2\2\u0147\u0146\3\2\2\2\u0148\u014b\3\2"+
-		"\2\2\u0149\u0147\3\2\2\2\u0149\u014a\3\2\2\2\u014a\u014f\3\2\2\2\u014b"+
-		"\u0149\3\2\2\2\u014c\u014e\5&\24\2\u014d\u014c\3\2\2\2\u014e\u0151\3\2"+
-		"\2\2\u014f\u014d\3\2\2\2\u014f\u0150\3\2\2\2\u0150%\3\2\2\2\u0151\u014f"+
-		"\3\2\2\2\u0152\u0154\5(\25\2\u0153\u0155\7^\2\2\u0154\u0153\3\2\2\2\u0155"+
-		"\u0156\3\2\2\2\u0156\u0154\3\2\2\2\u0156\u0157\3\2\2\2\u0157\u01c9\3\2"+
-		"\2\2\u0158\u015a\5(\25\2\u0159\u0158\3\2\2\2\u0159\u015a\3\2\2\2\u015a"+
-		"\u015b\3\2\2\2\u015b\u0161\t\t\2\2\u015c\u015f\5\66\34\2\u015d\u015e\7"+
-		"\5\2\2\u015e\u0160\5\66\34\2\u015f\u015d\3\2\2\2\u015f\u0160\3\2\2\2\u0160"+
-		"\u0162\3\2\2\2\u0161\u015c\3\2\2\2\u0161\u0162\3\2\2\2\u0162\u0164\3\2"+
-		"\2\2\u0163\u0165\7^\2\2\u0164\u0163\3\2\2\2\u0165\u0166\3\2\2\2\u0166"+
-		"\u0164\3\2\2\2\u0166\u0167\3\2\2\2\u0167\u01c9\3\2\2\2\u0168\u016a\5("+
-		"\25\2\u0169\u0168\3\2\2\2\u0169\u016a\3\2\2\2\u016a\u016b\3\2\2\2\u016b"+
-		"\u016c\7U\2\2\u016c\u0171\5\64\33\2\u016d\u016e\7\5\2\2\u016e\u0170\5"+
-		"\64\33\2\u016f\u016d\3\2\2\2\u0170\u0173\3\2\2\2\u0171\u016f\3\2\2\2\u0171"+
-		"\u0172\3\2\2\2\u0172\u0175\3\2\2\2\u0173\u0171\3\2\2\2\u0174\u0176\7^"+
-		"\2\2\u0175\u0174\3\2\2\2\u0176\u0177\3\2\2\2\u0177\u0175\3\2\2\2\u0177"+
-		"\u0178\3\2\2\2\u0178\u01c9\3\2\2\2\u0179\u017b\5(\25\2\u017a\u0179\3\2"+
-		"\2\2\u017a\u017b\3\2\2\2\u017b\u017c\3\2\2\2\u017c\u017d\t\n\2\2\u017d"+
-		"\u017f\5\64\33\2\u017e\u0180\7^\2\2\u017f\u017e\3\2\2\2\u0180\u0181\3"+
-		"\2\2\2\u0181\u017f\3\2\2\2\u0181\u0182\3\2\2\2\u0182\u01c9\3\2\2\2\u0183"+
-		"\u0185\5(\25\2\u0184\u0183\3\2\2\2\u0184\u0185\3\2\2\2\u0185\u0187\3\2"+
-		"\2\2\u0186\u0188\5*\26\2\u0187\u0186\3\2\2\2\u0187\u0188\3\2\2\2\u0188"+
-		"\u0189\3\2\2\2\u0189\u018a\5,\27\2\u018a\u018b\5.\30\2\u018b\u018c\7\5"+
-		"\2\2\u018c\u018d\5.\30\2\u018d\u018e\7\5\2\2\u018e\u0190\5.\30\2\u018f"+
-		"\u0191\5\62\32\2\u0190\u018f\3\2\2\2\u0190\u0191\3\2\2\2\u0191\u0193\3"+
-		"\2\2\2\u0192\u0194\7^\2\2\u0193\u0192\3\2\2\2\u0194\u0195\3\2\2\2\u0195"+
-		"\u0193\3\2\2\2\u0195\u0196\3\2\2\2\u0196\u01c9\3\2\2\2\u0197\u0199\5("+
-		"\25\2\u0198\u0197\3\2\2\2\u0198\u0199\3\2\2\2\u0199\u019b\3\2\2\2\u019a"+
-		"\u019c\5*\26\2\u019b\u019a\3\2\2\2\u019b\u019c\3\2\2\2\u019c\u019d\3\2"+
-		"\2\2\u019d\u019e\5,\27\2\u019e\u019f\5.\30\2\u019f\u01a0\7\5\2\2\u01a0"+
-		"\u01a2\5.\30\2\u01a1\u01a3\5\62\32\2\u01a2\u01a1\3\2\2\2\u01a2\u01a3\3"+
-		"\2\2\2\u01a3\u01a5\3\2\2\2\u01a4\u01a6\7^\2\2\u01a5\u01a4\3\2\2\2\u01a6"+
-		"\u01a7\3\2\2\2\u01a7\u01a5\3\2\2\2\u01a7\u01a8\3\2\2\2\u01a8\u01c9\3\2"+
-		"\2\2\u01a9\u01ab\5(\25\2\u01aa\u01a9\3\2\2\2\u01aa\u01ab\3\2\2\2\u01ab"+
-		"\u01ad\3\2\2\2\u01ac\u01ae\5*\26\2\u01ad\u01ac\3\2\2\2\u01ad\u01ae\3\2"+
-		"\2\2\u01ae\u01af\3\2\2\2\u01af\u01b0\5,\27\2\u01b0\u01b2\5.\30\2\u01b1"+
-		"\u01b3\5\62\32\2\u01b2\u01b1\3\2\2\2\u01b2\u01b3\3\2\2\2\u01b3\u01b5\3"+
-		"\2\2\2\u01b4\u01b6\7^\2\2\u01b5\u01b4\3\2\2\2\u01b6\u01b7\3\2\2\2\u01b7"+
-		"\u01b5\3\2\2\2\u01b7\u01b8\3\2\2\2\u01b8\u01c9\3\2\2\2\u01b9\u01bb\5("+
-		"\25\2\u01ba\u01b9\3\2\2\2\u01ba\u01bb\3\2\2\2\u01bb\u01bd\3\2\2\2\u01bc"+
-		"\u01be\5*\26\2\u01bd\u01bc\3\2\2\2\u01bd\u01be\3\2\2\2\u01be\u01bf\3\2"+
-		"\2\2\u01bf\u01c1\5,\27\2\u01c0\u01c2\5\62\32\2\u01c1\u01c0\3\2\2\2\u01c1"+
-		"\u01c2\3\2\2\2\u01c2\u01c4\3\2\2\2\u01c3\u01c5\7^\2\2\u01c4\u01c3\3\2"+
-		"\2\2\u01c5\u01c6\3\2\2\2\u01c6\u01c4\3\2\2\2\u01c6\u01c7\3\2\2\2\u01c7"+
-		"\u01c9\3\2\2\2\u01c8\u0152\3\2\2\2\u01c8\u0159\3\2\2\2\u01c8\u0169\3\2"+
-		"\2\2\u01c8\u017a\3\2\2\2\u01c8\u0184\3\2\2\2\u01c8\u0198\3\2\2\2\u01c8"+
-		"\u01aa\3\2\2\2\u01c8\u01ba\3\2\2\2\u01c9\'\3\2\2\2\u01ca\u01cc\6\25\2"+
-		"\2\u01cb\u01cd\7#\2\2\u01cc\u01cb\3\2\2\2\u01cc\u01cd\3\2\2\2\u01cd\u01ce"+
-		"\3\2\2\2\u01ce\u01cf\7X\2\2\u01cf)\3\2\2\2\u01d0\u01d1\6\26\3\2\u01d1"+
-		"\u01d2\7W\2\2\u01d2+\3\2\2\2\u01d3\u01d4\6\27\4\2\u01d4\u01d5\7X\2\2\u01d5"+
-		"-\3\2\2\2\u01d6\u01d8\5\60\31\2\u01d7\u01d6\3\2\2\2\u01d7\u01d8\3\2\2"+
-		"\2\u01d8\u01d9\3\2\2\2\u01d9\u01da\5\66\34\2\u01da/\3\2\2\2\u01db\u01dd"+
-		"\t\13\2\2\u01dc\u01de\7%\2\2\u01dd\u01dc\3\2\2\2\u01dd\u01de\3\2\2\2\u01de"+
-		"\61\3\2\2\2\u01df\u01e1\6\32\5\2\u01e0\u01e2\7#\2\2\u01e1\u01e0\3\2\2"+
-		"\2\u01e1\u01e2\3\2\2\2\u01e2\u01e3\3\2\2\2\u01e3\u01e4\7X\2\2\u01e4\63"+
-		"\3\2\2\2\u01e5\u01ea\5\66\34\2\u01e6\u01e7\7\7\2\2\u01e7\u01e8\5\66\34"+
-		"\2\u01e8\u01e9\7\b\2\2\u01e9\u01eb\3\2\2\2\u01ea\u01e6\3\2\2\2\u01ea\u01eb"+
-		"\3\2\2\2\u01eb\65\3\2\2\2\u01ec\u01ed\b\34\1\2\u01ed\u01ee\t\f\2\2\u01ee"+
-		"\u01fd\5\66\34\16\u01ef\u01f0\t\r\2\2\u01f0\u01f1\7\23\2\2\u01f1\u01f2"+
-		"\5\66\34\2\u01f2\u01f3\7\24\2\2\u01f3\u01fd\3\2\2\2\u01f4\u01f5\7\23\2"+
-		"\2\u01f5\u01f6\5\66\34\2\u01f6\u01f7\7\24\2\2\u01f7\u01fd\3\2\2\2\u01f8"+
-		"\u01fa\7O\2\2\u01f9\u01f8\3\2\2\2\u01f9\u01fa\3\2\2\2\u01fa\u01fb\3\2"+
-		"\2\2\u01fb\u01fd\58\35\2\u01fc\u01ec\3\2\2\2\u01fc\u01ef\3\2\2\2\u01fc"+
-		"\u01f4\3\2\2\2\u01fc\u01f9\3\2\2\2\u01fd\u021b\3\2\2\2\u01fe\u01ff\f\r"+
-		"\2\2\u01ff\u0200\t\16\2\2\u0200\u021a\5\66\34\16\u0201\u0202\f\f\2\2\u0202"+
-		"\u0203\t\17\2\2\u0203\u021a\5\66\34\r\u0204\u0205\f\13\2\2\u0205\u0206"+
-		"\t\20\2\2\u0206\u021a\5\66\34\f\u0207\u0208\f\n\2\2\u0208\u0209\t\21\2"+
-		"\2\u0209\u021a\5\66\34\13\u020a\u020b\f\t\2\2\u020b\u020c\t\22\2\2\u020c"+
-		"\u021a\5\66\34\n\u020d\u020e\f\b\2\2\u020e\u020f\t\23\2\2\u020f\u021a"+
-		"\5\66\34\t\u0210\u0211\f\7\2\2\u0211\u0212\t\24\2\2\u0212\u021a\5\66\34"+
-		"\b\u0213\u0214\f\6\2\2\u0214\u0215\7H\2\2\u0215\u0216\5\66\34\2\u0216"+
-		"\u0217\7\f\2\2\u0217\u0218\5\66\34\7\u0218\u021a\3\2\2\2\u0219\u01fe\3"+
-		"\2\2\2\u0219\u0201\3\2\2\2\u0219\u0204\3\2\2\2\u0219\u0207\3\2\2\2\u0219"+
-		"\u020a\3\2\2\2\u0219\u020d\3\2\2\2\u0219\u0210\3\2\2\2\u0219\u0213\3\2"+
-		"\2\2\u021a\u021d\3\2\2\2\u021b\u0219\3\2\2\2\u021b\u021c\3\2\2\2\u021c"+
-		"\67\3\2\2\2\u021d\u021b\3\2\2\2\u021e\u0249\7]\2\2\u021f\u0249\7\\\2\2"+
-		"\u0220\u0249\7[\2\2\u0221\u0249\7Z\2\2\u0222\u0249\7Y\2\2\u0223\u0249"+
-		"\7P\2\2\u0224\u0249\7V\2\2\u0225\u022a\7V\2\2\u0226\u0227\7\7\2\2\u0227"+
-		"\u0228\5\66\34\2\u0228\u0229\7\b\2\2\u0229\u022b\3\2\2\2\u022a\u0226\3"+
-		"\2\2\2\u022a\u022b\3\2\2\2\u022b\u0249\3\2\2\2\u022c\u022d\7V\2\2\u022d"+
-		"\u0232\t\25\2\2\u022e\u022f\7\7\2\2\u022f\u0230\5\66\34\2\u0230\u0231"+
-		"\7\b\2\2\u0231\u0233\3\2\2\2\u0232\u022e\3\2\2\2\u0232\u0233\3\2\2\2\u0233"+
-		"\u0249\3\2\2\2\u0234\u0239\7V\2\2\u0235\u0236\7\7\2\2\u0236\u0237\5\66"+
-		"\34\2\u0237\u0238\7\b\2\2\u0238\u023a\3\2\2\2\u0239\u0235\3\2\2\2\u0239"+
-		"\u023a\3\2\2\2\u023a\u023b\3\2\2\2\u023b\u0249\t\25\2\2\u023c\u023d\t"+
-		"\25\2\2\u023d\u0242\7V\2\2\u023e\u023f\7\7\2\2\u023f\u0240\5\66\34\2\u0240"+
-		"\u0241\7\b\2\2\u0241\u0243\3\2\2\2\u0242\u023e\3\2\2\2\u0242\u0243\3\2"+
-		"\2\2\u0243\u0249\3\2\2\2\u0244\u0246\7#\2\2\u0245\u0244\3\2\2\2\u0245"+
-		"\u0246\3\2\2\2\u0246\u0247\3\2\2\2\u0247\u0249\7X\2\2\u0248\u021e\3\2"+
-		"\2\2\u0248\u021f\3\2\2\2\u0248\u0220\3\2\2\2\u0248\u0221\3\2\2\2\u0248"+
-		"\u0222\3\2\2\2\u0248\u0223\3\2\2\2\u0248\u0224\3\2\2\2\u0248\u0225\3\2"+
-		"\2\2\u0248\u022c\3\2\2\2\u0248\u0234\3\2\2\2\u0248\u023c\3\2\2\2\u0248"+
-		"\u0245\3\2\2\2\u02499\3\2\2\2[=EGOTZ^fjqv\177\u0084\u0087\u008c\u0091"+
-		"\u0097\u00a1\u00a9\u00b2\u00b7\u00bd\u00c6\u00ce\u00d2\u00d8\u00de\u00e3"+
-		"\u00e7\u00ec\u00f1\u00f9\u0101\u0109\u010d\u0110\u0117\u011d\u0121\u0128"+
-		"\u012d\u0136\u0139\u013f\u0144\u0149\u014f\u0156\u0159\u015f\u0161\u0166"+
-		"\u0169\u0171\u0177\u017a\u0181\u0184\u0187\u0190\u0195\u0198\u019b\u01a2"+
-		"\u01a7\u01aa\u01ad\u01b2\u01b7\u01ba\u01bd\u01c1\u01c6\u01c8\u01cc\u01d7"+
-		"\u01dd\u01e1\u01ea\u01f9\u01fc\u0219\u021b\u022a\u0232\u0239\u0242\u0245"+
-		"\u0248";
+		"\3O\3\3\7\3S\n\3\f\3\16\3V\13\3\3\3\7\3Y\n\3\f\3\16\3\\\13\3\3\4\7\4_"+
+		"\n\4\f\4\16\4b\13\4\3\4\5\4e\n\4\3\4\3\4\3\4\3\4\7\4k\n\4\f\4\16\4n\13"+
+		"\4\3\4\7\4q\n\4\f\4\16\4t\13\4\3\4\5\4w\n\4\3\4\3\4\3\4\3\4\3\4\5\4~\n"+
+		"\4\3\4\7\4\u0081\n\4\f\4\16\4\u0084\13\4\3\4\7\4\u0087\n\4\f\4\16\4\u008a"+
+		"\13\4\3\4\3\4\3\4\3\4\3\4\3\4\5\4\u0092\n\4\3\4\7\4\u0095\n\4\f\4\16\4"+
+		"\u0098\13\4\5\4\u009a\n\4\3\5\6\5\u009d\n\5\r\5\16\5\u009e\3\5\7\5\u00a2"+
+		"\n\5\f\5\16\5\u00a5\13\5\3\5\7\5\u00a8\n\5\f\5\16\5\u00ab\13\5\3\6\3\6"+
+		"\3\6\3\6\3\6\7\6\u00b2\n\6\f\6\16\6\u00b5\13\6\3\6\3\6\3\6\6\6\u00ba\n"+
+		"\6\r\6\16\6\u00bb\3\7\3\7\3\b\3\b\3\t\6\t\u00c3\n\t\r\t\16\t\u00c4\3\t"+
+		"\7\t\u00c8\n\t\f\t\16\t\u00cb\13\t\3\t\7\t\u00ce\n\t\f\t\16\t\u00d1\13"+
+		"\t\3\n\3\n\3\n\3\n\3\n\3\n\5\n\u00d9\n\n\3\n\3\n\3\n\3\n\3\n\3\n\5\n\u00e1"+
+		"\n\n\7\n\u00e3\n\n\f\n\16\n\u00e6\13\n\3\n\6\n\u00e9\n\n\r\n\16\n\u00ea"+
+		"\3\13\3\13\3\13\3\13\5\13\u00f1\n\13\3\13\3\13\3\13\5\13\u00f6\n\13\3"+
+		"\13\3\13\5\13\u00fa\n\13\3\13\6\13\u00fd\n\13\r\13\16\13\u00fe\3\13\7"+
+		"\13\u0102\n\13\f\13\16\13\u0105\13\13\3\f\3\f\3\f\7\f\u010a\n\f\f\f\16"+
+		"\f\u010d\13\f\3\r\3\r\3\r\7\r\u0112\n\r\f\r\16\r\u0115\13\r\3\16\3\16"+
+		"\3\16\7\16\u011a\n\16\f\16\16\16\u011d\13\16\3\17\5\17\u0120\n\17\3\17"+
+		"\5\17\u0123\n\17\3\17\3\17\3\17\3\17\3\17\5\17\u012a\n\17\3\20\3\20\6"+
+		"\20\u012e\n\20\r\20\16\20\u012f\3\20\3\20\5\20\u0134\n\20\3\21\3\21\3"+
+		"\21\3\21\3\21\5\21\u013b\n\21\3\21\6\21\u013e\n\21\r\21\16\21\u013f\3"+
+		"\22\3\22\3\22\3\22\3\22\7\22\u0147\n\22\f\22\16\22\u014a\13\22\5\22\u014c"+
+		"\n\22\3\22\3\22\6\22\u0150\n\22\r\22\16\22\u0151\3\23\6\23\u0155\n\23"+
+		"\r\23\16\23\u0156\3\23\7\23\u015a\n\23\f\23\16\23\u015d\13\23\3\23\7\23"+
+		"\u0160\n\23\f\23\16\23\u0163\13\23\3\24\3\24\6\24\u0167\n\24\r\24\16\24"+
+		"\u0168\3\24\7\24\u016c\n\24\f\24\16\24\u016f\13\24\3\24\7\24\u0172\n\24"+
+		"\f\24\16\24\u0175\13\24\3\24\3\24\3\24\3\24\5\24\u017b\n\24\5\24\u017d"+
+		"\n\24\3\24\6\24\u0180\n\24\r\24\16\24\u0181\3\24\7\24\u0185\n\24\f\24"+
+		"\16\24\u0188\13\24\3\24\7\24\u018b\n\24\f\24\16\24\u018e\13\24\3\24\5"+
+		"\24\u0191\n\24\3\24\3\24\3\24\3\24\7\24\u0197\n\24\f\24\16\24\u019a\13"+
+		"\24\3\24\6\24\u019d\n\24\r\24\16\24\u019e\3\24\7\24\u01a2\n\24\f\24\16"+
+		"\24\u01a5\13\24\3\24\7\24\u01a8\n\24\f\24\16\24\u01ab\13\24\3\24\5\24"+
+		"\u01ae\n\24\3\24\3\24\3\24\6\24\u01b3\n\24\r\24\16\24\u01b4\3\24\7\24"+
+		"\u01b8\n\24\f\24\16\24\u01bb\13\24\3\24\7\24\u01be\n\24\f\24\16\24\u01c1"+
+		"\13\24\3\24\5\24\u01c4\n\24\3\24\5\24\u01c7\n\24\3\24\3\24\3\24\3\24\3"+
+		"\24\3\24\3\24\5\24\u01d0\n\24\3\24\6\24\u01d3\n\24\r\24\16\24\u01d4\3"+
+		"\24\7\24\u01d8\n\24\f\24\16\24\u01db\13\24\3\24\7\24\u01de\n\24\f\24\16"+
+		"\24\u01e1\13\24\3\24\5\24\u01e4\n\24\3\24\5\24\u01e7\n\24\3\24\3\24\3"+
+		"\24\3\24\3\24\5\24\u01ee\n\24\3\24\6\24\u01f1\n\24\r\24\16\24\u01f2\3"+
+		"\24\7\24\u01f6\n\24\f\24\16\24\u01f9\13\24\3\24\7\24\u01fc\n\24\f\24\16"+
+		"\24\u01ff\13\24\3\24\5\24\u0202\n\24\3\24\5\24\u0205\n\24\3\24\3\24\3"+
+		"\24\5\24\u020a\n\24\3\24\6\24\u020d\n\24\r\24\16\24\u020e\3\24\7\24\u0212"+
+		"\n\24\f\24\16\24\u0215\13\24\3\24\7\24\u0218\n\24\f\24\16\24\u021b\13"+
+		"\24\3\24\5\24\u021e\n\24\3\24\5\24\u0221\n\24\3\24\3\24\5\24\u0225\n\24"+
+		"\3\24\6\24\u0228\n\24\r\24\16\24\u0229\3\24\7\24\u022d\n\24\f\24\16\24"+
+		"\u0230\13\24\5\24\u0232\n\24\3\25\3\25\5\25\u0236\n\25\3\25\3\25\3\26"+
+		"\3\26\3\26\3\27\3\27\3\27\3\30\5\30\u0241\n\30\3\30\3\30\3\31\3\31\5\31"+
+		"\u0247\n\31\3\32\3\32\3\32\3\33\3\33\3\33\3\33\3\33\5\33\u0251\n\33\3"+
+		"\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\5\34\u0260"+
+		"\n\34\3\34\5\34\u0263\n\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34"+
+		"\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34\3\34"+
+		"\3\34\7\34\u027d\n\34\f\34\16\34\u0280\13\34\3\35\3\35\3\35\3\35\3\35"+
+		"\3\35\3\35\3\35\3\35\3\35\3\35\3\35\5\35\u028e\n\35\3\35\3\35\3\35\3\35"+
+		"\3\35\3\35\5\35\u0296\n\35\3\35\3\35\3\35\3\35\3\35\5\35\u029d\n\35\3"+
+		"\35\3\35\3\35\3\35\3\35\3\35\3\35\5\35\u02a6\n\35\3\35\5\35\u02a9\n\35"+
+		"\3\35\5\35\u02ac\n\35\3\35\2\3\66\36\2\4\6\b\n\f\16\20\22\24\26\30\32"+
+		"\34\36 \"$&(*,.\60\62\64\668\2\17\4\2\4\4\7\7\3\2\62\63\3\2\26\27\3\2"+
+		":;\4\2\21\21\34\34\4\2#$))\3\2\679\3\2\22\23\3\2\30\32\3\2%&\3\2#$\3\2"+
+		"\16\20\3\2\24\25\2\u0317\2=\3\2\2\2\4M\3\2\2\2\6\u0099\3\2\2\2\b\u009c"+
+		"\3\2\2\2\n\u00ac\3\2\2\2\f\u00bd\3\2\2\2\16\u00bf\3\2\2\2\20\u00c2\3\2"+
+		"\2\2\22\u00d2\3\2\2\2\24\u00ec\3\2\2\2\26\u0106\3\2\2\2\30\u010e\3\2\2"+
+		"\2\32\u0116\3\2\2\2\34\u011f\3\2\2\2\36\u0133\3\2\2\2 \u0135\3\2\2\2\""+
+		"\u0141\3\2\2\2$\u0154\3\2\2\2&\u0231\3\2\2\2(\u0233\3\2\2\2*\u0239\3\2"+
+		"\2\2,\u023c\3\2\2\2.\u0240\3\2\2\2\60\u0244\3\2\2\2\62\u0248\3\2\2\2\64"+
+		"\u024b\3\2\2\2\66\u0262\3\2\2\28\u02ab\3\2\2\2:<\7\7\2\2;:\3\2\2\2<?\3"+
+		"\2\2\2=;\3\2\2\2=>\3\2\2\2>G\3\2\2\2?=\3\2\2\2@F\5\4\3\2AF\5\b\5\2BF\5"+
+		"\20\t\2CF\5\24\13\2DF\5$\23\2E@\3\2\2\2EA\3\2\2\2EB\3\2\2\2EC\3\2\2\2"+
+		"ED\3\2\2\2FI\3\2\2\2GE\3\2\2\2GH\3\2\2\2HJ\3\2\2\2IG\3\2\2\2JK\7\2\2\3"+
+		"K\3\3\2\2\2LN\7/\2\2ML\3\2\2\2NO\3\2\2\2OM\3\2\2\2OP\3\2\2\2PT\3\2\2\2"+
+		"QS\7\7\2\2RQ\3\2\2\2SV\3\2\2\2TR\3\2\2\2TU\3\2\2\2UZ\3\2\2\2VT\3\2\2\2"+
+		"WY\5\6\4\2XW\3\2\2\2Y\\\3\2\2\2ZX\3\2\2\2Z[\3\2\2\2[\5\3\2\2\2\\Z\3\2"+
+		"\2\2]_\7\3\2\2^]\3\2\2\2_b\3\2\2\2`^\3\2\2\2`a\3\2\2\2ad\3\2\2\2b`\3\2"+
+		"\2\2ce\7!\2\2dc\3\2\2\2de\3\2\2\2ef\3\2\2\2fg\7A\2\2gh\7\37\2\2hl\5\66"+
+		"\34\2ik\t\2\2\2ji\3\2\2\2kn\3\2\2\2lj\3\2\2\2lm\3\2\2\2m\u009a\3\2\2\2"+
+		"nl\3\2\2\2oq\7\3\2\2po\3\2\2\2qt\3\2\2\2rp\3\2\2\2rs\3\2\2\2sv\3\2\2\2"+
+		"tr\3\2\2\2uw\7!\2\2vu\3\2\2\2vw\3\2\2\2wx\3\2\2\2x}\7A\2\2yz\7+\2\2z{"+
+		"\5\66\34\2{|\7,\2\2|~\3\2\2\2}y\3\2\2\2}~\3\2\2\2~\u0082\3\2\2\2\177\u0081"+
+		"\t\2\2\2\u0080\177\3\2\2\2\u0081\u0084\3\2\2\2\u0082\u0080\3\2\2\2\u0082"+
+		"\u0083\3\2\2\2\u0083\u009a\3\2\2\2\u0084\u0082\3\2\2\2\u0085\u0087\7\3"+
+		"\2\2\u0086\u0085\3\2\2\2\u0087\u008a\3\2\2\2\u0088\u0086\3\2\2\2\u0088"+
+		"\u0089\3\2\2\2\u0089\u008b\3\2\2\2\u008a\u0088\3\2\2\2\u008b\u008c\7\34"+
+		"\2\2\u008c\u0091\5\66\34\2\u008d\u008e\7+\2\2\u008e\u008f\5\66\34\2\u008f"+
+		"\u0090\7,\2\2\u0090\u0092\3\2\2\2\u0091\u008d\3\2\2\2\u0091\u0092\3\2"+
+		"\2\2\u0092\u0096\3\2\2\2\u0093\u0095\t\2\2\2\u0094\u0093\3\2\2\2\u0095"+
+		"\u0098\3\2\2\2\u0096\u0094\3\2\2\2\u0096\u0097\3\2\2\2\u0097\u009a\3\2"+
+		"\2\2\u0098\u0096\3\2\2\2\u0099`\3\2\2\2\u0099r\3\2\2\2\u0099\u0088\3\2"+
+		"\2\2\u009a\7\3\2\2\2\u009b\u009d\7\61\2\2\u009c\u009b\3\2\2\2\u009d\u009e"+
+		"\3\2\2\2\u009e\u009c\3\2\2\2\u009e\u009f\3\2\2\2\u009f\u00a3\3\2\2\2\u00a0"+
+		"\u00a2\7\7\2\2\u00a1\u00a0\3\2\2\2\u00a2\u00a5\3\2\2\2\u00a3\u00a1\3\2"+
+		"\2\2\u00a3\u00a4\3\2\2\2\u00a4\u00a9\3\2\2\2\u00a5\u00a3\3\2\2\2\u00a6"+
+		"\u00a8\5\n\6\2\u00a7\u00a6\3\2\2\2\u00a8\u00ab\3\2\2\2\u00a9\u00a7\3\2"+
+		"\2\2\u00a9\u00aa\3\2\2\2\u00aa\t\3\2\2\2\u00ab\u00a9\3\2\2\2\u00ac\u00b3"+
+		"\5\f\7\2\u00ad\u00ae\7+\2\2\u00ae\u00af\5\66\34\2\u00af\u00b0\7,\2\2\u00b0"+
+		"\u00b2\3\2\2\2\u00b1\u00ad\3\2\2\2\u00b2\u00b5\3\2\2\2\u00b3\u00b1\3\2"+
+		"\2\2\u00b3\u00b4\3\2\2\2\u00b4\u00b6\3\2\2\2\u00b5\u00b3\3\2\2\2\u00b6"+
+		"\u00b7\7(\2\2\u00b7\u00b9\5\16\b\2\u00b8\u00ba\7\7\2\2\u00b9\u00b8\3\2"+
+		"\2\2\u00ba\u00bb\3\2\2\2\u00bb\u00b9\3\2\2\2\u00bb\u00bc\3\2\2\2\u00bc"+
+		"\13\3\2\2\2\u00bd\u00be\7A\2\2\u00be\r\3\2\2\2\u00bf\u00c0\7\t\2\2\u00c0"+
+		"\17\3\2\2\2\u00c1\u00c3\7\60\2\2\u00c2\u00c1\3\2\2\2\u00c3\u00c4\3\2\2"+
+		"\2\u00c4\u00c2\3\2\2\2\u00c4\u00c5\3\2\2\2\u00c5\u00c9\3\2\2\2\u00c6\u00c8"+
+		"\7\7\2\2\u00c7\u00c6\3\2\2\2\u00c8\u00cb\3\2\2\2\u00c9\u00c7\3\2\2\2\u00c9"+
+		"\u00ca\3\2\2\2\u00ca\u00cf\3\2\2\2\u00cb\u00c9\3\2\2\2\u00cc\u00ce\5\22"+
+		"\n\2\u00cd\u00cc\3\2\2\2\u00ce\u00d1\3\2\2\2\u00cf\u00cd\3\2\2\2\u00cf"+
+		"\u00d0\3\2\2\2\u00d0\21\3\2\2\2\u00d1\u00cf\3\2\2\2\u00d2\u00d3\7>\2\2"+
+		"\u00d3\u00d8\7A\2\2\u00d4\u00d5\7+\2\2\u00d5\u00d6\5\66\34\2\u00d6\u00d7"+
+		"\7,\2\2\u00d7\u00d9\3\2\2\2\u00d8\u00d4\3\2\2\2\u00d8\u00d9\3\2\2\2\u00d9"+
+		"\u00e4\3\2\2\2\u00da\u00db\7!\2\2\u00db\u00e0\7A\2\2\u00dc\u00dd\7+\2"+
+		"\2\u00dd\u00de\5\66\34\2\u00de\u00df\7,\2\2\u00df\u00e1\3\2\2\2\u00e0"+
+		"\u00dc\3\2\2\2\u00e0\u00e1\3\2\2\2\u00e1\u00e3\3\2\2\2\u00e2\u00da\3\2"+
+		"\2\2\u00e3\u00e6\3\2\2\2\u00e4\u00e2\3\2\2\2\u00e4\u00e5\3\2\2\2\u00e5"+
+		"\u00e8\3\2\2\2\u00e6\u00e4\3\2\2\2\u00e7\u00e9\7\7\2\2\u00e8\u00e7\3\2"+
+		"\2\2\u00e9\u00ea\3\2\2\2\u00ea\u00e8\3\2\2\2\u00ea\u00eb\3\2\2\2\u00eb"+
+		"\23\3\2\2\2\u00ec\u00ed\t\3\2\2\u00ed\u00ee\7A\2\2\u00ee\u00f0\7-\2\2"+
+		"\u00ef\u00f1\5\26\f\2\u00f0\u00ef\3\2\2\2\u00f0\u00f1\3\2\2\2\u00f1\u00f2"+
+		"\3\2\2\2\u00f2\u00f5\7.\2\2\u00f3\u00f4\7(\2\2\u00f4\u00f6\5\30\r\2\u00f5"+
+		"\u00f3\3\2\2\2\u00f5\u00f6\3\2\2\2\u00f6\u00f9\3\2\2\2\u00f7\u00f8\7\31"+
+		"\2\2\u00f8\u00fa\5\32\16\2\u00f9\u00f7\3\2\2\2\u00f9\u00fa\3\2\2\2\u00fa"+
+		"\u00fc\3\2\2\2\u00fb\u00fd\7\7\2\2\u00fc\u00fb\3\2\2\2\u00fd\u00fe\3\2"+
+		"\2\2\u00fe\u00fc\3\2\2\2\u00fe\u00ff\3\2\2\2\u00ff\u0103\3\2\2\2\u0100"+
+		"\u0102\5\36\20\2\u0101\u0100\3\2\2\2\u0102\u0105\3\2\2\2\u0103\u0101\3"+
+		"\2\2\2\u0103\u0104\3\2\2\2\u0104\25\3\2\2\2\u0105\u0103\3\2\2\2\u0106"+
+		"\u010b\7A\2\2\u0107\u0108\7!\2\2\u0108\u010a\7A\2\2\u0109\u0107\3\2\2"+
+		"\2\u010a\u010d\3\2\2\2\u010b\u0109\3\2\2\2\u010b\u010c\3\2\2\2\u010c\27"+
+		"\3\2\2\2\u010d\u010b\3\2\2\2\u010e\u0113\7A\2\2\u010f\u0110\7!\2\2\u0110"+
+		"\u0112\7A\2\2\u0111\u010f\3\2\2\2\u0112\u0115\3\2\2\2\u0113\u0111\3\2"+
+		"\2\2\u0113\u0114\3\2\2\2\u0114\31\3\2\2\2\u0115\u0113\3\2\2\2\u0116\u011b"+
+		"\5\34\17\2\u0117\u0118\7!\2\2\u0118\u011a\5\34\17\2\u0119\u0117\3\2\2"+
+		"\2\u011a\u011d\3\2\2\2\u011b\u0119\3\2\2\2\u011b\u011c\3\2\2\2\u011c\33"+
+		"\3\2\2\2\u011d\u011b\3\2\2\2\u011e\u0120\7=\2\2\u011f\u011e\3\2\2\2\u011f"+
+		"\u0120\3\2\2\2\u0120\u0122\3\2\2\2\u0121\u0123\7>\2\2\u0122\u0121\3\2"+
+		"\2\2\u0122\u0123\3\2\2\2\u0123\u0124\3\2\2\2\u0124\u0129\7A\2\2\u0125"+
+		"\u0126\7+\2\2\u0126\u0127\5\66\34\2\u0127\u0128\7,\2\2\u0128\u012a\3\2"+
+		"\2\2\u0129\u0125\3\2\2\2\u0129\u012a\3\2\2\2\u012a\35\3\2\2\2\u012b\u012d"+
+		"\7\65\2\2\u012c\u012e\7\7\2\2\u012d\u012c\3\2\2\2\u012e\u012f\3\2\2\2"+
+		"\u012f\u012d\3\2\2\2\u012f\u0130\3\2\2\2\u0130\u0134\3\2\2\2\u0131\u0134"+
+		"\5 \21\2\u0132\u0134\5\"\22\2\u0133\u012b\3\2\2\2\u0133\u0131\3\2\2\2"+
+		"\u0133\u0132\3\2\2\2\u0134\37\3\2\2\2\u0135\u0136\7A\2\2\u0136\u013a\t"+
+		"\4\2\2\u0137\u013b\5\"\22\2\u0138\u013b\7A\2\2\u0139\u013b\5\66\34\2\u013a"+
+		"\u0137\3\2\2\2\u013a\u0138\3\2\2\2\u013a\u0139\3\2\2\2\u013b\u013d\3\2"+
+		"\2\2\u013c\u013e\7\7\2\2\u013d\u013c\3\2\2\2\u013e\u013f\3\2\2\2\u013f"+
+		"\u013d\3\2\2\2\u013f\u0140\3\2\2\2\u0140!\3\2\2\2\u0141\u0142\7A\2\2\u0142"+
+		"\u014b\7-\2\2\u0143\u0148\7A\2\2\u0144\u0145\7!\2\2\u0145\u0147\7A\2\2"+
+		"\u0146\u0144\3\2\2\2\u0147\u014a\3\2\2\2\u0148\u0146\3\2\2\2\u0148\u0149"+
+		"\3\2\2\2\u0149\u014c\3\2\2\2\u014a\u0148\3\2\2\2\u014b\u0143\3\2\2\2\u014b"+
+		"\u014c\3\2\2\2\u014c\u014d\3\2\2\2\u014d\u014f\7.\2\2\u014e\u0150\7\7"+
+		"\2\2\u014f\u014e\3\2\2\2\u0150\u0151\3\2\2\2\u0151\u014f\3\2\2\2\u0151"+
+		"\u0152\3\2\2\2\u0152#\3\2\2\2\u0153\u0155\7\64\2\2\u0154\u0153\3\2\2\2"+
+		"\u0155\u0156\3\2\2\2\u0156\u0154\3\2\2\2\u0156\u0157\3\2\2\2\u0157\u015b"+
+		"\3\2\2\2\u0158\u015a\7\7\2\2\u0159\u0158\3\2\2\2\u015a\u015d\3\2\2\2\u015b"+
+		"\u0159\3\2\2\2\u015b\u015c\3\2\2\2\u015c\u0161\3\2\2\2\u015d\u015b\3\2"+
+		"\2\2\u015e\u0160\5&\24\2\u015f\u015e\3\2\2\2\u0160\u0163\3\2\2\2\u0161"+
+		"\u015f\3\2\2\2\u0161\u0162\3\2\2\2\u0162%\3\2\2\2\u0163\u0161\3\2\2\2"+
+		"\u0164\u0166\5(\25\2\u0165\u0167\7\7\2\2\u0166\u0165\3\2\2\2\u0167\u0168"+
+		"\3\2\2\2\u0168\u0166\3\2\2\2\u0168\u0169\3\2\2\2\u0169\u016d\3\2\2\2\u016a"+
+		"\u016c\t\2\2\2\u016b\u016a\3\2\2\2\u016c\u016f\3\2\2\2\u016d\u016b\3\2"+
+		"\2\2\u016d\u016e\3\2\2\2\u016e\u0232\3\2\2\2\u016f\u016d\3\2\2\2\u0170"+
+		"\u0172\7\3\2\2\u0171\u0170\3\2\2\2\u0172\u0175\3\2\2\2\u0173\u0171\3\2"+
+		"\2\2\u0173\u0174\3\2\2\2\u0174\u0176\3\2\2\2\u0175\u0173\3\2\2\2\u0176"+
+		"\u017c\t\5\2\2\u0177\u017a\5\66\34\2\u0178\u0179\7!\2\2\u0179\u017b\5"+
+		"\66\34\2\u017a\u0178\3\2\2\2\u017a\u017b\3\2\2\2\u017b\u017d\3\2\2\2\u017c"+
+		"\u0177\3\2\2\2\u017c\u017d\3\2\2\2\u017d\u017f\3\2\2\2\u017e\u0180\7\7"+
+		"\2\2\u017f\u017e\3\2\2\2\u0180\u0181\3\2\2\2\u0181\u017f\3\2\2\2\u0181"+
+		"\u0182\3\2\2\2\u0182\u0186\3\2\2\2\u0183\u0185\t\2\2\2\u0184\u0183\3\2"+
+		"\2\2\u0185\u0188\3\2\2\2\u0186\u0184\3\2\2\2\u0186\u0187\3\2\2\2\u0187"+
+		"\u0232\3\2\2\2\u0188\u0186\3\2\2\2\u0189\u018b\7\3\2\2\u018a\u0189\3\2"+
+		"\2\2\u018b\u018e\3\2\2\2\u018c\u018a\3\2\2\2\u018c\u018d\3\2\2\2\u018d"+
+		"\u0190\3\2\2\2\u018e\u018c\3\2\2\2\u018f\u0191\5(\25\2\u0190\u018f\3\2"+
+		"\2\2\u0190\u0191\3\2\2\2\u0191\u0192\3\2\2\2\u0192\u0193\7>\2\2\u0193"+
+		"\u0198\5\64\33\2\u0194\u0195\7!\2\2\u0195\u0197\5\64\33\2\u0196\u0194"+
+		"\3\2\2\2\u0197\u019a\3\2\2\2\u0198\u0196\3\2\2\2\u0198\u0199\3\2\2\2\u0199"+
+		"\u019c\3\2\2\2\u019a\u0198\3\2\2\2\u019b\u019d\7\7\2\2\u019c\u019b\3\2"+
+		"\2\2\u019d\u019e\3\2\2\2\u019e\u019c\3\2\2\2\u019e\u019f\3\2\2\2\u019f"+
+		"\u01a3\3\2\2\2\u01a0\u01a2\t\2\2\2\u01a1\u01a0\3\2\2\2\u01a2\u01a5\3\2"+
+		"\2\2\u01a3\u01a1\3\2\2\2\u01a3\u01a4\3\2\2\2\u01a4\u0232\3\2\2\2\u01a5"+
+		"\u01a3\3\2\2\2\u01a6\u01a8\7\3\2\2\u01a7\u01a6\3\2\2\2\u01a8\u01ab\3\2"+
+		"\2\2\u01a9\u01a7\3\2\2\2\u01a9\u01aa\3\2\2\2\u01aa\u01ad\3\2\2\2\u01ab"+
+		"\u01a9\3\2\2\2\u01ac\u01ae\5(\25\2\u01ad\u01ac\3\2\2\2\u01ad\u01ae\3\2"+
+		"\2\2\u01ae\u01af\3\2\2\2\u01af\u01b0\7<\2\2\u01b0\u01b2\5\64\33\2\u01b1"+
+		"\u01b3\7\7\2\2\u01b2\u01b1\3\2\2\2\u01b3\u01b4\3\2\2\2\u01b4\u01b2\3\2"+
+		"\2\2\u01b4\u01b5\3\2\2\2\u01b5\u01b9\3\2\2\2\u01b6\u01b8\t\2\2\2\u01b7"+
+		"\u01b6\3\2\2\2\u01b8\u01bb\3\2\2\2\u01b9\u01b7\3\2\2\2\u01b9\u01ba\3\2"+
+		"\2\2\u01ba\u0232\3\2\2\2\u01bb\u01b9\3\2\2\2\u01bc\u01be\7\3\2\2\u01bd"+
+		"\u01bc\3\2\2\2\u01be\u01c1\3\2\2\2\u01bf\u01bd\3\2\2\2\u01bf\u01c0\3\2"+
+		"\2\2\u01c0\u01c3\3\2\2\2\u01c1\u01bf\3\2\2\2\u01c2\u01c4\5(\25\2\u01c3"+
+		"\u01c2\3\2\2\2\u01c3\u01c4\3\2\2\2\u01c4\u01c6\3\2\2\2\u01c5\u01c7\5*"+
+		"\26\2\u01c6\u01c5\3\2\2\2\u01c6\u01c7\3\2\2\2\u01c7\u01c8\3\2\2\2\u01c8"+
+		"\u01c9\5,\27\2\u01c9\u01ca\5.\30\2\u01ca\u01cb\7!\2\2\u01cb\u01cc\5.\30"+
+		"\2\u01cc\u01cd\7!\2\2\u01cd\u01cf\5.\30\2\u01ce\u01d0\5\62\32\2\u01cf"+
+		"\u01ce\3\2\2\2\u01cf\u01d0\3\2\2\2\u01d0\u01d2\3\2\2\2\u01d1\u01d3\7\7"+
+		"\2\2\u01d2\u01d1\3\2\2\2\u01d3\u01d4\3\2\2\2\u01d4\u01d2\3\2\2\2\u01d4"+
+		"\u01d5\3\2\2\2\u01d5\u01d9\3\2\2\2\u01d6\u01d8\t\2\2\2\u01d7\u01d6\3\2"+
+		"\2\2\u01d8\u01db\3\2\2\2\u01d9\u01d7\3\2\2\2\u01d9\u01da\3\2\2\2\u01da"+
+		"\u0232\3\2\2\2\u01db\u01d9\3\2\2\2\u01dc\u01de\7\3\2\2\u01dd\u01dc\3\2"+
+		"\2\2\u01de\u01e1\3\2\2\2\u01df\u01dd\3\2\2\2\u01df\u01e0\3\2\2\2\u01e0"+
+		"\u01e3\3\2\2\2\u01e1\u01df\3\2\2\2\u01e2\u01e4\5(\25\2\u01e3\u01e2\3\2"+
+		"\2\2\u01e3\u01e4\3\2\2\2\u01e4\u01e6\3\2\2\2\u01e5\u01e7\5*\26\2\u01e6"+
+		"\u01e5\3\2\2\2\u01e6\u01e7\3\2\2\2\u01e7\u01e8\3\2\2\2\u01e8\u01e9\5,"+
+		"\27\2\u01e9\u01ea\5.\30\2\u01ea\u01eb\7!\2\2\u01eb\u01ed\5.\30\2\u01ec"+
+		"\u01ee\5\62\32\2\u01ed\u01ec\3\2\2\2\u01ed\u01ee\3\2\2\2\u01ee\u01f0\3"+
+		"\2\2\2\u01ef\u01f1\7\7\2\2\u01f0\u01ef\3\2\2\2\u01f1\u01f2\3\2\2\2\u01f2"+
+		"\u01f0\3\2\2\2\u01f2\u01f3\3\2\2\2\u01f3\u01f7\3\2\2\2\u01f4\u01f6\t\2"+
+		"\2\2\u01f5\u01f4\3\2\2\2\u01f6\u01f9\3\2\2\2\u01f7\u01f5\3\2\2\2\u01f7"+
+		"\u01f8\3\2\2\2\u01f8\u0232\3\2\2\2\u01f9\u01f7\3\2\2\2\u01fa\u01fc\7\3"+
+		"\2\2\u01fb\u01fa\3\2\2\2\u01fc\u01ff\3\2\2\2\u01fd\u01fb\3\2\2\2\u01fd"+
+		"\u01fe\3\2\2\2\u01fe\u0201\3\2\2\2\u01ff\u01fd\3\2\2\2\u0200\u0202\5("+
+		"\25\2\u0201\u0200\3\2\2\2\u0201\u0202\3\2\2\2\u0202\u0204\3\2\2\2\u0203"+
+		"\u0205\5*\26\2\u0204\u0203\3\2\2\2\u0204\u0205\3\2\2\2\u0205\u0206\3\2"+
+		"\2\2\u0206\u0207\5,\27\2\u0207\u0209\5.\30\2\u0208\u020a\5\62\32\2\u0209"+
+		"\u0208\3\2\2\2\u0209\u020a\3\2\2\2\u020a\u020c\3\2\2\2\u020b\u020d\7\7"+
+		"\2\2\u020c\u020b\3\2\2\2\u020d\u020e\3\2\2\2\u020e\u020c\3\2\2\2\u020e"+
+		"\u020f\3\2\2\2\u020f\u0213\3\2\2\2\u0210\u0212\t\2\2\2\u0211\u0210\3\2"+
+		"\2\2\u0212\u0215\3\2\2\2\u0213\u0211\3\2\2\2\u0213\u0214\3\2\2\2\u0214"+
+		"\u0232\3\2\2\2\u0215\u0213\3\2\2\2\u0216\u0218\7\3\2\2\u0217\u0216\3\2"+
+		"\2\2\u0218\u021b\3\2\2\2\u0219\u0217\3\2\2\2\u0219\u021a\3\2\2\2\u021a"+
+		"\u021d\3\2\2\2\u021b\u0219\3\2\2\2\u021c\u021e\5(\25\2\u021d\u021c\3\2"+
+		"\2\2\u021d\u021e\3\2\2\2\u021e\u0220\3\2\2\2\u021f\u0221\5*\26\2\u0220"+
+		"\u021f\3\2\2\2\u0220\u0221\3\2\2\2\u0221\u0222\3\2\2\2\u0222\u0224\5,"+
+		"\27\2\u0223\u0225\5\62\32\2\u0224\u0223\3\2\2\2\u0224\u0225\3\2\2\2\u0225"+
+		"\u0227\3\2\2\2\u0226\u0228\7\7\2\2\u0227\u0226\3\2\2\2\u0228\u0229\3\2"+
+		"\2\2\u0229\u0227\3\2\2\2\u0229\u022a\3\2\2\2\u022a\u022e\3\2\2\2\u022b"+
+		"\u022d\t\2\2\2\u022c\u022b\3\2\2\2\u022d\u0230\3\2\2\2\u022e\u022c\3\2"+
+		"\2\2\u022e\u022f\3\2\2\2\u022f\u0232\3\2\2\2\u0230\u022e\3\2\2\2\u0231"+
+		"\u0164\3\2\2\2\u0231\u0173\3\2\2\2\u0231\u018c\3\2\2\2\u0231\u01a9\3\2"+
+		"\2\2\u0231\u01bf\3\2\2\2\u0231\u01df\3\2\2\2\u0231\u01fd\3\2\2\2\u0231"+
+		"\u0219\3\2\2\2\u0232\'\3\2\2\2\u0233\u0235\6\25\2\2\u0234\u0236\7 \2\2"+
+		"\u0235\u0234\3\2\2\2\u0235\u0236\3\2\2\2\u0236\u0237\3\2\2\2\u0237\u0238"+
+		"\7A\2\2\u0238)\3\2\2\2\u0239\u023a\6\26\3\2\u023a\u023b\7@\2\2\u023b+"+
+		"\3\2\2\2\u023c\u023d\6\27\4\2\u023d\u023e\7A\2\2\u023e-\3\2\2\2\u023f"+
+		"\u0241\5\60\31\2\u0240\u023f\3\2\2\2\u0240\u0241\3\2\2\2\u0241\u0242\3"+
+		"\2\2\2\u0242\u0243\5\66\34\2\u0243/\3\2\2\2\u0244\u0246\t\6\2\2\u0245"+
+		"\u0247\7\"\2\2\u0246\u0245\3\2\2\2\u0246\u0247\3\2\2\2\u0247\61\3\2\2"+
+		"\2\u0248\u0249\6\32\5\2\u0249\u024a\7A\2\2\u024a\63\3\2\2\2\u024b\u0250"+
+		"\5\66\34\2\u024c\u024d\7+\2\2\u024d\u024e\5\66\34\2\u024e\u024f\7,\2\2"+
+		"\u024f\u0251\3\2\2\2\u0250\u024c\3\2\2\2\u0250\u0251\3\2\2\2\u0251\65"+
+		"\3\2\2\2\u0252\u0253\b\34\1\2\u0253\u0254\t\7\2\2\u0254\u0263\5\66\34"+
+		"\r\u0255\u0256\t\b\2\2\u0256\u0257\7-\2\2\u0257\u0258\5\66\34\2\u0258"+
+		"\u0259\7.\2\2\u0259\u0263\3\2\2\2\u025a\u025b\7-\2\2\u025b\u025c\5\66"+
+		"\34\2\u025c\u025d\7.\2\2\u025d\u0263\3\2\2\2\u025e\u0260\7\33\2\2\u025f"+
+		"\u025e\3\2\2\2\u025f\u0260\3\2\2\2\u0260\u0261\3\2\2\2\u0261\u0263\58"+
+		"\35\2\u0262\u0252\3\2\2\2\u0262\u0255\3\2\2\2\u0262\u025a\3\2\2\2\u0262"+
+		"\u025f\3\2\2\2\u0263\u027e\3\2\2\2\u0264\u0265\f\f\2\2\u0265\u0266\t\t"+
+		"\2\2\u0266\u027d\5\66\34\r\u0267\u0268\f\13\2\2\u0268\u0269\t\n\2\2\u0269"+
+		"\u027d\5\66\34\f\u026a\u026b\f\n\2\2\u026b\u026c\t\13\2\2\u026c\u027d"+
+		"\5\66\34\13\u026d\u026e\f\t\2\2\u026e\u026f\t\f\2\2\u026f\u027d\5\66\34"+
+		"\n\u0270\u0271\f\b\2\2\u0271\u0272\7\66\2\2\u0272\u027d\5\66\34\t\u0273"+
+		"\u0274\f\7\2\2\u0274\u0275\t\r\2\2\u0275\u027d\5\66\34\b\u0276\u0277\f"+
+		"\6\2\2\u0277\u0278\7\'\2\2\u0278\u0279\5\66\34\2\u0279\u027a\7(\2\2\u027a"+
+		"\u027b\5\66\34\7\u027b\u027d\3\2\2\2\u027c\u0264\3\2\2\2\u027c\u0267\3"+
+		"\2\2\2\u027c\u026a\3\2\2\2\u027c\u026d\3\2\2\2\u027c\u0270\3\2\2\2\u027c"+
+		"\u0273\3\2\2\2\u027c\u0276\3\2\2\2\u027d\u0280\3\2\2\2\u027e\u027c\3\2"+
+		"\2\2\u027e\u027f\3\2\2\2\u027f\67\3\2\2\2\u0280\u027e\3\2\2\2\u0281\u02ac"+
+		"\7\r\2\2\u0282\u02ac\7\f\2\2\u0283\u02ac\7\13\2\2\u0284\u02ac\7\n\2\2"+
+		"\u0285\u02ac\7\t\2\2\u0286\u02ac\7\35\2\2\u0287\u02ac\7?\2\2\u0288\u028d"+
+		"\7?\2\2\u0289\u028a\7+\2\2\u028a\u028b\5\66\34\2\u028b\u028c\7,\2\2\u028c"+
+		"\u028e\3\2\2\2\u028d\u0289\3\2\2\2\u028d\u028e\3\2\2\2\u028e\u02ac\3\2"+
+		"\2\2\u028f\u0290\7?\2\2\u0290\u0295\t\16\2\2\u0291\u0292\7+\2\2\u0292"+
+		"\u0293\5\66\34\2\u0293\u0294\7,\2\2\u0294\u0296\3\2\2\2\u0295\u0291\3"+
+		"\2\2\2\u0295\u0296\3\2\2\2\u0296\u02ac\3\2\2\2\u0297\u029c\7?\2\2\u0298"+
+		"\u0299\7+\2\2\u0299\u029a\5\66\34\2\u029a\u029b\7,\2\2\u029b\u029d\3\2"+
+		"\2\2\u029c\u0298\3\2\2\2\u029c\u029d\3\2\2\2\u029d\u029e\3\2\2\2\u029e"+
+		"\u02ac\t\16\2\2\u029f\u02a0\t\16\2\2\u02a0\u02a5\7?\2\2\u02a1\u02a2\7"+
+		"+\2\2\u02a2\u02a3\5\66\34\2\u02a3\u02a4\7,\2\2\u02a4\u02a6\3\2\2\2\u02a5"+
+		"\u02a1\3\2\2\2\u02a5\u02a6\3\2\2\2\u02a6\u02ac\3\2\2\2\u02a7\u02a9\7 "+
+		"\2\2\u02a8\u02a7\3\2\2\2\u02a8\u02a9\3\2\2\2\u02a9\u02aa\3\2\2\2\u02aa"+
+		"\u02ac\7A\2\2\u02ab\u0281\3\2\2\2\u02ab\u0282\3\2\2\2\u02ab\u0283\3\2"+
+		"\2\2\u02ab\u0284\3\2\2\2\u02ab\u0285\3\2\2\2\u02ab\u0286\3\2\2\2\u02ab"+
+		"\u0287\3\2\2\2\u02ab\u0288\3\2\2\2\u02ab\u028f\3\2\2\2\u02ab\u0297\3\2"+
+		"\2\2\u02ab\u029f\3\2\2\2\u02ab\u02a8\3\2\2\2\u02ac9\3\2\2\2k=EGOTZ`dl"+
+		"rv}\u0082\u0088\u0091\u0096\u0099\u009e\u00a3\u00a9\u00b3\u00bb\u00c4"+
+		"\u00c9\u00cf\u00d8\u00e0\u00e4\u00ea\u00f0\u00f5\u00f9\u00fe\u0103\u010b"+
+		"\u0113\u011b\u011f\u0122\u0129\u012f\u0133\u013a\u013f\u0148\u014b\u0151"+
+		"\u0156\u015b\u0161\u0168\u016d\u0173\u017a\u017c\u0181\u0186\u018c\u0190"+
+		"\u0198\u019e\u01a3\u01a9\u01ad\u01b4\u01b9\u01bf\u01c3\u01c6\u01cf\u01d4"+
+		"\u01d9\u01df\u01e3\u01e6\u01ed\u01f2\u01f7\u01fd\u0201\u0204\u0209\u020e"+
+		"\u0213\u0219\u021d\u0220\u0224\u0229\u022e\u0231\u0235\u0240\u0246\u0250"+
+		"\u025f\u0262\u027c\u027e\u028d\u0295\u029c\u02a5\u02a8\u02ab";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

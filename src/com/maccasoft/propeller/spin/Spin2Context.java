@@ -52,13 +52,18 @@ public class Spin2Context implements Context {
 
     @Override
     public Expression getSymbol(String name) {
+        Expression exp = getLocalSymbol(name);
+        if (exp == null) {
+            System.err.println("Symbol " + name + " not found!");
+            exp = new NumberLiteral(0);
+        }
+        return exp;
+    }
+
+    public Expression getLocalSymbol(String name) {
         Expression exp = symbols.get(name);
         if (exp == null && parent != null) {
-            exp = parent.getSymbol(name);
-        }
-        if (exp == null) {
-            System.out.println("Symbol " + name + " not found!");
-            exp = new NumberLiteral(0);
+            exp = parent.getLocalSymbol(name);
         }
         return exp;
     }

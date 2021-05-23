@@ -26,7 +26,7 @@ import com.maccasoft.propeller.spin.Spin2Parser.OpcodeContext;
 @SuppressWarnings({
     "rawtypes"
 })
-public class Spin2PAsmLineBuilderVisitor extends Spin2BaseVisitor {
+public class Spin2PAsmLineBuilderVisitor extends Spin2ParserBaseVisitor {
 
     Spin2Context scope;
     String label;

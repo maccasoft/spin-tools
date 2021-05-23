@@ -1,4 +1,4 @@
-// Generated from Spin2.g4 by ANTLR 4.9.2
+// Generated from Spin2Parser.g4 by ANTLR 4.9.2
 package com.maccasoft.propeller.spin;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
  * This interface defines a complete listener for a parse tree produced by
  * {@link Spin2Parser}.
  */
-public interface Spin2Listener extends ParseTreeListener {
+public interface Spin2ParserListener extends ParseTreeListener {
 	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#prog}.
 	 * @param ctx the parse tree

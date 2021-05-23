@@ -53,7 +53,7 @@ import com.maccasoft.propeller.spin.Spin2Parser.ProgContext;
 @SuppressWarnings({
     "unchecked", "rawtypes"
 })
-public class Spin2Compiler extends Spin2BaseVisitor {
+public class Spin2Compiler extends Spin2ParserBaseVisitor {
 
     Spin2Context scope = new Spin2GlobalContext();
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
@@ -156,7 +156,7 @@ public class Spin2Compiler extends Spin2BaseVisitor {
             scope = scope.getParent();
         }
 
-        ctx.accept(new Spin2BaseVisitor() {
+        ctx.accept(new Spin2ParserBaseVisitor() {
             int enumValue = 0, enumIncrement = 1;
 
             @Override

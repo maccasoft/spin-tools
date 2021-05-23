@@ -1,4 +1,6 @@
-grammar Spin2;
+parser grammar Spin2Parser;
+
+options { tokenVocab=Spin2Lexer; }
 
 prog
     : NL* (constants | objects | variables | method | data)* EOF
@@ -40,12 +42,12 @@ CON  e0,e1,e2             'e0=0, e1=1, e2=2      (start=0, step=1)
 
  */
 
-constants: ('CON' | 'con')+ NL* constant* ;
+constants: CON_START+ NL* constant* ;
 
 constant
-    : (',')? name=IDENTIFIER '=' exp=expression NL*
-    | (',')? name=IDENTIFIER ('[' multiplier=expression ']')? NL*
-    | '#' start=expression ('[' step=expression ']')? NL*
+    : INDENT* (COMMA)? name=IDENTIFIER EQUAL exp=expression (NL | DEDENT)*
+    | INDENT* (COMMA)? name=IDENTIFIER (OPEN_BRACKET multiplier=expression CLOSE_BRACKET)? (NL | DEDENT)*
+    | INDENT* POUND start=expression (OPEN_BRACKET step=expression CLOSE_BRACKET)? (NL | DEDENT)*
     ;
 
 /*
@@ -59,9 +61,9 @@ OBJ  vga       : "VGA_Driver"     'instantiate "VGA_Driver.spin2" as "vga"
 
  */
 
-objects: ('OBJ' | 'obj')+ NL* object* ;
+objects: OBJ_START+ NL* object* ;
 
-object: reference ('[' expression ']')* ':' filename NL+ ;
+object: reference (OPEN_BRACKET expression CLOSE_BRACKET)* COLON filename NL+ ;
 
 reference: IDENTIFIER ;
 
@@ -84,10 +86,10 @@ VAR  CogNum                     'The default variable size is LONG (32 bits).
 
  */
 
-variables: ('VAR' | 'var')+ NL* variable* ;
+variables: VAR_START+ NL* variable* ;
 
 variable
-    : type=TYPE IDENTIFIER ('[' expression ']')? (',' IDENTIFIER ('[' expression ']')? )* NL+ 
+    : type=TYPE IDENTIFIER (OPEN_BRACKET expression CLOSE_BRACKET)? (COMMA IDENTIFIER (OPEN_BRACKET expression CLOSE_BRACKET)? )* NL+ 
     ;
 
 /* 
@@ -103,28 +105,28 @@ PRI StrCheck(StrPtrA, StrPtrB) : Pass | i, BYTE Str[64]
 
 */
 
-method: ('PUB' | 'pub' | 'PRI' | 'pri') name=IDENTIFIER '(' (parameters)? ')' (':' result)? ('|' localvars)? NL+ (statement)* ;
+method: (PUB_START | PRI_START) name=IDENTIFIER OPEN_PAREN (parameters)? CLOSE_PAREN (':' result)? ('|' localvars)? NL+ (statement)* ;
 
-parameters: IDENTIFIER (',' IDENTIFIER)* ;
+parameters: IDENTIFIER (COMMA IDENTIFIER)* ;
 
-result: IDENTIFIER (',' IDENTIFIER)* ;
+result: IDENTIFIER (COMMA IDENTIFIER)* ;
 
-localvars: localvar (',' localvar)* ;
+localvars: localvar (COMMA localvar)* ;
 
-localvar: align=('ALIGNW' | 'ALIGNL')? vartype=TYPE? name=IDENTIFIER ('[' count=expression ']')? ; 
+localvar: align=ALIGN? vartype=TYPE? name=IDENTIFIER (OPEN_BRACKET count=expression CLOSE_BRACKET)? ; 
 
 statement
-    : 'repeat' NL+
+    : REPEAT NL+
     | assignment
     | function
     ;
 
 assignment
-    : IDENTIFIER (':=' | '+=') (function | IDENTIFIER | expression) NL+
+    : IDENTIFIER (ASSIGN | ADD_ASSIGN) (function | IDENTIFIER | expression) NL+
     ;
 
 function
-    : IDENTIFIER '(' (IDENTIFIER (',' IDENTIFIER)* )? ')' NL+
+    : IDENTIFIER OPEN_PAREN (IDENTIFIER (COMMA IDENTIFIER)* )? CLOSE_PAREN NL+
     ;
 
 /*
@@ -149,54 +151,63 @@ buff            RES     16            'reserve 16 registers, advance cog address
 
  */
 
-data: ('DAT' | 'dat')+ NL* dataLine* ;
+data: DAT_START+ NL* dataLine* ;
+
+/*
+dataLine
+    : label NL+ (NL | DEDENT)*
+    | label opcode (argument (COMMA argument (COMMA argument)? )? )? NL+
+    | INDENT* opcode (argument (COMMA argument (COMMA argument)? )? )? NL+ (NL | DEDENT)*
+    | INDENT* directive=(ORG | ORGH) (expression (COMMA expression)? )? NL+ (NL | DEDENT)*
+    | label directive=RES dataValue NL+ (NL | DEDENT)*
+    ;
+*/
 
 dataLine
-    : label NL+
-    | label? directive=('ORG' | 'org' | 'ORGH' | 'orgh') (expression (',' expression)? )? NL+
-    | label? directive=TYPE dataValue (',' dataValue)* NL+
-    | label? directive=('RES' | 'res') dataValue NL+
-    | label? condition? opcode argument ',' argument ',' argument effect? NL+
-    | label? condition? opcode argument ',' argument effect? NL+
-    | label? condition? opcode argument effect? NL+
-    | label? condition? opcode effect? NL+
+    : label NL+ (NL | DEDENT)*
+    | INDENT* directive=(ORG | ORGH) (expression (COMMA expression)? )? NL+ (NL | DEDENT)*
+    | INDENT* label? directive=TYPE dataValue (COMMA dataValue)* NL+ (NL | DEDENT)*
+    | INDENT* label? directive=RES dataValue NL+ (NL | DEDENT)*
+    | INDENT* label? condition? opcode argument COMMA argument COMMA argument effect? NL+ (NL | DEDENT)*
+    | INDENT* label? condition? opcode argument COMMA argument effect? NL+ (NL | DEDENT)*
+    | INDENT* label? condition? opcode argument effect? NL+ (NL | DEDENT)*
+    | INDENT* label? condition? opcode effect? NL+ (NL | DEDENT)*
     ;
 
 label
-    : {_input.LT(1).getCharPositionInLine() == 0}? '.'? IDENTIFIER 
+    : {_input.LT(1).getCharPositionInLine() == 0}? DOT? IDENTIFIER 
     ;
 
 condition
-    : {_input.LT(1).getCharPositionInLine() != 0}? CONDITION 
+    :  {_input.LT(1).getCharPositionInLine() != 0}? CONDITION 
     ;
 
 opcode
-    : {_input.LT(1).getCharPositionInLine() != 0}? IDENTIFIER 
+    :  {_input.LT(1).getCharPositionInLine() != 0}? IDENTIFIER 
     ;
 
 argument: prefix? expression ;
 
-prefix: ('##' | '#') '\\'? ;
+prefix: (POUND_POUND | POUND) BACKSLASH? ;
 
 effect
-    : {_input.LT(1).getCharPositionInLine() != 0}? '.'? IDENTIFIER 
+    : {_input.LT(1).getCharPositionInLine() != 0}? IDENTIFIER 
     ;
 
-dataValue: expression ('[' count=expression ']')? ;
+dataValue: expression (OPEN_BRACKET count=expression CLOSE_BRACKET)? ;
 
 expression
-    : operator=('+' | '-' | '!!' | '!' | '~') exp=expression
-    | left=expression operator=('>>' | '<<') right=expression
-    | left=expression operator=('&' | '^' | '|') right=expression
-    | left=expression operator=('*' | '/' | '+/' | '//' | '+//') right=expression
-    | left=expression operator=('+=' | '+' | '-' | '#>' | '<#') right=expression
-    | left=expression operator=('ADDBITS' | 'addbits' | 'ADDPINS' | 'addpins') right=expression
-    | left=expression operator=('<' | '+<' | '<=' | '+<=' | '==' | '<>' | '>=' | '+>=' | '>' | '+>' | '<=>') right=expression
-    | left=expression operator=('&&'|'^^'| '||') right=expression
-    | left=expression operator='?' middle=expression operator=':' right=expression
-    | operator=('FLOAT' | 'float' | 'ROUND' | 'round' | 'TRUNC' | 'trunc') '(' exp=expression ')'
-    | '(' exp=expression ')'
-    | ('@')? atom
+    : operator=(PLUS | MINUS | TILDE) exp=expression
+    | left=expression operator=(LEFT_SHIFT | RIGHT_SHIFT) right=expression
+    | left=expression operator=(BIN_AND | BIN_XOR | BIN_OR) right=expression
+    | left=expression operator=(STAR | DIV) right=expression
+    | left=expression operator=(PLUS | MINUS) right=expression
+    | left=expression operator=ADDPINS right=expression
+    | left=expression operator=(LOGICAL_AND | LOGICAL_XOR | LOGICAL_OR) right=expression
+    | left=expression operator=QUESTION middle=expression operator=COLON right=expression
+    | operator=(FLOAT | ROUND | TRUNC) OPEN_PAREN exp=expression CLOSE_PAREN
+    | OPEN_PAREN exp=expression CLOSE_PAREN
+    | AT? atom
     ;
 
 atom
@@ -205,40 +216,11 @@ atom
     | BIN
     | QUAD
     | STRING
-    | '$'
+    | DOLLAR
     | PTR
-    | PTR ('[' expression ']')?
-    | PTR ('++' | '--') ('[' expression ']')?
-    | PTR ('[' expression ']')? ('++' | '--')
-    | ('++' | '--') PTR ('[' expression ']')?
-    | '.'? IDENTIFIER
+    | PTR (OPEN_BRACKET expression CLOSE_BRACKET)?
+    | PTR (PLUS_PLUS | MINUS_MINUS) (OPEN_BRACKET expression CLOSE_BRACKET)?
+    | PTR (OPEN_BRACKET expression CLOSE_BRACKET)? (PLUS_PLUS | MINUS_MINUS)
+    | (PLUS_PLUS | MINUS_MINUS) PTR (OPEN_BRACKET expression CLOSE_BRACKET)?
+    | DOT? IDENTIFIER
     ;
-
-/* Lexer */
-
-fragment LETTER: [a-zA-Z_] ;
-fragment DIGIT : [0-9] ;
-
-BLOCK_COMMENT: '{' .*? '}' -> channel(HIDDEN) ;
-
-COMMENT: '\'' ~ [\r\n]* -> channel(HIDDEN) ;
-
-TYPE: 'LONG' | 'long' | 'WORD' | 'word' | 'BYTE' | 'byte' ;
-
-PTR: 'PTRA' | 'ptra' | 'PTRB' | 'ptrb' ;
-
-CONDITION
-    : ('IF_' | 'if_') ( LETTER | DIGIT )*
-    | '_RET_' | '_ret_' 
-    ;
-
-IDENTIFIER: LETTER ( LETTER | DIGIT )* ;
-
-STRING  : '"' .*? '"' ;
-QUAD    : [%][%] [0123] [0123_]* ;
-BIN     : [%] [01] [01_]* ;
-HEX     : [$] [0-9a-fA-F] [0-9a-fA-F_]* ;
-NUMBER  : [0-9.] [0-9._eE]* ;
-
-NL      : [\r\n] ;
-WS      : [ \t] -> channel(HIDDEN) ;

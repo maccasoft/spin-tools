@@ -1,4 +1,4 @@
-// Generated from Spin2.g4 by ANTLR 4.9.2
+// Generated from Spin2Parser.g4 by ANTLR 4.9.2
 package com.maccasoft.propeller.spin;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -9,7 +9,7 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  * @param <T> The return type of the visit operation. Use {@link Void} for
  * operations with no return type.
  */
-public interface Spin2Visitor<T> extends ParseTreeVisitor<T> {
+public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#prog}.
 	 * @param ctx the parse tree

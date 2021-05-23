@@ -1,4 +1,4 @@
-// Generated from Spin2.g4 by ANTLR 4.9.2
+// Generated from Spin2Parser.g4 by ANTLR 4.9.2
 package com.maccasoft.propeller.spin;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -6,11 +6,11 @@ import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 /**
- * This class provides an empty implementation of {@link Spin2Listener},
+ * This class provides an empty implementation of {@link Spin2ParserListener},
  * which can be extended to create a listener which only needs to handle a subset
  * of the available methods.
  */
-public class Spin2BaseListener implements Spin2Listener {
+public class Spin2ParserBaseListener implements Spin2ParserListener {
 	/**
 	 * {@inheritDoc}
 	 *
