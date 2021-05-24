@@ -41,11 +41,11 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitConstantEnumName(Spin2Parser.ConstantEnumNameContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#objects}.
+	 * Visit a parse tree produced by {@link Spin2Parser#objectsSection}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitObjects(Spin2Parser.ObjectsContext ctx);
+	T visitObjectsSection(Spin2Parser.ObjectsSectionContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#object}.
 	 * @param ctx the parse tree
@@ -53,23 +53,11 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitObject(Spin2Parser.ObjectContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#reference}.
+	 * Visit a parse tree produced by {@link Spin2Parser#variablesSection}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitReference(Spin2Parser.ReferenceContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#filename}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFilename(Spin2Parser.FilenameContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#variables}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitVariables(Spin2Parser.VariablesContext ctx);
+	T visitVariablesSection(Spin2Parser.VariablesSectionContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#variable}.
 	 * @param ctx the parse tree

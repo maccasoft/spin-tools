@@ -76,13 +76,13 @@ public class Spin2ParserBaseListener implements Spin2ParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterObjects(Spin2Parser.ObjectsContext ctx) { }
+	@Override public void enterObjectsSection(Spin2Parser.ObjectsSectionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitObjects(Spin2Parser.ObjectsContext ctx) { }
+	@Override public void exitObjectsSection(Spin2Parser.ObjectsSectionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -100,37 +100,13 @@ public class Spin2ParserBaseListener implements Spin2ParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterReference(Spin2Parser.ReferenceContext ctx) { }
+	@Override public void enterVariablesSection(Spin2Parser.VariablesSectionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitReference(Spin2Parser.ReferenceContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterFilename(Spin2Parser.FilenameContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitFilename(Spin2Parser.FilenameContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterVariables(Spin2Parser.VariablesContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitVariables(Spin2Parser.VariablesContext ctx) { }
+	@Override public void exitVariablesSection(Spin2Parser.VariablesSectionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

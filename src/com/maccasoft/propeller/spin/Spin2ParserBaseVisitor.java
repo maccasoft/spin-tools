@@ -52,7 +52,7 @@ public class Spin2ParserBaseVisitor<T> extends AbstractParseTreeVisitor<T> imple
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitObjects(Spin2Parser.ObjectsContext ctx) { return visitChildren(ctx); }
+	@Override public T visitObjectsSection(Spin2Parser.ObjectsSectionContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -66,21 +66,7 @@ public class Spin2ParserBaseVisitor<T> extends AbstractParseTreeVisitor<T> imple
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitReference(Spin2Parser.ReferenceContext ctx) { return visitChildren(ctx); }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.</p>
-	 */
-	@Override public T visitFilename(Spin2Parser.FilenameContext ctx) { return visitChildren(ctx); }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.</p>
-	 */
-	@Override public T visitVariables(Spin2Parser.VariablesContext ctx) { return visitChildren(ctx); }
+	@Override public T visitVariablesSection(Spin2Parser.VariablesSectionContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

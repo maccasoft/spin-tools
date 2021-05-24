@@ -3,7 +3,7 @@ parser grammar Spin2Parser;
 options { tokenVocab=Spin2Lexer; }
 
 prog
-    : NL* (constantsSection | objects | variables | method | data)* EOF
+    : NL* (constantsSection | objectsSection | variablesSection | method | data)* EOF
     ;
 
 /*
@@ -65,13 +65,9 @@ OBJ  vga       : "VGA_Driver"     'instantiate "VGA_Driver.spin2" as "vga"
 
  */
 
-objects: OBJ_START+ NL* object* ;
+objectsSection: OBJ_START+ NL* object* ;
 
-object: reference (OPEN_BRACKET expression CLOSE_BRACKET)* COLON filename NL+ ;
-
-reference: IDENTIFIER ;
-
-filename: STRING ;
+object: INDENT* name=IDENTIFIER (OPEN_BRACKET count=expression CLOSE_BRACKET)* COLON filename=STRING (NL | DEDENT)+ ;
 
 /*
 
@@ -90,10 +86,10 @@ VAR  CogNum                     'The default variable size is LONG (32 bits).
 
  */
 
-variables: VAR_START+ NL* variable* ;
+variablesSection: VAR_START+ NL* (variable (COMMA variable)* )* ;
 
 variable
-    : type=TYPE IDENTIFIER (OPEN_BRACKET expression CLOSE_BRACKET)? (COMMA IDENTIFIER (OPEN_BRACKET expression CLOSE_BRACKET)? )* NL+ 
+    : INDENT* type=TYPE? name=IDENTIFIER (OPEN_BRACKET size=expression CLOSE_BRACKET)? (NL | DEDENT)+ 
     ;
 
 /* 

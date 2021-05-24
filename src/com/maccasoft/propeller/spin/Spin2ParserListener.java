@@ -58,15 +58,15 @@ public interface Spin2ParserListener extends ParseTreeListener {
 	 */
 	void exitConstantEnumName(Spin2Parser.ConstantEnumNameContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#objects}.
+	 * Enter a parse tree produced by {@link Spin2Parser#objectsSection}.
 	 * @param ctx the parse tree
 	 */
-	void enterObjects(Spin2Parser.ObjectsContext ctx);
+	void enterObjectsSection(Spin2Parser.ObjectsSectionContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#objects}.
+	 * Exit a parse tree produced by {@link Spin2Parser#objectsSection}.
 	 * @param ctx the parse tree
 	 */
-	void exitObjects(Spin2Parser.ObjectsContext ctx);
+	void exitObjectsSection(Spin2Parser.ObjectsSectionContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#object}.
 	 * @param ctx the parse tree
@@ -78,35 +78,15 @@ public interface Spin2ParserListener extends ParseTreeListener {
 	 */
 	void exitObject(Spin2Parser.ObjectContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#reference}.
+	 * Enter a parse tree produced by {@link Spin2Parser#variablesSection}.
 	 * @param ctx the parse tree
 	 */
-	void enterReference(Spin2Parser.ReferenceContext ctx);
+	void enterVariablesSection(Spin2Parser.VariablesSectionContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#reference}.
+	 * Exit a parse tree produced by {@link Spin2Parser#variablesSection}.
 	 * @param ctx the parse tree
 	 */
-	void exitReference(Spin2Parser.ReferenceContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#filename}.
-	 * @param ctx the parse tree
-	 */
-	void enterFilename(Spin2Parser.FilenameContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#filename}.
-	 * @param ctx the parse tree
-	 */
-	void exitFilename(Spin2Parser.FilenameContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#variables}.
-	 * @param ctx the parse tree
-	 */
-	void enterVariables(Spin2Parser.VariablesContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#variables}.
-	 * @param ctx the parse tree
-	 */
-	void exitVariables(Spin2Parser.VariablesContext ctx);
+	void exitVariablesSection(Spin2Parser.VariablesSectionContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#variable}.
 	 * @param ctx the parse tree
