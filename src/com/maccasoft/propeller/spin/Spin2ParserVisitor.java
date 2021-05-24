@@ -113,6 +113,42 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunction(Spin2Parser.FunctionContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#repeatLoop}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRepeatLoop(Spin2Parser.RepeatLoopContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#conditional}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitConditional(Spin2Parser.ConditionalContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#elseConditional}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitElseConditional(Spin2Parser.ElseConditionalContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#caseConditional}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCaseConditional(Spin2Parser.CaseConditionalContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#caseConditionalMatch}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCaseConditionalMatch(Spin2Parser.CaseConditionalMatchContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#caseConditionalOther}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCaseConditionalOther(Spin2Parser.CaseConditionalOtherContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#data}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

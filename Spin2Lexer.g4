@@ -34,6 +34,8 @@ MINUS_MINUS: '--' ;
 ASSIGN:      ':=' ;
 ADD_ASSIGN:  '+=' ;
 
+ELLIPSIS:    '..' ;
+
 BIN_AND:     '&' ;
 BIN_OR :     '|' ;
 BIN_XOR:     '^' ;
@@ -68,9 +70,24 @@ PRI_START: 'PRI' | 'pri' ;
 DAT_START: 'DAT' | 'dat' ;
 
 REPEAT: 'REPEAT' | 'repeat' ;
+FROM: 'FROM' | 'from' ;
+TO: 'TO' | 'to' ;
+STEP: 'STEP' | 'step' ;
+WHILE: 'WHILE' | 'while' ;
+UNTIL: 'UNTIL' | 'until' ;
+
+ELSEIFNOT: 'ELSEIFNOT' | 'elseifnot' ;
+ELSEIF:    'ELSEIF'    | 'elseif' ;
+ELSE:      'ELSE'      | 'else' ;
+IFNOT:     'IFNOT'     | 'ifnot' ;
+IF:        'IF'        | 'if' ;
+
+CASE: 'CASE' | 'case' ;
+OTHER: 'OTHER' | 'other' ;
 
 ADDPINS: 'ADDPINS' | 'addpins' ;
 ADDBITS: 'ADDBITS' | 'addbits' ;
+FUNCTIONS: 'ROUND' | 'round' | 'FLOAT' | 'float' | 'TRUNC' | 'trunc' ;
 
 ORG: 'ORG' | 'org' ;
 ORGH: 'ORGH' | 'orgh' ;

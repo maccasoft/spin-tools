@@ -178,6 +178,66 @@ public interface Spin2ParserListener extends ParseTreeListener {
 	 */
 	void exitFunction(Spin2Parser.FunctionContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#repeatLoop}.
+	 * @param ctx the parse tree
+	 */
+	void enterRepeatLoop(Spin2Parser.RepeatLoopContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#repeatLoop}.
+	 * @param ctx the parse tree
+	 */
+	void exitRepeatLoop(Spin2Parser.RepeatLoopContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#conditional}.
+	 * @param ctx the parse tree
+	 */
+	void enterConditional(Spin2Parser.ConditionalContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#conditional}.
+	 * @param ctx the parse tree
+	 */
+	void exitConditional(Spin2Parser.ConditionalContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#elseConditional}.
+	 * @param ctx the parse tree
+	 */
+	void enterElseConditional(Spin2Parser.ElseConditionalContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#elseConditional}.
+	 * @param ctx the parse tree
+	 */
+	void exitElseConditional(Spin2Parser.ElseConditionalContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#caseConditional}.
+	 * @param ctx the parse tree
+	 */
+	void enterCaseConditional(Spin2Parser.CaseConditionalContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#caseConditional}.
+	 * @param ctx the parse tree
+	 */
+	void exitCaseConditional(Spin2Parser.CaseConditionalContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#caseConditionalMatch}.
+	 * @param ctx the parse tree
+	 */
+	void enterCaseConditionalMatch(Spin2Parser.CaseConditionalMatchContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#caseConditionalMatch}.
+	 * @param ctx the parse tree
+	 */
+	void exitCaseConditionalMatch(Spin2Parser.CaseConditionalMatchContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#caseConditionalOther}.
+	 * @param ctx the parse tree
+	 */
+	void enterCaseConditionalOther(Spin2Parser.CaseConditionalOtherContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#caseConditionalOther}.
+	 * @param ctx the parse tree
+	 */
+	void exitCaseConditionalOther(Spin2Parser.CaseConditionalOtherContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#data}.
 	 * @param ctx the parse tree
 	 */

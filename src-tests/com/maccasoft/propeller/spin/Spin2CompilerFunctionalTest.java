@@ -131,11 +131,11 @@ class Spin2CompilerFunctionalTest {
             + "    _clkfreq = 160_000_000\n"
             + "\n"
             + "PUB main() | ct\n"
-            //+ "\n"
-            //+ "    ct := getct()                   ' get current timer\n"
-            //+ "    repeat\n"
-            //+ "        pint(56)                    ' toggle pin 56\n"
-            //+ "        waitct(ct += _clkfreq / 2)  ' wait half second"
+            + "\n"
+            + "    ct := getct()                   ' get current timer\n"
+            + "    repeat\n"
+            + "        pint(56)                    ' toggle pin 56\n"
+            + "        waitct(ct += _clkfreq / 2)  ' wait half second"
             + "\n";
 
         byte[] expected = new byte[] {};

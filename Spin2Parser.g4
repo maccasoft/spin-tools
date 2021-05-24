@@ -105,7 +105,7 @@ PRI StrCheck(StrPtrA, StrPtrB) : Pass | i, BYTE Str[64]
 
 */
 
-method: (PUB_START | PRI_START) name=IDENTIFIER OPEN_PAREN (parameters)? CLOSE_PAREN (':' result)? ('|' localvars)? NL+ (statement)* ;
+method: (PUB_START | PRI_START) name=IDENTIFIER OPEN_PAREN (parameters)? CLOSE_PAREN (':' result)? ('|' localvars)? NL+ INDENT statement* DEDENT ;
 
 parameters: IDENTIFIER (COMMA IDENTIFIER)* ;
 
@@ -116,17 +116,53 @@ localvars: localvar (COMMA localvar)* ;
 localvar: align=ALIGN? vartype=TYPE? name=IDENTIFIER (OPEN_BRACKET count=expression CLOSE_BRACKET)? ; 
 
 statement
-    : REPEAT NL+
-    | assignment
-    | function
+    : assignment NL+
+    | function NL+
+    | repeatLoop
+    | conditional
+    | caseConditional
     ;
 
 assignment
-    : IDENTIFIER (ASSIGN | ADD_ASSIGN) (function | IDENTIFIER | expression) NL+
+    : IDENTIFIER (COMMA IDENTIFIER)* (ASSIGN | ADD_ASSIGN) (function | expression)
     ;
 
 function
-    : IDENTIFIER OPEN_PAREN (IDENTIFIER (COMMA IDENTIFIER)* )? CLOSE_PAREN NL+
+    : BACKSLASH? IDENTIFIER OPEN_PAREN (assignment | function | expression (COMMA assignment | function | expression)* )? CLOSE_PAREN
+    ;
+
+repeatLoop
+    : REPEAT NL+ INDENT statement* DEDENT WHILE (function | expression) NL+
+    | REPEAT NL+ INDENT statement* DEDENT UNTIL (function | expression) NL+
+    | REPEAT FROM (function | expression) (TO (function | expression) (STEP (function | expression))? )? NL+ INDENT statement* DEDENT
+    | REPEAT WHILE (function | expression) NL+ INDENT statement* DEDENT
+    | REPEAT UNTIL (function | expression) NL+ INDENT statement* DEDENT
+    | REPEAT (function | expression)? NL+ INDENT statement* DEDENT
+    ;
+
+conditional
+    : IF (function | expression)? NL+ INDENT statement* DEDENT elseConditional*
+    | IFNOT (function | expression)? NL+ INDENT statement* DEDENT elseConditional*
+    ;
+
+elseConditional
+    : ELSE (function | expression)? NL+ INDENT statement* DEDENT
+    | ELSEIF (function | expression)? NL+ INDENT statement* DEDENT
+    | ELSEIFNOT (function | expression)? NL+ INDENT statement* DEDENT
+    ;
+
+caseConditional
+    : CASE (function | expression)? NL+ INDENT statement* DEDENT (caseConditionalMatch | caseConditionalOther)*
+    ;
+
+caseConditionalMatch
+    : expression (ELLIPSIS expression)? COLON (assignment | function) NL+ (INDENT statement* DEDENT)?
+    | expression (ELLIPSIS expression)? (COMMA expression (ELLIPSIS expression)? )* COLON NL+ (INDENT statement* DEDENT)?
+    ;
+
+caseConditionalOther
+    : OTHER COLON (assignment | function) NL+ (INDENT statement* DEDENT)?
+    | OTHER COLON NL+ (INDENT statement* DEDENT)?
     ;
 
 /*
@@ -199,7 +235,7 @@ expression
     | left=expression operator=LOGICAL_XOR right=expression
     | left=expression operator=LOGICAL_OR right=expression
     | left=expression operator=QUESTION middle=expression operator=COLON right=expression
-    | operator=IDENTIFIER OPEN_PAREN exp=expression CLOSE_PAREN
+    | operator=FUNCTIONS OPEN_PAREN exp=expression CLOSE_PAREN
     | OPEN_PAREN exp=expression CLOSE_PAREN
     | AT? atom
     ;
