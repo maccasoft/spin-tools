@@ -25,8 +25,8 @@ public class Spin2Parser extends Parser {
 		MINUS=34, STAR=35, DIV=36, QUESTION=37, COLON=38, TILDE=39, UNDERSCORE=40, 
 		OPEN_BRACKET=41, CLOSE_BRACKET=42, OPEN_PAREN=43, CLOSE_PAREN=44, CON_START=45, 
 		VAR_START=46, OBJ_START=47, PUB_START=48, PRI_START=49, DAT_START=50, 
-		REPEAT=51, ADDPINS=52, FLOAT=53, ROUND=54, TRUNC=55, ORG=56, ORGH=57, 
-		RES=58, ALIGN=59, TYPE=60, PTR=61, CONDITION=62, IDENTIFIER=63;
+		REPEAT=51, ADDPINS=52, ADDBITS=53, ORG=54, ORGH=55, RES=56, ALIGN=57, 
+		TYPE=58, CONDITION=59, IDENTIFIER=60;
 	public static final int
 		RULE_prog = 0, RULE_constantsSection = 1, RULE_constantAssign = 2, RULE_constantEnum = 3, 
 		RULE_constantEnumName = 4, RULE_objects = 5, RULE_object = 6, RULE_reference = 7, 
@@ -67,8 +67,7 @@ public class Spin2Parser extends Parser {
 			"STAR", "DIV", "QUESTION", "COLON", "TILDE", "UNDERSCORE", "OPEN_BRACKET", 
 			"CLOSE_BRACKET", "OPEN_PAREN", "CLOSE_PAREN", "CON_START", "VAR_START", 
 			"OBJ_START", "PUB_START", "PRI_START", "DAT_START", "REPEAT", "ADDPINS", 
-			"FLOAT", "ROUND", "TRUNC", "ORG", "ORGH", "RES", "ALIGN", "TYPE", "PTR", 
-			"CONDITION", "IDENTIFIER"
+			"ADDBITS", "ORG", "ORGH", "RES", "ALIGN", "TYPE", "CONDITION", "IDENTIFIER"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -2311,7 +2310,7 @@ public class Spin2Parser extends Parser {
 				setState(397);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << STRING) | (1L << QUAD) | (1L << BIN) | (1L << HEX) | (1L << NUMBER) | (1L << PLUS_PLUS) | (1L << MINUS_MINUS) | (1L << AT) | (1L << DOLLAR) | (1L << DOT) | (1L << PLUS) | (1L << MINUS) | (1L << TILDE) | (1L << OPEN_PAREN) | (1L << FLOAT) | (1L << ROUND) | (1L << TRUNC) | (1L << PTR) | (1L << IDENTIFIER))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << STRING) | (1L << QUAD) | (1L << BIN) | (1L << HEX) | (1L << NUMBER) | (1L << PLUS_PLUS) | (1L << MINUS_MINUS) | (1L << AT) | (1L << DOLLAR) | (1L << DOT) | (1L << PLUS) | (1L << MINUS) | (1L << TILDE) | (1L << OPEN_PAREN) | (1L << IDENTIFIER))) != 0)) {
 					{
 					setState(392);
 					expression(0);
@@ -3360,9 +3359,7 @@ public class Spin2Parser extends Parser {
 		public TerminalNode TILDE() { return getToken(Spin2Parser.TILDE, 0); }
 		public TerminalNode OPEN_PAREN() { return getToken(Spin2Parser.OPEN_PAREN, 0); }
 		public TerminalNode CLOSE_PAREN() { return getToken(Spin2Parser.CLOSE_PAREN, 0); }
-		public TerminalNode FLOAT() { return getToken(Spin2Parser.FLOAT, 0); }
-		public TerminalNode ROUND() { return getToken(Spin2Parser.ROUND, 0); }
-		public TerminalNode TRUNC() { return getToken(Spin2Parser.TRUNC, 0); }
+		public TerminalNode IDENTIFIER() { return getToken(Spin2Parser.IDENTIFIER, 0); }
 		public AtomContext atom() {
 			return getRuleContext(AtomContext.class,0);
 		}
@@ -3375,6 +3372,7 @@ public class Spin2Parser extends Parser {
 		public TerminalNode STAR() { return getToken(Spin2Parser.STAR, 0); }
 		public TerminalNode DIV() { return getToken(Spin2Parser.DIV, 0); }
 		public TerminalNode ADDPINS() { return getToken(Spin2Parser.ADDPINS, 0); }
+		public TerminalNode ADDBITS() { return getToken(Spin2Parser.ADDBITS, 0); }
 		public TerminalNode LOGICAL_AND() { return getToken(Spin2Parser.LOGICAL_AND, 0); }
 		public TerminalNode LOGICAL_XOR() { return getToken(Spin2Parser.LOGICAL_XOR, 0); }
 		public TerminalNode LOGICAL_OR() { return getToken(Spin2Parser.LOGICAL_OR, 0); }
@@ -3417,10 +3415,8 @@ public class Spin2Parser extends Parser {
 			{
 			setState(627);
 			_errHandler.sync(this);
-			switch (_input.LA(1)) {
-			case PLUS:
-			case MINUS:
-			case TILDE:
+			switch ( getInterpreter().adaptivePredict(_input,97,_ctx) ) {
+			case 1:
 				{
 				setState(612);
 				((ExpressionContext)_localctx).operator = _input.LT(1);
@@ -3437,21 +3433,10 @@ public class Spin2Parser extends Parser {
 				((ExpressionContext)_localctx).exp = expression(15);
 				}
 				break;
-			case FLOAT:
-			case ROUND:
-			case TRUNC:
+			case 2:
 				{
 				setState(614);
-				((ExpressionContext)_localctx).operator = _input.LT(1);
-				_la = _input.LA(1);
-				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << FLOAT) | (1L << ROUND) | (1L << TRUNC))) != 0)) ) {
-					((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
-				}
-				else {
-					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-					_errHandler.reportMatch(this);
-					consume();
-				}
+				((ExpressionContext)_localctx).operator = match(IDENTIFIER);
 				setState(615);
 				match(OPEN_PAREN);
 				setState(616);
@@ -3460,7 +3445,7 @@ public class Spin2Parser extends Parser {
 				match(CLOSE_PAREN);
 				}
 				break;
-			case OPEN_PAREN:
+			case 3:
 				{
 				setState(619);
 				match(OPEN_PAREN);
@@ -3470,18 +3455,7 @@ public class Spin2Parser extends Parser {
 				match(CLOSE_PAREN);
 				}
 				break;
-			case STRING:
-			case QUAD:
-			case BIN:
-			case HEX:
-			case NUMBER:
-			case PLUS_PLUS:
-			case MINUS_MINUS:
-			case AT:
-			case DOLLAR:
-			case DOT:
-			case PTR:
-			case IDENTIFIER:
+			case 4:
 				{
 				setState(624);
 				_errHandler.sync(this);
@@ -3497,8 +3471,6 @@ public class Spin2Parser extends Parser {
 				atom();
 				}
 				break;
-			default:
-				throw new NoViableAltException(this);
 			}
 			_ctx.stop = _input.LT(-1);
 			setState(667);
@@ -3632,7 +3604,16 @@ public class Spin2Parser extends Parser {
 						setState(647);
 						if (!(precpred(_ctx, 8))) throw new FailedPredicateException(this, "precpred(_ctx, 8)");
 						setState(648);
-						((ExpressionContext)_localctx).operator = match(ADDPINS);
+						((ExpressionContext)_localctx).operator = _input.LT(1);
+						_la = _input.LA(1);
+						if ( !(_la==ADDPINS || _la==ADDBITS) ) {
+							((ExpressionContext)_localctx).operator = (Token)_errHandler.recoverInline(this);
+						}
+						else {
+							if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+							_errHandler.reportMatch(this);
+							consume();
+						}
 						setState(649);
 						((ExpressionContext)_localctx).right = expression(9);
 						}
@@ -3724,7 +3705,7 @@ public class Spin2Parser extends Parser {
 		public TerminalNode QUAD() { return getToken(Spin2Parser.QUAD, 0); }
 		public TerminalNode STRING() { return getToken(Spin2Parser.STRING, 0); }
 		public TerminalNode DOLLAR() { return getToken(Spin2Parser.DOLLAR, 0); }
-		public TerminalNode PTR() { return getToken(Spin2Parser.PTR, 0); }
+		public TerminalNode IDENTIFIER() { return getToken(Spin2Parser.IDENTIFIER, 0); }
 		public TerminalNode OPEN_BRACKET() { return getToken(Spin2Parser.OPEN_BRACKET, 0); }
 		public ExpressionContext expression() {
 			return getRuleContext(ExpressionContext.class,0);
@@ -3732,7 +3713,6 @@ public class Spin2Parser extends Parser {
 		public TerminalNode CLOSE_BRACKET() { return getToken(Spin2Parser.CLOSE_BRACKET, 0); }
 		public TerminalNode PLUS_PLUS() { return getToken(Spin2Parser.PLUS_PLUS, 0); }
 		public TerminalNode MINUS_MINUS() { return getToken(Spin2Parser.MINUS_MINUS, 0); }
-		public TerminalNode IDENTIFIER() { return getToken(Spin2Parser.IDENTIFIER, 0); }
 		public TerminalNode DOT() { return getToken(Spin2Parser.DOT, 0); }
 		public AtomContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -3758,7 +3738,7 @@ public class Spin2Parser extends Parser {
 		enterRule(_localctx, 58, RULE_atom);
 		int _la;
 		try {
-			setState(712);
+			setState(711);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,105,_ctx) ) {
 			case 1:
@@ -3807,36 +3787,29 @@ public class Spin2Parser extends Parser {
 				enterOuterAlt(_localctx, 7);
 				{
 				setState(676);
-				match(PTR);
-				}
-				break;
-			case 8:
-				enterOuterAlt(_localctx, 8);
-				{
-				setState(677);
-				match(PTR);
-				setState(682);
+				match(IDENTIFIER);
+				setState(681);
 				_errHandler.sync(this);
 				switch ( getInterpreter().adaptivePredict(_input,100,_ctx) ) {
 				case 1:
 					{
-					setState(678);
+					setState(677);
 					match(OPEN_BRACKET);
-					setState(679);
+					setState(678);
 					expression(0);
-					setState(680);
+					setState(679);
 					match(CLOSE_BRACKET);
 					}
 					break;
 				}
 				}
 				break;
-			case 9:
-				enterOuterAlt(_localctx, 9);
+			case 8:
+				enterOuterAlt(_localctx, 8);
 				{
+				setState(683);
+				match(IDENTIFIER);
 				setState(684);
-				match(PTR);
-				setState(685);
 				_la = _input.LA(1);
 				if ( !(_la==PLUS_PLUS || _la==MINUS_MINUS) ) {
 				_errHandler.recoverInline(this);
@@ -3846,41 +3819,56 @@ public class Spin2Parser extends Parser {
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				setState(690);
+				setState(689);
 				_errHandler.sync(this);
 				switch ( getInterpreter().adaptivePredict(_input,101,_ctx) ) {
 				case 1:
 					{
-					setState(686);
+					setState(685);
 					match(OPEN_BRACKET);
-					setState(687);
+					setState(686);
 					expression(0);
-					setState(688);
+					setState(687);
 					match(CLOSE_BRACKET);
 					}
 					break;
 				}
 				}
 				break;
-			case 10:
-				enterOuterAlt(_localctx, 10);
+			case 9:
+				enterOuterAlt(_localctx, 9);
 				{
-				setState(692);
-				match(PTR);
-				setState(697);
+				setState(691);
+				match(IDENTIFIER);
+				setState(696);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==OPEN_BRACKET) {
 					{
-					setState(693);
+					setState(692);
 					match(OPEN_BRACKET);
-					setState(694);
+					setState(693);
 					expression(0);
-					setState(695);
+					setState(694);
 					match(CLOSE_BRACKET);
 					}
 				}
 
+				setState(698);
+				_la = _input.LA(1);
+				if ( !(_la==PLUS_PLUS || _la==MINUS_MINUS) ) {
+				_errHandler.recoverInline(this);
+				}
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
+					consume();
+				}
+				}
+				break;
+			case 10:
+				enterOuterAlt(_localctx, 10);
+				{
 				setState(699);
 				_la = _input.LA(1);
 				if ( !(_la==PLUS_PLUS || _la==MINUS_MINUS) ) {
@@ -3891,53 +3879,38 @@ public class Spin2Parser extends Parser {
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				}
-				break;
-			case 11:
-				enterOuterAlt(_localctx, 11);
-				{
 				setState(700);
-				_la = _input.LA(1);
-				if ( !(_la==PLUS_PLUS || _la==MINUS_MINUS) ) {
-				_errHandler.recoverInline(this);
-				}
-				else {
-					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-					_errHandler.reportMatch(this);
-					consume();
-				}
-				setState(701);
-				match(PTR);
-				setState(706);
+				match(IDENTIFIER);
+				setState(705);
 				_errHandler.sync(this);
 				switch ( getInterpreter().adaptivePredict(_input,103,_ctx) ) {
 				case 1:
 					{
-					setState(702);
+					setState(701);
 					match(OPEN_BRACKET);
-					setState(703);
+					setState(702);
 					expression(0);
-					setState(704);
+					setState(703);
 					match(CLOSE_BRACKET);
 					}
 					break;
 				}
 				}
 				break;
-			case 12:
-				enterOuterAlt(_localctx, 12);
+			case 11:
+				enterOuterAlt(_localctx, 11);
 				{
-				setState(709);
+				setState(708);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==DOT) {
 					{
-					setState(708);
+					setState(707);
 					match(DOT);
 					}
 				}
 
-				setState(711);
+				setState(710);
 				match(IDENTIFIER);
 				}
 				break;
@@ -4026,7 +3999,7 @@ public class Spin2Parser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3A\u02cd\4\2\t\2\4"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3>\u02cc\4\2\t\2\4"+
 		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t"+
 		"\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -4086,19 +4059,19 @@ public class Spin2Parser extends Parser {
 		"\3\36\3\36\3\36\3\36\3\36\3\36\3\36\3\36\3\36\3\36\3\36\3\36\3\36\3\36"+
 		"\3\36\3\36\3\36\3\36\3\36\3\36\3\36\3\36\3\36\7\36\u029c\n\36\f\36\16"+
 		"\36\u029f\13\36\3\37\3\37\3\37\3\37\3\37\3\37\3\37\3\37\3\37\3\37\3\37"+
-		"\3\37\5\37\u02ad\n\37\3\37\3\37\3\37\3\37\3\37\3\37\5\37\u02b5\n\37\3"+
-		"\37\3\37\3\37\3\37\3\37\5\37\u02bc\n\37\3\37\3\37\3\37\3\37\3\37\3\37"+
-		"\3\37\5\37\u02c5\n\37\3\37\5\37\u02c8\n\37\3\37\5\37\u02cb\n\37\3\37\2"+
-		"\3: \2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60\62\64\668:<\2"+
-		"\r\4\2\4\4\7\7\3\2\62\63\3\2\26\27\3\2:;\4\2\21\21\34\34\4\2#$))\3\2\67"+
-		"9\3\2\22\23\3\2%&\3\2#$\3\2\24\25\2\u0339\2A\3\2\2\2\4Q\3\2\2\2\6t\3\2"+
+		"\5\37\u02ac\n\37\3\37\3\37\3\37\3\37\3\37\3\37\5\37\u02b4\n\37\3\37\3"+
+		"\37\3\37\3\37\3\37\5\37\u02bb\n\37\3\37\3\37\3\37\3\37\3\37\3\37\3\37"+
+		"\5\37\u02c4\n\37\3\37\5\37\u02c7\n\37\3\37\5\37\u02ca\n\37\3\37\2\3: "+
+		"\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60\62\64\668:<\2\r\4"+
+		"\2\4\4\7\7\3\2\62\63\3\2\26\27\3\289\4\2\21\21\34\34\4\2#$))\3\2\22\23"+
+		"\3\2%&\3\2#$\3\2\66\67\3\2\24\25\2\u0337\2A\3\2\2\2\4Q\3\2\2\2\6t\3\2"+
 		"\2\2\b\u0083\3\2\2\2\n\u009e\3\2\2\2\f\u00af\3\2\2\2\16\u00bf\3\2\2\2"+
 		"\20\u00d0\3\2\2\2\22\u00d2\3\2\2\2\24\u00d5\3\2\2\2\26\u00e5\3\2\2\2\30"+
 		"\u00ff\3\2\2\2\32\u0119\3\2\2\2\34\u0121\3\2\2\2\36\u0129\3\2\2\2 \u0132"+
 		"\3\2\2\2\"\u0146\3\2\2\2$\u0148\3\2\2\2&\u0154\3\2\2\2(\u0167\3\2\2\2"+
 		"*\u0244\3\2\2\2,\u0246\3\2\2\2.\u024c\3\2\2\2\60\u024f\3\2\2\2\62\u0253"+
 		"\3\2\2\2\64\u0257\3\2\2\2\66\u025b\3\2\2\28\u025e\3\2\2\2:\u0275\3\2\2"+
-		"\2<\u02ca\3\2\2\2>@\7\7\2\2?>\3\2\2\2@C\3\2\2\2A?\3\2\2\2AB\3\2\2\2BK"+
+		"\2<\u02c9\3\2\2\2>@\7\7\2\2?>\3\2\2\2@C\3\2\2\2A?\3\2\2\2AB\3\2\2\2BK"+
 		"\3\2\2\2CA\3\2\2\2DJ\5\4\3\2EJ\5\f\7\2FJ\5\24\13\2GJ\5\30\r\2HJ\5(\25"+
 		"\2ID\3\2\2\2IE\3\2\2\2IF\3\2\2\2IG\3\2\2\2IH\3\2\2\2JM\3\2\2\2KI\3\2\2"+
 		"\2KL\3\2\2\2LN\3\2\2\2MK\3\2\2\2NO\7\2\2\3O\3\3\2\2\2PR\7/\2\2QP\3\2\2"+
@@ -4108,7 +4081,7 @@ public class Spin2Parser extends Parser {
 		"\5\2di\5\n\6\2ef\7!\2\2fh\5\n\6\2ge\3\2\2\2hk\3\2\2\2ig\3\2\2\2ij\3\2"+
 		"\2\2jm\3\2\2\2ki\3\2\2\2l[\3\2\2\2lc\3\2\2\2ld\3\2\2\2mp\3\2\2\2nl\3\2"+
 		"\2\2no\3\2\2\2o\5\3\2\2\2pn\3\2\2\2qs\7\3\2\2rq\3\2\2\2sv\3\2\2\2tr\3"+
-		"\2\2\2tu\3\2\2\2uw\3\2\2\2vt\3\2\2\2wx\7A\2\2xy\7\37\2\2y}\5:\36\2z|\t"+
+		"\2\2\2tu\3\2\2\2uw\3\2\2\2vt\3\2\2\2wx\7>\2\2xy\7\37\2\2y}\5:\36\2z|\t"+
 		"\2\2\2{z\3\2\2\2|\177\3\2\2\2}{\3\2\2\2}~\3\2\2\2~\7\3\2\2\2\177}\3\2"+
 		"\2\2\u0080\u0082\7\3\2\2\u0081\u0080\3\2\2\2\u0082\u0085\3\2\2\2\u0083"+
 		"\u0081\3\2\2\2\u0083\u0084\3\2\2\2\u0084\u0086\3\2\2\2\u0085\u0083\3\2"+
@@ -4120,7 +4093,7 @@ public class Spin2Parser extends Parser {
 		"\u0097\5\n\6\2\u0096\u0094\3\2\2\2\u0097\u009a\3\2\2\2\u0098\u0096\3\2"+
 		"\2\2\u0098\u0099\3\2\2\2\u0099\t\3\2\2\2\u009a\u0098\3\2\2\2\u009b\u009d"+
 		"\7\3\2\2\u009c\u009b\3\2\2\2\u009d\u00a0\3\2\2\2\u009e\u009c\3\2\2\2\u009e"+
-		"\u009f\3\2\2\2\u009f\u00a1\3\2\2\2\u00a0\u009e\3\2\2\2\u00a1\u00a6\7A"+
+		"\u009f\3\2\2\2\u009f\u00a1\3\2\2\2\u00a0\u009e\3\2\2\2\u00a1\u00a6\7>"+
 		"\2\2\u00a2\u00a3\7+\2\2\u00a3\u00a4\5:\36\2\u00a4\u00a5\7,\2\2\u00a5\u00a7"+
 		"\3\2\2\2\u00a6\u00a2\3\2\2\2\u00a6\u00a7\3\2\2\2\u00a7\u00ab\3\2\2\2\u00a8"+
 		"\u00aa\t\2\2\2\u00a9\u00a8\3\2\2\2\u00aa\u00ad\3\2\2\2\u00ab\u00a9\3\2"+
@@ -4135,23 +4108,23 @@ public class Spin2Parser extends Parser {
 		"\3\2\2\2\u00c5\u00c8\3\2\2\2\u00c6\u00c4\3\2\2\2\u00c6\u00c7\3\2\2\2\u00c7"+
 		"\u00c9\3\2\2\2\u00c8\u00c6\3\2\2\2\u00c9\u00ca\7(\2\2\u00ca\u00cc\5\22"+
 		"\n\2\u00cb\u00cd\7\7\2\2\u00cc\u00cb\3\2\2\2\u00cd\u00ce\3\2\2\2\u00ce"+
-		"\u00cc\3\2\2\2\u00ce\u00cf\3\2\2\2\u00cf\17\3\2\2\2\u00d0\u00d1\7A\2\2"+
+		"\u00cc\3\2\2\2\u00ce\u00cf\3\2\2\2\u00cf\17\3\2\2\2\u00d0\u00d1\7>\2\2"+
 		"\u00d1\21\3\2\2\2\u00d2\u00d3\7\t\2\2\u00d3\23\3\2\2\2\u00d4\u00d6\7\60"+
 		"\2\2\u00d5\u00d4\3\2\2\2\u00d6\u00d7\3\2\2\2\u00d7\u00d5\3\2\2\2\u00d7"+
 		"\u00d8\3\2\2\2\u00d8\u00dc\3\2\2\2\u00d9\u00db\7\7\2\2\u00da\u00d9\3\2"+
 		"\2\2\u00db\u00de\3\2\2\2\u00dc\u00da\3\2\2\2\u00dc\u00dd\3\2\2\2\u00dd"+
 		"\u00e2\3\2\2\2\u00de\u00dc\3\2\2\2\u00df\u00e1\5\26\f\2\u00e0\u00df\3"+
 		"\2\2\2\u00e1\u00e4\3\2\2\2\u00e2\u00e0\3\2\2\2\u00e2\u00e3\3\2\2\2\u00e3"+
-		"\25\3\2\2\2\u00e4\u00e2\3\2\2\2\u00e5\u00e6\7>\2\2\u00e6\u00eb\7A\2\2"+
+		"\25\3\2\2\2\u00e4\u00e2\3\2\2\2\u00e5\u00e6\7<\2\2\u00e6\u00eb\7>\2\2"+
 		"\u00e7\u00e8\7+\2\2\u00e8\u00e9\5:\36\2\u00e9\u00ea\7,\2\2\u00ea\u00ec"+
 		"\3\2\2\2\u00eb\u00e7\3\2\2\2\u00eb\u00ec\3\2\2\2\u00ec\u00f7\3\2\2\2\u00ed"+
-		"\u00ee\7!\2\2\u00ee\u00f3\7A\2\2\u00ef\u00f0\7+\2\2\u00f0\u00f1\5:\36"+
+		"\u00ee\7!\2\2\u00ee\u00f3\7>\2\2\u00ef\u00f0\7+\2\2\u00f0\u00f1\5:\36"+
 		"\2\u00f1\u00f2\7,\2\2\u00f2\u00f4\3\2\2\2\u00f3\u00ef\3\2\2\2\u00f3\u00f4"+
 		"\3\2\2\2\u00f4\u00f6\3\2\2\2\u00f5\u00ed\3\2\2\2\u00f6\u00f9\3\2\2\2\u00f7"+
 		"\u00f5\3\2\2\2\u00f7\u00f8\3\2\2\2\u00f8\u00fb\3\2\2\2\u00f9\u00f7\3\2"+
 		"\2\2\u00fa\u00fc\7\7\2\2\u00fb\u00fa\3\2\2\2\u00fc\u00fd\3\2\2\2\u00fd"+
 		"\u00fb\3\2\2\2\u00fd\u00fe\3\2\2\2\u00fe\27\3\2\2\2\u00ff\u0100\t\3\2"+
-		"\2\u0100\u0101\7A\2\2\u0101\u0103\7-\2\2\u0102\u0104\5\32\16\2\u0103\u0102"+
+		"\2\u0100\u0101\7>\2\2\u0101\u0103\7-\2\2\u0102\u0104\5\32\16\2\u0103\u0102"+
 		"\3\2\2\2\u0103\u0104\3\2\2\2\u0104\u0105\3\2\2\2\u0105\u0108\7.\2\2\u0106"+
 		"\u0107\7(\2\2\u0107\u0109\5\34\17\2\u0108\u0106\3\2\2\2\u0108\u0109\3"+
 		"\2\2\2\u0109\u010c\3\2\2\2\u010a\u010b\7\31\2\2\u010b\u010d\5\36\20\2"+
@@ -4159,27 +4132,27 @@ public class Spin2Parser extends Parser {
 		"\7\7\2\2\u010f\u010e\3\2\2\2\u0110\u0111\3\2\2\2\u0111\u010f\3\2\2\2\u0111"+
 		"\u0112\3\2\2\2\u0112\u0116\3\2\2\2\u0113\u0115\5\"\22\2\u0114\u0113\3"+
 		"\2\2\2\u0115\u0118\3\2\2\2\u0116\u0114\3\2\2\2\u0116\u0117\3\2\2\2\u0117"+
-		"\31\3\2\2\2\u0118\u0116\3\2\2\2\u0119\u011e\7A\2\2\u011a\u011b\7!\2\2"+
-		"\u011b\u011d\7A\2\2\u011c\u011a\3\2\2\2\u011d\u0120\3\2\2\2\u011e\u011c"+
+		"\31\3\2\2\2\u0118\u0116\3\2\2\2\u0119\u011e\7>\2\2\u011a\u011b\7!\2\2"+
+		"\u011b\u011d\7>\2\2\u011c\u011a\3\2\2\2\u011d\u0120\3\2\2\2\u011e\u011c"+
 		"\3\2\2\2\u011e\u011f\3\2\2\2\u011f\33\3\2\2\2\u0120\u011e\3\2\2\2\u0121"+
-		"\u0126\7A\2\2\u0122\u0123\7!\2\2\u0123\u0125\7A\2\2\u0124\u0122\3\2\2"+
+		"\u0126\7>\2\2\u0122\u0123\7!\2\2\u0123\u0125\7>\2\2\u0124\u0122\3\2\2"+
 		"\2\u0125\u0128\3\2\2\2\u0126\u0124\3\2\2\2\u0126\u0127\3\2\2\2\u0127\35"+
 		"\3\2\2\2\u0128\u0126\3\2\2\2\u0129\u012e\5 \21\2\u012a\u012b\7!\2\2\u012b"+
 		"\u012d\5 \21\2\u012c\u012a\3\2\2\2\u012d\u0130\3\2\2\2\u012e\u012c\3\2"+
 		"\2\2\u012e\u012f\3\2\2\2\u012f\37\3\2\2\2\u0130\u012e\3\2\2\2\u0131\u0133"+
-		"\7=\2\2\u0132\u0131\3\2\2\2\u0132\u0133\3\2\2\2\u0133\u0135\3\2\2\2\u0134"+
-		"\u0136\7>\2\2\u0135\u0134\3\2\2\2\u0135\u0136\3\2\2\2\u0136\u0137\3\2"+
-		"\2\2\u0137\u013c\7A\2\2\u0138\u0139\7+\2\2\u0139\u013a\5:\36\2\u013a\u013b"+
+		"\7;\2\2\u0132\u0131\3\2\2\2\u0132\u0133\3\2\2\2\u0133\u0135\3\2\2\2\u0134"+
+		"\u0136\7<\2\2\u0135\u0134\3\2\2\2\u0135\u0136\3\2\2\2\u0136\u0137\3\2"+
+		"\2\2\u0137\u013c\7>\2\2\u0138\u0139\7+\2\2\u0139\u013a\5:\36\2\u013a\u013b"+
 		"\7,\2\2\u013b\u013d\3\2\2\2\u013c\u0138\3\2\2\2\u013c\u013d\3\2\2\2\u013d"+
 		"!\3\2\2\2\u013e\u0140\7\65\2\2\u013f\u0141\7\7\2\2\u0140\u013f\3\2\2\2"+
 		"\u0141\u0142\3\2\2\2\u0142\u0140\3\2\2\2\u0142\u0143\3\2\2\2\u0143\u0147"+
 		"\3\2\2\2\u0144\u0147\5$\23\2\u0145\u0147\5&\24\2\u0146\u013e\3\2\2\2\u0146"+
-		"\u0144\3\2\2\2\u0146\u0145\3\2\2\2\u0147#\3\2\2\2\u0148\u0149\7A\2\2\u0149"+
-		"\u014d\t\4\2\2\u014a\u014e\5&\24\2\u014b\u014e\7A\2\2\u014c\u014e\5:\36"+
+		"\u0144\3\2\2\2\u0146\u0145\3\2\2\2\u0147#\3\2\2\2\u0148\u0149\7>\2\2\u0149"+
+		"\u014d\t\4\2\2\u014a\u014e\5&\24\2\u014b\u014e\7>\2\2\u014c\u014e\5:\36"+
 		"\2\u014d\u014a\3\2\2\2\u014d\u014b\3\2\2\2\u014d\u014c\3\2\2\2\u014e\u0150"+
 		"\3\2\2\2\u014f\u0151\7\7\2\2\u0150\u014f\3\2\2\2\u0151\u0152\3\2\2\2\u0152"+
-		"\u0150\3\2\2\2\u0152\u0153\3\2\2\2\u0153%\3\2\2\2\u0154\u0155\7A\2\2\u0155"+
-		"\u015e\7-\2\2\u0156\u015b\7A\2\2\u0157\u0158\7!\2\2\u0158\u015a\7A\2\2"+
+		"\u0150\3\2\2\2\u0152\u0153\3\2\2\2\u0153%\3\2\2\2\u0154\u0155\7>\2\2\u0155"+
+		"\u015e\7-\2\2\u0156\u015b\7>\2\2\u0157\u0158\7!\2\2\u0158\u015a\7>\2\2"+
 		"\u0159\u0157\3\2\2\2\u015a\u015d\3\2\2\2\u015b\u0159\3\2\2\2\u015b\u015c"+
 		"\3\2\2\2\u015c\u015f\3\2\2\2\u015d\u015b\3\2\2\2\u015e\u0156\3\2\2\2\u015e"+
 		"\u015f\3\2\2\2\u015f\u0160\3\2\2\2\u0160\u0162\7.\2\2\u0161\u0163\7\7"+
@@ -4205,7 +4178,7 @@ public class Spin2Parser extends Parser {
 		"\2\2\u019b\u0199\3\2\2\2\u019c\u019e\7\3\2\2\u019d\u019c\3\2\2\2\u019e"+
 		"\u01a1\3\2\2\2\u019f\u019d\3\2\2\2\u019f\u01a0\3\2\2\2\u01a0\u01a3\3\2"+
 		"\2\2\u01a1\u019f\3\2\2\2\u01a2\u01a4\5,\27\2\u01a3\u01a2\3\2\2\2\u01a3"+
-		"\u01a4\3\2\2\2\u01a4\u01a5\3\2\2\2\u01a5\u01a6\7>\2\2\u01a6\u01ab\58\35"+
+		"\u01a4\3\2\2\2\u01a4\u01a5\3\2\2\2\u01a5\u01a6\7<\2\2\u01a6\u01ab\58\35"+
 		"\2\u01a7\u01a8\7!\2\2\u01a8\u01aa\58\35\2\u01a9\u01a7\3\2\2\2\u01aa\u01ad"+
 		"\3\2\2\2\u01ab\u01a9\3\2\2\2\u01ab\u01ac\3\2\2\2\u01ac\u01af\3\2\2\2\u01ad"+
 		"\u01ab\3\2\2\2\u01ae\u01b0\7\7\2\2\u01af\u01ae\3\2\2\2\u01b0\u01b1\3\2"+
@@ -4215,7 +4188,7 @@ public class Spin2Parser extends Parser {
 		"\u01bb\7\3\2\2\u01ba\u01b9\3\2\2\2\u01bb\u01be\3\2\2\2\u01bc\u01ba\3\2"+
 		"\2\2\u01bc\u01bd\3\2\2\2\u01bd\u01c0\3\2\2\2\u01be\u01bc\3\2\2\2\u01bf"+
 		"\u01c1\5,\27\2\u01c0\u01bf\3\2\2\2\u01c0\u01c1\3\2\2\2\u01c1\u01c2\3\2"+
-		"\2\2\u01c2\u01c3\7<\2\2\u01c3\u01c5\58\35\2\u01c4\u01c6\7\7\2\2\u01c5"+
+		"\2\2\u01c2\u01c3\7:\2\2\u01c3\u01c5\58\35\2\u01c4\u01c6\7\7\2\2\u01c5"+
 		"\u01c4\3\2\2\2\u01c6\u01c7\3\2\2\2\u01c7\u01c5\3\2\2\2\u01c7\u01c8\3\2"+
 		"\2\2\u01c8\u01cc\3\2\2\2\u01c9\u01cb\t\2\2\2\u01ca\u01c9\3\2\2\2\u01cb"+
 		"\u01ce\3\2\2\2\u01cc\u01ca\3\2\2\2\u01cc\u01cd\3\2\2\2\u01cd\u0245\3\2"+
@@ -4263,27 +4236,27 @@ public class Spin2Parser extends Parser {
 		"\u0186\3\2\2\2\u0244\u019f\3\2\2\2\u0244\u01bc\3\2\2\2\u0244\u01d2\3\2"+
 		"\2\2\u0244\u01f2\3\2\2\2\u0244\u0210\3\2\2\2\u0244\u022c\3\2\2\2\u0245"+
 		"+\3\2\2\2\u0246\u0248\6\27\2\2\u0247\u0249\7 \2\2\u0248\u0247\3\2\2\2"+
-		"\u0248\u0249\3\2\2\2\u0249\u024a\3\2\2\2\u024a\u024b\7A\2\2\u024b-\3\2"+
-		"\2\2\u024c\u024d\6\30\3\2\u024d\u024e\7@\2\2\u024e/\3\2\2\2\u024f\u0250"+
-		"\6\31\4\2\u0250\u0251\7A\2\2\u0251\61\3\2\2\2\u0252\u0254\5\64\33\2\u0253"+
+		"\u0248\u0249\3\2\2\2\u0249\u024a\3\2\2\2\u024a\u024b\7>\2\2\u024b-\3\2"+
+		"\2\2\u024c\u024d\6\30\3\2\u024d\u024e\7=\2\2\u024e/\3\2\2\2\u024f\u0250"+
+		"\6\31\4\2\u0250\u0251\7>\2\2\u0251\61\3\2\2\2\u0252\u0254\5\64\33\2\u0253"+
 		"\u0252\3\2\2\2\u0253\u0254\3\2\2\2\u0254\u0255\3\2\2\2\u0255\u0256\5:"+
 		"\36\2\u0256\63\3\2\2\2\u0257\u0259\t\6\2\2\u0258\u025a\7\"\2\2\u0259\u0258"+
 		"\3\2\2\2\u0259\u025a\3\2\2\2\u025a\65\3\2\2\2\u025b\u025c\6\34\5\2\u025c"+
-		"\u025d\7A\2\2\u025d\67\3\2\2\2\u025e\u0263\5:\36\2\u025f\u0260\7+\2\2"+
+		"\u025d\7>\2\2\u025d\67\3\2\2\2\u025e\u0263\5:\36\2\u025f\u0260\7+\2\2"+
 		"\u0260\u0261\5:\36\2\u0261\u0262\7,\2\2\u0262\u0264\3\2\2\2\u0263\u025f"+
 		"\3\2\2\2\u0263\u0264\3\2\2\2\u02649\3\2\2\2\u0265\u0266\b\36\1\2\u0266"+
-		"\u0267\t\7\2\2\u0267\u0276\5:\36\21\u0268\u0269\t\b\2\2\u0269\u026a\7"+
-		"-\2\2\u026a\u026b\5:\36\2\u026b\u026c\7.\2\2\u026c\u0276\3\2\2\2\u026d"+
+		"\u0267\t\7\2\2\u0267\u0276\5:\36\21\u0268\u0269\7>\2\2\u0269\u026a\7-"+
+		"\2\2\u026a\u026b\5:\36\2\u026b\u026c\7.\2\2\u026c\u0276\3\2\2\2\u026d"+
 		"\u026e\7-\2\2\u026e\u026f\5:\36\2\u026f\u0270\7.\2\2\u0270\u0276\3\2\2"+
 		"\2\u0271\u0273\7\33\2\2\u0272\u0271\3\2\2\2\u0272\u0273\3\2\2\2\u0273"+
 		"\u0274\3\2\2\2\u0274\u0276\5<\37\2\u0275\u0265\3\2\2\2\u0275\u0268\3\2"+
 		"\2\2\u0275\u026d\3\2\2\2\u0275\u0272\3\2\2\2\u0276\u029d\3\2\2\2\u0277"+
-		"\u0278\f\20\2\2\u0278\u0279\t\t\2\2\u0279\u029c\5:\36\21\u027a\u027b\f"+
+		"\u0278\f\20\2\2\u0278\u0279\t\b\2\2\u0279\u029c\5:\36\21\u027a\u027b\f"+
 		"\17\2\2\u027b\u027c\7\30\2\2\u027c\u029c\5:\36\20\u027d\u027e\f\16\2\2"+
 		"\u027e\u027f\7\32\2\2\u027f\u029c\5:\36\17\u0280\u0281\f\r\2\2\u0281\u0282"+
-		"\7\31\2\2\u0282\u029c\5:\36\16\u0283\u0284\f\f\2\2\u0284\u0285\t\n\2\2"+
-		"\u0285\u029c\5:\36\r\u0286\u0287\f\13\2\2\u0287\u0288\t\13\2\2\u0288\u029c"+
-		"\5:\36\f\u0289\u028a\f\n\2\2\u028a\u028b\7\66\2\2\u028b\u029c\5:\36\13"+
+		"\7\31\2\2\u0282\u029c\5:\36\16\u0283\u0284\f\f\2\2\u0284\u0285\t\t\2\2"+
+		"\u0285\u029c\5:\36\r\u0286\u0287\f\13\2\2\u0287\u0288\t\n\2\2\u0288\u029c"+
+		"\5:\36\f\u0289\u028a\f\n\2\2\u028a\u028b\t\13\2\2\u028b\u029c\5:\36\13"+
 		"\u028c\u028d\f\t\2\2\u028d\u028e\7\16\2\2\u028e\u029c\5:\36\n\u028f\u0290"+
 		"\f\b\2\2\u0290\u0291\7\20\2\2\u0291\u029c\5:\36\t\u0292\u0293\f\7\2\2"+
 		"\u0293\u0294\7\17\2\2\u0294\u029c\5:\36\b\u0295\u0296\f\6\2\2\u0296\u0297"+
@@ -4292,32 +4265,31 @@ public class Spin2Parser extends Parser {
 		"\2\2\u029b\u0280\3\2\2\2\u029b\u0283\3\2\2\2\u029b\u0286\3\2\2\2\u029b"+
 		"\u0289\3\2\2\2\u029b\u028c\3\2\2\2\u029b\u028f\3\2\2\2\u029b\u0292\3\2"+
 		"\2\2\u029b\u0295\3\2\2\2\u029c\u029f\3\2\2\2\u029d\u029b\3\2\2\2\u029d"+
-		"\u029e\3\2\2\2\u029e;\3\2\2\2\u029f\u029d\3\2\2\2\u02a0\u02cb\7\r\2\2"+
-		"\u02a1\u02cb\7\f\2\2\u02a2\u02cb\7\13\2\2\u02a3\u02cb\7\n\2\2\u02a4\u02cb"+
-		"\7\t\2\2\u02a5\u02cb\7\35\2\2\u02a6\u02cb\7?\2\2\u02a7\u02ac\7?\2\2\u02a8"+
-		"\u02a9\7+\2\2\u02a9\u02aa\5:\36\2\u02aa\u02ab\7,\2\2\u02ab\u02ad\3\2\2"+
-		"\2\u02ac\u02a8\3\2\2\2\u02ac\u02ad\3\2\2\2\u02ad\u02cb\3\2\2\2\u02ae\u02af"+
-		"\7?\2\2\u02af\u02b4\t\f\2\2\u02b0\u02b1\7+\2\2\u02b1\u02b2\5:\36\2\u02b2"+
-		"\u02b3\7,\2\2\u02b3\u02b5\3\2\2\2\u02b4\u02b0\3\2\2\2\u02b4\u02b5\3\2"+
-		"\2\2\u02b5\u02cb\3\2\2\2\u02b6\u02bb\7?\2\2\u02b7\u02b8\7+\2\2\u02b8\u02b9"+
-		"\5:\36\2\u02b9\u02ba\7,\2\2\u02ba\u02bc\3\2\2\2\u02bb\u02b7\3\2\2\2\u02bb"+
-		"\u02bc\3\2\2\2\u02bc\u02bd\3\2\2\2\u02bd\u02cb\t\f\2\2\u02be\u02bf\t\f"+
-		"\2\2\u02bf\u02c4\7?\2\2\u02c0\u02c1\7+\2\2\u02c1\u02c2\5:\36\2\u02c2\u02c3"+
-		"\7,\2\2\u02c3\u02c5\3\2\2\2\u02c4\u02c0\3\2\2\2\u02c4\u02c5\3\2\2\2\u02c5"+
-		"\u02cb\3\2\2\2\u02c6\u02c8\7 \2\2\u02c7\u02c6\3\2\2\2\u02c7\u02c8\3\2"+
-		"\2\2\u02c8\u02c9\3\2\2\2\u02c9\u02cb\7A\2\2\u02ca\u02a0\3\2\2\2\u02ca"+
-		"\u02a1\3\2\2\2\u02ca\u02a2\3\2\2\2\u02ca\u02a3\3\2\2\2\u02ca\u02a4\3\2"+
-		"\2\2\u02ca\u02a5\3\2\2\2\u02ca\u02a6\3\2\2\2\u02ca\u02a7\3\2\2\2\u02ca"+
-		"\u02ae\3\2\2\2\u02ca\u02b6\3\2\2\2\u02ca\u02be\3\2\2\2\u02ca\u02c7\3\2"+
-		"\2\2\u02cb=\3\2\2\2lAIKSX`ilnt}\u0083\u008c\u0091\u0098\u009e\u00a6\u00ab"+
-		"\u00b1\u00b6\u00bc\u00c6\u00ce\u00d7\u00dc\u00e2\u00eb\u00f3\u00f7\u00fd"+
-		"\u0103\u0108\u010c\u0111\u0116\u011e\u0126\u012e\u0132\u0135\u013c\u0142"+
-		"\u0146\u014d\u0152\u015b\u015e\u0164\u0169\u016e\u0174\u017b\u0180\u0186"+
-		"\u018d\u018f\u0194\u0199\u019f\u01a3\u01ab\u01b1\u01b6\u01bc\u01c0\u01c7"+
-		"\u01cc\u01d2\u01d6\u01d9\u01e2\u01e7\u01ec\u01f2\u01f6\u01f9\u0200\u0205"+
-		"\u020a\u0210\u0214\u0217\u021c\u0221\u0226\u022c\u0230\u0233\u0237\u023c"+
-		"\u0241\u0244\u0248\u0253\u0259\u0263\u0272\u0275\u029b\u029d\u02ac\u02b4"+
-		"\u02bb\u02c4\u02c7\u02ca";
+		"\u029e\3\2\2\2\u029e;\3\2\2\2\u029f\u029d\3\2\2\2\u02a0\u02ca\7\r\2\2"+
+		"\u02a1\u02ca\7\f\2\2\u02a2\u02ca\7\13\2\2\u02a3\u02ca\7\n\2\2\u02a4\u02ca"+
+		"\7\t\2\2\u02a5\u02ca\7\35\2\2\u02a6\u02ab\7>\2\2\u02a7\u02a8\7+\2\2\u02a8"+
+		"\u02a9\5:\36\2\u02a9\u02aa\7,\2\2\u02aa\u02ac\3\2\2\2\u02ab\u02a7\3\2"+
+		"\2\2\u02ab\u02ac\3\2\2\2\u02ac\u02ca\3\2\2\2\u02ad\u02ae\7>\2\2\u02ae"+
+		"\u02b3\t\f\2\2\u02af\u02b0\7+\2\2\u02b0\u02b1\5:\36\2\u02b1\u02b2\7,\2"+
+		"\2\u02b2\u02b4\3\2\2\2\u02b3\u02af\3\2\2\2\u02b3\u02b4\3\2\2\2\u02b4\u02ca"+
+		"\3\2\2\2\u02b5\u02ba\7>\2\2\u02b6\u02b7\7+\2\2\u02b7\u02b8\5:\36\2\u02b8"+
+		"\u02b9\7,\2\2\u02b9\u02bb\3\2\2\2\u02ba\u02b6\3\2\2\2\u02ba\u02bb\3\2"+
+		"\2\2\u02bb\u02bc\3\2\2\2\u02bc\u02ca\t\f\2\2\u02bd\u02be\t\f\2\2\u02be"+
+		"\u02c3\7>\2\2\u02bf\u02c0\7+\2\2\u02c0\u02c1\5:\36\2\u02c1\u02c2\7,\2"+
+		"\2\u02c2\u02c4\3\2\2\2\u02c3\u02bf\3\2\2\2\u02c3\u02c4\3\2\2\2\u02c4\u02ca"+
+		"\3\2\2\2\u02c5\u02c7\7 \2\2\u02c6\u02c5\3\2\2\2\u02c6\u02c7\3\2\2\2\u02c7"+
+		"\u02c8\3\2\2\2\u02c8\u02ca\7>\2\2\u02c9\u02a0\3\2\2\2\u02c9\u02a1\3\2"+
+		"\2\2\u02c9\u02a2\3\2\2\2\u02c9\u02a3\3\2\2\2\u02c9\u02a4\3\2\2\2\u02c9"+
+		"\u02a5\3\2\2\2\u02c9\u02a6\3\2\2\2\u02c9\u02ad\3\2\2\2\u02c9\u02b5\3\2"+
+		"\2\2\u02c9\u02bd\3\2\2\2\u02c9\u02c6\3\2\2\2\u02ca=\3\2\2\2lAIKSX`iln"+
+		"t}\u0083\u008c\u0091\u0098\u009e\u00a6\u00ab\u00b1\u00b6\u00bc\u00c6\u00ce"+
+		"\u00d7\u00dc\u00e2\u00eb\u00f3\u00f7\u00fd\u0103\u0108\u010c\u0111\u0116"+
+		"\u011e\u0126\u012e\u0132\u0135\u013c\u0142\u0146\u014d\u0152\u015b\u015e"+
+		"\u0164\u0169\u016e\u0174\u017b\u0180\u0186\u018d\u018f\u0194\u0199\u019f"+
+		"\u01a3\u01ab\u01b1\u01b6\u01bc\u01c0\u01c7\u01cc\u01d2\u01d6\u01d9\u01e2"+
+		"\u01e7\u01ec\u01f2\u01f6\u01f9\u0200\u0205\u020a\u0210\u0214\u0217\u021c"+
+		"\u0221\u0226\u022c\u0230\u0233\u0237\u023c\u0241\u0244\u0248\u0253\u0259"+
+		"\u0263\u0272\u0275\u029b\u029d\u02ab\u02b3\u02ba\u02c3\u02c6\u02c9";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

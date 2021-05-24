@@ -70,9 +70,7 @@ DAT_START: 'DAT' | 'dat' ;
 REPEAT: 'REPEAT' | 'repeat' ;
 
 ADDPINS: 'ADDPINS' | 'addpins' ;
-FLOAT:   'FLOAT' | 'float' ;
-ROUND:   'ROUND' | 'round' ;
-TRUNC:   'TRUNC' | 'trunc' ;
+ADDBITS: 'ADDBITS' | 'addbits' ;
 
 ORG: 'ORG' | 'org' ;
 ORGH: 'ORGH' | 'orgh' ;
@@ -81,8 +79,6 @@ RES: 'RES' | 'res' ;
 ALIGN:   'ALIGNW' | 'alignw' | 'ALIGNL' | 'alignl' ;
 
 TYPE:    'LONG' | 'long' | 'WORD' | 'word' | 'BYTE' | 'byte' ;
-
-PTR:     'PTRA' | 'ptra' | 'PTRB' | 'ptrb' ;
 
 CONDITION
     : ('IF_' | 'if_') ( LETTER | DIGIT )*

@@ -55,14 +55,6 @@ constantEnum
 constantEnumName: INDENT* name=IDENTIFIER (OPEN_BRACKET multiplier=expression CLOSE_BRACKET)? (NL | DEDENT)*;
 
 /*
-constant
-    : INDENT* (COMMA)? name=IDENTIFIER EQUAL exp=expression (NL | DEDENT)*
-    | INDENT* (COMMA)? name=IDENTIFIER (OPEN_BRACKET multiplier=expression CLOSE_BRACKET)? (NL | DEDENT)*
-    | INDENT* POUND start=expression (OPEN_BRACKET step=expression CLOSE_BRACKET)? (NL | DEDENT)*
-    ;
-*/
-
-/*
 
 OBJ  vga       : "VGA_Driver"     'instantiate "VGA_Driver.spin2" as "vga"
 
@@ -165,16 +157,6 @@ buff            RES     16            'reserve 16 registers, advance cog address
 
 data: DAT_START+ NL* dataLine* ;
 
-/*
-dataLine
-    : label NL+ (NL | DEDENT)*
-    | label opcode (argument (COMMA argument (COMMA argument)? )? )? NL+
-    | INDENT* opcode (argument (COMMA argument (COMMA argument)? )? )? NL+ (NL | DEDENT)*
-    | INDENT* directive=(ORG | ORGH) (expression (COMMA expression)? )? NL+ (NL | DEDENT)*
-    | label directive=RES dataValue NL+ (NL | DEDENT)*
-    ;
-*/
-
 dataLine
     : label NL+ (NL | DEDENT)*
     | INDENT* directive=(ORG | ORGH) (expression (COMMA expression)? )? NL+ (NL | DEDENT)*
@@ -216,12 +198,12 @@ expression
     | left=expression operator=BIN_OR right=expression
     | left=expression operator=(STAR | DIV) right=expression
     | left=expression operator=(PLUS | MINUS) right=expression
-    | left=expression operator=ADDPINS right=expression
+    | left=expression operator=(ADDPINS | ADDBITS) right=expression
     | left=expression operator=LOGICAL_AND right=expression
     | left=expression operator=LOGICAL_XOR right=expression
     | left=expression operator=LOGICAL_OR right=expression
     | left=expression operator=QUESTION middle=expression operator=COLON right=expression
-    | operator=(FLOAT | ROUND | TRUNC) OPEN_PAREN exp=expression CLOSE_PAREN
+    | operator=IDENTIFIER OPEN_PAREN exp=expression CLOSE_PAREN
     | OPEN_PAREN exp=expression CLOSE_PAREN
     | AT? atom
     ;
@@ -233,10 +215,9 @@ atom
     | QUAD
     | STRING
     | DOLLAR
-    | PTR
-    | PTR (OPEN_BRACKET expression CLOSE_BRACKET)?
-    | PTR (PLUS_PLUS | MINUS_MINUS) (OPEN_BRACKET expression CLOSE_BRACKET)?
-    | PTR (OPEN_BRACKET expression CLOSE_BRACKET)? (PLUS_PLUS | MINUS_MINUS)
-    | (PLUS_PLUS | MINUS_MINUS) PTR (OPEN_BRACKET expression CLOSE_BRACKET)?
+    | IDENTIFIER (OPEN_BRACKET expression CLOSE_BRACKET)?
+    | IDENTIFIER (PLUS_PLUS | MINUS_MINUS) (OPEN_BRACKET expression CLOSE_BRACKET)?
+    | IDENTIFIER (OPEN_BRACKET expression CLOSE_BRACKET)? (PLUS_PLUS | MINUS_MINUS)
+    | (PLUS_PLUS | MINUS_MINUS) IDENTIFIER (OPEN_BRACKET expression CLOSE_BRACKET)?
     | DOT? IDENTIFIER
     ;
