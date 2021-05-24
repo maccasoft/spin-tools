@@ -124,45 +124,87 @@ statement
     ;
 
 assignment
-    : IDENTIFIER (COMMA IDENTIFIER)* (ASSIGN | ADD_ASSIGN) (function | expression)
+    : identifier (ASSIGN | ADD_ASSIGN) spinExpression ( (ASSIGN | ADD_ASSIGN) spinExpression )*
+    | identifier (COMMA IDENTIFIER)+ (ASSIGN | ADD_ASSIGN) spinExpression
     ;
 
 function
-    : BACKSLASH? IDENTIFIER OPEN_PAREN (assignment | function | expression (COMMA assignment | function | expression)* )? CLOSE_PAREN
+    : BACKSLASH? name=IDENTIFIER OPEN_PAREN functionArgument? CLOSE_PAREN
+    | BACKSLASH? obj=IDENTIFIER DOT name=IDENTIFIER OPEN_PAREN functionArgument? CLOSE_PAREN
+    | BACKSLASH? obj=IDENTIFIER OPEN_BRACKET index=spinExpression CLOSE_BRACKET DOT name=IDENTIFIER OPEN_PAREN functionArgument? CLOSE_PAREN
+    ;
+
+functionArgument
+    : (assignment | spinExpression) (COMMA (assignment | spinExpression) )*
+    ;
+
+identifier
+    : IDENTIFIER (OPEN_BRACKET spinExpression CLOSE_BRACKET)?
+    | IDENTIFIER DOT IDENTIFIER
+    | IDENTIFIER DOT OPEN_BRACKET spinExpression CLOSE_BRACKET
+    | IDENTIFIER DOT IDENTIFIER OPEN_BRACKET spinExpression CLOSE_BRACKET
     ;
 
 repeatLoop
-    : REPEAT NL+ INDENT statement* DEDENT WHILE (function | expression) NL+
-    | REPEAT NL+ INDENT statement* DEDENT UNTIL (function | expression) NL+
-    | REPEAT FROM (function | expression) (TO (function | expression) (STEP (function | expression))? )? NL+ INDENT statement* DEDENT
-    | REPEAT WHILE (function | expression) NL+ INDENT statement* DEDENT
-    | REPEAT UNTIL (function | expression) NL+ INDENT statement* DEDENT
-    | REPEAT (function | expression)? NL+ INDENT statement* DEDENT
+    : REPEAT spinExpression? NL+ INDENT statement* DEDENT
+    | REPEAT NL+ INDENT statement* DEDENT WHILE spinExpression NL+
+    | REPEAT NL+ INDENT statement* DEDENT UNTIL spinExpression NL+
+    | REPEAT FROM spinExpression (TO spinExpression (STEP spinExpression)? )? NL+ INDENT statement* DEDENT
+    | REPEAT WHILE spinExpression NL+ (INDENT statement* DEDENT)?
+    | REPEAT UNTIL spinExpression NL+ (INDENT statement* DEDENT)?
     ;
 
 conditional
-    : IF (function | expression)? NL+ INDENT statement* DEDENT elseConditional*
-    | IFNOT (function | expression)? NL+ INDENT statement* DEDENT elseConditional*
+    : IF spinExpression NL+ INDENT statement* DEDENT elseConditional*
+    | IFNOT spinExpression NL+ INDENT statement* DEDENT elseConditional*
     ;
 
 elseConditional
-    : ELSE (function | expression)? NL+ INDENT statement* DEDENT
-    | ELSEIF (function | expression)? NL+ INDENT statement* DEDENT
-    | ELSEIFNOT (function | expression)? NL+ INDENT statement* DEDENT
+    : ELSE NL+ INDENT statement* DEDENT
+    | ELSEIF spinExpression NL+ INDENT statement* DEDENT
+    | ELSEIFNOT spinExpression NL+ INDENT statement* DEDENT
     ;
 
 caseConditional
-    : CASE (function | expression)? NL+ INDENT statement* DEDENT (caseConditionalMatch | caseConditionalOther)*
+    : CASE spinExpression NL+ INDENT (caseConditionalMatch | caseConditionalOther)* DEDENT
     ;
 
 caseConditionalMatch
-    : expression (ELLIPSIS expression)? COLON (assignment | function) NL+ (INDENT statement* DEDENT)?
-    | expression (ELLIPSIS expression)? (COMMA expression (ELLIPSIS expression)? )* COLON NL+ (INDENT statement* DEDENT)?
+    : spinExpression (ELLIPSIS expression)? COLON (assignment | function)? NL+ (INDENT ( (assignment | function) NL+ )* DEDENT)?
     ;
 
 caseConditionalOther
     : OTHER COLON (assignment | function) NL+ (INDENT statement* DEDENT)?
     | OTHER COLON NL+ (INDENT statement* DEDENT)?
+    ;
+
+spinExpression
+    : operator=(PLUS | MINUS | TILDE) exp=spinExpression
+    | left=spinExpression operator=(LEFT_SHIFT | RIGHT_SHIFT) right=spinExpression
+    | left=spinExpression operator=BIN_AND right=spinExpression
+    | left=spinExpression operator=BIN_XOR right=spinExpression
+    | left=spinExpression operator=BIN_OR right=spinExpression
+    | left=spinExpression operator=(STAR | DIV) right=spinExpression
+    | left=spinExpression operator=(PLUS | MINUS) right=spinExpression
+    | left=spinExpression operator=(ADDPINS | ADDBITS) right=spinExpression
+    | left=spinExpression operator=(EQUALS | NOT_EQUALS) right=spinExpression
+    | left=spinExpression operator=(AND | LOGICAL_AND) right=spinExpression
+    | left=spinExpression operator=(XOR | LOGICAL_XOR) right=spinExpression
+    | left=spinExpression operator=(OR | LOGICAL_OR) right=spinExpression
+    | left=spinExpression operator=QUESTION middle=spinExpression operator=COLON right=spinExpression
+    | operator=FUNCTIONS OPEN_PAREN exp=spinExpression CLOSE_PAREN
+    | OPEN_PAREN exp=spinExpression CLOSE_PAREN
+    | atom
+    | identifier
+    | function
+    ;
+
+experssionAtom
+    : NUMBER
+    | HEX
+    | BIN
+    | QUAD
+    | STRING
     ;
 
 /*
@@ -205,11 +247,11 @@ label
     ;
 
 condition
-    :  {_input.LT(1).getCharPositionInLine() != 0}? CONDITION 
+    : {_input.LT(1).getCharPositionInLine() != 0}? CONDITION 
     ;
 
 opcode
-    :  {_input.LT(1).getCharPositionInLine() != 0}? IDENTIFIER 
+    : {_input.LT(1).getCharPositionInLine() != 0}? (OR | AND | XOR | IDENTIFIER) 
     ;
 
 argument: prefix? expression ;
@@ -231,9 +273,10 @@ expression
     | left=expression operator=(STAR | DIV) right=expression
     | left=expression operator=(PLUS | MINUS) right=expression
     | left=expression operator=(ADDPINS | ADDBITS) right=expression
-    | left=expression operator=LOGICAL_AND right=expression
-    | left=expression operator=LOGICAL_XOR right=expression
-    | left=expression operator=LOGICAL_OR right=expression
+    | left=expression operator=(EQUALS | NOT_EQUALS) right=expression
+    | left=expression operator=(AND | LOGICAL_AND) right=expression
+    | left=expression operator=(XOR | LOGICAL_XOR) right=expression
+    | left=expression operator=(OR | LOGICAL_OR) right=expression
     | left=expression operator=QUESTION middle=expression operator=COLON right=expression
     | operator=FUNCTIONS OPEN_PAREN exp=expression CLOSE_PAREN
     | OPEN_PAREN exp=expression CLOSE_PAREN

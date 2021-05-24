@@ -36,6 +36,9 @@ ADD_ASSIGN:  '+=' ;
 
 ELLIPSIS:    '..' ;
 
+EQUALS:      '==' ;
+NOT_EQUALS:  '<>' ;
+
 BIN_AND:     '&' ;
 BIN_OR :     '|' ;
 BIN_XOR:     '^' ;
@@ -88,6 +91,11 @@ OTHER: 'OTHER' | 'other' ;
 ADDPINS: 'ADDPINS' | 'addpins' ;
 ADDBITS: 'ADDBITS' | 'addbits' ;
 FUNCTIONS: 'ROUND' | 'round' | 'FLOAT' | 'float' | 'TRUNC' | 'trunc' ;
+
+AND: 'AND' | 'and' ;
+NOT: 'NOT' | 'not' ;
+XOR: 'XOR' | 'xor' ;
+OR: 'OR' | 'or' ;
 
 ORG: 'ORG' | 'org' ;
 ORGH: 'ORGH' | 'orgh' ;

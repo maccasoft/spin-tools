@@ -113,6 +113,18 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunction(Spin2Parser.FunctionContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#functionArgument}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionArgument(Spin2Parser.FunctionArgumentContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#identifier}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIdentifier(Spin2Parser.IdentifierContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#repeatLoop}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -148,6 +160,18 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitCaseConditionalOther(Spin2Parser.CaseConditionalOtherContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#spinExpression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSpinExpression(Spin2Parser.SpinExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#experssionAtom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExperssionAtom(Spin2Parser.ExperssionAtomContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#data}.
 	 * @param ctx the parse tree
