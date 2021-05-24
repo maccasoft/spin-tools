@@ -18,25 +18,45 @@ public interface Spin2ParserListener extends ParseTreeListener {
 	 */
 	void exitProg(Spin2Parser.ProgContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#constants}.
+	 * Enter a parse tree produced by {@link Spin2Parser#constantsSection}.
 	 * @param ctx the parse tree
 	 */
-	void enterConstants(Spin2Parser.ConstantsContext ctx);
+	void enterConstantsSection(Spin2Parser.ConstantsSectionContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#constants}.
+	 * Exit a parse tree produced by {@link Spin2Parser#constantsSection}.
 	 * @param ctx the parse tree
 	 */
-	void exitConstants(Spin2Parser.ConstantsContext ctx);
+	void exitConstantsSection(Spin2Parser.ConstantsSectionContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#constant}.
+	 * Enter a parse tree produced by {@link Spin2Parser#constantAssign}.
 	 * @param ctx the parse tree
 	 */
-	void enterConstant(Spin2Parser.ConstantContext ctx);
+	void enterConstantAssign(Spin2Parser.ConstantAssignContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#constant}.
+	 * Exit a parse tree produced by {@link Spin2Parser#constantAssign}.
 	 * @param ctx the parse tree
 	 */
-	void exitConstant(Spin2Parser.ConstantContext ctx);
+	void exitConstantAssign(Spin2Parser.ConstantAssignContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#constantEnum}.
+	 * @param ctx the parse tree
+	 */
+	void enterConstantEnum(Spin2Parser.ConstantEnumContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#constantEnum}.
+	 * @param ctx the parse tree
+	 */
+	void exitConstantEnum(Spin2Parser.ConstantEnumContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#constantEnumName}.
+	 * @param ctx the parse tree
+	 */
+	void enterConstantEnumName(Spin2Parser.ConstantEnumNameContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#constantEnumName}.
+	 * @param ctx the parse tree
+	 */
+	void exitConstantEnumName(Spin2Parser.ConstantEnumNameContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#objects}.
 	 * @param ctx the parse tree

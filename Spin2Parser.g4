@@ -3,7 +3,7 @@ parser grammar Spin2Parser;
 options { tokenVocab=Spin2Lexer; }
 
 prog
-    : NL* (constants | objects | variables | method | data)* EOF
+    : NL* (constantsSection | objects | variables | method | data)* EOF
     ;
 
 /*
@@ -42,13 +42,25 @@ CON  e0,e1,e2             'e0=0, e1=1, e2=2      (start=0, step=1)
 
  */
 
-constants: CON_START+ NL* constant* ;
+constantsSection: CON_START+ NL* ( (constantAssign (COMMA constantAssign)*) | constantEnum | (constantEnumName (COMMA constantEnumName)*) )* ;
 
+constantAssign
+    : INDENT* name=IDENTIFIER EQUAL exp=expression (NL | DEDENT)*
+    ;
+
+constantEnum
+    : INDENT* POUND start=expression (OPEN_BRACKET step=expression CLOSE_BRACKET)? (NL | DEDENT)* (COMMA constantEnumName)*
+    ;
+
+constantEnumName: INDENT* name=IDENTIFIER (OPEN_BRACKET multiplier=expression CLOSE_BRACKET)? (NL | DEDENT)*;
+
+/*
 constant
     : INDENT* (COMMA)? name=IDENTIFIER EQUAL exp=expression (NL | DEDENT)*
     | INDENT* (COMMA)? name=IDENTIFIER (OPEN_BRACKET multiplier=expression CLOSE_BRACKET)? (NL | DEDENT)*
     | INDENT* POUND start=expression (OPEN_BRACKET step=expression CLOSE_BRACKET)? (NL | DEDENT)*
     ;
+*/
 
 /*
 
@@ -199,11 +211,15 @@ dataValue: expression (OPEN_BRACKET count=expression CLOSE_BRACKET)? ;
 expression
     : operator=(PLUS | MINUS | TILDE) exp=expression
     | left=expression operator=(LEFT_SHIFT | RIGHT_SHIFT) right=expression
-    | left=expression operator=(BIN_AND | BIN_XOR | BIN_OR) right=expression
+    | left=expression operator=BIN_AND right=expression
+    | left=expression operator=BIN_XOR right=expression
+    | left=expression operator=BIN_OR right=expression
     | left=expression operator=(STAR | DIV) right=expression
     | left=expression operator=(PLUS | MINUS) right=expression
     | left=expression operator=ADDPINS right=expression
-    | left=expression operator=(LOGICAL_AND | LOGICAL_XOR | LOGICAL_OR) right=expression
+    | left=expression operator=LOGICAL_AND right=expression
+    | left=expression operator=LOGICAL_XOR right=expression
+    | left=expression operator=LOGICAL_OR right=expression
     | left=expression operator=QUESTION middle=expression operator=COLON right=expression
     | operator=(FLOAT | ROUND | TRUNC) OPEN_PAREN exp=expression CLOSE_PAREN
     | OPEN_PAREN exp=expression CLOSE_PAREN

@@ -44,8 +44,10 @@ import com.maccasoft.propeller.expressions.Sqrt;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.Xor;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantsContext;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignContext;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantEnumContext;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantEnumNameContext;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantsSectionContext;
 import com.maccasoft.propeller.spin.Spin2Parser.DataLineContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ExpressionContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ProgContext;
@@ -57,6 +59,8 @@ public class Spin2Compiler extends Spin2ParserBaseVisitor {
 
     Spin2Context scope = new Spin2GlobalContext();
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
+
+    int enumValue = 0, enumIncrement = 1;
 
     public Spin2Compiler() {
 
@@ -151,42 +155,41 @@ public class Spin2Compiler extends Spin2ParserBaseVisitor {
     }
 
     @Override
-    public Object visitConstants(ConstantsContext ctx) {
+    public Object visitConstantsSection(ConstantsSectionContext ctx) {
         while (scope.getParent() != null) {
             scope = scope.getParent();
         }
+        enumValue = 0;
+        enumIncrement = 1;
+        return super.visitConstantsSection(ctx);
+    }
 
-        ctx.accept(new Spin2ParserBaseVisitor() {
-            int enumValue = 0, enumIncrement = 1;
-
-            @Override
-            public Object visitConstant(ConstantContext ctx) {
-                if (ctx.start != null) {
-                    enumValue = Integer.parseInt(ctx.start.getText());
-                    enumIncrement = 1;
-                }
-
-                if (ctx.step != null) {
-                    enumIncrement = Integer.parseInt(ctx.step.getText());
-                }
-
-                if (ctx.name != null) {
-                    if (ctx.exp != null) {
-                        Expression expression = buildExpression(scope, ctx.exp);
-                        scope.addSymbol(ctx.name.getText(), expression);
-                    }
-                    else {
-                        scope.addSymbol(ctx.name.getText(), new NumberLiteral(enumValue));
-                    }
-
-                    enumValue += ctx.multiplier != null ? enumIncrement * Integer.parseInt(ctx.multiplier.getText()) : enumIncrement;
-                }
-
-                return null;
-            }
-
-        });
+    @Override
+    public Object visitConstantAssign(ConstantAssignContext ctx) {
+        Expression expression = buildExpression(scope, ctx.exp);
+        scope.addSymbol(ctx.name.getText(), expression);
         return null;
+    }
+
+    @Override
+    public Object visitConstantEnum(ConstantEnumContext ctx) {
+        Expression expression = buildExpression(scope, ctx.start);
+        enumValue = expression.getNumber().intValue();
+        if (ctx.step != null) {
+            expression = buildExpression(scope, ctx.step);
+            enumIncrement = expression.getNumber().intValue();
+        }
+        else {
+            enumIncrement = 1;
+        }
+        return super.visitConstantEnum(ctx);
+    }
+
+    @Override
+    public Object visitConstantEnumName(ConstantEnumNameContext ctx) {
+        scope.addSymbol(ctx.name.getText(), new NumberLiteral(enumValue));
+        enumValue += ctx.multiplier != null ? enumIncrement * Integer.parseInt(ctx.multiplier.getText()) : enumIncrement;
+        return super.visitConstantEnumName(ctx);
     }
 
     @Override

@@ -17,17 +17,29 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitProg(Spin2Parser.ProgContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#constants}.
+	 * Visit a parse tree produced by {@link Spin2Parser#constantsSection}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitConstants(Spin2Parser.ConstantsContext ctx);
+	T visitConstantsSection(Spin2Parser.ConstantsSectionContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#constant}.
+	 * Visit a parse tree produced by {@link Spin2Parser#constantAssign}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitConstant(Spin2Parser.ConstantContext ctx);
+	T visitConstantAssign(Spin2Parser.ConstantAssignContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#constantEnum}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitConstantEnum(Spin2Parser.ConstantEnumContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#constantEnumName}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitConstantEnumName(Spin2Parser.ConstantEnumNameContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#objects}.
 	 * @param ctx the parse tree

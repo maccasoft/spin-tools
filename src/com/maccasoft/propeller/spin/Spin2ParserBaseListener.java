@@ -28,25 +28,49 @@ public class Spin2ParserBaseListener implements Spin2ParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterConstants(Spin2Parser.ConstantsContext ctx) { }
+	@Override public void enterConstantsSection(Spin2Parser.ConstantsSectionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitConstants(Spin2Parser.ConstantsContext ctx) { }
+	@Override public void exitConstantsSection(Spin2Parser.ConstantsSectionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterConstant(Spin2Parser.ConstantContext ctx) { }
+	@Override public void enterConstantAssign(Spin2Parser.ConstantAssignContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitConstant(Spin2Parser.ConstantContext ctx) { }
+	@Override public void exitConstantAssign(Spin2Parser.ConstantAssignContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterConstantEnum(Spin2Parser.ConstantEnumContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitConstantEnum(Spin2Parser.ConstantEnumContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterConstantEnumName(Spin2Parser.ConstantEnumNameContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitConstantEnumName(Spin2Parser.ConstantEnumNameContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
