@@ -28,7 +28,10 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
 
         symbols.put("org", new Org());
         symbols.put("orgh", new Orgh());
-        symbols.put("res", new Res());
+        symbols.put("orgf", new Orgf());
+        symbols.put("fit", new Fit());
+        symbols.put("alignw", new Alignw());
+        symbols.put("alignl", new Alignl());
 
         // Instructions
         symbols.put("nop", new Nop());
@@ -390,6 +393,7 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
         symbols.put("augd", new Augd());
 
         // Directives
+        symbols.put("res", new Res());
         symbols.put("long", new Long());
         symbols.put("word", new Word());
         symbols.put("byte", new Byte());

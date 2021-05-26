@@ -31,8 +31,7 @@ RIGHT_SHIFT: '>>' ;
 PLUS_PLUS:   '++' ;
 MINUS_MINUS: '--' ;
 
-ASSIGN:      ':=' ;
-ADD_ASSIGN:  '+=' ;
+ASSIGN:      ':=' | '+=' | '&=' | '|=' | '^=' ;
 
 ELLIPSIS:    '..' ;
 
@@ -90,6 +89,10 @@ OTHER: 'OTHER' | 'other' ;
 
 ADDPINS: 'ADDPINS' | 'addpins' ;
 ADDBITS: 'ADDBITS' | 'addbits' ;
+FRAC: 'FRAC' | 'frac' ;
+ENCOD: 'ENCOD' | 'encod' ;
+DECOD: 'DECOD' | 'decod' ;
+
 FUNCTIONS: 'ROUND' | 'round' | 'FLOAT' | 'float' | 'TRUNC' | 'trunc' ;
 
 AND: 'AND' | 'and' ;
@@ -108,6 +111,18 @@ TYPE:    'LONG' | 'long' | 'WORD' | 'word' | 'BYTE' | 'byte' ;
 CONDITION
     : ('IF_' | 'if_') ( LETTER | DIGIT )*
     | '_RET_' | '_ret_' 
+    ;
+
+MODIFIER
+    : 'WC'   | 'wc'
+    | 'WZ'   | 'wz' 
+    | 'WCZ'  | 'wcz' 
+    | 'ANDC' | 'andc' 
+    | 'ORC'  | 'orc' 
+    | 'XORC' | 'xorc' 
+    | 'ANDZ' | 'andz' 
+    | 'ORZ'  | 'orz' 
+    | 'XORZ' | 'xorz' 
     ;
 
 IDENTIFIER: LETTER ( LETTER | DIGIT )* ;

@@ -116,16 +116,10 @@ localvars: localvar (COMMA localvar)* ;
 localvar: align=ALIGN? vartype=TYPE? name=IDENTIFIER (OPEN_BRACKET count=expression CLOSE_BRACKET)? ; 
 
 statement
-    : assignment NL+
-    | function NL+
+    : spinExpression NL+
     | repeatLoop
     | conditional
     | caseConditional
-    ;
-
-assignment
-    : identifier (ASSIGN | ADD_ASSIGN) spinExpression ( (ASSIGN | ADD_ASSIGN) spinExpression )*
-    | identifier (COMMA IDENTIFIER)+ (ASSIGN | ADD_ASSIGN) spinExpression
     ;
 
 function
@@ -135,11 +129,12 @@ function
     ;
 
 functionArgument
-    : (assignment | spinExpression) (COMMA (assignment | spinExpression) )*
+    : spinExpression (COMMA spinExpression )*
     ;
 
 identifier
-    : IDENTIFIER (OPEN_BRACKET spinExpression CLOSE_BRACKET)?
+    : AT IDENTIFIER
+    | IDENTIFIER (OPEN_BRACKET spinExpression CLOSE_BRACKET)?
     | IDENTIFIER DOT IDENTIFIER
     | IDENTIFIER DOT OPEN_BRACKET spinExpression CLOSE_BRACKET
     | IDENTIFIER DOT IDENTIFIER OPEN_BRACKET spinExpression CLOSE_BRACKET
@@ -149,7 +144,7 @@ repeatLoop
     : REPEAT spinExpression? NL+ INDENT statement* DEDENT
     | REPEAT NL+ INDENT statement* DEDENT WHILE spinExpression NL+
     | REPEAT NL+ INDENT statement* DEDENT UNTIL spinExpression NL+
-    | REPEAT FROM spinExpression (TO spinExpression (STEP spinExpression)? )? NL+ INDENT statement* DEDENT
+    | REPEAT IDENTIFIER FROM spinExpression (TO spinExpression (STEP spinExpression)? )? NL+ INDENT statement* DEDENT
     | REPEAT WHILE spinExpression NL+ (INDENT statement* DEDENT)?
     | REPEAT UNTIL spinExpression NL+ (INDENT statement* DEDENT)?
     ;
@@ -170,22 +165,25 @@ caseConditional
     ;
 
 caseConditionalMatch
-    : spinExpression (ELLIPSIS expression)? COLON (assignment | function)? NL+ (INDENT ( (assignment | function) NL+ )* DEDENT)?
+    : spinExpression (ELLIPSIS expression)? COLON spinExpression? NL+ (INDENT ( spinExpression NL+ )* DEDENT)?
     ;
 
 caseConditionalOther
-    : OTHER COLON (assignment | function) NL+ (INDENT statement* DEDENT)?
+    : OTHER COLON spinExpression NL+ (INDENT statement* DEDENT)?
     | OTHER COLON NL+ (INDENT statement* DEDENT)?
     ;
 
 spinExpression
-    : operator=(PLUS | MINUS | TILDE) exp=spinExpression
+    : identifier (COMMA IDENTIFIER)* ASSIGN spinExpression
+    | TYPE OPEN_BRACKET spinExpression CLOSE_BRACKET ASSIGN spinExpression
+    | operator=(PLUS | MINUS | TILDE | ENCOD | DECOD) exp=spinExpression
     | left=spinExpression operator=(LEFT_SHIFT | RIGHT_SHIFT) right=spinExpression
     | left=spinExpression operator=BIN_AND right=spinExpression
     | left=spinExpression operator=BIN_XOR right=spinExpression
     | left=spinExpression operator=BIN_OR right=spinExpression
     | left=spinExpression operator=(STAR | DIV) right=spinExpression
     | left=spinExpression operator=(PLUS | MINUS) right=spinExpression
+    | left=spinExpression operator=FRAC right=spinExpression
     | left=spinExpression operator=(ADDPINS | ADDBITS) right=spinExpression
     | left=spinExpression operator=(EQUALS | NOT_EQUALS) right=spinExpression
     | left=spinExpression operator=(AND | LOGICAL_AND) right=spinExpression
@@ -196,6 +194,8 @@ spinExpression
     | OPEN_PAREN exp=spinExpression CLOSE_PAREN
     | atom
     | identifier
+    | identifier (PLUS_PLUS | MINUS_MINUS)
+    | (PLUS_PLUS | MINUS_MINUS) identifier
     | function
     ;
 
@@ -232,8 +232,8 @@ buff            RES     16            'reserve 16 registers, advance cog address
 data: DAT_START+ NL* dataLine* ;
 
 dataLine
-    : label NL+ (NL | DEDENT)*
-    | INDENT* directive=(ORG | ORGH) (expression (COMMA expression)? )? NL+ (NL | DEDENT)*
+    : label NL+
+    | INDENT* directive=(ORG | ORGH | ALIGN) (expression (COMMA expression)? )? NL+ (NL | DEDENT)*
     | INDENT* label? directive=TYPE dataValue (COMMA dataValue)* NL+ (NL | DEDENT)*
     | INDENT* label? directive=RES dataValue NL+ (NL | DEDENT)*
     | INDENT* label? condition? opcode argument COMMA argument COMMA argument effect? NL+ (NL | DEDENT)*
@@ -243,7 +243,7 @@ dataLine
     ;
 
 label
-    : {_input.LT(1).getCharPositionInLine() == 0}? DOT? IDENTIFIER 
+    : {_input.LT(1).getCharPositionInLine() == 0}? (DOT? IDENTIFIER) 
     ;
 
 condition
@@ -251,7 +251,7 @@ condition
     ;
 
 opcode
-    : {_input.LT(1).getCharPositionInLine() != 0}? (OR | AND | XOR | IDENTIFIER) 
+    : {_input.LT(1).getCharPositionInLine() != 0}? (OR | AND | NOT | XOR | ENCOD | DECOD | IDENTIFIER) 
     ;
 
 argument: prefix? expression ;
@@ -259,7 +259,7 @@ argument: prefix? expression ;
 prefix: (POUND_POUND | POUND) BACKSLASH? ;
 
 effect
-    : {_input.LT(1).getCharPositionInLine() != 0}? IDENTIFIER 
+    : MODIFIER 
     ;
 
 dataValue: expression (OPEN_BRACKET count=expression CLOSE_BRACKET)? ;

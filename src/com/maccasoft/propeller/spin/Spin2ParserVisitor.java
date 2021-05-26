@@ -101,12 +101,6 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStatement(Spin2Parser.StatementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#assignment}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAssignment(Spin2Parser.AssignmentContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#function}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
