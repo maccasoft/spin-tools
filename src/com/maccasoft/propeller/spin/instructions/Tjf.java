@@ -58,8 +58,17 @@ public class Tjf extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, 0b00);
             value = i.setBoolean(value, src.isLiteral());
             value = d.setValue(value, dst.getInteger());
-            int offset = src.isLiteral() ? (src.getInteger() - context.getInteger("$") - 1) : src.getInteger();
+
+            int offset = src.getInteger();
+            if (src.isLiteral()) {
+                offset -= context.getInteger("$");
+                if (src.getInteger() >= 0x400) {
+                    offset /= 4;
+                }
+                offset--;
+            }
             value = s.setValue(value, offset);
+
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, offset), value) : getBytes(value);
         }
 

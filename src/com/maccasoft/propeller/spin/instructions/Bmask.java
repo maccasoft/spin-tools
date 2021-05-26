@@ -86,9 +86,8 @@ public class Bmask extends Spin2PAsmInstructionFactory {
         @Override
         public byte[] getBytes() {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
-            value = o.setValue(value, 0b1001100);
-            value = cz.setValue(value, 0b01);
-            value = i.setBoolean(value, true);
+            value = o.setValue(value, 0b1001110);
+            value = czi.setValue(value, 0b010);
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, dst.getInteger());
             return getBytes(value);

@@ -51,6 +51,8 @@ import com.maccasoft.propeller.spin.Spin2Parser.ConstantsSectionContext;
 import com.maccasoft.propeller.spin.Spin2Parser.DataLineContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ExpressionContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ProgContext;
+import com.maccasoft.propeller.spin.instructions.Org;
+import com.maccasoft.propeller.spin.instructions.Orgh;
 
 @SuppressWarnings({
     "unchecked", "rawtypes"
@@ -89,21 +91,33 @@ public class Spin2Compiler extends Spin2ParserBaseVisitor {
         }
         scope.addSymbol("clkmode_", new NumberLiteral(getClockMode(20000000, _clkfreq)));
 
+        boolean hubMode = false;
         int address = 0, hubAddress = 0;
         for (Spin2PAsmLine line : source) {
-            line.getScope().setHubAddress(hubAddress);
-            address = line.resolve(address < 0x400 ? address : hubAddress);
-            if (address < 0x400) {
-                hubAddress += line.getInstructionObject().getSize();
-            }
-            else {
-                hubAddress += line.getInstructionObject().getSize();
-                if (address > hubAddress) {
-                    hubAddress = address;
+            try {
+                line.getScope().setHubAddress(hubAddress);
+                if (line.getInstructionFactory() instanceof Orgh) {
+                    hubMode = true;
+                }
+                if (line.getInstructionFactory() instanceof Org) {
+                    hubMode = false;
+                }
+                address = line.resolve((hubMode || address >= 0x400) ? hubAddress : address);
+                if (hubMode || address >= 0x400) {
+                    hubAddress += line.getInstructionObject().getSize();
+                    if (address > hubAddress) {
+                        hubAddress = address;
+                    }
+                    else {
+                        address = hubAddress;
+                    }
                 }
                 else {
-                    address = hubAddress;
+                    hubAddress += line.getInstructionObject().getSize();
                 }
+            } catch (Exception e) {
+                System.err.println(line);
+                e.printStackTrace();
             }
         }
 
@@ -308,7 +322,7 @@ public class Spin2Compiler extends Spin2ParserBaseVisitor {
         else if (ctx.atom() != null) {
             String s = ctx.atom().getText();
             if (s.startsWith("%%")) {
-                return new NumberLiteral(Long.parseLong(s.substring(1).replace("_", ""), 4));
+                return new NumberLiteral(Long.parseLong(s.substring(2).replace("_", ""), 4));
             }
             else if (s.startsWith("%")) {
                 return new NumberLiteral(Long.parseLong(s.substring(1).replace("_", ""), 2));

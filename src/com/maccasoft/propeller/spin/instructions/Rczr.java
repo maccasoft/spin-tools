@@ -22,8 +22,8 @@ public class Rczr extends Spin2PAsmInstructionFactory {
 
     @Override
     public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
-        if (Spin2PAsmSchema.D_S_WC_WZ_WCZ.check(arguments, effect)) {
-            return new Rczr_(context, condition, arguments.get(0), arguments.get(1), effect);
+        if (Spin2PAsmSchema.D_WC_WZ_WCZ.check(arguments, effect)) {
+            return new Rczr_(context, condition, arguments.get(0), effect);
         }
         throw new RuntimeException("Invalid arguments");
     }
@@ -35,20 +35,13 @@ public class Rczr extends Spin2PAsmInstructionFactory {
 
         String condition;
         Spin2PAsmExpression dst;
-        Spin2PAsmExpression src;
         String effect;
 
-        public Rczr_(Spin2Context context, String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src, String effect) {
+        public Rczr_(Spin2Context context, String condition, Spin2PAsmExpression dst, String effect) {
             super(context);
             this.condition = condition;
             this.dst = dst;
-            this.src = src;
             this.effect = effect;
-        }
-
-        @Override
-        public int getSize() {
-            return src.isLongLiteral() ? 8 : 4;
         }
 
         // EEEE 1101011 CZ0 DDDDDDDDD 001101010
@@ -58,10 +51,9 @@ public class Rczr extends Spin2PAsmInstructionFactory {
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
             value = o.setValue(value, 0b1101011);
             value = cz.setValue(value, encodeEffect(effect));
-            value = i.setBoolean(value, src.isLiteral());
             value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
-            return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
+            value = s.setValue(value, 0b001101010);
+            return getBytes(value);
         }
 
     }

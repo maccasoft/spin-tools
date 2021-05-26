@@ -59,7 +59,7 @@ public class Djnf extends Spin2PAsmInstructionFactory {
             value = i.setBoolean(value, src.isLiteral());
             value = d.setValue(value, dst.getInteger());
             int offset = src.isLiteral() ? (src.getInteger() - context.getInteger("$") - 1) : src.getInteger();
-            value = s.setValue(value, offset);
+            value = s.setValue(value, (src.isLiteral() && src.getInteger() > 0x400) ? offset / 4 : offset);
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, offset), value) : getBytes(value);
         }
 
