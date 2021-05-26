@@ -102,8 +102,8 @@ public class Spin2Compiler extends Spin2ParserBaseVisitor {
                 if (line.getInstructionFactory() instanceof Org) {
                     hubMode = false;
                 }
-                address = line.resolve((hubMode || address >= 0x400) ? hubAddress : address);
-                if (hubMode || address >= 0x400) {
+                address = line.resolve(hubMode ? hubAddress : address);
+                if (hubMode) {
                     hubAddress += line.getInstructionObject().getSize();
                     if (address > hubAddress) {
                         hubAddress = address;
