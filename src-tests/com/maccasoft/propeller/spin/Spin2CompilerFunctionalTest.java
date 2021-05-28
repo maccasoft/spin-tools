@@ -146,13 +146,20 @@ class Spin2CompilerFunctionalTest {
 
     @Test
     void testReference1() throws Exception {
+        String text = getResourceAsString("Spin2_interpreter.spin2");
+        byte[] expected = getResource("Spin2_interpreter.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
+    void testReference2() throws Exception {
         String text = getResourceAsString("m6502_apple1_cvbs.spin2");
         byte[] expected = getResource("m6502_apple1_cvbs.binary");
         Assertions.assertTrue(compileAndCompare(text, expected));
     }
 
     @Test
-    void testReference2() throws Exception {
+    void testReference3() throws Exception {
         String text = getResourceAsString("m6502_apple1_vga.spin2");
         byte[] expected = getResource("m6502_apple1_vga.binary");
         Assertions.assertTrue(compileAndCompare(text, expected));
@@ -199,6 +206,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     boolean compileAndCompare(String text, byte[] ref) throws Exception {
+        byte[] refLong = new byte[4];
         Spin2Compiler compiler = new Spin2Compiler();
 
         Spin2Lexer lexer = new Spin2Lexer(CharStreams.fromString(text));
@@ -210,6 +218,7 @@ class Spin2CompilerFunctionalTest {
         parser.prog().accept(compiler);
 
         boolean result = true;
+
         for (Spin2PAsmLine line : compiler.getSource()) {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             line.generateObjectCode(os);
@@ -223,6 +232,11 @@ class Spin2CompilerFunctionalTest {
             StringBuilder out = new StringBuilder();
             out.append(String.format("%06X ", address));
             out.append(addr < 0x400 ? String.format("%03X ", addr++) : "    ");
+
+            refLong[0] = (address < ref.length) ? ref[address] : 0x00;
+            refLong[1] = (address + 1 < ref.length) ? ref[address + 1] : 0x00;
+            refLong[2] = (address + 2 < ref.length) ? ref[address + 2] : 0x00;
+            refLong[3] = (address + 3 < ref.length) ? ref[address + 3] : 0x00;
 
             StringBuilder refbytes = new StringBuilder();
             refbytes.append((index < code.length && address < ref.length) ? String.format(" %02X", ref[address]) : "   ");
@@ -242,14 +256,21 @@ class Spin2CompilerFunctionalTest {
             out.append(" | " + line);
 
             if (!refbytes.toString().equals(ourbytes.toString())) {
+                if (code.length >= 4) {
+                    Assertions.assertEquals(Spin2InstructionObject.decodeToString(refLong), Spin2InstructionObject.decodeToString(code), "\n" + out.toString() + "\n");
+                }
                 result = false;
-                System.out.println(out);
             }
 
             while (index < code.length) {
                 out = new StringBuilder();
                 out.append(String.format("%06X ", address + index));
                 out.append(addr < 0x400 ? String.format("%03X ", addr++) : "    ");
+
+                refLong[0] = (address < ref.length) ? ref[address] : 0x00;
+                refLong[1] = (address + 1 < ref.length) ? ref[address + 1] : 0x00;
+                refLong[2] = (address + 2 < ref.length) ? ref[address + 2] : 0x00;
+                refLong[3] = (address + 3 < ref.length) ? ref[address + 3] : 0x00;
 
                 refbytes = new StringBuilder();
                 refbytes.append((index < code.length && address + index < ref.length) ? String.format(" %02X", ref[address + index]) : "   ");
@@ -269,8 +290,10 @@ class Spin2CompilerFunctionalTest {
                 out.append(" | ");
 
                 if (!refbytes.toString().equals(ourbytes.toString())) {
+                    if (code.length >= 4) {
+                        Assertions.assertEquals(Spin2InstructionObject.decodeToString(refLong), Spin2InstructionObject.decodeToString(code), "\n" + out.toString() + "\n");
+                    }
                     result = false;
-                    System.out.println(out);
                 }
             }
         }
