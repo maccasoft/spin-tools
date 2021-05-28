@@ -161,11 +161,11 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSpinExpression(Spin2Parser.SpinExpressionContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#experssionAtom}.
+	 * Visit a parse tree produced by {@link Spin2Parser#expressionAtom}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExperssionAtom(Spin2Parser.ExperssionAtomContext ctx);
+	T visitExpressionAtom(Spin2Parser.ExpressionAtomContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#data}.
 	 * @param ctx the parse tree
@@ -185,12 +185,6 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitLabel(Spin2Parser.LabelContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#condition}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCondition(Spin2Parser.ConditionContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#opcode}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -203,29 +197,17 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitArgument(Spin2Parser.ArgumentContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#prefix}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitPrefix(Spin2Parser.PrefixContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#effect}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitEffect(Spin2Parser.EffectContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#dataValue}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitDataValue(Spin2Parser.DataValueContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#expression}.
+	 * Visit a parse tree produced by {@link Spin2Parser#constantExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpression(Spin2Parser.ExpressionContext ctx);
+	T visitConstantExpression(Spin2Parser.ConstantExpressionContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#atom}.
 	 * @param ctx the parse tree

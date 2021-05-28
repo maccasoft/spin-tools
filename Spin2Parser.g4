@@ -45,14 +45,14 @@ CON  e0,e1,e2             'e0=0, e1=1, e2=2      (start=0, step=1)
 constantsSection: CON_START+ NL* ( (constantAssign (COMMA constantAssign)*) | constantEnum | (constantEnumName (COMMA constantEnumName)*) )* ;
 
 constantAssign
-    : INDENT* name=IDENTIFIER EQUAL exp=expression (NL | DEDENT)*
+    : INDENT* name=IDENTIFIER EQUAL exp=constantExpression (NL | DEDENT)*
     ;
 
 constantEnum
-    : INDENT* POUND start=expression (OPEN_BRACKET step=expression CLOSE_BRACKET)? (NL | DEDENT)* (COMMA constantEnumName)*
+    : INDENT* LITERAL start=constantExpression (OPEN_BRACKET step=constantExpression CLOSE_BRACKET)? (NL | DEDENT)* (COMMA constantEnumName)*
     ;
 
-constantEnumName: INDENT* name=IDENTIFIER (OPEN_BRACKET multiplier=expression CLOSE_BRACKET)? (NL | DEDENT)*;
+constantEnumName: INDENT* name=IDENTIFIER (OPEN_BRACKET multiplier=constantExpression CLOSE_BRACKET)? (NL | DEDENT)*;
 
 /*
 
@@ -67,7 +67,7 @@ OBJ  vga       : "VGA_Driver"     'instantiate "VGA_Driver.spin2" as "vga"
 
 objectsSection: OBJ_START+ NL* object* ;
 
-object: INDENT* name=IDENTIFIER (OPEN_BRACKET count=expression CLOSE_BRACKET)* COLON filename=STRING (NL | DEDENT)+ ;
+object: INDENT* name=IDENTIFIER (OPEN_BRACKET count=constantExpression CLOSE_BRACKET)* COLON filename=STRING (NL | DEDENT)+ ;
 
 /*
 
@@ -89,7 +89,7 @@ VAR  CogNum                     'The default variable size is LONG (32 bits).
 variablesSection: VAR_START+ NL* (variable (COMMA variable)* )* ;
 
 variable
-    : INDENT* type=TYPE? name=IDENTIFIER (OPEN_BRACKET size=expression CLOSE_BRACKET)? (NL | DEDENT)+ 
+    : INDENT* type=TYPE? name=IDENTIFIER (OPEN_BRACKET size=constantExpression CLOSE_BRACKET)? (NL | DEDENT)+ 
     ;
 
 /* 
@@ -113,7 +113,7 @@ result: IDENTIFIER (COMMA IDENTIFIER)* ;
 
 localvars: localvar (COMMA localvar)* ;
 
-localvar: align=ALIGN? vartype=TYPE? name=IDENTIFIER (OPEN_BRACKET count=expression CLOSE_BRACKET)? ; 
+localvar: align=ALIGN? vartype=TYPE? name=IDENTIFIER (OPEN_BRACKET count=constantExpression CLOSE_BRACKET)? ; 
 
 statement
     : spinExpression NL+
@@ -133,11 +133,12 @@ functionArgument
     ;
 
 identifier
-    : AT IDENTIFIER
-    | IDENTIFIER (OPEN_BRACKET spinExpression CLOSE_BRACKET)?
-    | IDENTIFIER DOT IDENTIFIER
-    | IDENTIFIER DOT OPEN_BRACKET spinExpression CLOSE_BRACKET
-    | IDENTIFIER DOT IDENTIFIER OPEN_BRACKET spinExpression CLOSE_BRACKET
+    : AT name=IDENTIFIER
+    | name=IDENTIFIER DOT IDENTIFIER OPEN_BRACKET spinExpression CLOSE_BRACKET
+    | name=IDENTIFIER DOT OPEN_BRACKET spinExpression CLOSE_BRACKET
+    | name=IDENTIFIER DOT IDENTIFIER
+    | name=IDENTIFIER OPEN_BRACKET spinExpression CLOSE_BRACKET
+    | name=IDENTIFIER
     ;
 
 repeatLoop
@@ -150,12 +151,14 @@ repeatLoop
     ;
 
 conditional
-    : IF spinExpression NL+ INDENT statement* DEDENT elseConditional*
+    : IF NOT spinExpression NL+ INDENT statement* DEDENT elseConditional*
     | IFNOT spinExpression NL+ INDENT statement* DEDENT elseConditional*
+    | IF spinExpression NL+ INDENT statement* DEDENT elseConditional*
     ;
 
 elseConditional
     : ELSE NL+ INDENT statement* DEDENT
+    | ELSEIF NOT spinExpression NL+ INDENT statement* DEDENT
     | ELSEIF spinExpression NL+ INDENT statement* DEDENT
     | ELSEIFNOT spinExpression NL+ INDENT statement* DEDENT
     ;
@@ -165,7 +168,7 @@ caseConditional
     ;
 
 caseConditionalMatch
-    : spinExpression (ELLIPSIS expression)? COLON spinExpression? NL+ (INDENT ( spinExpression NL+ )* DEDENT)?
+    : spinExpression (ELLIPSIS spinExpression)? COLON spinExpression? NL+ (INDENT ( spinExpression NL+ )* DEDENT)?
     ;
 
 caseConditionalOther
@@ -192,19 +195,19 @@ spinExpression
     | left=spinExpression operator=QUESTION middle=spinExpression operator=COLON right=spinExpression
     | operator=FUNCTIONS OPEN_PAREN exp=spinExpression CLOSE_PAREN
     | OPEN_PAREN exp=spinExpression CLOSE_PAREN
-    | atom
-    | identifier
-    | identifier (PLUS_PLUS | MINUS_MINUS)
-    | (PLUS_PLUS | MINUS_MINUS) identifier
-    | function
+    | expressionAtom
     ;
 
-experssionAtom
+expressionAtom
     : NUMBER
     | HEX
     | BIN
     | QUAD
     | STRING
+    | identifier
+    | identifier (PLUS_PLUS | MINUS_MINUS)
+    | (PLUS_PLUS | MINUS_MINUS) identifier
+    | function
     ;
 
 /*
@@ -233,53 +236,46 @@ data: DAT_START+ NL* dataLine* ;
 
 dataLine
     : label NL+
-    | INDENT* directive=(ORG | ORGH | ALIGN) (expression (COMMA expression)? )? NL+ (NL | DEDENT)*
+    | INDENT* directive=(ORG | ORGH | ORGF | ALIGN) (constantExpression (COMMA constantExpression)? )? NL+ (NL | DEDENT)*
+    | INDENT* label? directive=FIT argument? NL+ (NL | DEDENT)*
     | INDENT* label? directive=TYPE dataValue (COMMA dataValue)* NL+ (NL | DEDENT)*
-    | INDENT* label? directive=RES dataValue NL+ (NL | DEDENT)*
-    | INDENT* label? condition? opcode argument COMMA argument COMMA argument effect? NL+ (NL | DEDENT)*
-    | INDENT* label? condition? opcode argument COMMA argument effect? NL+ (NL | DEDENT)*
-    | INDENT* label? condition? opcode argument effect? NL+ (NL | DEDENT)*
-    | INDENT* label? condition? opcode effect? NL+ (NL | DEDENT)*
+    | INDENT* label? directive=RES constantExpression NL+ (NL | DEDENT)*
+    | INDENT* label? condition=CONDITION? opcode argument COMMA argument COMMA argument modifier=MODIFIER? NL+ (NL | DEDENT)*
+    | INDENT* label? condition=CONDITION? opcode argument COMMA argument modifier=MODIFIER? NL+ (NL | DEDENT)*
+    | INDENT* label? condition=CONDITION? opcode argument modifier=MODIFIER? NL+ (NL | DEDENT)*
+    | INDENT* label? condition=CONDITION? opcode modifier=MODIFIER? NL+ (NL | DEDENT)*
     ;
 
 label
     : {_input.LT(1).getCharPositionInLine() == 0}? (DOT? IDENTIFIER) 
     ;
 
-condition
-    : {_input.LT(1).getCharPositionInLine() != 0}? CONDITION 
-    ;
-
 opcode
     : {_input.LT(1).getCharPositionInLine() != 0}? (OR | AND | NOT | XOR | ENCOD | DECOD | IDENTIFIER) 
     ;
 
-argument: prefix? expression ;
-
-prefix: (POUND_POUND | POUND) BACKSLASH? ;
-
-effect
-    : MODIFIER 
+argument
+    : prefix=(LITERAL | LITERAL_ABS | LONG_LITERAL | LONG_LITERAL_ABS)? constantExpression
     ;
 
-dataValue: expression (OPEN_BRACKET count=expression CLOSE_BRACKET)? ;
+dataValue: constantExpression (OPEN_BRACKET count=constantExpression CLOSE_BRACKET)? ;
 
-expression
-    : operator=(PLUS | MINUS | TILDE) exp=expression
-    | left=expression operator=(LEFT_SHIFT | RIGHT_SHIFT) right=expression
-    | left=expression operator=BIN_AND right=expression
-    | left=expression operator=BIN_XOR right=expression
-    | left=expression operator=BIN_OR right=expression
-    | left=expression operator=(STAR | DIV) right=expression
-    | left=expression operator=(PLUS | MINUS) right=expression
-    | left=expression operator=(ADDPINS | ADDBITS) right=expression
-    | left=expression operator=(EQUALS | NOT_EQUALS) right=expression
-    | left=expression operator=(AND | LOGICAL_AND) right=expression
-    | left=expression operator=(XOR | LOGICAL_XOR) right=expression
-    | left=expression operator=(OR | LOGICAL_OR) right=expression
-    | left=expression operator=QUESTION middle=expression operator=COLON right=expression
-    | operator=FUNCTIONS OPEN_PAREN exp=expression CLOSE_PAREN
-    | OPEN_PAREN exp=expression CLOSE_PAREN
+constantExpression
+    : operator=(PLUS | MINUS | TILDE) exp=constantExpression
+    | left=constantExpression operator=(LEFT_SHIFT | RIGHT_SHIFT) right=constantExpression
+    | left=constantExpression operator=BIN_AND right=constantExpression
+    | left=constantExpression operator=BIN_XOR right=constantExpression
+    | left=constantExpression operator=BIN_OR right=constantExpression
+    | left=constantExpression operator=(STAR | DIV) right=constantExpression
+    | left=constantExpression operator=(PLUS | MINUS) right=constantExpression
+    | left=constantExpression operator=(ADDPINS | ADDBITS) right=constantExpression
+    | left=constantExpression operator=(EQUALS | NOT_EQUALS) right=constantExpression
+    | left=constantExpression operator=(AND | LOGICAL_AND) right=constantExpression
+    | left=constantExpression operator=(XOR | LOGICAL_XOR) right=constantExpression
+    | left=constantExpression operator=(OR | LOGICAL_OR) right=constantExpression
+    | left=constantExpression operator=QUESTION middle=constantExpression operator=COLON right=constantExpression
+    | operator=FUNCTIONS OPEN_PAREN exp=constantExpression CLOSE_PAREN
+    | OPEN_PAREN exp=constantExpression CLOSE_PAREN
     | AT? atom
     ;
 
@@ -290,9 +286,9 @@ atom
     | QUAD
     | STRING
     | DOLLAR
-    | IDENTIFIER (OPEN_BRACKET expression CLOSE_BRACKET)?
-    | IDENTIFIER (PLUS_PLUS | MINUS_MINUS) (OPEN_BRACKET expression CLOSE_BRACKET)?
-    | IDENTIFIER (OPEN_BRACKET expression CLOSE_BRACKET)? (PLUS_PLUS | MINUS_MINUS)
-    | (PLUS_PLUS | MINUS_MINUS) IDENTIFIER (OPEN_BRACKET expression CLOSE_BRACKET)?
+    | IDENTIFIER (OPEN_BRACKET constantExpression CLOSE_BRACKET)?
+    | IDENTIFIER (PLUS_PLUS | MINUS_MINUS) (OPEN_BRACKET constantExpression CLOSE_BRACKET)?
+    | IDENTIFIER (OPEN_BRACKET constantExpression CLOSE_BRACKET)? (PLUS_PLUS | MINUS_MINUS)
+    | (PLUS_PLUS | MINUS_MINUS) IDENTIFIER (OPEN_BRACKET constantExpression CLOSE_BRACKET)?
     | DOT? IDENTIFIER
     ;

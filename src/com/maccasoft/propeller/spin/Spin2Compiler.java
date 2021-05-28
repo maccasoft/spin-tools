@@ -47,9 +47,9 @@ import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantEnumContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantEnumNameContext;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantExpressionContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantsSectionContext;
 import com.maccasoft.propeller.spin.Spin2Parser.DataLineContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ExpressionContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ProgContext;
 import com.maccasoft.propeller.spin.instructions.Org;
 import com.maccasoft.propeller.spin.instructions.Orgh;
@@ -236,7 +236,7 @@ public class Spin2Compiler extends Spin2ParserBaseVisitor {
         return source;
     }
 
-    public static Expression buildExpression(Spin2Context scope, ExpressionContext ctx) {
+    public static Expression buildExpression(Spin2Context scope, ConstantExpressionContext ctx) {
         if (ctx.operator != null) {
             String op = ctx.operator.getText();
             if (ctx.exp != null) {

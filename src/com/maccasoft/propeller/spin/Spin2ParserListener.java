@@ -258,15 +258,15 @@ public interface Spin2ParserListener extends ParseTreeListener {
 	 */
 	void exitSpinExpression(Spin2Parser.SpinExpressionContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#experssionAtom}.
+	 * Enter a parse tree produced by {@link Spin2Parser#expressionAtom}.
 	 * @param ctx the parse tree
 	 */
-	void enterExperssionAtom(Spin2Parser.ExperssionAtomContext ctx);
+	void enterExpressionAtom(Spin2Parser.ExpressionAtomContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#experssionAtom}.
+	 * Exit a parse tree produced by {@link Spin2Parser#expressionAtom}.
 	 * @param ctx the parse tree
 	 */
-	void exitExperssionAtom(Spin2Parser.ExperssionAtomContext ctx);
+	void exitExpressionAtom(Spin2Parser.ExpressionAtomContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#data}.
 	 * @param ctx the parse tree
@@ -298,16 +298,6 @@ public interface Spin2ParserListener extends ParseTreeListener {
 	 */
 	void exitLabel(Spin2Parser.LabelContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#condition}.
-	 * @param ctx the parse tree
-	 */
-	void enterCondition(Spin2Parser.ConditionContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#condition}.
-	 * @param ctx the parse tree
-	 */
-	void exitCondition(Spin2Parser.ConditionContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#opcode}.
 	 * @param ctx the parse tree
 	 */
@@ -328,26 +318,6 @@ public interface Spin2ParserListener extends ParseTreeListener {
 	 */
 	void exitArgument(Spin2Parser.ArgumentContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#prefix}.
-	 * @param ctx the parse tree
-	 */
-	void enterPrefix(Spin2Parser.PrefixContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#prefix}.
-	 * @param ctx the parse tree
-	 */
-	void exitPrefix(Spin2Parser.PrefixContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#effect}.
-	 * @param ctx the parse tree
-	 */
-	void enterEffect(Spin2Parser.EffectContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#effect}.
-	 * @param ctx the parse tree
-	 */
-	void exitEffect(Spin2Parser.EffectContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#dataValue}.
 	 * @param ctx the parse tree
 	 */
@@ -358,15 +328,15 @@ public interface Spin2ParserListener extends ParseTreeListener {
 	 */
 	void exitDataValue(Spin2Parser.DataValueContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#expression}.
+	 * Enter a parse tree produced by {@link Spin2Parser#constantExpression}.
 	 * @param ctx the parse tree
 	 */
-	void enterExpression(Spin2Parser.ExpressionContext ctx);
+	void enterConstantExpression(Spin2Parser.ConstantExpressionContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#expression}.
+	 * Exit a parse tree produced by {@link Spin2Parser#constantExpression}.
 	 * @param ctx the parse tree
 	 */
-	void exitExpression(Spin2Parser.ExpressionContext ctx);
+	void exitConstantExpression(Spin2Parser.ConstantExpressionContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#atom}.
 	 * @param ctx the parse tree

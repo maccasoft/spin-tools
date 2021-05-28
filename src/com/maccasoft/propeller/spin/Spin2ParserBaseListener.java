@@ -316,13 +316,13 @@ public class Spin2ParserBaseListener implements Spin2ParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterExperssionAtom(Spin2Parser.ExperssionAtomContext ctx) { }
+	@Override public void enterExpressionAtom(Spin2Parser.ExpressionAtomContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitExperssionAtom(Spin2Parser.ExperssionAtomContext ctx) { }
+	@Override public void exitExpressionAtom(Spin2Parser.ExpressionAtomContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -364,18 +364,6 @@ public class Spin2ParserBaseListener implements Spin2ParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterCondition(Spin2Parser.ConditionContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitCondition(Spin2Parser.ConditionContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterOpcode(Spin2Parser.OpcodeContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -400,30 +388,6 @@ public class Spin2ParserBaseListener implements Spin2ParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterPrefix(Spin2Parser.PrefixContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitPrefix(Spin2Parser.PrefixContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterEffect(Spin2Parser.EffectContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitEffect(Spin2Parser.EffectContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterDataValue(Spin2Parser.DataValueContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -436,13 +400,13 @@ public class Spin2ParserBaseListener implements Spin2ParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterExpression(Spin2Parser.ExpressionContext ctx) { }
+	@Override public void enterConstantExpression(Spin2Parser.ConstantExpressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitExpression(Spin2Parser.ExpressionContext ctx) { }
+	@Override public void exitConstantExpression(Spin2Parser.ConstantExpressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
