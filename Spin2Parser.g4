@@ -142,12 +142,12 @@ identifier
     ;
 
 repeatLoop
-    : REPEAT spinExpression? NL+ INDENT statement* DEDENT
+    : REPEAT spinExpression? NL+ (INDENT statement* DEDENT? )?
     | REPEAT NL+ INDENT statement* DEDENT WHILE spinExpression NL+
     | REPEAT NL+ INDENT statement* DEDENT UNTIL spinExpression NL+
-    | REPEAT IDENTIFIER FROM spinExpression (TO spinExpression (STEP spinExpression)? )? NL+ INDENT statement* DEDENT
-    | REPEAT WHILE spinExpression NL+ (INDENT statement* DEDENT)?
-    | REPEAT UNTIL spinExpression NL+ (INDENT statement* DEDENT)?
+    | REPEAT identifier FROM spinExpression (TO spinExpression (STEP spinExpression)? )? NL+ (INDENT statement* DEDENT? )?
+    | REPEAT WHILE spinExpression NL+ (INDENT statement* DEDENT? )?
+    | REPEAT UNTIL spinExpression NL+ (INDENT statement* DEDENT? )?
     ;
 
 conditional

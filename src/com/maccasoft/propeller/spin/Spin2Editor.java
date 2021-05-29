@@ -53,6 +53,7 @@ import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenId;
 
 public class Spin2Editor {
 
+    Display display;
     Composite container;
     LineNumbersRuler ruler;
     StyledText styledText;
@@ -97,6 +98,8 @@ public class Spin2Editor {
     };
 
     public Spin2Editor(Composite parent) {
+        display = parent.getDisplay();
+
         container = new Composite(parent, SWT.NONE);
         GridLayout containerLayout = new GridLayout(2, false);
         containerLayout.horizontalSpacing = 1;
@@ -104,57 +107,91 @@ public class Spin2Editor {
         container.setLayout(containerLayout);
 
         if ("win32".equals(SWT.getPlatform())) {
-            font = new Font(Display.getDefault(), "Courier New", 9, SWT.NONE);
-            fontBold = new Font(Display.getDefault(), "Courier New", 9, SWT.BOLD);
-            fontItalic = new Font(Display.getDefault(), "Courier New", 9, SWT.ITALIC);
-            fontBoldItalic = new Font(Display.getDefault(), "Courier New", 9, SWT.BOLD | SWT.ITALIC);
+            font = new Font(display, "Courier New", 9, SWT.NONE);
+            fontBold = new Font(display, "Courier New", 9, SWT.BOLD);
+            fontItalic = new Font(display, "Courier New", 9, SWT.ITALIC);
+            fontBoldItalic = new Font(display, "Courier New", 9, SWT.BOLD | SWT.ITALIC);
         }
         else {
-            font = new Font(Display.getDefault(), "mono", 9, SWT.NONE);
-            fontBold = new Font(Display.getDefault(), "mono", 9, SWT.BOLD);
-            fontItalic = new Font(Display.getDefault(), "mono", 9, SWT.ITALIC);
-            fontBoldItalic = new Font(Display.getDefault(), "mono", 9, SWT.BOLD | SWT.ITALIC);
+            font = new Font(display, "mono", 9, SWT.NONE);
+            fontBold = new Font(display, "mono", 9, SWT.BOLD);
+            fontItalic = new Font(display, "mono", 9, SWT.ITALIC);
+            fontBoldItalic = new Font(display, "mono", 9, SWT.BOLD | SWT.ITALIC);
         }
 
         currentLine = 0;
-        currentLineBackground = new Color(Display.getDefault(), 0xE8, 0xF2, 0xFE);
+        currentLineBackground = new Color(display, 0xE8, 0xF2, 0xFE);
 
         styleMap.put(TokenId.COMMENT, new TextStyle(
             font,
-            new Color(Display.getDefault(), 0x7E, 0x7E, 0x7E),
+            new Color(display, 0x7E, 0x7E, 0x7E),
             null));
         styleMap.put(TokenId.SECTION, new TextStyle(
             fontBold,
-            new Color(Display.getDefault(), 0x00, 0x00, 0x00),
+            new Color(display, 0x00, 0x00, 0xA0),
             null));
 
         styleMap.put(TokenId.NUMBER, new TextStyle(
             font,
-            new Color(Display.getDefault(), 0x00, 0x66, 0x99),
+            new Color(display, 0x00, 0x66, 0x99),
             null));
         styleMap.put(TokenId.STRING, new TextStyle(
             font,
-            new Color(Display.getDefault(), 0x7E, 0x00, 0x7E),
+            new Color(display, 0x7E, 0x00, 0x7E),
+            null));
+        styleMap.put(TokenId.CONSTANT, new TextStyle(
+            font,
+            new Color(display, 0x7E, 0x00, 0x7E),
             null));
 
-        styleMap.put(TokenId.PUB_METHOD, new TextStyle(
+        styleMap.put(TokenId.METHOD_PUB, new TextStyle(
             fontBold,
-            new Color(Display.getDefault(), 0x00, 0x00, 0x00),
+            new Color(display, 0x00, 0x00, 0x00),
             null));
-        styleMap.put(TokenId.PRI_METHOD, new TextStyle(
+        styleMap.put(TokenId.METHOD_PRI, new TextStyle(
             fontBoldItalic,
-            new Color(Display.getDefault(), 0x00, 0x00, 0x00),
+            new Color(display, 0x00, 0x00, 0x00),
+            null));
+        styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(
+            font,
+            new Color(display, 0x80, 0x80, 0x00),
+            null));
+        styleMap.put(TokenId.METHOD_RETURN, new TextStyle(
+            font,
+            new Color(display, 0x90, 0x00, 0x00),
+            null));
+
+        styleMap.put(TokenId.KEYWORD, new TextStyle(
+            fontBold,
+            new Color(display, 0x00, 0x00, 0xA0),
+            null));
+        styleMap.put(TokenId.FUNCTION, new TextStyle(
+            fontBold,
+            new Color(display, 0x00, 0x00, 0x00),
+            null));
+
+        styleMap.put(TokenId.PASM_CONDITION, new TextStyle(
+            fontBold,
+            new Color(display, 0x00, 0x00, 0x00),
+            null));
+        styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(
+            fontBold,
+            new Color(display, 0x00, 0x00, 0x00),
+            null));
+        styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(
+            fontBold,
+            new Color(display, 0x00, 0x00, 0x00),
             null));
 
         TextStyle warningStyle = new TextStyle();
         warningStyle.underline = true;
-        warningStyle.underlineColor = new Color(Display.getDefault(), 0xCC, 0x99, 0x00);
-        warningStyle.underlineStyle = SWT.UNDERLINE_SQUIGGLE;
+        warningStyle.underlineColor = new Color(display, 0xFC, 0xAF, 0x3E);
+        warningStyle.underlineStyle = SWT.UNDERLINE_DOUBLE;
         styleMap.put(TokenId.WARNING, warningStyle);
 
         TextStyle errorStyle = new TextStyle();
         errorStyle.underline = true;
-        errorStyle.underlineColor = new Color(Display.getDefault(), 0xCC, 0x00, 0x00);
+        errorStyle.underlineColor = new Color(display, 0xC0, 0x00, 0x00);
         errorStyle.underlineStyle = SWT.UNDERLINE_SQUIGGLE;
         styleMap.put(TokenId.ERROR, errorStyle);
 
@@ -223,7 +260,7 @@ public class Spin2Editor {
                 List<StyleRange> ranges = new ArrayList<StyleRange>();
 
                 try {
-                    for (Entry<Token, TokenId> entry : tokenMarker.getLineTokens(event.lineOffset, event.lineOffset + event.lineText.length() - 1).entrySet()) {
+                    for (Entry<Token, TokenId> entry : tokenMarker.getLineTokens(event.lineOffset, event.lineOffset + event.lineText.length()).entrySet()) {
                         TextStyle style = styleMap.get(entry.getValue());
                         if (style != null) {
                             StyleRange range = new StyleRange(style);

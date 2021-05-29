@@ -160,10 +160,30 @@ class Spin2TokenMarkerTest {
         Spin2TokenMarker subject = new Spin2TokenMarker();
         subject.refreshTokens(text);
 
-        Map<Token, TokenId> result = subject.getLineTokens(2, 27);
-        Iterator<Entry<Token, TokenId>> iter = result.entrySet().iterator();
+        Map<Token, TokenId> result = subject.getLineTokens(0, 1);
+        Assertions.assertEquals(1, result.size());
 
-        Entry<Token, TokenId> entry = iter.next();
-        Assertions.assertEquals(TokenId.COMMENT, entry.getValue());
+        result = subject.getLineTokens(2, 27);
+        Assertions.assertEquals(1, result.size());
+
+        result = subject.getLineTokens(29, 29);
+        Assertions.assertEquals(1, result.size());
     }
+
+    @Test
+    void testGetLastLineTokens() {
+        String text = ""
+            + "{\n"
+            + "     Constant declarations\n"
+            + "}\n"
+            + "CON\n"
+            + "";
+
+        Spin2TokenMarker subject = new Spin2TokenMarker();
+        subject.refreshTokens(text);
+
+        Map<Token, TokenId> result = subject.getLineTokens(text.length(), text.length());
+        Assertions.assertEquals(0, result.size());
+    }
+
 }
