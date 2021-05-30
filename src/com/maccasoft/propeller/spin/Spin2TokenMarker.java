@@ -11,14 +11,12 @@
 package com.maccasoft.propeller.spin;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -58,6 +56,7 @@ public class Spin2TokenMarker {
         STRING,
         KEYWORD,
         FUNCTION,
+        OPERATOR,
         TYPE,
 
         CONSTANT,
@@ -113,6 +112,13 @@ public class Spin2TokenMarker {
 
     static Map<String, TokenId> keywords = new HashMap<String, TokenId>();
     static {
+        keywords.put("CON", TokenId.SECTION);
+        keywords.put("VAR", TokenId.SECTION);
+        keywords.put("OBJ", TokenId.SECTION);
+        keywords.put("PUB", TokenId.SECTION);
+        keywords.put("PRI", TokenId.SECTION);
+        keywords.put("DAT", TokenId.SECTION);
+
         keywords.put("BYTE", TokenId.TYPE);
         keywords.put("WORD", TokenId.TYPE);
         keywords.put("LONG", TokenId.TYPE);
@@ -723,16 +729,55 @@ public class Spin2TokenMarker {
         pasmKeywords.put("_SET", TokenId.PASM_INSTRUCTION);
     }
 
-    Comparator<Token> tokenComparator = new Comparator<Token>() {
+    public static class TokenMarker implements Comparable<TokenMarker> {
 
-        @Override
-        public int compare(Token o1, Token o2) {
-            return o1.getStartIndex() - o2.getStartIndex();
+        int start;
+        int stop;
+        TokenId id;
+
+        public TokenMarker(Token token, TokenId id) {
+            this.start = token.getStartIndex();
+            this.stop = token.getStopIndex();
+            this.id = id;
         }
 
-    };
+        public TokenMarker(Token startToken, Token stopToken, TokenId id) {
+            this.start = startToken.getStartIndex();
+            this.stop = stopToken.getStopIndex();
+            this.id = id;
+        }
 
-    TreeMap<Token, TokenId> tokens = new TreeMap<Token, TokenId>(tokenComparator);
+        public TokenMarker(int start, int stop, TokenId id) {
+            this.start = start;
+            this.stop = stop;
+            this.id = id;
+        }
+
+        public TokenMarker(int start) {
+            this.start = start;
+            this.stop = start;
+        }
+
+        public int getStart() {
+            return start;
+        }
+
+        public int getStop() {
+            return stop;
+        }
+
+        public TokenId getId() {
+            return id;
+        }
+
+        @Override
+        public int compareTo(TokenMarker o) {
+            return Integer.compare(start, o.start);
+        }
+
+    }
+
+    TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
 
     Map<String, TokenId> symbols = new HashMap<String, TokenId>();
 
@@ -740,7 +785,7 @@ public class Spin2TokenMarker {
 
         @Override
         public void enterConstantsSection(ConstantsSectionContext ctx) {
-            tokens.put(ctx.getStart(), TokenId.SECTION);
+            tokens.add(new TokenMarker(ctx.getStart(), TokenId.SECTION));
         }
 
         @Override
@@ -748,17 +793,17 @@ public class Spin2TokenMarker {
             if (ctx.name != null) {
                 if (!symbols.containsKey(ctx.name.getText())) {
                     symbols.put(ctx.name.getText(), TokenId.CONSTANT);
-                    tokens.put(ctx.name, TokenId.CONSTANT);
+                    tokens.add(new TokenMarker(ctx.name, TokenId.CONSTANT));
                 }
                 else {
-                    tokens.put(ctx.name, TokenId.ERROR);
+                    tokens.add(new TokenMarker(ctx.name, TokenId.ERROR));
                 }
             }
         }
 
         @Override
         public void enterVariablesSection(VariablesSectionContext ctx) {
-            tokens.put(ctx.getStart(), TokenId.SECTION);
+            tokens.add(new TokenMarker(ctx.getStart(), TokenId.SECTION));
         }
 
         @Override
@@ -766,17 +811,17 @@ public class Spin2TokenMarker {
             if (ctx.name != null) {
                 if (!symbols.containsKey(ctx.name.getText())) {
                     symbols.put(ctx.name.getText(), TokenId.VARIABLE);
-                    tokens.put(ctx.name, TokenId.VARIABLE);
+                    tokens.add(new TokenMarker(ctx.name, TokenId.VARIABLE));
                 }
                 else {
-                    tokens.put(ctx.name, TokenId.ERROR);
+                    tokens.add(new TokenMarker(ctx.name, TokenId.ERROR));
                 }
             }
         }
 
         @Override
         public void enterObjectsSection(ObjectsSectionContext ctx) {
-            tokens.put(ctx.getStart(), TokenId.SECTION);
+            tokens.add(new TokenMarker(ctx.getStart(), TokenId.SECTION));
         }
 
         @Override
@@ -784,35 +829,35 @@ public class Spin2TokenMarker {
             if (ctx.name != null) {
                 if (!symbols.containsKey(ctx.name.getText())) {
                     symbols.put(ctx.name.getText(), TokenId.OBJECT);
-                    tokens.put(ctx.name, TokenId.OBJECT);
+                    tokens.add(new TokenMarker(ctx.name, TokenId.OBJECT));
                 }
                 else {
-                    tokens.put(ctx.name, TokenId.ERROR);
+                    tokens.add(new TokenMarker(ctx.name, TokenId.ERROR));
                 }
             }
         }
 
         @Override
         public void exitMethod(MethodContext ctx) {
-            tokens.put(ctx.getStart(), TokenId.SECTION);
+            tokens.add(new TokenMarker(ctx.getStart(), TokenId.SECTION));
             if (ctx.name != null) {
                 if (symbols.containsKey(ctx.name.getText())) {
-                    tokens.put(ctx.name, TokenId.ERROR);
+                    tokens.add(new TokenMarker(ctx.name, TokenId.ERROR));
                 }
                 else if (ctx.PRI_START() != null) {
                     symbols.put(ctx.name.getText(), TokenId.METHOD_PRI);
-                    tokens.put(ctx.name, TokenId.METHOD_PRI);
+                    tokens.add(new TokenMarker(ctx.name, TokenId.METHOD_PRI));
                 }
                 else {
                     symbols.put(ctx.name.getText(), TokenId.METHOD_PUB);
-                    tokens.put(ctx.name, TokenId.METHOD_PUB);
+                    tokens.add(new TokenMarker(ctx.name, TokenId.METHOD_PUB));
                 }
             }
         }
 
         @Override
         public void enterData(DataContext ctx) {
-            tokens.put(ctx.getStart(), TokenId.SECTION);
+            tokens.add(new TokenMarker(ctx.getStart(), TokenId.SECTION));
         }
 
         String lastPasmLabel = "";
@@ -832,12 +877,12 @@ public class Spin2TokenMarker {
 
                 if (!symbols.containsKey(text)) {
                     symbols.put(text, TokenId.PASM_LABEL);
-                    tokens.put(labelCtx.getStart(), TokenId.PASM_LABEL);
-                    tokens.put(labelCtx.getStop(), TokenId.PASM_LABEL);
+                    tokens.add(new TokenMarker(labelCtx.getStart(), TokenId.PASM_LABEL));
+                    tokens.add(new TokenMarker(labelCtx.getStop(), TokenId.PASM_LABEL));
                 }
                 else {
-                    tokens.put(labelCtx.getStart(), TokenId.ERROR);
-                    tokens.put(labelCtx.getStop(), TokenId.ERROR);
+                    tokens.add(new TokenMarker(labelCtx.getStart(), TokenId.ERROR));
+                    tokens.add(new TokenMarker(labelCtx.getStop(), TokenId.ERROR));
                 }
             }
             if (ctx.condition != null) {
@@ -845,14 +890,14 @@ public class Spin2TokenMarker {
                 if (id != TokenId.PASM_CONDITION) {
                     id = TokenId.ERROR;
                 }
-                tokens.put(ctx.condition, id);
+                tokens.add(new TokenMarker(ctx.condition, id));
             }
             if (ctx.directive != null) {
                 TokenId id = pasmKeywords.get(ctx.directive.getText().toUpperCase());
                 if (id != TokenId.PASM_INSTRUCTION) {
                     id = TokenId.ERROR;
                 }
-                tokens.put(ctx.directive, id);
+                tokens.add(new TokenMarker(ctx.directive, id));
             }
             if (ctx.opcode() != null) {
                 OpcodeContext opcodeCtx = ctx.opcode();
@@ -860,14 +905,14 @@ public class Spin2TokenMarker {
                 if (id != TokenId.PASM_INSTRUCTION) {
                     id = TokenId.ERROR;
                 }
-                tokens.put(opcodeCtx.getStart(), id);
+                tokens.add(new TokenMarker(opcodeCtx.getStart(), id));
             }
             if (ctx.modifier != null) {
                 TokenId id = pasmKeywords.get(ctx.modifier.getText().toUpperCase());
                 if (id != TokenId.PASM_MODIFIER) {
                     id = TokenId.ERROR;
                 }
-                tokens.put(ctx.modifier, id);
+                tokens.add(new TokenMarker(ctx.modifier, id));
             }
         }
 
@@ -875,13 +920,13 @@ public class Spin2TokenMarker {
         public void visitTerminal(TerminalNode node) {
             TokenId id = typeMap.get(node.getSymbol().getType());
             if (id != null) {
-                tokens.put(node.getSymbol(), id);
+                tokens.add(new TokenMarker(node.getSymbol(), id));
             }
         }
 
         @Override
         public void visitErrorNode(ErrorNode node) {
-            tokens.put(node.getSymbol(), TokenId.WARNING);
+            tokens.add(new TokenMarker(node.getSymbol(), TokenId.WARNING));
         }
 
     };
@@ -900,10 +945,10 @@ public class Spin2TokenMarker {
                         String text = node.getSymbol().getText();
                         if (!symbols.containsKey(text) && !locals.containsKey(text)) {
                             locals.put(text, TokenId.METHOD_PARAMETER);
-                            tokens.put(node.getSymbol(), TokenId.METHOD_PARAMETER);
+                            tokens.add(new TokenMarker(node.getSymbol(), TokenId.METHOD_PARAMETER));
                         }
                         else {
-                            tokens.put(node.getSymbol(), TokenId.ERROR);
+                            tokens.add(new TokenMarker(node.getSymbol(), TokenId.ERROR));
                         }
                     }
                     return null;
@@ -915,10 +960,10 @@ public class Spin2TokenMarker {
                         String text = node.getSymbol().getText();
                         if (!symbols.containsKey(text) && !locals.containsKey(text)) {
                             locals.put(text, TokenId.METHOD_RETURN);
-                            tokens.put(node.getSymbol(), TokenId.METHOD_RETURN);
+                            tokens.add(new TokenMarker(node.getSymbol(), TokenId.METHOD_RETURN));
                         }
                         else {
-                            tokens.put(node.getSymbol(), TokenId.ERROR);
+                            tokens.add(new TokenMarker(node.getSymbol(), TokenId.ERROR));
                         }
                     }
                     return null;
@@ -930,10 +975,10 @@ public class Spin2TokenMarker {
                         String text = ctx.name.getText();
                         if (!symbols.containsKey(text) && !locals.containsKey(text)) {
                             locals.put(ctx.name.getText(), TokenId.METHOD_LOCAL);
-                            tokens.put(ctx.name, TokenId.METHOD_LOCAL);
+                            tokens.add(new TokenMarker(ctx.name, TokenId.METHOD_LOCAL));
                         }
                         else {
-                            tokens.put(ctx.name, TokenId.ERROR);
+                            tokens.add(new TokenMarker(ctx.name, TokenId.ERROR));
                         }
                     }
                     return null;
@@ -949,7 +994,7 @@ public class Spin2TokenMarker {
                         if (id == null) {
                             id = TokenId.ERROR;
                         }
-                        tokens.put(ctx.name, id);
+                        tokens.add(new TokenMarker(ctx.name, id));
                     }
                     return null;
                 }
@@ -961,7 +1006,7 @@ public class Spin2TokenMarker {
                         if (id == null) {
                             id = TokenId.ERROR;
                         }
-                        tokens.put(ctx.obj, id);
+                        tokens.add(new TokenMarker(ctx.obj, id));
                     }
                     if (ctx.name != null) {
                         TokenId id = keywords.get(ctx.name.getText().toUpperCase());
@@ -971,7 +1016,7 @@ public class Spin2TokenMarker {
                         if (id == null) {
                             id = TokenId.ERROR;
                         }
-                        tokens.put(ctx.name, id);
+                        tokens.add(new TokenMarker(ctx.name, id));
                     }
                     return super.visitFunction(ctx);
                 }
@@ -987,7 +1032,7 @@ public class Spin2TokenMarker {
                 if (id == null) {
                     id = TokenId.ERROR;
                 }
-                tokens.put(ctx.name, id);
+                tokens.add(new TokenMarker(ctx.name, id));
             }
             return null;
         }
@@ -1022,8 +1067,8 @@ public class Spin2TokenMarker {
                 if (id == null) {
                     id = TokenId.ERROR;
                 }
-                tokens.put(ctx.getStart(), id);
-                tokens.put(ctx.getStop(), id);
+                tokens.add(new TokenMarker(ctx.getStart(), id));
+                tokens.add(new TokenMarker(ctx.getStop(), id));
             }
             return null;
         }
@@ -1052,22 +1097,31 @@ public class Spin2TokenMarker {
         List<Token> list = stream.getTokens(0, stream.size() - 1, commentSet);
         if (list != null) {
             for (Token token : list) {
-                tokens.put(token, TokenId.COMMENT);
+                tokens.add(new TokenMarker(token, TokenId.COMMENT));
             }
         }
     }
 
-    public Map<Token, TokenId> getLineTokens(int lineStart, int lineStop) {
-        Map<Token, TokenId> result = new TreeMap<Token, TokenId>(tokenComparator);
+    public Set<TokenMarker> getLineTokens(int lineStart, String lineText) {
+        return getLineTokens(lineStart, lineStart + lineText.length());
+    }
 
-        for (Entry<Token, TokenId> entry : tokens.entrySet()) {
-            int start = entry.getKey().getStartIndex();
-            int stop = entry.getKey().getStopIndex();
+    public Set<TokenMarker> getLineTokens(int lineStart, int lineStop) {
+        Set<TokenMarker> result = new TreeSet<TokenMarker>();
+
+        TokenMarker firstMarker = tokens.floor(new TokenMarker(lineStart, lineStop, null));
+        if (firstMarker == null) {
+            return new TreeSet<TokenMarker>();
+        }
+
+        for (TokenMarker entry : tokens.tailSet(firstMarker)) {
+            int start = entry.getStart();
+            int stop = entry.getStop();
             if ((lineStart >= start && lineStart <= stop) || (lineStop >= start && lineStop <= stop)) {
-                result.put(entry.getKey(), entry.getValue());
+                result.add(entry);
             }
             else if (stop >= lineStart && stop <= lineStop) {
-                result.put(entry.getKey(), entry.getValue());
+                result.add(entry);
             }
             if (start >= lineStop) {
                 break;

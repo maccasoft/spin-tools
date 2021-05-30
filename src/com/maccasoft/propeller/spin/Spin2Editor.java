@@ -14,10 +14,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.function.Consumer;
 
-import org.antlr.v4.runtime.Token;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.swt.SWT;
@@ -50,6 +48,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenId;
+import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenMarker;
 
 public class Spin2Editor {
 
@@ -161,6 +160,10 @@ public class Spin2Editor {
             new Color(display, 0x90, 0x00, 0x00),
             null));
 
+        styleMap.put(TokenId.TYPE, new TextStyle(
+            fontBold,
+            new Color(display, 0x00, 0x00, 0x00),
+            null));
         styleMap.put(TokenId.KEYWORD, new TextStyle(
             fontBold,
             new Color(display, 0x00, 0x00, 0xA0),
@@ -260,12 +263,12 @@ public class Spin2Editor {
                 List<StyleRange> ranges = new ArrayList<StyleRange>();
 
                 try {
-                    for (Entry<Token, TokenId> entry : tokenMarker.getLineTokens(event.lineOffset, event.lineOffset + event.lineText.length()).entrySet()) {
-                        TextStyle style = styleMap.get(entry.getValue());
+                    for (TokenMarker entry : tokenMarker.getLineTokens(event.lineOffset, event.lineText)) {
+                        TextStyle style = styleMap.get(entry.getId());
                         if (style != null) {
                             StyleRange range = new StyleRange(style);
-                            range.start = entry.getKey().getStartIndex();
-                            range.length = entry.getKey().getStopIndex() - range.start + 1;
+                            range.start = entry.getStart();
+                            range.length = entry.getStop() - range.start + 1;
                             ranges.add(range);
                         }
                     }
