@@ -268,15 +268,15 @@ public interface Spin2ParserListener extends ParseTreeListener {
 	 */
 	void exitExpressionAtom(Spin2Parser.ExpressionAtomContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#data}.
+	 * Enter a parse tree produced by {@link Spin2Parser#dataSection}.
 	 * @param ctx the parse tree
 	 */
-	void enterData(Spin2Parser.DataContext ctx);
+	void enterDataSection(Spin2Parser.DataSectionContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#data}.
+	 * Exit a parse tree produced by {@link Spin2Parser#dataSection}.
 	 * @param ctx the parse tree
 	 */
-	void exitData(Spin2Parser.DataContext ctx);
+	void exitDataSection(Spin2Parser.DataSectionContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#dataLine}.
 	 * @param ctx the parse tree
@@ -288,6 +288,36 @@ public interface Spin2ParserListener extends ParseTreeListener {
 	 */
 	void exitDataLine(Spin2Parser.DataLineContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#directive}.
+	 * @param ctx the parse tree
+	 */
+	void enterDirective(Spin2Parser.DirectiveContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#directive}.
+	 * @param ctx the parse tree
+	 */
+	void exitDirective(Spin2Parser.DirectiveContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#assembler}.
+	 * @param ctx the parse tree
+	 */
+	void enterAssembler(Spin2Parser.AssemblerContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#assembler}.
+	 * @param ctx the parse tree
+	 */
+	void exitAssembler(Spin2Parser.AssemblerContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link Spin2Parser#data}.
+	 * @param ctx the parse tree
+	 */
+	void enterData(Spin2Parser.DataContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link Spin2Parser#data}.
+	 * @param ctx the parse tree
+	 */
+	void exitData(Spin2Parser.DataContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#label}.
 	 * @param ctx the parse tree
 	 */
@@ -297,16 +327,6 @@ public interface Spin2ParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitLabel(Spin2Parser.LabelContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link Spin2Parser#opcode}.
-	 * @param ctx the parse tree
-	 */
-	void enterOpcode(Spin2Parser.OpcodeContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link Spin2Parser#opcode}.
-	 * @param ctx the parse tree
-	 */
-	void exitOpcode(Spin2Parser.OpcodeContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link Spin2Parser#argument}.
 	 * @param ctx the parse tree

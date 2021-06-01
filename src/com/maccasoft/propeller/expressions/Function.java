@@ -15,6 +15,11 @@ public abstract class Function extends Expression {
     }
 
     @Override
+    public boolean isConstant() {
+        return term.isConstant();
+    }
+
+    @Override
     public boolean isNumber() {
         return term.isNumber();
     }

@@ -21,6 +21,11 @@ public abstract class BinaryOperator extends Expression {
     }
 
     @Override
+    public boolean isConstant() {
+        return term1.isConstant() && term2.isConstant();
+    }
+
+    @Override
     public boolean isNumber() {
         return term1.isNumber() && term2.isNumber();
     }

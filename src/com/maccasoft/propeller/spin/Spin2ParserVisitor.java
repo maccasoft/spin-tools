@@ -167,11 +167,11 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExpressionAtom(Spin2Parser.ExpressionAtomContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#data}.
+	 * Visit a parse tree produced by {@link Spin2Parser#dataSection}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitData(Spin2Parser.DataContext ctx);
+	T visitDataSection(Spin2Parser.DataSectionContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#dataLine}.
 	 * @param ctx the parse tree
@@ -179,17 +179,29 @@ public interface Spin2ParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitDataLine(Spin2Parser.DataLineContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#directive}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDirective(Spin2Parser.DirectiveContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#assembler}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssembler(Spin2Parser.AssemblerContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link Spin2Parser#data}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitData(Spin2Parser.DataContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#label}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitLabel(Spin2Parser.LabelContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link Spin2Parser#opcode}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOpcode(Spin2Parser.OpcodeContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link Spin2Parser#argument}.
 	 * @param ctx the parse tree

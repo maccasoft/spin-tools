@@ -24,11 +24,14 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import com.maccasoft.propeller.spin.Spin2Parser.AssemblerContext;
 import com.maccasoft.propeller.spin.Spin2Parser.AtomContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantsSectionContext;
 import com.maccasoft.propeller.spin.Spin2Parser.DataContext;
 import com.maccasoft.propeller.spin.Spin2Parser.DataLineContext;
+import com.maccasoft.propeller.spin.Spin2Parser.DataSectionContext;
+import com.maccasoft.propeller.spin.Spin2Parser.DirectiveContext;
 import com.maccasoft.propeller.spin.Spin2Parser.FunctionContext;
 import com.maccasoft.propeller.spin.Spin2Parser.IdentifierContext;
 import com.maccasoft.propeller.spin.Spin2Parser.LabelContext;
@@ -36,7 +39,6 @@ import com.maccasoft.propeller.spin.Spin2Parser.LocalvarContext;
 import com.maccasoft.propeller.spin.Spin2Parser.MethodContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ObjectContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ObjectsSectionContext;
-import com.maccasoft.propeller.spin.Spin2Parser.OpcodeContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ParametersContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ProgContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ResultContext;
@@ -71,6 +73,8 @@ public class Spin2TokenMarker {
 
         PASM_LABEL,
         PASM_CONDITION,
+        PASM_TYPE,
+        PASM_DIRECTIVE,
         PASM_INSTRUCTION,
         PASM_MODIFIER,
 
@@ -234,16 +238,16 @@ public class Spin2TokenMarker {
 
     static Map<String, TokenId> pasmKeywords = new HashMap<String, TokenId>();
     static {
-        pasmKeywords.put("ORG", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ORGH", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ORGF", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FIT", TokenId.PASM_INSTRUCTION);
+        pasmKeywords.put("ORG", TokenId.PASM_DIRECTIVE);
+        pasmKeywords.put("ORGH", TokenId.PASM_DIRECTIVE);
+        pasmKeywords.put("ORGF", TokenId.PASM_DIRECTIVE);
+        pasmKeywords.put("FIT", TokenId.PASM_DIRECTIVE);
 
-        pasmKeywords.put("BYTE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WORD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("LONG", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RES", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FILE", TokenId.PASM_INSTRUCTION);
+        pasmKeywords.put("BYTE", TokenId.PASM_TYPE);
+        pasmKeywords.put("WORD", TokenId.PASM_TYPE);
+        pasmKeywords.put("LONG", TokenId.PASM_TYPE);
+        pasmKeywords.put("RES", TokenId.PASM_DIRECTIVE);
+        pasmKeywords.put("FILE", TokenId.PASM_DIRECTIVE);
 
         pasmKeywords.put("ASMCLK", TokenId.PASM_INSTRUCTION);
 
@@ -856,35 +860,44 @@ public class Spin2TokenMarker {
         }
 
         @Override
-        public void enterData(DataContext ctx) {
+        public void enterDataSection(DataSectionContext ctx) {
             tokens.add(new TokenMarker(ctx.getStart(), TokenId.SECTION));
         }
 
         String lastPasmLabel = "";
 
         @Override
-        public void exitDataLine(DataLineContext ctx) {
-            if (ctx.label() != null) {
-                LabelContext labelCtx = ctx.label();
-
-                String text = labelCtx.getText();
-                if (text.startsWith(".")) {
-                    text = lastPasmLabel + text;
-                }
-                else {
-                    lastPasmLabel = text;
-                }
-
-                if (!symbols.containsKey(text)) {
-                    symbols.put(text, TokenId.PASM_LABEL);
-                    tokens.add(new TokenMarker(labelCtx.getStart(), TokenId.PASM_LABEL));
-                    tokens.add(new TokenMarker(labelCtx.getStop(), TokenId.PASM_LABEL));
-                }
-                else {
-                    tokens.add(new TokenMarker(labelCtx.getStart(), TokenId.ERROR));
-                    tokens.add(new TokenMarker(labelCtx.getStop(), TokenId.ERROR));
-                }
+        public void exitLabel(LabelContext ctx) {
+            String text = ctx.getText();
+            if (text.startsWith(".")) {
+                text = lastPasmLabel + text;
             }
+            else {
+                lastPasmLabel = text;
+            }
+
+            if (!symbols.containsKey(text)) {
+                symbols.put(text, TokenId.PASM_LABEL);
+                tokens.add(new TokenMarker(ctx.getStart(), ctx.getStop(), TokenId.PASM_LABEL));
+            }
+            else {
+                tokens.add(new TokenMarker(ctx.getStart(), ctx.getStop(), TokenId.ERROR));
+            }
+        }
+
+        @Override
+        public void exitDirective(DirectiveContext ctx) {
+            if (ctx.name != null) {
+                TokenId id = pasmKeywords.get(ctx.name.getText().toUpperCase());
+                if (id != TokenId.PASM_DIRECTIVE) {
+                    id = TokenId.ERROR;
+                }
+                tokens.add(new TokenMarker(ctx.name, id));
+            }
+        }
+
+        @Override
+        public void exitAssembler(AssemblerContext ctx) {
             if (ctx.condition != null) {
                 TokenId id = pasmKeywords.get(ctx.condition.getText().toUpperCase());
                 if (id != TokenId.PASM_CONDITION) {
@@ -892,20 +905,12 @@ public class Spin2TokenMarker {
                 }
                 tokens.add(new TokenMarker(ctx.condition, id));
             }
-            if (ctx.directive != null) {
-                TokenId id = pasmKeywords.get(ctx.directive.getText().toUpperCase());
+            if (ctx.instruction != null) {
+                TokenId id = pasmKeywords.get(ctx.instruction.getText().toUpperCase());
                 if (id != TokenId.PASM_INSTRUCTION) {
                     id = TokenId.ERROR;
                 }
-                tokens.add(new TokenMarker(ctx.directive, id));
-            }
-            if (ctx.opcode() != null) {
-                OpcodeContext opcodeCtx = ctx.opcode();
-                TokenId id = pasmKeywords.get(opcodeCtx.getText().toUpperCase());
-                if (id != TokenId.PASM_INSTRUCTION) {
-                    id = TokenId.ERROR;
-                }
-                tokens.add(new TokenMarker(opcodeCtx.getStart(), id));
+                tokens.add(new TokenMarker(ctx.instruction, id));
             }
             if (ctx.modifier != null) {
                 TokenId id = pasmKeywords.get(ctx.modifier.getText().toUpperCase());
@@ -913,6 +918,17 @@ public class Spin2TokenMarker {
                     id = TokenId.ERROR;
                 }
                 tokens.add(new TokenMarker(ctx.modifier, id));
+            }
+        }
+
+        @Override
+        public void exitData(DataContext ctx) {
+            if (ctx.type != null) {
+                TokenId id = pasmKeywords.get(ctx.type.getText().toUpperCase());
+                if (id != TokenId.PASM_TYPE) {
+                    id = TokenId.ERROR;
+                }
+                tokens.add(new TokenMarker(ctx.type, id));
             }
         }
 

@@ -3,6 +3,11 @@ package com.maccasoft.propeller.expressions;
 public abstract class Passthrough extends Expression {
 
     @Override
+    public boolean isConstant() {
+        return resolve().isConstant();
+    }
+
+    @Override
     public boolean isNumber() {
         return resolve().isNumber();
     }

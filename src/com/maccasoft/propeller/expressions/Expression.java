@@ -9,6 +9,10 @@ public abstract class Expression {
         return this;
     }
 
+    public boolean isConstant() {
+        return false;
+    }
+
     public boolean isRegister() {
         return false;
     }

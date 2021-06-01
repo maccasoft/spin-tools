@@ -15,11 +15,13 @@ import java.util.List;
 
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin.Spin2Parser.ArgumentContext;
+import com.maccasoft.propeller.spin.Spin2Parser.AssemblerContext;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantExpressionContext;
+import com.maccasoft.propeller.spin.Spin2Parser.DataContext;
 import com.maccasoft.propeller.spin.Spin2Parser.DataLineContext;
 import com.maccasoft.propeller.spin.Spin2Parser.DataValueContext;
+import com.maccasoft.propeller.spin.Spin2Parser.DirectiveContext;
 import com.maccasoft.propeller.spin.Spin2Parser.LabelContext;
-import com.maccasoft.propeller.spin.Spin2Parser.OpcodeContext;
 
 @SuppressWarnings({
     "rawtypes"
@@ -35,15 +37,6 @@ public class Spin2PAsmLineBuilderVisitor extends Spin2ParserBaseVisitor {
 
     public Spin2PAsmLineBuilderVisitor(Spin2Context scope, DataLineContext ctx) {
         this.scope = scope;
-        if (ctx.condition != null) {
-            this.condition = ctx.condition.getText();
-        }
-        if (ctx.directive != null) {
-            this.mnemonic = ctx.directive.getText();
-        }
-        if (ctx.modifier != null) {
-            this.modifier = ctx.modifier.getText();
-        }
     }
 
     @Override
@@ -53,9 +46,32 @@ public class Spin2PAsmLineBuilderVisitor extends Spin2ParserBaseVisitor {
     }
 
     @Override
-    public Object visitOpcode(OpcodeContext ctx) {
-        mnemonic = ctx.getText();
+    public Object visitDirective(DirectiveContext ctx) {
+        if (ctx.name != null) {
+            this.mnemonic = ctx.name.getText();
+        }
+        return super.visitDirective(ctx);
+    }
+
+    @Override
+    public Object visitConstantExpression(ConstantExpressionContext ctx) {
+        Expression expression = Spin2Compiler.buildExpression(scope, ctx);
+        arguments.add(new Spin2PAsmExpression(null, expression, null));
         return null;
+    }
+
+    @Override
+    public Object visitAssembler(AssemblerContext ctx) {
+        if (ctx.condition != null) {
+            this.condition = ctx.condition.getText();
+        }
+        if (ctx.instruction != null) {
+            this.mnemonic = ctx.instruction.getText();
+        }
+        if (ctx.modifier != null) {
+            this.modifier = ctx.modifier.getText();
+        }
+        return super.visitAssembler(ctx);
     }
 
     @Override
@@ -66,10 +82,11 @@ public class Spin2PAsmLineBuilderVisitor extends Spin2ParserBaseVisitor {
     }
 
     @Override
-    public Object visitConstantExpression(ConstantExpressionContext ctx) {
-        Expression expression = Spin2Compiler.buildExpression(scope, ctx);
-        arguments.add(new Spin2PAsmExpression(null, expression, null));
-        return null;
+    public Object visitData(DataContext ctx) {
+        if (ctx.type != null) {
+            this.mnemonic = ctx.type.getText();
+        }
+        return super.visitData(ctx);
     }
 
     @Override

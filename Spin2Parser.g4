@@ -3,7 +3,7 @@ parser grammar Spin2Parser;
 options { tokenVocab=Spin2Lexer; }
 
 prog
-    : NL* (constantsSection | objectsSection | variablesSection | method | data)* EOF
+    : NL* (constantsSection | objectsSection | variablesSection | method | dataSection)* EOF
     ;
 
 /*
@@ -95,12 +95,19 @@ variable
 /* 
 
 PUB go()
+
 PUB SetupADC(pins)
+
 PUB StartTx(pin, baud) : Okay
+
 PRI RotateXY(X, Y, Angle) : NewX, NewY | p,q,r
+
 PRI Shuffle() | i, j
+
 PRI FFT1024(DataPtr) | a, b, x[1024], y[1024]
+
 PRI ReMix() : Length, SampleRate | WORD Buff[20000], k
+
 PRI StrCheck(StrPtrA, StrPtrB) : Pass | i, BYTE Str[64]
 
 */
@@ -232,26 +239,38 @@ buff            RES     16            'reserve 16 registers, advance cog address
 
  */
 
-data: DAT_START+ NL* dataLine* ;
+dataSection: DAT_START+ NL* (INDENT* dataLine (NL | DEDENT)* )* ;
 
 dataLine
     : label NL+
-    | INDENT* directive=(ORG | ORGH | ORGF | ALIGN) (constantExpression (COMMA constantExpression)? )? NL+ (NL | DEDENT)*
-    | INDENT* label? directive=FIT argument? NL+ (NL | DEDENT)*
-    | INDENT* label? directive=TYPE dataValue (COMMA dataValue)* NL+ (NL | DEDENT)*
-    | INDENT* label? directive=RES constantExpression NL+ (NL | DEDENT)*
-    | INDENT* label? condition=CONDITION? opcode argument COMMA argument COMMA argument modifier=MODIFIER? NL+ (NL | DEDENT)*
-    | INDENT* label? condition=CONDITION? opcode argument COMMA argument modifier=MODIFIER? NL+ (NL | DEDENT)*
-    | INDENT* label? condition=CONDITION? opcode argument modifier=MODIFIER? NL+ (NL | DEDENT)*
-    | INDENT* label? condition=CONDITION? opcode modifier=MODIFIER? NL+ (NL | DEDENT)*
+    | directive NL+
+    | assembler NL+
+    | data NL+
+    ;
+
+directive
+    : {_input.LT(1).getCharPositionInLine() != 0}? name=(ORG | ORGH | ORGF | ALIGN) (constantExpression (COMMA constantExpression)? )?
+    | label? name=FIT constantExpression?
+    | label? name=RES constantExpression
+    ;
+
+assembler
+    : label condition=CONDITION? instruction=(OR | AND | NOT | XOR | ENCOD | DECOD | IDENTIFIER) argument COMMA argument COMMA argument modifier=MODIFIER?
+    | label condition=CONDITION? instruction=(OR | AND | NOT | XOR | ENCOD | DECOD | IDENTIFIER) argument COMMA argument modifier=MODIFIER?
+    | label condition=CONDITION? instruction=(OR | AND | NOT | XOR | ENCOD | DECOD | IDENTIFIER) argument modifier=MODIFIER?
+    | label condition=CONDITION? instruction=(OR | AND | NOT | XOR | ENCOD | DECOD | IDENTIFIER) modifier=MODIFIER?
+    | condition=CONDITION? instruction=(OR | AND | NOT | XOR | ENCOD | DECOD | IDENTIFIER) argument COMMA argument COMMA argument modifier=MODIFIER?
+    | condition=CONDITION? instruction=(OR | AND | NOT | XOR | ENCOD | DECOD | IDENTIFIER) argument COMMA argument modifier=MODIFIER?
+    | condition=CONDITION? instruction=(OR | AND | NOT | XOR | ENCOD | DECOD | IDENTIFIER) argument modifier=MODIFIER?
+    | condition=CONDITION? instruction=(OR | AND | NOT | XOR | ENCOD | DECOD | IDENTIFIER) modifier=MODIFIER?
+    ;
+
+data
+    : label? type=TYPE dataValue (COMMA dataValue)*
     ;
 
 label
     : {_input.LT(1).getCharPositionInLine() == 0}? (DOT? IDENTIFIER) 
-    ;
-
-opcode
-    : {_input.LT(1).getCharPositionInLine() != 0}? (OR | AND | NOT | XOR | ENCOD | DECOD | IDENTIFIER) 
     ;
 
 argument
