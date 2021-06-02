@@ -10,71 +10,71 @@
 
 package com.maccasoft.propeller.spin;
 
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignEnum;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignExpression;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantSetEnum;
-import com.maccasoft.propeller.spin.Spin2Parser.Constants;
-import com.maccasoft.propeller.spin.Spin2Parser.Data;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignEnumNode;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignNode;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantSetEnumNode;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantsNode;
+import com.maccasoft.propeller.spin.Spin2Parser.DataNode;
 import com.maccasoft.propeller.spin.Spin2Parser.ErrorNode;
-import com.maccasoft.propeller.spin.Spin2Parser.Expression;
-import com.maccasoft.propeller.spin.Spin2Parser.Line;
-import com.maccasoft.propeller.spin.Spin2Parser.Method;
-import com.maccasoft.propeller.spin.Spin2Parser.Objects;
-import com.maccasoft.propeller.spin.Spin2Parser.Statement;
-import com.maccasoft.propeller.spin.Spin2Parser.Variable;
-import com.maccasoft.propeller.spin.Spin2Parser.Variables;
+import com.maccasoft.propeller.spin.Spin2Parser.ExpressionNode;
+import com.maccasoft.propeller.spin.Spin2Parser.DataLineNode;
+import com.maccasoft.propeller.spin.Spin2Parser.MethodNode;
+import com.maccasoft.propeller.spin.Spin2Parser.ObjectsNode;
+import com.maccasoft.propeller.spin.Spin2Parser.StatementNode;
+import com.maccasoft.propeller.spin.Spin2Parser.VariableNode;
+import com.maccasoft.propeller.spin.Spin2Parser.VariablesNode;
 
 public class Spin2ParserVisitor {
 
-    public void visitConstants(Constants node) {
+    public void visitConstants(ConstantsNode node) {
 
     }
 
-    public void visitConstantAssignExpression(ConstantAssignExpression node) {
+    public void visitConstantAssign(ConstantAssignNode node) {
 
     }
 
-    public void visitConstantSetEnum(ConstantSetEnum node) {
+    public void visitConstantSetEnum(ConstantSetEnumNode node) {
 
     }
 
-    public void visitConstantAssignEnum(ConstantAssignEnum node) {
+    public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
 
     }
 
-    public void visitVariables(Variables node) {
+    public void visitVariables(VariablesNode node) {
 
     }
 
-    public void visitVariable(Variable node) {
+    public void visitVariable(VariableNode node) {
 
     }
 
-    public void visitObjects(Objects node) {
+    public void visitObjects(ObjectsNode node) {
 
     }
 
-    public void visitMethod(Method node) {
+    public void visitMethod(MethodNode node) {
 
     }
 
-    public void visitStatement(Statement node) {
+    public void visitStatement(StatementNode node) {
 
     }
 
-    public void visitData(Data node) {
+    public void visitData(DataNode node) {
 
     }
 
-    public void visitLine(Line node) {
+    public void visitDataLine(DataLineNode node) {
 
     }
 
-    public void visitExpression(Expression node) {
+    public void visitExpression(ExpressionNode node) {
 
     }
 
-    public void visitErrorNode(ErrorNode node) {
+    public void visitError(ErrorNode node) {
 
     }
 

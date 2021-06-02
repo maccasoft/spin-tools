@@ -13,11 +13,11 @@ package com.maccasoft.propeller.spin;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignEnum;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignExpression;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantSetEnum;
-import com.maccasoft.propeller.spin.Spin2Parser.Constants;
-import com.maccasoft.propeller.spin.Spin2Parser.Method;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignEnumNode;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignNode;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantSetEnumNode;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantsNode;
+import com.maccasoft.propeller.spin.Spin2Parser.MethodNode;
 import com.maccasoft.propeller.spin.Spin2Parser.Node;
 
 class Spin2ParserTest {
@@ -30,15 +30,15 @@ class Spin2ParserTest {
             + ""));
 
         Node root = subject.parse();
-        Constants con0 = (Constants) root.childs.get(0);
+        ConstantsNode con0 = (ConstantsNode) root.childs.get(0);
 
         Assertions.assertEquals(2, con0.childs.size());
 
-        ConstantAssignExpression node0 = (ConstantAssignExpression) con0.childs.get(0);
+        ConstantAssignNode node0 = (ConstantAssignNode) con0.childs.get(0);
         Assertions.assertEquals("EnableFlow", node0.identifier.getText());
         Assertions.assertEquals("8", node0.expression.getText());
 
-        ConstantAssignExpression node1 = (ConstantAssignExpression) con0.childs.get(1);
+        ConstantAssignNode node1 = (ConstantAssignNode) con0.childs.get(1);
         Assertions.assertEquals("DisableFlow", node1.identifier.getText());
         Assertions.assertEquals("4", node1.expression.getText());
     }
@@ -51,19 +51,19 @@ class Spin2ParserTest {
             + ""));
 
         Node root = subject.parse();
-        Constants con0 = (Constants) root.childs.get(0);
+        ConstantsNode con0 = (ConstantsNode) root.childs.get(0);
 
         Assertions.assertEquals(3, con0.childs.size());
 
-        ConstantAssignExpression node0 = (ConstantAssignExpression) con0.childs.get(0);
+        ConstantAssignNode node0 = (ConstantAssignNode) con0.childs.get(0);
         Assertions.assertEquals("x", node0.identifier.getText());
         Assertions.assertEquals("5", node0.expression.getText());
 
-        ConstantAssignExpression node1 = (ConstantAssignExpression) con0.childs.get(1);
+        ConstantAssignNode node1 = (ConstantAssignNode) con0.childs.get(1);
         Assertions.assertEquals("y", node1.identifier.getText());
         Assertions.assertEquals("-5", node1.expression.getText());
 
-        ConstantAssignExpression node2 = (ConstantAssignExpression) con0.childs.get(2);
+        ConstantAssignNode node2 = (ConstantAssignNode) con0.childs.get(2);
         Assertions.assertEquals("z", node2.identifier.getText());
         Assertions.assertEquals("1", node2.expression.getText());
     }
@@ -75,16 +75,16 @@ class Spin2ParserTest {
             + ""));
 
         Node root = subject.parse();
-        Constants con0 = (Constants) root.childs.get(0);
+        ConstantsNode con0 = (ConstantsNode) root.childs.get(0);
 
-        ConstantSetEnum node0 = (ConstantSetEnum) con0.childs.get(0);
+        ConstantSetEnumNode node0 = (ConstantSetEnumNode) con0.childs.get(0);
         Assertions.assertEquals("0", node0.start.getText());
         Assertions.assertNull(node0.step);
 
-        Assertions.assertEquals("a", ((ConstantAssignEnum) con0.childs.get(1)).identifier.getText());
-        Assertions.assertEquals("b", ((ConstantAssignEnum) con0.childs.get(2)).identifier.getText());
-        Assertions.assertEquals("c", ((ConstantAssignEnum) con0.childs.get(3)).identifier.getText());
-        Assertions.assertEquals("d", ((ConstantAssignEnum) con0.childs.get(4)).identifier.getText());
+        Assertions.assertEquals("a", ((ConstantAssignEnumNode) con0.childs.get(1)).identifier.getText());
+        Assertions.assertEquals("b", ((ConstantAssignEnumNode) con0.childs.get(2)).identifier.getText());
+        Assertions.assertEquals("c", ((ConstantAssignEnumNode) con0.childs.get(3)).identifier.getText());
+        Assertions.assertEquals("d", ((ConstantAssignEnumNode) con0.childs.get(4)).identifier.getText());
     }
 
     @Test
@@ -95,9 +95,9 @@ class Spin2ParserTest {
             + ""));
 
         Node root = subject.parse();
-        Constants con0 = (Constants) root.childs.get(0);
+        ConstantsNode con0 = (ConstantsNode) root.childs.get(0);
 
-        ConstantAssignEnum node0 = (ConstantAssignEnum) con0.childs.get(0);
+        ConstantAssignEnumNode node0 = (ConstantAssignEnumNode) con0.childs.get(0);
         Assertions.assertEquals("u", node0.identifier.getText());
         Assertions.assertEquals("2", node0.multiplier.getText());
     }
@@ -109,7 +109,7 @@ class Spin2ParserTest {
             + ""));
 
         Node root = subject.parse();
-        Method method0 = (Method) root.childs.get(0);
+        MethodNode method0 = (MethodNode) root.childs.get(0);
 
         Assertions.assertEquals("PUB", method0.type.getText());
         Assertions.assertEquals("go", method0.name.getText());
@@ -122,7 +122,7 @@ class Spin2ParserTest {
             + ""));
 
         Node root = subject.parse();
-        Method method0 = (Method) root.childs.get(0);
+        MethodNode method0 = (MethodNode) root.childs.get(0);
 
         Assertions.assertEquals("pin", method0.parameters.get(0).getText());
         Assertions.assertEquals("baud", method0.parameters.get(1).getText());
@@ -135,7 +135,7 @@ class Spin2ParserTest {
             + ""));
 
         Node root = subject.parse();
-        Method method0 = (Method) root.childs.get(0);
+        MethodNode method0 = (MethodNode) root.childs.get(0);
 
         Assertions.assertEquals("a", method0.localVariables.get(0).identifier.getText());
         Assertions.assertEquals("b", method0.localVariables.get(1).identifier.getText());
@@ -148,7 +148,7 @@ class Spin2ParserTest {
             + ""));
 
         Node root = subject.parse();
-        Method method0 = (Method) root.childs.get(0);
+        MethodNode method0 = (MethodNode) root.childs.get(0);
 
         Assertions.assertEquals("LONG", method0.localVariables.get(0).type.getText());
         Assertions.assertEquals("WORD", method0.localVariables.get(1).type.getText());
@@ -161,7 +161,7 @@ class Spin2ParserTest {
             + ""));
 
         Node root = subject.parse();
-        Method method0 = (Method) root.childs.get(0);
+        MethodNode method0 = (MethodNode) root.childs.get(0);
 
         Assertions.assertEquals("1024", method0.localVariables.get(0).size.getText());
         Assertions.assertEquals("512", method0.localVariables.get(1).size.getText());
