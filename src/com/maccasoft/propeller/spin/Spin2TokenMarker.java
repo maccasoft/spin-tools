@@ -350,7 +350,9 @@ public class Spin2TokenMarker {
 
         @Override
         public void visitVariable(VariableNode node) {
-            tokens.add(new TokenMarker(node.getType(), TokenId.TYPE));
+            if (node.getType() != null) {
+                tokens.add(new TokenMarker(node.getType(), TokenId.TYPE));
+            }
 
             if (symbols.containsKey(node.getIdentifier().getText())) {
                 tokens.add(new TokenMarker(node.getIdentifier(), TokenId.ERROR));
@@ -370,11 +372,15 @@ public class Spin2TokenMarker {
         public void visitMethod(MethodNode node) {
             if ("PRI".equalsIgnoreCase(node.getType().getText())) {
                 tokens.add(new TokenMarker(node.getType(), TokenId.METHOD_PRI));
-                tokens.add(new TokenMarker(node.getName(), TokenId.METHOD_PRI));
+                if (node.getName() != null) {
+                    tokens.add(new TokenMarker(node.getName(), TokenId.METHOD_PRI));
+                }
             }
             else {
                 tokens.add(new TokenMarker(node.getType(), TokenId.METHOD_PUB));
-                tokens.add(new TokenMarker(node.getName(), TokenId.METHOD_PUB));
+                if (node.getName() != null) {
+                    tokens.add(new TokenMarker(node.getName(), TokenId.METHOD_PUB));
+                }
             }
 
             for (Node child : node.getParameters()) {

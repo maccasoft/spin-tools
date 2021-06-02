@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -36,6 +37,8 @@ import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.VerifyEvent;
+import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
@@ -47,6 +50,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Caret;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
@@ -54,6 +58,9 @@ import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenId;
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenMarker;
 
 public class Spin2Editor {
+
+    private static final int UNDO_LIMIT = 500;
+    private static final int CURRENT_CHANGE_TIMER_EXPIRE = 500;
 
     Display display;
     Composite container;
@@ -74,6 +81,41 @@ public class Spin2Editor {
 
     Spin2TokenMarker tokenMarker;
     Map<Spin2TokenMarker.TokenId, TextStyle> styleMap = new HashMap<Spin2TokenMarker.TokenId, TextStyle>();
+
+    boolean ignoreUndo;
+    boolean ignoreRedo;
+    TextChange currentChange;
+    Stack<TextChange> undoStack = new Stack<TextChange>();
+    Stack<TextChange> redoStack = new Stack<TextChange>();
+
+    class TextChange {
+
+        int caretOffset;
+        int topIndex;
+        int start;
+        int length;
+        String replacedText;
+        long timeStamp;
+
+        TextChange(int start, int length, String replacedText, int topIndex, int caretOffset) {
+            this.start = start;
+            this.length = length;
+            this.replacedText = replacedText;
+            this.timeStamp = System.currentTimeMillis();
+            this.topIndex = topIndex;
+            this.caretOffset = caretOffset;
+        }
+
+        void append(int length, String replacedText) {
+            this.length += length;
+            this.replacedText += replacedText;
+            this.timeStamp = System.currentTimeMillis();
+        }
+
+        boolean isExpired() {
+            return (System.currentTimeMillis() - timeStamp) >= CURRENT_CHANGE_TIMER_EXPIRE;
+        }
+    }
 
     private final CaretListener caretListener = new CaretListener() {
 
@@ -100,26 +142,37 @@ public class Spin2Editor {
         }
     };
 
+    final Runnable refreshViewRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            if (styledText == null || styledText.isDisposed()) {
+                return;
+            }
+            styledText.redraw();
+        }
+    };
+
     public Spin2Editor(Composite parent) {
         display = parent.getDisplay();
 
-        container = new Composite(parent, SWT.NONE);
+        container = new Composite(parent, SWT.NO_FOCUS);
         GridLayout containerLayout = new GridLayout(2, false);
         containerLayout.horizontalSpacing = 1;
         containerLayout.marginWidth = containerLayout.marginHeight = 0;
         container.setLayout(containerLayout);
 
         if ("win32".equals(SWT.getPlatform())) {
-            font = new Font(display, "Courier New", 9, SWT.NONE);
-            fontBold = new Font(display, "Courier New", 9, SWT.BOLD);
-            fontItalic = new Font(display, "Courier New", 9, SWT.ITALIC);
-            fontBoldItalic = new Font(display, "Courier New", 9, SWT.BOLD | SWT.ITALIC);
+            font = new Font(display, "Courier New", 10, SWT.NONE);
+            fontBold = new Font(display, "Courier New", 10, SWT.BOLD);
+            fontItalic = new Font(display, "Courier New", 10, SWT.ITALIC);
+            fontBoldItalic = new Font(display, "Courier New", 10, SWT.BOLD | SWT.ITALIC);
         }
         else {
-            font = new Font(display, "mono", 9, SWT.NONE);
-            fontBold = new Font(display, "mono", 9, SWT.BOLD);
-            fontItalic = new Font(display, "mono", 9, SWT.ITALIC);
-            fontBoldItalic = new Font(display, "mono", 9, SWT.BOLD | SWT.ITALIC);
+            font = new Font(display, "mono", 10, SWT.NONE);
+            fontBold = new Font(display, "mono", 10, SWT.BOLD);
+            fontItalic = new Font(display, "mono", 10, SWT.ITALIC);
+            fontBoldItalic = new Font(display, "mono", 10, SWT.BOLD | SWT.ITALIC);
         }
 
         currentLine = 0;
@@ -254,6 +307,39 @@ public class Spin2Editor {
             }
         });
 
+        styledText.addVerifyListener(new VerifyListener() {
+
+            @Override
+            public void verifyText(VerifyEvent e) {
+                String replacedText = styledText.getTextRange(e.start, e.end - e.start);
+                if (!ignoreUndo) {
+                    if (currentChange == null || currentChange.isExpired()) {
+                        undoStack.push(currentChange = new TextChange(e.start, e.text.length(), replacedText, styledText.getTopIndex(), styledText.getCaretOffset()));
+                        if (undoStack.size() > UNDO_LIMIT) {
+                            undoStack.remove(0);
+                        }
+                    }
+                    else {
+                        if (e.start != currentChange.start + currentChange.length) {
+                            undoStack.push(currentChange = new TextChange(e.start, e.text.length(), replacedText, styledText.getTopIndex(), styledText.getCaretOffset()));
+                            if (undoStack.size() > UNDO_LIMIT) {
+                                undoStack.remove(0);
+                            }
+                        }
+                        else {
+                            currentChange.append(e.text.length(), replacedText);
+                        }
+                    }
+                }
+                else if (!ignoreRedo) {
+                    redoStack.push(new TextChange(e.start, e.text.length(), replacedText, styledText.getTopIndex(), styledText.getCaretOffset()));
+                    if (redoStack.size() > UNDO_LIMIT) {
+                        redoStack.remove(0);
+                    }
+                }
+            }
+        });
+
         styledText.addKeyListener(new KeyAdapter() {
 
             @Override
@@ -291,6 +377,7 @@ public class Spin2Editor {
                 if (modified) {
                     try {
                         tokenMarker.refreshTokens(styledText.getText());
+                        display.timerExec(500, refreshViewRunnable);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -314,6 +401,7 @@ public class Spin2Editor {
                 event.styles = ranges.toArray(new StyleRange[ranges.size()]);
             }
         });
+
         styledText.addLineBackgroundListener(new LineBackgroundListener() {
 
             @Override
@@ -350,6 +438,10 @@ public class Spin2Editor {
         });
     }
 
+    public Control getControl() {
+        return container;
+    }
+
     public void dispose() {
         container.dispose();
     }
@@ -361,6 +453,7 @@ public class Spin2Editor {
             text = text.replaceAll("[ \\t]+(\r\n|\n|\r)", "$1");
 
             currentLine = 0;
+            modified = true;
             styledText.setText(text);
         } finally {
             styledText.setRedraw(true);
@@ -372,6 +465,60 @@ public class Spin2Editor {
         String text = styledText.getText();
         text = text.replaceAll("[ \\t]+(\r\n|\n|\r)", "$1");
         return text;
+    }
+
+    public void undo() {
+        if (undoStack.empty()) {
+            return;
+        }
+
+        TextChange change = undoStack.pop();
+
+        ignoreUndo = true;
+        try {
+            styledText.setRedraw(false);
+            styledText.replaceTextRange(change.start, change.length, change.replacedText);
+            styledText.setCaretOffset(change.caretOffset);
+            styledText.setTopIndex(change.topIndex);
+        } finally {
+            styledText.setRedraw(true);
+            ignoreUndo = false;
+        }
+    }
+
+    public void redo() {
+        if (redoStack.empty()) {
+            return;
+        }
+
+        TextChange change = redoStack.pop();
+
+        ignoreRedo = true;
+        try {
+            styledText.setRedraw(false);
+            styledText.replaceTextRange(change.start, change.length, change.replacedText);
+            styledText.setCaretOffset(change.caretOffset);
+            styledText.setTopIndex(change.topIndex);
+        } finally {
+            styledText.setRedraw(true);
+            ignoreRedo = false;
+        }
+    }
+
+    public void cut() {
+        styledText.cut();
+    }
+
+    public void copy() {
+        styledText.copy();
+    }
+
+    public void paste() {
+        styledText.paste();
+    }
+
+    public void selectAll() {
+        styledText.selectAll();
     }
 
     public static void main(String[] args) {

@@ -96,7 +96,7 @@ class Spin2CompilerFunctionalTest {
             + "                jmp     #.loop\n"
             + "\n";
 
-        byte[] expected = new byte[] {
+        byte[] part0 = new byte[] {
             /* 000000 000 */ // |                     org     0
             /* 000000 000 */ // | start
             /* 000000 000 */ (byte) 0x03, (byte) 0x80, (byte) 0x80, (byte) 0xFF, // |                     hubset  ##clkmode_ & !%11
@@ -106,16 +106,22 @@ class Spin2CompilerFunctionalTest {
             /* 000010 004 */ (byte) 0x03, (byte) 0x80, (byte) 0x80, (byte) 0xFF, // |                     hubset  ##clkmode_
             /* 000014 005 */ (byte) 0x00, (byte) 0xF6, (byte) 0x67, (byte) 0xFD, // |
             /* 000018 006 */ (byte) 0x00, (byte) 0x04, (byte) 0x80, (byte) 0xFD, // |                     jmp     #@main
+        };
+        byte[] part1 = new byte[] {
             /* 00001C 007 */ // | ct                  res     1
             /* 00001C 000 */ // |                     orgh    1024
-            /* 00001C 400 */ // | main
-            /* 00001C 400 */ (byte) 0x1A, (byte) 0x0E, (byte) 0x60, (byte) 0xFD, // |                     getct   ct
-            /* 000020 401 */ (byte) 0x5F, (byte) 0x70, (byte) 0x64, (byte) 0xFD, // | .loop               drvnot  #56
-            /* 000024 402 */ (byte) 0x5A, (byte) 0x62, (byte) 0x02, (byte) 0xFF, // |                     addct1  ct, ##delay
-            /* 000028 403 */ (byte) 0x00, (byte) 0x0E, (byte) 0x64, (byte) 0xFA, // |
-            /* 00002C 404 */ (byte) 0x24, (byte) 0x22, (byte) 0x60, (byte) 0xFD, // |                     waitct1
-            /* 000030 405 */ (byte) 0xEC, (byte) 0xFF, (byte) 0x9F, (byte) 0xFD, // |                     jmp     #.loop
+            /* 000400     */ // | main
+            /* 000400     */ (byte) 0x1A, (byte) 0x0E, (byte) 0x60, (byte) 0xFD, // |                     getct   ct
+            /* 000404     */ (byte) 0x5F, (byte) 0x70, (byte) 0x64, (byte) 0xFD, // | .loop               drvnot  #56
+            /* 000408     */ (byte) 0x5A, (byte) 0x62, (byte) 0x02, (byte) 0xFF, // |                     addct1  ct, ##delay
+            /* 00040C     */ (byte) 0x00, (byte) 0x0E, (byte) 0x64, (byte) 0xFA, // |
+            /* 000410     */ (byte) 0x24, (byte) 0x22, (byte) 0x60, (byte) 0xFD, // |                     waitct1
+            /* 000414     */ (byte) 0xEC, (byte) 0xFF, (byte) 0x9F, (byte) 0xFD, // |                     jmp     #.loop
         };
+
+        byte[] expected = new byte[0x400 + part1.length];
+        System.arraycopy(part0, 0, expected, 0, part0.length);
+        System.arraycopy(part1, 0, expected, 0x400, part1.length);
 
         byte[] result = compile(text);
         Assertions.assertArrayEquals(expected, result);
@@ -145,21 +151,33 @@ class Spin2CompilerFunctionalTest {
     void testReference1() throws Exception {
         String text = getResourceAsString("Spin2_interpreter.spin2");
         byte[] expected = getResource("Spin2_interpreter.binary");
+
         compileAndCompare(text, expected);
+
+        byte[] result = compile(text);
+        Assertions.assertArrayEquals(expected, result);
     }
 
     @Test
     void testReference2() throws Exception {
         String text = getResourceAsString("m6502_apple1_cvbs.spin2");
         byte[] expected = getResource("m6502_apple1_cvbs.binary");
+
         Assertions.assertTrue(compileAndCompare(text, expected));
+
+        byte[] result = compile(text);
+        Assertions.assertArrayEquals(expected, result);
     }
 
     @Test
     void testReference3() throws Exception {
         String text = getResourceAsString("m6502_apple1_vga.spin2");
         byte[] expected = getResource("m6502_apple1_vga.binary");
+
         Assertions.assertTrue(compileAndCompare(text, expected));
+
+        byte[] result = compile(text);
+        Assertions.assertArrayEquals(expected, result);
     }
 
     String getResourceAsString(String name) throws Exception {
@@ -193,9 +211,7 @@ class Spin2CompilerFunctionalTest {
         compiler.compile(root);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        for (Spin2PAsmLine line : compiler.source) {
-            line.generateObjectCode(os);
-        }
+        compiler.generateObjectCode(os);
         return os.toByteArray();
     }
 

@@ -38,11 +38,11 @@ public class Spin2Compiler {
     Spin2Context scope = new Spin2GlobalContext();
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
 
-    int enumValue = 0, enumIncrement = 1;
-
     ExpressionBuilder expressionBuilder = new ExpressionBuilder();
 
     final Spin2ParserVisitor compilerVisitor = new Spin2ParserVisitor() {
+
+        int enumValue = 0, enumIncrement = 1;
 
         @Override
         public void visitConstants(ConstantsNode node) {
@@ -174,8 +174,19 @@ public class Spin2Compiler {
     }
 
     public void generateObjectCode(OutputStream os) throws Exception {
+        int address = 0;
+
         for (Spin2PAsmLine line : source) {
-            line.generateObjectCode(os);
+            while (address < line.getScope().getHubAddress()) {
+                os.write(0x00);
+                address++;
+            }
+            Spin2InstructionObject obj = line.getInstructionObject();
+            byte[] code = obj.getBytes();
+            if (code != null && code.length != 0) {
+                os.write(code);
+                address += code.length;
+            }
         }
     }
 

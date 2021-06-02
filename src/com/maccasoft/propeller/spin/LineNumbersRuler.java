@@ -63,7 +63,7 @@ public class LineNumbersRuler {
     };
 
     public LineNumbersRuler(Composite parent) {
-        canvas = new Canvas(parent, SWT.DOUBLE_BUFFERED);
+        canvas = new Canvas(parent, SWT.DOUBLE_BUFFERED | SWT.NO_FOCUS);
         canvas.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
         canvas.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_FOREGROUND));
         canvas.setLayoutData(layoutData = new GridData(SWT.FILL, SWT.FILL, false, true));
