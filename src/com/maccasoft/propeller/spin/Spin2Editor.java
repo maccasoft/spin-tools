@@ -27,6 +27,9 @@ import org.eclipse.swt.custom.LineStyleEvent;
 import org.eclipse.swt.custom.LineStyleListener;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.custom.TextChangeListener;
+import org.eclipse.swt.custom.TextChangedEvent;
+import org.eclipse.swt.custom.TextChangingEvent;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
@@ -67,6 +70,7 @@ public class Spin2Editor {
 
     Caret insertCaret;
     Caret overwriteCaret;
+    boolean modified;
 
     Spin2TokenMarker tokenMarker;
     Map<Spin2TokenMarker.TokenId, TextStyle> styleMap = new HashMap<Spin2TokenMarker.TokenId, TextStyle>();
@@ -145,11 +149,11 @@ public class Spin2Editor {
 
         styleMap.put(TokenId.METHOD_PUB, new TextStyle(
             fontBold,
-            new Color(display, 0x00, 0x00, 0x00),
+            new Color(display, 0x00, 0x00, 0xA0),
             null));
         styleMap.put(TokenId.METHOD_PRI, new TextStyle(
             fontBoldItalic,
-            new Color(display, 0x00, 0x00, 0x00),
+            new Color(display, 0x00, 0x00, 0xA0),
             null));
         styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(
             font,
@@ -166,13 +170,17 @@ public class Spin2Editor {
             null));
         styleMap.put(TokenId.KEYWORD, new TextStyle(
             fontBold,
-            new Color(display, 0x00, 0x00, 0xA0),
+            new Color(display, 0x00, 0x80, 0x00),
             null));
         styleMap.put(TokenId.FUNCTION, new TextStyle(
             fontBold,
             new Color(display, 0x00, 0x00, 0x00),
             null));
 
+        styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(
+            fontItalic,
+            new Color(display, 0x00, 0x00, 0x00),
+            null));
         styleMap.put(TokenId.PASM_CONDITION, new TextStyle(
             fontBold,
             new Color(display, 0x00, 0x00, 0x00),
@@ -242,7 +250,7 @@ public class Spin2Editor {
 
             @Override
             public void modifyText(ModifyEvent e) {
-                e.display.timerExec(250, refreshMarkersRunnable);
+                //e.display.timerExec(500, refreshMarkersRunnable);
             }
         });
 
@@ -256,11 +264,38 @@ public class Spin2Editor {
             }
         });
 
+        styledText.getContent().addTextChangeListener(new TextChangeListener() {
+
+            @Override
+            public void textSet(TextChangedEvent event) {
+
+            }
+
+            @Override
+            public void textChanging(TextChangingEvent event) {
+                modified = true;
+            }
+
+            @Override
+            public void textChanged(TextChangedEvent event) {
+
+            }
+        });
+
         styledText.addLineStyleListener(new LineStyleListener() {
 
             @Override
             public void lineGetStyle(LineStyleEvent event) {
                 List<StyleRange> ranges = new ArrayList<StyleRange>();
+
+                if (modified) {
+                    try {
+                        tokenMarker.refreshTokens(styledText.getText());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    modified = false;
+                }
 
                 try {
                     for (TokenMarker entry : tokenMarker.getLineTokens(event.lineOffset, event.lineText)) {
@@ -402,4 +437,5 @@ public class Spin2Editor {
 
         display.dispose();
     }
+
 }

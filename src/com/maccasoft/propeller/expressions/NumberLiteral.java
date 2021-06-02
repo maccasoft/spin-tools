@@ -18,6 +18,30 @@ public class NumberLiteral extends Literal {
         this.base = base;
     }
 
+    public NumberLiteral(String s) {
+        if (s.startsWith("%%")) {
+            s = s.substring(2);
+            this.base = 4;
+        }
+        else if (s.startsWith("%")) {
+            s = s.substring(1);
+            this.base = 2;
+        }
+        else if (s.startsWith("$")) {
+            s = s.substring(1);
+            this.base = 16;
+        }
+        else {
+            this.base = 10;
+        }
+        if (s.contains(".")) {
+            this.value = Double.parseDouble(s.replace("_", ""));
+        }
+        else {
+            this.value = Long.parseLong(s.replace("_", ""), this.base);
+        }
+    }
+
     @Override
     public boolean isNumber() {
         return true;

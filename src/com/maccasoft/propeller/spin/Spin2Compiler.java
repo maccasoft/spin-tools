@@ -12,57 +12,35 @@ package com.maccasoft.propeller.spin;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
-import com.maccasoft.propeller.expressions.Abs;
-import com.maccasoft.propeller.expressions.Add;
-import com.maccasoft.propeller.expressions.Addpins;
-import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.ContextLiteral;
-import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.Frac;
-import com.maccasoft.propeller.expressions.Group;
+import com.maccasoft.propeller.expressions.ExpressionBuilder;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
-import com.maccasoft.propeller.expressions.LogicalAnd;
-import com.maccasoft.propeller.expressions.LogicalOr;
-import com.maccasoft.propeller.expressions.LogicalXor;
-import com.maccasoft.propeller.expressions.Modulo;
-import com.maccasoft.propeller.expressions.Multiply;
-import com.maccasoft.propeller.expressions.Negative;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.expressions.Or;
-import com.maccasoft.propeller.expressions.Positive;
-import com.maccasoft.propeller.expressions.Round;
-import com.maccasoft.propeller.expressions.Sca;
-import com.maccasoft.propeller.expressions.Scas;
-import com.maccasoft.propeller.expressions.ShiftLeft;
-import com.maccasoft.propeller.expressions.ShiftRight;
-import com.maccasoft.propeller.expressions.Sqrt;
-import com.maccasoft.propeller.expressions.Subtract;
-import com.maccasoft.propeller.expressions.Trunc;
-import com.maccasoft.propeller.expressions.Xor;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantEnumContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantEnumNameContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantExpressionContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantsSectionContext;
-import com.maccasoft.propeller.spin.Spin2Parser.DataLineContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ProgContext;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignEnum;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignExpression;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantSetEnum;
+import com.maccasoft.propeller.spin.Spin2Parser.Constants;
+import com.maccasoft.propeller.spin.Spin2Parser.InstructionParameter;
+import com.maccasoft.propeller.spin.Spin2Parser.Line;
+import com.maccasoft.propeller.spin.Spin2Parser.Node;
+import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 import com.maccasoft.propeller.spin.instructions.Org;
 import com.maccasoft.propeller.spin.instructions.Orgh;
 
-@SuppressWarnings({
-    "unchecked", "rawtypes"
-})
-public class Spin2Compiler extends Spin2ParserBaseVisitor {
+public class Spin2Compiler {
 
     Spin2Context scope = new Spin2GlobalContext();
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
 
     int enumValue = 0, enumIncrement = 1;
+
+    ExpressionBuilder expressionBuilder = new ExpressionBuilder();
 
     public Spin2Compiler() {
 
@@ -74,9 +52,133 @@ public class Spin2Compiler extends Spin2ParserBaseVisitor {
         }
     }
 
-    @Override
-    public Object visitProg(ProgContext ctx) {
-        super.visitProg(ctx);
+    public void compile(Node root) {
+        root.accept(new Spin2ParserVisitor() {
+
+            @Override
+            public void visitConstants(Constants node) {
+                while (scope.getParent() != null) {
+                    scope = scope.getParent();
+                }
+                enumValue = 0;
+                enumIncrement = 1;
+            }
+
+            @Override
+            public void visitConstantAssignExpression(ConstantAssignExpression node) {
+                String name = node.identifier.getText();
+                try {
+                    Expression expression = buildExpression(node.expression, scope);
+                    scope.addSymbol(name, expression);
+                } catch (Exception e) {
+                    for (Token t : node.expression.getTokens()) {
+                        System.err.print(" " + t.getText());
+                    }
+                    System.err.println();
+                    throw e;
+                }
+            }
+
+            @Override
+            public void visitConstantSetEnum(ConstantSetEnum node) {
+                Expression expression = buildExpression(node.start, scope);
+                enumValue = expression.getNumber().intValue();
+                if (node.step != null) {
+                    expression = buildExpression(node.step, scope);
+                    enumIncrement = expression.getNumber().intValue();
+                }
+                else {
+                    enumIncrement = 1;
+                }
+            }
+
+            @Override
+            public void visitConstantAssignEnum(ConstantAssignEnum node) {
+                scope.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
+                if (node.multiplier != null) {
+                    Expression expression = buildExpression(node.multiplier, scope);
+                    enumValue += enumIncrement * expression.getNumber().intValue();
+                }
+                else {
+                    enumValue += enumIncrement;
+                }
+            }
+
+            @Override
+            public void visitLine(Line node) {
+                String label = node.label != null ? node.label.getText() : null;
+                String condition = node.condition != null ? node.condition.getText() : null;
+                String mnemonic = node.instruction != null ? node.instruction.getText() : null;
+                String modifier = node.modifier != null ? node.modifier.getText() : null;
+                List<Spin2PAsmExpression> parameters = new ArrayList<Spin2PAsmExpression>();
+
+                Spin2Context localScope = new Spin2Context(scope);
+
+                for (InstructionParameter param : node.parameters) {
+                    int index = 0;
+                    String prefix = null;
+                    Expression expression = null, count = null;
+
+                    Token token;
+                    if (index < param.getTokens().size()) {
+                        token = param.getToken(index);
+                        if (token.getText().startsWith("#")) {
+                            prefix = (prefix == null ? "" : prefix) + token.getText();
+                            index++;
+                        }
+                    }
+                    if (index < param.getTokens().size()) {
+                        token = param.getToken(index);
+                        if ("\\".equals(token.getText())) {
+                            prefix = (prefix == null ? "" : prefix) + token.getText();
+                            index++;
+                        }
+                    }
+                    if (index < param.getTokens().size()) {
+                        try {
+                            expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), localScope);
+                        } catch (Exception e) {
+                            for (Token t : param.getTokens().subList(index, param.getTokens().size())) {
+                                System.err.print(" " + t.getText());
+                            }
+                            System.err.println();
+                            throw e;
+                        }
+                    }
+                    if (param.count != null) {
+                        try {
+                            count = buildExpression(param.count, localScope);
+                        } catch (Exception e) {
+                            for (Token t : param.count.getTokens()) {
+                                System.err.print(" " + t.getText());
+                            }
+                            System.err.println();
+                            throw e;
+                        }
+                    }
+                    parameters.add(new Spin2PAsmExpression(prefix, expression, count));
+                }
+
+                Spin2PAsmLine pasmLine = new Spin2PAsmLine(localScope, label, condition, mnemonic, parameters, modifier);
+                if (pasmLine.getLabel() != null) {
+                    try {
+                        if (!pasmLine.isLocalLabel() && scope.getParent() != null) {
+                            scope = scope.getParent();
+                        }
+                        scope.addSymbol(pasmLine.getLabel(), new ContextLiteral(pasmLine.getScope()));
+                        scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
+                        if (!pasmLine.isLocalLabel()) {
+                            scope = new Spin2Context(scope);
+                        }
+                    } catch (RuntimeException e) {
+                        System.err.println(pasmLine);
+                        e.printStackTrace();
+                    }
+                }
+                source.addAll(pasmLine.expand());
+            }
+
+        });
 
         while (scope.getParent() != null) {
             scope = scope.getParent();
@@ -101,6 +203,7 @@ public class Spin2Compiler extends Spin2ParserBaseVisitor {
                 }
                 if (line.getInstructionFactory() instanceof Org) {
                     hubMode = false;
+                    hubAddress = (hubAddress + 3) & ~3;
                 }
                 address = line.resolve(hubMode ? hubAddress : address);
                 if (hubMode) {
@@ -120,8 +223,6 @@ public class Spin2Compiler extends Spin2ParserBaseVisitor {
                 e.printStackTrace();
             }
         }
-
-        return null;
     }
 
     int getClockMode(int xinfreq, int clkfreq) {
@@ -168,187 +269,172 @@ public class Spin2Compiler extends Spin2ParserBaseVisitor {
         return clkmode;
     }
 
-    @Override
-    public Object visitConstantsSection(ConstantsSectionContext ctx) {
-        while (scope.getParent() != null) {
-            scope = scope.getParent();
-        }
-        enumValue = 0;
-        enumIncrement = 1;
-        return super.visitConstantsSection(ctx);
-    }
-
-    @Override
-    public Object visitConstantAssign(ConstantAssignContext ctx) {
-        Expression expression = buildExpression(scope, ctx.exp);
-        scope.addSymbol(ctx.name.getText(), expression);
-        return null;
-    }
-
-    @Override
-    public Object visitConstantEnum(ConstantEnumContext ctx) {
-        Expression expression = buildExpression(scope, ctx.start);
-        enumValue = expression.getNumber().intValue();
-        if (ctx.step != null) {
-            expression = buildExpression(scope, ctx.step);
-            enumIncrement = expression.getNumber().intValue();
-        }
-        else {
-            enumIncrement = 1;
-        }
-        return super.visitConstantEnum(ctx);
-    }
-
-    @Override
-    public Object visitConstantEnumName(ConstantEnumNameContext ctx) {
-        scope.addSymbol(ctx.name.getText(), new NumberLiteral(enumValue));
-        enumValue += ctx.multiplier != null ? enumIncrement * Integer.parseInt(ctx.multiplier.getText()) : enumIncrement;
-        return super.visitConstantEnumName(ctx);
-    }
-
-    @Override
-    public Object visitDataLine(DataLineContext ctx) {
-        Spin2PAsmLineBuilderVisitor lineBuilder = new Spin2PAsmLineBuilderVisitor(new Spin2Context(scope), ctx);
-        ctx.accept(lineBuilder);
-
-        Spin2PAsmLine line = lineBuilder.getLine();
-        if (line.getLabel() != null) {
-            try {
-                if (!line.isLocalLabel() && scope.getParent() != null) {
-                    scope = scope.getParent();
-                }
-                scope.addSymbol(line.getLabel(), new ContextLiteral(line.getScope()));
-                scope.addSymbol("@" + line.getLabel(), new HubContextLiteral(line.getScope()));
-                if (!line.isLocalLabel()) {
-                    scope = new Spin2Context(scope);
-                }
-            } catch (RuntimeException e) {
-                System.err.println(line);
-                e.printStackTrace();
-            }
-        }
-        source.addAll(line.expand());
-
-        return null;
-    }
-
     public List<Spin2PAsmLine> getSource() {
         return source;
     }
 
-    public static Expression buildExpression(Spin2Context scope, ConstantExpressionContext ctx) {
-        if (ctx.operator != null) {
-            String op = ctx.operator.getText();
-            if (ctx.exp != null) {
-                if ("+".equals(op)) {
-                    return new Positive(buildExpression(scope, ctx.exp));
-                }
-                else if ("-".equals(op)) {
-                    return new Negative(buildExpression(scope, ctx.exp));
-                }
-                else if ("abs".equalsIgnoreCase(op)) {
-                    return new Abs(buildExpression(scope, ctx.exp));
-                }
-                else if ("sqrt".equalsIgnoreCase(op)) {
-                    return new Sqrt(buildExpression(scope, ctx.exp));
-                }
-                else if ("float".equalsIgnoreCase(op)) {
-                    return new com.maccasoft.propeller.expressions.Float(buildExpression(scope, ctx.exp));
-                }
-                else if ("round".equalsIgnoreCase(op)) {
-                    return new Round(buildExpression(scope, ctx.exp));
-                }
-                else if ("trunc".equalsIgnoreCase(op)) {
-                    return new Trunc(buildExpression(scope, ctx.exp));
-                }
+    Expression buildExpression(Node node, Spin2Context scope) {
+        return buildExpression(node.getTokens(), scope);
+    }
+
+    Expression buildExpression(List<Token> tokens, Spin2Context scope) {
+        int state = 0;
+        Iterator<Token> iter = tokens.iterator();
+
+        while (iter.hasNext()) {
+            Token token = iter.next();
+
+            if ("(".equals(token.getText())) {
+                expressionBuilder.addOperatorToken(expressionBuilder.GROUP_OPEN);
+                state = 0;
+                continue;
             }
-            else {
-                if (">>".equals(op)) {
-                    return new ShiftRight(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("<<".equals(op)) {
-                    return new ShiftLeft(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("&".equals(op)) {
-                    return new And(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("^".equals(op)) {
-                    return new Xor(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("|".equals(op)) {
-                    return new Or(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("*".equals(op)) {
-                    return new Multiply(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("/".equals(op)) {
-                    return new Divide(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("//".equals(op)) {
-                    return new Modulo(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("+".equals(op)) {
-                    return new Add(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("-".equals(op)) {
-                    return new Subtract(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("addpins".equalsIgnoreCase(op)) {
-                    return new Addpins(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("frac".equalsIgnoreCase(op)) {
-                    return new Frac(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("sca".equalsIgnoreCase(op)) {
-                    return new Sca(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("scas".equalsIgnoreCase(op)) {
-                    return new Scas(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("&&".equals(op) || "and".equalsIgnoreCase(op)) {
-                    return new LogicalAnd(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("^^".equals(op) || "xor".equalsIgnoreCase(op)) {
-                    return new LogicalXor(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
-                else if ("||".equals(op) || "or".equalsIgnoreCase(op)) {
-                    return new LogicalOr(buildExpression(scope, ctx.left), buildExpression(scope, ctx.right));
-                }
+            else if (")".equals(token.getText())) {
+                expressionBuilder.addOperatorToken(expressionBuilder.GROUP_CLOSE);
+                state = 1;
+                continue;
+            }
+
+            switch (state) {
+                case 0:
+                    if ("!".equals(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.NOT);
+                    }
+                    else if ("!!".equals(token.getText()) || "NOT".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_NOT);
+                    }
+                    else if ("+".equals(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.POSITIVE);
+                    }
+                    else if ("-".equals(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.NEGATIVE);
+                    }
+                    else if ("ABS".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.ABS);
+                    }
+                    else if ("ENCOD".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.ENCOD);
+                    }
+                    else if ("DECOD".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.DECOD);
+                    }
+                    else if ("BMASK".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.BMASK);
+                    }
+                    else if ("SQRT".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.SQRT);
+                    }
+                    else if ("ROUND".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.ROUND);
+                    }
+                    else if (token.type == Spin2TokenStream.NUMBER) {
+                        if ("$".equals(token.getText())) {
+                            expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
+                        }
+                        else {
+                            expressionBuilder.addValueToken(new NumberLiteral(token.getText()));
+                        }
+                    }
+                    else if (token.getText().startsWith("\"")) {
+                        expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
+                    }
+                    else {
+                        expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
+                    }
+                    state = 1;
+                    break;
+                case 1:
+                    if ("!".equals(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.NOT);
+                    }
+                    else if ("!!".equals(token.getText()) || "NOT".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_NOT);
+                    }
+                    else if ("ABS".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.ABS);
+                    }
+                    else if ("ENCOD".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.ENCOD);
+                    }
+                    else if ("DECOD".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.DECOD);
+                    }
+                    else if ("BMASK".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.BMASK);
+                    }
+                    else if ("SQRT".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.SQRT);
+                    }
+                    else if (">>".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.SHIFT_RIGHT);
+                    }
+                    else if ("<<".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.SHIFT_LEFT);
+                    }
+                    else if ("&".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.AND);
+                    }
+                    else if ("^".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.XOR);
+                    }
+                    else if ("|".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.OR);
+                    }
+                    else if ("*".equals(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.MULTIPLY);
+                    }
+                    else if ("/".equals(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.DIVIDE);
+                    }
+                    else if ("+".equals(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.ADD);
+                    }
+                    else if ("-".equals(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.SUBTRACT);
+                    }
+                    else if ("ADDBITS".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.ADDBITS);
+                    }
+                    else if ("ADDPINS".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.ADDPINS);
+                    }
+                    else if ("&&".equalsIgnoreCase(token.getText()) || "AND".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_AND);
+                    }
+                    else if ("^^".equalsIgnoreCase(token.getText()) || "XOR".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_XOR);
+                    }
+                    else if ("||".equalsIgnoreCase(token.getText()) || "OR".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_OR);
+                    }
+                    else if ("?".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.TERNARYIF);
+                    }
+                    else if (":".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.TERNARYELSE);
+                    }
+                    else if ("ROUND".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.ROUND);
+                    }
+                    else if (token.type == Spin2TokenStream.NUMBER) {
+                        if ("$".equals(token.getText())) {
+                            expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
+                        }
+                        else {
+                            expressionBuilder.addValueToken(new NumberLiteral(token.getText()));
+                        }
+                    }
+                    else if (token.getText().startsWith("\"")) {
+                        expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
+                    }
+                    else {
+                        expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
+                    }
+                    state = 0;
+                    break;
             }
         }
-        else if ("(".equals(ctx.getStart().getText())) {
-            return new Group(buildExpression(scope, ctx.exp));
-        }
-        else if (ctx.atom() != null) {
-            String s = ctx.atom().getText();
-            if (s.startsWith("%%")) {
-                return new NumberLiteral(Long.parseLong(s.substring(2).replace("_", ""), 4));
-            }
-            else if (s.startsWith("%")) {
-                return new NumberLiteral(Long.parseLong(s.substring(1).replace("_", ""), 2));
-            }
-            else if (s.startsWith("$")) {
-                if (s.length() == 1) {
-                    return new Identifier(s, scope);
-                }
-                return new NumberLiteral(Long.parseLong(s.substring(1).replace("_", ""), 16));
-            }
-            else if (s.startsWith("\"")) {
-                return new CharacterLiteral(s.charAt(1));
-            }
-            else if ((s.charAt(0) >= '0' && s.charAt(0) <= '9')) {
-                if (s.contains(".")) {
-                    return new NumberLiteral(Double.parseDouble(s.replace("_", "")));
-                }
-                else {
-                    return new NumberLiteral(Long.parseLong(s.replace("_", "")));
-                }
-            }
-            if (ctx.getStart().getText().startsWith("@")) {
-                return new Identifier(ctx.getStart().getText() + s, scope);
-            }
-            return new Identifier(s, scope);
-        }
-        return new NumberLiteral(0);
+
+        return expressionBuilder.getExpression();
     }
 }

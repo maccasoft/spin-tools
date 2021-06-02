@@ -13,14 +13,11 @@ package com.maccasoft.propeller.spin;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({
-    "unchecked"
-})
+import com.maccasoft.propeller.spin.Spin2Parser.Node;
+
 class Spin2CompilerFunctionalTest {
 
     @Test
@@ -188,15 +185,12 @@ class Spin2CompilerFunctionalTest {
     }
 
     byte[] compile(String text) throws Exception {
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+        Spin2Parser subject = new Spin2Parser(stream);
+        Node root = subject.parse();
+
         Spin2Compiler compiler = new Spin2Compiler();
-
-        Spin2Lexer lexer = new Spin2Lexer(CharStreams.fromString(text));
-        //lexer.removeErrorListeners();
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        Spin2Parser parser = new Spin2Parser(tokens);
-        //parser.removeErrorListeners();
-
-        parser.prog().accept(compiler);
+        compiler.compile(root);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         for (Spin2PAsmLine line : compiler.source) {
@@ -207,15 +201,13 @@ class Spin2CompilerFunctionalTest {
 
     boolean compileAndCompare(String text, byte[] ref) throws Exception {
         byte[] refLong = new byte[4];
+
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+        Spin2Parser subject = new Spin2Parser(stream);
+        Node root = subject.parse();
+
         Spin2Compiler compiler = new Spin2Compiler();
-
-        Spin2Lexer lexer = new Spin2Lexer(CharStreams.fromString(text));
-        //lexer.removeErrorListeners();
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        Spin2Parser parser = new Spin2Parser(tokens);
-        //parser.removeErrorListeners();
-
-        parser.prog().accept(compiler);
+        compiler.compile(root);
 
         boolean result = true;
 

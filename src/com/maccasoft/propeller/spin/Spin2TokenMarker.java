@@ -10,44 +10,29 @@
 
 package com.maccasoft.propeller.spin;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.tree.ErrorNode;
-import org.antlr.v4.runtime.tree.TerminalNode;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignEnum;
+import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignExpression;
+import com.maccasoft.propeller.spin.Spin2Parser.Constants;
+import com.maccasoft.propeller.spin.Spin2Parser.Data;
+import com.maccasoft.propeller.spin.Spin2Parser.Expression;
+import com.maccasoft.propeller.spin.Spin2Parser.InstructionParameter;
+import com.maccasoft.propeller.spin.Spin2Parser.Line;
+import com.maccasoft.propeller.spin.Spin2Parser.LocalVariable;
+import com.maccasoft.propeller.spin.Spin2Parser.Method;
+import com.maccasoft.propeller.spin.Spin2Parser.Node;
+import com.maccasoft.propeller.spin.Spin2Parser.Objects;
+import com.maccasoft.propeller.spin.Spin2Parser.Parameter;
+import com.maccasoft.propeller.spin.Spin2Parser.ReturnVariable;
+import com.maccasoft.propeller.spin.Spin2Parser.Statement;
+import com.maccasoft.propeller.spin.Spin2Parser.Variable;
+import com.maccasoft.propeller.spin.Spin2Parser.Variables;
+import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 
-import com.maccasoft.propeller.spin.Spin2Parser.AssemblerContext;
-import com.maccasoft.propeller.spin.Spin2Parser.AtomContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantsSectionContext;
-import com.maccasoft.propeller.spin.Spin2Parser.DataContext;
-import com.maccasoft.propeller.spin.Spin2Parser.DataLineContext;
-import com.maccasoft.propeller.spin.Spin2Parser.DataSectionContext;
-import com.maccasoft.propeller.spin.Spin2Parser.DirectiveContext;
-import com.maccasoft.propeller.spin.Spin2Parser.FunctionContext;
-import com.maccasoft.propeller.spin.Spin2Parser.IdentifierContext;
-import com.maccasoft.propeller.spin.Spin2Parser.LabelContext;
-import com.maccasoft.propeller.spin.Spin2Parser.LocalvarContext;
-import com.maccasoft.propeller.spin.Spin2Parser.MethodContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ObjectContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ObjectsSectionContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ParametersContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ProgContext;
-import com.maccasoft.propeller.spin.Spin2Parser.ResultContext;
-import com.maccasoft.propeller.spin.Spin2Parser.VariableContext;
-import com.maccasoft.propeller.spin.Spin2Parser.VariablesSectionContext;
-
-@SuppressWarnings({
-    "unchecked", "rawtypes"
-})
 public class Spin2TokenMarker {
 
     public static enum TokenId {
@@ -72,6 +57,7 @@ public class Spin2TokenMarker {
         METHOD_PARAMETER,
 
         PASM_LABEL,
+        PASM_LOCAL_LABEL,
         PASM_CONDITION,
         PASM_TYPE,
         PASM_DIRECTIVE,
@@ -80,38 +66,6 @@ public class Spin2TokenMarker {
 
         WARNING,
         ERROR
-    }
-
-    static Set<Integer> commentSet = new HashSet<Integer>(Arrays.asList(new Integer[] {
-        Spin2Lexer.COMMENT, Spin2Lexer.BLOCK_COMMENT
-    }));
-
-    static Map<Integer, TokenId> typeMap = new HashMap<Integer, TokenId>();
-    static {
-        typeMap.put(Spin2Lexer.COMMENT, TokenId.COMMENT);
-        typeMap.put(Spin2Lexer.BLOCK_COMMENT, TokenId.COMMENT);
-
-        typeMap.put(Spin2Lexer.BIN, TokenId.NUMBER);
-        typeMap.put(Spin2Lexer.HEX, TokenId.NUMBER);
-        typeMap.put(Spin2Lexer.QUAD, TokenId.NUMBER);
-        typeMap.put(Spin2Lexer.NUMBER, TokenId.NUMBER);
-        typeMap.put(Spin2Lexer.STRING, TokenId.STRING);
-
-        typeMap.put(Spin2Lexer.REPEAT, TokenId.KEYWORD);
-        typeMap.put(Spin2Lexer.WHILE, TokenId.KEYWORD);
-        typeMap.put(Spin2Lexer.UNTIL, TokenId.KEYWORD);
-        typeMap.put(Spin2Lexer.FROM, TokenId.KEYWORD);
-        typeMap.put(Spin2Lexer.TO, TokenId.KEYWORD);
-        typeMap.put(Spin2Lexer.STEP, TokenId.KEYWORD);
-
-        typeMap.put(Spin2Lexer.IF, TokenId.KEYWORD);
-        typeMap.put(Spin2Lexer.IFNOT, TokenId.KEYWORD);
-        typeMap.put(Spin2Lexer.ELSE, TokenId.KEYWORD);
-        typeMap.put(Spin2Lexer.ELSEIF, TokenId.KEYWORD);
-        typeMap.put(Spin2Lexer.ELSEIFNOT, TokenId.KEYWORD);
-
-        typeMap.put(Spin2Lexer.CASE, TokenId.KEYWORD);
-        typeMap.put(Spin2Lexer.OTHER, TokenId.KEYWORD);
     }
 
     static Map<String, TokenId> keywords = new HashMap<String, TokenId>();
@@ -223,6 +177,10 @@ public class Spin2TokenMarker {
 
         keywords.put("END", TokenId.KEYWORD);
 
+        keywords.put("ROUND", TokenId.KEYWORD);
+        keywords.put("ADDPINS", TokenId.KEYWORD);
+        keywords.put("ADDBITS", TokenId.KEYWORD);
+
         keywords.put("_CLKFREQ", TokenId.CONSTANT);
         keywords.put("_CLKMODE", TokenId.CONSTANT);
         keywords.put("CLKFREQ", TokenId.CONSTANT);
@@ -234,394 +192,19 @@ public class Spin2TokenMarker {
         keywords.put("POSX", TokenId.CONSTANT);
         keywords.put("NEGX", TokenId.CONSTANT);
         keywords.put("PI", TokenId.CONSTANT);
+
+        keywords.put("PR0", TokenId.PASM_INSTRUCTION);
+        keywords.put("PR1", TokenId.PASM_INSTRUCTION);
+        keywords.put("PR2", TokenId.PASM_INSTRUCTION);
+        keywords.put("PR3", TokenId.PASM_INSTRUCTION);
+        keywords.put("PR4", TokenId.PASM_INSTRUCTION);
+        keywords.put("PR5", TokenId.PASM_INSTRUCTION);
+        keywords.put("PR6", TokenId.PASM_INSTRUCTION);
+        keywords.put("PR7", TokenId.PASM_INSTRUCTION);
     }
 
     static Map<String, TokenId> pasmKeywords = new HashMap<String, TokenId>();
     static {
-        pasmKeywords.put("ORG", TokenId.PASM_DIRECTIVE);
-        pasmKeywords.put("ORGH", TokenId.PASM_DIRECTIVE);
-        pasmKeywords.put("ORGF", TokenId.PASM_DIRECTIVE);
-        pasmKeywords.put("FIT", TokenId.PASM_DIRECTIVE);
-
-        pasmKeywords.put("BYTE", TokenId.PASM_TYPE);
-        pasmKeywords.put("WORD", TokenId.PASM_TYPE);
-        pasmKeywords.put("LONG", TokenId.PASM_TYPE);
-        pasmKeywords.put("RES", TokenId.PASM_DIRECTIVE);
-        pasmKeywords.put("FILE", TokenId.PASM_DIRECTIVE);
-
-        pasmKeywords.put("ASMCLK", TokenId.PASM_INSTRUCTION);
-
-        pasmKeywords.put("NOP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ROL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ROR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SHR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SHL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RCR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RCL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SAR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SAL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ADD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ADDX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ADDS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ADDSX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SUB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SUBX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SUBS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SUBSX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CMP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CMPX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CMPS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CMPSX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CMPR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CMPM", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SUBR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CMPSUB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FGE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FLE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FGES", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FLES", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SUMC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SUMNC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SUMZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SUMNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TESTB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TESTBN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BITL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BITH", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BITC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BITNC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BITZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BITNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BITNC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BITRND", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BITNOT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("AND", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ANDN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("OR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("XOR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MUXC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MUXNC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MUXZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MUXNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MOV", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("NOT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ABS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("NEG", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("NEGC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("NEGNC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("NEGZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("NEGNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("INCMOD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DECMOD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ZEROX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SIGNX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ENCOD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ONES", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TEST", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TESTN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETNIB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("GETNIB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ROLNIB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETBYTE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("GETBYTE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ROLBYTE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETWORD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("GETWORD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ROLWORD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALTSN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALTGN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALTSB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALTGB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALTSW", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALTGW", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALTR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALTD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALTS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALTB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALTI", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DECOD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BMASK", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CRCBIT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CRCNIB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MUXNITS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MUXNIBS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MUXQ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MOVBYTS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MUL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MULS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SCA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SCAS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ADDPIX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MULPIX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BLNPIX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MIXPIX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ADDCT1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ADDCT2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ADDCT3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WMLONG", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RQPIN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RDPIN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RDLUT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RDBYTE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RDWORD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RDLONG", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POPA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POPB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CALLD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RESI3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RESI2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RESI1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RESI0", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("REST3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("REST2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("REST1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("REST0", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CALLPA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CALLPB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DJZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DJNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DJF", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DJNF", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("IJZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("IJNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TJZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TJNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TJF", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TJNF", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TJS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TJNS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JINT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JCT1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JCT2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JCT3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JSE1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JSE2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JSE3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JSE4", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JPAT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JFBW", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JXMT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JXFI", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JXRO", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JXRL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JATN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JQMT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNINT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNCT1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNCT2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNCT3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNSE1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNSE2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNSE3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNSE4", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNPAT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNFBW", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNXMT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNXFI", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNXRO", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNXRL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNATN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JNQMT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETPAT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("AKPIN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WRPIN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WXPIN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WYPIN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WRLUT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WRBYTE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WRWORD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WRLONG", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PUSHA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PUSHB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RDFAST", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WRFAST", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FBLOCK", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("XINIT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("XSTOP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("XZERO", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("XCONT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("REP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("COGINIT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("QMUL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("QDIV", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("QFRAC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("QSQRT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("QROTATE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("QVECTOR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("HUBSET", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("COGID", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("COGSTOP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("LOCKNEW", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("LOCKRET", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("LOCKTRY", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("LOCKREL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("QLOG", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("QEXP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RFBYTE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RFWORD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RFLONG", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RFVAR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RFVARS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WFBYTE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WFWORD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WFLONG", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("GETQX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("GETQY", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("GETCT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("GETRND", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETDACS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETXFRQ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("GETXACC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETSE1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETSE2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETSE3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETSE4", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLINT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLCT1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLCT2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLCT3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLSE1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLSE2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLSE3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLSE4", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLPAT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLFBW", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLXMT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLXFI", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLXRO", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLXRL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLATN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POLLQMT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITINT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITCT1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITCT2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITCT3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITSE1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITSE2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITSE3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITSE4", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITPAT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITFBW", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITXMT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITXFI", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITXRO", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITXRL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WAITATN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("ALLOWI", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("STALLI", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TRIGINT1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TRIGINT2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TRIGINT3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("NIXINT1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("NIXINT2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("NIXINT3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETINT1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETINT2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETINT3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETQ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETQ2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PUSH", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("POP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JMP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CALL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RET", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CALLA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RETA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CALLB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RETB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JMPREL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SKIP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SKIPF", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("EXECF", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("GETPTR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("GETBRK", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("COGBRK", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("BRK", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETLUTS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETCY", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETCI", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETCQ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETCFRQ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETCMOD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETPIV", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETPIX", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("COGATN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TESTP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("TESTPN", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DIRL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DIRH", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DIRC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DIRNC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DIRZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DIRNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DIRRND", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DIRNOT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("OUTL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("OUTH", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("OUTC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("OUTNC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("OUTZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("OUTNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("OUTRND", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("OUTNOT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FLTL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FLTH", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FLTC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FLTNC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FLTZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FLTNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FLTRND", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("FLTNOT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DRVL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DRVH", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DRVC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DRVNC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DRVZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DRVNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DRVRND", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DRVNOT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SPLITB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MERGEB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SPLITW", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MERGEW", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SEUSSF", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SEUSSR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RGBSQZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RGBEXP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("XORO32", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("REV", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RCZR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("RCZL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WRC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WRNC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WRZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("WRNZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MODCZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MODC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("MODZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("SETSCP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("GETSCP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("JMP", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CALL", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CALLA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CALLB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("CALLD", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("LOC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("AUGS", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("AUGD", TokenId.PASM_INSTRUCTION);
-
-        pasmKeywords.put("PR0", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PR1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PR2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PR3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PR4", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PR5", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PR6", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PR7", TokenId.PASM_INSTRUCTION);
         pasmKeywords.put("IJMP3", TokenId.PASM_INSTRUCTION);
         pasmKeywords.put("IRET3", TokenId.PASM_INSTRUCTION);
         pasmKeywords.put("IJMP2", TokenId.PASM_INSTRUCTION);
@@ -638,66 +221,6 @@ public class Spin2TokenMarker {
         pasmKeywords.put("OUTB", TokenId.PASM_INSTRUCTION);
         pasmKeywords.put("INA", TokenId.PASM_INSTRUCTION);
         pasmKeywords.put("INB", TokenId.PASM_INSTRUCTION);
-
-        pasmKeywords.put("WC", TokenId.PASM_MODIFIER);
-        pasmKeywords.put("WZ", TokenId.PASM_MODIFIER);
-        pasmKeywords.put("WCZ", TokenId.PASM_MODIFIER);
-        pasmKeywords.put("ANDC", TokenId.PASM_MODIFIER);
-        pasmKeywords.put("ANDZ", TokenId.PASM_MODIFIER);
-        pasmKeywords.put("ORC", TokenId.PASM_MODIFIER);
-        pasmKeywords.put("ORZ", TokenId.PASM_MODIFIER);
-        pasmKeywords.put("XORC", TokenId.PASM_MODIFIER);
-        pasmKeywords.put("XORZ", TokenId.PASM_MODIFIER);
-
-        pasmKeywords.put("_RET_", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NC_AND_NZ", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NZ_AND_NC", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_GT", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_A", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_00", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NC_AND_Z", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_Z_AND_NC", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_01", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NC", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_GE", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_AE", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_0X", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_C_AND_NZ", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NZ_AND_C", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_10", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NZ", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NE", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_X0", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_C_NE_Z", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_Z_NE_C", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_DIFF", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NC_OR_NZ", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NZ_OR_NC", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NOT_11", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_C_AND_Z", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_Z_AND_C", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_11", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_C_EQ_Z", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_Z_EQ_C", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_SAME", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_Z", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_E", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_X1", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NC_OR_Z", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_Z_OR_NC", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NOT_10", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_C", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_LT", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_B", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_1X", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_C_OR_NZ", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NZ_OR_C", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NOT_01", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_C_OR_Z", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_Z_OR_C", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_LE", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_BE", TokenId.PASM_CONDITION);
-        pasmKeywords.put("IF_NOT_00", TokenId.PASM_CONDITION);
 
         pasmKeywords.put("_CLR", TokenId.PASM_INSTRUCTION);
         pasmKeywords.put("_NC_AND_Z", TokenId.PASM_INSTRUCTION);
@@ -740,14 +263,20 @@ public class Spin2TokenMarker {
         TokenId id;
 
         public TokenMarker(Token token, TokenId id) {
-            this.start = token.getStartIndex();
-            this.stop = token.getStopIndex();
+            this.start = token.start;
+            this.stop = token.stop;
+            this.id = id;
+        }
+
+        public TokenMarker(Node node, TokenId id) {
+            this.start = node.getStartIndex();
+            this.stop = node.getStopIndex();
             this.id = id;
         }
 
         public TokenMarker(Token startToken, Token stopToken, TokenId id) {
-            this.start = startToken.getStartIndex();
-            this.stop = stopToken.getStopIndex();
+            this.start = startToken.start;
+            this.stop = stopToken.stop;
             this.id = id;
         }
 
@@ -785,312 +314,6 @@ public class Spin2TokenMarker {
 
     Map<String, TokenId> symbols = new HashMap<String, TokenId>();
 
-    final Spin2ParserBaseListener parserListener = new Spin2ParserBaseListener() {
-
-        @Override
-        public void enterConstantsSection(ConstantsSectionContext ctx) {
-            tokens.add(new TokenMarker(ctx.getStart(), TokenId.SECTION));
-        }
-
-        @Override
-        public void exitConstantAssign(ConstantAssignContext ctx) {
-            if (ctx.name != null) {
-                if (!symbols.containsKey(ctx.name.getText())) {
-                    symbols.put(ctx.name.getText(), TokenId.CONSTANT);
-                    tokens.add(new TokenMarker(ctx.name, TokenId.CONSTANT));
-                }
-                else {
-                    tokens.add(new TokenMarker(ctx.name, TokenId.ERROR));
-                }
-            }
-        }
-
-        @Override
-        public void enterVariablesSection(VariablesSectionContext ctx) {
-            tokens.add(new TokenMarker(ctx.getStart(), TokenId.SECTION));
-        }
-
-        @Override
-        public void exitVariable(VariableContext ctx) {
-            if (ctx.name != null) {
-                if (!symbols.containsKey(ctx.name.getText())) {
-                    symbols.put(ctx.name.getText(), TokenId.VARIABLE);
-                    tokens.add(new TokenMarker(ctx.name, TokenId.VARIABLE));
-                }
-                else {
-                    tokens.add(new TokenMarker(ctx.name, TokenId.ERROR));
-                }
-            }
-        }
-
-        @Override
-        public void enterObjectsSection(ObjectsSectionContext ctx) {
-            tokens.add(new TokenMarker(ctx.getStart(), TokenId.SECTION));
-        }
-
-        @Override
-        public void exitObject(ObjectContext ctx) {
-            if (ctx.name != null) {
-                if (!symbols.containsKey(ctx.name.getText())) {
-                    symbols.put(ctx.name.getText(), TokenId.OBJECT);
-                    tokens.add(new TokenMarker(ctx.name, TokenId.OBJECT));
-                }
-                else {
-                    tokens.add(new TokenMarker(ctx.name, TokenId.ERROR));
-                }
-            }
-        }
-
-        @Override
-        public void exitMethod(MethodContext ctx) {
-            tokens.add(new TokenMarker(ctx.getStart(), TokenId.SECTION));
-            if (ctx.name != null) {
-                if (symbols.containsKey(ctx.name.getText())) {
-                    tokens.add(new TokenMarker(ctx.name, TokenId.ERROR));
-                }
-                else if (ctx.PRI_START() != null) {
-                    symbols.put(ctx.name.getText(), TokenId.METHOD_PRI);
-                    tokens.add(new TokenMarker(ctx.name, TokenId.METHOD_PRI));
-                }
-                else {
-                    symbols.put(ctx.name.getText(), TokenId.METHOD_PUB);
-                    tokens.add(new TokenMarker(ctx.name, TokenId.METHOD_PUB));
-                }
-            }
-        }
-
-        @Override
-        public void enterDataSection(DataSectionContext ctx) {
-            tokens.add(new TokenMarker(ctx.getStart(), TokenId.SECTION));
-        }
-
-        String lastPasmLabel = "";
-
-        @Override
-        public void exitLabel(LabelContext ctx) {
-            String text = ctx.getText();
-            if (text.startsWith(".")) {
-                text = lastPasmLabel + text;
-            }
-            else {
-                lastPasmLabel = text;
-            }
-
-            if (!symbols.containsKey(text)) {
-                symbols.put(text, TokenId.PASM_LABEL);
-                tokens.add(new TokenMarker(ctx.getStart(), ctx.getStop(), TokenId.PASM_LABEL));
-            }
-            else {
-                tokens.add(new TokenMarker(ctx.getStart(), ctx.getStop(), TokenId.ERROR));
-            }
-        }
-
-        @Override
-        public void exitDirective(DirectiveContext ctx) {
-            if (ctx.name != null) {
-                TokenId id = pasmKeywords.get(ctx.name.getText().toUpperCase());
-                if (id != TokenId.PASM_DIRECTIVE) {
-                    id = TokenId.ERROR;
-                }
-                tokens.add(new TokenMarker(ctx.name, id));
-            }
-        }
-
-        @Override
-        public void exitAssembler(AssemblerContext ctx) {
-            if (ctx.condition != null) {
-                TokenId id = pasmKeywords.get(ctx.condition.getText().toUpperCase());
-                if (id != TokenId.PASM_CONDITION) {
-                    id = TokenId.ERROR;
-                }
-                tokens.add(new TokenMarker(ctx.condition, id));
-            }
-            if (ctx.instruction != null) {
-                TokenId id = pasmKeywords.get(ctx.instruction.getText().toUpperCase());
-                if (id != TokenId.PASM_INSTRUCTION) {
-                    id = TokenId.ERROR;
-                }
-                tokens.add(new TokenMarker(ctx.instruction, id));
-            }
-            if (ctx.modifier != null) {
-                TokenId id = pasmKeywords.get(ctx.modifier.getText().toUpperCase());
-                if (id != TokenId.PASM_MODIFIER) {
-                    id = TokenId.ERROR;
-                }
-                tokens.add(new TokenMarker(ctx.modifier, id));
-            }
-        }
-
-        @Override
-        public void exitData(DataContext ctx) {
-            if (ctx.type != null) {
-                TokenId id = pasmKeywords.get(ctx.type.getText().toUpperCase());
-                if (id != TokenId.PASM_TYPE) {
-                    id = TokenId.ERROR;
-                }
-                tokens.add(new TokenMarker(ctx.type, id));
-            }
-        }
-
-        @Override
-        public void visitTerminal(TerminalNode node) {
-            TokenId id = typeMap.get(node.getSymbol().getType());
-            if (id != null) {
-                tokens.add(new TokenMarker(node.getSymbol(), id));
-            }
-        }
-
-        @Override
-        public void visitErrorNode(ErrorNode node) {
-            tokens.add(new TokenMarker(node.getSymbol(), TokenId.WARNING));
-        }
-
-    };
-
-    final Spin2ParserBaseVisitor parserVisitor = new Spin2ParserBaseVisitor() {
-
-        @Override
-        public Object visitMethod(MethodContext ctx) {
-            ctx.accept(new Spin2ParserBaseVisitor() {
-
-                Map<String, TokenId> locals = new HashMap<String, TokenId>();
-
-                @Override
-                public Object visitParameters(ParametersContext ctx) {
-                    for (TerminalNode node : ctx.IDENTIFIER()) {
-                        String text = node.getSymbol().getText();
-                        if (!symbols.containsKey(text) && !locals.containsKey(text)) {
-                            locals.put(text, TokenId.METHOD_PARAMETER);
-                            tokens.add(new TokenMarker(node.getSymbol(), TokenId.METHOD_PARAMETER));
-                        }
-                        else {
-                            tokens.add(new TokenMarker(node.getSymbol(), TokenId.ERROR));
-                        }
-                    }
-                    return null;
-                }
-
-                @Override
-                public Object visitResult(ResultContext ctx) {
-                    for (TerminalNode node : ctx.IDENTIFIER()) {
-                        String text = node.getSymbol().getText();
-                        if (!symbols.containsKey(text) && !locals.containsKey(text)) {
-                            locals.put(text, TokenId.METHOD_RETURN);
-                            tokens.add(new TokenMarker(node.getSymbol(), TokenId.METHOD_RETURN));
-                        }
-                        else {
-                            tokens.add(new TokenMarker(node.getSymbol(), TokenId.ERROR));
-                        }
-                    }
-                    return null;
-                }
-
-                @Override
-                public Object visitLocalvar(LocalvarContext ctx) {
-                    if (ctx.name != null) {
-                        String text = ctx.name.getText();
-                        if (!symbols.containsKey(text) && !locals.containsKey(text)) {
-                            locals.put(ctx.name.getText(), TokenId.METHOD_LOCAL);
-                            tokens.add(new TokenMarker(ctx.name, TokenId.METHOD_LOCAL));
-                        }
-                        else {
-                            tokens.add(new TokenMarker(ctx.name, TokenId.ERROR));
-                        }
-                    }
-                    return null;
-                }
-
-                @Override
-                public Object visitIdentifier(IdentifierContext ctx) {
-                    if (ctx.name != null) {
-                        TokenId id = symbols.get(ctx.name.getText());
-                        if (id == null) {
-                            id = locals.get(ctx.name.getText());
-                        }
-                        if (id == null) {
-                            id = TokenId.ERROR;
-                        }
-                        tokens.add(new TokenMarker(ctx.name, id));
-                    }
-                    return null;
-                }
-
-                @Override
-                public Object visitFunction(FunctionContext ctx) {
-                    if (ctx.obj != null) {
-                        TokenId id = symbols.get(ctx.obj.getText());
-                        if (id == null) {
-                            id = TokenId.ERROR;
-                        }
-                        tokens.add(new TokenMarker(ctx.obj, id));
-                    }
-                    if (ctx.name != null) {
-                        TokenId id = keywords.get(ctx.name.getText().toUpperCase());
-                        if (id == null) {
-                            id = symbols.get(ctx.name.getText());
-                        }
-                        if (id == null) {
-                            id = TokenId.ERROR;
-                        }
-                        tokens.add(new TokenMarker(ctx.name, id));
-                    }
-                    return super.visitFunction(ctx);
-                }
-
-            });
-            return null;
-        }
-
-        @Override
-        public Object visitIdentifier(IdentifierContext ctx) {
-            if (ctx.name != null) {
-                TokenId id = symbols.get(ctx.name.getText());
-                if (id == null) {
-                    id = TokenId.ERROR;
-                }
-                tokens.add(new TokenMarker(ctx.name, id));
-            }
-            return null;
-        }
-
-        String lastPasmLabel = "";
-
-        @Override
-        public Object visitDataLine(DataLineContext ctx) {
-            if (ctx.label() != null) {
-                String text = ctx.label().getText();
-                if (text.startsWith(".")) {
-                    text = lastPasmLabel + text;
-                }
-                else {
-                    lastPasmLabel = text;
-                }
-            }
-            return super.visitDataLine(ctx);
-        }
-
-        @Override
-        public Object visitAtom(AtomContext ctx) {
-            if (ctx.IDENTIFIER() != null) {
-                String text = ctx.getText();
-                if (text.startsWith(".")) {
-                    text = lastPasmLabel + text;
-                }
-                TokenId id = pasmKeywords.get(text.toUpperCase());
-                if (id == null) {
-                    id = symbols.get(text);
-                }
-                if (id == null) {
-                    id = TokenId.ERROR;
-                }
-                tokens.add(new TokenMarker(ctx.getStart(), id));
-                tokens.add(new TokenMarker(ctx.getStop(), id));
-            }
-            return null;
-        }
-
-    };
-
     public Spin2TokenMarker() {
 
     }
@@ -1099,23 +322,255 @@ public class Spin2TokenMarker {
         tokens.clear();
         symbols.clear();
 
-        Spin2Lexer lexer = new Spin2Lexer(CharStreams.fromString(text));
-        lexer.removeErrorListeners();
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+        Spin2Parser subject = new Spin2Parser(stream);
+        Node root = subject.parse();
 
-        CommonTokenStream stream = new CommonTokenStream(lexer);
-        Spin2Parser parser = new Spin2Parser(stream);
-        parser.removeErrorListeners();
-        parser.addParseListener(parserListener);
-
-        ProgContext context = parser.prog();
-        context.accept(parserVisitor);
-
-        List<Token> list = stream.getTokens(0, stream.size() - 1, commentSet);
-        if (list != null) {
-            for (Token token : list) {
-                tokens.add(new TokenMarker(token, TokenId.COMMENT));
-            }
+        // Comments are hidden from the parser
+        for (Token token : stream.getHiddenTokens()) {
+            tokens.add(new TokenMarker(token, TokenId.COMMENT));
         }
+
+        // Collect known keywords and symbols
+        root.accept(new Spin2ParserVisitor() {
+
+            String lastLabel = "";
+
+            @Override
+            public void visitConstants(Constants node) {
+                tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
+            }
+
+            @Override
+            public void visitConstantAssignExpression(ConstantAssignExpression node) {
+                if (symbols.containsKey(node.getIdentifier().getText())) {
+                    tokens.add(new TokenMarker(node.getIdentifier(), TokenId.ERROR));
+                }
+                else {
+                    symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
+                    tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
+                }
+            }
+
+            @Override
+            public void visitConstantAssignEnum(ConstantAssignEnum node) {
+                if (symbols.containsKey(node.getIdentifier().getText())) {
+                    tokens.add(new TokenMarker(node.getIdentifier(), TokenId.ERROR));
+                }
+                else {
+                    symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
+                    tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
+                }
+            }
+
+            @Override
+            public void visitVariables(Variables node) {
+                tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
+            }
+
+            @Override
+            public void visitVariable(Variable node) {
+                tokens.add(new TokenMarker(node.getType(), TokenId.TYPE));
+
+                if (symbols.containsKey(node.getIdentifier().getText())) {
+                    tokens.add(new TokenMarker(node.getIdentifier(), TokenId.ERROR));
+                }
+                else {
+                    symbols.put(node.getIdentifier().getText(), TokenId.VARIABLE);
+                    tokens.add(new TokenMarker(node.getIdentifier(), TokenId.VARIABLE));
+                }
+            }
+
+            @Override
+            public void visitObjects(Objects node) {
+                tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
+            }
+
+            @Override
+            public void visitMethod(Method node) {
+                if ("PRI".equalsIgnoreCase(node.getType().getText())) {
+                    tokens.add(new TokenMarker(node.getType(), TokenId.METHOD_PRI));
+                    tokens.add(new TokenMarker(node.getName(), TokenId.METHOD_PRI));
+                }
+                else {
+                    tokens.add(new TokenMarker(node.getType(), TokenId.METHOD_PUB));
+                    tokens.add(new TokenMarker(node.getName(), TokenId.METHOD_PUB));
+                }
+
+                for (Parameter child : node.getParameters()) {
+                    tokens.add(new TokenMarker(child, TokenId.METHOD_LOCAL));
+                }
+                for (ReturnVariable child : node.getReturnVariables()) {
+                    tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
+                }
+                for (LocalVariable child : node.getLocalVariables()) {
+                    if (child.type != null) {
+                        tokens.add(new TokenMarker(child.type, TokenId.TYPE));
+                    }
+                    tokens.add(new TokenMarker(child.identifier, TokenId.METHOD_LOCAL));
+                }
+            }
+
+            @Override
+            public void visitData(Data node) {
+                lastLabel = "";
+                tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
+            }
+
+            @Override
+            public void visitLine(Line node) {
+                if (node.label != null) {
+                    String s = node.label.getText();
+                    if (s.startsWith(".")) {
+                        symbols.put(lastLabel + s, TokenId.PASM_LOCAL_LABEL);
+                        tokens.add(new TokenMarker(node.label, TokenId.PASM_LOCAL_LABEL));
+                    }
+                    else {
+                        symbols.put(s, TokenId.PASM_LABEL);
+                        tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
+                        lastLabel = s;
+                    }
+                }
+                if (node.condition != null) {
+                    tokens.add(new TokenMarker(node.condition, TokenId.PASM_CONDITION));
+                }
+                if (node.instruction != null) {
+                    tokens.add(new TokenMarker(node.instruction, TokenId.PASM_INSTRUCTION));
+                }
+                if (node.modifier != null) {
+                    tokens.add(new TokenMarker(node.modifier, TokenId.PASM_MODIFIER));
+                }
+            }
+
+        });
+
+        // Update symbols references from expressions
+        root.accept(new Spin2ParserVisitor() {
+
+            String lastLabel = "";
+            Map<String, TokenId> locals = new HashMap<String, TokenId>();
+
+            @Override
+            public void visitMethod(Method node) {
+                locals.clear();
+
+                for (Parameter child : node.getParameters()) {
+                    locals.put(child.getText(), TokenId.METHOD_LOCAL);
+                }
+                for (ReturnVariable child : node.getReturnVariables()) {
+                    locals.put(child.getText(), TokenId.METHOD_RETURN);
+                }
+                for (LocalVariable child : node.getLocalVariables()) {
+                    locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
+                }
+                for (Node child : node.childs) {
+                    if (child instanceof Statement) {
+                        markTokens(child);
+                    }
+                }
+            }
+
+            void markTokens(Node node) {
+                for (Token token : node.getTokens()) {
+                    TokenId id = null;
+                    if (token.type == Spin2TokenStream.NUMBER) {
+                        id = TokenId.NUMBER;
+                    }
+                    else if (token.type == Spin2TokenStream.OPERATOR) {
+                        id = TokenId.OPERATOR;
+                    }
+                    else if (token.type == Spin2TokenStream.STRING) {
+                        id = TokenId.STRING;
+                    }
+                    if (id == null) {
+                        id = keywords.get(token.getText().toUpperCase());
+                    }
+                    if (id == null) {
+                        id = locals.get(token.getText());
+                    }
+                    if (id == null) {
+                        id = symbols.get(token.getText());
+                    }
+                    if (id != null) {
+                        tokens.add(new TokenMarker(token, id));
+                    }
+                }
+                for (Node child : node.childs) {
+                    markTokens(child);
+                }
+            }
+
+            @Override
+            public void visitData(Data node) {
+                lastLabel = "";
+            }
+
+            @Override
+            public void visitLine(Line node) {
+                if (node.label != null) {
+                    String s = node.label.getText();
+                    if (!s.startsWith(".")) {
+                        lastLabel = s;
+                    }
+                }
+
+                for (InstructionParameter parameter : node.parameters) {
+                    for (Token token : parameter.getTokens()) {
+                        TokenId id = null;
+                        if (token.type == Spin2TokenStream.NUMBER) {
+                            id = TokenId.NUMBER;
+                        }
+                        else if (token.type == Spin2TokenStream.OPERATOR) {
+                            id = TokenId.OPERATOR;
+                        }
+                        else if (token.type == Spin2TokenStream.STRING) {
+                            id = TokenId.STRING;
+                        }
+                        else {
+                            String s = token.getText();
+                            if (s.startsWith(".")) {
+                                s = lastLabel + s;
+                            }
+                            id = symbols.get(s);
+                        }
+                        if (id == null) {
+                            id = pasmKeywords.get(token.getText().toUpperCase());
+                        }
+                        if (id == null) {
+                            id = TokenId.ERROR;
+                        }
+                        tokens.add(new TokenMarker(token, id));
+                    }
+                }
+            }
+
+            @Override
+            public void visitExpression(Expression node) {
+                for (Token token : node.getTokens()) {
+                    TokenId id = null;
+                    if (token.type == Spin2TokenStream.NUMBER) {
+                        id = TokenId.NUMBER;
+                    }
+                    else if (token.type == Spin2TokenStream.OPERATOR) {
+                        id = TokenId.OPERATOR;
+                    }
+                    else if (token.type == Spin2TokenStream.STRING) {
+                        id = TokenId.STRING;
+                    }
+                    else {
+                        id = symbols.get(token.getText());
+                    }
+                    if (id == null) {
+                        id = keywords.get(token.getText().toUpperCase());
+                    }
+                    if (id == null) {
+                        id = TokenId.ERROR;
+                    }
+                    tokens.add(new TokenMarker(token, id));
+                }
+            }
+
+        });
     }
 
     public Set<TokenMarker> getLineTokens(int lineStart, String lineText) {
