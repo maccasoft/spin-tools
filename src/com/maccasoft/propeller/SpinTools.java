@@ -10,11 +10,17 @@
 
 package com.maccasoft.propeller;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -39,6 +45,12 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.internal.ImageRegistry;
+import com.maccasoft.propeller.spin.Spin2Compiler;
+import com.maccasoft.propeller.spin.Spin2Parser;
+import com.maccasoft.propeller.spin.Spin2Parser.Node;
+import com.maccasoft.propeller.spin.Spin2TokenStream;
+
+import jssc.SerialPortException;
 
 public class SpinTools {
 
@@ -47,6 +59,7 @@ public class SpinTools {
 
     Shell shell;
     CTabFolder tabFolder;
+    SerialPortList serialPortList;
 
     public SpinTools(Shell shell) {
         this.shell = shell;
@@ -79,6 +92,8 @@ public class SpinTools {
             }
         });
         createTabFolderMenu();
+
+        serialPortList = new SerialPortList();
     }
 
     void createFileMenu(Menu parent) {
@@ -367,21 +382,6 @@ public class SpinTools {
         item.setMenu(menu);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Verify / Compile\tCtrl+R");
-        item.setAccelerator(SWT.MOD1 + 'R');
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                try {
-
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-
-        item = new MenuItem(menu, SWT.PUSH);
         item.setText("Upload to RAM\tCtrl+U");
         item.setAccelerator(SWT.MOD1 + 'U');
         item.addListener(SWT.Selection, new Listener() {
@@ -389,7 +389,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-
+                    handleCompileAndUpload();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -428,7 +428,98 @@ public class SpinTools {
             }
         });
 
+        createPortMenu(menu);
+
         return menu;
+    }
+
+    void createPortMenu(Menu parent) {
+        final Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+        menu.addMenuListener(new MenuListener() {
+
+            @Override
+            public void menuShown(MenuEvent e) {
+                serialPortList.fillMenu(menu);
+            }
+
+            @Override
+            public void menuHidden(MenuEvent e) {
+
+            }
+        });
+
+        MenuItem item = new MenuItem(parent, SWT.CASCADE);
+        item.setText("&Port");
+        item.setMenu(menu);
+    }
+
+    private void handleCompileAndUpload() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem == null) {
+            return;
+        }
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+
+        String text = editorTab.getEditor().getText();
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+
+        IRunnableWithProgress thread = new IRunnableWithProgress() {
+
+            @Override
+            public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                monitor.beginTask("Compile and Upload", IProgressMonitor.UNKNOWN);
+
+                try {
+                    Spin2Parser parser = new Spin2Parser(stream);
+                    Node root = parser.parse();
+
+                    Spin2Compiler compiler = new Spin2Compiler();
+                    compiler.compile(root);
+
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    compiler.generateObjectCode(os);
+
+                    Propeller2Loader loader = new Propeller2Loader(serialPortList.getSelection()) {
+
+                        @Override
+                        protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
+                            monitor.setTaskName("Loading " + text + " to RAM");
+                            super.bufferUpload(type, binaryImage, text);
+                        }
+
+                        @Override
+                        protected void notifyProgress(int sent, int total) {
+                            if (sent == total) {
+                                monitor.subTask(String.format("%d bytes sent", total));
+                            }
+                            else {
+                                monitor.subTask(String.format("%d bytes remaining", total - sent));
+                            }
+                        }
+
+                        @Override
+                        protected void verifyRam() throws SerialPortException, IOException {
+                            monitor.setTaskName("Verifying RAM ... ");
+                            super.verifyRam();
+                        }
+
+                    };
+                    loader.upload(os.toByteArray(), 0);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                monitor.done();
+            }
+
+        };
+
+        ProgressMonitorDialog dlg = new ProgressMonitorDialog(shell);
+        try {
+            dlg.run(true, true, thread);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     void createHelpMenu(Menu parent) {
