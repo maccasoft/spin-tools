@@ -204,10 +204,24 @@ public class Spin2Compiler {
         if (scope.hasSymbol("_clkfreq")) {
             _clkfreq = scope.getSymbol("_clkfreq").getNumber().intValue();
         }
-        if (scope.hasSymbol("_CLKFREQ")) {
+        else if (scope.hasSymbol("_CLKFREQ")) {
             _clkfreq = scope.getSymbol("_CLKFREQ").getNumber().intValue();
         }
-        scope.addSymbol("clkmode_", new NumberLiteral(getClockMode(20000000, _clkfreq)));
+
+        if (!scope.hasSymbol("_clkfreq")) {
+            scope.addSymbol("_clkfreq", new NumberLiteral(_clkfreq));
+        }
+        if (!scope.hasSymbol("_CLKFREQ")) {
+            scope.addSymbol("_CLKFREQ", new NumberLiteral(_clkfreq));
+        }
+
+        int _clkmode = getClockMode(20000000, _clkfreq);
+        if (!scope.hasSymbol("clkmode_")) {
+            scope.addSymbol("clkmode_", new NumberLiteral(_clkmode));
+        }
+        if (!scope.hasSymbol("CLKMODE_")) {
+            scope.addSymbol("CLKMODE_", new NumberLiteral(_clkmode));
+        }
 
         for (Spin2PAsmLine line : source) {
             try {
@@ -399,6 +413,24 @@ public class Spin2Compiler {
                     }
                     else if ("/".equals(token.getText())) {
                         expressionBuilder.addOperatorToken(expressionBuilder.DIVIDE);
+                    }
+                    else if ("//".equals(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.MODULO);
+                    }
+                    else if ("+/".equals(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.UNSIGNED_DIVIDE);
+                    }
+                    else if ("+//".equals(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.UNSIGNED_MODULO);
+                    }
+                    else if ("SCA".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.SCA);
+                    }
+                    else if ("SCAS".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.SCAS);
+                    }
+                    else if ("FRAC".equalsIgnoreCase(token.getText())) {
+                        expressionBuilder.addOperatorToken(expressionBuilder.FRAC);
                     }
                     else if ("+".equals(token.getText())) {
                         expressionBuilder.addOperatorToken(expressionBuilder.ADD);

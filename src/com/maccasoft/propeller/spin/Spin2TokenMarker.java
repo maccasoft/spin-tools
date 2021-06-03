@@ -409,10 +409,12 @@ public class Spin2TokenMarker {
                 String s = node.label.getText();
                 if (s.startsWith(".")) {
                     symbols.put(lastLabel + s, TokenId.PASM_LOCAL_LABEL);
+                    symbols.put(lastLabel + "@" + s, TokenId.PASM_LOCAL_LABEL);
                     tokens.add(new TokenMarker(node.label, TokenId.PASM_LOCAL_LABEL));
                 }
                 else {
                     symbols.put(s, TokenId.PASM_LABEL);
+                    symbols.put("@" + s, TokenId.PASM_LABEL);
                     tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
                     lastLabel = s;
                 }
@@ -513,7 +515,7 @@ public class Spin2TokenMarker {
                     }
                     else {
                         String s = token.getText();
-                        if (s.startsWith(".")) {
+                        if (s.startsWith(".") || s.startsWith("@.")) {
                             s = lastLabel + s;
                         }
                         id = symbols.get(s);

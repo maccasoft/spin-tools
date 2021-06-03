@@ -129,6 +129,11 @@ public class Spin2Parser {
             return sb.toString();
         }
 
+        @Override
+        public String toString() {
+            return getText();
+        }
+
     }
 
     public class ErrorNode extends Node {

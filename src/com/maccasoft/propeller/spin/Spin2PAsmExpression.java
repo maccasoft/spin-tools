@@ -52,9 +52,6 @@ public class Spin2PAsmExpression {
     }
 
     public int getInteger() {
-        if (expression.isRegister()) {
-            return expression.getRegister();
-        }
         return expression.getNumber().intValue();
     }
 

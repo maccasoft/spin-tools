@@ -107,6 +107,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator LOGICAL_NOT = new Operator(Precedence.UNARY, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             return new LogicalNot(operands.pop());
@@ -114,6 +115,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator POSITIVE = new Operator(Precedence.UNARY, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             return new Positive(operands.pop());
@@ -121,6 +123,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator NEGATIVE = new Operator(Precedence.UNARY, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             return new Negative(operands.pop());
@@ -129,12 +132,14 @@ public class ExpressionBuilder {
 
     public final Operator COMPLEMENT = new Operator(Precedence.UNARY, Associativity.RIGHT_TO_LEFT) {
         @Override
+
         public Expression evaluate() {
             return new Complement(operands.pop());
         };
     };
 
     public final Operator ABS = new Operator(Precedence.UNARY, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             return new Abs(operands.pop());
@@ -142,6 +147,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator ENCOD = new Operator(Precedence.UNARY, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             return new Encod(operands.pop());
@@ -149,6 +155,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator DECOD = new Operator(Precedence.UNARY, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             return new Decod(operands.pop());
@@ -156,6 +163,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator BMASK = new Operator(Precedence.UNARY, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             return new Bmask(operands.pop());
@@ -163,6 +171,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator SQRT = new Operator(Precedence.UNARY, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             return new Sqrt(operands.pop());
@@ -170,6 +179,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator MULTIPLY = new Operator(Precedence.MULTIPLICATION, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -178,6 +188,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator DIVIDE = new Operator(Precedence.MULTIPLICATION, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -186,6 +197,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator MODULO = new Operator(Precedence.MULTIPLICATION, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -193,14 +205,61 @@ public class ExpressionBuilder {
         };
     };
 
+    public final Operator UNSIGNED_DIVIDE = new Operator(Precedence.MULTIPLICATION, Associativity.LEFT_TO_RIGHT) {
+
+        @Override
+        public Expression evaluate() {
+            Expression operandRight = operands.pop();
+            return new UnsignedDivide(operands.pop(), operandRight);
+        };
+    };
+
+    public final Operator UNSIGNED_MODULO = new Operator(Precedence.MULTIPLICATION, Associativity.LEFT_TO_RIGHT) {
+
+        @Override
+        public Expression evaluate() {
+            Expression operandRight = operands.pop();
+            return new UnsignedModulo(operands.pop(), operandRight);
+        };
+    };
+
     public final Operator ROUND = new Operator(Precedence.MULTIPLICATION, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             return new Round(operands.pop());
         };
     };
 
+    public final Operator SCA = new Operator(Precedence.MULTIPLICATION, Associativity.RIGHT_TO_LEFT) {
+
+        @Override
+        public Expression evaluate() {
+            Expression operandRight = operands.pop();
+            return new Sca(operands.pop(), operandRight);
+        };
+    };
+
+    public final Operator SCAS = new Operator(Precedence.MULTIPLICATION, Associativity.RIGHT_TO_LEFT) {
+
+        @Override
+        public Expression evaluate() {
+            Expression operandRight = operands.pop();
+            return new Scas(operands.pop(), operandRight);
+        };
+    };
+
+    public final Operator FRAC = new Operator(Precedence.MULTIPLICATION, Associativity.RIGHT_TO_LEFT) {
+
+        @Override
+        public Expression evaluate() {
+            Expression operandRight = operands.pop();
+            return new Frac(operands.pop(), operandRight);
+        };
+    };
+
     public final Operator ADD = new Operator(Precedence.ADDITION, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -209,6 +268,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator SUBTRACT = new Operator(Precedence.ADDITION, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -217,6 +277,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator ADDBITS = new Operator(Precedence.ADDBITS, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -225,6 +286,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator ADDPINS = new Operator(Precedence.ADDBITS, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -233,6 +295,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator SHIFT_LEFT = new Operator(Precedence.SHIFT, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -241,6 +304,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator SHIFT_RIGHT = new Operator(Precedence.SHIFT, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -249,6 +313,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator LESS_THAN = new Operator(Precedence.COMPARISON, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -257,6 +322,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator LESS_OR_EQUALS = new Operator(Precedence.COMPARISON, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -265,6 +331,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator GREATER_THAN = new Operator(Precedence.COMPARISON, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -273,6 +340,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator GREATER_OR_EQUALS = new Operator(Precedence.COMPARISON, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -281,6 +349,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator EQUALS = new Operator(Precedence.EQUALITY, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -289,6 +358,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator NOT_EQUALS = new Operator(Precedence.EQUALITY, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -297,6 +367,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator AND = new Operator(Precedence.AND, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -305,6 +376,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator XOR = new Operator(Precedence.XOR, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -321,6 +393,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator LOGICAL_AND = new Operator(Precedence.LOGICAL_AND, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -329,6 +402,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator LOGICAL_OR = new Operator(Precedence.LOGICAL_OR, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -337,6 +411,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator LOGICAL_XOR = new Operator(Precedence.LOGICAL_XOR, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -345,6 +420,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator TERNARYIF = new Operator(Precedence.TERNARYIFELSE, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             throw new ExpressionError("Ternary if (?) without else (:).");
@@ -352,6 +428,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator TERNARYELSE = new Operator(Precedence.TERNARYIFELSE, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             Expression operandRight = operands.pop();
@@ -370,6 +447,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator GROUP_OPEN = new Operator(Precedence.GROUPING, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             return new Group(operands.pop());
@@ -377,6 +455,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator GROUP_CLOSE = new Operator(Precedence.NONE, Associativity.LEFT_TO_RIGHT) {
+
         @Override
         public Expression evaluate() {
             throw new RuntimeException("Can not evaluate group close.");
@@ -384,6 +463,7 @@ public class ExpressionBuilder {
     };
 
     public final Operator SENTINEL = new Operator(Precedence.NONE, Associativity.RIGHT_TO_LEFT) {
+
         @Override
         public Expression evaluate() {
             throw new RuntimeException("Can not evaluate sentinel.");

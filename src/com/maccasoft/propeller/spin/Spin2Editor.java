@@ -286,18 +286,6 @@ public class Spin2Editor {
 
         styledText.setCaret(insertCaret);
         styledText.addCaretListener(caretListener);
-        styledText.setTabStops(new int[] {
-            charSize.x * 4,
-            charSize.x * 8,
-            charSize.x * 12,
-            charSize.x * 16,
-            charSize.x * 20,
-            charSize.x * 24,
-            charSize.x * 28,
-            charSize.x * 32,
-            charSize.x * 36,
-            charSize.x * 40,
-        });
 
         styledText.addModifyListener(new ModifyListener() {
 
@@ -453,8 +441,20 @@ public class Spin2Editor {
             text = text.replaceAll("[ \\t]+(\r\n|\n|\r)", "$1");
 
             currentLine = 0;
-            modified = true;
             styledText.setText(text);
+            undoStack.clear();
+            redoStack.clear();
+
+            display.asyncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    modified = true;
+                    styledText.redraw();
+                }
+
+            });
+
         } finally {
             styledText.setRedraw(true);
             styledText.addCaretListener(caretListener);

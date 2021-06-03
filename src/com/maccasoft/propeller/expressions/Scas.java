@@ -14,7 +14,7 @@ public class Scas extends BinaryOperator {
 
     @Override
     public String getLexeme() {
-        return "frac";
+        return "scas";
     }
 
 }

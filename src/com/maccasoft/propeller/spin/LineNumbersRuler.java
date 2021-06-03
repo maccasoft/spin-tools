@@ -75,7 +75,7 @@ public class LineNumbersRuler {
 
         leftMargin = rightMargin = 5;
 
-        layoutData.widthHint = (int) Math.round(leftMargin + fontMetrics.getAverageCharacterWidth() * 4 + rightMargin);
+        layoutData.widthHint = (int) Math.round(leftMargin + fontMetrics.getAverageCharacterWidth() * 5 + rightMargin);
 
         scrollBarSelection = lineCount = -1;
     }

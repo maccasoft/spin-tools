@@ -1,8 +1,5 @@
 package com.maccasoft.propeller.expressions;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public abstract class Expression {
 
     public Expression resolve() {
@@ -11,14 +8,6 @@ public abstract class Expression {
 
     public boolean isConstant() {
         return false;
-    }
-
-    public boolean isRegister() {
-        return false;
-    }
-
-    public int getRegister() {
-        throw new EvaluationException("Not a register.");
     }
 
     public boolean isNumber() {
@@ -39,16 +28,6 @@ public abstract class Expression {
 
     public boolean isGroup() {
         return false;
-    }
-
-    public List<Expression> getList() {
-        List<Expression> list = new ArrayList<>();
-        addToList(list);
-        return list;
-    }
-
-    protected void addToList(List<Expression> list) {
-        list.add(this);
     }
 
     public Expression getElement() {
