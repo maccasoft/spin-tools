@@ -80,21 +80,27 @@ public class Spin2Parser {
         final List<Token> tokens = new ArrayList<Token>();
         final List<Node> childs = new ArrayList<Node>();
 
-        public Node(Node parent) {
-            this(parent, true);
+        public Node() {
+            this.parent = null;
         }
 
-        public Node(Node parent, boolean addToParent) {
+        public Node(Node parent) {
             this.parent = parent;
-            if (parent != null && addToParent) {
-                parent.childs.add(this);
-            }
+            this.parent.childs.add(this);
         }
 
         public void accept(Spin2ParserVisitor visitor) {
             for (Node child : childs) {
                 child.accept(visitor);
             }
+        }
+
+        public Token getStartToken() {
+            return tokens.get(0);
+        }
+
+        public Token getStopToken() {
+            return tokens.get(tokens.size() - 1);
         }
 
         public List<Token> getTokens() {
@@ -156,7 +162,7 @@ public class Spin2Parser {
     }
 
     public Node parse() {
-        root = new Node(null);
+        root = new Node();
 
         while (true) {
             Token token = stream.nextToken();
@@ -696,9 +702,9 @@ public class Spin2Parser {
                         }
                     }
 
-                    child = new StatementNode(parent);
-                    state = 1;
-                    // fall-through
+                    child = parseStatement(parent, token);
+                    break;
+
                 case 1:
                     child.tokens.add(token);
                     break;
@@ -835,6 +841,70 @@ public class Spin2Parser {
                     }
                     local.size.tokens.add(token);
                     break;
+            }
+        }
+    }
+
+    Node parseStatement(Node parent, Token token) {
+        Node statement = new StatementNode(parent);
+
+        while (true) {
+            if ("(".equals(token.getText())) {
+                token = parseSubStatement(statement, token);
+                if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
+                    break;
+                }
+                token = stream.nextToken();
+            }
+            else {
+                statement.tokens.add(token);
+                token = stream.nextToken();
+            }
+            if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
+                break;
+            }
+        }
+
+        return statement;
+    }
+
+    Token parseSubStatement(Node parent, Token token) {
+        Node node = new Node(parent);
+        node.tokens.add(token);
+
+        while (true) {
+            token = stream.nextToken();
+            if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
+                return token;
+            }
+            if ("(".equals(token.getText())) {
+                token = parseSubStatement(node, token);
+                if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
+                    return token;
+                }
+                if (")".equals(token.getText())) {
+                    continue;
+                }
+            }
+            if (",".equals(token.getText())) {
+                if (node.getParent() == parent) {
+                    List<Token> list = new ArrayList<Token>(node.tokens.subList(1, node.tokens.size()));
+                    node.tokens.removeAll(list);
+                    node = new Node(node);
+                    node.tokens.addAll(list);
+                }
+                node.getParent().tokens.add(token);
+                node = new Node(node.getParent());
+                continue;
+            }
+            else if (")".equals(token.getText())) {
+                if (node.getParent() != parent) {
+                    node = node.getParent();
+                }
+            }
+            node.tokens.add(token);
+            if (")".equals(token.getText())) {
+                return token;
             }
         }
     }

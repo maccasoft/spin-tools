@@ -20,6 +20,7 @@ import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignNode;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantsNode;
 import com.maccasoft.propeller.spin.Spin2Parser.DataLineNode;
 import com.maccasoft.propeller.spin.Spin2Parser.DataNode;
+import com.maccasoft.propeller.spin.Spin2Parser.ErrorNode;
 import com.maccasoft.propeller.spin.Spin2Parser.ExpressionNode;
 import com.maccasoft.propeller.spin.Spin2Parser.LocalVariableNode;
 import com.maccasoft.propeller.spin.Spin2Parser.MethodNode;
@@ -408,14 +409,28 @@ public class Spin2TokenMarker {
             if (node.label != null) {
                 String s = node.label.getText();
                 if (s.startsWith(".")) {
-                    symbols.put(lastLabel + s, TokenId.PASM_LOCAL_LABEL);
-                    symbols.put(lastLabel + "@" + s, TokenId.PASM_LOCAL_LABEL);
-                    tokens.add(new TokenMarker(node.label, TokenId.PASM_LOCAL_LABEL));
+                    if (symbols.containsKey(lastLabel + s)) {
+                        tokens.add(new TokenMarker(node.label, TokenId.ERROR));
+                    }
+                    else {
+                        symbols.put(lastLabel + s, TokenId.PASM_LOCAL_LABEL);
+                        symbols.put(lastLabel + "@" + s, TokenId.PASM_LOCAL_LABEL);
+                        tokens.add(new TokenMarker(node.label, TokenId.PASM_LOCAL_LABEL));
+                    }
                 }
                 else {
-                    symbols.put(s, TokenId.PASM_LABEL);
-                    symbols.put("@" + s, TokenId.PASM_LABEL);
-                    tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
+                    TokenId id = symbols.get(s);
+                    if (id == null) {
+                        id = pasmKeywords.get(s);
+                    }
+                    if (id != null) {
+                        tokens.add(new TokenMarker(node.label, TokenId.ERROR));
+                    }
+                    else {
+                        symbols.put(s, TokenId.PASM_LABEL);
+                        symbols.put("@" + s, TokenId.PASM_LABEL);
+                        tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
+                    }
                     lastLabel = s;
                 }
             }
@@ -554,6 +569,13 @@ public class Spin2TokenMarker {
                     id = TokenId.ERROR;
                 }
                 tokens.add(new TokenMarker(token, id));
+            }
+        }
+
+        @Override
+        public void visitError(ErrorNode node) {
+            for (Token token : node.getTokens()) {
+                tokens.add(new TokenMarker(token, TokenId.ERROR));
             }
         }
 

@@ -502,4 +502,13 @@ public class ExpressionBuilder {
         }
     }
 
+    public static void main(String[] args) {
+        ExpressionBuilder builder = new ExpressionBuilder();
+        builder.addValueToken(new NumberLiteral(1));
+        builder.addOperatorToken(builder.ADD);
+        builder.addOperatorToken(builder.GROUP_OPEN);
+        builder.addOperatorToken(builder.GROUP_CLOSE);
+        Expression expression = builder.getExpression();
+        System.out.println(expression);
+    }
 }

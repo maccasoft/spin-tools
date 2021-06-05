@@ -142,6 +142,29 @@ class Spin2CompilerFunctionalTest {
             + "\n";
 
         byte[] expected = new byte[] {};
+        /* 88 10 00 00    PBASE $1088     */
+        /* A4 10 00 00    VBASE $10A4     */
+        /* A8 10 00 00    DBASE $10A8     */
+        /* 00 01 00 00    CLEAR $0010     */
+
+        /* 1088 - 08 00 00       CALL 0.0        */
+        /* 108B - 80 19          3200?           */
+        /* 108D - 00 00 00 04                    */
+        /*                                       */ /* PUB main()                                              */
+        /* 1091 - 33             GETCT           */ /*     ct := getct()                   ' get current timer */
+        /* 1092 - F0             +-> ct          */ /*                                                         */
+        /*                                       */ /*     repeat                                              */
+        /* 1093 - 45 38          56              */ /*     |   pint(56)                    ' toggle pin 56     */
+        /* 1095 - 39             PINT            */ /*     |                                                   */
+        /* 1096 - 49 00 B4 C4 04 _CLKFREQ / 2    */ /*     |   waitct(ct += _clkfreq / 2)  ' wait half second  */
+        /* 109B - D0             ct              */ /*     |                                                   */
+        /* 109C - CA             +=              */ /*     |                                                   */
+        /* 109D - 35             WAITCT          */ /*     |                                                   */
+        /* 109E - 12 74          JMP -12         */ /*     +                                                   */
+        /* 10A0 - 04 00 00 00                    */
+        /* 10A4 - 00 00 00 00    VBASE           */
+        /* DBASE (STACK)                         */
+        /* 10A8 - 00 00 00 00    ct              */
 
         byte[] result = compile(text);
         Assertions.assertArrayEquals(expected, result);
