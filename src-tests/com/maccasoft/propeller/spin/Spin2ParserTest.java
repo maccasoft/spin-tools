@@ -17,6 +17,8 @@ import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignEnumNode;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignNode;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantSetEnumNode;
 import com.maccasoft.propeller.spin.Spin2Parser.ConstantsNode;
+import com.maccasoft.propeller.spin.Spin2Parser.DataLineNode;
+import com.maccasoft.propeller.spin.Spin2Parser.DataNode;
 import com.maccasoft.propeller.spin.Spin2Parser.MethodNode;
 import com.maccasoft.propeller.spin.Spin2Parser.Node;
 
@@ -165,6 +167,45 @@ class Spin2ParserTest {
 
         Assertions.assertEquals("1024", method0.localVariables.get(0).size.getText());
         Assertions.assertEquals("512", method0.localVariables.get(1).size.getText());
+    }
+
+    @Test
+    void testParsePtr() {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "DAT    wrlong a,ptra\n"
+            + "       wrlong a,ptra++\n"
+            + "       wrlong a,++ptra\n"
+            + "       wrlong a,ptra[3]\n"
+            + "       wrlong a,ptra--[3]\n"
+            + "       wrlong a,--ptra[3]\n"
+            + ""));
+
+        Node root = subject.parse();
+        DataNode data0 = (DataNode) root.childs.get(0);
+
+        DataLineNode line = (DataLineNode) data0.childs.get(0);
+        Assertions.assertEquals("ptra", line.parameters.get(1).getText());
+        Assertions.assertEquals(0, line.parameters.get(1).childs.size());
+
+        line = (DataLineNode) data0.childs.get(1);
+        Assertions.assertEquals("ptra++", line.parameters.get(1).getText());
+        Assertions.assertEquals(0, line.parameters.get(1).childs.size());
+
+        line = (DataLineNode) data0.childs.get(2);
+        Assertions.assertEquals("++ptra", line.parameters.get(1).getText());
+        Assertions.assertEquals(0, line.parameters.get(1).childs.size());
+
+        line = (DataLineNode) data0.childs.get(3);
+        Assertions.assertEquals("ptra", line.parameters.get(1).getText());
+        Assertions.assertEquals("3", line.parameters.get(1).childs.get(0).getText());
+
+        line = (DataLineNode) data0.childs.get(4);
+        Assertions.assertEquals("ptra--", line.parameters.get(1).getText());
+        Assertions.assertEquals("3", line.parameters.get(1).childs.get(0).getText());
+
+        line = (DataLineNode) data0.childs.get(5);
+        Assertions.assertEquals("--ptra", line.parameters.get(1).getText());
+        Assertions.assertEquals("3", line.parameters.get(1).childs.get(0).getText());
     }
 
 }

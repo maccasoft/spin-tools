@@ -108,30 +108,35 @@ public class Spin2Compiler {
                 String prefix = null;
                 Expression expression = null, count = null;
 
-                Token token;
-                if (index < param.getTokens().size()) {
-                    token = param.getToken(index);
-                    if (token.getText().startsWith("#")) {
-                        prefix = (prefix == null ? "" : prefix) + token.getText();
-                        index++;
-                    }
+                if (param.getText().toUpperCase().contains("PTRA") || param.getText().toUpperCase().contains("PTRB")) {
+                    expression = new Identifier(param.getText(), scope);
                 }
-                if (index < param.getTokens().size()) {
-                    token = param.getToken(index);
-                    if ("\\".equals(token.getText())) {
-                        prefix = (prefix == null ? "" : prefix) + token.getText();
-                        index++;
-                    }
-                }
-                if (index < param.getTokens().size()) {
-                    try {
-                        expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), localScope);
-                    } catch (Exception e) {
-                        for (Token t : param.getTokens().subList(index, param.getTokens().size())) {
-                            System.err.print(" " + t.getText());
+                else {
+                    Token token;
+                    if (index < param.getTokens().size()) {
+                        token = param.getToken(index);
+                        if (token.getText().startsWith("#")) {
+                            prefix = (prefix == null ? "" : prefix) + token.getText();
+                            index++;
                         }
-                        System.err.println();
-                        throw e;
+                    }
+                    if (index < param.getTokens().size()) {
+                        token = param.getToken(index);
+                        if ("\\".equals(token.getText())) {
+                            prefix = (prefix == null ? "" : prefix) + token.getText();
+                            index++;
+                        }
+                    }
+                    if (index < param.getTokens().size()) {
+                        try {
+                            expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), localScope);
+                        } catch (Exception e) {
+                            for (Token t : param.getTokens().subList(index, param.getTokens().size())) {
+                                System.err.print(" " + t.getText());
+                            }
+                            System.err.println();
+                            throw e;
+                        }
                     }
                 }
                 if (param.count != null) {

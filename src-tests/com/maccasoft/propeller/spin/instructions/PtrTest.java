@@ -15,6 +15,8 @@ import java.io.ByteArrayOutputStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.expressions.Identifier;
+import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.spin.Spin2Compiler;
 import com.maccasoft.propeller.spin.Spin2Context;
 import com.maccasoft.propeller.spin.Spin2InstructionObject;
@@ -25,44 +27,42 @@ import com.maccasoft.propeller.spin.Spin2TokenStream;
 
 class PtrTest {
 
+    Spin2Context scope = new Spin2Context();
+
     @Test
     void testEncodePtr() throws Exception {
-        Assertions.assertEquals(0b100000000, encodePtr("ptra"));
-        Assertions.assertEquals(0b110000000, encodePtr("ptrb"));
-        Assertions.assertEquals(0b100000011, encodePtr("ptra[3]"));
-        Assertions.assertEquals(0b110000011, encodePtr("ptrb[3]"));
-        Assertions.assertEquals(0b100111101, encodePtr("ptra[-3]"));
-        Assertions.assertEquals(0b110111101, encodePtr("ptrb[-3]"));
+        Assertions.assertEquals(0b100000000, encodePtr("ptra", null));
+        Assertions.assertEquals(0b110000000, encodePtr("ptrb", null));
+        Assertions.assertEquals(0b100000011, encodePtr("ptra", "3"));
+        Assertions.assertEquals(0b110000011, encodePtr("ptrb", "3"));
+        Assertions.assertEquals(0b100111101, encodePtr("ptra", "-3"));
+        Assertions.assertEquals(0b110111101, encodePtr("ptrb", "-3"));
 
-        Assertions.assertEquals(0b101100001, encodePtr("ptra++"));
-        Assertions.assertEquals(0b111100001, encodePtr("ptrb++"));
-        Assertions.assertEquals(0b101111111, encodePtr("ptra--"));
-        Assertions.assertEquals(0b111111111, encodePtr("ptrb--"));
-        Assertions.assertEquals(0b101000001, encodePtr("++ptra"));
-        Assertions.assertEquals(0b111000001, encodePtr("++ptrb"));
-        Assertions.assertEquals(0b101011111, encodePtr("--ptra"));
-        Assertions.assertEquals(0b111011111, encodePtr("--ptrb"));
+        Assertions.assertEquals(0b101100001, encodePtr("ptra++", null));
+        Assertions.assertEquals(0b111100001, encodePtr("ptrb++", null));
+        Assertions.assertEquals(0b101111111, encodePtr("ptra--", null));
+        Assertions.assertEquals(0b111111111, encodePtr("ptrb--", null));
+        Assertions.assertEquals(0b101000001, encodePtr("++ptra", null));
+        Assertions.assertEquals(0b111000001, encodePtr("++ptrb", null));
+        Assertions.assertEquals(0b101011111, encodePtr("--ptra", null));
+        Assertions.assertEquals(0b111011111, encodePtr("--ptrb", null));
 
-        Assertions.assertEquals(0b101100011, encodePtr("ptra++[3]"));
-        Assertions.assertEquals(0b111100011, encodePtr("ptrb++[3]"));
-        Assertions.assertEquals(0b101111101, encodePtr("ptra--[3]"));
-        Assertions.assertEquals(0b111111101, encodePtr("ptrb--[3]"));
+        Assertions.assertEquals(0b101100011, encodePtr("ptra++", "3"));
+        Assertions.assertEquals(0b111100011, encodePtr("ptrb++", "3"));
+        Assertions.assertEquals(0b101111101, encodePtr("ptra--", "3"));
+        Assertions.assertEquals(0b111111101, encodePtr("ptrb--", "3"));
 
-        Assertions.assertEquals(0b101000011, encodePtr("++ptra[3]"));
-        Assertions.assertEquals(0b111000011, encodePtr("++ptrb[3]"));
-        Assertions.assertEquals(0b101011101, encodePtr("--ptra[3]"));
-        Assertions.assertEquals(0b111011101, encodePtr("--ptrb[3]"));
+        Assertions.assertEquals(0b101000011, encodePtr("++ptra", "3"));
+        Assertions.assertEquals(0b111000011, encodePtr("++ptrb", "3"));
+        Assertions.assertEquals(0b101011101, encodePtr("--ptra", "3"));
+        Assertions.assertEquals(0b111011101, encodePtr("--ptrb", "3"));
     }
 
-    int encodePtr(String str) {
-        return new Spin2InstructionObjectMock().encodePtr(new Spin2PAsmExpression(null, null, null) {
-
-            @Override
-            public String toString() {
-                return str;
-            }
-
-        });
+    int encodePtr(String expression, String count) {
+        return new Spin2InstructionObjectMock().encodePtr(new Spin2PAsmExpression(
+            null,
+            new Identifier(expression, scope),
+            count != null ? new NumberLiteral(count) : null));
     }
 
     class Spin2InstructionObjectMock extends Spin2InstructionObject {

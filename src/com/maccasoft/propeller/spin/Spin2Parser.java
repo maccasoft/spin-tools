@@ -1030,9 +1030,6 @@ public class Spin2Parser {
                     }
                     // fall-through
                 case 3:
-                    if (types.contains(token.getText().toUpperCase())) {
-
-                    }
                     if (instructions.contains(token.getText().toUpperCase())) {
                         parent.instruction = new Node(parent);
                         parent.instruction.tokens.add(token);
@@ -1087,31 +1084,11 @@ public class Spin2Parser {
                         state = 5;
                         break;
                     }
-
-                    if (parameter.tokens.size() != 0) {
-                        Token prev = parameter.tokens.get(parameter.tokens.size() - 1);
-                        if (prev.type != Spin2TokenStream.NUMBER) {
-                            if ("++".equals(token.getText()) || "--".equals(token.getText()) || "[".equals(token.getText())) {
-                                parameter.tokens.set(parameter.tokens.size() - 1, stream.new Token(prev, token));
-                                break;
-                            }
-                            if ("++".equals(prev.getText()) || "--".equals(prev.getText())) {
-                                parameter.tokens.set(parameter.tokens.size() - 1, stream.new Token(prev, token));
-                                break;
-                            }
-                            if (prev.getText().contains("[") && !prev.getText().contains("]")) {
-                                parameter.tokens.set(parameter.tokens.size() - 1, stream.new Token(prev, token));
-                                break;
-                            }
-                        }
-                    }
-
                     if ("[".equals(token.getText())) {
                         parameter.count = new ExpressionNode(parameter);
                         state = 10;
                         break;
                     }
-
                     parameter.tokens.add(token);
                     break;
                 case 9:

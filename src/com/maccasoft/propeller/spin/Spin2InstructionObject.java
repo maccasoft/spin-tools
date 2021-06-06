@@ -303,22 +303,20 @@ public abstract class Spin2InstructionObject {
     protected int encodePtr(Spin2PAsmExpression expression) {
         int result = 0;
 
-        String str = expression.toString().toLowerCase();
+        String str = expression.getExpression().toString().toLowerCase();
         if (str.contains("ptra")) {
             result = 0b100000000;
         }
         if (str.contains("ptrb")) {
             result = 0b110000000;
         }
-        if (str.contains("[")) {
-            int s = str.indexOf('[');
-            int e = str.indexOf(']');
-            int o = Integer.parseInt(str.substring(s + 1, e));
+        if (expression.count != null) {
+            int o = expression.getCount();
             if (str.contains("++")) {
                 if (o < 0) {
                     o = 32 + o;
                 }
-                result |= o & 0x1FF;
+                result |= o & 0x1F;
                 result |= 0b001000000;
                 if (!str.startsWith("++")) {
                     result |= 0b000100000;
@@ -329,7 +327,7 @@ public abstract class Spin2InstructionObject {
                 if (o < 0) {
                     o = 32 + o;
                 }
-                result |= o & 0x1FF;
+                result |= o & 0x1F;
                 result |= 0b001000000;
                 if (!str.startsWith("--")) {
                     result |= 0b000100000;
@@ -339,7 +337,7 @@ public abstract class Spin2InstructionObject {
                 if (o < 0) {
                     o = 64 + o;
                 }
-                result |= o & 0x3FF;
+                result |= o & 0x3F;
             }
         }
         else if (str.contains("++")) {
