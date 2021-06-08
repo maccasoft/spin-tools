@@ -176,6 +176,8 @@ public class Spin2TokenMarker {
 
         keywords.put("END", TokenId.KEYWORD);
 
+        keywords.put("DEBUG", TokenId.KEYWORD);
+
         keywords.put("ROUND", TokenId.KEYWORD);
         keywords.put("ADDPINS", TokenId.KEYWORD);
         keywords.put("ADDBITS", TokenId.KEYWORD);
@@ -200,6 +202,246 @@ public class Spin2TokenMarker {
         keywords.put("PR5", TokenId.PASM_INSTRUCTION);
         keywords.put("PR6", TokenId.PASM_INSTRUCTION);
         keywords.put("PR7", TokenId.PASM_INSTRUCTION);
+
+        keywords.put("P_TRUE_A", TokenId.CONSTANT);
+        keywords.put("P_INVERT_A", TokenId.CONSTANT);
+
+        keywords.put("P_LOCAL_A", TokenId.CONSTANT);
+        keywords.put("P_PLUS1_A", TokenId.CONSTANT);
+        keywords.put("P_PLUS2_A", TokenId.CONSTANT);
+        keywords.put("P_PLUS3_A", TokenId.CONSTANT);
+        keywords.put("P_OUTBIT_A", TokenId.CONSTANT);
+        keywords.put("P_MINUS3_A", TokenId.CONSTANT);
+        keywords.put("P_MINUS2_A", TokenId.CONSTANT);
+        keywords.put("P_MINUS1_A", TokenId.CONSTANT);
+        keywords.put("P_TRUE_B", TokenId.CONSTANT);
+        keywords.put("P_INVERT_B", TokenId.CONSTANT);
+        keywords.put("P_LOCAL_B", TokenId.CONSTANT);
+        keywords.put("P_PLUS1_B", TokenId.CONSTANT);
+        keywords.put("P_PLUS2_B", TokenId.CONSTANT);
+        keywords.put("P_PLUS3_B", TokenId.CONSTANT);
+        keywords.put("P_OUTBIT_B", TokenId.CONSTANT);
+        keywords.put("P_MINUS3_B", TokenId.CONSTANT);
+        keywords.put("P_MINUS2_B", TokenId.CONSTANT);
+        keywords.put("P_MINUS1_B", TokenId.CONSTANT);
+        keywords.put("P_PASS_AB", TokenId.CONSTANT);
+        keywords.put("P_AND_AB", TokenId.CONSTANT);
+        keywords.put("P_OR_AB", TokenId.CONSTANT);
+        keywords.put("P_XOR_AB", TokenId.CONSTANT);
+        keywords.put("P_FILT0_AB", TokenId.CONSTANT);
+        keywords.put("P_FILT1_AB", TokenId.CONSTANT);
+        keywords.put("P_FILT2_AB", TokenId.CONSTANT);
+        keywords.put("P_FILT3_AB", TokenId.CONSTANT);
+        keywords.put("P_LOGIC_A", TokenId.CONSTANT);
+        keywords.put("P_LOGIC_A_FB", TokenId.CONSTANT);
+        keywords.put("P_LOGIC_B_FB", TokenId.CONSTANT);
+        keywords.put("P_SCHMITT_A", TokenId.CONSTANT);
+        keywords.put("P_SCHMITT_A_FB", TokenId.CONSTANT);
+        keywords.put("P_SCHMITT_B_FB", TokenId.CONSTANT);
+        keywords.put("P_COMPARE_AB", TokenId.CONSTANT);
+        keywords.put("P_COMPARE_AB_FB", TokenId.CONSTANT);
+        keywords.put("P_ADC_GIO", TokenId.CONSTANT);
+        keywords.put("P_ADC_VIO", TokenId.CONSTANT);
+        keywords.put("P_ADC_FLOAT", TokenId.CONSTANT);
+        keywords.put("P_ADC_1X", TokenId.CONSTANT);
+        keywords.put("P_ADC_3X", TokenId.CONSTANT);
+        keywords.put("P_ADC_10X", TokenId.CONSTANT);
+        keywords.put("P_ADC_30X", TokenId.CONSTANT);
+        keywords.put("P_ADC_100X", TokenId.CONSTANT);
+        keywords.put("P_DAC_990R_3V", TokenId.CONSTANT);
+        keywords.put("P_DAC_600R_2V", TokenId.CONSTANT);
+        keywords.put("P_DAC_124R_3V", TokenId.CONSTANT);
+        keywords.put("P_DAC_75R_2V", TokenId.CONSTANT);
+        keywords.put("P_CHANNEL", TokenId.CONSTANT);
+        keywords.put("P_LEVEL_A", TokenId.CONSTANT);
+        keywords.put("P_LEVEL_A_FBN", TokenId.CONSTANT);
+        keywords.put("P_LEVEL_B_FBP", TokenId.CONSTANT);
+        keywords.put("P_LEVEL_B_FBN", TokenId.CONSTANT);
+        keywords.put("P_ASYNC_IO", TokenId.CONSTANT);
+        keywords.put("P_SYNC_IO", TokenId.CONSTANT);
+        keywords.put("P_TRUE_IN", TokenId.CONSTANT);
+        keywords.put("P_INVERT_IN", TokenId.CONSTANT);
+        keywords.put("P_TRUE_OUTPUT", TokenId.CONSTANT);
+        keywords.put("P_INVERT_OUTPUT", TokenId.CONSTANT);
+        keywords.put("P_HIGH_FAST", TokenId.CONSTANT);
+        keywords.put("P_HIGH_1K5", TokenId.CONSTANT);
+        keywords.put("P_HIGH_15K", TokenId.CONSTANT);
+        keywords.put("P_HIGH_150K", TokenId.CONSTANT);
+        keywords.put("P_HIGH_1MA", TokenId.CONSTANT);
+        keywords.put("P_HIGH_100UA", TokenId.CONSTANT);
+        keywords.put("P_HIGH_10UA", TokenId.CONSTANT);
+        keywords.put("P_HIGH_FLOAT", TokenId.CONSTANT);
+        keywords.put("P_LOW_FAST", TokenId.CONSTANT);
+        keywords.put("P_LOW_1K5", TokenId.CONSTANT);
+        keywords.put("P_LOW_15K", TokenId.CONSTANT);
+        keywords.put("P_LOW_150K", TokenId.CONSTANT);
+        keywords.put("P_LOW_1MA", TokenId.CONSTANT);
+        keywords.put("P_LOW_100UA", TokenId.CONSTANT);
+        keywords.put("P_LOW_10UA", TokenId.CONSTANT);
+        keywords.put("P_LOW_FLOAT", TokenId.CONSTANT);
+        keywords.put("P_TT_00", TokenId.CONSTANT);
+        keywords.put("P_TT_01", TokenId.CONSTANT);
+        keywords.put("P_TT_10", TokenId.CONSTANT);
+        keywords.put("P_TT_11", TokenId.CONSTANT);
+        keywords.put("P_OE", TokenId.CONSTANT);
+        keywords.put("P_BITDAC", TokenId.CONSTANT);
+        keywords.put("P_NORMAL", TokenId.CONSTANT);
+        keywords.put("P_REPOSITORY", TokenId.CONSTANT);
+        keywords.put("P_DAC_NOISE", TokenId.CONSTANT);
+        keywords.put("P_DAC_DITHER_RND", TokenId.CONSTANT);
+        keywords.put("P_DAC_DITHER_PWM", TokenId.CONSTANT);
+        keywords.put("P_PULSE", TokenId.CONSTANT);
+        keywords.put("P_TRANSITION", TokenId.CONSTANT);
+        keywords.put("P_NCO_FREQ", TokenId.CONSTANT);
+        keywords.put("P_NCO_DUTY", TokenId.CONSTANT);
+        keywords.put("P_PWM_TRIANGLE", TokenId.CONSTANT);
+        keywords.put("P_PWM_SAWTOOTH", TokenId.CONSTANT);
+        keywords.put("P_PWM_SMPS", TokenId.CONSTANT);
+        keywords.put("P_QUADRATURE", TokenId.CONSTANT);
+        keywords.put("P_REG_UP", TokenId.CONSTANT);
+        keywords.put("P_REG_UP_DOWN", TokenId.CONSTANT);
+        keywords.put("P_COUNT_RISES", TokenId.CONSTANT);
+        keywords.put("P_COUNT_HIGHS", TokenId.CONSTANT);
+
+        keywords.put("P_STATE_TICKS", TokenId.CONSTANT);
+        keywords.put("P_HIGH_TICKS", TokenId.CONSTANT);
+        keywords.put("P_EVENTS_TICKS", TokenId.CONSTANT);
+        keywords.put("P_PERIODS_TICKS", TokenId.CONSTANT);
+        keywords.put("P_PERIODS_HIGHS", TokenId.CONSTANT);
+        keywords.put("P_COUNTER_TICKS", TokenId.CONSTANT);
+        keywords.put("P_COUNTER_HIGHS", TokenId.CONSTANT);
+        keywords.put("P_COUNTER_PERIODS", TokenId.CONSTANT);
+
+        keywords.put("P_ADC", TokenId.CONSTANT);
+        keywords.put("P_ADC_EXT", TokenId.CONSTANT);
+        keywords.put("P_ADC_SCOPE", TokenId.CONSTANT);
+        keywords.put("P_USB_PAIR", TokenId.CONSTANT);
+        keywords.put("P_SYNC_TX", TokenId.CONSTANT);
+        keywords.put("P_SYNC_RX", TokenId.CONSTANT);
+        keywords.put("P_ASYNC_TX", TokenId.CONSTANT);
+        keywords.put("P_ASYNC_RX", TokenId.CONSTANT);
+
+        keywords.put("X_IMM_32X1_LUT", TokenId.CONSTANT);
+        keywords.put("X_IMM_16X2_LUT", TokenId.CONSTANT);
+        keywords.put("X_IMM_8X4_LUT", TokenId.CONSTANT);
+        keywords.put("X_IMM_4X8_LUT", TokenId.CONSTANT);
+
+        keywords.put("X_IMM_32X1_1DAC1", TokenId.CONSTANT);
+        keywords.put("X_IMM_16X2_2DAC1", TokenId.CONSTANT);
+        keywords.put("X_IMM_16X2_1DAC2", TokenId.CONSTANT);
+        keywords.put("X_IMM_8X4_4DAC1", TokenId.CONSTANT);
+        keywords.put("X_IMM_8X4_2DAC2", TokenId.CONSTANT);
+        keywords.put("X_IMM_8X4_1DAC4", TokenId.CONSTANT);
+
+        keywords.put("X_IMM_4X8_4DAC2", TokenId.CONSTANT);
+        keywords.put("X_IMM_4X8_2DAC4", TokenId.CONSTANT);
+        keywords.put("X_IMM_4X8_1DAC8", TokenId.CONSTANT);
+        keywords.put("X_IMM_2X16_4DAC4", TokenId.CONSTANT);
+
+        keywords.put("X_IMM_2X16_2DAC8", TokenId.CONSTANT);
+        keywords.put("X_IMM_1X32_4DAC8", TokenId.CONSTANT);
+
+        keywords.put("X_RFLONG_32X1_LUT", TokenId.CONSTANT);
+        keywords.put("X_RFLONG_16X2_LUT", TokenId.CONSTANT);
+        keywords.put("X_RFLONG_8X4_LUT", TokenId.CONSTANT);
+        keywords.put("X_RFLONG_4X8_LUT", TokenId.CONSTANT);
+
+        keywords.put("X_RFBYTE_1P_1DAC1", TokenId.CONSTANT);
+        keywords.put("X_RFBYTE_2P_2DAC1", TokenId.CONSTANT);
+        keywords.put("X_RFBYTE_2P_1DAC2", TokenId.CONSTANT);
+        keywords.put("X_RFBYTE_4P_4DAC1", TokenId.CONSTANT);
+        keywords.put("X_RFBYTE_4P_2DAC2", TokenId.CONSTANT);
+        keywords.put("X_RFBYTE_4P_1DAC4", TokenId.CONSTANT);
+        keywords.put("X_RFBYTE_8P_4DAC2", TokenId.CONSTANT);
+        keywords.put("X_RFBYTE_8P_2DAC4", TokenId.CONSTANT);
+        keywords.put("X_RFBYTE_8P_1DAC8", TokenId.CONSTANT);
+        keywords.put("X_RFWORD_16P_4DAC4", TokenId.CONSTANT);
+        keywords.put("X_RFWORD_16P_2DAC8", TokenId.CONSTANT);
+        keywords.put("X_RFLONG_32P_4DAC8", TokenId.CONSTANT);
+
+        keywords.put("X_RFBYTE_LUMA8", TokenId.CONSTANT);
+        keywords.put("X_RFBYTE_RGBI8", TokenId.CONSTANT);
+        keywords.put("X_RFBYTE_RGB8", TokenId.CONSTANT);
+        keywords.put("X_RFWORD_RGB16", TokenId.CONSTANT);
+        keywords.put("X_RFLONG_RGB24", TokenId.CONSTANT);
+
+        keywords.put("X_1P_1DAC1_WFBYTE", TokenId.CONSTANT);
+        keywords.put("X_2P_2DAC1_WFBYTE", TokenId.CONSTANT);
+        keywords.put("X_2P_1DAC2_WFBYTE", TokenId.CONSTANT);
+
+        keywords.put("X_4P_4DAC1_WFBYTE", TokenId.CONSTANT);
+        keywords.put("X_4P_2DAC2_WFBYTE", TokenId.CONSTANT);
+        keywords.put("X_4P_1DAC4_WFBYTE", TokenId.CONSTANT);
+
+        keywords.put("X_8P_4DAC2_WFBYTE", TokenId.CONSTANT);
+        keywords.put("X_8P_2DAC4_WFBYTE", TokenId.CONSTANT);
+        keywords.put("X_8P_1DAC8_WFBYTE", TokenId.CONSTANT);
+
+        keywords.put("X_16P_4DAC4_WFWORD", TokenId.CONSTANT);
+        keywords.put("X_16P_2DAC8_WFWORD", TokenId.CONSTANT);
+        keywords.put("X_32P_4DAC8_WFLONG", TokenId.CONSTANT);
+
+        keywords.put("X_1ADC8_0P_1DAC8_WFBYTE", TokenId.CONSTANT);
+        keywords.put("X_1ADC8_8P_2DAC8_WFWORD", TokenId.CONSTANT);
+        keywords.put("X_2ADC8_0P_2DAC8_WFWORD", TokenId.CONSTANT);
+        keywords.put("X_2ADC8_16P_4DAC8_WFLONG", TokenId.CONSTANT);
+        keywords.put("X_4ADC8_0P_4DAC8_WFLONG", TokenId.CONSTANT);
+
+        keywords.put("X_DDS_GOERTZEL_SINC1", TokenId.CONSTANT);
+        keywords.put("X_DDS_GOERTZEL_SINC2", TokenId.CONSTANT);
+
+        keywords.put("X_DACS_OFF", TokenId.CONSTANT);
+        keywords.put("X_DACS_0_0_0_0", TokenId.CONSTANT);
+        keywords.put("X_DACS_X_X_0_0", TokenId.CONSTANT);
+        keywords.put("X_DACS_0_0_X_X", TokenId.CONSTANT);
+        keywords.put("X_DACS_X_X_X_0", TokenId.CONSTANT);
+        keywords.put("X_DACS_X_X_0_X", TokenId.CONSTANT);
+        keywords.put("X_DACS_X_0_X_X", TokenId.CONSTANT);
+        keywords.put("X_DACS_0_X_X_X", TokenId.CONSTANT);
+
+        keywords.put("X_DACS_0N0_0N0", TokenId.CONSTANT);
+        keywords.put("X_DACS_X_X_0N0", TokenId.CONSTANT);
+        keywords.put("X_DACS_0N0_X_X", TokenId.CONSTANT);
+        keywords.put("X_DACS_1_0_1_0", TokenId.CONSTANT);
+        keywords.put("X_DACS_X_X_1_0", TokenId.CONSTANT);
+        keywords.put("X_DACS_1_0_X_X", TokenId.CONSTANT);
+        keywords.put("X_DACS_1N1_0N0", TokenId.CONSTANT);
+        keywords.put("X_DACS_3_2_1_0", TokenId.CONSTANT);
+
+        keywords.put("X_PINS_OFF", TokenId.CONSTANT);
+        keywords.put("X_PINS_ON", TokenId.CONSTANT);
+        keywords.put("X_WRITE_OFF", TokenId.CONSTANT);
+        keywords.put("X_WRITE_ON", TokenId.CONSTANT);
+        keywords.put("X_ALT_OFF", TokenId.CONSTANT);
+        keywords.put("X_ALT_ON", TokenId.CONSTANT);
+
+        keywords.put("COGEXEC", TokenId.CONSTANT);
+        keywords.put("COGEXEC_NEW", TokenId.CONSTANT);
+        keywords.put("HUBEXEC", TokenId.CONSTANT);
+        keywords.put("HUBEXEC_NEW", TokenId.CONSTANT);
+        keywords.put("COGEXEC_NEW_PAIR", TokenId.CONSTANT);
+        keywords.put("HUBEXEC_NEW_PAIR", TokenId.CONSTANT);
+
+        keywords.put("NEWCOG", TokenId.CONSTANT);
+
+        keywords.put("EVENT_INT", TokenId.CONSTANT);
+        keywords.put("INT_OFF", TokenId.CONSTANT);
+        keywords.put("EVENT_CT1", TokenId.CONSTANT);
+        keywords.put("EVENT_CT2", TokenId.CONSTANT);
+        keywords.put("EVENT_CT3", TokenId.CONSTANT);
+        keywords.put("EVENT_SE1", TokenId.CONSTANT);
+        keywords.put("EVENT_SE2", TokenId.CONSTANT);
+        keywords.put("EVENT_SE3", TokenId.CONSTANT);
+        keywords.put("EVENT_SE4", TokenId.CONSTANT);
+
+        keywords.put("EVENT_PAT", TokenId.CONSTANT);
+        keywords.put("EVENT_FBW", TokenId.CONSTANT);
+        keywords.put("EVENT_XMT", TokenId.CONSTANT);
+        keywords.put("EVENT_XFI", TokenId.CONSTANT);
+        keywords.put("EVENT_XRO", TokenId.CONSTANT);
+        keywords.put("EVENT_XRL", TokenId.CONSTANT);
+        keywords.put("EVENT_ATN", TokenId.CONSTANT);
+        keywords.put("EVENT_QMT", TokenId.CONSTANT);
     }
 
     static Map<String, TokenId> pasmKeywords = new HashMap<String, TokenId>();
@@ -261,6 +503,8 @@ public class Spin2TokenMarker {
         int stop;
         TokenId id;
 
+        String error;
+
         public TokenMarker(Token token, TokenId id) {
             this.start = token.start;
             this.stop = token.stop;
@@ -307,11 +551,21 @@ public class Spin2TokenMarker {
             return Integer.compare(start, o.start);
         }
 
+        public String getError() {
+            return error;
+        }
+
+        public void setError(String error) {
+            this.error = error;
+        }
+
     }
 
+    Node root;
     TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
 
     Map<String, TokenId> symbols = new HashMap<String, TokenId>();
+    Map<String, String> methods = new HashMap<String, String>();
 
     final Spin2ParserVisitor collectKeywordsVisitor = new Spin2ParserVisitor() {
 
@@ -355,11 +609,15 @@ public class Spin2TokenMarker {
                 tokens.add(new TokenMarker(node.getType(), TokenId.TYPE));
             }
 
-            if (symbols.containsKey(node.getIdentifier().getText())) {
-                tokens.add(new TokenMarker(node.getIdentifier(), TokenId.ERROR));
+            String identifier = node.getIdentifier().getText();
+            if (symbols.containsKey(identifier)) {
+                TokenMarker marker = new TokenMarker(node.getIdentifier(), TokenId.ERROR);
+                marker.setError("Symbol already defined");
+                tokens.add(marker);
             }
             else {
-                symbols.put(node.getIdentifier().getText(), TokenId.VARIABLE);
+                symbols.put(identifier, TokenId.VARIABLE);
+                symbols.put("@" + identifier, TokenId.VARIABLE);
                 tokens.add(new TokenMarker(node.getIdentifier(), TokenId.VARIABLE));
             }
         }
@@ -374,22 +632,48 @@ public class Spin2TokenMarker {
             if ("PRI".equalsIgnoreCase(node.getType().getText())) {
                 tokens.add(new TokenMarker(node.getType(), TokenId.METHOD_PRI));
                 if (node.getName() != null) {
+                    symbols.put(node.getName().getText(), TokenId.METHOD_PRI);
                     tokens.add(new TokenMarker(node.getName(), TokenId.METHOD_PRI));
                 }
             }
             else {
                 tokens.add(new TokenMarker(node.getType(), TokenId.METHOD_PUB));
                 if (node.getName() != null) {
+                    symbols.put(node.getName().getText(), TokenId.METHOD_PUB);
                     tokens.add(new TokenMarker(node.getName(), TokenId.METHOD_PUB));
                 }
             }
 
+            StringBuilder sb = new StringBuilder();
+            sb.append("<b>");
+            sb.append(node.getType().getText());
+            sb.append(" ");
+            sb.append(node.getName().getText());
+
+            sb.append("(");
             for (Node child : node.getParameters()) {
+                if (sb.charAt(sb.length() - 1) != '(') {
+                    sb.append(", ");
+                }
+                sb.append(child.getText());
                 tokens.add(new TokenMarker(child, TokenId.METHOD_LOCAL));
             }
-            for (Node child : node.getReturnVariables()) {
-                tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
+            sb.append(")");
+
+            if (node.getReturnVariables().size() != 0) {
+                sb.append(" : ");
+                for (Node child : node.getReturnVariables()) {
+                    if (sb.charAt(sb.length() - 2) != ':') {
+                        sb.append(", ");
+                    }
+                    sb.append(child.getText());
+                    tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
+                }
             }
+            sb.append("</b>");
+
+            methods.put(node.getName().getText(), sb.toString());
+
             for (LocalVariableNode child : node.getLocalVariables()) {
                 if (child.type != null) {
                     tokens.add(new TokenMarker(child.type, TokenId.TYPE));
@@ -474,27 +758,31 @@ public class Spin2TokenMarker {
 
         void markTokens(Node node) {
             for (Token token : node.getTokens()) {
-                TokenId id = null;
                 if (token.type == Spin2TokenStream.NUMBER) {
-                    id = TokenId.NUMBER;
+                    tokens.add(new TokenMarker(token, TokenId.NUMBER));
                 }
                 else if (token.type == Spin2TokenStream.OPERATOR) {
-                    id = TokenId.OPERATOR;
+                    tokens.add(new TokenMarker(token, TokenId.OPERATOR));
                 }
                 else if (token.type == Spin2TokenStream.STRING) {
-                    id = TokenId.STRING;
+                    tokens.add(new TokenMarker(token, TokenId.STRING));
                 }
-                if (id == null) {
-                    id = keywords.get(token.getText().toUpperCase());
-                }
-                if (id == null) {
-                    id = locals.get(token.getText());
-                }
-                if (id == null) {
-                    id = symbols.get(token.getText());
-                }
-                if (id != null) {
-                    tokens.add(new TokenMarker(token, id));
+                else {
+                    TokenId id = keywords.get(token.getText().toUpperCase());
+                    if (id == null) {
+                        id = locals.get(token.getText());
+                    }
+                    if (id == null) {
+                        id = symbols.get(token.getText());
+                    }
+                    if (id == null) {
+                        TokenMarker marker = new TokenMarker(token, TokenId.ERROR);
+                        marker.setError("Symbol is undefined");
+                        tokens.add(marker);
+                    }
+                    else {
+                        tokens.add(new TokenMarker(token, id));
+                    }
                 }
             }
             for (Node child : node.childs) {
@@ -520,13 +808,13 @@ public class Spin2TokenMarker {
                 for (Token token : parameter.getTokens()) {
                     TokenId id = null;
                     if (token.type == Spin2TokenStream.NUMBER) {
-                        id = TokenId.NUMBER;
+                        tokens.add(new TokenMarker(token, TokenId.NUMBER));
                     }
                     else if (token.type == Spin2TokenStream.OPERATOR) {
-                        id = TokenId.OPERATOR;
+                        tokens.add(new TokenMarker(token, TokenId.OPERATOR));
                     }
                     else if (token.type == Spin2TokenStream.STRING) {
-                        id = TokenId.STRING;
+                        tokens.add(new TokenMarker(token, TokenId.STRING));
                     }
                     else {
                         String s = token.getText();
@@ -534,14 +822,18 @@ public class Spin2TokenMarker {
                             s = lastLabel + s;
                         }
                         id = symbols.get(s);
+                        if (id == null) {
+                            id = pasmKeywords.get(token.getText().toUpperCase());
+                        }
+                        if (id == null) {
+                            TokenMarker marker = new TokenMarker(token, TokenId.ERROR);
+                            marker.setError("Symbol is undefined");
+                            tokens.add(marker);
+                        }
+                        else {
+                            tokens.add(new TokenMarker(token, id));
+                        }
                     }
-                    if (id == null) {
-                        id = pasmKeywords.get(token.getText().toUpperCase());
-                    }
-                    if (id == null) {
-                        id = TokenId.ERROR;
-                    }
-                    tokens.add(new TokenMarker(token, id));
                 }
             }
         }
@@ -549,34 +841,39 @@ public class Spin2TokenMarker {
         @Override
         public void visitExpression(ExpressionNode node) {
             for (Token token : node.getTokens()) {
-                TokenId id = null;
                 if (token.type == Spin2TokenStream.NUMBER) {
-                    id = TokenId.NUMBER;
+                    tokens.add(new TokenMarker(token, TokenId.NUMBER));
                 }
                 else if (token.type == Spin2TokenStream.OPERATOR) {
-                    id = TokenId.OPERATOR;
+                    tokens.add(new TokenMarker(token, TokenId.OPERATOR));
                 }
                 else if (token.type == Spin2TokenStream.STRING) {
-                    id = TokenId.STRING;
+                    tokens.add(new TokenMarker(token, TokenId.STRING));
                 }
                 else {
-                    id = symbols.get(token.getText());
+                    TokenId id = keywords.get(token.getText().toUpperCase());
+                    if (id == null) {
+                        id = symbols.get(token.getText());
+                    }
+                    if (id == null) {
+                        TokenMarker marker = new TokenMarker(token, TokenId.ERROR);
+                        marker.setError("Symbol is undefined");
+                        tokens.add(marker);
+                    }
+                    else {
+                        tokens.add(new TokenMarker(token, id));
+                    }
                 }
-                if (id == null) {
-                    id = keywords.get(token.getText().toUpperCase());
-                }
-                if (id == null) {
-                    id = TokenId.ERROR;
-                }
-                tokens.add(new TokenMarker(token, id));
             }
         }
 
         @Override
         public void visitError(ErrorNode node) {
-            for (Token token : node.getTokens()) {
-                tokens.add(new TokenMarker(token, TokenId.ERROR));
+            TokenMarker marker = new TokenMarker(node.getStartToken(), node.getStopToken(), TokenId.ERROR);
+            if (node.getDescription() != null) {
+                marker.setError(node.getDescription());
             }
+            tokens.add(marker);
         }
 
     };
@@ -591,7 +888,7 @@ public class Spin2TokenMarker {
 
         Spin2TokenStream stream = new Spin2TokenStream(text);
         Spin2Parser subject = new Spin2Parser(stream);
-        Node root = subject.parse();
+        root = subject.parse();
 
         // Comments are hidden from the parser
         for (Token token : stream.getHiddenTokens()) {
@@ -607,6 +904,15 @@ public class Spin2TokenMarker {
 
     public Set<TokenMarker> getLineTokens(int lineStart, String lineText) {
         return getLineTokens(lineStart, lineStart + lineText.length());
+    }
+
+    public TokenMarker getMarkerAtOffset(int offset) {
+        for (TokenMarker marker : tokens) {
+            if (offset >= marker.start && offset <= marker.stop) {
+                return marker;
+            }
+        }
+        return null;
     }
 
     public Set<TokenMarker> getLineTokens(int lineStart, int lineStop) {
@@ -634,4 +940,65 @@ public class Spin2TokenMarker {
         return result;
     }
 
+    public Node getContextAt(int index) {
+        if (root == null) {
+            return null;
+        }
+        for (Node node : root.getChilds()) {
+            Node result = getContextAt(node, index);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    public Node getContextAt(Node node, int index) {
+        for (Node child : node.getChilds()) {
+            if (child instanceof DataLineNode) {
+                if (index >= child.getStartIndex() && index <= child.getStopIndex()) {
+                    return child;
+                }
+            }
+            if (child instanceof StatementNode) {
+                Node result = getContextAt(child, index);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+
+        if (index >= node.getStartIndex() && index <= node.getStopIndex()) {
+            return node;
+        }
+
+        return null;
+    }
+
+    public Token getTokenAt(int index) {
+        if (root == null) {
+            return null;
+        }
+        return getTokenAt(root, index);
+    }
+
+    public Token getTokenAt(Node node, int index) {
+        for (Token token : node.getTokens()) {
+            if (index >= token.start && index <= token.stop) {
+                return token;
+            }
+        }
+        for (Node child : node.getChilds()) {
+            Token token = getTokenAt(child, index);
+            if (token != null) {
+                return token;
+            }
+        }
+
+        return null;
+    }
+
+    public String getMethod(String symbol) {
+        return methods.get(symbol);
+    }
 }

@@ -18,6 +18,7 @@ import java.util.Stack;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
+import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CaretEvent;
@@ -31,12 +32,16 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.TextChangeListener;
 import org.eclipse.swt.custom.TextChangedEvent;
 import org.eclipse.swt.custom.TextChangingEvent;
+import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.graphics.Color;
@@ -52,10 +57,18 @@ import org.eclipse.swt.widgets.Caret;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
+import com.maccasoft.propeller.internal.ColorRegistry;
+import com.maccasoft.propeller.internal.ContentProposalAdapter;
+import com.maccasoft.propeller.internal.HTMLStyledTextParser;
+import com.maccasoft.propeller.internal.StyledTextContentAdapter;
+import com.maccasoft.propeller.spin.Spin2Parser.DataLineNode;
+import com.maccasoft.propeller.spin.Spin2Parser.Node;
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenId;
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenMarker;
+import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 
 public class Spin2Editor {
 
@@ -153,6 +166,8 @@ public class Spin2Editor {
         }
     };
 
+    Shell window;
+
     public Spin2Editor(Composite parent) {
         display = parent.getDisplay();
 
@@ -178,84 +193,36 @@ public class Spin2Editor {
         currentLine = 0;
         currentLineBackground = new Color(display, 0xE8, 0xF2, 0xFE);
 
-        styleMap.put(TokenId.COMMENT, new TextStyle(
-            font,
-            new Color(display, 0x7E, 0x7E, 0x7E),
-            null));
-        styleMap.put(TokenId.SECTION, new TextStyle(
-            fontBold,
-            new Color(display, 0x00, 0x00, 0xA0),
-            null));
+        styleMap.put(TokenId.COMMENT, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x7E, 0x7E), null));
+        styleMap.put(TokenId.SECTION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
 
-        styleMap.put(TokenId.NUMBER, new TextStyle(
-            font,
-            new Color(display, 0x00, 0x66, 0x99),
-            null));
-        styleMap.put(TokenId.STRING, new TextStyle(
-            font,
-            new Color(display, 0x7E, 0x00, 0x7E),
-            null));
-        styleMap.put(TokenId.CONSTANT, new TextStyle(
-            font,
-            new Color(display, 0x7E, 0x00, 0x7E),
-            null));
+        styleMap.put(TokenId.NUMBER, new TextStyle(font, ColorRegistry.getColor(0x00, 0x66, 0x99), null));
+        styleMap.put(TokenId.STRING, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x00, 0x7E), null));
+        styleMap.put(TokenId.CONSTANT, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x00, 0x7E), null));
 
-        styleMap.put(TokenId.METHOD_PUB, new TextStyle(
-            fontBold,
-            new Color(display, 0x00, 0x00, 0xA0),
-            null));
-        styleMap.put(TokenId.METHOD_PRI, new TextStyle(
-            fontBoldItalic,
-            new Color(display, 0x00, 0x00, 0xA0),
-            null));
-        styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(
-            font,
-            new Color(display, 0x80, 0x80, 0x00),
-            null));
-        styleMap.put(TokenId.METHOD_RETURN, new TextStyle(
-            font,
-            new Color(display, 0x90, 0x00, 0x00),
-            null));
+        styleMap.put(TokenId.METHOD_PUB, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
+        styleMap.put(TokenId.METHOD_PRI, new TextStyle(fontBoldItalic, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
+        styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(font, ColorRegistry.getColor(0x80, 0x80, 0x00), null));
+        styleMap.put(TokenId.METHOD_RETURN, new TextStyle(font, ColorRegistry.getColor(0x90, 0x00, 0x00), null));
 
-        styleMap.put(TokenId.TYPE, new TextStyle(
-            fontBold,
-            new Color(display, 0x00, 0x00, 0x00),
-            null));
-        styleMap.put(TokenId.KEYWORD, new TextStyle(
-            fontBold,
-            new Color(display, 0x00, 0x80, 0x00),
-            null));
-        styleMap.put(TokenId.FUNCTION, new TextStyle(
-            fontBold,
-            new Color(display, 0x00, 0x00, 0x00),
-            null));
+        styleMap.put(TokenId.TYPE, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.KEYWORD, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x80, 0x00), null));
+        styleMap.put(TokenId.FUNCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
 
-        styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(
-            fontItalic,
-            new Color(display, 0x00, 0x00, 0x00),
-            null));
-        styleMap.put(TokenId.PASM_CONDITION, new TextStyle(
-            fontBold,
-            new Color(display, 0x00, 0x00, 0x00),
-            null));
-        styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(
-            fontBold,
-            new Color(display, 0x00, 0x00, 0x00),
-            null));
-        styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(
-            fontBold,
-            new Color(display, 0x00, 0x00, 0x00),
-            null));
+        styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(fontItalic, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.PASM_CONDITION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
 
         TextStyle warningStyle = new TextStyle();
         warningStyle.underline = true;
-        warningStyle.underlineColor = new Color(display, 0xFC, 0xAF, 0x3E);
+        warningStyle.underlineColor = ColorRegistry.getColor(0xFC, 0xAF, 0x3E);
         warningStyle.underlineStyle = SWT.UNDERLINE_DOUBLE;
         styleMap.put(TokenId.WARNING, warningStyle);
 
         TextStyle errorStyle = new TextStyle();
         errorStyle.underline = true;
-        errorStyle.underlineColor = new Color(display, 0xC0, 0x00, 0x00);
+        errorStyle.underlineColor = ColorRegistry.getColor(0xC0, 0x00, 0x00);
         errorStyle.underlineStyle = SWT.UNDERLINE_SQUIGGLE;
         styleMap.put(TokenId.ERROR, errorStyle);
 
@@ -399,6 +366,140 @@ public class Spin2Editor {
                 }
                 else {
                     event.lineBackground = null;
+                }
+            }
+        });
+
+        styledText.addMouseMoveListener(new MouseMoveListener() {
+
+            @Override
+            public void mouseMove(MouseEvent e) {
+                if (window != null) {
+                    window.dispose();
+                    window = null;
+                }
+            }
+        });
+
+        styledText.addMouseTrackListener(new MouseTrackListener() {
+
+            @Override
+            public void mouseHover(MouseEvent e) {
+                if (window != null) {
+                    window.dispose();
+                }
+
+                int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
+
+                Token token = tokenMarker.getTokenAt(offset);
+                if (token == null) {
+                    return;
+                }
+                Rectangle bounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
+
+                Node context = tokenMarker.getContextAt(offset);
+                TokenMarker marker = tokenMarker.getMarkerAtOffset(offset);
+
+                if (marker != null && marker.getError() != null) {
+                    window = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP | SWT.TOOL);
+                    FillLayout layout = new FillLayout();
+                    layout.marginHeight = layout.marginWidth = 5;
+                    window.setLayout(layout);
+                    Label content = new Label(window, SWT.NONE);
+                    content.setText(marker.getError());
+                    window.pack();
+
+                    Point size = window.getSize();
+                    window.setLocation(bounds.x, bounds.y - size.y - 3);
+
+                    window.open();
+                    styledText.setFocus();
+                    return;
+                }
+
+                if (token != null) {
+                    String text = null;
+                    if (context instanceof DataLineNode) {
+                        text = Spin2PAsmInstructionHelp.getString(token.getText().toUpperCase());
+                    }
+                    else {
+                        text = Spin2InstructionHelp.getString(token.getText().toUpperCase());
+                    }
+                    if (text == null) {
+                        text = tokenMarker.getMethod(token.getText());
+                    }
+                    if (text != null) {
+                        window = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP | SWT.TOOL);
+                        FillLayout layout = new FillLayout();
+                        layout.marginHeight = layout.marginWidth = 5;
+                        window.setLayout(layout);
+
+                        StyledText content = new StyledText(window, SWT.READ_ONLY | SWT.WRAP | SWT.V_SCROLL);
+                        content.setCaret(null);
+                        new HTMLStyledTextParser(content).setText(text);
+
+                        window.pack();
+
+                        bounds.y += bounds.height + 3;
+                        if (bounds.width < 640) {
+                            bounds.width = 640;
+                        }
+                        if (bounds.height < 240) {
+                            bounds.height = 240;
+                        }
+
+                        window.setBounds(bounds);
+
+                        window.open();
+                        styledText.setFocus();
+                    }
+                }
+
+            }
+
+            @Override
+            public void mouseExit(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEnter(MouseEvent e) {
+
+            }
+        });
+
+        char[] autoActivationCharacters = new char[] {
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+        };
+
+        KeyStroke keyStroke = null;
+        try {
+            keyStroke = KeyStroke.getInstance("Ctrl+Space");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        ContentProposalAdapter adapter = new ContentProposalAdapter(
+            styledText,
+            new StyledTextContentAdapter(),
+            new Spin2InstructionContentProposalProvider(),
+            keyStroke,
+            autoActivationCharacters);
+        adapter.setPopupSize(new Point(200, 300));
+        adapter.setPropagateKeys(true);
+        adapter.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);
+
+        styledText.addVerifyKeyListener(new VerifyKeyListener() {
+
+            @Override
+            public void verifyKey(VerifyEvent e) {
+                try {
+                    KeyStroke k = KeyStroke.getInstance("Enter");
+                    if (k.getNaturalKey() == e.keyCode && adapter.isProposalPopupOpen()) {
+                        e.doit = false;
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }
         });

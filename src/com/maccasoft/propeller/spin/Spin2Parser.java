@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -80,7 +81,7 @@ public class Spin2Parser {
         final List<Token> tokens = new ArrayList<Token>();
         final List<Node> childs = new ArrayList<Node>();
 
-        public Node() {
+        Node() {
             this.parent = null;
         }
 
@@ -92,6 +93,20 @@ public class Spin2Parser {
         public void accept(Spin2ParserVisitor visitor) {
             for (Node child : childs) {
                 child.accept(visitor);
+            }
+        }
+
+        void addToken(Token token) {
+            tokens.add(token);
+            if (parent != null) {
+                parent.addToken(token);
+            }
+        }
+
+        void addAllTokens(Collection<Token> list) {
+            tokens.addAll(list);
+            if (parent != null) {
+                parent.addAllTokens(list);
             }
         }
 
@@ -144,13 +159,25 @@ public class Spin2Parser {
 
     public class ErrorNode extends Node {
 
+        String description;
+
         public ErrorNode(Node parent) {
             super(parent);
+            this.description = "Syntax error";
+        }
+
+        public ErrorNode(Node parent, String description) {
+            super(parent);
+            this.description = description;
         }
 
         @Override
         public void accept(Spin2ParserVisitor visitor) {
             visitor.visitError(this);
+        }
+
+        public String getDescription() {
+            return description;
         }
 
     }
@@ -173,8 +200,8 @@ public class Spin2Parser {
                 continue;
             }
             if (!parseSection(token)) {
-                Node node = new ErrorNode(root);
-                node.tokens.add(token);
+                ConstantsNode node = new ConstantsNode(root);
+                parseConstants(node, token);
             }
         }
 
@@ -182,10 +209,6 @@ public class Spin2Parser {
     }
 
     boolean parseSection(Token token) {
-        if ("CON".equalsIgnoreCase(token.getText())) {
-            parseCon(token);
-            return true;
-        }
         if ("VAR".equalsIgnoreCase(token.getText())) {
             parseVar(token);
             return true;
@@ -206,10 +229,20 @@ public class Spin2Parser {
             parseDat(token);
             return true;
         }
+        if ("CON".equalsIgnoreCase(token.getText())) {
+            ConstantsNode node = new ConstantsNode(root);
+            node.addToken(token);
+            parseConstants(node, stream.nextToken());
+            return true;
+        }
         return false;
     }
 
     public class ExpressionNode extends Node {
+
+        public ExpressionNode() {
+
+        }
 
         public ExpressionNode(Node parent) {
             super(parent);
@@ -252,13 +285,12 @@ public class Spin2Parser {
                 if ("[".equals(token.getText())) {
                     break;
                 }
-                this.start.tokens.add(token);
+                this.start.addToken(token);
             }
             if (i < tokens.size()) {
                 this.step = new ExpressionNode(this);
-                this.step.tokens.addAll(tokens.subList(i, tokens.size() - 1));
+                this.step.addAllTokens(tokens.subList(i, tokens.size() - 1));
             }
-            this.tokens.addAll(tokens);
         }
 
         @Override
@@ -279,14 +311,12 @@ public class Spin2Parser {
 
             int i = 0;
             this.identifier = new Node(this);
-            this.identifier.tokens.add(tokens.get(i++));
+            this.identifier.addToken(tokens.get(i++));
 
             if (i < tokens.size() && "[".equals(tokens.get(i).getText())) {
                 this.multiplier = new ExpressionNode(this);
-                this.multiplier.tokens.addAll(tokens.subList(i + 1, tokens.size() - 1));
+                this.multiplier.addAllTokens(tokens.subList(i + 1, tokens.size() - 1));
             }
-
-            this.tokens.addAll(tokens);
         }
 
         @Override
@@ -313,10 +343,12 @@ public class Spin2Parser {
         public ConstantAssignNode(Node parent, List<Token> childs) {
             super(parent);
             this.identifier = new Node(this);
-            this.identifier.tokens.add(childs.get(0));
+            this.identifier.addToken(childs.get(0));
+            if (this.parent != null) {
+                this.parent.addToken(childs.get(1));
+            }
             this.expression = new ExpressionNode(this);
-            this.expression.tokens.addAll(childs.subList(2, childs.size()));
-            this.tokens.addAll(tokens);
+            this.expression.addAllTokens(childs.subList(2, childs.size()));
         }
 
         @Override
@@ -335,15 +367,11 @@ public class Spin2Parser {
 
     }
 
-    void parseCon(Token start) {
+    void parseConstants(ConstantsNode parent, Token token) {
         List<Token> list = new ArrayList<Token>();
-
-        ConstantsNode node = new ConstantsNode(root);
-        node.tokens.add(start);
 
         int state = 1;
         while (true) {
-            Token token = stream.nextToken();
             switch (state) {
                 case 0:
                     if (parseSection(token)) {
@@ -356,30 +384,30 @@ public class Spin2Parser {
                         Node child = null;
 
                         if (list.size() == 1) {
-                            new ConstantAssignEnumNode(node, list);
+                            new ConstantAssignEnumNode(parent, list);
                         }
                         else if (list.size() >= 2) {
                             if ("#".equals(list.get(0).getText())) {
-                                new ConstantSetEnumNode(node, list);
+                                new ConstantSetEnumNode(parent, list);
                             }
                             else if (list.size() >= 3) {
                                 if ("=".equals(list.get(1).getText())) {
-                                    new ConstantAssignNode(node, list);
+                                    new ConstantAssignNode(parent, list);
                                 }
                                 else if ("[".equals(list.get(1).getText())) {
-                                    new ConstantAssignEnumNode(node, list);
+                                    new ConstantAssignEnumNode(parent, list);
                                 }
                                 else {
-                                    child = new ErrorNode(node);
+                                    child = new ErrorNode(parent);
                                 }
                             }
                             else {
-                                child = new ErrorNode(node);
+                                child = new ErrorNode(parent);
                             }
                         }
 
                         if (child != null) {
-                            child.tokens.addAll(list);
+                            child.addAllTokens(list);
                         }
                         list.clear();
 
@@ -394,6 +422,7 @@ public class Spin2Parser {
                     list.add(token);
                     break;
             }
+            token = stream.nextToken();
         }
     }
 
@@ -423,18 +452,20 @@ public class Spin2Parser {
             int i = 0;
             if (types.contains(tokens.get(i).getText().toUpperCase())) {
                 this.type = new Node(this);
-                this.type.tokens.add(tokens.get(i));
+                this.type.addToken(tokens.get(i));
                 i++;
             }
 
             if (i < tokens.size()) {
                 this.identifier = new Node(this);
-                this.identifier.tokens.add(tokens.get(i++));
+                this.identifier.addToken(tokens.get(i++));
             }
 
             if (i < tokens.size() && "[".equals(tokens.get(i).getText())) {
+                parent.addToken(tokens.get(i));
                 this.size = new ExpressionNode(this);
-                this.size.tokens.addAll(tokens.subList(i + 1, tokens.size() - 1));
+                this.size.addAllTokens(tokens.subList(i + 1, tokens.size() - 1));
+                parent.addToken(tokens.get(tokens.size() - 1));
             }
 
             this.tokens.addAll(tokens);
@@ -551,7 +582,7 @@ public class Spin2Parser {
                         }
 
                         if (child != null) {
-                            child.tokens.addAll(list);
+                            child.addAllTokens(list);
                         }
                         list.clear();
 
@@ -662,7 +693,7 @@ public class Spin2Parser {
     void parseMethod(Token start) {
         MethodNode node = new MethodNode(root);
         node.type = new Node(node);
-        node.type.tokens.add(start);
+        node.type.addToken(start);
 
         int state = 2;
         Node parent = node;
@@ -706,94 +737,104 @@ public class Spin2Parser {
                     break;
 
                 case 1:
-                    child.tokens.add(token);
+                    child.addToken(token);
                     break;
 
                 case 2:
                     if (token.type == 0) {
                         node.name = new Node(node);
-                        node.name.tokens.add(token);
+                        node.name.addToken(token);
                         state = 3;
                         break;
                     }
                     child = new ErrorNode(parent);
-                    child.tokens.add(token);
+                    child.addToken(token);
                     state = 1;
                     break;
 
                 case 3:
                     if ("(".equals(token.getText())) {
+                        node.addToken(token);
                         state = 4;
                         break;
                     }
                     else if (":".equals(token.getText())) {
+                        node.addToken(token);
                         state = 7;
                         break;
                     }
                     else if ("|".equals(token.getText())) {
+                        node.addToken(token);
                         state = 9;
                         break;
                     }
                     child = new ErrorNode(parent);
-                    child.tokens.add(token);
+                    child.addToken(token);
                     state = 1;
                     break;
 
                 case 4:
                     if (")".equals(token.getText())) {
+                        node.addToken(token);
                         state = 6;
                         break;
                     }
                     param = new Node(node);
-                    param.tokens.add(token);
+                    param.addToken(token);
                     node.parameters.add(param);
                     state = 5;
                     break;
                 case 5:
                     if (",".equals(token.getText())) {
+                        node.addToken(token);
                         state = 4;
                         break;
                     }
                     if (")".equals(token.getText())) {
+                        node.addToken(token);
                         state = 6;
                         break;
                     }
                     child = new ErrorNode(parent);
-                    child.tokens.add(token);
+                    child.addToken(token);
                     state = 1;
                     break;
 
                 case 6:
                     if (":".equals(token.getText())) {
+                        node.addToken(token);
                         state = 7;
                         break;
                     }
                     if ("|".equals(token.getText())) {
+                        node.addToken(token);
                         state = 9;
                         break;
                     }
                     child = new ErrorNode(parent);
-                    child.tokens.add(token);
+                    child.addToken(token);
                     state = 1;
                     break;
 
                 case 7:
                     ret = new Node(node);
-                    ret.tokens.add(token);
+                    ret.addToken(token);
                     node.returnVariables.add(ret);
                     state = 8;
                     break;
                 case 8:
                     if (",".equals(token.getText())) {
+                        node.addToken(token);
                         state = 7;
                         break;
                     }
                     else if ("|".equals(token.getText())) {
+                        node.addToken(token);
                         state = 9;
                         break;
                     }
                     child = new ErrorNode(parent);
-                    child.tokens.add(token);
+                    child.addToken(token);
                     state = 1;
                     break;
 
@@ -802,7 +843,7 @@ public class Spin2Parser {
                     node.localVariables.add(local);
                     if (types.contains(token.getText().toUpperCase())) {
                         local.type = new Node(local);
-                        local.type.tokens.add(token);
+                        local.type.addToken(token);
                         state = 10;
                         break;
                     }
@@ -810,36 +851,40 @@ public class Spin2Parser {
                 case 10:
                     if (token.type == 0) {
                         local.identifier = new Node(local);
-                        local.identifier.tokens.add(token);
+                        local.identifier.addToken(token);
                         state = 11;
                         break;
                     }
                     child = new ErrorNode(parent);
-                    child.tokens.add(token);
+                    child.addToken(token);
                     state = 1;
                     break;
                 case 11:
                     if (",".equals(token.getText())) {
+                        node.addToken(token);
                         state = 9;
                         break;
                     }
                     if ("[".equals(token.getText())) {
+                        node.addToken(token);
                         local.size = new ExpressionNode(local);
                         state = 12;
                         break;
                     }
                     if (":".equals(token.getText())) {
+                        node.addToken(token);
                         state = 7;
                         break;
                     }
-                    local.identifier.tokens.add(token);
+                    local.identifier.addToken(token);
                     break;
                 case 12:
                     if ("]".equals(token.getText())) {
+                        node.addToken(token);
                         state = 11;
                         break;
                     }
-                    local.size.tokens.add(token);
+                    local.size.addToken(token);
                     break;
             }
         }
@@ -849,15 +894,18 @@ public class Spin2Parser {
         Node statement = new StatementNode(parent);
 
         while (true) {
+            statement.addToken(token);
             if ("(".equals(token.getText())) {
                 token = parseSubStatement(statement, token);
                 if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
                     break;
                 }
+                if (")".equals(token.getText())) {
+                    statement.addToken(token);
+                }
                 token = stream.nextToken();
             }
             else {
-                statement.tokens.add(token);
                 token = stream.nextToken();
             }
             if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
@@ -870,7 +918,6 @@ public class Spin2Parser {
 
     Token parseSubStatement(Node parent, Token token) {
         Node node = new Node(parent);
-        node.tokens.add(token);
 
         while (true) {
             token = stream.nextToken();
@@ -883,6 +930,7 @@ public class Spin2Parser {
                     return token;
                 }
                 if (")".equals(token.getText())) {
+                    parent.addToken(token);
                     continue;
                 }
             }
@@ -893,7 +941,7 @@ public class Spin2Parser {
                     node = new Node(node);
                     node.tokens.addAll(list);
                 }
-                node.getParent().tokens.add(token);
+                node.getParent().addToken(token);
                 node = new Node(node.getParent());
                 continue;
             }
@@ -901,11 +949,9 @@ public class Spin2Parser {
                 if (node.getParent() != parent) {
                     node = node.getParent();
                 }
-            }
-            node.tokens.add(token);
-            if (")".equals(token.getText())) {
                 return token;
             }
+            node.addToken(token);
         }
     }
 
@@ -974,7 +1020,7 @@ public class Spin2Parser {
 
     void parseDat(Token start) {
         Node node = new DataNode(root);
-        node.tokens.add(start);
+        node.addToken(start);
 
         Node parent = node;
         while (true) {
@@ -1016,7 +1062,7 @@ public class Spin2Parser {
                 case 1:
                     if (token.column == 0) {
                         parent.label = new Node(parent);
-                        parent.label.tokens.add(token);
+                        parent.label.addToken(token);
                         state = 2;
                         break;
                     }
@@ -1024,7 +1070,7 @@ public class Spin2Parser {
                 case 2:
                     if (conditions.contains(token.getText().toUpperCase())) {
                         parent.condition = new Node(parent);
-                        parent.condition.tokens.add(token);
+                        parent.condition.addToken(token);
                         state = 3;
                         break;
                     }
@@ -1032,44 +1078,44 @@ public class Spin2Parser {
                 case 3:
                     if (instructions.contains(token.getText().toUpperCase())) {
                         parent.instruction = new Node(parent);
-                        parent.instruction.tokens.add(token);
+                        parent.instruction.addToken(token);
                         state = 4;
                         break;
                     }
                     child = new ErrorNode(parent);
-                    child.tokens.add(token);
+                    child.addToken(token);
                     state = 9;
                     break;
                 case 4:
                     if (modifiers.contains(token.getText().toUpperCase())) {
                         parent.modifier = new Node(parent);
-                        parent.modifier.tokens.add(token);
+                        parent.modifier.addToken(token);
                         state = 5;
                         break;
                     }
                     parameter = new ParameterNode(parent);
-                    parameter.tokens.add(token);
+                    parameter.addToken(token);
                     parent.parameters.add(parameter);
                     state = 7;
                     break;
                 case 5:
                     if (",".equals(token.getText())) {
-                        parent.modifier.tokens.add(token);
+                        parent.modifier.addToken(token);
                         state = 6;
                         break;
                     }
                     child = new ErrorNode(parent);
-                    child.tokens.add(token);
+                    child.addToken(token);
                     state = 9;
                     break;
                 case 6:
                     if (modifiers.contains(token.getText().toUpperCase())) {
-                        parent.modifier.tokens.add(token);
+                        parent.modifier.addToken(token);
                         state = 5;
                         break;
                     }
                     child = new ErrorNode(parent);
-                    child.tokens.add(token);
+                    child.addToken(token);
                     state = 9;
                     break;
                 case 7:
@@ -1080,26 +1126,27 @@ public class Spin2Parser {
                     }
                     if (modifiers.contains(token.getText().toUpperCase())) {
                         parent.modifier = new Node(parent);
-                        parent.modifier.tokens.add(token);
+                        parent.modifier.addToken(token);
                         state = 5;
                         break;
                     }
                     if ("[".equals(token.getText())) {
-                        parameter.count = new ExpressionNode(parameter);
+                        parameter.count = new ExpressionNode();
+                        parameter.childs.add(parameter.count);
                         state = 10;
                         break;
                     }
-                    parameter.tokens.add(token);
+                    parameter.addToken(token);
                     break;
                 case 9:
-                    child.tokens.add(token);
+                    child.addToken(token);
                     break;
                 case 10:
                     if ("]".equals(token.getText())) {
                         state = 7;
                         break;
                     }
-                    parameter.count.tokens.add(token);
+                    parameter.count.addToken(token);
                     break;
             }
         }
@@ -1107,15 +1154,57 @@ public class Spin2Parser {
 
     public static void main(String[] args) {
         String text = ""
+            + "' Program captures 4 ADC SCOPE pins and displays waveforms on DEBUG Scope\n"
+            + "\n"
             + "CON\n"
-            + "    _clkfreq    = 160_000_000\n"
+            + "  _clkfreq = 300_000_000    'set clock frequency\n"
+            + "  _pins    = 0 addpins 3    'do conversion on these 4 pins\n"
             + "\n"
-            + "PUB main() | ct\n"
+            + "VAR\n"
+            + "  stack[40]\n"
+            + "  buff[512]\n"
             + "\n"
-            + "    ct := getct()                   ' get current timer\n"
-            + "    repeat\n"
-            + "        pint(56)                    ' toggle pin 56\n"
-            + "        waitct(ct += _clkfreq / 2)  ' wait half second\n"
+            + "PUB start(pins, rate, adc_mode) | i\n"
+            + "\n"
+            + "  if rate == 0  'in case top-level object, set defaults\n"
+            + "    pins := _pins\n"
+            + "    rate := $2000_0000\n"
+            + "    adc_mode := p_adc_1x\n"
+            + "\n"
+            + "  cogspin(newcog, scope(pins, rate, adc_mode), @stack)  'launch scope cog\n"
+            + "\n"
+            + "\n"
+            + "PRI scope(pins, rate, adc_mode) | _setscp, _setse1, _buffadr, _timeout\n"
+            + "\n"
+            + "  debug(`SCOPE s pos 100 100 size 512 276 samples 512 rate 512 longs_8bit `dly(200))\n"
+            + "  debug(`s 'Pin0' 0 255 255 10 15)\n"
+            + "  debug(`s 'Pin1' 0 255 255 10 0)\n"
+            + "  debug(`s 'Pin2' 0 255 255 10 0)\n"
+            + "  debug(`s 'Pin3' 0 255 255 10 0)\n"
+            + "\n"
+            + "  pinstart(pins, adc_mode | p_adc_scope, $88_78 + 0, 0)     'init ADC SCOPE pins\n"
+            + "\n"
+            + "  _setscp := $40 + pins & $3F       'scope data pipe\n"
+            + "  _setse1 := $180 + pins & $3F      'scope trigger sensor\n"
+            + "  _buffadr := @buff         'set buff address\n"
+            + "  _timeout := clkfreq / 20      'set trigger timeout\n"
+            + "\n"
+            + "  repeat\n"
+            + "    org\n"
+            + "    akpin   pins                'acknowledge prior trigger\n"
+            + "    setscp  _setscp             'enable scope data pipe\n"
+            + "    setse1  _setse1             'trigger on first scope pin\n"
+            + "    wrfast  #0,_buffadr         'set up fast write\n"
+            + "    getct   pr7             'get ct\n"
+            + "    add pr7,_timeout            'add timeout\n"
+            + "    setq    pr7             'set timeout for waitse1\n"
+            + "    waitse1                 'wait for trigger\n"
+            + "    setq    rate                'set sample rate\n"
+            + "    xinit   ##$F086<<16 + 512, #0       'start recording scope pipe data\n"
+            + "    waitxfi                 'wait for recording to complete\n"
+            + "    end\n"
+            + "\n"
+            + "    debug(`s `uhex_long_array_(@buff, 512) `dly(50))    'show data\n"
             + "";
 
         try {
