@@ -173,4 +173,14 @@ class Spin2TokenStreamTest {
         assertEquals("@.label", subject.nextToken().getText());
     }
 
+    @Test
+    void testDebugStatement() {
+        Spin2TokenStream subject = new Spin2TokenStream("    debug(`s `uhex_long_array_(@buff, 512) `dly(50))  'show data\n");
+
+        assertEquals("debug", subject.nextToken().getText());
+        assertEquals("(", subject.nextToken().getText());
+        assertEquals("`s `uhex_long_array_(@buff, 512) `dly(50)", subject.nextToken().getText());
+        assertEquals(")", subject.nextToken().getText());
+    }
+
 }

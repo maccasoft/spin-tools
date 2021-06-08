@@ -23,18 +23,12 @@ public class Spin2TokenStream {
     static final int NUMBER = 4;
     static final int KEYWORD = 5;
     static final int OPERATOR = 6;
-    static final int NL = 7;
+    static final int DEBUG = 7;
+    static final int NL = 8;
     static final int EOF = -1;
 
     final String text;
-    final Token eofToken = new Token(EOF, 0, 0) {
-
-        @Override
-        public String getText() {
-            return "";
-        }
-
-    };
+    final Token eofToken = new Token(EOF, 0, 0);
 
     int index = 0;
     int line = 0;
@@ -52,7 +46,8 @@ public class Spin2TokenStream {
         public int stop;
         public int line;
         public int column;
-        public String text;
+
+        private String text;
 
         public Token(int start) {
             this.start = start;
@@ -129,10 +124,16 @@ public class Spin2TokenStream {
                         state = token.type = COMMENT;
                     }
                     else if (ch == '{') { // Block comment
+                        nested = 0;
                         state = token.type = BLOCK_COMMENT;
                     }
                     else if (ch == '"') { // String
                         state = token.type = STRING;
+                    }
+                    else if (ch == '`') { // Debug command
+                        token.type = STRING;
+                        nested = 1;
+                        state = DEBUG;
                     }
                     else if (ch == '$') { // Hex number
                         state = token.type = NUMBER;
@@ -302,6 +303,21 @@ public class Spin2TokenStream {
                     state = START;
                     return token;
                 }
+                case DEBUG:
+                    if (ch == '(') {
+                        nested++;
+                    }
+                    else if (ch == ')') {
+                        if (nested > 0) {
+                            nested--;
+                        }
+                        if (nested == 0) {
+                            state = START;
+                            return token;
+                        }
+                    }
+                    token.stop++;
+                    break;
             }
         }
 
