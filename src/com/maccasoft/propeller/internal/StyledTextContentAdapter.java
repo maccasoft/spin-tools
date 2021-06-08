@@ -50,9 +50,21 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
         }
 
         ((StyledText) control).setSelection(new Point(start + lineOffset, position + lineOffset));
-
         ((StyledText) control).insert(text);
-        ((StyledText) control).setCaretOffset(start + lineOffset + text.length());
+
+        caretOffset = 0;
+        while (caretOffset < text.length()) {
+            if (text.charAt(caretOffset) == '(') {
+                caretOffset++;
+                if (caretOffset < text.length() && text.charAt(caretOffset) == ')') {
+                    caretOffset++;
+                }
+                break;
+            }
+            caretOffset++;
+        }
+
+        ((StyledText) control).setCaretOffset(start + lineOffset + caretOffset);
     }
 
     @Override

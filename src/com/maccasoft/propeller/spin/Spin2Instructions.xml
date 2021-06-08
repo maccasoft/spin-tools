@@ -1,0 +1,268 @@
+<content>
+    <entry name="CON"><![CDATA[
+        <b>CON</b>
+        <p>Constant declarations (CON is the initial/default block type)</p>
+    ]]></entry>
+    <entry name="VAR"><![CDATA[
+        <b>VAR</b>
+        <p>Variable declarations</p>
+    ]]></entry>
+    <entry name="OBJ"><![CDATA[
+        <b>OBJ</b>
+        <p>Child-object instantiations</p>
+    ]]></entry>
+    <entry name="PUB"><![CDATA[
+        <b>PUB</b>
+        <p>Public method for use by the parent object and within this object</p>
+    ]]></entry>
+    <entry name="PRI"><![CDATA[
+        <b>PRI</b>
+        <p>Private method for use within this object</p>
+    ]]></entry>
+    <entry name="DAT"><![CDATA[
+        <b>DAT</b>
+        <p>Data declarations, including PASM code</p>
+    ]]></entry>
+
+    <entry name="hubset" insert="hubset(value)"><![CDATA[
+        <b>HUBSET(Value)</b><br/><br/>
+        Execute HUBSET instruction using Value
+    ]]></entry>
+    <entry name="clkset" insert="clkset(newclkmode, newclkfreq)"><![CDATA[
+        <b>CLKSET(NewCLKMODE, NewCLKFREQ)</b><br/><br/>
+        Safely establish new clock settings, updates CLKMODE and CLKFREQ
+    ]]></entry>
+    <entry name="cogspin" insert="cogspin(cognum, method, stkaddr)"><![CDATA[
+        <b>COGSPIN(CogNum, Method({Pars}), StkAddr)</b><br/><br/>
+        Start Spin2 method in a cog, returns cog's ID if used as an expression element, -1 = no cog free
+    ]]></entry>
+    <entry name="coginit" insert="coginit(cognum, pasmaddr, ptravalue)"><![CDATA[
+        <b>COGINIT(CogNum, PASMaddr, PTRAvalue)</b><br/><br/>
+        Start PASM code in a cog, returns cog's ID if used as an expression element, -1 = no cog free
+    ]]></entry>
+    <entry name="cogstop" insert="cogstop(cognum)"><![CDATA[
+        <b>COGSTOP(CogNum)</b><br/><br/>
+        Stop cog CogNum
+    ]]></entry>
+    <entry name="cogid" insert="cogid()"><![CDATA[
+        <b>COGID() : CogNum</b><br/><br/>
+        Get this cog's ID
+    ]]></entry>
+    <entry name="cogchk" insert="cogchk(cognum)"><![CDATA[
+        <b>COGCHK(CogNum) : Running</b><br/><br/>
+        Check if cog CogNum is running, returns -1 if running or 0 if not
+    ]]></entry>
+    <entry name="locknew" insert="locknew()"><![CDATA[
+        <b>LOCKNEW() : LockNum</b><br/><br/>
+        Check out a new LOCK from inventory, LockNum = 0..15 if successful or &lt; 0 if no LOCK available
+    ]]></entry>
+    <entry name="lockret" insert="lockret(locknum)"><![CDATA[
+        <b>LOCKRET(LockNum)</b><br/><br/>
+        Return a certain LOCK to inventory
+    ]]></entry>
+    <entry name="locktry" insert="locktry(locknum)"><![CDATA[
+        <b>LOCKTRY(LockNum) : LockState</b>
+        <p>Try to capture a certain LOCK, LockState = -1 if successful or 0 if another cog has captured the LOCK</p>
+    ]]></entry>
+    <entry name="lockrel" insert="lockrel(locknum)"><![CDATA[
+        <b>LOCKREL(LockNum)</b><br/><br/>
+        Release a certain LOCK
+    ]]></entry>
+    <entry name="lockchk" insert="lockchk(locknum)"><![CDATA[
+        <b>LOCKCHK(LockNum) : LockState</b><br/><br/>
+        Check a certain LOCK's state, LockState[31] = captured, LockState[3:0] = current or last owner cog
+    ]]></entry>
+    <entry name="cogatn" insert="cogatn(cogmask)"><![CDATA[
+        <b>COGATN(CogMask)</b><br/><br/>
+        Strobe ATN input(s) of cog(s) according to 16-bit CogMask
+    ]]></entry>
+    <entry name="pollatn" insert="pollatn()"><![CDATA[
+        <b>POLLATN() : AtnFlag</b><br/><br/>
+        Check if this cog has received an ATN strobe, AtnFlag = -1 if ATN strobed or 0 if not strobed
+    ]]></entry>
+    <entry name="waitatn" insert="waitatn()"><![CDATA[
+        <b>WAITATN()</b><br/><br/>
+        Wait for this cog to receive an ATN strobe
+    ]]></entry>
+
+    <entry name="pinw" insert="pinw(pinfield, data)"><![CDATA[
+        <b>PINW | PINWRITE(PinField, Data)</b><br/><br/>Drive PinField pin(s) with Data
+    ]]></entry>
+    <entry name="pinl" insert="pinl(pinfield)"><![CDATA[
+        <b>PINL | PINLOW(PinField)</b><br/><br/>Drive PinField pin(s) low
+    ]]></entry>
+    <entry name="pinh" insert="pinh(pinfield)"><![CDATA[
+        <b>PINH | PINHIGH(PinField)</b><br/><br/>Drive PinField pin(s) high
+    ]]></entry>
+    <entry name="pint" insert="pint(pinfield)"><![CDATA[
+        <b>PINT | PINTOGGLE(PinField)</b><br/><br/>Drive and toggle PinField pin(s)
+    ]]></entry>
+    <entry name="pinf" insert="pinf(pinfield)"><![CDATA[
+        <b>PINF | PINFLOAT(PinField)</b><br/><br/>Float PinField pin(s)
+    ]]></entry>
+    <entry name="pinr" insert="pinr(pinfield)"><![CDATA[
+        <b>PINR | PINREAD(PinField) : PinStates</b><br/><br/>Read PinField pin(s)
+    ]]></entry>
+    <entry name="pinstart" insert="pinstart(pinfield, mode, xval, yval)"><![CDATA[
+        <b>PINSTART(PinField, Mode, Xval, Yval)</b><br/><br/>Start PinField smart pin(s): DIR=0, then WRPIN=Mode, WXPIN=Xval, WYPIN=Yval, then DIR=1
+    ]]></entry>
+    <entry name="pinclear" insert="pinclear(pinfield)"><![CDATA[
+        <b>PINCLEAR(PinField)</b><br/><br/>Clear PinField smart pin(s): DIR=0, then WRPIN=0
+    ]]></entry>
+    <entry name="wrpin" insert="wrpin(pinfield, data)"><![CDATA[
+        <b>WRPIN(PinField, Data)</b><br/><br/>Write 'mode' register(s) of PinField smart pin(s) with Data
+    ]]></entry>
+    <entry name="wxpin" insert="wxpin(pinfield, data)"><![CDATA[
+        <b>WXPIN(PinField, Data)</b><br/><br/>Write 'X' register(s) of PinField smart pin(s) with Data
+    ]]></entry>
+    <entry name="wypin" insert="wypin(pinfield, data)"><![CDATA[
+        <b>WYPIN(PinField, Data)</b><br/><br/>Write 'Y' register(s) of PinField smart pin(s) with Data
+    ]]></entry>
+    <entry name="akpin" insert="akpin(pinfield)"><![CDATA[
+        <b>AKPIN(PinField)</b><br/><br/>Acknowledge PinField smart pin(s)
+    ]]></entry>
+    <entry name="rdpin" insert="rdpin(pin)"><![CDATA[
+        <b>RDPIN(Pin) : Zval</b><br/><br/>Read Pin smart pin and acknowledge, Zval[31] = C flag from RDPIN, other bits are RDPIN data
+    ]]></entry>
+    <entry name="rqpin" insert="rqpin(pin)"><![CDATA[
+        <b>RQPIN(Pin) : Zval</b><br/><br/>Read Pin smart pin without acknowledge, Zval[31] = C flag from RQPIN, other bits are RQPIN data
+    ]]></entry>
+
+    <entry name="pinwrite" insert="pinwrite(pinfield, data)"><![CDATA[
+        <b>PINW | PINWRITE(PinField, Data)</b><br/><br/>Drive PinField pin(s) with Data
+    ]]></entry>
+    <entry name="pinlow" insert="pinlow(pinfield)"><![CDATA[
+        <b>PINL | PINLOW(PinField)</b><br/><br/>Drive PinField pin(s) low
+    ]]></entry>
+    <entry name="pinhigh" insert="pinhigh(pinfield)"><![CDATA[
+        <b>PINH | PINHIGH(PinField)</b><br/><br/>Drive PinField pin(s) high
+    ]]></entry>
+    <entry name="pintoggle" insert="pintoggle(pinfield)"><![CDATA[
+        <b>PINT | PINTOGGLE(PinField)</b><br/><br/>Drive and toggle PinField pin(s)
+    ]]></entry>
+    <entry name="pinfloat" insert="pinfloat(pinfield)"><![CDATA[
+        <b>PINF | PINFLOAT(PinField)</b><br/><br/>Float PinField pin(s)
+    ]]></entry>
+    <entry name="pinread" insert="pinread(pinfield)"><![CDATA[
+        <b>PINR | PINREAD(PinField) : PinStates</b><br/><br/>Read PinField pin(s)
+    ]]></entry>
+
+    <entry name="getct" insert="getct()"><![CDATA[
+        <b>GETCT() : Count</b><br/><br/>Get 32-bit system counter
+    ]]></entry>
+    <entry name="pollct" insert="pollct(tick)"><![CDATA[
+        <b>POLLCT(Tick) : Past</b><br/><br/>Check if system counter has gone past 'Tick', returns -1 if past or 0 if not past
+    ]]></entry>
+    <entry name="waitct" insert="waitct(tick)"><![CDATA[
+        <b>WAITCT(Tick)</b><br/><br/>Wait for system counter to get past 'Tick'
+    ]]></entry>
+    <entry name="waitus" insert="waitus(microseconds)"><![CDATA[
+        <b>WAITUS(Microseconds)</b><br/><br/>Wait Microseconds, uses CLKFREQ
+    ]]></entry>
+    <entry name="waitms" insert="waitms(milliseconds)"><![CDATA[
+        <b>WAITMS(Milliseconds)</b><br/><br/>Wait Milliseconds, uses CLKFREQ
+    ]]></entry>
+    <entry name="getsec" insert="getsec()"><![CDATA[
+        <b>GETSEC() : Seconds</b><br/><br/>Get seconds since booting, uses 64-bit system counter and CLKFREQ, rolls over every 136 years.
+    ]]></entry>
+    <entry name="getms" insert="getms()"><![CDATA[
+        <b>GETMS() : Milliseconds</b><br/><br/>Get milliseconds since booting, uses 64-bit system counter and CLKFREQ, rolls over every 49.7 days.
+    ]]></entry>
+
+    <entry name="call" insert="call(regorhubaddr)"><![CDATA[
+        <b>CALL(RegOrHubAddr)</b><br/><br/>CALL PASM code at Addr, PASM code should avoid registers $130..$1D7 and LUT
+    ]]></entry>
+    <entry name="regexec" insert="regexec(hubaddr)"><![CDATA[
+        <b>REGEXEC(HubAddr)</b><br/><br/>Load a self-defined chunk of PASM code at HubAddr into registers and CALL it. See REGEXEC description.
+    ]]></entry>
+    <entry name="regload" insert="regload(hubaddr)"><![CDATA[
+        <b>REGLOAD(HubAddr)</b><br/><br/>Load a self-defined chunk of PASM code or data at HubAddr into registers. See REGLOAD description.
+    ]]></entry>
+
+    <entry name="rotxy" insert="rotxy(x, y, angle32bit)"><![CDATA[
+        <b>ROTXY(x, y, angle32bit) : rotx, roty</b><br/><br/>Rotate (x,y) by angle32bit and return rotated (x,y)
+    ]]></entry>
+    <entry name="polxy" insert="polxy(length, angle32bit)"><![CDATA[
+        <b>POLXY(length, angle32bit) : x, y</b><br/><br/>Convert (length,angle32bit) to (x,y)
+    ]]></entry>
+    <entry name="xypol" insert="xypol(x, y)"><![CDATA[
+        <b>XYPOL(x, y) : length, angle32bit</b><br/><br/>Convert (x,y) to (length,angle32bit)
+    ]]></entry>
+    <entry name="qsin" insert="qsin(length, angle, twopi)"><![CDATA[
+        <b>QSIN(length, angle, twopi) : y</b><br/><br/>Rotate (length,0) by (angle / twopi) * 2Pi and return y. Use 0 for twopi = $1_0000_0000. Twopi is unsigned.
+    ]]></entry>
+    <entry name="qcos" insert="qcos(length, angle, twopi)"><![CDATA[
+        <b>QCOS(length, angle, twopi) : x</b><br/><br/>Rotate (length,0) by (angle / twopi) * 2Pi and return x. Use 0 for twopi = $1_0000_0000. Twopi is unsigned.
+    ]]></entry>
+    <entry name="muldiv64" insert="muldiv64(mult1, mult2, divisor)"><![CDATA[
+        <b>MULDIV64(mult1, mult2, divisor) : quotient</b><br/><br/>Divide the 64-bit product of 'mult1' and 'mult2' by 'divisor', return quotient (unsigned operation)
+    ]]></entry>
+    <entry name="getrnd" insert="getrnd()"><![CDATA[
+        <b>GETRND() : Rnd</b><br/><br/>Get random long (from xoroshiro128** PRNG, seeded on boot with thermal noise from ADC)
+    ]]></entry>
+
+    <entry name="getregs" insert="getregs(hubaddr, cogaddr, count)"><![CDATA[
+        <b>GETREGS(HubAddr, CogAddr, Count)</b><br/><br/>Move Count registers at CogAddr to longs at HubAddr
+    ]]></entry>
+    <entry name="setregs" insert="setregs(hubaddr, cogaddr, count)"><![CDATA[
+        <b>SETREGS(HubAddr, CogAddr, Count)</b><br/><br/>Move Count longs at HubAddr to registers at CogAddr
+    ]]></entry>
+    <entry name="bytemove" insert="bytemove(dest, source, count)"><![CDATA[
+        <b>BYTEMOVE(Dest, Source, Count)</b><br/><br/>Move Count bytes from Source to Dest
+    ]]></entry>
+    <entry name="wordmove" insert="wordmove(dest, source, count)"><![CDATA[
+        <b>WORDMOVE(Dest, Source, Count)</b><br/><br/>Move Count words from Source to Dest
+    ]]></entry>
+    <entry name="longmove" insert="longmove(dest, source, count)"><![CDATA[
+        <b>LONGMOVE(Dest, Source, Count)</b><br/><br/>Move Count longs from Source to Dest
+    ]]></entry>
+    <entry name="bytefill" insert="bytefill(dest, value, count)"><![CDATA[
+        <b>BYTEFILL(Dest, Value, Count)</b><br/><br/>Fill Count bytes at Dest with Value
+    ]]></entry>
+    <entry name="wordfill" insert="wordfill(dest, value, count)"><![CDATA[
+        <b>WORDFILL(Dest, Value, Count)</b><br/><br/>Fill Count words at Dest with Value
+    ]]></entry>
+    <entry name="longfill" insert="longfill(dest, value, count)"><![CDATA[
+        <b>LONGFILL(Dest, Value, Count)</b><br/><br/>Fill Count longs at Dest with Value
+    ]]></entry>
+
+    <entry name="strsize" insert="strsize(addr)"><![CDATA[
+        <b>STRSIZE(Addr) : Size</b><br/><br/>Count bytes in zero-terminated string at Addr, return string size, not including zero terminator
+    ]]></entry>
+    <entry name="strcomp" insert="strcomp(addra, addrb)"><![CDATA[
+        <b>STRCOMP(AddrA, AddrB) : Match</b><br/><br/>Compare zero-terminated strings at AddrA and AddrB, return -1 if match or 0 if mismatch
+    ]]></entry>
+    <entry name="string" insert="string(&quot;text&quot;,9)"><![CDATA[
+        <b>STRING("Text",9) : StringAddress</b><br/><br/>Compose a zero-terminated string (quoted characters and values 1..255 allowed), return address of string
+    ]]></entry>
+
+    <entry name="lookup" insert="lookup(index: v1, v2..v3, etc)"><![CDATA[
+        <b>LOOKUP(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 1-based index, return value (0 if index out of range)
+    ]]></entry>
+    <entry name="lookupz" insert="lookupz(index: v1, v2..v3, etc)"><![CDATA[
+        <b>LOOKUPZ(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 0-based index, return value (0 if index out of range)
+    ]]></entry>
+    <entry name="lookdown" insert="lookdown(value: v1, v2..v3, etc)"><![CDATA[
+        <b>LOOKDOWN(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 1-based index of matching value (values and ranges allowed), return index (0 if no match)
+    ]]></entry>
+    <entry name="lookdownz" insert="lookdownz(value: v1, v2..v3, etc)"><![CDATA[
+        <b>LOOKDOWNZ(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 0-based index of matching value (values and ranges allowed), return index (0 if no match)
+    ]]></entry>
+
+    <entry name="addpins"><![CDATA[
+        <b>x ADDPINS y</b><p>Make pinfield, (x & $3F) | (y & $1F) << 6</p>
+    ]]></entry>
+
+    <entry name="CLKFREQ"><![CDATA[
+        <b>CLKFREQ</b><p>Clock frequency value</p>
+    ]]></entry>
+    <entry name="_CLKFREQ"><![CDATA[
+        <b>CLKFREQ</b><p>Clock frequency value</p>
+    ]]></entry>
+    <entry name="CLKMODE"><![CDATA[
+        <b>CLKMODE</b><p>Clock mode value</p>
+    ]]></entry>
+    <entry name="_CLKMODE"><![CDATA[
+        <b>CLKMODE</b><p>Clock mode value</p>
+    ]]></entry>
+</content>

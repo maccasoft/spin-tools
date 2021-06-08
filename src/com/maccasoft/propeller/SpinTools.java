@@ -45,9 +45,9 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.internal.ImageRegistry;
+import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin.Spin2Compiler;
 import com.maccasoft.propeller.spin.Spin2Parser;
-import com.maccasoft.propeller.spin.Spin2Parser.Node;
 import com.maccasoft.propeller.spin.Spin2TokenStream;
 
 import jssc.SerialPortException;
@@ -97,32 +97,29 @@ public class SpinTools {
     }
 
     void createFileMenu(Menu parent) {
-        final Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
-        menu.addMenuListener(new MenuListener() {
-
-            @Override
-            public void menuShown(MenuEvent e) {
-                MenuItem[] item = menu.getItems();
-                for (int i = 0; i < item.length; i++) {
-                    item[i].dispose();
-                }
-                populateFileMenu(menu);
-            }
-
-            @Override
-            public void menuHidden(MenuEvent e) {
-
-            }
-        });
-        populateFileMenu(menu);
+        Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
 
         MenuItem item = new MenuItem(parent, SWT.CASCADE);
         item.setText("&File");
         item.setMenu(menu);
-    }
 
-    void populateFileMenu(Menu menu) {
-        MenuItem item = new MenuItem(menu, SWT.PUSH);
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("New");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handleFileNew();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
         item.setText("Open...");
         item.addListener(SWT.Selection, new Listener() {
 
@@ -198,6 +195,12 @@ public class SpinTools {
                 }
             }
         });
+    }
+
+    private void handleFileNew() {
+        EditorTab editorTab = new EditorTab(tabFolder, null);
+        tabFolder.setSelection(tabFolder.getItemCount() - 1);
+        editorTab.setFocus();
     }
 
     private void handleFileOpen() {

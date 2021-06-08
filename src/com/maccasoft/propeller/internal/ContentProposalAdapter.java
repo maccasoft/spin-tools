@@ -348,8 +348,8 @@ public class ContentProposalAdapter {
 
                     case SWT.TAB:
                         e.doit = false;
-                        getShell().setFocus();
-                        return;
+                        close();
+                        break;
 
                     case SWT.BS:
                         // Backspace should back out of any stored filter text

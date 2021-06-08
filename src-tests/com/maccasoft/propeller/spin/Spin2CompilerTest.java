@@ -15,9 +15,9 @@ import java.io.ByteArrayOutputStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.spin.Spin2Parser.DataLineNode;
-import com.maccasoft.propeller.spin.Spin2Parser.DataNode;
-import com.maccasoft.propeller.spin.Spin2Parser.Node;
+import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.Node;
 
 class Spin2CompilerTest {
 

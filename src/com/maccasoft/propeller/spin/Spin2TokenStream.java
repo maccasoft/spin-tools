@@ -27,8 +27,9 @@ public class Spin2TokenStream {
     static final int NL = 8;
     static final int EOF = -1;
 
+    public static final Token EOF_TOKEN = new Token(null, 0, EOF);
+
     final String text;
-    final Token eofToken = new Token(EOF, 0, 0);
 
     int index = 0;
     int line = 0;
@@ -40,38 +41,38 @@ public class Spin2TokenStream {
     List<Token> tokens = new ArrayList<Token>();
     List<Token> hiddenTokens = new ArrayList<Token>();
 
-    public class Token {
+    public static class Token {
         public int type;
         public int start;
         public int stop;
         public int line;
         public int column;
 
+        private Spin2TokenStream stream;
         private String text;
 
-        public Token(int start) {
+        public Token(Spin2TokenStream stream, int start) {
+            this.stream = stream;
             this.start = start;
             this.stop = start;
         }
 
-        public Token(int type, int start, int stop) {
-            this.type = type;
+        public Token(Spin2TokenStream stream, int start, int type) {
+            this.stream = stream;
             this.start = start;
-            this.stop = stop;
-        }
-
-        public Token(Token token0, Token token1) {
-            this.start = token0.start;
-            this.line = token0.line;
-            this.column = token0.column;
-            this.stop = token1.stop;
+            this.stop = start;
+            this.type = type;
         }
 
         public String getText() {
-            if (this.text == null) {
-                this.text = Spin2TokenStream.this.text.substring(start, stop + 1);
+            if (text == null) {
+                text = stream.getSource(start, stop);
             }
-            return this.text;
+            return text;
+        }
+
+        public Spin2TokenStream getStream() {
+            return stream;
         }
 
         @Override
@@ -102,7 +103,7 @@ public class Spin2TokenStream {
     }
 
     public Token nextToken() {
-        Token token = eofToken;
+        Token token = EOF_TOKEN;
 
         for (; index < text.length(); index++, column++) {
             char ch = text.charAt(index);
@@ -114,7 +115,7 @@ public class Spin2TokenStream {
                         }
                         break;
                     }
-                    token = new Token(index);
+                    token = new Token(this, index);
                     token.column = column;
                     token.line = line;
                     if (ch == '\r' || ch == '\n') {
@@ -199,7 +200,7 @@ public class Spin2TokenStream {
                         index--;
                         state = START;
                         hiddenTokens.add(token);
-                        token = eofToken;
+                        token = EOF_TOKEN;
                         break;
                     }
                     token.stop++;
@@ -214,7 +215,7 @@ public class Spin2TokenStream {
                             index++;
                             state = START;
                             hiddenTokens.add(token);
-                            token = eofToken;
+                            token = EOF_TOKEN;
                             break;
                         }
                         nested--;
@@ -322,6 +323,10 @@ public class Spin2TokenStream {
         }
 
         return token;
+    }
+
+    public String getSource(int start, int stop) {
+        return text.substring(start, stop + 1);
     }
 
     public List<Token> getTokens() {

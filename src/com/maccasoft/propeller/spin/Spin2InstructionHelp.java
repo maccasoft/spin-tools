@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spin;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -56,5 +57,20 @@ public class Spin2InstructionHelp {
             l.add(e.nextElement());
         }
         return l.toArray(new String[l.size()]);
+    }
+
+    public static void main(String[] args) {
+        try {
+            PrintStream out = new PrintStream("/home/marco/workspace/spin-tools/src/com/maccasoft/propeller/spin/Spin2Instructions.xml");
+            out.println("<content>");
+            for (String key : getKeys()) {
+                out.println("    <entry name=\"" + key + "\"><![CDATA[");
+                out.println(getString(key));
+                out.println("    ]]></entry>");
+            }
+            out.println("</content>");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

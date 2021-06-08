@@ -16,7 +16,7 @@ import java.io.InputStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.spin.Spin2Parser.Node;
+import com.maccasoft.propeller.model.Node;
 
 class Spin2CompilerFunctionalTest {
 

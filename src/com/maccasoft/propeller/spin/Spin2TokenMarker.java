@@ -15,21 +15,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignEnumNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantsNode;
-import com.maccasoft.propeller.spin.Spin2Parser.DataLineNode;
-import com.maccasoft.propeller.spin.Spin2Parser.DataNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ErrorNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ExpressionNode;
-import com.maccasoft.propeller.spin.Spin2Parser.LocalVariableNode;
-import com.maccasoft.propeller.spin.Spin2Parser.MethodNode;
-import com.maccasoft.propeller.spin.Spin2Parser.Node;
-import com.maccasoft.propeller.spin.Spin2Parser.ObjectsNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ParameterNode;
-import com.maccasoft.propeller.spin.Spin2Parser.StatementNode;
-import com.maccasoft.propeller.spin.Spin2Parser.VariableNode;
-import com.maccasoft.propeller.spin.Spin2Parser.VariablesNode;
+import com.maccasoft.propeller.model.ConstantAssignEnumNode;
+import com.maccasoft.propeller.model.ConstantAssignNode;
+import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.ErrorNode;
+import com.maccasoft.propeller.model.ExpressionNode;
+import com.maccasoft.propeller.model.LocalVariableNode;
+import com.maccasoft.propeller.model.MethodNode;
+import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.ParameterNode;
+import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.VariableNode;
+import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 
 public class Spin2TokenMarker {
@@ -565,9 +565,8 @@ public class Spin2TokenMarker {
     TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
 
     Map<String, TokenId> symbols = new HashMap<String, TokenId>();
-    Map<String, String> methods = new HashMap<String, String>();
 
-    final Spin2ParserVisitor collectKeywordsVisitor = new Spin2ParserVisitor() {
+    final Spin2ModelVisitor collectKeywordsVisitor = new Spin2ModelVisitor() {
 
         String lastLabel = "";
 
@@ -644,41 +643,12 @@ public class Spin2TokenMarker {
                 }
             }
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("<b>");
-            sb.append(node.getType().getText());
-            sb.append(" ");
-            sb.append(node.getName().getText());
-
-            sb.append("(");
             for (Node child : node.getParameters()) {
-                if (sb.charAt(sb.length() - 1) != '(') {
-                    sb.append(", ");
-                }
-                sb.append(child.getText());
                 tokens.add(new TokenMarker(child, TokenId.METHOD_LOCAL));
             }
-            sb.append(")");
 
-            if (node.getReturnVariables().size() != 0) {
-                sb.append(" : ");
-                for (Node child : node.getReturnVariables()) {
-                    if (sb.charAt(sb.length() - 2) != ':') {
-                        sb.append(", ");
-                    }
-                    sb.append(child.getText());
-                    tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
-                }
-            }
-            sb.append("</b>");
-
-            methods.put(node.getName().getText(), sb.toString());
-
-            for (LocalVariableNode child : node.getLocalVariables()) {
-                if (child.type != null) {
-                    tokens.add(new TokenMarker(child.type, TokenId.TYPE));
-                }
-                tokens.add(new TokenMarker(child.identifier, TokenId.METHOD_LOCAL));
+            for (Node child : node.getReturnVariables()) {
+                tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
             }
         }
 
@@ -731,7 +701,7 @@ public class Spin2TokenMarker {
 
     };
 
-    final Spin2ParserVisitor updateReferencesVisitor = new Spin2ParserVisitor() {
+    final Spin2ModelVisitor updateReferencesVisitor = new Spin2ModelVisitor() {
 
         String lastLabel = "";
         Map<String, TokenId> locals = new HashMap<String, TokenId>();
@@ -746,9 +716,22 @@ public class Spin2TokenMarker {
             for (Node child : node.getReturnVariables()) {
                 locals.put(child.getText(), TokenId.METHOD_RETURN);
             }
+
             for (LocalVariableNode child : node.getLocalVariables()) {
+                if (child.type != null) {
+                    tokens.add(new TokenMarker(child.type, TokenId.TYPE));
+                }
                 locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
+                if (symbols.containsKey(child.identifier.getText())) {
+                    TokenMarker marker = new TokenMarker(child.identifier, TokenId.ERROR);
+                    marker.setError("Symbol already defined");
+                    tokens.add(marker);
+                }
+                else {
+                    tokens.add(new TokenMarker(child.identifier, TokenId.METHOD_LOCAL));
+                }
             }
+
             for (Node child : node.childs) {
                 if (child instanceof StatementNode) {
                     markTokens(child);
@@ -999,6 +982,64 @@ public class Spin2TokenMarker {
     }
 
     public String getMethod(String symbol) {
-        return methods.get(symbol);
+        StringBuilder sb = new StringBuilder();
+
+        root.accept(new Spin2ModelVisitor() {
+
+            @Override
+            public void visitConstantAssign(ConstantAssignNode node) {
+                if (node.getIdentifier() == null) {
+                    return;
+                }
+                if (!symbol.equals(node.getIdentifier().getText())) {
+                    return;
+                }
+                sb.append("<b>");
+                sb.append(node.getText());
+                sb.append("</b>");
+            }
+
+            @Override
+            public void visitMethod(MethodNode node) {
+                if (node.getName() == null) {
+                    return;
+                }
+                if (!symbol.equals(node.getName().getText())) {
+                    return;
+                }
+
+                sb.append("<b>");
+                sb.append(node.getType().getText());
+                sb.append(" ");
+                if (node.getName() != null) {
+                    sb.append(node.getName().getText());
+                }
+
+                sb.append("(");
+                for (Node child : node.getParameters()) {
+                    if (sb.charAt(sb.length() - 1) != '(') {
+                        sb.append(", ");
+                    }
+                    sb.append(child.getText());
+                    tokens.add(new TokenMarker(child, TokenId.METHOD_LOCAL));
+                }
+                sb.append(")");
+
+                if (node.getReturnVariables().size() != 0) {
+                    sb.append(" : ");
+                    for (Node child : node.getReturnVariables()) {
+                        if (sb.charAt(sb.length() - 2) != ':') {
+                            sb.append(", ");
+                        }
+                        sb.append(child.getText());
+                        tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
+                    }
+                }
+                sb.append("</b>");
+            }
+
+        });
+
+        return sb.length() != 0 ? sb.toString() : null;
     }
 }

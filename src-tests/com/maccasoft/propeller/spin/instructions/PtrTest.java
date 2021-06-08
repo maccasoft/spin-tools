@@ -17,12 +17,12 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin.Spin2Compiler;
 import com.maccasoft.propeller.spin.Spin2Context;
 import com.maccasoft.propeller.spin.Spin2InstructionObject;
 import com.maccasoft.propeller.spin.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin.Spin2Parser;
-import com.maccasoft.propeller.spin.Spin2Parser.Node;
 import com.maccasoft.propeller.spin.Spin2TokenStream;
 
 class PtrTest {

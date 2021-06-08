@@ -64,8 +64,8 @@ import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ContentProposalAdapter;
 import com.maccasoft.propeller.internal.HTMLStyledTextParser;
 import com.maccasoft.propeller.internal.StyledTextContentAdapter;
-import com.maccasoft.propeller.spin.Spin2Parser.DataLineNode;
-import com.maccasoft.propeller.spin.Spin2Parser.Node;
+import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenId;
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenMarker;
 import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
@@ -401,7 +401,7 @@ public class Spin2Editor {
                 TokenMarker marker = tokenMarker.getMarkerAtOffset(offset);
 
                 if (marker != null && marker.getError() != null) {
-                    window = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP | SWT.TOOL);
+                    window = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
                     FillLayout layout = new FillLayout();
                     layout.marginHeight = layout.marginWidth = 5;
                     window.setLayout(layout);
@@ -413,23 +413,29 @@ public class Spin2Editor {
                     window.setLocation(bounds.x, bounds.y - size.y - 3);
 
                     window.open();
-                    styledText.setFocus();
+                    display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            styledText.setFocus();
+                        }
+                    });
                     return;
                 }
 
                 if (token != null) {
                     String text = null;
                     if (context instanceof DataLineNode) {
-                        text = Spin2PAsmInstructionHelp.getString(token.getText().toUpperCase());
+                        text = Spin2PAsmInstructionHelp.getString(token.getText().toLowerCase());
                     }
                     else {
-                        text = Spin2InstructionHelp.getString(token.getText().toUpperCase());
+                        text = Spin2InstructionHelp.getString(token.getText().toLowerCase());
                     }
                     if (text == null) {
                         text = tokenMarker.getMethod(token.getText());
                     }
                     if (text != null) {
-                        window = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP | SWT.TOOL);
+                        window = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
                         FillLayout layout = new FillLayout();
                         layout.marginHeight = layout.marginWidth = 5;
                         window.setLayout(layout);
@@ -451,7 +457,13 @@ public class Spin2Editor {
                         window.setBounds(bounds);
 
                         window.open();
-                        styledText.setFocus();
+                        display.asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                styledText.setFocus();
+                            }
+                        });
                     }
                 }
 

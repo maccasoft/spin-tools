@@ -48,14 +48,18 @@ public class EditorTab {
     public EditorTab(CTabFolder folder, File file) {
         this.file = file;
         this.editor = new Spin2Editor(folder);
-        try {
-            this.editor.setText(loadFromFile(file));
-        } catch (Exception e) {
-            e.printStackTrace();
+
+        if (file != null) {
+            try {
+                this.editor.setText(loadFromFile(file));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         tabItem = new CTabItem(folder, SWT.NONE);
-        tabItem.setText(file.getName());
+        tabItem.setShowClose(true);
+        tabItem.setText(file != null ? file.getName() : "New");
         tabItem.setControl(editor.getControl());
         tabItem.setData(this);
     }

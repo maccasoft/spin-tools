@@ -10,21 +10,21 @@
 
 package com.maccasoft.propeller.spin;
 
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignEnumNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantSetEnumNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantsNode;
-import com.maccasoft.propeller.spin.Spin2Parser.DataNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ErrorNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ExpressionNode;
-import com.maccasoft.propeller.spin.Spin2Parser.DataLineNode;
-import com.maccasoft.propeller.spin.Spin2Parser.MethodNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ObjectsNode;
-import com.maccasoft.propeller.spin.Spin2Parser.StatementNode;
-import com.maccasoft.propeller.spin.Spin2Parser.VariableNode;
-import com.maccasoft.propeller.spin.Spin2Parser.VariablesNode;
+import com.maccasoft.propeller.model.ConstantAssignEnumNode;
+import com.maccasoft.propeller.model.ConstantAssignNode;
+import com.maccasoft.propeller.model.ConstantSetEnumNode;
+import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.ErrorNode;
+import com.maccasoft.propeller.model.ExpressionNode;
+import com.maccasoft.propeller.model.MethodNode;
+import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.VariableNode;
+import com.maccasoft.propeller.model.VariablesNode;
 
-public class Spin2ParserVisitor {
+public class Spin2ModelVisitor {
 
     public void visitConstants(ConstantsNode node) {
 

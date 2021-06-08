@@ -22,13 +22,13 @@ import com.maccasoft.propeller.expressions.ExpressionBuilder;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignEnumNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantAssignNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantSetEnumNode;
-import com.maccasoft.propeller.spin.Spin2Parser.ConstantsNode;
-import com.maccasoft.propeller.spin.Spin2Parser.DataLineNode;
-import com.maccasoft.propeller.spin.Spin2Parser.Node;
-import com.maccasoft.propeller.spin.Spin2Parser.ParameterNode;
+import com.maccasoft.propeller.model.ConstantAssignEnumNode;
+import com.maccasoft.propeller.model.ConstantAssignNode;
+import com.maccasoft.propeller.model.ConstantSetEnumNode;
+import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 import com.maccasoft.propeller.spin.instructions.Org;
 import com.maccasoft.propeller.spin.instructions.Orgh;
@@ -40,7 +40,7 @@ public class Spin2Compiler {
 
     ExpressionBuilder expressionBuilder = new ExpressionBuilder();
 
-    final Spin2ParserVisitor compilerVisitor = new Spin2ParserVisitor() {
+    final Spin2ModelVisitor compilerVisitor = new Spin2ModelVisitor() {
 
         int enumValue = 0, enumIncrement = 1;
 

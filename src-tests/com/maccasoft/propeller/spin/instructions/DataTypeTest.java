@@ -15,9 +15,9 @@ import java.io.ByteArrayOutputStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin.Spin2Compiler;
 import com.maccasoft.propeller.spin.Spin2Parser;
-import com.maccasoft.propeller.spin.Spin2Parser.Node;
 import com.maccasoft.propeller.spin.Spin2TokenStream;
 
 class DataTypeTest {

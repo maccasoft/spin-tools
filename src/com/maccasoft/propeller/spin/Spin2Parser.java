@@ -12,16 +12,32 @@ package com.maccasoft.propeller.spin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.maccasoft.propeller.model.ConstantAssignEnumNode;
+import com.maccasoft.propeller.model.ConstantAssignNode;
+import com.maccasoft.propeller.model.ConstantSetEnumNode;
+import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.ErrorNode;
+import com.maccasoft.propeller.model.ExpressionNode;
+import com.maccasoft.propeller.model.LocalVariableNode;
+import com.maccasoft.propeller.model.MethodNode;
+import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.ObjectNode;
+import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.ParameterNode;
+import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.VariableNode;
+import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 
 public class Spin2Parser {
 
-    static Set<String> instructions = new HashSet<String>(Arrays.asList(new String[] {
+    public static Set<String> instructions = new HashSet<String>(Arrays.asList(new String[] {
         "ORG", "ORGH", "ORGF", "FIT",
         "BYTE", "WORD", "LONG", "RES", "FILE",
         "ASMCLK",
@@ -55,7 +71,7 @@ public class Spin2Parser {
         "JMP", "CALL", "CALLA", "CALLB", "CALLD", "LOC", "AUGS", "AUGD",
     }));
 
-    static Set<String> conditions = new HashSet<String>(Arrays.asList(new String[] {
+    public static Set<String> conditions = new HashSet<String>(Arrays.asList(new String[] {
         "_RET_",
         "IF_NC_AND_NZ", "IF_NZ_AND_NC", "IF_GT", "IF_A", "IF_00", "IF_NC_AND_Z", "IF_Z_AND_NC", "IF_01", "IF_NC", "IF_GE", "IF_AE",
         "IF_0X", "IF_C_AND_NZ", "IF_NZ_AND_C", "IF_10", "IF_NZ", "IF_NE", "IF_X0", "IF_C_NE_Z", "IF_Z_NE_C", "IF_DIFF",
@@ -64,132 +80,25 @@ public class Spin2Parser {
         "IF_NZ_OR_C", "IF_NOT_01", "IF_C_OR_Z", "IF_Z_OR_C", "IF_LE", "IF_BE", "IF_NOT_00",
     }));
 
-    static Set<String> modifiers = new HashSet<String>(Arrays.asList(new String[] {
+    public static Set<String> modifiers = new HashSet<String>(Arrays.asList(new String[] {
         "WC", "WZ", "WCZ",
         "ANDC", "ANDZ", "ORC", "ORZ", "XORC", "XORZ",
     }));
 
-    static Set<String> types = new HashSet<String>(Arrays.asList(new String[] {
+    public static Set<String> types = new HashSet<String>(Arrays.asList(new String[] {
         "LONG", "WORD", "BYTE",
     }));
 
     final Spin2TokenStream stream;
 
-    public class Node {
-
-        final Node parent;
-        final List<Token> tokens = new ArrayList<Token>();
-        final List<Node> childs = new ArrayList<Node>();
-
-        Node() {
-            this.parent = null;
-        }
-
-        public Node(Node parent) {
-            this.parent = parent;
-            this.parent.childs.add(this);
-        }
-
-        public void accept(Spin2ParserVisitor visitor) {
-            for (Node child : childs) {
-                child.accept(visitor);
-            }
-        }
-
-        void addToken(Token token) {
-            tokens.add(token);
-            if (parent != null) {
-                parent.addToken(token);
-            }
-        }
-
-        void addAllTokens(Collection<Token> list) {
-            tokens.addAll(list);
-            if (parent != null) {
-                parent.addAllTokens(list);
-            }
-        }
-
-        public Token getStartToken() {
-            return tokens.get(0);
-        }
-
-        public Token getStopToken() {
-            return tokens.get(tokens.size() - 1);
-        }
-
-        public List<Token> getTokens() {
-            return tokens;
-        }
-
-        public Token getToken(int index) {
-            return tokens.get(index);
-        }
-
-        public Node getParent() {
-            return parent;
-        }
-
-        public List<Node> getChilds() {
-            return childs;
-        }
-
-        public int getStartIndex() {
-            return tokens.size() != 0 ? tokens.get(0).start : -1;
-        }
-
-        public int getStopIndex() {
-            return tokens.size() != 0 ? tokens.get(tokens.size() - 1).stop : -1;
-        }
-
-        public String getText() {
-            StringBuilder sb = new StringBuilder();
-            for (Token token : tokens) {
-                sb.append(token.getText());
-            }
-            return sb.toString();
-        }
-
-        @Override
-        public String toString() {
-            return getText();
-        }
-
-    }
-
-    public class ErrorNode extends Node {
-
-        String description;
-
-        public ErrorNode(Node parent) {
-            super(parent);
-            this.description = "Syntax error";
-        }
-
-        public ErrorNode(Node parent, String description) {
-            super(parent);
-            this.description = description;
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitError(this);
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-    }
-
-    Node root;
+    Spin2Model root;
 
     public Spin2Parser(Spin2TokenStream stream) {
         this.stream = stream;
     }
 
-    public Node parse() {
-        root = new Node();
+    public Spin2Model parse() {
+        root = new Spin2Model();
 
         while (true) {
             Token token = stream.nextToken();
@@ -209,6 +118,9 @@ public class Spin2Parser {
     }
 
     boolean parseSection(Token token) {
+        if (token.type == Spin2TokenStream.EOF) {
+            return false;
+        }
         if ("VAR".equalsIgnoreCase(token.getText())) {
             parseVar(token);
             return true;
@@ -238,135 +150,6 @@ public class Spin2Parser {
         return false;
     }
 
-    public class ExpressionNode extends Node {
-
-        public ExpressionNode() {
-
-        }
-
-        public ExpressionNode(Node parent) {
-            super(parent);
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitExpression(this);
-            super.accept(visitor);
-        }
-
-    }
-
-    public class ConstantsNode extends Node {
-
-        public ConstantsNode(Node parent) {
-            super(parent);
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitConstants(this);
-            super.accept(visitor);
-        }
-
-    }
-
-    public class ConstantSetEnumNode extends Node {
-
-        ExpressionNode start;
-        ExpressionNode step;
-
-        public ConstantSetEnumNode(Node parent, List<Token> tokens) {
-            super(parent);
-            this.start = new ExpressionNode(this);
-
-            int i = 1;
-            while (i < tokens.size()) {
-                Token token = tokens.get(i++);
-                if ("[".equals(token.getText())) {
-                    break;
-                }
-                this.start.addToken(token);
-            }
-            if (i < tokens.size()) {
-                this.step = new ExpressionNode(this);
-                this.step.addAllTokens(tokens.subList(i, tokens.size() - 1));
-            }
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitConstantSetEnum(this);
-            super.accept(visitor);
-        }
-
-    }
-
-    public class ConstantAssignEnumNode extends Node {
-
-        Node identifier;
-        ExpressionNode multiplier;
-
-        public ConstantAssignEnumNode(Node parent, List<Token> tokens) {
-            super(parent);
-
-            int i = 0;
-            this.identifier = new Node(this);
-            this.identifier.addToken(tokens.get(i++));
-
-            if (i < tokens.size() && "[".equals(tokens.get(i).getText())) {
-                this.multiplier = new ExpressionNode(this);
-                this.multiplier.addAllTokens(tokens.subList(i + 1, tokens.size() - 1));
-            }
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitConstantAssignEnum(this);
-            super.accept(visitor);
-        }
-
-        public Node getIdentifier() {
-            return identifier;
-        }
-
-        public ExpressionNode getMultiplier() {
-            return multiplier;
-        }
-
-    }
-
-    public class ConstantAssignNode extends Node {
-
-        Node identifier;
-        ExpressionNode expression;
-
-        public ConstantAssignNode(Node parent, List<Token> childs) {
-            super(parent);
-            this.identifier = new Node(this);
-            this.identifier.addToken(childs.get(0));
-            if (this.parent != null) {
-                this.parent.addToken(childs.get(1));
-            }
-            this.expression = new ExpressionNode(this);
-            this.expression.addAllTokens(childs.subList(2, childs.size()));
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitConstantAssign(this);
-            super.accept(visitor);
-        }
-
-        public Node getIdentifier() {
-            return identifier;
-        }
-
-        public ExpressionNode getExpression() {
-            return expression;
-        }
-
-    }
-
     void parseConstants(ConstantsNode parent, Token token) {
         List<Token> list = new ArrayList<Token>();
 
@@ -380,7 +163,7 @@ public class Spin2Parser {
                     state = 1;
                     // fall-through
                 case 1:
-                    if (",".equals(token.getText()) || token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
+                    if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF || ",".equals(token.getText())) {
                         Node child = null;
 
                         if (list.size() == 1) {
@@ -426,70 +209,6 @@ public class Spin2Parser {
         }
     }
 
-    class VariablesNode extends Node {
-
-        public VariablesNode(Node parent) {
-            super(parent);
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitVariables(this);
-            super.accept(visitor);
-        }
-
-    }
-
-    class VariableNode extends Node {
-
-        Node type;
-        Node identifier;
-        ExpressionNode size;
-
-        public VariableNode(Node parent, List<Token> tokens) {
-            super(parent);
-
-            int i = 0;
-            if (types.contains(tokens.get(i).getText().toUpperCase())) {
-                this.type = new Node(this);
-                this.type.addToken(tokens.get(i));
-                i++;
-            }
-
-            if (i < tokens.size()) {
-                this.identifier = new Node(this);
-                this.identifier.addToken(tokens.get(i++));
-            }
-
-            if (i < tokens.size() && "[".equals(tokens.get(i).getText())) {
-                parent.addToken(tokens.get(i));
-                this.size = new ExpressionNode(this);
-                this.size.addAllTokens(tokens.subList(i + 1, tokens.size() - 1));
-                parent.addToken(tokens.get(tokens.size() - 1));
-            }
-
-            this.tokens.addAll(tokens);
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitVariable(this);
-        }
-
-        public Node getType() {
-            return type;
-        }
-
-        public Node getIdentifier() {
-            return identifier;
-        }
-
-        public ExpressionNode getSize() {
-            return size;
-        }
-
-    }
-
     void parseVar(Token start) {
         List<Token> list = new ArrayList<Token>();
 
@@ -525,28 +244,6 @@ public class Spin2Parser {
                     break;
             }
         }
-    }
-
-    public class ObjectsNode extends Node {
-
-        public ObjectsNode(Node parent) {
-            super(parent);
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitObjects(this);
-            super.accept(visitor);
-        }
-
-    }
-
-    public class ObjectNode extends Node {
-
-        public ObjectNode(Node parent) {
-            super(parent);
-        }
-
     }
 
     void parseObj(Token start) {
@@ -598,96 +295,6 @@ public class Spin2Parser {
                     break;
             }
         }
-    }
-
-    public class MethodNode extends Node {
-
-        Node type;
-        Node name;
-        List<Node> parameters = new ArrayList<Node>();
-        List<Node> returnVariables = new ArrayList<Node>();
-        List<LocalVariableNode> localVariables = new ArrayList<LocalVariableNode>();
-
-        public MethodNode(Node parent) {
-            super(parent);
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitMethod(this);
-            super.accept(visitor);
-        }
-
-        public Node getType() {
-            return type;
-        }
-
-        public Node getName() {
-            return name;
-        }
-
-        public List<Node> getParameters() {
-            return parameters;
-        }
-
-        public Node getParameter(int index) {
-            return parameters.get(index);
-        }
-
-        public List<Node> getReturnVariables() {
-            return returnVariables;
-        }
-
-        public Node getReturnVariable(int index) {
-            return returnVariables.get(index);
-        }
-
-        public List<LocalVariableNode> getLocalVariables() {
-            return localVariables;
-        }
-
-        public LocalVariableNode getLocalVariable(int index) {
-            return localVariables.get(index);
-        }
-
-    }
-
-    class LocalVariableNode extends Node {
-
-        Node type;
-        Node identifier;
-        ExpressionNode size;
-
-        public LocalVariableNode(Node parent) {
-            super(parent);
-        }
-
-        public Node getType() {
-            return type;
-        }
-
-        public Node getIdentifier() {
-            return identifier;
-        }
-
-        public ExpressionNode getSize() {
-            return size;
-        }
-
-    }
-
-    class StatementNode extends Node {
-
-        public StatementNode(Node parent) {
-            super(parent);
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitStatement(this);
-            super.accept(visitor);
-        }
-
     }
 
     void parseMethod(Token start) {
@@ -935,14 +542,8 @@ public class Spin2Parser {
                 }
             }
             if (",".equals(token.getText())) {
-                if (node.getParent() == parent) {
-                    List<Token> list = new ArrayList<Token>(node.tokens.subList(1, node.tokens.size()));
-                    node.tokens.removeAll(list);
-                    node = new Node(node);
-                    node.tokens.addAll(list);
-                }
-                node.getParent().addToken(token);
-                node = new Node(node.getParent());
+                parent.addToken(token);
+                node = new Node(parent);
                 continue;
             }
             else if (")".equals(token.getText())) {
@@ -968,54 +569,6 @@ public class Spin2Parser {
                 return;
             }
         }
-    }
-
-    public class DataNode extends Node {
-
-        public DataNode(Node parent) {
-            super(parent);
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitData(this);
-            super.accept(visitor);
-        }
-
-    }
-
-    public class DataLineNode extends Node {
-
-        public Node label;
-        public Node condition;
-        public Node instruction;
-        public List<ParameterNode> parameters = new ArrayList<ParameterNode>();
-        public Node modifier;
-
-        public DataLineNode(Node parent) {
-            super(parent);
-        }
-
-        @Override
-        public void accept(Spin2ParserVisitor visitor) {
-            visitor.visitDataLine(this);
-            super.accept(visitor);
-        }
-
-    }
-
-    public class ParameterNode extends Node {
-
-        public ExpressionNode count;
-
-        public ParameterNode(Node parent) {
-            super(parent);
-        }
-
-        public ExpressionNode getCount() {
-            return count;
-        }
-
     }
 
     void parseDat(Token start) {
@@ -1226,10 +779,10 @@ public class Spin2Parser {
         }
 
         System.out.print(node.getClass().getSimpleName());
-        for (Token token : node.tokens) {
-            System.out.print(" [" + token.getText().replaceAll("\n", "\\n") + "]");
-        }
-        System.out.println();
+        //for (Token token : node.tokens) {
+        //    System.out.print(" [" + token.getText().replaceAll("\n", "\\n") + "]");
+        //}
+        System.out.println(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
 
         for (Node child : node.childs) {
             print(child, indent + 1);
