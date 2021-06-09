@@ -566,6 +566,7 @@ public class Spin2Parser {
                 return;
             }
             if ("END".equalsIgnoreCase(token.getText())) {
+                parent.addToken(token);
                 return;
             }
         }
@@ -596,7 +597,7 @@ public class Spin2Parser {
 
     void parseDatLine(Node node, Token token) {
         int state = 0;
-        DataLineNode parent = null;
+        DataLineNode parent = new DataLineNode(node);
         ParameterNode parameter = null;
         Node child = null;
 
@@ -609,7 +610,6 @@ public class Spin2Parser {
             }
             switch (state) {
                 case 0:
-                    parent = new DataLineNode(node);
                     state = 1;
                     // fall-through
                 case 1:
@@ -788,4 +788,5 @@ public class Spin2Parser {
             print(child, indent + 1);
         }
     }
+
 }

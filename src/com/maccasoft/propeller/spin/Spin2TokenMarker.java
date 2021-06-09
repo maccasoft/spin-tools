@@ -10,7 +10,9 @@
 
 package com.maccasoft.propeller.spin;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -927,11 +929,50 @@ public class Spin2TokenMarker {
         if (root == null) {
             return null;
         }
-        for (Node node : root.getChilds()) {
-            Node result = getContextAt(node, index);
-            if (result != null) {
-                return result;
+
+        List<Node> allNodes = new ArrayList<Node>();
+        root.accept(new Spin2ModelVisitor() {
+
+            @Override
+            public void visitConstants(ConstantsNode node) {
+                allNodes.add(node);
             }
+
+            @Override
+            public void visitVariables(VariablesNode node) {
+                allNodes.add(node);
+            }
+
+            @Override
+            public void visitObjects(ObjectsNode node) {
+                allNodes.add(node);
+            }
+
+            @Override
+            public void visitStatement(StatementNode node) {
+                allNodes.add(node);
+            }
+
+            @Override
+            public void visitData(DataNode node) {
+                allNodes.add(node);
+            }
+
+            @Override
+            public void visitDataLine(DataLineNode node) {
+                allNodes.add(node);
+            }
+
+        });
+        for (int i = 0; i < allNodes.size() - 1; i++) {
+            int nodeStart = allNodes.get(i).getStartIndex();
+            int nodeStop = allNodes.get(i + 1).getStartIndex();
+            if (index >= nodeStart && index < nodeStop) {
+                return allNodes.get(i);
+            }
+        }
+        if (allNodes.size() != 0) {
+            return allNodes.get(allNodes.size() - 1);
         }
         return null;
     }

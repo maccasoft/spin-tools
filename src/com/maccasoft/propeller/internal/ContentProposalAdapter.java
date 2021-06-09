@@ -425,7 +425,7 @@ public class ContentProposalAdapter {
              */
             @Override
             protected Control createDialogArea(Composite parent) {
-                text = new StyledText(parent, SWT.MULTI | SWT.READ_ONLY | SWT.WRAP | SWT.NO_FOCUS);
+                text = new StyledText(parent, SWT.MULTI | SWT.READ_ONLY | SWT.WRAP | SWT.NO_FOCUS | SWT.V_SCROLL);
 
                 // Use the compact margins employed by PopupDialog.
                 GridData gd = new GridData(GridData.BEGINNING | GridData.FILL_BOTH);
@@ -905,7 +905,7 @@ public class ContentProposalAdapter {
                         IContentProposal p = getSelectedProposal();
                         if (p != null) {
                             String description = p.getDescription();
-                            if (description != null) {
+                            if (description != null && !"".equals(description)) {
                                 if (infoPopup == null) {
                                     infoPopup = new InfoPopupDialog(getShell());
                                     infoPopup.open();

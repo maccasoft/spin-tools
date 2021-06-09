@@ -10,67 +10,119 @@
 
 package com.maccasoft.propeller.spin;
 
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Enumeration;
+import java.io.InputStream;
 import java.util.List;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.eclipse.jface.fieldassist.ContentProposal;
+import org.eclipse.jface.fieldassist.IContentProposal;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 public class Spin2InstructionHelp {
 
-    private static final String BUNDLE_NAME = Spin2InstructionHelp.class.getName();
-    private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
-
-    private static final int MAX_RECURSION = 5;
-    private static Pattern pattern = Pattern.compile("\\$\\{([\\w\\.\\-]+)\\}");
-
-    public static String getString(String key) {
+    public static String getString(String context, String key) {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try {
-            return translateMessage(key, MAX_RECURSION);
-        } catch (MissingResourceException e) {
-            return null;
-        }
-    }
+            InputStream is = Spin2InstructionHelp.class.getResourceAsStream("Spin2Instructions.xml");
+            try {
+                DocumentBuilder db = dbf.newDocumentBuilder();
+                Document doc = db.parse(is);
 
-    private static String translateMessage(String key, int iteration) {
-        String message = RESOURCE_BUNDLE.getString(key);
-        if (message != null) {
-            StringBuffer sb = new StringBuffer();
-            Matcher matcher = pattern.matcher(message);
-            while (matcher.find() && iteration > 0) {
-                // the magic
-                matcher.appendReplacement(sb, translateMessage(matcher.group(1), iteration - 1));
+                NodeList rootNodeList = doc.getChildNodes().item(0).getChildNodes();
+                for (int i = 0; i < rootNodeList.getLength(); i++) {
+                    if (!(rootNodeList.item(i) instanceof Element)) {
+                        continue;
+                    }
+                    Element node = (Element) rootNodeList.item(i);
+                    if ("entry".equals(node.getTagName())) {
+                        if (key.equalsIgnoreCase(node.getAttribute("name"))) {
+                            return node.getTextContent();
+                        }
+                    }
+                    else if ("section".equals(node.getTagName())) {
+                        if (context != null && node.getAttribute("class").contains(context)) {
+                            NodeList childList = node.getChildNodes();
+                            for (int ii = 0; ii < childList.getLength(); ii++) {
+                                if (!(childList.item(ii) instanceof Element)) {
+                                    continue;
+                                }
+                                Element element = (Element) childList.item(ii);
+                                if ("entry".equals(element.getTagName())) {
+                                    if (key.equalsIgnoreCase(element.getAttribute("name"))) {
+                                        return element.getTextContent();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } finally {
+                is.close();
             }
-            matcher.appendTail(sb);
-            return sb.toString();
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return null;
     }
 
-    public static String[] getKeys() {
-        List<String> l = new ArrayList<String>();
-        Enumeration<String> e = RESOURCE_BUNDLE.getKeys();
-        while (e.hasMoreElements()) {
-            l.add(e.nextElement());
-        }
-        return l.toArray(new String[l.size()]);
-    }
-
-    public static void main(String[] args) {
+    public static void fillProposals(String context, String token, List<IContentProposal> proposals) {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try {
-            PrintStream out = new PrintStream("/home/marco/workspace/spin-tools/src/com/maccasoft/propeller/spin/Spin2Instructions.xml");
-            out.println("<content>");
-            for (String key : getKeys()) {
-                out.println("    <entry name=\"" + key + "\"><![CDATA[");
-                out.println(getString(key));
-                out.println("    ]]></entry>");
+            InputStream is = Spin2InstructionHelp.class.getResourceAsStream("Spin2Instructions.xml");
+            try {
+                DocumentBuilder db = dbf.newDocumentBuilder();
+                Document doc = db.parse(is);
+
+                NodeList rootNodeList = doc.getChildNodes().item(0).getChildNodes();
+                for (int i = 0; i < rootNodeList.getLength(); i++) {
+                    if (!(rootNodeList.item(i) instanceof Element)) {
+                        continue;
+                    }
+                    Element node = (Element) rootNodeList.item(i);
+                    if ("entry".equals(node.getTagName())) {
+                        String key = node.getAttribute("name");
+                        if (key.toUpperCase().startsWith(token)) {
+                            String insert = node.getAttribute("insert");
+                            if (insert == null || "".equals(insert)) {
+                                insert = key;
+                            }
+                            proposals.add(new ContentProposal(insert, key, node.getTextContent()));
+                        }
+                    }
+                    else if ("section".equals(node.getTagName())) {
+                        if (context != null && node.getAttribute("class").contains(context)) {
+                            NodeList childList = node.getChildNodes();
+                            for (int ii = 0; ii < childList.getLength(); ii++) {
+                                if (!(childList.item(ii) instanceof Element)) {
+                                    continue;
+                                }
+                                Element element = (Element) childList.item(ii);
+                                if ("entry".equals(element.getTagName())) {
+                                    String key = element.getAttribute("name");
+                                    if (key.toUpperCase().startsWith(token)) {
+                                        String insert = element.getAttribute("insert");
+                                        if (insert == null || "".equals(insert)) {
+                                            insert = key;
+                                        }
+                                        proposals.add(new ContentProposal(insert, key, element.getTextContent()));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } finally {
+                is.close();
             }
-            out.println("</content>");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 }

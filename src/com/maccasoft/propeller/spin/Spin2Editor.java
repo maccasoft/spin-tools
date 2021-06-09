@@ -11,6 +11,8 @@
 package com.maccasoft.propeller.spin;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +22,8 @@ import java.util.function.Consumer;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
+import org.eclipse.jface.fieldassist.IContentProposal;
+import org.eclipse.jface.fieldassist.IContentProposalProvider;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CaretEvent;
@@ -68,7 +72,6 @@ import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ContentProposalAdapter;
 import com.maccasoft.propeller.internal.HTMLStyledTextParser;
 import com.maccasoft.propeller.internal.StyledTextContentAdapter;
-import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenId;
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenMarker;
@@ -477,13 +480,7 @@ public class Spin2Editor {
                 }
 
                 if (token != null) {
-                    String text = null;
-                    if (context instanceof DataLineNode) {
-                        text = Spin2PAsmInstructionHelp.getString(token.getText().toLowerCase());
-                    }
-                    else {
-                        text = Spin2InstructionHelp.getString(token.getText().toLowerCase());
-                    }
+                    String text = Spin2InstructionHelp.getString(context.getClass().getSimpleName(), token.getText().toLowerCase());
                     if (text == null) {
                         text = tokenMarker.getMethod(token.getText());
                     }
@@ -547,7 +544,46 @@ public class Spin2Editor {
         ContentProposalAdapter adapter = new ContentProposalAdapter(
             styledText,
             new StyledTextContentAdapter(),
-            new Spin2InstructionContentProposalProvider(),
+            new IContentProposalProvider() {
+
+                @Override
+                public IContentProposal[] getProposals(String contents, int position) {
+                    List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+
+                    String context = null;
+                    Node node = tokenMarker.getContextAt(styledText.getCaretOffset());
+                    if (node != null) {
+                        context = node.getClass().getSimpleName();
+                    }
+
+                    int start = position;
+                    while (start > 0) {
+                        if (contents.charAt(start - 1) != '_' && !Character.isAlphabetic(contents.charAt(start - 1))) {
+                            break;
+                        }
+                        start--;
+                    }
+
+                    String token = contents.substring(start, position).toUpperCase();
+                    if ("".equals(token) || Spin2InstructionHelp.getString(context, token) != null) {
+                        return null;
+                    }
+
+                    Spin2InstructionHelp.fillProposals(context, token, proposals);
+
+                    Collections.sort(proposals, new Comparator<IContentProposal>() {
+
+                        @Override
+                        public int compare(IContentProposal o1, IContentProposal o2) {
+                            return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+                        }
+
+                    });
+
+                    return proposals.toArray(new IContentProposal[proposals.size()]);
+                }
+
+            },
             keyStroke,
             autoActivationCharacters);
         adapter.setPopupSize(new Point(200, 300));

@@ -1,268 +1,633 @@
 <content>
-    <entry name="CON"><![CDATA[
-        <b>CON</b>
-        <p>Constant declarations (CON is the initial/default block type)</p>
-    ]]></entry>
-    <entry name="VAR"><![CDATA[
-        <b>VAR</b>
-        <p>Variable declarations</p>
-    ]]></entry>
-    <entry name="OBJ"><![CDATA[
-        <b>OBJ</b>
-        <p>Child-object instantiations</p>
-    ]]></entry>
-    <entry name="PUB"><![CDATA[
-        <b>PUB</b>
-        <p>Public method for use by the parent object and within this object</p>
-    ]]></entry>
-    <entry name="PRI"><![CDATA[
-        <b>PRI</b>
-        <p>Private method for use within this object</p>
-    ]]></entry>
-    <entry name="DAT"><![CDATA[
-        <b>DAT</b>
-        <p>Data declarations, including PASM code</p>
-    ]]></entry>
+    <entry name="CON"><![CDATA[<b>CON</b><p>Constant declarations (CON is the initial/default block type)</p>]]></entry>
+    <entry name="VAR"><![CDATA[<b>VAR</b><p>Variable declarations</p>]]></entry>
+    <entry name="OBJ"><![CDATA[<b>OBJ</b><p>Child-object instantiations</p>]]></entry>
+    <entry name="PUB"><![CDATA[<b>PUB</b><p>Public method for use by the parent object and within this object</p>]]></entry>
+    <entry name="PRI"><![CDATA[<b>PRI</b><p>Private method for use within this object</p>]]></entry>
+    <entry name="DAT"><![CDATA[<b>DAT</b><p>Data declarations, including PASM code</p>]]></entry>
 
-    <entry name="hubset" insert="hubset(value)"><![CDATA[
-        <b>HUBSET(Value)</b><br/><br/>
-        Execute HUBSET instruction using Value
-    ]]></entry>
-    <entry name="clkset" insert="clkset(newclkmode, newclkfreq)"><![CDATA[
-        <b>CLKSET(NewCLKMODE, NewCLKFREQ)</b><br/><br/>
-        Safely establish new clock settings, updates CLKMODE and CLKFREQ
-    ]]></entry>
-    <entry name="cogspin" insert="cogspin(cognum, method, stkaddr)"><![CDATA[
-        <b>COGSPIN(CogNum, Method({Pars}), StkAddr)</b><br/><br/>
-        Start Spin2 method in a cog, returns cog's ID if used as an expression element, -1 = no cog free
-    ]]></entry>
-    <entry name="coginit" insert="coginit(cognum, pasmaddr, ptravalue)"><![CDATA[
-        <b>COGINIT(CogNum, PASMaddr, PTRAvalue)</b><br/><br/>
-        Start PASM code in a cog, returns cog's ID if used as an expression element, -1 = no cog free
-    ]]></entry>
-    <entry name="cogstop" insert="cogstop(cognum)"><![CDATA[
-        <b>COGSTOP(CogNum)</b><br/><br/>
-        Stop cog CogNum
-    ]]></entry>
-    <entry name="cogid" insert="cogid()"><![CDATA[
-        <b>COGID() : CogNum</b><br/><br/>
-        Get this cog's ID
-    ]]></entry>
-    <entry name="cogchk" insert="cogchk(cognum)"><![CDATA[
-        <b>COGCHK(CogNum) : Running</b><br/><br/>
-        Check if cog CogNum is running, returns -1 if running or 0 if not
-    ]]></entry>
-    <entry name="locknew" insert="locknew()"><![CDATA[
-        <b>LOCKNEW() : LockNum</b><br/><br/>
-        Check out a new LOCK from inventory, LockNum = 0..15 if successful or &lt; 0 if no LOCK available
-    ]]></entry>
-    <entry name="lockret" insert="lockret(locknum)"><![CDATA[
-        <b>LOCKRET(LockNum)</b><br/><br/>
-        Return a certain LOCK to inventory
-    ]]></entry>
-    <entry name="locktry" insert="locktry(locknum)"><![CDATA[
-        <b>LOCKTRY(LockNum) : LockState</b>
-        <p>Try to capture a certain LOCK, LockState = -1 if successful or 0 if another cog has captured the LOCK</p>
-    ]]></entry>
-    <entry name="lockrel" insert="lockrel(locknum)"><![CDATA[
-        <b>LOCKREL(LockNum)</b><br/><br/>
-        Release a certain LOCK
-    ]]></entry>
-    <entry name="lockchk" insert="lockchk(locknum)"><![CDATA[
-        <b>LOCKCHK(LockNum) : LockState</b><br/><br/>
-        Check a certain LOCK's state, LockState[31] = captured, LockState[3:0] = current or last owner cog
-    ]]></entry>
-    <entry name="cogatn" insert="cogatn(cogmask)"><![CDATA[
-        <b>COGATN(CogMask)</b><br/><br/>
-        Strobe ATN input(s) of cog(s) according to 16-bit CogMask
-    ]]></entry>
-    <entry name="pollatn" insert="pollatn()"><![CDATA[
-        <b>POLLATN() : AtnFlag</b><br/><br/>
-        Check if this cog has received an ATN strobe, AtnFlag = -1 if ATN strobed or 0 if not strobed
-    ]]></entry>
-    <entry name="waitatn" insert="waitatn()"><![CDATA[
-        <b>WAITATN()</b><br/><br/>
-        Wait for this cog to receive an ATN strobe
-    ]]></entry>
+    <entry name="addpins"><![CDATA[<b>x ADDPINS y</b><p>Make pinfield, (x & $3F) | (y & $1F) << 6</p>]]></entry>
+    <entry name="CLKFREQ"><![CDATA[<b>CLKFREQ</b><p>Clock frequency value</p>]]></entry>
+    <entry name="_CLKFREQ"><![CDATA[<b>CLKFREQ</b><p>Clock frequency value</p>]]></entry>
+    <entry name="CLKMODE"><![CDATA[<b>CLKMODE</b><p>Clock mode value</p>]]></entry>
+    <entry name="_CLKMODE"><![CDATA[<b>CLKMODE</b><p>Clock mode value</p>]]></entry>
 
-    <entry name="pinw" insert="pinw(pinfield, data)"><![CDATA[
-        <b>PINW | PINWRITE(PinField, Data)</b><br/><br/>Drive PinField pin(s) with Data
-    ]]></entry>
-    <entry name="pinl" insert="pinl(pinfield)"><![CDATA[
-        <b>PINL | PINLOW(PinField)</b><br/><br/>Drive PinField pin(s) low
-    ]]></entry>
-    <entry name="pinh" insert="pinh(pinfield)"><![CDATA[
-        <b>PINH | PINHIGH(PinField)</b><br/><br/>Drive PinField pin(s) high
-    ]]></entry>
-    <entry name="pint" insert="pint(pinfield)"><![CDATA[
-        <b>PINT | PINTOGGLE(PinField)</b><br/><br/>Drive and toggle PinField pin(s)
-    ]]></entry>
-    <entry name="pinf" insert="pinf(pinfield)"><![CDATA[
-        <b>PINF | PINFLOAT(PinField)</b><br/><br/>Float PinField pin(s)
-    ]]></entry>
-    <entry name="pinr" insert="pinr(pinfield)"><![CDATA[
-        <b>PINR | PINREAD(PinField) : PinStates</b><br/><br/>Read PinField pin(s)
-    ]]></entry>
-    <entry name="pinstart" insert="pinstart(pinfield, mode, xval, yval)"><![CDATA[
-        <b>PINSTART(PinField, Mode, Xval, Yval)</b><br/><br/>Start PinField smart pin(s): DIR=0, then WRPIN=Mode, WXPIN=Xval, WYPIN=Yval, then DIR=1
-    ]]></entry>
-    <entry name="pinclear" insert="pinclear(pinfield)"><![CDATA[
-        <b>PINCLEAR(PinField)</b><br/><br/>Clear PinField smart pin(s): DIR=0, then WRPIN=0
-    ]]></entry>
-    <entry name="wrpin" insert="wrpin(pinfield, data)"><![CDATA[
-        <b>WRPIN(PinField, Data)</b><br/><br/>Write 'mode' register(s) of PinField smart pin(s) with Data
-    ]]></entry>
-    <entry name="wxpin" insert="wxpin(pinfield, data)"><![CDATA[
-        <b>WXPIN(PinField, Data)</b><br/><br/>Write 'X' register(s) of PinField smart pin(s) with Data
-    ]]></entry>
-    <entry name="wypin" insert="wypin(pinfield, data)"><![CDATA[
-        <b>WYPIN(PinField, Data)</b><br/><br/>Write 'Y' register(s) of PinField smart pin(s) with Data
-    ]]></entry>
-    <entry name="akpin" insert="akpin(pinfield)"><![CDATA[
-        <b>AKPIN(PinField)</b><br/><br/>Acknowledge PinField smart pin(s)
-    ]]></entry>
-    <entry name="rdpin" insert="rdpin(pin)"><![CDATA[
-        <b>RDPIN(Pin) : Zval</b><br/><br/>Read Pin smart pin and acknowledge, Zval[31] = C flag from RDPIN, other bits are RDPIN data
-    ]]></entry>
-    <entry name="rqpin" insert="rqpin(pin)"><![CDATA[
-        <b>RQPIN(Pin) : Zval</b><br/><br/>Read Pin smart pin without acknowledge, Zval[31] = C flag from RQPIN, other bits are RQPIN data
-    ]]></entry>
+    <section class="StatementNode">
+        <entry name="abort"></entry>
+        <entry name="send"></entry>
+        <entry name="recv"></entry>
+        <entry name="if"></entry>
+        <entry name="ifnot"></entry>
+        <entry name="elseif"></entry>
+        <entry name="elseifnot"></entry>
+        <entry name="else"></entry>
+        <entry name="case"></entry>
+        <entry name="case_fast"></entry>
+        <entry name="other"></entry>
+        <entry name="repeat"><![CDATA[<b>REPEAT</b><p>All looping is achieved through REPEAT constructs, which have several forms:</p>
+<b>REPEAT</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
 
-    <entry name="pinwrite" insert="pinwrite(pinfield, data)"><![CDATA[
-        <b>PINW | PINWRITE(PinField, Data)</b><br/><br/>Drive PinField pin(s) with Data
-    ]]></entry>
-    <entry name="pinlow" insert="pinlow(pinfield)"><![CDATA[
-        <b>PINL | PINLOW(PinField)</b><br/><br/>Drive PinField pin(s) low
-    ]]></entry>
-    <entry name="pinhigh" insert="pinhigh(pinfield)"><![CDATA[
-        <b>PINH | PINHIGH(PinField)</b><br/><br/>Drive PinField pin(s) high
-    ]]></entry>
-    <entry name="pintoggle" insert="pintoggle(pinfield)"><![CDATA[
-        <b>PINT | PINTOGGLE(PinField)</b><br/><br/>Drive and toggle PinField pin(s)
-    ]]></entry>
-    <entry name="pinfloat" insert="pinfloat(pinfield)"><![CDATA[
-        <b>PINF | PINFLOAT(PinField)</b><br/><br/>Float PinField pin(s)
-    ]]></entry>
-    <entry name="pinread" insert="pinread(pinfield)"><![CDATA[
-        <b>PINR | PINREAD(PinField) : PinStates</b><br/><br/>Read PinField pin(s)
-    ]]></entry>
+<b>REPEAT &lt;count&gt;</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
 
-    <entry name="getct" insert="getct()"><![CDATA[
-        <b>GETCT() : Count</b><br/><br/>Get 32-bit system counter
-    ]]></entry>
-    <entry name="pollct" insert="pollct(tick)"><![CDATA[
-        <b>POLLCT(Tick) : Past</b><br/><br/>Check if system counter has gone past 'Tick', returns -1 if past or 0 if not past
-    ]]></entry>
-    <entry name="waitct" insert="waitct(tick)"><![CDATA[
-        <b>WAITCT(Tick)</b><br/><br/>Wait for system counter to get past 'Tick'
-    ]]></entry>
-    <entry name="waitus" insert="waitus(microseconds)"><![CDATA[
-        <b>WAITUS(Microseconds)</b><br/><br/>Wait Microseconds, uses CLKFREQ
-    ]]></entry>
-    <entry name="waitms" insert="waitms(milliseconds)"><![CDATA[
-        <b>WAITMS(Milliseconds)</b><br/><br/>Wait Milliseconds, uses CLKFREQ
-    ]]></entry>
-    <entry name="getsec" insert="getsec()"><![CDATA[
-        <b>GETSEC() : Seconds</b><br/><br/>Get seconds since booting, uses 64-bit system counter and CLKFREQ, rolls over every 136 years.
-    ]]></entry>
-    <entry name="getms" insert="getms()"><![CDATA[
-        <b>GETMS() : Milliseconds</b><br/><br/>Get milliseconds since booting, uses 64-bit system counter and CLKFREQ, rolls over every 49.7 days.
-    ]]></entry>
+<b>REPEAT &lt;variable&gt; FROM &lt;first&gt; TO &lt;last&gt;</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
 
-    <entry name="call" insert="call(regorhubaddr)"><![CDATA[
-        <b>CALL(RegOrHubAddr)</b><br/><br/>CALL PASM code at Addr, PASM code should avoid registers $130..$1D7 and LUT
-    ]]></entry>
-    <entry name="regexec" insert="regexec(hubaddr)"><![CDATA[
-        <b>REGEXEC(HubAddr)</b><br/><br/>Load a self-defined chunk of PASM code at HubAddr into registers and CALL it. See REGEXEC description.
-    ]]></entry>
-    <entry name="regload" insert="regload(hubaddr)"><![CDATA[
-        <b>REGLOAD(HubAddr)</b><br/><br/>Load a self-defined chunk of PASM code or data at HubAddr into registers. See REGLOAD description.
-    ]]></entry>
+<b>REPEAT WHILE &lt;condition&gt;</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
 
-    <entry name="rotxy" insert="rotxy(x, y, angle32bit)"><![CDATA[
-        <b>ROTXY(x, y, angle32bit) : rotx, roty</b><br/><br/>Rotate (x,y) by angle32bit and return rotated (x,y)
-    ]]></entry>
-    <entry name="polxy" insert="polxy(length, angle32bit)"><![CDATA[
-        <b>POLXY(length, angle32bit) : x, y</b><br/><br/>Convert (length,angle32bit) to (x,y)
-    ]]></entry>
-    <entry name="xypol" insert="xypol(x, y)"><![CDATA[
-        <b>XYPOL(x, y) : length, angle32bit</b><br/><br/>Convert (x,y) to (length,angle32bit)
-    ]]></entry>
-    <entry name="qsin" insert="qsin(length, angle, twopi)"><![CDATA[
-        <b>QSIN(length, angle, twopi) : y</b><br/><br/>Rotate (length,0) by (angle / twopi) * 2Pi and return y. Use 0 for twopi = $1_0000_0000. Twopi is unsigned.
-    ]]></entry>
-    <entry name="qcos" insert="qcos(length, angle, twopi)"><![CDATA[
-        <b>QCOS(length, angle, twopi) : x</b><br/><br/>Rotate (length,0) by (angle / twopi) * 2Pi and return x. Use 0 for twopi = $1_0000_0000. Twopi is unsigned.
-    ]]></entry>
-    <entry name="muldiv64" insert="muldiv64(mult1, mult2, divisor)"><![CDATA[
-        <b>MULDIV64(mult1, mult2, divisor) : quotient</b><br/><br/>Divide the 64-bit product of 'mult1' and 'mult2' by 'divisor', return quotient (unsigned operation)
-    ]]></entry>
-    <entry name="getrnd" insert="getrnd()"><![CDATA[
-        <b>GETRND() : Rnd</b><br/><br/>Get random long (from xoroshiro128** PRNG, seeded on boot with thermal noise from ADC)
-    ]]></entry>
+<b>REPEAT UNTIL &lt;condition&gt;</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
 
-    <entry name="getregs" insert="getregs(hubaddr, cogaddr, count)"><![CDATA[
-        <b>GETREGS(HubAddr, CogAddr, Count)</b><br/><br/>Move Count registers at CogAddr to longs at HubAddr
-    ]]></entry>
-    <entry name="setregs" insert="setregs(hubaddr, cogaddr, count)"><![CDATA[
-        <b>SETREGS(HubAddr, CogAddr, Count)</b><br/><br/>Move Count longs at HubAddr to registers at CogAddr
-    ]]></entry>
-    <entry name="bytemove" insert="bytemove(dest, source, count)"><![CDATA[
-        <b>BYTEMOVE(Dest, Source, Count)</b><br/><br/>Move Count bytes from Source to Dest
-    ]]></entry>
-    <entry name="wordmove" insert="wordmove(dest, source, count)"><![CDATA[
-        <b>WORDMOVE(Dest, Source, Count)</b><br/><br/>Move Count words from Source to Dest
-    ]]></entry>
-    <entry name="longmove" insert="longmove(dest, source, count)"><![CDATA[
-        <b>LONGMOVE(Dest, Source, Count)</b><br/><br/>Move Count longs from Source to Dest
-    ]]></entry>
-    <entry name="bytefill" insert="bytefill(dest, value, count)"><![CDATA[
-        <b>BYTEFILL(Dest, Value, Count)</b><br/><br/>Fill Count bytes at Dest with Value
-    ]]></entry>
-    <entry name="wordfill" insert="wordfill(dest, value, count)"><![CDATA[
-        <b>WORDFILL(Dest, Value, Count)</b><br/><br/>Fill Count words at Dest with Value
-    ]]></entry>
-    <entry name="longfill" insert="longfill(dest, value, count)"><![CDATA[
-        <b>LONGFILL(Dest, Value, Count)</b><br/><br/>Fill Count longs at Dest with Value
-    ]]></entry>
+<b>REPEAT</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/>
+<b>WHILE &lt;condition&gt;</b><br/><br/>
 
-    <entry name="strsize" insert="strsize(addr)"><![CDATA[
-        <b>STRSIZE(Addr) : Size</b><br/><br/>Count bytes in zero-terminated string at Addr, return string size, not including zero terminator
-    ]]></entry>
-    <entry name="strcomp" insert="strcomp(addra, addrb)"><![CDATA[
-        <b>STRCOMP(AddrA, AddrB) : Match</b><br/><br/>Compare zero-terminated strings at AddrA and AddrB, return -1 if match or 0 if mismatch
-    ]]></entry>
-    <entry name="string" insert="string(&quot;text&quot;,9)"><![CDATA[
-        <b>STRING("Text",9) : StringAddress</b><br/><br/>Compose a zero-terminated string (quoted characters and values 1..255 allowed), return address of string
-    ]]></entry>
+<b>REPEAT</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/>
+<b>UNTIL &lt;condition&gt;</b><br/><br/>
+]]></entry>
+        <entry name="from"></entry>
+        <entry name="to"></entry>
+        <entry name="step"></entry>
+        <entry name="while"></entry>
+        <entry name="until"></entry>
+        <entry name="next"></entry>
+        <entry name="quit"></entry>
+        <entry name="org"></entry>
+        <entry name="end"></entry>
 
-    <entry name="lookup" insert="lookup(index: v1, v2..v3, etc)"><![CDATA[
-        <b>LOOKUP(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 1-based index, return value (0 if index out of range)
-    ]]></entry>
-    <entry name="lookupz" insert="lookupz(index: v1, v2..v3, etc)"><![CDATA[
-        <b>LOOKUPZ(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 0-based index, return value (0 if index out of range)
-    ]]></entry>
-    <entry name="lookdown" insert="lookdown(value: v1, v2..v3, etc)"><![CDATA[
-        <b>LOOKDOWN(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 1-based index of matching value (values and ranges allowed), return index (0 if no match)
-    ]]></entry>
-    <entry name="lookdownz" insert="lookdownz(value: v1, v2..v3, etc)"><![CDATA[
-        <b>LOOKDOWNZ(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 0-based index of matching value (values and ranges allowed), return index (0 if no match)
-    ]]></entry>
+        <entry name="debug"></entry>
 
-    <entry name="addpins"><![CDATA[
-        <b>x ADDPINS y</b><p>Make pinfield, (x & $3F) | (y & $1F) << 6</p>
-    ]]></entry>
+        <entry name="hubset" insert="hubset(value)"><![CDATA[<b>HUBSET(Value)</b><br/><br/>Execute HUBSET instruction using Value]]></entry>
+        <entry name="clkset" insert="clkset(newclkmode, newclkfreq)"><![CDATA[<b>CLKSET(NewCLKMODE, NewCLKFREQ)</b><br/><br/>Safely establish new clock settings, updates CLKMODE and CLKFREQ]]></entry>
+        <entry name="cogspin" insert="cogspin(cognum, method, stkaddr)"><![CDATA[<b>COGSPIN(CogNum, Method({Pars}), StkAddr)</b><br/><br/>Start Spin2 method in a cog, returns cog's ID if used as an expression element, -1 = no cog free]]></entry>
+        <entry name="coginit" insert="coginit(cognum, pasmaddr, ptravalue)"><![CDATA[<b>COGINIT(CogNum, PASMaddr, PTRAvalue)</b><br/><br/>Start PASM code in a cog, returns cog's ID if used as an expression element, -1 = no cog free]]></entry>
+        <entry name="cogstop" insert="cogstop(cognum)"><![CDATA[<b>COGSTOP(CogNum)</b><br/><br/>Stop cog CogNum]]></entry>
+        <entry name="cogid" insert="cogid()"><![CDATA[<b>COGID() : CogNum</b><br/><br/>Get this cog's ID]]></entry>
+        <entry name="cogchk" insert="cogchk(cognum)"><![CDATA[<b>COGCHK(CogNum) : Running</b><br/><br/>Check if cog CogNum is running, returns -1 if running or 0 if not]]></entry>
+        <entry name="locknew" insert="locknew()"><![CDATA[<b>LOCKNEW() : LockNum</b><br/><br/>Check out a new LOCK from inventory, LockNum = 0..15 if successful or &lt; 0 if no LOCK available]]></entry>
+        <entry name="lockret" insert="lockret(locknum)"><![CDATA[<b>LOCKRET(LockNum)</b><br/><br/>Return a certain LOCK to inventory]]></entry>
+        <entry name="locktry" insert="locktry(locknum)"><![CDATA[<b>LOCKTRY(LockNum) : LockState</b><p>Try to capture a certain LOCK, LockState = -1 if successful or 0 if another cog has captured the LOCK</p>]]></entry>
+        <entry name="lockrel" insert="lockrel(locknum)"><![CDATA[<b>LOCKREL(LockNum)</b><br/><br/>Release a certain LOCK]]></entry>
+        <entry name="lockchk" insert="lockchk(locknum)"><![CDATA[<b>LOCKCHK(LockNum) : LockState</b><br/><br/>Check a certain LOCK's state, LockState[31] = captured, LockState[3:0] = current or last owner cog]]></entry>
+        <entry name="cogatn" insert="cogatn(cogmask)"><![CDATA[<b>COGATN(CogMask)</b><br/><br/>Strobe ATN input(s) of cog(s) according to 16-bit CogMask]]></entry>
+        <entry name="pollatn" insert="pollatn()"><![CDATA[<b>POLLATN() : AtnFlag</b><br/><br/>Check if this cog has received an ATN strobe, AtnFlag = -1 if ATN strobed or 0 if not strobed]]></entry>
+        <entry name="waitatn" insert="waitatn()"><![CDATA[<b>WAITATN()</b><br/><br/>Wait for this cog to receive an ATN strobe]]></entry>
 
-    <entry name="CLKFREQ"><![CDATA[
-        <b>CLKFREQ</b><p>Clock frequency value</p>
-    ]]></entry>
-    <entry name="_CLKFREQ"><![CDATA[
-        <b>CLKFREQ</b><p>Clock frequency value</p>
-    ]]></entry>
-    <entry name="CLKMODE"><![CDATA[
-        <b>CLKMODE</b><p>Clock mode value</p>
-    ]]></entry>
-    <entry name="_CLKMODE"><![CDATA[
-        <b>CLKMODE</b><p>Clock mode value</p>
-    ]]></entry>
+        <entry name="pinw" insert="pinw(pinfield, data)"><![CDATA[<b>PINW | PINWRITE(PinField, Data)</b><br/><br/>Drive PinField pin(s) with Data]]></entry>
+        <entry name="pinl" insert="pinl(pinfield)"><![CDATA[<b>PINL | PINLOW(PinField)</b><br/><br/>Drive PinField pin(s) low]]></entry>
+        <entry name="pinh" insert="pinh(pinfield)"><![CDATA[<b>PINH | PINHIGH(PinField)</b><br/><br/>Drive PinField pin(s) high]]></entry>
+        <entry name="pint" insert="pint(pinfield)"><![CDATA[<b>PINT | PINTOGGLE(PinField)</b><br/><br/>Drive and toggle PinField pin(s)]]></entry>
+        <entry name="pinf" insert="pinf(pinfield)"><![CDATA[<b>PINF | PINFLOAT(PinField)</b><br/><br/>Float PinField pin(s)]]></entry>
+        <entry name="pinr" insert="pinr(pinfield)"><![CDATA[<b>PINR | PINREAD(PinField) : PinStates</b><br/><br/>Read PinField pin(s)]]></entry>
+        <entry name="pinstart" insert="pinstart(pinfield, mode, xval, yval)"><![CDATA[<b>PINSTART(PinField, Mode, Xval, Yval)</b><br/><br/>Start PinField smart pin(s): DIR=0, then WRPIN=Mode, WXPIN=Xval, WYPIN=Yval, then DIR=1]]></entry>
+        <entry name="pinclear" insert="pinclear(pinfield)"><![CDATA[<b>PINCLEAR(PinField)</b><br/><br/>Clear PinField smart pin(s): DIR=0, then WRPIN=0]]></entry>
+        <entry name="wrpin" insert="wrpin(pinfield, data)"><![CDATA[<b>WRPIN(PinField, Data)</b><br/><br/>Write 'mode' register(s) of PinField smart pin(s) with Data]]></entry>
+        <entry name="wxpin" insert="wxpin(pinfield, data)"><![CDATA[<b>WXPIN(PinField, Data)</b><br/><br/>Write 'X' register(s) of PinField smart pin(s) with Data]]></entry>
+        <entry name="wypin" insert="wypin(pinfield, data)"><![CDATA[<b>WYPIN(PinField, Data)</b><br/><br/>Write 'Y' register(s) of PinField smart pin(s) with Data]]></entry>
+        <entry name="akpin" insert="akpin(pinfield)"><![CDATA[<b>AKPIN(PinField)</b><br/><br/>Acknowledge PinField smart pin(s)]]></entry>
+        <entry name="rdpin" insert="rdpin(pin)"><![CDATA[<b>RDPIN(Pin) : Zval</b><br/><br/>Read Pin smart pin and acknowledge, Zval[31] = C flag from RDPIN, other bits are RDPIN data]]></entry>
+        <entry name="rqpin" insert="rqpin(pin)"><![CDATA[<b>RQPIN(Pin) : Zval</b><br/><br/>Read Pin smart pin without acknowledge, Zval[31] = C flag from RQPIN, other bits are RQPIN data]]></entry>
+    
+        <entry name="pinwrite" insert="pinwrite(pinfield, data)"><![CDATA[<b>PINW | PINWRITE(PinField, Data)</b><br/><br/>Drive PinField pin(s) with Data]]></entry>
+        <entry name="pinlow" insert="pinlow(pinfield)"><![CDATA[<b>PINL | PINLOW(PinField)</b><br/><br/>Drive PinField pin(s) low]]></entry>
+        <entry name="pinhigh" insert="pinhigh(pinfield)"><![CDATA[<b>PINH | PINHIGH(PinField)</b><br/><br/>Drive PinField pin(s) high]]></entry>
+        <entry name="pintoggle" insert="pintoggle(pinfield)"><![CDATA[<b>PINT | PINTOGGLE(PinField)</b><br/><br/>Drive and toggle PinField pin(s)]]></entry>
+        <entry name="pinfloat" insert="pinfloat(pinfield)"><![CDATA[<b>PINF | PINFLOAT(PinField)</b><br/><br/>Float PinField pin(s)]]></entry>
+        <entry name="pinread" insert="pinread(pinfield)"><![CDATA[<b>PINR | PINREAD(PinField) : PinStates</b><br/><br/>Read PinField pin(s)]]></entry>
+
+        <entry name="getct" insert="getct()"><![CDATA[<b>GETCT() : Count</b><br/><br/>Get 32-bit system counter]]></entry>
+        <entry name="pollct" insert="pollct(tick)"><![CDATA[<b>POLLCT(Tick) : Past</b><br/><br/>Check if system counter has gone past 'Tick', returns -1 if past or 0 if not past]]></entry>
+        <entry name="waitct" insert="waitct(tick)"><![CDATA[<b>WAITCT(Tick)</b><br/><br/>Wait for system counter to get past 'Tick']]></entry>
+        <entry name="waitus" insert="waitus(microseconds)"><![CDATA[<b>WAITUS(Microseconds)</b><br/><br/>Wait Microseconds, uses CLKFREQ]]></entry>
+        <entry name="waitms" insert="waitms(milliseconds)"><![CDATA[<b>WAITMS(Milliseconds)</b><br/><br/>Wait Milliseconds, uses CLKFREQ]]></entry>
+        <entry name="getsec" insert="getsec()"><![CDATA[<b>GETSEC() : Seconds</b><br/><br/>Get seconds since booting, uses 64-bit system counter and CLKFREQ, rolls over every 136 years.]]></entry>
+        <entry name="getms" insert="getms()"><![CDATA[<b>GETMS() : Milliseconds</b><br/><br/>Get milliseconds since booting, uses 64-bit system counter and CLKFREQ, rolls over every 49.7 days.]]></entry>
+    
+        <entry name="call" insert="call(regorhubaddr)"><![CDATA[<b>CALL(RegOrHubAddr)</b><br/><br/>CALL PASM code at Addr, PASM code should avoid registers $130..$1D7 and LUT]]></entry>
+        <entry name="regexec" insert="regexec(hubaddr)"><![CDATA[<b>REGEXEC(HubAddr)</b><br/><br/>Load a self-defined chunk of PASM code at HubAddr into registers and CALL it. See REGEXEC description.]]></entry>
+        <entry name="regload" insert="regload(hubaddr)"><![CDATA[<b>REGLOAD(HubAddr)</b><br/><br/>Load a self-defined chunk of PASM code or data at HubAddr into registers. See REGLOAD description.]]></entry>
+    
+        <entry name="rotxy" insert="rotxy(x, y, angle32bit)"><![CDATA[<b>ROTXY(x, y, angle32bit) : rotx, roty</b><br/><br/>Rotate (x,y) by angle32bit and return rotated (x,y)]]></entry>
+        <entry name="polxy" insert="polxy(length, angle32bit)"><![CDATA[<b>POLXY(length, angle32bit) : x, y</b><br/><br/>Convert (length,angle32bit) to (x,y)]]></entry>
+        <entry name="xypol" insert="xypol(x, y)"><![CDATA[<b>XYPOL(x, y) : length, angle32bit</b><br/><br/>Convert (x,y) to (length,angle32bit)]]></entry>
+        <entry name="qsin" insert="qsin(length, angle, twopi)"><![CDATA[<b>QSIN(length, angle, twopi) : y</b><br/><br/>Rotate (length,0) by (angle / twopi) * 2Pi and return y. Use 0 for twopi = $1_0000_0000. Twopi is unsigned.]]></entry>
+        <entry name="qcos" insert="qcos(length, angle, twopi)"><![CDATA[<b>QCOS(length, angle, twopi) : x</b><br/><br/>Rotate (length,0) by (angle / twopi) * 2Pi and return x. Use 0 for twopi = $1_0000_0000. Twopi is unsigned.]]></entry>
+        <entry name="muldiv64" insert="muldiv64(mult1, mult2, divisor)"><![CDATA[<b>MULDIV64(mult1, mult2, divisor) : quotient</b><br/><br/>Divide the 64-bit product of 'mult1' and 'mult2' by 'divisor', return quotient (unsigned operation)]]></entry>
+        <entry name="getrnd" insert="getrnd()"><![CDATA[<b>GETRND() : Rnd</b><br/><br/>Get random long (from xoroshiro128** PRNG, seeded on boot with thermal noise from ADC)]]></entry>
+    
+        <entry name="getregs" insert="getregs(hubaddr, cogaddr, count)"><![CDATA[<b>GETREGS(HubAddr, CogAddr, Count)</b><br/><br/>Move Count registers at CogAddr to longs at HubAddr]]></entry>
+        <entry name="setregs" insert="setregs(hubaddr, cogaddr, count)"><![CDATA[<b>SETREGS(HubAddr, CogAddr, Count)</b><br/><br/>Move Count longs at HubAddr to registers at CogAddr]]></entry>
+        <entry name="bytemove" insert="bytemove(dest, source, count)"><![CDATA[<b>BYTEMOVE(Dest, Source, Count)</b><br/><br/>Move Count bytes from Source to Dest]]></entry>
+        <entry name="wordmove" insert="wordmove(dest, source, count)"><![CDATA[<b>WORDMOVE(Dest, Source, Count)</b><br/><br/>Move Count words from Source to Dest]]></entry>
+        <entry name="longmove" insert="longmove(dest, source, count)"><![CDATA[<b>LONGMOVE(Dest, Source, Count)</b><br/><br/>Move Count longs from Source to Dest]]></entry>
+        <entry name="bytefill" insert="bytefill(dest, value, count)"><![CDATA[<b>BYTEFILL(Dest, Value, Count)</b><br/><br/>Fill Count bytes at Dest with Value]]></entry>
+        <entry name="wordfill" insert="wordfill(dest, value, count)"><![CDATA[<b>WORDFILL(Dest, Value, Count)</b><br/><br/>Fill Count words at Dest with Value]]></entry>
+        <entry name="longfill" insert="longfill(dest, value, count)"><![CDATA[<b>LONGFILL(Dest, Value, Count)</b><br/><br/>Fill Count longs at Dest with Value]]></entry>
+    
+        <entry name="strsize" insert="strsize(addr)"><![CDATA[<b>STRSIZE(Addr) : Size</b><br/><br/>Count bytes in zero-terminated string at Addr, return string size, not including zero terminator]]></entry>
+        <entry name="strcomp" insert="strcomp(addra, addrb)"><![CDATA[<b>STRCOMP(AddrA, AddrB) : Match</b><br/><br/>Compare zero-terminated strings at AddrA and AddrB, return -1 if match or 0 if mismatch]]></entry>
+        <entry name="string" insert="string(&quot;text&quot;,9)"><![CDATA[<b>STRING("Text",9) : StringAddress</b><br/><br/>Compose a zero-terminated string (quoted characters and values 1..255 allowed), return address of string]]></entry>
+    
+        <entry name="lookup" insert="lookup(index: v1, v2..v3, etc)"><![CDATA[<b>LOOKUP(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 1-based index, return value (0 if index out of range)]]></entry>
+        <entry name="lookupz" insert="lookupz(index: v1, v2..v3, etc)"><![CDATA[<b>LOOKUPZ(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 0-based index, return value (0 if index out of range)]]></entry>
+        <entry name="lookdown" insert="lookdown(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWN(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 1-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
+        <entry name="lookdownz" insert="lookdownz(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWNZ(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 0-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
+    </section>
+
+    <section class="DatNode,DataLineNode">
+        <entry name="nop"><![CDATA[<b>NOP</b><p>No operation.</p>]]></entry>
+        <entry name="ror"><![CDATA[<b>ROR     D,{#}S   {WC/WZ/WCZ}</b><p>Rotate right.           D = [31:0]  of ({D[31:0], D[31:0]}     >> S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[0].  *</p>]]></entry>
+        <entry name="rol"><![CDATA[<b>ROL     D,{#}S   {WC/WZ/WCZ}</b><p>Rotate left.            D = [63:32] of ({D[31:0], D[31:0]}     << S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[31]. *</p>]]></entry>
+        <entry name="shr"><![CDATA[<b>SHR     D,{#}S   {WC/WZ/WCZ}</b><p>Shift right.            D = [31:0]  of ({32'b0, D[31:0]}       >> S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[0].  *</p>]]></entry>
+        <entry name="shl"><![CDATA[<b>SHL     D,{#}S   {WC/WZ/WCZ}</b><p>Shift left.             D = [63:32] of ({D[31:0], 32'b0}       << S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[31]. *</p>]]></entry>
+        <entry name="rcr"><![CDATA[<b>RCR     D,{#}S   {WC/WZ/WCZ}</b><p>Rotate carry right.     D = [31:0]  of ({{32{C}}, D[31:0]}     >> S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[0].  *</p>]]></entry>
+        <entry name="rcl"><![CDATA[<b>RCL     D,{#}S   {WC/WZ/WCZ}</b><p>Rotate carry left.      D = [63:32] of ({D[31:0], {32{C}}}     << S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[31]. *</p>]]></entry>
+        <entry name="sar"><![CDATA[<b>SAR     D,{#}S   {WC/WZ/WCZ}</b><p>Shift arithmetic right. D = [31:0]  of ({{32{D[31]}}, D[31:0]} >> S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[0].  *</p>]]></entry>
+        <entry name="sal"><![CDATA[<b>SAL     D,{#}S   {WC/WZ/WCZ}</b><p>Shift arithmetic left.  D = [63:32] of ({D[31:0], {32{D[0]}}}  << S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[31]. *</p>]]></entry>
+        <entry name="add"><![CDATA[<b>ADD     D,{#}S   {WC/WZ/WCZ}</b><p>Add S into D.                                  D = D + S.        C = carry of (D + S).               *</p>]]></entry>
+        <entry name="addx"><![CDATA[<b>ADDX    D,{#}S   {WC/WZ/WCZ}</b><p>Add (S + C) into D, extended.                  D = D + S + C.    C = carry of (D + S + C).           Z = Z AND (result == 0).</p>]]></entry>
+        <entry name="adds"><![CDATA[<b>ADDS    D,{#}S   {WC/WZ/WCZ}</b><p>Add S into D, signed.                          D = D + S.        C = correct sign of (D + S).        *</p>]]></entry>
+        <entry name="addsx"><![CDATA[<b>ADDSX   D,{#}S   {WC/WZ/WCZ}</b><p>Add (S + C) into D, signed and extended.       D = D + S + C.    C = correct sign of (D + S + C).    Z = Z AND (result == 0).</p>]]></entry>
+        <entry name="sub"><![CDATA[<b>SUB     D,{#}S   {WC/WZ/WCZ}</b><p>Subtract S from D.                             D = D - S.        C = borrow of (D - S).              *</p>]]></entry>
+        <entry name="subx"><![CDATA[<b>SUBX    D,{#}S   {WC/WZ/WCZ}</b><p>Subtract (S + C) from D, extended.             D = D - (S + C).  C = borrow of (D - (S + C)).        Z = Z AND (result == 0).</p>]]></entry>
+        <entry name="subs"><![CDATA[<b>SUBS    D,{#}S   {WC/WZ/WCZ}</b><p>Subtract S from D, signed.                     D = D - S.        C = correct sign of (D - S).        *</p>]]></entry>
+        <entry name="subsx"><![CDATA[<b>SUBSX   D,{#}S   {WC/WZ/WCZ}</b><p>Subtract (S + C) from D, signed and extended.  D = D - (S + C).  C = correct sign of (D - (S + C)).  Z = Z AND (result == 0).</p>]]></entry>
+        <entry name="cmp"><![CDATA[<b>CMP     D,{#}S   {WC/WZ/WCZ}</b><p>Compare D to S.                                                  C = borrow of (D - S).              Z = (D == S).</p>]]></entry>
+        <entry name="cmpx"><![CDATA[<b>CMPX    D,{#}S   {WC/WZ/WCZ}</b><p>Compare D to (S + C), extended.                                  C = borrow of (D - (S + C)).        Z = Z AND (D == S + C).</p>]]></entry>
+        <entry name="cmps"><![CDATA[<b>CMPS    D,{#}S   {WC/WZ/WCZ}</b><p>Compare D to S, signed.                                          C = correct sign of (D - S).        Z = (D == S).</p>]]></entry>
+        <entry name="cmpsx"><![CDATA[<b>CMPSX   D,{#}S   {WC/WZ/WCZ}</b><p>Compare D to (S + C), signed and extended.                       C = correct sign of (D - (S + C)).  Z = Z AND (D == S + C).</p>]]></entry>
+        <entry name="cmpr"><![CDATA[<b>CMPR    D,{#}S   {WC/WZ/WCZ}</b><p>Compare S to D (reverse).                                        C = borrow of (S - D).              Z = (D == S).</p>]]></entry>
+        <entry name="cmpm"><![CDATA[<b>CMPM    D,{#}S   {WC/WZ/WCZ}</b><p>Compare D to S, get MSB of difference into C.                    C = MSB of (D - S).                 Z = (D == S).</p>]]></entry>
+        <entry name="subr"><![CDATA[<b>SUBR    D,{#}S   {WC/WZ/WCZ}</b><p>Subtract D from S (reverse).                   D = S - D.        C = borrow of (S - D).              *</p>]]></entry>
+        <entry name="cmpsub"><![CDATA[<b>CMPSUB  D,{#}S   {WC/WZ/WCZ}</b><p>Compare and subtract S from D if D >= S. If D => S then D = D - S and C = 1, else D same and C = 0.  *</p>]]></entry>
+        <entry name="fge"><![CDATA[<b>FGE     D,{#}S   {WC/WZ/WCZ}</b><p>Force D >= S. If D < S then D = S and C = 1, else D same and C = 0. *</p>]]></entry>
+        <entry name="fle"><![CDATA[<b>FLE     D,{#}S   {WC/WZ/WCZ}</b><p>Force D <= S. If D > S then D = S and C = 1, else D same and C = 0. *</p>]]></entry>
+        <entry name="fges"><![CDATA[<b>FGES    D,{#}S   {WC/WZ/WCZ}</b><p>Force D >= S, signed. If D < S then D = S and C = 1, else D same and C = 0. *</p>]]></entry>
+        <entry name="fles"><![CDATA[<b>FLES    D,{#}S   {WC/WZ/WCZ}</b><p>Force D <= S, signed. If D > S then D = S and C = 1, else D same and C = 0. *</p>]]></entry>
+        <entry name="sumc"><![CDATA[<b>SUMC    D,{#}S   {WC/WZ/WCZ}</b><p>Sum +/-S into D by  C. If C = 1 then D = D - S, else D = D + S. C = correct sign of (D +/- S). *</p>]]></entry>
+        <entry name="sumnc"><![CDATA[<b>SUMNC   D,{#}S   {WC/WZ/WCZ}</b><p>Sum +/-S into D by !C. If C = 0 then D = D - S, else D = D + S. C = correct sign of (D +/- S). *</p>]]></entry>
+        <entry name="sumz"><![CDATA[<b>SUMZ    D,{#}S   {WC/WZ/WCZ}</b><p>Sum +/-S into D by  Z. If Z = 1 then D = D - S, else D = D + S. C = correct sign of (D +/- S). *</p>]]></entry>
+        <entry name="sumnz"><![CDATA[<b>SUMNZ   D,{#}S   {WC/WZ/WCZ}</b><p>Sum +/-S into D by !Z. If Z = 0 then D = D - S, else D = D + S. C = correct sign of (D +/- S). *</p>]]></entry>
+        <entry name="testb"><![CDATA[<b>TESTB   D,{#}S         WC/WZ</b><p>Test bit S[4:0] of  D, write to C/Z. C/Z =          D[S[4:0]].</p>]]></entry>
+        <entry name="testbn"><![CDATA[<b>TESTBN  D,{#}S         WC/WZ</b><p>Test bit S[4:0] of !D, write to C/Z. C/Z =         !D[S[4:0]].</p>]]></entry>
+        <entry name="testb"><![CDATA[<b>TESTB   D,{#}S     ANDC/ANDZ</b><p>Test bit S[4:0] of  D, AND into C/Z. C/Z = C/Z AND  D[S[4:0]].</p>]]></entry>
+        <entry name="testbn"><![CDATA[<b>TESTBN  D,{#}S     ANDC/ANDZ</b><p>Test bit S[4:0] of !D, AND into C/Z. C/Z = C/Z AND !D[S[4:0]].</p>]]></entry>
+        <entry name="testb"><![CDATA[<b>TESTB   D,{#}S       ORC/ORZ</b><p>Test bit S[4:0] of  D, OR  into C/Z. C/Z = C/Z OR   D[S[4:0]].</p>]]></entry>
+        <entry name="testbn"><![CDATA[<b>TESTBN  D,{#}S       ORC/ORZ</b><p>Test bit S[4:0] of !D, OR  into C/Z. C/Z = C/Z OR  !D[S[4:0]].</p>]]></entry>
+        <entry name="testb"><![CDATA[<b>TESTB   D,{#}S     XORC/XORZ</b><p>Test bit S[4:0] of  D, XOR into C/Z. C/Z = C/Z XOR  D[S[4:0]].</p>]]></entry>
+        <entry name="testbn"><![CDATA[<b>TESTBN  D,{#}S     XORC/XORZ</b><p>Test bit S[4:0] of !D, XOR into C/Z. C/Z = C/Z XOR !D[S[4:0]].</p>]]></entry>
+        <entry name="bitl"><![CDATA[<b>BITL    D,{#}S         {WCZ}</b><p>Bits D[S[9:5]+S[4:0]:S[4:0]] = 0.    Other bits unaffected. Prior SETQ overrides S[9:5]. C,Z = original D[S[4:0]].</p>]]></entry>
+        <entry name="bith"><![CDATA[<b>BITH    D,{#}S         {WCZ}</b><p>Bits D[S[9:5]+S[4:0]:S[4:0]] = 1.    Other bits unaffected. Prior SETQ overrides S[9:5]. C,Z = original D[S[4:0]].</p>]]></entry>
+        <entry name="bitc"><![CDATA[<b>BITC    D,{#}S         {WCZ}</b><p>Bits D[S[9:5]+S[4:0]:S[4:0]] = C.    Other bits unaffected. Prior SETQ overrides S[9:5]. C,Z = original D[S[4:0]].</p>]]></entry>
+        <entry name="bitnc"><![CDATA[<b>BITNC   D,{#}S         {WCZ}</b><p>Bits D[S[9:5]+S[4:0]:S[4:0]] = !C.   Other bits unaffected. Prior SETQ overrides S[9:5]. C,Z = original D[S[4:0]].</p>]]></entry>
+        <entry name="bitz"><![CDATA[<b>BITZ    D,{#}S         {WCZ}</b><p>Bits D[S[9:5]+S[4:0]:S[4:0]] = Z.    Other bits unaffected. Prior SETQ overrides S[9:5]. C,Z = original D[S[4:0]].</p>]]></entry>
+        <entry name="bitnz"><![CDATA[<b>BITNZ   D,{#}S         {WCZ}</b><p>Bits D[S[9:5]+S[4:0]:S[4:0]] = !Z.   Other bits unaffected. Prior SETQ overrides S[9:5]. C,Z = original D[S[4:0]].</p>]]></entry>
+        <entry name="bitrnd"><![CDATA[<b>BITRND  D,{#}S         {WCZ}</b><p>Bits D[S[9:5]+S[4:0]:S[4:0]] = RNDs. Other bits unaffected. Prior SETQ overrides S[9:5]. C,Z = original D[S[4:0]].</p>]]></entry>
+        <entry name="bitnot"><![CDATA[<b>BITNOT  D,{#}S         {WCZ}</b><p>Toggle bits D[S[9:5]+S[4:0]:S[4:0]]. Other bits unaffected. Prior SETQ overrides S[9:5]. C,Z = original D[S[4:0]].</p>]]></entry>
+        <entry name="and"><![CDATA[<b>AND     D,{#}S   {WC/WZ/WCZ}</b><p>AND S into D.    D = D & S.    C = parity of result. *</p>]]></entry>
+        <entry name="andn"><![CDATA[<b>ANDN    D,{#}S   {WC/WZ/WCZ}</b><p>AND !S into D.   D = D & !S.   C = parity of result. *</p>]]></entry>
+        <entry name="or"><![CDATA[<b>OR      D,{#}S   {WC/WZ/WCZ}</b><p>OR S into D.     D = D | S.    C = parity of result. *</p>]]></entry>
+        <entry name="xor"><![CDATA[<b>XOR     D,{#}S   {WC/WZ/WCZ}</b><p>XOR S into D.    D = D ^ S.    C = parity of result. *</p>]]></entry>
+        <entry name="muxc"><![CDATA[<b>MUXC    D,{#}S   {WC/WZ/WCZ}</b><p>Mux  C into each D bit that is '1' in S. D = (!S & D ) | (S & {32{ C}}). C = parity of result. *</p>]]></entry>
+        <entry name="muxnc"><![CDATA[<b>MUXNC   D,{#}S   {WC/WZ/WCZ}</b><p>Mux !C into each D bit that is '1' in S. D = (!S & D ) | (S & {32{!C}}). C = parity of result. *</p>]]></entry>
+        <entry name="muxz"><![CDATA[<b>MUXZ    D,{#}S   {WC/WZ/WCZ}</b><p>Mux  Z into each D bit that is '1' in S. D = (!S & D ) | (S & {32{ Z}}). C = parity of result. *</p>]]></entry>
+        <entry name="muxnz"><![CDATA[<b>MUXNZ   D,{#}S   {WC/WZ/WCZ}</b><p>Mux !Z into each D bit that is '1' in S. D = (!S & D ) | (S & {32{!Z}}). C = parity of result. *</p>]]></entry>
+        <entry name="mov"><![CDATA[<b>MOV     D,{#}S   {WC/WZ/WCZ}</b><p>Move S into D. D = S. C = S[31]. *</p>]]></entry>
+        <entry name="not"><![CDATA[<b>NOT     D,{#}S   {WC/WZ/WCZ}</b><p>Get !S into D. D = !S. C = !S[31]. *</p>]]></entry>
+        <entry name="not"><![CDATA[<b>NOT     D        {WC/WZ/WCZ}</b><p>Get !D into D. D = !D. C = !D[31]. *</p>]]></entry>
+        <entry name="abs"><![CDATA[<b>ABS     D,{#}S   {WC/WZ/WCZ}</b><p>Get absolute value of S into D. D = ABS(S). C = S[31]. *</p>]]></entry>
+        <entry name="abs"><![CDATA[<b>ABS     D        {WC/WZ/WCZ}</b><p>Get absolute value of D into D. D = ABS(D). C = D[31]. *</p>]]></entry>
+        <entry name="neg"><![CDATA[<b>NEG     D,{#}S   {WC/WZ/WCZ}</b><p>Negate S into D. D = -S. C = MSB of result. *</p>]]></entry>
+        <entry name="neg"><![CDATA[<b>NEG     D        {WC/WZ/WCZ}</b><p>Negate D.        D = -D. C = MSB of result. *</p>]]></entry>
+        <entry name="negc"><![CDATA[<b>NEGC    D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by  C into D. If C = 1 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
+        <entry name="negc"><![CDATA[<b>NEGC    D        {WC/WZ/WCZ}</b><p>Negate D by  C.        If C = 1 then D = -D, else D = D. C = MSB of result. *</p>]]></entry>
+        <entry name="negnc"><![CDATA[<b>NEGNC   D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by !C into D. If C = 0 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
+        <entry name="negnc"><![CDATA[<b>NEGNC   D        {WC/WZ/WCZ}</b><p>Negate D by !C.        If C = 0 then D = -D, else D = D. C = MSB of result. *</p>]]></entry>
+        <entry name="negz"><![CDATA[<b>NEGZ    D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by  Z into D. If Z = 1 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
+        <entry name="negz"><![CDATA[<b>NEGZ    D        {WC/WZ/WCZ}</b><p>Negate D by  Z.        If Z = 1 then D = -D, else D = D. C = MSB of result. *</p>]]></entry>
+        <entry name="negnz"><![CDATA[<b>NEGNZ   D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by !Z into D. If Z = 0 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
+        <entry name="negnz"><![CDATA[<b>NEGNZ   D        {WC/WZ/WCZ}</b><p>Negate D by !Z.        If Z = 0 then D = -D, else D = D. C = MSB of result. *</p>]]></entry>
+        <entry name="incmod"><![CDATA[<b>INCMOD  D,{#}S   {WC/WZ/WCZ}</b><p>Increment with modulus. If D = S then D = 0 and C = 1, else D = D + 1 and C = 0. *</p>]]></entry>
+        <entry name="decmod"><![CDATA[<b>DECMOD  D,{#}S   {WC/WZ/WCZ}</b><p>Decrement with modulus. If D = 0 then D = S and C = 1, else D = D - 1 and C = 0. *</p>]]></entry>
+        <entry name="zerox"><![CDATA[<b>ZEROX   D,{#}S   {WC/WZ/WCZ}</b><p>Zero-extend D above bit S[4:0]. C = MSB of result. *</p>]]></entry>
+        <entry name="signx"><![CDATA[<b>SIGNX   D,{#}S   {WC/WZ/WCZ}</b><p>Sign-extend D from bit S[4:0]. C = MSB of result. *</p>]]></entry>
+        <entry name="encod"><![CDATA[<b>ENCOD   D,{#}S   {WC/WZ/WCZ}</b><p>Get bit position of top-most '1' in S into D. D = position of top '1' in S (0..31). C = (S != 0). *</p>]]></entry>
+        <entry name="encod"><![CDATA[<b>ENCOD   D        {WC/WZ/WCZ}</b><p>Get bit position of top-most '1' in D into D. D = position of top '1' in S (0..31). C = (S != 0). *</p>]]></entry>
+        <entry name="ones"><![CDATA[<b>ONES    D,{#}S   {WC/WZ/WCZ}</b><p>Get number of '1's in S into D. D = number of '1's in S (0..32). C = LSB of result. *</p>]]></entry>
+        <entry name="ones"><![CDATA[<b>ONES    D        {WC/WZ/WCZ}</b><p>Get number of '1's in D into D. D = number of '1's in S (0..32). C = LSB of result. *</p>]]></entry>
+        <entry name="test"><![CDATA[<b>TEST    D,{#}S   {WC/WZ/WCZ}</b><p>Test D with S. C = parity of (D & S). Z = ((D & S) == 0).</p>]]></entry>
+        <entry name="test"><![CDATA[<b>TEST    D        {WC/WZ/WCZ}</b><p>Test D. C = parity of D. Z = (D == 0).</p>]]></entry>
+        <entry name="testn"><![CDATA[<b>TESTN   D,{#}S   {WC/WZ/WCZ}</b><p>Test D with !S. C = parity of (D & !S). Z = ((D & !S) == 0).</p>]]></entry>
+        <entry name="setnib"><![CDATA[<b>SETNIB  D,{#}S,#N</b><p>Set S[3:0] into nibble N in D, keeping rest of D same.</p>]]></entry>
+        <entry name="setnib"><![CDATA[<b>SETNIB  {#}S</b><p>Set S[3:0] into nibble established by prior ALTSN instruction.</p>]]></entry>
+        <entry name="getnib"><![CDATA[<b>GETNIB  D,{#}S,#N</b><p>Get nibble N of S into D. D = {28'b0, S.NIBBLE[N]).</p>]]></entry>
+        <entry name="getnib"><![CDATA[<b>GETNIB  D</b><p>Get nibble established by prior ALTGN instruction into D.</p>]]></entry>
+        <entry name="rolnib"><![CDATA[<b>ROLNIB  D,{#}S,#N</b><p>Rotate-left nibble N of S into D. D = {D[27:0], S.NIBBLE[N]).</p>]]></entry>
+        <entry name="rolnib"><![CDATA[<b>ROLNIB  D</b><p>Rotate-left nibble established by prior ALTGN instruction into D.</p>]]></entry>
+        <entry name="setbyte"><![CDATA[<b>SETBYTE D,{#}S,#N</b><p>Set S[7:0] into byte N in D, keeping rest of D same.</p>]]></entry>
+        <entry name="setbyte"><![CDATA[<b>SETBYTE {#}S</b><p>Set S[7:0] into byte established by prior ALTSB instruction.</p>]]></entry>
+        <entry name="getbyte"><![CDATA[<b>GETBYTE D,{#}S,#N</b><p>Get byte N of S into D. D = {24'b0, S.BYTE[N]).</p>]]></entry>
+        <entry name="getbyte"><![CDATA[<b>GETBYTE D</b><p>Get byte established by prior ALTGB instruction into D.</p>]]></entry>
+        <entry name="rolbyte"><![CDATA[<b>ROLBYTE D,{#}S,#N</b><p>Rotate-left byte N of S into D. D = {D[23:0], S.BYTE[N]).</p>]]></entry>
+        <entry name="rolbyte"><![CDATA[<b>ROLBYTE D</b><p>Rotate-left byte established by prior ALTGB instruction into D.</p>]]></entry>
+        <entry name="setword"><![CDATA[<b>SETWORD D,{#}S,#N</b><p>Set S[15:0] into word N in D, keeping rest of D same.</p>]]></entry>
+        <entry name="setword"><![CDATA[<b>SETWORD {#}S</b><p>Set S[15:0] into word established by prior ALTSW instruction.</p>]]></entry>
+        <entry name="getword"><![CDATA[<b>GETWORD D,{#}S,#N</b><p>Get word N of S into D. D = {16'b0, S.WORD[N]).</p>]]></entry>
+        <entry name="getword"><![CDATA[<b>GETWORD D</b><p>Get word established by prior ALTGW instruction into D.</p>]]></entry>
+        <entry name="rolword"><![CDATA[<b>ROLWORD D,{#}S,#N</b><p>Rotate-left word N of S into D. D = {D[15:0], S.WORD[N]).</p>]]></entry>
+        <entry name="rolword"><![CDATA[<b>ROLWORD D</b><p>Rotate-left word established by prior ALTGW instruction into D.</p>]]></entry>
+        <entry name="altsn"><![CDATA[<b>ALTSN   D,{#}S</b><p>Alter subsequent SETNIB instruction. Next D field = (D[11:3] + S) & $1FF, N field = D[2:0].          D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altsn"><![CDATA[<b>ALTSN   D</b><p>Alter subsequent SETNIB instruction. Next D field = D[11:3], N field = D[2:0].</p>]]></entry>
+        <entry name="altgn"><![CDATA[<b>ALTGN   D,{#}S</b><p>Alter subsequent GETNIB/ROLNIB instruction. Next S field = (D[11:3] + S) & $1FF, N field = D[2:0].   D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altgn"><![CDATA[<b>ALTGN   D</b><p>Alter subsequent GETNIB/ROLNIB instruction. Next S field = D[11:3], N field = D[2:0].</p>]]></entry>
+        <entry name="altsb"><![CDATA[<b>ALTSB   D,{#}S</b><p>Alter subsequent SETBYTE instruction. Next D field = (D[10:2] + S) & $1FF, N field = D[1:0].         D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altsb"><![CDATA[<b>ALTSB   D</b><p>Alter subsequent SETBYTE instruction. Next D field = D[10:2], N field = D[1:0].</p>]]></entry>
+        <entry name="altgb"><![CDATA[<b>ALTGB   D,{#}S</b><p>Alter subsequent GETBYTE/ROLBYTE instruction. Next S field = (D[10:2] + S) & $1FF, N field = D[1:0]. D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altgb"><![CDATA[<b>ALTGB   D</b><p>Alter subsequent GETBYTE/ROLBYTE instruction. Next S field = D[10:2], N field = D[1:0].</p>]]></entry>
+        <entry name="altsw"><![CDATA[<b>ALTSW   D,{#}S</b><p>Alter subsequent SETWORD instruction. Next D field = (D[9:1] + S) & $1FF, N field = D[0].            D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altsw"><![CDATA[<b>ALTSW   D</b><p>Alter subsequent SETWORD instruction. Next D field = D[9:1], N field = D[0].</p>]]></entry>
+        <entry name="altgw"><![CDATA[<b>ALTGW   D,{#}S</b><p>Alter subsequent GETWORD/ROLWORD instruction. Next S field = ((D[9:1] + S) & $1FF), N field = D[0].  D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altgw"><![CDATA[<b>ALTGW   D</b><p>Alter subsequent GETWORD/ROLWORD instruction. Next S field = D[9:1], N field = D[0].</p>]]></entry>
+        <entry name="altr"><![CDATA[<b>ALTR    D,{#}S</b><p>Alter result register address (normally D field) of next instruction to (D + S) & $1FF.              D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altr"><![CDATA[<b>ALTR    D</b><p>Alter result register address (normally D field) of next instruction to D[8:0].</p>]]></entry>
+        <entry name="altd"><![CDATA[<b>ALTD    D,{#}S</b><p>Alter D field of next instruction to (D + S) & $1FF.                                                 D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altd"><![CDATA[<b>ALTD    D</b><p>Alter D field of next instruction to D[8:0].</p>]]></entry>
+        <entry name="alts"><![CDATA[<b>ALTS    D,{#}S</b><p>Alter S field of next instruction to (D + S) & $1FF.                                                 D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="alts"><![CDATA[<b>ALTS    D</b><p>Alter S field of next instruction to D[8:0].</p>]]></entry>
+        <entry name="altb"><![CDATA[<b>ALTB    D,{#}S</b><p>Alter D field of next instruction to (D[13:5] + S) & $1FF.                                           D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altb"><![CDATA[<b>ALTB    D</b><p>Alter D field of next instruction to D[13:5].</p>]]></entry>
+        <entry name="alti"><![CDATA[<b>ALTI    D,{#}S</b><p>Substitute next instruction's I/R/D/S fields with fields from D, per S. Modify D per S.</p>]]></entry>
+        <entry name="alti"><![CDATA[<b>ALTI    D</b><p>Execute D in place of next instruction. D stays same.</p>]]></entry>
+        <entry name="setr"><![CDATA[<b>SETR    D,{#}S</b><p>Set R field of D to S[8:0]. D = {D[31:28], S[8:0], D[18:0]}.</p>]]></entry>
+        <entry name="setd"><![CDATA[<b>SETD    D,{#}S</b><p>Set D field of D to S[8:0]. D = {D[31:18], S[8:0], D[8:0]}.</p>]]></entry>
+        <entry name="sets"><![CDATA[<b>SETS    D,{#}S</b><p>Set S field of D to S[8:0]. D = {D[31:9], S[8:0]}.</p>]]></entry>
+        <entry name="decod"><![CDATA[<b>DECOD   D,{#}S</b><p>Decode S[4:0] into D. D = 1 << S[4:0].</p>]]></entry>
+        <entry name="decod"><![CDATA[<b>DECOD   D</b><p>Decode D[4:0] into D. D = 1 << D[4:0].</p>]]></entry>
+        <entry name="bmask"><![CDATA[<b>BMASK   D,{#}S</b><p>Get LSB-justified bit mask of size (S[4:0] + 1) into D. D = ($0000_0002 << S[4:0]) - 1.</p>]]></entry>
+        <entry name="bmask"><![CDATA[<b>BMASK   D</b><p>Get LSB-justified bit mask of size (D[4:0] + 1) into D. D = ($0000_0002 << D[4:0]) - 1.</p>]]></entry>
+        <entry name="crcbit"><![CDATA[<b>CRCBIT  D,{#}S</b><p>Iterate CRC value in D using C and polynomial in S. If (C XOR D[0]) then D = (D >> 1) XOR S, else D = (D >> 1).</p>]]></entry>
+        <entry name="crcnib"><![CDATA[<b>CRCNIB  D,{#}S</b><p>Iterate CRC value in D using Q[31:28] and polynomial in S. Like CRCBIT x 4. Q = Q << 4. Use 'REP #n,#1'+SETQ+CRCNIB+CRCNIB+CRCNIB...</p>]]></entry>
+        <entry name="muxnits"><![CDATA[<b>MUXNITS D,{#}S</b><p>For each non-zero bit pair in S, copy that bit pair into the corresponding D bits, else leave that D bit pair the same.</p>]]></entry>
+        <entry name="muxnibs"><![CDATA[<b>MUXNIBS D,{#}S</b><p>For each non-zero nibble in S, copy that nibble into the corresponding D nibble, else leave that D nibble the same.</p>]]></entry>
+        <entry name="muxq"><![CDATA[<b>MUXQ    D,{#}S</b><p>Used after SETQ. For each '1' bit in Q, copy the corresponding bit in S into D. D = (D & !Q) | (S & Q).</p>]]></entry>
+        <entry name="movbyts"><![CDATA[<b>MOVBYTS D,{#}S</b><p>Move bytes within D, per S. D = {D.BYTE[S[7:6]], D.BYTE[S[5:4]], D.BYTE[S[3:2]], D.BYTE[S[1:0]]}.</p>]]></entry>
+        <entry name="mul"><![CDATA[<b>MUL     D,{#}S          {WZ}</b><p>D = unsigned (D[15:0] * S[15:0]). Z = (S == 0) | (D == 0).</p>]]></entry>
+        <entry name="muls"><![CDATA[<b>MULS    D,{#}S          {WZ}</b><p>D = signed (D[15:0] * S[15:0]).   Z = (S == 0) | (D == 0).</p>]]></entry>
+        <entry name="sca"><![CDATA[<b>SCA     D,{#}S          {WZ}</b><p>Next instruction's S value = unsigned (D[15:0] * S[15:0]) >> 16. *</p>]]></entry>
+        <entry name="scas"><![CDATA[<b>SCAS    D,{#}S          {WZ}</b><p>Next instruction's S value = signed (D[15:0] * S[15:0]) >> 14. In this scheme, $4000 = 1.0 and $C000 = -1.0. *</p>]]></entry>
+        <entry name="addpix"><![CDATA[<b>ADDPIX  D,{#}S</b><p>Add bytes of S into bytes of D, with $FF saturation.</p>]]></entry>
+        <entry name="mulpix"><![CDATA[<b>MULPIX  D,{#}S</b><p>Multiply bytes of S into bytes of D, where $FF = 1.0 and $00 = 0.0.</p>]]></entry>
+        <entry name="blnpix"><![CDATA[<b>BLNPIX  D,{#}S</b><p>Alpha-blend bytes of S into bytes of D, using SETPIV value.</p>]]></entry>
+        <entry name="mixpix"><![CDATA[<b>MIXPIX  D,{#}S</b><p>Mix bytes of S into bytes of D, using SETPIX and SETPIV values.</p>]]></entry>
+        <entry name="addct1"><![CDATA[<b>ADDCT1  D,{#}S</b><p>Set CT1 event to trigger on CT = D + S. Adds S into D.</p>]]></entry>
+        <entry name="addct2"><![CDATA[<b>ADDCT2  D,{#}S</b><p>Set CT2 event to trigger on CT = D + S. Adds S into D.</p>]]></entry>
+        <entry name="addct3"><![CDATA[<b>ADDCT3  D,{#}S</b><p>Set CT3 event to trigger on CT = D + S. Adds S into D.</p>]]></entry>
+        <entry name="wmlong"><![CDATA[<b>WMLONG  D,{#}S/P</b><p>Write only non-$00 bytes in D[31:0] to hub address {#}S/PTRx.     Prior SETQ/SETQ2 invokes cog/LUT block transfer.</p>]]></entry>
+        <entry name="rqpin"><![CDATA[<b>RQPIN   D,{#}S          {WC}</b><p>Read smart pin S[5:0] result "Z" into D, don't acknowledge smart pin ("Q" in RQPIN means "quiet"). C = modal result.</p>]]></entry>
+        <entry name="rdpin"><![CDATA[<b>RDPIN   D,{#}S          {WC}</b><p>Read smart pin S[5:0] result "Z" into D, acknowledge smart pin. C = modal result.</p>]]></entry>
+        <entry name="rdlut"><![CDATA[<b>RDLUT   D,{#}S/P {WC/WZ/WCZ}</b><p>Read data from LUT address {#}S/PTRx into D. C = MSB of data. *</p>]]></entry>
+        <entry name="rdbyte"><![CDATA[<b>RDBYTE  D,{#}S/P {WC/WZ/WCZ}</b><p>Read zero-extended byte from hub address {#}S/PTRx into D. C = MSB of byte. *</p>]]></entry>
+        <entry name="rdword"><![CDATA[<b>RDWORD  D,{#}S/P {WC/WZ/WCZ}</b><p>Read zero-extended word from hub address {#}S/PTRx into D. C = MSB of word. *</p>]]></entry>
+        <entry name="rdlong"><![CDATA[<b>RDLONG  D,{#}S/P {WC/WZ/WCZ}</b><p>Read long from hub address {#}S/PTRx into D. C = MSB of long. *   Prior SETQ/SETQ2 invokes cog/LUT block transfer.</p>]]></entry>
+        <entry name="popa"><![CDATA[<b>POPA    D        {WC/WZ/WCZ}</b><p>Read long from hub address --PTRA into D. C = MSB of long. *</p>]]></entry>
+        <entry name="popb"><![CDATA[<b>POPB    D        {WC/WZ/WCZ}</b><p>Read long from hub address --PTRB into D. C = MSB of long. *</p>]]></entry>
+        <entry name="calld"><![CDATA[<b>CALLD   D,{#}S   {WC/WZ/WCZ}</b><p>Call to S** by writing {C, Z, 10'b0, PC[19:0]} to D.                    C = S[31], Z = S[30].</p>]]></entry>
+        <entry name="resi3"><![CDATA[<b>RESI3</b><p>Resume from INT3. (CALLD $1F0,$1F1 WCZ)</p>]]></entry>
+        <entry name="resi2"><![CDATA[<b>RESI2</b><p>Resume from INT2. (CALLD $1F2,$1F3 WCZ)</p>]]></entry>
+        <entry name="resi1"><![CDATA[<b>RESI1</b><p>Resume from INT1. (CALLD $1F4,$1F5 WCZ)</p>]]></entry>
+        <entry name="resi0"><![CDATA[<b>RESI0</b><p>Resume from INT0. (CALLD $1FE,$1FF WCZ)</p>]]></entry>
+        <entry name="reti3"><![CDATA[<b>RETI3</b><p>Return from INT3. (CALLD $1FF,$1F1 WCZ)</p>]]></entry>
+        <entry name="reti2"><![CDATA[<b>RETI2</b><p>Return from INT2. (CALLD $1FF,$1F3 WCZ)</p>]]></entry>
+        <entry name="reti1"><![CDATA[<b>RETI1</b><p>Return from INT1. (CALLD $1FF,$1F5 WCZ)</p>]]></entry>
+        <entry name="reti0"><![CDATA[<b>RETI0</b><p>Return from INT0. (CALLD $1FF,$1FF WCZ)</p>]]></entry>
+        <entry name="callpa"><![CDATA[<b>CALLPA  {#}D,{#}S</b><p>Call to S** by pushing {C, Z, 10'b0, PC[19:0]} onto stack, copy D to PA.</p>]]></entry>
+        <entry name="callpb"><![CDATA[<b>CALLPB  {#}D,{#}S</b><p>Call to S** by pushing {C, Z, 10'b0, PC[19:0]} onto stack, copy D to PB.</p>]]></entry>
+        <entry name="djz"><![CDATA[<b>DJZ     D,{#}S</b><p>Decrement D and jump to S** if result is zero.</p>]]></entry>
+        <entry name="djnz"><![CDATA[<b>DJNZ    D,{#}S</b><p>Decrement D and jump to S** if result is not zero.</p>]]></entry>
+        <entry name="djf"><![CDATA[<b>DJF     D,{#}S</b><p>Decrement D and jump to S** if result is $FFFF_FFFF.</p>]]></entry>
+        <entry name="djnf"><![CDATA[<b>DJNF    D,{#}S</b><p>Decrement D and jump to S** if result is not $FFFF_FFFF.</p>]]></entry>
+        <entry name="ijz"><![CDATA[<b>IJZ     D,{#}S</b><p>Increment D and jump to S** if result is zero.</p>]]></entry>
+        <entry name="ijnz"><![CDATA[<b>IJNZ    D,{#}S</b><p>Increment D and jump to S** if result is not zero.</p>]]></entry>
+        <entry name="tjz"><![CDATA[<b>TJZ     D,{#}S</b><p>Test D and jump to S** if D is zero.</p>]]></entry>
+        <entry name="tjnz"><![CDATA[<b>TJNZ    D,{#}S</b><p>Test D and jump to S** if D is not zero.</p>]]></entry>
+        <entry name="tjf"><![CDATA[<b>TJF     D,{#}S</b><p>Test D and jump to S** if D is full (D = $FFFF_FFFF).</p>]]></entry>
+        <entry name="tjnf"><![CDATA[<b>TJNF    D,{#}S</b><p>Test D and jump to S** if D is not full (D != $FFFF_FFFF).</p>]]></entry>
+        <entry name="tjs"><![CDATA[<b>TJS     D,{#}S</b><p>Test D and jump to S** if D is signed (D[31] = 1).</p>]]></entry>
+        <entry name="tjns"><![CDATA[<b>TJNS    D,{#}S</b><p>Test D and jump to S** if D is not signed (D[31] = 0).</p>]]></entry>
+        <entry name="tjv"><![CDATA[<b>TJV     D,{#}S</b><p>Test D and jump to S** if D overflowed (D[31] != C, C = 'correct sign' from last addition/subtraction).</p>]]></entry>
+        <entry name="jint"><![CDATA[<b>JINT    {#}S</b><p>Jump to S** if INT event flag is set.</p>]]></entry>
+        <entry name="jct1"><![CDATA[<b>JCT1    {#}S</b><p>Jump to S** if CT1 event flag is set.</p>]]></entry>
+        <entry name="jct2"><![CDATA[<b>JCT2    {#}S</b><p>Jump to S** if CT2 event flag is set.</p>]]></entry>
+        <entry name="jct3"><![CDATA[<b>JCT3    {#}S</b><p>Jump to S** if CT3 event flag is set.</p>]]></entry>
+        <entry name="jse1"><![CDATA[<b>JSE1    {#}S</b><p>Jump to S** if SE1 event flag is set.</p>]]></entry>
+        <entry name="jse2"><![CDATA[<b>JSE2    {#}S</b><p>Jump to S** if SE2 event flag is set.</p>]]></entry>
+        <entry name="jse3"><![CDATA[<b>JSE3    {#}S</b><p>Jump to S** if SE3 event flag is set.</p>]]></entry>
+        <entry name="jse4"><![CDATA[<b>JSE4    {#}S</b><p>Jump to S** if SE4 event flag is set.</p>]]></entry>
+        <entry name="jpat"><![CDATA[<b>JPAT    {#}S</b><p>Jump to S** if PAT event flag is set.</p>]]></entry>
+        <entry name="jfbw"><![CDATA[<b>JFBW    {#}S</b><p>Jump to S** if FBW event flag is set.</p>]]></entry>
+        <entry name="jxmt"><![CDATA[<b>JXMT    {#}S</b><p>Jump to S** if XMT event flag is set.</p>]]></entry>
+        <entry name="jxfi"><![CDATA[<b>JXFI    {#}S</b><p>Jump to S** if XFI event flag is set.</p>]]></entry>
+        <entry name="jxro"><![CDATA[<b>JXRO    {#}S</b><p>Jump to S** if XRO event flag is set.</p>]]></entry>
+        <entry name="jxrl"><![CDATA[<b>JXRL    {#}S</b><p>Jump to S** if XRL event flag is set.</p>]]></entry>
+        <entry name="jatn"><![CDATA[<b>JATN    {#}S</b><p>Jump to S** if ATN event flag is set.</p>]]></entry>
+        <entry name="jqmt"><![CDATA[<b>JQMT    {#}S</b><p>Jump to S** if QMT event flag is set.</p>]]></entry>
+        <entry name="jnint"><![CDATA[<b>JNINT   {#}S</b><p>Jump to S** if INT event flag is clear.</p>]]></entry>
+        <entry name="jnct1"><![CDATA[<b>JNCT1   {#}S</b><p>Jump to S** if CT1 event flag is clear.</p>]]></entry>
+        <entry name="jnct2"><![CDATA[<b>JNCT2   {#}S</b><p>Jump to S** if CT2 event flag is clear.</p>]]></entry>
+        <entry name="jnct3"><![CDATA[<b>JNCT3   {#}S</b><p>Jump to S** if CT3 event flag is clear.</p>]]></entry>
+        <entry name="jnse1"><![CDATA[<b>JNSE1   {#}S</b><p>Jump to S** if SE1 event flag is clear.</p>]]></entry>
+        <entry name="jnse2"><![CDATA[<b>JNSE2   {#}S</b><p>Jump to S** if SE2 event flag is clear.</p>]]></entry>
+        <entry name="jnse3"><![CDATA[<b>JNSE3   {#}S</b><p>Jump to S** if SE3 event flag is clear.</p>]]></entry>
+        <entry name="jnse4"><![CDATA[<b>JNSE4   {#}S</b><p>Jump to S** if SE4 event flag is clear.</p>]]></entry>
+        <entry name="jnpat"><![CDATA[<b>JNPAT   {#}S</b><p>Jump to S** if PAT event flag is clear.</p>]]></entry>
+        <entry name="jnfbw"><![CDATA[<b>JNFBW   {#}S</b><p>Jump to S** if FBW event flag is clear.</p>]]></entry>
+        <entry name="jnxmt"><![CDATA[<b>JNXMT   {#}S</b><p>Jump to S** if XMT event flag is clear.</p>]]></entry>
+        <entry name="jnxfi"><![CDATA[<b>JNXFI   {#}S</b><p>Jump to S** if XFI event flag is clear.</p>]]></entry>
+        <entry name="jnxro"><![CDATA[<b>JNXRO   {#}S</b><p>Jump to S** if XRO event flag is clear.</p>]]></entry>
+        <entry name="jnxrl"><![CDATA[<b>JNXRL   {#}S</b><p>Jump to S** if XRL event flag is clear.</p>]]></entry>
+        <entry name="jnatn"><![CDATA[<b>JNATN   {#}S</b><p>Jump to S** if ATN event flag is clear.</p>]]></entry>
+        <entry name="jnqmt"><![CDATA[<b>JNQMT   {#}S</b><p>Jump to S** if QMT event flag is clear.</p>]]></entry>
+        <entry name="&lt;empty&gt;"><![CDATA[<b><empty> {#}D,{#}S</b><p><empty></p>]]></entry>
+        <entry name="&lt;empty&gt;"><![CDATA[<b><empty> {#}D,{#}S</b><p><empty></p>]]></entry>
+        <entry name="setpat"><![CDATA[<b>SETPAT  {#}D,{#}S</b><p>Set pin pattern for PAT event. C selects INA/INB, Z selects =/!=, D provides mask value, S provides match value.</p>]]></entry>
+        <entry name="akpin"><![CDATA[<b>AKPIN   {#}S</b><p>Acknowledge smart pins S[10:6]+S[5:0]..S[5:0].                              Wraps within A/B pins. Prior SETQ overrides S[10:6].</p>]]></entry>
+        <entry name="wrpin"><![CDATA[<b>WRPIN   {#}D,{#}S</b><p>Set mode of smart pins S[10:6]+S[5:0]..S[5:0] to D, acknowledge smart pins. Wraps within A/B pins. Prior SETQ overrides S[10:6].</p>]]></entry>
+        <entry name="wxpin"><![CDATA[<b>WXPIN   {#}D,{#}S</b><p>Set "X"  of smart pins S[10:6]+S[5:0]..S[5:0] to D, acknowledge smart pins. Wraps within A/B pins. Prior SETQ overrides S[10:6].</p>]]></entry>
+        <entry name="wypin"><![CDATA[<b>WYPIN   {#}D,{#}S</b><p>Set "Y"  of smart pins S[10:6]+S[5:0]..S[5:0] to D, acknowledge smart pins. Wraps within A/B pins. Prior SETQ overrides S[10:6].</p>]]></entry>
+        <entry name="wrlut"><![CDATA[<b>WRLUT   {#}D,{#}S/P</b><p>Write D to LUT address {#}S/PTRx.</p>]]></entry>
+        <entry name="wrbyte"><![CDATA[<b>WRBYTE  {#}D,{#}S/P</b><p>Write byte in D[7:0] to hub address {#}S/PTRx.</p>]]></entry>
+        <entry name="wrword"><![CDATA[<b>WRWORD  {#}D,{#}S/P</b><p>Write word in D[15:0] to hub address {#}S/PTRx.</p>]]></entry>
+        <entry name="wrlong"><![CDATA[<b>WRLONG  {#}D,{#}S/P</b><p>Write long in D[31:0] to hub address {#}S/PTRx.                   Prior SETQ/SETQ2 invokes cog/LUT block transfer.</p>]]></entry>
+        <entry name="pusha"><![CDATA[<b>PUSHA   {#}D</b><p>Write long in D[31:0] to hub address PTRA++.</p>]]></entry>
+        <entry name="pushb"><![CDATA[<b>PUSHB   {#}D</b><p>Write long in D[31:0] to hub address PTRB++.</p>]]></entry>
+        <entry name="rdfast"><![CDATA[<b>RDFAST  {#}D,{#}S</b><p>Begin new fast hub read via FIFO.  D[31] = no wait, D[13:0] = block size in 64-byte units (0 = max), S[19:0] = block start address.</p>]]></entry>
+        <entry name="wrfast"><![CDATA[<b>WRFAST  {#}D,{#}S</b><p>Begin new fast hub write via FIFO. D[31] = no wait, D[13:0] = block size in 64-byte units (0 = max), S[19:0] = block start address.</p>]]></entry>
+        <entry name="fblock"><![CDATA[<b>FBLOCK  {#}D,{#}S</b><p>Set next block for when block wraps. D[13:0] = block size in 64-byte units (0 = max), S[19:0] = block start address.</p>]]></entry>
+        <entry name="xinit"><![CDATA[<b>XINIT   {#}D,{#}S</b><p>Issue streamer command immediately, zeroing phase.</p>]]></entry>
+        <entry name="xstop"><![CDATA[<b>XSTOP</b><p>Stop streamer immediately.</p>]]></entry>
+        <entry name="xzero"><![CDATA[<b>XZERO   {#}D,{#}S</b><p>Buffer new streamer command to be issued on final NCO rollover of current command, zeroing phase.</p>]]></entry>
+        <entry name="xcont"><![CDATA[<b>XCONT   {#}D,{#}S</b><p>Buffer new streamer command to be issued on final NCO rollover of current command, continuing phase.</p>]]></entry>
+        <entry name="rep"><![CDATA[<b>REP     {#}D,{#}S</b><p>Execute next D[8:0] instructions S times. If S = 0, repeat instructions infinitely. If D[8:0] = 0, nothing repeats.</p>]]></entry>
+        <entry name="coginit"><![CDATA[<b>COGINIT {#}D,{#}S       {WC}</b><p>Start cog selected by D. S[19:0] sets hub startup address and PTRB of cog. Prior SETQ sets PTRA of cog.</p>]]></entry>
+        <entry name="qmul"><![CDATA[<b>QMUL    {#}D,{#}S</b><p>Begin CORDIC unsigned multiplication of D * S. GETQX/GETQY retrieves lower/upper product.</p>]]></entry>
+        <entry name="qdiv"><![CDATA[<b>QDIV    {#}D,{#}S</b><p>Begin CORDIC unsigned division of {SETQ value or 32'b0, D} / S. GETQX/GETQY retrieves quotient/remainder.</p>]]></entry>
+        <entry name="qfrac"><![CDATA[<b>QFRAC   {#}D,{#}S</b><p>Begin CORDIC unsigned division of {D, SETQ value or 32'b0} / S. GETQX/GETQY retrieves quotient/remainder.</p>]]></entry>
+        <entry name="qsqrt"><![CDATA[<b>QSQRT   {#}D,{#}S</b><p>Begin CORDIC square root of {S, D}. GETQX retrieves root.</p>]]></entry>
+        <entry name="qrotate"><![CDATA[<b>QROTATE {#}D,{#}S</b><p>Begin CORDIC rotation of point (D, SETQ value or 32'b0) by angle S. GETQX/GETQY retrieves X/Y.</p>]]></entry>
+        <entry name="qvector"><![CDATA[<b>QVECTOR {#}D,{#}S</b><p>Begin CORDIC vectoring of point (D, S). GETQX/GETQY retrieves length/angle.</p>]]></entry>
+        <entry name="hubset"><![CDATA[<b>HUBSET  {#}D</b><p>Set hub configuration to D.</p>]]></entry>
+        <entry name="cogid"><![CDATA[<b>COGID   {#}D            {WC}</b><p>If D is register and no WC, get cog ID (0 to 15) into D. If WC, check status of cog D[3:0], C = 1 if on.</p>]]></entry>
+        <entry name="cogstop"><![CDATA[<b>COGSTOP {#}D</b><p>Stop cog D[3:0].</p>]]></entry>
+        <entry name="locknew"><![CDATA[<b>LOCKNEW D               {WC}</b><p>Request a LOCK. D will be written with the LOCK number (0 to 15). C = 1 if no LOCK available.</p>]]></entry>
+        <entry name="lockret"><![CDATA[<b>LOCKRET {#}D</b><p>Return LOCK D[3:0] for reallocation.</p>]]></entry>
+        <entry name="locktry"><![CDATA[<b>LOCKTRY {#}D            {WC}</b><p>Try to get LOCK D[3:0]. C = 1 if got LOCK. LOCKREL releases LOCK. LOCK is also released if owner cog stops or restarts. </p>]]></entry>
+        <entry name="lockrel"><![CDATA[<b>LOCKREL {#}D            {WC}</b><p>Release LOCK D[3:0]. If D is a register and WC, get current/last cog id of LOCK owner into D and LOCK status into C.</p>]]></entry>
+        <entry name="qlog"><![CDATA[<b>QLOG    {#}D</b><p>Begin CORDIC number-to-logarithm conversion of D. GETQX retrieves log {5'whole_exponent, 27'fractional_exponent}.</p>]]></entry>
+        <entry name="qexp"><![CDATA[<b>QEXP    {#}D</b><p>Begin CORDIC logarithm-to-number conversion of D. GETQX retrieves number.</p>]]></entry>
+        <entry name="rfbyte"><![CDATA[<b>RFBYTE  D        {WC/WZ/WCZ}</b><p>Used after RDFAST. Read zero-extended byte from FIFO into D. C = MSB of byte. *</p>]]></entry>
+        <entry name="rfword"><![CDATA[<b>RFWORD  D        {WC/WZ/WCZ}</b><p>Used after RDFAST. Read zero-extended word from FIFO into D. C = MSB of word. *</p>]]></entry>
+        <entry name="rflong"><![CDATA[<b>RFLONG  D        {WC/WZ/WCZ}</b><p>Used after RDFAST. Read long from FIFO into D. C = MSB of long. *</p>]]></entry>
+        <entry name="rfvar"><![CDATA[<b>RFVAR   D        {WC/WZ/WCZ}</b><p>Used after RDFAST. Read zero-extended 1..4-byte value from FIFO into D. C = 0. *</p>]]></entry>
+        <entry name="rfvars"><![CDATA[<b>RFVARS  D        {WC/WZ/WCZ}</b><p>Used after RDFAST. Read sign-extended 1..4-byte value from FIFO into D. C = MSB of value. *</p>]]></entry>
+        <entry name="wfbyte"><![CDATA[<b>WFBYTE  {#}D</b><p>Used after WRFAST. Write byte in D[7:0] into FIFO.</p>]]></entry>
+        <entry name="wfword"><![CDATA[<b>WFWORD  {#}D</b><p>Used after WRFAST. Write word in D[15:0] into FIFO.</p>]]></entry>
+        <entry name="wflong"><![CDATA[<b>WFLONG  {#}D</b><p>Used after WRFAST. Write long in D[31:0] into FIFO.</p>]]></entry>
+        <entry name="getqx"><![CDATA[<b>GETQX   D        {WC/WZ/WCZ}</b><p>Retrieve CORDIC result X into D. Waits, in case result not ready. C = X[31]. *</p>]]></entry>
+        <entry name="getqy"><![CDATA[<b>GETQY   D        {WC/WZ/WCZ}</b><p>Retrieve CORDIC result Y into D. Waits, in case result not ready. C = Y[31]. *</p>]]></entry>
+        <entry name="getct"><![CDATA[<b>GETCT   D               {WC}</b><p>Get CT[31:0] or CT[63:32] if WC into D. GETCT WC + GETCT gets full CT. CT=0 on reset, CT++ on every clock. C = same.</p>]]></entry>
+        <entry name="getrnd"><![CDATA[<b>GETRND  D        {WC/WZ/WCZ}</b><p>Get RND into D/C/Z. RND is the PRNG that updates on every clock. D = RND[31:0], C = RND[31], Z = RND[30], unique per cog.</p>]]></entry>
+        <entry name="getrnd"><![CDATA[<b>GETRND            WC/WZ/WCZ</b><p>Get RND into C/Z. C = RND[31], Z = RND[30], unique per cog.</p>]]></entry>
+        <entry name="setdacs"><![CDATA[<b>SETDACS {#}D</b><p>DAC3 = D[31:24], DAC2 = D[23:16], DAC1 = D[15:8], DAC0 = D[7:0].</p>]]></entry>
+        <entry name="setxfrq"><![CDATA[<b>SETXFRQ {#}D</b><p>Set streamer NCO frequency to D.</p>]]></entry>
+        <entry name="getxacc"><![CDATA[<b>GETXACC D</b><p>Get the streamer's Goertzel X accumulator into D and the Y accumulator into the next instruction's S, clear accumulators.</p>]]></entry>
+        <entry name="waitx"><![CDATA[<b>WAITX   {#}D     {WC/WZ/WCZ}</b><p>Wait 2 + D clocks if no WC/WZ/WCZ. If WC/WZ/WCZ, wait 2 + (D & RND) clocks. C/Z = 0.</p>]]></entry>
+        <entry name="setse1"><![CDATA[<b>SETSE1  {#}D</b><p>Set SE1 event configuration to D[8:0].</p>]]></entry>
+        <entry name="setse2"><![CDATA[<b>SETSE2  {#}D</b><p>Set SE2 event configuration to D[8:0].</p>]]></entry>
+        <entry name="setse3"><![CDATA[<b>SETSE3  {#}D</b><p>Set SE3 event configuration to D[8:0].</p>]]></entry>
+        <entry name="setse4"><![CDATA[<b>SETSE4  {#}D</b><p>Set SE4 event configuration to D[8:0].</p>]]></entry>
+        <entry name="pollint"><![CDATA[<b>POLLINT          {WC/WZ/WCZ}</b><p>Get INT event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollct1"><![CDATA[<b>POLLCT1          {WC/WZ/WCZ}</b><p>Get CT1 event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollct2"><![CDATA[<b>POLLCT2          {WC/WZ/WCZ}</b><p>Get CT2 event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollct3"><![CDATA[<b>POLLCT3          {WC/WZ/WCZ}</b><p>Get CT3 event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollse1"><![CDATA[<b>POLLSE1          {WC/WZ/WCZ}</b><p>Get SE1 event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollse2"><![CDATA[<b>POLLSE2          {WC/WZ/WCZ}</b><p>Get SE2 event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollse3"><![CDATA[<b>POLLSE3          {WC/WZ/WCZ}</b><p>Get SE3 event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollse4"><![CDATA[<b>POLLSE4          {WC/WZ/WCZ}</b><p>Get SE4 event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollpat"><![CDATA[<b>POLLPAT          {WC/WZ/WCZ}</b><p>Get PAT event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollfbw"><![CDATA[<b>POLLFBW          {WC/WZ/WCZ}</b><p>Get FBW event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollxmt"><![CDATA[<b>POLLXMT          {WC/WZ/WCZ}</b><p>Get XMT event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollxfi"><![CDATA[<b>POLLXFI          {WC/WZ/WCZ}</b><p>Get XFI event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollxro"><![CDATA[<b>POLLXRO          {WC/WZ/WCZ}</b><p>Get XRO event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollxrl"><![CDATA[<b>POLLXRL          {WC/WZ/WCZ}</b><p>Get XRL event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollatn"><![CDATA[<b>POLLATN          {WC/WZ/WCZ}</b><p>Get ATN event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="pollqmt"><![CDATA[<b>POLLQMT          {WC/WZ/WCZ}</b><p>Get QMT event flag into C/Z, then clear it.</p>]]></entry>
+        <entry name="waitint"><![CDATA[<b>WAITINT          {WC/WZ/WCZ}</b><p>Wait for INT event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitct1"><![CDATA[<b>WAITCT1          {WC/WZ/WCZ}</b><p>Wait for CT1 event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitct2"><![CDATA[<b>WAITCT2          {WC/WZ/WCZ}</b><p>Wait for CT2 event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitct3"><![CDATA[<b>WAITCT3          {WC/WZ/WCZ}</b><p>Wait for CT3 event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitse1"><![CDATA[<b>WAITSE1          {WC/WZ/WCZ}</b><p>Wait for SE1 event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitse2"><![CDATA[<b>WAITSE2          {WC/WZ/WCZ}</b><p>Wait for SE2 event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitse3"><![CDATA[<b>WAITSE3          {WC/WZ/WCZ}</b><p>Wait for SE3 event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitse4"><![CDATA[<b>WAITSE4          {WC/WZ/WCZ}</b><p>Wait for SE4 event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitpat"><![CDATA[<b>WAITPAT          {WC/WZ/WCZ}</b><p>Wait for PAT event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitfbw"><![CDATA[<b>WAITFBW          {WC/WZ/WCZ}</b><p>Wait for FBW event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitxmt"><![CDATA[<b>WAITXMT          {WC/WZ/WCZ}</b><p>Wait for XMT event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitxfi"><![CDATA[<b>WAITXFI          {WC/WZ/WCZ}</b><p>Wait for XFI event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitxro"><![CDATA[<b>WAITXRO          {WC/WZ/WCZ}</b><p>Wait for XRO event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitxrl"><![CDATA[<b>WAITXRL          {WC/WZ/WCZ}</b><p>Wait for XRL event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="waitatn"><![CDATA[<b>WAITATN          {WC/WZ/WCZ}</b><p>Wait for ATN event flag, then clear it. Prior SETQ sets optional CT timeout value. C/Z = timeout.</p>]]></entry>
+        <entry name="allowi"><![CDATA[<b>ALLOWI</b><p>Allow interrupts (default).</p>]]></entry>
+        <entry name="stalli"><![CDATA[<b>STALLI</b><p>Stall Interrupts.</p>]]></entry>
+        <entry name="trgint1"><![CDATA[<b>TRGINT1</b><p>Trigger INT1, regardless of STALLI mode.</p>]]></entry>
+        <entry name="trgint2"><![CDATA[<b>TRGINT2</b><p>Trigger INT2, regardless of STALLI mode.</p>]]></entry>
+        <entry name="trgint3"><![CDATA[<b>TRGINT3</b><p>Trigger INT3, regardless of STALLI mode.</p>]]></entry>
+        <entry name="nixint1"><![CDATA[<b>NIXINT1</b><p>Cancel INT1.</p>]]></entry>
+        <entry name="nixint2"><![CDATA[<b>NIXINT2</b><p>Cancel INT2.</p>]]></entry>
+        <entry name="nixint3"><![CDATA[<b>NIXINT3</b><p>Cancel INT3.</p>]]></entry>
+        <entry name="setint1"><![CDATA[<b>SETINT1 {#}D</b><p>Set INT1 source to D[3:0].</p>]]></entry>
+        <entry name="setint2"><![CDATA[<b>SETINT2 {#}D</b><p>Set INT2 source to D[3:0].</p>]]></entry>
+        <entry name="setint3"><![CDATA[<b>SETINT3 {#}D</b><p>Set INT3 source to D[3:0].</p>]]></entry>
+        <entry name="setq"><![CDATA[<b>SETQ    {#}D</b><p>Set Q to D. Use before RDLONG/WRLONG/WMLONG to set block transfer. Also used before MUXQ/COGINIT/QDIV/QFRAC/QROTATE/WAITxxx.</p>]]></entry>
+        <entry name="setq2"><![CDATA[<b>SETQ2   {#}D</b><p>Set Q to D. Use before RDLONG/WRLONG/WMLONG to set LUT block transfer.</p>]]></entry>
+        <entry name="push"><![CDATA[<b>PUSH    {#}D</b><p>Push D onto stack.</p>]]></entry>
+        <entry name="pop"><![CDATA[<b>POP     D        {WC/WZ/WCZ}</b><p>Pop stack (K). D = K. C = K[31]. *</p>]]></entry>
+        <entry name="jmp"><![CDATA[<b>JMP     D        {WC/WZ/WCZ}</b><p>Jump to D.                                                              C = D[31], Z = D[30], PC = D[19:0].</p>]]></entry>
+        <entry name="call"><![CDATA[<b>CALL    D        {WC/WZ/WCZ}</b><p>Call to D by pushing {C, Z, 10'b0, PC[19:0]} onto stack.                C = D[31], Z = D[30], PC = D[19:0].</p>]]></entry>
+        <entry name="ret"><![CDATA[<b>RET              {WC/WZ/WCZ}</b><p>Return by popping stack (K).                                            C = K[31], Z = K[30], PC = K[19:0].</p>]]></entry>
+        <entry name="calla"><![CDATA[<b>CALLA   D        {WC/WZ/WCZ}</b><p>Call to D by writing {C, Z, 10'b0, PC[19:0]} to hub long at PTRA++.     C = D[31], Z = D[30], PC = D[19:0].</p>]]></entry>
+        <entry name="reta"><![CDATA[<b>RETA             {WC/WZ/WCZ}</b><p>Return by reading hub long (L) at --PTRA.                               C = L[31], Z = L[30], PC = L[19:0].</p>]]></entry>
+        <entry name="callb"><![CDATA[<b>CALLB   D        {WC/WZ/WCZ}</b><p>Call to D by writing {C, Z, 10'b0, PC[19:0]} to hub long at PTRB++.     C = D[31], Z = D[30], PC = D[19:0].</p>]]></entry>
+        <entry name="retb"><![CDATA[<b>RETB             {WC/WZ/WCZ}</b><p>Return by reading hub long (L) at --PTRB.                               C = L[31], Z = L[30], PC = L[19:0].</p>]]></entry>
+        <entry name="jmprel"><![CDATA[<b>JMPREL  {#}D</b><p>Jump ahead/back by D instructions. For cogex, PC += D[19:0]. For hubex, PC += D[17:0] << 2.</p>]]></entry>
+        <entry name="skip"><![CDATA[<b>SKIP    {#}D</b><p>Skip instructions per D. Subsequent instructions 0..31 get cancelled for each '1' bit in D[0]..D[31].</p>]]></entry>
+        <entry name="skipf"><![CDATA[<b>SKIPF   {#}D</b><p>Skip cog/LUT instructions fast per D. Like SKIP, but instead of cancelling instructions, the PC leaps over them.</p>]]></entry>
+        <entry name="execf"><![CDATA[<b>EXECF   {#}D</b><p>Jump to D[9:0] in cog/LUT and set SKIPF pattern to D[31:10]. PC = {10'b0, D[9:0]}.</p>]]></entry>
+        <entry name="getptr"><![CDATA[<b>GETPTR  D</b><p>Get current FIFO hub pointer into D.</p>]]></entry>
+        <entry name="getbrk"><![CDATA[<b>GETBRK  D          WC/WZ/WCZ</b><p>Get breakpoint/cog status into D according to WC/WZ/WCZ. See documentation for details.</p>]]></entry>
+        <entry name="cogbrk"><![CDATA[<b>COGBRK  {#}D</b><p>If in debug ISR, trigger asynchronous breakpoint in cog D[3:0]. Cog D[3:0] must have asynchronous breakpoint enabled.</p>]]></entry>
+        <entry name="brk"><![CDATA[<b>BRK     {#}D</b><p>If in debug ISR, set next break condition to D. Else, set BRK code to D[7:0] and unconditionally trigger BRK interrupt, if enabled.</p>]]></entry>
+        <entry name="setluts"><![CDATA[<b>SETLUTS {#}D</b><p>If D[0] = 1 then enable LUT sharing, where LUT writes within the adjacent odd/even companion cog are copied to this cog's LUT.</p>]]></entry>
+        <entry name="setcy"><![CDATA[<b>SETCY   {#}D</b><p>Set the colorspace converter "CY" parameter to D[31:0].</p>]]></entry>
+        <entry name="setci"><![CDATA[<b>SETCI   {#}D</b><p>Set the colorspace converter "CI" parameter to D[31:0].</p>]]></entry>
+        <entry name="setcq"><![CDATA[<b>SETCQ   {#}D</b><p>Set the colorspace converter "CQ" parameter to D[31:0].</p>]]></entry>
+        <entry name="setcfrq"><![CDATA[<b>SETCFRQ {#}D</b><p>Set the colorspace converter "CFRQ" parameter to D[31:0].</p>]]></entry>
+        <entry name="setcmod"><![CDATA[<b>SETCMOD {#}D</b><p>Set the colorspace converter "CMOD" parameter to D[8:0].</p>]]></entry>
+        <entry name="setpiv"><![CDATA[<b>SETPIV  {#}D</b><p>Set BLNPIX/MIXPIX blend factor to D[7:0].</p>]]></entry>
+        <entry name="setpix"><![CDATA[<b>SETPIX  {#}D</b><p>Set MIXPIX mode to D[5:0].</p>]]></entry>
+        <entry name="cogatn"><![CDATA[<b>COGATN  {#}D</b><p>Strobe "attention" of all cogs whose corresponging bits are high in D[15:0].</p>]]></entry>
+        <entry name="testp"><![CDATA[<b>TESTP   {#}D           WC/WZ</b><p>Test  IN bit of pin D[5:0], write to C/Z. C/Z =          IN[D[5:0]].</p>]]></entry>
+        <entry name="testpn"><![CDATA[<b>TESTPN  {#}D           WC/WZ</b><p>Test !IN bit of pin D[5:0], write to C/Z. C/Z =         !IN[D[5:0]].</p>]]></entry>
+        <entry name="testp"><![CDATA[<b>TESTP   {#}D       ANDC/ANDZ</b><p>Test  IN bit of pin D[5:0], AND into C/Z. C/Z = C/Z AND  IN[D[5:0]].</p>]]></entry>
+        <entry name="testpn"><![CDATA[<b>TESTPN  {#}D       ANDC/ANDZ</b><p>Test !IN bit of pin D[5:0], AND into C/Z. C/Z = C/Z AND !IN[D[5:0]].</p>]]></entry>
+        <entry name="testp"><![CDATA[<b>TESTP   {#}D         ORC/ORZ</b><p>Test  IN bit of pin D[5:0], OR  into C/Z. C/Z = C/Z OR   IN[D[5:0]].</p>]]></entry>
+        <entry name="testpn"><![CDATA[<b>TESTPN  {#}D         ORC/ORZ</b><p>Test !IN bit of pin D[5:0], OR  into C/Z. C/Z = C/Z OR  !IN[D[5:0]].</p>]]></entry>
+        <entry name="testp"><![CDATA[<b>TESTP   {#}D       XORC/XORZ</b><p>Test  IN bit of pin D[5:0], XOR into C/Z. C/Z = C/Z XOR  IN[D[5:0]].</p>]]></entry>
+        <entry name="testpn"><![CDATA[<b>TESTPN  {#}D       XORC/XORZ</b><p>Test !IN bit of pin D[5:0], XOR into C/Z. C/Z = C/Z XOR !IN[D[5:0]].</p>]]></entry>
+        <entry name="dirl"><![CDATA[<b>DIRL    {#}D           {WCZ}</b><p>DIR bits of pins D[10:6]+D[5:0]..D[5:0] = 0.                  Wraps within DIRA/DIRB. Prior SETQ overrides D[10:6]. C,Z = DIR bit.</p>]]></entry>
+        <entry name="dirh"><![CDATA[<b>DIRH    {#}D           {WCZ}</b><p>DIR bits of pins D[10:6]+D[5:0]..D[5:0] = 1.                  Wraps within DIRA/DIRB. Prior SETQ overrides D[10:6]. C,Z = DIR bit.</p>]]></entry>
+        <entry name="dirc"><![CDATA[<b>DIRC    {#}D           {WCZ}</b><p>DIR bits of pins D[10:6]+D[5:0]..D[5:0] = C.                  Wraps within DIRA/DIRB. Prior SETQ overrides D[10:6]. C,Z = DIR bit.</p>]]></entry>
+        <entry name="dirnc"><![CDATA[<b>DIRNC   {#}D           {WCZ}</b><p>DIR bits of pins D[10:6]+D[5:0]..D[5:0] = !C.                 Wraps within DIRA/DIRB. Prior SETQ overrides D[10:6]. C,Z = DIR bit.</p>]]></entry>
+        <entry name="dirz"><![CDATA[<b>DIRZ    {#}D           {WCZ}</b><p>DIR bits of pins D[10:6]+D[5:0]..D[5:0] = Z.                  Wraps within DIRA/DIRB. Prior SETQ overrides D[10:6]. C,Z = DIR bit.</p>]]></entry>
+        <entry name="dirnz"><![CDATA[<b>DIRNZ   {#}D           {WCZ}</b><p>DIR bits of pins D[10:6]+D[5:0]..D[5:0] = !Z.                 Wraps within DIRA/DIRB. Prior SETQ overrides D[10:6]. C,Z = DIR bit.</p>]]></entry>
+        <entry name="dirrnd"><![CDATA[<b>DIRRND  {#}D           {WCZ}</b><p>DIR bits of pins D[10:6]+D[5:0]..D[5:0] = RNDs.               Wraps within DIRA/DIRB. Prior SETQ overrides D[10:6]. C,Z = DIR bit.</p>]]></entry>
+        <entry name="dirnot"><![CDATA[<b>DIRNOT  {#}D           {WCZ}</b><p>Toggle DIR bits of pins D[10:6]+D[5:0]..D[5:0].               Wraps within DIRA/DIRB. Prior SETQ overrides D[10:6]. C,Z = DIR bit.</p>]]></entry>
+        <entry name="outl"><![CDATA[<b>OUTL    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = 0.                  Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="outh"><![CDATA[<b>OUTH    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = 1.                  Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="outc"><![CDATA[<b>OUTC    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = C.                  Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="outnc"><![CDATA[<b>OUTNC   {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = !C.                 Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="outz"><![CDATA[<b>OUTZ    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = Z.                  Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="outnz"><![CDATA[<b>OUTNZ   {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = !Z.                 Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="outrnd"><![CDATA[<b>OUTRND  {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = RNDs.               Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="outnot"><![CDATA[<b>OUTNOT  {#}D           {WCZ}</b><p>Toggle OUT bits of pins D[10:6]+D[5:0]..D[5:0].               Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="fltl"><![CDATA[<b>FLTL    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = 0.    DIR bits = 0. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="flth"><![CDATA[<b>FLTH    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = 1.    DIR bits = 0. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="fltc"><![CDATA[<b>FLTC    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = C.    DIR bits = 0. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="fltnc"><![CDATA[<b>FLTNC   {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = !C.   DIR bits = 0. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="fltz"><![CDATA[<b>FLTZ    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = Z.    DIR bits = 0. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="fltnz"><![CDATA[<b>FLTNZ   {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = !Z.   DIR bits = 0. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="fltrnd"><![CDATA[<b>FLTRND  {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = RNDs. DIR bits = 0. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="fltnot"><![CDATA[<b>FLTNOT  {#}D           {WCZ}</b><p>Toggle OUT bits of pins D[10:6]+D[5:0]..D[5:0]. DIR bits = 0. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="drvl"><![CDATA[<b>DRVL    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = 0.    DIR bits = 1. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="drvh"><![CDATA[<b>DRVH    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = 1.    DIR bits = 1. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="drvc"><![CDATA[<b>DRVC    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = C.    DIR bits = 1. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="drvnc"><![CDATA[<b>DRVNC   {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = !C.   DIR bits = 1. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="drvz"><![CDATA[<b>DRVZ    {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = Z.    DIR bits = 1. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="drvnz"><![CDATA[<b>DRVNZ   {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = !Z.   DIR bits = 1. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="drvrnd"><![CDATA[<b>DRVRND  {#}D           {WCZ}</b><p>OUT bits of pins D[10:6]+D[5:0]..D[5:0] = RNDs. DIR bits = 1. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="drvnot"><![CDATA[<b>DRVNOT  {#}D           {WCZ}</b><p>Toggle OUT bits of pins D[10:6]+D[5:0]..D[5:0]. DIR bits = 1. Wraps within OUTA/OUTB. Prior SETQ overrides D[10:6]. C,Z = OUT bit.</p>]]></entry>
+        <entry name="splitb"><![CDATA[<b>SPLITB  D</b><p>Split every 4th bit of D into bytes. D = {D[31], D[27], D[23], D[19], ...D[12], D[8], D[4], D[0]}.</p>]]></entry>
+        <entry name="mergeb"><![CDATA[<b>MERGEB  D</b><p>Merge bits of bytes in D. D = {D[31], D[23], D[15], D[7], ...D[24], D[16], D[8], D[0]}.</p>]]></entry>
+        <entry name="splitw"><![CDATA[<b>SPLITW  D</b><p>Split odd/even bits of D into words. D = {D[31], D[29], D[27], D[25], ...D[6], D[4], D[2], D[0]}.</p>]]></entry>
+        <entry name="mergew"><![CDATA[<b>MERGEW  D</b><p>Merge bits of words in D. D = {D[31], D[15], D[30], D[14], ...D[17], D[1], D[16], D[0]}.</p>]]></entry>
+        <entry name="seussf"><![CDATA[<b>SEUSSF  D</b><p>Relocate and periodically invert bits within D. Returns to original value on 32nd iteration. Forward pattern.</p>]]></entry>
+        <entry name="seussr"><![CDATA[<b>SEUSSR  D</b><p>Relocate and periodically invert bits within D. Returns to original value on 32nd iteration. Reverse pattern.</p>]]></entry>
+        <entry name="rgbsqz"><![CDATA[<b>RGBSQZ  D</b><p>Squeeze 8:8:8 RGB value in D[31:8] into 5:6:5 value in D[15:0]. D = {15'b0, D[31:27], D[23:18], D[15:11]}.</p>]]></entry>
+        <entry name="rgbexp"><![CDATA[<b>RGBEXP  D</b><p>Expand 5:6:5 RGB value in D[15:0] into 8:8:8 value in D[31:8]. D = {D[15:11,15:13], D[10:5,10:9], D[4:0,4:2], 8'b0}.</p>]]></entry>
+        <entry name="xoro32"><![CDATA[<b>XORO32  D</b><p>Iterate D with xoroshiro32+ PRNG algorithm and put PRNG result into next instruction's S.</p>]]></entry>
+        <entry name="rev"><![CDATA[<b>REV     D</b><p>Reverse D bits. D = D[0:31].</p>]]></entry>
+        <entry name="rczr"><![CDATA[<b>RCZR    D        {WC/WZ/WCZ}</b><p>Rotate C,Z right through D. D = {C, Z, D[31:2]}. C = D[1],  Z = D[0].</p>]]></entry>
+        <entry name="rczl"><![CDATA[<b>RCZL    D        {WC/WZ/WCZ}</b><p>Rotate C,Z left through D.  D = {D[29:0], C, Z}. C = D[31], Z = D[30].</p>]]></entry>
+        <entry name="wrc"><![CDATA[<b>WRC     D</b><p>Write 0 or 1 to D, according to  C. D = {31'b0,  C).</p>]]></entry>
+        <entry name="wrnc"><![CDATA[<b>WRNC    D</b><p>Write 0 or 1 to D, according to !C. D = {31'b0, !C).</p>]]></entry>
+        <entry name="wrz"><![CDATA[<b>WRZ     D</b><p>Write 0 or 1 to D, according to  Z. D = {31'b0,  Z).</p>]]></entry>
+        <entry name="wrnz"><![CDATA[<b>WRNZ    D</b><p>Write 0 or 1 to D, according to !Z. D = {31'b0, !Z).</p>]]></entry>
+        <entry name="modcz"><![CDATA[<b>MODCZ   c,z      {WC/WZ/WCZ}</b><p>Modify C and Z according to cccc and zzzz. C = cccc[{C,Z}], Z = zzzz[{C,Z}].</p>]]></entry>
+        <entry name="modc"><![CDATA[<b>MODC    c               {WC}</b><p>Modify C according to cccc. C = cccc[{C,Z}].</p>]]></entry>
+        <entry name="modz"><![CDATA[<b>MODZ    z               {WZ}</b><p>Modify Z according to zzzz. Z = zzzz[{C,Z}].</p>]]></entry>
+        <entry name="setscp"><![CDATA[<b>SETSCP  {#}D</b><p>Set four-channel oscilloscope enable to D[6] and set input pin base to D[5:2].</p>]]></entry>
+        <entry name="getscp"><![CDATA[<b>GETSCP  D</b><p>Get four-channel oscilloscope samples into D. D = {ch3[7:0],ch2[7:0],ch1[7:0],ch0[7:0]}.</p>]]></entry>
+        <entry name="jmp"><![CDATA[<b>JMP     #{\}A</b><p>Jump to A.                                                                  If R = 1 then PC += A, else PC = A. "\" forces R = 0.</p>]]></entry>
+        <entry name="call"><![CDATA[<b>CALL    #{\}A</b><p>Call to A by pushing {C, Z, 10'b0, PC[19:0]} onto stack.                    If R = 1 then PC += A, else PC = A. "\" forces R = 0.</p>]]></entry>
+        <entry name="calla"><![CDATA[<b>CALLA   #{\}A</b><p>Call to A by writing {C, Z, 10'b0, PC[19:0]} to hub long at PTRA++.         If R = 1 then PC += A, else PC = A. "\" forces R = 0.</p>]]></entry>
+        <entry name="callb"><![CDATA[<b>CALLB   #{\}A</b><p>Call to A by writing {C, Z, 10'b0, PC[19:0]} to hub long at PTRB++.         If R = 1 then PC += A, else PC = A. "\" forces R = 0.</p>]]></entry>
+        <entry name="calld"><![CDATA[<b>CALLD   PA/PB/PTRA/PTRB,#{\}A</b><p>Call to A by writing {C, Z, 10'b0, PC[19:0]} to PA/PB/PTRA/PTRB (per W).    If R = 1 then PC += A, else PC = A. "\" forces R = 0.</p>]]></entry>
+        <entry name="loc"><![CDATA[<b>LOC     PA/PB/PTRA/PTRB,#{\}A</b><p>Get {12'b0, address[19:0]} into PA/PB/PTRA/PTRB (per W).          If R = 1, address = PC + A, else address = A. "\" forces R = 0.</p>]]></entry>
+        <entry name="augs"><![CDATA[<b>AUGS    #n</b><p>Queue #n to be used as upper 23 bits for next #S occurrence, so that the next 9-bit #S will be augmented to 32 bits.</p>]]></entry>
+        <entry name="augd"><![CDATA[<b>AUGD    #n</b><p>Queue #n to be used as upper 23 bits for next #D occurrence, so that the next 9-bit #D will be augmented to 32 bits.</p>]]></entry>
+        <entry name="_ret_"><![CDATA[<b>_RET_         <inst>  <ops></b><p>Execute <inst> always and return if no branch. If <inst> is not branching then return by popping stack[19:0] into PC.</p>]]></entry>
+        <entry name="if_nc_and_nz"><![CDATA[<b>IF_NC_AND_NZ  <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0.</p>]]></entry>
+        <entry name="if_nz_and_nc"><![CDATA[<b>IF_NZ_AND_NC  <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0.</p>]]></entry>
+        <entry name="if_gt"><![CDATA[<b>IF_GT         <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0, or if 'greater than' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_a"><![CDATA[<b>IF_A          <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0, or if 'above' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_00"><![CDATA[<b>IF_00         <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0.</p>]]></entry>
+        <entry name="if_nc_and_z"><![CDATA[<b>IF_NC_AND_Z   <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 1.</p>]]></entry>
+        <entry name="if_z_and_nc"><![CDATA[<b>IF_Z_AND_NC   <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 1.</p>]]></entry>
+        <entry name="if_01"><![CDATA[<b>IF_01         <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 1.</p>]]></entry>
+        <entry name="if_nc"><![CDATA[<b>IF_NC         <inst>  <ops></b><p>Execute <inst> if C = 0.</p>]]></entry>
+        <entry name="if_ge"><![CDATA[<b>IF_GE         <inst>  <ops></b><p>Execute <inst> if C = 0, or if 'greater than or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_ae"><![CDATA[<b>IF_AE         <inst>  <ops></b><p>Execute <inst> if C = 0, or if 'above or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_0x"><![CDATA[<b>IF_0X         <inst>  <ops></b><p>Execute <inst> if C = 0.</p>]]></entry>
+        <entry name="if_c_and_nz"><![CDATA[<b>IF_C_AND_NZ   <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 0.</p>]]></entry>
+        <entry name="if_nz_and_c"><![CDATA[<b>IF_NZ_AND_C   <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 0.</p>]]></entry>
+        <entry name="if_10"><![CDATA[<b>IF_10         <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 0.</p>]]></entry>
+        <entry name="if_nz"><![CDATA[<b>IF_NZ         <inst>  <ops></b><p>Execute <inst> if Z = 0.</p>]]></entry>
+        <entry name="if_ne"><![CDATA[<b>IF_NE         <inst>  <ops></b><p>Execute <inst> if Z = 0, or if 'not equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_x0"><![CDATA[<b>IF_X0         <inst>  <ops></b><p>Execute <inst> if Z = 0.</p>]]></entry>
+        <entry name="if_c_ne_z"><![CDATA[<b>IF_C_NE_Z     <inst>  <ops></b><p>Execute <inst> if C != Z.</p>]]></entry>
+        <entry name="if_z_ne_c"><![CDATA[<b>IF_Z_NE_C     <inst>  <ops></b><p>Execute <inst> if C != Z.</p>]]></entry>
+        <entry name="if_diff"><![CDATA[<b>IF_DIFF       <inst>  <ops></b><p>Execute <inst> if C != Z.</p>]]></entry>
+        <entry name="if_nc_or_nz"><![CDATA[<b>IF_NC_OR_NZ   <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 0.</p>]]></entry>
+        <entry name="if_nz_or_nc"><![CDATA[<b>IF_NZ_OR_NC   <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 0.</p>]]></entry>
+        <entry name="if_not_11"><![CDATA[<b>IF_NOT_11     <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 0.</p>]]></entry>
+        <entry name="if_c_and_z"><![CDATA[<b>IF_C_AND_Z    <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 1.</p>]]></entry>
+        <entry name="if_z_and_c"><![CDATA[<b>IF_Z_AND_C    <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 1.</p>]]></entry>
+        <entry name="if_11"><![CDATA[<b>IF_11         <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 1.</p>]]></entry>
+        <entry name="if_c_eq_z"><![CDATA[<b>IF_C_EQ_Z     <inst>  <ops></b><p>Execute <inst> if C = Z.</p>]]></entry>
+        <entry name="if_z_eq_c"><![CDATA[<b>IF_Z_EQ_C     <inst>  <ops></b><p>Execute <inst> if C = Z.</p>]]></entry>
+        <entry name="if_same"><![CDATA[<b>IF_SAME       <inst>  <ops></b><p>Execute <inst> if C = Z.</p>]]></entry>
+        <entry name="if_z"><![CDATA[<b>IF_Z          <inst>  <ops></b><p>Execute <inst> if Z = 1.</p>]]></entry>
+        <entry name="if_e"><![CDATA[<b>IF_E          <inst>  <ops></b><p>Execute <inst> if Z = 1, or if 'equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_x1"><![CDATA[<b>IF_X1         <inst>  <ops></b><p>Execute <inst> if Z = 1.</p>]]></entry>
+        <entry name="if_nc_or_z"><![CDATA[<b>IF_NC_OR_Z    <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 1.</p>]]></entry>
+        <entry name="if_z_or_nc"><![CDATA[<b>IF_Z_OR_NC    <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 1.</p>]]></entry>
+        <entry name="if_not_10"><![CDATA[<b>IF_NOT_10     <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 1.</p>]]></entry>
+        <entry name="if_c"><![CDATA[<b>IF_C          <inst>  <ops></b><p>Execute <inst> if C = 1.</p>]]></entry>
+        <entry name="if_lt"><![CDATA[<b>IF_LT         <inst>  <ops></b><p>Execute <inst> if C = 1, or if 'less than' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_b"><![CDATA[<b>IF_B          <inst>  <ops></b><p>Execute <inst> if C = 1, or if 'below' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_1x"><![CDATA[<b>IF_1X         <inst>  <ops></b><p>Execute <inst> if C = 1.</p>]]></entry>
+        <entry name="if_c_or_nz"><![CDATA[<b>IF_C_OR_NZ    <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 0.</p>]]></entry>
+        <entry name="if_nz_or_c"><![CDATA[<b>IF_NZ_OR_C    <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 0.</p>]]></entry>
+        <entry name="if_not_01"><![CDATA[<b>IF_NOT_01     <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 0.</p>]]></entry>
+        <entry name="if_c_or_z"><![CDATA[<b>IF_C_OR_Z     <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1.</p>]]></entry>
+        <entry name="if_z_or_c"><![CDATA[<b>IF_Z_OR_C     <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1.</p>]]></entry>
+        <entry name="if_le"><![CDATA[<b>IF_LE         <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1, or if 'less than or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_be"><![CDATA[<b>IF_BE         <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1, or if 'below or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_not_00"><![CDATA[<b>IF_NOT_00     <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1.</p>]]></entry>
+        <entry name="_clr"><![CDATA[<b>_CLR</b><p>C/Z = 0</p>]]></entry>
+        <entry name="_nc_and_nz"><![CDATA[<b>_NC_AND_NZ</b><p>C/Z = !C AND !Z</p>]]></entry>
+        <entry name="_nz_and_nc"><![CDATA[<b>_NZ_AND_NC</b><p>C/Z = !C AND !Z</p>]]></entry>
+        <entry name="_gt"><![CDATA[<b>_GT</b><p>C/Z = !C AND !Z, or 'greater than' after a comparison/subtraction.</p>]]></entry>
+        <entry name="_nc_and_z"><![CDATA[<b>_NC_AND_Z</b><p>C/Z = !C AND Z</p>]]></entry>
+        <entry name="_z_and_nc"><![CDATA[<b>_Z_AND_NC</b><p>C/Z = !C AND Z</p>]]></entry>
+        <entry name="_nc"><![CDATA[<b>_NC</b><p>C/Z = !C</p>]]></entry>
+        <entry name="_ge"><![CDATA[<b>_GE</b><p>C/Z = !C, or 'greater than or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="_c_and_nz"><![CDATA[<b>_C_AND_NZ</b><p>C/Z = C AND !Z</p>]]></entry>
+        <entry name="_nz_and_c"><![CDATA[<b>_NZ_AND_C</b><p>C/Z = C AND !Z</p>]]></entry>
+        <entry name="_nz"><![CDATA[<b>_NZ</b><p>C/Z = !Z</p>]]></entry>
+        <entry name="_ne"><![CDATA[<b>_NE</b><p>C/Z = !Z, or 'not equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="_c_ne_z"><![CDATA[<b>_C_NE_Z</b><p>C/Z = C NOT_EQUAL_TO Z</p>]]></entry>
+        <entry name="_z_ne_c"><![CDATA[<b>_Z_NE_C</b><p>C/Z = C NOT_EQUAL_TO Z</p>]]></entry>
+        <entry name="_nc_or_nz"><![CDATA[<b>_NC_OR_NZ</b><p>C/Z = !C OR !Z</p>]]></entry>
+        <entry name="_nz_or_nc"><![CDATA[<b>_NZ_OR_NC</b><p>C/Z = !C OR !Z</p>]]></entry>
+        <entry name="_c_and_z"><![CDATA[<b>_C_AND_Z</b><p>C/Z = C AND Z</p>]]></entry>
+        <entry name="_z_and_c"><![CDATA[<b>_Z_AND_C</b><p>C/Z = C AND Z</p>]]></entry>
+        <entry name="_c_eq_z"><![CDATA[<b>_C_EQ_Z</b><p>C/Z = C EQUAL_TO Z</p>]]></entry>
+        <entry name="_z_eq_c"><![CDATA[<b>_Z_EQ_C</b><p>C/Z = C EQUAL_TO Z</p>]]></entry>
+        <entry name="_z"><![CDATA[<b>_Z</b><p>C/Z = Z</p>]]></entry>
+        <entry name="_e"><![CDATA[<b>_E</b><p>C/Z = Z, or 'equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="_nc_or_z"><![CDATA[<b>_NC_OR_Z</b><p>C/Z = !C OR Z</p>]]></entry>
+        <entry name="_z_or_nc"><![CDATA[<b>_Z_OR_NC</b><p>C/Z = !C OR Z</p>]]></entry>
+        <entry name="_c"><![CDATA[<b>_C</b><p>C/Z = C</p>]]></entry>
+        <entry name="_lt"><![CDATA[<b>_LT</b><p>C/Z = C, or 'less than' after a comparison/subtraction.</p>]]></entry>
+        <entry name="_c_or_nz"><![CDATA[<b>_C_OR_NZ</b><p>C/Z = C OR !Z</p>]]></entry>
+        <entry name="_nz_or_c"><![CDATA[<b>_NZ_OR_C</b><p>C/Z = C OR !Z</p>]]></entry>
+        <entry name="_c_or_z"><![CDATA[<b>_C_OR_Z</b><p>C/Z = C OR Z</p>]]></entry>
+        <entry name="_z_or_c"><![CDATA[<b>_Z_OR_C</b><p>C/Z = C OR Z</p>]]></entry>
+        <entry name="_le"><![CDATA[<b>_LE</b><p>C/Z = C OR Z, or 'less than or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="_set"><![CDATA[<b>_SET</b><p>C/Z = 1</p>]]></entry>
+    </section>
+
 </content>

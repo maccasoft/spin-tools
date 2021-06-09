@@ -49,28 +49,37 @@ public class HTMLStyledTextParser extends ParserCallback {
 
     @Override
     public void handleStartTag(final Tag t, final MutableAttributeSet a, final int pos) {
-        if (t == Tag.B) {
+        if (t == Tag.P) {
+            if (outputString.length() > 0 && outputString.charAt(outputString.length() - 1) != '\n') {
+                outputString.append("\n");
+            }
+            outputString.append("\n");
+        }
+        else if (t == Tag.B) {
             currentStyleRange = new StyleRange();
             currentTagType = TagType.B;
             currentPosition = outputString.length();
         }
-        if (t == Tag.I) {
+        else if (t == Tag.I) {
             currentStyleRange = new StyleRange();
             currentTagType = TagType.I;
             currentPosition = outputString.length();
         }
-        if (t == Tag.U) {
+        else if (t == Tag.U) {
             currentStyleRange = new StyleRange();
             currentTagType = TagType.U;
             currentPosition = outputString.length();
-        }
-        if (t == Tag.P) {
-            outputString.append("\n\n");
         }
     }
 
     @Override
     public void handleEndTag(final Tag t, final int pos) {
+        if (t == Tag.P) {
+            if (outputString.length() > 0 && outputString.charAt(outputString.length() - 1) != '\n') {
+                outputString.append("\n");
+            }
+            outputString.append("\n");
+        }
         if (t != Tag.B && t != Tag.I && t != Tag.U && t != Tag.PRE) {
             return;
         }
