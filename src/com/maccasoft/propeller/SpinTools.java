@@ -28,6 +28,8 @@ import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
@@ -92,6 +94,35 @@ public class SpinTools {
             }
         });
         createTabFolderMenu();
+
+        tabFolder.addTraverseListener(new TraverseListener() {
+
+            @Override
+            public void keyTraversed(TraverseEvent e) {
+                if (e.character != SWT.TAB || (e.stateMask & SWT.MODIFIER_MASK) == 0) {
+                    return;
+                }
+                int index = tabFolder.getSelectionIndex();
+                if ((e.stateMask & SWT.SHIFT) != 0) {
+                    index--;
+                    if (index < 0) {
+                        index = tabFolder.getItemCount() - 1;
+                    }
+                }
+                else {
+                    index++;
+                    if (index >= tabFolder.getItemCount()) {
+                        index = 0;
+                    }
+                }
+                tabFolder.setSelection(index);
+
+                EditorTab tab = (EditorTab) tabFolder.getItem(index).getData();
+                tab.setFocus();
+
+                e.doit = false;
+            }
+        });
 
         serialPortList = new SerialPortList();
     }

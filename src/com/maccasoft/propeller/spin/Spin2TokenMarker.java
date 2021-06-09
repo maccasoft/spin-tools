@@ -1042,4 +1042,8 @@ public class Spin2TokenMarker {
 
         return sb.length() != 0 ? sb.toString() : null;
     }
+
+    public Node getRoot() {
+        return root;
+    }
 }

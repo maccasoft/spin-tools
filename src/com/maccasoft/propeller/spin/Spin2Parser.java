@@ -226,7 +226,7 @@ public class Spin2Parser {
                     state = 1;
                     // fall-through
                 case 1:
-                    if (",".equals(token.getText()) || token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
+                    if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF || ",".equals(token.getText())) {
                         if (list.size() >= 1) {
                             new VariableNode(node, list);
                         }

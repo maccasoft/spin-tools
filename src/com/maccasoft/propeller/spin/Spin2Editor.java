@@ -21,6 +21,7 @@ import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CaretEvent;
 import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.LineBackgroundEvent;
@@ -42,6 +43,8 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.graphics.Color;
@@ -57,6 +60,7 @@ import org.eclipse.swt.widgets.Caret;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
@@ -95,6 +99,8 @@ public class Spin2Editor {
     Spin2TokenMarker tokenMarker;
     Map<Spin2TokenMarker.TokenId, TextStyle> styleMap = new HashMap<Spin2TokenMarker.TokenId, TextStyle>();
 
+    Spin2EditorBackgroundDecorator backgroundDecorator;
+
     boolean ignoreUndo;
     boolean ignoreRedo;
     TextChange currentChange;
@@ -104,18 +110,16 @@ public class Spin2Editor {
     class TextChange {
 
         int caretOffset;
-        int topIndex;
         int start;
         int length;
         String replacedText;
         long timeStamp;
 
-        TextChange(int start, int length, String replacedText, int topIndex, int caretOffset) {
+        TextChange(int start, int length, String replacedText, int caretOffset) {
             this.start = start;
             this.length = length;
             this.replacedText = replacedText;
             this.timeStamp = System.currentTimeMillis();
-            this.topIndex = topIndex;
             this.caretOffset = caretOffset;
         }
 
@@ -232,7 +236,7 @@ public class Spin2Editor {
         styledText = new StyledText(container, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
         styledText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         styledText.setMargins(5, 5, 5, 5);
-        styledText.setTabs(8);
+        styledText.setTabs(4);
         styledText.setFont(font);
 
         ruler.setText(styledText);
@@ -269,14 +273,14 @@ public class Spin2Editor {
                 String replacedText = styledText.getTextRange(e.start, e.end - e.start);
                 if (!ignoreUndo) {
                     if (currentChange == null || currentChange.isExpired()) {
-                        undoStack.push(currentChange = new TextChange(e.start, e.text.length(), replacedText, styledText.getTopIndex(), styledText.getCaretOffset()));
+                        undoStack.push(currentChange = new TextChange(e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
                         if (undoStack.size() > UNDO_LIMIT) {
                             undoStack.remove(0);
                         }
                     }
                     else {
                         if (e.start != currentChange.start + currentChange.length) {
-                            undoStack.push(currentChange = new TextChange(e.start, e.text.length(), replacedText, styledText.getTopIndex(), styledText.getCaretOffset()));
+                            undoStack.push(currentChange = new TextChange(e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
                             if (undoStack.size() > UNDO_LIMIT) {
                                 undoStack.remove(0);
                             }
@@ -287,7 +291,7 @@ public class Spin2Editor {
                     }
                 }
                 else if (!ignoreRedo) {
-                    redoStack.push(new TextChange(e.start, e.text.length(), replacedText, styledText.getTopIndex(), styledText.getCaretOffset()));
+                    redoStack.push(new TextChange(e.start, e.text.length(), replacedText, styledText.getCaretOffset()));
                     if (redoStack.size() > UNDO_LIMIT) {
                         redoStack.remove(0);
                     }
@@ -295,12 +299,60 @@ public class Spin2Editor {
             }
         });
 
+        styledText.addTraverseListener(new TraverseListener() {
+
+            @Override
+            public void keyTraversed(TraverseEvent e) {
+                if (e.character != SWT.TAB) {
+                    return;
+                }
+                e.doit = false;
+                if ((e.stateMask & SWT.CTRL) != 0) {
+                    Event event = new Event();
+                    event.character = e.character;
+                    event.stateMask = e.stateMask;
+                    event.detail = e.detail;
+                    e.display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            if (!styledText.isDisposed()) {
+                                Control control = styledText.getParent();
+                                while (!(control instanceof CTabFolder) && control.getParent() != null) {
+                                    control = control.getParent();
+                                }
+                                control.notifyListeners(SWT.Traverse, event);
+                            }
+                        }
+                    });
+                }
+            }
+        });
         styledText.addKeyListener(new KeyAdapter() {
 
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.keyCode == SWT.INSERT && e.stateMask == 0) {
                     styledText.setCaret(styledText.getCaret() == insertCaret ? overwriteCaret : insertCaret);
+                }
+            }
+        });
+        styledText.addVerifyKeyListener(new VerifyKeyListener() {
+
+            @Override
+            public void verifyKey(VerifyEvent e) {
+                if (e.keyCode == SWT.TAB) {
+                    e.doit = false;
+                    if ((e.stateMask & SWT.CTRL) != 0) {
+                        return;
+                    }
+                    if ((e.stateMask & SWT.SHIFT) != 0) {
+                        doBacktab();
+
+                    }
+                    else {
+                        doTab();
+                    }
                 }
             }
         });
@@ -357,6 +409,7 @@ public class Spin2Editor {
             }
         });
 
+        backgroundDecorator = new Spin2EditorBackgroundDecorator();
         styledText.addLineBackgroundListener(new LineBackgroundListener() {
 
             @Override
@@ -365,7 +418,7 @@ public class Spin2Editor {
                     event.lineBackground = currentLineBackground;
                 }
                 else {
-                    event.lineBackground = null;
+                    event.lineBackground = backgroundDecorator.getLineBackground(tokenMarker.getRoot(), event.lineOffset);
                 }
             }
         });
@@ -552,6 +605,7 @@ public class Spin2Editor {
         styledText.removeCaretListener(caretListener);
         try {
             text = text.replaceAll("[ \\t]+(\r\n|\n|\r)", "$1");
+            text = replaceTabs(text, styledText.getTabs());
 
             currentLine = 0;
             styledText.setText(text);
@@ -574,10 +628,50 @@ public class Spin2Editor {
         }
     }
 
+    String replaceTabs(String text, int tabs) {
+        final StringBuilder spaces = new StringBuilder(tabs);
+        for (int i = 0; i < tabs; i++) {
+            spaces.append(' ');
+        }
+
+        int i = 0;
+        while ((i = text.indexOf('\t', i)) != -1) {
+            int s = i;
+            while (s > 0) {
+                s--;
+                if (text.charAt(s) == '\r' || text.charAt(s) == '\n') {
+                    s++;
+                    break;
+                }
+            }
+            int n = ((i - s) % tabs);
+            text = text.substring(0, i) + spaces.substring(0, tabs - n) + text.substring(i + 1);
+        }
+
+        return text;
+    }
+
     public String getText() {
         String text = styledText.getText();
-        text = text.replaceAll("[ \\t]+(\r\n|\n|\r)", "$1");
-        return text;
+        String result = text.replaceAll("[ \\t]+(\r\n|\n|\r)", "$1");
+        if (!result.equals(text)) {
+            int offset = styledText.getCaretOffset();
+            int line = styledText.getLineAtOffset(offset);
+            int column = offset - styledText.getOffsetAtLine(line);
+            int topindex = styledText.getTopIndex();
+
+            styledText.setRedraw(false);
+            try {
+                styledText.setText(result);
+                styledText.setTopIndex(topindex);
+
+                String ls = styledText.getLine(line);
+                styledText.setCaretOffset(styledText.getOffsetAtLine(line) + Math.min(column, ls.length()));
+            } finally {
+                styledText.setRedraw(true);
+            }
+        }
+        return result;
     }
 
     public void undo() {
@@ -592,7 +686,10 @@ public class Spin2Editor {
             styledText.setRedraw(false);
             styledText.replaceTextRange(change.start, change.length, change.replacedText);
             styledText.setCaretOffset(change.caretOffset);
-            styledText.setTopIndex(change.topIndex);
+            styledText.setSelection(change.caretOffset, change.caretOffset);
+            if (redoStack.size() != 0) {
+                redoStack.peek().caretOffset = change.caretOffset;
+            }
         } finally {
             styledText.setRedraw(true);
             ignoreUndo = false;
@@ -611,7 +708,7 @@ public class Spin2Editor {
             styledText.setRedraw(false);
             styledText.replaceTextRange(change.start, change.length, change.replacedText);
             styledText.setCaretOffset(change.caretOffset);
-            styledText.setTopIndex(change.topIndex);
+            styledText.setSelection(change.caretOffset, change.caretOffset);
         } finally {
             styledText.setRedraw(true);
             ignoreRedo = false;
@@ -632,6 +729,67 @@ public class Spin2Editor {
 
     public void selectAll() {
         styledText.selectAll();
+    }
+
+    void doTab() {
+        int caretOffset = styledText.getCaretOffset();
+        int lineNumber = styledText.getLineAtOffset(caretOffset);
+        int lineStart = styledText.getOffsetAtLine(lineNumber);
+
+        int currentColumn = caretOffset - lineStart;
+
+        int nextTabColumn = 0;
+        while (nextTabColumn <= currentColumn) {
+            nextTabColumn += styledText.getTabs();
+        }
+
+        StringBuilder sb = new StringBuilder();
+        while (currentColumn < nextTabColumn) {
+            sb.append(" ");
+            currentColumn++;
+        }
+
+        styledText.setRedraw(false);
+        try {
+            styledText.insert(sb.toString());
+            styledText.setCaretOffset(lineStart + nextTabColumn);
+            styledText.showSelection();
+        } finally {
+            styledText.setRedraw(true);
+        }
+    }
+
+    void doBacktab() {
+        int caretOffset = styledText.getCaretOffset();
+        int lineNumber = styledText.getLineAtOffset(caretOffset);
+        int lineStart = styledText.getOffsetAtLine(lineNumber);
+        String lineText = styledText.getLine(lineNumber);
+
+        int currentColumn = caretOffset - lineStart;
+        if (currentColumn == 0) {
+            return;
+        }
+
+        int previousTabColumn = 0;
+        while (previousTabColumn + styledText.getTabs() < currentColumn) {
+            previousTabColumn += styledText.getTabs();
+        }
+
+        while (currentColumn > 0 && currentColumn > previousTabColumn) {
+            if (!Character.isWhitespace(lineText.charAt(currentColumn - 1))) {
+                break;
+            }
+            currentColumn--;
+        }
+
+        styledText.setRedraw(false);
+        try {
+            styledText.setSelection(lineStart + currentColumn, caretOffset);
+            styledText.insert("");
+            styledText.showSelection();
+        } finally {
+            styledText.setRedraw(true);
+        }
     }
 
     public static void main(String[] args) {

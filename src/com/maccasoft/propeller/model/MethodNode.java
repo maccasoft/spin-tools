@@ -37,6 +37,10 @@ public class MethodNode extends Node {
         return type;
     }
 
+    public boolean isPublic() {
+        return "PUB".equalsIgnoreCase(type.getText());
+    }
+
     public Node getName() {
         return name;
     }
