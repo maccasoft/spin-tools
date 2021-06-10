@@ -14,6 +14,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -24,6 +27,8 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -62,6 +67,8 @@ public class SpinTools {
     Shell shell;
     CTabFolder tabFolder;
     SerialPortList serialPortList;
+
+    Preferences preferences;
 
     public SpinTools(Shell shell) {
         this.shell = shell;
@@ -125,6 +132,19 @@ public class SpinTools {
         });
 
         serialPortList = new SerialPortList();
+
+        preferences = Preferences.getInstance();
+        shell.addDisposeListener(new DisposeListener() {
+
+            @Override
+            public void widgetDisposed(DisposeEvent e) {
+                try {
+                    preferences.save();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
     }
 
     void createFileMenu(Menu parent) {
@@ -213,6 +233,8 @@ public class SpinTools {
 
         new MenuItem(menu, SWT.SEPARATOR);
 
+        final int lruIndex = menu.getItemCount();
+
         item = new MenuItem(menu, SWT.PUSH);
         item.setText("Exit");
         item.addListener(SWT.Selection, new Listener() {
@@ -226,6 +248,56 @@ public class SpinTools {
                 }
             }
         });
+
+        menu.addMenuListener(new MenuListener() {
+
+            List<MenuItem> list = new ArrayList<MenuItem>();
+
+            @Override
+            public void menuShown(MenuEvent e) {
+                for (MenuItem item : list) {
+                    item.dispose();
+                }
+                list.clear();
+                populateLruFiles(menu, lruIndex, list);
+            }
+
+            @Override
+            public void menuHidden(MenuEvent e) {
+            }
+        });
+    }
+
+    void populateLruFiles(Menu menu, int itemIndex, List<MenuItem> list) {
+        int index = 0;
+
+        Iterator<String> iter = Preferences.getInstance().getLru().iterator();
+        while (iter.hasNext()) {
+            final File fileToOpen = new File(iter.next());
+            MenuItem item = new MenuItem(menu, SWT.PUSH, itemIndex++);
+            item.setText(String.format("%d %s", index + 1, fileToOpen.getName()));
+            item.setToolTipText(fileToOpen.getAbsolutePath());
+            item.addListener(SWT.Selection, new Listener() {
+
+                @Override
+                public void handleEvent(Event e) {
+                    try {
+                        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen);
+                        tabFolder.setSelection(tabFolder.getItemCount() - 1);
+                        editorTab.setFocus();
+                        preferences.addToLru(fileToOpen);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+            list.add(item);
+            index++;
+        }
+
+        if (index > 0) {
+            list.add(new MenuItem(menu, SWT.SEPARATOR, itemIndex));
+        }
     }
 
     private void handleFileNew() {
@@ -246,19 +318,30 @@ public class SpinTools {
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
 
+        File filterPath = null;
+
         CTabItem tabItem = tabFolder.getSelection();
         if (tabItem != null) {
             EditorTab editorTab = (EditorTab) tabItem.getData();
             if (editorTab.getFile() != null) {
-                dlg.setFilterPath(editorTab.getFile().getParent());
+                filterPath = editorTab.getFile();
             }
         }
+        if (filterPath == null && preferences.getLru().size() != 0) {
+            filterPath = new File(preferences.getLru().get(0));
+        }
 
-        final String fileName = dlg.open();
+        if (filterPath != null) {
+            dlg.setFilterPath(filterPath.getParent());
+        }
+
+        String fileName = dlg.open();
         if (fileName != null) {
-            EditorTab editorTab = new EditorTab(tabFolder, new File(fileName));
+            File fileToOpen = new File(fileName);
+            EditorTab editorTab = new EditorTab(tabFolder, fileToOpen);
             tabFolder.setSelection(tabFolder.getItemCount() - 1);
             editorTab.setFocus();
+            preferences.addToLru(fileToOpen);
         }
     }
 
