@@ -12,7 +12,6 @@ package com.maccasoft.propeller.model;
 
 import java.util.List;
 
-import com.maccasoft.propeller.spin.Spin2ModelVisitor;
 import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 
 public class ConstantAssignNode extends Node {
@@ -32,7 +31,7 @@ public class ConstantAssignNode extends Node {
     }
 
     @Override
-    public void accept(Spin2ModelVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visitConstantAssign(this);
         super.accept(visitor);
     }

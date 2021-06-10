@@ -13,8 +13,6 @@ package com.maccasoft.propeller.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.maccasoft.propeller.spin.Spin2ModelVisitor;
-
 public class DataLineNode extends Node {
 
     public Node label;
@@ -28,7 +26,7 @@ public class DataLineNode extends Node {
     }
 
     @Override
-    public void accept(Spin2ModelVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visitDataLine(this);
         super.accept(visitor);
     }

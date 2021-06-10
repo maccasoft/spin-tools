@@ -28,6 +28,7 @@ import com.maccasoft.propeller.model.ConstantSetEnumNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 import com.maccasoft.propeller.spin.instructions.Org;
@@ -40,7 +41,7 @@ public class Spin2Compiler {
 
     ExpressionBuilder expressionBuilder = new ExpressionBuilder();
 
-    final Spin2ModelVisitor compilerVisitor = new Spin2ModelVisitor() {
+    final NodeVisitor compilerVisitor = new NodeVisitor() {
 
         int enumValue = 0, enumIncrement = 1;
 

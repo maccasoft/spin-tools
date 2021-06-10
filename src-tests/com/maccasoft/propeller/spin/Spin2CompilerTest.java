@@ -65,30 +65,30 @@ class Spin2CompilerTest {
             + ""));
 
         Node root = parser.parse();
-        DataNode data0 = (DataNode) root.childs.get(0);
+        DataNode data0 = (DataNode) root.getChild(0);
 
-        subject.compilerVisitor.visitDataLine((DataLineNode) data0.childs.get(0));
+        subject.compilerVisitor.visitDataLine((DataLineNode) data0.getChild(0));
         Spin2PAsmLine line = subject.source.get(0);
         Assertions.assertEquals("ptra", line.getArguments().get(1).getExpression().toString());
         Assertions.assertEquals(
             Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_100000000),
             Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
 
-        subject.compilerVisitor.visitDataLine((DataLineNode) data0.childs.get(1));
+        subject.compilerVisitor.visitDataLine((DataLineNode) data0.getChild(1));
         line = subject.source.get(1);
         Assertions.assertEquals("ptra++", line.getArguments().get(1).getExpression().toString());
         Assertions.assertEquals(
             Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_101100001),
             Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
 
-        subject.compilerVisitor.visitDataLine((DataLineNode) data0.childs.get(2));
+        subject.compilerVisitor.visitDataLine((DataLineNode) data0.getChild(2));
         line = subject.source.get(2);
         Assertions.assertEquals("++ptra", line.getArguments().get(1).getExpression().toString());
         Assertions.assertEquals(
             Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_101000001),
             Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
 
-        subject.compilerVisitor.visitDataLine((DataLineNode) data0.childs.get(3));
+        subject.compilerVisitor.visitDataLine((DataLineNode) data0.getChild(3));
         line = subject.source.get(3);
         Assertions.assertEquals("ptra", line.getArguments().get(1).getExpression().toString());
         Assertions.assertEquals(3, line.getArguments().get(1).getCount());
@@ -96,7 +96,7 @@ class Spin2CompilerTest {
             Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_100000011),
             Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
 
-        subject.compilerVisitor.visitDataLine((DataLineNode) data0.childs.get(4));
+        subject.compilerVisitor.visitDataLine((DataLineNode) data0.getChild(4));
         line = subject.source.get(4);
         Assertions.assertEquals("ptra--", line.getArguments().get(1).getExpression().toString());
         Assertions.assertEquals(3, line.getArguments().get(1).getCount());
@@ -104,7 +104,7 @@ class Spin2CompilerTest {
             Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_101111101),
             Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
 
-        subject.compilerVisitor.visitDataLine((DataLineNode) data0.childs.get(5));
+        subject.compilerVisitor.visitDataLine((DataLineNode) data0.getChild(5));
         line = subject.source.get(5);
         Assertions.assertEquals("--ptra", line.getArguments().get(1).getExpression().toString());
         Assertions.assertEquals(3, line.getArguments().get(1).getCount());

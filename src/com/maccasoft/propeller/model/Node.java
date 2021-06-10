@@ -14,15 +14,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import com.maccasoft.propeller.spin.Spin2ModelVisitor;
 import com.maccasoft.propeller.spin.Spin2TokenStream;
 import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 
 public class Node {
 
-    public final Node parent;
-    public final List<Token> tokens = new ArrayList<Token>();
-    public final List<Node> childs = new ArrayList<Node>();
+    final Node parent;
+    final List<Token> tokens = new ArrayList<Token>();
+    final List<Node> childs = new ArrayList<Node>();
 
     public Node() {
         this.parent = null;
@@ -33,7 +32,7 @@ public class Node {
         this.parent.childs.add(this);
     }
 
-    public void accept(Spin2ModelVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         for (Node child : childs) {
             child.accept(visitor);
         }
@@ -71,6 +70,14 @@ public class Node {
 
     public Node getParent() {
         return parent;
+    }
+
+    public void addChild(Node node) {
+        childs.add(node);
+    }
+
+    public Node getChild(int index) {
+        return childs.get(index);
     }
 
     public List<Node> getChilds() {

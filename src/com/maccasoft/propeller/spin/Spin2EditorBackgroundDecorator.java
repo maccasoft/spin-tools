@@ -28,17 +28,17 @@ public class Spin2EditorBackgroundDecorator {
     }
 
     public Color getLineBackground(Node root, int lineOffset) {
-        if (root == null || root.getChilds().size() == 0) {
-            return null;
+        Color color = getSectionBackground(null);
+
+        if (root != null) {
+            for (Node child : root.getChilds()) {
+                if (lineOffset < child.getStartIndex()) {
+                    break;
+                }
+                color = getSectionBackground(child);
+            }
         }
 
-        Color color = getSectionBackground(null);
-        for (Node child : root.getChilds()) {
-            if (lineOffset < child.getStartIndex()) {
-                break;
-            }
-            color = getSectionBackground(child);
-        }
         return color;
     }
 

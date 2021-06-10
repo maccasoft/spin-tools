@@ -8,23 +8,9 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin;
+package com.maccasoft.propeller.model;
 
-import com.maccasoft.propeller.model.ConstantAssignEnumNode;
-import com.maccasoft.propeller.model.ConstantAssignNode;
-import com.maccasoft.propeller.model.ConstantSetEnumNode;
-import com.maccasoft.propeller.model.ConstantsNode;
-import com.maccasoft.propeller.model.DataLineNode;
-import com.maccasoft.propeller.model.DataNode;
-import com.maccasoft.propeller.model.ErrorNode;
-import com.maccasoft.propeller.model.ExpressionNode;
-import com.maccasoft.propeller.model.MethodNode;
-import com.maccasoft.propeller.model.ObjectsNode;
-import com.maccasoft.propeller.model.StatementNode;
-import com.maccasoft.propeller.model.VariableNode;
-import com.maccasoft.propeller.model.VariablesNode;
-
-public class Spin2ModelVisitor {
+public class NodeVisitor {
 
     public void visitConstants(ConstantsNode node) {
 

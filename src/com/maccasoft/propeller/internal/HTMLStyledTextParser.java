@@ -24,6 +24,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 
 public class HTMLStyledTextParser extends ParserCallback {
 
@@ -35,8 +36,10 @@ public class HTMLStyledTextParser extends ParserCallback {
     private int currentPosition;
     private final HTMLEditorKit.Parser parser;
 
+    private Font fixedFont;
+
     private enum TagType {
-        B, U, I
+        B, U, I, CODE
     };
 
     public HTMLStyledTextParser(final StyledText styledText) {
@@ -45,6 +48,15 @@ public class HTMLStyledTextParser extends ParserCallback {
         this.styledText = styledText;
         this.listOfStyles = new ArrayList<StyleRange>();
         this.outputString = new StringBuilder();
+
+        Font font = styledText.getFont();
+        FontData fontData = font.getFontData()[0];
+        if ("win32".equals(SWT.getPlatform())) {
+            fixedFont = new Font(styledText.getDisplay(), "Courier New", fontData.getHeight() - 1, SWT.NONE);
+        }
+        else {
+            fixedFont = new Font(styledText.getDisplay(), "mono", fontData.getHeight() - 1, SWT.NONE);
+        }
     }
 
     @Override
@@ -70,6 +82,12 @@ public class HTMLStyledTextParser extends ParserCallback {
             currentTagType = TagType.U;
             currentPosition = outputString.length();
         }
+        else if (t == Tag.CODE) {
+            currentStyleRange = new StyleRange();
+            currentStyleRange.font = fixedFont;
+            currentTagType = TagType.CODE;
+            currentPosition = outputString.length();
+        }
     }
 
     @Override
@@ -80,12 +98,11 @@ public class HTMLStyledTextParser extends ParserCallback {
             }
             outputString.append("\n");
         }
-        if (t != Tag.B && t != Tag.I && t != Tag.U && t != Tag.PRE) {
+        if (t != Tag.B && t != Tag.I && t != Tag.U && t != Tag.CODE) {
             return;
         }
         int style = SWT.NORMAL;
         boolean underline = false;
-        Font font = null;
         if (t == Tag.B) {
             if (TagType.B != this.currentTagType) {
                 throw new RuntimeException("Error parsing [" + this.styledText.getText() + "] : bad syntax");
@@ -104,12 +121,17 @@ public class HTMLStyledTextParser extends ParserCallback {
             }
             style = SWT.NORMAL;
         }
+        else if (t == Tag.CODE) {
+            if (TagType.CODE != this.currentTagType) {
+                throw new RuntimeException("Error parsing [" + this.styledText.getText() + "] : bad syntax");
+            }
+            style = SWT.BOLD;
+        }
         if (currentStyleRange != null) {
             currentStyleRange.start = currentPosition;
             currentStyleRange.length = outputString.length() - currentPosition;
             currentStyleRange.fontStyle = style;
             currentStyleRange.underline = underline;
-            currentStyleRange.font = font;
             listOfStyles.add(this.currentStyleRange);
             currentStyleRange = null;
             currentTagType = null;

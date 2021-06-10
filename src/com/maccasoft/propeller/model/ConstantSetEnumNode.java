@@ -12,7 +12,6 @@ package com.maccasoft.propeller.model;
 
 import java.util.List;
 
-import com.maccasoft.propeller.spin.Spin2ModelVisitor;
 import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 
 public class ConstantSetEnumNode extends Node {
@@ -39,7 +38,7 @@ public class ConstantSetEnumNode extends Node {
     }
 
     @Override
-    public void accept(Spin2ModelVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visitConstantSetEnum(this);
         super.accept(visitor);
     }

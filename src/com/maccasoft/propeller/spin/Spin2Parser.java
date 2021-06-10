@@ -91,18 +91,19 @@ public class Spin2Parser {
 
     final Spin2TokenStream stream;
 
-    Spin2Model root;
+    Node root;
 
     public Spin2Parser(Spin2TokenStream stream) {
         this.stream = stream;
     }
 
-    public Spin2Model parse() {
-        root = new Spin2Model();
+    public Node parse() {
+        root = new Node();
 
         while (true) {
             Token token = stream.nextToken();
             if (token.type == Spin2TokenStream.EOF) {
+                root.addToken(token);
                 break;
             }
             if (token.type == Spin2TokenStream.NL) {
@@ -142,7 +143,7 @@ public class Spin2Parser {
             return true;
         }
         if ("CON".equalsIgnoreCase(token.getText())) {
-            ConstantsNode node = new ConstantsNode(root);
+            ConstantsNode node = new ConstantsNode(root, token);
             node.addToken(token);
             parseConstants(node, stream.nextToken());
             return true;
@@ -181,11 +182,11 @@ public class Spin2Parser {
                                     new ConstantAssignEnumNode(parent, list);
                                 }
                                 else {
-                                    child = new ErrorNode(parent);
+                                    child = new ErrorNode(parent, "Syntax error");
                                 }
                             }
                             else {
-                                child = new ErrorNode(parent);
+                                child = new ErrorNode(parent, "Syntax error");
                             }
                         }
 
@@ -213,7 +214,7 @@ public class Spin2Parser {
         List<Token> list = new ArrayList<Token>();
 
         Node node = new VariablesNode(root);
-        node.tokens.add(start);
+        node.addToken(start);
 
         int state = 1;
         while (true) {
@@ -250,7 +251,7 @@ public class Spin2Parser {
         List<Token> list = new ArrayList<Token>();
 
         Node node = new ObjectsNode(root);
-        node.tokens.add(start);
+        node.addToken(start);
 
         int state = 1;
         while (true) {
@@ -298,9 +299,7 @@ public class Spin2Parser {
     }
 
     void parseMethod(Token start) {
-        MethodNode node = new MethodNode(root);
-        node.type = new Node(node);
-        node.type.addToken(start);
+        MethodNode node = new MethodNode(root, start);
 
         int state = 2;
         Node parent = node;
@@ -329,13 +328,13 @@ public class Spin2Parser {
                         break;
                     }
 
-                    if (child.tokens.size() != 0) {
-                        while (token.column < child.tokens.get(0).column && child != node) {
+                    if (child.getTokens().size() != 0) {
+                        while (token.column < child.getToken(0).column && child != node) {
                             child = child.getParent();
                             parent = child.getParent();
                         }
 
-                        if (token.column > child.tokens.get(0).column) {
+                        if (token.column > child.getToken(0).column) {
                             parent = child;
                         }
                     }
@@ -349,8 +348,8 @@ public class Spin2Parser {
 
                 case 2:
                     if (token.type == 0) {
-                        node.name = new Node(node);
-                        node.name.addToken(token);
+                        node.name = token;
+                        node.addToken(token);
                         state = 3;
                         break;
                     }
@@ -590,7 +589,7 @@ public class Spin2Parser {
             }
             parseDatLine(parent, token);
             if ("ORG".equalsIgnoreCase(token.getText()) || "ORGH".equalsIgnoreCase(token.getText())) {
-                parent = node.childs.get(node.childs.size() - 1);
+                parent = node.getChild(node.getChilds().size() - 1);
             }
         }
     }
@@ -685,7 +684,7 @@ public class Spin2Parser {
                     }
                     if ("[".equals(token.getText())) {
                         parameter.count = new ExpressionNode();
-                        parameter.childs.add(parameter.count);
+                        parameter.addChild(parameter.count);
                         state = 10;
                         break;
                     }
@@ -784,7 +783,7 @@ public class Spin2Parser {
         //}
         System.out.println(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
 
-        for (Node child : node.childs) {
+        for (Node child : node.getChilds()) {
             print(child, indent + 1);
         }
     }

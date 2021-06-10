@@ -10,8 +10,6 @@
 
 package com.maccasoft.propeller.model;
 
-import com.maccasoft.propeller.spin.Spin2ModelVisitor;
-
 public class StatementNode extends Node {
 
     public StatementNode(Node parent) {
@@ -19,7 +17,7 @@ public class StatementNode extends Node {
     }
 
     @Override
-    public void accept(Spin2ModelVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visitStatement(this);
         super.accept(visitor);
     }

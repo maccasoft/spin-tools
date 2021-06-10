@@ -27,7 +27,7 @@ public class Spin2TokenStream {
     static final int NL = 8;
     static final int EOF = -1;
 
-    public static final Token EOF_TOKEN = new Token(null, 0, EOF);
+    private final Token EOF_TOKEN = new Token(null, 0, EOF);
 
     final String text;
 
@@ -38,7 +38,6 @@ public class Spin2TokenStream {
     int nested = 0;
     boolean escape = false;
 
-    List<Token> tokens = new ArrayList<Token>();
     List<Token> hiddenTokens = new ArrayList<Token>();
 
     public static class Token {
@@ -65,6 +64,9 @@ public class Spin2TokenStream {
         }
 
         public String getText() {
+            if (type == EOF) {
+                return "<EOF>";
+            }
             if (text == null) {
                 text = stream.getSource(start, stop);
             }
@@ -103,6 +105,10 @@ public class Spin2TokenStream {
     }
 
     public Token nextToken() {
+        return nextToken(false);
+    }
+
+    public Token nextToken(boolean comments) {
         Token token = EOF_TOKEN;
 
         for (; index < text.length(); index++, column++) {
@@ -178,7 +184,6 @@ public class Spin2TokenStream {
                         token.type = OPERATOR;
                         if (ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';') {
                             index++;
-                            tokens.add(token);
                             state = START;
                             return token;
                         }
@@ -189,7 +194,6 @@ public class Spin2TokenStream {
                     if (ch != '\r' && ch != '\n') {
                         column = 0;
                         line++;
-                        tokens.add(token);
                         state = START;
                         return token;
                     }
@@ -200,6 +204,9 @@ public class Spin2TokenStream {
                         index--;
                         state = START;
                         hiddenTokens.add(token);
+                        if (comments) {
+                            return token;
+                        }
                         token = EOF_TOKEN;
                         break;
                     }
@@ -215,6 +222,9 @@ public class Spin2TokenStream {
                             index++;
                             state = START;
                             hiddenTokens.add(token);
+                            if (comments) {
+                                return token;
+                            }
                             token = EOF_TOKEN;
                             break;
                         }
@@ -226,7 +236,6 @@ public class Spin2TokenStream {
                         token.stop++;
                     }
                     else {
-                        tokens.add(token);
                         state = START;
                         return token;
                     }
@@ -239,7 +248,6 @@ public class Spin2TokenStream {
                     }
                     if (ch == '"') {
                         index++;
-                        tokens.add(token);
                         state = START;
                         return token;
                     }
@@ -250,7 +258,6 @@ public class Spin2TokenStream {
                         break;
                     }
 
-                    tokens.add(token);
                     state = START;
                     return token;
                 case OPERATOR: {
@@ -300,7 +307,6 @@ public class Spin2TokenStream {
                         token.stop++;
                         index++;
                     }
-                    tokens.add(token);
                     state = START;
                     return token;
                 }
@@ -322,15 +328,20 @@ public class Spin2TokenStream {
             }
         }
 
+        if (state == COMMENT || state == BLOCK_COMMENT) {
+            hiddenTokens.add(token);
+            return comments ? token : EOF_TOKEN;
+        }
+
+        if (token == EOF_TOKEN) {
+            token.start = token.stop = text.length() - 1;
+        }
+
         return token;
     }
 
     public String getSource(int start, int stop) {
         return text.substring(start, stop + 1);
-    }
-
-    public List<Token> getTokens() {
-        return tokens;
     }
 
     public List<Token> getHiddenTokens() {

@@ -453,7 +453,7 @@ public class Spin2Editor {
                 }
                 Rectangle bounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
 
-                Node context = tokenMarker.getContextAt(offset);
+                //Node context = tokenMarker.getContextAt(offset);
                 TokenMarker marker = tokenMarker.getMarkerAtOffset(offset);
 
                 if (marker != null && marker.getError() != null) {
@@ -480,7 +480,7 @@ public class Spin2Editor {
                 }
 
                 if (token != null) {
-                    String text = Spin2InstructionHelp.getString(context.getClass().getSimpleName(), token.getText().toLowerCase());
+                    String text = Spin2InstructionHelp.getString("", token.getText().toLowerCase());
                     if (text == null) {
                         text = tokenMarker.getMethod(token.getText());
                     }
@@ -530,11 +530,6 @@ public class Spin2Editor {
             }
         });
 
-        char[] autoActivationCharacters = new char[] {
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-        };
-
         KeyStroke keyStroke = null;
         try {
             keyStroke = KeyStroke.getInstance("Ctrl+Space");
@@ -548,44 +543,12 @@ public class Spin2Editor {
 
                 @Override
                 public IContentProposal[] getProposals(String contents, int position) {
-                    List<IContentProposal> proposals = new ArrayList<IContentProposal>();
-
-                    String context = null;
-                    Node node = tokenMarker.getContextAt(styledText.getCaretOffset());
-                    if (node != null) {
-                        context = node.getClass().getSimpleName();
-                    }
-
-                    int start = position;
-                    while (start > 0) {
-                        if (contents.charAt(start - 1) != '_' && !Character.isAlphabetic(contents.charAt(start - 1))) {
-                            break;
-                        }
-                        start--;
-                    }
-
-                    String token = contents.substring(start, position).toUpperCase();
-                    if ("".equals(token) || Spin2InstructionHelp.getString(context, token) != null) {
-                        return null;
-                    }
-
-                    Spin2InstructionHelp.fillProposals(context, token, proposals);
-
-                    Collections.sort(proposals, new Comparator<IContentProposal>() {
-
-                        @Override
-                        public int compare(IContentProposal o1, IContentProposal o2) {
-                            return o1.getLabel().compareToIgnoreCase(o2.getLabel());
-                        }
-
-                    });
-
-                    return proposals.toArray(new IContentProposal[proposals.size()]);
+                    return computeProposals(contents, position);
                 }
 
             },
             keyStroke,
-            autoActivationCharacters);
+            null);
         adapter.setPopupSize(new Point(200, 300));
         adapter.setPropagateKeys(true);
         adapter.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);
@@ -648,15 +611,7 @@ public class Spin2Editor {
             undoStack.clear();
             redoStack.clear();
 
-            display.asyncExec(new Runnable() {
-
-                @Override
-                public void run() {
-                    modified = true;
-                    styledText.redraw();
-                }
-
-            });
+            modified = true;
 
         } finally {
             styledText.setRedraw(true);
@@ -826,6 +781,47 @@ public class Spin2Editor {
         } finally {
             styledText.setRedraw(true);
         }
+    }
+
+    public IContentProposal[] computeProposals(String contents, int position) {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+
+        String context = null;
+        if (position == 0) {
+            context = "Root";
+        }
+        else {
+            Node node = tokenMarker.getContextAt(styledText.getCaretOffset());
+            if (node != null) {
+                context = node.getClass().getSimpleName();
+            }
+        }
+
+        int start = position;
+        while (start > 0) {
+            if (contents.charAt(start - 1) != '_' && !Character.isAlphabetic(contents.charAt(start - 1))) {
+                break;
+            }
+            start--;
+        }
+
+        String token = contents.substring(start, position).toUpperCase();
+        //if ("".equals(token) || Spin2InstructionHelp.getString(context, token) != null) {
+        //    return null;
+        //}
+
+        Spin2InstructionHelp.fillProposals(context, token, proposals);
+
+        Collections.sort(proposals, new Comparator<IContentProposal>() {
+
+            @Override
+            public int compare(IContentProposal o1, IContentProposal o2) {
+                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+            }
+
+        });
+
+        return proposals.toArray(new IContentProposal[proposals.size()]);
     }
 
     public static void main(String[] args) {

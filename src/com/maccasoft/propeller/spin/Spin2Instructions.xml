@@ -1,16 +1,20 @@
 <content>
-    <entry name="CON"><![CDATA[<b>CON</b><p>Constant declarations (CON is the initial/default block type)</p>]]></entry>
-    <entry name="VAR"><![CDATA[<b>VAR</b><p>Variable declarations</p>]]></entry>
-    <entry name="OBJ"><![CDATA[<b>OBJ</b><p>Child-object instantiations</p>]]></entry>
-    <entry name="PUB"><![CDATA[<b>PUB</b><p>Public method for use by the parent object and within this object</p>]]></entry>
-    <entry name="PRI"><![CDATA[<b>PRI</b><p>Private method for use within this object</p>]]></entry>
-    <entry name="DAT"><![CDATA[<b>DAT</b><p>Data declarations, including PASM code</p>]]></entry>
+    <section class="Root">
+        <entry name="CON"><![CDATA[<b>CON</b><p>Constant declarations (CON is the initial/default block type)</p>]]></entry>
+        <entry name="VAR"><![CDATA[<b>VAR</b><p>Variable declarations</p>]]></entry>
+        <entry name="OBJ"><![CDATA[<b>OBJ</b><p>Child-object instantiations</p>]]></entry>
+        <entry name="PUB"><![CDATA[<b>PUB</b><p>Public method for use by the parent object and within this object</p>]]></entry>
+        <entry name="PRI"><![CDATA[<b>PRI</b><p>Private method for use within this object</p>]]></entry>
+        <entry name="DAT"><![CDATA[<b>DAT</b><p>Data declarations, including PASM code</p>]]></entry>
+    </section>
 
-    <entry name="addpins"><![CDATA[<b>x ADDPINS y</b><p>Make pinfield, (x & $3F) | (y & $1F) << 6</p>]]></entry>
-    <entry name="CLKFREQ"><![CDATA[<b>CLKFREQ</b><p>Clock frequency value</p>]]></entry>
-    <entry name="_CLKFREQ"><![CDATA[<b>CLKFREQ</b><p>Clock frequency value</p>]]></entry>
-    <entry name="CLKMODE"><![CDATA[<b>CLKMODE</b><p>Clock mode value</p>]]></entry>
-    <entry name="_CLKMODE"><![CDATA[<b>CLKMODE</b><p>Clock mode value</p>]]></entry>
+    <section class="ConstantsNode,ExpressionNode">
+        <entry name="addpins"><![CDATA[<b>x ADDPINS y</b><p>Make pinfield, (x & $3F) | (y & $1F) &lt;&lt; 6</p>]]></entry>
+        <entry name="CLKFREQ"><![CDATA[<b>CLKFREQ | _CLKFREQ</b><p>Clock frequency value</p>]]></entry>
+        <entry name="_CLKFREQ"><![CDATA[<b>CLKFREQ | _CLKFREQ</b><p>Clock frequency value</p>]]></entry>
+        <entry name="CLKMODE"><![CDATA[<b>CLKMODE | _CLKMODE</b><p>Clock mode value</p>]]></entry>
+        <entry name="_CLKMODE"><![CDATA[<b>CLKMODE | _CLKMODE</b><p>Clock mode value</p>]]></entry>
+    </section>
 
     <section class="StatementNode">
         <entry name="abort"></entry>
@@ -137,7 +141,7 @@
         <entry name="lookdownz" insert="lookdownz(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWNZ(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 0-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
     </section>
 
-    <section class="DatNode,DataLineNode">
+    <section class="DatNode,DataLineNode" stage="Mnemonic">
         <entry name="nop"><![CDATA[<b>NOP</b><p>No operation.</p>]]></entry>
         <entry name="ror"><![CDATA[<b>ROR     D,{#}S   {WC/WZ/WCZ}</b><p>Rotate right.           D = [31:0]  of ({D[31:0], D[31:0]}     >> S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[0].  *</p>]]></entry>
         <entry name="rol"><![CDATA[<b>ROL     D,{#}S   {WC/WZ/WCZ}</b><p>Rotate left.            D = [63:32] of ({D[31:0], D[31:0]}     << S[4:0]). C = last bit shifted out if S[4:0] > 0, else D[31]. *</p>]]></entry>
@@ -350,8 +354,6 @@
         <entry name="jnxrl"><![CDATA[<b>JNXRL   {#}S</b><p>Jump to S** if XRL event flag is clear.</p>]]></entry>
         <entry name="jnatn"><![CDATA[<b>JNATN   {#}S</b><p>Jump to S** if ATN event flag is clear.</p>]]></entry>
         <entry name="jnqmt"><![CDATA[<b>JNQMT   {#}S</b><p>Jump to S** if QMT event flag is clear.</p>]]></entry>
-        <entry name="&lt;empty&gt;"><![CDATA[<b><empty> {#}D,{#}S</b><p><empty></p>]]></entry>
-        <entry name="&lt;empty&gt;"><![CDATA[<b><empty> {#}D,{#}S</b><p><empty></p>]]></entry>
         <entry name="setpat"><![CDATA[<b>SETPAT  {#}D,{#}S</b><p>Set pin pattern for PAT event. C selects INA/INB, Z selects =/!=, D provides mask value, S provides match value.</p>]]></entry>
         <entry name="akpin"><![CDATA[<b>AKPIN   {#}S</b><p>Acknowledge smart pins S[10:6]+S[5:0]..S[5:0].                              Wraps within A/B pins. Prior SETQ overrides S[10:6].</p>]]></entry>
         <entry name="wrpin"><![CDATA[<b>WRPIN   {#}D,{#}S</b><p>Set mode of smart pins S[10:6]+S[5:0]..S[5:0] to D, acknowledge smart pins. Wraps within A/B pins. Prior SETQ overrides S[10:6].</p>]]></entry>
@@ -547,6 +549,8 @@
         <entry name="loc"><![CDATA[<b>LOC     PA/PB/PTRA/PTRB,#{\}A</b><p>Get {12'b0, address[19:0]} into PA/PB/PTRA/PTRB (per W).          If R = 1, address = PC + A, else address = A. "\" forces R = 0.</p>]]></entry>
         <entry name="augs"><![CDATA[<b>AUGS    #n</b><p>Queue #n to be used as upper 23 bits for next #S occurrence, so that the next 9-bit #S will be augmented to 32 bits.</p>]]></entry>
         <entry name="augd"><![CDATA[<b>AUGD    #n</b><p>Queue #n to be used as upper 23 bits for next #D occurrence, so that the next 9-bit #D will be augmented to 32 bits.</p>]]></entry>
+    </section>
+    <section class="DatNode,DataLineNode" stage="Condition">
         <entry name="_ret_"><![CDATA[<b>_RET_         <inst>  <ops></b><p>Execute <inst> always and return if no branch. If <inst> is not branching then return by popping stack[19:0] into PC.</p>]]></entry>
         <entry name="if_nc_and_nz"><![CDATA[<b>IF_NC_AND_NZ  <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0.</p>]]></entry>
         <entry name="if_nz_and_nc"><![CDATA[<b>IF_NZ_AND_NC  <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0.</p>]]></entry>
@@ -596,6 +600,8 @@
         <entry name="if_le"><![CDATA[<b>IF_LE         <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1, or if 'less than or equal' after a comparison/subtraction.</p>]]></entry>
         <entry name="if_be"><![CDATA[<b>IF_BE         <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1, or if 'below or equal' after a comparison/subtraction.</p>]]></entry>
         <entry name="if_not_00"><![CDATA[<b>IF_NOT_00     <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1.</p>]]></entry>
+    </section>
+    <section class="DatNode,DataLineNode" stage="Parameter">
         <entry name="_clr"><![CDATA[<b>_CLR</b><p>C/Z = 0</p>]]></entry>
         <entry name="_nc_and_nz"><![CDATA[<b>_NC_AND_NZ</b><p>C/Z = !C AND !Z</p>]]></entry>
         <entry name="_nz_and_nc"><![CDATA[<b>_NZ_AND_NC</b><p>C/Z = !C AND !Z</p>]]></entry>

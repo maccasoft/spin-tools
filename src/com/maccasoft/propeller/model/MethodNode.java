@@ -13,27 +13,29 @@ package com.maccasoft.propeller.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.maccasoft.propeller.spin.Spin2ModelVisitor;
+import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 
 public class MethodNode extends Node {
 
-    public Node type;
-    public Node name;
+    public Token type;
+    public Token name;
     public List<Node> parameters = new ArrayList<Node>();
     public List<Node> returnVariables = new ArrayList<Node>();
     public List<LocalVariableNode> localVariables = new ArrayList<LocalVariableNode>();
 
-    public MethodNode(Node parent) {
+    public MethodNode(Node parent, Token type) {
         super(parent);
+        this.type = type;
+        addToken(type);
     }
 
     @Override
-    public void accept(Spin2ModelVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visitMethod(this);
         super.accept(visitor);
     }
 
-    public Node getType() {
+    public Token getType() {
         return type;
     }
 
@@ -41,7 +43,7 @@ public class MethodNode extends Node {
         return "PUB".equalsIgnoreCase(type.getText());
     }
 
-    public Node getName() {
+    public Token getName() {
         return name;
     }
 

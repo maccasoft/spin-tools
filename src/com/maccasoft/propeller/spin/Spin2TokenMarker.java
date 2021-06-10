@@ -27,6 +27,7 @@ import com.maccasoft.propeller.model.ExpressionNode;
 import com.maccasoft.propeller.model.LocalVariableNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.model.StatementNode;
@@ -568,13 +569,15 @@ public class Spin2TokenMarker {
 
     Map<String, TokenId> symbols = new HashMap<String, TokenId>();
 
-    final Spin2ModelVisitor collectKeywordsVisitor = new Spin2ModelVisitor() {
+    final NodeVisitor collectKeywordsVisitor = new NodeVisitor() {
 
         String lastLabel = "";
 
         @Override
         public void visitConstants(ConstantsNode node) {
-            tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
+            if (node.getTextToken() != null) {
+                tokens.add(new TokenMarker(node.getTextToken(), TokenId.SECTION));
+            }
         }
 
         @Override
@@ -666,7 +669,9 @@ public class Spin2TokenMarker {
                 String s = node.label.getText();
                 if (s.startsWith(".")) {
                     if (symbols.containsKey(lastLabel + s)) {
-                        tokens.add(new TokenMarker(node.label, TokenId.ERROR));
+                        TokenMarker marker = new TokenMarker(node.label, TokenId.ERROR);
+                        marker.setError("Symbol already defined");
+                        tokens.add(marker);
                     }
                     else {
                         symbols.put(lastLabel + s, TokenId.PASM_LOCAL_LABEL);
@@ -680,7 +685,9 @@ public class Spin2TokenMarker {
                         id = pasmKeywords.get(s);
                     }
                     if (id != null) {
-                        tokens.add(new TokenMarker(node.label, TokenId.ERROR));
+                        TokenMarker marker = new TokenMarker(node.label, TokenId.ERROR);
+                        marker.setError("Symbol already defined");
+                        tokens.add(marker);
                     }
                     else {
                         symbols.put(s, TokenId.PASM_LABEL);
@@ -703,7 +710,7 @@ public class Spin2TokenMarker {
 
     };
 
-    final Spin2ModelVisitor updateReferencesVisitor = new Spin2ModelVisitor() {
+    final NodeVisitor updateReferencesVisitor = new NodeVisitor() {
 
         String lastLabel = "";
         Map<String, TokenId> locals = new HashMap<String, TokenId>();
@@ -734,7 +741,7 @@ public class Spin2TokenMarker {
                 }
             }
 
-            for (Node child : node.childs) {
+            for (Node child : node.getChilds()) {
                 if (child instanceof StatementNode) {
                     markTokens(child);
                 }
@@ -770,7 +777,7 @@ public class Spin2TokenMarker {
                     }
                 }
             }
-            for (Node child : node.childs) {
+            for (Node child : node.getChilds()) {
                 markTokens(child);
             }
         }
@@ -903,9 +910,13 @@ public class Spin2TokenMarker {
     public Set<TokenMarker> getLineTokens(int lineStart, int lineStop) {
         Set<TokenMarker> result = new TreeSet<TokenMarker>();
 
+        if (tokens.size() == 0) {
+            return result;
+        }
+
         TokenMarker firstMarker = tokens.floor(new TokenMarker(lineStart, lineStop, null));
         if (firstMarker == null) {
-            return new TreeSet<TokenMarker>();
+            firstMarker = tokens.first();
         }
 
         for (TokenMarker entry : tokens.tailSet(firstMarker)) {
@@ -931,7 +942,7 @@ public class Spin2TokenMarker {
         }
 
         List<Node> allNodes = new ArrayList<Node>();
-        root.accept(new Spin2ModelVisitor() {
+        root.accept(new NodeVisitor() {
 
             @Override
             public void visitConstants(ConstantsNode node) {
@@ -1025,7 +1036,7 @@ public class Spin2TokenMarker {
     public String getMethod(String symbol) {
         StringBuilder sb = new StringBuilder();
 
-        root.accept(new Spin2ModelVisitor() {
+        root.accept(new NodeVisitor() {
 
             @Override
             public void visitConstantAssign(ConstantAssignNode node) {

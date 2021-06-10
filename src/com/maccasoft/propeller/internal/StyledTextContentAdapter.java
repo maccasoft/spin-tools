@@ -43,10 +43,17 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
             start--;
         }
         while (position < contents.length()) {
-            if (contents.charAt(start) != '_' && !Character.isAlphabetic(contents.charAt(start))) {
+            if (contents.charAt(position) != '_' && !Character.isAlphabetic(contents.charAt(position))) {
                 break;
             }
             position++;
+        }
+        if (position < contents.length() && contents.charAt(position) == '(') {
+            int e = text.indexOf('(');
+            if (e != -1) {
+                text = text.substring(0, e + 1);
+                position++;
+            }
         }
 
         ((StyledText) control).setSelection(new Point(start + lineOffset, position + lineOffset));
