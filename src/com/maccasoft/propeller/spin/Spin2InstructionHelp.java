@@ -11,6 +11,9 @@
 package com.maccasoft.propeller.spin;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -70,7 +73,9 @@ public class Spin2InstructionHelp {
         return null;
     }
 
-    public static void fillProposals(String context, String token, List<IContentProposal> proposals) {
+    public static List<IContentProposal> fillProposals(String context, String token) {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try {
             InputStream is = Spin2InstructionHelp.class.getResourceAsStream("Spin2Instructions.xml");
@@ -123,6 +128,17 @@ public class Spin2InstructionHelp {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        Collections.sort(proposals, new Comparator<IContentProposal>() {
+
+            @Override
+            public int compare(IContentProposal o1, IContentProposal o2) {
+                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+            }
+
+        });
+
+        return proposals;
     }
 
 }

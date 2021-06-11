@@ -11,11 +11,16 @@
 package com.maccasoft.propeller.spin;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.eclipse.jface.fieldassist.ContentProposal;
+import org.eclipse.jface.fieldassist.IContentProposal;
 
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
@@ -1097,5 +1102,154 @@ public class Spin2TokenMarker {
 
     public Node getRoot() {
         return root;
+    }
+
+    public List<IContentProposal> getPAsmProposals(String token) {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+
+        if (root != null) {
+            root.accept(new NodeVisitor() {
+
+                @Override
+                public void visitConstantAssign(ConstantAssignNode node) {
+                    if (node.identifier != null) {
+                        String text = node.identifier.getText();
+                        if (text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, null));
+                        }
+                    }
+                }
+
+                @Override
+                public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
+                    if (node.identifier != null) {
+                        String text = node.identifier.getText();
+                        if (text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, null));
+                        }
+                    }
+                }
+
+                @Override
+                public void visitData(DataNode node) {
+                    for (Node child : node.getChilds()) {
+                        DataLineNode lineNode = (DataLineNode) child;
+                        if (lineNode.label != null) {
+                            String text = lineNode.label.getText();
+                            if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
+                                proposals.add(new ContentProposal(text, text, null));
+                            }
+                        }
+                    }
+                }
+
+            });
+        }
+
+        Collections.sort(proposals, new Comparator<IContentProposal>() {
+
+            @Override
+            public int compare(IContentProposal o1, IContentProposal o2) {
+                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+            }
+
+        });
+
+        return proposals;
+    }
+
+    public List<IContentProposal> getMethodProposals(Node context, String token) {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+
+        if (root != null) {
+            while (!(context instanceof MethodNode) && context.getParent() != null) {
+                context = context.getParent();
+            }
+            context.accept(new NodeVisitor() {
+
+                @Override
+                public void visitMethod(MethodNode node) {
+                    for (Node child : node.getParameters()) {
+                        String text = child.getText();
+                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, null));
+                        }
+                    }
+
+                    for (Node child : node.getReturnVariables()) {
+                        String text = child.getText();
+                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, null));
+                        }
+                    }
+
+                    for (Node child : node.getLocalVariables()) {
+                        String text = child.getText();
+                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, null));
+                        }
+                    }
+                }
+
+                @Override
+                public void visitDataLine(DataLineNode node) {
+                    if (node.label != null) {
+                        String text = node.label.getText();
+                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, null));
+                        }
+                    }
+                }
+
+            });
+
+            root.accept(new NodeVisitor() {
+
+                @Override
+                public void visitConstantAssign(ConstantAssignNode node) {
+                    if (node.identifier != null) {
+                        String text = node.identifier.getText();
+                        if (text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, null));
+                        }
+                    }
+                }
+
+                @Override
+                public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
+                    if (node.identifier != null) {
+                        String text = node.identifier.getText();
+                        if (text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, null));
+                        }
+                    }
+                }
+
+                @Override
+                public void visitData(DataNode node) {
+                    for (Node child : node.getChilds()) {
+                        DataLineNode lineNode = (DataLineNode) child;
+                        if (lineNode.label != null) {
+                            String text = lineNode.label.getText();
+                            if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
+                                proposals.add(new ContentProposal(text, text, null));
+                            }
+                        }
+                    }
+                }
+
+            });
+        }
+
+        Collections.sort(proposals, new Comparator<IContentProposal>() {
+
+            @Override
+            public int compare(IContentProposal o1, IContentProposal o2) {
+                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+            }
+
+        });
+
+        return proposals;
     }
 }

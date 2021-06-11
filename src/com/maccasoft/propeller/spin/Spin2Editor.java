@@ -11,8 +11,6 @@
 package com.maccasoft.propeller.spin;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +70,10 @@ import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ContentProposalAdapter;
 import com.maccasoft.propeller.internal.HTMLStyledTextParser;
 import com.maccasoft.propeller.internal.StyledTextContentAdapter;
+import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenId;
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenMarker;
 import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
@@ -417,11 +418,14 @@ public class Spin2Editor {
 
             @Override
             public void lineGetBackground(LineBackgroundEvent event) {
+                event.lineBackground = backgroundDecorator.getLineBackground(tokenMarker.getRoot(), event.lineOffset);
                 if (styledText.getLineAtOffset(event.lineOffset) == currentLine) {
-                    event.lineBackground = currentLineBackground;
-                }
-                else {
-                    event.lineBackground = backgroundDecorator.getLineBackground(tokenMarker.getRoot(), event.lineOffset);
+                    if (event.lineBackground != null) {
+                        event.lineBackground = ColorRegistry.getDimColor(event.lineBackground, -6);
+                    }
+                    else {
+                        event.lineBackground = currentLineBackground;
+                    }
                 }
             }
         });
@@ -453,7 +457,7 @@ public class Spin2Editor {
                 }
                 Rectangle bounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
 
-                //Node context = tokenMarker.getContextAt(offset);
+                Node context = tokenMarker.getContextAt(offset);
                 TokenMarker marker = tokenMarker.getMarkerAtOffset(offset);
 
                 if (marker != null && marker.getError() != null) {
@@ -480,7 +484,7 @@ public class Spin2Editor {
                 }
 
                 if (token != null) {
-                    String text = Spin2InstructionHelp.getString("", token.getText().toLowerCase());
+                    String text = Spin2InstructionHelp.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
                     if (text == null) {
                         text = tokenMarker.getMethod(token.getText());
                     }
@@ -786,17 +790,6 @@ public class Spin2Editor {
     public IContentProposal[] computeProposals(String contents, int position) {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
 
-        String context = null;
-        if (position == 0) {
-            context = "Root";
-        }
-        else {
-            Node node = tokenMarker.getContextAt(styledText.getCaretOffset());
-            if (node != null) {
-                context = node.getClass().getSimpleName();
-            }
-        }
-
         int start = position;
         while (start > 0) {
             if (contents.charAt(start - 1) != '_' && !Character.isAlphabetic(contents.charAt(start - 1))) {
@@ -806,20 +799,58 @@ public class Spin2Editor {
         }
 
         String token = contents.substring(start, position).toUpperCase();
-        //if ("".equals(token) || Spin2InstructionHelp.getString(context, token) != null) {
-        //    return null;
-        //}
 
-        Spin2InstructionHelp.fillProposals(context, token, proposals);
+        if (position == 0) {
+            proposals.addAll(Spin2InstructionHelp.fillProposals("Root", token));
+        }
+        else {
+            Node node = tokenMarker.getContextAt(styledText.getCaretOffset());
+            if (node instanceof DataLineNode) {
+                DataLineNode line = (DataLineNode) node;
+                position = styledText.getCaretOffset();
 
-        Collections.sort(proposals, new Comparator<IContentProposal>() {
+                if (line.condition != null) {
+                    if (position >= line.condition.getStartIndex() && position <= line.condition.getStopIndex() + 1) {
+                        proposals.addAll(Spin2InstructionHelp.fillProposals("Condition", token));
+                    }
+                }
+                if (line.instruction != null) {
+                    if (position >= line.instruction.getStartIndex() && position <= line.instruction.getStopIndex() + 1) {
+                        proposals.addAll(Spin2InstructionHelp.fillProposals("Instruction", token));
+                    }
+                    if (position > line.instruction.getStopIndex() + 1) {
+                        proposals.addAll(Spin2InstructionHelp.fillProposals(line.instruction.getText().toUpperCase(), token));
+                        if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
+                            proposals.addAll(tokenMarker.getMethodProposals(node.getParent(), token));
+                        }
+                        else {
+                            proposals.addAll(tokenMarker.getPAsmProposals(token));
+                        }
+                    }
+                }
 
-            @Override
-            public int compare(IContentProposal o1, IContentProposal o2) {
-                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+                if (line.condition == null && line.instruction == null) {
+                    proposals.addAll(Spin2InstructionHelp.fillProposals("Condition", token));
+                    proposals.addAll(Spin2InstructionHelp.fillProposals("Instruction", token));
+                }
+                else if (line.condition != null && line.instruction == null) {
+                    if (position > line.condition.getStopIndex() + 1) {
+                        proposals.addAll(Spin2InstructionHelp.fillProposals("Instruction", token));
+                    }
+                }
+                else if (line.condition == null && line.instruction != null) {
+                    if (position < line.instruction.getStartIndex()) {
+                        proposals.addAll(Spin2InstructionHelp.fillProposals("Condition", token));
+                    }
+                }
             }
-
-        });
+            else if (node != null) {
+                if (node instanceof StatementNode) {
+                    proposals.addAll(tokenMarker.getMethodProposals(node, token));
+                }
+                proposals.addAll(Spin2InstructionHelp.fillProposals(node.getClass().getSimpleName(), token));
+            }
+        }
 
         return proposals.toArray(new IContentProposal[proposals.size()]);
     }

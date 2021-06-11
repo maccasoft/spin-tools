@@ -17,7 +17,6 @@ import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
-import com.maccasoft.propeller.expressions.NumberLiteral;
 
 public class Spin2Context implements Context {
 
@@ -54,8 +53,7 @@ public class Spin2Context implements Context {
     public Expression getSymbol(String name) {
         Expression exp = getLocalSymbol(name);
         if (exp == null) {
-            System.err.println("Symbol " + name + " not found!");
-            exp = new NumberLiteral(0);
+            throw new RuntimeException("Symbol " + name + " not found!");
         }
         return exp;
     }
@@ -79,7 +77,7 @@ public class Spin2Context implements Context {
 
     public int getInteger(String name) {
         Expression result = getSymbol(name);
-        return result != null ? result.getNumber().intValue() : 0;
+        return result.getNumber().intValue();
     }
 
     public void setAddress(int address) {

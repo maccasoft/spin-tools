@@ -38,6 +38,31 @@ public class ColorRegistry {
         return result;
     }
 
+    public static Color getDimColor(Color color, int percent) {
+        int r = color.getRed() + (int) (color.getRed() / 100.0 * percent);
+        if (r < 0) {
+            r = 0;
+        }
+        if (r > 255) {
+            r = 255;
+        }
+        int g = color.getGreen() + (int) (color.getGreen() / 100.0 * percent);
+        if (g < 0) {
+            g = 0;
+        }
+        if (g > 255) {
+            g = 255;
+        }
+        int b = color.getBlue() + (int) (color.getBlue() / 100.0 * percent);
+        if (b < 0) {
+            b = 0;
+        }
+        if (b > 255) {
+            b = 255;
+        }
+        return getColor(r, g, b);
+    }
+
     public static void dispose() {
         for (Color color : map.values()) {
             color.dispose();
