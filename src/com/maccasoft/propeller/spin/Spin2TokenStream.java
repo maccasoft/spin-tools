@@ -253,7 +253,7 @@ public class Spin2TokenStream {
                     }
                     break;
                 case KEYWORD:
-                    if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_') {
+                    if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == '.') {
                         token.stop++;
                         break;
                     }

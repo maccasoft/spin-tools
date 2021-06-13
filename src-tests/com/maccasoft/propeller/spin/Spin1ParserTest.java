@@ -17,8 +17,11 @@ import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
 import com.maccasoft.propeller.model.ConstantSetEnumNode;
 import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.ObjectNode;
+import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.StatementNode;
 
 class Spin1ParserTest {
@@ -82,6 +85,113 @@ class Spin1ParserTest {
         Assertions.assertEquals(ConstantAssignNode.class, root.getChild(0).getChild(1).getClass());
         Assertions.assertEquals(ConstantAssignNode.class, root.getChild(0).getChild(2).getClass());
         Assertions.assertEquals(ConstantAssignNode.class, root.getChild(0).getChild(3).getClass());
+    }
+
+    @Test
+    void testParseObject() {
+        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0 : \"file0\"\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(1, root.getChilds().size());
+        Assertions.assertEquals(ObjectsNode.class, root.getChild(0).getClass());
+
+        Assertions.assertEquals(1, root.getChild(0).getChilds().size());
+        Assertions.assertEquals(ObjectNode.class, root.getChild(0).getChild(0).getClass());
+
+        ObjectNode node = (ObjectNode) root.getChild(0).getChild(0);
+        Assertions.assertEquals("obj0 : \"file0\"", node.getText());
+        Assertions.assertEquals("obj0", node.name.getText());
+        Assertions.assertNull(node.count);
+        Assertions.assertEquals("\"file0\"", node.file.getText());
+    }
+
+    @Test
+    void testParseObjects() {
+        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0 : \"file0\"\n"
+            + "    obj1 : \"file1\"\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(1, root.getChilds().size());
+        Assertions.assertEquals(ObjectsNode.class, root.getChild(0).getClass());
+
+        Assertions.assertEquals(2, root.getChild(0).getChilds().size());
+        Assertions.assertEquals(ObjectNode.class, root.getChild(0).getChild(0).getClass());
+        Assertions.assertEquals(ObjectNode.class, root.getChild(0).getChild(1).getClass());
+
+        ObjectNode node0 = (ObjectNode) root.getChild(0).getChild(0);
+        Assertions.assertEquals("obj0 : \"file0\"", node0.getText());
+        Assertions.assertEquals("obj0", node0.name.getText());
+        Assertions.assertNull(node0.count);
+        Assertions.assertEquals("\"file0\"", node0.file.getText());
+
+        ObjectNode node1 = (ObjectNode) root.getChild(0).getChild(1);
+        Assertions.assertEquals("obj1 : \"file1\"", node1.getText());
+        Assertions.assertEquals("obj1", node1.name.getText());
+        Assertions.assertNull(node0.count);
+        Assertions.assertEquals("\"file1\"", node1.file.getText());
+    }
+
+    @Test
+    void testParseObjectArray() {
+        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0[10] : \"file0\"\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(1, root.getChilds().size());
+        Assertions.assertEquals(ObjectsNode.class, root.getChild(0).getClass());
+
+        Assertions.assertEquals(1, root.getChild(0).getChilds().size());
+        Assertions.assertEquals(ObjectNode.class, root.getChild(0).getChild(0).getClass());
+
+        ObjectNode node = (ObjectNode) root.getChild(0).getChild(0);
+        Assertions.assertEquals("obj0[10] : \"file0\"", node.getText());
+        Assertions.assertEquals("obj0", node.name.getText());
+        Assertions.assertEquals("10", node.count.getText());
+        Assertions.assertEquals("\"file0\"", node.file.getText());
+    }
+
+    @Test
+    void testParseObjectSyntaxError1() {
+        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0 = \n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(1, root.getChilds().size());
+        Assertions.assertEquals(ObjectsNode.class, root.getChild(0).getClass());
+
+        Assertions.assertEquals(1, root.getChild(0).getChilds().size());
+        Assertions.assertEquals(ObjectNode.class, root.getChild(0).getChild(0).getClass());
+
+        ObjectNode node = (ObjectNode) root.getChild(0).getChild(0);
+        Assertions.assertEquals(ErrorNode.class, node.getChild(node.getChilds().size() - 1).getClass());
+    }
+
+    @Test
+    void testParseObjectSyntaxError2() {
+        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0 : \"file0\" a0\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(1, root.getChilds().size());
+        Assertions.assertEquals(ObjectsNode.class, root.getChild(0).getClass());
+
+        Assertions.assertEquals(1, root.getChild(0).getChilds().size());
+        Assertions.assertEquals(ObjectNode.class, root.getChild(0).getChild(0).getClass());
+
+        ObjectNode node = (ObjectNode) root.getChild(0).getChild(0);
+        Assertions.assertEquals(ErrorNode.class, node.getChild(node.getChilds().size() - 1).getClass());
     }
 
     @Test

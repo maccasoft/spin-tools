@@ -193,14 +193,21 @@ public class Spin1Parser {
     }
 
     void parseObj(Token start) {
-        List<Token> list = new ArrayList<Token>();
+        Node parent = new ObjectsNode(root);
+        parent.addToken(start);
 
-        Node node = new ObjectsNode(root);
-        node.addToken(start);
-
+        ErrorNode error = null;
+        ObjectNode object = null;
         int state = 1;
         while (true) {
             Token token = stream.nextToken();
+            if (token.type == Spin2TokenStream.EOF) {
+                return;
+            }
+            if (token.type == Spin2TokenStream.NL) {
+                state = 0;
+                continue;
+            }
             switch (state) {
                 case 0:
                     if (parseSection(token)) {
@@ -209,35 +216,47 @@ public class Spin1Parser {
                     state = 1;
                     // fall-through
                 case 1:
-                    if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
-                        Node child = null;
-
-                        if (list.size() >= 3) {
-                            if (":".equals(list.get(list.size() - 2).getText())) {
-                                child = new ObjectNode(node);
-                            }
-                            else {
-                                child = new ErrorNode(node);
-                            }
-                        }
-                        else if (list.size() > 0) {
-                            child = new ErrorNode(node);
-                        }
-
-                        if (child != null) {
-                            child.addAllTokens(list);
-                        }
-                        list.clear();
-
-                        if (token.type == Spin2TokenStream.EOF) {
-                            return;
-                        }
-                        if (token.type == Spin2TokenStream.NL) {
-                            state = 0;
-                        }
+                    object = new ObjectNode(parent);
+                    object.addToken(token);
+                    object.name = token;
+                    state = 2;
+                    break;
+                case 2:
+                    if ("[".equals(token.getText())) {
+                        object.count = new Node(object);
+                        state = 5;
                         break;
                     }
-                    list.add(token);
+                    // fall-through
+                case 3:
+                    if (":".equals(token.getText())) {
+                        state = 4;
+                        break;
+                    }
+                    error = new ErrorNode(object, "Syntax error");
+                    error.addToken(token);
+                    state = 9;
+                    break;
+                case 4:
+                    object.addToken(token);
+                    object.file = token;
+                    state = 8;
+                    break;
+
+                case 5:
+                    if ("]".equals(token.getText())) {
+                        state = 3;
+                        break;
+                    }
+                    object.count.addToken(token);
+                    break;
+
+                case 8:
+                    error = new ErrorNode(object, "Syntax error");
+                    state = 9;
+                    // fall-through
+                case 9:
+                    error.addToken(token);
                     break;
             }
         }

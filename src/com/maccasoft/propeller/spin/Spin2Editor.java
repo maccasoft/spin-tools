@@ -240,7 +240,7 @@ public class Spin2Editor {
         styledText = new StyledText(container, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
         styledText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         styledText.setMargins(5, 5, 5, 5);
-        styledText.setTabs(4);
+        styledText.setTabs(8);
         styledText.setFont(font);
 
         ruler.setText(styledText);

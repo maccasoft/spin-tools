@@ -39,8 +39,7 @@ public class Spin2Parser {
 
     public static Set<String> instructions = new HashSet<String>(Arrays.asList(new String[] {
         "ORG", "ORGH", "ORGF", "FIT",
-        "BYTE", "WORD", "LONG", "RES", "FILE",
-        "ASMCLK",
+        "RES", "FILE", "ASMCLK",
         "NOP", "ROL", "ROR", "SHR", "SHL", "RCR", "RCL", "SAR", "SAL", "ADD", "ADDX", "ADDS", "ADDSX", "SUB", "SUBX", "SUBS",
         "SUBSX", "CMP", "CMPX", "CMPS", "CMPSX", "CMPR", "CMPM", "SUBR", "CMPSUB", "FGE", "FLE", "FGES", "FLES", "SUMC", "SUMNC",
         "SUMZ", "SUMNZ", "TESTB", "TESTBN", "BITL", "BITH", "BITC", "BITNC", "BITZ", "BITNZ", "BITNC", "BITRND", "BITNOT", "AND",
@@ -248,14 +247,21 @@ public class Spin2Parser {
     }
 
     void parseObj(Token start) {
-        List<Token> list = new ArrayList<Token>();
+        Node parent = new ObjectsNode(root);
+        parent.addToken(start);
 
-        Node node = new ObjectsNode(root);
-        node.addToken(start);
-
+        ErrorNode error = null;
+        ObjectNode object = null;
         int state = 1;
         while (true) {
             Token token = stream.nextToken();
+            if (token.type == Spin2TokenStream.EOF) {
+                return;
+            }
+            if (token.type == Spin2TokenStream.NL) {
+                state = 0;
+                continue;
+            }
             switch (state) {
                 case 0:
                     if (parseSection(token)) {
@@ -264,35 +270,47 @@ public class Spin2Parser {
                     state = 1;
                     // fall-through
                 case 1:
-                    if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
-                        Node child = null;
-
-                        if (list.size() >= 3) {
-                            if (":".equals(list.get(list.size() - 2).getText())) {
-                                child = new ObjectNode(node);
-                            }
-                            else {
-                                child = new ErrorNode(node);
-                            }
-                        }
-                        else if (list.size() > 0) {
-                            child = new ErrorNode(node);
-                        }
-
-                        if (child != null) {
-                            child.addAllTokens(list);
-                        }
-                        list.clear();
-
-                        if (token.type == Spin2TokenStream.EOF) {
-                            return;
-                        }
-                        if (token.type == Spin2TokenStream.NL) {
-                            state = 0;
-                        }
+                    object = new ObjectNode(parent);
+                    object.addToken(token);
+                    object.name = token;
+                    state = 2;
+                    break;
+                case 2:
+                    if ("[".equals(token.getText())) {
+                        object.count = new Node(object);
+                        state = 5;
                         break;
                     }
-                    list.add(token);
+                    // fall-through
+                case 3:
+                    if (":".equals(token.getText())) {
+                        state = 4;
+                        break;
+                    }
+                    error = new ErrorNode(object, "Syntax error");
+                    error.addToken(token);
+                    state = 9;
+                    break;
+                case 4:
+                    object.addToken(token);
+                    object.file = token;
+                    state = 8;
+                    break;
+
+                case 5:
+                    if ("]".equals(token.getText())) {
+                        state = 3;
+                        break;
+                    }
+                    object.count.addToken(token);
+                    break;
+
+                case 8:
+                    error = new ErrorNode(object, "Syntax error");
+                    state = 9;
+                    // fall-through
+                case 9:
+                    error.addToken(token);
                     break;
             }
         }
@@ -385,6 +403,12 @@ public class Spin2Parser {
                         state = 6;
                         break;
                     }
+                    if (types.contains(token.getText().toUpperCase())) {
+                        child = new ErrorNode(parent);
+                        child.addToken(token);
+                        state = 1;
+                        break;
+                    }
                     param = new Node(node);
                     param.addToken(token);
                     node.parameters.add(param);
@@ -423,6 +447,12 @@ public class Spin2Parser {
                     break;
 
                 case 7:
+                    if (types.contains(token.getText().toUpperCase())) {
+                        child = new ErrorNode(parent);
+                        child.addToken(token);
+                        state = 1;
+                        break;
+                    }
                     ret = new Node(node);
                     ret.addToken(token);
                     node.returnVariables.add(ret);
@@ -482,7 +512,9 @@ public class Spin2Parser {
                         state = 7;
                         break;
                     }
-                    local.identifier.addToken(token);
+                    child = new ErrorNode(parent);
+                    child.addToken(token);
+                    state = 1;
                     break;
                 case 12:
                     if ("]".equals(token.getText())) {
@@ -581,6 +613,9 @@ public class Spin2Parser {
             if (token.type == Spin2TokenStream.EOF) {
                 return;
             }
+            if (token.type == Spin2TokenStream.NL) {
+                continue;
+            }
             if (parseSection(token)) {
                 return;
             }
@@ -628,14 +663,15 @@ public class Spin2Parser {
                     }
                     // fall-through
                 case 3:
-                    if (instructions.contains(token.getText().toUpperCase())) {
+                    if (instructions.contains(token.getText().toUpperCase()) || types.contains(token.getText().toUpperCase())) {
                         parent.instruction = new Node(parent);
                         parent.instruction.addToken(token);
                         state = 4;
                         break;
                     }
-                    child = new ErrorNode(parent);
+                    child = new ErrorNode(parent, parent.condition == null ? "Invalid condition or instruction" : "Invalid instruction");
                     child.addToken(token);
+                    child = parent;
                     state = 9;
                     break;
                 case 4:
@@ -656,7 +692,7 @@ public class Spin2Parser {
                         state = 6;
                         break;
                     }
-                    child = new ErrorNode(parent);
+                    child = new ErrorNode(parent, "Syntax error");
                     child.addToken(token);
                     state = 9;
                     break;
@@ -666,7 +702,7 @@ public class Spin2Parser {
                         state = 5;
                         break;
                     }
-                    child = new ErrorNode(parent);
+                    child = new ErrorNode(parent, "Invalid modifier");
                     child.addToken(token);
                     state = 9;
                     break;
@@ -695,6 +731,7 @@ public class Spin2Parser {
                     break;
                 case 10:
                     if ("]".equals(token.getText())) {
+                        parent.addToken(token);
                         state = 7;
                         break;
                     }

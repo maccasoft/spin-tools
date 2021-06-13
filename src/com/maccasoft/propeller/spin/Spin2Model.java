@@ -10,19 +10,12 @@
 
 package com.maccasoft.propeller.spin;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.maccasoft.propeller.model.Node;
 
-public class Spin2Model {
-
-    Node root;
-
-    Map<String, Spin2Model> objects = new HashMap<String, Spin2Model>();
+public class Spin2Model extends Spin1Model {
 
     public Spin2Model(Node root) {
-        this.root = root;
+        super(root);
     }
 
 }

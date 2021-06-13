@@ -33,6 +33,7 @@ import com.maccasoft.propeller.model.LocalVariableNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
+import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.model.StatementNode;
@@ -634,22 +635,35 @@ public class Spin2TokenMarker {
         @Override
         public void visitObjects(ObjectsNode node) {
             tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
+            for (Node child : node.getChilds()) {
+                ObjectNode obj = (ObjectNode) child;
+                if (obj.name != null) {
+                    symbols.put(obj.name.getText(), TokenId.OBJECT);
+                    tokens.add(new TokenMarker(obj.name, TokenId.OBJECT));
+                    if (obj.file != null) {
+                        tokens.add(new TokenMarker(obj.file, TokenId.STRING));
+                    }
+                }
+            }
         }
 
         @Override
         public void visitMethod(MethodNode node) {
+            TokenId id = TokenId.METHOD_PUB;
             if ("PRI".equalsIgnoreCase(node.getType().getText())) {
-                tokens.add(new TokenMarker(node.getType(), TokenId.METHOD_PRI));
-                if (node.getName() != null) {
-                    symbols.put(node.getName().getText(), TokenId.METHOD_PRI);
-                    tokens.add(new TokenMarker(node.getName(), TokenId.METHOD_PRI));
-                }
+                id = TokenId.METHOD_PRI;
             }
-            else {
-                tokens.add(new TokenMarker(node.getType(), TokenId.METHOD_PUB));
-                if (node.getName() != null) {
-                    symbols.put(node.getName().getText(), TokenId.METHOD_PUB);
-                    tokens.add(new TokenMarker(node.getName(), TokenId.METHOD_PUB));
+            tokens.add(new TokenMarker(node.getType(), id));
+
+            if (node.getName() != null) {
+                if (symbols.containsKey(node.getName().getText())) {
+                    TokenMarker marker = new TokenMarker(node.getName(), TokenId.ERROR);
+                    marker.setError("Symbol already defined");
+                    tokens.add(marker);
+                }
+                else {
+                    symbols.put(node.getName().getText(), id);
+                    tokens.add(new TokenMarker(node.getName(), id));
                 }
             }
 
@@ -721,6 +735,17 @@ public class Spin2TokenMarker {
         Map<String, TokenId> locals = new HashMap<String, TokenId>();
 
         @Override
+        public void visitObjects(ObjectsNode node) {
+            tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
+            for (Node child : node.getChilds()) {
+                ObjectNode obj = (ObjectNode) child;
+                if (obj.count != null) {
+                    markTokens(obj.count);
+                }
+            }
+        }
+
+        @Override
         public void visitMethod(MethodNode node) {
             locals.clear();
 
@@ -773,9 +798,11 @@ public class Spin2TokenMarker {
                         id = symbols.get(token.getText());
                     }
                     if (id == null) {
-                        TokenMarker marker = new TokenMarker(token, TokenId.ERROR);
-                        marker.setError("Symbol is undefined");
-                        tokens.add(marker);
+                        if (token.getText().indexOf('.') <= 0) {
+                            TokenMarker marker = new TokenMarker(token, TokenId.ERROR);
+                            marker.setError("Symbol is undefined");
+                            tokens.add(marker);
+                        }
                     }
                     else {
                         tokens.add(new TokenMarker(token, id));
@@ -1220,6 +1247,26 @@ public class Spin2TokenMarker {
                     if (node.identifier != null) {
                         String text = node.identifier.getText();
                         if (text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, null));
+                        }
+                    }
+                }
+
+                @Override
+                public void visitVariable(VariableNode node) {
+                    if (node.getIdentifier() != null) {
+                        String text = node.getIdentifier().getText();
+                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, null));
+                        }
+                    }
+                }
+
+                @Override
+                public void visitMethod(MethodNode node) {
+                    if (node.getName() != null) {
+                        String text = node.getName().getText();
+                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
                             proposals.add(new ContentProposal(text, text, null));
                         }
                     }

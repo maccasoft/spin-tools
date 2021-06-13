@@ -21,29 +21,31 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
 
     @Override
     public String getControlContents(Control control) {
-        int caretOffset = ((StyledText) control).getCaretOffset();
-        int line = ((StyledText) control).getLineAtOffset(caretOffset);
-        return ((StyledText) control).getLine(line);
+        StyledText styledText = (StyledText) control;
+        int caretOffset = styledText.getCaretOffset();
+        int line = styledText.getLineAtOffset(caretOffset);
+        return styledText.getLine(line);
     }
 
     @Override
     public void setControlContents(Control control, String text, int cursorPosition) {
-        int caretOffset = ((StyledText) control).getCaretOffset();
-        int line = ((StyledText) control).getLineAtOffset(caretOffset);
-        int lineOffset = ((StyledText) control).getOffsetAtLine(line);
+        StyledText styledText = (StyledText) control;
+        int caretOffset = styledText.getCaretOffset();
+        int line = styledText.getLineAtOffset(caretOffset);
+        int lineOffset = styledText.getOffsetAtLine(line);
 
-        String contents = ((StyledText) control).getLine(line);
+        String contents = styledText.getLine(line);
 
         int position = caretOffset - lineOffset;
         int start = position;
         while (start > 0) {
-            if (contents.charAt(start - 1) != '_' && !Character.isAlphabetic(contents.charAt(start - 1))) {
+            if (!isIdentifierPart(contents.charAt(start - 1))) {
                 break;
             }
             start--;
         }
         while (position < contents.length()) {
-            if (contents.charAt(position) != '_' && !Character.isAlphabetic(contents.charAt(position))) {
+            if (!isIdentifierPart(contents.charAt(position))) {
                 break;
             }
             position++;
@@ -56,8 +58,8 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
             }
         }
 
-        ((StyledText) control).setSelection(new Point(start + lineOffset, position + lineOffset));
-        ((StyledText) control).insert(text);
+        styledText.setSelection(new Point(start + lineOffset, position + lineOffset));
+        styledText.insert(text);
 
         caretOffset = 0;
         while (caretOffset < text.length()) {
@@ -71,43 +73,51 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
             caretOffset++;
         }
 
-        ((StyledText) control).setCaretOffset(start + lineOffset + caretOffset);
+        styledText.setCaretOffset(start + lineOffset + caretOffset);
+    }
+
+    boolean isIdentifierPart(char ch) {
+        return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_';
     }
 
     @Override
     public void insertControlContents(Control control, String text, int cursorPosition) {
-        ((StyledText) control).insert(text);
-        ((StyledText) control).setCaretOffset(((StyledText) control).getCaretOffset() + text.length());
+        StyledText styledText = (StyledText) control;
+        styledText.insert(text);
+        styledText.setCaretOffset(styledText.getCaretOffset() + text.length());
     }
 
     @Override
     public int getCursorPosition(Control control) {
-        int caretOffset = ((StyledText) control).getCaretOffset();
-        int line = ((StyledText) control).getLineAtOffset(caretOffset);
-        return caretOffset - ((StyledText) control).getOffsetAtLine(line);
+        StyledText styledText = (StyledText) control;
+        int caretOffset = styledText.getCaretOffset();
+        int line = styledText.getLineAtOffset(caretOffset);
+        return caretOffset - styledText.getOffsetAtLine(line);
     }
 
     @Override
     public Rectangle getInsertionBounds(Control control) {
         StyledText text = (StyledText) control;
         Point caretOrigin = text.getLocationAtOffset(text.getCaretOffset());
-        return new Rectangle(caretOrigin.x + text.getClientArea().x,
-            caretOrigin.y + text.getClientArea().y + 3, 1, text.getLineHeight());
+        return new Rectangle(caretOrigin.x + text.getClientArea().x, caretOrigin.y + text.getClientArea().y + 3, 1, text.getLineHeight());
     }
 
     @Override
     public void setCursorPosition(Control control, int position) {
-        ((StyledText) control).setSelection(new Point(position, position));
+        StyledText styledText = (StyledText) control;
+        styledText.setSelection(new Point(position, position));
     }
 
     @Override
     public Point getSelection(Control control) {
-        return ((StyledText) control).getSelection();
+        StyledText styledText = (StyledText) control;
+        return styledText.getSelection();
     }
 
     @Override
     public void setSelection(Control control, Point range) {
-        ((StyledText) control).setSelection(range);
+        StyledText styledText = (StyledText) control;
+        styledText.setSelection(range);
     }
 
 }

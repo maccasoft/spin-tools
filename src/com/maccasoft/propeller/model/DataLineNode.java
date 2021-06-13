@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021 Marco Maccaferri and others.
  * All rights reserved.
- * 
+ *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
  * distribution, and is available at
@@ -29,6 +29,11 @@ public class DataLineNode extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visitDataLine(this);
         super.accept(visitor);
+    }
+
+    @Override
+    public int getStartIndex() {
+        return tokens.size() != 0 ? tokens.get(0).start - tokens.get(0).column : -1;
     }
 
 }
