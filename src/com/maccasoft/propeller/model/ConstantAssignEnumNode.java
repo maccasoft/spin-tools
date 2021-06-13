@@ -12,8 +12,6 @@ package com.maccasoft.propeller.model;
 
 import java.util.List;
 
-import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
-
 public class ConstantAssignEnumNode extends Node {
 
     public Node identifier;

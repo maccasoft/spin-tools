@@ -13,8 +13,6 @@ package com.maccasoft.propeller.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
-
 public class MethodNode extends Node {
 
     public Token type;

@@ -74,9 +74,9 @@ import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenId;
 import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenMarker;
-import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 
 public class Spin2Editor {
 

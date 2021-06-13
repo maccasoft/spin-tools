@@ -30,7 +30,7 @@ import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ParameterNode;
-import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
+import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin.instructions.Org;
 import com.maccasoft.propeller.spin.instructions.Orgh;
 
@@ -361,7 +361,7 @@ public class Spin2Compiler {
                     else if ("ROUND".equalsIgnoreCase(token.getText())) {
                         expressionBuilder.addOperatorToken(expressionBuilder.ROUND);
                     }
-                    else if (token.type == Spin2TokenStream.NUMBER) {
+                    else if (token.type == Token.NUMBER) {
                         if ("$".equals(token.getText())) {
                             expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
                         }
@@ -468,7 +468,7 @@ public class Spin2Compiler {
                     else if ("ROUND".equalsIgnoreCase(token.getText())) {
                         expressionBuilder.addOperatorToken(expressionBuilder.ROUND);
                     }
-                    else if (token.type == Spin2TokenStream.NUMBER) {
+                    else if (token.type == Token.NUMBER) {
                         if ("$".equals(token.getText())) {
                             expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
                         }

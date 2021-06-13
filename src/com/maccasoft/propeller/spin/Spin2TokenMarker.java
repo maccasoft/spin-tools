@@ -37,9 +37,9 @@ import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
-import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 
 public class Spin2TokenMarker {
 
@@ -780,13 +780,13 @@ public class Spin2TokenMarker {
 
         void markTokens(Node node) {
             for (Token token : node.getTokens()) {
-                if (token.type == Spin2TokenStream.NUMBER) {
+                if (token.type == Token.NUMBER) {
                     tokens.add(new TokenMarker(token, TokenId.NUMBER));
                 }
-                else if (token.type == Spin2TokenStream.OPERATOR) {
+                else if (token.type == Token.OPERATOR) {
                     tokens.add(new TokenMarker(token, TokenId.OPERATOR));
                 }
-                else if (token.type == Spin2TokenStream.STRING) {
+                else if (token.type == Token.STRING) {
                     tokens.add(new TokenMarker(token, TokenId.STRING));
                 }
                 else {
@@ -831,13 +831,13 @@ public class Spin2TokenMarker {
             for (ParameterNode parameter : node.parameters) {
                 for (Token token : parameter.getTokens()) {
                     TokenId id = null;
-                    if (token.type == Spin2TokenStream.NUMBER) {
+                    if (token.type == Token.NUMBER) {
                         tokens.add(new TokenMarker(token, TokenId.NUMBER));
                     }
-                    else if (token.type == Spin2TokenStream.OPERATOR) {
+                    else if (token.type == Token.OPERATOR) {
                         tokens.add(new TokenMarker(token, TokenId.OPERATOR));
                     }
-                    else if (token.type == Spin2TokenStream.STRING) {
+                    else if (token.type == Token.STRING) {
                         tokens.add(new TokenMarker(token, TokenId.STRING));
                     }
                     else {
@@ -865,13 +865,13 @@ public class Spin2TokenMarker {
         @Override
         public void visitExpression(ExpressionNode node) {
             for (Token token : node.getTokens()) {
-                if (token.type == Spin2TokenStream.NUMBER) {
+                if (token.type == Token.NUMBER) {
                     tokens.add(new TokenMarker(token, TokenId.NUMBER));
                 }
-                else if (token.type == Spin2TokenStream.OPERATOR) {
+                else if (token.type == Token.OPERATOR) {
                     tokens.add(new TokenMarker(token, TokenId.OPERATOR));
                 }
-                else if (token.type == Spin2TokenStream.STRING) {
+                else if (token.type == Token.STRING) {
                     tokens.add(new TokenMarker(token, TokenId.STRING));
                 }
                 else {

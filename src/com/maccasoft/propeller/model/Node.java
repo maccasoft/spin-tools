@@ -14,9 +14,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import com.maccasoft.propeller.spin.Spin2TokenStream;
-import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
-
 public class Node {
 
     final Node parent;
@@ -93,7 +90,7 @@ public class Node {
     }
 
     public String getText() {
-        Spin2TokenStream stream = getStartToken().getStream();
+        TokenStream stream = getStartToken().getStream();
         return stream.getSource(getStartIndex(), getStopIndex());
     }
 

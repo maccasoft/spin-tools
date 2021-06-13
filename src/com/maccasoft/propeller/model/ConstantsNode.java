@@ -10,8 +10,6 @@
 
 package com.maccasoft.propeller.model;
 
-import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
-
 public class ConstantsNode extends Node {
 
     Token text;

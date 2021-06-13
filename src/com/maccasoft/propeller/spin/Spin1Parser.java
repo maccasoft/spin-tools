@@ -28,9 +28,9 @@ import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.model.StatementNode;
+import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
-import com.maccasoft.propeller.spin.Spin2TokenStream.Token;
 
 public class Spin1Parser {
 
@@ -47,11 +47,11 @@ public class Spin1Parser {
 
         while (true) {
             Token token = stream.nextToken();
-            if (token.type == Spin2TokenStream.EOF) {
+            if (token.type == Token.EOF) {
                 root.addToken(token);
                 break;
             }
-            if (token.type == Spin2TokenStream.NL) {
+            if (token.type == Token.NL) {
                 continue;
             }
             if (!parseSection(token)) {
@@ -64,7 +64,7 @@ public class Spin1Parser {
     }
 
     boolean parseSection(Token token) {
-        if (token.type == Spin2TokenStream.EOF) {
+        if (token.type == Token.EOF) {
             return false;
         }
         if ("VAR".equalsIgnoreCase(token.getText())) {
@@ -109,7 +109,7 @@ public class Spin1Parser {
                     state = 1;
                     // fall-through
                 case 1:
-                    if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF || ",".equals(token.getText())) {
+                    if (token.type == Token.NL || token.type == Token.EOF || ",".equals(token.getText())) {
                         Node child = null;
 
                         if (list.size() == 1) {
@@ -140,10 +140,10 @@ public class Spin1Parser {
                         }
                         list.clear();
 
-                        if (token.type == Spin2TokenStream.EOF) {
+                        if (token.type == Token.EOF) {
                             return;
                         }
-                        if (token.type == Spin2TokenStream.NL) {
+                        if (token.type == Token.NL) {
                             state = 0;
                         }
                         break;
@@ -172,16 +172,16 @@ public class Spin1Parser {
                     state = 1;
                     // fall-through
                 case 1:
-                    if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF || ",".equals(token.getText())) {
+                    if (token.type == Token.NL || token.type == Token.EOF || ",".equals(token.getText())) {
                         if (list.size() >= 1) {
                             new VariableNode(node, list);
                         }
                         list.clear();
 
-                        if (token.type == Spin2TokenStream.EOF) {
+                        if (token.type == Token.EOF) {
                             return;
                         }
-                        if (token.type == Spin2TokenStream.NL) {
+                        if (token.type == Token.NL) {
                             state = 0;
                         }
                         break;
@@ -201,10 +201,10 @@ public class Spin1Parser {
         int state = 1;
         while (true) {
             Token token = stream.nextToken();
-            if (token.type == Spin2TokenStream.EOF) {
+            if (token.type == Token.EOF) {
                 return;
             }
-            if (token.type == Spin2TokenStream.NL) {
+            if (token.type == Token.NL) {
                 state = 0;
                 continue;
             }
@@ -274,10 +274,10 @@ public class Spin1Parser {
 
         while (true) {
             Token token = stream.nextToken();
-            if (token.type == Spin2TokenStream.EOF) {
+            if (token.type == Token.EOF) {
                 return;
             }
-            if (token.type == Spin2TokenStream.NL) {
+            if (token.type == Token.NL) {
                 state = 0;
                 continue;
             }
@@ -471,7 +471,7 @@ public class Spin1Parser {
             statement.addToken(token);
             if ("(".equals(token.getText())) {
                 token = parseSubStatement(statement, token);
-                if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
+                if (token.type == Token.NL || token.type == Token.EOF) {
                     break;
                 }
                 if (")".equals(token.getText())) {
@@ -482,7 +482,7 @@ public class Spin1Parser {
             else {
                 token = stream.nextToken();
             }
-            if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
+            if (token.type == Token.NL || token.type == Token.EOF) {
                 break;
             }
         }
@@ -495,12 +495,12 @@ public class Spin1Parser {
 
         while (true) {
             token = stream.nextToken();
-            if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
+            if (token.type == Token.NL || token.type == Token.EOF) {
                 return token;
             }
             if ("(".equals(token.getText())) {
                 token = parseSubStatement(node, token);
-                if (token.type == Spin2TokenStream.NL || token.type == Spin2TokenStream.EOF) {
+                if (token.type == Token.NL || token.type == Token.EOF) {
                     return token;
                 }
                 if (")".equals(token.getText())) {
@@ -530,10 +530,10 @@ public class Spin1Parser {
         Node parent = node;
         while (true) {
             Token token = stream.nextToken();
-            if (token.type == Spin2TokenStream.EOF) {
+            if (token.type == Token.EOF) {
                 return;
             }
-            if (token.type == Spin2TokenStream.NL) {
+            if (token.type == Token.NL) {
                 continue;
             }
             if (parseSection(token)) {
@@ -559,7 +559,7 @@ public class Spin1Parser {
             if (state != 0) {
                 token = stream.nextToken();
             }
-            if (token.type == Spin2TokenStream.EOF || token.type == Spin2TokenStream.NL) {
+            if (token.type == Token.EOF || token.type == Token.NL) {
                 return;
             }
             switch (state) {

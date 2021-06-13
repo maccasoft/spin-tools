@@ -10,14 +10,14 @@
 
 package com.maccasoft.propeller.model;
 
-public class ObjectNode extends Node {
+import java.util.List;
 
-    public Token name;
-    public Node count;
-    public Token file;
+public abstract class TokenStream {
 
-    public ObjectNode(Node parent) {
-        super(parent);
-    }
+    public abstract Token nextToken();
+
+    public abstract String getSource(int start, int stop);
+
+    public abstract List<Token> getHiddenTokens();
 
 }

@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.model.Token;
+
 class Spin2TokenStreamTest {
 
     @Test
@@ -28,19 +30,19 @@ class Spin2TokenStreamTest {
         assertEquals("EnableFlow", subject.nextToken().getText());
         assertEquals("=", subject.nextToken().getText());
         assertEquals("8", subject.nextToken().getText());
-        assertEquals(Spin2TokenStream.NL, subject.nextToken().type);
+        assertEquals(Token.NL, subject.nextToken().type);
 
         assertEquals("DisableFlow", subject.nextToken().getText());
         assertEquals("=", subject.nextToken().getText());
         assertEquals("4", subject.nextToken().getText());
-        assertEquals(Spin2TokenStream.NL, subject.nextToken().type);
+        assertEquals(Token.NL, subject.nextToken().type);
 
         assertEquals("ColorBurstFreq", subject.nextToken().getText());
         assertEquals("=", subject.nextToken().getText());
         assertEquals("3_579_545", subject.nextToken().getText());
-        assertEquals(Spin2TokenStream.NL, subject.nextToken().type);
+        assertEquals(Token.NL, subject.nextToken().type);
 
-        assertEquals(Spin2TokenStream.EOF, subject.nextToken().type);
+        assertEquals(Token.EOF, subject.nextToken().type);
     }
 
     @Test
@@ -68,7 +70,7 @@ class Spin2TokenStreamTest {
         assertEquals(2, subject.nextToken().line);
         assertEquals(2, subject.nextToken().line);
 
-        assertEquals(Spin2TokenStream.EOF, subject.nextToken().type);
+        assertEquals(Token.EOF, subject.nextToken().type);
     }
 
     @Test
