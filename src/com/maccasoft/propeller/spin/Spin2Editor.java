@@ -142,8 +142,15 @@ public class Spin2Editor {
 
         @Override
         public void caretMoved(CaretEvent event) {
-            int offset = styledText.getCaretOffset();
-            currentLine = styledText.getLineAtOffset(offset);
+            int line = styledText.getLineAtOffset(event.caretOffset);
+            if (line != currentLine) {
+                Rectangle r = styledText.getClientArea();
+                if (currentLine != -1) {
+                    styledText.redraw(0, styledText.getLinePixel(currentLine), r.width, styledText.getLineHeight(), false);
+                }
+                currentLine = line;
+                styledText.redraw(0, styledText.getLinePixel(currentLine), r.width, styledText.getLineHeight(), false);
+            }
         }
     };
 
