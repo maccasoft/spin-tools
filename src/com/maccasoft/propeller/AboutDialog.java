@@ -66,12 +66,10 @@ public class AboutDialog extends Dialog {
 
         String title = SpinTools.APP_TITLE + " " + SpinTools.APP_VERSION;
         final String epl = "http://www.eclipse.org/legal/epl-v10.html";
-        final String famfamfam = "http://www.famfamfam.com/lab/icons/silk";
         final String message = title + "\r\n\r\n" + "Copyright (c) 2021 Marco Maccaferri and others. All rights reserved.\r\n\r\n"
             + "This program and the accompanying materials are made available under the\r\n"
             + "terms of the Eclipse Public License v1.0 which accompanies this distribution\r\n"
-            + "and is available at " + epl
-            + "\r\n\r\nIcons from " + famfamfam;
+            + "and is available at " + epl;
 
         final StyledText text = new StyledText(content, SWT.READ_ONLY);
         text.setLayoutData(new GridData(SWT.TOP, SWT.RIGHT, true, false));
@@ -90,14 +88,6 @@ public class AboutDialog extends Dialog {
         style = new StyleRange();
         style.start = message.indexOf(epl);
         style.length = epl.length();
-        style.underline = true;
-        style.underlineStyle = SWT.UNDERLINE_LINK;
-        text.setStyleRange(style);
-        linkRanges.add(style);
-
-        style = new StyleRange();
-        style.start = message.indexOf(famfamfam);
-        style.length = famfamfam.length();
         style.underline = true;
         style.underlineStyle = SWT.UNDERLINE_LINK;
         text.setStyleRange(style);

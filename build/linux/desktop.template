@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Propeller Sketch Tools
+GenericName=Propeller Sketch Tools
+Comment=Development tools for Parallax Propeller microcontrollers
+Exec=<BINARY_LOCATION>
+Icon=<ICON_NAME>
+Terminal=false
+Categories=Development;IDE;Electronics;
+MimeType=text/x-propeller
+Keywords=embedded electronics;electronics;propeller;microcontroller;

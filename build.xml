@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="build">
+    <tstamp>
+        <format property="timestamp" pattern="yyyyMMdd-HHmm" />
+    </tstamp>
+    <property name="version" value="0.0.1" />
+    <property name="package" value="spin-tools" />
+    <property name="folder" value="${package}-${version}" />
+    <property name="main-class" value="com.maccasoft.propeller.SpinTools" />
+    <property name="dependencies-folder" value="build" />
+    <property name="work" value="build/work" />
+
+    <property name="launch4j.dir" location="/opt/launch4j" />
+    <taskdef name="launch4j" 
+        classname="net.sf.launch4j.ant.Launch4jTask" 
+        classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar" />
+
+    <target name="build">
+        <antcall target="build-linux64" />
+        <antcall target="build-windows64" />
+    </target>
+
+    <!-- Linux x86/64 -->
+    <target name="build-linux64">
+        <delete dir="${work}" includeemptydirs="true" />
+        <mkdir dir="${work}/${folder}" />
+
+        <mkdir dir="${work}/bin" />
+        <javac target="1.8" source="1.8" destdir="${work}/bin" srcdir="src" debug="true" includeantruntime="false">
+            <classpath refid="lib.path.ref" />
+            <classpath>
+                <pathelement location="lib/org.eclipse.swt.gtk.linux.x86_64_3.114.100.v20200604-0951.jar" />
+            </classpath>
+        </javac>
+
+        <antcall target="copy-common-files" />
+        <copy todir="${work}/${folder}/lib">
+            <fileset file="lib/org.eclipse.swt.gtk.linux.x86_64_3.114.100.v20200604-0951.jar" />
+            <fileset file="build/linux/app16.png" />
+            <fileset file="build/linux/app32.png" />
+            <fileset file="build/linux/app48.png" />
+            <fileset file="build/linux/app64.png" />
+            <fileset file="build/linux/desktop.template" />
+        </copy>
+        <copy todir="${work}/${folder}">
+            <fileset file="build/linux/propeller" />
+            <fileset file="build/linux/install.sh" />
+            <fileset file="build/linux/uninstall.sh" />
+            <fileset file="build/linux/propeller.png" />
+        </copy>
+        <chmod file="${work}/${folder}/propeller" perm="755" />
+        <chmod file="${work}/${folder}/install.sh" perm="755" />
+        <chmod file="${work}/${folder}/uninstall.sh" perm="755" />
+
+        <exec executable="tar" dir="${work}" failonerror="true">
+            <arg value="czf" />
+            <arg value="../${package}-linux64-${version}.tar.gz" />
+            <arg value="${folder}" />
+        </exec>
+    </target>
+
+    <!-- Windows x86/64 -->
+    <target name="build-windows64">
+        <delete dir="${work}" includeemptydirs="true" />
+        <mkdir dir="${work}/${folder}" />
+
+        <mkdir dir="${work}/bin" />
+        <javac target="1.8" source="1.8" destdir="${work}/bin" srcdir="src" debug="true" includeantruntime="false">
+            <classpath refid="lib.path.ref" />
+            <classpath>
+                <pathelement location="lib/org.eclipse.swt.win32.win32.x86_64_3.114.100.v20200604-0951.jar" />
+            </classpath>
+        </javac>
+
+        <antcall target="copy-common-files" />
+        <copy todir="${work}/${folder}/lib">
+            <fileset file="lib/org.eclipse.swt.win32.win32.x86_64_3.114.100.v20200604-0951.jar" />
+        </copy>
+
+        <launch4j 
+            configFile="build/windows/config64.xml" 
+            outfile="${work}/${folder}/propeller.exe" 
+            fileVersion="${version}.0" 
+            txtFileVersion="${version}.0" 
+            productVersion="${version}.0" 
+            txtProductVersion="${version}.0" />
+
+        <exec executable="zip" dir="${work}" failonerror="true">
+            <arg value="-q" />
+            <arg value="-r" />
+            <arg value="../${package}-windows64-${version}.zip" />
+            <arg value="${folder}" />
+        </exec>
+    </target>
+
+    <path id="lib.path.ref">
+        <pathelement location="lib/org.eclipse.core.commands_3.9.700.v20191217-1850.jar" />
+        <pathelement location="lib/org.eclipse.core.databinding_1.9.0.v20200519-1409.jar" />
+        <pathelement location="lib/org.eclipse.core.databinding.beans_1.6.100.v20191217-1850.jar" />
+        <pathelement location="lib/org.eclipse.core.databinding.observable_1.9.0.v20200205-2119.jar" />
+        <pathelement location="lib/org.eclipse.core.databinding.property_1.8.0.v20200124-0715.jar" />
+        <pathelement location="lib/org.eclipse.equinox.common_3.12.0.v20200504-1602.jar" />
+        <pathelement location="lib/org.eclipse.jface_3.20.0.v20200505-1952.jar" />
+        <pathelement location="lib/org.eclipse.jface.databinding_1.11.100.v20200522-1835.jar" />
+        <pathelement location="lib/jssc-2.9.2.jar" />
+        <pathelement location="lib/jackson-core-2.7.0.jar" />
+        <pathelement location="lib/jackson-annotations-2.7.0.jar" />
+        <pathelement location="lib/jackson-databind-2.7.0.jar" />
+        <pathelement location="lib/commons-lang3-3.12.0.jar" />
+    </path>
+
+    <target name="copy-common-files">
+        <jar destfile="${work}/${folder}/lib/com.maccasoft.propeller.tools_${version}.v${timestamp}.jar">
+            <fileset dir="${work}/bin" />
+            <fileset dir="src">
+                <exclude name="**/*.java" />
+            </fileset>
+        </jar>
+
+        <copy todir="${work}/${folder}/lib">
+            <fileset dir="lib" includes="org.eclipse.core.commands_3.9.700.v20191217-1850.jar" />
+            <fileset dir="lib" includes="org.eclipse.core.databinding_1.9.0.v20200519-1409.jar" />
+            <fileset dir="lib" includes="org.eclipse.core.databinding.beans_1.6.100.v20191217-1850.jar" />
+            <fileset dir="lib" includes="org.eclipse.core.databinding.observable_1.9.0.v20200205-2119.jar" />
+            <fileset dir="lib" includes="org.eclipse.core.databinding.property_1.8.0.v20200124-0715.jar" />
+            <fileset dir="lib" includes="org.eclipse.equinox.common_3.12.0.v20200504-1602.jar" />
+            <fileset dir="lib" includes="org.eclipse.jface_3.20.0.v20200505-1952.jar" />
+            <fileset dir="lib" includes="org.eclipse.jface.databinding_1.11.100.v20200522-1835.jar" />
+            <fileset dir="lib" includes="jssc-2.9.2.jar" />
+            <fileset dir="lib" includes="jackson-core-2.7.0.jar" />
+            <fileset dir="lib" includes="jackson-annotations-2.7.0.jar" />
+            <fileset dir="lib" includes="jackson-databind-2.7.0.jar" />
+            <fileset dir="lib" includes="commons-lang3-3.12.0.jar" />
+        </copy>
+
+        <copy todir="${work}/${folder}">
+            <fileset file="LICENSE"/>
+        </copy>
+    </target>
+
+    <target name="clean">
+        <delete dir="${work}" includeemptydirs="true" />
+    </target>
+
+</project>
