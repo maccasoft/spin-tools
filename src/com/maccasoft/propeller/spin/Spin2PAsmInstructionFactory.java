@@ -397,6 +397,7 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
         symbols.put("long", new Long());
         symbols.put("word", new Word());
         symbols.put("byte", new Byte());
+        symbols.put("file", new FileInc());
     }
 
     public static Spin2PAsmInstructionFactory get(String mnemonic) {
