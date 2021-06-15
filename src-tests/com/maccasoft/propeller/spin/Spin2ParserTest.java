@@ -21,6 +21,8 @@ import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.VariableNode;
+import com.maccasoft.propeller.model.VariablesNode;
 
 class Spin2ParserTest {
 
@@ -227,6 +229,89 @@ class Spin2ParserTest {
         line = (DataLineNode) data0.getChild(5);
         Assertions.assertEquals("--ptra", line.parameters.get(1).getText());
         Assertions.assertEquals("3", line.parameters.get(1).getChild(0).getText());
+    }
+
+    @Test
+    void testParseVariables() {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "VAR a\n"
+            + "    b\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(1, root.getChilds().size());
+        Assertions.assertEquals(VariablesNode.class, root.getChild(0).getClass());
+
+        Assertions.assertEquals(2, root.getChild(0).getChilds().size());
+        Assertions.assertEquals("a", root.getChild(0).getChild(0).getText());
+        Assertions.assertEquals("b", root.getChild(0).getChild(1).getText());
+
+        Assertions.assertEquals(VariableNode.class, root.getChild(0).getChild(0).getClass());
+        Assertions.assertEquals(VariableNode.class, root.getChild(0).getChild(1).getClass());
+    }
+
+    @Test
+    void testParseTypedVariables() {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "VAR long a\n"
+            + "    word b\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(1, root.getChilds().size());
+        Assertions.assertEquals(VariablesNode.class, root.getChild(0).getClass());
+
+        Assertions.assertEquals(2, root.getChild(0).getChilds().size());
+
+        VariableNode node0 = (VariableNode) root.getChild(0).getChild(0);
+        Assertions.assertEquals("long", node0.type.getText());
+        Assertions.assertEquals("a", node0.identifier.getText());
+
+        VariableNode node1 = (VariableNode) root.getChild(0).getChild(1);
+        Assertions.assertEquals("word", node1.type.getText());
+        Assertions.assertEquals("b", node1.identifier.getText());
+    }
+
+    @Test
+    void testParseVariablesList() {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "VAR long a, b, c\n"
+            + "    word d, e\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(1, root.getChilds().size());
+        Assertions.assertEquals(VariablesNode.class, root.getChild(0).getClass());
+
+        Assertions.assertEquals(5, root.getChild(0).getChilds().size());
+        Assertions.assertEquals("long a", root.getChild(0).getChild(0).getText());
+        Assertions.assertEquals("b", root.getChild(0).getChild(1).getText());
+        Assertions.assertEquals("c", root.getChild(0).getChild(2).getText());
+        Assertions.assertEquals("word d", root.getChild(0).getChild(3).getText());
+        Assertions.assertEquals("e", root.getChild(0).getChild(4).getText());
+
+        Assertions.assertEquals(VariableNode.class, root.getChild(0).getChild(0).getClass());
+        Assertions.assertEquals(VariableNode.class, root.getChild(0).getChild(1).getClass());
+        Assertions.assertEquals(VariableNode.class, root.getChild(0).getChild(2).getClass());
+        Assertions.assertEquals(VariableNode.class, root.getChild(0).getChild(3).getClass());
+        Assertions.assertEquals(VariableNode.class, root.getChild(0).getChild(4).getClass());
+    }
+
+    @Test
+    void testParseVariableSize() {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "VAR a[10]\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(1, root.getChilds().size());
+        Assertions.assertEquals(VariablesNode.class, root.getChild(0).getClass());
+
+        VariableNode node = (VariableNode) root.getChild(0).getChild(0);
+        Assertions.assertEquals("a", node.identifier.getText());
+        Assertions.assertEquals("10", node.size.getText());
+
+        Assertions.assertEquals(1, node.getChilds().size());
     }
 
 }

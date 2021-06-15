@@ -301,7 +301,7 @@ public class SpinTools {
     }
 
     private void handleFileNew() {
-        EditorTab editorTab = new EditorTab(tabFolder, null);
+        EditorTab editorTab = new EditorTab(tabFolder, new File("New.spin"));
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
     }

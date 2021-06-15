@@ -21,7 +21,9 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 
+import com.maccasoft.propeller.spin.Spin1TokenMarker;
 import com.maccasoft.propeller.spin.Spin2Editor;
+import com.maccasoft.propeller.spin.Spin2TokenMarker;
 
 public class EditorTab {
 
@@ -47,19 +49,23 @@ public class EditorTab {
 
     public EditorTab(CTabFolder folder, File file) {
         this.file = file;
-        this.editor = new Spin2Editor(folder);
 
-        if (file != null) {
-            try {
-                this.editor.setText(loadFromFile(file));
-            } catch (Exception e) {
-                e.printStackTrace();
+        editor = new Spin2Editor(folder);
+        try {
+            if (file.getName().toLowerCase().endsWith(".spin2")) {
+                editor.setTokenMarker(new Spin2TokenMarker());
             }
+            else {
+                editor.setTokenMarker(new Spin1TokenMarker());
+            }
+            editor.setText(loadFromFile(file));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         tabItem = new CTabItem(folder, SWT.NONE);
         tabItem.setShowClose(true);
-        tabItem.setText(file != null ? file.getName() : "New");
+        tabItem.setText(file.getName());
         tabItem.setControl(editor.getControl());
         tabItem.setData(this);
     }
@@ -86,6 +92,12 @@ public class EditorTab {
 
     public void setFile(File file) {
         this.file = file;
+        if (file.getName().toLowerCase().endsWith(".spin2")) {
+            editor.setTokenMarker(new Spin2TokenMarker());
+        }
+        else {
+            editor.setTokenMarker(new Spin1TokenMarker());
+        }
     }
 
     public void setFocus() {

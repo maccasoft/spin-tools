@@ -16,8 +16,8 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenId;
-import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenMarker;
+import com.maccasoft.propeller.spin.EditorTokenMarker.TokenId;
+import com.maccasoft.propeller.spin.EditorTokenMarker.TokenMarker;
 
 class Spin2TokenMarkerTest {
 

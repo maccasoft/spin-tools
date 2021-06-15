@@ -93,9 +93,9 @@ public class Spin2TokenStream extends TokenStream {
                         state = Token.KEYWORD;
                     }
                     else { // operator
-                        if (ch == '.' && index + 1 < text.length()) {
+                        if ((ch == '.' || ch == ':') && index + 1 < text.length()) {
                             char ch1 = text.charAt(index + 1);
-                            if ((ch1 >= 'a' && ch1 <= 'z') || (ch1 >= 'A' && ch1 <= 'Z') || ch1 == '_') { // Keyword
+                            if ((ch1 >= 'a' && ch1 <= 'z') || (ch1 >= 'A' && ch1 <= 'Z') || ch1 == '_') { // Local label
                                 state = Token.KEYWORD;
                                 break;
                             }

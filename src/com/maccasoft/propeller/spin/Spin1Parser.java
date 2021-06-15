@@ -11,10 +11,7 @@
 package com.maccasoft.propeller.spin;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
@@ -36,10 +33,6 @@ import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
 public class Spin1Parser {
-
-    static Set<String> blockStart = new HashSet<String>(Arrays.asList(new String[] {
-        "IF", "IFNOT", "ELSEIF", "ELSEIFNOT", "ELSE", "CASE", "CASE_FAST", "OTHER", "REPEAT",
-    }));
 
     final Spin2TokenStream stream;
 
@@ -163,14 +156,22 @@ public class Spin1Parser {
     }
 
     void parseVar(Token start) {
-        List<Token> list = new ArrayList<Token>();
+        Node parent = new VariablesNode(root);
+        parent.addToken(start);
 
-        Node node = new VariablesNode(root);
-        node.addToken(start);
-
+        ErrorNode error = null;
+        VariableNode node = null;
         int state = 1;
         while (true) {
             Token token = stream.nextToken();
+            if (token.type == Token.EOF) {
+                return;
+            }
+            if (token.type == Token.NL) {
+                node = null;
+                state = 0;
+                continue;
+            }
             switch (state) {
                 case 0:
                     if (parseSection(token)) {
@@ -179,21 +180,55 @@ public class Spin1Parser {
                     state = 1;
                     // fall-through
                 case 1:
-                    if (token.type == Token.NL || token.type == Token.EOF || ",".equals(token.getText())) {
-                        if (list.size() >= 1) {
-                            new VariableNode(node, list);
-                        }
-                        list.clear();
-
-                        if (token.type == Token.EOF) {
-                            return;
-                        }
-                        if (token.type == Token.NL) {
-                            state = 0;
-                        }
+                    if (Spin2Model.isType(token.getText())) {
+                        node = new VariableNode(parent);
+                        node.addToken(token);
+                        node.type = token;
+                        state = 2;
                         break;
                     }
-                    list.add(token);
+                    // fall-through
+                case 2:
+                    if (token.type == 0) {
+                        if (node == null) {
+                            node = new VariableNode(parent);
+                        }
+                        node.addToken(token);
+                        node.identifier = token;
+                        state = 3;
+                        break;
+                    }
+                    error = new ErrorNode(parent);
+                    state = 9;
+                    break;
+
+                case 3:
+                    if ("[".equals(token.getText())) {
+                        node.size = new ExpressionNode(node);
+                        state = 5;
+                        break;
+                    }
+                    // fall-through
+                case 4:
+                    if (",".equals(token.getText())) {
+                        node = null;
+                        state = 1;
+                        break;
+                    }
+                    error = new ErrorNode(parent);
+                    state = 9;
+                    break;
+
+                case 5:
+                    if ("]".equals(token.getText())) {
+                        state = 4;
+                        break;
+                    }
+                    node.size.addToken(token);
+                    break;
+
+                case 9:
+                    error.addToken(token);
                     break;
             }
         }
@@ -301,7 +336,7 @@ public class Spin1Parser {
                         }
 
                         if (token.column > child.getToken(0).column) {
-                            if (blockStart.contains(child.getToken(0).getText().toUpperCase())) {
+                            if (Spin1Model.isBlockStart(child.getToken(0).getText())) {
                                 parent = child;
                             }
                             else if (child.getText().endsWith(":")) {

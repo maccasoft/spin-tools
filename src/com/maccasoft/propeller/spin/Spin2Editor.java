@@ -76,8 +76,8 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenId;
-import com.maccasoft.propeller.spin.Spin2TokenMarker.TokenMarker;
+import com.maccasoft.propeller.spin.EditorTokenMarker.TokenId;
+import com.maccasoft.propeller.spin.EditorTokenMarker.TokenMarker;
 
 public class Spin2Editor {
 
@@ -101,8 +101,8 @@ public class Spin2Editor {
     Caret overwriteCaret;
     boolean modified;
 
-    Spin2TokenMarker tokenMarker;
-    Map<Spin2TokenMarker.TokenId, TextStyle> styleMap = new HashMap<Spin2TokenMarker.TokenId, TextStyle>();
+    EditorTokenMarker tokenMarker;
+    Map<TokenId, TextStyle> styleMap = new HashMap<TokenId, TextStyle>();
 
     Spin2EditorBackgroundDecorator backgroundDecorator;
 
@@ -265,8 +265,6 @@ public class Spin2Editor {
         overwriteCaret.setSize(charSize.x, styledText.getLineHeight());
         overwriteCaret.setFont(styledText.getFont());
 
-        tokenMarker = new Spin2TokenMarker();
-
         styledText.setCaret(insertCaret);
         styledText.addCaretListener(caretListener);
 
@@ -393,28 +391,30 @@ public class Spin2Editor {
             public void lineGetStyle(LineStyleEvent event) {
                 List<StyleRange> ranges = new ArrayList<StyleRange>();
 
-                if (modified) {
+                if (tokenMarker != null) {
+                    if (modified) {
+                        try {
+                            tokenMarker.refreshTokens(styledText.getText());
+                            display.timerExec(500, refreshViewRunnable);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        modified = false;
+                    }
+
                     try {
-                        tokenMarker.refreshTokens(styledText.getText());
-                        display.timerExec(500, refreshViewRunnable);
+                        for (TokenMarker entry : tokenMarker.getLineTokens(event.lineOffset, event.lineText)) {
+                            TextStyle style = styleMap.get(entry.getId());
+                            if (style != null) {
+                                StyleRange range = new StyleRange(style);
+                                range.start = entry.getStart();
+                                range.length = entry.getStop() - range.start + 1;
+                                ranges.add(range);
+                            }
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    modified = false;
-                }
-
-                try {
-                    for (TokenMarker entry : tokenMarker.getLineTokens(event.lineOffset, event.lineText)) {
-                        TextStyle style = styleMap.get(entry.getId());
-                        if (style != null) {
-                            StyleRange range = new StyleRange(style);
-                            range.start = entry.getStart();
-                            range.length = entry.getStop() - range.start + 1;
-                            ranges.add(range);
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
 
                 event.styles = ranges.toArray(new StyleRange[ranges.size()]);
@@ -662,6 +662,12 @@ public class Spin2Editor {
                 overwriteCaret.dispose();
             }
         });
+    }
+
+    public void setTokenMarker(EditorTokenMarker tokenMarker) {
+        this.tokenMarker = tokenMarker;
+        modified = true;
+        styledText.redraw();
     }
 
     public Control getControl() {

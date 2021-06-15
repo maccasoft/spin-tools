@@ -11,10 +11,7 @@
 package com.maccasoft.propeller.spin;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
@@ -36,61 +33,6 @@ import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
 public class Spin2Parser {
-
-    public static Set<String> blockStart = new HashSet<String>(Arrays.asList(new String[] {
-        "IF", "IFNOT", "ELSEIF", "ELSEIFNOT", "ELSE", "CASE", "CASE_FAST", "OTHER", "REPEAT",
-    }));
-
-    public static Set<String> instructions = new HashSet<String>(Arrays.asList(new String[] {
-        "ORG", "ORGH", "ORGF", "FIT",
-        "RES", "FILE", "ASMCLK",
-        "NOP", "ROL", "ROR", "SHR", "SHL", "RCR", "RCL", "SAR", "SAL", "ADD", "ADDX", "ADDS", "ADDSX", "SUB", "SUBX", "SUBS",
-        "SUBSX", "CMP", "CMPX", "CMPS", "CMPSX", "CMPR", "CMPM", "SUBR", "CMPSUB", "FGE", "FLE", "FGES", "FLES", "SUMC", "SUMNC",
-        "SUMZ", "SUMNZ", "TESTB", "TESTBN", "BITL", "BITH", "BITC", "BITNC", "BITZ", "BITNZ", "BITNC", "BITRND", "BITNOT", "AND",
-        "ANDN", "OR", "XOR", "MUXC", "MUXNC", "MUXZ", "MUXNZ", "MOV", "NOT", "ABS", "NEG", "NEGC", "NEGNC", "NEGZ", "NEGNZ",
-        "INCMOD", "DECMOD", "ZEROX", "SIGNX", "ENCOD", "ONES", "TEST", "TESTN", "SETNIB", "GETNIB", "ROLNIB", "SETBYTE", "GETBYTE",
-        "ROLBYTE", "SETWORD", "GETWORD", "ROLWORD", "ALTSN", "ALTGN", "ALTSB", "ALTGB", "ALTSW", "ALTGW", "ALTR", "ALTD", "ALTS",
-        "ALTB", "ALTI", "SETR", "SETD", "SETS", "DECOD", "BMASK", "CRCBIT", "CRCNIB", "MUXNITS", "MUXNIBS", "MUXQ", "MOVBYTS",
-        "MUL", "MULS", "SCA", "SCAS", "ADDPIX", "MULPIX", "BLNPIX", "MIXPIX", "ADDCT1", "ADDCT2", "ADDCT3", "WMLONG", "RQPIN",
-        "RDPIN", "RDLUT", "RDBYTE", "RDWORD", "RDLONG", "POPA", "POPB", "CALLD", "RESI3", "RESI2", "RESI1", "RESI0", "REST3",
-        "REST2", "REST1", "REST0", "CALLPA", "CALLPB", "DJZ", "DJNZ", "DJF", "DJNF", "IJZ", "IJNZ", "TJZ", "TJNZ", "TJF", "TJNF",
-        "TJS", "TJNS", "JINT", "JCT1", "JCT2", "JCT3", "JSE1", "JSE2", "JSE3", "JSE4", "JPAT", "JFBW", "JXMT", "JXFI", "JXRO",
-        "JXRL", "JATN", "JQMT", "JNINT", "JNCT1", "JNCT2", "JNCT3", "JNSE1", "JNSE2", "JNSE3", "JNSE4", "JNPAT", "JNFBW", "JNXMT",
-        "JNXFI", "JNXRO", "JNXRL", "JNATN", "JNQMT", "SETPAT", "AKPIN", "WRPIN", "WXPIN", "WYPIN", "WRLUT",
-        "WRBYTE", "WRWORD", "WRLONG", "PUSHA", "PUSHB", "RDFAST", "WRFAST", "FBLOCK", "XINIT", "XSTOP", "XZERO", "XCONT", "REP",
-        "COGINIT", "QMUL", "QDIV", "QFRAC", "QSQRT", "QROTATE", "QVECTOR", "HUBSET", "COGID", "COGSTOP", "LOCKNEW", "LOCKRET",
-        "LOCKTRY", "LOCKREL", "QLOG", "QEXP", "RFBYTE", "RFWORD", "RFLONG", "RFVAR", "RFVARS", "WFBYTE", "WFWORD", "WFLONG",
-        "GETQX", "GETQY", "GETCT", "GETRND", "SETDACS", "SETXFRQ", "GETXACC", "WAITX", "SETSE1", "SETSE2", "SETSE3", "SETSE4",
-        "POLLINT", "POLLCT1", "POLLCT2", "POLLCT3", "POLLSE1", "POLLSE2", "POLLSE3", "POLLSE4", "POLLPAT", "POLLFBW", "POLLXMT",
-        "POLLXFI", "POLLXRO", "POLLXRL", "POLLATN", "POLLQMT", "WAITINT", "WAITCT1", "WAITCT2", "WAITCT3", "WAITSE1", "WAITSE2",
-        "WAITSE3", "WAITSE4", "WAITPAT", "WAITFBW", "WAITXMT", "WAITXFI", "WAITXRO", "WAITXRL", "WAITATN", "ALLOWI", "STALLI",
-        "TRIGINT1", "TRIGINT2", "TRIGINT3", "NIXINT1", "NIXINT2", "NIXINT3", "SETINT1", "SETINT2", "SETINT3", "SETQ", "SETQ2",
-        "PUSH", "POP", "JMP", "CALL", "RET", "CALLA", "RETA", "CALLB", "RETB", "JMPREL", "SKIP", "SKIPF", "EXECF", "GETPTR",
-        "GETBRK", "COGBRK", "BRK", "SETLUTS", "SETCY", "SETCI", "SETCQ", "SETCFRQ", "SETCMOD", "SETPIV", "SETPIX", "COGATN",
-        "TESTP", "TESTPN", "DIRL", "DIRH", "DIRC", "DIRNC", "DIRZ", "DIRNZ", "DIRRND", "DIRNOT", "OUTL", "OUTH", "OUTC", "OUTNC",
-        "OUTZ", "OUTNZ", "OUTRND", "OUTNOT", "FLTL", "FLTH", "FLTC", "FLTNC", "FLTZ", "FLTNZ", "FLTRND", "FLTNOT", "DRVL", "DRVH",
-        "DRVC", "DRVNC", "DRVZ", "DRVNZ", "DRVRND", "DRVNOT", "SPLITB", "MERGEB", "SPLITW", "MERGEW", "SEUSSF", "SEUSSR", "RGBSQZ",
-        "RGBEXP", "XORO32", "REV", "RCZR", "RCZL", "WRC", "WRNC", "WRZ", "WRNZ", "MODCZ", "MODC", "MODZ", "SETSCP", "GETSCP",
-        "JMP", "CALL", "CALLA", "CALLB", "CALLD", "LOC", "AUGS", "AUGD",
-    }));
-
-    public static Set<String> conditions = new HashSet<String>(Arrays.asList(new String[] {
-        "_RET_",
-        "IF_NC_AND_NZ", "IF_NZ_AND_NC", "IF_GT", "IF_A", "IF_00", "IF_NC_AND_Z", "IF_Z_AND_NC", "IF_01", "IF_NC", "IF_GE", "IF_AE",
-        "IF_0X", "IF_C_AND_NZ", "IF_NZ_AND_C", "IF_10", "IF_NZ", "IF_NE", "IF_X0", "IF_C_NE_Z", "IF_Z_NE_C", "IF_DIFF",
-        "IF_NC_OR_NZ", "IF_NZ_OR_NC", "IF_NOT_11", "IF_C_AND_Z", "IF_Z_AND_C", "IF_11", "IF_C_EQ_Z", "IF_Z_EQ_C", "IF_SAME",
-        "IF_Z", "IF_E", "IF_X1", "IF_NC_OR_Z", "IF_Z_OR_NC", "IF_NOT_10", "IF_C", "IF_LT", "IF_B", "IF_1X", "IF_C_OR_NZ",
-        "IF_NZ_OR_C", "IF_NOT_01", "IF_C_OR_Z", "IF_Z_OR_C", "IF_LE", "IF_BE", "IF_NOT_00",
-    }));
-
-    public static Set<String> modifiers = new HashSet<String>(Arrays.asList(new String[] {
-        "WC", "WZ", "WCZ",
-        "ANDC", "ANDZ", "ORC", "ORZ", "XORC", "XORZ",
-    }));
-
-    public static Set<String> types = new HashSet<String>(Arrays.asList(new String[] {
-        "LONG", "WORD", "BYTE",
-    }));
 
     final Spin2TokenStream stream;
 
@@ -214,14 +156,22 @@ public class Spin2Parser {
     }
 
     void parseVar(Token start) {
-        List<Token> list = new ArrayList<Token>();
+        Node parent = new VariablesNode(root);
+        parent.addToken(start);
 
-        Node node = new VariablesNode(root);
-        node.addToken(start);
-
+        ErrorNode error = null;
+        VariableNode node = null;
         int state = 1;
         while (true) {
             Token token = stream.nextToken();
+            if (token.type == Token.EOF) {
+                return;
+            }
+            if (token.type == Token.NL) {
+                node = null;
+                state = 0;
+                continue;
+            }
             switch (state) {
                 case 0:
                     if (parseSection(token)) {
@@ -230,21 +180,55 @@ public class Spin2Parser {
                     state = 1;
                     // fall-through
                 case 1:
-                    if (token.type == Token.NL || token.type == Token.EOF || ",".equals(token.getText())) {
-                        if (list.size() >= 1) {
-                            new VariableNode(node, list);
-                        }
-                        list.clear();
-
-                        if (token.type == Token.EOF) {
-                            return;
-                        }
-                        if (token.type == Token.NL) {
-                            state = 0;
-                        }
+                    if (Spin2Model.isType(token.getText())) {
+                        node = new VariableNode(parent);
+                        node.addToken(token);
+                        node.type = token;
+                        state = 2;
                         break;
                     }
-                    list.add(token);
+                    // fall-through
+                case 2:
+                    if (token.type == 0) {
+                        if (node == null) {
+                            node = new VariableNode(parent);
+                        }
+                        node.addToken(token);
+                        node.identifier = token;
+                        state = 3;
+                        break;
+                    }
+                    error = new ErrorNode(parent);
+                    state = 9;
+                    break;
+
+                case 3:
+                    if ("[".equals(token.getText())) {
+                        node.size = new ExpressionNode(node);
+                        state = 5;
+                        break;
+                    }
+                    // fall-through
+                case 4:
+                    if (",".equals(token.getText())) {
+                        node = null;
+                        state = 1;
+                        break;
+                    }
+                    error = new ErrorNode(parent);
+                    state = 9;
+                    break;
+
+                case 5:
+                    if ("]".equals(token.getText())) {
+                        state = 4;
+                        break;
+                    }
+                    node.size.addToken(token);
+                    break;
+
+                case 9:
+                    error.addToken(token);
                     break;
             }
         }
@@ -352,7 +336,7 @@ public class Spin2Parser {
                         }
 
                         if (token.column > child.getToken(0).column) {
-                            if (blockStart.contains(child.getToken(0).getText().toUpperCase())) {
+                            if (Spin2Model.isBlockStart(child.getToken(0).getText())) {
                                 parent = child;
                             }
                             else if (child.getText().endsWith(":")) {
@@ -412,7 +396,7 @@ public class Spin2Parser {
                         state = 6;
                         break;
                     }
-                    if (types.contains(token.getText().toUpperCase())) {
+                    if (Spin2Model.isType(token.getText())) {
                         child = new ErrorNode(parent);
                         child.addToken(token);
                         state = 1;
@@ -456,7 +440,7 @@ public class Spin2Parser {
                     break;
 
                 case 7:
-                    if (types.contains(token.getText().toUpperCase())) {
+                    if (Spin2Model.isType(token.getText())) {
                         child = new ErrorNode(parent);
                         child.addToken(token);
                         state = 1;
@@ -486,7 +470,7 @@ public class Spin2Parser {
                 case 9:
                     local = new LocalVariableNode(node);
                     node.localVariables.add(local);
-                    if (types.contains(token.getText().toUpperCase())) {
+                    if (Spin2Model.isType(token.getText())) {
                         local.type = new Node(local);
                         local.type.addToken(token);
                         state = 10;
@@ -670,7 +654,7 @@ public class Spin2Parser {
                     }
                     // fall-through
                 case 2:
-                    if (conditions.contains(token.getText().toUpperCase())) {
+                    if (Spin2Model.isCondition(token.getText())) {
                         parent.condition = new Node(parent);
                         parent.condition.addToken(token);
                         state = 3;
@@ -678,7 +662,7 @@ public class Spin2Parser {
                     }
                     // fall-through
                 case 3:
-                    if (instructions.contains(token.getText().toUpperCase()) || types.contains(token.getText().toUpperCase())) {
+                    if (Spin2Model.isInstruction(token.getText()) || Spin2Model.isType(token.getText())) {
                         parent.instruction = new Node(parent);
                         parent.instruction.addToken(token);
                         state = 4;
@@ -690,7 +674,7 @@ public class Spin2Parser {
                     state = 9;
                     break;
                 case 4:
-                    if (modifiers.contains(token.getText().toUpperCase())) {
+                    if (Spin2Model.isModifier(token.getText())) {
                         parent.modifier = new Node(parent);
                         parent.modifier.addToken(token);
                         state = 5;
@@ -712,7 +696,7 @@ public class Spin2Parser {
                     state = 9;
                     break;
                 case 6:
-                    if (modifiers.contains(token.getText().toUpperCase())) {
+                    if (Spin2Model.isModifier(token.getText())) {
                         parent.modifier.addToken(token);
                         state = 5;
                         break;
@@ -727,7 +711,7 @@ public class Spin2Parser {
                         parent.parameters.add(parameter);
                         break;
                     }
-                    if (modifiers.contains(token.getText().toUpperCase())) {
+                    if (Spin2Model.isModifier(token.getText())) {
                         parent.modifier = new Node(parent);
                         parent.modifier.addToken(token);
                         state = 5;
