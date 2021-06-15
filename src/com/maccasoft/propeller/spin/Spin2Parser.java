@@ -345,11 +345,6 @@ public class Spin2Parser {
                         return;
                     }
 
-                    if ("ORG".equalsIgnoreCase(token.getText())) {
-                        parseInlineCode(child, token);
-                        break;
-                    }
-
                     if (child.getTokens().size() != 0) {
                         while (token.column < child.getToken(0).column && child != node) {
                             child = child.getParent();
@@ -364,6 +359,11 @@ public class Spin2Parser {
                                 parent = child;
                             }
                         }
+                    }
+
+                    if ("ORG".equalsIgnoreCase(token.getText())) {
+                        parseInlineCode(parent, token);
+                        break;
                     }
 
                     child = parseStatement(parent, token);
@@ -611,7 +611,8 @@ public class Spin2Parser {
                 return;
             }
             if ("END".equalsIgnoreCase(token.getText())) {
-                parent.addToken(token);
+                Node statement = new StatementNode(parent);
+                statement.addToken(token);
                 return;
             }
         }
@@ -757,57 +758,34 @@ public class Spin2Parser {
 
     public static void main(String[] args) {
         String text = ""
-            + "' Program captures 4 ADC SCOPE pins and displays waveforms on DEBUG Scope\n"
+            + "' Program drives a DAC pin with a ramp pattern, use ctrl-F10 to run\n"
+            + "'\n"
+            + "' Jumper:       P8  to P0\n"
             + "\n"
             + "CON\n"
-            + "  _clkfreq = 300_000_000    'set clock frequency\n"
-            + "  _pins    = 0 addpins 3    'do conversion on these 4 pins\n"
+            + "  _clkfreq = 300_000_000                'set clock frequency\n"
+            + "  _pin     = 8                          'operate DAC on this pin\n"
             + "\n"
-            + "VAR\n"
-            + "  stack[40]\n"
-            + "  buff[512]\n"
+            + "OBJ scope : \"simple_SCOPE\"\n"
             + "\n"
-            + "PUB start(pins, rate, adc_mode) | i\n"
+            + "PUB go()\n"
             + "\n"
-            + "  if rate == 0  'in case top-level object, set defaults\n"
-            + "    pins := _pins\n"
-            + "    rate := $2000_0000\n"
-            + "    adc_mode := p_adc_1x\n"
+            + "  scope.start(0 addpins 0, $1000_0000, p_adc_1x)\n"
             + "\n"
-            + "  cogspin(newcog, scope(pins, rate, adc_mode), @stack)  'launch scope cog\n"
+            + "  org\n"
             + "\n"
+            + "        dirh    #_pin\n"
             + "\n"
-            + "PRI scope(pins, rate, adc_mode) | _setscp, _setse1, _buffadr, _timeout\n"
+            + "        rep     @loop,#0\n"
+            + "        add     level,#1                'increment level variable\n"
+            + "        setbyte mode,level,#1           'write level byte into mode\n"
+            + "        wrpin   mode,#_pin              'write mode to pin to update DAC\n"
+            + "loop\n"
             + "\n"
-            + "  debug(`SCOPE s pos 100 100 size 512 276 samples 512 rate 512 longs_8bit `dly(200))\n"
-            + "  debug(`s 'Pin0' 0 255 255 10 15)\n"
-            + "  debug(`s 'Pin1' 0 255 255 10 0)\n"
-            + "  debug(`s 'Pin2' 0 255 255 10 0)\n"
-            + "  debug(`s 'Pin3' 0 255 255 10 0)\n"
+            + "mode    long    p_dac_124r_3v           '%0000_0000_000_10110_xxxxxxxx_00_00000_0\n"
+            + "level   res     1                       'level variable, gets written to %xxxxxxxx\n"
             + "\n"
-            + "  pinstart(pins, adc_mode | p_adc_scope, $88_78 + 0, 0)     'init ADC SCOPE pins\n"
-            + "\n"
-            + "  _setscp := $40 + pins & $3F       'scope data pipe\n"
-            + "  _setse1 := $180 + pins & $3F      'scope trigger sensor\n"
-            + "  _buffadr := @buff         'set buff address\n"
-            + "  _timeout := clkfreq / 20      'set trigger timeout\n"
-            + "\n"
-            + "  repeat\n"
-            + "    org\n"
-            + "    akpin   pins                'acknowledge prior trigger\n"
-            + "    setscp  _setscp             'enable scope data pipe\n"
-            + "    setse1  _setse1             'trigger on first scope pin\n"
-            + "    wrfast  #0,_buffadr         'set up fast write\n"
-            + "    getct   pr7             'get ct\n"
-            + "    add pr7,_timeout            'add timeout\n"
-            + "    setq    pr7             'set timeout for waitse1\n"
-            + "    waitse1                 'wait for trigger\n"
-            + "    setq    rate                'set sample rate\n"
-            + "    xinit   ##$F086<<16 + 512, #0       'start recording scope pipe data\n"
-            + "    waitxfi                 'wait for recording to complete\n"
-            + "    end\n"
-            + "\n"
-            + "    debug(`s `uhex_long_array_(@buff, 512) `dly(50))    'show data\n"
+            + "  end\n"
             + "";
 
         try {

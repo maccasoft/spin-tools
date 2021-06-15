@@ -332,6 +332,32 @@ class Spin2ParseMethodTest {
     }
 
     @Test
+    void testParseIndentedBlockWithoutStatements() {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB start()\n"
+            + "\n"
+            + "    repeat\n"
+            + "    if\n"
+            + "        a := b\n"
+            + ""));
+
+        Node root = subject.parse();
+        MethodNode pub0 = (MethodNode) root.getChild(0);
+
+        Assertions.assertEquals(2, pub0.getChilds().size());
+        Assertions.assertEquals(0, pub0.getChild(0).getChilds().size());
+        Assertions.assertEquals(1, pub0.getChild(1).getChilds().size());
+
+        Assertions.assertEquals(""
+            + "repeat", pub0.getChild(0).getText());
+        Assertions.assertEquals(""
+            + "if\n"
+            + "        a := b", pub0.getChild(1).getText());
+        Assertions.assertEquals(""
+            + "a := b", pub0.getChild(1).getChild(0).getText());
+    }
+
+    @Test
     void testParseMisplacedBlocks() {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "PUB start()\n"
@@ -392,6 +418,49 @@ class Spin2ParseMethodTest {
         Assertions.assertEquals(2, pub0.getChild(0).getChilds().size());
         Assertions.assertEquals(1, pub0.getChild(0).getChild(0).getChilds().size());
         Assertions.assertEquals(2, pub0.getChild(0).getChild(1).getChilds().size());
+    }
+
+    @Test
+    void testParseInlinePAsmBlock() {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB start()\n"
+            + "\n"
+            + "    org\n"
+            + "        nop\n"
+            + "        ret\n"
+            + ""));
+
+        Node root = subject.parse();
+        MethodNode pub0 = (MethodNode) root.getChild(0);
+
+        Assertions.assertEquals(3, pub0.getChilds().size());
+
+        Assertions.assertEquals("    org", pub0.getChild(0).getText());
+        Assertions.assertEquals("        nop", pub0.getChild(1).getText());
+        Assertions.assertEquals("        ret", pub0.getChild(2).getText());
+    }
+
+    @Test
+    void testParseIndentedInlinePAsmBlock() {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB start()\n"
+            + "\n"
+            + "    repeat\n"
+            + "        org\n"
+            + "            nop\n"
+            + "            ret\n"
+            + ""));
+
+        Node root = subject.parse();
+        MethodNode pub0 = (MethodNode) root.getChild(0);
+
+        Assertions.assertEquals(1, pub0.getChilds().size());
+        Assertions.assertEquals(3, pub0.getChild(0).getChilds().size());
+
+        Node node = pub0.getChild(0);
+        Assertions.assertEquals("        org", node.getChild(0).getText());
+        Assertions.assertEquals("            nop", node.getChild(1).getText());
+        Assertions.assertEquals("            ret", node.getChild(2).getText());
     }
 
 }
