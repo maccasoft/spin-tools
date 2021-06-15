@@ -11,7 +11,10 @@
 package com.maccasoft.propeller.spin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
@@ -33,6 +36,10 @@ import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
 public class Spin1Parser {
+
+    static Set<String> blockStart = new HashSet<String>(Arrays.asList(new String[] {
+        "IF", "IFNOT", "ELSEIF", "ELSEIFNOT", "ELSE", "CASE", "CASE_FAST", "OTHER", "REPEAT",
+    }));
 
     final Spin2TokenStream stream;
 
@@ -294,7 +301,12 @@ public class Spin1Parser {
                         }
 
                         if (token.column > child.getToken(0).column) {
-                            parent = child;
+                            if (blockStart.contains(child.getToken(0).getText().toUpperCase())) {
+                                parent = child;
+                            }
+                            else if (child.getText().endsWith(":")) {
+                                parent = child;
+                            }
                         }
                     }
 
@@ -469,6 +481,11 @@ public class Spin1Parser {
 
         while (true) {
             statement.addToken(token);
+            if (statement.getTokens().size() == 2) {
+                if (":".equals(token.getText())) {
+                    break;
+                }
+            }
             if ("(".equals(token.getText())) {
                 token = parseSubStatement(statement, token);
                 if (token.type == Token.NL || token.type == Token.EOF) {
@@ -663,82 +680,12 @@ public class Spin1Parser {
 
     public static void main(String[] args) {
         String text = ""
-            + "CON\n"
+            + "PUB start()\n"
             + "\n"
-            + "    _XINFREQ = 5_000_000\n"
-            + "    _CLKMODE = XTAL1 + PLL16X\n"
-            + "\n"
-            + "    ' Modes\n"
-            + "\n"
-            + "    #0\n"
-            + "    MODE_TEXT_80x25\n"
-            + "    MODE_TEXT_80x30\n"
-            + "    MODE_TEXT_320x240\n"
-            + "    MODE_TMS9918\n"
-            + "\n"
-            + "VAR\n"
-            + "\n"
-            + "OBJ\n"
-            + "\n"
-            + "    map  : \"gpu_map\"\n"
-            + "    vga  : \"vga_80x25\"\n"
-            + "    vga2 : \"vga_640x240\"\n"
-            + "    vga3 : \"vga_320x240\"\n"
-            + "    vt   : \"vt100_80x25\"\n"
-            + "    vt2  : \"vt100_80x30\"\n"
-            + "    tms  : \"tms9918\"\n"
-            + "    fpu  : \"fpu\"\n"
-            + "    rtx  : \"gpu_hs_rtx\"\n"
-            + "\n"
-            + "PUB start\n"
-            + "\n"
-            + "    bytefill(map#GPU_REG_BASE, $00, constant($8000 - map#GPU_REG_BASE))\n"
-            + "    BYTE[map#GPU_REG0] := $A0 ' VGA text + VT100\n"
-            + "    BYTE[map#GPU_REG2] := $00 ' screen\n"
-            + "    BYTE[map#GPU_REG3] := $94 ' palette\n"
-            + "    BYTE[map#GPU_REG4] := $98 ' font\n"
-            + "    BYTE[map#GPU_REG8] := constant(CURSOR_ON|CURSOR_ULINE|CURSOR_FLASH)\n"
-            + "    BYTE[map#GPU_REG10] := 4\n"
-            + "    vga.init\n"
-            + "    fpu.init\n"
-            + "    rtx.init\n"
-            + "\n"
-            + "    bus_if_addr := (@bus_interface_end - @bus_interface) << 16 | @bus_interface\n"
-            + "    mode_switch_ovl := (@mode_switch_end - @mode_switch) << 16 | @mode_switch\n"
-            + "\n"
-            + "    vga_text_driver := (2048 << 16) | vga.get_driver\n"
-            + "    vga_640x240_driver := (2048 << 16) | vga2.get_driver\n"
-            + "    vga_320x240_driver := (2048 << 16) | vga3.get_driver\n"
-            + "    vt100_driver := (vt.get_size << 16) | vt.get_driver\n"
-            + "    vt100_80x30_driver := (vt2.get_size << 16) | vt2.get_driver\n"
-            + "    tms_driver := (2048 << 16) | tms.get_driver\n"
-            + "\n"
-            + "    coginit(cogid, @driver, 0)\n"
-            + "\n"
-            + "DAT\n"
-            + "\n"
-            + "driver              org     0\n"
-            + "\n"
-            + "                    jmp     #overlay_start\n"
-            + "\n"
-            + "' resident code\n"
-            + "\n"
-            + "' I2C Block Read\n"
-            + "'\n"
-            + "' i2c_addr = address to read from\n"
-            + "' i2c_length = bytes to read\n"
-            + "' i2c_hub_addr = hub address to write to\n"
-            + "\n"
-            + "i2c_read_block\n"
-            + "                    call    #i2c_start\n"
-            + "\n"
-            + "                    mov     i2c_data, #$A0              ' address device for write\n"
-            + "                    call    #i2c_write                  ' |\n"
-            + "                    mov     i2c_data, i2c_addr\n"
-            + "                    ror     i2c_data, #8                ' high address byte\n"
-            + "                    call    #i2c_write                  ' |\n"
-            + "                    rol     i2c_data, #8                ' low address byte\n"
-            + "                    call    #i2c_write                  ' |\n"
+            + "    case a\n"
+            + "        0: a := b\n"
+            + "        1: c := d\n"
+            + "           e := f\n"
             + "";
 
         try {

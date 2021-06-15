@@ -310,4 +310,88 @@ class Spin1ParseMethodTest {
         Assertions.assertEquals("PUB start(arg0, arg1) | byte var1, word var2 : var0", pub0.getText());
     }
 
+    @Test
+    void testParseIndentedBlock() {
+        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+            + "PUB start()\n"
+            + "\n"
+            + "    repeat\n"
+            + "        a := b\n"
+            + ""));
+
+        Node root = subject.parse();
+        MethodNode pub0 = (MethodNode) root.getChild(0);
+
+        Assertions.assertEquals(1, pub0.getChilds().size());
+        Assertions.assertEquals(1, pub0.getChild(0).getChilds().size());
+
+        Assertions.assertEquals(""
+            + "repeat\n"
+            + "        a := b", pub0.getChild(0).getText());
+        Assertions.assertEquals(""
+            + "a := b", pub0.getChild(0).getChild(0).getText());
+    }
+
+    @Test
+    void testParseMisplacedBlocks() {
+        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+            + "PUB start()\n"
+            + "\n"
+            + "    repeat\n"
+            + "        a := b\n"
+            + "         c := d\n"
+            + ""));
+
+        Node root = subject.parse();
+        MethodNode pub0 = (MethodNode) root.getChild(0);
+
+        Assertions.assertEquals(1, pub0.getChilds().size());
+        Assertions.assertEquals(2, pub0.getChild(0).getChilds().size());
+
+        Assertions.assertEquals(""
+            + "repeat\n"
+            + "        a := b\n"
+            + "         c := d", pub0.getChild(0).getText());
+        Assertions.assertEquals(""
+            + "a := b", pub0.getChild(0).getChild(0).getText());
+        Assertions.assertEquals(""
+            + "c := d", pub0.getChild(0).getChild(1).getText());
+    }
+
+    @Test
+    void testParseCaseBlock() {
+        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+            + "PUB start()\n"
+            + "\n"
+            + "    case a\n"
+            + "        0: a := b\n"
+            + "        1: c := d\n"
+            + ""));
+
+        Node root = subject.parse();
+        MethodNode pub0 = (MethodNode) root.getChild(0);
+
+        Assertions.assertEquals(1, pub0.getChilds().size());
+        Assertions.assertEquals(2, pub0.getChild(0).getChilds().size());
+    }
+
+    @Test
+    void testParseCaseBlockWithMultipleStatements() {
+        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+            + "PUB start()\n"
+            + "\n"
+            + "    case a\n"
+            + "        0: a := b\n"
+            + "        1: c := d\n"
+            + "           e := f\n"
+            + ""));
+
+        Node root = subject.parse();
+        MethodNode pub0 = (MethodNode) root.getChild(0);
+
+        Assertions.assertEquals(1, pub0.getChilds().size());
+        Assertions.assertEquals(2, pub0.getChild(0).getChilds().size());
+        Assertions.assertEquals(1, pub0.getChild(0).getChild(0).getChilds().size());
+        Assertions.assertEquals(2, pub0.getChild(0).getChild(1).getChilds().size());
+    }
 }

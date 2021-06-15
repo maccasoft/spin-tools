@@ -64,6 +64,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
 import com.maccasoft.propeller.internal.ColorRegistry;
@@ -226,7 +227,7 @@ public class Spin2Editor {
 
         styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(fontItalic, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
         styleMap.put(TokenId.PASM_CONDITION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
-        styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x80, 0x00, 0x00), null));
         styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
 
         TextStyle warningStyle = new TextStyle();
@@ -579,6 +580,67 @@ public class Spin2Editor {
             }
         });
 
+        styledText.addListener(SWT.Paint, new Listener() {
+
+            Rectangle clientArea;
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    clientArea = styledText.getClientArea();
+                    clientArea.y += styledText.getTopMargin();
+                    clientArea.height -= styledText.getBottomMargin();
+
+                    e.gc.setClipping(clientArea);
+                    e.gc.setForeground(e.display.getSystemColor(SWT.COLOR_DARK_GRAY));
+
+                    Node root = tokenMarker.getRoot();
+                    if (root != null) {
+                        for (Node child : root.getChilds()) {
+                            if (child instanceof MethodNode) {
+                                paintBlock(e.gc, child, 0, -1);
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+            void paintBlock(GC gc, Node node, int level, int yref) {
+                Rectangle r = styledText.getTextBounds(node.getStartToken().start, node.getStartToken().start);
+                int x0 = r.x + r.width / 2;
+                int y0 = r.y + r.height;
+
+                if (y0 >= clientArea.height) {
+                    return;
+                }
+
+                for (Node child : node.getChilds()) {
+                    if (!(child instanceof StatementNode) && !(child instanceof DataLineNode)) {
+                        continue;
+                    }
+                    int y1 = -1;
+                    if (level > 0) {
+                        r = styledText.getTextBounds(child.getStartToken().start, child.getStartToken().start);
+                        y1 = r.y + r.height / 2;
+                        if (y1 != y0 && y1 >= 0 && y1 != yref) {
+                            int x1 = r.x - r.width / 2;
+                            gc.drawLine(x0, y0, x0, y1);
+                            gc.drawLine(x0, y1, x1, y1);
+                            y0 = y1;
+                        }
+                        if (y0 >= clientArea.height) {
+                            break;
+                        }
+                    }
+                    if (child instanceof StatementNode) {
+                        paintBlock(gc, child, level + 1, y1);
+                    }
+                }
+            }
+        });
+
         styledText.addDisposeListener(new DisposeListener() {
 
             @Override
@@ -860,6 +922,15 @@ public class Spin2Editor {
         }
 
         return proposals.toArray(new IContentProposal[proposals.size()]);
+    }
+
+    public void gotToLineColumn(int line, int column) {
+        if (line >= styledText.getLineCount()) {
+            return;
+        }
+        int offset = styledText.getOffsetAtLine(line);
+        styledText.setCaretOffset(offset + column);
+        styledText.setTopIndex(line > 10 ? line - 10 : 1);
     }
 
     public static void main(String[] args) {

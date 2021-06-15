@@ -37,6 +37,10 @@ import com.maccasoft.propeller.model.VariablesNode;
 
 public class Spin2Parser {
 
+    public static Set<String> blockStart = new HashSet<String>(Arrays.asList(new String[] {
+        "IF", "IFNOT", "ELSEIF", "ELSEIFNOT", "ELSE", "CASE", "CASE_FAST", "OTHER", "REPEAT",
+    }));
+
     public static Set<String> instructions = new HashSet<String>(Arrays.asList(new String[] {
         "ORG", "ORGH", "ORGF", "FIT",
         "RES", "FILE", "ASMCLK",
@@ -353,7 +357,12 @@ public class Spin2Parser {
                         }
 
                         if (token.column > child.getToken(0).column) {
-                            parent = child;
+                            if (blockStart.contains(child.getToken(0).getText().toUpperCase())) {
+                                parent = child;
+                            }
+                            else if (child.getText().endsWith(":")) {
+                                parent = child;
+                            }
                         }
                     }
 
@@ -533,6 +542,11 @@ public class Spin2Parser {
 
         while (true) {
             statement.addToken(token);
+            if (statement.getTokens().size() == 2) {
+                if (":".equals(token.getText())) {
+                    break;
+                }
+            }
             if ("(".equals(token.getText())) {
                 token = parseSubStatement(statement, token);
                 if (token.type == Token.NL || token.type == Token.EOF) {
