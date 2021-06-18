@@ -1,0 +1,77 @@
+/*
+ * Copyright (c) 2021 Marco Maccaferri and others.
+ * All rights reserved.
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
+
+package com.maccasoft.propeller.spin2.instructions;
+
+import java.util.List;
+
+import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.spin2.Spin2InstructionObject;
+import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
+import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
+import com.maccasoft.propeller.spin2.Spin2PAsmSchema;
+
+/*
+ * REP     {#}D,{#}S
+ */
+public class Rep extends Spin2PAsmInstructionFactory {
+
+    @Override
+    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+        if (Spin2PAsmSchema.LD_S.check(arguments, effect)) {
+            return new Rep_(context, condition, arguments.get(0), arguments.get(1));
+        }
+        throw new RuntimeException("Invalid arguments");
+    }
+
+    public class Rep_ extends Spin2InstructionObject {
+
+        String condition;
+        Spin2PAsmExpression dst;
+        Spin2PAsmExpression src;
+        String effect;
+
+        public Rep_(Spin2Context context, String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src) {
+            super(context);
+            this.condition = condition;
+            this.dst = dst;
+            this.src = src;
+        }
+
+        // EEEE 1100110 1LI DDDDDDDDD SSSSSSSSS
+
+        @Override
+        public byte[] getBytes() {
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            value = o.setValue(value, 0b1100110);
+            value = c.setValue(value, 1);
+            value = i.setBoolean(value, src.isLiteral());
+
+            String symbol = dst.getExpression().toString();
+            if (symbol.startsWith("@")) {
+                int addr = context.getInteger(symbol.substring(1));
+                int offset = addr - context.getInteger("$");
+                if (addr >= 0x400) {
+                    offset /= 4;
+                }
+                value = l.setBoolean(value, true);
+                value = d.setValue(value, dst.isLiteral() ? offset : offset - 1);
+            }
+            else {
+                value = l.setBoolean(value, dst.isLiteral());
+                value = d.setValue(value, dst.getInteger());
+            }
+
+            value = s.setValue(value, src.getInteger());
+            return getBytes(value);
+        }
+
+    }
+}

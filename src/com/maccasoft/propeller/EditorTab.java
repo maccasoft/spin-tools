@@ -21,9 +21,9 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 
-import com.maccasoft.propeller.spin.Spin1TokenMarker;
-import com.maccasoft.propeller.spin.Spin2Editor;
-import com.maccasoft.propeller.spin.Spin2TokenMarker;
+import com.maccasoft.propeller.spin1.Spin1TokenMarker;
+import com.maccasoft.propeller.spin2.Spin2Editor;
+import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 
 public class EditorTab {
 

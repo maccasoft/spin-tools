@@ -53,9 +53,9 @@ import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.spin.Spin2Compiler;
-import com.maccasoft.propeller.spin.Spin2Parser;
-import com.maccasoft.propeller.spin.Spin2TokenStream;
+import com.maccasoft.propeller.spin2.Spin2Compiler;
+import com.maccasoft.propeller.spin2.Spin2Parser;
+import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 import jssc.SerialPortException;
 
