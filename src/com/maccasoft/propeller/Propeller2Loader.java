@@ -51,17 +51,16 @@ public class Propeller2Loader {
 
         if (!serialPort.isOpened()) {
             serialPort.openPort();
-        }
-
-        try {
             serialPort.setParams(
                 portSpeed,
                 SerialPort.DATABITS_8,
                 SerialPort.STOPBITS_1,
                 SerialPort.PARITY_NONE,
-                false,
-                false);
+                true,
+                true);
+        }
 
+        try {
             hwreset();
             version = hwfind();
         } finally {
@@ -74,9 +73,9 @@ public class Propeller2Loader {
     }
 
     void hwreset() throws SerialPortException {
-        serialPort.setDTR(true);
-        msleep(25);
         serialPort.setDTR(false);
+        msleep(25);
+        serialPort.setDTR(true);
         msleep(25);
         skipIncomingBytes();
         serialPort.purgePort(SerialPort.PURGE_TXABORT |
@@ -146,19 +145,17 @@ public class Propeller2Loader {
 
         if (!serialPort.isOpened()) {
             serialPort.openPort();
-        }
-
-        try {
             serialPort.setParams(
                 portSpeed,
                 SerialPort.DATABITS_8,
                 SerialPort.STOPBITS_1,
                 SerialPort.PARITY_NONE,
-                false,
-                false);
+                true,
+                true);
+        }
 
+        try {
             hwreset();
-
             if (hwfind() != 0) {
                 bufferUpload(type, imageBuffer, "binary image");
             }
@@ -172,19 +169,17 @@ public class Propeller2Loader {
     public void upload(byte[] binaryImage, int type) throws SerialPortException, IOException {
         if (!serialPort.isOpened()) {
             serialPort.openPort();
-        }
-
-        try {
             serialPort.setParams(
                 portSpeed,
                 SerialPort.DATABITS_8,
                 SerialPort.STOPBITS_1,
                 SerialPort.PARITY_NONE,
-                false,
-                false);
+                true,
+                true);
+        }
 
+        try {
             hwreset();
-
             if (hwfind() != 0) {
                 bufferUpload(type, binaryImage, "binary image");
             }

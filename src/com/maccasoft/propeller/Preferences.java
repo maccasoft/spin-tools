@@ -28,6 +28,7 @@ public class Preferences {
     public static final String PROP_SHOW_LINE_NUMBERS = "showLineNumbers";
     public static final String PROP_EDITOR_FONT = "editorFont";
     public static final String PROP_LRU = "lru";
+    public static final String PROP_PORT = "port";
 
     public static final String PREFERENCES_NAME = ".spin-tools";
 
@@ -58,6 +59,7 @@ public class Preferences {
     boolean showLineNumbers;
     String editorFont;
     final List<String> lru = new ArrayList<String>();
+    String port;
 
     final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
@@ -110,6 +112,14 @@ public class Preferences {
             lru.remove(lru.size() - 1);
         }
         changeSupport.firePropertyChange(PROP_LRU, null, this.lru);
+    }
+
+    public String getPort() {
+        return port;
+    }
+
+    public void setPort(String port) {
+        changeSupport.firePropertyChange(PROP_PORT, this.port, this.port = port);
     }
 
     public void save() throws IOException {

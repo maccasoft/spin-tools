@@ -17,6 +17,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -57,6 +59,7 @@ import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
+import jssc.SerialPort;
 import jssc.SerialPortException;
 
 public class SpinTools {
@@ -131,14 +134,47 @@ public class SpinTools {
             }
         });
 
+        preferences = Preferences.getInstance();
+
         serialPortList = new SerialPortList();
 
-        preferences = Preferences.getInstance();
+        String port = preferences.getPort();
+        if (port != null) {
+            serialPortList.setSelection(port);
+        }
+
+        serialPortList.addObserver(new Observer() {
+
+            @Override
+            public void update(Observable o, Object arg) {
+                String port = (String) arg;
+                SerialTerminal serialTerminal = getSerialTerminal();
+                if (serialTerminal != null) {
+                    if (!port.equals(serialTerminal.getSerialPort().getPortName())) {
+                        SerialPort oldSerialPort = serialTerminal.getSerialPort();
+                        try {
+                            if (oldSerialPort.isOpened()) {
+                                oldSerialPort.closePort();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        serialTerminal.setSerialPort(new SerialPort(port));
+                    }
+                }
+                preferences.setPort(port);
+            }
+        });
+
         shell.addDisposeListener(new DisposeListener() {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
                 try {
+                    SerialTerminal serialTerminal = getSerialTerminal();
+                    if (serialTerminal != null) {
+                        serialTerminal.close();
+                    }
                     preferences.save();
                 } catch (IOException e1) {
                     e1.printStackTrace();
@@ -301,7 +337,7 @@ public class SpinTools {
     }
 
     private void handleFileNew() {
-        EditorTab editorTab = new EditorTab(tabFolder, new File("New.spin"));
+        EditorTab editorTab = new EditorTab(tabFolder, new File("Untitled.spin2"));
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
     }
@@ -538,7 +574,12 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-
+                    SerialTerminal serialTerminal = getSerialTerminal();
+                    if (serialTerminal == null) {
+                        serialTerminal = new SerialTerminal(new SerialPort(serialPortList.getSelection()));
+                        serialTerminal.open();
+                    }
+                    serialTerminal.getControl().setFocus();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -577,6 +618,8 @@ public class SpinTools {
         }
         EditorTab editorTab = (EditorTab) tabItem.getData();
 
+        SerialTerminal serialTerminal = getSerialTerminal();
+
         String text = editorTab.getEditor().getText();
         Spin2TokenStream stream = new Spin2TokenStream(text);
 
@@ -596,7 +639,28 @@ public class SpinTools {
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
                     compiler.generateObjectCode(os);
 
-                    Propeller2Loader loader = new Propeller2Loader(serialPortList.getSelection()) {
+                    SerialPort serialPort = null;
+                    boolean shared = false;
+
+                    if (serialTerminal != null) {
+                        SerialPort terminalPort = serialTerminal.getSerialPort();
+                        if (terminalPort.getPortName().equals(serialPortList.getSelection())) {
+                            Display.getDefault().syncExec(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    serialTerminal.setSerialPort(null);
+                                }
+                            });
+                            serialPort = terminalPort;
+                            shared = true;
+                        }
+                    }
+                    if (serialPort == null) {
+                        serialPort = new SerialPort(serialPortList.getSelection());
+                    }
+
+                    Propeller2Loader loader = new Propeller2Loader(serialPort, shared) {
 
                         @Override
                         protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
@@ -622,6 +686,19 @@ public class SpinTools {
 
                     };
                     loader.upload(os.toByteArray(), 0);
+
+                    if (shared) {
+                        SerialPort terminalPort = serialPort;
+                        Display.getDefault().syncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                if (serialTerminal != null) {
+                                    serialTerminal.setSerialPort(terminalPort);
+                                }
+                            }
+                        });
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -730,6 +807,16 @@ public class SpinTools {
         });
 
         tabFolder.setTopRight(toolBar);
+    }
+
+    SerialTerminal getSerialTerminal() {
+        Shell[] shells = Display.getDefault().getShells();
+        for (int i = 0; i < shells.length; i++) {
+            if (shells[i].getData() instanceof SerialTerminal) {
+                return (SerialTerminal) shells[i].getData();
+            }
+        }
+        return null;
     }
 
     static {
