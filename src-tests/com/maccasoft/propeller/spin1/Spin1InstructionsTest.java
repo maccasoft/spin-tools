@@ -74,6 +74,21 @@ class Spin1InstructionsTest {
     }
 
     @Test
+    void testCall() throws Exception {
+        byte[] code = compile(""
+            + "DAT\n"
+            + "label           call    #label\n"
+            + "label_ret       nop");
+        Assertions.assertEquals(decodeToString("00 02 FC 5C"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testClkset() throws Exception {
+        byte[] code = compile("DAT             clkset  1");
+        Assertions.assertEquals(decodeToString("00 02 7C 0C"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
     void testCmp() throws Exception {
         byte[] code = compile("DAT             cmp     1, 2");
         Assertions.assertEquals(decodeToString("02 02 3C 84"), Spin1InstructionObject.decodeToString(code));
@@ -98,6 +113,30 @@ class Spin1InstructionsTest {
     }
 
     @Test
+    void testCmpx() throws Exception {
+        byte[] code = compile("DAT             cmpx    1, 2");
+        Assertions.assertEquals(decodeToString("02 02 3C CC"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testCogid() throws Exception {
+        byte[] code = compile("DAT             cogid   1");
+        Assertions.assertEquals(decodeToString("01 02 FC 0C"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testCoginit() throws Exception {
+        byte[] code = compile("DAT             coginit 1");
+        Assertions.assertEquals(decodeToString("02 02 7C 0C"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testCogstop() throws Exception {
+        byte[] code = compile("DAT             cogstop 1");
+        Assertions.assertEquals(decodeToString("03 02 7C 0C"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
     void testDjnz() throws Exception {
         byte[] code = compile("DAT             djnz    1, 2");
         Assertions.assertEquals(decodeToString("02 02 BC E4"), Spin1InstructionObject.decodeToString(code));
@@ -110,9 +149,39 @@ class Spin1InstructionsTest {
     }
 
     @Test
+    void testJmp() throws Exception {
+        byte[] code = compile("DAT             jmp     1");
+        Assertions.assertEquals(decodeToString("01 00 3C 5C"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
     void testJmpret() throws Exception {
         byte[] code = compile("DAT             jmpret  1, 2");
         Assertions.assertEquals(decodeToString("02 02 BC 5C"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testLockclr() throws Exception {
+        byte[] code = compile("DAT             lockclr 1");
+        Assertions.assertEquals(decodeToString("07 02 7C 0C"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testLocknew() throws Exception {
+        byte[] code = compile("DAT             locknew 1");
+        Assertions.assertEquals(decodeToString("04 02 FC 0C"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testLockret() throws Exception {
+        byte[] code = compile("DAT             lockret 1");
+        Assertions.assertEquals(decodeToString("05 02 7C 0C"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testLockset() throws Exception {
+        byte[] code = compile("DAT             lockset 1");
+        Assertions.assertEquals(decodeToString("06 02 7C 0C"), Spin1InstructionObject.decodeToString(code));
     }
 
     @Test
@@ -218,6 +287,12 @@ class Spin1InstructionsTest {
     }
 
     @Test
+    void testNop() throws Exception {
+        byte[] code = compile("DAT             nop");
+        Assertions.assertEquals(decodeToString("00 00 00 00"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
     void testOr() throws Exception {
         byte[] code = compile("DAT             or      1, 2");
         Assertions.assertEquals(decodeToString("02 02 BC 68"), Spin1InstructionObject.decodeToString(code));
@@ -251,6 +326,12 @@ class Spin1InstructionsTest {
     void testRdword() throws Exception {
         byte[] code = compile("DAT             rdword  1, 2");
         Assertions.assertEquals(decodeToString("02 02 BC 04"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testRet() throws Exception {
+        byte[] code = compile("DAT             ret");
+        Assertions.assertEquals(decodeToString("00 00 7C 5C"), Spin1InstructionObject.decodeToString(code));
     }
 
     @Test
@@ -341,6 +422,18 @@ class Spin1InstructionsTest {
     void testSumz() throws Exception {
         byte[] code = compile("DAT             sumz    1, 2");
         Assertions.assertEquals(decodeToString("02 02 BC 98"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testTest() throws Exception {
+        byte[] code = compile("DAT             test    1, 2");
+        Assertions.assertEquals(decodeToString("02 02 3C 60"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testTestn() throws Exception {
+        byte[] code = compile("DAT             testn   1, 2");
+        Assertions.assertEquals(decodeToString("02 02 3C 64"), Spin1InstructionObject.decodeToString(code));
     }
 
     @Test

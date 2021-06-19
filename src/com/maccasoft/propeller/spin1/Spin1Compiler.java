@@ -90,14 +90,9 @@ public class Spin1Compiler {
         }
 
         for (Spin1PAsmLine line : source) {
-            try {
-                line.getScope().setHubAddress(hubAddress);
-                address = line.resolve(address);
-                hubAddress += line.getInstructionObject().getSize();
-            } catch (Exception e) {
-                System.err.println(line);
-                e.printStackTrace();
-            }
+            line.getScope().setHubAddress(hubAddress);
+            address = line.resolve(address);
+            hubAddress += line.getInstructionObject().getSize();
         }
     }
 

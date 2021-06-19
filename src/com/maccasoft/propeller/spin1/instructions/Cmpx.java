@@ -18,41 +18,43 @@ import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
 import com.maccasoft.propeller.spin1.Spin1PAsmSchema;
 
-public class Call extends Spin1PAsmInstructionFactory {
+public class Cmpx extends Spin1PAsmInstructionFactory {
 
     @Override
     public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
-        if (Spin1PAsmSchema.S.check(arguments, effect)) {
-            return new Call_(context, condition, arguments.get(0), effect);
+        if (Spin1PAsmSchema.D_S.check(arguments, effect)) {
+            return new Cmpx_(context, condition, arguments.get(0), arguments.get(1), effect);
         }
         throw new RuntimeException("Invalid arguments");
     }
 
     /*
-     * CALL    #S       {WC/WZ}
+     * CMPX    D,{#}S   {WC/WZ/NR/WR}
      */
-    public class Call_ extends Spin1InstructionObject {
+    public class Cmpx_ extends Spin1InstructionObject {
 
         String condition;
+        Spin1PAsmExpression dst;
         Spin1PAsmExpression src;
         String effect;
 
-        public Call_(Spin1Context context, String condition, Spin1PAsmExpression src, String effect) {
+        public Cmpx_(Spin1Context context, String condition, Spin1PAsmExpression dst, Spin1PAsmExpression src, String effect) {
             super(context);
             this.condition = condition;
+            this.dst = dst;
             this.src = src;
             this.effect = effect;
         }
 
-        // 010111_0011_1111_ddddddddd_sssssssss
+        // 110011_000i_1111_ddddddddd_sssssssss
 
         @Override
         public byte[] getBytes() {
-            int value = instr.setValue(0, 0b010111);
+            int value = instr.setValue(0, 0b110011);
             value = con.setValue(value, condition == null ? 0b1111 : conditions.get(condition));
-            value = zcr.setValue(value, encodeEffect(effect));
-            value = i.setBoolean(value, true);
-            value = d.setValue(value, context.getInteger(src.getExpression().toString() + "_ret"));
+            value = zcr.setValue(value, encodeEffect(0b000, effect));
+            value = i.setBoolean(value, src.isLiteral());
+            value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, src.getInteger());
             return getBytes(value);
         }

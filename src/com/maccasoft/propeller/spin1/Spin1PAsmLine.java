@@ -82,38 +82,22 @@ public class Spin1PAsmLine {
     }
 
     public int resolve(int address) {
-        try {
-            return getInstructionObject().resolve(address);
-        } catch (Exception e) {
-            System.err.println(this);
-            e.printStackTrace();
-        }
-        return address;
+        return getInstructionObject().resolve(address);
     }
 
     public Spin1InstructionObject getInstructionObject() {
-        try {
-            if (instructionObject == null) {
-                instructionObject = getInstructionFactory().createObject(scope, condition, arguments, effect);
-            }
-        } catch (Exception e) {
-            System.err.println(this);
-            e.printStackTrace();
+        if (instructionObject == null) {
+            instructionObject = getInstructionFactory().createObject(scope, condition, arguments, effect);
         }
         return instructionObject;
     }
 
     public void generateObjectCode(OutputStream output) throws IOException {
-        try {
-            if (instructionObject == null) {
-                instructionObject = getInstructionFactory().createObject(scope, condition, arguments, effect);
-            }
-            if (instructionObject != null) {
-                instructionObject.generateObjectCode(output);
-            }
-        } catch (Exception e) {
-            System.err.println(this);
-            e.printStackTrace();
+        if (instructionObject == null) {
+            instructionObject = getInstructionFactory().createObject(scope, condition, arguments, effect);
+        }
+        if (instructionObject != null) {
+            instructionObject.generateObjectCode(output);
         }
     }
 

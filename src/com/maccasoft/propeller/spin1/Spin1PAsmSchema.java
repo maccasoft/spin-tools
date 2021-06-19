@@ -42,6 +42,13 @@ public abstract class Spin1PAsmSchema {
         "wr,wz,wc",
     }));
 
+    public static Set<String> E_WC_WZ = new HashSet<String>(Arrays.asList(new String[] {
+        "wc",
+        "wz",
+        "wc,wz",
+        "wz,wc",
+    }));
+
     /**
      * OPCODE
      */
@@ -67,13 +74,25 @@ public abstract class Spin1PAsmSchema {
     };
 
     /**
-     * OPCODE  D        {WC/WZ/NR/WR}
+     * OPCODE  D
      */
     public static Spin1PAsmSchema D = new Spin1PAsmSchema() {
 
         @Override
         public boolean check(List<Spin1PAsmExpression> arguments, String effect) {
-            return arguments.size() == 1 && arguments.get(0).prefix == null && (effect == null || E_ALL.contains(effect.toLowerCase()));
+            return arguments.size() == 1 && arguments.get(0).prefix == null && effect == null;
+        }
+
+    };
+
+    /**
+     * OPCODE  D        {WC/WZ}
+     */
+    public static Spin1PAsmSchema D_WC_WZ = new Spin1PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin1PAsmExpression> arguments, String effect) {
+            return arguments.size() == 1 && arguments.get(0).prefix == null && (effect == null || E_WC_WZ.contains(effect.toLowerCase()));
         }
 
     };

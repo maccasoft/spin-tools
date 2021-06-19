@@ -18,42 +18,40 @@ import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
 import com.maccasoft.propeller.spin1.Spin1PAsmSchema;
 
-public class Call extends Spin1PAsmInstructionFactory {
+public class Cogstop extends Spin1PAsmInstructionFactory {
 
     @Override
     public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
-        if (Spin1PAsmSchema.S.check(arguments, effect)) {
-            return new Call_(context, condition, arguments.get(0), effect);
+        if (Spin1PAsmSchema.D.check(arguments, effect)) {
+            return new Cogstop_(context, condition, arguments.get(0));
         }
         throw new RuntimeException("Invalid arguments");
     }
 
     /*
-     * CALL    #S       {WC/WZ}
+     * COGSTOP D
      */
-    public class Call_ extends Spin1InstructionObject {
+    public class Cogstop_ extends Spin1InstructionObject {
 
         String condition;
-        Spin1PAsmExpression src;
-        String effect;
+        Spin1PAsmExpression dst;
 
-        public Call_(Spin1Context context, String condition, Spin1PAsmExpression src, String effect) {
+        public Cogstop_(Spin1Context context, String condition, Spin1PAsmExpression dst) {
             super(context);
             this.condition = condition;
-            this.src = src;
-            this.effect = effect;
+            this.dst = dst;
         }
 
-        // 010111_0011_1111_ddddddddd_sssssssss
+        // 000011_0001_1111_ddddddddd_xxxxxx011
 
         @Override
         public byte[] getBytes() {
-            int value = instr.setValue(0, 0b010111);
+            int value = instr.setValue(0, 0b000011);
             value = con.setValue(value, condition == null ? 0b1111 : conditions.get(condition));
-            value = zcr.setValue(value, encodeEffect(effect));
+            value = zcr.setValue(value, 0b000);
             value = i.setBoolean(value, true);
-            value = d.setValue(value, context.getInteger(src.getExpression().toString() + "_ret"));
-            value = s.setValue(value, src.getInteger());
+            value = d.setValue(value, dst.getInteger());
+            value = s.setValue(value, 0b011);
             return getBytes(value);
         }
 
