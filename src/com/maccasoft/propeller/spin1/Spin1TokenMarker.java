@@ -32,7 +32,6 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin2.EditorTokenMarker;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class Spin1TokenMarker extends EditorTokenMarker {
 
@@ -510,7 +509,7 @@ public class Spin1TokenMarker extends EditorTokenMarker {
         tokens.clear();
         symbols.clear();
 
-        Spin2TokenStream stream = new Spin2TokenStream(text);
+        Spin1TokenStream stream = new Spin1TokenStream(text);
         Spin1Parser subject = new Spin1Parser(stream);
         root = subject.parse();
 

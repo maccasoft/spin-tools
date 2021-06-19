@@ -22,11 +22,11 @@ public class Spin1Model extends SpinModel {
     static Set<String> instructions = new HashSet<String>(Arrays.asList(new String[] {
         "ORG", "FIT",
         "ABS", "ABSNEG", "ADD", "ADDABS", "ADDS", "ADDSX", "ADDX", "AND", "ANDN", "CALL", "CLKSET", "CMP", "CMPS", "CMPSUB",
-        "CMPSX", "CMPX", "COGID", "COGINIT", "COGSTOP", "DJNZ", "HUBOP", "JMP", "JMPRET", "LOCKCLR", "LOCKNEW", "LOCKRET",
-        "LOCKSET", "MAX", "MAXS", "MIN", "MINS", "MOV", "MOVD", "MOVI", "MOVS", "MUXC", "MUXNC", "MUXNZ", "MUXZ", "NEG", "NEGC",
-        "NEGNC", "NEGNZ", "NEGZ", "NOP", "OR", "RCL", "RCR", "RDBYTE", "RDLONG", "RDWORD", "RET", "REV", "ROL", "ROR", "SAR",
-        "SHL", "SHR", "SUB", "SUBABS", "SUBS", "SUBSX", "SUBX", "SUMC", "SUMNC", "SUMNZ", "SUMZ", "TEST", "TESTN", "TJNZ", "TJZ",
-        "WAITCNT", "WAITPEQ", "WAITPNE", "WAITVID", "WRBYTE", "WRLONG", "WRWORD", "XOR",
+        "CMPSX", "CMPX", "COGID", "COGINIT", "COGSTOP", "DEC", "DJNZ", "ENC", "HUBOP", "JMP", "JMPRET", "LOCKCLR", "LOCKNEW",
+        "LOCKRET", "LOCKSET", "MAX", "MAXS", "MIN", "MINS", "MOV", "MOVD", "MOVI", "MOVS", "MUL", "MULS", "MUXC", "MUXNC", "MUXNZ",
+        "MUXZ", "NEG", "NEGC", "NEGNC", "NEGNZ", "NEGZ", "NOP", "ONES", "OR", "RCL", "RCR", "RDBYTE", "RDLONG", "RDWORD", "RET",
+        "REV", "ROL", "ROR", "SAR", "SHL", "SHR", "SUB", "SUBABS", "SUBS", "SUBSX", "SUBX", "SUMC", "SUMNC", "SUMNZ", "SUMZ",
+        "TEST", "TESTN", "TJNZ", "TJZ", "WAITCNT", "WAITPEQ", "WAITPNE", "WAITVID", "WRBYTE", "WRLONG", "WRWORD", "XOR",
     }));
 
     static Set<String> conditions = new HashSet<String>(Arrays.asList(new String[] {

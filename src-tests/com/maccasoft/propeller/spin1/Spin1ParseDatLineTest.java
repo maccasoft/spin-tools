@@ -16,13 +16,12 @@ import org.junit.jupiter.api.Test;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 class Spin1ParseDatLineTest {
 
     @Test
     void testParseLabel() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "label\n"
             + ""));
@@ -41,7 +40,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testParseCondition() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "        if_c\n"
             + ""));
@@ -60,7 +59,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testParseInstruction() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "                mov\n"
             + ""));
@@ -79,7 +78,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testParseInstructionParameters() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "                mov     a, b\n"
             + ""));
@@ -100,7 +99,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testParseModifier() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "                mov     a, b    wz\n"
             + ""));
@@ -121,7 +120,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testParseFullLine() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "label   if_c    mov     a, b    wz\n"
             + ""));
@@ -142,7 +141,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testUnknownCondition() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "label   if_c1   mov     a, b    wz\n"
             + ""));
@@ -163,7 +162,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testUnknownInstruction() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "label   if_c    mov1    a, b    wz\n"
             + ""));
@@ -184,7 +183,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testUnknownModifierParsedAsParameter() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "label   if_c    mov     a, b    wz1\n"
             + ""));
@@ -205,7 +204,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testUnknownModifier() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "label   if_c    mov     a, b    wz,wc1\n"
             + ""));
@@ -228,7 +227,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testParseData() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "                long    1, 2, 3, 4\n"
             + ""));
@@ -251,7 +250,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testParseDataArray() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "                long    1[2], 3, 4, 5[6]\n"
             + ""));
@@ -278,7 +277,7 @@ class Spin1ParseDatLineTest {
 
     @Test
     void testParseUnknownTypeData() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
             + "                long1   1, 2, 3, 4\n"
             + ""));

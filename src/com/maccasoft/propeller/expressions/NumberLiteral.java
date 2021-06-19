@@ -7,6 +7,7 @@ public class NumberLiteral extends Literal {
 
     private final Number value;
     private final int base;
+    private String text;
 
     public NumberLiteral(Number value) {
         this.value = value;
@@ -40,6 +41,7 @@ public class NumberLiteral extends Literal {
         else {
             this.value = Long.parseLong(s.replace("_", ""), this.base);
         }
+        this.text = s;
     }
 
     @Override
@@ -58,15 +60,23 @@ public class NumberLiteral extends Literal {
 
     @Override
     public String toString() {
-        switch (base) {
-            case 2:
-                return "%" + Long.toBinaryString(value.longValue());
-            case 4:
-                return "%%" + Long.toString(value.longValue(), 4);
-            case 16:
-                return "$" + Long.toHexString(value.longValue());
+        if (text == null) {
+            switch (base) {
+                case 2:
+                    text = "%" + Long.toBinaryString(value.longValue());
+                    break;
+                case 4:
+                    text = "%%" + Long.toString(value.longValue(), 4);
+                    break;
+                case 16:
+                    text = "$" + Long.toHexString(value.longValue());
+                    break;
+                default:
+                    text = value.toString();
+                    break;
+            }
         }
-        return value.toString();
+        return text;
     }
 
 }

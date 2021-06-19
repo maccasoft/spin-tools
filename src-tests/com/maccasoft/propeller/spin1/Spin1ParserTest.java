@@ -25,13 +25,12 @@ import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 class Spin1ParserTest {
 
     @Test
     void testParseDefaultAsConstants() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "    con0 = 1\n"
             + "    con1 = 2\n"
             + ""));
@@ -50,7 +49,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseConstants() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "CON con0 = 1\n"
             + "    con1 = 2\n"
             + ""));
@@ -69,7 +68,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseConstantsList() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "CON con0 = 1\n"
             + "    con1 = 2, con2 = 3, con3 = 4\n"
             + ""));
@@ -92,7 +91,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseObject() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "OBJ\n"
             + "    obj0 : \"file0\"\n"
             + ""));
@@ -113,7 +112,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseObjects() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "OBJ\n"
             + "    obj0 : \"file0\"\n"
             + "    obj1 : \"file1\"\n"
@@ -142,7 +141,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseObjectArray() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "OBJ\n"
             + "    obj0[10] : \"file0\"\n"
             + ""));
@@ -163,7 +162,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseObjectSyntaxError1() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "OBJ\n"
             + "    obj0 = \n"
             + ""));
@@ -181,7 +180,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseObjectSyntaxError2() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "OBJ\n"
             + "    obj0 : \"file0\" a0\n"
             + ""));
@@ -199,7 +198,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseEnumConstants() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "CON #0\n"
             + "    con0\n"
             + "    con1\n"
@@ -221,7 +220,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseEnumConstantsList() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "CON #0\n"
             + "    con0\n"
             + "    con1, con2, con3\n"
@@ -246,7 +245,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseMethods() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start\n"
             + "\n"
             + "PUB method1\n"
@@ -268,7 +267,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseStatements() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start\n"
             + "\n"
             + "    method1\n"
@@ -295,7 +294,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseVariables() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "VAR a\n"
             + "    b\n"
             + ""));
@@ -314,7 +313,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseTypedVariables() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "VAR long a\n"
             + "    word b\n"
             + ""));
@@ -336,7 +335,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseVariablesList() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "VAR long a, b, c\n"
             + "    word d, e\n"
             + ""));
@@ -361,7 +360,7 @@ class Spin1ParserTest {
 
     @Test
     void testParseVariableSize() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "VAR a[10]\n"
             + ""));
 

@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.StatementNode;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 class Spin1ModelTest {
 
@@ -41,7 +40,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetNodeAt() {
-        Spin1Parser parser = new Spin1Parser(new Spin2TokenStream(text1));
+        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(text1));
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node1 = subject.getNodeAt(15);
@@ -59,7 +58,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetMethodProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin2TokenStream(text1));
+        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(text1));
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node = subject.getNodeAt(15);
@@ -73,7 +72,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetMethodProposalsInitialText() {
-        Spin1Parser parser = new Spin1Parser(new Spin2TokenStream(text1));
+        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(text1));
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node = subject.getNodeAt(15);
@@ -87,7 +86,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetParametersProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin2TokenStream(text1));
+        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(text1));
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node = subject.getNodeAt(67);
@@ -103,7 +102,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetLocalVariablesProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin2TokenStream(text1));
+        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(text1));
         Spin1Model subject = new Spin1Model(parser.parse());
 
         Node node = subject.getNodeAt(99);
@@ -119,7 +118,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetGlobalVariablesProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(""
             + "VAR\n"
             + "\n"
             + "    var0\n"
@@ -142,7 +141,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetConstansProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(""
             + "CON\n"
             + "\n"
             + "    con0 = 1\n"
@@ -165,7 +164,7 @@ class Spin1ModelTest {
 
     @Test
     void testGetDatLabelProposals() {
-        Spin1Parser parser = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser parser = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start\n"
             + "\n"
             + "    \n"

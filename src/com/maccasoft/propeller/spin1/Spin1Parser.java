@@ -32,15 +32,14 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin2.Spin2Model;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class Spin1Parser {
 
-    final Spin2TokenStream stream;
+    final Spin1TokenStream stream;
 
     Node root;
 
-    public Spin1Parser(Spin2TokenStream stream) {
+    public Spin1Parser(Spin1TokenStream stream) {
         this.stream = stream;
     }
 
@@ -726,7 +725,7 @@ public class Spin1Parser {
             + "";
 
         try {
-            Spin2TokenStream stream = new Spin2TokenStream(text);
+            Spin1TokenStream stream = new Spin1TokenStream(text);
             Spin1Parser subject = new Spin1Parser(stream);
             Node root = subject.parse();
             print(root, 0);

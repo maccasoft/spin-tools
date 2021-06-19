@@ -16,13 +16,12 @@ import org.junit.jupiter.api.Test;
 import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 class Spin1ParseMethodTest {
 
     @Test
     void testParseMethod() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start\n"
             + ""));
 
@@ -40,7 +39,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseMethodEmptParameters() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start()\n"
             + ""));
 
@@ -58,7 +57,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseParameter() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start(arg0)\n"
             + ""));
 
@@ -77,7 +76,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseParameters() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start(arg0,arg1,arg2)\n"
             + ""));
 
@@ -98,7 +97,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseLocal() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start | var0\n"
             + ""));
 
@@ -117,7 +116,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseLocals() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start | var0, var1, var2\n"
             + ""));
 
@@ -141,7 +140,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseTypedLocals() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start | byte var0, word var1, long var2\n"
             + ""));
 
@@ -165,7 +164,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseArrayLocal() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start | var0[10]\n"
             + ""));
 
@@ -185,7 +184,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseResult() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start : result\n"
             + ""));
 
@@ -204,7 +203,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testAllowOneResultOnly() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start : result0, result1\n"
             + ""));
 
@@ -225,7 +224,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testDontAllowTypedParameters() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start(word arg0)\n"
             + ""));
 
@@ -245,7 +244,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseUnknowTypeLocal() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start | byte var0, word var1 var2\n"
             + ""));
 
@@ -267,7 +266,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseFull() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start(arg0, arg1) : var0 | byte var1, word var2\n"
             + ""));
 
@@ -290,7 +289,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseFullOrder() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start(arg0, arg1) | byte var1, word var2 : var0\n"
             + ""));
 
@@ -313,7 +312,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseIndentedBlock() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start()\n"
             + "\n"
             + "    repeat\n"
@@ -335,7 +334,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseMisplacedBlocks() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start()\n"
             + "\n"
             + "    repeat\n"
@@ -361,7 +360,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseCaseBlock() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start()\n"
             + "\n"
             + "    case a\n"
@@ -378,7 +377,7 @@ class Spin1ParseMethodTest {
 
     @Test
     void testParseCaseBlockWithMultipleStatements() {
-        Spin1Parser subject = new Spin1Parser(new Spin2TokenStream(""
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start()\n"
             + "\n"
             + "    case a\n"
