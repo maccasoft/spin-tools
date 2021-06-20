@@ -10,8 +10,6 @@
 
 package com.maccasoft.propeller.spin1;
 
-import java.io.ByteArrayOutputStream;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -143,6 +141,12 @@ class Spin1InstructionsTest {
     }
 
     @Test
+    void testEnc() throws Exception {
+        byte[] code = compile("DAT             enc     1, 2");
+        Assertions.assertEquals(decodeToString("02 02 BC 18"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
     void testHubop() throws Exception {
         byte[] code = compile("DAT             hubop   1, 2");
         Assertions.assertEquals(decodeToString("02 02 3C 0C"), Spin1InstructionObject.decodeToString(code));
@@ -257,6 +261,18 @@ class Spin1InstructionsTest {
     }
 
     @Test
+    void testMul() throws Exception {
+        byte[] code = compile("DAT             mul     1, 2");
+        Assertions.assertEquals(decodeToString("02 02 BC 10"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testMuls() throws Exception {
+        byte[] code = compile("DAT             muls    1, 2");
+        Assertions.assertEquals(decodeToString("02 02 BC 14"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
     void testNeg() throws Exception {
         byte[] code = compile("DAT             neg     1, 2");
         Assertions.assertEquals(decodeToString("02 02 BC A4"), Spin1InstructionObject.decodeToString(code));
@@ -290,6 +306,12 @@ class Spin1InstructionsTest {
     void testNop() throws Exception {
         byte[] code = compile("DAT             nop");
         Assertions.assertEquals(decodeToString("00 00 00 00"), Spin1InstructionObject.decodeToString(code));
+    }
+
+    @Test
+    void testOnes() throws Exception {
+        byte[] code = compile("DAT             ones    1, 2");
+        Assertions.assertEquals(decodeToString("02 02 BC 1C"), Spin1InstructionObject.decodeToString(code));
     }
 
     @Test
@@ -504,10 +526,8 @@ class Spin1InstructionsTest {
         Spin1Compiler compiler = new Spin1Compiler();
         compiler.compile(root);
 
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        compiler.generateObjectCode(os);
-
-        return os.toByteArray();
+        Spin1InstructionObject obj = compiler.source.get(0).getInstructionObject();
+        return obj.getBytes();
     }
 
     static String decodeToString(String s) {

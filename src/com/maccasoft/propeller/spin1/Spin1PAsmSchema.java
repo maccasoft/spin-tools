@@ -68,7 +68,25 @@ public abstract class Spin1PAsmSchema {
 
         @Override
         public boolean check(List<Spin1PAsmExpression> arguments, String effect) {
+            if (arguments.size() != 2) {
+                throw new RuntimeException("error: expected 2 operands, found " + arguments.size());
+            }
             return arguments.size() == 2 && arguments.get(0).prefix == null && (effect == null || E_ALL.contains(effect.toLowerCase()));
+        }
+
+    };
+
+    /**
+     * OPCODE  D,{#}S   {WC/WZ}
+     */
+    public static Spin1PAsmSchema D_S_WC_WZ = new Spin1PAsmSchema() {
+
+        @Override
+        public boolean check(List<Spin1PAsmExpression> arguments, String effect) {
+            if (arguments.size() != 2) {
+                throw new RuntimeException("error: expected 2 operands, found " + arguments.size());
+            }
+            return arguments.size() == 2 && arguments.get(0).prefix == null && (effect == null || E_WC_WZ.contains(effect.toLowerCase()));
         }
 
     };
@@ -80,6 +98,9 @@ public abstract class Spin1PAsmSchema {
 
         @Override
         public boolean check(List<Spin1PAsmExpression> arguments, String effect) {
+            if (arguments.size() != 1) {
+                throw new RuntimeException("error: expected 2 operands, found " + arguments.size());
+            }
             return arguments.size() == 1 && arguments.get(0).prefix == null && effect == null;
         }
 
@@ -92,6 +113,9 @@ public abstract class Spin1PAsmSchema {
 
         @Override
         public boolean check(List<Spin1PAsmExpression> arguments, String effect) {
+            if (arguments.size() != 1) {
+                throw new RuntimeException("error: expected 2 operands, found " + arguments.size());
+            }
             return arguments.size() == 1 && arguments.get(0).prefix == null && (effect == null || E_WC_WZ.contains(effect.toLowerCase()));
         }
 
@@ -104,6 +128,9 @@ public abstract class Spin1PAsmSchema {
 
         @Override
         public boolean check(List<Spin1PAsmExpression> arguments, String effect) {
+            if (arguments.size() != 1) {
+                throw new RuntimeException("error: expected 2 operands, found " + arguments.size());
+            }
             return arguments.size() == 1 && (effect == null || E_ALL.contains(effect.toLowerCase()));
         }
 

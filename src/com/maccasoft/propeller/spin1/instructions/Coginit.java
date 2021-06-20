@@ -25,7 +25,7 @@ public class Coginit extends Spin1PAsmInstructionFactory {
         if (Spin1PAsmSchema.D.check(arguments, effect)) {
             return new Coginit_(context, condition, arguments.get(0));
         }
-        throw new RuntimeException("Invalid arguments");
+        throw new RuntimeException("error: invalid arguments");
     }
 
     /*

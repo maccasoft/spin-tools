@@ -16,9 +16,21 @@ import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
+import com.maccasoft.propeller.spin1.Spin1PAsmLine;
 import com.maccasoft.propeller.spin1.Spin1PAsmSchema;
 
 public class Test extends Spin1PAsmInstructionFactory {
+
+    @Override
+    public Spin1InstructionObject createObject(Spin1PAsmLine line) {
+        if (Spin1PAsmSchema.D_S_WC_WZ.check(line.getArguments(), line.getEffect())) {
+            if (line.getEffect() == null) {
+                line.addAnnotation("warning: instruction " + line.getMnemonic() + " used without flags being set");
+            }
+            return new Test_(line.getScope(), line.getCondition(), line.getArguments().get(0), line.getArguments().get(1), line.getEffect());
+        }
+        throw new RuntimeException("Invalid arguments");
+    }
 
     @Override
     public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {

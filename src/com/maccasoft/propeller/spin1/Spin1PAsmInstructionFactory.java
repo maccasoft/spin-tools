@@ -36,7 +36,7 @@ import com.maccasoft.propeller.spin1.instructions.Cogid;
 import com.maccasoft.propeller.spin1.instructions.Coginit;
 import com.maccasoft.propeller.spin1.instructions.Cogstop;
 import com.maccasoft.propeller.spin1.instructions.Djnz;
-import com.maccasoft.propeller.spin1.instructions.Empty;
+import com.maccasoft.propeller.spin1.instructions.Enc;
 import com.maccasoft.propeller.spin1.instructions.FileInc;
 import com.maccasoft.propeller.spin1.instructions.Fit;
 import com.maccasoft.propeller.spin1.instructions.Hubop;
@@ -74,6 +74,7 @@ import com.maccasoft.propeller.spin1.instructions.Rcr;
 import com.maccasoft.propeller.spin1.instructions.Rdbyte;
 import com.maccasoft.propeller.spin1.instructions.Rdlong;
 import com.maccasoft.propeller.spin1.instructions.Rdword;
+import com.maccasoft.propeller.spin1.instructions.Res;
 import com.maccasoft.propeller.spin1.instructions.Ret;
 import com.maccasoft.propeller.spin1.instructions.Rev;
 import com.maccasoft.propeller.spin1.instructions.Rol;
@@ -110,6 +111,7 @@ public abstract class Spin1PAsmInstructionFactory extends Expression {
     static {
         symbols.put("ORG", new Org());
         symbols.put("FIT", new Fit());
+        symbols.put("RES", new Res());
         symbols.put("BYTE", new com.maccasoft.propeller.spin1.instructions.Byte());
         symbols.put("WORD", new Word());
         symbols.put("LONG", new com.maccasoft.propeller.spin1.instructions.Long());
@@ -135,6 +137,7 @@ public abstract class Spin1PAsmInstructionFactory extends Expression {
         symbols.put("COGINIT", new Coginit());
         symbols.put("COGSTOP", new Cogstop());
         symbols.put("DJNZ", new Djnz());
+        symbols.put("ENC", new Enc());
         symbols.put("HUBOP", new Hubop());
         symbols.put("JMP", new Jmp());
         symbols.put("JMPRET", new Jmpret());
@@ -200,11 +203,7 @@ public abstract class Spin1PAsmInstructionFactory extends Expression {
     }
 
     public static Spin1PAsmInstructionFactory get(String mnemonic) {
-        Spin1PAsmInstructionFactory factory = mnemonic != null ? symbols.get(mnemonic.toUpperCase()) : Empty.instance;
-        if (factory == null) {
-            throw new RuntimeException("Invalid instruction: " + mnemonic);
-        }
-        return factory;
+        return symbols.get(mnemonic.toUpperCase());
     }
 
     public Spin1PAsmInstructionFactory() {
@@ -214,6 +213,12 @@ public abstract class Spin1PAsmInstructionFactory extends Expression {
         return Collections.singletonList(line);
     }
 
-    public abstract Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect);
+    public Spin1InstructionObject createObject(Spin1PAsmLine line) {
+        return createObject(line.getScope(), line.getCondition(), line.getArguments(), line.getEffect());
+    }
+
+    public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String modifiers) {
+        return null;
+    }
 
 }

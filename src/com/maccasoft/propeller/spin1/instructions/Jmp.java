@@ -25,7 +25,7 @@ public class Jmp extends Spin1PAsmInstructionFactory {
         if (Spin1PAsmSchema.S.check(arguments, effect)) {
             return new Jmpret_(context, condition, arguments.get(0), effect);
         }
-        throw new RuntimeException("Invalid arguments");
+        throw new RuntimeException("error: invalid arguments");
     }
 
     /*

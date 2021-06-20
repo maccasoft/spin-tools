@@ -25,7 +25,7 @@ public class Clkset extends Spin1PAsmInstructionFactory {
         if (Spin1PAsmSchema.D.check(arguments, effect)) {
             return new Clkset_(context, condition, arguments.get(0), effect);
         }
-        throw new RuntimeException("Invalid arguments");
+        throw new RuntimeException("error: invalid arguments");
     }
 
     /*

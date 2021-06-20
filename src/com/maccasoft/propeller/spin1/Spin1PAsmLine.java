@@ -12,8 +12,11 @@ package com.maccasoft.propeller.spin1;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.maccasoft.propeller.spin1.instructions.Empty;
 
 public class Spin1PAsmLine {
 
@@ -28,6 +31,7 @@ public class Spin1PAsmLine {
     Spin1InstructionObject instructionObject;
 
     String originalText;
+    List<String> annotations = new ArrayList<String>();
 
     public Spin1PAsmLine(Spin1Context scope, String label, String condition, String mnemonic, List<Spin1PAsmExpression> arguments, String effect) {
         this.scope = scope;
@@ -36,6 +40,16 @@ public class Spin1PAsmLine {
         this.mnemonic = mnemonic;
         this.arguments = arguments;
         this.effect = effect;
+
+        if (mnemonic != null) {
+            this.instructionFactory = Spin1PAsmInstructionFactory.get(mnemonic);
+            if (this.instructionFactory == null) {
+                this.annotations.add("error: invalid instruction " + mnemonic);
+            }
+        }
+        if (this.instructionFactory == null) {
+            this.instructionFactory = Empty.instance;
+        }
     }
 
     public Spin1Context getScope() {
@@ -47,7 +61,7 @@ public class Spin1PAsmLine {
     }
 
     public boolean isLocalLabel() {
-        return label != null && label.startsWith(".");
+        return label != null && label.startsWith(":");
     }
 
     public String getCondition() {
@@ -62,43 +76,55 @@ public class Spin1PAsmLine {
         return arguments;
     }
 
+    public int getArgumentCount() {
+        return arguments.size();
+    }
+
+    public Spin1PAsmExpression getArgument(int index) {
+        return arguments.get(index);
+    }
+
     public String getEffect() {
         return effect;
     }
 
     public Spin1PAsmInstructionFactory getInstructionFactory() {
-        if (instructionFactory == null) {
-            instructionFactory = Spin1PAsmInstructionFactory.get(mnemonic);
-        }
         return instructionFactory;
     }
 
     public List<Spin1PAsmLine> expand() {
-        try {
-            return getInstructionFactory().expand(this);
-        } catch (Exception e) {
-            return Collections.singletonList(this);
+        if (instructionFactory != null) {
+            return instructionFactory.expand(this);
         }
+        return Collections.singletonList(this);
     }
 
     public int resolve(int address) {
-        return getInstructionObject().resolve(address);
+        if (instructionObject == null && instructionFactory != null) {
+            instructionObject = instructionFactory.createObject(this);
+        }
+        if (instructionObject != null) {
+            return instructionObject.resolve(address);
+        }
+        return address;
     }
 
     public Spin1InstructionObject getInstructionObject() {
-        if (instructionObject == null) {
-            instructionObject = getInstructionFactory().createObject(scope, condition, arguments, effect);
-        }
         return instructionObject;
     }
 
     public void generateObjectCode(OutputStream output) throws IOException {
-        if (instructionObject == null) {
-            instructionObject = getInstructionFactory().createObject(scope, condition, arguments, effect);
-        }
         if (instructionObject != null) {
             instructionObject.generateObjectCode(output);
         }
+    }
+
+    public void addAnnotation(String s) {
+        annotations.add(s);
+    }
+
+    public List<String> getAnnotations() {
+        return annotations;
     }
 
     @Override

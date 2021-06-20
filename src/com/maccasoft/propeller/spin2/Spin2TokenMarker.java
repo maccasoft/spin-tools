@@ -748,6 +748,9 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                             id = pasmKeywords.get(token.getText().toUpperCase());
                         }
                         if (id == null) {
+                            id = keywords.get(token.getText().toUpperCase());
+                        }
+                        if (id == null) {
                             TokenMarker marker = new TokenMarker(token, TokenId.ERROR);
                             marker.setError("Symbol is undefined");
                             tokens.add(marker);

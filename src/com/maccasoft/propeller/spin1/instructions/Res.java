@@ -16,40 +16,37 @@ import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
 import com.maccasoft.propeller.spin1.Spin1PAsmLine;
 
-public class Fit extends Spin1PAsmInstructionFactory {
+public class Res extends Spin1PAsmInstructionFactory {
 
     @Override
     public Spin1InstructionObject createObject(Spin1PAsmLine line) {
         if (line.getArgumentCount() == 0) {
-            return new Fit_(line.getScope());
+            return new Res_(line.getScope());
         }
         if (line.getArgumentCount() == 1) {
-            return new Fit_(line.getScope(), line.getArgument(0));
+            return new Res_(line.getScope(), line.getArgument(0));
         }
         line.addAnnotation("error: expected 0 or 1 arguments, found " + line.getArgumentCount());
         return null;
     }
 
-    public class Fit_ extends Spin1InstructionObject {
+    public static class Res_ extends Spin1InstructionObject {
 
-        Spin1PAsmExpression arg0;
+        Spin1PAsmExpression argument;
 
-        public Fit_(Spin1Context context) {
+        public Res_(Spin1Context context) {
             super(context);
         }
 
-        public Fit_(Spin1Context context, Spin1PAsmExpression arg0) {
+        public Res_(Spin1Context context, Spin1PAsmExpression argument) {
             super(context);
-            this.arg0 = arg0;
+            this.argument = argument;
         }
 
         @Override
         public int resolve(int address) {
-            int limit = arg0 != null ? arg0.getInteger() : 0x1F0;
-            if (address > limit) {
-                throw new RuntimeException("error: fit limit exceeded by " + (address - limit) + " long(s)");
-            }
-            return address;
+            context.setAddress(address);
+            return context.getAddress() + 1;
         }
 
         @Override
