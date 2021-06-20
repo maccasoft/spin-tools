@@ -349,9 +349,11 @@ public class Spin1TokenMarker extends EditorTokenMarker {
 
             for (Node child : node.getParameters()) {
                 locals.put(child.getText(), TokenId.METHOD_LOCAL);
+                locals.put("@" + child.getText(), TokenId.METHOD_LOCAL);
             }
             for (Node child : node.getReturnVariables()) {
                 locals.put(child.getText(), TokenId.METHOD_RETURN);
+                locals.put("@" + child.getText(), TokenId.METHOD_RETURN);
             }
 
             for (LocalVariableNode child : node.getLocalVariables()) {
@@ -359,6 +361,7 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                     tokens.add(new TokenMarker(child.type, TokenId.TYPE));
                 }
                 locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
+                locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
                 if (symbols.containsKey(child.identifier.getText())) {
                     TokenMarker marker = new TokenMarker(child.identifier, TokenId.ERROR);
                     marker.setError("Symbol already defined");
