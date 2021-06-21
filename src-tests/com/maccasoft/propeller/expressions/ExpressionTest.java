@@ -63,4 +63,20 @@ class ExpressionTest {
         Assertions.assertTrue(exp.isConstant());
     }
 
+    @Test
+    void testVariableIsConstant() {
+        SimpleContext context = new SimpleContext();
+        context.symbols.put("a", new NumberLiteral(1));
+
+        Expression exp = new Variable("a", context);
+        Assertions.assertFalse(exp.isConstant());
+    }
+
+    @Test
+    void testVariableBinaryExpressionIsConstant() {
+        SimpleContext context = new SimpleContext();
+        Expression exp = new Add(new NumberLiteral(1), new Variable("a", context));
+        Assertions.assertFalse(exp.isConstant());
+    }
+
 }

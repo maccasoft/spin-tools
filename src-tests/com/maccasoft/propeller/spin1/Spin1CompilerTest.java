@@ -37,4 +37,259 @@ class Spin1CompilerTest {
         Assertions.assertEquals("XTAL1 + PLL16X", subject.scope.getSymbol("_CLKMODE").toString());
     }
 
+    @Test
+    void testEmpty() {
+        Spin1TokenStream stream = new Spin1TokenStream("");
+        Spin1Parser parser = new Spin1Parser(stream);
+        Node root = parser.parse();
+
+        Spin1Compiler subject = new Spin1Compiler();
+        subject.compile(root);
+
+        Assertions.assertEquals(0x0010, subject.pbase);
+        Assertions.assertEquals(0x0014, subject.vbase);
+        Assertions.assertEquals(0x001C, subject.dbase);
+
+        Assertions.assertEquals(0x0014, subject.pcurr);
+        Assertions.assertEquals(0x0020, subject.dcurr);
+    }
+
+    @Test
+    void testOneEmptyMethod() {
+        Spin1TokenStream stream = new Spin1TokenStream("");
+        Spin1Parser parser = new Spin1Parser(stream);
+        Node root = parser.parse();
+
+        Spin1Compiler subject = new Spin1Compiler();
+        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
+
+            @Override
+            public byte[] getBytes() {
+                return new byte[] {
+                    (byte) 0x32, //              RETURN_PLAIN
+                };
+            }
+
+        });
+        subject.compile(root);
+
+        Assertions.assertEquals(0x0010, subject.pbase);
+        Assertions.assertEquals(0x001C, subject.vbase);
+        Assertions.assertEquals(0x0024, subject.dbase);
+
+        Assertions.assertEquals(0x0018, subject.pcurr);
+        Assertions.assertEquals(0x0028, subject.dcurr);
+    }
+
+    @Test
+    void testTwoEmptyMethods() {
+        Spin1TokenStream stream = new Spin1TokenStream("");
+        Spin1Parser parser = new Spin1Parser(stream);
+        Node root = parser.parse();
+
+        Spin1Compiler subject = new Spin1Compiler();
+        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
+
+            @Override
+            public byte[] getBytes() {
+                return new byte[] {
+                    (byte) 0x32, //              RETURN_PLAIN
+                };
+            }
+
+        });
+        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
+
+            @Override
+            public byte[] getBytes() {
+                return new byte[] {
+                    (byte) 0x32, //              RETURN_PLAIN
+                };
+            }
+
+        });
+        subject.compile(root);
+
+        Assertions.assertEquals(0x0010, subject.pbase);
+        Assertions.assertEquals(0x0020, subject.vbase);
+        Assertions.assertEquals(0x0028, subject.dbase);
+
+        Assertions.assertEquals(0x001C, subject.pcurr);
+        Assertions.assertEquals(0x002C, subject.dcurr);
+    }
+
+    @Test
+    void testTopMethodWithLocalVariables() {
+        Spin1TokenStream stream = new Spin1TokenStream("");
+        Spin1Parser parser = new Spin1Parser(stream);
+        Node root = parser.parse();
+
+        Spin1Compiler subject = new Spin1Compiler();
+        subject.methods.add(new Spin1Method(subject.scope) {
+
+            @Override
+            public int getLocalSize() {
+                return 4;
+            }
+
+            @Override
+            public byte[] getBytes() {
+                return new byte[] {
+                    (byte) 0x32, //              RETURN_PLAIN
+                };
+            }
+
+        });
+        subject.methods.add(new Spin1Method(subject.scope) {
+
+            @Override
+            public byte[] getBytes() {
+                return new byte[] {
+                    (byte) 0x32, //              RETURN_PLAIN
+                };
+            }
+
+        });
+        subject.compile(root);
+
+        Assertions.assertEquals(0x0010, subject.pbase);
+        Assertions.assertEquals(0x0020, subject.vbase);
+        Assertions.assertEquals(0x0028, subject.dbase);
+
+        Assertions.assertEquals(0x001C, subject.pcurr);
+        Assertions.assertEquals(0x0030, subject.dcurr);
+    }
+
+    @Test
+    void testSecondMethodWithLocalVariables() {
+        Spin1TokenStream stream = new Spin1TokenStream("");
+        Spin1Parser parser = new Spin1Parser(stream);
+        Node root = parser.parse();
+
+        Spin1Compiler subject = new Spin1Compiler();
+        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
+
+            @Override
+            public byte[] getBytes() {
+                return new byte[] {
+                    (byte) 0x32, //              RETURN_PLAIN
+                };
+            }
+
+        });
+        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
+
+            @Override
+            public int getLocalSize() {
+                return 4;
+            }
+
+            @Override
+            public byte[] getBytes() {
+                return new byte[] {
+                    (byte) 0x32, //              RETURN_PLAIN
+                };
+            }
+
+        });
+        subject.compile(root);
+
+        Assertions.assertEquals(0x0010, subject.pbase);
+        Assertions.assertEquals(0x0020, subject.vbase);
+        Assertions.assertEquals(0x0028, subject.dbase);
+
+        Assertions.assertEquals(0x001C, subject.pcurr);
+        Assertions.assertEquals(0x002C, subject.dcurr);
+    }
+
+    @Test
+    void testMethodsWithLocalVariables() {
+        Spin1TokenStream stream = new Spin1TokenStream("");
+        Spin1Parser parser = new Spin1Parser(stream);
+        Node root = parser.parse();
+
+        Spin1Compiler subject = new Spin1Compiler();
+        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
+
+            @Override
+            public int getLocalSize() {
+                return 4;
+            }
+
+            @Override
+            public byte[] getBytes() {
+                return new byte[] {
+                    (byte) 0x32, //              RETURN_PLAIN
+                };
+            }
+
+        });
+        subject.methods.add(new Spin1Method(subject.scope) {
+
+            @Override
+            public int getLocalSize() {
+                return 8;
+            }
+
+            @Override
+            public byte[] getBytes() {
+                return new byte[] {
+                    (byte) 0x32, //              RETURN_PLAIN
+                };
+            }
+
+        });
+        subject.compile(root);
+
+        Assertions.assertEquals(0x0010, subject.pbase);
+        Assertions.assertEquals(0x0020, subject.vbase);
+        Assertions.assertEquals(0x0028, subject.dbase);
+
+        Assertions.assertEquals(0x001C, subject.pcurr);
+        Assertions.assertEquals(0x0030, subject.dcurr);
+    }
+
+    @Test
+    void testResolveMethodAddress() {
+        Spin1TokenStream stream = new Spin1TokenStream("");
+        Spin1Parser parser = new Spin1Parser(stream);
+        Node root = parser.parse();
+
+        Spin1Compiler subject = new Spin1Compiler();
+        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
+
+            @Override
+            public int getLocalSize() {
+                return 4;
+            }
+
+            @Override
+            public byte[] getBytes() {
+                return new byte[] {
+                    (byte) 0x32, //              RETURN_PLAIN
+                };
+            }
+
+        });
+        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
+
+            @Override
+            public int getLocalSize() {
+                return 8;
+            }
+
+            @Override
+            public byte[] getBytes() {
+                return new byte[] {
+                    (byte) 0x32, //              RETURN_PLAIN
+                };
+            }
+
+        });
+        subject.compile(root);
+
+        Assertions.assertEquals(0x001C, subject.methods.get(0).getScope().getAddress());
+        Assertions.assertEquals(0x001D, subject.methods.get(1).getScope().getAddress());
+    }
+
 }

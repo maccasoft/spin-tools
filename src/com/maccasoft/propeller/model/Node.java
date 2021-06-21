@@ -16,9 +16,9 @@ import java.util.List;
 
 public class Node {
 
-    final Node parent;
-    final List<Token> tokens = new ArrayList<Token>();
-    final List<Node> childs = new ArrayList<Node>();
+    protected final Node parent;
+    protected final List<Token> tokens = new ArrayList<Token>();
+    protected final List<Node> childs = new ArrayList<Node>();
 
     public Node() {
         this.parent = null;

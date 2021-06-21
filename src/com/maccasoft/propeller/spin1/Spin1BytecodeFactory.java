@@ -16,6 +16,8 @@ import java.util.Map;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.spin1.bytecode.Cogid;
+import com.maccasoft.propeller.spin1.bytecode.Coginit;
 import com.maccasoft.propeller.spin1.bytecode.VarAssignAdd;
 import com.maccasoft.propeller.spin1.bytecode.VarWrite;
 
@@ -27,6 +29,9 @@ public abstract class Spin1BytecodeFactory {
     static {
         symbols.put(":=", new VarWrite());
         symbols.put("+=", new VarAssignAdd());
+
+        symbols.put("COGID", new Cogid());
+        symbols.put("COGINIT", new Coginit());
     }
 
     public abstract Spin1BytecodeObject createObject(Spin1Context context, Expression expression);

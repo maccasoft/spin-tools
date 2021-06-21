@@ -19,14 +19,15 @@ public class VarWrite extends Spin1BytecodeFactory {
 
     @Override
     public Spin1BytecodeObject createObject(Spin1Context context, Expression expression) {
-        return new VarWrite_(expression);
+        return new VarWrite_(context, expression);
     }
 
     class VarWrite_ extends Spin1BytecodeObject {
 
         Expression expression;
 
-        public VarWrite_(Expression expression) {
+        public VarWrite_(Spin1Context context, Expression expression) {
+            super(context);
             this.expression = expression;
         }
 

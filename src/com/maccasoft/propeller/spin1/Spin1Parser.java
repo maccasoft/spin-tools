@@ -592,13 +592,13 @@ public class Spin1Parser {
             if (parseSection(token)) {
                 return;
             }
-            if ("ORG".equalsIgnoreCase(token.getText())) {
-                parent = node;
-            }
+            //if ("ORG".equalsIgnoreCase(token.getText())) {
+            //    parent = node;
+            //}
             parseDatLine(parent, token);
-            if ("ORG".equalsIgnoreCase(token.getText())) {
-                parent = node.getChild(node.getChilds().size() - 1);
-            }
+            //if ("ORG".equalsIgnoreCase(token.getText())) {
+            //    parent = node.getChild(node.getChilds().size() - 1);
+            //}
         }
     }
 

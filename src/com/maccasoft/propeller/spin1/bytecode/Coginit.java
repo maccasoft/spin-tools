@@ -15,20 +15,17 @@ import com.maccasoft.propeller.spin1.Spin1BytecodeFactory;
 import com.maccasoft.propeller.spin1.Spin1BytecodeObject;
 import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class VarAssignAdd extends Spin1BytecodeFactory {
+public class Coginit extends Spin1BytecodeFactory {
 
     @Override
     public Spin1BytecodeObject createObject(Spin1Context context, Expression expression) {
-        return new VarAssignAdd_(context, expression);
+        return new Coginit_(context);
     }
 
-    class VarAssignAdd_ extends Spin1BytecodeObject {
+    class Coginit_ extends Spin1BytecodeObject {
 
-        Expression expression;
-
-        public VarAssignAdd_(Spin1Context context, Expression expression) {
+        public Coginit_(Spin1Context context) {
             super(context);
-            this.expression = expression;
         }
 
         @Override
@@ -38,10 +35,16 @@ public class VarAssignAdd extends Spin1BytecodeFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = xxx.setValue(0b01_1_000_10, expression.getNumber().intValue() / 4);
             return new byte[] {
-                (byte) value, (byte) 0b110_01100
+                (byte) 0x2C,
             };
         }
+
+        @Override
+        public String toString() {
+            return "COGINIT";
+        }
+
     }
+
 }

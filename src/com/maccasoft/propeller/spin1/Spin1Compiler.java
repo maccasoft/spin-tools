@@ -40,8 +40,16 @@ public class Spin1Compiler {
 
     Spin1Context scope = new Spin1GlobalContext();
     List<Spin1PAsmLine> source = new ArrayList<Spin1PAsmLine>();
+    List<Spin1Method> methods = new ArrayList<Spin1Method>();
 
     ExpressionBuilder expressionBuilder = new ExpressionBuilder();
+
+    int pbase;
+    int vbase;
+    int dbase;
+
+    int pcurr;
+    int dcurr;
 
     static class Spin1Line {
         Spin1Context scope;
@@ -71,25 +79,42 @@ public class Spin1Compiler {
     }
 
     public Spin1Compiler() {
+        this.pbase = 0x0010;
+        this.vbase = 0x0010 + 4;
+        this.dbase = this.vbase + 8;
 
+        this.pcurr = this.pbase + 4;
+        this.dcurr = this.dbase + 4;
     }
 
     void compile(Node root) {
-        int address = 0, hubAddress = 0;
+        int address = 0;
 
         for (Node node : root.getChilds()) {
             if (node instanceof ConstantsNode) {
                 compileConBlock(node);
             }
         }
+
+        determineClock();
+
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
                 compileDatBlock(node);
             }
         }
 
+        if (methods.size() == 0) {
+            methods.add(new Spin1Method(scope));
+        }
+
+        vbase += methods.size() * 4;
+        dbase += methods.size() * 4;
+        pcurr += methods.size() * 4;
+        dcurr += methods.size() * 4;
+
         for (Spin1PAsmLine line : source) {
-            line.getScope().setHubAddress(hubAddress);
+            line.getScope().setHubAddress(pcurr);
             try {
                 address = line.resolve(address);
                 if (address > 0x1F0) {
@@ -97,14 +122,34 @@ public class Spin1Compiler {
                 }
                 Spin1InstructionObject obj = line.getInstructionObject();
                 if (obj != null) {
-                    hubAddress += obj.getSize();
+                    vbase += obj.getSize();
+                    dbase += obj.getSize();
+                    pcurr += obj.getSize();
+                    dcurr += obj.getSize();
                 }
             } catch (Exception e) {
                 line.getAnnotations().add(e.getMessage());
             }
         }
 
-        determineClock();
+        if (methods.size() != 0) {
+            dcurr += methods.get(0).getLocalSize();
+        }
+
+        address = pcurr;
+        for (Spin1Method line : methods) {
+            address = line.resolve(address);
+            dcurr += line.getSize();
+            vbase += line.getSize();
+            dbase += line.getSize();
+        }
+
+        while ((address % 4) != 0) {
+            vbase++;
+            dbase++;
+            dcurr++;
+            address++;
+        }
     }
 
     void determineClock() {
@@ -185,45 +230,6 @@ public class Spin1Compiler {
             if (code != null && code.length != 0) {
                 os.write(code);
                 address += code.length;
-            }
-        }
-    }
-
-    public void generateListing(OutputStream os) throws Exception {
-        int address = 0;
-
-        for (Spin1PAsmLine line : source) {
-            while (address < line.getScope().getHubAddress()) {
-                os.write(0x00);
-                address++;
-            }
-            Spin1InstructionObject obj = line.getInstructionObject();
-            byte[] code = obj.getBytes();
-
-            os.write(String.format("%04X %03X", address, line.getScope().getInteger("$")).getBytes());
-
-            int i = 0;
-            if (code != null && code.length != 0) {
-                while (i < code.length && i < 4) {
-                    os.write(String.format(" %02X", code[i++]).getBytes());
-                }
-            }
-            while (i < 4) {
-                os.write("   ".getBytes());
-                i++;
-            }
-            os.write((" | " + line.toString()).getBytes());
-            //os.write("\n".getBytes());
-
-            if (code != null) {
-                while (i < code.length) {
-                    if ((i % 4) == 0) {
-                        os.write(String.format("\n%04X    ", address + i).getBytes());
-                    }
-                    os.write(String.format(" %02X", code[i++]).getBytes());
-                }
-                address += code.length;
-                os.write("\n".getBytes());
             }
         }
     }
@@ -579,91 +585,163 @@ public class Spin1Compiler {
         //source.add(new Spin1Line(null, factory, new NumberLiteral(node.getToken(0).getText())));
     }
 
+    public void generateListing(OutputStream os) throws Exception {
+        int address = 0;
+
+        int clkfreq = scope.getInteger("_CLKFREQ");
+        os.write(String.format("%04X    ", address).getBytes());
+        os.write(String.format(" %02X %02X %02X %02X", clkfreq & 0xFF, (clkfreq >> 8) & 0xFF, (clkfreq >> 16) & 0xFF, (clkfreq >> 24) & 0xFF).getBytes());
+        os.write((" | " + "_CLKFREQ\n").getBytes());
+        address += 4;
+
+        int clkmode = scope.getInteger("_CLKMODE");
+        os.write(String.format("%04X    ", address).getBytes());
+        os.write(String.format(" %02X         ", clkmode & 0xFF).getBytes());
+        os.write((" | " + "_CLKMODE\n").getBytes());
+        address += 1;
+
+        os.write(String.format("%04X    ", address).getBytes());
+        os.write(String.format(" %02X         ", 0x00).getBytes());
+        os.write((" | " + "Placeholder for checksum\n").getBytes());
+        address += 1;
+
+        os.write(String.format("%04X    ", address).getBytes());
+        os.write(String.format(" %02X %02X      ", pbase & 0xFF, (pbase >> 8) & 0xFF).getBytes());
+        os.write((" | " + "PBASE\n").getBytes());
+        address += 2;
+
+        os.write(String.format("%04X    ", address).getBytes());
+        os.write(String.format(" %02X %02X      ", vbase & 0xFF, (vbase >> 8) & 0xFF).getBytes());
+        os.write((" | " + "VBASE\n").getBytes());
+        address += 2;
+
+        os.write(String.format("%04X    ", address).getBytes());
+        os.write(String.format(" %02X %02X      ", dbase & 0xFF, (dbase >> 8) & 0xFF).getBytes());
+        os.write((" | " + "DBASE\n").getBytes());
+        address += 2;
+
+        os.write(String.format("%04X    ", address).getBytes());
+        os.write(String.format(" %02X %02X      ", pcurr & 0xFF, (pcurr >> 8) & 0xFF).getBytes());
+        os.write((" | " + "PCURR\n").getBytes());
+        address += 2;
+
+        os.write(String.format("%04X    ", address).getBytes());
+        os.write(String.format(" %02X %02X      ", dcurr & 0xFF, (dcurr >> 8) & 0xFF).getBytes());
+        os.write((" | " + "DCURR\n").getBytes());
+        address += 2;
+
+        os.write("\n".getBytes());
+
+        int size = vbase - pbase;
+        os.write(String.format("%04X    ", address).getBytes());
+        os.write(String.format(" %02X %02X      ", size & 0xFF, (size >> 8) & 0xFF).getBytes());
+        os.write((" | " + "Object size\n").getBytes());
+        address += 2;
+
+        int count = methods.size() + 1;
+        os.write(String.format("%04X    ", address).getBytes());
+        os.write(String.format(" %02X         ", count & 0xFF).getBytes());
+        os.write((" | " + "Method count + 1\n").getBytes());
+        address += 1;
+
+        int objects = 0;
+        os.write(String.format("%04X    ", address).getBytes());
+        os.write(String.format(" %02X         ", objects & 0xFF).getBytes());
+        os.write((" | " + "OBJ count\n").getBytes());
+        address += 1;
+
+        for (Spin1Method line : methods) {
+            int faddr = line.getScope().getAddress();
+            os.write(String.format("%04X    ", address).getBytes());
+            os.write(String.format(" %02X %02X %02X %02X", faddr & 0xFF, (faddr >> 8) & 0xFF, line.getLocalSize() & 0xFF, (line.getLocalSize() >> 8) & 0xFF).getBytes());
+            os.write((" | " + "Function\n").getBytes());
+            address += 4;
+        }
+
+        os.write("\n".getBytes());
+
+        for (Spin1PAsmLine line : source) {
+            while (address < line.getScope().getHubAddress()) {
+                os.write(0x00);
+                address++;
+            }
+            Spin1InstructionObject obj = line.getInstructionObject();
+            byte[] code = obj.getBytes();
+
+            os.write(String.format("%04X %03X", address, line.getScope().getInteger("$")).getBytes());
+
+            int i = 0;
+            if (code != null && code.length != 0) {
+                while (i < code.length && i < 4) {
+                    os.write(String.format(" %02X", code[i++]).getBytes());
+                }
+            }
+            while (i < 4) {
+                os.write("   ".getBytes());
+                i++;
+            }
+            os.write((" | " + line.toString()).getBytes());
+
+            if (code != null) {
+                while (i < code.length) {
+                    if ((i % 4) == 0) {
+                        os.write(String.format("\n%04X    ", address + i).getBytes());
+                    }
+                    os.write(String.format(" %02X", code[i++]).getBytes());
+                }
+                address += code.length;
+                os.write("\n".getBytes());
+            }
+        }
+
+        os.write("\n".getBytes());
+
+        for (Spin1Method line : methods) {
+            byte[] code = line.getBytes();
+
+            os.write(String.format("%04X    ", address).getBytes());
+
+            int i = 0;
+            if (code != null && code.length != 0) {
+                while (i < code.length && i < 4) {
+                    os.write(String.format(" %02X", code[i++]).getBytes());
+                }
+            }
+            while (i < 4) {
+                os.write("   ".getBytes());
+                i++;
+            }
+            os.write((" | ").getBytes());
+
+            if (code != null) {
+                while (i < code.length) {
+                    if ((i % 4) == 0) {
+                        os.write(String.format("\n%04X    ", address + i).getBytes());
+                    }
+                    os.write(String.format(" %02X", code[i++]).getBytes());
+                }
+                address += code.length;
+                while ((i % 4) != 0) {
+                    os.write("   ".getBytes());
+                    i++;
+                }
+                os.write(" |\n".getBytes());
+            }
+        }
+    }
+
     public static void main(String[] args) {
         String text = ""
-            + "DAT\n"
+            + "PUB main\n"
             + "\n"
-            + "                ABS     1, 2\n"
-            + "                ABSNEG  1, 2\n"
-            + "                ADD     1, 2\n"
-            + "                ADDABS  1, 2\n"
-            + "                ADDS    1, 2\n"
-            + "                ADDSX   1, 2\n"
-            + "                ADDX    1, 2\n"
-            + "                AND     1, 2\n"
-            + "                ANDN    1, 2\n"
-            + "LABEL           CALL    #LABEL\n"
-            + "LABEL_ret       CLKSET  1\n"
-            + "                CMP     1, 2\n"
-            + "                CMPS    1, 2\n"
-            + "                CMPSUB  1, 2\n"
-            + "                CMPSX   1, 2\n"
-            + "                CMPX    1, 2\n"
-            + "                COGID   1\n"
-            + "                COGINIT 1\n"
-            + "                COGSTOP 1\n"
-            + "                DJNZ    1, 2\n"
-            + "                HUBOP   1, 2\n"
-            + "                JMP     1\n"
-            + "                JMPRET  1, 2\n"
-            + "                LOCKCLR 1\n"
-            + "                LOCKNEW 1\n"
-            + "                LOCKRET 1\n"
-            + "                LOCKSET 1\n"
-            + "                MAX     1, 2\n"
-            + "                MAXS    1, 2\n"
-            + "                MIN     1, 2\n"
-            + "                MINS    1, 2\n"
-            + "                MOV     1, 2\n"
-            + "                MOVD    1, 2\n"
-            + "                MOVI    1, 2\n"
-            + "                MOVS    1, 2\n"
-            + "                MUXC    1, 2\n"
-            + "                MUXNC   1, 2\n"
-            + "                MUXNZ   1, 2\n"
-            + "                MUXZ    1, 2\n"
-            + "                NEG     1, 2\n"
-            + "                NEGC    1, 2\n"
-            + "                NEGNC   1, 2\n"
-            + "                NEGNZ   1, 2\n"
-            + "                NEGZ    1, 2\n"
-            + "                NOP\n"
-            + "                OR      1, 2\n"
-            + "                RCL     1, 2\n"
-            + "                RCR     1, 2\n"
-            + "                RDBYTE  1, 2\n"
-            + "                RDLONG  1, 2\n"
-            + "                RDWORD  1, 2\n"
-            + "                RET\n"
-            + "                REV     1, 2\n"
-            + "                ROL     1, 2\n"
-            + "                ROR     1, 2\n"
-            + "                SAR     1, 2\n"
-            + "                SHL     1, 2\n"
-            + "                SHR     1, 2\n"
-            + "                SUB     1, 2\n"
-            + "                SUBABS  1, 2\n"
-            + "                SUBS    1, 2\n"
-            + "                SUBSX   1, 2\n"
-            + "                SUBX    1, 2\n"
-            + "                SUMC    1, 2\n"
-            + "                SUMNC   1, 2\n"
-            + "                SUMNZ   1, 2\n"
-            + "                SUMZ    1, 2\n"
-            + "                TEST    1, 2\n"
-            + "                TESTN   1, 2\n"
-            + "                TJNZ    1, 2\n"
-            + "                TJZ     1, 2\n"
-            + "                WAITCNT 1, 2\n"
-            + "                WAITPEQ 1, 2\n"
-            + "                WAITPNE 1, 2\n"
-            + "                WAITVID 1, 2\n"
-            + "                WRBYTE  1, 2\n"
-            + "                WRLONG  1, 2\n"
-            + "                WRWORD  1, 2\n"
-            + "                XOR     1, 2\n"
-            + "                ZAB     1, 2\n"
-            + "";
+            + "    coginit(cogid, @start, 0)\n"
+            + "\n"
+            + "DAT             org     $000\n"
+            + "\n"
+            + "start           cogid   a\n"
+            + "                cogstop a\n"
+            + "\n"
+            + "a               res     1";
 
         try {
             Spin1TokenStream stream = new Spin1TokenStream(text);
@@ -673,8 +751,9 @@ public class Spin1Compiler {
 
             Spin1Compiler compiler = new Spin1Compiler();
             compiler.compile(root);
+
             //compiler.generateObjectCode(new ByteArrayOutputStream());
-            //compiler.generateListing(System.out);
+            compiler.generateListing(System.out);
 
         } catch (Exception e) {
             e.printStackTrace();

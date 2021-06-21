@@ -12,6 +12,16 @@ package com.maccasoft.propeller.spin1;
 
 public abstract class Spin1BytecodeObject {
 
+    protected final Spin1Context context;
+
+    public Spin1BytecodeObject(Spin1Context context) {
+        this.context = context;
+    }
+
+    public int resolve(int address) {
+        return address + getSize();
+    }
+
     public int getSize() {
         return 1;
     }

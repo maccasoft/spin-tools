@@ -11,37 +11,17 @@
 package com.maccasoft.propeller.spin1.bytecode;
 
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.spin1.Spin1BytecodeFactory;
 import com.maccasoft.propeller.spin1.Spin1BytecodeObject;
 import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.spin1.bytecode.RegRead.RegRead_;
 
-public class VarAssignAdd extends Spin1BytecodeFactory {
+public class Cogid extends Spin1BytecodeFactory {
 
     @Override
     public Spin1BytecodeObject createObject(Spin1Context context, Expression expression) {
-        return new VarAssignAdd_(context, expression);
+        return new RegRead_(context, new NumberLiteral(0x1E9));
     }
 
-    class VarAssignAdd_ extends Spin1BytecodeObject {
-
-        Expression expression;
-
-        public VarAssignAdd_(Spin1Context context, Expression expression) {
-            super(context);
-            this.expression = expression;
-        }
-
-        @Override
-        public int getSize() {
-            return 2;
-        }
-
-        @Override
-        public byte[] getBytes() {
-            int value = xxx.setValue(0b01_1_000_10, expression.getNumber().intValue() / 4);
-            return new byte[] {
-                (byte) value, (byte) 0b110_01100
-            };
-        }
-    }
 }
