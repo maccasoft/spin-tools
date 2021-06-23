@@ -11,29 +11,25 @@
 package com.maccasoft.propeller.spin1.bytecode;
 
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin1.Spin1BytecodeFactory;
-import com.maccasoft.propeller.spin1.Spin1BytecodeObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionFactory;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeLine;
 import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class VarAssignAdd extends Spin1BytecodeFactory {
+public class AddAssign extends Spin1BytecodeInstructionFactory {
 
     @Override
-    public Spin1BytecodeObject createObject(Spin1Context context, Expression expression) {
-        return new VarAssignAdd_(context, expression);
+    public Spin1BytecodeInstructionObject createObject(Spin1BytecodeLine line) {
+        return new AddAssign_(line.getScope(), new com.maccasoft.propeller.expressions.Identifier(line.getMnemonic(), line.getScope()));
     }
 
-    class VarAssignAdd_ extends Spin1BytecodeObject {
+    class AddAssign_ extends Spin1BytecodeInstructionObject {
 
         Expression expression;
 
-        public VarAssignAdd_(Spin1Context context, Expression expression) {
+        public AddAssign_(Spin1Context context, Expression expression) {
             super(context);
             this.expression = expression;
-        }
-
-        @Override
-        public int getSize() {
-            return 2;
         }
 
         @Override
@@ -42,6 +38,11 @@ public class VarAssignAdd extends Spin1BytecodeFactory {
             return new byte[] {
                 (byte) value, (byte) 0b110_01100
             };
+        }
+
+        @Override
+        public String toString() {
+            return "ADD_ASSIGN";
         }
     }
 }

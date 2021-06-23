@@ -11,29 +11,25 @@
 package com.maccasoft.propeller.spin1.bytecode;
 
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin1.Spin1BytecodeFactory;
-import com.maccasoft.propeller.spin1.Spin1BytecodeObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionFactory;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeLine;
 import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class MemAddress extends Spin1BytecodeFactory {
+public class MemAddress extends Spin1BytecodeInstructionFactory {
 
     @Override
-    public Spin1BytecodeObject createObject(Spin1Context context, Expression expression) {
-        return new MemAddress_(context, expression);
+    public Spin1BytecodeInstructionObject createObject(Spin1BytecodeLine line) {
+        return new MemAddress_(line.getScope(), new com.maccasoft.propeller.expressions.Identifier(line.getMnemonic(), line.getScope()));
     }
 
-    class MemAddress_ extends Spin1BytecodeObject {
+    class MemAddress_ extends Spin1BytecodeInstructionObject {
 
         Expression expression;
 
         public MemAddress_(Spin1Context context, Expression expression) {
             super(context);
             this.expression = expression;
-        }
-
-        @Override
-        public int getSize() {
-            return 2;
         }
 
         @Override
@@ -48,13 +44,13 @@ public class MemAddress extends Spin1BytecodeFactory {
             //           | || | || ||
             if (addr < 127) {
                 return new byte[] {
-                    (byte) 0b1_10_0_01_11,
+                    (byte) 0b1_10_0_01_00,
                     (byte) addr,
                 };
             }
             else {
                 return new byte[] {
-                    (byte) 0b1_10_0_01_11,
+                    (byte) 0b1_10_0_01_00,
                     (byte) (0x80 | (addr >> 8)),
                     (byte) addr,
                 };

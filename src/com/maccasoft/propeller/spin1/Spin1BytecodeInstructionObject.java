@@ -10,20 +10,29 @@
 
 package com.maccasoft.propeller.spin1;
 
-public abstract class Spin1BytecodeObject {
+import java.io.IOException;
+import java.io.OutputStream;
+
+public abstract class Spin1BytecodeInstructionObject {
 
     protected final Spin1Context context;
 
-    public Spin1BytecodeObject(Spin1Context context) {
+    public Spin1BytecodeInstructionObject(Spin1Context context) {
         this.context = context;
     }
 
     public int resolve(int address) {
+        context.setAddress(address);
         return address + getSize();
     }
 
     public int getSize() {
-        return 1;
+        return getBytes().length;
+    }
+
+    public void generateObjectCode(OutputStream output) throws IOException {
+        byte[] object = getBytes();
+        output.write(object, 0, object.length);
     }
 
     public abstract byte[] getBytes();

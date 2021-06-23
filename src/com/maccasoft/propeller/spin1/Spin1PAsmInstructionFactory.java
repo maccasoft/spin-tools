@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin1.instructions.Abs;
 import com.maccasoft.propeller.spin1.instructions.Absneg;
 import com.maccasoft.propeller.spin1.instructions.Add;
@@ -105,7 +104,7 @@ import com.maccasoft.propeller.spin1.instructions.Wrlong;
 import com.maccasoft.propeller.spin1.instructions.Wrword;
 import com.maccasoft.propeller.spin1.instructions.Xor;
 
-public abstract class Spin1PAsmInstructionFactory extends Expression {
+public abstract class Spin1PAsmInstructionFactory {
 
     static Map<String, Spin1PAsmInstructionFactory> symbols = new HashMap<String, Spin1PAsmInstructionFactory>();
     static {
@@ -207,6 +206,7 @@ public abstract class Spin1PAsmInstructionFactory extends Expression {
     }
 
     public Spin1PAsmInstructionFactory() {
+
     }
 
     public List<Spin1PAsmLine> expand(Spin1PAsmLine line) {

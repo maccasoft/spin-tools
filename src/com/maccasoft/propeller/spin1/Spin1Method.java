@@ -10,38 +10,45 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Spin1Method {
 
     Spin1Context scope;
+    List<Spin1BytecodeLine> source = new ArrayList<Spin1BytecodeLine>();
+
+    int localSize;
 
     public Spin1Method(Spin1Context scope) {
         this.scope = scope;
+        this.localSize = 4;
     }
 
     public Spin1Context getScope() {
         return scope;
     }
 
+    public void expand() {
+        List<Spin1BytecodeLine> lines = new ArrayList<Spin1BytecodeLine>();
+        for (Spin1BytecodeLine line : source) {
+            lines.addAll(line.expand());
+        }
+        lines.add(new Spin1BytecodeLine(new Spin1Context(scope), null, "return", null));
+        source = lines;
+    }
+
     public int resolve(int address) {
         scope.setAddress(address);
-        return address + getSize();
+        return address;
+    }
+
+    public void setLocalSize(int localSize) {
+        this.localSize = localSize;
     }
 
     public int getLocalSize() {
-        return 0;
+        return localSize;
     }
 
-    public int getSize() {
-        return getBytes().length;
-    }
-
-    public byte[] getBytes() {
-        return new byte[] {
-            (byte) 0x3F, (byte) 0x89, // COGID -> REG_READ 1E9 (89 = (1E9 - 1E0) | %1_00_00000
-            (byte) 0xC7, (byte) 0x08, // MEM_ADDRESS LONG PBASE+$0008
-            (byte) 0x35, //              CONSTANT 0
-            (byte) 0x2C, //              COGINIT
-            (byte) 0x32, //              RETURN_PLAIN
-        };
-    }
 }

@@ -10,6 +10,8 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.util.Collections;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -51,7 +53,7 @@ class Spin1CompilerTest {
         Assertions.assertEquals(0x001C, subject.dbase);
 
         Assertions.assertEquals(0x0014, subject.pcurr);
-        Assertions.assertEquals(0x0020, subject.dcurr);
+        Assertions.assertEquals(0x001C, subject.dcurr);
     }
 
     @Test
@@ -61,16 +63,11 @@ class Spin1CompilerTest {
         Node root = parser.parse();
 
         Spin1Compiler subject = new Spin1Compiler();
-        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
 
-            @Override
-            public byte[] getBytes() {
-                return new byte[] {
-                    (byte) 0x32, //              RETURN_PLAIN
-                };
-            }
+        Spin1Method method = new Spin1Method(new Spin1Context(subject.scope));
+        method.source.add(new Spin1BytecodeLine(new Spin1Context(subject.scope), null, "return", Collections.emptyList()));
+        subject.methods.add(method);
 
-        });
         subject.compile(root);
 
         Assertions.assertEquals(0x0010, subject.pbase);
@@ -88,26 +85,15 @@ class Spin1CompilerTest {
         Node root = parser.parse();
 
         Spin1Compiler subject = new Spin1Compiler();
-        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
 
-            @Override
-            public byte[] getBytes() {
-                return new byte[] {
-                    (byte) 0x32, //              RETURN_PLAIN
-                };
-            }
+        Spin1Method method1 = new Spin1Method(new Spin1Context(subject.scope));
+        method1.source.add(new Spin1BytecodeLine(new Spin1Context(subject.scope), null, "return", Collections.emptyList()));
+        subject.methods.add(method1);
 
-        });
-        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
+        Spin1Method method2 = new Spin1Method(new Spin1Context(subject.scope));
+        method2.source.add(new Spin1BytecodeLine(new Spin1Context(subject.scope), null, "return", Collections.emptyList()));
+        subject.methods.add(method2);
 
-            @Override
-            public byte[] getBytes() {
-                return new byte[] {
-                    (byte) 0x32, //              RETURN_PLAIN
-                };
-            }
-
-        });
         subject.compile(root);
 
         Assertions.assertEquals(0x0010, subject.pbase);
@@ -115,7 +101,7 @@ class Spin1CompilerTest {
         Assertions.assertEquals(0x0028, subject.dbase);
 
         Assertions.assertEquals(0x001C, subject.pcurr);
-        Assertions.assertEquals(0x002C, subject.dcurr);
+        Assertions.assertEquals(0x0030, subject.dcurr);
     }
 
     @Test
@@ -125,31 +111,16 @@ class Spin1CompilerTest {
         Node root = parser.parse();
 
         Spin1Compiler subject = new Spin1Compiler();
-        subject.methods.add(new Spin1Method(subject.scope) {
 
-            @Override
-            public int getLocalSize() {
-                return 4;
-            }
+        Spin1Method method1 = new Spin1Method(new Spin1Context(subject.scope));
+        method1.setLocalSize(method1.getLocalSize() + 4);
+        method1.source.add(new Spin1BytecodeLine(new Spin1Context(subject.scope), null, "return", Collections.emptyList()));
+        subject.methods.add(method1);
 
-            @Override
-            public byte[] getBytes() {
-                return new byte[] {
-                    (byte) 0x32, //              RETURN_PLAIN
-                };
-            }
+        Spin1Method method2 = new Spin1Method(new Spin1Context(subject.scope));
+        method2.source.add(new Spin1BytecodeLine(new Spin1Context(subject.scope), null, "return", Collections.emptyList()));
+        subject.methods.add(method2);
 
-        });
-        subject.methods.add(new Spin1Method(subject.scope) {
-
-            @Override
-            public byte[] getBytes() {
-                return new byte[] {
-                    (byte) 0x32, //              RETURN_PLAIN
-                };
-            }
-
-        });
         subject.compile(root);
 
         Assertions.assertEquals(0x0010, subject.pbase);
@@ -157,7 +128,7 @@ class Spin1CompilerTest {
         Assertions.assertEquals(0x0028, subject.dbase);
 
         Assertions.assertEquals(0x001C, subject.pcurr);
-        Assertions.assertEquals(0x0030, subject.dcurr);
+        Assertions.assertEquals(0x0034, subject.dcurr);
     }
 
     @Test
@@ -167,31 +138,16 @@ class Spin1CompilerTest {
         Node root = parser.parse();
 
         Spin1Compiler subject = new Spin1Compiler();
-        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
 
-            @Override
-            public byte[] getBytes() {
-                return new byte[] {
-                    (byte) 0x32, //              RETURN_PLAIN
-                };
-            }
+        Spin1Method method1 = new Spin1Method(new Spin1Context(subject.scope));
+        method1.source.add(new Spin1BytecodeLine(new Spin1Context(subject.scope), null, "return", Collections.emptyList()));
+        subject.methods.add(method1);
 
-        });
-        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
+        Spin1Method method2 = new Spin1Method(new Spin1Context(subject.scope));
+        method2.setLocalSize(method1.getLocalSize() + 4);
+        method2.source.add(new Spin1BytecodeLine(new Spin1Context(subject.scope), null, "return", Collections.emptyList()));
+        subject.methods.add(method2);
 
-            @Override
-            public int getLocalSize() {
-                return 4;
-            }
-
-            @Override
-            public byte[] getBytes() {
-                return new byte[] {
-                    (byte) 0x32, //              RETURN_PLAIN
-                };
-            }
-
-        });
         subject.compile(root);
 
         Assertions.assertEquals(0x0010, subject.pbase);
@@ -199,7 +155,7 @@ class Spin1CompilerTest {
         Assertions.assertEquals(0x0028, subject.dbase);
 
         Assertions.assertEquals(0x001C, subject.pcurr);
-        Assertions.assertEquals(0x002C, subject.dcurr);
+        Assertions.assertEquals(0x0034, subject.dcurr);
     }
 
     @Test
@@ -209,36 +165,17 @@ class Spin1CompilerTest {
         Node root = parser.parse();
 
         Spin1Compiler subject = new Spin1Compiler();
-        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
 
-            @Override
-            public int getLocalSize() {
-                return 4;
-            }
+        Spin1Method method1 = new Spin1Method(new Spin1Context(subject.scope));
+        method1.setLocalSize(method1.getLocalSize() + 4);
+        method1.source.add(new Spin1BytecodeLine(new Spin1Context(subject.scope), null, "return", Collections.emptyList()));
+        subject.methods.add(method1);
 
-            @Override
-            public byte[] getBytes() {
-                return new byte[] {
-                    (byte) 0x32, //              RETURN_PLAIN
-                };
-            }
+        Spin1Method method2 = new Spin1Method(new Spin1Context(subject.scope));
+        method2.setLocalSize(method1.getLocalSize() + 4);
+        method2.source.add(new Spin1BytecodeLine(new Spin1Context(subject.scope), null, "return", Collections.emptyList()));
+        subject.methods.add(method2);
 
-        });
-        subject.methods.add(new Spin1Method(subject.scope) {
-
-            @Override
-            public int getLocalSize() {
-                return 8;
-            }
-
-            @Override
-            public byte[] getBytes() {
-                return new byte[] {
-                    (byte) 0x32, //              RETURN_PLAIN
-                };
-            }
-
-        });
         subject.compile(root);
 
         Assertions.assertEquals(0x0010, subject.pbase);
@@ -246,7 +183,7 @@ class Spin1CompilerTest {
         Assertions.assertEquals(0x0028, subject.dbase);
 
         Assertions.assertEquals(0x001C, subject.pcurr);
-        Assertions.assertEquals(0x0030, subject.dcurr);
+        Assertions.assertEquals(0x003C, subject.dcurr);
     }
 
     @Test
@@ -256,40 +193,21 @@ class Spin1CompilerTest {
         Node root = parser.parse();
 
         Spin1Compiler subject = new Spin1Compiler();
-        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
 
-            @Override
-            public int getLocalSize() {
-                return 4;
-            }
+        Spin1Method method1 = new Spin1Method(new Spin1Context(subject.scope));
+        method1.setLocalSize(method1.getLocalSize() + 4);
+        method1.source.add(new Spin1BytecodeLine(new Spin1Context(subject.scope), null, "return", Collections.emptyList()));
+        subject.methods.add(method1);
 
-            @Override
-            public byte[] getBytes() {
-                return new byte[] {
-                    (byte) 0x32, //              RETURN_PLAIN
-                };
-            }
+        Spin1Method method2 = new Spin1Method(new Spin1Context(subject.scope));
+        method2.setLocalSize(method1.getLocalSize() + 8);
+        method2.source.add(new Spin1BytecodeLine(new Spin1Context(subject.scope), null, "return", Collections.emptyList()));
+        subject.methods.add(method2);
 
-        });
-        subject.methods.add(new Spin1Method(new Spin1Context(subject.scope)) {
-
-            @Override
-            public int getLocalSize() {
-                return 8;
-            }
-
-            @Override
-            public byte[] getBytes() {
-                return new byte[] {
-                    (byte) 0x32, //              RETURN_PLAIN
-                };
-            }
-
-        });
         subject.compile(root);
 
-        Assertions.assertEquals(0x001C, subject.methods.get(0).getScope().getAddress());
-        Assertions.assertEquals(0x001D, subject.methods.get(1).getScope().getAddress());
+        Assertions.assertEquals(0x001C, subject.methods.get(0).getScope().getHubAddress());
+        Assertions.assertEquals(0x001D, subject.methods.get(1).getScope().getHubAddress());
     }
 
 }

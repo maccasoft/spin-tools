@@ -10,7 +10,6 @@
 
 package com.maccasoft.propeller.spin1;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -18,11 +17,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.spin1.bytecode.Constant;
 
-public class Spin1ExpressionBuilder {
+public class Spin1BytecodeExpressionCompiler {
 
     static final int LEFT_TO_RIGHT = 0;
     static final int RIGHT_TO_LEFT = 1;
@@ -113,165 +110,6 @@ public class Spin1ExpressionBuilder {
         operatorPrecedence.put(",", 98);
     }
 
-    public static class Spin1ExpressionNode extends Node {
-
-        public Spin1ExpressionNode() {
-        }
-
-        public Spin1ExpressionNode(Token token) {
-            tokens.add(token);
-        }
-
-        public Spin1ExpressionNode(Node parent) {
-            super(parent);
-        }
-
-        public boolean isConstant() {
-            return true;
-        }
-
-        public byte[] getObjectCode() {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try {
-                for (Node node : childs) {
-                    os.write(((Spin1ExpressionNode) node).getObjectCode());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return os.toByteArray();
-        }
-
-    }
-
-    public static class Spin1NumberLiteralNode extends Spin1ExpressionNode {
-
-        private final Number value;
-        private final int base;
-        private String text;
-
-        public Spin1NumberLiteralNode(Token token) {
-            tokens.add(token);
-
-            String value = token.getText();
-            if (value.startsWith("%%")) {
-                value = value.substring(2);
-                this.base = 4;
-            }
-            else if (value.startsWith("%")) {
-                value = value.substring(1);
-                this.base = 2;
-            }
-            else if (value.startsWith("$")) {
-                value = value.substring(1);
-                this.base = 16;
-            }
-            else {
-                this.base = 10;
-            }
-            if (value.contains(".")) {
-                this.value = Double.parseDouble(value.replace("_", ""));
-            }
-            else {
-                this.value = Long.parseLong(value.replace("_", ""), this.base);
-            }
-            this.text = value;
-        }
-
-        @Override
-        public byte[] getObjectCode() {
-            return Constant.compileConstant(value.intValue());
-        }
-
-        @Override
-        public String toString() {
-            if (text == null) {
-                switch (base) {
-                    case 2:
-                        text = "%" + Long.toBinaryString(value.longValue());
-                        break;
-                    case 4:
-                        text = "%%" + Long.toString(value.longValue(), 4);
-                        break;
-                    case 16:
-                        text = "$" + Long.toHexString(value.longValue());
-                        break;
-                    default:
-                        text = value.toString();
-                        break;
-                }
-            }
-            return text;
-        }
-
-    }
-
-    public static class Spin1ExpressionOperatorNode extends Spin1ExpressionNode {
-
-        static Map<String, Integer> mathOp = new HashMap<String, Integer>();
-        static {
-            mathOp.put("->", 0b111_00000); //  rotate right
-            mathOp.put("<-", 0b111_00001); //  rotate left
-            mathOp.put(">>", 0b111_00010); //  shift right
-            mathOp.put("<<", 0b111_00011); //  shift left
-            mathOp.put("|>", 0b111_00100); //  limit minimum (signed)
-            mathOp.put("<|", 0b111_00101); //  limit maximum (signed)
-            mathOp.put("-", 0b111_00110); //   negate
-            mathOp.put("!", 0b111_00111); //   bitwise not
-            mathOp.put("&", 0b111_01000); //   bitwise and
-            mathOp.put("||", 0b111_01001); //  absolute
-            mathOp.put("|", 0b111_01010); //   bitwise or
-            mathOp.put("^", 0b111_01011); //   bitwise xor
-            mathOp.put("+", 0b111_01100); //   add
-            mathOp.put("-", 0b111_01101); //   subtract
-            mathOp.put("~>", 0b111_01110); //  shift arithmetic right
-            mathOp.put("><", 0b111_01111); //  reverse bits
-            mathOp.put("AND", 0b111_10000); // boolean and
-            mathOp.put(">|", 0b111_10001); //  encode (0-32)
-            mathOp.put("OR", 0b111_10010); //  boolean or
-            mathOp.put("|<", 0b111_10011); //  decode
-            mathOp.put("*", 0b111_10100); //   multiply, return lower half (signed)
-            mathOp.put("**", 0b111_10101); //  multiply, return upper half (signed)
-            mathOp.put("/", 0b111_10110); //   divide, return quotient (signed)
-            mathOp.put("//", 0b111_10111); //  divide, return remainder (signed)
-            mathOp.put("^^", 0b111_11000); //  square root
-            mathOp.put("<", 0b111_11001); //   test below (signed)
-            mathOp.put(">", 0b111_11010); //   test above (signed)
-            mathOp.put("<>", 0b111_11011); //  test not equal
-            mathOp.put("==", 0b111_11100); //  test equal
-            mathOp.put("=<", 0b111_11101); //  test below or equal (signed)
-            mathOp.put("=>", 0b111_11110); //  test above or equal (signed)
-            mathOp.put("NOT", 0b111_11111); // boolean not
-        }
-
-        public Spin1ExpressionOperatorNode(Token token) {
-            super(token);
-        }
-
-        @Override
-        public byte[] getObjectCode() {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try {
-                for (Node node : childs) {
-                    os.write(((Spin1ExpressionNode) node).getObjectCode());
-                }
-                Integer op = mathOp.get(tokens.get(0).getText());
-                if (op != null) {
-                    os.write(op.intValue());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return os.toByteArray();
-        }
-
-        @Override
-        public String toString() {
-            return tokens.get(0).getText();
-        }
-
-    }
-
     private static abstract class Operator {
 
         public Token token;
@@ -296,7 +134,7 @@ public class Spin1ExpressionBuilder {
             }
         }
 
-        public abstract Spin1ExpressionNode evaluate();
+        public abstract Spin1BytecodeExpression evaluate();
 
         @Override
         public String toString() {
@@ -313,8 +151,25 @@ public class Spin1ExpressionBuilder {
         }
 
         @Override
-        public Spin1ExpressionNode evaluate() {
-            Spin1ExpressionOperatorNode result = new Spin1ExpressionOperatorNode(token);
+        public Spin1BytecodeExpression evaluate() {
+            Spin1BytecodeExpression result = new Spin1BytecodeExpression(token);
+            result.addChild(operands.pop());
+            return result;
+        }
+
+    }
+
+    private class GroupOperator extends Operator {
+
+        public GroupOperator(Token token) {
+            this.token = token;
+            this.precedence = operatorPrecedence.get(token.getText());
+            this.associativity = LEFT_TO_RIGHT;
+        }
+
+        @Override
+        public Spin1BytecodeExpression evaluate() {
+            Spin1BytecodeExpression result = new Spin1BytecodeExpression(token);
             result.addChild(operands.pop());
             return result;
         }
@@ -330,9 +185,9 @@ public class Spin1ExpressionBuilder {
         }
 
         @Override
-        public Spin1ExpressionNode evaluate() {
-            Spin1ExpressionNode right = operands.pop();
-            Spin1ExpressionOperatorNode result = new Spin1ExpressionOperatorNode(token);
+        public Spin1BytecodeExpression evaluate() {
+            Spin1BytecodeExpression right = operands.pop();
+            Spin1BytecodeExpression result = new Spin1BytecodeExpression(token);
             result.addChild(operands.pop());
             result.addChild(right);
             return result;
@@ -352,11 +207,9 @@ public class Spin1ExpressionBuilder {
         }
 
         @Override
-        public Spin1ExpressionNode evaluate() {
-            Spin1ExpressionNode right = operands.pop();
-            Spin1ExpressionNode result = new Spin1ExpressionNode();
-            result.addToken(name);
-            result.addToken(token);
+        public Spin1BytecodeExpression evaluate() {
+            Spin1BytecodeExpression right = operands.pop();
+            Spin1BytecodeExpression result = new Spin1BytecodeExpression(name);
             result.addChild(right);
             return result;
         }
@@ -372,17 +225,16 @@ public class Spin1ExpressionBuilder {
         }
 
         @Override
-        public Spin1ExpressionNode evaluate() {
-            Spin1ExpressionNode node0 = operands.pop();
-            Spin1ExpressionNode node1 = operands.pop();
+        public Spin1BytecodeExpression evaluate() {
+            Spin1BytecodeExpression node0 = operands.pop();
+            Spin1BytecodeExpression node1 = operands.pop();
 
-            if (",".equals(node0.getToken(0).getText())) {
-                node0.addChild(node1);
+            if (",".equals(node0.getText())) {
+                node0.childs.add(0, node1);
                 return node0;
             }
 
-            Spin1ExpressionNode result = new Spin1ExpressionNode();
-            result.addToken(token);
+            Spin1BytecodeExpression result = new Spin1BytecodeExpression(token);
             result.addChild(node1);
             result.addChild(node0);
             return result;
@@ -391,13 +243,13 @@ public class Spin1ExpressionBuilder {
     }
 
     int state;
-    Deque<Spin1ExpressionNode> operands = new ArrayDeque<Spin1ExpressionNode>();
+    Deque<Spin1BytecodeExpression> operands = new ArrayDeque<Spin1BytecodeExpression>();
     Deque<Operator> operators = new ArrayDeque<Operator>();
 
     public final Operator SENTINEL = new Operator(99, RIGHT_TO_LEFT) {
 
         @Override
-        public Spin1ExpressionNode evaluate() {
+        public Spin1BytecodeExpression evaluate() {
             throw new RuntimeException("Can not evaluate sentinel.");
         }
 
@@ -407,11 +259,11 @@ public class Spin1ExpressionBuilder {
         };
     };
 
-    public Spin1ExpressionBuilder() {
+    public Spin1BytecodeExpressionCompiler() {
         operators.push(SENTINEL);
     }
 
-    public Spin1ExpressionNode getExpression(List<Token> tokens) {
+    public Spin1BytecodeExpression getExpression(List<Token> tokens) {
         int state = 0;
 
         for (int i = 0; i < tokens.size(); i++) {
@@ -419,7 +271,12 @@ public class Spin1ExpressionBuilder {
             switch (state) {
                 case 0:
                     if (token.type == Token.OPERATOR) {
-                        addOperator(new UnaryOperator(token));
+                        if ("(".equals(token.getText())) {
+                            addOperator(new GroupOperator(token));
+                        }
+                        else {
+                            addOperator(new UnaryOperator(token));
+                        }
                         break;
                     }
                     // fall through
@@ -453,12 +310,8 @@ public class Spin1ExpressionBuilder {
     }
 
     public void addValueToken(Token token) {
-        if (token.type == Token.NUMBER) {
-            operands.push(new Spin1NumberLiteralNode(token));
-        }
-        else {
-            operands.push(new Spin1ExpressionNode(token));
-        }
+        Spin1BytecodeExpression operand = new Spin1BytecodeExpression(token);
+        operands.push(operand);
     }
 
     public void addOperatorToken(Token token) {
@@ -467,7 +320,7 @@ public class Spin1ExpressionBuilder {
             operator = new SequenceOperator(token);
         }
         else if ("(".equals(token.getText())) {
-            operator = new UnaryOperator(token);
+            operator = new GroupOperator(token);
         }
         else if ("[".equals(token.getText())) {
             operator = new UnaryOperator(token);
@@ -476,6 +329,10 @@ public class Spin1ExpressionBuilder {
             operator = new BinaryOperator(token);
         }
         addOperator(operator);
+    }
+
+    public void addUnaryOperator(Token token) {
+        addOperator(new UnaryOperator(token));
     }
 
     public void addOperator(Operator operator) {
@@ -512,7 +369,7 @@ public class Spin1ExpressionBuilder {
         }
     }
 
-    public Spin1ExpressionNode getExpression() {
+    public Spin1BytecodeExpression getExpression() {
         if (operands.isEmpty() || operators.isEmpty()) {
             throw new RuntimeException("Operands / operators is empty: " + this);
         }
@@ -531,27 +388,20 @@ public class Spin1ExpressionBuilder {
     }
 
     public static void main(String[] args) {
+        Spin1Context scope = new Spin1Context();
         try {
-            Spin1ExpressionNode node = compile("1 + 2 * 3");
-            print(node, 0);
-            byte[] code = node.getObjectCode();
-            for (int i = 0; i < code.length; i++) {
-                System.out.println(String.format(" %02X", code[i]));
-            }
 
-            node = compile("(1 + 2) * 3");
-            print(node, 0);
-            code = node.getObjectCode();
-            for (int i = 0; i < code.length; i++) {
-                System.out.println(String.format(" %02X", code[i]));
-            }
+            Spin1BytecodeExpression expression = compile("a := 1 + 2 * 3");
+            print(expression, 0);
+            System.out.println();
 
-            node = compile("line(ship_x - (last_cos ~> 15), ship_y - (last_sin ~> 15) )");
-            print(node, 0);
-            code = node.getObjectCode();
-            for (int i = 0; i < code.length; i++) {
-                System.out.println(String.format(" %02X", code[i]));
-            }
+            expression = compile("(1 + 2) * 3");
+            print(expression, 0);
+            System.out.println();
+
+            expression = compile("(1 + 2) * 3");
+            print(expression, 0);
+            System.out.println();
 
             //print(compile("(1 + 2) * 3"), 0);
             //print(compile("    a := CNT"), 0);
@@ -565,9 +415,10 @@ public class Spin1ExpressionBuilder {
         }
     }
 
-    static Spin1ExpressionNode compile(String text) {
+    static Spin1BytecodeExpression compile(String text) {
         List<Token> tokens = new ArrayList<Token>();
 
+        System.out.println(text);
         Spin1TokenStream stream = new Spin1TokenStream(text);
         while (true) {
             Token token = stream.nextToken();
@@ -576,12 +427,11 @@ public class Spin1ExpressionBuilder {
             }
             tokens.add(token);
         }
-
-        Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder();
+        Spin1BytecodeExpressionCompiler builder = new Spin1BytecodeExpressionCompiler();
         return builder.getExpression(tokens);
     }
 
-    static void print(Node node, int indent) {
+    static void print(Spin1BytecodeExpression node, int indent) {
         if (indent != 0) {
             for (int i = 1; i < indent; i++) {
                 System.out.print("|    ");
@@ -595,7 +445,7 @@ public class Spin1ExpressionBuilder {
         //}
         System.out.println(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
 
-        for (Node child : node.getChilds()) {
+        for (Spin1BytecodeExpression child : node.getChilds()) {
             print(child, indent + 1);
         }
     }

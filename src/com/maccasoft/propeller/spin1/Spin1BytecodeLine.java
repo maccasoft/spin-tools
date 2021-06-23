@@ -16,39 +16,43 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.maccasoft.propeller.spin1.instructions.Empty;
+import com.maccasoft.propeller.spin1.bytecode.Constant;
+import com.maccasoft.propeller.spin1.bytecode.Empty;
+import com.maccasoft.propeller.spin1.bytecode.MemAddress;
 
-public class Spin1PAsmLine {
+public class Spin1BytecodeLine {
 
     Spin1Context scope;
     String label;
-    String condition;
     String mnemonic;
-    List<Spin1PAsmExpression> arguments;
-    String effect;
+    List<Spin1BytecodeExpression> arguments;
 
-    Spin1PAsmInstructionFactory instructionFactory;
-    Spin1InstructionObject instructionObject;
+    Spin1BytecodeInstructionFactory instructionFactory;
+    Spin1BytecodeInstructionObject instructionObject;
 
     //String originalText;
     List<String> annotations = new ArrayList<String>();
 
-    public Spin1PAsmLine(Spin1Context scope, String label, String condition, String mnemonic, List<Spin1PAsmExpression> arguments, String effect) {
+    public Spin1BytecodeLine(Spin1Context scope, String label, String mnemonic, List<Spin1BytecodeExpression> arguments) {
         this.scope = scope;
         this.label = label;
-        this.condition = condition;
         this.mnemonic = mnemonic;
         this.arguments = arguments;
-        this.effect = effect;
 
         if (mnemonic != null) {
-            this.instructionFactory = Spin1PAsmInstructionFactory.get(mnemonic);
+            this.instructionFactory = Spin1BytecodeInstructionFactory.get(mnemonic);
             if (this.instructionFactory == null) {
-                this.annotations.add("error: invalid instruction " + mnemonic);
+                if (mnemonic.startsWith("@")) {
+                    this.instructionFactory = new MemAddress();
+                }
+                else if (!"(".equals(mnemonic) && !",".equals(mnemonic)) {
+                    this.instructionFactory = new Constant();
+                }
             }
-        }
-        if (this.instructionFactory == null) {
-            this.instructionFactory = Empty.instance;
+            if (this.instructionFactory == null) {
+                this.instructionFactory = Empty.instance;
+                //this.annotations.add("error: invalid instruction " + mnemonic);
+            }
         }
     }
 
@@ -64,15 +68,11 @@ public class Spin1PAsmLine {
         return label != null && label.startsWith(":");
     }
 
-    public String getCondition() {
-        return condition;
-    }
-
     public String getMnemonic() {
         return mnemonic;
     }
 
-    public List<Spin1PAsmExpression> getArguments() {
+    public List<Spin1BytecodeExpression> getArguments() {
         return arguments;
     }
 
@@ -80,19 +80,15 @@ public class Spin1PAsmLine {
         return arguments.size();
     }
 
-    public Spin1PAsmExpression getArgument(int index) {
+    public Spin1BytecodeExpression getArgument(int index) {
         return arguments.get(index);
     }
 
-    public String getEffect() {
-        return effect;
-    }
-
-    public Spin1PAsmInstructionFactory getInstructionFactory() {
+    public Spin1BytecodeInstructionFactory getInstructionFactory() {
         return instructionFactory;
     }
 
-    public List<Spin1PAsmLine> expand() {
+    public List<Spin1BytecodeLine> expand() {
         if (instructionFactory != null) {
             return instructionFactory.expand(this);
         }
@@ -109,7 +105,7 @@ public class Spin1PAsmLine {
         return address;
     }
 
-    public Spin1InstructionObject getInstructionObject() {
+    public Spin1BytecodeInstructionObject getInstructionObject() {
         return instructionObject;
     }
 
@@ -134,21 +130,18 @@ public class Spin1PAsmLine {
             sb.append(label);
             sb.append(" ");
         }
-        if (condition != null) {
-            while (sb.length() < 8) {
-                sb.append(" ");
-            }
-            sb.append(condition);
+        while (sb.length() < 16) {
             sb.append(" ");
         }
-        while (sb.length() < 20) {
+        if (instructionFactory != null) {
+            sb.append(instructionFactory.getClass().getSimpleName());
             sb.append(" ");
         }
-        if (mnemonic != null) {
+        else if (mnemonic != null) {
             sb.append(mnemonic);
         }
         if (arguments.size() != 0) {
-            while (sb.length() < 28) {
+            while (sb.length() < 24) {
                 sb.append(" ");
             }
             for (int i = 0; i < arguments.size(); i++) {
@@ -157,13 +150,6 @@ public class Spin1PAsmLine {
                 }
                 sb.append(arguments.get(i).toString());
             }
-        }
-        if (effect != null) {
-            sb.append(" ");
-            while (sb.length() < 44) {
-                sb.append(" ");
-            }
-            sb.append(effect);
         }
         return sb.toString();
     }

@@ -10,9 +10,11 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -22,6 +24,7 @@ import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.ExpressionBuilder;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
+import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
@@ -29,17 +32,19 @@ import com.maccasoft.propeller.model.ConstantSetEnumNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.LocalVariableNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ParameterNode;
+import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.spin1.bytecode.Constant;
 
 public class Spin1Compiler {
 
     Spin1Context scope = new Spin1GlobalContext();
     List<Spin1PAsmLine> source = new ArrayList<Spin1PAsmLine>();
+
     List<Spin1Method> methods = new ArrayList<Spin1Method>();
 
     ExpressionBuilder expressionBuilder = new ExpressionBuilder();
@@ -51,45 +56,16 @@ public class Spin1Compiler {
     int pcurr;
     int dcurr;
 
-    static class Spin1Line {
-        Spin1Context scope;
-        Expression expression;
-
-        Spin1BytecodeFactory instructionFactory;
-        Spin1BytecodeObject instructionObject;
-
-        public Spin1Line(Spin1Context scope, Spin1BytecodeFactory instructionFactory, Expression expression) {
-            this.scope = scope;
-            this.instructionFactory = instructionFactory;
-            this.expression = expression;
-        }
-
-        public Spin1Context getScope() {
-            return scope;
-        }
-
-        public List<Spin1Line> expand() {
-            return Collections.singletonList(this);
-        }
-
-        public int resolve(int address) {
-            return address;
-        }
-
-    }
-
     public Spin1Compiler() {
         this.pbase = 0x0010;
-        this.vbase = 0x0010 + 4;
-        this.dbase = this.vbase + 8;
+        this.vbase = 0x0010;
+        this.dbase = this.pbase + 8;
 
-        this.pcurr = this.pbase + 4;
-        this.dcurr = this.dbase + 4;
+        this.pcurr = this.pbase;
+        this.dcurr = this.dbase;
     }
 
     void compile(Node root) {
-        int address = 0;
-
         for (Node node : root.getChilds()) {
             if (node instanceof ConstantsNode) {
                 compileConBlock(node);
@@ -104,15 +80,18 @@ public class Spin1Compiler {
             }
         }
 
-        if (methods.size() == 0) {
-            methods.add(new Spin1Method(scope));
+        for (Node node : root.getChilds()) {
+            if (node instanceof MethodNode) {
+                compileMethodBlock((MethodNode) node);
+            }
         }
 
-        vbase += methods.size() * 4;
-        dbase += methods.size() * 4;
-        pcurr += methods.size() * 4;
-        dcurr += methods.size() * 4;
+        vbase += 4 + 4 * methods.size();
+        dbase += 4 + 4 * methods.size();
+        pcurr += 4 + 4 * methods.size();
+        dcurr += 4 + 4 * methods.size();
 
+        int address = 0;
         for (Spin1PAsmLine line : source) {
             line.getScope().setHubAddress(pcurr);
             try {
@@ -132,16 +111,24 @@ public class Spin1Compiler {
             }
         }
 
-        if (methods.size() != 0) {
-            dcurr += methods.get(0).getLocalSize();
-        }
-
         address = pcurr;
-        for (Spin1Method line : methods) {
-            address = line.resolve(address);
-            dcurr += line.getSize();
-            vbase += line.getSize();
-            dbase += line.getSize();
+        for (Spin1Method method : methods) {
+            method.getScope().setHubAddress(address);
+
+            //vbase += method.getLocalSize();
+            //dbase += method.getLocalSize();
+            dcurr += method.getLocalSize();
+
+            for (Spin1BytecodeLine line : method.source) {
+                line.getScope().setHubAddress(address);
+                address = line.resolve(address);
+                Spin1BytecodeInstructionObject obj = line.getInstructionObject();
+                if (obj != null) {
+                    vbase += obj.getSize();
+                    dbase += obj.getSize();
+                    dcurr += obj.getSize();
+                }
+            }
         }
 
         while ((address % 4) != 0) {
@@ -215,23 +202,6 @@ public class Spin1Compiler {
         }
 
         return bitPos;
-    }
-
-    public void generateObjectCode(OutputStream os) throws Exception {
-        int address = 0;
-
-        for (Spin1PAsmLine line : source) {
-            while (address < line.getScope().getHubAddress()) {
-                os.write(0x00);
-                address++;
-            }
-            Spin1InstructionObject obj = line.getInstructionObject();
-            byte[] code = obj.getBytes();
-            if (code != null && code.length != 0) {
-                os.write(code);
-                address += code.length;
-            }
-        }
     }
 
     void compileConBlock(Node parent) {
@@ -332,14 +302,7 @@ public class Spin1Compiler {
                 parameters.add(new Spin1PAsmExpression(prefix, expression, count));
             }
 
-            Spin1PAsmLine pasmLine = new Spin1PAsmLine(localScope, label, condition, mnemonic, parameters, modifier) {
-
-                @Override
-                public String toString() {
-                    return node.getText();
-                }
-
-            };
+            Spin1PAsmLine pasmLine = new Spin1PAsmLine(localScope, label, condition, mnemonic, parameters, modifier);
             if (pasmLine.getLabel() != null) {
                 try {
                     if (!pasmLine.isLocalLabel() && scope.getParent() != null) {
@@ -536,212 +499,318 @@ public class Spin1Compiler {
     }
 
     void compileMethodBlock(MethodNode node) {
-        Spin1Context localScope = new Spin1Context(scope);
+        Spin1Method method = new Spin1Method(new Spin1Context(scope));
+
+        if (node.getReturnVariables().size() != 0) {
+            Node child = node.getReturnVariable(0);
+            method.getScope().addSymbol(child.getText(), new LocalVariable(child.getText(), 0));
+        }
+
+        int offset = 4;
+        for (Node child : node.getParameters()) {
+            method.getScope().addSymbol(child.getText(), new LocalVariable(child.getText(), offset));
+            offset += 4;
+        }
+        for (LocalVariableNode child : node.getLocalVariables()) {
+            method.getScope().addSymbol(child.getIdentifier().getText(), new LocalVariable(child.getIdentifier().getText(), offset));
+
+            int size = 4;
+            if (child.getType() != null) {
+                if ("BYTE".equalsIgnoreCase(child.getType().getText())) {
+                    size = 1;
+                }
+                if ("WORD".equalsIgnoreCase(child.getType().getText())) {
+                    size = 2;
+                }
+            }
+            if (child.getSize() != null) {
+                Expression count = buildExpression(child.getSize().getTokens(), method.getScope());
+                size *= count.getNumber().intValue();
+            }
+            offset += ((size + 3) / 4) * 4;
+        }
+        method.setLocalSize(offset);
 
         for (Node child : node.getChilds()) {
-            compileStatementBlock(localScope, child);
+            if (child instanceof StatementNode) {
+                compileStatementBlock(method, child);
+            }
         }
+
+        method.expand();
+
+        methods.add(method);
     }
 
-    void compileStatementBlock(Spin1Context scope, Node node) {
-        Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder();
+    void compileStatementBlock(Spin1Method method, Node node) {
+        Spin1BytecodeExpressionCompiler compiler = new Spin1BytecodeExpressionCompiler();
 
         List<Token> tokens = node.getTokens();
+        int state = 0;
+
         for (int i = 0; i < tokens.size(); i++) {
             Token token = tokens.get(i);
-            if (Spin1ExpressionBuilder.operatorPrecedence.containsKey(token.getText().toUpperCase())) {
-                builder.addOperatorToken(token);
-            }
-            else {
-                if (i + 1 < tokens.size()) {
-                    Token next = tokens.get(i + 1);
-                    if (next.type != Token.EOF && next.type != Token.NL) {
-                        if ("(".equals(next.getText())) {
-                            builder.addFunctionOperatorToken(token, next);
-                            i++;
-                            continue;
+            switch (state) {
+                case 0:
+                    if (Spin1BytecodeExpressionCompiler.operatorPrecedence.containsKey(token.getText().toUpperCase())) {
+                        compiler.addUnaryOperator(token);
+                        break;
+                    }
+                    // fall through
+                case 1:
+                    if (Spin1BytecodeExpressionCompiler.operatorPrecedence.containsKey(token.getText().toUpperCase())) {
+                        compiler.addOperatorToken(token);
+                        break;
+                    }
+                    if (i + 1 < tokens.size()) {
+                        Token next = tokens.get(i + 1);
+                        if (next.type != Token.EOF && next.type != Token.NL) {
+                            if ("(".equals(next.getText())) {
+                                compiler.addFunctionOperatorToken(token, next);
+                                i++;
+                                state = 0;
+                                break;
+                            }
                         }
                     }
-                }
-                builder.addValueToken(token);
+                    compiler.addValueToken(token);
+                    state = 2;
+                    break;
+                case 2:
+                    compiler.addOperatorToken(token);
+                    state = 1;
+                    break;
             }
         }
 
+        Spin1BytecodeExpression expression = compiler.getExpression();
+        print(expression, 0);
+        method.source.add(new Spin1BytecodeLine(new Spin1Context(method.getScope()), null, expression.getText(), expression.getChilds()));
+
         for (Node child : node.getChilds()) {
-            compileStatementBlock(scope, child);
+            if (child instanceof StatementNode) {
+                compileStatementBlock(method, child);
+            }
         }
     }
 
-    void writeSource(Node node) {
-        for (Node child : node.getChilds()) {
-            writeSource(child);
+    void print(Spin1BytecodeExpression node, int indent) {
+        if (indent != 0) {
+            for (int i = 1; i < indent; i++) {
+                System.out.print("|    ");
+            }
+            System.out.print("+--- ");
         }
 
-        Spin1BytecodeFactory factory = Spin1BytecodeFactory.symbols.get(node.getToken(0).getText().toUpperCase());
-        if (factory == null) {
-            factory = new Constant();
-        }
+        System.out.print(node.getClass().getSimpleName());
+        System.out.println(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
 
-        //source.add(new Spin1Line(null, factory, new NumberLiteral(node.getToken(0).getText())));
+        for (Spin1BytecodeExpression child : node.getChilds()) {
+            print(child, indent + 1);
+        }
     }
 
-    public void generateListing(OutputStream os) throws Exception {
+    public void generateObjectCode(OutputStream os, PrintStream out) throws Exception {
         int address = 0;
 
         int clkfreq = scope.getInteger("_CLKFREQ");
-        os.write(String.format("%04X    ", address).getBytes());
-        os.write(String.format(" %02X %02X %02X %02X", clkfreq & 0xFF, (clkfreq >> 8) & 0xFF, (clkfreq >> 16) & 0xFF, (clkfreq >> 24) & 0xFF).getBytes());
-        os.write((" | " + "_CLKFREQ\n").getBytes());
+        writeInt(os, clkfreq);
+        out.print(String.format("%04X    ", address));
+        out.print(String.format(" %02X %02X %02X %02X", clkfreq & 0xFF, (clkfreq >> 8) & 0xFF, (clkfreq >> 16) & 0xFF, (clkfreq >> 24) & 0xFF));
+        out.println("    | " + "_CLKFREQ");
         address += 4;
 
         int clkmode = scope.getInteger("_CLKMODE");
-        os.write(String.format("%04X    ", address).getBytes());
-        os.write(String.format(" %02X         ", clkmode & 0xFF).getBytes());
-        os.write((" | " + "_CLKMODE\n").getBytes());
+        os.write(clkmode);
+        out.print(String.format("%04X    ", address));
+        out.print(String.format(" %02X         ", clkmode & 0xFF));
+        out.println("    | " + "_CLKMODE");
         address += 1;
 
-        os.write(String.format("%04X    ", address).getBytes());
-        os.write(String.format(" %02X         ", 0x00).getBytes());
-        os.write((" | " + "Placeholder for checksum\n").getBytes());
+        os.write(0x00);
+        out.print(String.format("%04X    ", address));
+        out.print(String.format(" %02X         ", 0x00));
+        out.println("    | " + "Placeholder for checksum");
         address += 1;
 
-        os.write(String.format("%04X    ", address).getBytes());
-        os.write(String.format(" %02X %02X      ", pbase & 0xFF, (pbase >> 8) & 0xFF).getBytes());
-        os.write((" | " + "PBASE\n").getBytes());
+        writeWord(os, pbase);
+        out.print(String.format("%04X    ", address));
+        out.print(String.format(" %02X %02X      ", pbase & 0xFF, (pbase >> 8) & 0xFF));
+        out.println("    | " + "PBASE");
         address += 2;
 
-        os.write(String.format("%04X    ", address).getBytes());
-        os.write(String.format(" %02X %02X      ", vbase & 0xFF, (vbase >> 8) & 0xFF).getBytes());
-        os.write((" | " + "VBASE\n").getBytes());
+        writeWord(os, vbase);
+        out.print(String.format("%04X    ", address));
+        out.print(String.format(" %02X %02X      ", vbase & 0xFF, (vbase >> 8) & 0xFF));
+        out.println("    | " + "VBASE");
         address += 2;
 
-        os.write(String.format("%04X    ", address).getBytes());
-        os.write(String.format(" %02X %02X      ", dbase & 0xFF, (dbase >> 8) & 0xFF).getBytes());
-        os.write((" | " + "DBASE\n").getBytes());
+        writeWord(os, dbase);
+        out.print(String.format("%04X    ", address));
+        out.print(String.format(" %02X %02X      ", dbase & 0xFF, (dbase >> 8) & 0xFF));
+        out.println("    | " + "DBASE");
         address += 2;
 
-        os.write(String.format("%04X    ", address).getBytes());
-        os.write(String.format(" %02X %02X      ", pcurr & 0xFF, (pcurr >> 8) & 0xFF).getBytes());
-        os.write((" | " + "PCURR\n").getBytes());
+        writeWord(os, pcurr);
+        out.print(String.format("%04X    ", address));
+        out.print(String.format(" %02X %02X      ", pcurr & 0xFF, (pcurr >> 8) & 0xFF));
+        out.println("    | " + "PCURR");
         address += 2;
 
-        os.write(String.format("%04X    ", address).getBytes());
-        os.write(String.format(" %02X %02X      ", dcurr & 0xFF, (dcurr >> 8) & 0xFF).getBytes());
-        os.write((" | " + "DCURR\n").getBytes());
+        writeWord(os, dcurr);
+        out.print(String.format("%04X    ", address));
+        out.print(String.format(" %02X %02X      ", dcurr & 0xFF, (dcurr >> 8) & 0xFF));
+        out.println("    | " + "DCURR");
         address += 2;
 
-        os.write("\n".getBytes());
+        out.print("\n");
 
         int size = vbase - pbase;
-        os.write(String.format("%04X    ", address).getBytes());
-        os.write(String.format(" %02X %02X      ", size & 0xFF, (size >> 8) & 0xFF).getBytes());
-        os.write((" | " + "Object size\n").getBytes());
+        writeWord(os, size);
+        out.print(String.format("%04X    ", address));
+        out.print(String.format(" %02X %02X      ", size & 0xFF, (size >> 8) & 0xFF));
+        out.print(("    | " + "Object size\n"));
         address += 2;
 
         int count = methods.size() + 1;
-        os.write(String.format("%04X    ", address).getBytes());
-        os.write(String.format(" %02X         ", count & 0xFF).getBytes());
-        os.write((" | " + "Method count + 1\n").getBytes());
+        os.write(count);
+        out.print(String.format("%04X    ", address));
+        out.print(String.format(" %02X         ", count & 0xFF));
+        out.print(("    | " + "Method count + 1\n"));
         address += 1;
 
         int objects = 0;
-        os.write(String.format("%04X    ", address).getBytes());
-        os.write(String.format(" %02X         ", objects & 0xFF).getBytes());
-        os.write((" | " + "OBJ count\n").getBytes());
+        os.write(objects);
+        out.print(String.format("%04X    ", address));
+        out.print(String.format(" %02X         ", objects & 0xFF));
+        out.print(("    | " + "OBJ count\n"));
         address += 1;
 
-        for (Spin1Method line : methods) {
-            int faddr = line.getScope().getAddress();
-            os.write(String.format("%04X    ", address).getBytes());
-            os.write(String.format(" %02X %02X %02X %02X", faddr & 0xFF, (faddr >> 8) & 0xFF, line.getLocalSize() & 0xFF, (line.getLocalSize() >> 8) & 0xFF).getBytes());
-            os.write((" | " + "Function\n").getBytes());
+        for (Spin1Method method : methods) {
+            int faddr = method.getScope().getHubAddress() - pbase;
+            int lsize = method.getLocalSize() - 4;
+            writeWord(os, faddr);
+            writeWord(os, lsize);
+            out.print(String.format("%04X    ", address));
+            out.print(String.format(" %02X %02X %02X %02X", faddr & 0xFF, (faddr >> 8) & 0xFF, lsize & 0xFF, (lsize >> 8) & 0xFF));
+            out.print(("    | " + "Function\n"));
             address += 4;
         }
 
-        os.write("\n".getBytes());
+        out.println();
 
         for (Spin1PAsmLine line : source) {
             while (address < line.getScope().getHubAddress()) {
                 os.write(0x00);
+                out.print(String.format("%02X", 0x00));
                 address++;
             }
             Spin1InstructionObject obj = line.getInstructionObject();
             byte[] code = obj.getBytes();
 
-            os.write(String.format("%04X %03X", address, line.getScope().getInteger("$")).getBytes());
+            out.print(String.format("%04X %03X", line.getScope().getHubAddress(), line.getScope().getInteger("$")));
 
             int i = 0;
             if (code != null && code.length != 0) {
                 while (i < code.length && i < 4) {
-                    os.write(String.format(" %02X", code[i++]).getBytes());
+                    out.print(String.format(" %02X", code[i++]));
                 }
             }
-            while (i < 4) {
-                os.write("   ".getBytes());
+            while (i < 5) {
+                out.print("   ");
                 i++;
             }
-            os.write((" | " + line.toString()).getBytes());
+            out.print((" | " + line.toString()));
 
             if (code != null) {
+                os.write(code);
                 while (i < code.length) {
-                    if ((i % 4) == 0) {
-                        os.write(String.format("\n%04X    ", address + i).getBytes());
+                    if ((i % 5) == 0) {
+                        out.print(String.format("\n%04X    ", address + i));
                     }
-                    os.write(String.format(" %02X", code[i++]).getBytes());
+                    out.print(String.format(" %02X", code[i++]));
                 }
                 address += code.length;
-                os.write("\n".getBytes());
+                out.println();
             }
         }
 
-        os.write("\n".getBytes());
+        if (source.size() != 0) {
+            out.println();
+        }
 
-        for (Spin1Method line : methods) {
-            byte[] code = line.getBytes();
+        for (Spin1Method method : methods) {
+            for (Spin1BytecodeLine line : method.source) {
+                byte[] code = line.getInstructionObject().getBytes();
 
-            os.write(String.format("%04X    ", address).getBytes());
+                out.print(String.format("%04X    ", address));
 
-            int i = 0;
-            if (code != null && code.length != 0) {
-                while (i < code.length && i < 4) {
-                    os.write(String.format(" %02X", code[i++]).getBytes());
-                }
-            }
-            while (i < 4) {
-                os.write("   ".getBytes());
-                i++;
-            }
-            os.write((" | ").getBytes());
-
-            if (code != null) {
-                while (i < code.length) {
-                    if ((i % 4) == 0) {
-                        os.write(String.format("\n%04X    ", address + i).getBytes());
+                int i = 0;
+                if (code != null && code.length != 0) {
+                    os.write(code);
+                    while (i < code.length && i < 5) {
+                        out.print(String.format(" %02X", code[i++]));
                     }
-                    os.write(String.format(" %02X", code[i++]).getBytes());
                 }
-                address += code.length;
-                while ((i % 4) != 0) {
-                    os.write("   ".getBytes());
+                while (i < 5) {
+                    out.print("   ");
                     i++;
                 }
-                os.write(" |\n".getBytes());
+                out.print(" | ");
+
+                out.println(line.getInstructionObject());
+
+                address += code.length;
             }
         }
+
+        if (methods.size() != 0) {
+            out.println();
+        }
+
+        out.print(String.format("%04X    ", address));
+
+        if ((address % 4) != 0) {
+            int i = 0;
+            while ((address % 4) != 0) {
+                os.write(0x00);
+                out.print(String.format(" %02X", 0x00));
+                i++;
+                address++;
+            }
+            while (i < 5) {
+                out.print("   ");
+                i++;
+            }
+            out.println(" | (padding)");
+        }
+    }
+
+    public void writeInt(OutputStream os, int value) throws IOException {
+        os.write(value & 0xFF);
+        os.write((value >> 8) & 0xFF);
+        os.write((value >> 16) & 0xFF);
+        os.write((value >> 24) & 0xFF);
+    }
+
+    public void writeWord(OutputStream os, int value) throws IOException {
+        os.write(value & 0xFF);
+        os.write((value >> 8) & 0xFF);
     }
 
     public static void main(String[] args) {
         String text = ""
-            + "PUB main\n"
+            + "PUB main | a\n"
             + "\n"
             + "    coginit(cogid, @start, 0)\n"
             + "\n"
             + "DAT             org     $000\n"
             + "\n"
-            + "start           cogid   a\n"
-            + "                cogstop a\n"
+            + "start           cogid   id\n"
+            + "                cogstop id\n"
             + "\n"
-            + "a               res     1";
+            + "id              res     1\n"
+            + "";
 
         try {
             Spin1TokenStream stream = new Spin1TokenStream(text);
@@ -752,8 +821,24 @@ public class Spin1Compiler {
             Spin1Compiler compiler = new Spin1Compiler();
             compiler.compile(root);
 
-            //compiler.generateObjectCode(new ByteArrayOutputStream());
-            compiler.generateListing(System.out);
+            for (Spin1PAsmLine line : compiler.source) {
+                System.out.println(line);
+            }
+
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            compiler.generateObjectCode(os, System.out);
+
+            byte[] code = os.toByteArray();
+            System.out.println();
+            for (int i = 0; i < code.length; i++) {
+                if (i > 0 && (i % 16) == 0) {
+                    System.out.println();
+                }
+                System.out.print(String.format("%02X ", code[i]));
+            }
+            if ((code.length % 16) != 0) {
+                System.out.println();
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -10,27 +10,25 @@
 
 package com.maccasoft.propeller.spin1.bytecode;
 
-import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin1.Spin1BytecodeFactory;
-import com.maccasoft.propeller.spin1.Spin1BytecodeObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionFactory;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeLine;
 import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class Coginit extends Spin1BytecodeFactory {
+public class Coginit extends Spin1BytecodeInstructionFactory {
 
     @Override
-    public Spin1BytecodeObject createObject(Spin1Context context, Expression expression) {
-        return new Coginit_(context);
+    public Spin1BytecodeInstructionObject createObject(Spin1BytecodeLine line) {
+        if (line.getArgumentCount() == 3) {
+            return new Coginit_(line.getScope());
+        }
+        throw new RuntimeException("error: expected 3 arguments, found " + line.getArgumentCount());
     }
 
-    class Coginit_ extends Spin1BytecodeObject {
+    class Coginit_ extends Spin1BytecodeInstructionObject {
 
         public Coginit_(Spin1Context context) {
             super(context);
-        }
-
-        @Override
-        public int getSize() {
-            return 2;
         }
 
         @Override

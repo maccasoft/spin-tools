@@ -10,18 +10,26 @@
 
 package com.maccasoft.propeller.spin1.bytecode;
 
-import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.spin1.Spin1BytecodeFactory;
-import com.maccasoft.propeller.spin1.Spin1BytecodeObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionFactory;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeLine;
 import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.bytecode.RegRead.RegRead_;
 
-public class Cogid extends Spin1BytecodeFactory {
+public class Cogid extends Spin1BytecodeInstructionFactory {
 
     @Override
-    public Spin1BytecodeObject createObject(Spin1Context context, Expression expression) {
-        return new RegRead_(context, new NumberLiteral(0x1E9));
+    public Spin1BytecodeInstructionObject createObject(Spin1BytecodeLine line) {
+        return new Cogid_(line.getScope());
+    }
+
+    public static class Cogid_ extends RegRead_ {
+
+        public Cogid_(Spin1Context context) {
+            super(context, new NumberLiteral(0x1E9));
+        }
+
     }
 
 }

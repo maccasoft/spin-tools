@@ -34,6 +34,11 @@ public class Token {
     private TokenStream stream;
     private String text;
 
+    public Token(int type, String text) {
+        this.type = type;
+        this.text = text;
+    }
+
     public Token(TokenStream stream, int start) {
         this.start = start;
         this.stop = start;

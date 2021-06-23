@@ -10,12 +10,17 @@
 
 package com.maccasoft.propeller.spin1.bytecode;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin1.Spin1BytecodeFactory;
-import com.maccasoft.propeller.spin1.Spin1BytecodeObject;
+import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionFactory;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeLine;
 import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class Constant extends Spin1BytecodeFactory {
+public class Constant extends Spin1BytecodeInstructionFactory {
 
     public static byte[] compileConstant(int value) {
 
@@ -79,11 +84,20 @@ public class Constant extends Spin1BytecodeFactory {
     }
 
     @Override
-    public Spin1BytecodeObject createObject(Spin1Context context, Expression expression) {
-        return new Constant_(context, expression);
+    public Spin1BytecodeInstructionObject createObject(Spin1BytecodeLine line) {
+        try {
+            return new Constant_(line.getScope(), new NumberLiteral(line.getMnemonic()));
+        } catch (Exception e) {
+            return new Constant_(line.getScope(), new com.maccasoft.propeller.expressions.Identifier(line.getMnemonic(), line.getScope()));
+        }
     }
 
-    class Constant_ extends Spin1BytecodeObject {
+    @Override
+    public List<Spin1BytecodeLine> expand(Spin1BytecodeLine line) {
+        return Collections.singletonList(line);
+    }
+
+    class Constant_ extends Spin1BytecodeInstructionObject {
 
         Expression expression;
 
@@ -93,14 +107,14 @@ public class Constant extends Spin1BytecodeFactory {
         }
 
         @Override
-        public int getSize() {
-            return getBytes().length;
-        }
-
-        @Override
         public byte[] getBytes() {
             int value = expression.getNumber().intValue();
             return compileConstant(value);
+        }
+
+        @Override
+        public String toString() {
+            return "CONSTANT " + expression;
         }
     }
 
