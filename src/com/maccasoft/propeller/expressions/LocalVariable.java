@@ -32,7 +32,7 @@ public class LocalVariable extends Literal {
 
     @Override
     public Number getNumber() {
-        return new Long(offset);
+        return Long.valueOf(offset);
     }
 
     @Override

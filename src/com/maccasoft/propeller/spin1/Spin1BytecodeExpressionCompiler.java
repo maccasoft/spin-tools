@@ -11,7 +11,6 @@
 package com.maccasoft.propeller.spin1;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -385,69 +384,6 @@ public class Spin1BytecodeExpressionCompiler {
         }
 
         return operands.pop();
-    }
-
-    public static void main(String[] args) {
-        Spin1Context scope = new Spin1Context();
-        try {
-
-            Spin1BytecodeExpression expression = compile("a := 1 + 2 * 3");
-            print(expression, 0);
-            System.out.println();
-
-            expression = compile("(1 + 2) * 3");
-            print(expression, 0);
-            System.out.println();
-
-            expression = compile("(1 + 2) * 3");
-            print(expression, 0);
-            System.out.println();
-
-            //print(compile("(1 + 2) * 3"), 0);
-            //print(compile("    a := CNT"), 0);
-            //print(compile("        waitcnt(a += 3_000_000)"), 0);
-            //print(compile("Player(@Wav,10,11)"), 0);
-            //print(compile("gr.line(ship_x - (last_cos ~> 15), ship_y - (last_sin ~> 15) )"), 0);
-            //print(compile("mouse.button(THRUST_BUTTON_ID) and (Rand & $01)"), 0);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    static Spin1BytecodeExpression compile(String text) {
-        List<Token> tokens = new ArrayList<Token>();
-
-        System.out.println(text);
-        Spin1TokenStream stream = new Spin1TokenStream(text);
-        while (true) {
-            Token token = stream.nextToken();
-            if (token.type == Token.EOF || token.type == Token.NL) {
-                break;
-            }
-            tokens.add(token);
-        }
-        Spin1BytecodeExpressionCompiler builder = new Spin1BytecodeExpressionCompiler();
-        return builder.getExpression(tokens);
-    }
-
-    static void print(Spin1BytecodeExpression node, int indent) {
-        if (indent != 0) {
-            for (int i = 1; i < indent; i++) {
-                System.out.print("|    ");
-            }
-            System.out.print("+--- ");
-        }
-
-        System.out.print(node.getClass().getSimpleName());
-        //for (Token token : node.tokens) {
-        //    System.out.print(" [" + token.getText().replaceAll("\n", "\\n") + "]");
-        //}
-        System.out.println(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
-
-        for (Spin1BytecodeExpression child : node.getChilds()) {
-            print(child, indent + 1);
-        }
     }
 
 }

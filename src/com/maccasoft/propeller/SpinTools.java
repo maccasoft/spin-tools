@@ -10,6 +10,8 @@
 
 package com.maccasoft.propeller;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -17,8 +19,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -143,11 +143,11 @@ public class SpinTools {
             serialPortList.setSelection(port);
         }
 
-        serialPortList.addObserver(new Observer() {
+        serialPortList.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
-            public void update(Observable o, Object arg) {
-                String port = (String) arg;
+            public void propertyChange(PropertyChangeEvent evt) {
+                String port = (String) evt.getNewValue();
                 SerialTerminal serialTerminal = getSerialTerminal();
                 if (serialTerminal != null) {
                     if (!port.equals(serialTerminal.getSerialPort().getPortName())) {
@@ -164,6 +164,7 @@ public class SpinTools {
                 }
                 preferences.setPort(port);
             }
+
         });
 
         shell.addDisposeListener(new DisposeListener() {

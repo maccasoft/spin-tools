@@ -10,7 +10,7 @@ public class ContextLiteral extends Literal {
 
     @Override
     public Number getNumber() {
-        return new Long(context.getAddress());
+        return Long.valueOf(context.getAddress());
     }
 
     @Override

@@ -19,7 +19,7 @@ public class CharacterLiteral extends Literal {
 
     @Override
     public Number getNumber() {
-        return new Long(character);
+        return Long.valueOf(character);
     }
 
     @Override

@@ -9,7 +9,7 @@ public class Round extends Function {
     @Override
     public Number getNumber() {
         if (term.getNumber() instanceof Double) {
-            return new Long(Math.round(term.getNumber().doubleValue())).longValue();
+            return Long.valueOf(Math.round(term.getNumber().doubleValue())).longValue();
         }
         return term.getNumber();
     }

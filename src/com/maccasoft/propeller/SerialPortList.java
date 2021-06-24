@@ -11,12 +11,13 @@
 
 package com.maccasoft.propeller;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Observable;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
@@ -28,10 +29,12 @@ import org.eclipse.swt.widgets.MenuItem;
 
 import jssc.SerialNativeInterface;
 
-public class SerialPortList extends Observable {
+public class SerialPortList {
 
     final List<MenuItem> items = new ArrayList<MenuItem>();
     String selection;
+
+    PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     private static SerialNativeInterface serialInterface;
     private static final Pattern PORTNAMES_REGEXP;
@@ -157,9 +160,7 @@ public class SerialPortList extends Observable {
 
         @Override
         public void widgetSelected(SelectionEvent e) {
-            selection = ((MenuItem) e.widget).getText();
-            setChanged();
-            notifyObservers(selection);
+            changeSupport.firePropertyChange("selection", selection, selection = ((MenuItem) e.widget).getText());
         }
     };
 
@@ -168,6 +169,14 @@ public class SerialPortList extends Observable {
         if (c.size() != 0) {
             selection = c.iterator().next();
         }
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener l) {
+        changeSupport.addPropertyChangeListener(l);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener l) {
+        changeSupport.removePropertyChangeListener(l);
     }
 
     public void fillMenu(Menu menu) {
