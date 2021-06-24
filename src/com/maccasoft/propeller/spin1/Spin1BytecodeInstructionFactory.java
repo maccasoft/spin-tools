@@ -103,18 +103,27 @@ public abstract class Spin1BytecodeInstructionFactory {
     }
 
     public List<Spin1BytecodeLine> expand(Spin1BytecodeLine line) {
-        if (line.getArgumentCount() == 1) {
-            line.arguments = new ArrayList<Spin1BytecodeExpression>(line.getArgument(0).getChilds());
-        }
-
         List<Spin1BytecodeLine> list = new ArrayList<Spin1BytecodeLine>();
+
+        List<Spin1BytecodeExpression> arguments = new ArrayList<>(line.getArguments());
+        line.arguments.clear();
+        for (Spin1BytecodeExpression exp : arguments) {
+            if (",".equals(exp.getText()) || "(".equals(exp.getText())) {
+                line.arguments.addAll(exp.getChilds());
+            }
+            else {
+                line.arguments.add(exp);
+            }
+        }
 
         for (int i = 0; i < line.getArgumentCount(); i++) {
             Spin1BytecodeExpression expression = line.getArgument(i);
             Spin1BytecodeLine newLine = new Spin1BytecodeLine(line.getScope(), null, expression.getText(), expression.getChilds());
             list.addAll(newLine.expand());
         }
-        list.add(line);
+        if (!",".equals(line.getMnemonic()) && !"(".equals(line.getMnemonic())) {
+            list.add(line);
+        }
 
         return list;
     }

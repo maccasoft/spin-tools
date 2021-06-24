@@ -10,10 +10,6 @@
 
 package com.maccasoft.propeller.spin1.bytecode;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.maccasoft.propeller.spin1.Spin1BytecodeExpression;
 import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionFactory;
 import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionObject;
 import com.maccasoft.propeller.spin1.Spin1BytecodeLine;
@@ -26,18 +22,6 @@ public class Empty extends Spin1BytecodeInstructionFactory {
     @Override
     public Spin1BytecodeInstructionObject createObject(Spin1BytecodeLine line) {
         return new Empty_(line.getScope());
-    }
-
-    public List<Spin1BytecodeLine> expand1(Spin1BytecodeLine line) {
-        List<Spin1BytecodeLine> list = new ArrayList<Spin1BytecodeLine>();
-
-        for (int i = 0; i < line.getArgumentCount(); i++) {
-            Spin1BytecodeExpression expression = line.getArgument(i);
-            Spin1BytecodeLine newLine = new Spin1BytecodeLine(line.getScope(), null, expression.getText(), expression.getChilds());
-            list.addAll(newLine.expand());
-        }
-
-        return list;
     }
 
     class Empty_ extends Spin1BytecodeInstructionObject {

@@ -800,8 +800,11 @@ public class Spin1Compiler {
 
     public static void main(String[] args) {
         String text = ""
-            + "PUB main | a\n"
+            + "PUB main | a, b\n"
             + "\n"
+            + "    (1 + 2)\n"
+            + "    a := 1 + 2 * 3\n"
+            + "    b := (1 + 2) * 3\n"
             + "    coginit(cogid, @start, 0)\n"
             + "\n"
             + "DAT             org     $000\n"
