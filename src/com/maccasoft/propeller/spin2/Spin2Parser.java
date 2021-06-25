@@ -330,7 +330,7 @@ public class Spin2Parser {
                     }
 
                     if (child.getTokens().size() != 0) {
-                        while (token.column < child.getToken(0).column && child != node) {
+                        while (token.column < child.getToken(0).column && child.getParent() != node) {
                             child = child.getParent();
                             parent = child.getParent();
                         }

@@ -331,7 +331,7 @@ public class Spin1Parser {
                     }
 
                     if (child.getTokens().size() != 0) {
-                        while (token.column < child.getToken(0).column && child != node) {
+                        while (token.column < child.getToken(0).column && child.getParent() != node) {
                             child = child.getParent();
                             parent = child.getParent();
                         }
@@ -716,12 +716,22 @@ public class Spin1Parser {
 
     public static void main(String[] args) {
         String text = ""
-            + "PUB start()\n"
+            + "CON\n"
             + "\n"
-            + "    case a\n"
-            + "        0: a := b\n"
-            + "        1: c := d\n"
-            + "           e := f\n"
+            + "    _XINFREQ = 5_000_000\n"
+            + "    _CLKMODE = XTAL1 + PLL16X\n"
+            + "\n"
+            + "VAR\n"
+            + "\n"
+            + "OBJ\n"
+            + "\n"
+            + "PUB start | a\n"
+            + "\n"
+            + "    ' initialization\n"
+            + "    a := 1 + 2 * 3\n"
+            + "\n"
+            + "    repeat\n"
+            + "        ' loop\n"
             + "";
 
         try {
