@@ -185,4 +185,43 @@ class Spin2TokenStreamTest {
         assertEquals(")", subject.nextToken().getText());
     }
 
+    @Test
+    void testBlockComment() {
+        Spin2TokenStream subject = new Spin2TokenStream("{ first line\n  second line }");
+
+        assertEquals("{ first line\n  second line }", subject.nextToken(true).getText());
+    }
+
+    @Test
+    void testLineComment() {
+        Spin2TokenStream subject = new Spin2TokenStream("' first line\n' second line");
+
+        assertEquals("' first line", subject.nextToken(true).getText());
+        assertEquals("\n", subject.nextToken(true).getText());
+        assertEquals("' second line", subject.nextToken(true).getText());
+    }
+
+    @Test
+    void testBlockDocumentComment() {
+        Spin2TokenStream subject = new Spin2TokenStream("{{ first line\n  second line }}");
+
+        assertEquals("{{ first line\n  second line }}", subject.nextToken(true).getText());
+    }
+
+    @Test
+    void testLineDocumentComment() {
+        Spin2TokenStream subject = new Spin2TokenStream("'' first line\n'' second line");
+
+        assertEquals("'' first line", subject.nextToken(true).getText());
+        assertEquals("\n", subject.nextToken(true).getText());
+        assertEquals("'' second line", subject.nextToken(true).getText());
+    }
+
+    @Test
+    void testNestedBlockComment() {
+        Spin2TokenStream subject = new Spin2TokenStream("{ first line\n{ second line }}");
+
+        assertEquals("{ first line\n{ second line }}", subject.nextToken(true).getText());
+    }
+
 }

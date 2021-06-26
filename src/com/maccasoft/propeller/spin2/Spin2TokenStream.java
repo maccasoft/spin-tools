@@ -133,12 +133,12 @@ public class Spin2TokenStream extends TokenStream {
                     break;
                 case Token.COMMENT:
                     if (ch == '\r' || ch == '\n') {
-                        index--;
                         state = Token.START;
                         hiddenTokens.add(token);
                         if (comments) {
                             return token;
                         }
+                        index--;
                         token = EOF_TOKEN;
                         break;
                     }

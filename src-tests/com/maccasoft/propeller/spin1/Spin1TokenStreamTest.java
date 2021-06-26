@@ -564,41 +564,46 @@ class Spin1TokenStreamTest {
 
     @Test
     void testBlockComment() {
-        Spin1TokenStream subject = new Spin1TokenStream("{ first line\n  second line }");
+        Spin1TokenStream subject = new Spin1TokenStream("{ first line\n  second line }\n");
 
         assertEquals("{ first line\n  second line }", subject.nextToken(true).getText());
+        assertEquals("\n", subject.nextToken(true).getText());
     }
 
     @Test
     void testLineComment() {
-        Spin1TokenStream subject = new Spin1TokenStream("' first line\n' second line");
+        Spin1TokenStream subject = new Spin1TokenStream("' first line\n' second line\n");
 
         assertEquals("' first line", subject.nextToken(true).getText());
         assertEquals("\n", subject.nextToken(true).getText());
         assertEquals("' second line", subject.nextToken(true).getText());
+        assertEquals("\n", subject.nextToken(true).getText());
     }
 
     @Test
     void testBlockDocumentComment() {
-        Spin1TokenStream subject = new Spin1TokenStream("{{ first line\n  second line }}");
+        Spin1TokenStream subject = new Spin1TokenStream("{{ first line\n  second line }}\n");
 
         assertEquals("{{ first line\n  second line }}", subject.nextToken(true).getText());
+        assertEquals("\n", subject.nextToken(true).getText());
     }
 
     @Test
     void testLineDocumentComment() {
-        Spin1TokenStream subject = new Spin1TokenStream("'' first line\n'' second line");
+        Spin1TokenStream subject = new Spin1TokenStream("'' first line\n'' second line\n");
 
         assertEquals("'' first line", subject.nextToken(true).getText());
         assertEquals("\n", subject.nextToken(true).getText());
         assertEquals("'' second line", subject.nextToken(true).getText());
+        assertEquals("\n", subject.nextToken(true).getText());
     }
 
     @Test
     void testNestedBlockComment() {
-        Spin1TokenStream subject = new Spin1TokenStream("{ first line\n{ second line }}");
+        Spin1TokenStream subject = new Spin1TokenStream("{ first line\n{ second line }}\n");
 
         assertEquals("{ first line\n{ second line }}", subject.nextToken(true).getText());
+        assertEquals("\n", subject.nextToken(true).getText());
     }
 
 }

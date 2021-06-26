@@ -138,6 +138,7 @@ public class Spin1TokenStream extends TokenStream {
                         if (comments) {
                             return token;
                         }
+                        index--;
                         token = EOF_TOKEN;
                         break;
                     }
