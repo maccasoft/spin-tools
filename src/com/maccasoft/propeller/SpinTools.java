@@ -12,9 +12,19 @@ package com.maccasoft.propeller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -54,7 +64,12 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.internal.ImageRegistry;
+import com.maccasoft.propeller.internal.TempDirectory;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.NodeVisitor;
+import com.maccasoft.propeller.model.ObjectNode;
+import com.maccasoft.propeller.spin1.Spin1Parser;
+import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
@@ -192,13 +207,44 @@ public class SpinTools {
         item.setMenu(menu);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New");
+        item.setText("New\tCtrl+N");
+        item.setAccelerator(SWT.CTRL + 'N');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
             public void handleEvent(Event e) {
                 try {
                     handleFileNew();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("New (From P1 template)\tCtrl+Alt+1");
+        item.setAccelerator(SWT.CTRL + SWT.ALT + '1');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handleFileNewSpin1();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("New (From P2 template)\tCtrl+Alt+1");
+        item.setAccelerator(SWT.CTRL + SWT.ALT + '2');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handleFileNewSpin2();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -231,7 +277,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-
+                    handleFileSave();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -245,7 +291,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-
+                    handleFileSaveAs();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -317,9 +363,15 @@ public class SpinTools {
             item.addListener(SWT.Selection, new Listener() {
 
                 @Override
-                public void handleEvent(Event e) {
+                public void handleEvent(Event event) {
                     try {
-                        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen);
+                        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName());
+                        try {
+                            editorTab.setEditorText(loadFromFile(fileToOpen));
+                            editorTab.setFile(fileToOpen);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                         tabFolder.setSelection(tabFolder.getItemCount() - 1);
                         editorTab.setFocus();
                         preferences.addToLru(fileToOpen);
@@ -338,9 +390,70 @@ public class SpinTools {
     }
 
     private void handleFileNew() {
-        EditorTab editorTab = new EditorTab(tabFolder, new File("Untitled.spin2"));
+        String suffix = ".spin";
+
+        if (tabFolder.getSelection() != null) {
+            EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
+            String tabName = currentTab.getText();
+            suffix = tabName.substring(tabName.lastIndexOf('.'));
+        }
+
+        String name = getUniqueName("Untitled", suffix);
+        EditorTab editorTab = new EditorTab(tabFolder, name);
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
+    }
+
+    private void handleFileNewSpin1() {
+        String name = getUniqueName("Untitled", ".spin");
+        EditorTab editorTab = new EditorTab(tabFolder, name);
+        editorTab.setEditorText(getResourceAsString("template.spin"));
+        tabFolder.setSelection(tabFolder.getItemCount() - 1);
+        editorTab.setFocus();
+    }
+
+    private void handleFileNewSpin2() {
+        String name = getUniqueName("Untitled", ".spin2");
+        EditorTab editorTab = new EditorTab(tabFolder, name);
+        editorTab.setEditorText(getResourceAsString("template.spin2"));
+        tabFolder.setSelection(tabFolder.getItemCount() - 1);
+        editorTab.setFocus();
+    }
+
+    String getUniqueName(String prefix, String suffix) {
+        int count = 0;
+        String name = prefix + suffix;
+
+        int index = 0;
+        while (index < tabFolder.getItemCount()) {
+            CTabItem tabItem = tabFolder.getItem(index);
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+            if (editorTab.getText().equalsIgnoreCase(name)) {
+                name = prefix + String.valueOf(++count) + suffix;
+                index = -1;
+            }
+            index++;
+        }
+
+        return name;
+    }
+
+    String getResourceAsString(String name) {
+        InputStream is = getClass().getResourceAsStream(name);
+        try {
+            byte[] b = new byte[is.available()];
+            is.read(b);
+            return new String(b);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                is.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return "";
     }
 
     private void handleFileOpen() {
@@ -360,9 +473,7 @@ public class SpinTools {
         CTabItem tabItem = tabFolder.getSelection();
         if (tabItem != null) {
             EditorTab editorTab = (EditorTab) tabItem.getData();
-            if (editorTab.getFile() != null) {
-                filterPath = editorTab.getFile();
-            }
+            filterPath = editorTab.getFile();
         }
         if (filterPath == null && preferences.getLru().size() != 0) {
             filterPath = new File(preferences.getLru().get(0));
@@ -375,14 +486,99 @@ public class SpinTools {
         String fileName = dlg.open();
         if (fileName != null) {
             File fileToOpen = new File(fileName);
-            EditorTab editorTab = new EditorTab(tabFolder, fileToOpen);
+
+            EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName());
+            try {
+                editorTab.setEditorText(loadFromFile(fileToOpen));
+                editorTab.setFile(fileToOpen);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             tabFolder.setSelection(tabFolder.getItemCount() - 1);
             editorTab.setFocus();
             preferences.addToLru(fileToOpen);
         }
     }
 
-    protected Menu createEditMenu(Menu parent) {
+    String loadFromFile(File file) throws Exception {
+        String line;
+        StringBuilder sb = new StringBuilder();
+
+        if (file.exists()) {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+                sb.append("\n");
+            }
+            reader.close();
+        }
+
+        return sb.toString();
+    }
+
+    private void handleFileSave() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem != null) {
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+            File fileToSave = editorTab.getFile();
+            if (fileToSave == null) {
+                handleFileSaveAs();
+                return;
+            }
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave));
+                writer.write(editorTab.getEditorText());
+                writer.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void handleFileSaveAs() {
+        FileDialog dlg = new FileDialog(shell, SWT.SAVE);
+        dlg.setText("Save Spin File");
+        String[] filterNames = new String[] {
+            "Spin Files"
+        };
+        String[] filterExtensions = new String[] {
+            "*.spin;*.spin2"
+        };
+        dlg.setFilterNames(filterNames);
+        dlg.setFilterExtensions(filterExtensions);
+
+        File filterPath = null;
+
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem != null) {
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+            dlg.setFileName(editorTab.getText());
+
+            filterPath = editorTab.getFile();
+            if (filterPath == null && preferences.getLru().size() != 0) {
+                filterPath = new File(preferences.getLru().get(0));
+            }
+            if (filterPath != null) {
+                dlg.setFilterPath(filterPath.getParent());
+            }
+
+            String fileName = dlg.open();
+            if (fileName != null) {
+                File fileToSave = new File(fileName);
+                try {
+                    BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave));
+                    writer.write(editorTab.getEditorText());
+                    writer.close();
+                    editorTab.setFile(fileToSave);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    Menu createEditMenu(Menu parent) {
         Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
 
         MenuItem item = new MenuItem(parent, SWT.CASCADE);
@@ -528,7 +724,7 @@ public class SpinTools {
         return menu;
     }
 
-    protected Menu createToolsMenu(Menu parent) {
+    Menu createToolsMenu(Menu parent) {
         Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
 
         MenuItem item = new MenuItem(parent, SWT.CASCADE);
@@ -536,8 +732,23 @@ public class SpinTools {
         item.setMenu(menu);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to RAM\tCtrl+U");
-        item.setAccelerator(SWT.MOD1 + 'U');
+        item.setText("Compile\tF8");
+        item.setAccelerator(SWT.F8);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handleCompile();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Upload to RAM\tF9");
+        item.setAccelerator(SWT.F9);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -551,8 +762,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to Flash\tCtrl+Shift+U");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'U');
+        item.setText("Upload to Flash\tF10");
+        item.setAccelerator(SWT.F10);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -612,7 +823,234 @@ public class SpinTools {
         item.setMenu(menu);
     }
 
+    private void handleCompile() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem == null) {
+            return;
+        }
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+        if (editorTab.getText().toLowerCase().endsWith(".spin2")) {
+            handleInternalCompile();
+        }
+        else {
+            handleOpenSpinCompile();
+        }
+    }
+
+    private void handleInternalCompile() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem == null) {
+            return;
+        }
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+
+        String text = editorTab.getEditorText();
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+
+        IRunnableWithProgress thread = new IRunnableWithProgress() {
+
+            @Override
+            public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                monitor.beginTask("Compile and Upload", IProgressMonitor.UNKNOWN);
+
+                try {
+                    Spin2Parser parser = new Spin2Parser(stream);
+                    Node root = parser.parse();
+
+                    Spin2Compiler compiler = new Spin2Compiler();
+                    compiler.compile(root);
+
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    compiler.generateObjectCode(os);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                monitor.done();
+            }
+
+        };
+
+        ProgressMonitorDialog dlg = new ProgressMonitorDialog(shell);
+        try {
+            dlg.run(true, true, thread);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleOpenSpinCompile() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem == null) {
+            return;
+        }
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+        File editorFile = editorTab.getFile();
+
+        File file = new File(TempDirectory.location(), editorTab.getText());
+        File binaryFile = new File(TempDirectory.location(), editorTab.getText() + ".binary");
+        try {
+            file.getParentFile().mkdirs();
+
+            String source = editorTab.getEditorText();
+
+            Writer os = new OutputStreamWriter(new FileOutputStream(file));
+            os.write(source);
+            os.close();
+
+            Spin1TokenStream stream = new Spin1TokenStream(source);
+            Spin1Parser subject = new Spin1Parser(stream);
+            Node root = subject.parse();
+            root.accept(new NodeVisitor() {
+
+                @Override
+                public void visitObject(ObjectNode node) {
+                    String name = node.file.getText();
+                    if (name.startsWith("\"")) {
+                        name = name.substring(1);
+                    }
+                    if (name.endsWith("\"")) {
+                        name = name.substring(0, name.length() - 1);
+                    }
+                    exportObjectFile(name + ".spin");
+                }
+
+            });
+
+        } catch (Exception e1) {
+            e1.printStackTrace();
+            return;
+        }
+        //console.clear();
+
+        IRunnableWithProgress thread = new IRunnableWithProgress() {
+
+            @Override
+            public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                monitor.beginTask("Compile and Upload", IProgressMonitor.UNKNOWN);
+
+                try {
+                    String toolchainPath = "/home/marco/workspace/spin-tools/build/linux/";
+
+                    List<String> cmd = new ArrayList<String>();
+                    cmd.add(toolchainPath + "openspin");
+                    cmd.add("-b");
+                    cmd.add("-u");
+                    cmd.add("-L.");
+                    if (editorFile != null) {
+                        cmd.add("-L" + editorFile.getParent());
+                    }
+                    cmd.add("-o" + binaryFile.getName());
+                    cmd.add(file.getName());
+
+                    runCommand(cmd, TempDirectory.location());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                monitor.done();
+            }
+
+        };
+
+        ProgressMonitorDialog dlg = new ProgressMonitorDialog(shell);
+        try {
+            dlg.run(true, true, thread);
+
+            if (binaryFile.exists()) {
+                byte[] data = new byte[32768];
+                InputStream is = new FileInputStream(binaryFile);
+                is.read(data);
+                is.close();
+
+                MemoryDialog dlg2 = new MemoryDialog(shell);
+                dlg2.setData(data);
+                dlg2.open();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    void exportObjectFile(String name) {
+        CTabItem[] tabItem = tabFolder.getItems();
+        for (int i = 0; i < tabItem.length; i++) {
+            EditorTab editorTab = (EditorTab) tabItem[i].getData();
+            if (name.equals(editorTab.getText())) {
+                File file = new File(TempDirectory.location(), editorTab.getText());
+                try {
+                    Writer os = new OutputStreamWriter(new FileOutputStream(file));
+                    os.write(editorTab.getEditorText());
+                    os.close();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+    }
+
+    int runCommand(List<String> cmd, File outDir) throws IOException, InterruptedException {
+        PrintStream out = System.out;
+        PrintStream err = System.err;
+
+        ProcessBuilder builder = new ProcessBuilder(cmd);
+        builder.directory(outDir);
+
+        StringBuilder sb = new StringBuilder();
+        for (String s : cmd) {
+            if (sb.length() != 0) {
+                sb.append(" ");
+            }
+            sb.append(s);
+        }
+        out.println(sb.toString());
+
+        Process p = builder.start();
+        Thread ioStream = new Thread() {
+            int outLength, errLength;
+            byte[] buffer = new byte[1024];
+
+            @Override
+            public void run() {
+                try {
+                    InputStream outIs = p.getInputStream();
+                    InputStream errIs = p.getErrorStream();
+                    do {
+                        while ((outLength = outIs.read(buffer)) > 0) {
+                            out.write(buffer, 0, outLength);
+                        }
+                        while ((errLength = errIs.read(buffer)) > 0) {
+                            err.write(buffer, 0, errLength);
+                        }
+                    } while (outLength != -1 || errLength != -1);
+                    outIs.close();
+                    errIs.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        ioStream.start();
+
+        return p.waitFor();
+    }
+
     private void handleCompileAndUpload() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem == null) {
+            return;
+        }
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+        if (editorTab.getText().toLowerCase().endsWith(".spin2")) {
+            handleInternalCompileAndUpload();
+        }
+        else {
+            handleOpenSpinCompileAndUpload();
+        }
+    }
+
+    private void handleInternalCompileAndUpload() {
         CTabItem tabItem = tabFolder.getSelection();
         if (tabItem == null) {
             return;
@@ -621,7 +1059,7 @@ public class SpinTools {
 
         SerialTerminal serialTerminal = getSerialTerminal();
 
-        String text = editorTab.getEditor().getText();
+        String text = editorTab.getEditorText();
         Spin2TokenStream stream = new Spin2TokenStream(text);
 
         IRunnableWithProgress thread = new IRunnableWithProgress() {
@@ -700,6 +1138,117 @@ public class SpinTools {
                             }
                         });
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                monitor.done();
+            }
+
+        };
+
+        ProgressMonitorDialog dlg = new ProgressMonitorDialog(shell);
+        try {
+            dlg.run(true, true, thread);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleOpenSpinCompileAndUpload() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem == null) {
+            return;
+        }
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+        File editorFile = editorTab.getFile();
+
+        File file = new File(TempDirectory.location(), editorFile.getName());
+        File binaryFile = new File(TempDirectory.location(), editorFile.getName() + ".binary");
+        try {
+            file.getParentFile().mkdirs();
+
+            String source = editorTab.getEditorText();
+
+            Writer os = new OutputStreamWriter(new FileOutputStream(file));
+            os.write(source);
+            os.close();
+
+            Spin1TokenStream stream = new Spin1TokenStream(source);
+            Spin1Parser subject = new Spin1Parser(stream);
+            Node root = subject.parse();
+            root.accept(new NodeVisitor() {
+
+                @Override
+                public void visitObject(ObjectNode node) {
+                    String name = node.file.getText();
+                    if (name.startsWith("\"")) {
+                        name = name.substring(1);
+                    }
+                    if (name.endsWith("\"")) {
+                        name = name.substring(0, name.length() - 1);
+                    }
+                    exportObjectFile(name + ".spin");
+                }
+
+            });
+
+        } catch (Exception e1) {
+            e1.printStackTrace();
+            return;
+        }
+        //console.clear();
+
+        IRunnableWithProgress thread = new IRunnableWithProgress() {
+
+            @Override
+            public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                monitor.beginTask("Compile and Upload", IProgressMonitor.UNKNOWN);
+
+                try {
+                    String toolchainPath = "/home/marco/workspace/spin-tools/build/linux/";
+
+                    List<String> cmd = new ArrayList<String>();
+                    cmd.add(toolchainPath + "openspin");
+                    cmd.add("-b");
+                    cmd.add("-u");
+                    cmd.add("-L.");
+                    cmd.add("-L" + editorFile.getParent());
+                    cmd.add("-o" + binaryFile.getName());
+                    cmd.add(file.getName());
+
+                    runCommand(cmd, TempDirectory.location());
+
+                    PropellerLoader loader = new PropellerLoader(serialPortList.getSelection()) {
+
+                        @Override
+                        protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
+                            monitor.setTaskName("Loading " + text + " to RAM");
+                            super.bufferUpload(type, binaryImage, text);
+                        }
+
+                        @Override
+                        protected void notifyProgress(int sent, int total) {
+                            if (sent == total) {
+                                monitor.subTask(String.format("%d bytes sent", total));
+                            }
+                            else {
+                                monitor.subTask(String.format("%d bytes remaining", total - sent));
+                            }
+                        }
+
+                        @Override
+                        protected void verifyRam() throws SerialPortException, IOException {
+                            monitor.setTaskName("Verifying RAM ... ");
+                            super.verifyRam();
+                        }
+
+                    };
+
+                    if (binaryFile.exists()) {
+                        loader.upload(binaryFile, 0);
+                    }
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -879,6 +1428,8 @@ public class SpinTools {
                             display.sleep();
                         }
                     }
+
+                    TempDirectory.clean();
                 } catch (Exception e) {
                     e.printStackTrace();
                     return;

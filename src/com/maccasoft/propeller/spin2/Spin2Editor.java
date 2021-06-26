@@ -18,6 +18,7 @@ import java.util.Stack;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.fieldassist.IContentProposal;
@@ -111,6 +112,9 @@ public class Spin2Editor {
     TextChange currentChange;
     Stack<TextChange> undoStack = new Stack<TextChange>();
     Stack<TextChange> redoStack = new Stack<TextChange>();
+
+    boolean ignoreModify;
+    ListenerList<ModifyListener> modifyListeners = new ListenerList<ModifyListener>();
 
     class TextChange {
 
@@ -273,6 +277,12 @@ public class Spin2Editor {
             @Override
             public void modifyText(ModifyEvent e) {
                 //e.display.timerExec(500, refreshMarkersRunnable);
+                if (!ignoreModify) {
+                    Object[] l = modifyListeners.getListeners();
+                    for (int i = 0; i < l.length; i++) {
+                        ((ModifyListener) l[i]).modifyText(e);
+                    }
+                }
             }
         });
 
@@ -670,6 +680,14 @@ public class Spin2Editor {
         styledText.redraw();
     }
 
+    public void addModifyListener(ModifyListener l) {
+        modifyListeners.add(l);
+    }
+
+    public void removeModifyListener(ModifyListener l) {
+        modifyListeners.remove(l);
+    }
+
     public Control getControl() {
         return container;
     }
@@ -685,12 +703,14 @@ public class Spin2Editor {
             text = text.replaceAll("[ \\t]+(\r\n|\n|\r)", "$1");
             text = replaceTabs(text, styledText.getTabs());
 
+            ignoreModify = true;
             currentLine = 0;
             styledText.setText(text);
             undoStack.clear();
             redoStack.clear();
 
             modified = true;
+            ignoreModify = false;
 
         } finally {
             styledText.setRedraw(true);
@@ -731,6 +751,7 @@ public class Spin2Editor {
             int topindex = styledText.getTopIndex();
 
             styledText.setRedraw(false);
+            ignoreModify = true;
             try {
                 styledText.setText(result);
                 styledText.setTopIndex(topindex);
@@ -739,6 +760,7 @@ public class Spin2Editor {
                 styledText.setCaretOffset(styledText.getOffsetAtLine(line) + Math.min(column, ls.length()));
             } finally {
                 styledText.setRedraw(true);
+                ignoreModify = false;
             }
         }
         return result;

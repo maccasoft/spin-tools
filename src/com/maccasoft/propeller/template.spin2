@@ -1,0 +1,14 @@
+CON
+
+    _CLKFREQ = 160_000_000
+
+VAR
+
+OBJ
+
+PUB start()
+
+    ' initialization
+
+    repeat
+        ' loop

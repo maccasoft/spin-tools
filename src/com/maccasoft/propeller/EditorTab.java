@@ -13,13 +13,13 @@ package com.maccasoft.propeller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
 import com.maccasoft.propeller.spin2.Spin2Editor;
@@ -30,6 +30,9 @@ public class EditorTab {
     File file;
     Spin2Editor editor;
     CTabItem tabItem;
+
+    String tabItemText;
+    boolean dirty;
 
     final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
 
@@ -47,43 +50,44 @@ public class EditorTab {
         }
     };
 
-    public EditorTab(CTabFolder folder, File file) {
-        this.file = file;
+    public EditorTab(CTabFolder folder, String name) {
+        tabItem = new CTabItem(folder, SWT.NONE);
+        tabItem.setShowClose(true);
+        tabItem.setText(tabItemText = name);
+        tabItem.setData(this);
 
         editor = new Spin2Editor(folder);
         try {
-            if (file.getName().toLowerCase().endsWith(".spin2")) {
+            if (name.toLowerCase().endsWith(".spin2")) {
                 editor.setTokenMarker(new Spin2TokenMarker());
             }
             else {
                 editor.setTokenMarker(new Spin1TokenMarker());
             }
-            editor.setText(loadFromFile(file));
         } catch (Exception e) {
             e.printStackTrace();
         }
+        editor.addModifyListener(new ModifyListener() {
 
-        tabItem = new CTabItem(folder, SWT.NONE);
-        tabItem.setShowClose(true);
-        tabItem.setText(file.getName());
+            @Override
+            public void modifyText(ModifyEvent e) {
+                if (!dirty) {
+                    dirty = true;
+                    updateTabItemText();
+                }
+            }
+        });
+
         tabItem.setControl(editor.getControl());
-        tabItem.setData(this);
     }
 
-    String loadFromFile(File file) throws Exception {
-        String line;
-        StringBuilder sb = new StringBuilder();
-
-        if (file.exists()) {
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-                sb.append("\n");
-            }
-            reader.close();
+    void updateTabItemText() {
+        if (dirty) {
+            tabItem.setText("*" + tabItemText);
         }
-
-        return sb.toString();
+        else {
+            tabItem.setText(tabItemText);
+        }
     }
 
     public File getFile() {
@@ -105,7 +109,8 @@ public class EditorTab {
     }
 
     public void setText(String text) {
-        tabItem.setText(text);
+        tabItemText = text;
+        updateTabItemText();
     }
 
     public String getText() {
@@ -145,7 +150,22 @@ public class EditorTab {
         editor.redo();
     }
 
-    public Spin2Editor getEditor() {
-        return editor;
+    public void setEditorText(String text) {
+        editor.setText(text);
+    }
+
+    public String getEditorText() {
+        return editor.getText();
+    }
+
+    public void clearDirty() {
+        if (dirty) {
+            dirty = false;
+            updateTabItemText();
+        }
+    }
+
+    public boolean isDirty() {
+        return dirty;
     }
 }
