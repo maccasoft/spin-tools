@@ -20,4 +20,10 @@ public class ObjectNode extends Node {
         super(parent);
     }
 
+    @Override
+    public void accept(NodeVisitor visitor) {
+        visitor.visitObject(this);
+        super.accept(visitor);
+    }
+
 }

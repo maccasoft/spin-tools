@@ -40,6 +40,10 @@ public class NodeVisitor {
 
     }
 
+    public void visitObject(ObjectNode node) {
+
+    }
+
     public void visitMethod(MethodNode node) {
 
     }
