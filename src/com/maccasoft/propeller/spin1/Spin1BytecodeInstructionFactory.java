@@ -21,6 +21,7 @@ import com.maccasoft.propeller.spin1.bytecode.Abs;
 import com.maccasoft.propeller.spin1.bytecode.Add;
 import com.maccasoft.propeller.spin1.bytecode.AddAssign;
 import com.maccasoft.propeller.spin1.bytecode.And;
+import com.maccasoft.propeller.spin1.bytecode.Assign;
 import com.maccasoft.propeller.spin1.bytecode.BooleanAnd;
 import com.maccasoft.propeller.spin1.bytecode.BooleanNot;
 import com.maccasoft.propeller.spin1.bytecode.BooleanOr;
@@ -48,7 +49,6 @@ import com.maccasoft.propeller.spin1.bytecode.TestBelow;
 import com.maccasoft.propeller.spin1.bytecode.TestBelowOrEqual;
 import com.maccasoft.propeller.spin1.bytecode.TestEqual;
 import com.maccasoft.propeller.spin1.bytecode.TestNotEqual;
-import com.maccasoft.propeller.spin1.bytecode.VarWrite;
 import com.maccasoft.propeller.spin1.bytecode.Xor;
 
 public abstract class Spin1BytecodeInstructionFactory {
@@ -86,7 +86,7 @@ public abstract class Spin1BytecodeInstructionFactory {
         symbols.put("=>", new TestAboveOrEqual()); //  test above or equal (signed)
         symbols.put("NOT", new BooleanNot()); // boolean not
 
-        symbols.put(":=", new VarWrite());
+        symbols.put(":=", new Assign());
         symbols.put("+=", new AddAssign());
 
         symbols.put("COGID", new Cogid());

@@ -140,65 +140,76 @@ public class Spin1Compiler {
     }
 
     void determineClock() {
-        Expression clkmode = scope.getLocalSymbol("_CLKMODE");
-        if (clkmode == null) {
-            clkmode = scope.getLocalSymbol("_clkmode");
+        Expression _clkmode = scope.getLocalSymbol("_CLKMODE");
+        if (_clkmode == null) {
+            _clkmode = scope.getLocalSymbol("_clkmode");
         }
 
-        Expression clkfreq = scope.getLocalSymbol("_CLKFREQ");
-        if (clkfreq == null) {
-            clkfreq = scope.getLocalSymbol("_clkfreq");
+        Expression _clkfreq = scope.getLocalSymbol("_CLKFREQ");
+        if (_clkfreq == null) {
+            _clkfreq = scope.getLocalSymbol("_clkfreq");
         }
 
-        Expression xinfreq = scope.getLocalSymbol("_XINFREQ");
-        if (xinfreq == null) {
-            xinfreq = scope.getLocalSymbol("_xinfreq");
+        Expression _xinfreq = scope.getLocalSymbol("_XINFREQ");
+        if (_xinfreq == null) {
+            _xinfreq = scope.getLocalSymbol("_xinfreq");
         }
 
-        if (clkmode == null && clkfreq == null && xinfreq == null) {
-            scope.addSymbol("_CLKMODE", new NumberLiteral(0));
-            scope.addSymbol("_CLKFREQ", new NumberLiteral(12_000_000));
+        if (_clkmode == null && _clkfreq == null && _xinfreq == null) {
+            scope.addSymbol("CLKMODE", new NumberLiteral(0));
+            scope.addSymbol("CLKFREQ", new NumberLiteral(12_000_000));
             return;
         }
 
-        if (clkmode == null && (clkfreq != null || xinfreq != null)) {
+        if (_clkmode == null && (_clkfreq != null || _xinfreq != null)) {
             throw new RuntimeException("_CLKFREQ / _XINFREQ specified without _CLKMODE");
         }
-        if (clkfreq != null && xinfreq != null) {
+        if (_clkfreq != null && _xinfreq != null) {
             throw new RuntimeException("Either _CLKFREQ or _XINFREQ must be specified, but not both");
         }
 
-        int mode = clkmode.getNumber().intValue();
+        int mode = _clkmode.getNumber().intValue();
         if (mode == 0 || (mode & 0xFFFFF800) != 0 || (((mode & 0x03) != 0) && ((mode & 0x7FC) != 0))) {
             throw new RuntimeException("Invalid _CLKMODE specified");
         }
         if ((mode & 0x03) != 0) { // RCFAST or RCSLOW
-            if (clkfreq != null || xinfreq != null) {
+            if (_clkfreq != null || _xinfreq != null) {
                 throw new RuntimeException("_CLKFREQ / _XINFREQ not allowed with RCFAST / RCSLOW");
             }
 
-            scope.addSymbol("_CLKMODE", new NumberLiteral(mode == 2 ? 1 : 0));
-            scope.addSymbol("_CLKFREQ", new NumberLiteral(mode == 2 ? 20_000 : 12_000_000));
+            scope.addSymbol("CLKMODE", new NumberLiteral(mode == 2 ? 1 : 0));
+            scope.addSymbol("CLKFREQ", new NumberLiteral(mode == 2 ? 20_000 : 12_000_000));
             return;
         }
+
+        int bitPos = getBitPos((mode >> 2) & 0x0F);
+        int clkmode = (bitPos << 3) | 0x22;
 
         int freqshift = 0;
         if ((mode & 0x7C0) != 0) {
             freqshift = getBitPos(mode >> 6);
+            clkmode += freqshift + 0x41;
         }
-        if (xinfreq != null) {
-            scope.addSymbol("_CLKFREQ", new NumberLiteral(xinfreq.getNumber().intValue() << freqshift));
+        if (_xinfreq != null) {
+            scope.addSymbol("CLKFREQ", new NumberLiteral(_xinfreq.getNumber().intValue() << freqshift));
         }
+        scope.addSymbol("CLKMODE", new NumberLiteral(clkmode));
     }
 
     int getBitPos(int value) {
+        int bitCount = 0;
         int bitPos = 0;
 
         for (int i = 32; i > 0; i--) {
             if ((value & 0x01) != 0) {
                 bitPos = 32 - i;
+                bitCount++;
             }
             value >>= 1;
+        }
+
+        if (bitCount != 1) {
+            throw new RuntimeException("Invalid _CLKMODE specified");
         }
 
         return bitPos;
@@ -504,15 +515,18 @@ public class Spin1Compiler {
         if (node.getReturnVariables().size() != 0) {
             Node child = node.getReturnVariable(0);
             method.getScope().addSymbol(child.getText(), new LocalVariable(child.getText(), 0));
+            method.getScope().addSymbol("@" + child.getText(), new LocalVariable(child.getText(), 0));
         }
 
         int offset = 4;
         for (Node child : node.getParameters()) {
             method.getScope().addSymbol(child.getText(), new LocalVariable(child.getText(), offset));
+            method.getScope().addSymbol("@" + child.getText(), new LocalVariable(child.getText(), offset));
             offset += 4;
         }
         for (LocalVariableNode child : node.getLocalVariables()) {
             method.getScope().addSymbol(child.getIdentifier().getText(), new LocalVariable(child.getIdentifier().getText(), offset));
+            method.getScope().addSymbol("@" + child.getIdentifier().getText(), new LocalVariable(child.getIdentifier().getText(), offset));
 
             int size = 4;
             if (child.getType() != null) {
@@ -547,6 +561,17 @@ public class Spin1Compiler {
 
         List<Token> tokens = node.getTokens();
         int state = 0;
+
+        if (tokens.size() != 0) {
+            if ("REPEAT".equalsIgnoreCase(tokens.get(0).getText())) {
+                for (Node child : node.getChilds()) {
+                    if (child instanceof StatementNode) {
+                        compileStatementBlock(method, child);
+                    }
+                }
+                return;
+            }
+        }
 
         for (int i = 0; i < tokens.size(); i++) {
             Token token = tokens.get(i);
@@ -585,7 +610,8 @@ public class Spin1Compiler {
 
         Spin1BytecodeExpression expression = compiler.getExpression();
         print(expression, 0);
-        method.source.add(new Spin1BytecodeLine(new Spin1Context(method.getScope()), null, expression.getText(), expression.getChilds()));
+        expression.generateObjectCode(method.getScope(), false);
+        //method.source.add(new Spin1BytecodeLine(new Spin1Context(method.getScope()), null, expression.getText(), expression.getChilds()));
 
         for (Node child : node.getChilds()) {
             if (child instanceof StatementNode) {
@@ -613,18 +639,18 @@ public class Spin1Compiler {
     public void generateObjectCode(OutputStream os, PrintStream out) throws Exception {
         int address = 0;
 
-        int clkfreq = scope.getInteger("_CLKFREQ");
+        int clkfreq = scope.getInteger("CLKFREQ");
         writeInt(os, clkfreq);
         out.print(String.format("%04X    ", address));
         out.print(String.format(" %02X %02X %02X %02X", clkfreq & 0xFF, (clkfreq >> 8) & 0xFF, (clkfreq >> 16) & 0xFF, (clkfreq >> 24) & 0xFF));
-        out.println("    | " + "_CLKFREQ");
+        out.println("    | " + "CLKFREQ");
         address += 4;
 
-        int clkmode = scope.getInteger("_CLKMODE");
+        int clkmode = scope.getInteger("CLKMODE");
         os.write(clkmode);
         out.print(String.format("%04X    ", address));
         out.print(String.format(" %02X         ", clkmode & 0xFF));
-        out.println("    | " + "_CLKMODE");
+        out.println("    | " + "CLKMODE");
         address += 1;
 
         os.write(0x00);
@@ -800,19 +826,11 @@ public class Spin1Compiler {
 
     public static void main(String[] args) {
         String text = ""
-            + "PUB main | a, b\n"
+            + "PUB main | a\n"
             + "\n"
-            + "    (1 + 2)\n"
-            + "    a := 1 + 2 * 3\n"
-            + "    b := (1 + 2) * 3\n"
-            + "    coginit(cogid, @start, 0)\n"
-            + "\n"
-            + "DAT             org     $000\n"
-            + "\n"
-            + "start           cogid   id\n"
-            + "                cogstop id\n"
-            + "\n"
-            + "id              res     1\n"
+            + "    a := CNT\n"
+            + "    repeat\n"
+            + "        waitcnt(a += 1_000)\n"
             + "";
 
         try {

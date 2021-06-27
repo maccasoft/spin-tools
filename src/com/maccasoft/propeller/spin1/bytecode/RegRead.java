@@ -21,6 +21,10 @@ public class RegRead extends Spin1BytecodeInstructionFactory {
 
     @Override
     public Spin1BytecodeInstructionObject createObject(Spin1BytecodeLine line) {
+        if (line.getScope().hasSymbol(line.getMnemonic())) {
+            Expression expression = line.getScope().getSymbol(line.getMnemonic());
+            return new RegRead_(line.getScope(), expression);
+        }
         return new RegRead_(line.getScope(), new NumberLiteral(line.getMnemonic()));
     }
 
@@ -35,6 +39,9 @@ public class RegRead extends Spin1BytecodeInstructionFactory {
 
         @Override
         public byte[] getBytes() {
+            //                                                            ++-------- 00 read, 01 write, 10 assign
+            //                                                            || +++++-- register offset from 0x1E0
+            //                                                            || |||||
             return new byte[] {
                 (byte) 0x3F,
                 (byte) ((expression.getNumber().intValue() - 0x1E0) | 0b1_00_00000),

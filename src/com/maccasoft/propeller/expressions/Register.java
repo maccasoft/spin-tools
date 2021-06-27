@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2021 Marco Maccaferri and others.
  * All rights reserved.
- * 
+ *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License v1.0 which accompanies this
  * distribution, and is available at
@@ -10,10 +10,22 @@
 
 package com.maccasoft.propeller.expressions;
 
-public class Register extends Identifier {
+public class Register extends Literal {
 
-    public Register(String name, Context context) {
-        super(name, context);
+    int address;
+
+    public Register(int address) {
+        this.address = address;
+    }
+
+    @Override
+    public boolean isNumber() {
+        return true;
+    }
+
+    @Override
+    public Number getNumber() {
+        return Long.valueOf(address);
     }
 
 }

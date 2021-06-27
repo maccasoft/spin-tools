@@ -321,9 +321,6 @@ public class Spin1BytecodeExpressionCompiler {
         else if ("(".equals(token.getText())) {
             operator = new GroupOperator(token);
         }
-        else if ("[".equals(token.getText())) {
-            operator = new UnaryOperator(token);
-        }
         else {
             operator = new BinaryOperator(token);
         }

@@ -12,26 +12,27 @@ package com.maccasoft.propeller.spin1;
 
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.Register;
 
 public class Spin1GlobalContext extends Spin1Context {
 
     public Spin1GlobalContext() {
-        addBuiltinSymbol("PAR", new NumberLiteral("$1F0"));
-        addBuiltinSymbol("CNT", new NumberLiteral("$1F1"));
-        addBuiltinSymbol("INA", new NumberLiteral("$1F2"));
-        addBuiltinSymbol("INB", new NumberLiteral("$1F3"));
-        addBuiltinSymbol("OUTA", new NumberLiteral("$1F4"));
-        addBuiltinSymbol("OUTB", new NumberLiteral("$1F5"));
-        addBuiltinSymbol("DIRA", new NumberLiteral("$1F6"));
-        addBuiltinSymbol("DIRB", new NumberLiteral("$1F7"));
-        addBuiltinSymbol("CTRA", new NumberLiteral("$1F8"));
-        addBuiltinSymbol("CTRB", new NumberLiteral("$1F9"));
-        addBuiltinSymbol("FRQA", new NumberLiteral("$1FA"));
-        addBuiltinSymbol("FRQB", new NumberLiteral("$1FB"));
-        addBuiltinSymbol("PHSA", new NumberLiteral("$1FC"));
-        addBuiltinSymbol("PHSB", new NumberLiteral("$1FD"));
-        addBuiltinSymbol("VCFG", new NumberLiteral("$1FE"));
-        addBuiltinSymbol("VSCL", new NumberLiteral("$1FF"));
+        addBuiltinSymbol("PAR", new Register(0x1F0));
+        addBuiltinSymbol("CNT", new Register(0x1F1));
+        addBuiltinSymbol("INA", new Register(0x1F2));
+        addBuiltinSymbol("INB", new Register(0x1F3));
+        addBuiltinSymbol("OUTA", new Register(0x1F4));
+        addBuiltinSymbol("OUTB", new Register(0x1F5));
+        addBuiltinSymbol("DIRA", new Register(0x1F6));
+        addBuiltinSymbol("DIRB", new Register(0x1F7));
+        addBuiltinSymbol("CTRA", new Register(0x1F8));
+        addBuiltinSymbol("CTRB", new Register(0x1F9));
+        addBuiltinSymbol("FRQA", new Register(0x1FA));
+        addBuiltinSymbol("FRQB", new Register(0x1FB));
+        addBuiltinSymbol("PHSA", new Register(0x1FC));
+        addBuiltinSymbol("PHSB", new Register(0x1FD));
+        addBuiltinSymbol("VCFG", new Register(0x1FE));
+        addBuiltinSymbol("VSCL", new Register(0x1FF));
 
         addBuiltinSymbol("TRUE", new NumberLiteral(-1));
         addBuiltinSymbol("FALSE", new NumberLiteral(0));
