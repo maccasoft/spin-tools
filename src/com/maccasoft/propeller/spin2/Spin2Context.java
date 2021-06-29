@@ -28,6 +28,7 @@ public class Spin2Context implements Context {
     boolean set;
 
     int hubAddress;
+    int objectOffset;
 
     public Spin2Context() {
     }
@@ -96,6 +97,15 @@ public class Spin2Context implements Context {
 
     public void setHubAddress(int hubAddress) {
         this.hubAddress = hubAddress;
+    }
+
+    @Override
+    public int getObjectOffset() {
+        return objectOffset;
+    }
+
+    public void setObjectOffset(int objectOffset) {
+        this.objectOffset = objectOffset;
     }
 
 }

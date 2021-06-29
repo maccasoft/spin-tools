@@ -40,6 +40,12 @@ class ExpressionTest {
         public int getHubAddress() {
             return 0;
         }
+
+        @Override
+        public int getObjectOffset() {
+            return 0;
+        }
+
     }
 
     @Test
@@ -68,14 +74,13 @@ class ExpressionTest {
         SimpleContext context = new SimpleContext();
         context.symbols.put("a", new NumberLiteral(1));
 
-        Expression exp = new Variable("a", context);
+        Expression exp = new Variable("a", 0);
         Assertions.assertFalse(exp.isConstant());
     }
 
     @Test
     void testVariableBinaryExpressionIsConstant() {
-        SimpleContext context = new SimpleContext();
-        Expression exp = new Add(new NumberLiteral(1), new Variable("a", context));
+        Expression exp = new Add(new NumberLiteral(1), new Variable("a", 0));
         Assertions.assertFalse(exp.isConstant());
     }
 

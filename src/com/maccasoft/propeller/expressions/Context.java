@@ -10,4 +10,6 @@ public interface Context {
 
     public int getHubAddress();
 
+    public int getObjectOffset();
+
 }

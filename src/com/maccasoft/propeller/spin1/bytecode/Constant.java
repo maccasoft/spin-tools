@@ -10,19 +10,25 @@
 
 package com.maccasoft.propeller.spin1.bytecode;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionFactory;
 import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionObject;
-import com.maccasoft.propeller.spin1.Spin1BytecodeLine;
-import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class Constant extends Spin1BytecodeInstructionFactory {
+public class Constant extends Spin1BytecodeInstructionObject {
 
-    public static byte[] compileConstant(int value) {
+    public Expression expression;
+
+    public Constant(Expression expression) {
+        this.expression = expression;
+    }
+
+    @Override
+    public int getSize() {
+        return getBytes().length;
+    }
+
+    @Override
+    public byte[] getBytes() {
+        int value = expression.getNumber().intValue();
 
         if (value == -1 || value == 0 || value == 1) {
             return new byte[] {
@@ -30,7 +36,7 @@ public class Constant extends Spin1BytecodeInstructionFactory {
             };
         }
 
-        for (int i = 0; i < 128; i++) {
+        /*for (int i = 0; i < 128; i++) {
             int testVal = 2;
             testVal <<= (i & 0x1F); // mask i, so that we only actually shift 0 to 31
 
@@ -46,7 +52,7 @@ public class Constant extends Spin1BytecodeInstructionFactory {
                     0x37, (byte) i
                 };
             }
-        }
+        }*/
 
         if ((value & 0xFFFFFF00) == 0xFFFFFF00) {
             return new byte[] {
@@ -80,42 +86,11 @@ public class Constant extends Spin1BytecodeInstructionFactory {
                 0x37 + 1, (byte) value
             };
         }
-
     }
 
     @Override
-    public Spin1BytecodeInstructionObject createObject(Spin1BytecodeLine line) {
-        try {
-            return new Constant_(line.getScope(), new NumberLiteral(line.getMnemonic()));
-        } catch (Exception e) {
-            return new Constant_(line.getScope(), new com.maccasoft.propeller.expressions.Identifier(line.getMnemonic(), line.getScope()));
-        }
-    }
-
-    @Override
-    public List<Spin1BytecodeLine> expand(Spin1BytecodeLine line) {
-        return Collections.singletonList(line);
-    }
-
-    class Constant_ extends Spin1BytecodeInstructionObject {
-
-        Expression expression;
-
-        public Constant_(Spin1Context context, Expression expression) {
-            super(context);
-            this.expression = expression;
-        }
-
-        @Override
-        public byte[] getBytes() {
-            int value = expression.getNumber().intValue();
-            return compileConstant(value);
-        }
-
-        @Override
-        public String toString() {
-            return "CONSTANT " + expression;
-        }
+    public String toString() {
+        return "CONSTANT (" + expression + ")";
     }
 
 }

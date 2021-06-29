@@ -10,18 +10,14 @@
 
 package com.maccasoft.propeller.expressions;
 
-public class Variable extends Passthrough {
+public class Variable extends Literal {
 
     String name;
-    Context context;
+    int offset;
 
-    public Variable(String name, Context context) {
+    public Variable(String name, int offset) {
         this.name = name;
-        this.context = context;
-    }
-
-    public String getName() {
-        return name;
+        this.offset = offset;
     }
 
     @Override
@@ -30,8 +26,13 @@ public class Variable extends Passthrough {
     }
 
     @Override
-    public Expression resolve() {
-        return context.getSymbol(name);
+    public boolean isNumber() {
+        return true;
+    }
+
+    @Override
+    public Number getNumber() {
+        return Long.valueOf(offset);
     }
 
     @Override
