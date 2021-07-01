@@ -45,7 +45,7 @@ class Spin1ModelTest {
 
         Node node1 = subject.getNodeAt(15);
         Assertions.assertEquals(StatementNode.class, node1.getClass());
-        Assertions.assertEquals("method1", node1.getText());
+        Assertions.assertEquals("    method1", node1.getText());
 
         Node node2 = subject.getNodeAt(67);
         Assertions.assertEquals(MethodNode.class, node2.getClass());

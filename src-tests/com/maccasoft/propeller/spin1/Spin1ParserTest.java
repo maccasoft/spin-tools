@@ -285,8 +285,8 @@ class Spin1ParserTest {
         MethodNode pub0 = (MethodNode) root.getChild(0);
         Assertions.assertEquals(2, pub0.getChilds().size());
 
-        Assertions.assertEquals("method1", pub0.getChild(0).getText());
-        Assertions.assertEquals("repeat\n        method2", pub0.getChild(1).getText());
+        Assertions.assertEquals("    method1", pub0.getChild(0).getText());
+        Assertions.assertEquals("    repeat", pub0.getChild(1).getText());
 
         Assertions.assertEquals(StatementNode.class, pub0.getChild(0).getClass());
         Assertions.assertEquals(StatementNode.class, pub0.getChild(1).getClass());

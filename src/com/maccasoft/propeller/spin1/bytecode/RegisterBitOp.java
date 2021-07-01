@@ -15,7 +15,7 @@ import org.apache.commons.lang3.BitField;
 import com.maccasoft.propeller.spin1.Spin1BytecodeInstruction;
 import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class RegisterOp extends Spin1BytecodeInstruction {
+public class RegisterBitOp extends Spin1BytecodeInstruction {
 
     static final BitField op_oo = new BitField(0b0_11_00000);
     static final BitField op_xxxxx = new BitField(0b0_00_11111);
@@ -28,13 +28,13 @@ public class RegisterOp extends Spin1BytecodeInstruction {
     public int value;
     public int mathOp;
 
-    public RegisterOp(Spin1Context context, Op oo, int value) {
+    public RegisterBitOp(Spin1Context context, Op oo, int value) {
         super(context);
         this.oo = oo;
         this.value = value;
     }
 
-    public RegisterOp(Spin1Context context, Op oo, int value, int mathOp) {
+    public RegisterBitOp(Spin1Context context, Op oo, int value, int mathOp) {
         super(context);
         this.oo = oo;
         this.value = value;
@@ -54,18 +54,18 @@ public class RegisterOp extends Spin1BytecodeInstruction {
 
         if (oo == Op.Assign) {
             return new byte[] {
-                0b00111111, (byte) b1, (byte) mathOp
+                0b00111101, (byte) b1, (byte) mathOp
             };
         }
 
         return new byte[] {
-            0b00111111, (byte) b1
+            0b00111101, (byte) b1
         };
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("REG_");
+        StringBuilder sb = new StringBuilder("REGBIT_");
         switch (oo) {
             case Read:
                 sb.append("READ");

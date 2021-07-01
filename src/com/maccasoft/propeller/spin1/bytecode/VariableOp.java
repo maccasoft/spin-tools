@@ -13,9 +13,10 @@ package com.maccasoft.propeller.spin1.bytecode;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstruction;
+import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class VariableOp extends Spin1BytecodeInstructionObject {
+public class VariableOp extends Spin1BytecodeInstruction {
 
     static final BitField op_b = new BitField(0b00_1_000_00);
     static final BitField op_oo = new BitField(0b00_0_000_11);
@@ -69,18 +70,21 @@ public class VariableOp extends Spin1BytecodeInstructionObject {
     public Expression value;
     public int mathOp;
 
-    VariableOp() {
+    VariableOp(Spin1Context context) {
+        super(context);
         b = Base.DBase;
         oo = Op.Read;
     }
 
-    public VariableOp(Base b, Op oo, Expression value) {
+    public VariableOp(Spin1Context context, Base b, Op oo, Expression value) {
+        super(context);
         this.b = b;
         this.oo = oo;
         this.value = value;
     }
 
-    public VariableOp(Base b, Op oo, Expression value, int mathOp) {
+    public VariableOp(Spin1Context context, Base b, Op oo, Expression value, int mathOp) {
+        super(context);
         this.b = b;
         this.oo = oo;
         this.value = value;

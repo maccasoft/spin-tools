@@ -18,7 +18,7 @@ import java.util.Map;
 
 import com.maccasoft.propeller.model.Token;
 
-public class Spin1BytecodeExpressionCompiler {
+public class Spin1BytecodeParser {
 
     static final int LEFT_TO_RIGHT = 0;
     static final int RIGHT_TO_LEFT = 1;
@@ -133,7 +133,7 @@ public class Spin1BytecodeExpressionCompiler {
             }
         }
 
-        public abstract Spin1BytecodeExpression evaluate();
+        public abstract Spin1BytecodeNode evaluate();
 
         @Override
         public String toString() {
@@ -146,12 +146,12 @@ public class Spin1BytecodeExpressionCompiler {
         public UnaryOperator(Token token) {
             this.token = token;
             this.precedence = operatorPrecedence.get(token.getText());
-            this.associativity = LEFT_TO_RIGHT;
+            this.associativity = RIGHT_TO_LEFT;
         }
 
         @Override
-        public Spin1BytecodeExpression evaluate() {
-            Spin1BytecodeExpression result = new Spin1BytecodeExpression(token);
+        public Spin1BytecodeNode evaluate() {
+            Spin1BytecodeNode result = new Spin1BytecodeNode(token);
             result.addChild(operands.pop());
             return result;
         }
@@ -167,8 +167,8 @@ public class Spin1BytecodeExpressionCompiler {
         }
 
         @Override
-        public Spin1BytecodeExpression evaluate() {
-            Spin1BytecodeExpression result = new Spin1BytecodeExpression(token);
+        public Spin1BytecodeNode evaluate() {
+            Spin1BytecodeNode result = new Spin1BytecodeNode(token);
             result.addChild(operands.pop());
             return result;
         }
@@ -184,9 +184,9 @@ public class Spin1BytecodeExpressionCompiler {
         }
 
         @Override
-        public Spin1BytecodeExpression evaluate() {
-            Spin1BytecodeExpression right = operands.pop();
-            Spin1BytecodeExpression result = new Spin1BytecodeExpression(token);
+        public Spin1BytecodeNode evaluate() {
+            Spin1BytecodeNode right = operands.pop();
+            Spin1BytecodeNode result = new Spin1BytecodeNode(token);
             result.addChild(operands.pop());
             result.addChild(right);
             return result;
@@ -206,9 +206,9 @@ public class Spin1BytecodeExpressionCompiler {
         }
 
         @Override
-        public Spin1BytecodeExpression evaluate() {
-            Spin1BytecodeExpression right = operands.pop();
-            Spin1BytecodeExpression result = new Spin1BytecodeExpression(name);
+        public Spin1BytecodeNode evaluate() {
+            Spin1BytecodeNode right = operands.pop();
+            Spin1BytecodeNode result = new Spin1BytecodeNode(name);
             result.addChild(right);
             return result;
         }
@@ -224,16 +224,16 @@ public class Spin1BytecodeExpressionCompiler {
         }
 
         @Override
-        public Spin1BytecodeExpression evaluate() {
-            Spin1BytecodeExpression node0 = operands.pop();
-            Spin1BytecodeExpression node1 = operands.pop();
+        public Spin1BytecodeNode evaluate() {
+            Spin1BytecodeNode node0 = operands.pop();
+            Spin1BytecodeNode node1 = operands.pop();
 
             if (",".equals(node0.getText())) {
                 node0.childs.add(0, node1);
                 return node0;
             }
 
-            Spin1BytecodeExpression result = new Spin1BytecodeExpression(token);
+            Spin1BytecodeNode result = new Spin1BytecodeNode(token);
             result.addChild(node1);
             result.addChild(node0);
             return result;
@@ -242,13 +242,13 @@ public class Spin1BytecodeExpressionCompiler {
     }
 
     int state;
-    Deque<Spin1BytecodeExpression> operands = new ArrayDeque<Spin1BytecodeExpression>();
+    Deque<Spin1BytecodeNode> operands = new ArrayDeque<Spin1BytecodeNode>();
     Deque<Operator> operators = new ArrayDeque<Operator>();
 
     public final Operator SENTINEL = new Operator(99, RIGHT_TO_LEFT) {
 
         @Override
-        public Spin1BytecodeExpression evaluate() {
+        public Spin1BytecodeNode evaluate() {
             throw new RuntimeException("Can not evaluate sentinel.");
         }
 
@@ -258,11 +258,11 @@ public class Spin1BytecodeExpressionCompiler {
         };
     };
 
-    public Spin1BytecodeExpressionCompiler() {
+    public Spin1BytecodeParser() {
         operators.push(SENTINEL);
     }
 
-    public Spin1BytecodeExpression getExpression(List<Token> tokens) {
+    public Spin1BytecodeNode getExpression(List<Token> tokens) {
         int state = 0;
 
         for (int i = 0; i < tokens.size(); i++) {
@@ -309,7 +309,7 @@ public class Spin1BytecodeExpressionCompiler {
     }
 
     public void addValueToken(Token token) {
-        Spin1BytecodeExpression operand = new Spin1BytecodeExpression(token);
+        Spin1BytecodeNode operand = new Spin1BytecodeNode(token);
         operands.push(operand);
     }
 
@@ -365,7 +365,7 @@ public class Spin1BytecodeExpressionCompiler {
         }
     }
 
-    public Spin1BytecodeExpression getExpression() {
+    public Spin1BytecodeNode getExpression() {
         if (operands.isEmpty() || operators.isEmpty()) {
             throw new RuntimeException("Operands / operators is empty: " + this);
         }

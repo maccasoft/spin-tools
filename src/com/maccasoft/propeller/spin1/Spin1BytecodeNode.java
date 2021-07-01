@@ -17,11 +17,11 @@ import java.util.Map;
 
 import com.maccasoft.propeller.model.Token;
 
-public class Spin1BytecodeExpression {
+public class Spin1BytecodeNode {
 
     int type;
     String text;
-    List<Spin1BytecodeExpression> childs = new ArrayList<Spin1BytecodeExpression>();
+    List<Spin1BytecodeNode> childs = new ArrayList<Spin1BytecodeNode>();
 
     static Map<String, Integer> mathOps = new HashMap<String, Integer>();
     static {
@@ -131,20 +131,20 @@ public class Spin1BytecodeExpression {
         mathOpsText.put(0b000_11111, "BOOLEAN_NOT"); // boolean not
     }
 
-    public Spin1BytecodeExpression(String text) {
+    public Spin1BytecodeNode(String text) {
         this.text = text;
     }
 
-    public Spin1BytecodeExpression(Token token) {
+    public Spin1BytecodeNode(Token token) {
         this.type = token.type;
         this.text = token.getText();
     }
 
-    public void addChild(Spin1BytecodeExpression node) {
+    public void addChild(Spin1BytecodeNode node) {
         childs.add(node);
     }
 
-    public List<Spin1BytecodeExpression> getChilds() {
+    public List<Spin1BytecodeNode> getChilds() {
         return childs;
     }
 

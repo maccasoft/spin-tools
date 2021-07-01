@@ -11,13 +11,15 @@
 package com.maccasoft.propeller.spin1.bytecode;
 
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstruction;
+import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class Constant extends Spin1BytecodeInstructionObject {
+public class Constant extends Spin1BytecodeInstruction {
 
     public Expression expression;
 
-    public Constant(Expression expression) {
+    public Constant(Spin1Context context, Expression expression) {
+        super(context);
         this.expression = expression;
     }
 
@@ -39,14 +41,14 @@ public class Constant extends Spin1BytecodeInstructionObject {
         /*for (int i = 0; i < 128; i++) {
             int testVal = 2;
             testVal <<= (i & 0x1F); // mask i, so that we only actually shift 0 to 31
-
+        
             if ((i & 0x20) != 0) {// i in range 32 to 63 or 96 to 127
                 testVal--;
             }
             if ((i & 0x40) != 0) {// i in range 64 to 127
                 testVal = ~testVal;
             }
-
+        
             if (testVal == value) {
                 return new byte[] {
                     0x37, (byte) i

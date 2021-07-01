@@ -128,6 +128,42 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
+    void testCompileMath() throws Exception {
+        String text = ""
+            + "PUB main() | a, b, c\n"
+            + "\n"
+            + "    a := 1\n"
+            + "    b := 2\n"
+            + "    c := a + b * 3\n"
+            + "";
+
+        byte[] expected = new byte[] {};
+        /* 88 10 00 00    PBASE $1088     */
+        /* 9C 10 00 00    VBASE $109C FIRST PUB @$0000 */
+        /* A0 10 00 00    DBASE $10A0     */
+        /* 00 01 00 00    CLEAR $0010     */
+
+        /* 1088 - 08 00 00 80           PUB @$00008 + (PAR_COUNT << 24)  */
+        /* 108C - 14 00 00 00                    */
+        /*                                       */
+        /* 1090 (0008) - 0C             STACK SIZE (RFVAR) */
+        /* 1091 (0009) - A2             CONSTANT (1)    */
+        /* 1092 (000A) - F0             WRITE DBASE+$0  */
+        /* 1093 (000B) - A3             CONSTANT (2)    */
+        /* 1094 (000C) - F1             WRITE DBASE+$1  */
+        /* 1095 (000D) - E0             READ DBASE +$0  */
+        /* 1096 (000E) - E1             READ DBASE +$1  */
+        /* 1097 (000F) - A4             CONSTANT (3)    */
+        /* 1098 (0010) - 96             MULTIPLY        */
+        /* 1099 (0011) - 8A             ADD             */
+        /* 109A (0012) - F2             WRITE DBASE +$2 */
+        /* 109B (0013) - 04             RETURN          */
+
+        byte[] result = compile(text);
+        Assertions.assertArrayEquals(expected, result);
+    }
+
+    @Test
     void testCompileBlinkSpin() throws Exception {
         String text = ""
             + "CON\n"
@@ -147,9 +183,10 @@ class Spin2CompilerFunctionalTest {
         /* A8 10 00 00    DBASE $10A8     */
         /* 00 01 00 00    CLEAR $0010     */
 
-        /* 1088 - 08 00 00       CALL 0.0        */
-        /* 108B - 80 19          3200?           */
-        /* 108D - 00 00 00 04                    */
+        /* 1088 - 08 00 00 80                    */
+        /* 108C - 19 00 00 00                    */
+        /*                                       */
+        /* 1090 - 04             (stack size)    */
         /*                                       */ /* PUB main()                                              */
         /* 1091 - 33             GETCT           */ /*     ct := getct()                   ' get current timer */
         /* 1092 - F0             +-> ct          */ /*                                                         */

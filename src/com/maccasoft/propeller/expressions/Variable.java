@@ -12,12 +12,28 @@ package com.maccasoft.propeller.expressions;
 
 public class Variable extends Literal {
 
+    String type;
     String name;
+    Expression size;
     int offset;
 
-    public Variable(String name, int offset) {
+    public Variable(String type, String name, Expression size, int offset) {
+        this.type = type;
         this.name = name;
+        this.size = size;
         this.offset = offset;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public Expression getSize() {
+        return size;
+    }
+
+    public int getOffset() {
+        return offset;
     }
 
     @Override

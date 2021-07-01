@@ -8,31 +8,26 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin1.bytecode;
+package com.maccasoft.propeller.spin2.bytecode;
 
-import com.maccasoft.propeller.spin1.Spin1BytecodeInstruction;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.spin2.Spin2Bytecode;
+import com.maccasoft.propeller.spin2.Spin2Context;
 
-public class Bytecode extends Spin1BytecodeInstruction {
+public class Bytecode extends Spin2Bytecode {
 
-    public int value;
-    public String text;
+    int code;
+    String text;
 
-    public Bytecode(Spin1Context context, int value, String text) {
-        super(context);
-        this.value = value;
+    public Bytecode(Spin2Context context, String label, int code, String text) {
+        super(context, label);
+        this.code = code;
         this.text = text;
-    }
-
-    @Override
-    public int getSize() {
-        return 1;
     }
 
     @Override
     public byte[] getBytes() {
         return new byte[] {
-            (byte) value
+            (byte) code
         };
     }
 

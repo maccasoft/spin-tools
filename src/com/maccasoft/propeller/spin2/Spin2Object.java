@@ -8,7 +8,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin1;
+package com.maccasoft.propeller.spin2;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,7 +16,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Spin1Object {
+public class Spin2Object {
 
     int size;
     List<DataObject> data = new ArrayList<DataObject>();
@@ -60,9 +60,9 @@ public class Spin1Object {
 
     public static class LongDataObject extends DataObject {
 
-        int value;
+        long value;
 
-        public LongDataObject(int value) {
+        public LongDataObject(long value) {
             super(new byte[] {
                 (byte) value,
                 (byte) (value >> 8),
@@ -72,7 +72,7 @@ public class Spin1Object {
             this.value = value;
         }
 
-        public LongDataObject(int value, String text) {
+        public LongDataObject(long value, String text) {
             super(new byte[] {
                 (byte) value,
                 (byte) (value >> 8),
@@ -82,11 +82,11 @@ public class Spin1Object {
             this.value = value;
         }
 
-        public int getValue() {
+        public long getValue() {
             return value;
         }
 
-        public void setValue(int value) {
+        public void setValue(long value) {
             this.bytes = new byte[] {
                 (byte) value,
                 (byte) (value >> 8),
@@ -199,18 +199,18 @@ public class Spin1Object {
 
     }
 
-    public Spin1Object() {
+    public Spin2Object() {
 
     }
 
-    public LongDataObject writeLong(int value) {
+    public LongDataObject writeLong(long value) {
         LongDataObject rc = new LongDataObject(value);
         data.add(rc);
         size += 4;
         return rc;
     }
 
-    public LongDataObject writeLong(int value, String text) {
+    public LongDataObject writeLong(long value, String text) {
         LongDataObject rc = new LongDataObject(value, text);
         data.add(rc);
         size += 4;

@@ -8,28 +8,24 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin1;
+package com.maccasoft.propeller.spin2;
 
-public abstract class Spin1BytecodeInstructionObject {
+public class Spin1BytecodeLine {
 
+    Spin2Context scope;
     String label;
 
-    public Spin1BytecodeInstructionObject() {
-
+    public Spin1BytecodeLine(Spin2Context scope, String label) {
+        this.scope = scope;
+        this.label = label;
     }
 
-    public Spin1BytecodeInstructionObject(String label) {
-        this.label = label;
+    public Spin2Context getScope() {
+        return scope;
     }
 
     public String getLabel() {
         return label;
     }
-
-    public int getSize() {
-        return 1;
-    }
-
-    public abstract byte[] getBytes();
 
 }

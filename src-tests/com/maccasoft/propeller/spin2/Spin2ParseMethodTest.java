@@ -325,10 +325,9 @@ class Spin2ParseMethodTest {
         Assertions.assertEquals(1, pub0.getChild(0).getChilds().size());
 
         Assertions.assertEquals(""
-            + "repeat\n"
-            + "        a := b", pub0.getChild(0).getText());
+            + "    repeat", pub0.getChild(0).getText());
         Assertions.assertEquals(""
-            + "a := b", pub0.getChild(0).getChild(0).getText());
+            + "        a := b", pub0.getChild(0).getChild(0).getText());
     }
 
     @Test
@@ -349,12 +348,11 @@ class Spin2ParseMethodTest {
         Assertions.assertEquals(1, pub0.getChild(1).getChilds().size());
 
         Assertions.assertEquals(""
-            + "repeat", pub0.getChild(0).getText());
+            + "    repeat", pub0.getChild(0).getText());
         Assertions.assertEquals(""
-            + "if\n"
-            + "        a := b", pub0.getChild(1).getText());
+            + "    if", pub0.getChild(1).getText());
         Assertions.assertEquals(""
-            + "a := b", pub0.getChild(1).getChild(0).getText());
+            + "        a := b", pub0.getChild(1).getChild(0).getText());
     }
 
     @Test
@@ -374,13 +372,11 @@ class Spin2ParseMethodTest {
         Assertions.assertEquals(2, pub0.getChild(0).getChilds().size());
 
         Assertions.assertEquals(""
-            + "repeat\n"
-            + "        a := b\n"
-            + "         c := d", pub0.getChild(0).getText());
+            + "    repeat", pub0.getChild(0).getText());
         Assertions.assertEquals(""
-            + "a := b", pub0.getChild(0).getChild(0).getText());
+            + "        a := b", pub0.getChild(0).getChild(0).getText());
         Assertions.assertEquals(""
-            + "c := d", pub0.getChild(0).getChild(1).getText());
+            + "         c := d", pub0.getChild(0).getChild(1).getText());
     }
 
     @Test

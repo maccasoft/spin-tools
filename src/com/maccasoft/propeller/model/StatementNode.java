@@ -17,9 +17,19 @@ public class StatementNode extends Node {
     }
 
     @Override
+    public void addToken(Token token) {
+        tokens.add(token);
+    }
+
+    @Override
     public void accept(NodeVisitor visitor) {
         visitor.visitStatement(this);
         super.accept(visitor);
+    }
+
+    @Override
+    public int getStartIndex() {
+        return tokens.size() != 0 ? tokens.get(0).start - tokens.get(0).column : -1;
     }
 
 }

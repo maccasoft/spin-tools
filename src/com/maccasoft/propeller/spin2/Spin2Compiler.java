@@ -21,16 +21,30 @@ import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.ExpressionBuilder;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
+import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.Register;
+import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
 import com.maccasoft.propeller.model.ConstantSetEnumNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.LocalVariableNode;
+import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ParameterNode;
+import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.VariableNode;
+import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.spin2.Spin2Object.LongDataObject;
+import com.maccasoft.propeller.spin2.bytecode.Bytecode;
+import com.maccasoft.propeller.spin2.bytecode.Constant;
+import com.maccasoft.propeller.spin2.bytecode.Jmp;
+import com.maccasoft.propeller.spin2.bytecode.MathOp;
+import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
 
@@ -38,6 +52,8 @@ public class Spin2Compiler {
 
     Spin2Context scope = new Spin2GlobalContext();
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
+
+    List<Spin2Method> methods = new ArrayList<Spin2Method>();
 
     ExpressionBuilder expressionBuilder = new ExpressionBuilder();
 
@@ -196,11 +212,18 @@ public class Spin2Compiler {
         }
     }
 
-    public void compile(Node root) {
+    public Spin2Object compile(Node root) {
         boolean hubMode = false;
         int address = 0, hubAddress = 0;
+        Spin2Object object = new Spin2Object();
 
         root.accept(compilerVisitor);
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof VariablesNode) {
+                compileVarBlock(node);
+            }
+        }
 
         while (scope.getParent() != null) {
             scope = scope.getParent();
@@ -227,6 +250,12 @@ public class Spin2Compiler {
         }
         if (!scope.hasSymbol("CLKMODE_")) {
             scope.addSymbol("CLKMODE_", new NumberLiteral(_clkmode));
+        }
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof MethodNode) {
+                compileMethodBlock((MethodNode) node);
+            }
         }
 
         for (Spin2PAsmLine line : source) {
@@ -256,6 +285,278 @@ public class Spin2Compiler {
                 System.err.println(line);
                 e.printStackTrace();
             }
+        }
+
+        LongDataObject[] ld = new LongDataObject[methods.size() + 1];
+
+        int index = 0;
+        while (index < ld.length) {
+            ld[index] = object.writeLong(0);
+            index++;
+        }
+
+        index = 0;
+        for (Spin2Method method : methods) {
+            ld[index].setValue(object.getSize() | (method.getParametersCount() << 24) | 0x80000000L);
+            method.writeTo(object);
+            index++;
+        }
+        ld[index].setValue(object.getSize());
+
+        return object;
+    }
+
+    void compileVarBlock(Node parent) {
+
+        parent.accept(new NodeVisitor() {
+
+            int offset = 4;
+
+            @Override
+            public void visitVariable(VariableNode node) {
+                String type = "LONG";
+                if (node.type != null) {
+                    type = node.type.getText().toUpperCase();
+                }
+                Expression size = null;
+                if (node.size != null) {
+                    size = buildExpression(node.size.getTokens(), scope);
+                }
+                scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, offset));
+                scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, offset));
+                offset += 4 * (size != null ? size.getNumber().intValue() : 1);
+            }
+
+        });
+    }
+
+    void compileMethodBlock(MethodNode node) {
+        Spin2Context localScope = new Spin2Context(scope);
+        List<LocalVariable> parameters = new ArrayList<LocalVariable>();
+        List<LocalVariable> localVariables = new ArrayList<LocalVariable>();
+
+        if (node.getReturnVariables().size() != 0) {
+            Node child = node.getReturnVariable(0);
+            LocalVariable var = new LocalVariable("LONG", child.getText(), new NumberLiteral(1), 0);
+            localScope.addSymbol(child.getText(), var);
+            localScope.addSymbol("@" + child.getText(), var);
+        }
+
+        int offset = 0;
+        for (Node child : node.getParameters()) {
+            LocalVariable var = new LocalVariable("LONG", child.getText(), new NumberLiteral(1), 0);
+            localScope.addSymbol(child.getText(), var);
+            localScope.addSymbol("@" + child.getText(), var);
+            parameters.add(var);
+            offset += 4;
+        }
+        for (LocalVariableNode child : node.getLocalVariables()) {
+            String type = "LONG";
+            if (child.type != null) {
+                type = child.type.getText().toUpperCase();
+            }
+            Expression size = null;
+            if (child.size != null) {
+                size = buildExpression(child.size.getTokens(), scope);
+                if (!size.isConstant()) {
+                    throw new RuntimeException("error: expression is not constant");
+                }
+            }
+            LocalVariable var = new LocalVariable(type, child.getText(), size, offset);
+            localScope.addSymbol(child.getIdentifier().getText(), var);
+            localScope.addSymbol("@" + child.getIdentifier().getText(), var);
+            localVariables.add(var);
+
+            int count = 4;
+            if ("BYTE".equalsIgnoreCase(type)) {
+                count = 1;
+            }
+            if ("WORD".equalsIgnoreCase(type)) {
+                count = 2;
+            }
+            if (size != null) {
+                count = count * size.getNumber().intValue();
+            }
+            offset += ((count + 3) / 4) * 4;
+        }
+
+        Spin2Method method = new Spin2Method(localScope, node.name.getText(), parameters, localVariables);
+
+        Spin2StatementNode root = new Spin2StatementNode(0, "RETURN");
+        for (Node child : node.getChilds()) {
+            if (child instanceof StatementNode) {
+                compileStatementBlock(root, child);
+            }
+        }
+        print(root, 0);
+
+        compileBytecodeStatement(method, root);
+
+        methods.add(method);
+    }
+
+    void compileStatementBlock(Spin2StatementNode parent, Node node) {
+        Spin2TreeBuilder builder = new Spin2TreeBuilder();
+        for (Token token : node.getTokens()) {
+            builder.addToken(token);
+        }
+
+        Spin2StatementNode statementNode = builder.getRoot();
+        parent.addChild(statementNode);
+
+        for (Node child : node.getChilds()) {
+            if (child instanceof StatementNode) {
+                compileStatementBlock(statementNode, child);
+            }
+        }
+    }
+
+    void compileBytecodeStatement(Spin2Method method, Spin2StatementNode node) {
+        Spin2Bytecode obj = null;
+
+        if (node.type == Token.NUMBER) {
+            Expression expression = new NumberLiteral(node.getText());
+            obj = new Constant(method.getScope(), null, expression);
+        }
+        else if (":=".equals(node.getText())) {
+            compileBytecodeStatement(method, node.getChild(1));
+            if (node.getChild(0).type == Token.OPERATOR) {
+                compileBytecodeStatement(method, node.getChild(0));
+            }
+            else {
+                Expression expression = method.getScope().getLocalSymbol(node.getChild(0).getText());
+                if (expression instanceof Register) {
+
+                }
+                else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
+                    obj = new VariableOp(method.getScope(), null, VariableOp.Op.Write, (Variable) expression);
+                }
+                else {
+                    throw new RuntimeException("error: unknown: " + node.getText());
+                }
+            }
+        }
+        else if (MathOp.isAssignMathOp(node.getText())) {
+            compileBytecodeStatement(method, node.getChild(1));
+            if (node.getChild(0).type == Token.OPERATOR) {
+                compileBytecodeStatement(method, node.getChild(0));
+            }
+            else {
+                Expression expression = method.getScope().getLocalSymbol(node.getChild(0).getText());
+                if (expression instanceof Register) {
+
+                }
+                else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
+                    method.addSource(new VariableOp(method.getScope(), null, VariableOp.Op.Setup, (Variable) expression));
+                }
+                else {
+                    throw new RuntimeException("error: unknown: " + node.getText());
+                }
+            }
+            obj = new MathOp(method.getScope(), null, node.getText());
+        }
+        else if (MathOp.isMathOp(node.getText())) {
+            if (node.childs.size() != 2) {
+                throw new RuntimeException("error: expression syntax error " + node.getText());
+            }
+            compileBytecodeStatement(method, node.getChild(0));
+            compileBytecodeStatement(method, node.getChild(1));
+            obj = new MathOp(method.getScope(), null, node.getText());
+        }
+        else if ("GETRND".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 0) {
+                throw new RuntimeException("error: expected 0 arguments, found " + node.getChildCount());
+            }
+            obj = new Bytecode(method.getScope(), null, 0x32, node.getText());
+        }
+        else if ("GETCT".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 0) {
+                throw new RuntimeException("error: expected 0 arguments, found " + node.getChildCount());
+            }
+            obj = new Bytecode(method.getScope(), null, 0x33, node.getText());
+        }
+        else if ("POLLCT".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 1) {
+                throw new RuntimeException("error: expected 1 argument, found " + node.getChildCount());
+            }
+            compileBytecodeStatement(method, node.getChild(0));
+            obj = new Bytecode(method.getScope(), null, 0x34, node.getText());
+        }
+        else if ("WAITCT".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 1) {
+                throw new RuntimeException("error: expected 1 argument, found " + node.getChildCount());
+            }
+            compileBytecodeStatement(method, node.getChild(0));
+            obj = new Bytecode(method.getScope(), null, 0x35, node.getText());
+        }
+        else if ("PINLOW".equalsIgnoreCase(node.getText()) || "PINL".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 1) {
+                throw new RuntimeException("error: expected 1 argument, found " + node.getChildCount());
+            }
+            compileBytecodeStatement(method, node.getChild(0));
+            obj = new Bytecode(method.getScope(), null, 0x37, node.getText());
+        }
+        else if ("PINHIGH".equalsIgnoreCase(node.getText()) || "PINH".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 1) {
+                throw new RuntimeException("error: expected 1 argument, found " + node.getChildCount());
+            }
+            compileBytecodeStatement(method, node.getChild(0));
+            obj = new Bytecode(method.getScope(), null, 0x38, node.getText());
+        }
+        else if ("PINTOGGLE".equalsIgnoreCase(node.getText()) || "PINT".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 1) {
+                throw new RuntimeException("error: expected 1 argument, found " + node.getChildCount());
+            }
+            compileBytecodeStatement(method, node.getChild(0));
+            obj = new Bytecode(method.getScope(), null, 0x39, node.getText());
+        }
+        else if ("RETURN".equalsIgnoreCase(node.getText())) {
+            for (Spin2StatementNode child : node.getChilds()) {
+                compileBytecodeStatement(method, child);
+            }
+            obj = new Bytecode(method.getScope(), null, 0x04, node.getText());
+        }
+        else if ("REPEAT".equalsIgnoreCase(node.getText())) {
+            Spin2Bytecode label = new Spin2Bytecode(method.getScope(), "label");
+            method.getScope().addSymbol("label", new ContextLiteral(label.getContext()));
+            method.source.add(label);
+            for (Spin2StatementNode child : node.getChilds()) {
+                compileBytecodeStatement(method, child);
+            }
+            obj = new Jmp(method.getScope(), null, new Identifier("label", label.getContext()));
+        }
+        else {
+            Expression expression = method.getScope().getLocalSymbol(node.getText());
+            if (expression instanceof Register) {
+
+            }
+            else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
+                obj = new VariableOp(method.getScope(), null, VariableOp.Op.Read, (Variable) expression);
+            }
+            else {
+                obj = new Constant(method.getScope(), null, expression);
+            }
+        }
+
+        if (obj != null) {
+            method.source.add(obj);
+        }
+    }
+
+    static void print(Spin2StatementNode node, int indent) {
+        if (indent != 0) {
+            for (int i = 1; i < indent; i++) {
+                System.out.print("|    ");
+            }
+            System.out.print("+--- ");
+        }
+
+        System.out.print(node.getClass().getSimpleName());
+        System.out.print(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
+        System.out.println();
+
+        for (Spin2StatementNode child : node.getChilds()) {
+            print(child, indent + 1);
         }
     }
 
@@ -489,4 +790,32 @@ public class Spin2Compiler {
 
         return expressionBuilder.getExpression();
     }
+
+    public static void main(String[] args) {
+        String text = ""
+            + "CON\n"
+            + "    _clkfreq = 160_000_000\n"
+            + "\n"
+            + "PUB main() | ct\n"
+            + "\n"
+            + "    ct := getct()                   ' get current timer\n"
+            + "    repeat\n"
+            + "        pint(56)                    ' toggle pin 56\n"
+            + "        waitct(ct += 80_000_000)  ' wait half second"
+            + "\n";
+
+        try {
+            Spin2TokenStream stream = new Spin2TokenStream(text);
+            Spin2Parser subject = new Spin2Parser(stream);
+            Node root = subject.parse();
+
+            Spin2Compiler compiler = new Spin2Compiler();
+            Spin2Object obj = compiler.compile(root);
+            obj.generateListing(0x0000, System.out);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

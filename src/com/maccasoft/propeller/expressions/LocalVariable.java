@@ -10,34 +10,10 @@
 
 package com.maccasoft.propeller.expressions;
 
-public class LocalVariable extends Literal {
+public class LocalVariable extends Variable {
 
-    String name;
-    int offset;
-
-    public LocalVariable(String name, int offset) {
-        this.name = name;
-        this.offset = offset;
-    }
-
-    @Override
-    public boolean isConstant() {
-        return false;
-    }
-
-    @Override
-    public boolean isNumber() {
-        return true;
-    }
-
-    @Override
-    public Number getNumber() {
-        return Long.valueOf(offset);
-    }
-
-    @Override
-    public String toString() {
-        return name;
+    public LocalVariable(String type, String name, Expression size, int offset) {
+        super(type, name, size, offset);
     }
 
 }

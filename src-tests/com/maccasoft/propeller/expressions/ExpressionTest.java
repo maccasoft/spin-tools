@@ -74,13 +74,13 @@ class ExpressionTest {
         SimpleContext context = new SimpleContext();
         context.symbols.put("a", new NumberLiteral(1));
 
-        Expression exp = new Variable("a", 0);
+        Expression exp = new Variable("LONG", "a", new NumberLiteral(1), 0);
         Assertions.assertFalse(exp.isConstant());
     }
 
     @Test
     void testVariableBinaryExpressionIsConstant() {
-        Expression exp = new Add(new NumberLiteral(1), new Variable("a", 0));
+        Expression exp = new Add(new NumberLiteral(1), new Variable("LONG", "a", new NumberLiteral(1), 0));
         Assertions.assertFalse(exp.isConstant());
     }
 

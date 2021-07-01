@@ -14,9 +14,10 @@ import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin1.Spin1BytecodeInstructionObject;
+import com.maccasoft.propeller.spin1.Spin1BytecodeInstruction;
+import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class MemoryOp extends Spin1BytecodeInstructionObject {
+public class MemoryOp extends Spin1BytecodeInstruction {
 
     static final BitField op_ss = new BitField(0b0_11_0_00_00);
     static final BitField op_i = new BitField(0b0_00_1_00_00);
@@ -41,7 +42,8 @@ public class MemoryOp extends Spin1BytecodeInstructionObject {
     public Op oo;
     public Expression expression;
 
-    public MemoryOp(Size ss, boolean i, Base bb, Op oo, Expression expression) {
+    public MemoryOp(Spin1Context context, Size ss, boolean i, Base bb, Op oo, Expression expression) {
+        super(context);
         this.ss = ss;
         this.i = i;
         this.bb = bb;

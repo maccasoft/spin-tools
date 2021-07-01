@@ -326,10 +326,34 @@ class Spin1ParseMethodTest {
         Assertions.assertEquals(1, pub0.getChild(0).getChilds().size());
 
         Assertions.assertEquals(""
-            + "repeat\n"
-            + "        a := b", pub0.getChild(0).getText());
+            + "    repeat", pub0.getChild(0).getText());
         Assertions.assertEquals(""
-            + "a := b", pub0.getChild(0).getChild(0).getText());
+            + "        a := b", pub0.getChild(0).getChild(0).getText());
+    }
+
+    @Test
+    void testParseIndentedBlockWithoutStatements() {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PUB start()\n"
+            + "\n"
+            + "    repeat\n"
+            + "    if\n"
+            + "        a := b\n"
+            + ""));
+
+        Node root = subject.parse();
+        MethodNode pub0 = (MethodNode) root.getChild(0);
+
+        Assertions.assertEquals(2, pub0.getChilds().size());
+        Assertions.assertEquals(0, pub0.getChild(0).getChilds().size());
+        Assertions.assertEquals(1, pub0.getChild(1).getChilds().size());
+
+        Assertions.assertEquals(""
+            + "    repeat", pub0.getChild(0).getText());
+        Assertions.assertEquals(""
+            + "    if", pub0.getChild(1).getText());
+        Assertions.assertEquals(""
+            + "        a := b", pub0.getChild(1).getChild(0).getText());
     }
 
     @Test
@@ -349,13 +373,11 @@ class Spin1ParseMethodTest {
         Assertions.assertEquals(2, pub0.getChild(0).getChilds().size());
 
         Assertions.assertEquals(""
-            + "repeat\n"
-            + "        a := b\n"
-            + "         c := d", pub0.getChild(0).getText());
+            + "    repeat", pub0.getChild(0).getText());
         Assertions.assertEquals(""
-            + "a := b", pub0.getChild(0).getChild(0).getText());
+            + "        a := b", pub0.getChild(0).getChild(0).getText());
         Assertions.assertEquals(""
-            + "c := d", pub0.getChild(0).getChild(1).getText());
+            + "         c := d", pub0.getChild(0).getChild(1).getText());
     }
 
     @Test
