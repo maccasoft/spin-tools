@@ -32,6 +32,11 @@ class ExpressionTest {
         }
 
         @Override
+        public boolean isAddressSet() {
+            return true;
+        }
+
+        @Override
         public int getAddress() {
             return 0;
         }

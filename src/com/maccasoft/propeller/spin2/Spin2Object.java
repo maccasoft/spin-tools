@@ -34,26 +34,8 @@ public class Spin2Object {
             this.text = text;
         }
 
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder("   ");
-
-            int i = 0;
-            if (bytes != null) {
-                while (i < bytes.length && i < 5) {
-                    sb.append(String.format(" %02X", bytes[i++]));
-                }
-            }
-            while (i < 5) {
-                sb.append("   ");
-                i++;
-            }
-            sb.append(" | ");
-            if (text != null) {
-                sb.append(text);
-            }
-
-            return sb.toString();
+        public void setText(String text) {
+            this.text = text;
         }
 
     }
@@ -174,29 +156,6 @@ public class Spin2Object {
             this.addr = addr;
         }
 
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append(String.format("%03X", addr));
-
-            int i = 0;
-            if (bytes != null) {
-                while (i < bytes.length && i < 4) {
-                    sb.append(String.format(" %02X", bytes[i++]));
-                }
-            }
-            while (i < 5) {
-                sb.append("   ");
-                i++;
-            }
-            sb.append(" | ");
-            if (text != null) {
-                sb.append(text);
-            }
-
-            return sb.toString();
-        }
-
     }
 
     public Spin2Object() {
@@ -265,6 +224,11 @@ public class Spin2Object {
         size += bytes.length;
     }
 
+    public void writeObject(Spin2Object object) {
+        data.addAll(object.data);
+        size += object.size;
+    }
+
     public int getSize() {
         return size;
     }
@@ -283,12 +247,72 @@ public class Spin2Object {
         }
     }
 
-    public void generateListing(int address, PrintStream ps) {
+    public void generateBinary(OutputStream os) throws IOException {
+        for (DataObject obj : data) {
+            if (obj.bytes != null) {
+                os.write(obj.bytes);
+            }
+        }
+    }
+
+    public void generateListing(PrintStream ps) {
+        int address = 0;
 
         for (DataObject obj : data) {
-            ps.print(String.format("%04X ", address));
-            ps.println(obj);
-            address += obj.bytes.length;
+            if (obj.bytes != null) {
+                if (obj instanceof PAsmDataObject) {
+                    int cogAddr = ((PAsmDataObject) obj).addr;
+
+                    ps.print(String.format("%05X ", address));
+                    ps.print(cogAddr < 0x400 ? String.format("%03X", cogAddr) : "   ");
+
+                    int i = 0;
+                    while (i < obj.bytes.length) {
+                        if (i > 0 && (i % 4) == 0) {
+                            ps.print("    |");
+                            if (i == 4) {
+                                if (obj.text != null) {
+                                    ps.print(" " + obj.text);
+                                }
+                            }
+                            ps.println();
+                            cogAddr++;
+                            ps.print(String.format("%05X ", address));
+                            ps.print(cogAddr < 0x400 ? String.format("%03X", cogAddr) : "   ");
+                        }
+                        ps.print(String.format(" %02X", obj.bytes[i++]));
+                        address++;
+                    }
+                    while (i < 4 || (i % 4) != 0) {
+                        ps.print("   ");
+                        i++;
+                    }
+                    ps.print("    |");
+                    if (i == 4) {
+                        if (obj.text != null) {
+                            ps.print(" " + obj.text);
+                        }
+                    }
+                }
+                else {
+                    ps.print(String.format("%05X    ", address));
+
+                    int i = 0;
+                    while (i < obj.bytes.length) {
+                        ps.print(String.format(" %02X", obj.bytes[i++]));
+                        address++;
+                    }
+                    while (i < 5) {
+                        ps.print("   ");
+                        i++;
+                    }
+                    ps.print(" |");
+                    if (obj.text != null) {
+                        ps.print(" " + obj.text);
+                    }
+                }
+            }
+            ps.println();
         }
     }
 

@@ -11,7 +11,9 @@
 package com.maccasoft.propeller.spin2;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Spin2StatementNode {
 
@@ -23,6 +25,7 @@ public class Spin2StatementNode {
     int type;
     String text;
 
+    Map<String, Spin2StatementNode> properties = new HashMap<String, Spin2StatementNode>();
     List<Spin2StatementNode> childs = new ArrayList<Spin2StatementNode>();
 
     public Spin2StatementNode(int type, String text) {
@@ -36,6 +39,14 @@ public class Spin2StatementNode {
 
     public String getText() {
         return text;
+    }
+
+    public void setProperty(String name, Spin2StatementNode node) {
+        properties.put(name, node);
+    }
+
+    public Spin2StatementNode getProperty(String name) {
+        return properties.get(name);
     }
 
     public void addChild(Spin2StatementNode node) {

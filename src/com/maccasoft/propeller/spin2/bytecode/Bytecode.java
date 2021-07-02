@@ -21,7 +21,12 @@ public class Bytecode extends Spin2Bytecode {
     public Bytecode(Spin2Context context, String label, int code, String text) {
         super(context, label);
         this.code = code;
-        this.text = text;
+        this.text = text.toUpperCase();
+    }
+
+    @Override
+    public int getSize() {
+        return 1;
     }
 
     @Override

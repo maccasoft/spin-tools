@@ -46,7 +46,8 @@ public class Orgh extends Spin2PAsmInstructionFactory {
 
         @Override
         public int resolve(int address) {
-            return arg0 != null ? arg0.getInteger() : address;
+            context.setAddress(arg0 != null ? arg0.getInteger() : address);
+            return context.getAddress();
         }
 
         @Override

@@ -38,6 +38,7 @@ public class Orgf extends Spin2PAsmInstructionFactory {
 
         @Override
         public int resolve(int address) {
+            context.setAddress(address);
             return arg0.getInteger();
         }
 

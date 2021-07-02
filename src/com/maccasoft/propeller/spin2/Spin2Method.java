@@ -13,22 +13,30 @@ package com.maccasoft.propeller.spin2;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.BitField;
+
 import com.maccasoft.propeller.expressions.LocalVariable;
 
 public class Spin2Method {
+
+    public static final BitField address_bit = new BitField(0b0_0000000_0000_11111111111111111111);
+    public static final BitField returns_bit = new BitField(0b0_0000000_1111_00000000000000000000);
+    public static final BitField parameters_bit = new BitField(0b0_1111111_0000_00000000000000000000);
 
     Spin2Context scope;
 
     String label;
     List<LocalVariable> parameters;
+    List<LocalVariable> returns;
     List<LocalVariable> localVariables;
 
     List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
-    public Spin2Method(Spin2Context scope, String label, List<LocalVariable> parameters, List<LocalVariable> localVariables) {
+    public Spin2Method(Spin2Context scope, String label, List<LocalVariable> parameters, List<LocalVariable> returns, List<LocalVariable> localVariables) {
         this.scope = scope;
         this.label = label;
         this.parameters = parameters;
+        this.returns = returns;
         this.localVariables = localVariables;
     }
 
@@ -43,6 +51,10 @@ public class Spin2Method {
     public int resolve(int address) {
         scope.setAddress(address);
         return address;
+    }
+
+    public int getReturnsCount() {
+        return returns.size();
     }
 
     public int getParametersCount() {

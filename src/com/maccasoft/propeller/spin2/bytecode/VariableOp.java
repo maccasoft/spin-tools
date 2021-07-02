@@ -33,6 +33,23 @@ public class VariableOp extends Spin2Bytecode {
     }
 
     @Override
+    public int getSize() {
+        int value = variable.getNumber().intValue();
+
+        if ("LONG".equalsIgnoreCase(variable.getType()) && (value / 4) <= 15) {
+            value /= 4;
+            if (variable instanceof LocalVariable) {
+                return 1;
+            }
+            else {
+                return 2;
+            }
+        }
+
+        return Constant.wrVarSize(value) + 2;
+    }
+
+    @Override
     public byte[] getBytes() {
         int value = variable.getNumber().intValue();
 
@@ -109,11 +126,11 @@ public class VariableOp extends Spin2Bytecode {
         }
         int value = variable.getNumber().intValue();
         if ("LONG".equalsIgnoreCase(variable.getType()) && (value / 4) <= 15) {
-            sb.append(String.format("+$%04X", value / 4));
+            sb.append(String.format("+$%05X", value / 4));
             sb.append(" (short)");
         }
         else {
-            sb.append(String.format("+$%04X", value));
+            sb.append(String.format("+$%05X", value));
         }
         return sb.toString();
     }

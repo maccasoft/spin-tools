@@ -81,8 +81,14 @@ public class Spin1Context implements Context {
         return result.getNumber().intValue();
     }
 
+    @Override
+    public boolean isAddressSet() {
+        return set;
+    }
+
     public void setAddress(int address) {
         this.address = address;
+        this.set = true;
     }
 
     @Override

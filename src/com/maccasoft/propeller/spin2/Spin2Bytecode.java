@@ -32,6 +32,14 @@ public class Spin2Bytecode {
         context.setAddress(address);
     }
 
+    public boolean isFixedSize() {
+        return true;
+    }
+
+    public int getSize() {
+        return 0;
+    }
+
     public byte[] getBytes() {
         return new byte[0];
     }

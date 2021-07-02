@@ -369,8 +369,8 @@ public class Spin2TreeBuilder {
 
         switch (state) {
             case 0:
-                if (token.type != 0) {
-                    throw new RuntimeException("error: expecting identifier");
+                if (token.type != 0 && token.type != Token.NUMBER) {
+                    throw new RuntimeException("error: expecting identifier, got " + token.getText());
                 }
                 addValueToken(token);
                 state = 1;
@@ -462,6 +462,10 @@ public class Spin2TreeBuilder {
                 break;
             }
         }
+    }
+
+    public void setState(int state) {
+        this.state = state;
     }
 
     public static void main(String[] args) {

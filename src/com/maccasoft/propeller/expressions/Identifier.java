@@ -24,6 +24,10 @@ public class Identifier extends Passthrough {
         return name;
     }
 
+    public Context getContext() {
+        return context;
+    }
+
     @Override
     public Expression resolve() {
         return context.getSymbol(name);

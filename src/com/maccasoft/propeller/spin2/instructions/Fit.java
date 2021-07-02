@@ -45,6 +45,7 @@ public class Fit extends Spin2PAsmInstructionFactory {
 
         @Override
         public int resolve(int address) {
+            context.setAddress(address);
             return address;
         }
 

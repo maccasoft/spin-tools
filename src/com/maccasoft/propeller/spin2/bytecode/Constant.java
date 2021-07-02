@@ -44,6 +44,20 @@ public class Constant extends Spin2Bytecode {
         };
     }
 
+    public static int wrVarSize(long value) {
+        value = Math.abs(value);
+        if (value < 0x80) {
+            return 1;
+        }
+        if (value < 0x4000) {
+            return 2;
+        }
+        if (value < 0x200000) {
+            return 3;
+        }
+        return 4;
+    }
+
     public static byte[] wrVars(long value) {
         if (Math.abs(value) < 0x40) {
             return new byte[] {
@@ -71,11 +85,43 @@ public class Constant extends Spin2Bytecode {
         };
     }
 
+    public static int wrVarsSize(long value) {
+        if (Math.abs(value) < 0x40) {
+            return 1;
+        }
+        if (Math.abs(value) < 0x2000) {
+            return 2;
+        }
+        if (Math.abs(value) < 0x100000) {
+            return 3;
+        }
+        return 4;
+    }
+
     public Expression expression;
 
     public Constant(Spin2Context context, String label, Expression expression) {
         super(context, label);
         this.expression = expression;
+    }
+
+    @Override
+    public int getSize() {
+        int value = expression.getNumber().intValue();
+
+        if (value >= -1 && value <= 14) {
+            return 1;
+        }
+
+        // 1 to 4 byte constant
+        if ((value & 0xFFFF0000) != 0) {
+            return 5;
+        }
+        else if ((value & 0x0000FF00) != 0) {
+            return 3;
+        }
+
+        return 2;
     }
 
     @Override
@@ -99,11 +145,10 @@ public class Constant extends Spin2Bytecode {
                 0x47, (byte) value, (byte) (value >> 8)
             };
         }
-        else {
-            return new byte[] {
-                0x45, (byte) value
-            };
-        }
+
+        return new byte[] {
+            0x45, (byte) value
+        };
     }
 
     @Override

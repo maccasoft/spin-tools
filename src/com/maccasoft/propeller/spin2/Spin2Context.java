@@ -83,10 +83,19 @@ public class Spin2Context implements Context {
 
     public void setAddress(int address) {
         this.address = address;
+        this.set = true;
+    }
+
+    @Override
+    public boolean isAddressSet() {
+        return set;
     }
 
     @Override
     public int getAddress() {
+        if (!set) {
+            throw new RuntimeException("address not set");
+        }
         return address;
     }
 
