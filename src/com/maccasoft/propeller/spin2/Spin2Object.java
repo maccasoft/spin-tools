@@ -293,8 +293,9 @@ public class Spin2Object {
                             ps.print(" " + obj.text);
                         }
                     }
+                    ps.println();
                 }
-                else {
+                else if (obj.bytes.length != 0) {
                     ps.print(String.format("%05X    ", address));
 
                     int i = 0;
@@ -310,9 +311,9 @@ public class Spin2Object {
                     if (obj.text != null) {
                         ps.print(" " + obj.text);
                     }
+                    ps.println();
                 }
             }
-            ps.println();
         }
     }
 

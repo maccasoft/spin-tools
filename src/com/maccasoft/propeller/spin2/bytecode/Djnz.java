@@ -21,9 +21,7 @@ public class Djnz extends Jmp {
 
     @Override
     public String toString() {
-        int address = expression.getNumber().intValue();
-        int value = address - (getContext().getAddress() + 1);
-        return "DJNZ " + expression + String.format(" @ $%05X (%d)", expression.getNumber().intValue(), value);
+        return toString("DJNZ");
     }
 
 }

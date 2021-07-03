@@ -76,11 +76,15 @@ public class Jmp extends Spin2Bytecode {
         return b;
     }
 
-    @Override
-    public String toString() {
+    public String toString(String prefix) {
         int address = expression.getNumber().intValue();
         int value = address - (getContext().getAddress() + 1);
-        return "JMP " + expression + String.format(" @ $%05X (%d)", expression.getNumber().intValue(), value);
+        return prefix + String.format(" $%05X (%d)", expression.getNumber().intValue(), value);
+    }
+
+    @Override
+    public String toString() {
+        return toString("JMP");
     }
 
 }

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class Spin2StatementNode {
 
@@ -43,6 +44,21 @@ public class Spin2StatementNode {
 
     public void setProperty(String name, Spin2StatementNode node) {
         properties.put(name, node);
+    }
+
+    public String getPropertiesText() {
+        StringBuilder sb = new StringBuilder();
+        for (Entry<String, Spin2StatementNode> entry : properties.entrySet()) {
+            if (sb.length() != 0) {
+                sb.append(", ");
+            }
+            sb.append("[");
+            sb.append(entry.getKey());
+            sb.append("(");
+            sb.append(entry.getValue());
+            sb.append(")]");
+        }
+        return sb.toString();
     }
 
     public Spin2StatementNode getProperty(String name) {

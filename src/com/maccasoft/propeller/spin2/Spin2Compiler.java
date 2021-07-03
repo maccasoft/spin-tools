@@ -13,10 +13,8 @@ package com.maccasoft.propeller.spin2;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.ContextLiteral;
@@ -42,11 +40,13 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
 import com.maccasoft.propeller.spin2.Spin2Object.LongDataObject;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
 import com.maccasoft.propeller.spin2.bytecode.Djnz;
 import com.maccasoft.propeller.spin2.bytecode.Jmp;
+import com.maccasoft.propeller.spin2.bytecode.Jnz;
 import com.maccasoft.propeller.spin2.bytecode.Jz;
 import com.maccasoft.propeller.spin2.bytecode.MathOp;
 import com.maccasoft.propeller.spin2.bytecode.Tjz;
@@ -458,7 +458,8 @@ public class Spin2Compiler {
         List<Token> tokens = node.getTokens();
 
         Spin2StatementNode statementNode;
-        if ("IF".equalsIgnoreCase(tokens.get(index).getText())) {
+        String text = tokens.get(index).getText();
+        if ("IF".equalsIgnoreCase(text) || "IFNOT".equalsIgnoreCase(text) || "ELSEIF".equalsIgnoreCase(text) || "ELSEIFNOT".equalsIgnoreCase(text)) {
             statementNode = new Spin2StatementNode(0, tokens.get(index++).getText());
 
             builder.setState(2);
@@ -466,11 +467,17 @@ public class Spin2Compiler {
                 Token token = tokens.get(index++);
                 builder.addToken(token);
             }
-            statementNode.addChild(builder.getRoot());
+            statementNode.setProperty("condition", builder.getRoot());
+
             parent.addChild(statementNode);
         }
-        else if ("REPEAT".equalsIgnoreCase(tokens.get(index).getText())) {
+        else if ("ELSE".equalsIgnoreCase(text)) {
             statementNode = new Spin2StatementNode(0, tokens.get(index++).getText());
+            parent.addChild(statementNode);
+        }
+        else if ("REPEAT".equalsIgnoreCase(text)) {
+            statementNode = new Spin2StatementNode(0, tokens.get(index++).getText());
+
             while (index < tokens.size()) {
                 Token token = tokens.get(index++);
                 builder.addToken(token);
@@ -478,6 +485,7 @@ public class Spin2Compiler {
             if (index > 1) {
                 statementNode.setProperty("counter", builder.getRoot());
             }
+
             parent.addChild(statementNode);
         }
         else {
@@ -485,7 +493,6 @@ public class Spin2Compiler {
                 Token token = tokens.get(index++);
                 builder.addToken(token);
             }
-
             statementNode = builder.getRoot();
             parent.addChild(statementNode);
         }
@@ -497,92 +504,10 @@ public class Spin2Compiler {
         }
     }
 
-    static class BytecodeDescriptor {
-        int code;
-        int parameters;
-
-        public BytecodeDescriptor(int code, int parameters) {
-            this.code = code;
-            this.parameters = parameters;
-        }
-    }
-    static Map<String, BytecodeDescriptor> descriptors = new HashMap<String, BytecodeDescriptor>();
-    static {
-        descriptors.put("HUBSET", new BytecodeDescriptor(0x54, 1));
-        descriptors.put("CLKSET", new BytecodeDescriptor(0x56, 2));
-        descriptors.put("CLKFREQ", new BytecodeDescriptor(0x58, 0));
-        descriptors.put("COGSPIN", new BytecodeDescriptor(0x5A, 3));
-        descriptors.put("REGEXEC", new BytecodeDescriptor(0x5E, 1));
-        descriptors.put("REGLOAD", new BytecodeDescriptor(0x60, 1));
-        descriptors.put("CALL", new BytecodeDescriptor(0x62, 1));
-        descriptors.put("GETREGS", new BytecodeDescriptor(0x64, 3));
-        descriptors.put("SETREGS", new BytecodeDescriptor(0x66, 3));
-        descriptors.put("BYTEMOVE", new BytecodeDescriptor(0x68, 3));
-        descriptors.put("BYTEFILL", new BytecodeDescriptor(0x6A, 3));
-        descriptors.put("WORDMOVE", new BytecodeDescriptor(0x6C, 3));
-        descriptors.put("WORDFILL", new BytecodeDescriptor(0x6E, 3));
-        descriptors.put("LONGMOVE", new BytecodeDescriptor(0x70, 3));
-        descriptors.put("LONGFILL", new BytecodeDescriptor(0x72, 3));
-        descriptors.put("STRSIZE", new BytecodeDescriptor(0x74, 1));
-        descriptors.put("STRCOMP", new BytecodeDescriptor(0x76, 2));
-        descriptors.put("WAITUS", new BytecodeDescriptor(0x78, 1));
-        descriptors.put("WAITMS", new BytecodeDescriptor(0x7A, 1));
-        descriptors.put("GETMS", new BytecodeDescriptor(0x7C, 0));
-        descriptors.put("GETSEC", new BytecodeDescriptor(0x7E, 0));
-        descriptors.put("MULDIV64", new BytecodeDescriptor(0x80, 3));
-        descriptors.put("QSIN", new BytecodeDescriptor(0x82, 3));
-        descriptors.put("QCOS", new BytecodeDescriptor(0x84, 3));
-
-        descriptors.put("COGINIT", new BytecodeDescriptor(0x25, 3));
-        descriptors.put("COGSTOP", new BytecodeDescriptor(0x27, 1));
-        descriptors.put("COGID", new BytecodeDescriptor(0x28, 0));
-        descriptors.put("COGCHK", new BytecodeDescriptor(0x29, 1));
-
-        descriptors.put("LOCKNEW", new BytecodeDescriptor(0x2A, 0));
-        descriptors.put("LOCKRET", new BytecodeDescriptor(0x2B, 1));
-        descriptors.put("LOCKTRY", new BytecodeDescriptor(0x2C, 1));
-        descriptors.put("LOCKREL", new BytecodeDescriptor(0x2D, 1));
-        descriptors.put("LOCKCHK", new BytecodeDescriptor(0x2E, 1));
-
-        descriptors.put("COGATN", new BytecodeDescriptor(0x2F, 1));
-        descriptors.put("POLLATN", new BytecodeDescriptor(0x30, 0));
-        descriptors.put("WAITATN", new BytecodeDescriptor(0x31, 0));
-
-        descriptors.put("GETRND", new BytecodeDescriptor(0x32, 0));
-        descriptors.put("GETCT", new BytecodeDescriptor(0x33, 0));
-        descriptors.put("POLLCT", new BytecodeDescriptor(0x34, 1));
-        descriptors.put("WAITCT", new BytecodeDescriptor(0x35, 1));
-
-        descriptors.put("PINW", new BytecodeDescriptor(0x36, 1));
-        descriptors.put("PINWRITE", new BytecodeDescriptor(0x36, 1));
-        descriptors.put("PINL", new BytecodeDescriptor(0x37, 1));
-        descriptors.put("PINLOW", new BytecodeDescriptor(0x37, 1));
-        descriptors.put("PINH", new BytecodeDescriptor(0x38, 1));
-        descriptors.put("PINHIGH", new BytecodeDescriptor(0x38, 1));
-        descriptors.put("PINT", new BytecodeDescriptor(0x39, 1));
-        descriptors.put("PINTOGGLE", new BytecodeDescriptor(0x39, 1));
-        descriptors.put("PINF", new BytecodeDescriptor(0x3A, 1));
-        descriptors.put("PINFLOAT", new BytecodeDescriptor(0x3A, 1));
-        descriptors.put("PINR", new BytecodeDescriptor(0x3B, 1));
-        descriptors.put("PINREAD", new BytecodeDescriptor(0x3B, 1));
-
-        descriptors.put("PINSTART", new BytecodeDescriptor(0x3C, 4));
-        descriptors.put("PINCLEAR", new BytecodeDescriptor(0x3D, 1));
-
-        descriptors.put("WRPIN", new BytecodeDescriptor(0x3E, 2));
-        descriptors.put("WXPIN", new BytecodeDescriptor(0x3F, 2));
-        descriptors.put("WYPIN", new BytecodeDescriptor(0x40, 2));
-        descriptors.put("AKPIN", new BytecodeDescriptor(0x41, 1));
-        descriptors.put("RDPIN", new BytecodeDescriptor(0x42, 1));
-        descriptors.put("RQPIN", new BytecodeDescriptor(0x43, 1));
-
-        descriptors.put("ROTXY", new BytecodeDescriptor(0x68, 3));
-        descriptors.put("POLXY", new BytecodeDescriptor(0x69, 2));
-        descriptors.put("XYPOL", new BytecodeDescriptor(0x6A, 2));
-    }
+    int labelCounter;
 
     void compileBytecodeStatement(Spin2Method method, Spin2StatementNode node, boolean push) {
-        BytecodeDescriptor desc = descriptors.get(node.getText().toUpperCase());
+        Descriptor desc = Spin2Bytecode.getDescriptor(node.getText());
         if (desc != null) {
             if (node.getChildCount() == 1 && ",".equals(node.getChild(0).getText())) {
                 Spin2StatementNode argsNode = node.getChild(0);
@@ -670,20 +595,62 @@ public class Spin2Compiler {
             }
             method.source.add(new Bytecode(method.getScope(), null, 0x04, node.getText()));
         }
-        else if ("IF".equalsIgnoreCase(node.getText())) {
-            compileBytecodeStatement(method, node.getChild(0), true);
-
-            Spin2Bytecode exitLabel = new Spin2Bytecode(method.getScope(), "LABEL_" + String.valueOf(method.source.size()));
+        else if ("IF".equalsIgnoreCase(node.getText()) || "IFNOT".equalsIgnoreCase(node.getText())) {
+            Spin2Bytecode exitLabel = new Spin2Bytecode(method.getScope(), "LABEL_" + String.valueOf(labelCounter++));
             method.getScope().addSymbol(exitLabel.getLabel(), new ContextLiteral(exitLabel.getContext()));
-            method.addSource(new Jz(method.getScope(), null, new Identifier(exitLabel.getLabel(), exitLabel.getContext())));
 
-            for (int i = 1; i < node.getChildCount(); i++) {
+            Spin2Bytecode loopExitLabel = new Spin2Bytecode(method.getScope(), "LABEL_" + String.valueOf(labelCounter++));
+            method.getScope().addSymbol(loopExitLabel.getLabel(), new ContextLiteral(loopExitLabel.getContext()));
+
+            compileBytecodeStatement(method, node.getProperty("condition"), true);
+            if ("IF".equalsIgnoreCase(node.getText())) {
+                method.addSource(new Jz(method.getScope(), null, new Identifier(exitLabel.getLabel(), exitLabel.getContext())));
+            }
+            else {
+                method.addSource(new Jnz(method.getScope(), null, new Identifier(exitLabel.getLabel(), exitLabel.getContext())));
+            }
+
+            for (int i = 0; i < node.getChildCount(); i++) {
                 compileBytecodeStatement(method, node.getChild(i), false);
             }
             method.source.add(exitLabel);
+            method.source.add(loopExitLabel);
+        }
+        else if ("ELSEIF".equalsIgnoreCase(node.getText()) || "ELSEIFNOT".equalsIgnoreCase(node.getText())) {
+            Spin2Bytecode loopExitLabel = method.source.get(method.source.size() - 1);
+            method.source.remove(method.source.size() - 1);
+            method.source.add(method.source.size() - 1, new Jmp(method.getScope(), null, new Identifier(loopExitLabel.getLabel(), loopExitLabel.getContext())));
+
+            Spin2Bytecode exitLabel = new Spin2Bytecode(method.getScope(), "LABEL_" + String.valueOf(labelCounter++));
+            method.getScope().addSymbol(exitLabel.getLabel(), new ContextLiteral(exitLabel.getContext()));
+
+            compileBytecodeStatement(method, node.getProperty("condition"), true);
+            if ("ELSEIF".equalsIgnoreCase(node.getText())) {
+                method.addSource(new Jz(method.getScope(), null, new Identifier(exitLabel.getLabel(), exitLabel.getContext())));
+            }
+            else {
+                method.addSource(new Jnz(method.getScope(), null, new Identifier(exitLabel.getLabel(), exitLabel.getContext())));
+            }
+
+            for (int i = 0; i < node.getChildCount(); i++) {
+                compileBytecodeStatement(method, node.getChild(i), false);
+            }
+            method.source.add(exitLabel);
+            method.source.add(loopExitLabel);
+        }
+        else if ("ELSE".equalsIgnoreCase(node.getText())) {
+            Spin2Bytecode loopExitLabel = method.source.get(method.source.size() - 1);
+            method.source.remove(method.source.size() - 1);
+            method.source.add(method.source.size() - 1, new Jmp(method.getScope(), null, new Identifier(loopExitLabel.getLabel(), loopExitLabel.getContext())));
+
+            for (int i = 0; i < node.getChildCount(); i++) {
+                compileBytecodeStatement(method, node.getChild(i), false);
+            }
+
+            method.source.add(loopExitLabel);
         }
         else if ("REPEAT".equalsIgnoreCase(node.getText())) {
-            Spin2Bytecode exitLabel = new Spin2Bytecode(method.getScope(), "LABEL_" + String.valueOf(method.source.size()));
+            Spin2Bytecode exitLabel = new Spin2Bytecode(method.getScope(), "LABEL_" + String.valueOf(labelCounter++));
 
             Spin2StatementNode property = node.getProperty("counter");
             if (property != null) {
@@ -693,7 +660,7 @@ public class Spin2Compiler {
                 }
             }
 
-            Spin2Bytecode loopLabel = new Spin2Bytecode(method.getScope(), "LABEL_" + String.valueOf(method.source.size()));
+            Spin2Bytecode loopLabel = new Spin2Bytecode(method.getScope(), "LABEL_" + String.valueOf(labelCounter++));
             method.getScope().addSymbol(loopLabel.getLabel(), new ContextLiteral(loopLabel.getContext()));
             method.source.add(loopLabel);
 
@@ -728,10 +695,6 @@ public class Spin2Compiler {
     }
 
     static void print(Spin2StatementNode node, int indent) {
-        for (Spin2StatementNode child : node.getChilds()) {
-            print(child, indent + 1);
-        }
-
         if (indent != 0) {
             for (int i = 1; i < indent; i++) {
                 System.out.print("|    ");
@@ -740,8 +703,12 @@ public class Spin2Compiler {
         }
 
         System.out.print(node.getClass().getSimpleName());
-        System.out.print(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
+        System.out.print(" [" + node.getText().replaceAll("\n", "\\\\n") + "] " + node.getPropertiesText());
         System.out.println();
+
+        for (Spin2StatementNode child : node.getChilds()) {
+            print(child, indent + 1);
+        }
     }
 
     int getClockMode(int xinfreq, int clkfreq) {
@@ -979,36 +946,27 @@ public class Spin2Compiler {
         String text1 = ""
             + "CON\n"
             + "    _clkfreq = 160_000_000\n"
-            + "    DELAY    = _CLKFREQ / 2\n"
+            + "    delay    = _clkfreq / 2\n"
             + "\n"
             + "PUB main() | ct\n"
-            + "\n"
-            + "    ct := muldiv64(1, 2, 3)\n"
             + "\n"
             + "    ct := getct()                   ' get current timer\n"
             + "    repeat\n"
             + "        pint(56)                    ' toggle pin 56\n"
-            + "        waitct(ct += DELAY)         ' wait half second"
+            + "        waitct(ct += delay)         ' wait half second"
             + "\n"
-            + "DAT\n"
-            + "\n"
-            + "                org   $000\n"
-            + "\n"
-            + "start\n"
-            + "                getct   ct                  ' get current timer\n"
-            + ".loop           drvnot  #56                 ' toggle output\n"
-            + "                addct1  ct, ##DELAY         ' set delay to timer 1\n"
-            + "                waitct1                     ' wait for timer 1 expire\n"
-            + "                jmp     #\\.loop\n"
-            + "\n"
-            + "ct              res     1\n"
             + "";
         String text = ""
-            + "PUB main(a, b) : c | d, e\n"
+            + "PUB main() | a\n"
             + "\n"
             + "    if a == 1\n"
             + "        a := 2\n"
-            + "        b := 3\n"
+            + "    elseif a == 3\n"
+            + "        a := 4\n"
+            + "    elseif a == 5\n"
+            + "        a := 6\n"
+            + "    else\n"
+            + "        a := 7\n"
             + "\n"
             + "";
 
