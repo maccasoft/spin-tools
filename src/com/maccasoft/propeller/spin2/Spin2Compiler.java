@@ -345,7 +345,7 @@ public class Spin2Compiler {
 
             ld[index].setValue(value | 0x80000000L);
             ld[index].setText(String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnsCount()));
-            object.writeBytes(new byte[0], "Method " + method.getLabel());
+            object.writeComment("Method " + method.getLabel());
             method.writeTo(object);
             index++;
         }
@@ -439,13 +439,13 @@ public class Spin2Compiler {
         Spin2Method method = new Spin2Method(localScope, node.name.getText(), parameters, returns, localVariables);
 
         Spin2StatementNode root = new Spin2StatementNode(0, "RETURN");
+        root.setComment(node.getText());
         for (Node child : node.getChilds()) {
             if (child instanceof StatementNode) {
                 compileStatementBlock(root, child);
             }
         }
-        print(root, 0);
-
+        //print(root, 0);
         compileBytecodeStatement(method, root, false);
 
         methods.add(method);
@@ -460,6 +460,9 @@ public class Spin2Compiler {
         Spin2StatementNode statementNode;
         String text = tokens.get(index).getText();
         if ("IF".equalsIgnoreCase(text) || "IFNOT".equalsIgnoreCase(text) || "ELSEIF".equalsIgnoreCase(text) || "ELSEIFNOT".equalsIgnoreCase(text)) {
+            if (tokens.size() == 1) {
+                throw new RuntimeException("syntax error");
+            }
             statementNode = new Spin2StatementNode(0, tokens.get(index++).getText());
 
             builder.setState(2);
@@ -472,21 +475,113 @@ public class Spin2Compiler {
             parent.addChild(statementNode);
         }
         else if ("ELSE".equalsIgnoreCase(text)) {
+            if (parent.getChildCount() == 0 || (!"IF".equalsIgnoreCase(parent.getChild(0).getText()) && !"IFNOT".equalsIgnoreCase(parent.getChild(0).getText()))) {
+                throw new RuntimeException("error: misplaced else");
+            }
+            if (tokens.size() > 0) {
+                throw new RuntimeException("syntax error");
+            }
             statementNode = new Spin2StatementNode(0, tokens.get(index++).getText());
             parent.addChild(statementNode);
         }
         else if ("REPEAT".equalsIgnoreCase(text)) {
-            statementNode = new Spin2StatementNode(0, tokens.get(index++).getText());
+            Token token = tokens.get(index++);
+            statementNode = new Spin2StatementNode(0, token.getText());
 
+            if (index < tokens.size()) {
+                token = tokens.get(index);
+                if ("WHILE".equalsIgnoreCase(token.getText())) {
+                    index++;
+                    builder.setState(2);
+                    while (index < tokens.size()) {
+                        token = tokens.get(index++);
+                        builder.addToken(token);
+                    }
+                    statementNode.setProperty("while", builder.getRoot());
+                }
+                else if ("UNTIL".equalsIgnoreCase(token.getText())) {
+                    index++;
+                    builder.setState(2);
+                    while (index < tokens.size()) {
+                        token = tokens.get(index++);
+                        builder.addToken(token);
+                    }
+                    statementNode.setProperty("until", builder.getRoot());
+                }
+            }
+            if (index < tokens.size()) {
+                while (index < tokens.size()) {
+                    token = tokens.get(index++);
+                    if ("FROM".equals(token.getText()) || "TO".equals(token.getText()) || "STEP".equals(token.getText())) {
+                        break;
+                    }
+                    builder.addToken(token);
+                }
+                if (index > 1) {
+                    statementNode.setProperty("counter", builder.getRoot());
+                }
+                if ("FROM".equals(token.getText())) {
+                    while (index < tokens.size()) {
+                        token = tokens.get(index++);
+                        if ("TO".equals(token.getText()) || "STEP".equals(token.getText())) {
+                            break;
+                        }
+                        builder.addToken(token);
+                    }
+                    statementNode.setProperty("from", builder.getRoot());
+                }
+                if ("TO".equals(token.getText())) {
+                    while (index < tokens.size()) {
+                        token = tokens.get(index++);
+                        if ("STEP".equals(token.getText())) {
+                            break;
+                        }
+                        builder.addToken(token);
+                    }
+                    statementNode.setProperty("to", builder.getRoot());
+                }
+                if ("STEP".equals(token.getText())) {
+                    while (index < tokens.size()) {
+                        token = tokens.get(index++);
+                        builder.addToken(token);
+                    }
+                    statementNode.setProperty("step", builder.getRoot());
+                }
+            }
+
+            parent.addChild(statementNode);
+        }
+        else if ("WHILE".equalsIgnoreCase(text)) {
+            if (parent.getChildCount() == 0 || !"REPEAT".equalsIgnoreCase(parent.getChild(0).getText())) {
+                throw new RuntimeException("error: misplaced while");
+            }
+            builder.setState(2);
+            index++;
             while (index < tokens.size()) {
                 Token token = tokens.get(index++);
                 builder.addToken(token);
             }
-            if (index > 1) {
-                statementNode.setProperty("counter", builder.getRoot());
+            Spin2StatementNode whileStatement = builder.getRoot();
+            whileStatement.setComment(node.getText());
+            parent.getChild(0).setProperty("while_end", whileStatement);
+            //parent.addChild(statementNode);
+            statementNode = parent;
+        }
+        else if ("UNTIL".equalsIgnoreCase(text)) {
+            if (parent.getChildCount() == 0 || !"REPEAT".equalsIgnoreCase(parent.getChild(0).getText())) {
+                throw new RuntimeException("error: misplaced until");
             }
-
-            parent.addChild(statementNode);
+            builder.setState(2);
+            index++;
+            while (index < tokens.size()) {
+                Token token = tokens.get(index++);
+                builder.addToken(token);
+            }
+            Spin2StatementNode untilStatement = builder.getRoot();
+            untilStatement.setComment(node.getText());
+            parent.getChild(0).setProperty("until_end", untilStatement);
+            //parent.addChild(statementNode);
+            statementNode = parent;
         }
         else {
             while (index < tokens.size()) {
@@ -502,11 +597,17 @@ public class Spin2Compiler {
                 compileStatementBlock(statementNode, child);
             }
         }
+
+        if (node.getText() != null) {
+            statementNode.setComment(node.getText());
+        }
     }
 
     int labelCounter;
 
     void compileBytecodeStatement(Spin2Method method, Spin2StatementNode node, boolean push) {
+        int index = method.source.size();
+
         Descriptor desc = Spin2Bytecode.getDescriptor(node.getText());
         if (desc != null) {
             if (node.getChildCount() == 1 && ",".equals(node.getChild(0).getText())) {
@@ -570,7 +671,7 @@ public class Spin2Compiler {
             method.source.add(new MathOp(method.getScope(), null, node.getText(), push));
         }
         else if (MathOp.isMathOp(node.getText())) {
-            if (node.childs.size() != 2) {
+            if (node.getChildCount() != 2) {
                 throw new RuntimeException("error: expression syntax error " + node.getText());
             }
             compileBytecodeStatement(method, node.getChild(0), true);
@@ -578,15 +679,15 @@ public class Spin2Compiler {
             method.source.add(new MathOp(method.getScope(), null, node.getText(), false));
         }
         else if ("ABORT".equalsIgnoreCase(node.getText())) {
-            if (node.childs.size() == 0) {
+            if (node.getChildCount() == 0) {
                 method.source.add(new Bytecode(method.getScope(), null, 0x06, node.getText()));
             }
-            else if (node.childs.size() == 1) {
+            else if (node.getChildCount() == 1) {
                 compileBytecodeStatement(method, node.getChild(0), true);
                 method.source.add(new Bytecode(method.getScope(), null, 0x07, node.getText()));
             }
             else {
-                throw new RuntimeException("error: expected 0 or 1 argument, found " + node.childs.size());
+                throw new RuntimeException("error: expected 0 or 1 argument, found " + node.getChildCount());
             }
         }
         else if ("RETURN".equalsIgnoreCase(node.getText())) {
@@ -651,6 +752,12 @@ public class Spin2Compiler {
         }
         else if ("REPEAT".equalsIgnoreCase(node.getText())) {
             Spin2Bytecode exitLabel = new Spin2Bytecode(method.getScope(), "LABEL_" + String.valueOf(labelCounter++));
+            method.getScope().addSymbol(exitLabel.getLabel(), new ContextLiteral(exitLabel.getContext()));
+            node.setData("exitLabel", exitLabel);
+
+            Spin2Bytecode loopLabel = new Spin2Bytecode(method.getScope(), "LABEL_" + String.valueOf(labelCounter++));
+            method.getScope().addSymbol(loopLabel.getLabel(), new ContextLiteral(loopLabel.getContext()));
+            node.setData("loopLabel", loopLabel);
 
             Spin2StatementNode property = node.getProperty("counter");
             if (property != null) {
@@ -658,11 +765,24 @@ public class Spin2Compiler {
                 if (!(method.source.get(method.source.size() - 1) instanceof Constant)) {
                     method.addSource(new Tjz(method.getScope(), null, new Identifier(exitLabel.getLabel(), exitLabel.getContext())));
                 }
+                method.source.add(loopLabel);
             }
-
-            Spin2Bytecode loopLabel = new Spin2Bytecode(method.getScope(), "LABEL_" + String.valueOf(labelCounter++));
-            method.getScope().addSymbol(loopLabel.getLabel(), new ContextLiteral(loopLabel.getContext()));
-            method.source.add(loopLabel);
+            else {
+                method.source.add(loopLabel);
+                property = node.getProperty("while");
+                if (property != null) {
+                    compileBytecodeStatement(method, property, true);
+                    method.addSource(new Jz(method.getScope(), null, new Identifier(exitLabel.getLabel(), exitLabel.getContext())));
+                }
+                else {
+                    property = node.getProperty("until");
+                    if (property != null) {
+                        compileBytecodeStatement(method, property, true);
+                        method.addSource(new Jnz(method.getScope(), null, new Identifier(exitLabel.getLabel(), exitLabel.getContext())));
+                    }
+                }
+                property = null;
+            }
 
             for (Spin2StatementNode child : node.getChilds()) {
                 compileBytecodeStatement(method, child, push);
@@ -670,12 +790,45 @@ public class Spin2Compiler {
 
             if (property != null) {
                 method.source.add(new Djnz(method.getScope(), null, new Identifier(loopLabel.getLabel(), loopLabel.getContext())));
-                method.getScope().addSymbol(exitLabel.getLabel(), new ContextLiteral(exitLabel.getContext()));
             }
             else {
-                method.source.add(new Jmp(method.getScope(), null, new Identifier(loopLabel.getLabel(), loopLabel.getContext())));
+                property = node.getProperty("while_end");
+                if (property != null) {
+                    compileBytecodeStatement(method, property, true);
+                    method.source.add(new Jnz(method.getScope(), null, new Identifier(loopLabel.getLabel(), loopLabel.getContext())));
+                }
+                else {
+                    property = node.getProperty("until_end");
+                    if (property != null) {
+                        compileBytecodeStatement(method, property, true);
+                        method.source.add(new Jz(method.getScope(), null, new Identifier(loopLabel.getLabel(), loopLabel.getContext())));
+                    }
+                }
+                if (property == null) {
+                    method.source.add(new Jmp(method.getScope(), null, new Identifier(loopLabel.getLabel(), loopLabel.getContext())));
+                }
             }
             method.source.add(exitLabel);
+        }
+        else if ("QUIT".equalsIgnoreCase(node.getText())) {
+            Spin2StatementNode parent = node.getParent();
+            while (parent != null && parent.getData("exitLabel") == null) {
+                parent = parent.getParent();
+            }
+            if (parent != null && parent.getData("exitLabel") != null) {
+                Spin2Bytecode exitLabel = (Spin2Bytecode) parent.getData("exitLabel");
+                method.addSource(new Jmp(method.getScope(), null, new Identifier(exitLabel.getLabel(), exitLabel.getContext())));
+            }
+        }
+        else if ("NEXT".equalsIgnoreCase(node.getText())) {
+            Spin2StatementNode parent = node.getParent();
+            while (parent != null && parent.getData("loopLabel") == null) {
+                parent = parent.getParent();
+            }
+            if (parent != null && parent.getData("loopLabel") != null) {
+                Spin2Bytecode exitLabel = (Spin2Bytecode) parent.getData("loopLabel");
+                method.addSource(new Jmp(method.getScope(), null, new Identifier(exitLabel.getLabel(), exitLabel.getContext())));
+            }
         }
         else {
             Expression expression = method.getScope().getLocalSymbol(node.getText());
@@ -691,6 +844,10 @@ public class Spin2Compiler {
             else {
                 method.source.add(new Constant(method.getScope(), null, expression));
             }
+        }
+
+        if (method.source.get(index).getComment() == null) {
+            method.source.get(index).setComment(node.getComment());
         }
     }
 
@@ -956,7 +1113,7 @@ public class Spin2Compiler {
             + "        waitct(ct += delay)         ' wait half second"
             + "\n"
             + "";
-        String text = ""
+        String ifelse_text = ""
             + "PUB main() | a\n"
             + "\n"
             + "    if a == 1\n"
@@ -967,6 +1124,21 @@ public class Spin2Compiler {
             + "        a := 6\n"
             + "    else\n"
             + "        a := 7\n"
+            + "\n"
+            + "";
+        String repeat_text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat while a > 1\n"
+            + "        a := 2\n"
+            + "\n"
+            + "";
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat\n"
+            + "        a := 2\n"
+            + "    while a > 1\n"
             + "\n"
             + "";
 

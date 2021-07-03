@@ -106,6 +106,8 @@ public class Spin2Bytecode {
     Spin2Context context;
     String label;
 
+    String comment;
+
     public Spin2Bytecode(Spin2Context context, String label) {
         this.context = new Spin2Context(context);
         this.label = label;
@@ -133,6 +135,14 @@ public class Spin2Bytecode {
 
     public byte[] getBytes() {
         return new byte[0];
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 
     @Override

@@ -10,14 +10,18 @@
 
 package com.maccasoft.propeller.spin2;
 
-public class Spin1BytecodeLine {
+public class Spin2MethodLine {
 
     Spin2Context scope;
     String label;
 
-    public Spin1BytecodeLine(Spin2Context scope, String label) {
-        this.scope = scope;
+    Spin2StatementNode tree;
+    String text;
+
+    public Spin2MethodLine(Spin2Context scope, String label, Spin2StatementNode tree) {
+        this.scope = new Spin2Context(scope);
         this.label = label;
+        this.tree = tree;
     }
 
     public Spin2Context getScope() {
@@ -26,6 +30,22 @@ public class Spin1BytecodeLine {
 
     public String getLabel() {
         return label;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public void resolve(int address) {
+        scope.setAddress(address);
+    }
+
+    public Spin2StatementNode getTree() {
+        return tree;
     }
 
 }

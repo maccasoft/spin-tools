@@ -255,7 +255,7 @@ public class Spin2TreeBuilder {
             Spin2StatementNode node1 = operands.pop();
 
             if (",".equals(node0.getText())) {
-                node0.childs.add(0, node1);
+                node0.addChild(0, node1);
                 return node0;
             }
 
@@ -389,7 +389,7 @@ public class Spin2TreeBuilder {
                 }
                 Integer op = operatorPrecedence.get(token.getText().toUpperCase());
                 if (op == null || op.intValue() != 17) {
-                    throw new RuntimeException("error: expecting assignment operator");
+                    throw new RuntimeException("error: expecting assignment operator, got " + token.getText());
                 }
                 addOperatorToken(token);
                 state = 2;
@@ -401,7 +401,7 @@ public class Spin2TreeBuilder {
                     break;
                 }
                 if (token.type != 0 && token.type != Token.NUMBER) {
-                    throw new RuntimeException("error: expecting constant or identifier");
+                    throw new RuntimeException("error: expecting constant or identifier, got " + token.getText());
                 }
                 addValueToken(token);
                 state = 3;
@@ -415,7 +415,7 @@ public class Spin2TreeBuilder {
                 }
                 Integer op = operatorPrecedence.get(token.getText().toUpperCase());
                 if (op == null) {
-                    throw new RuntimeException("error: expecting operator");
+                    throw new RuntimeException("error: expecting operator, got " + token.getText());
                 }
                 addOperatorToken(token);
                 if (")".equals(token.getText())) {
@@ -433,14 +433,14 @@ public class Spin2TreeBuilder {
                     break;
                 }
                 if (token.type != 0 && token.type != Token.NUMBER) {
-                    throw new RuntimeException("error: expecting constant or identifier");
+                    throw new RuntimeException("error: expecting constant or identifier, got " + token.getText());
                 }
                 addValueToken(token);
                 state = 3;
                 break;
             case 5:
                 if (token.type != 0 && token.type != Token.NUMBER) {
-                    throw new RuntimeException("error: expecting constant or identifier");
+                    throw new RuntimeException("error: expecting constant or identifier, got " + token.getText());
                 }
                 addValueToken(token);
                 state = 6;
@@ -448,7 +448,7 @@ public class Spin2TreeBuilder {
             case 6: {
                 Integer op = operatorPrecedence.get(token.getText().toUpperCase());
                 if (op == null) {
-                    throw new RuntimeException("error: expecting operator");
+                    throw new RuntimeException("error: expecting operator, got " + token.getText());
                 }
                 addOperatorToken(token);
                 if (")".equals(token.getText())) {

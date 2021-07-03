@@ -31,6 +31,7 @@ public class Spin2Method {
     List<LocalVariable> localVariables;
 
     List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
+    List<Spin2MethodLine> lines = new ArrayList<Spin2MethodLine>();
 
     public Spin2Method(Spin2Context scope, String label, List<LocalVariable> parameters, List<LocalVariable> returns, List<LocalVariable> localVariables) {
         this.scope = scope;
@@ -89,10 +90,21 @@ public class Spin2Method {
         return source;
     }
 
+    public void addSource(Spin2MethodLine line) {
+        lines.add(line);
+    }
+
+    public List<Spin2MethodLine> getLines() {
+        return lines;
+    }
+
     public void writeTo(Spin2Object obj) {
         obj.writeByte(getStackSize(), "(stack size)");
         for (Spin2Bytecode bc : getSource()) {
             bc.getContext().setAddress(obj.getSize());
+            if (bc.getComment() != null) {
+                obj.writeComment(bc.getComment());
+            }
             obj.writeBytes(bc.getBytes(), bc.toString());
         }
     }

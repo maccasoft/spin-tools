@@ -12,13 +12,18 @@ package com.maccasoft.propeller.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Node {
 
     protected final Node parent;
     protected final List<Token> tokens = new ArrayList<Token>();
     protected final List<Node> childs = new ArrayList<Node>();
+
+    protected Object data;
+    protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
     public Node() {
         this.parent = null;
@@ -92,6 +97,22 @@ public class Node {
     public String getText() {
         TokenStream stream = getStartToken().getStream();
         return stream.getSource(getStartIndex(), getStopIndex());
+    }
+
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
+    }
+
+    public Object getData(String key) {
+        return keyedData.get(key);
+    }
+
+    public void setData(String key, Object data) {
+        this.keyedData.put(key, data);
     }
 
     @Override

@@ -40,6 +40,13 @@ public class Spin2Object {
 
     }
 
+    public static class CommentDataObject extends DataObject {
+
+        public CommentDataObject(String text) {
+            super(null, text);
+        }
+    }
+
     public static class LongDataObject extends DataObject {
 
         long value;
@@ -229,6 +236,10 @@ public class Spin2Object {
         size += object.size;
     }
 
+    public void writeComment(String text) {
+        data.add(new CommentDataObject(text));
+    }
+
     public int getSize() {
         return size;
     }
@@ -313,6 +324,10 @@ public class Spin2Object {
                     }
                     ps.println();
                 }
+            }
+            else if (obj.text != null) {
+                ps.print("         ");
+                ps.println(" ' " + obj.text);
             }
         }
     }

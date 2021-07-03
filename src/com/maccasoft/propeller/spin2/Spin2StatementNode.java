@@ -27,7 +27,13 @@ public class Spin2StatementNode {
     String text;
 
     Map<String, Spin2StatementNode> properties = new HashMap<String, Spin2StatementNode>();
-    List<Spin2StatementNode> childs = new ArrayList<Spin2StatementNode>();
+    private List<Spin2StatementNode> childs = new ArrayList<Spin2StatementNode>();
+
+    String comment;
+    Spin2StatementNode parent;
+
+    protected Object data;
+    protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
     public Spin2StatementNode(int type, String text) {
         this.type = type;
@@ -65,8 +71,18 @@ public class Spin2StatementNode {
         return properties.get(name);
     }
 
+    public Spin2StatementNode getParent() {
+        return parent;
+    }
+
     public void addChild(Spin2StatementNode node) {
+        node.parent = this;
         childs.add(node);
+    }
+
+    public void addChild(int index, Spin2StatementNode node) {
+        node.parent = this;
+        childs.add(index, node);
     }
 
     public Spin2StatementNode getChild(int index) {
@@ -79,6 +95,30 @@ public class Spin2StatementNode {
 
     public List<Spin2StatementNode> getChilds() {
         return childs;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
+    }
+
+    public Object getData(String key) {
+        return keyedData.get(key);
+    }
+
+    public void setData(String key, Object data) {
+        this.keyedData.put(key, data);
     }
 
     @Override
