@@ -248,6 +248,7 @@ public class Spin2Object {
         if ((size % 2) != 0) {
             int padding = 2 - (size % 2);
             data.add(new DataObject(new byte[padding], "Padding"));
+            size += padding;
         }
     }
 
@@ -255,6 +256,7 @@ public class Spin2Object {
         if ((size % 4) != 0) {
             int padding = 4 - (size % 4);
             data.add(new DataObject(new byte[padding], "Padding"));
+            size += padding;
         }
     }
 

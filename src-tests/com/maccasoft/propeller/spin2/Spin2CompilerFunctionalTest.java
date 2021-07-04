@@ -137,27 +137,31 @@ class Spin2CompilerFunctionalTest {
             + "    c := a + b * 3\n"
             + "";
 
-        byte[] expected = new byte[] {};
-        /* 88 10 00 00    PBASE $1088     */
-        /* 9C 10 00 00    VBASE $109C FIRST PUB @$0000 */
-        /* A0 10 00 00    DBASE $10A0     */
-        /* 00 01 00 00    CLEAR $0010     */
+        byte[] expected = new byte[] {
+            /* 88 10 00 00    PBASE $1088     */
+            /* 9C 10 00 00    VBASE $109C     */
+            /* A0 10 00 00    DBASE $10A0     */
+            /* 00 01 00 00    CLEAR $0010     */
 
-        /* 1088 - 08 00 00 80           PUB @$00008 + (PAR_COUNT << 24)  */
-        /* 108C - 14 00 00 00                    */
-        /*                                       */
-        /* 1090 (0008) - 0C             STACK SIZE (RFVAR) */
-        /* 1091 (0009) - A2             CONSTANT (1)    */
-        /* 1092 (000A) - F0             WRITE DBASE+$0  */
-        /* 1093 (000B) - A3             CONSTANT (2)    */
-        /* 1094 (000C) - F1             WRITE DBASE+$1  */
-        /* 1095 (000D) - E0             READ DBASE +$0  */
-        /* 1096 (000E) - E1             READ DBASE +$1  */
-        /* 1097 (000F) - A4             CONSTANT (3)    */
-        /* 1098 (0010) - 96             MULTIPLY        */
-        /* 1099 (0011) - 8A             ADD             */
-        /* 109A (0012) - F2             WRITE DBASE +$2 */
-        /* 109B (0013) - 04             RETURN          */
+            /* 1088 (0000) - */ (byte) 0x08, (byte) 0x00, (byte) 0x00, (byte) 0x80,
+            /* 108C (0004) - */ (byte) 0x14, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+            /*                                       */
+            /* 1090 (0008) - */ (byte) 0x0C, /*             STACK SIZE (RFVAR) */
+            /* 1091 (0009) - */ (byte) 0xA2, /*             CONSTANT (1)    */
+            /* 1092 (000A) - */ (byte) 0xF0, /*             WRITE DBASE+$0  */
+            /* 1093 (000B) - */ (byte) 0xA3, /*             CONSTANT (2)    */
+            /* 1094 (000C) - */ (byte) 0xF1, /*             WRITE DBASE+$1  */
+            /* 1095 (000D) - */ (byte) 0xE0, /*             READ DBASE +$0  */
+            /* 1096 (000E) - */ (byte) 0xE1, /*             READ DBASE +$1  */
+            /* 1097 (000F) - */ (byte) 0xA4, /*             CONSTANT (3)    */
+            /* 1098 (0010) - */ (byte) 0x96, /*             MULTIPLY        */
+            /* 1099 (0011) - */ (byte) 0x8A, /*             ADD             */
+            /* 109A (0012) - */ (byte) 0xF2, /*             WRITE DBASE +$2 */
+            /* 109B (0013) - */ (byte) 0x04, /*             RETURN          */
+
+            /* 109C - 00 00 00 00    VBASE           */
+            /* 10A0 - 00 00 00 00    DBASE           */
+        };
 
         byte[] result = compile(text);
         Assertions.assertArrayEquals(expected, result);
@@ -168,40 +172,43 @@ class Spin2CompilerFunctionalTest {
         String text = ""
             + "CON\n"
             + "    _clkfreq = 160_000_000\n"
+            + "    _delay   = _clkfreq / 2\n"
             + "\n"
             + "PUB main() | ct\n"
             + "\n"
             + "    ct := getct()                   ' get current timer\n"
             + "    repeat\n"
             + "        pint(56)                    ' toggle pin 56\n"
-            + "        waitct(ct += _clkfreq / 2)  ' wait half second"
-            + "\n";
+            + "        waitct(ct += _delay)        ' wait half second\n"
+            + "";
 
-        byte[] expected = new byte[] {};
-        /* 88 10 00 00    PBASE $1088     */
-        /* A4 10 00 00    VBASE $10A4     */
-        /* A8 10 00 00    DBASE $10A8     */
-        /* 00 01 00 00    CLEAR $0010     */
+        byte[] expected = new byte[] {
+            /* 88 10 00 00    PBASE $1088     */
+            /* A4 10 00 00    VBASE $10A4     */
+            /* A8 10 00 00    DBASE $10A8     */
+            /* 00 01 00 00    CLEAR $0010     */
 
-        /* 1088 - 08 00 00 80                    */
-        /* 108C - 19 00 00 00                    */
-        /*                                       */
-        /* 1090 - 04             (stack size)    */
-        /*                                       */ /* PUB main()                                              */
-        /* 1091 - 33             GETCT           */ /*     ct := getct()                   ' get current timer */
-        /* 1092 - F0             +-> ct          */ /*                                                         */
-        /*                                       */ /*     repeat                                              */
-        /* 1093 - 45 38          56              */ /*     |   pint(56)                    ' toggle pin 56     */
-        /* 1095 - 39             PINT            */ /*     |                                                   */
-        /* 1096 - 49 00 B4 C4 04 _CLKFREQ / 2    */ /*     |   waitct(ct += _clkfreq / 2)  ' wait half second  */
-        /* 109B - D0             ct              */ /*     |                                                   */
-        /* 109C - CA             +=              */ /*     |                                                   */
-        /* 109D - 35             WAITCT          */ /*     |                                                   */
-        /* 109E - 12 74          JMP -12         */ /*     +                                                   */
-        /* 10A0 - 04 00 00 00                    */
-        /* 10A4 - 00 00 00 00    VBASE           */
-        /* DBASE (STACK)                         */
-        /* 10A8 - 00 00 00 00    ct              */
+            /* 1088 (0000) - */ (byte) 0x08, (byte) 0x00, (byte) 0x00, (byte) 0x80,
+            /* 108C (0004) - */ (byte) 0x19, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+
+            /* 1090 (0008) - */ (byte) 0x04, /*                                                     (stack size)    */
+            /*                                                                                              */ /* PUB main()                                              */
+            /* 1091 (0009) - */ (byte) 0x33, /*                                                     GETCT           */ /*     ct := getct()                   ' get current timer */
+            /* 1092 (000A) - */ (byte) 0xF0, /*                                                     +-> ct          */ /*                                                         */
+            /*                                                                                              */ /*     repeat                                              */
+            /* 1093 (000B) - */ (byte) 0x45, (byte) 0x38, /*                                        56              */ /*     |   pint(56)                    ' toggle pin 56     */
+            /* 1095 (000D) - */ (byte) 0x39, /*                                                     PINT            */ /*     |                                                   */
+            /* 1096 (000E) - */ (byte) 0x49, (byte) 0x00, (byte) 0xB4, (byte) 0xC4, (byte) 0x04, /* _CLKFREQ / 2    */ /*     |   waitct(ct += _clkfreq / 2)  ' wait half second  */
+            /* 109B (0013) - */ (byte) 0xD0, /*                                                     ct              */ /*     |                                                   */
+            /* 109C (0014) - */ (byte) 0xCA, /*                                                     +=              */ /*     |                                                   */
+            /* 109D (0015) - */ (byte) 0x35, /*                                                     WAITCT          */ /*     |                                                   */
+            /* 109E (0016) - */ (byte) 0x12, (byte) 0x74, /*                                        JMP -12         */ /*     +                                                   */
+            /* 10A0 (0018) - */ (byte) 0x04, /*                                                     RETURN          */
+            /* 10A1 (0019) - */ (byte) 0x00, (byte) 0x00, (byte) 0x00, /*                           (padding)       */
+
+            /* 10A4 - 00 00 00 00    VBASE           */
+            /* 10A8 - 00 00 00 00    DBASE           */
+        };
 
         byte[] result = compile(text);
         Assertions.assertArrayEquals(expected, result);
@@ -268,10 +275,10 @@ class Spin2CompilerFunctionalTest {
         Node root = subject.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();
-        compiler.compile(root);
+        Spin2Object obj = compiler.compile(root);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        compiler.generateObjectCode(os);
+        obj.generateBinary(os);
         return os.toByteArray();
     }
 

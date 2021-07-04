@@ -21,6 +21,7 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
+import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
@@ -218,10 +219,10 @@ class PtrTest {
         Node root = subject.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();
-        compiler.compile(root);
+        Spin2Object obj = compiler.compile(root);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        compiler.generateObjectCode(os);
+        obj.generateBinary(os);
         return os.toByteArray();
     }
 

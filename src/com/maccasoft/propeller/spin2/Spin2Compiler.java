@@ -11,7 +11,6 @@
 package com.maccasoft.propeller.spin2;
 
 import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -49,6 +48,7 @@ import com.maccasoft.propeller.spin2.bytecode.Jmp;
 import com.maccasoft.propeller.spin2.bytecode.Jnz;
 import com.maccasoft.propeller.spin2.bytecode.Jz;
 import com.maccasoft.propeller.spin2.bytecode.MathOp;
+import com.maccasoft.propeller.spin2.bytecode.MemoryOp;
 import com.maccasoft.propeller.spin2.bytecode.Tjz;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 import com.maccasoft.propeller.spin2.instructions.Org;
@@ -203,23 +203,6 @@ public class Spin2Compiler {
 
     }
 
-    public void generateObjectCode(OutputStream os) throws Exception {
-        int address = 0;
-
-        for (Spin2PAsmLine line : source) {
-            while (address < line.getScope().getHubAddress()) {
-                os.write(0x00);
-                address++;
-            }
-            Spin2InstructionObject obj = line.getInstructionObject();
-            byte[] code = obj.getBytes();
-            if (code != null && code.length != 0) {
-                os.write(code);
-                address += code.length;
-            }
-        }
-    }
-
     public Spin2Object compile(Node root) {
         boolean hubMode = false;
         int address = 0, hubAddress = 0;
@@ -227,14 +210,14 @@ public class Spin2Compiler {
 
         root.accept(compilerVisitor);
 
+        while (scope.getParent() != null) {
+            scope = scope.getParent();
+        }
+
         for (Node node : root.getChilds()) {
             if (node instanceof VariablesNode) {
                 compileVarBlock(node);
             }
-        }
-
-        while (scope.getParent() != null) {
-            scope = scope.getParent();
         }
 
         int _clkfreq = 20000000;
@@ -264,6 +247,10 @@ public class Spin2Compiler {
             if (node instanceof MethodNode) {
                 compileMethodBlock((MethodNode) node);
             }
+        }
+
+        if (methods.size() != 0) {
+            hubAddress = (methods.size() + 1) * 4;
         }
 
         for (Spin2PAsmLine line : source) {
@@ -297,12 +284,14 @@ public class Spin2Compiler {
 
         LongDataObject[] ld = new LongDataObject[methods.size() + 1];
 
-        int index = 0;
-        for (Spin2Method method : methods) {
-            ld[index] = object.writeLong(0, "Method " + method.getLabel());
-            index++;
+        if (methods.size() != 0) {
+            int index = 0;
+            for (Spin2Method method : methods) {
+                ld[index] = object.writeLong(0, "Method " + method.getLabel());
+                index++;
+            }
+            ld[index] = object.writeLong(0, "End");
         }
-        ld[index] = object.writeLong(0, "End");
 
         for (Spin2PAsmLine line : source) {
             hubAddress = line.getScope().getHubAddress();
@@ -313,45 +302,46 @@ public class Spin2Compiler {
         }
         object.alignToLong();
 
-        boolean repeat = true;
-        while (repeat) {
-            repeat = false;
-            address = object.getSize();
+        if (methods.size() != 0) {
+            boolean repeat = true;
+            while (repeat) {
+                repeat = false;
+                address = object.getSize();
 
-            for (Spin2Method method : methods) {
-                address++;
-                for (Spin2Bytecode bc : method.getSource()) {
-                    if (bc.getContext().isAddressSet()) {
-                        if (address != bc.getContext().getAddress()) {
+                for (Spin2Method method : methods) {
+                    address++;
+                    for (Spin2Bytecode bc : method.getSource()) {
+                        if (bc.getContext().isAddressSet()) {
+                            if (address != bc.getContext().getAddress()) {
+                                repeat = true;
+                            }
+                        }
+                        bc.resolve(address);
+                        if (!bc.isFixedSize()) {
                             repeat = true;
                         }
+                        address += bc.getSize();
                     }
-                    bc.resolve(address);
-                    if (!bc.isFixedSize()) {
-                        repeat = true;
-                    }
-                    address += bc.getSize();
                 }
             }
+
+            int index = 0;
+            for (Spin2Method method : methods) {
+                int value = 0;
+
+                value = Spin2Method.address_bit.setValue(value, object.getSize());
+                value = Spin2Method.returns_bit.setValue(value, method.getReturnsCount());
+                value = Spin2Method.parameters_bit.setValue(value, method.getParametersCount());
+
+                ld[index].setValue(value | 0x80000000L);
+                ld[index].setText(String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnsCount()));
+                method.writeTo(object);
+                index++;
+            }
+            ld[index].setValue(object.getSize());
+
+            object.alignToLong();
         }
-
-        index = 0;
-        for (Spin2Method method : methods) {
-            int value = 0;
-
-            value = Spin2Method.address_bit.setValue(value, object.getSize());
-            value = Spin2Method.returns_bit.setValue(value, method.getReturnsCount());
-            value = Spin2Method.parameters_bit.setValue(value, method.getParametersCount());
-
-            ld[index].setValue(value | 0x80000000L);
-            ld[index].setText(String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnsCount()));
-            object.writeComment("Method " + method.getLabel());
-            method.writeTo(object);
-            index++;
-        }
-        ld[index].setValue(object.getSize());
-
-        object.alignToLong();
 
         return object;
     }
@@ -415,7 +405,7 @@ public class Spin2Compiler {
             if (child.size != null) {
                 size = buildExpression(child.size.getTokens(), scope);
                 if (!size.isConstant()) {
-                    throw new RuntimeException("error: expression is not constant");
+                    throw new RuntimeException("expression is not constant");
                 }
             }
             LocalVariable var = new LocalVariable(type, child.getText(), size, offset);
@@ -437,9 +427,9 @@ public class Spin2Compiler {
         }
 
         Spin2Method method = new Spin2Method(localScope, node.name.getText(), parameters, returns, localVariables);
+        method.setComment(node.getText());
 
         Spin2StatementNode root = new Spin2StatementNode(0, "RETURN");
-        root.setComment(node.getText());
         for (Node child : node.getChilds()) {
             if (child instanceof StatementNode) {
                 compileStatementBlock(root, child);
@@ -464,6 +454,7 @@ public class Spin2Compiler {
                 throw new RuntimeException("syntax error");
             }
             statementNode = new Spin2StatementNode(0, tokens.get(index++).getText());
+            statementNode.setComment(node.getText());
 
             builder.setState(2);
             while (index < tokens.size()) {
@@ -476,17 +467,19 @@ public class Spin2Compiler {
         }
         else if ("ELSE".equalsIgnoreCase(text)) {
             if (parent.getChildCount() == 0 || (!"IF".equalsIgnoreCase(parent.getChild(0).getText()) && !"IFNOT".equalsIgnoreCase(parent.getChild(0).getText()))) {
-                throw new RuntimeException("error: misplaced else");
+                throw new RuntimeException("misplaced else");
             }
             if (tokens.size() > 0) {
                 throw new RuntimeException("syntax error");
             }
             statementNode = new Spin2StatementNode(0, tokens.get(index++).getText());
+            statementNode.setComment(node.getText());
             parent.addChild(statementNode);
         }
         else if ("REPEAT".equalsIgnoreCase(text)) {
             Token token = tokens.get(index++);
             statementNode = new Spin2StatementNode(0, token.getText());
+            statementNode.setComment(node.getText());
 
             if (index < tokens.size()) {
                 token = tokens.get(index);
@@ -553,7 +546,7 @@ public class Spin2Compiler {
         }
         else if ("WHILE".equalsIgnoreCase(text)) {
             if (parent.getChildCount() == 0 || !"REPEAT".equalsIgnoreCase(parent.getChild(0).getText())) {
-                throw new RuntimeException("error: misplaced while");
+                throw new RuntimeException("misplaced while");
             }
             builder.setState(2);
             index++;
@@ -569,7 +562,7 @@ public class Spin2Compiler {
         }
         else if ("UNTIL".equalsIgnoreCase(text)) {
             if (parent.getChildCount() == 0 || !"REPEAT".equalsIgnoreCase(parent.getChild(0).getText())) {
-                throw new RuntimeException("error: misplaced until");
+                throw new RuntimeException("misplaced until");
             }
             builder.setState(2);
             index++;
@@ -589,6 +582,7 @@ public class Spin2Compiler {
                 builder.addToken(token);
             }
             statementNode = builder.getRoot();
+            statementNode.setComment(node.getText());
             parent.addChild(statementNode);
         }
 
@@ -596,10 +590,6 @@ public class Spin2Compiler {
             if (child instanceof StatementNode) {
                 compileStatementBlock(statementNode, child);
             }
-        }
-
-        if (node.getText() != null) {
-            statementNode.setComment(node.getText());
         }
     }
 
@@ -613,7 +603,7 @@ public class Spin2Compiler {
             if (node.getChildCount() == 1 && ",".equals(node.getChild(0).getText())) {
                 Spin2StatementNode argsNode = node.getChild(0);
                 if (argsNode.getChildCount() != desc.parameters) {
-                    throw new RuntimeException("error: expected " + desc.parameters + " argument(s), found " + argsNode.getChildCount());
+                    throw new RuntimeException("expected " + desc.parameters + " argument(s), found " + argsNode.getChildCount());
                 }
                 for (int i = 0; i < desc.parameters; i++) {
                     compileBytecodeStatement(method, argsNode.getChild(i), true);
@@ -621,7 +611,7 @@ public class Spin2Compiler {
             }
             else {
                 if (node.getChildCount() != desc.parameters) {
-                    throw new RuntimeException("error: expected " + desc.parameters + " argument(s), found " + node.getChildCount());
+                    throw new RuntimeException("expected " + desc.parameters + " argument(s), found " + node.getChildCount());
                 }
                 for (int i = 0; i < desc.parameters; i++) {
                     compileBytecodeStatement(method, node.getChild(i), true);
@@ -641,13 +631,13 @@ public class Spin2Compiler {
             else {
                 Expression expression = method.getScope().getLocalSymbol(node.getChild(0).getText());
                 if (expression instanceof Register) {
-                    throw new RuntimeException("error: unhandled register expression");
+                    throw new RuntimeException("unhandled register expression");
                 }
                 else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
                     method.source.add(new VariableOp(method.getScope(), null, VariableOp.Op.Write, (Variable) expression));
                 }
                 else {
-                    throw new RuntimeException("error: unknown: " + node.getText());
+                    throw new RuntimeException("unknown: " + node.getText());
                 }
             }
         }
@@ -659,20 +649,20 @@ public class Spin2Compiler {
             else {
                 Expression expression = method.getScope().getLocalSymbol(node.getChild(0).getText());
                 if (expression instanceof Register) {
-                    throw new RuntimeException("error: unhandled register expression");
+                    throw new RuntimeException("unhandled register expression");
                 }
                 else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
                     method.addSource(new VariableOp(method.getScope(), null, VariableOp.Op.Setup, (Variable) expression));
                 }
                 else {
-                    throw new RuntimeException("error: unknown: " + node.getText());
+                    throw new RuntimeException("unknown: " + node.getText());
                 }
             }
             method.source.add(new MathOp(method.getScope(), null, node.getText(), push));
         }
         else if (MathOp.isMathOp(node.getText())) {
             if (node.getChildCount() != 2) {
-                throw new RuntimeException("error: expression syntax error " + node.getText());
+                throw new RuntimeException("expression syntax error " + node.getText());
             }
             compileBytecodeStatement(method, node.getChild(0), true);
             compileBytecodeStatement(method, node.getChild(1), true);
@@ -687,7 +677,7 @@ public class Spin2Compiler {
                 method.source.add(new Bytecode(method.getScope(), null, 0x07, node.getText()));
             }
             else {
-                throw new RuntimeException("error: expected 0 or 1 argument, found " + node.getChildCount());
+                throw new RuntimeException("expected 0 or 1 argument, found " + node.getChildCount());
             }
         }
         else if ("RETURN".equalsIgnoreCase(node.getText())) {
@@ -833,10 +823,21 @@ public class Spin2Compiler {
         else {
             Expression expression = method.getScope().getLocalSymbol(node.getText());
             if (expression == null) {
-                throw new RuntimeException("error: unknown " + node.getText());
+                throw new RuntimeException("unknown " + node.getText());
             }
             if (expression instanceof Register) {
-                throw new RuntimeException("error: unhandled register expression");
+                throw new RuntimeException("unhandled register expression");
+            }
+            else if (node.getText().startsWith("@")) {
+                MemoryOp.Size ss = MemoryOp.Size.Long;
+                MemoryOp.Base bb = MemoryOp.Base.PBase;
+                if (expression instanceof LocalVariable) {
+                    bb = MemoryOp.Base.DBase;
+                }
+                else if (expression instanceof Variable) {
+                    bb = MemoryOp.Base.VBase;
+                }
+                method.source.add(new MemoryOp(method.getScope(), null, ss, bb, MemoryOp.Op.Address, expression));
             }
             else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
                 method.source.add(new VariableOp(method.getScope(), null, VariableOp.Op.Read, (Variable) expression));
@@ -1099,19 +1100,25 @@ public class Spin2Compiler {
         return expressionBuilder.getExpression();
     }
 
+    public boolean hasSpinMethods() {
+        return methods.size() != 0;
+    }
+
+    public int getVarSize() {
+        return varOffset;
+    }
+
     public static void main(String[] args) {
         String text1 = ""
             + "CON\n"
             + "    _clkfreq = 160_000_000\n"
-            + "    delay    = _clkfreq / 2\n"
             + "\n"
             + "PUB main() | ct\n"
             + "\n"
             + "    ct := getct()                   ' get current timer\n"
             + "    repeat\n"
             + "        pint(56)                    ' toggle pin 56\n"
-            + "        waitct(ct += delay)         ' wait half second"
-            + "\n"
+            + "        waitct(ct += _clkfreq / 2)  ' wait half second\n"
             + "";
         String ifelse_text = ""
             + "PUB main() | a\n"
@@ -1134,12 +1141,17 @@ public class Spin2Compiler {
             + "\n"
             + "";
         String text = ""
-            + "PUB main() | a\n"
+            + "VAR a, b, filler[128], c\n"
             + "\n"
-            + "    repeat\n"
-            + "        a := 2\n"
-            + "    while a > 1\n"
+            + "PUB main()\n"
             + "\n"
+            + "    a := @b\n"
+            + "    a := @c\n"
+            + "    coginit(cogid(), @driver, 0)\n"
+            + "\n"
+            + "DAT org $000\n"
+            + "\n"
+            + "driver\n"
             + "";
 
         try {
@@ -1154,6 +1166,8 @@ public class Spin2Compiler {
 
             Spin2Interpreter interpreter = new Spin2Interpreter();
             Spin2Object binary = new Spin2Object();
+            interpreter.setVBase(interpreter.getPBase() + obj.getSize());
+            interpreter.setDBase(interpreter.getPBase() + obj.getSize() + compiler.getVarSize());
             binary.writeBytes(interpreter.code, "Interpreter");
             binary.writeObject(obj);
 
@@ -1162,6 +1176,8 @@ public class Spin2Compiler {
             os.close();
 
             System.out.println(String.format("PBASE: $%05X", interpreter.getPBase()));
+            System.out.println(String.format("VBASE: $%05X", interpreter.getVBase()));
+            System.out.println(String.format("DBASE: $%05X", interpreter.getDBase()));
 
         } catch (Exception e) {
             e.printStackTrace();

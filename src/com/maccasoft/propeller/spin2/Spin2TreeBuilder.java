@@ -429,7 +429,7 @@ public class Spin2TreeBuilder {
                     operators.pop();
                     FunctionOperator operator = (FunctionOperator) operators.pop();
                     operands.push(new Spin2StatementNode(Spin2StatementNode.FUNCTION, operator.name.getText()));
-                    state = 1;
+                    state = 3;
                     break;
                 }
                 if (token.type != 0 && token.type != Token.NUMBER) {

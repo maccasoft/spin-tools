@@ -38,7 +38,7 @@ class Spin2CompilerTest {
         Node root = parser.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();
-        compiler.compile(root);
+        Spin2Object obj = compiler.compile(root);
 
         Assertions.assertEquals(0x000L, compiler.source.get(0).getScope().getSymbol("$").getNumber());
         Assertions.assertEquals(0x000L, compiler.source.get(1).getScope().getSymbol("$").getNumber());
@@ -48,7 +48,7 @@ class Spin2CompilerTest {
         Assertions.assertEquals(0x006L, compiler.source.get(5).getScope().getSymbol("$").getNumber());
         Assertions.assertEquals(0x007L, compiler.source.get(6).getScope().getSymbol("$").getNumber());
 
-        compiler.generateObjectCode(new ByteArrayOutputStream());
+        obj.generateBinary(new ByteArrayOutputStream());
     }
 
     @Test

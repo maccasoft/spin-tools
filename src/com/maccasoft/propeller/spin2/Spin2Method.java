@@ -16,6 +16,7 @@ import java.util.List;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.LocalVariable;
+import com.maccasoft.propeller.spin2.bytecode.Constant;
 
 public class Spin2Method {
 
@@ -32,6 +33,8 @@ public class Spin2Method {
 
     List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
     List<Spin2MethodLine> lines = new ArrayList<Spin2MethodLine>();
+
+    String comment;
 
     public Spin2Method(Spin2Context scope, String label, List<LocalVariable> parameters, List<LocalVariable> returns, List<LocalVariable> localVariables) {
         this.scope = scope;
@@ -98,8 +101,21 @@ public class Spin2Method {
         return lines;
     }
 
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
     public void writeTo(Spin2Object obj) {
-        obj.writeByte(getStackSize(), "(stack size)");
+        if (comment != null) {
+            obj.writeComment(comment);
+        }
+
+        obj.writeBytes(Constant.wrVar(getStackSize()), "(stack size)");
+
         for (Spin2Bytecode bc : getSource()) {
             bc.getContext().setAddress(obj.getSize());
             if (bc.getComment() != null) {

@@ -20,7 +20,8 @@ public class VariableOp extends Spin2Bytecode {
     public static enum Op {
         Read,
         Write,
-        Setup
+        Setup,
+        Address
     }
 
     public Op op;
@@ -63,11 +64,23 @@ public class VariableOp extends Spin2Bytecode {
                 else if (op == Op.Write) {
                     opcode = 0xF0;
                 }
+                else if (op == Op.Address) {
+                    return new byte[] {
+                        (byte) (opcode + value),
+                        (byte) 0x7F
+                    };
+                }
                 return new byte[] {
                     (byte) (opcode + value)
                 };
             }
             else {
+                if (op == Op.Address) {
+                    return new byte[] {
+                        (byte) (0xC0 + value),
+                        (byte) 0x7F
+                    };
+                }
                 return new byte[] {
                     (byte) (0xC0 + value),
                     (byte) (op == Op.Read ? 0x80 : 0x81)
@@ -103,7 +116,12 @@ public class VariableOp extends Spin2Bytecode {
         for (int i = 0; i < v.length; i++) {
             b[i + 1] = v[i];
         }
-        b[b.length - 1] = (byte) (op == Op.Read ? 0x80 : 0x81);
+        if (op == Op.Address) {
+            b[b.length - 1] = (byte) 0x7F;
+        }
+        else {
+            b[b.length - 1] = (byte) (op == Op.Read ? 0x80 : 0x81);
+        }
 
         return b;
     }
@@ -116,6 +134,9 @@ public class VariableOp extends Spin2Bytecode {
         }
         else if (op == Op.Write) {
             sb.append("WRITE ");
+        }
+        else if (op == Op.Address) {
+            sb.append("ADDRESS ");
         }
         sb.append(variable.getType());
         if (variable instanceof LocalVariable) {

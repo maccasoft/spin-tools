@@ -561,6 +561,7 @@ public class Spin2Parser {
                 return token;
             }
             if ("(".equals(token.getText())) {
+                parent.addToken(token);
                 token = parseSubStatement(node, token);
                 if (token.type == Token.NL || token.type == Token.EOF) {
                     return token;
