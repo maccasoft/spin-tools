@@ -30,6 +30,7 @@ import com.maccasoft.propeller.model.ConstantAssignNode;
 import com.maccasoft.propeller.model.ConstantSetEnumNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.LocalVariableNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
@@ -65,140 +66,6 @@ public class Spin2Compiler {
 
     int varOffset = 4;
 
-    final NodeVisitor compilerVisitor = new NodeVisitor() {
-
-        int enumValue = 0, enumIncrement = 1;
-
-        @Override
-        public void visitConstants(ConstantsNode node) {
-            while (scope.getParent() != null) {
-                scope = scope.getParent();
-            }
-            enumValue = 0;
-            enumIncrement = 1;
-        }
-
-        @Override
-        public void visitConstantAssign(ConstantAssignNode node) {
-            String name = node.identifier.getText();
-            try {
-                Expression expression = buildExpression(node.expression, scope);
-                scope.addSymbol(name, expression);
-            } catch (Exception e) {
-                for (Token t : node.expression.getTokens()) {
-                    System.err.print(" " + t.getText());
-                }
-                System.err.println();
-                throw e;
-            }
-        }
-
-        @Override
-        public void visitConstantSetEnum(ConstantSetEnumNode node) {
-            Expression expression = buildExpression(node.start, scope);
-            enumValue = expression.getNumber().intValue();
-            if (node.step != null) {
-                expression = buildExpression(node.step, scope);
-                enumIncrement = expression.getNumber().intValue();
-            }
-            else {
-                enumIncrement = 1;
-            }
-        }
-
-        @Override
-        public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
-            scope.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
-            if (node.multiplier != null) {
-                Expression expression = buildExpression(node.multiplier, scope);
-                enumValue += enumIncrement * expression.getNumber().intValue();
-            }
-            else {
-                enumValue += enumIncrement;
-            }
-        }
-
-        @Override
-        public void visitDataLine(DataLineNode node) {
-            String label = node.label != null ? node.label.getText() : null;
-            String condition = node.condition != null ? node.condition.getText() : null;
-            String mnemonic = node.instruction != null ? node.instruction.getText() : null;
-            String modifier = node.modifier != null ? node.modifier.getText() : null;
-            List<Spin2PAsmExpression> parameters = new ArrayList<Spin2PAsmExpression>();
-
-            Spin2Context localScope = new Spin2Context(scope);
-
-            for (ParameterNode param : node.parameters) {
-                int index = 0;
-                String prefix = null;
-                Expression expression = null, count = null;
-
-                if (param.getText().toUpperCase().contains("PTRA") || param.getText().toUpperCase().contains("PTRB")) {
-                    expression = new Identifier(param.getText(), scope);
-                }
-                else {
-                    Token token;
-                    if (index < param.getTokens().size()) {
-                        token = param.getToken(index);
-                        if (token.getText().startsWith("#")) {
-                            prefix = (prefix == null ? "" : prefix) + token.getText();
-                            index++;
-                        }
-                    }
-                    if (index < param.getTokens().size()) {
-                        token = param.getToken(index);
-                        if ("\\".equals(token.getText())) {
-                            prefix = (prefix == null ? "" : prefix) + token.getText();
-                            index++;
-                        }
-                    }
-                    if (index < param.getTokens().size()) {
-                        try {
-                            expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), localScope);
-                        } catch (Exception e) {
-                            for (Token t : param.getTokens().subList(index, param.getTokens().size())) {
-                                System.err.print(" " + t.getText());
-                            }
-                            System.err.println();
-                            throw e;
-                        }
-                    }
-                }
-                if (param.count != null) {
-                    try {
-                        count = buildExpression(param.count, localScope);
-                    } catch (Exception e) {
-                        for (Token t : param.count.getTokens()) {
-                            System.err.print(" " + t.getText());
-                        }
-                        System.err.println();
-                        throw e;
-                    }
-                }
-                parameters.add(new Spin2PAsmExpression(prefix, expression, count));
-            }
-
-            Spin2PAsmLine pasmLine = new Spin2PAsmLine(localScope, label, condition, mnemonic, parameters, modifier);
-            if (pasmLine.getLabel() != null) {
-                try {
-                    if (!pasmLine.isLocalLabel() && scope.getParent() != null) {
-                        scope = scope.getParent();
-                    }
-                    scope.addSymbol(pasmLine.getLabel(), new ContextLiteral(pasmLine.getScope()));
-                    scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
-                    if (!pasmLine.isLocalLabel()) {
-                        scope = new Spin2Context(scope);
-                    }
-                } catch (RuntimeException e) {
-                    System.err.println(pasmLine);
-                    e.printStackTrace();
-                }
-            }
-            source.addAll(pasmLine.expand());
-        }
-
-    };
-
     public Spin2Compiler() {
 
     }
@@ -208,10 +75,10 @@ public class Spin2Compiler {
         int address = 0, hubAddress = 0;
         Spin2Object object = new Spin2Object();
 
-        root.accept(compilerVisitor);
-
-        while (scope.getParent() != null) {
-            scope = scope.getParent();
+        for (Node node : root.getChilds()) {
+            if (node instanceof ConstantsNode) {
+                compileConBlock(node);
+            }
         }
 
         for (Node node : root.getChilds()) {
@@ -241,6 +108,12 @@ public class Spin2Compiler {
         }
         if (!scope.hasSymbol("CLKMODE_")) {
             scope.addSymbol("CLKMODE_", new NumberLiteral(_clkmode));
+        }
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof DataNode) {
+                compileDatBlock(node);
+            }
         }
 
         for (Node node : root.getChilds()) {
@@ -346,6 +219,54 @@ public class Spin2Compiler {
         return object;
     }
 
+    void compileConBlock(Node parent) {
+
+        parent.accept(new NodeVisitor() {
+            int enumValue = 0, enumIncrement = 1;
+
+            @Override
+            public void visitConstantAssign(ConstantAssignNode node) {
+                String name = node.identifier.getText();
+                try {
+                    Expression expression = buildExpression(node.expression, scope);
+                    scope.addSymbol(name, expression);
+                } catch (Exception e) {
+                    for (Token t : node.expression.getTokens()) {
+                        System.err.print(" " + t.getText());
+                    }
+                    System.err.println();
+                    throw e;
+                }
+            }
+
+            @Override
+            public void visitConstantSetEnum(ConstantSetEnumNode node) {
+                Expression expression = buildExpression(node.start, scope);
+                enumValue = expression.getNumber().intValue();
+                if (node.step != null) {
+                    expression = buildExpression(node.step, scope);
+                    enumIncrement = expression.getNumber().intValue();
+                }
+                else {
+                    enumIncrement = 1;
+                }
+            }
+
+            @Override
+            public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
+                scope.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
+                if (node.multiplier != null) {
+                    Expression expression = buildExpression(node.multiplier, scope);
+                    enumValue += enumIncrement * expression.getNumber().intValue();
+                }
+                else {
+                    enumValue += enumIncrement;
+                }
+            }
+
+        });
+    }
+
     void compileVarBlock(Node parent) {
 
         for (Node child : parent.getChilds()) {
@@ -371,6 +292,97 @@ public class Spin2Compiler {
             }
             varOffset += varSize;
         }
+    }
+
+    void compileDatBlock(Node parent) {
+        Spin2Context savedContext = scope;
+
+        for (Node child : parent.getChilds()) {
+            DataLineNode node = (DataLineNode) child;
+            Spin2PAsmLine pasmLine = compileDataLine(node);
+            source.addAll(pasmLine.expand());
+        }
+
+        scope = savedContext;
+    }
+
+    Spin2PAsmLine compileDataLine(DataLineNode node) {
+        String label = node.label != null ? node.label.getText() : null;
+        String condition = node.condition != null ? node.condition.getText() : null;
+        String mnemonic = node.instruction != null ? node.instruction.getText() : null;
+        String modifier = node.modifier != null ? node.modifier.getText() : null;
+        List<Spin2PAsmExpression> parameters = new ArrayList<Spin2PAsmExpression>();
+
+        Spin2Context localScope = new Spin2Context(scope);
+
+        for (ParameterNode param : node.parameters) {
+            int index = 0;
+            String prefix = null;
+            Expression expression = null, count = null;
+
+            if (param.getText().toUpperCase().contains("PTRA") || param.getText().toUpperCase().contains("PTRB")) {
+                expression = new Identifier(param.getText(), scope);
+            }
+            else {
+                Token token;
+                if (index < param.getTokens().size()) {
+                    token = param.getToken(index);
+                    if (token.getText().startsWith("#")) {
+                        prefix = (prefix == null ? "" : prefix) + token.getText();
+                        index++;
+                    }
+                }
+                if (index < param.getTokens().size()) {
+                    token = param.getToken(index);
+                    if ("\\".equals(token.getText())) {
+                        prefix = (prefix == null ? "" : prefix) + token.getText();
+                        index++;
+                    }
+                }
+                if (index < param.getTokens().size()) {
+                    try {
+                        expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), localScope);
+                    } catch (Exception e) {
+                        for (Token t : param.getTokens().subList(index, param.getTokens().size())) {
+                            System.err.print(" " + t.getText());
+                        }
+                        System.err.println();
+                        throw e;
+                    }
+                }
+            }
+            if (param.count != null) {
+                try {
+                    count = buildExpression(param.count, localScope);
+                } catch (Exception e) {
+                    for (Token t : param.count.getTokens()) {
+                        System.err.print(" " + t.getText());
+                    }
+                    System.err.println();
+                    throw e;
+                }
+            }
+            parameters.add(new Spin2PAsmExpression(prefix, expression, count));
+        }
+
+        Spin2PAsmLine pasmLine = new Spin2PAsmLine(localScope, label, condition, mnemonic, parameters, modifier);
+        if (pasmLine.getLabel() != null) {
+            try {
+                if (!pasmLine.isLocalLabel() && scope.getParent() != null) {
+                    scope = scope.getParent();
+                }
+                scope.addSymbol(pasmLine.getLabel(), new ContextLiteral(pasmLine.getScope()));
+                scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
+                if (!pasmLine.isLocalLabel()) {
+                    scope = new Spin2Context(scope);
+                }
+            } catch (RuntimeException e) {
+                System.err.println(pasmLine);
+                e.printStackTrace();
+            }
+        }
+
+        return pasmLine;
     }
 
     void compileMethodBlock(MethodNode node) {
