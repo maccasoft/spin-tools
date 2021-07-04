@@ -16,40 +16,50 @@ import java.util.Map;
 public class Spin2Bytecode {
 
     static class Descriptor {
-        int code;
+        byte[] code;
         int parameters;
 
-        public Descriptor(int code, int parameters) {
-            this.code = code;
+        public Descriptor(int b, int parameters) {
+            this.code = new byte[] {
+                (byte) b
+            };
+            this.parameters = parameters;
+        }
+
+        public Descriptor(int b0, int b1, int parameters) {
+            this.code = new byte[] {
+                (byte) b0,
+                (byte) b1
+            };
             this.parameters = parameters;
         }
     }
     static Map<String, Descriptor> descriptors = new HashMap<String, Descriptor>();
     static {
-        descriptors.put("HUBSET", new Descriptor(0x54, 1));
-        descriptors.put("CLKSET", new Descriptor(0x56, 2));
-        descriptors.put("CLKFREQ", new Descriptor(0x58, 0));
-        descriptors.put("COGSPIN", new Descriptor(0x5A, 3));
-        descriptors.put("REGEXEC", new Descriptor(0x5E, 1));
-        descriptors.put("REGLOAD", new Descriptor(0x60, 1));
-        descriptors.put("CALL", new Descriptor(0x62, 1));
-        descriptors.put("GETREGS", new Descriptor(0x64, 3));
-        descriptors.put("SETREGS", new Descriptor(0x66, 3));
-        descriptors.put("BYTEMOVE", new Descriptor(0x68, 3));
-        descriptors.put("BYTEFILL", new Descriptor(0x6A, 3));
-        descriptors.put("WORDMOVE", new Descriptor(0x6C, 3));
-        descriptors.put("WORDFILL", new Descriptor(0x6E, 3));
-        descriptors.put("LONGMOVE", new Descriptor(0x70, 3));
-        descriptors.put("LONGFILL", new Descriptor(0x72, 3));
-        descriptors.put("STRSIZE", new Descriptor(0x74, 1));
-        descriptors.put("STRCOMP", new Descriptor(0x76, 2));
-        descriptors.put("WAITUS", new Descriptor(0x78, 1));
-        descriptors.put("WAITMS", new Descriptor(0x7A, 1));
-        descriptors.put("GETMS", new Descriptor(0x7C, 0));
-        descriptors.put("GETSEC", new Descriptor(0x7E, 0));
-        descriptors.put("MULDIV64", new Descriptor(0x80, 3));
-        descriptors.put("QSIN", new Descriptor(0x82, 3));
-        descriptors.put("QCOS", new Descriptor(0x84, 3));
+        descriptors.put("HUBSET", new Descriptor(0x19, 0x54, 1));
+        descriptors.put("CLKSET", new Descriptor(0x19, 0x56, 2));
+        descriptors.put("CLKFREQ", new Descriptor(0x19, 0x58, 0));
+        descriptors.put("COGSPIN", new Descriptor(0x19, 0x5A, 3));
+        descriptors.put("REGEXEC", new Descriptor(0x19, 0x5E, 1));
+        descriptors.put("REGLOAD", new Descriptor(0x19, 0x60, 1));
+        descriptors.put("CALL", new Descriptor(0x19, 0x62, 1));
+        descriptors.put("GETREGS", new Descriptor(0x19, 0x64, 3));
+        descriptors.put("SETREGS", new Descriptor(0x19, 0x66, 3));
+        descriptors.put("BYTEMOVE", new Descriptor(0x19, 0x68, 3));
+        descriptors.put("BYTEFILL", new Descriptor(0x19, 0x6A, 3));
+        descriptors.put("WORDMOVE", new Descriptor(0x19, 0x6C, 3));
+        descriptors.put("WORDFILL", new Descriptor(0x19, 0x6E, 3));
+        descriptors.put("LONGMOVE", new Descriptor(0x19, 0x70, 3));
+        descriptors.put("LONGFILL", new Descriptor(0x19, 0x72, 3));
+        descriptors.put("STRSIZE", new Descriptor(0x19, 0x74, 1));
+        descriptors.put("STRCOMP", new Descriptor(0x19, 0x76, 2));
+        descriptors.put("WAITUS", new Descriptor(0x19, 0x78, 1));
+        descriptors.put("WAITMS", new Descriptor(0x19, 0x7A, 1));
+        descriptors.put("GETMS", new Descriptor(0x19, 0x7C, 0));
+        descriptors.put("GETSEC", new Descriptor(0x19, 0x7E, 0));
+        descriptors.put("MULDIV64", new Descriptor(0x19, 0x80, 3));
+        descriptors.put("QSIN", new Descriptor(0x19, 0x82, 3));
+        descriptors.put("QCOS", new Descriptor(0x19, 0x84, 3));
 
         descriptors.put("COGINIT", new Descriptor(0x25, 3));
         descriptors.put("COGSTOP", new Descriptor(0x27, 1));
