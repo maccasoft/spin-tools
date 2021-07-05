@@ -13,7 +13,6 @@ package com.maccasoft.propeller.spin2.bytecode;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
 
 public class MemoryOp extends Spin2Bytecode {
 
@@ -34,8 +33,7 @@ public class MemoryOp extends Spin2Bytecode {
     public Op op;
     public Expression expression;
 
-    public MemoryOp(Spin2Context context, String label, Size ss, Base bb, Op op, Expression expression) {
-        super(context, label);
+    public MemoryOp(Size ss, Base bb, Op op, Expression expression) {
         this.ss = ss;
         this.base = bb;
         this.op = op;

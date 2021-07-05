@@ -113,30 +113,14 @@ public class Spin2Bytecode {
         return descriptors.get(s.toUpperCase());
     }
 
-    Spin2Context context;
-    String label;
+    String text;
 
-    String comment;
+    public Spin2Bytecode() {
 
-    public Spin2Bytecode(Spin2Context context, String label) {
-        this.context = new Spin2Context(context);
-        this.label = label;
     }
 
-    public Spin2Context getContext() {
-        return context;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public void resolve(int address) {
-        context.setAddress(address);
-    }
-
-    public boolean isFixedSize() {
-        return true;
+    public Spin2Bytecode(String text) {
+        this.text = text;
     }
 
     public int getSize() {
@@ -147,17 +131,9 @@ public class Spin2Bytecode {
         return new byte[0];
     }
 
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
     @Override
     public String toString() {
-        return label != null ? label : "";
+        return text;
     }
 
 }

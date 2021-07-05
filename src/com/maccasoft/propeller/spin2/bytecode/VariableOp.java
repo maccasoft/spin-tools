@@ -13,7 +13,6 @@ package com.maccasoft.propeller.spin2.bytecode;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
 
 public class VariableOp extends Spin2Bytecode {
 
@@ -27,15 +26,14 @@ public class VariableOp extends Spin2Bytecode {
     public Op op;
     public Variable variable;
 
-    public VariableOp(Spin2Context context, String label, Op op, Variable variable) {
-        super(context, label);
+    public VariableOp(Op op, Variable variable) {
         this.op = op;
         this.variable = variable;
     }
 
     @Override
     public int getSize() {
-        int value = variable.getNumber().intValue();
+        int value = variable.getOffset();
 
         if ("LONG".equalsIgnoreCase(variable.getType()) && (value / 4) <= 15) {
             value /= 4;
@@ -52,7 +50,7 @@ public class VariableOp extends Spin2Bytecode {
 
     @Override
     public byte[] getBytes() {
-        int value = variable.getNumber().intValue();
+        int value = variable.getOffset();
 
         if ("LONG".equalsIgnoreCase(variable.getType()) && (value / 4) <= 15) {
             value /= 4;
@@ -145,7 +143,7 @@ public class VariableOp extends Spin2Bytecode {
         else if (variable instanceof Variable) {
             sb.append(" VBASE");
         }
-        int value = variable.getNumber().intValue();
+        int value = variable.getOffset();
         if ("LONG".equalsIgnoreCase(variable.getType()) && (value / 4) <= 15) {
             sb.append(String.format("+$%05X", value / 4));
             sb.append(" (short)");

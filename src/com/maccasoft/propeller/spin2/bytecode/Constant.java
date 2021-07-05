@@ -12,7 +12,6 @@ package com.maccasoft.propeller.spin2.bytecode;
 
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
 
 public class Constant extends Spin2Bytecode {
 
@@ -100,8 +99,7 @@ public class Constant extends Spin2Bytecode {
 
     public Expression expression;
 
-    public Constant(Spin2Context context, String label, Expression expression) {
-        super(context, label);
+    public Constant(Expression expression) {
         this.expression = expression;
     }
 

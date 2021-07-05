@@ -10,7 +10,7 @@
 
 package com.maccasoft.propeller.expressions;
 
-public class Variable extends Literal {
+public class Variable extends Expression {
 
     String type;
     String name;
@@ -34,21 +34,6 @@ public class Variable extends Literal {
 
     public int getOffset() {
         return offset;
-    }
-
-    @Override
-    public boolean isConstant() {
-        return false;
-    }
-
-    @Override
-    public boolean isNumber() {
-        return true;
-    }
-
-    @Override
-    public Number getNumber() {
-        return Long.valueOf(offset);
     }
 
     @Override

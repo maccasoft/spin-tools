@@ -19,29 +19,19 @@ import com.maccasoft.propeller.spin2.Spin2Context;
 public class Jmp extends Spin2Bytecode {
 
     int code;
+    Spin2Context context;
     Expression expression;
 
-    public Jmp(Spin2Context context, String label, Expression expression) {
-        super(context, label);
+    public Jmp(Spin2Context context, Expression expression) {
         this.code = 0x12;
+        this.context = context;
         this.expression = expression;
     }
 
-    protected Jmp(Spin2Context context, String label, int code, Expression expression) {
-        super(context, label);
+    protected Jmp(Spin2Context context, int code, Expression expression) {
         this.code = code;
+        this.context = context;
         this.expression = expression;
-    }
-
-    @Override
-    public boolean isFixedSize() {
-        if (expression instanceof ContextLiteral) {
-            return ((ContextLiteral) expression).getContext().isAddressSet();
-        }
-        else if (expression instanceof Identifier) {
-            return ((Identifier) expression).getContext().isAddressSet();
-        }
-        return true;
     }
 
     @Override
@@ -57,14 +47,14 @@ public class Jmp extends Spin2Bytecode {
             }
         }
         int address = expression.getNumber().intValue();
-        int value = address - (getContext().getAddress() + 1);
+        int value = address - (context.getAddress() + 1);
         return Constant.wrVarsSize(value) + 1;
     }
 
     @Override
     public byte[] getBytes() {
         int address = expression.getNumber().intValue();
-        int value = address - (getContext().getAddress() + 1);
+        int value = address - (context.getAddress() + 1);
         byte[] v = Constant.wrVars(value);
 
         byte[] b = new byte[v.length + 1];
@@ -78,7 +68,7 @@ public class Jmp extends Spin2Bytecode {
 
     public String toString(String prefix) {
         int address = expression.getNumber().intValue();
-        int value = address - (getContext().getAddress() + 1);
+        int value = address - (context.getAddress() + 1);
         return prefix + String.format(" $%05X (%d)", expression.getNumber().intValue(), value);
     }
 

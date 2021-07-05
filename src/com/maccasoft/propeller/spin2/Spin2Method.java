@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.BitField;
 
+import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
 
@@ -31,7 +32,6 @@ public class Spin2Method {
     List<LocalVariable> returns;
     List<LocalVariable> localVariables;
 
-    List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
     List<Spin2MethodLine> lines = new ArrayList<Spin2MethodLine>();
 
     String comment;
@@ -52,8 +52,26 @@ public class Spin2Method {
         return label;
     }
 
+    public void expand() {
+        List<Spin2MethodLine> list = new ArrayList<Spin2MethodLine>();
+        for (Spin2MethodLine line : lines) {
+            list.addAll(line.expand());
+        }
+
+        lines = list;
+
+        for (Spin2MethodLine line : lines) {
+            if (line.getLabel() != null) {
+                scope.addSymbol(line.getLabel(), new ContextLiteral(line.getScope()));
+            }
+        }
+    }
+
     public int resolve(int address) {
-        scope.setAddress(address);
+        for (Spin2MethodLine line : lines) {
+            address = line.resolve(address);
+        }
+
         return address;
     }
 
@@ -85,14 +103,6 @@ public class Spin2Method {
         return count;
     }
 
-    public void addSource(Spin2Bytecode line) {
-        source.add(line);
-    }
-
-    public List<Spin2Bytecode> getSource() {
-        return source;
-    }
-
     public void addSource(Spin2MethodLine line) {
         lines.add(line);
     }
@@ -116,12 +126,13 @@ public class Spin2Method {
 
         obj.writeBytes(Constant.wrVar(getStackSize()), "(stack size)");
 
-        for (Spin2Bytecode bc : getSource()) {
-            bc.getContext().setAddress(obj.getSize());
-            if (bc.getComment() != null) {
-                obj.writeComment(bc.getComment());
+        for (Spin2MethodLine line : lines) {
+            if (line.getText() != null) {
+                obj.writeComment(line.toString());
             }
-            obj.writeBytes(bc.getBytes(), bc.toString());
+            for (Spin2Bytecode bc : line.getSource()) {
+                obj.writeBytes(bc.getBytes(), bc.toString());
+            }
         }
     }
 

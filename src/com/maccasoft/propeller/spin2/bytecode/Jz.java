@@ -15,8 +15,8 @@ import com.maccasoft.propeller.spin2.Spin2Context;
 
 public class Jz extends Jmp {
 
-    public Jz(Spin2Context context, String label, Expression expression) {
-        super(context, label, 0x13, expression);
+    public Jz(Spin2Context context, Expression expression) {
+        super(context, 0x13, expression);
     }
 
     @Override

@@ -11,25 +11,21 @@
 package com.maccasoft.propeller.spin2.bytecode;
 
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
 
 public class Bytecode extends Spin2Bytecode {
 
     byte[] code;
-    String text;
 
-    public Bytecode(Spin2Context context, String label, int code, String text) {
-        super(context, label);
+    public Bytecode(int code, String text) {
+        super(text.toUpperCase());
         this.code = new byte[] {
             (byte) code
         };
-        this.text = text.toUpperCase();
     }
 
-    public Bytecode(Spin2Context context, String label, byte[] code, String text) {
-        super(context, label);
+    public Bytecode(byte[] code, String text) {
+        super(text.toUpperCase());
         this.code = code;
-        this.text = text.toUpperCase();
     }
 
     @Override
@@ -40,11 +36,6 @@ public class Bytecode extends Spin2Bytecode {
     @Override
     public byte[] getBytes() {
         return code;
-    }
-
-    @Override
-    public String toString() {
-        return text;
     }
 
 }

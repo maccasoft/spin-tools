@@ -328,8 +328,7 @@ public class Spin2Object {
                 }
             }
             else if (obj.text != null) {
-                ps.print("         ");
-                ps.println(" ' " + obj.text);
+                ps.println("' " + obj.text);
             }
         }
     }

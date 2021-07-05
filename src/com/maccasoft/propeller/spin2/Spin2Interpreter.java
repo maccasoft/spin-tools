@@ -57,6 +57,14 @@ public class Spin2Interpreter {
         return readLong(0x38);
     }
 
+    public void setClkMode(int mode) {
+        writeLong(0x40, mode);
+    }
+
+    public void setClkFreq(int value) {
+        writeLong(0x44, value);
+    }
+
     void writeLong(int index, int value) {
         code[index] = (byte) value;
         code[index + 1] = (byte) (value >> 8);

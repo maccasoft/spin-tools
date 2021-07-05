@@ -15,7 +15,7 @@ public abstract class Expression {
     }
 
     public Number getNumber() {
-        throw new EvaluationException("Not a number.");
+        throw new RuntimeException("Not a number.");
     }
 
     public boolean isString() {
@@ -23,7 +23,7 @@ public abstract class Expression {
     }
 
     public String getString() {
-        throw new EvaluationException("Not a string.");
+        throw new RuntimeException("Not a string.");
     }
 
     public boolean isGroup() {
