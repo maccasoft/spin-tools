@@ -19,18 +19,17 @@ import com.maccasoft.propeller.spin2.Spin2Context;
 public class Jmp extends Spin2Bytecode {
 
     int code;
-    Spin2Context context;
     Expression expression;
 
     public Jmp(Spin2Context context, Expression expression) {
+        super(context);
         this.code = 0x12;
-        this.context = context;
         this.expression = expression;
     }
 
     protected Jmp(Spin2Context context, int code, Expression expression) {
+        super(context);
         this.code = code;
-        this.context = context;
         this.expression = expression;
     }
 
@@ -69,7 +68,7 @@ public class Jmp extends Spin2Bytecode {
     public String toString(String prefix) {
         int address = expression.getNumber().intValue();
         int value = address - (context.getAddress() + 1);
-        return prefix + String.format(" $%05X (%d)", expression.getNumber().intValue(), value);
+        return prefix + String.format(" $%05X (%d)", address, value);
     }
 
     @Override

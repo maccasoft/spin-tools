@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin2;
 
 import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -105,6 +106,644 @@ class Spin2CompilerTest {
         Assertions.assertEquals(
             Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_101011101),
             Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
+    }
+
+    @Test
+    void testEmptyMethod() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0A 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "00008     00             | (stack size)\n"
+            + "00009     04             | RETURN\n"
+            + "0000A     00 00          | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testLocalVarAssignment() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0C 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     a := 1\n"
+            + "00009     A2             | CONSTANT (1)\n"
+            + "0000A     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000B     04             | RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testGlobalVarAssignment() throws Exception {
+        String text = ""
+            + "VAR a\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0D 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "00008     00             | (stack size)\n"
+            + "'     a := 1\n"
+            + "00009     A2             | CONSTANT (1)\n"
+            + "0000A     C1 81          | VAR_WRITE LONG VBASE+$00001 (short)\n"
+            + "0000C     04             | RETURN\n"
+            + "0000D     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testExpressionAssignment() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    a := 1 + b * 3\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     10 00 00 00    | End\n"
+            + "' PUB main() | a, b\n"
+            + "00008     08             | (stack size)\n"
+            + "'     a := 1 + b * 3\n"
+            + "00009     A2             | CONSTANT (1)\n"
+            + "0000A     E1             | VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000B     A4             | CONSTANT (3)\n"
+            + "0000C     96             | MULTIPLY\n"
+            + "0000D     8A             | ADD\n"
+            + "0000E     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000F     04             | RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testIfConditional() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    if a == 0\n"
+            + "        a := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     11 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     if a == 0\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     A1             | CONSTANT (0)\n"
+            + "0000B     70             | EQUAL\n"
+            + "0000C     13 03          | JZ $00010 (3)\n"
+            + "'         a := 1\n"
+            + "0000E     A2             | CONSTANT (1)\n"
+            + "0000F     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00010     04             | RETURN\n"
+            + "00011     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testIfElseConditional() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    if a == 0\n"
+            + "        a := 1\n"
+            + "    else\n"
+            + "        a := 2\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     15 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     if a == 0\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     A1             | CONSTANT (0)\n"
+            + "0000B     70             | EQUAL\n"
+            + "0000C     13 05          | JZ $00012 (5)\n"
+            + "'         a := 1\n"
+            + "0000E     A2             | CONSTANT (1)\n"
+            + "0000F     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00010     12 03          | JMP $00014 (3)\n"
+            + "'     else\n"
+            + "'         a := 2\n"
+            + "00012     A3             | CONSTANT (2)\n"
+            + "00013     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00014     04             | RETURN\n"
+            + "00015     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testIfElseIfConditional() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    if a == 0\n"
+            + "        a := 1\n"
+            + "    elseif a == 1\n"
+            + "        a := 2\n"
+            + "    elseif a == 2\n"
+            + "        a := 3\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     23 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     if a == 0\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     A1             | CONSTANT (0)\n"
+            + "0000B     70             | EQUAL\n"
+            + "0000C     13 05          | JZ $00012 (5)\n"
+            + "'         a := 1\n"
+            + "0000E     A2             | CONSTANT (1)\n"
+            + "0000F     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00010     12 11          | JMP $00022 (17)\n"
+            + "'     elseif a == 1\n"
+            + "00012     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00013     A2             | CONSTANT (1)\n"
+            + "00014     70             | EQUAL\n"
+            + "00015     13 05          | JZ $0001B (5)\n"
+            + "'         a := 2\n"
+            + "00017     A3             | CONSTANT (2)\n"
+            + "00018     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00019     12 08          | JMP $00022 (8)\n"
+            + "'     elseif a == 2\n"
+            + "0001B     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0001C     A3             | CONSTANT (2)\n"
+            + "0001D     70             | EQUAL\n"
+            + "0001E     13 03          | JZ $00022 (3)\n"
+            + "'         a := 3\n"
+            + "00020     A4             | CONSTANT (3)\n"
+            + "00021     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00022     04             | RETURN\n"
+            + "00023     00             | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testIfElseIfElseConditional() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    if a == 0\n"
+            + "        a := 1\n"
+            + "    elseif a == 1\n"
+            + "        a := 2\n"
+            + "    elseif a == 2\n"
+            + "        a := 3\n"
+            + "    else\n"
+            + "        a := 4\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     27 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     if a == 0\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     A1             | CONSTANT (0)\n"
+            + "0000B     70             | EQUAL\n"
+            + "0000C     13 05          | JZ $00012 (5)\n"
+            + "'         a := 1\n"
+            + "0000E     A2             | CONSTANT (1)\n"
+            + "0000F     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00010     12 15          | JMP $00026 (21)\n"
+            + "'     elseif a == 1\n"
+            + "00012     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00013     A2             | CONSTANT (1)\n"
+            + "00014     70             | EQUAL\n"
+            + "00015     13 05          | JZ $0001B (5)\n"
+            + "'         a := 2\n"
+            + "00017     A3             | CONSTANT (2)\n"
+            + "00018     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00019     12 0C          | JMP $00026 (12)\n"
+            + "'     elseif a == 2\n"
+            + "0001B     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0001C     A3             | CONSTANT (2)\n"
+            + "0001D     70             | EQUAL\n"
+            + "0001E     13 05          | JZ $00024 (5)\n"
+            + "'         a := 3\n"
+            + "00020     A4             | CONSTANT (3)\n"
+            + "00021     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00022     12 03          | JMP $00026 (3)\n"
+            + "'     else\n"
+            + "'         a := 4\n"
+            + "00024     A5             | CONSTANT (4)\n"
+            + "00025     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00026     04             | RETURN\n"
+            + "00027     00             | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeat() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat\n"
+            + "        a := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0E 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     repeat\n"
+            + "'         a := 1\n"
+            + "00009     A2             | CONSTANT (1)\n"
+            + "0000A     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000B     12 7D          | JMP $00009 (-3)\n"
+            + "0000D     04             | RETURN\n"
+            + "0000E     00 00          | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatQuit() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat\n"
+            + "        if a == 1\n"
+            + "            quit\n"
+            + "        a := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     15 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     repeat\n"
+            + "'         if a == 1\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     A2             | CONSTANT (1)\n"
+            + "0000B     70             | EQUAL\n"
+            + "0000C     13 03          | JZ $00010 (3)\n"
+            + "'             quit\n"
+            + "0000E     12 05          | JMP $00014 (5)\n"
+            + "'         a := 1\n"
+            + "00010     A2             | CONSTANT (1)\n"
+            + "00011     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00012     12 76          | JMP $00009 (-10)\n"
+            + "00014     04             | RETURN\n"
+            + "00015     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatNext() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat\n"
+            + "        if a == 1\n"
+            + "            next\n"
+            + "        a := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     15 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     repeat\n"
+            + "'         if a == 1\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     A2             | CONSTANT (1)\n"
+            + "0000B     70             | EQUAL\n"
+            + "0000C     13 03          | JZ $00010 (3)\n"
+            + "'             next\n"
+            + "0000E     12 7A          | JMP $00009 (-6)\n"
+            + "'         a := 1\n"
+            + "00010     A2             | CONSTANT (1)\n"
+            + "00011     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00012     12 76          | JMP $00009 (-10)\n"
+            + "00014     04             | RETURN\n"
+            + "00015     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatWhile() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat while a < 1\n"
+            + "        a := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     13 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     repeat while a < 1\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     A2             | CONSTANT (1)\n"
+            + "0000B     6C             | LESS_THAN\n"
+            + "0000C     13 05          | JZ $00012 (5)\n"
+            + "'         a := 1\n"
+            + "0000E     A2             | CONSTANT (1)\n"
+            + "0000F     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00010     12 78          | JMP $00009 (-8)\n"
+            + "00012     04             | RETURN\n"
+            + "00013     00             | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatUntil() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat until a < 1\n"
+            + "        a := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     13 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     repeat until a < 1\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     A2             | CONSTANT (1)\n"
+            + "0000B     6C             | LESS_THAN\n"
+            + "0000C     14 05          | JNZ $00012 (5)\n"
+            + "'         a := 1\n"
+            + "0000E     A2             | CONSTANT (1)\n"
+            + "0000F     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00010     12 78          | JMP $00009 (-8)\n"
+            + "00012     04             | RETURN\n"
+            + "00013     00             | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatPostWhile() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat\n"
+            + "        a := 1\n"
+            + "    while a < 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     11 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     repeat\n"
+            + "'         a := 1\n"
+            + "00009     A2             | CONSTANT (1)\n"
+            + "0000A     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     while a < 1\n"
+            + "0000B     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000C     A2             | CONSTANT (1)\n"
+            + "0000D     6C             | LESS_THAN\n"
+            + "0000E     14 7A          | JNZ $00009 (-6)\n"
+            + "00010     04             | RETURN\n"
+            + "00011     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatPostUntil() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat\n"
+            + "        a := 1\n"
+            + "    until a < 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     11 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     repeat\n"
+            + "'         a := 1\n"
+            + "00009     A2             | CONSTANT (1)\n"
+            + "0000A     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     until a < 1\n"
+            + "0000B     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000C     A2             | CONSTANT (1)\n"
+            + "0000D     6C             | LESS_THAN\n"
+            + "0000E     13 7A          | JZ $00009 (-6)\n"
+            + "00010     04             | RETURN\n"
+            + "00011     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatPostConditionQuit() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat\n"
+            + "        if a == 1\n"
+            + "            quit\n"
+            + "        a := 1\n"
+            + "    while a < 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     18 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     repeat\n"
+            + "'         if a == 1\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     A2             | CONSTANT (1)\n"
+            + "0000B     70             | EQUAL\n"
+            + "0000C     13 03          | JZ $00010 (3)\n"
+            + "'             quit\n"
+            + "0000E     12 08          | JMP $00017 (8)\n"
+            + "'         a := 1\n"
+            + "00010     A2             | CONSTANT (1)\n"
+            + "00011     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     while a < 1\n"
+            + "00012     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00013     A2             | CONSTANT (1)\n"
+            + "00014     6C             | LESS_THAN\n"
+            + "00015     14 73          | JNZ $00009 (-13)\n"
+            + "00017     04             | RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatPostConditionNext() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat\n"
+            + "        if a == 1\n"
+            + "            next\n"
+            + "        a := 1\n"
+            + "    until a < 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     18 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     repeat\n"
+            + "'         if a == 1\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     A2             | CONSTANT (1)\n"
+            + "0000B     70             | EQUAL\n"
+            + "0000C     13 03          | JZ $00010 (3)\n"
+            + "'             next\n"
+            + "0000E     12 03          | JMP $00012 (3)\n"
+            + "'         a := 1\n"
+            + "00010     A2             | CONSTANT (1)\n"
+            + "00011     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     until a < 1\n"
+            + "00012     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00013     A2             | CONSTANT (1)\n"
+            + "00014     6C             | LESS_THAN\n"
+            + "00015     13 73          | JZ $00009 (-13)\n"
+            + "00017     04             | RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMethodCall() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    function()\n"
+            + "\n"
+            + "PUB function()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     0C 00 00 80    | Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004     11 00 00 80    | Method function @ $00011 (0 parameters, 0 returns)\n"
+            + "00008     13 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "0000C     00             | (stack size)\n"
+            + "'     function()\n"
+            + "0000D     00 0A 01       | CALL_SUB (1)\n"
+            + "00010     04             | RETURN\n"
+            + "' PUB function()\n"
+            + "00011     00             | (stack size)\n"
+            + "00012     04             | RETURN\n"
+            + "00013     00             | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMethodOrder() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "PRI function1()\n"
+            + "\n"
+            + "PUB function2()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     10 00 00 80    | Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "00004     12 00 00 80    | Method function2 @ $00012 (0 parameters, 0 returns)\n"
+            + "00008     14 00 00 80    | Method function1 @ $00014 (0 parameters, 0 returns)\n"
+            + "0000C     16 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "00010     00             | (stack size)\n"
+            + "00011     04             | RETURN\n"
+            + "' PUB function2()\n"
+            + "00012     00             | (stack size)\n"
+            + "00013     04             | RETURN\n"
+            + "' PRI function1()\n"
+            + "00014     00             | (stack size)\n"
+            + "00015     04             | RETURN\n"
+            + "00016     00 00          | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testPriMethodCall() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    function1()\n"
+            + "\n"
+            + "PRI function1()\n"
+            + "\n"
+            + "PUB function2()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     10 00 00 80    | Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "00004     15 00 00 80    | Method function2 @ $00015 (0 parameters, 0 returns)\n"
+            + "00008     17 00 00 80    | Method function1 @ $00017 (0 parameters, 0 returns)\n"
+            + "0000C     19 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "00010     00             | (stack size)\n"
+            + "'     function1()\n"
+            + "00011     00 0A 02       | CALL_SUB (2)\n"
+            + "00014     04             | RETURN\n"
+            + "' PUB function2()\n"
+            + "00015     00             | (stack size)\n"
+            + "00016     04             | RETURN\n"
+            + "' PRI function1()\n"
+            + "00017     00             | (stack size)\n"
+            + "00018     04             | RETURN\n"
+            + "00019     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    String compile(String text) throws Exception {
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+        Spin2Parser subject = new Spin2Parser(stream);
+        Node root = subject.parse();
+
+        Spin2Compiler compiler = new Spin2Compiler();
+        Spin2Object obj = compiler.compile(root);
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        obj.generateListing(new PrintStream(os));
+
+        return os.toString();
     }
 
 }

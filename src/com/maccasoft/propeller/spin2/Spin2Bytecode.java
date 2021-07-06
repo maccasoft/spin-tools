@@ -113,14 +113,21 @@ public class Spin2Bytecode {
         return descriptors.get(s.toUpperCase());
     }
 
+    protected Spin2Context context;
     String text;
 
-    public Spin2Bytecode() {
-
+    public Spin2Bytecode(Spin2Context context) {
+        this.context = new Spin2Context(context);
     }
 
-    public Spin2Bytecode(String text) {
+    public Spin2Bytecode(Spin2Context context, String text) {
+        this.context = new Spin2Context(context);
         this.text = text;
+    }
+
+    public int resolve(int address) {
+        context.setAddress(address);
+        return address + getSize();
     }
 
     public int getSize() {

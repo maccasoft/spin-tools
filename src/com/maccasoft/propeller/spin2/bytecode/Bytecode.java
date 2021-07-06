@@ -11,20 +11,21 @@
 package com.maccasoft.propeller.spin2.bytecode;
 
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
+import com.maccasoft.propeller.spin2.Spin2Context;
 
 public class Bytecode extends Spin2Bytecode {
 
     byte[] code;
 
-    public Bytecode(int code, String text) {
-        super(text.toUpperCase());
+    public Bytecode(Spin2Context context, int code, String text) {
+        super(context, text.toUpperCase());
         this.code = new byte[] {
             (byte) code
         };
     }
 
-    public Bytecode(byte[] code, String text) {
-        super(text.toUpperCase());
+    public Bytecode(Spin2Context context, byte[] code, String text) {
+        super(context, text.toUpperCase());
         this.code = code;
     }
 

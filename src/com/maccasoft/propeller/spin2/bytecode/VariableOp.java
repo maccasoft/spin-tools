@@ -13,6 +13,7 @@ package com.maccasoft.propeller.spin2.bytecode;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
+import com.maccasoft.propeller.spin2.Spin2Context;
 
 public class VariableOp extends Spin2Bytecode {
 
@@ -26,7 +27,8 @@ public class VariableOp extends Spin2Bytecode {
     public Op op;
     public Variable variable;
 
-    public VariableOp(Op op, Variable variable) {
+    public VariableOp(Spin2Context context, Op op, Variable variable) {
+        super(context);
         this.op = op;
         this.variable = variable;
     }

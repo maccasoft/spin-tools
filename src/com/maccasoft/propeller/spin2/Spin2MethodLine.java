@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.maccasoft.propeller.expressions.ContextLiteral;
+
 public class Spin2MethodLine {
 
     Spin2Context scope;
@@ -76,10 +78,22 @@ public class Spin2MethodLine {
         return list;
     }
 
+    public void register(Spin2Context context) {
+        if (label != null) {
+            context.addSymbol(label, new ContextLiteral(scope));
+        }
+        for (Spin2MethodLine line : childs) {
+            line.register(context);
+        }
+    }
+
     public int resolve(int address) {
         scope.setAddress(address);
         for (Spin2Bytecode bc : source) {
-            address += bc.getSize();
+            address = bc.resolve(address);
+        }
+        for (Spin2MethodLine line : childs) {
+            address = line.resolve(address);
         }
         return address;
     }
@@ -142,6 +156,20 @@ public class Spin2MethodLine {
 
     public void setData(String key, Object data) {
         this.keyedData.put(key, data);
+    }
+
+    public void writeTo(Spin2Object obj) {
+        if (text != null) {
+            obj.writeComment(text);
+        }
+
+        for (Spin2Bytecode bc : source) {
+            obj.writeBytes(bc.getBytes(), bc.toString());
+        }
+
+        for (Spin2MethodLine line : childs) {
+            line.writeTo(obj);
+        }
     }
 
     @Override
