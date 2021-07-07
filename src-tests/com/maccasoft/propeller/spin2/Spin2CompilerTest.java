@@ -196,6 +196,28 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testCharacterAssigment() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := \"1\"\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0D 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     a := \"1\"\n"
+            + "00009     45 31          | CONSTANT ('1')\n"
+            + "0000B     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000C     04             | RETURN\n"
+            + "0000D     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testIfConditional() throws Exception {
         String text = ""
             + "PUB main() | a\n"
@@ -711,12 +733,70 @@ class Spin2CompilerTest {
             + "' PUB main()\n"
             + "0000C     00             | (stack size)\n"
             + "'     function()\n"
-            + "0000D     00 0A 01       | CALL_SUB (1)\n"
+            + "0000D     00             | RETURNS_COUNT (0)\n"
+            + "0000E     0A 01          | CALL_SUB (1)\n"
             + "00010     04             | RETURN\n"
             + "' PUB function()\n"
             + "00011     00             | (stack size)\n"
             + "00012     04             | RETURN\n"
             + "00013     00             | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMethodArguments() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    function(1)\n"
+            + "\n"
+            + "PUB function(a)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     0C 00 00 80    | Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004     12 00 00 81    | Method function @ $00012 (1 parameters, 0 returns)\n"
+            + "00008     14 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "0000C     00             | (stack size)\n"
+            + "'     function(1)\n"
+            + "0000D     00             | RETURNS_COUNT (0)\n"
+            + "0000E     A2             | CONSTANT (1)\n"
+            + "0000F     0A 01          | CALL_SUB (1)\n"
+            + "00011     04             | RETURN\n"
+            + "' PUB function(a)\n"
+            + "00012     00             | (stack size)\n"
+            + "00013     04             | RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMethodCharacterArguments() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    function(\"1\")\n"
+            + "\n"
+            + "PUB function(a)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     0C 00 00 80    | Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004     13 00 00 81    | Method function @ $00013 (1 parameters, 0 returns)\n"
+            + "00008     15 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "0000C     00             | (stack size)\n"
+            + "'     function(\"1\")\n"
+            + "0000D     00             | RETURNS_COUNT (0)\n"
+            + "0000E     45 31          | CONSTANT ('1')\n"
+            + "00010     0A 01          | CALL_SUB (1)\n"
+            + "00012     04             | RETURN\n"
+            + "' PUB function(a)\n"
+            + "00013     00             | (stack size)\n"
+            + "00014     04             | RETURN\n"
+            + "00015     00 00 00       | Padding\n"
             + "", compile(text));
     }
 
@@ -770,7 +850,8 @@ class Spin2CompilerTest {
             + "' PUB main()\n"
             + "00010     00             | (stack size)\n"
             + "'     function1()\n"
-            + "00011     00 0A 02       | CALL_SUB (2)\n"
+            + "00011     00             | RETURNS_COUNT (0)\n"
+            + "00012     0A 02          | CALL_SUB (2)\n"
             + "00014     04             | RETURN\n"
             + "' PUB function2()\n"
             + "00015     00             | (stack size)\n"
@@ -1015,6 +1096,150 @@ class Spin2CompilerTest {
             + "00020     1E             | CASE_DONE\n"
             + "00021     04             | RETURN\n"
             + "00022     00 00          | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testSendVariable() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    SEND(a)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0C 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     SEND(a)\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     0D             | SEND\n"
+            + "0000B     04             | RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testSendBytes() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    SEND(1,2,3)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0F 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     SEND(1,2,3)\n"
+            + "00009     0E 03 01 02 03 | SEND\n"
+            + "0000E     04             | RETURN\n"
+            + "0000F     00             | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testSendMixed() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    SEND(a,2,3)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     10 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     SEND(a,2,3)\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     0D             | SEND\n"
+            + "0000B     A3             | CONSTANT (2)\n"
+            + "0000C     0D             | SEND\n"
+            + "0000D     A4             | CONSTANT (3)\n"
+            + "0000E     0D             | SEND\n"
+            + "0000F     04             | RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testSendAssign() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    SEND := @out\n"
+            + "\n"
+            + "PRI out()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     0C 00 00 80    | Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004     13 00 00 80    | Method out @ $00013 (0 parameters, 0 returns)\n"
+            + "00008     15 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "0000C     00             | (stack size)\n"
+            + "'     SEND := @out\n"
+            + "0000D     11 01          | SUB (1)\n"
+            + "0000F     4E 53 81       | REG_WRITE +$1D3\n"
+            + "00012     04             | RETURN\n"
+            + "' PRI out()\n"
+            + "00013     00             | (stack size)\n"
+            + "00014     04             | RETURN\n"
+            + "00015     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRecv() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := RECV()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0C 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     a := RECV()\n"
+            + "00009     0C             | RECV\n"
+            + "0000A     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000B     04             | RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRecvAssign() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    RECV := @in\n"
+            + "\n"
+            + "PRI in()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     0C 00 00 80    | Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004     13 00 00 80    | Method in @ $00013 (0 parameters, 0 returns)\n"
+            + "00008     15 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "0000C     00             | (stack size)\n"
+            + "'     RECV := @in\n"
+            + "0000D     11 01          | SUB (1)\n"
+            + "0000F     4E 52 81       | REG_WRITE +$1D2\n"
+            + "00012     04             | RETURN\n"
+            + "' PRI in()\n"
+            + "00013     00             | (stack size)\n"
+            + "00014     04             | RETURN\n"
+            + "00015     00 00 00       | Padding\n"
             + "", compile(text));
     }
 

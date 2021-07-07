@@ -52,6 +52,7 @@ import com.maccasoft.propeller.spin2.bytecode.Jnz;
 import com.maccasoft.propeller.spin2.bytecode.Jz;
 import com.maccasoft.propeller.spin2.bytecode.MathOp;
 import com.maccasoft.propeller.spin2.bytecode.MemoryOp;
+import com.maccasoft.propeller.spin2.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
@@ -138,6 +139,7 @@ public class Spin2Compiler {
                 Spin2Method method = compileMethod((MethodNode) node);
 
                 scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
+                scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 method.register();
 
                 methods.add(method);
@@ -415,6 +417,30 @@ public class Spin2Compiler {
         List<LocalVariable> localVariables = new ArrayList<LocalVariable>();
 
         //print(node, 0);
+
+        localScope.addSymbol("recv", new Register(0x1D2));
+        localScope.addSymbol("send", new Register(0x1D3));
+
+        localScope.addSymbol("pr0", new Register(0x1D8));
+        localScope.addSymbol("pr1", new Register(0x1D9));
+        localScope.addSymbol("pr2", new Register(0x1DA));
+        localScope.addSymbol("pr3", new Register(0x1DB));
+        localScope.addSymbol("pr4", new Register(0x1DC));
+        localScope.addSymbol("pr5", new Register(0x1DD));
+        localScope.addSymbol("pr6", new Register(0x1DE));
+        localScope.addSymbol("pr7", new Register(0x1DF));
+
+        localScope.addSymbol("RECV", new Register(0x1D2));
+        localScope.addSymbol("SEND", new Register(0x1D3));
+
+        localScope.addSymbol("PR0", new Register(0x1D8));
+        localScope.addSymbol("PR1", new Register(0x1D9));
+        localScope.addSymbol("PR2", new Register(0x1DA));
+        localScope.addSymbol("PR3", new Register(0x1DB));
+        localScope.addSymbol("PR4", new Register(0x1DC));
+        localScope.addSymbol("PR5", new Register(0x1DD));
+        localScope.addSymbol("PR6", new Register(0x1DE));
+        localScope.addSymbol("PR7", new Register(0x1DF));
 
         int offset = 0;
         for (Node child : node.getParameters()) {
@@ -923,6 +949,13 @@ public class Spin2Compiler {
             Expression expression = new NumberLiteral(node.getText());
             source.add(new Constant(context, expression));
         }
+        else if (node.type == Token.STRING) {
+            if (node.getText().length() != 3) {
+                throw new RuntimeException("invalid character constant");
+            }
+            Expression expression = new CharacterLiteral(node.getText().charAt(1));
+            source.add(new Constant(context, expression));
+        }
         else if (":=".equals(node.getText())) {
             source.addAll(compileBytecodeExpression(context, node.getChild(1), push));
             if (node.getChild(0).type == Token.OPERATOR) {
@@ -931,7 +964,7 @@ public class Spin2Compiler {
             else {
                 Expression expression = context.getLocalSymbol(node.getChild(0).getText());
                 if (expression instanceof Register) {
-                    throw new RuntimeException("unhandled register expression");
+                    source.add(new RegisterOp(context, RegisterOp.Op.Write, expression));
                 }
                 else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
                     source.add(new VariableOp(context, VariableOp.Op.Write, (Variable) expression));
@@ -1024,30 +1057,40 @@ public class Spin2Compiler {
             if (expression instanceof Register) {
                 throw new RuntimeException("unhandled register expression");
             }
+            else if (node.getText().startsWith("@")) {
+                if (expression instanceof Method) {
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) 0x11,
+                        (byte) ((Method) expression).getOffset()
+                    }, "SUB (" + ((Method) expression).getOffset() + ")"));
+                }
+                else {
+                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    MemoryOp.Base bb = MemoryOp.Base.PBase;
+                    if (expression instanceof LocalVariable) {
+                        bb = MemoryOp.Base.DBase;
+                    }
+                    else if (expression instanceof Variable) {
+                        bb = MemoryOp.Base.VBase;
+                    }
+                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, expression));
+                }
+            }
             else if (expression instanceof Method) {
                 int parameters = ((Method) expression).getArgumentsCount();
                 if (argsNode.getChildCount() != parameters) {
                     throw new RuntimeException("expected " + parameters + " argument(s), found " + argsNode.getChildCount());
                 }
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) ((Method) expression).getReturnsCount(),
+                }, "RETURNS_COUNT (" + ((Method) expression).getReturnsCount() + ")"));
                 for (int i = 0; i < parameters; i++) {
                     source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
                 }
                 source.add(new Bytecode(context, new byte[] {
-                    (byte) ((Method) expression).getReturnsCount(),
                     (byte) 0x0A,
                     (byte) ((Method) expression).getOffset()
                 }, "CALL_SUB (" + ((Method) expression).getOffset() + ")"));
-            }
-            else if (node.getText().startsWith("@")) {
-                MemoryOp.Size ss = MemoryOp.Size.Long;
-                MemoryOp.Base bb = MemoryOp.Base.PBase;
-                if (expression instanceof LocalVariable) {
-                    bb = MemoryOp.Base.DBase;
-                }
-                else if (expression instanceof Variable) {
-                    bb = MemoryOp.Base.VBase;
-                }
-                source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, expression));
             }
             else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
                 source.add(new VariableOp(context, VariableOp.Op.Read, (Variable) expression));
@@ -1303,83 +1346,17 @@ public class Spin2Compiler {
     }
 
     public static void main(String[] args) {
-        String text1 = ""
+        String text = ""
             + "CON\n"
             + "    _clkfreq = 160_000_000\n"
+            + "    _delay   = _clkfreq / 2\n"
             + "\n"
             + "PUB main() | ct\n"
             + "\n"
             + "    ct := getct()                   ' get current timer\n"
             + "    repeat\n"
             + "        pint(56)                    ' toggle pin 56\n"
-            + "        waitct(ct += _clkfreq / 2)  ' wait half second\n"
-            + "";
-        String ifelse_text = ""
-            + "PUB main() | a\n"
-            + "\n"
-            + "    if a == 1\n"
-            + "        a := 2\n"
-            + "    elseif a == 3\n"
-            + "        a := 4\n"
-            + "    elseif a == 5\n"
-            + "        a := 6\n"
-            + "    else\n"
-            + "        a := 7\n"
-            + "\n"
-            + "";
-        String text3 = ""
-            + "PUB main() | a\n"
-            + "\n"
-            + "    repeat while a > 1\n"
-            + "        a := 2\n"
-            + "    a := loop()\n"
-            + "\n"
-            + "\n"
-            + "PUB loop() : r | a\n"
-            + "\n"
-            + "    repeat \n"
-            + "        a := 2\n"
-            + "    until a > 1\n"
-            + "\n"
-            + "";
-        String text2 = ""
-            + "PUB main() | a, b\n"
-            + "\n"
-            + "    'if a == 1\n"
-            + "    '    a := 2\n"
-            + "    '    if a == 5\n"
-            + "    '        a := 6\n"
-            + "    a := 1\n"
-            + "    b := a + b * 3\n"
-            + "\n"
-            + "    if a == 1\n"
-            + "        a := 2\n"
-            + "    elseif a == 3\n"
-            + "        a := 4\n"
-            + "    elseif a == 5\n"
-            + "        a := 6\n"
-            + "    else\n"
-            + "        a := 7\n"
-            + "\n"
-            + "    'case a\n"
-            + "    '    1: a := 2\n"
-            + "    '       if a == 5\n"
-            + "    '           a := 6\n"
-            + "    '    2: a := 3\n"
-            + "    '    3: a := 4\n"
-            + "    '    other: a := 5\n"
-            + "\n"
-            + "    'if a == 5\n"
-            + "    '    a := 6\n"
-            + "";
-        String text = ""
-            + "PUB main() | a\n"
-            + "\n"
-            + "    a := RECV()\n"
-            + "    SEND(a)\n"
-            + "    SEND(1,2,3)\n"
-            + "    SEND(a,2,3)\n"
-            + "\n"
+            + "        waitct(ct += _delay)        ' wait half second\n"
             + "";
 
         try {

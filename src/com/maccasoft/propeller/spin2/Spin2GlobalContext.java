@@ -11,29 +11,30 @@
 package com.maccasoft.propeller.spin2;
 
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.Register;
 
 public class Spin2GlobalContext extends Spin2Context {
 
     public Spin2GlobalContext() {
 
         // Registers
-        
-        addSymbol("ijmp3", new NumberLiteral(0x1F0));
-        addSymbol("iret3", new NumberLiteral(0x1F1));
-        addSymbol("ijmp2", new NumberLiteral(0x1F2));
-        addSymbol("iret2", new NumberLiteral(0x1F3));
-        addSymbol("ijmp1", new NumberLiteral(0x1F4));
-        addSymbol("iret1", new NumberLiteral(0x1F5));
-        addSymbol("pa", new NumberLiteral(0x1F6));
-        addSymbol("pb", new NumberLiteral(0x1F7));
-        addSymbol("ptra", new NumberLiteral(0x1F8));
-        addSymbol("ptrb", new NumberLiteral(0x1F9));
-        addSymbol("dira", new NumberLiteral(0x1FA));
-        addSymbol("dirb", new NumberLiteral(0x1FB));
-        addSymbol("outa", new NumberLiteral(0x1FC));
-        addSymbol("outb", new NumberLiteral(0x1FD));
-        addSymbol("ina", new NumberLiteral(0x1FE));
-        addSymbol("inb", new NumberLiteral(0x1FF));
+
+        addSymbol("ijmp3", new Register(0x1F0));
+        addSymbol("iret3", new Register(0x1F1));
+        addSymbol("ijmp2", new Register(0x1F2));
+        addSymbol("iret2", new Register(0x1F3));
+        addSymbol("ijmp1", new Register(0x1F4));
+        addSymbol("iret1", new Register(0x1F5));
+        addSymbol("pa", new Register(0x1F6));
+        addSymbol("pb", new Register(0x1F7));
+        addSymbol("ptra", new Register(0x1F8));
+        addSymbol("ptrb", new Register(0x1F9));
+        addSymbol("dira", new Register(0x1FA));
+        addSymbol("dirb", new Register(0x1FB));
+        addSymbol("outa", new Register(0x1FC));
+        addSymbol("outb", new Register(0x1FD));
+        addSymbol("ina", new Register(0x1FE));
+        addSymbol("inb", new Register(0x1FF));
 
         // Smart-pin constants
 

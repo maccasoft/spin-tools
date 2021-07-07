@@ -369,7 +369,7 @@ public class Spin2TreeBuilder {
 
         switch (state) {
             case 0:
-                if (token.type != 0 && token.type != Token.NUMBER) {
+                if (token.type != 0 && token.type != Token.NUMBER && token.type != Token.STRING) {
                     throw new RuntimeException("error: expecting identifier, got " + token.getText());
                 }
                 addValueToken(token);
@@ -400,7 +400,7 @@ public class Spin2TreeBuilder {
                     addOperatorToken(token);
                     break;
                 }
-                if (token.type != 0 && token.type != Token.NUMBER) {
+                if (token.type != 0 && token.type != Token.NUMBER && token.type != Token.STRING) {
                     throw new RuntimeException("error: expecting constant or identifier, got " + token.getText());
                 }
                 addValueToken(token);
@@ -432,14 +432,14 @@ public class Spin2TreeBuilder {
                     state = 3;
                     break;
                 }
-                if (token.type != 0 && token.type != Token.NUMBER) {
+                if (token.type != 0 && token.type != Token.NUMBER && token.type != Token.STRING) {
                     throw new RuntimeException("error: expecting constant or identifier, got " + token.getText());
                 }
                 addValueToken(token);
                 state = 3;
                 break;
             case 5:
-                if (token.type != 0 && token.type != Token.NUMBER) {
+                if (token.type != 0 && token.type != Token.NUMBER && token.type != Token.STRING) {
                     throw new RuntimeException("error: expecting constant or identifier, got " + token.getText());
                 }
                 addValueToken(token);

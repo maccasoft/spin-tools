@@ -277,9 +277,7 @@ class Spin2CompilerFunctionalTest {
         Spin2Compiler compiler = new Spin2Compiler();
         Spin2Object obj = compiler.compile(root);
 
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        obj.generateBinary(os);
-        return os.toByteArray();
+        return obj.getBinary();
     }
 
     boolean compileAndCompare(String text, byte[] ref) throws Exception {

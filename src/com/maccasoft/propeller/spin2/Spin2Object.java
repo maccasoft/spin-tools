@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -305,6 +306,16 @@ public class Spin2Object {
                 os.write(obj.bytes);
             }
         }
+    }
+
+    public byte[] getBinary() throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        for (DataObject obj : data) {
+            if (obj.bytes != null) {
+                os.write(obj.bytes);
+            }
+        }
+        return os.toByteArray();
     }
 
     public void generateListing(PrintStream ps) {

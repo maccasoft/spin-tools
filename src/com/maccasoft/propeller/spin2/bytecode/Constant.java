@@ -120,25 +120,12 @@ public class Constant extends Spin2Bytecode {
             }
         }
 
-        int value = expression.getNumber().intValue();
-        if (value >= -1 && value <= 14) {
-            return 1;
-        }
-
-        // 1 to 4 byte constant
-        if ((value & 0xFFFF0000) != 0) {
-            return 5;
-        }
-        else if ((value & 0x0000FF00) != 0) {
-            return 3;
-        }
-
-        return 2;
+        return getBytes().length;
     }
 
     @Override
     public byte[] getBytes() {
-        int value = expression.getNumber().intValue();
+        long value = expression.getNumber().longValue();
 
         if (value >= -1 && value <= 14) {
             return new byte[] {
@@ -146,21 +133,54 @@ public class Constant extends Spin2Bytecode {
             };
         }
 
-        // 1 to 4 byte constant
-        if ((value & 0xFFFF0000) != 0) {
+        if ((value & 0xFFFFFF00L) == 0) {
             return new byte[] {
-                0x49, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
+                0x45, (byte) value
             };
         }
-        else if ((value & 0x0000FF00) != 0) {
+
+        value &= 0xFFFFFFFFL;
+
+        for (long i = 0, b = 1; i < 32; i++, b <<= 1) {
+            if (value == b) {
+                return new byte[] {
+                    (byte) 0x4A,
+                    (byte) i
+                };
+            }
+            if (value == (b ^ 0xFFFFFFFFL)) {
+                return new byte[] {
+                    (byte) 0x4B,
+                    (byte) i
+                };
+            }
+        }
+
+        for (long i = 31, b = 0xFFFFFFFFL; i >= 0; i--, b >>= 1) {
+            if (value == b) {
+                return new byte[] {
+                    (byte) 0x4C,
+                    (byte) i
+                };
+            }
+            if (value == (b ^ 0xFFFFFFFFL)) {
+                return new byte[] {
+                    (byte) 0x4D,
+                    (byte) i
+                };
+            }
+        }
+
+        if ((value & 0xFFFF0000L) == 0) {
             return new byte[] {
                 0x47, (byte) value, (byte) (value >> 8)
             };
         }
 
         return new byte[] {
-            0x45, (byte) value
+            0x49, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
         };
+
     }
 
     @Override

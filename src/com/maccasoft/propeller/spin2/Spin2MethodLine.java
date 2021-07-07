@@ -69,15 +69,6 @@ public class Spin2MethodLine {
         this.text = text;
     }
 
-    public List<Spin2MethodLine> expand() {
-        List<Spin2MethodLine> list = new ArrayList<Spin2MethodLine>();
-        list.add(this);
-        for (Spin2MethodLine line : childs) {
-            list.addAll(line.expand());
-        }
-        return list;
-    }
-
     public void register(Spin2Context context) {
         if (label != null) {
             context.addSymbol(label, new ContextLiteral(scope));

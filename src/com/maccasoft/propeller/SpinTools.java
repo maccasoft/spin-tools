@@ -861,6 +861,11 @@ public class SpinTools {
                     Spin2Compiler compiler = new Spin2Compiler();
                     Spin2Object obj = compiler.compile(root);
 
+                    File listing = new File(editorTab.getFile().getParentFile(), editorTab.getFile().getName() + ".lst");
+                    FileOutputStream os = new FileOutputStream(listing);
+                    obj.generateListing(new PrintStream(os));
+                    os.close();
+
                     shell.getDisplay().asyncExec(new Runnable() {
                         @Override
                         public void run() {
