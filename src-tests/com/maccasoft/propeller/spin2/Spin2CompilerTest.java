@@ -196,6 +196,27 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testConstantExpressionAssignment() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := 1 + 2 * 3\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0C 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     a := 1 + 2 * 3\n"
+            + "00009     A8             | CONSTANT (1 + 2 * 3)\n"
+            + "0000A     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000B     04             | RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testCharacterAssigment() throws Exception {
         String text = ""
             + "PUB main() | a\n"
@@ -210,7 +231,7 @@ class Spin2CompilerTest {
             + "' PUB main() | a\n"
             + "00008     04             | (stack size)\n"
             + "'     a := \"1\"\n"
-            + "00009     45 31          | CONSTANT ('1')\n"
+            + "00009     45 31          | CONSTANT (\"1\")\n"
             + "0000B     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "0000C     04             | RETURN\n"
             + "0000D     00 00 00       | Padding\n"
@@ -790,13 +811,102 @@ class Spin2CompilerTest {
             + "0000C     00             | (stack size)\n"
             + "'     function(\"1\")\n"
             + "0000D     00             | RETURNS_COUNT (0)\n"
-            + "0000E     45 31          | CONSTANT ('1')\n"
+            + "0000E     45 31          | CONSTANT (\"1\")\n"
             + "00010     0A 01          | CALL_SUB (1)\n"
             + "00012     04             | RETURN\n"
             + "' PUB function(a)\n"
             + "00013     00             | (stack size)\n"
             + "00014     04             | RETURN\n"
             + "00015     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMethodStringArgument() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    function(string(\"1234\"))\n"
+            + "\n"
+            + "PUB function(a)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     0C 00 00 80    | Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004     18 00 00 81    | Method function @ $00018 (1 parameters, 0 returns)\n"
+            + "00008     1A 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "0000C     00             | (stack size)\n"
+            + "'     function(string(\"1234\"))\n"
+            + "0000D     00             | RETURNS_COUNT (0)\n"
+            + "0000E     9E 05 31 32 33 | STRING\n"
+            + "00013     34 00          |\n"
+            + "00015     0A 01          | CALL_SUB (1)\n"
+            + "00017     04             | RETURN\n"
+            + "' PUB function(a)\n"
+            + "00018     00             | (stack size)\n"
+            + "00019     04             | RETURN\n"
+            + "0001A     00 00          | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMethodAutomaticStringArgument() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    function(\"1234\")\n"
+            + "\n"
+            + "PUB function(a)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     0C 00 00 80    | Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004     18 00 00 81    | Method function @ $00018 (1 parameters, 0 returns)\n"
+            + "00008     1A 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "0000C     00             | (stack size)\n"
+            + "'     function(\"1234\")\n"
+            + "0000D     00             | RETURNS_COUNT (0)\n"
+            + "0000E     9E 05 31 32 33 | STRING\n"
+            + "00013     34 00          |\n"
+            + "00015     0A 01          | CALL_SUB (1)\n"
+            + "00017     04             | RETURN\n"
+            + "' PUB function(a)\n"
+            + "00018     00             | (stack size)\n"
+            + "00019     04             | RETURN\n"
+            + "0001A     00 00          | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMethodMixedStringArgument() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    function(string(\"1234\", 13, 10))\n"
+            + "\n"
+            + "PUB function(a)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     0C 00 00 80    | Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004     1A 00 00 81    | Method function @ $0001A (1 parameters, 0 returns)\n"
+            + "00008     1C 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "0000C     00             | (stack size)\n"
+            + "'     function(string(\"1234\", 13, 10))\n"
+            + "0000D     00             | RETURNS_COUNT (0)\n"
+            + "0000E     9E 07 31 32 33 | STRING\n"
+            + "00013     34 0D 0A 00    |\n"
+            + "00017     0A 01          | CALL_SUB (1)\n"
+            + "00019     04             | RETURN\n"
+            + "' PUB function(a)\n"
+            + "0001A     00             | (stack size)\n"
+            + "0001B     04             | RETURN\n"
             + "", compile(text));
     }
 

@@ -435,7 +435,7 @@ public class Spin1Compiler {
                             expressionBuilder.addValueToken(new NumberLiteral(token.getText()));
                         }
                     }
-                    else if (token.getText().startsWith("\"")) {
+                    else if (token.type == Token.STRING) {
                         expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
                     }
                     else {
@@ -536,7 +536,7 @@ public class Spin1Compiler {
                             expressionBuilder.addValueToken(new NumberLiteral(token.getText()));
                         }
                     }
-                    else if (token.getText().startsWith("\"")) {
+                    else if (token.type == Token.STRING) {
                         expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
                     }
                     else {
@@ -1037,10 +1037,10 @@ public class Spin1Compiler {
             for (Spin1PAsmLine line : compiler.source) {
                 System.out.println(line);
             }
-            
+
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             compiler.generateObjectCode(os, System.out);
-            
+
             byte[] code = os.toByteArray();
             System.out.println();
             for (int i = 0; i < code.length; i++) {

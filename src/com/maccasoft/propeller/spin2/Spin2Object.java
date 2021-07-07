@@ -363,16 +363,28 @@ public class Spin2Object {
 
                     int i = 0;
                     while (i < obj.bytes.length) {
+                        if (i > 0 && (i % 5) == 0) {
+                            ps.print(" |");
+                            if (i == 5) {
+                                if (obj.text != null) {
+                                    ps.print(" " + obj.text);
+                                }
+                            }
+                            ps.println();
+                            ps.print(String.format("%05X    ", address));
+                        }
                         ps.print(String.format(" %02X", obj.bytes[i++]));
                         address++;
                     }
-                    while (i < 5) {
+                    while (i < 5 || (i % 5) != 0) {
                         ps.print("   ");
                         i++;
                     }
                     ps.print(" |");
-                    if (obj.text != null) {
-                        ps.print(" " + obj.text);
+                    if (i == 5) {
+                        if (obj.text != null) {
+                            ps.print(" " + obj.text);
+                        }
                     }
                     ps.println();
                 }

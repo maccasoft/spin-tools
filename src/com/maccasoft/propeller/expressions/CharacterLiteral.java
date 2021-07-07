@@ -34,7 +34,7 @@ public class CharacterLiteral extends Literal {
         escaped = escaped.replace("\f", "\\f");
         escaped = escaped.replace("\r", "\\r");
         escaped = escaped.replace("\33", "\\e");
-        return "'" + escaped + "'";
+        return "\"" + escaped + "\"";
     }
 
 }

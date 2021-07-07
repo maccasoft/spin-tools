@@ -172,14 +172,13 @@ class Spin2CompilerFunctionalTest {
         String text = ""
             + "CON\n"
             + "    _clkfreq = 160_000_000\n"
-            + "    _delay   = _clkfreq / 2\n"
             + "\n"
             + "PUB main() | ct\n"
             + "\n"
             + "    ct := getct()                   ' get current timer\n"
             + "    repeat\n"
             + "        pint(56)                    ' toggle pin 56\n"
-            + "        waitct(ct += _delay)        ' wait half second\n"
+            + "        waitct(ct += _clkfreq / 2)  ' wait half second\n"
             + "";
 
         byte[] expected = new byte[] {

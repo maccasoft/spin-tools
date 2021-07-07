@@ -15,17 +15,30 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import com.maccasoft.propeller.expressions.Add;
+import com.maccasoft.propeller.expressions.Addbits;
+import com.maccasoft.propeller.expressions.Addpins;
+import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.ContextLiteral;
+import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.ExpressionBuilder;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
+import com.maccasoft.propeller.expressions.Modulo;
+import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
+import com.maccasoft.propeller.expressions.ShiftLeft;
+import com.maccasoft.propeller.expressions.ShiftRight;
+import com.maccasoft.propeller.expressions.Subtract;
+import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.Variable;
+import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
 import com.maccasoft.propeller.model.ConstantSetEnumNode;
@@ -950,11 +963,23 @@ public class Spin2Compiler {
             source.add(new Constant(context, expression));
         }
         else if (node.type == Token.STRING) {
-            if (node.getText().length() != 3) {
-                throw new RuntimeException("invalid character constant");
+            String s = node.getText().substring(1);
+            s = s.substring(0, s.length() - 1);
+            if (s.length() == 1) {
+                Expression expression = new CharacterLiteral(s.charAt(0));
+                source.add(new Constant(context, expression));
             }
-            Expression expression = new CharacterLiteral(node.getText().charAt(1));
-            source.add(new Constant(context, expression));
+            else {
+                byte[] code = new byte[s.length() + 3];
+                int index = 0;
+                code[index++] = (byte) 0x9E;
+                code[index++] = (byte) (s.length() + 1);
+                for (int i = 0; i < s.length(); i++) {
+                    code[index++] = (byte) s.charAt(i);
+                }
+                code[index++] = (byte) 0x00;
+                source.add(new Bytecode(context, code, "STRING".toUpperCase()));
+            }
         }
         else if (":=".equals(node.getText())) {
             source.addAll(compileBytecodeExpression(context, node.getChild(1), push));
@@ -997,9 +1022,14 @@ public class Spin2Compiler {
             if (node.getChildCount() != 2) {
                 throw new RuntimeException("expression syntax error " + node.getText());
             }
-            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-            source.add(new MathOp(context, node.getText(), false));
+            try {
+                Expression expression = buildConstantExpression(context, node);
+                source.add(new Constant(context, expression));
+            } catch (Exception e) {
+                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+                source.add(new MathOp(context, node.getText(), false));
+            }
         }
         else if ("ABORT".equalsIgnoreCase(node.getText())) {
             if (argsNode.getChildCount() == 0) {
@@ -1048,6 +1078,28 @@ public class Spin2Compiler {
         }
         else if ("DEBUG".equalsIgnoreCase(node.getText())) {
             // Ignored
+        }
+        else if ("STRING".equalsIgnoreCase(node.getText())) {
+            StringBuilder sb = new StringBuilder();
+            for (Spin2StatementNode child : argsNode.getChilds()) {
+                if (child.type == Spin2StatementNode.STRING) {
+                    String s = child.getText().substring(1);
+                    sb.append(s.substring(0, s.length() - 1));
+                }
+                else if (child.type == Spin2StatementNode.NUMBER) {
+                    NumberLiteral expression = new NumberLiteral(child.getText());
+                    sb.append((char) expression.getNumber().intValue());
+                }
+            }
+            byte[] code = new byte[sb.length() + 3];
+            int index = 0;
+            code[index++] = (byte) 0x9E;
+            code[index++] = (byte) (sb.length() + 1);
+            for (int i = 0; i < sb.length(); i++) {
+                code[index++] = (byte) sb.charAt(i);
+            }
+            code[index++] = (byte) 0x00;
+            source.add(new Bytecode(context, code, node.getText().toUpperCase()));
         }
         else {
             Expression expression = context.getLocalSymbol(node.getText());
@@ -1112,6 +1164,73 @@ public class Spin2Compiler {
         }
 
         return source;
+    }
+
+    Expression buildConstantExpression(Spin2Context context, Spin2StatementNode node) {
+        if (node.type == Token.NUMBER) {
+            return new NumberLiteral(node.getText());
+        }
+        else if (node.type == Token.STRING) {
+            String s = node.getText().substring(1);
+            s = s.substring(0, s.length() - 1);
+            if (s.length() == 1) {
+                return new CharacterLiteral(s.charAt(0));
+            }
+            throw new RuntimeException("string not allowed");
+        }
+
+        Expression expression = context.getLocalSymbol(node.getText());
+        if (expression != null) {
+            if (expression.isConstant()) {
+                return expression;
+            }
+            throw new RuntimeException("not a constant (" + expression + ")");
+        }
+
+        if ("+".equals(node.getText())) {
+            return new Add(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("-".equals(node.getText())) {
+            return new Subtract(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("*".equals(node.getText())) {
+            return new Multiply(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("/".equals(node.getText())) {
+            return new Divide(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("//".equals(node.getText())) {
+            return new Modulo(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("|".equals(node.getText())) {
+            return new Or(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("&".equals(node.getText())) {
+            return new And(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("^".equals(node.getText())) {
+            return new Xor(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("<<".equals(node.getText())) {
+            return new ShiftLeft(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if (">>".equals(node.getText())) {
+            return new ShiftRight(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("ADDPINS".equalsIgnoreCase(node.getText())) {
+            return new Addpins(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("ADDBITS".equalsIgnoreCase(node.getText())) {
+            return new Addbits(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("TRUNC".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 1) {
+                throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+            }
+            return new Trunc(buildConstantExpression(context, node.getChild(0)));
+        }
+
+        throw new RuntimeException("unknown " + node.getText());
     }
 
     int getClockMode(int xinfreq, int clkfreq) {
@@ -1224,7 +1343,7 @@ public class Spin2Compiler {
                             expressionBuilder.addValueToken(new NumberLiteral(token.getText()));
                         }
                     }
-                    else if (token.getText().startsWith("\"")) {
+                    else if (token.type == Token.STRING) {
                         expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
                     }
                     else {
@@ -1331,7 +1450,7 @@ public class Spin2Compiler {
                             expressionBuilder.addValueToken(new NumberLiteral(token.getText()));
                         }
                     }
-                    else if (token.getText().startsWith("\"")) {
+                    else if (token.type == Token.STRING) {
                         expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
                     }
                     else {
