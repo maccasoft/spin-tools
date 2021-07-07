@@ -71,7 +71,6 @@ import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
-import com.maccasoft.propeller.spin2.Spin2Interpreter;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
@@ -862,14 +861,14 @@ public class SpinTools {
                     Spin2Compiler compiler = new Spin2Compiler();
                     Spin2Object obj = compiler.compile(root);
 
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    if (compiler.hasSpinMethods()) {
-                        Spin2Interpreter interpreter = new Spin2Interpreter();
-                        interpreter.setVBase(interpreter.getPBase() + obj.getSize());
-                        interpreter.setDBase(interpreter.getPBase() + obj.getSize() + compiler.getVarSize());
-                        os.write(interpreter.getCode());
-                    }
-                    obj.generateBinary(os);
+                    shell.getDisplay().asyncExec(new Runnable() {
+                        @Override
+                        public void run() {
+                            MemoryDialog2 dlg2 = new MemoryDialog2(shell);
+                            dlg2.setObject(obj);
+                            dlg2.open();
+                        }
+                    });
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1084,12 +1083,6 @@ public class SpinTools {
                     Spin2Object obj = compiler.compile(root);
 
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    if (compiler.hasSpinMethods()) {
-                        Spin2Interpreter interpreter = new Spin2Interpreter();
-                        interpreter.setVBase(interpreter.getPBase() + obj.getSize());
-                        interpreter.setDBase(interpreter.getPBase() + obj.getSize() + compiler.getVarSize());
-                        os.write(interpreter.getCode());
-                    }
                     obj.generateBinary(os);
 
                     SerialPort serialPort = null;

@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.bytecode;
 
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Context;
 
@@ -44,18 +45,30 @@ public class MemoryOp extends Spin2Bytecode {
 
     @Override
     public int getSize() {
-        int value = expression.getNumber().intValue();
+        int value;
         if (expression instanceof ContextLiteral) {
             value = ((ContextLiteral) expression).getContext().getHubAddress();
+        }
+        else if (expression instanceof Variable) {
+            value = ((Variable) expression).getOffset();
+        }
+        else {
+            value = expression.getNumber().intValue();
         }
         return Constant.wrVarSize(value) + 2;
     }
 
     @Override
     public byte[] getBytes() {
-        int value = expression.getNumber().intValue();
+        int value;
         if (expression instanceof ContextLiteral) {
             value = ((ContextLiteral) expression).getContext().getHubAddress();
+        }
+        else if (expression instanceof Variable) {
+            value = ((Variable) expression).getOffset();
+        }
+        else {
+            value = expression.getNumber().intValue();
         }
 
         byte[] v = Constant.wrVar(value);
@@ -112,9 +125,15 @@ public class MemoryOp extends Spin2Bytecode {
             sb.append("DBASE");
         }
 
-        int value = expression.getNumber().intValue();
+        int value;
         if (expression instanceof ContextLiteral) {
             value = ((ContextLiteral) expression).getContext().getHubAddress();
+        }
+        else if (expression instanceof Variable) {
+            value = ((Variable) expression).getOffset();
+        }
+        else {
+            value = expression.getNumber().intValue();
         }
         sb.append(String.format("+$%05X", value));
 

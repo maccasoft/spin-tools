@@ -19,7 +19,11 @@ import java.util.List;
 public class Spin2Object {
 
     int size;
+    Spin2Interpreter interpreter;
     List<DataObject> data = new ArrayList<DataObject>();
+
+    int _clkfreq;
+    int _clkmode;
 
     public static class DataObject {
         byte[] bytes;
@@ -260,7 +264,42 @@ public class Spin2Object {
         }
     }
 
+    public int getClkFreq() {
+        return _clkfreq;
+    }
+
+    public void setClkFreq(int _clkfreq) {
+        this._clkfreq = _clkfreq;
+        if (interpreter != null) {
+            interpreter.setClkFreq(_clkfreq);
+        }
+    }
+
+    public int getClkMode() {
+        return _clkmode;
+    }
+
+    public void setClkMode(int _clkmode) {
+        this._clkmode = _clkmode;
+        if (interpreter != null) {
+            interpreter.setClkMode(_clkmode);
+        }
+    }
+
+    public Spin2Interpreter getInterpreter() {
+        return interpreter;
+    }
+
+    public void setInterpreter(Spin2Interpreter interpreter) {
+        this.interpreter = interpreter;
+        this.interpreter.setClkFreq(_clkfreq);
+        this.interpreter.setClkMode(_clkmode);
+    }
+
     public void generateBinary(OutputStream os) throws IOException {
+        if (interpreter != null) {
+            os.write(interpreter.code);
+        }
         for (DataObject obj : data) {
             if (obj.bytes != null) {
                 os.write(obj.bytes);
@@ -330,13 +369,6 @@ public class Spin2Object {
             else if (obj.text != null) {
                 ps.println("' " + obj.text);
             }
-        }
-    }
-
-    public void writeBinary(OutputStream os) throws IOException {
-
-        for (DataObject obj : data) {
-            os.write(obj.bytes);
         }
     }
 

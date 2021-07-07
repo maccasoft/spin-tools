@@ -390,6 +390,56 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testRepeatCounter() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat 10\n"
+            + "        a := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0F 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     repeat 10\n"
+            + "00009     AB             | CONSTANT (10)\n"
+            + "'         a := 1\n"
+            + "0000A     A2             | CONSTANT (1)\n"
+            + "0000B     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000C     16 7D          | DJNZ $0000A (-3)\n"
+            + "0000E     04             | RETURN\n"
+            + "0000F     00             | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatVarCounter() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat a\n"
+            + "        a := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0F 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     repeat a\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "'         a := 1\n"
+            + "0000A     A2             | CONSTANT (1)\n"
+            + "0000B     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000C     16 7D          | DJNZ $0000A (-3)\n"
+            + "0000E     04             | RETURN\n"
+            + "0000F     00             | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testRepeatQuit() throws Exception {
         String text = ""
             + "PUB main() | a\n"
@@ -729,6 +779,242 @@ class Spin2CompilerTest {
             + "00017     00             | (stack size)\n"
             + "00018     04             | RETURN\n"
             + "00019     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testAbort() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    abort\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0B 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "00008     00             | (stack size)\n"
+            + "'     abort\n"
+            + "00009     06             | ABORT\n"
+            + "0000A     04             | RETURN\n"
+            + "0000B     00             | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testAbortArgument() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    abort 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0C 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "00008     00             | (stack size)\n"
+            + "'     abort 1\n"
+            + "00009     A2             | CONSTANT (1)\n"
+            + "0000A     07             | ABORT\n"
+            + "0000B     04             | RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testDataPointer() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "        a := @value\n"
+            + "\n"
+            + "DAT             org     $000\n"
+            + "\n"
+            + "value           long    1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     0C 00 00 80    | Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004     12 00 00 00    | End\n"
+            + "00008 000                |                     org     000\n"
+            + "00008 000 01 00 00 00    | value               long    1\n"
+            + "' PUB main() | a\n"
+            + "0000C     04             | (stack size)\n"
+            + "'         a := @value\n"
+            + "0000D     5C 08 7F       | MEM_ADDRESS PBASE+$00008\n"
+            + "00010     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00011     04             | RETURN\n"
+            + "00012     00 00          | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testDataValue() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "        a := value\n"
+            + "\n"
+            + "DAT             org     $000\n"
+            + "\n"
+            + "value           long    1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     0C 00 00 80    | Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004     12 00 00 00    | End\n"
+            + "00008 000                |                     org     000\n"
+            + "00008 000 01 00 00 00    | value               long    1\n"
+            + "' PUB main() | a\n"
+            + "0000C     04             | (stack size)\n"
+            + "'         a := value\n"
+            + "0000D     5C 08 80       | MEM_READ PBASE+$00008\n"
+            + "00010     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00011     04             | RETURN\n"
+            + "00012     00 00          | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testVarPointer() throws Exception {
+        String text = ""
+            + "VAR b[10]\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "        a := @b\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0E 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'         a := @b\n"
+            + "00009     5D 04 7F       | MEM_ADDRESS VBASE+$00004\n"
+            + "0000C     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000D     04             | RETURN\n"
+            + "0000E     00 00          | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testLocalVarPointer() throws Exception {
+        String text = ""
+            + "PUB main() | a, b[10]\n"
+            + "\n"
+            + "        a := @b\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0E 00 00 00    | End\n"
+            + "' PUB main() | a, b[10]\n"
+            + "00008     2C             | (stack size)\n"
+            + "'         a := @b\n"
+            + "00009     5E 04 7F       | MEM_ADDRESS DBASE+$00004\n"
+            + "0000C     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000D     04             | RETURN\n"
+            + "0000E     00 00          | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testInternalFunction() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "        a := muldiv64(1, 2, 3)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     10 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'         a := muldiv64(1, 2, 3)\n"
+            + "00009     A2             | CONSTANT (1)\n"
+            + "0000A     A3             | CONSTANT (2)\n"
+            + "0000B     A4             | CONSTANT (3)\n"
+            + "0000C     19 80          | MULDIV64\n"
+            + "0000E     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000F     04             | RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testIgnoreDebug() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    debug()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0A 00 00 00    | End\n"
+            + "' PUB main()\n"
+            + "00008     00             | (stack size)\n"
+            + "'     debug()\n"
+            + "00009     04             | RETURN\n"
+            + "0000A     00 00          | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testCase() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    case a\n"
+            + "        1: a := 4\n"
+            + "        2: a := 5\n"
+            + "        3: a := 6\n"
+            + "        other: a := 7\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     22 00 00 00    | End\n"
+            + "' PUB main() | a\n"
+            + "00008     04             | (stack size)\n"
+            + "'     case a\n"
+            + "00009     45 21          | CONSTANT ($00021)\n"
+            + "0000B     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000C     A2             | CONSTANT (1)\n"
+            + "0000D     1C 0A          | CASE_JMP $00018 (10)\n"
+            + "0000F     A3             | CONSTANT (2)\n"
+            + "00010     1C 0A          | CASE_JMP $0001B (10)\n"
+            + "00012     A4             | CONSTANT (3)\n"
+            + "00013     1C 0A          | CASE_JMP $0001E (10)\n"
+            + "'         other: a := 7\n"
+            + "00015     A8             | CONSTANT (7)\n"
+            + "00016     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00017     1E             | CASE_DONE\n"
+            + "'         1: a := 4\n"
+            + "00018     A5             | CONSTANT (4)\n"
+            + "00019     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0001A     1E             | CASE_DONE\n"
+            + "'         2: a := 5\n"
+            + "0001B     A6             | CONSTANT (5)\n"
+            + "0001C     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0001D     1E             | CASE_DONE\n"
+            + "'         3: a := 6\n"
+            + "0001E     A7             | CONSTANT (6)\n"
+            + "0001F     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00020     1E             | CASE_DONE\n"
+            + "00021     04             | RETURN\n"
+            + "00022     00 00          | Padding\n"
             + "", compile(text));
     }
 

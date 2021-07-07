@@ -10,10 +10,11 @@
 
 package com.maccasoft.propeller;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.text.NumberFormat;
 
-import org.eclipse.core.databinding.observable.Realm;
-import org.eclipse.jface.databinding.swt.DisplayRealm;
+import org.apache.commons.lang3.BitField;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
@@ -43,10 +44,18 @@ import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 
 import com.maccasoft.propeller.internal.ColorRegistry;
+import com.maccasoft.propeller.spin2.Spin2Object;
 
-public class MemoryDialog extends Dialog {
+public class MemoryDialog2 extends Dialog {
 
     public static final int BYTES_PER_ROW = 16;
+
+    static BitField cm_pll = new BitField(0b0000_000_1_000000_0000000000_0000_00_00);
+    static BitField cm_xi_div = new BitField(0b0000_000_0_111111_0000000000_0000_00_00);
+    static BitField cm_vco_mul = new BitField(0b0000_000_0_000000_1111111111_0000_00_00);
+    static BitField cm_vco_div = new BitField(0b0000_000_0_000000_0000000000_1111_00_00);
+    static BitField cm_cc = new BitField(0b0000_000_0_000000_0000000000_0000_11_00);
+    static BitField cm_ss = new BitField(0b0000_000_0_000000_0000000000_0000_00_11);
 
     Display display;
     Canvas canvas;
@@ -58,16 +67,18 @@ public class MemoryDialog extends Dialog {
     Color variablesBackground;
     Color stackFreeBackground;
 
+    Spin2Object object;
     byte[] data;
 
     int clkfreq;
+    int clkmode;
     int pbase;
     int vbase;
     int dbase;
 
     NumberFormat format;
 
-    public MemoryDialog(Shell parentShell) {
+    public MemoryDialog2(Shell parentShell) {
         super(parentShell);
     }
 
@@ -103,8 +114,18 @@ public class MemoryDialog extends Dialog {
         createMemoryView(content);
 
         int rows = canvas.getClientArea().height / fontMetrics.getHeight();
-        int selection = verticalBar.getSelection();
+        int selection = (pbase / BYTES_PER_ROW) * BYTES_PER_ROW;
         verticalBar.setValues(selection, 0, data.length, rows * BYTES_PER_ROW, BYTES_PER_ROW, rows * BYTES_PER_ROW);
+
+        display.asyncExec(new Runnable() {
+
+            @Override
+            public void run() {
+                verticalBar.setSelection(selection);
+                canvas.redraw();
+            }
+
+        });
 
         return content;
     }
@@ -121,12 +142,12 @@ public class MemoryDialog extends Dialog {
         group.setLayout(new GridLayout(3, false));
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         label = new Label(group, SWT.NONE);
-        label.setText("$0000");
+        label.setText("$00000");
         label = new Label(group, SWT.CENTER);
         label.setText("HUB RAM Usage");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label = new Label(group, SWT.NONE);
-        label.setText("$7FFF");
+        label.setText(String.format("$%X", data.length - 1));
 
         label = new Label(group, SWT.BORDER);
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
@@ -140,15 +161,22 @@ public class MemoryDialog extends Dialog {
             public void handleEvent(Event e) {
                 Rectangle bounds = ((Control) e.widget).getBounds();
 
-                int codePixels = (int) (bounds.width * (vbase - pbase) / 32768.0);
-                int variablesPixels = (int) (bounds.width * (dbase - vbase) / 32768.0);
+                int interpreterPixels = (int) (bounds.width * pbase / (double) data.length);
+                int codePixels = (int) (bounds.width * (vbase - pbase) / (double) data.length);
+                int variablesPixels = (int) (bounds.width * (dbase - vbase) / (double) data.length);
 
+                int x = 0;
+                e.gc.setBackground(display.getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+                e.gc.fillRectangle(x, 0, interpreterPixels, bounds.height);
+                x += interpreterPixels;
                 e.gc.setBackground(codeBackground);
-                e.gc.fillRectangle(0, 0, codePixels, bounds.height);
+                e.gc.fillRectangle(x, 0, codePixels, bounds.height);
+                x += codePixels;
                 e.gc.setBackground(variablesBackground);
-                e.gc.fillRectangle(codePixels, 0, variablesPixels, bounds.height);
+                e.gc.fillRectangle(x, 0, variablesPixels, bounds.height);
+                x += variablesPixels;
                 e.gc.setBackground(stackFreeBackground);
-                e.gc.fillRectangle(codePixels + variablesPixels, 0, bounds.width - (codePixels + variablesPixels), bounds.height);
+                e.gc.fillRectangle(x, 0, bounds.width - x, bounds.height);
             }
 
         });
@@ -159,10 +187,21 @@ public class MemoryDialog extends Dialog {
 
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        label.setText("Interpreter");
+        label.setLayoutData(new GridData(convertWidthInCharsToPixels(30), SWT.DEFAULT));
+        label = new Label(group, SWT.NONE);
+        label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
+        label.setText(String.format("%d bytes", pbase));
+        label = new Label(group, SWT.BORDER);
+        label.setBackground(display.getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+        label.setLayoutData(new GridData(convertWidthInCharsToPixels(5), SWT.DEFAULT));
+
+        label = new Label(group, SWT.NONE);
+        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label.setText("Code / Data");
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-        label.setText(String.format("%d longs", (vbase - pbase) / 4));
+        label.setText(String.format("%d bytes", vbase - pbase));
         label = new Label(group, SWT.BORDER);
         label.setBackground(codeBackground);
         label.setLayoutData(new GridData(convertWidthInCharsToPixels(5), SWT.DEFAULT));
@@ -172,7 +211,7 @@ public class MemoryDialog extends Dialog {
         label.setText("Variables");
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-        label.setText(String.format("%d longs", (dbase - vbase) / 4));
+        label.setText(String.format("%d bytes", dbase - vbase));
         label = new Label(group, SWT.BORDER);
         label.setLayoutData(new GridData(convertWidthInCharsToPixels(5), SWT.DEFAULT));
         label.setBackground(variablesBackground);
@@ -181,7 +220,7 @@ public class MemoryDialog extends Dialog {
         label.setText("Stack / Free");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label = new Label(group, SWT.NONE);
-        label.setText(String.format("%d longs", (data.length - dbase) / 4));
+        label.setText(String.format("%d bytes", data.length - dbase));
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
         label = new Label(group, SWT.BORDER);
         label.setBackground(stackFreeBackground);
@@ -199,95 +238,42 @@ public class MemoryDialog extends Dialog {
         label.setText("Clock Mode");
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-        if (data[4] == 0x00) {
-            label.setText("RCFAST");
+
+        StringBuilder sb = new StringBuilder();
+        switch (cm_ss.getValue(clkmode)) {
+            case 0b00:
+                sb.append("RCFAST");
+                break;
+            case 0b01:
+                sb.append("RCSLOW");
+                break;
+            case 0b10:
+                sb.append("XIN");
+                break;
+            case 0b11:
+                sb.append("XTAL" + (cm_cc.getValue(clkmode) + 1));
+                if (cm_pll.getValue(clkmode) == 1) {
+                    sb.append("+PLL" + (cm_xi_div.getValue(clkmode) + 1) + "X");
+                }
+                break;
         }
-        else if (data[4] == 0x01) {
-            label.setText("RCSLOW");
-        }
-        else {
-            String xtal = null, pll = null;
-            switch (data[4] & 0b0_0_1_11_000) {
-                case 0b0_0_1_01_000:
-                    xtal = "XTAL1";
-                    break;
-                case 0b0_0_1_10_000:
-                    xtal = "XTAL2";
-                    break;
-                case 0b0_0_1_11_000:
-                    xtal = "XTAL3";
-                    break;
-            }
-            switch (data[4] & 0b0_1_1_00_111) {
-                case 0b0_1_1_00_011:
-                    pll = "PLL1X";
-                    break;
-                case 0b0_1_1_00_100:
-                    pll = "PLL2X";
-                    break;
-                case 0b0_1_1_00_101:
-                    pll = "PLL4X";
-                    break;
-                case 0b0_1_1_00_110:
-                    pll = "PLL8X";
-                    break;
-                case 0b0_1_1_00_111:
-                    pll = "PLL16X";
-                    break;
-            }
-            if (xtal != null && pll != null) {
-                label.setText(xtal + " + " + pll);
-            }
-            else if (xtal != null) {
-                label.setText(xtal);
-            }
-            else if (pll != null) {
-                label.setText(pll);
-            }
-        }
+        label.setText(sb.toString());
 
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label.setText("Clock Freq.");
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-        if (data[4] == 0x00) {
-            label.setText("~ " + format.format(12000000) + " Hz");
-        }
-        else if (data[4] == 0x01) {
-            label.setText("~ " + format.format(20000) + " Hz");
-        }
-        else {
-            label.setText(format.format(clkfreq) + " Hz");
-        }
+        label.setText(format.format(clkfreq) + " Hz");
 
         label = new Label(group, SWT.NONE);
         label.setText("XIN Freq.");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-        if ((data[4] & 0b00100000) == 0) {
-            label.setText("Ignored");
-        }
-        else {
-            switch (data[4] & 0b0_1_1_00_111) {
-                case 0b0_1_1_00_011:
-                    label.setText(format.format(clkfreq) + " Hz");
-                    break;
-                case 0b0_1_1_00_100:
-                    label.setText(format.format(clkfreq / 2) + " Hz");
-                    break;
-                case 0b0_1_1_00_101:
-                    label.setText(format.format(clkfreq / 4) + " Hz");
-                    break;
-                case 0b0_1_1_00_110:
-                    label.setText(format.format(clkfreq / 8) + " Hz");
-                    break;
-                case 0b0_1_1_00_111:
-                    label.setText(format.format(clkfreq / 16) + " Hz");
-                    break;
-            }
-        }
+
+        int value = clkfreq / (cm_vco_mul.getValue(clkmode) + 1) * (cm_xi_div.getValue(clkmode) + 1);
+        label.setText(format.format(value) + " Hz");
     }
 
     public void createMemoryView(Composite parent) {
@@ -468,13 +454,31 @@ public class MemoryDialog extends Dialog {
         return canvas;
     }
 
-    public void setData(byte[] data) {
-        this.data = data;
+    public void setObject(Spin2Object object) {
+        this.object = object;
 
-        clkfreq = readLong(0);
-        pbase = readWord(6);
-        vbase = readWord(8);
-        dbase = readWord(10) - 8;
+        try {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            object.generateBinary(os);
+
+            data = new byte[512 * 1024];
+            System.arraycopy(os.toByteArray(), 0, data, 0, Math.min(data.length, os.size()));
+
+            clkfreq = object.getClkFreq();
+            clkmode = object.getClkMode();
+
+            if (object.getInterpreter() != null) {
+                pbase = readLong(0x30);
+                vbase = readLong(0x34);
+                dbase = readLong(0x38);
+            }
+            else {
+                pbase = 0;
+                vbase = dbase = object.getSize();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     int readWord(int index) {
@@ -483,48 +487,6 @@ public class MemoryDialog extends Dialog {
 
     int readLong(int index) {
         return (data[index] & 0xFF) | ((data[index + 1] & 0xFF) << 8) | ((data[index + 2] & 0xFF) << 16) | ((data[index + 3] & 0xFF) << 24);
-    }
-
-    public static void main(String[] args) {
-        final Display display = new Display();
-
-        Realm.runWithDefault(DisplayRealm.getRealm(display), new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    MemoryDialog app = new MemoryDialog(null);
-
-                    byte[] data = new byte[32768];
-
-                    data[0] = (byte) 0x00;
-                    data[1] = (byte) 0xB4;
-                    data[2] = (byte) 0xC4;
-                    data[3] = (byte) 0x04;
-
-                    data[4] = (byte) 0x6F;
-                    data[5] = (byte) 0x00;
-
-                    data[6] = (byte) 0x10;
-                    data[7] = (byte) 0x00;
-
-                    data[8] = (byte) 0x00;
-                    data[9] = (byte) 0x01;
-
-                    data[10] = (byte) 0x88;
-                    data[11] = (byte) 0x01;
-
-                    app.setData(data);
-
-                    app.open();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return;
-                }
-            }
-        });
-
-        display.dispose();
     }
 
 }

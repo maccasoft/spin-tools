@@ -10,7 +10,9 @@
 
 package com.maccasoft.propeller.spin2.bytecode;
 
+import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Context;
 
@@ -107,8 +109,18 @@ public class Constant extends Spin2Bytecode {
 
     @Override
     public int getSize() {
-        int value = expression.getNumber().intValue();
+        if (expression instanceof ContextLiteral) {
+            if (!((ContextLiteral) expression).getContext().isAddressSet()) {
+                return 5;
+            }
+        }
+        else if (expression instanceof Identifier) {
+            if (!((Identifier) expression).getContext().isAddressSet()) {
+                return 5;
+            }
+        }
 
+        int value = expression.getNumber().intValue();
         if (value >= -1 && value <= 14) {
             return 1;
         }
@@ -153,6 +165,9 @@ public class Constant extends Spin2Bytecode {
 
     @Override
     public String toString() {
+        if ((expression instanceof ContextLiteral) || (expression instanceof Identifier)) {
+            return "CONSTANT (" + String.format("$%05X", expression.getNumber().intValue()) + ")";
+        }
         return "CONSTANT (" + expression + ")";
     }
 
