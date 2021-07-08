@@ -21,6 +21,7 @@ public class Spin2Interpreter {
         try {
             code = new byte[is.available()];
             is.read(code);
+            writeLong(0x3C, 0x00000100);
             setPBase(code.length);
         } catch (Exception e) {
             e.printStackTrace();
@@ -51,6 +52,10 @@ public class Spin2Interpreter {
 
     public void setDBase(int value) {
         writeLong(0x38, value);
+    }
+
+    public void setClearLongs(int value) {
+        writeLong(0x3C, value);
     }
 
     public int getDBase() {

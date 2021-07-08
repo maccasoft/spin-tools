@@ -418,7 +418,7 @@ public class Spin2TreeBuilder {
                     throw new RuntimeException("error: expecting operator, got " + token.getText());
                 }
                 addOperatorToken(token);
-                if (")".equals(token.getText())) {
+                if (")".equals(token.getText()) || "]".equals(token.getText())) {
                     break;
                 }
                 state = 2;

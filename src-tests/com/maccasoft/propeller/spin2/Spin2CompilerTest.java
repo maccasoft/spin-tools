@@ -1084,14 +1084,14 @@ class Spin2CompilerTest {
 
         Assertions.assertEquals(""
             + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004     0E 00 00 00    | End\n"
+            + "00004     0D 00 00 00    | End\n"
             + "' PUB main() | a\n"
             + "00008     04             | (stack size)\n"
             + "'         a := @b\n"
-            + "00009     5D 04 7F       | MEM_ADDRESS VBASE+$00004\n"
-            + "0000C     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "0000D     04             | RETURN\n"
-            + "0000E     00 00          | Padding\n"
+            + "00009     C1 7F          | VAR_ADDRESS LONG VBASE+$00001 (short)\n"
+            + "0000B     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000C     04             | RETURN\n"
+            + "0000D     00 00 00       | Padding\n"
             + "", compile(text));
     }
 
@@ -1106,14 +1106,14 @@ class Spin2CompilerTest {
 
         Assertions.assertEquals(""
             + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004     0E 00 00 00    | End\n"
+            + "00004     0D 00 00 00    | End\n"
             + "' PUB main() | a, b[10]\n"
             + "00008     2C             | (stack size)\n"
             + "'         a := @b\n"
-            + "00009     5E 04 7F       | MEM_ADDRESS DBASE+$00004\n"
-            + "0000C     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "0000D     04             | RETURN\n"
-            + "0000E     00 00          | Padding\n"
+            + "00009     D1 7F          | VAR_ADDRESS LONG DBASE+$00001 (short)\n"
+            + "0000B     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000C     04             | RETURN\n"
+            + "0000D     00 00 00       | Padding\n"
             + "", compile(text));
     }
 
@@ -1350,6 +1350,52 @@ class Spin2CompilerTest {
             + "00013     00             | (stack size)\n"
             + "00014     04             | RETURN\n"
             + "00015     00 00 00       | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testTypeExpression() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    a := BYTE[@b]\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0F 00 00 00    | End\n"
+            + "' PUB main() | a, b\n"
+            + "00008     08             | (stack size)\n"
+            + "'     a := BYTE[@b]\n"
+            + "00009     D1 7F          | VAR_ADDRESS LONG DBASE+$00001 (short)\n"
+            + "0000B     65 80          | BYTE_READ\n"
+            + "0000D     F0             | VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000E     04             | RETURN\n"
+            + "0000F     00             | Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testTypeAssign() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    BYTE[@b] := a\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000     08 00 00 80    | Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004     0F 00 00 00    | End\n"
+            + "' PUB main() | a, b\n"
+            + "00008     08             | (stack size)\n"
+            + "'     BYTE[@b] := a\n"
+            + "00009     E0             | VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A     D1 7F          | VAR_ADDRESS LONG DBASE+$00001 (short)\n"
+            + "0000C     65 81          | BYTE_WRITE\n"
+            + "0000E     04             | RETURN\n"
+            + "0000F     00             | Padding\n"
             + "", compile(text));
     }
 

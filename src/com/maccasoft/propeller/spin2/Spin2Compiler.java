@@ -251,6 +251,7 @@ public class Spin2Compiler {
             Spin2Interpreter interpreter = new Spin2Interpreter();
             interpreter.setVBase(interpreter.getPBase() + object.getSize());
             interpreter.setDBase(interpreter.getPBase() + object.getSize() + varOffset);
+            interpreter.setClearLongs(255 + ((varOffset + 3) / 4));
             object.setInterpreter(interpreter);
         }
 
@@ -529,8 +530,13 @@ public class Spin2Compiler {
 
         for (Node child : childs) {
             if (child instanceof StatementNode) {
-                Spin2MethodLine line = compileStatement(context, child);
-                lines.add(line);
+                try {
+                    Spin2MethodLine line = compileStatement(context, child);
+                    lines.add(line);
+                } catch (Exception e) {
+                    System.err.println("error compiling '" + child.getText() + "'");
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -654,18 +660,20 @@ public class Spin2Compiler {
             String text = token.getText();
 
             if (iter.hasNext()) {
+                builder.setState(2);
+
                 token = iter.next();
                 if ("WHILE".equalsIgnoreCase(token.getText()) || "UNTIL".equalsIgnoreCase(token.getText())) {
                     text += " " + token.getText();
-                    builder.setState(2);
-                    while (iter.hasNext()) {
-                        builder.addToken(iter.next());
-                    }
-                    arguments.add(builder.getRoot());
                 }
                 else {
-                    arguments.add(new Spin2StatementNode(token.type, token.getText()));
+                    builder.addToken(token);
                 }
+
+                while (iter.hasNext()) {
+                    builder.addToken(iter.next());
+                }
+                arguments.add(builder.getRoot());
             }
 
             line = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), text, arguments);
@@ -982,7 +990,7 @@ public class Spin2Compiler {
             }
         }
         else if (":=".equals(node.getText())) {
-            source.addAll(compileBytecodeExpression(context, node.getChild(1), push));
+            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
             if (node.getChild(0).type == Token.OPERATOR) {
                 source.addAll(compileBytecodeExpression(context, node.getChild(0), push));
             }
@@ -1029,6 +1037,30 @@ public class Spin2Compiler {
                 source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                 source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
                 source.add(new MathOp(context, node.getText(), false));
+            }
+        }
+        else if ("[".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 2) {
+                throw new RuntimeException("expression syntax error " + node.getText());
+            }
+            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+            if ("BYTE".equalsIgnoreCase(node.getChild(0).getText())) {
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) 0x65, push ? (byte) 0x80 : (byte) 0x81
+                }, node.getChild(0).getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
+            }
+            else if ("WORD".equalsIgnoreCase(node.getChild(0).getText())) {
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) 0x66, push ? (byte) 0x80 : (byte) 0x81
+                }, node.getChild(0).getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
+            }
+            else if ("LONG".equalsIgnoreCase(node.getChild(0).getText())) {
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) 0x67, push ? (byte) 0x80 : (byte) 0x81
+                }, node.getChild(0).getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
+            }
+            else {
+                throw new RuntimeException("unknown " + node.getChild(0).getText());
             }
         }
         else if ("ABORT".equalsIgnoreCase(node.getText())) {
@@ -1115,6 +1147,9 @@ public class Spin2Compiler {
                         (byte) 0x11,
                         (byte) ((Method) expression).getOffset()
                     }, "SUB (" + ((Method) expression).getOffset() + ")"));
+                }
+                else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
+                    source.add(new VariableOp(context, VariableOp.Op.Address, (Variable) expression));
                 }
                 else {
                     MemoryOp.Size ss = MemoryOp.Size.Long;
@@ -1467,15 +1502,50 @@ public class Spin2Compiler {
     public static void main(String[] args) {
         String text = ""
             + "CON\n"
-            + "    _clkfreq = 160_000_000\n"
-            + "    _delay   = _clkfreq / 2\n"
             + "\n"
-            + "PUB main() | ct\n"
+            + "    _CLKFREQ = 160_000_000\n"
             + "\n"
-            + "    ct := getct()                   ' get current timer\n"
+            + "    RX = 63\n"
+            + "    TX = 62\n"
+            + "    BAUD = 115_200\n"
+            + "\n"
+            + "VAR\n"
+            + "\n"
+            + "    long rxp\n"
+            + "    long txp\n"
+            + "    byte pbuf[80]\n"
+            + "\n"
+            + "OBJ\n"
+            + "\n"
+            + "PUB start() | bitmode\n"
+            + "\n"
+            + "    ' initialization\n"
+            + "\n"
+            + "    bitmode := muldiv64(clkfreq, $1_0000, BAUD) & $FFFFFC00       ' set bit timing\n"
+            + "    bitmode |= 7                                                  ' set bits (8)\n"
+            + "\n"
+            + "    pinstart(RX, P_ASYNC_RX, bitmode, 0)\n"
+            + "    pinstart(TX, P_ASYNC_TX | P_OE, bitmode, 0)\n"
+            + "\n"
+            + "    str(\"Hello, World\")\n"
+            + "    tx(13)\n"
+            + "    tx(10)\n"
+            + "\n"
             + "    repeat\n"
-            + "        pint(56)                    ' toggle pin 56\n"
-            + "        waitct(ct += _delay)        ' wait half second\n"
+            + "        ' loop\n"
+            + "\n"
+            + "PUB tx(b) | chk\n"
+            + "\n"
+            + "    repeat\n"
+            + "        chk := pinr(TX)\n"
+            + "    while chk == 0\n"
+            + "    wypin(TX, b)\n"
+            + "\n"
+            + "PUB str(s)\n"
+            + "\n"
+            + "    repeat strsize(s)\n"
+            + "        tx(BYTE[s])\n"
+            + "        s += 1\n"
             + "";
 
         try {
