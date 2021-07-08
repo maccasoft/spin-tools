@@ -59,6 +59,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
@@ -183,6 +184,13 @@ public class SpinTools {
 
         });
 
+        shell.addListener(SWT.Close, new Listener() {
+
+            @Override
+            public void handleEvent(Event event) {
+                event.doit = handleUnsavedContent();
+            }
+        });
         shell.addDisposeListener(new DisposeListener() {
 
             @Override
@@ -522,22 +530,35 @@ public class SpinTools {
         CTabItem tabItem = tabFolder.getSelection();
         if (tabItem != null) {
             EditorTab editorTab = (EditorTab) tabItem.getData();
-            File fileToSave = editorTab.getFile();
-            if (fileToSave == null) {
-                handleFileSaveAs();
-                return;
-            }
-            try {
-                BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave));
-                writer.write(editorTab.getEditorText());
-                writer.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            doFileSave(editorTab);
+        }
+    }
+
+    private void doFileSave(EditorTab editorTab) {
+        File fileToSave = editorTab.getFile();
+        if (fileToSave == null) {
+            doFileSaveAs(editorTab);
+            return;
+        }
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave));
+            writer.write(editorTab.getEditorText());
+            writer.close();
+            editorTab.clearDirty();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     private void handleFileSaveAs() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem != null) {
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+            doFileSaveAs(editorTab);
+        }
+    }
+
+    private void doFileSaveAs(EditorTab editorTab) {
         FileDialog dlg = new FileDialog(shell, SWT.SAVE);
         dlg.setText("Save Spin File");
         String[] filterNames = new String[] {
@@ -549,32 +570,27 @@ public class SpinTools {
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
 
-        File filterPath = null;
+        dlg.setFileName(editorTab.getText());
 
-        CTabItem tabItem = tabFolder.getSelection();
-        if (tabItem != null) {
-            EditorTab editorTab = (EditorTab) tabItem.getData();
-            dlg.setFileName(editorTab.getText());
+        File filterPath = editorTab.getFile();
+        if (filterPath == null && preferences.getLru().size() != 0) {
+            filterPath = new File(preferences.getLru().get(0));
+        }
+        if (filterPath != null) {
+            dlg.setFilterPath(filterPath.getParent());
+        }
 
-            filterPath = editorTab.getFile();
-            if (filterPath == null && preferences.getLru().size() != 0) {
-                filterPath = new File(preferences.getLru().get(0));
-            }
-            if (filterPath != null) {
-                dlg.setFilterPath(filterPath.getParent());
-            }
-
-            String fileName = dlg.open();
-            if (fileName != null) {
-                File fileToSave = new File(fileName);
-                try {
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave));
-                    writer.write(editorTab.getEditorText());
-                    writer.close();
-                    editorTab.setFile(fileToSave);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        String fileName = dlg.open();
+        if (fileName != null) {
+            File fileToSave = new File(fileName);
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave));
+                writer.write(editorTab.getEditorText());
+                writer.close();
+                editorTab.setFile(fileToSave);
+                editorTab.clearDirty();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -1369,6 +1385,47 @@ public class SpinTools {
         });
 
         tabFolder.setTopRight(toolBar);
+    }
+
+    boolean handleUnsavedContent() {
+        boolean dirty = false;
+
+        for (CTabItem tabItem : tabFolder.getItems()) {
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+            if (editorTab.isDirty()) {
+                dirty = true;
+                break;
+            }
+        }
+
+        if (dirty) {
+            int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL;
+            MessageBox messageBox = new MessageBox(shell, style);
+            messageBox.setText(APP_TITLE);
+            messageBox.setMessage("Editor contains unsaved changes.  Save before exit?");
+            switch (messageBox.open()) {
+                case SWT.CANCEL:
+                    return false;
+                case SWT.YES:
+                    try {
+                        for (CTabItem tabItem : tabFolder.getItems()) {
+                            EditorTab editorTab = (EditorTab) tabItem.getData();
+                            if (editorTab.isDirty()) {
+                                doFileSave(editorTab);
+                                if (editorTab.isDirty()) {
+                                    return false;
+                                }
+                            }
+                        }
+                    } catch (Exception e1) {
+                        e1.printStackTrace();
+                        return false;
+                    }
+                    return true;
+            }
+        }
+
+        return true;
     }
 
     SerialTerminal getSerialTerminal() {

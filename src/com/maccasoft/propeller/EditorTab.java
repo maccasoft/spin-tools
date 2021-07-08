@@ -114,7 +114,7 @@ public class EditorTab {
     }
 
     public String getText() {
-        return tabItem.getText();
+        return tabItemText;
     }
 
     public void dispose() {
