@@ -46,6 +46,24 @@ public class Spin2CompilerMessage extends RuntimeException {
         this.stopToken = token;
     }
 
+    public Spin2CompilerMessage(int type, String message, Node node) {
+        super(message);
+        this.type = type;
+        this.line = node.getStartToken().line;
+        this.column = node.getStartToken().column;
+        this.startToken = node.getStartToken();
+        this.stopToken = node.getStopToken();
+    }
+
+    public Spin2CompilerMessage(int type, String message, Token token) {
+        super(message);
+        this.type = type;
+        this.line = token.line;
+        this.column = token.column;
+        this.startToken = token;
+        this.stopToken = token;
+    }
+
     public int getType() {
         return type;
     }

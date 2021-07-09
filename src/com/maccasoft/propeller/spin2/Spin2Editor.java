@@ -595,36 +595,42 @@ public class Spin2Editor {
             Rectangle clientArea;
 
             @Override
-            public void handleEvent(Event e) {
+            public void handleEvent(Event event) {
+                GC gc = event.gc;
                 try {
                     clientArea = styledText.getClientArea();
                     clientArea.y += styledText.getTopMargin();
                     clientArea.height -= styledText.getBottomMargin();
 
-                    e.gc.setAdvanced(true);
-                    e.gc.setLineWidth(0);
-                    e.gc.setClipping(clientArea);
+                    gc.setAdvanced(true);
+                    gc.setAntialias(SWT.OFF);
+                    gc.setLineWidth(0);
+                    gc.setClipping(clientArea);
 
-                    e.gc.setForeground(e.display.getSystemColor(SWT.COLOR_DARK_GRAY));
+                    gc.setForeground(event.display.getSystemColor(SWT.COLOR_DARK_GRAY));
 
                     Node root = tokenMarker.getRoot();
                     if (root != null) {
                         for (Node child : root.getChilds()) {
                             if (child instanceof MethodNode) {
-                                paintBlock(e.gc, child, 0, -1);
+                                paintBlock(gc, child, 0, -1);
                             }
                         }
                     }
 
-                    e.gc.setForeground(e.display.getSystemColor(SWT.COLOR_RED));
-
                     for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
                         Rectangle r = styledText.getTextBounds(entry.getStart(), entry.getStop());
                         int[] polyline = computePolyline(new Point(r.x, r.y), new Point(r.x + r.width, r.y), styledText.getLineHeight());
-                        e.gc.drawPolyline(polyline);
+                        if (entry.id == TokenId.ERROR) {
+                            gc.setForeground(ColorRegistry.getColor(0xC0, 0x00, 0x00));
+                        }
+                        else {
+                            gc.setForeground(ColorRegistry.getColor(0xFC, 0xAF, 0x3E));
+                        }
+                        gc.drawPolyline(polyline);
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
 

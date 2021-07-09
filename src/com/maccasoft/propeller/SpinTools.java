@@ -16,7 +16,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -34,6 +33,7 @@ import java.util.function.Consumer;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.SWT;
@@ -66,15 +66,7 @@ import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.TempDirectory;
-import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.NodeVisitor;
-import com.maccasoft.propeller.model.ObjectNode;
-import com.maccasoft.propeller.spin1.Spin1Parser;
-import com.maccasoft.propeller.spin1.Spin1TokenStream;
-import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Object;
-import com.maccasoft.propeller.spin2.Spin2Parser;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 import jssc.SerialPort;
 import jssc.SerialPortException;
@@ -749,7 +741,7 @@ public class SpinTools {
         item.setMenu(menu);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Compile\tF8");
+        item.setText("Show Info\tF8");
         item.setAccelerator(SWT.F8);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -850,7 +842,7 @@ public class SpinTools {
             handleInternalCompile();
         }
         else {
-            handleOpenSpinCompile();
+
         }
     }
 
@@ -861,144 +853,14 @@ public class SpinTools {
         }
         EditorTab editorTab = (EditorTab) tabItem.getData();
 
-        String text = editorTab.getEditorText();
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-
-        IRunnableWithProgress thread = new IRunnableWithProgress() {
-
-            @Override
-            public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-                monitor.beginTask("Compile and Upload", IProgressMonitor.UNKNOWN);
-
-                try {
-                    Spin2Parser parser = new Spin2Parser(stream);
-                    Node root = parser.parse();
-
-                    Spin2Compiler compiler = new Spin2Compiler();
-                    Spin2Object obj = compiler.compile(root);
-
-                    File listing = new File(editorTab.getFile().getParentFile(), editorTab.getFile().getName() + ".lst");
-                    FileOutputStream os = new FileOutputStream(listing);
-                    obj.generateListing(new PrintStream(os));
-                    os.close();
-
-                    shell.getDisplay().asyncExec(new Runnable() {
-                        @Override
-                        public void run() {
-                            MemoryDialog2 dlg2 = new MemoryDialog2(shell);
-                            dlg2.setObject(obj);
-                            dlg2.open();
-                        }
-                    });
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                monitor.done();
-            }
-
-        };
-
-        ProgressMonitorDialog dlg = new ProgressMonitorDialog(shell);
-        try {
-            dlg.run(true, true, thread);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void handleOpenSpinCompile() {
-        CTabItem tabItem = tabFolder.getSelection();
-        if (tabItem == null) {
+        if (editorTab.hasErrors()) {
+            MessageDialog.open(MessageDialog.INFORMATION, shell, APP_TITLE, "Editor has errors, fix all errors before opening the information dialog.", SWT.NONE);
             return;
         }
-        EditorTab editorTab = (EditorTab) tabItem.getData();
-        File editorFile = editorTab.getFile();
 
-        File file = new File(TempDirectory.location(), editorTab.getText());
-        File binaryFile = new File(TempDirectory.location(), editorTab.getText() + ".binary");
-        try {
-            file.getParentFile().mkdirs();
-
-            String source = editorTab.getEditorText();
-
-            Writer os = new OutputStreamWriter(new FileOutputStream(file));
-            os.write(source);
-            os.close();
-
-            Spin1TokenStream stream = new Spin1TokenStream(source);
-            Spin1Parser subject = new Spin1Parser(stream);
-            Node root = subject.parse();
-            root.accept(new NodeVisitor() {
-
-                @Override
-                public void visitObject(ObjectNode node) {
-                    String name = node.file.getText();
-                    if (name.startsWith("\"")) {
-                        name = name.substring(1);
-                    }
-                    if (name.endsWith("\"")) {
-                        name = name.substring(0, name.length() - 1);
-                    }
-                    exportObjectFile(name + ".spin");
-                }
-
-            });
-
-        } catch (Exception e1) {
-            e1.printStackTrace();
-            return;
-        }
-        //console.clear();
-
-        IRunnableWithProgress thread = new IRunnableWithProgress() {
-
-            @Override
-            public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-                monitor.beginTask("Compile and Upload", IProgressMonitor.UNKNOWN);
-
-                try {
-                    String toolchainPath = "/home/marco/workspace/spin-tools/build/linux/";
-
-                    List<String> cmd = new ArrayList<String>();
-                    cmd.add(toolchainPath + "openspin");
-                    cmd.add("-b");
-                    cmd.add("-u");
-                    cmd.add("-L.");
-                    if (editorFile != null) {
-                        cmd.add("-L" + editorFile.getParent());
-                    }
-                    cmd.add("-o" + binaryFile.getName());
-                    cmd.add(file.getName());
-
-                    runCommand(cmd, TempDirectory.location());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                monitor.done();
-            }
-
-        };
-
-        ProgressMonitorDialog dlg = new ProgressMonitorDialog(shell);
-        try {
-            dlg.run(true, true, thread);
-
-            if (binaryFile.exists()) {
-                byte[] data = new byte[32768];
-                InputStream is = new FileInputStream(binaryFile);
-                is.read(data);
-                is.close();
-
-                MemoryDialog dlg2 = new MemoryDialog(shell);
-                dlg2.setData(data);
-                dlg2.open();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        MemoryDialog2 dlg2 = new MemoryDialog2(shell);
+        dlg2.setObject(editorTab.getObject());
+        dlg2.open();
     }
 
     void exportObjectFile(String name) {
@@ -1074,7 +936,7 @@ public class SpinTools {
             handleInternalCompileAndUpload();
         }
         else {
-            handleOpenSpinCompileAndUpload();
+
         }
     }
 
@@ -1084,25 +946,21 @@ public class SpinTools {
             return;
         }
         EditorTab editorTab = (EditorTab) tabItem.getData();
+        if (editorTab.hasErrors()) {
+            MessageDialog.open(MessageDialog.INFORMATION, shell, APP_TITLE, "Editor has errors, fix all errors before upload.", SWT.NONE);
+            return;
+        }
 
+        Spin2Object obj = editorTab.getObject();
         SerialTerminal serialTerminal = getSerialTerminal();
-
-        String text = editorTab.getEditorText();
-        Spin2TokenStream stream = new Spin2TokenStream(text);
 
         IRunnableWithProgress thread = new IRunnableWithProgress() {
 
             @Override
             public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-                monitor.beginTask("Compile and Upload", IProgressMonitor.UNKNOWN);
+                monitor.beginTask("Upload", IProgressMonitor.UNKNOWN);
 
                 try {
-                    Spin2Parser parser = new Spin2Parser(stream);
-                    Node root = parser.parse();
-
-                    Spin2Compiler compiler = new Spin2Compiler();
-                    Spin2Object obj = compiler.compile(root);
-
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
                     obj.generateBinary(os);
 
@@ -1166,117 +1024,6 @@ public class SpinTools {
                             }
                         });
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                monitor.done();
-            }
-
-        };
-
-        ProgressMonitorDialog dlg = new ProgressMonitorDialog(shell);
-        try {
-            dlg.run(true, true, thread);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void handleOpenSpinCompileAndUpload() {
-        CTabItem tabItem = tabFolder.getSelection();
-        if (tabItem == null) {
-            return;
-        }
-        EditorTab editorTab = (EditorTab) tabItem.getData();
-        File editorFile = editorTab.getFile();
-
-        File file = new File(TempDirectory.location(), editorFile.getName());
-        File binaryFile = new File(TempDirectory.location(), editorFile.getName() + ".binary");
-        try {
-            file.getParentFile().mkdirs();
-
-            String source = editorTab.getEditorText();
-
-            Writer os = new OutputStreamWriter(new FileOutputStream(file));
-            os.write(source);
-            os.close();
-
-            Spin1TokenStream stream = new Spin1TokenStream(source);
-            Spin1Parser subject = new Spin1Parser(stream);
-            Node root = subject.parse();
-            root.accept(new NodeVisitor() {
-
-                @Override
-                public void visitObject(ObjectNode node) {
-                    String name = node.file.getText();
-                    if (name.startsWith("\"")) {
-                        name = name.substring(1);
-                    }
-                    if (name.endsWith("\"")) {
-                        name = name.substring(0, name.length() - 1);
-                    }
-                    exportObjectFile(name + ".spin");
-                }
-
-            });
-
-        } catch (Exception e1) {
-            e1.printStackTrace();
-            return;
-        }
-        //console.clear();
-
-        IRunnableWithProgress thread = new IRunnableWithProgress() {
-
-            @Override
-            public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-                monitor.beginTask("Compile and Upload", IProgressMonitor.UNKNOWN);
-
-                try {
-                    String toolchainPath = "/home/marco/workspace/spin-tools/build/linux/";
-
-                    List<String> cmd = new ArrayList<String>();
-                    cmd.add(toolchainPath + "openspin");
-                    cmd.add("-b");
-                    cmd.add("-u");
-                    cmd.add("-L.");
-                    cmd.add("-L" + editorFile.getParent());
-                    cmd.add("-o" + binaryFile.getName());
-                    cmd.add(file.getName());
-
-                    runCommand(cmd, TempDirectory.location());
-
-                    PropellerLoader loader = new PropellerLoader(serialPortList.getSelection()) {
-
-                        @Override
-                        protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
-                            monitor.setTaskName("Loading " + text + " to RAM");
-                            super.bufferUpload(type, binaryImage, text);
-                        }
-
-                        @Override
-                        protected void notifyProgress(int sent, int total) {
-                            if (sent == total) {
-                                monitor.subTask(String.format("%d bytes sent", total));
-                            }
-                            else {
-                                monitor.subTask(String.format("%d bytes remaining", total - sent));
-                            }
-                        }
-
-                        @Override
-                        protected void verifyRam() throws SerialPortException, IOException {
-                            monitor.setTaskName("Verifying RAM ... ");
-                            super.verifyRam();
-                        }
-
-                    };
-
-                    if (binaryFile.exists()) {
-                        loader.upload(binaryFile, 0);
-                    }
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -1364,7 +1111,7 @@ public class SpinTools {
                 }
                 for (CTabItem tabItem : tabFolder.getItems()) {
                     MenuItem menuItem = new MenuItem(menu, SWT.RADIO);
-                    menuItem.setText(tabItem.getText());
+                    menuItem.setText(((EditorTab) tabItem.getData()).getText());
                     menuItem.setSelection(tabFolder.getSelection() == tabItem);
                     menuItem.addListener(SWT.Selection, new Listener() {
 

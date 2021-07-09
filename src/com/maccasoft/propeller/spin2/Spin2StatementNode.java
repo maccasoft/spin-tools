@@ -16,15 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.maccasoft.propeller.model.Token;
+
 public class Spin2StatementNode {
 
-    public static final int STRING = 3;
-    public static final int NUMBER = 4;
-    public static final int OPERATOR = 6;
-    public static final int FUNCTION = 9;
-
-    int type;
-    String text;
+    Token token;
 
     Map<String, Spin2StatementNode> properties = new HashMap<String, Spin2StatementNode>();
     private List<Spin2StatementNode> childs = new ArrayList<Spin2StatementNode>();
@@ -35,17 +31,20 @@ public class Spin2StatementNode {
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
-    public Spin2StatementNode(int type, String text) {
-        this.type = type;
-        this.text = text;
+    public Spin2StatementNode(Token token) {
+        this.token = token;
     }
 
     public int getType() {
-        return type;
+        return token.type;
     }
 
     public String getText() {
-        return text;
+        return token.getText();
+    }
+
+    public Token getToken() {
+        return token;
     }
 
     public void setProperty(String name, Spin2StatementNode node) {
@@ -124,9 +123,9 @@ public class Spin2StatementNode {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        switch (type) {
-            case OPERATOR:
-                if (",".equals(text)) {
+        switch (token.type) {
+            case Token.OPERATOR:
+                if (",".equals(token.getText())) {
                     for (int i = 0; i < childs.size(); i++) {
                         if (i != 0) {
                             sb.append(", ");
@@ -134,14 +133,14 @@ public class Spin2StatementNode {
                         sb.append(childs.get(i));
                     }
                 }
-                else if ("(".equals(text)) {
+                else if ("(".equals(token.getText())) {
                     sb.append("(");
                     for (int i = 0; i < childs.size(); i++) {
                         sb.append(childs.get(i));
                     }
                     sb.append(")");
                 }
-                else if ("[".equals(text)) {
+                else if ("[".equals(token.getText())) {
                     sb.append(childs.get(0));
                     sb.append("[");
                     for (int i = 1; i < childs.size(); i++) {
@@ -152,13 +151,13 @@ public class Spin2StatementNode {
                 else {
                     sb.append(childs.get(0).toString());
                     sb.append(" ");
-                    sb.append(text);
+                    sb.append(token.getText());
                     sb.append(" ");
                     sb.append(childs.get(1).toString());
                 }
                 break;
-            case FUNCTION:
-                sb.append(text);
+            case Token.FUNCTION:
+                sb.append(token.getText());
                 sb.append("(");
                 if (childs.size() != 0) {
                     sb.append(childs.get(0));
@@ -166,7 +165,7 @@ public class Spin2StatementNode {
                 sb.append(")");
                 break;
             default:
-                sb.append(text);
+                sb.append(token.getText());
                 for (int i = 0; i < childs.size(); i++) {
                     sb.append(" ");
                     sb.append(childs.get(i));

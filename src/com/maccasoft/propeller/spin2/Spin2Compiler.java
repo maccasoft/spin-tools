@@ -81,6 +81,7 @@ public class Spin2Compiler {
     int varOffset = 4;
     int labelCounter;
 
+    boolean errors;
     List<Spin2CompilerMessage> messages = new ArrayList<Spin2CompilerMessage>();
 
     public Spin2Compiler() {
@@ -162,6 +163,8 @@ public class Spin2Compiler {
                     compileLine(line);
                 } catch (Spin2CompilerMessage e) {
                     logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new Spin2CompilerMessage(e.getMessage(), (Node) line.getData()));
                 }
             }
         }
@@ -274,7 +277,11 @@ public class Spin2Compiler {
                 String name = node.identifier.getText();
                 Expression expression = buildExpression(node.expression, scope);
                 expression.setData(node);
-                scope.addSymbol(name, expression);
+                try {
+                    scope.addSymbol(name, expression);
+                } catch (Exception e) {
+                    logMessage(new Spin2CompilerMessage(e.getMessage(), node.identifier));
+                }
             }
 
             @Override
@@ -292,7 +299,12 @@ public class Spin2Compiler {
 
             @Override
             public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
-                scope.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
+                try {
+                    scope.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
+                } catch (Exception e) {
+                    logMessage(new Spin2CompilerMessage(e.getMessage(), node.identifier));
+                    return;
+                }
                 if (node.multiplier != null) {
                     Expression expression = buildExpression(node.multiplier, scope);
                     enumValue += enumIncrement * expression.getNumber().intValue();
@@ -309,18 +321,27 @@ public class Spin2Compiler {
 
         for (Node child : parent.getChilds()) {
             VariableNode node = (VariableNode) child;
+            if (node.identifier == null) {
+                continue;
+            }
 
             String type = "LONG";
             if (node.type != null) {
                 type = node.type.getText().toUpperCase();
             }
+
             Expression size = new NumberLiteral(1);
             if (node.size != null) {
                 size = buildExpression(node.size.getTokens(), scope);
             }
 
-            scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-            scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+            try {
+                scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+            } catch (Exception e) {
+                logMessage(new Spin2CompilerMessage(e.getMessage(), node.identifier));
+                continue;
+            }
 
             int varSize = size.getNumber().intValue();
             if ("WORD".equalsIgnoreCase(type)) {
@@ -475,6 +496,16 @@ public class Spin2Compiler {
         }
 
         for (LocalVariableNode child : node.getLocalVariables()) {
+            String name = child.getIdentifier().getText();
+            Expression expression = localScope.getLocalSymbol(name);
+            if (expression instanceof LocalVariable) {
+                logMessage(new Spin2CompilerMessage("symbol " + name + " already defined", child.getIdentifier()));
+                continue;
+            }
+            else if (expression != null) {
+                logMessage(new Spin2CompilerMessage(Spin2CompilerMessage.WARNING, "local variable " + name + " hides global variable", child.getIdentifier()));
+            }
+
             String type = "LONG";
             if (child.type != null) {
                 type = child.type.getText().toUpperCase();
@@ -531,9 +562,16 @@ public class Spin2Compiler {
 
         for (Node child : childs) {
             if (child instanceof StatementNode) {
-                Spin2MethodLine line = compileStatement(context, child);
-                line.setData(child);
-                lines.add(line);
+                try {
+                    Spin2MethodLine line = compileStatement(context, child);
+                    line.setData(child);
+                    lines.add(line);
+                } catch (Spin2CompilerMessage e) {
+                    logMessage(e);
+                    throw e;
+                } catch (Exception e) {
+                    logMessage(new Spin2CompilerMessage(e.getMessage(), child));
+                }
             }
         }
 
@@ -964,11 +1002,11 @@ public class Spin2Compiler {
             }
             source.add(new Bytecode(context, desc.code, node.getText()));
         }
-        else if (node.type == Token.NUMBER) {
+        else if (node.getType() == Token.NUMBER) {
             Expression expression = new NumberLiteral(node.getText());
             source.add(new Constant(context, expression));
         }
-        else if (node.type == Token.STRING) {
+        else if (node.getType() == Token.STRING) {
             String s = node.getText().substring(1);
             s = s.substring(0, s.length() - 1);
             if (s.length() == 1) {
@@ -989,11 +1027,13 @@ public class Spin2Compiler {
         }
         else if (":=".equals(node.getText())) {
             source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-            if (node.getChild(0).type == Token.OPERATOR) {
-                source.addAll(compileBytecodeExpression(context, node.getChild(0), push));
+
+            Spin2StatementNode left = node.getChild(0);
+            if (left.getType() == Token.OPERATOR) {
+                source.addAll(compileBytecodeExpression(context, left, push));
             }
             else {
-                Expression expression = context.getLocalSymbol(node.getChild(0).getText());
+                Expression expression = context.getLocalSymbol(left.getText());
                 if (expression instanceof Register) {
                     source.add(new RegisterOp(context, RegisterOp.Op.Write, expression));
                 }
@@ -1001,17 +1041,19 @@ public class Spin2Compiler {
                     source.add(new VariableOp(context, VariableOp.Op.Write, (Variable) expression));
                 }
                 else {
-                    throw new RuntimeException("unknown: " + node.getText());
+                    throw new Spin2CompilerMessage("undefined symbol " + left.getText(), left.getToken());
                 }
             }
         }
         else if (MathOp.isAssignMathOp(node.getText())) {
             source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-            if (node.getChild(0).type == Token.OPERATOR) {
-                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+
+            Spin2StatementNode left = node.getChild(0);
+            if (left.getType() == Token.OPERATOR) {
+                source.addAll(compileBytecodeExpression(context, left, true));
             }
             else {
-                Expression expression = context.getLocalSymbol(node.getChild(0).getText());
+                Expression expression = context.getLocalSymbol(left.getText());
                 if (expression instanceof Register) {
                     throw new RuntimeException("unhandled register expression");
                 }
@@ -1019,7 +1061,7 @@ public class Spin2Compiler {
                     source.add(new VariableOp(context, VariableOp.Op.Setup, (Variable) expression));
                 }
                 else {
-                    throw new RuntimeException("unknown: " + node.getText());
+                    throw new Spin2CompilerMessage("undefined symbol " + left.getText(), left.getToken());
                 }
             }
             source.add(new MathOp(context, node.getText(), push));
@@ -1112,11 +1154,11 @@ public class Spin2Compiler {
         else if ("STRING".equalsIgnoreCase(node.getText())) {
             StringBuilder sb = new StringBuilder();
             for (Spin2StatementNode child : argsNode.getChilds()) {
-                if (child.type == Spin2StatementNode.STRING) {
+                if (child.getType() == Token.STRING) {
                     String s = child.getText().substring(1);
                     sb.append(s.substring(0, s.length() - 1));
                 }
-                else if (child.type == Spin2StatementNode.NUMBER) {
+                else if (child.getType() == Token.NUMBER) {
                     NumberLiteral expression = new NumberLiteral(child.getText());
                     sb.append((char) expression.getNumber().intValue());
                 }
@@ -1134,7 +1176,7 @@ public class Spin2Compiler {
         else {
             Expression expression = context.getLocalSymbol(node.getText());
             if (expression == null) {
-                throw new RuntimeException("unknown " + node.getText());
+                throw new Spin2CompilerMessage("undefined symbol " + node.getText(), node.getToken());
             }
             if (expression instanceof Register) {
                 throw new RuntimeException("unhandled register expression");
@@ -1200,10 +1242,10 @@ public class Spin2Compiler {
     }
 
     Expression buildConstantExpression(Spin2Context context, Spin2StatementNode node) {
-        if (node.type == Token.NUMBER) {
+        if (node.getType() == Token.NUMBER) {
             return new NumberLiteral(node.getText());
         }
-        else if (node.type == Token.STRING) {
+        else if (node.getType() == Token.STRING) {
             String s = node.getText().substring(1);
             s = s.substring(0, s.length() - 1);
             if (s.length() == 1) {
@@ -1312,6 +1354,21 @@ public class Spin2Compiler {
 
     public List<Spin2PAsmLine> getSource() {
         return source;
+    }
+
+    protected void logMessage(Spin2CompilerMessage message) {
+        if (message.type == Spin2CompilerMessage.ERROR) {
+            errors = true;
+        }
+        messages.add(message);
+    }
+
+    public boolean hasErrors() {
+        return errors;
+    }
+
+    public List<Spin2CompilerMessage> getMessages() {
+        return messages;
     }
 
     Expression buildExpression(Node node, Spin2Context scope) {
@@ -1523,15 +1580,6 @@ public class Spin2Compiler {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    protected void logMessage(Spin2CompilerMessage message) {
-        messages.add(message);
-        System.out.println(message);
-    }
-
-    public List<Spin2CompilerMessage> getMessages() {
-        return messages;
     }
 
     static void print(Node node, int indent) {

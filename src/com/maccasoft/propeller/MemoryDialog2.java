@@ -12,18 +12,24 @@ package com.maccasoft.propeller;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.text.NumberFormat;
 
 import org.apache.commons.lang3.BitField;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -58,8 +64,10 @@ public class MemoryDialog2 extends Dialog {
     static BitField cm_ss = new BitField(0b0000_000_0_000000_0000000000_0000_00_11);
 
     Display display;
+
+    CTabFolder tabFolder;
     Canvas canvas;
-    ScrollBar verticalBar;
+    StyledText styledText;
 
     Font font;
     FontMetrics fontMetrics;
@@ -103,6 +111,15 @@ public class MemoryDialog2 extends Dialog {
 
         display = parent.getDisplay();
 
+        Font dialogFont = parent.getFont();
+        FontData[] fontData = dialogFont.getFontData();
+        if ("win32".equals(SWT.getPlatform())) {
+            font = new Font(display, "Courier New", fontData[0].getHeight(), SWT.NONE);
+        }
+        else {
+            font = new Font(display, "mono", fontData[0].getHeight(), SWT.NONE);
+        }
+
         format = NumberFormat.getInstance();
         format.setGroupingUsed(true);
 
@@ -111,20 +128,49 @@ public class MemoryDialog2 extends Dialog {
         stackFreeBackground = ColorRegistry.getColor(191, 223, 255);
 
         createInfoGroup(content);
-        createMemoryView(content);
 
-        int rows = canvas.getClientArea().height / fontMetrics.getHeight();
-        int selection = (pbase / BYTES_PER_ROW) * BYTES_PER_ROW;
-        verticalBar.setValues(selection, 0, data.length, rows * BYTES_PER_ROW, BYTES_PER_ROW, rows * BYTES_PER_ROW);
+        tabFolder = new CTabFolder(content, SWT.BORDER);
+        tabFolder.setMaximizeVisible(false);
+        tabFolder.setMinimizeVisible(false);
+        tabFolder.setTabHeight(24);
 
-        display.asyncExec(new Runnable() {
+        CTabItem tabItem = new CTabItem(tabFolder, SWT.NONE);
+        tabItem.setText("Memory");
+        tabItem.setControl(createMemoryView(tabFolder));
+
+        tabItem = new CTabItem(tabFolder, SWT.NONE);
+        tabItem.setText("Listing");
+        tabItem.setControl(createListingView(tabFolder));
+
+        tabFolder.setSelection(0);
+        tabFolder.getSelection().getControl().setFocus();
+
+        tabFolder.addTraverseListener(new TraverseListener() {
 
             @Override
-            public void run() {
-                verticalBar.setSelection(selection);
-                canvas.redraw();
-            }
+            public void keyTraversed(TraverseEvent e) {
+                if (e.character != SWT.TAB || (e.stateMask & SWT.CTRL) == 0) {
+                    return;
+                }
 
+                int index = tabFolder.getSelectionIndex();
+                if ((e.stateMask & SWT.SHIFT) != 0) {
+                    index--;
+                    if (index < 0) {
+                        index = tabFolder.getItemCount() - 1;
+                    }
+                }
+                else {
+                    index++;
+                    if (index >= tabFolder.getItemCount()) {
+                        index = 0;
+                    }
+                }
+                tabFolder.setSelection(index);
+                tabFolder.getItem(index).getControl().setFocus();
+
+                e.doit = false;
+            }
         });
 
         return content;
@@ -276,21 +322,11 @@ public class MemoryDialog2 extends Dialog {
         label.setText(format.format(value) + " Hz");
     }
 
-    public void createMemoryView(Composite parent) {
-        Font dialogFont = parent.getFont();
-        FontData[] fontData = dialogFont.getFontData();
-        if ("win32".equals(SWT.getPlatform())) {
-            font = new Font(Display.getDefault(), "Courier New", fontData[0].getHeight(), SWT.NONE);
-        }
-        else {
-            font = new Font(Display.getDefault(), "mono", fontData[0].getHeight(), SWT.NONE);
-        }
-
+    Control createMemoryView(Composite parent) {
         Composite container = new Composite(parent, SWT.NONE);
         container.setLayout(new GridLayout(1, false));
-        container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        canvas = new Canvas(container, SWT.V_SCROLL | SWT.DOUBLE_BUFFERED | SWT.NO_FOCUS) {
+        canvas = new Canvas(container, SWT.V_SCROLL | SWT.DOUBLE_BUFFERED) {
 
             @Override
             public Point computeSize(int wHint, int hHint, boolean changed) {
@@ -303,6 +339,17 @@ public class MemoryDialog2 extends Dialog {
         canvas.setFont(font);
         canvas.setBackground(display.getSystemColor(SWT.COLOR_LIST_BACKGROUND));
         //canvas.setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
+
+        ScrollBar verticalBar = canvas.getVerticalBar();
+        verticalBar.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                int selection = verticalBar.getSelection();
+                verticalBar.setSelection(((selection + (BYTES_PER_ROW / 2)) / BYTES_PER_ROW) * BYTES_PER_ROW);
+                canvas.redraw();
+            }
+        });
 
         GC gc = new GC(canvas);
         fontMetrics = gc.getFontMetrics();
@@ -438,16 +485,129 @@ public class MemoryDialog2 extends Dialog {
             }
         });
 
-        verticalBar = canvas.getVerticalBar();
-        verticalBar.addSelectionListener(new SelectionAdapter() {
+        canvas.addTraverseListener(new TraverseListener() {
 
             @Override
-            public void widgetSelected(SelectionEvent e) {
-                int selection = verticalBar.getSelection();
-                verticalBar.setSelection(((selection + (BYTES_PER_ROW / 2)) / BYTES_PER_ROW) * BYTES_PER_ROW);
-                canvas.redraw();
+            public void keyTraversed(TraverseEvent e) {
+                e.doit = false;
+                if ((e.stateMask & SWT.CTRL) != 0) {
+                    Event event = new Event();
+                    event.character = e.character;
+                    event.stateMask = e.stateMask;
+                    event.detail = e.detail;
+                    e.display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            if (!canvas.isDisposed()) {
+                                Control control = canvas.getParent();
+                                while (!(control instanceof CTabFolder) && control.getParent() != null) {
+                                    control = control.getParent();
+                                }
+                                control.notifyListeners(SWT.Traverse, event);
+                            }
+                        }
+                    });
+                }
             }
         });
+
+        int rows = canvas.getClientArea().height / fontMetrics.getHeight();
+        int selection = (pbase / BYTES_PER_ROW) * BYTES_PER_ROW;
+        verticalBar.setValues(selection, 0, data.length, rows * BYTES_PER_ROW, BYTES_PER_ROW, rows * BYTES_PER_ROW);
+
+        display.asyncExec(new Runnable() {
+
+            @Override
+            public void run() {
+                verticalBar.setSelection(selection);
+                canvas.redraw();
+            }
+
+        });
+
+        return container;
+    }
+
+    Control createListingView(Composite parent) {
+        Composite container = new Composite(parent, SWT.NONE);
+        container.setLayout(new GridLayout(1, false));
+
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+        gridData.heightHint = fontMetrics.getHeight() * 30;
+        gridData.widthHint = (int) (fontMetrics.getAverageCharacterWidth() * 40);
+
+        styledText = new StyledText(container, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
+        styledText.setLayoutData(gridData);
+        styledText.setMargins(5, 5, 5, 5);
+        styledText.setTabs(8);
+        styledText.setFont(font);
+        styledText.setEditable(false);
+
+        styledText.addKeyListener(new KeyListener() {
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.keyCode == SWT.ESC) {
+                    handleShellCloseEvent();
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+        });
+        styledText.addTraverseListener(new TraverseListener() {
+
+            @Override
+            public void keyTraversed(TraverseEvent e) {
+                e.doit = false;
+                if ((e.stateMask & SWT.CTRL) != 0) {
+                    Event event = new Event();
+                    event.character = e.character;
+                    event.stateMask = e.stateMask;
+                    event.detail = e.detail;
+                    e.display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            if (!styledText.isDisposed()) {
+                                Control control = styledText.getParent();
+                                while (!(control instanceof CTabFolder) && control.getParent() != null) {
+                                    control = control.getParent();
+                                }
+                                control.notifyListeners(SWT.Traverse, event);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+        Thread thread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                try {
+                    object.generateListing(new PrintStream(os));
+                    display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            if (!styledText.isDisposed()) {
+                                styledText.setText(os.toString());
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    // Do nothing
+                }
+            }
+        });
+        thread.start();
+
+        return container;
     }
 
     public Control getControl() {

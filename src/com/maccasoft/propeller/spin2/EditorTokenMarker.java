@@ -150,7 +150,8 @@ public abstract class EditorTokenMarker {
     public void refreshCompilerTokens(List<Spin2CompilerMessage> messages) {
         TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
         for (Spin2CompilerMessage message : messages) {
-            TokenMarker marker = new TokenMarker(message.getStartToken(), message.getStopToken(), TokenId.ERROR);
+            TokenId id = message.type == Spin2CompilerMessage.ERROR ? TokenId.ERROR : TokenId.WARNING;
+            TokenMarker marker = new TokenMarker(message.getStartToken(), message.getStopToken(), id);
             marker.setError(message.getMessage());
             tokens.add(marker);
         }

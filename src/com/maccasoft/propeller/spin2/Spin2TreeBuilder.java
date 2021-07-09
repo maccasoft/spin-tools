@@ -177,7 +177,7 @@ public class Spin2TreeBuilder {
 
         @Override
         public Spin2StatementNode evaluate() {
-            Spin2StatementNode result = new Spin2StatementNode(token.type, token.getText());
+            Spin2StatementNode result = new Spin2StatementNode(token);
             result.addChild(operands.pop());
             return result;
         }
@@ -194,7 +194,7 @@ public class Spin2TreeBuilder {
 
         @Override
         public Spin2StatementNode evaluate() {
-            Spin2StatementNode result = new Spin2StatementNode(token.type, token.getText());
+            Spin2StatementNode result = new Spin2StatementNode(token);
             result.addChild(operands.pop());
             return result;
         }
@@ -212,7 +212,7 @@ public class Spin2TreeBuilder {
         @Override
         public Spin2StatementNode evaluate() {
             Spin2StatementNode right = operands.pop();
-            Spin2StatementNode result = new Spin2StatementNode(token.type, token.getText());
+            Spin2StatementNode result = new Spin2StatementNode(token);
             result.addChild(operands.pop());
             result.addChild(right);
             return result;
@@ -226,6 +226,7 @@ public class Spin2TreeBuilder {
 
         public FunctionOperator(Token name, Token token) {
             this.name = name;
+            this.name.type = Token.FUNCTION;
             this.token = token;
             this.precedence = operatorPrecedence.get(token.getText());
             this.associativity = LEFT_TO_RIGHT;
@@ -234,7 +235,7 @@ public class Spin2TreeBuilder {
         @Override
         public Spin2StatementNode evaluate() {
             Spin2StatementNode right = operands.pop();
-            Spin2StatementNode result = new Spin2StatementNode(Spin2StatementNode.FUNCTION, name.getText());
+            Spin2StatementNode result = new Spin2StatementNode(name);
             result.addChild(right);
             return result;
         }
@@ -259,7 +260,7 @@ public class Spin2TreeBuilder {
                 return node0;
             }
 
-            Spin2StatementNode result = new Spin2StatementNode(token.type, token.getText());
+            Spin2StatementNode result = new Spin2StatementNode(token);
             result.addChild(node1);
             result.addChild(node0);
             return result;
@@ -289,7 +290,7 @@ public class Spin2TreeBuilder {
     }
 
     public void addValueToken(Token token) {
-        Spin2StatementNode operand = new Spin2StatementNode(token.type, token.getText());
+        Spin2StatementNode operand = new Spin2StatementNode(token);
         operands.push(operand);
     }
 
@@ -383,7 +384,7 @@ public class Spin2TreeBuilder {
                 }
                 if ("(".equals(token.getText())) {
                     Spin2StatementNode node = operands.pop();
-                    addOperator(new FunctionOperator(new Token(node.type, node.text), token));
+                    addOperator(new FunctionOperator(node.getToken(), token));
                     state = 4;
                     break;
                 }
@@ -409,7 +410,7 @@ public class Spin2TreeBuilder {
             case 3: {
                 if ("(".equals(token.getText())) {
                     Spin2StatementNode node = operands.pop();
-                    addOperator(new FunctionOperator(new Token(node.type, node.text), token));
+                    addOperator(new FunctionOperator(node.getToken(), token));
                     state = 4;
                     break;
                 }
@@ -428,7 +429,7 @@ public class Spin2TreeBuilder {
                 if (")".equals(token.getText())) {
                     operators.pop();
                     FunctionOperator operator = (FunctionOperator) operators.pop();
-                    operands.push(new Spin2StatementNode(Spin2StatementNode.FUNCTION, operator.name.getText()));
+                    operands.push(new Spin2StatementNode(operator.name));
                     state = 3;
                     break;
                 }

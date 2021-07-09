@@ -23,10 +23,12 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.widgets.Display;
 
+import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
 import com.maccasoft.propeller.spin2.EditorTokenMarker;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Editor;
+import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 
 public class EditorTab {
@@ -42,6 +44,9 @@ public class EditorTab {
 
     AtomicBoolean threadRunning = new AtomicBoolean(false);
     AtomicBoolean pendingCompile = new AtomicBoolean(false);
+
+    boolean errors;
+    Spin2Object object;
 
     final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
 
@@ -68,10 +73,20 @@ public class EditorTab {
             }
             if (!threadRunning.getAndSet(true)) {
                 pendingCompile.set(false);
-                EditorCompiler thread = new EditorCompiler(editor.getText()) {
 
+                Node root = tokenMarker.getRoot();
+                Thread thread = new Thread(new Runnable() {
                     @Override
-                    protected void onTerminated(Spin2Compiler compiler) {
+                    public void run() {
+                        Spin2Compiler compiler = new Spin2Compiler();
+                        try {
+                            object = compiler.compile(root);
+                            errors = compiler.hasErrors();
+                        } catch (Exception e) {
+                            errors = true;
+                            e.printStackTrace();
+                        }
+
                         if (!pendingCompile.get()) {
                             tokenMarker.refreshCompilerTokens(compiler.getMessages());
                             Display.getDefault().asyncExec(new Runnable() {
@@ -82,13 +97,14 @@ public class EditorTab {
                                         return;
                                     }
                                     editor.getStyledText().redraw();
+                                    updateTabItemText();
                                 }
                             });
                         }
                         threadRunning.set(false);
                     }
 
-                };
+                });
                 thread.start();
             }
             else {
@@ -137,6 +153,7 @@ public class EditorTab {
         else {
             tabItem.setText(tabItemText);
         }
+        tabItem.setForeground(errors ? Display.getDefault().getSystemColor(SWT.COLOR_RED) : null);
     }
 
     public File getFile() {
@@ -219,4 +236,13 @@ public class EditorTab {
     public boolean isDirty() {
         return dirty;
     }
+
+    public boolean hasErrors() {
+        return errors;
+    }
+
+    public Spin2Object getObject() {
+        return object;
+    }
+
 }

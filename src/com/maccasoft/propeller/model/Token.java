@@ -21,8 +21,9 @@ public class Token {
     public static final int NUMBER = 4;
     public static final int KEYWORD = 5;
     public static final int OPERATOR = 6;
-    public static final int DEBUG = 7;
-    public static final int NL = 8;
+    public static final int FUNCTION = 7;
+    public static final int DEBUG = 8;
+    public static final int NL = 9;
     public static final int EOF = -1;
 
     public int type;

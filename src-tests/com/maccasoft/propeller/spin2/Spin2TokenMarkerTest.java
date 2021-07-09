@@ -99,7 +99,7 @@ class Spin2TokenMarkerTest {
         Assertions.assertEquals(TokenId.COMMENT, entry.getId());
 
         entry = iter.next();
-        Assertions.assertEquals(TokenId.ERROR, entry.getId());
+        Assertions.assertEquals(TokenId.CONSTANT, entry.getId());
 
         entry = iter.next();
         Assertions.assertEquals(TokenId.NUMBER, entry.getId());
