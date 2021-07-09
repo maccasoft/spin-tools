@@ -46,7 +46,7 @@ public class ExpressionBuilder {
 
     public Expression getExpression() {
         if (operands.isEmpty() || operators.isEmpty()) {
-            throw new RuntimeException("Operands / operators is empty: " + this);
+            throw new RuntimeException("Operands / operators is empty" + this);
         }
 
         // process remainder

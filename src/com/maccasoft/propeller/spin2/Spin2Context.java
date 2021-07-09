@@ -45,7 +45,7 @@ public class Spin2Context implements Context {
 
     public void addSymbol(String name, Expression value) {
         if (symbols.containsKey(name)) {
-            throw new RuntimeException("Symbol " + name + " already defined");
+            throw new RuntimeException("symbol " + name + " already defined");
         }
         symbols.put(name, value);
     }
@@ -54,7 +54,7 @@ public class Spin2Context implements Context {
     public Expression getSymbol(String name) {
         Expression exp = getLocalSymbol(name);
         if (exp == null) {
-            throw new RuntimeException("Symbol " + name + " not found!");
+            throw new RuntimeException("symbol " + name + " not found!");
         }
         return exp;
     }

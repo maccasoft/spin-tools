@@ -13,7 +13,9 @@ package com.maccasoft.propeller.spin2;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Spin2PAsmLine {
 
@@ -28,6 +30,9 @@ public class Spin2PAsmLine {
     Spin2InstructionObject instructionObject;
 
     String originalText;
+
+    protected Object data;
+    protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
     public Spin2PAsmLine(Spin2Context scope, String label, String condition, String mnemonic, List<Spin2PAsmExpression> arguments, String effect) {
         this.scope = scope;
@@ -115,6 +120,22 @@ public class Spin2PAsmLine {
             System.err.println(this);
             e.printStackTrace();
         }
+    }
+
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
+    }
+
+    public Object getData(String key) {
+        return keyedData.get(key);
+    }
+
+    public void setData(String key, Object data) {
+        this.keyedData.put(key, data);
     }
 
     @Override

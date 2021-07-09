@@ -137,6 +137,7 @@ public abstract class EditorTokenMarker {
 
     protected Node root;
     protected TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
+    protected TreeSet<TokenMarker> compilerTokens = new TreeSet<TokenMarker>();
 
     protected Map<String, TokenId> symbols = new HashMap<String, TokenId>();
 
@@ -146,11 +147,30 @@ public abstract class EditorTokenMarker {
         return root;
     }
 
+    public void refreshCompilerTokens(List<Spin2CompilerMessage> messages) {
+        TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
+        for (Spin2CompilerMessage message : messages) {
+            TokenMarker marker = new TokenMarker(message.getStartToken(), message.getStopToken(), TokenId.ERROR);
+            marker.setError(message.getMessage());
+            tokens.add(marker);
+        }
+        compilerTokens = tokens;
+    }
+
+    public TreeSet<TokenMarker> getCompilerTokens() {
+        return compilerTokens;
+    }
+
     public Set<TokenMarker> getLineTokens(int lineStart, String lineText) {
         return getLineTokens(lineStart, lineStart + lineText.length());
     }
 
     public TokenMarker getMarkerAtOffset(int offset) {
+        for (TokenMarker marker : compilerTokens) {
+            if (offset >= marker.start && offset <= marker.stop) {
+                return marker;
+            }
+        }
         for (TokenMarker marker : tokens) {
             if (offset >= marker.start && offset <= marker.stop) {
                 return marker;
@@ -162,26 +182,23 @@ public abstract class EditorTokenMarker {
     public Set<TokenMarker> getLineTokens(int lineStart, int lineStop) {
         Set<TokenMarker> result = new TreeSet<TokenMarker>();
 
-        if (tokens.size() == 0) {
-            return result;
-        }
-
-        TokenMarker firstMarker = tokens.floor(new TokenMarker(lineStart, lineStop, null));
-        if (firstMarker == null) {
-            firstMarker = tokens.first();
-        }
-
-        for (TokenMarker entry : tokens.tailSet(firstMarker)) {
-            int start = entry.getStart();
-            int stop = entry.getStop();
-            if ((lineStart >= start && lineStart <= stop) || (lineStop >= start && lineStop <= stop)) {
-                result.add(entry);
+        if (tokens.size() != 0) {
+            TokenMarker firstMarker = tokens.floor(new TokenMarker(lineStart, lineStop, null));
+            if (firstMarker == null) {
+                firstMarker = tokens.first();
             }
-            else if (stop >= lineStart && stop <= lineStop) {
-                result.add(entry);
-            }
-            if (start >= lineStop) {
-                break;
+            for (TokenMarker entry : tokens.tailSet(firstMarker)) {
+                int start = entry.getStart();
+                int stop = entry.getStop();
+                if ((lineStart >= start && lineStart <= stop) || (lineStop >= start && lineStop <= stop)) {
+                    result.add(entry);
+                }
+                else if (stop >= lineStart && stop <= lineStop) {
+                    result.add(entry);
+                }
+                if (start >= lineStop) {
+                    break;
+                }
             }
         }
 

@@ -11,10 +11,14 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
@@ -38,6 +42,10 @@ public class LineNumbersRuler {
 
     private int scrollBarSelection;
     private int lineCount;
+
+    private Color textColor;
+    private Color highlightColor;
+    private Set<Integer> highlight = new HashSet<Integer>();
 
     final PaintListener paintListener = new PaintListener() {
 
@@ -78,6 +86,9 @@ public class LineNumbersRuler {
         layoutData.widthHint = (int) Math.round(leftMargin + fontMetrics.getAverageCharacterWidth() * 5 + rightMargin);
 
         scrollBarSelection = lineCount = -1;
+
+        textColor = canvas.getForeground();
+        highlightColor = Display.getDefault().getSystemColor(SWT.COLOR_RED);
     }
 
     public void setText(StyledText text) {
@@ -100,6 +111,7 @@ public class LineNumbersRuler {
                 break;
             }
             String s = Integer.toString(lineNumber + 1);
+            gc.setForeground(highlight.contains(lineNumber) ? highlightColor : textColor);
             gc.drawString(s, rect.width - gc.stringExtent(s).x - rightMargin, y);
             lineNumber++;
         }
@@ -121,4 +133,15 @@ public class LineNumbersRuler {
         canvas.setVisible(visible);
         layoutData.exclude = !visible;
     }
+
+    public void setHighlight(int line) {
+        highlight.add(line - 1);
+        canvas.redraw();
+    }
+
+    public void clearHighlights() {
+        highlight.clear();
+        canvas.redraw();
+    }
+
 }

@@ -1,6 +1,12 @@
 package com.maccasoft.propeller.expressions;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public abstract class Expression {
+
+    protected Object data;
+    protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
     public Expression resolve() {
         return this;
@@ -40,6 +46,22 @@ public abstract class Expression {
 
     public Expression getNext() {
         return null;
+    }
+
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
+    }
+
+    public Object getData(String key) {
+        return keyedData.get(key);
+    }
+
+    public void setData(String key, Object data) {
+        this.keyedData.put(key, data);
     }
 
 }

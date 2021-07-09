@@ -14,14 +14,18 @@ package com.maccasoft.propeller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
+import com.maccasoft.propeller.spin2.EditorTokenMarker;
+import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Editor;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 
@@ -31,8 +35,13 @@ public class EditorTab {
     Spin2Editor editor;
     CTabItem tabItem;
 
+    EditorTokenMarker tokenMarker;
+
     String tabItemText;
     boolean dirty;
+
+    AtomicBoolean threadRunning = new AtomicBoolean(false);
+    AtomicBoolean pendingCompile = new AtomicBoolean(false);
 
     final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
 
@@ -50,6 +59,46 @@ public class EditorTab {
         }
     };
 
+    final Runnable compilerRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            if (editor.getControl().isDisposed()) {
+                return;
+            }
+            if (!threadRunning.getAndSet(true)) {
+                pendingCompile.set(false);
+                EditorCompiler thread = new EditorCompiler(editor.getText()) {
+
+                    @Override
+                    protected void onTerminated(Spin2Compiler compiler) {
+                        if (!pendingCompile.get()) {
+                            tokenMarker.refreshCompilerTokens(compiler.getMessages());
+                            Display.getDefault().asyncExec(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    if (editor == null || editor.getStyledText().isDisposed()) {
+                                        return;
+                                    }
+                                    editor.getStyledText().redraw();
+                                }
+                            });
+                        }
+                        threadRunning.set(false);
+                    }
+
+                };
+                thread.start();
+            }
+            else {
+                pendingCompile.set(true);
+                Display.getDefault().timerExec(250, compilerRunnable);
+            }
+        }
+
+    };
+
     public EditorTab(CTabFolder folder, String name) {
         tabItem = new CTabItem(folder, SWT.NONE);
         tabItem.setShowClose(true);
@@ -57,16 +106,15 @@ public class EditorTab {
         tabItem.setData(this);
 
         editor = new Spin2Editor(folder);
-        try {
-            if (name.toLowerCase().endsWith(".spin2")) {
-                editor.setTokenMarker(new Spin2TokenMarker());
-            }
-            else {
-                editor.setTokenMarker(new Spin1TokenMarker());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+        if (name.toLowerCase().endsWith(".spin2")) {
+            tokenMarker = new Spin2TokenMarker();
         }
+        else {
+            tokenMarker = new Spin1TokenMarker();
+        }
+        editor.setTokenMarker(tokenMarker);
+
         editor.addModifyListener(new ModifyListener() {
 
             @Override
@@ -75,6 +123,7 @@ public class EditorTab {
                     dirty = true;
                     updateTabItemText();
                 }
+                Display.getDefault().timerExec(250, compilerRunnable);
             }
         });
 
@@ -97,11 +146,12 @@ public class EditorTab {
     public void setFile(File file) {
         this.file = file;
         if (file.getName().toLowerCase().endsWith(".spin2")) {
-            editor.setTokenMarker(new Spin2TokenMarker());
+            tokenMarker = new Spin2TokenMarker();
         }
         else {
-            editor.setTokenMarker(new Spin1TokenMarker());
+            tokenMarker = new Spin1TokenMarker();
         }
+        editor.setTokenMarker(tokenMarker);
     }
 
     public void setFocus() {
@@ -152,6 +202,7 @@ public class EditorTab {
 
     public void setEditorText(String text) {
         editor.setText(text);
+        Display.getDefault().timerExec(250, compilerRunnable);
     }
 
     public String getEditorText() {

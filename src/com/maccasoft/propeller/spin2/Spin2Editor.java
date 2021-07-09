@@ -237,7 +237,7 @@ public class Spin2Editor {
         TextStyle warningStyle = new TextStyle();
         warningStyle.underline = true;
         warningStyle.underlineColor = ColorRegistry.getColor(0xFC, 0xAF, 0x3E);
-        warningStyle.underlineStyle = SWT.UNDERLINE_DOUBLE;
+        warningStyle.underlineStyle = SWT.UNDERLINE_SQUIGGLE;
         styleMap.put(TokenId.WARNING, warningStyle);
 
         TextStyle errorStyle = new TextStyle();
@@ -601,7 +601,10 @@ public class Spin2Editor {
                     clientArea.y += styledText.getTopMargin();
                     clientArea.height -= styledText.getBottomMargin();
 
+                    e.gc.setAdvanced(true);
+                    e.gc.setLineWidth(0);
                     e.gc.setClipping(clientArea);
+
                     e.gc.setForeground(e.display.getSystemColor(SWT.COLOR_DARK_GRAY));
 
                     Node root = tokenMarker.getRoot();
@@ -611,6 +614,14 @@ public class Spin2Editor {
                                 paintBlock(e.gc, child, 0, -1);
                             }
                         }
+                    }
+
+                    e.gc.setForeground(e.display.getSystemColor(SWT.COLOR_RED));
+
+                    for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
+                        Rectangle r = styledText.getTextBounds(entry.getStart(), entry.getStop());
+                        int[] polyline = computePolyline(new Point(r.x, r.y), new Point(r.x + r.width, r.y), styledText.getLineHeight());
+                        e.gc.drawPolyline(polyline);
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -649,6 +660,44 @@ public class Spin2Editor {
                     }
                 }
             }
+
+            private int[] computePolyline(Point left, Point right, int height) {
+
+                final int WIDTH = 4; // must be even
+                final int HEIGHT = 2; // can be any number
+
+                int peeks = (right.x - left.x) / WIDTH;
+
+                int leftX = left.x;
+
+                // compute (number of point) * 2
+                int length = ((2 * peeks) + 1) * 2;
+                if (length < 0) {
+                    return new int[0];
+                }
+
+                int[] coordinates = new int[length];
+
+                // cache peeks' y-coordinates
+                int bottom = left.y + height - 1;
+                int top = bottom - HEIGHT;
+
+                // populate array with peek coordinates
+                for (int i = 0; i < peeks; i++) {
+                    int index = 4 * i;
+                    coordinates[index] = leftX + (WIDTH * i);
+                    coordinates[index + 1] = bottom;
+                    coordinates[index + 2] = coordinates[index] + WIDTH / 2;
+                    coordinates[index + 3] = top;
+                }
+
+                // the last down flank is missing
+                coordinates[length - 2] = left.x + (WIDTH * peeks);
+                coordinates[length - 1] = bottom;
+
+                return coordinates;
+            }
+
         });
 
         styledText.addDisposeListener(new DisposeListener() {
@@ -690,6 +739,10 @@ public class Spin2Editor {
 
     public Control getControl() {
         return container;
+    }
+
+    public StyledText getStyledText() {
+        return styledText;
     }
 
     public void dispose() {

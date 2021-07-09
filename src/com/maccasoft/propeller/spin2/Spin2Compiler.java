@@ -78,10 +78,10 @@ public class Spin2Compiler {
     List<Spin2Method> methods = new ArrayList<Spin2Method>();
     List<Spin2Bytecode> bytecodeSource = new ArrayList<Spin2Bytecode>();
 
-    ExpressionBuilder expressionBuilder = new ExpressionBuilder();
-
     int varOffset = 4;
     int labelCounter;
+
+    List<Spin2CompilerMessage> messages = new ArrayList<Spin2CompilerMessage>();
 
     public Spin2Compiler() {
 
@@ -139,10 +139,9 @@ public class Spin2Compiler {
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PUB".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin2Method method = compileMethod((MethodNode) node);
-
                 scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
+                scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 method.register();
-
                 methods.add(method);
             }
         }
@@ -150,18 +149,20 @@ public class Spin2Compiler {
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PRI".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin2Method method = compileMethod((MethodNode) node);
-
                 scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 method.register();
-
                 methods.add(method);
             }
         }
 
         for (Spin2Method method : methods) {
             for (Spin2MethodLine line : method.getLines()) {
-                compileLine(line);
+                try {
+                    compileLine(line);
+                } catch (Spin2CompilerMessage e) {
+                    logMessage(e);
+                }
             }
         }
 
@@ -170,31 +171,36 @@ public class Spin2Compiler {
         }
 
         for (Spin2PAsmLine line : source) {
-            try {
-                line.getScope().setHubAddress(hubAddress);
-                if (line.getInstructionFactory() instanceof Orgh) {
-                    hubMode = true;
-                }
-                if (line.getInstructionFactory() instanceof Org) {
-                    hubMode = false;
-                    hubAddress = (hubAddress + 3) & ~3;
-                }
-                address = line.resolve(hubMode ? hubAddress : address);
-                if (hubMode) {
-                    hubAddress += line.getInstructionObject().getSize();
-                    if (address > hubAddress) {
-                        hubAddress = address;
-                    }
-                    else {
-                        address = hubAddress;
-                    }
+            line.getScope().setHubAddress(hubAddress);
+            if (line.getInstructionFactory() instanceof Orgh) {
+                hubMode = true;
+            }
+            if (line.getInstructionFactory() instanceof Org) {
+                hubMode = false;
+                hubAddress = (hubAddress + 3) & ~3;
+            }
+            boolean isCogCode = address < 0x200;
+            address = line.resolve(hubMode ? hubAddress : address);
+            if (line.getInstructionFactory() instanceof Org) {
+                isCogCode = address < 0x200;
+            }
+            if (hubMode) {
+                hubAddress += line.getInstructionObject().getSize();
+                if (address > hubAddress) {
+                    hubAddress = address;
                 }
                 else {
-                    hubAddress += line.getInstructionObject().getSize();
+                    address = hubAddress;
                 }
-            } catch (Exception e) {
-                System.err.println(line);
-                e.printStackTrace();
+            }
+            else {
+                if (isCogCode && address > 0x1F0) {
+                    throw new RuntimeException("cog code limit exceeded by " + (address - 0x1F0) + " long(s)");
+                }
+                else if (!isCogCode && address > 0x400) {
+                    throw new RuntimeException("lut code limit exceeded by " + (address - 0x400) + " long(s)");
+                }
+                hubAddress += line.getInstructionObject().getSize();
             }
         }
 
@@ -266,16 +272,9 @@ public class Spin2Compiler {
             @Override
             public void visitConstantAssign(ConstantAssignNode node) {
                 String name = node.identifier.getText();
-                try {
-                    Expression expression = buildExpression(node.expression, scope);
-                    scope.addSymbol(name, expression);
-                } catch (Exception e) {
-                    for (Token t : node.expression.getTokens()) {
-                        System.err.print(" " + t.getText());
-                    }
-                    System.err.println();
-                    throw e;
-                }
+                Expression expression = buildExpression(node.expression, scope);
+                expression.setData(node);
+                scope.addSymbol(name, expression);
             }
 
             @Override
@@ -319,6 +318,7 @@ public class Spin2Compiler {
             if (node.size != null) {
                 size = buildExpression(node.size.getTokens(), scope);
             }
+
             scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
             scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
 
@@ -339,6 +339,7 @@ public class Spin2Compiler {
         for (Node child : parent.getChilds()) {
             DataLineNode node = (DataLineNode) child;
             Spin2PAsmLine pasmLine = compileDataLine(node);
+            pasmLine.setData(node);
             source.addAll(pasmLine.expand());
         }
 
@@ -530,13 +531,9 @@ public class Spin2Compiler {
 
         for (Node child : childs) {
             if (child instanceof StatementNode) {
-                try {
-                    Spin2MethodLine line = compileStatement(context, child);
-                    lines.add(line);
-                } catch (Exception e) {
-                    System.err.println("error compiling '" + child.getText() + "'");
-                    e.printStackTrace();
-                }
+                Spin2MethodLine line = compileStatement(context, child);
+                line.setData(child);
+                lines.add(line);
             }
         }
 
@@ -756,7 +753,8 @@ public class Spin2Compiler {
         else {
             iter = node.getTokens().iterator();
             while (iter.hasNext()) {
-                builder.addToken(iter.next());
+                token = iter.next();
+                builder.addToken(token);
             }
             line = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), null, builder.getRoot());
             line.setText(node.getText());
@@ -918,7 +916,7 @@ public class Spin2Compiler {
             Descriptor desc = Spin2Bytecode.getDescriptor(text);
             if (desc != null) {
                 if (line.getArgumentsCount() != desc.parameters) {
-                    throw new RuntimeException("expected " + desc.parameters + " argument(s), found " + line.getArgumentsCount());
+                    throw new Spin2CompilerMessage("expected " + desc.parameters + " argument(s), found " + line.getArgumentsCount(), (Node) line.getData());
                 }
                 for (Spin2StatementNode arg : line.getArguments()) {
                     List<Spin2Bytecode> list = compileBytecodeExpression(line.getScope(), arg, true);
@@ -1322,8 +1320,9 @@ public class Spin2Compiler {
 
     Expression buildExpression(List<Token> tokens, Spin2Context scope) {
         int state = 0;
-        Iterator<Token> iter = tokens.iterator();
+        ExpressionBuilder expressionBuilder = new ExpressionBuilder();
 
+        Iterator<Token> iter = tokens.iterator();
         while (iter.hasNext()) {
             Token token = iter.next();
 
@@ -1501,51 +1500,6 @@ public class Spin2Compiler {
 
     public static void main(String[] args) {
         String text = ""
-            + "CON\n"
-            + "\n"
-            + "    _CLKFREQ = 160_000_000\n"
-            + "\n"
-            + "    RX = 63\n"
-            + "    TX = 62\n"
-            + "    BAUD = 115_200\n"
-            + "\n"
-            + "VAR\n"
-            + "\n"
-            + "    long rxp\n"
-            + "    long txp\n"
-            + "    byte pbuf[80]\n"
-            + "\n"
-            + "OBJ\n"
-            + "\n"
-            + "PUB start() | bitmode\n"
-            + "\n"
-            + "    ' initialization\n"
-            + "\n"
-            + "    bitmode := muldiv64(clkfreq, $1_0000, BAUD) & $FFFFFC00       ' set bit timing\n"
-            + "    bitmode |= 7                                                  ' set bits (8)\n"
-            + "\n"
-            + "    pinstart(RX, P_ASYNC_RX, bitmode, 0)\n"
-            + "    pinstart(TX, P_ASYNC_TX | P_OE, bitmode, 0)\n"
-            + "\n"
-            + "    str(\"Hello, World\")\n"
-            + "    tx(13)\n"
-            + "    tx(10)\n"
-            + "\n"
-            + "    repeat\n"
-            + "        ' loop\n"
-            + "\n"
-            + "PUB tx(b) | chk\n"
-            + "\n"
-            + "    repeat\n"
-            + "        chk := pinr(TX)\n"
-            + "    while chk == 0\n"
-            + "    wypin(TX, b)\n"
-            + "\n"
-            + "PUB str(s)\n"
-            + "\n"
-            + "    repeat strsize(s)\n"
-            + "        tx(BYTE[s])\n"
-            + "        s += 1\n"
             + "";
 
         try {
@@ -1569,6 +1523,15 @@ public class Spin2Compiler {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    protected void logMessage(Spin2CompilerMessage message) {
+        messages.add(message);
+        System.out.println(message);
+    }
+
+    public List<Spin2CompilerMessage> getMessages() {
+        return messages;
     }
 
     static void print(Node node, int indent) {

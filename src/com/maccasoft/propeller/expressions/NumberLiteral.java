@@ -20,6 +20,7 @@ public class NumberLiteral extends Literal {
     }
 
     public NumberLiteral(String s) {
+        this.text = s;
         if (s.startsWith("%%")) {
             s = s.substring(2);
             this.base = 4;
@@ -41,7 +42,6 @@ public class NumberLiteral extends Literal {
         else {
             this.value = Long.parseLong(s.replace("_", ""), this.base);
         }
-        this.text = s;
     }
 
     @Override
