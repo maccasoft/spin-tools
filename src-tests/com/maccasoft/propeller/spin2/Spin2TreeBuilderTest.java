@@ -252,4 +252,28 @@ class Spin2TreeBuilderTest {
         assertEquals("(b + c) * 3", root.toString());
     }
 
+    @Test
+    void testTernaryExpression() {
+        Spin2TreeBuilder builder = new Spin2TreeBuilder();
+
+        builder.addToken(new Token(0, "a"));
+        builder.addToken(new Token(Token.OPERATOR, ":="));
+        builder.addToken(new Token(0, "b"));
+        builder.addToken(new Token(Token.OPERATOR, "?"));
+        builder.addToken(new Token(0, "c"));
+        builder.addToken(new Token(Token.OPERATOR, ":"));
+        builder.addToken(new Token(0, "d"));
+
+        Spin2StatementNode root = builder.getRoot();
+
+        assertEquals(":=", root.getText());
+        assertEquals("a", root.getChild(0).getText());
+        assertEquals("?", root.getChild(1).getText());
+        assertEquals("b", root.getChild(1).getChild(0).getText());
+        assertEquals("c", root.getChild(1).getChild(1).getText());
+        assertEquals("d", root.getChild(1).getChild(2).getText());
+
+        assertEquals("a := b ? c : d", root.toString());
+    }
+
 }

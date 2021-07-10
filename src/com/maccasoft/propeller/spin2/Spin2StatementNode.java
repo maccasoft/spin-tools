@@ -148,12 +148,19 @@ public class Spin2StatementNode {
                     }
                     sb.append("]");
                 }
+                else if ("?".equals(token.getText())) {
+                    sb.append(childs.get(0));
+                    sb.append(" ? ");
+                    sb.append(childs.get(1));
+                    sb.append(" : ");
+                    sb.append(childs.get(2));
+                }
                 else {
-                    sb.append(childs.get(0).toString());
+                    sb.append(childs.get(0));
                     sb.append(" ");
                     sb.append(token.getText());
                     sb.append(" ");
-                    sb.append(childs.get(1).toString());
+                    sb.append(childs.get(1));
                 }
                 break;
             case Token.FUNCTION:

@@ -80,6 +80,8 @@ public class Spin2TreeBuilder {
         operatorPrecedence.put("||", 12);
         operatorPrecedence.put("OR", 12);
 
+        operatorPrecedence.put(":", 16);
+        operatorPrecedence.put("?", 16);
         operatorPrecedence.put("..", 16);
 
         operatorPrecedence.put(":=", 17);
@@ -222,6 +224,36 @@ public class Spin2TreeBuilder {
 
     }
 
+    private class TernaryOperator extends Operator {
+
+        public TernaryOperator(Token token) {
+            this.token = token;
+            this.precedence = operatorPrecedence.get(token.getText().toUpperCase());
+            this.associativity = RIGHT_TO_LEFT;
+        }
+
+        @Override
+        public Spin2StatementNode evaluate() {
+            Spin2StatementNode right = operands.pop();
+            while (":".equals(operators.peek().token.getText())) {
+                operands.push(operators.pop().evaluate());
+            }
+
+            if ("?".equals(operators.peek().token.getText())) {
+                Token token = operators.pop().token;
+                Spin2StatementNode middle = operands.pop();
+
+                Spin2StatementNode result = new Spin2StatementNode(token);
+                result.addChild(operands.pop());
+                result.addChild(middle);
+                result.addChild(right);
+                return result;
+            }
+            throw new RuntimeException("ternary else (:) without if (?).");
+        }
+
+    }
+
     private class FunctionOperator extends Operator {
 
         Token name;
@@ -303,6 +335,9 @@ public class Spin2TreeBuilder {
         }
         else if ("(".equals(token.getText())) {
             operator = new GroupOperator(token);
+        }
+        else if ("?".equals(token.getText()) || ":".equals(token.getText())) {
+            operator = new TernaryOperator(token);
         }
         else {
             operator = new BinaryOperator(token);

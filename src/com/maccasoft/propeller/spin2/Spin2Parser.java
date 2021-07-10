@@ -522,12 +522,19 @@ public class Spin2Parser {
     }
 
     Node parseStatement(Node parent, Token token) {
+        int ternary = 0;
         Node statement = new StatementNode(parent);
 
         while (true) {
             statement.addToken(token);
+            if ("?".equals(token.getText())) {
+                ternary++;
+            }
             if (":".equals(token.getText())) {
-                break;
+                if (ternary == 0) {
+                    break;
+                }
+                ternary--;
             }
             if ("(".equals(token.getText())) {
                 token = parseSubStatement(statement, token);

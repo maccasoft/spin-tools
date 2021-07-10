@@ -314,4 +314,15 @@ class Spin2ParserTest {
         Assertions.assertEquals(1, node.getChilds().size());
     }
 
+    @Test
+    void testParseTernaryExpression() {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "a := (b == 1) ? 2 : 3\n"
+            + ""));
+
+        Node root = subject.parseStatement(new Node(), subject.stream.nextToken());
+        Assertions.assertEquals("a := (b == 1) ? 2 : 3", root.getText());
+        Assertions.assertEquals(1, root.getChilds().size());
+    }
+
 }

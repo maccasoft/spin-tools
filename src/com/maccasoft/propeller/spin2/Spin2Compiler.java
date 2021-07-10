@@ -1177,6 +1177,15 @@ public class Spin2Compiler {
                 throw new RuntimeException("unknown " + node.getChild(0).getText());
             }
         }
+        else if ("?".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 3) {
+                throw new RuntimeException("expression syntax error " + node.getText());
+            }
+            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+            source.addAll(compileBytecodeExpression(context, node.getChild(2), true));
+            source.add(new Bytecode(context, 0x6B, "TERNARY_IF_ELSE"));
+        }
         else if ("(".equalsIgnoreCase(node.getText())) {
             source.addAll(compileBytecodeExpression(context, node.getChild(0), push));
         }
