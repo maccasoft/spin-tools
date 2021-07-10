@@ -1020,6 +1020,22 @@ public class Spin2Editor {
         styledText.setTopIndex(line > 10 ? line - 10 : 1);
     }
 
+    public void setCompilerMessages(List<Spin2CompilerMessage> messages) {
+        tokenMarker.refreshCompilerTokens(messages);
+
+        ruler.clearHighlights();
+        for (Spin2CompilerMessage msg : messages) {
+            if (msg.type == Spin2CompilerMessage.ERROR) {
+                ruler.setHighlight(msg.line);
+            }
+        }
+    }
+
+    public void redraw() {
+        styledText.redraw();
+        ruler.redraw();
+    }
+
     public static void main(String[] args) {
         final Display display = new Display();
 

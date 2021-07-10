@@ -267,6 +267,35 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testIfConditionExpression() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    if (a := b) == 0\n"
+            + "        a := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "01088 00000 08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "0108C 00004 13 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "01090 00008 08             (stack size)\n"
+            + "'     if (a := b) == 0\n"
+            + "01091 00009 E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "01092 0000A D0 82          VAR_WRITE LONG DBASE+$00000 (short) (push)\n"
+            + "01094 0000C A1             CONSTANT (0)\n"
+            + "01095 0000D 70             EQUAL\n"
+            + "01096 0000E 13 03          JZ $00012 (3)\n"
+            + "'         a := 1\n"
+            + "01098 00010 A2             CONSTANT (1)\n"
+            + "01099 00011 F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0109A 00012 04             RETURN\n"
+            + "0109B 00013 00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testIfElseConditional() throws Exception {
         String text = ""
             + "PUB main() | a\n"
@@ -468,17 +497,18 @@ class Spin2CompilerTest {
 
         Assertions.assertEquals(""
             + "01088 00000 08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "0108C 00004 0F 00 00 00    End\n"
+            + "0108C 00004 11 00 00 00    End\n"
             + "' PUB main() | a\n"
             + "01090 00008 04             (stack size)\n"
             + "'     repeat a\n"
             + "01091 00009 E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "01092 0000A 15 05          TJZ $00010 (5)\n"
             + "'         a := 1\n"
-            + "01092 0000A A2             CONSTANT (1)\n"
-            + "01093 0000B F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "01094 0000C 16 7D          DJNZ $0000A (-3)\n"
-            + "01096 0000E 04             RETURN\n"
-            + "01097 0000F 00             Padding\n"
+            + "01094 0000C A2             CONSTANT (1)\n"
+            + "01095 0000D F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "01096 0000E 16 7D          DJNZ $0000C (-3)\n"
+            + "01098 00010 04             RETURN\n"
+            + "01099 00011 00 00 00       Padding\n"
             + "", compile(text));
     }
 
@@ -1020,11 +1050,11 @@ class Spin2CompilerTest {
         String text = ""
             + "PUB main() | a\n"
             + "\n"
-            + "        a := @value\n"
+            + "        a := @b\n"
             + "\n"
             + "DAT             org     $000\n"
             + "\n"
-            + "value           long    1\n"
+            + "b               long    1\n"
             + "\n"
             + "";
 
@@ -1032,10 +1062,10 @@ class Spin2CompilerTest {
             + "01088 00000 0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "0108C 00004 12 00 00 00    End\n"
             + "00008   000                                    org     $000\n"
-            + "00008   000 01 00 00 00    value               long    1\n"
+            + "00008   000 01 00 00 00    b                   long    1\n"
             + "' PUB main() | a\n"
             + "01094 0000C 04             (stack size)\n"
-            + "'         a := @value\n"
+            + "'         a := @b\n"
             + "01095 0000D 5C 08 7F       MEM_ADDRESS PBASE+$00008\n"
             + "01098 00010 F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "01099 00011 04             RETURN\n"
@@ -1044,15 +1074,15 @@ class Spin2CompilerTest {
     }
 
     @Test
-    void testDataValue() throws Exception {
+    void testDataValueRead() throws Exception {
         String text = ""
             + "PUB main() | a\n"
             + "\n"
-            + "        a := value\n"
+            + "        a := b\n"
             + "\n"
             + "DAT             org     $000\n"
             + "\n"
-            + "value           long    1\n"
+            + "b               long    1\n"
             + "\n"
             + "";
 
@@ -1060,12 +1090,40 @@ class Spin2CompilerTest {
             + "01088 00000 0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "0108C 00004 12 00 00 00    End\n"
             + "00008   000                                    org     $000\n"
-            + "00008   000 01 00 00 00    value               long    1\n"
+            + "00008   000 01 00 00 00    b                   long    1\n"
             + "' PUB main() | a\n"
             + "01094 0000C 04             (stack size)\n"
-            + "'         a := value\n"
+            + "'         a := b\n"
             + "01095 0000D 5C 08 80       MEM_READ PBASE+$00008\n"
             + "01098 00010 F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "01099 00011 04             RETURN\n"
+            + "0109A 00012 00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testDataValueAssign() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "        b := a\n"
+            + "\n"
+            + "DAT             org     $000\n"
+            + "\n"
+            + "b               long    1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "01088 00000 0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "0108C 00004 12 00 00 00    End\n"
+            + "00008   000                                    org     $000\n"
+            + "00008   000 01 00 00 00    b                   long    1\n"
+            + "' PUB main() | a\n"
+            + "01094 0000C 04             (stack size)\n"
+            + "'         b := a\n"
+            + "01095 0000D E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "01096 0000E 5C 08 81       MEM_WRITE PBASE+$00008\n"
             + "01099 00011 04             RETURN\n"
             + "0109A 00012 00 00          Padding\n"
             + "", compile(text));
@@ -1206,6 +1264,41 @@ class Spin2CompilerTest {
             + "010A8 00020 1E             CASE_DONE\n"
             + "010A9 00021 04             RETURN\n"
             + "010AA 00022 00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testCaseRange() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    case a\n"
+            + "        1..5: a := 6\n"
+            + "        other: a := 7\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "01088 00000 08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "0108C 00004 17 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "01090 00008 04             (stack size)\n"
+            + "'     case a\n"
+            + "01091 00009 45 16          CONSTANT ($00016)\n"
+            + "01093 0000B E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "01094 0000C A2             CONSTANT (1)\n"
+            + "01095 0000D A6             CONSTANT (5)\n"
+            + "01096 0000E 1D 04          CASE_RANGE_JMP $00013 (4)\n"
+            + "'         other: a := 7\n"
+            + "01098 00010 A8             CONSTANT (7)\n"
+            + "01099 00011 F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0109A 00012 1E             CASE_DONE\n"
+            + "'        1..5: a := 6\n"
+            + "0109B 00013 A7             CONSTANT (6)\n"
+            + "0109C 00014 F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0109D 00015 1E             CASE_DONE\n"
+            + "0109E 00016 04             RETURN\n"
+            + "0109F 00017 00             Padding\n"
             + "", compile(text));
     }
 

@@ -88,7 +88,7 @@ public class EditorTab {
                         }
 
                         if (!pendingCompile.get()) {
-                            tokenMarker.refreshCompilerTokens(compiler.getMessages());
+                            editor.setCompilerMessages(compiler.getMessages());
                             Display.getDefault().asyncExec(new Runnable() {
 
                                 @Override
@@ -96,7 +96,7 @@ public class EditorTab {
                                     if (editor == null || editor.getStyledText().isDisposed()) {
                                         return;
                                     }
-                                    editor.getStyledText().redraw();
+                                    editor.redraw();
                                     updateTabItemText();
                                 }
                             });
@@ -153,6 +153,7 @@ public class EditorTab {
         else {
             tabItem.setText(tabItemText);
         }
+        tabItem.setSelectionForeground(errors ? Display.getDefault().getSystemColor(SWT.COLOR_RED) : null);
         tabItem.setForeground(errors ? Display.getDefault().getSystemColor(SWT.COLOR_RED) : null);
     }
 

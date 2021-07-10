@@ -58,6 +58,7 @@ import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
 import com.maccasoft.propeller.spin2.Spin2Object.LongDataObject;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
 import com.maccasoft.propeller.spin2.bytecode.CaseJmp;
+import com.maccasoft.propeller.spin2.bytecode.CaseRangeJmp;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
 import com.maccasoft.propeller.spin2.bytecode.Djnz;
 import com.maccasoft.propeller.spin2.bytecode.Jmp;
@@ -66,6 +67,7 @@ import com.maccasoft.propeller.spin2.bytecode.Jz;
 import com.maccasoft.propeller.spin2.bytecode.MathOp;
 import com.maccasoft.propeller.spin2.bytecode.MemoryOp;
 import com.maccasoft.propeller.spin2.bytecode.RegisterOp;
+import com.maccasoft.propeller.spin2.bytecode.Tjz;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
@@ -163,13 +165,19 @@ public class Spin2Compiler {
                     compileLine(line);
                 } catch (Spin2CompilerMessage e) {
                     logMessage(e);
+                    e.printStackTrace();
                 } catch (Exception e) {
                     logMessage(new Spin2CompilerMessage(e.getMessage(), (Node) line.getData()));
+                    e.printStackTrace();
                 }
             }
         }
 
         if (methods.size() != 0) {
+            scope.addSymbol("@CLKMODE", new NumberLiteral(0x40));
+            scope.addSymbol("@clkmode", new NumberLiteral(0x40));
+            scope.addSymbol("@CLKFREQ", new NumberLiteral(0x44));
+            scope.addSymbol("@clkfreq", new NumberLiteral(0x44));
             hubAddress = (methods.size() + 1) * 4;
         }
 
@@ -281,6 +289,7 @@ public class Spin2Compiler {
                     scope.addSymbol(name, expression);
                 } catch (Exception e) {
                     logMessage(new Spin2CompilerMessage(e.getMessage(), node.identifier));
+                    e.printStackTrace();
                 }
             }
 
@@ -303,6 +312,7 @@ public class Spin2Compiler {
                     scope.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
                 } catch (Exception e) {
                     logMessage(new Spin2CompilerMessage(e.getMessage(), node.identifier));
+                    e.printStackTrace();
                     return;
                 }
                 if (node.multiplier != null) {
@@ -340,6 +350,7 @@ public class Spin2Compiler {
                 scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
             } catch (Exception e) {
                 logMessage(new Spin2CompilerMessage(e.getMessage(), node.identifier));
+                e.printStackTrace();
                 continue;
             }
 
@@ -480,17 +491,35 @@ public class Spin2Compiler {
 
         int offset = 0;
         for (Node child : node.getParameters()) {
-            LocalVariable var = new LocalVariable("LONG", child.getText(), new NumberLiteral(1), offset);
-            localScope.addSymbol(child.getText(), var);
-            localScope.addSymbol("@" + child.getText(), var);
+            String name = child.getText();
+            Expression expression = localScope.getLocalSymbol(name);
+            if (expression instanceof LocalVariable) {
+                logMessage(new Spin2CompilerMessage("symbol " + name + " already defined", child));
+                continue;
+            }
+            else if (expression != null) {
+                logMessage(new Spin2CompilerMessage(Spin2CompilerMessage.WARNING, "parameter " + name + " hides global variable", child));
+            }
+            LocalVariable var = new LocalVariable("LONG", name, new NumberLiteral(1), offset);
+            localScope.addSymbol(name, var);
+            localScope.addSymbol("@" + name, var);
             parameters.add(var);
             offset += 4;
         }
 
         for (Node child : node.getReturnVariables()) {
-            LocalVariable var = new LocalVariable("LONG", child.getText(), new NumberLiteral(1), offset);
-            localScope.addSymbol(child.getText(), var);
-            localScope.addSymbol("@" + child.getText(), var);
+            String name = child.getText();
+            Expression expression = localScope.getLocalSymbol(name);
+            if (expression instanceof LocalVariable) {
+                logMessage(new Spin2CompilerMessage("symbol " + name + " already defined", child));
+                continue;
+            }
+            else if (expression != null) {
+                logMessage(new Spin2CompilerMessage(Spin2CompilerMessage.WARNING, "return variable " + name + " hides global variable", child));
+            }
+            LocalVariable var = new LocalVariable("LONG", name, new NumberLiteral(1), offset);
+            localScope.addSymbol(name, var);
+            localScope.addSymbol("@" + name, var);
             returns.add(var);
             offset += 4;
         }
@@ -512,9 +541,15 @@ public class Spin2Compiler {
             }
             Expression size = null;
             if (child.size != null) {
-                size = buildExpression(child.size.getTokens(), scope);
-                if (!size.isConstant()) {
-                    throw new RuntimeException("expression is not constant");
+                try {
+                    size = buildExpression(child.size.getTokens(), scope);
+                    if (!size.isConstant()) {
+                        logMessage(new Spin2CompilerMessage("expression is not constant", child.size));
+                        continue;
+                    }
+                } catch (Exception e) {
+                    logMessage(new Spin2CompilerMessage("expression syntax error", child.size));
+                    continue;
                 }
             }
             LocalVariable var = new LocalVariable(type, child.getText(), size, offset);
@@ -571,6 +606,7 @@ public class Spin2Compiler {
                     throw e;
                 } catch (Exception e) {
                     logMessage(new Spin2CompilerMessage(e.getMessage(), child));
+                    e.printStackTrace();
                 }
             }
         }
@@ -842,7 +878,14 @@ public class Spin2Compiler {
         }
         else if ("REPEAT".equalsIgnoreCase(text)) {
             if (line.getArgumentsCount() == 1) {
-                line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), true));
+                try {
+                    Expression expression = buildConstantExpression(line.getScope(), line.getArgument(0));
+                    line.addSource(new Constant(line.getScope(), expression));
+                } catch (Exception e) {
+                    line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), true));
+                    Spin2MethodLine target = (Spin2MethodLine) line.getData("quit");
+                    line.addSource(new Tjz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                }
             }
             else if (line.getArgumentsCount() != 0) {
                 throw new RuntimeException("unsupported");
@@ -940,10 +983,19 @@ public class Spin2Compiler {
             line.addSource(new Constant(line.getScope(), new Identifier(end.getLabel(), end.getScope())));
 
             for (Spin2StatementNode arg : line.getArguments()) {
-                line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
                 Spin2MethodLine target = (Spin2MethodLine) arg.getData("true");
-                if (target != null) {
-                    line.addSource(new CaseJmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                if ("..".equals(arg.getText())) {
+                    line.addSource(compileBytecodeExpression(line.getScope(), arg.getChild(0), false));
+                    line.addSource(compileBytecodeExpression(line.getScope(), arg.getChild(1), false));
+                    if (target != null) {
+                        line.addSource(new CaseRangeJmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                    }
+                }
+                else {
+                    line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
+                    if (target != null) {
+                        line.addSource(new CaseJmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                    }
                 }
             }
         }
@@ -1038,7 +1090,18 @@ public class Spin2Compiler {
                     source.add(new RegisterOp(context, RegisterOp.Op.Write, expression));
                 }
                 else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
-                    source.add(new VariableOp(context, VariableOp.Op.Write, (Variable) expression));
+                    source.add(new VariableOp(context, VariableOp.Op.Write, push, (Variable) expression));
+                }
+                else if (expression instanceof ContextLiteral) {
+                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    MemoryOp.Base bb = MemoryOp.Base.PBase;
+                    if (expression instanceof LocalVariable) {
+                        bb = MemoryOp.Base.DBase;
+                    }
+                    else if (expression instanceof Variable) {
+                        bb = MemoryOp.Base.VBase;
+                    }
+                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Write, expression));
                 }
                 else {
                     throw new Spin2CompilerMessage("undefined symbol " + left.getText(), left.getToken());
@@ -1059,6 +1122,17 @@ public class Spin2Compiler {
                 }
                 else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
                     source.add(new VariableOp(context, VariableOp.Op.Setup, (Variable) expression));
+                }
+                else if (expression instanceof ContextLiteral) {
+                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    MemoryOp.Base bb = MemoryOp.Base.PBase;
+                    if (expression instanceof LocalVariable) {
+                        bb = MemoryOp.Base.DBase;
+                    }
+                    else if (expression instanceof Variable) {
+                        bb = MemoryOp.Base.VBase;
+                    }
+                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, expression));
                 }
                 else {
                     throw new Spin2CompilerMessage("undefined symbol " + left.getText(), left.getToken());
@@ -1102,6 +1176,9 @@ public class Spin2Compiler {
             else {
                 throw new RuntimeException("unknown " + node.getChild(0).getText());
             }
+        }
+        else if ("(".equalsIgnoreCase(node.getText())) {
+            source.addAll(compileBytecodeExpression(context, node.getChild(0), push));
         }
         else if ("ABORT".equalsIgnoreCase(node.getText())) {
             if (argsNode.getChildCount() == 0) {

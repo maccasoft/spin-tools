@@ -136,11 +136,13 @@ public class LineNumbersRuler {
 
     public void setHighlight(int line) {
         highlight.add(line - 1);
-        canvas.redraw();
     }
 
     public void clearHighlights() {
         highlight.clear();
+    }
+
+    public void redraw() {
         canvas.redraw();
     }
 

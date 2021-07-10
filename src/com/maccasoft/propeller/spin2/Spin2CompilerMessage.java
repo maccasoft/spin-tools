@@ -31,7 +31,7 @@ public class Spin2CompilerMessage extends RuntimeException {
     public Spin2CompilerMessage(String message, Node node) {
         super(message);
         this.type = ERROR;
-        this.line = node.getStartToken().line;
+        this.line = node.getStartToken().line + 1;
         this.column = node.getStartToken().column;
         this.startToken = node.getStartToken();
         this.stopToken = node.getStopToken();
@@ -40,7 +40,7 @@ public class Spin2CompilerMessage extends RuntimeException {
     public Spin2CompilerMessage(String message, Token token) {
         super(message);
         this.type = ERROR;
-        this.line = token.line;
+        this.line = token.line + 1;
         this.column = token.column;
         this.startToken = token;
         this.stopToken = token;
@@ -49,7 +49,7 @@ public class Spin2CompilerMessage extends RuntimeException {
     public Spin2CompilerMessage(int type, String message, Node node) {
         super(message);
         this.type = type;
-        this.line = node.getStartToken().line;
+        this.line = node.getStartToken().line + 1;
         this.column = node.getStartToken().column;
         this.startToken = node.getStartToken();
         this.stopToken = node.getStopToken();
@@ -58,7 +58,7 @@ public class Spin2CompilerMessage extends RuntimeException {
     public Spin2CompilerMessage(int type, String message, Token token) {
         super(message);
         this.type = type;
-        this.line = token.line;
+        this.line = token.line + 1;
         this.column = token.column;
         this.startToken = token;
         this.stopToken = token;

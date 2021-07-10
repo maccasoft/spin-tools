@@ -25,6 +25,7 @@ public class VariableOp extends Spin2Bytecode {
     }
 
     public Op op;
+    public boolean push;
     public Variable variable;
 
     public VariableOp(Spin2Context context, Op op, Variable variable) {
@@ -33,16 +34,33 @@ public class VariableOp extends Spin2Bytecode {
         this.variable = variable;
     }
 
+    public VariableOp(Spin2Context context, Op op, boolean push, Variable variable) {
+        super(context);
+        this.op = op;
+        this.push = push;
+        this.variable = variable;
+    }
+
     @Override
     public int getSize() {
         int value = variable.getOffset();
 
         if ("LONG".equalsIgnoreCase(variable.getType()) && (value / 4) <= 15) {
-            value /= 4;
             if (variable instanceof LocalVariable) {
+                if (op == Op.Write) {
+                    if (push) {
+                        return 2;
+                    }
+                }
+                else if (op == Op.Address) {
+                    return 2;
+                }
                 return 1;
             }
             else {
+                if (op == Op.Address) {
+                    return 2;
+                }
                 return 2;
             }
         }
@@ -62,6 +80,12 @@ public class VariableOp extends Spin2Bytecode {
                     opcode = 0xE0;
                 }
                 else if (op == Op.Write) {
+                    if (push) {
+                        return new byte[] {
+                            (byte) (opcode + value),
+                            (byte) 0x82
+                        };
+                    }
                     opcode = 0xF0;
                 }
                 else if (op == Op.Address) {
@@ -91,36 +115,41 @@ public class VariableOp extends Spin2Bytecode {
         byte[] v = Constant.wrVar(value);
         byte[] b = new byte[v.length + 2];
 
+        int index = 0;
         if (variable instanceof LocalVariable) {
             if ("WORD".equalsIgnoreCase(variable.getType())) {
-                b[0] = 0x58;
+                b[index] = 0x58;
             }
             else if ("BYTE".equalsIgnoreCase(variable.getType())) {
-                b[0] = 0x52;
+                b[index] = 0x52;
             }
             else {
-                b[0] = 0x5E;
+                b[index] = 0x5E;
             }
         }
         else {
             if ("WORD".equalsIgnoreCase(variable.getType())) {
-                b[0] = 0x57;
+                b[index] = 0x57;
             }
             else if ("BYTE".equalsIgnoreCase(variable.getType())) {
-                b[0] = 0x51;
+                b[index] = 0x51;
             }
             else {
-                b[0] = 0x5D;
+                b[index] = 0x5D;
             }
         }
+        index++;
         for (int i = 0; i < v.length; i++) {
-            b[i + 1] = v[i];
+            b[index++] = v[i];
         }
         if (op == Op.Address) {
-            b[b.length - 1] = (byte) 0x7F;
+            b[index] = (byte) 0x7F;
+        }
+        else if (op == Op.Read) {
+            b[index] = (byte) 0x80;
         }
         else {
-            b[b.length - 1] = (byte) (op == Op.Read ? 0x80 : 0x81);
+            b[index] = (byte) (push ? 0x82 : 0x81);
         }
 
         return b;
@@ -152,6 +181,9 @@ public class VariableOp extends Spin2Bytecode {
         }
         else {
             sb.append(String.format("+$%05X", value));
+        }
+        if (op == Op.Write && push) {
+            sb.append(" (push)");
         }
         return sb.toString();
     }

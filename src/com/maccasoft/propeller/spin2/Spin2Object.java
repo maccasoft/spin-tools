@@ -327,7 +327,7 @@ public class Spin2Object {
                 if (obj instanceof PAsmDataObject) {
                     int cogAddr = ((PAsmDataObject) obj).addr;
 
-                    ps.print(String.format("%05X   ", address));
+                    ps.print(String.format("%05X %05X   ", address + offset, address));
                     ps.print(cogAddr < 0x400 ? String.format("%03X", cogAddr) : "   ");
 
                     int i = 0;
@@ -341,7 +341,7 @@ public class Spin2Object {
                             }
                             ps.println();
                             cogAddr++;
-                            ps.print(String.format("%05X   ", address));
+                            ps.print(String.format("%05X %05X   ", address + offset, address));
                             ps.print(cogAddr < 0x400 ? String.format("%03X", cogAddr) : "   ");
                         }
                         ps.print(String.format(" %02X", obj.bytes[i++]));
@@ -360,7 +360,7 @@ public class Spin2Object {
                     ps.println();
                 }
                 else if (obj.bytes.length != 0) {
-                    ps.print(String.format("%05X %05X", address + offset, address));
+                    ps.print(String.format("%05X %05X      ", address + offset, address));
 
                     int i = 0;
                     while (i < obj.bytes.length) {
@@ -371,7 +371,7 @@ public class Spin2Object {
                                 }
                             }
                             ps.println();
-                            ps.print(String.format("%05X %05X", address + offset, address));
+                            ps.print(String.format("%05X %05X      ", address + offset, address));
                         }
                         ps.print(String.format(" %02X", obj.bytes[i++]));
                         address++;
