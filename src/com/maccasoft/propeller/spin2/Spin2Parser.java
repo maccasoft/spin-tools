@@ -526,10 +526,8 @@ public class Spin2Parser {
 
         while (true) {
             statement.addToken(token);
-            if (statement.getTokens().size() == 2) {
-                if (":".equals(token.getText())) {
-                    break;
-                }
+            if (":".equals(token.getText())) {
+                break;
             }
             if ("(".equals(token.getText())) {
                 token = parseSubStatement(statement, token);

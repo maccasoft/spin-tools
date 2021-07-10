@@ -74,6 +74,77 @@ class Spin2TokenStreamTest {
     }
 
     @Test
+    void testEmptyLineCount() {
+        Spin2TokenStream subject = new Spin2TokenStream(""
+            + "CON  EnableFlow = 8                'single assignments\n"
+            + "\n"
+            + "\n"
+            + "     DisableFlow = 4\n"
+            + "\n"
+            + "     ColorBurstFreq = 3_579_545\n"
+            + "");
+
+        assertEquals(0, subject.nextToken().line);
+        assertEquals(0, subject.nextToken().line);
+        assertEquals(0, subject.nextToken().line);
+        assertEquals(0, subject.nextToken().line);
+        //assertEquals(0, subject.nextToken().line);
+        assertEquals(0, subject.nextToken().line);
+
+        assertEquals(3, subject.nextToken().line);
+        assertEquals(3, subject.nextToken().line);
+        assertEquals(3, subject.nextToken().line);
+        assertEquals(3, subject.nextToken().line);
+
+        assertEquals(5, subject.nextToken().line);
+        assertEquals(5, subject.nextToken().line);
+        assertEquals(5, subject.nextToken().line);
+        assertEquals(5, subject.nextToken().line);
+
+        assertEquals(Token.EOF, subject.nextToken().type);
+    }
+
+    @Test
+    void testBlockCommentsLineCount() {
+        Spin2TokenStream subject = new Spin2TokenStream(""
+            + "{\n"
+            + "    comment\n"
+            + "}\n"
+            + "CON  EnableFlow = 8\n"
+            + "\n"
+            + "\n"
+            + "     DisableFlow = 4\n"
+            + "\n"
+            + "{\n"
+            + "    comment\n"
+            + "}\n"
+            + "     ColorBurstFreq = 3_579_545\n"
+            + "");
+
+        assertEquals(2, subject.nextToken().line); // EOL after block comment
+
+        assertEquals(3, subject.nextToken().line);
+        assertEquals(3, subject.nextToken().line);
+        assertEquals(3, subject.nextToken().line);
+        assertEquals(3, subject.nextToken().line);
+        assertEquals(3, subject.nextToken().line);
+
+        assertEquals(6, subject.nextToken().line);
+        assertEquals(6, subject.nextToken().line);
+        assertEquals(6, subject.nextToken().line);
+        assertEquals(6, subject.nextToken().line);
+
+        assertEquals(10, subject.nextToken().line); // EOL after block comment
+
+        assertEquals(11, subject.nextToken().line);
+        assertEquals(11, subject.nextToken().line);
+        assertEquals(11, subject.nextToken().line);
+        assertEquals(11, subject.nextToken().line);
+
+        assertEquals(Token.EOF, subject.nextToken().type);
+    }
+
+    @Test
     void testColumnCount() {
         Spin2TokenStream subject = new Spin2TokenStream(""
             + "CON  EnableFlow = 8                'single assignments\n"
@@ -222,6 +293,31 @@ class Spin2TokenStreamTest {
         Spin2TokenStream subject = new Spin2TokenStream("{ first line\n{ second line }}");
 
         assertEquals("{ first line\n{ second line }}", subject.nextToken(true).getText());
+    }
+
+    @Test
+    void testNumericRangeOperator() {
+        Spin2TokenStream subject = new Spin2TokenStream("12..34");
+
+        assertEquals("12", subject.nextToken().getText());
+        assertEquals("..", subject.nextToken().getText());
+        assertEquals("34", subject.nextToken().getText());
+    }
+
+    @Test
+    void testKeywordRangeOperator() {
+        Spin2TokenStream subject = new Spin2TokenStream("ab..cd");
+
+        assertEquals("ab", subject.nextToken().getText());
+        assertEquals("..", subject.nextToken().getText());
+        assertEquals("cd", subject.nextToken().getText());
+    }
+
+    @Test
+    void testDecimalNumber() {
+        Spin2TokenStream subject = new Spin2TokenStream("1.234");
+
+        assertEquals("1.234", subject.nextToken().getText());
     }
 
 }

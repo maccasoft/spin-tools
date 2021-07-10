@@ -227,4 +227,29 @@ class Spin2TreeBuilderTest {
         assertEquals("a := b[1]", root.toString());
     }
 
+    @Test
+    void testGroupExpression() {
+        Spin2TreeBuilder builder = new Spin2TreeBuilder();
+        builder.setState(2);
+
+        builder.addToken(new Token(Token.OPERATOR, "("));
+        builder.addToken(new Token(Token.NUMBER, "b"));
+        builder.addToken(new Token(Token.OPERATOR, "+"));
+        builder.addToken(new Token(Token.NUMBER, "c"));
+        builder.addToken(new Token(Token.OPERATOR, ")"));
+        builder.addToken(new Token(Token.OPERATOR, "*"));
+        builder.addToken(new Token(Token.NUMBER, "3"));
+
+        Spin2StatementNode root = builder.getRoot();
+
+        assertEquals("*", root.getText());
+        assertEquals("(", root.getChild(0).getText());
+        assertEquals("3", root.getChild(1).getText());
+        assertEquals("+", root.getChild(0).getChild(0).getText());
+        assertEquals("b", root.getChild(0).getChild(0).getChild(0).getText());
+        assertEquals("c", root.getChild(0).getChild(0).getChild(1).getText());
+
+        assertEquals("(b + c) * 3", root.toString());
+    }
+
 }

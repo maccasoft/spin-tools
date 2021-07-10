@@ -80,6 +80,8 @@ public class Spin2TreeBuilder {
         operatorPrecedence.put("||", 12);
         operatorPrecedence.put("OR", 12);
 
+        operatorPrecedence.put("..", 16);
+
         operatorPrecedence.put(":=", 17);
 
         operatorPrecedence.put(">>=", 17);

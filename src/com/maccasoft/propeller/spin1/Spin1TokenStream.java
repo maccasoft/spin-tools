@@ -123,9 +123,9 @@ public class Spin1TokenStream extends TokenStream {
                     }
                     break;
                 case Token.NL:
+                    column = 0;
+                    line++;
                     if (ch != '\r' && ch != '\n') {
-                        column = 0;
-                        line++;
                         state = Token.START;
                         return token;
                     }
@@ -146,7 +146,11 @@ public class Spin1TokenStream extends TokenStream {
                     break;
                 case Token.BLOCK_COMMENT:
                     token.stop++;
-                    if (ch == '{') {
+                    if (ch == '\r' || ch == '\n') {
+                        column = 0;
+                        line++;
+                    }
+                    else if (ch == '{') {
                         nested++;
                     }
                     else if (ch == '}') {
@@ -171,7 +175,7 @@ public class Spin1TokenStream extends TokenStream {
 
                     if (ch == '.' && index + 1 < text.length()) {
                         char ch1 = text.charAt(index + 1);
-                        if ((ch1 >= 'a' && ch1 <= 'z') || (ch1 >= 'A' && ch1 <= 'Z') || ch1 == '_') {
+                        if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '_') {
                             token.stop++;
                             break;
                         }
@@ -199,7 +203,7 @@ public class Spin1TokenStream extends TokenStream {
 
                     if ((ch == '.' || ch == '#') && index + 1 < text.length()) {
                         char ch1 = text.charAt(index + 1);
-                        if ((ch1 >= 'a' && ch1 <= 'z') || (ch1 >= 'A' && ch1 <= 'Z') || ch1 == '_') { // Local label
+                        if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '_') {
                             token.stop++;
                             break;
                         }

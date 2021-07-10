@@ -123,9 +123,9 @@ public class Spin2TokenStream extends TokenStream {
                     }
                     break;
                 case Token.NL:
+                    column = 0;
+                    line++;
                     if (ch != '\r' && ch != '\n') {
-                        column = 0;
-                        line++;
                         state = Token.START;
                         return token;
                     }
@@ -146,12 +146,16 @@ public class Spin2TokenStream extends TokenStream {
                     break;
                 case Token.BLOCK_COMMENT:
                     token.stop++;
-                    if (ch == '{') {
+                    if (ch == '\r' || ch == '\n') {
+                        column = 0;
+                        line++;
+                    }
+                    else if (ch == '{') {
                         nested++;
                     }
                     else if (ch == '}') {
                         if (nested == 0) {
-                            index++;
+                            //index++;
                             state = Token.START;
                             hiddenTokens.add(token);
                             if (comments) {
@@ -164,14 +168,21 @@ public class Spin2TokenStream extends TokenStream {
                     }
                     break;
                 case Token.NUMBER:
-                    if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_' || ch == '.') {
+                    if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_') {
                         token.stop++;
+                        break;
                     }
-                    else {
-                        state = Token.START;
-                        return token;
+
+                    if (ch == '.' && index + 1 < text.length()) {
+                        char ch1 = text.charAt(index + 1);
+                        if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '_') {
+                            token.stop++;
+                            break;
+                        }
                     }
-                    break;
+
+                    state = Token.START;
+                    return token;
                 case Token.STRING:
                     token.stop++;
                     if (escape) {
@@ -185,9 +196,22 @@ public class Spin2TokenStream extends TokenStream {
                     }
                     break;
                 case Token.KEYWORD:
-                    if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == '.') {
+                    if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_') {
                         token.stop++;
                         break;
+                    }
+
+                    if ((ch == '.' || ch == '#') && index + 1 < text.length()) {
+                        char ch1 = text.charAt(index + 1);
+                        if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '_') {
+                            token.stop++;
+                            break;
+                        }
+                    }
+
+                    if (ch == '=') {
+                        token.stop++;
+                        index++;
                     }
 
                     state = Token.START;

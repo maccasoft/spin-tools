@@ -606,4 +606,29 @@ class Spin1TokenStreamTest {
         assertEquals("\n", subject.nextToken(true).getText());
     }
 
+    @Test
+    void testNumericRangeOperator() {
+        Spin1TokenStream subject = new Spin1TokenStream("12..34");
+
+        assertEquals("12", subject.nextToken().getText());
+        assertEquals("..", subject.nextToken().getText());
+        assertEquals("34", subject.nextToken().getText());
+    }
+
+    @Test
+    void testKeywordRangeOperator() {
+        Spin1TokenStream subject = new Spin1TokenStream("ab..cd");
+
+        assertEquals("ab", subject.nextToken().getText());
+        assertEquals("..", subject.nextToken().getText());
+        assertEquals("cd", subject.nextToken().getText());
+    }
+
+    @Test
+    void testDecimalNumber() {
+        Spin1TokenStream subject = new Spin1TokenStream("1.234");
+
+        assertEquals("1.234", subject.nextToken().getText());
+    }
+
 }
