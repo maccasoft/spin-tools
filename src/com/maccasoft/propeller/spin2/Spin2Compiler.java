@@ -821,15 +821,55 @@ public class Spin2Compiler {
                 token = iter.next();
                 if ("WHILE".equalsIgnoreCase(token.getText()) || "UNTIL".equalsIgnoreCase(token.getText())) {
                     text += " " + token.getText();
+                    while (iter.hasNext()) {
+                        builder.addToken(iter.next());
+                    }
+                    arguments.add(builder.getRoot());
                 }
                 else {
                     builder.addToken(token);
-                }
 
-                while (iter.hasNext()) {
-                    builder.addToken(iter.next());
+                    while (iter.hasNext()) {
+                        token = iter.next();
+                        if ("FROM".equalsIgnoreCase(token.getText())) {
+                            break;
+                        }
+                        builder.addToken(token);
+                    }
+                    arguments.add(builder.getRoot());
+
+                    if ("FROM".equalsIgnoreCase(token.getText())) {
+                        builder.setState(2);
+                        while (iter.hasNext()) {
+                            token = iter.next();
+                            if ("TO".equalsIgnoreCase(token.getText())) {
+                                break;
+                            }
+                            builder.addToken(token);
+                        }
+                        arguments.add(builder.getRoot());
+
+                        if ("TO".equalsIgnoreCase(token.getText())) {
+                            builder.setState(2);
+                            while (iter.hasNext()) {
+                                token = iter.next();
+                                if ("STEP".equalsIgnoreCase(token.getText())) {
+                                    break;
+                                }
+                                builder.addToken(token);
+                            }
+                            arguments.add(builder.getRoot());
+
+                            if ("STEP".equalsIgnoreCase(token.getText())) {
+                                builder.setState(2);
+                                while (iter.hasNext()) {
+                                    builder.addToken(iter.next());
+                                }
+                                arguments.add(builder.getRoot());
+                            }
+                        }
+                    }
                 }
-                arguments.add(builder.getRoot());
             }
 
             line = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), text, arguments);
@@ -972,6 +1012,57 @@ public class Spin2Compiler {
                     line.addSource(new Tjz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
                 }
             }
+            else if (line.getArgumentsCount() == 3 || line.getArgumentsCount() == 4) {
+                Spin2MethodLine end = line.getChilds().get(0);
+                line.addSource(new Constant(line.getScope(), new Identifier(end.getLabel(), end.getScope())));
+
+                try {
+                    Expression from = buildConstantExpression(line.getScope(), line.getArgument(1));
+                    Expression to = buildConstantExpression(line.getScope(), line.getArgument(2));
+                    if (to.isConstant() && from.isConstant()) {
+                        if (to.getNumber().intValue() < from.getNumber().intValue()) {
+                            line.addSource(new Constant(line.getScope(), new NumberLiteral(from.getNumber().intValue())));
+                            if (line.getArgumentsCount() == 4) {
+                                line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(3), true));
+                            }
+                            line.addSource(new Constant(line.getScope(), new NumberLiteral(to.getNumber().intValue())));
+                        }
+                        else {
+                            line.addSource(new Constant(line.getScope(), new NumberLiteral(to.getNumber().intValue())));
+                            if (line.getArgumentsCount() == 4) {
+                                line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(3), true));
+                            }
+                            line.addSource(new Constant(line.getScope(), new NumberLiteral(from.getNumber().intValue())));
+                        }
+                    }
+                    else {
+                        line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(2), true));
+                        if (line.getArgumentsCount() == 4) {
+                            line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(3), true));
+                        }
+                        line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(1), true));
+                    }
+                } catch (Exception e) {
+                    line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(2), true));
+                    if (line.getArgumentsCount() == 4) {
+                        line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(3), true));
+                    }
+                    line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(1), true));
+                }
+
+                String varText = line.getArgument(0).getText();
+                Expression expression = line.getScope().getLocalSymbol(varText);
+                if (expression == null) {
+                    throw new Spin2CompilerMessage("undefined symbol " + varText, line.getArgument(0).getToken());
+                }
+                else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
+                    line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Setup, false, (Variable) expression));
+                    line.addSource(new Bytecode(line.getScope(), line.getArgumentsCount() == 4 ? 0x7D : 0x7C, "REPEAT"));
+                }
+                else {
+                    throw new RuntimeException("unsupported " + line.getArgument(0));
+                }
+            }
             else if (line.getArgumentsCount() != 0) {
                 throw new RuntimeException("unsupported");
             }
@@ -1035,6 +1126,20 @@ public class Spin2Compiler {
             if (target != null) {
                 if ("NEXT_DEC".equalsIgnoreCase(text)) {
                     line.addSource(new Djnz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                }
+                else if (target.getArgumentsCount() == 3 || target.getArgumentsCount() == 4) {
+                    String varText = target.getArgument(0).getText();
+                    Expression expression = line.getScope().getLocalSymbol(varText);
+                    if (expression == null) {
+                        throw new Spin2CompilerMessage("undefined symbol " + varText, target.getArgument(0).getToken());
+                    }
+                    else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
+                        line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Setup, false, (Variable) expression));
+                        line.addSource(new Bytecode(line.getScope(), 0x7E, "REPEAT_LOOP"));
+                    }
+                    else {
+                        throw new RuntimeException("unsupported " + line.getArgument(0));
+                    }
                 }
                 else {
                     line.addSource(new Jmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));

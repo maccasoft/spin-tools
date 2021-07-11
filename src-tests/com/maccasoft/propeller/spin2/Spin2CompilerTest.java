@@ -782,6 +782,217 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testRepeatRange() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    repeat a from 1 to 10\n"
+            + "        b := a + 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "01088 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "0108C 00004       16 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "01090 00008       08             (stack size)\n"
+            + "'     repeat a from 1 to 10\n"
+            + "01091 00009       45 0F          CONSTANT ($0000F)\n"
+            + "01093 0000B       AB             CONSTANT (10)\n"
+            + "01094 0000C       A2             CONSTANT (1)\n"
+            + "01095 0000D       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "01096 0000E       7C             REPEAT\n"
+            + "'         b := a + 1\n"
+            + "01097 0000F       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "01098 00010       A2             CONSTANT (1)\n"
+            + "01099 00011       8A             ADD\n"
+            + "0109A 00012       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "0109B 00013       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "0109C 00014       7E             REPEAT_LOOP\n"
+            + "0109D 00015       04             RETURN\n"
+            + "0109E 00016       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatRangeVariables() throws Exception {
+        String text = ""
+            + "PUB main() | a, b, c, d\n"
+            + "\n"
+            + "    repeat a from b to c\n"
+            + "        d := a + 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "01088 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "0108C 00004       16 00 00 00    End\n"
+            + "' PUB main() | a, b, c, d\n"
+            + "01090 00008       10             (stack size)\n"
+            + "'     repeat a from b to c\n"
+            + "01091 00009       45 0F          CONSTANT ($0000F)\n"
+            + "01093 0000B       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "01094 0000C       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "01095 0000D       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "01096 0000E       7C             REPEAT\n"
+            + "'         d := a + 1\n"
+            + "01097 0000F       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "01098 00010       A2             CONSTANT (1)\n"
+            + "01099 00011       8A             ADD\n"
+            + "0109A 00012       F3             VAR_WRITE LONG DBASE+$00003 (short)\n"
+            + "0109B 00013       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "0109C 00014       7E             REPEAT_LOOP\n"
+            + "0109D 00015       04             RETURN\n"
+            + "0109E 00016       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatRangeReverse() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    repeat a from 10 to 1\n"
+            + "        b := a + 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "01088 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "0108C 00004       16 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "01090 00008       08             (stack size)\n"
+            + "'     repeat a from 10 to 1\n"
+            + "01091 00009       45 0F          CONSTANT ($0000F)\n"
+            + "01093 0000B       AB             CONSTANT (10)\n"
+            + "01094 0000C       A2             CONSTANT (1)\n"
+            + "01095 0000D       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "01096 0000E       7C             REPEAT\n"
+            + "'         b := a + 1\n"
+            + "01097 0000F       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "01098 00010       A2             CONSTANT (1)\n"
+            + "01099 00011       8A             ADD\n"
+            + "0109A 00012       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "0109B 00013       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "0109C 00014       7E             REPEAT_LOOP\n"
+            + "0109D 00015       04             RETURN\n"
+            + "0109E 00016       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatRangeStep() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    repeat a from 1 to 10 step 5\n"
+            + "        b := a + 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "01088 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "0108C 00004       17 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "01090 00008       08             (stack size)\n"
+            + "'     repeat a from 1 to 10 step 5\n"
+            + "01091 00009       45 10          CONSTANT ($00010)\n"
+            + "01093 0000B       AB             CONSTANT (10)\n"
+            + "01094 0000C       A6             CONSTANT (5)\n"
+            + "01095 0000D       A2             CONSTANT (1)\n"
+            + "01096 0000E       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "01097 0000F       7D             REPEAT\n"
+            + "'         b := a + 1\n"
+            + "01098 00010       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "01099 00011       A2             CONSTANT (1)\n"
+            + "0109A 00012       8A             ADD\n"
+            + "0109B 00013       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "0109C 00014       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "0109D 00015       7E             REPEAT_LOOP\n"
+            + "0109E 00016       04             RETURN\n"
+            + "0109F 00017       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatRangeNextQuit() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    repeat a from 1 to 10 step 5\n"
+            + "        if b > 5\n"
+            + "            next\n"
+            + "        else\n"
+            + "            quit\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "01088 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "0108C 00004       1E 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "01090 00008       08             (stack size)\n"
+            + "'     repeat a from 1 to 10 step 5\n"
+            + "01091 00009       45 10          CONSTANT ($00010)\n"
+            + "01093 0000B       AB             CONSTANT (10)\n"
+            + "01094 0000C       A6             CONSTANT (5)\n"
+            + "01095 0000D       A2             CONSTANT (1)\n"
+            + "01096 0000E       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "01097 0000F       7D             REPEAT\n"
+            + "'         if b > 5\n"
+            + "01098 00010       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "01099 00011       A6             CONSTANT (5)\n"
+            + "0109A 00012       74             GREATER_THAN\n"
+            + "0109B 00013       13 05          JZ $00019 (5)\n"
+            + "'             next\n"
+            + "0109D 00015       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "0109E 00016       7E             REPEAT_LOOP\n"
+            + "0109F 00017       12 03          JMP $0001B (3)\n"
+            + "'         else\n"
+            + "'             quit\n"
+            + "010A1 00019       12 03          JMP $0001D (3)\n"
+            + "010A3 0001B       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "010A4 0001C       7E             REPEAT_LOOP\n"
+            + "010A5 0001D       04             RETURN\n"
+            + "010A6 0001E       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatAddressRange() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    repeat a from @c to @d\n"
+            + "        b := a + 1\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "c       long    1\n"
+            + "d       long    2\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "01088 00000       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "0108C 00004       22 00 00 00    End\n"
+            + "01090 00008   000 01 00 00 00    c                   long    1\n"
+            + "01094 0000C   001 02 00 00 00    d                   long    2\n"
+            + "' PUB main() | a, b\n"
+            + "01098 00010       08             (stack size)\n"
+            + "'     repeat a from @c to @d\n"
+            + "01099 00011       45 1B          CONSTANT ($0001B)\n"
+            + "0109B 00013       5C 0C 7F       MEM_ADDRESS PBASE+$0000C\n"
+            + "0109E 00016       5C 08 7F       MEM_ADDRESS PBASE+$00008\n"
+            + "010A1 00019       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "010A2 0001A       7C             REPEAT\n"
+            + "'         b := a + 1\n"
+            + "010A3 0001B       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "010A4 0001C       A2             CONSTANT (1)\n"
+            + "010A5 0001D       8A             ADD\n"
+            + "010A6 0001E       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "010A7 0001F       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "010A8 00020       7E             REPEAT_LOOP\n"
+            + "010A9 00021       04             RETURN\n"
+            + "010AA 00022       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testMethodCall() throws Exception {
         String text = ""
             + "PUB main()\n"

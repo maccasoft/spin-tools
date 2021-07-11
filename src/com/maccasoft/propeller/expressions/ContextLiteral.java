@@ -13,6 +13,11 @@ public class ContextLiteral extends Literal {
     }
 
     @Override
+    public boolean isConstant() {
+        return false;
+    }
+
+    @Override
     public Number getNumber() {
         return Long.valueOf(context.getAddress());
     }

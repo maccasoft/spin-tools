@@ -9,6 +9,11 @@ public class HubContextLiteral extends Literal {
     }
 
     @Override
+    public boolean isConstant() {
+        return false;
+    }
+
+    @Override
     public Number getNumber() {
         return context.getHubAddress();
     }
