@@ -650,6 +650,43 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testRepeatWhileQuit() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat while a < 1\n"
+            + "        if a == 1\n"
+            + "            quit\n"
+            + "        a := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "01088 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "0108C 00004       1A 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "01090 00008       04             (stack size)\n"
+            + "'     repeat while a < 1\n"
+            + "01091 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "01092 0000A       A2             CONSTANT (1)\n"
+            + "01093 0000B       6C             LESS_THAN\n"
+            + "01094 0000C       13 0C          JZ $00019 (12)\n"
+            + "'         if a == 1\n"
+            + "01096 0000E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "01097 0000F       A2             CONSTANT (1)\n"
+            + "01098 00010       70             EQUAL\n"
+            + "01099 00011       13 03          JZ $00015 (3)\n"
+            + "'             quit\n"
+            + "0109B 00013       12 05          JMP $00019 (5)\n"
+            + "'         a := 1\n"
+            + "0109D 00015       A2             CONSTANT (1)\n"
+            + "0109E 00016       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0109F 00017       12 71          JMP $00009 (-15)\n"
+            + "010A1 00019       04             RETURN\n"
+            + "010A2 0001A       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testRepeatPostWhile() throws Exception {
         String text = ""
             + "PUB main() | a\n"
