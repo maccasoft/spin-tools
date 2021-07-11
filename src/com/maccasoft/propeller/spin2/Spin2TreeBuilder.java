@@ -30,6 +30,8 @@ public class Spin2TreeBuilder {
         operatorPrecedence.put("[", -1);
         operatorPrecedence.put("]", 99);
 
+        operatorPrecedence.put("ENCOD", 2);
+
         operatorPrecedence.put(">>", 3);
         operatorPrecedence.put("<<", 3);
         operatorPrecedence.put("SAR", 3);
@@ -433,8 +435,13 @@ public class Spin2TreeBuilder {
                 state = 2;
                 break;
             }
-            case 2:
+            case 2: {
                 if ("(".equals(token.getText()) || "]".equals(token.getText())) {
+                    addOperatorToken(token);
+                    break;
+                }
+                Integer op = operatorPrecedence.get(token.getText().toUpperCase());
+                if (op != null && op.intValue() == 2) {
                     addOperatorToken(token);
                     break;
                 }
@@ -444,6 +451,7 @@ public class Spin2TreeBuilder {
                 addValueToken(token);
                 state = 3;
                 break;
+            }
             case 3: {
                 if ("(".equals(token.getText())) {
                     Spin2StatementNode node = operands.pop();

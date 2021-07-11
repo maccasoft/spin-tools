@@ -49,6 +49,8 @@ import com.maccasoft.propeller.model.LocalVariableNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
+import com.maccasoft.propeller.model.ObjectNode;
+import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
@@ -80,11 +82,15 @@ public class Spin2Compiler {
     List<Spin2Method> methods = new ArrayList<Spin2Method>();
     List<Spin2Bytecode> bytecodeSource = new ArrayList<Spin2Bytecode>();
 
+    List<Spin2Object> objects = new ArrayList<Spin2Object>();
+
     int varOffset = 4;
     int labelCounter;
 
     boolean errors;
     List<Spin2CompilerMessage> messages = new ArrayList<Spin2CompilerMessage>();
+
+    Spin2Object object = new Spin2Object();
 
     public Spin2Compiler() {
 
@@ -93,7 +99,6 @@ public class Spin2Compiler {
     public Spin2Object compile(Node root) {
         boolean hubMode = false;
         int address = 0, hubAddress = 0;
-        Spin2Object object = new Spin2Object();
 
         for (Node node : root.getChilds()) {
             if (node instanceof ConstantsNode) {
@@ -106,6 +111,8 @@ public class Spin2Compiler {
                 compileVarBlock(node);
             }
         }
+
+        object.setVarSize(varOffset);
 
         int _clkfreq = 20000000;
         if (scope.hasSymbol("_clkfreq")) {
@@ -132,6 +139,12 @@ public class Spin2Compiler {
 
         object.setClkFreq(_clkfreq);
         object.setClkMode(_clkmode);
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof ObjectsNode) {
+                compileObjBlock(node);
+            }
+        }
 
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
@@ -170,6 +183,18 @@ public class Spin2Compiler {
                     logMessage(new Spin2CompilerMessage(e.getMessage(), (Node) line.getData()));
                     e.printStackTrace();
                 }
+            }
+        }
+
+        LongDataObject[] ldo = new LongDataObject[objects.size() * 2];
+
+        if (objects.size() != 0) {
+            int index = 0;
+            for (int i = 0; i < objects.size(); i++) {
+                ldo[index] = object.writeLong(0, "");
+                index++;
+                ldo[index] = object.writeLong(0, "");
+                index++;
             }
         }
 
@@ -265,6 +290,31 @@ public class Spin2Compiler {
 
             object.alignToLong();
 
+            if (objects.size() != 0) {
+                index = 0;
+                ldo[index].setValue(object.getSize());
+                ldo[index].setText(String.format("Object @ $%05X", object.getSize()));
+                index++;
+                ldo[index].setValue(varOffset);
+                ldo[index].setText(String.format("Variables @ $%05X", varOffset));
+                index++;
+
+                Iterator<Spin2Object> iter = objects.iterator();
+                while (iter.hasNext()) {
+                    Spin2Object obj = iter.next();
+                    object.writeObject(obj);
+                    varOffset += obj.getVarSize();
+                    if (iter.hasNext()) {
+                        ldo[index].setValue(object.getSize());
+                        ldo[index].setText(String.format("Object @ PBASE+$%05X", object.getSize()));
+                        index++;
+                        ldo[index].setValue(varOffset);
+                        ldo[index].setText(String.format("Variables @ VBASE+$%05X", varOffset));
+                        index++;
+                    }
+                }
+            }
+
             Spin2Interpreter interpreter = new Spin2Interpreter();
             interpreter.setVBase(interpreter.getPBase() + object.getSize());
             interpreter.setDBase(interpreter.getPBase() + object.getSize() + varOffset);
@@ -272,6 +322,10 @@ public class Spin2Compiler {
             object.setInterpreter(interpreter);
         }
 
+        return object;
+    }
+
+    public Spin2Object getObject() {
         return object;
     }
 
@@ -283,12 +337,21 @@ public class Spin2Compiler {
             @Override
             public void visitConstantAssign(ConstantAssignNode node) {
                 String name = node.identifier.getText();
-                Expression expression = buildExpression(node.expression, scope);
-                expression.setData(node);
                 try {
-                    scope.addSymbol(name, expression);
+                    Expression expression = buildExpression(node.expression, scope);
+                    expression.setData(node);
+                    try {
+                        scope.addSymbol(name, expression);
+                    } catch (Spin2CompilerMessage e) {
+                        logMessage(e);
+                    } catch (Exception e) {
+                        logMessage(new Spin2CompilerMessage(e.getMessage(), node.identifier));
+                        e.printStackTrace();
+                    }
+                } catch (Spin2CompilerMessage e) {
+                    logMessage(e);
                 } catch (Exception e) {
-                    logMessage(new Spin2CompilerMessage(e.getMessage(), node.identifier));
+                    logMessage(new Spin2CompilerMessage(e.getMessage(), node.expression));
                     e.printStackTrace();
                 }
             }
@@ -363,6 +426,28 @@ public class Spin2Compiler {
             }
             varOffset += varSize;
         }
+    }
+
+    void compileObjBlock(Node parent) {
+
+        for (Node child : parent.getChilds()) {
+            ObjectNode node = (ObjectNode) child;
+            if (node.name != null && node.file != null) {
+                String text = getObjectSource(node.file.getText());
+
+                Spin2TokenStream stream = new Spin2TokenStream(text);
+                Spin2Parser subject = new Spin2Parser(stream);
+                Node root = subject.parse();
+
+                Spin2Compiler compiler = new Spin2Compiler();
+                objects.add(compiler.compile(root));
+            }
+
+        }
+    }
+
+    protected String getObjectSource(String fileName) {
+        return "";
     }
 
     void compileDatBlock(Node parent) {
@@ -1524,6 +1609,9 @@ public class Spin2Compiler {
                         expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
                     }
                     else {
+                        if (token.type != 0) {
+                            throw new Spin2CompilerMessage("unexpected " + token.getText(), token);
+                        }
                         expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
                     }
                     state = 1;
@@ -1626,12 +1714,15 @@ public class Spin2Compiler {
                         else {
                             expressionBuilder.addValueToken(new NumberLiteral(token.getText()));
                         }
+                        break;
                     }
                     else if (token.type == Token.STRING) {
                         expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
+                        break;
                     }
                     else {
                         expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
+                        break;
                     }
                     state = 0;
                     break;

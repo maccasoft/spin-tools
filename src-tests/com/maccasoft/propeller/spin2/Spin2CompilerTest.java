@@ -13,7 +13,9 @@ package com.maccasoft.propeller.spin2;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.DataLineNode;
@@ -21,6 +23,19 @@ import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
 
 class Spin2CompilerTest {
+
+    static String lineSeparator;
+
+    @BeforeAll
+    static void testSetup() {
+        lineSeparator = System.getProperty("line.separator");
+        System.setProperty("line.separator", "\n");
+    }
+
+    @AfterAll
+    static void testTerminate() {
+        System.setProperty("line.separator", lineSeparator);
+    }
 
     @Test
     void testDollarSymbol() throws Exception {
@@ -1517,6 +1532,68 @@ class Spin2CompilerTest {
             + "01098 00010       04             RETURN\n"
             + "01099 00011       00 00 00       Padding\n"
             + "", compile(text));
+    }
+
+    @Test
+    void testObject() throws Exception {
+        String text1 = ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "";
+
+        String text2 = ""
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "";
+
+        Spin2TokenStream stream = new Spin2TokenStream(text1);
+        Spin2Parser subject = new Spin2Parser(stream);
+        Node root = subject.parse();
+
+        Spin2Compiler compiler = new Spin2Compiler() {
+
+            @Override
+            protected String getObjectSource(String fileName) {
+                return text2;
+            }
+
+        };
+        Spin2Object obj = compiler.compile(root);
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        obj.generateListing(new PrintStream(os));
+
+        Assertions.assertEquals(""
+            + "01088 00000       14 00 00 00    Object @ $00014\n"
+            + "0108C 00004       04 00 00 00    Variables @ $00004\n"
+            + "01090 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "01094 0000C       14 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "01098 00010       04             (stack size)\n"
+            + "'     a := 1\n"
+            + "01099 00011       A2             CONSTANT (1)\n"
+            + "0109A 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0109B 00013       04             RETURN\n"
+            + "0109C 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
+            + "010A0 00004       0E 00 00 00    End\n"
+            + "' PUB start(a, b) | c\n"
+            + "010A4 00008       04             (stack size)\n"
+            + "'     c := a + b\n"
+            + "010A5 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "010A6 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "010A7 0000B       8A             ADD\n"
+            + "010A8 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "010A9 0000D       04             RETURN\n"
+            + "010AA 0000E       00 00          Padding\n"
+            + "", os.toString());
     }
 
     String compile(String text) throws Exception {

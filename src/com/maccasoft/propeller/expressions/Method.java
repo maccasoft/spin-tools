@@ -15,6 +15,7 @@ public class Method extends Expression {
     String name;
     int arguments;
     int returns;
+    int object;
     int offset;
 
     public Method(String name, int arguments, int returns, int offset) {
@@ -30,6 +31,14 @@ public class Method extends Expression {
 
     public int getReturnsCount() {
         return returns;
+    }
+
+    public int getObject() {
+        return object;
+    }
+
+    public void setObject(int object) {
+        this.object = object;
     }
 
     public int getOffset() {

@@ -23,8 +23,9 @@ public class Spin2Object {
     Spin2Interpreter interpreter;
     List<DataObject> data = new ArrayList<DataObject>();
 
-    int _clkfreq;
-    int _clkmode;
+    int clkfreq;
+    int clkmode;
+    int varSize;
 
     public static class DataObject {
         byte[] bytes;
@@ -50,6 +51,21 @@ public class Spin2Object {
         public CommentDataObject(String text) {
             super(null, text);
         }
+    }
+
+    public static class ObjectDataObject extends DataObject {
+
+        Spin2Object object;
+
+        public ObjectDataObject(Spin2Object object) {
+            super(null, null);
+            this.object = object;
+        }
+
+        public Spin2Object getObject() {
+            return object;
+        }
+
     }
 
     public static class LongDataObject extends DataObject {
@@ -237,7 +253,7 @@ public class Spin2Object {
     }
 
     public void writeObject(Spin2Object object) {
-        data.addAll(object.data);
+        data.add(new ObjectDataObject(object));
         size += object.size;
     }
 
@@ -266,22 +282,22 @@ public class Spin2Object {
     }
 
     public int getClkFreq() {
-        return _clkfreq;
+        return clkfreq;
     }
 
-    public void setClkFreq(int _clkfreq) {
-        this._clkfreq = _clkfreq;
+    public void setClkFreq(int clkfreq) {
+        this.clkfreq = clkfreq;
         if (interpreter != null) {
-            interpreter.setClkFreq(_clkfreq);
+            interpreter.setClkFreq(clkfreq);
         }
     }
 
     public int getClkMode() {
-        return _clkmode;
+        return clkmode;
     }
 
     public void setClkMode(int _clkmode) {
-        this._clkmode = _clkmode;
+        this.clkmode = _clkmode;
         if (interpreter != null) {
             interpreter.setClkMode(_clkmode);
         }
@@ -293,8 +309,16 @@ public class Spin2Object {
 
     public void setInterpreter(Spin2Interpreter interpreter) {
         this.interpreter = interpreter;
-        this.interpreter.setClkFreq(_clkfreq);
-        this.interpreter.setClkMode(_clkmode);
+        this.interpreter.setClkFreq(clkfreq);
+        this.interpreter.setClkMode(clkmode);
+    }
+
+    public int getVarSize() {
+        return varSize;
+    }
+
+    public void setVarSize(int varSize) {
+        this.varSize = varSize;
     }
 
     public void generateBinary(OutputStream os) throws IOException {
@@ -319,11 +343,18 @@ public class Spin2Object {
     }
 
     public void generateListing(PrintStream ps) {
-        int address = 0;
         int offset = interpreter != null ? interpreter.getPBase() : 0;
+        generateListing(offset, ps);
+    }
+
+    protected int generateListing(int offset, PrintStream ps) {
+        int address = 0;
 
         for (DataObject obj : data) {
-            if (obj.bytes != null) {
+            if (obj instanceof ObjectDataObject) {
+                address += ((ObjectDataObject) obj).getObject().generateListing(address + offset, ps);
+            }
+            else if (obj.bytes != null) {
                 if (obj instanceof PAsmDataObject) {
                     int cogAddr = ((PAsmDataObject) obj).addr;
 
@@ -392,6 +423,8 @@ public class Spin2Object {
                 ps.println("' " + obj.text);
             }
         }
+
+        return address;
     }
 
 }
