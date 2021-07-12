@@ -210,6 +210,13 @@ public class Spin1Compiler {
             ld[i] = object.writeLong(0, "Function " + methods.get(i).getLabel());
         }
 
+        WordDataObject[] headerOffset = new WordDataObject[objects.size()];
+        WordDataObject[] variablesOffset = new WordDataObject[objects.size()];
+        for (int i = 0; i < headerOffset.length; i++) {
+            headerOffset[i] = object.writeWord(0, "Header offset");
+            variablesOffset[i] = object.writeWord(0, "Var offset");
+        }
+
         for (Spin1PAsmLine line : source) {
             hubAddress = line.getScope().getHubAddress();
             if (object.getSize() < hubAddress) {
@@ -249,8 +256,13 @@ public class Spin1Compiler {
 
         //dcurr.setValue(dbase.getValue() + 4);
 
+        int index = 0;
         for (Spin1Object o : objects) {
+            headerOffset[index].setValue(object.getSize());
+            variablesOffset[index].setValue(varOffset);
             object.writeObject(o);
+            varOffset += o.getVarSize();
+            index++;
         }
 
         return object;
@@ -378,7 +390,7 @@ public class Spin1Compiler {
                 for (Spin1Method method : compiler.methods) {
                     String qualifiedName = node.name.getText() + "." + method.getLabel();
                     Method symbol = new Method(qualifiedName, method.getParametersCount(), method.getReturnsCount(), index++);
-                    symbol.setObject(objects.size());
+                    symbol.setObject(objects.size() + 1);
                     scope.addSymbol(qualifiedName, symbol);
                 }
             }
