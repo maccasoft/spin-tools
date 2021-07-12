@@ -13,23 +13,20 @@ package com.maccasoft.propeller.spin1.bytecode;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Identifier;
-import com.maccasoft.propeller.spin1.Spin1Bytecode;
+import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class Jmp extends Spin1Bytecode {
+public class RepeatLoop extends VariableOp {
 
-    int code;
     public Expression expression;
 
-    public Jmp(Spin1Context context, Expression expression) {
-        super(context);
-        this.code = 0b00000100;
-        this.expression = expression;
-    }
+    public Base b;
+    public Op oo;
+    boolean step;
 
-    public Jmp(Spin1Context context, int code, Expression expression) {
-        super(context);
-        this.code = code;
+    public RepeatLoop(Spin1Context context, Variable value, boolean step, Expression expression) {
+        super(context, Op.Assign, value);
+        this.step = step;
         this.expression = expression;
     }
 
@@ -37,51 +34,56 @@ public class Jmp extends Spin1Bytecode {
     public int getSize() {
         if (expression instanceof ContextLiteral) {
             if (!((ContextLiteral) expression).getContext().isAddressSet()) {
-                return 3;
+                return 4;
             }
         }
         else if (expression instanceof Identifier) {
             if (!((Identifier) expression).getContext().isAddressSet()) {
-                return 3;
+                return 4;
             }
         }
         int address = expression.getNumber().intValue();
-        int value = address - context.getAddress() - 2;
+        int value = address - context.getAddress() - 3;
         if (Math.abs(value) >= 0x40) {
             value--;
         }
-        return Math.abs(value) < 0x40 ? 2 : 3;
+        return Math.abs(value) < 0x40 ? 3 : 4;
     }
 
     @Override
     public byte[] getBytes() {
+        byte[] b0 = super.getBytes();
+
         int address = expression.getNumber().intValue();
-        int value = address - context.getAddress() - 2;
+        int value = address - context.getAddress() - 3;
         if (Math.abs(value) < 0x40) {
             return new byte[] {
-                (byte) code,
+                b0[0],
+                (byte) (step ? 0x06 : 0x02),
                 (byte) (value & 0x7F)
             };
         }
         else {
             value--;
             return new byte[] {
-                (byte) code,
+                b0[0],
+                (byte) (step ? 0x06 : 0x02),
                 (byte) ((value & 0x7F) | 0x80),
                 (byte) ((value >> 7) & 0x7F)
             };
         }
     }
 
-    public String toString(String prefix) {
-        int address = expression.getNumber().intValue();
-        int value = address - (context.getAddress() + getSize());
-        return prefix + String.format(" $%05X (%d)", address, value);
-    }
-
     @Override
     public String toString() {
-        return toString("JMP");
+        StringBuilder sb = new StringBuilder(super.toString());
+
+        int address = expression.getNumber().intValue();
+        int value = address - (context.getAddress() + getSize());
+        sb.append(" REPEAT-JMP");
+        sb.append(String.format(" $%05X (%d)", address, value));
+
+        return sb.toString();
     }
 
 }

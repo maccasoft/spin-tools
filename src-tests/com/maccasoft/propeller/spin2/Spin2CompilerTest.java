@@ -477,7 +477,7 @@ class Spin2CompilerTest {
     }
 
     @Test
-    void testRepeatCounter() throws Exception {
+    void testRepeatCount() throws Exception {
         String text = ""
             + "PUB main() | a\n"
             + "\n"
@@ -948,15 +948,14 @@ class Spin2CompilerTest {
     }
 
     @Test
-    void testRepeatRangeNextQuit() throws Exception {
+    void testRepeatRangeNext() throws Exception {
         String text = ""
             + "PUB main() | a, b\n"
             + "\n"
             + "    repeat a from 1 to 10 step 5\n"
             + "        if b > 5\n"
             + "            next\n"
-            + "        else\n"
-            + "            quit\n"
+            + "        b := a + 1\n"
             + "";
 
         Assertions.assertEquals(""
@@ -975,14 +974,56 @@ class Spin2CompilerTest {
             + "01098 00010       E1             VAR_READ LONG DBASE+$00001 (short)\n"
             + "01099 00011       A6             CONSTANT (5)\n"
             + "0109A 00012       74             GREATER_THAN\n"
-            + "0109B 00013       13 05          JZ $00019 (5)\n"
+            + "0109B 00013       13 03          JZ $00017 (3)\n"
             + "'             next\n"
-            + "0109D 00015       D0             VAR_LONG DBASE+$00000 (short)\n"
-            + "0109E 00016       7E             REPEAT_LOOP\n"
-            + "0109F 00017       12 03          JMP $0001B (3)\n"
-            + "'         else\n"
+            + "0109D 00015       12 05          JMP $0001B (5)\n"
+            + "'         b := a + 1\n"
+            + "0109F 00017       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "010A0 00018       A2             CONSTANT (1)\n"
+            + "010A1 00019       8A             ADD\n"
+            + "010A2 0001A       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "010A3 0001B       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "010A4 0001C       7E             REPEAT_LOOP\n"
+            + "010A5 0001D       04             RETURN\n"
+            + "010A6 0001E       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatRangeQuit() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    repeat a from 1 to 10 step 5\n"
+            + "        if b > 5\n"
+            + "            quit\n"
+            + "        b := a + 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "01088 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "0108C 00004       1E 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "01090 00008       08             (stack size)\n"
+            + "'     repeat a from 1 to 10 step 5\n"
+            + "01091 00009       45 10          CONSTANT ($00010)\n"
+            + "01093 0000B       AB             CONSTANT (10)\n"
+            + "01094 0000C       A6             CONSTANT (5)\n"
+            + "01095 0000D       A2             CONSTANT (1)\n"
+            + "01096 0000E       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "01097 0000F       7D             REPEAT\n"
+            + "'         if b > 5\n"
+            + "01098 00010       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "01099 00011       A6             CONSTANT (5)\n"
+            + "0109A 00012       74             GREATER_THAN\n"
+            + "0109B 00013       13 03          JZ $00017 (3)\n"
             + "'             quit\n"
-            + "010A1 00019       12 03          JMP $0001D (3)\n"
+            + "0109D 00015       12 07          JMP $0001D (7)\n"
+            + "'         b := a + 1\n"
+            + "0109F 00017       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "010A0 00018       A2             CONSTANT (1)\n"
+            + "010A1 00019       8A             ADD\n"
+            + "010A2 0001A       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
             + "010A3 0001B       D0             VAR_LONG DBASE+$00000 (short)\n"
             + "010A4 0001C       7E             REPEAT_LOOP\n"
             + "010A5 0001D       04             RETURN\n"

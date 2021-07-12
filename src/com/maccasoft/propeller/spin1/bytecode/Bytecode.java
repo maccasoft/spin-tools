@@ -10,35 +10,33 @@
 
 package com.maccasoft.propeller.spin1.bytecode;
 
-import com.maccasoft.propeller.spin1.Spin1BytecodeInstruction;
+import com.maccasoft.propeller.spin1.Spin1Bytecode;
 import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class Bytecode extends Spin1BytecodeInstruction {
+public class Bytecode extends Spin1Bytecode {
 
-    public int value;
-    public String text;
+    byte[] code;
 
-    public Bytecode(Spin1Context context, int value, String text) {
-        super(context);
-        this.value = value;
-        this.text = text;
+    public Bytecode(Spin1Context context, int code, String text) {
+        super(context, text.toUpperCase());
+        this.code = new byte[] {
+            (byte) code
+        };
+    }
+
+    public Bytecode(Spin1Context context, byte[] code, String text) {
+        super(context, text.toUpperCase());
+        this.code = code;
     }
 
     @Override
     public int getSize() {
-        return 1;
+        return code.length;
     }
 
     @Override
     public byte[] getBytes() {
-        return new byte[] {
-            (byte) value
-        };
-    }
-
-    @Override
-    public String toString() {
-        return text;
+        return code;
     }
 
 }

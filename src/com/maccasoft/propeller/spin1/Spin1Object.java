@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -20,6 +21,10 @@ public class Spin1Object {
 
     int size;
     List<DataObject> data = new ArrayList<DataObject>();
+
+    int clkfreq;
+    int clkmode;
+    int varSize;
 
     public static class DataObject {
         byte[] bytes;
@@ -34,35 +39,39 @@ public class Spin1Object {
             this.text = text;
         }
 
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder("   ");
+        public void setText(String text) {
+            this.text = text;
+        }
 
-            int i = 0;
-            if (bytes != null) {
-                while (i < bytes.length && i < 5) {
-                    sb.append(String.format(" %02X", bytes[i++]));
-                }
-            }
-            while (i < 5) {
-                sb.append("   ");
-                i++;
-            }
-            sb.append(" | ");
-            if (text != null) {
-                sb.append(text);
-            }
+    }
 
-            return sb.toString();
+    public static class CommentDataObject extends DataObject {
+
+        public CommentDataObject(String text) {
+            super(null, text);
+        }
+    }
+
+    public static class ObjectDataObject extends DataObject {
+
+        Spin1Object object;
+
+        public ObjectDataObject(Spin1Object object) {
+            super(null, null);
+            this.object = object;
+        }
+
+        public Spin1Object getObject() {
+            return object;
         }
 
     }
 
     public static class LongDataObject extends DataObject {
 
-        int value;
+        long value;
 
-        public LongDataObject(int value) {
+        public LongDataObject(long value) {
             super(new byte[] {
                 (byte) value,
                 (byte) (value >> 8),
@@ -72,7 +81,7 @@ public class Spin1Object {
             this.value = value;
         }
 
-        public LongDataObject(int value, String text) {
+        public LongDataObject(long value, String text) {
             super(new byte[] {
                 (byte) value,
                 (byte) (value >> 8),
@@ -82,11 +91,11 @@ public class Spin1Object {
             this.value = value;
         }
 
-        public int getValue() {
+        public long getValue() {
             return value;
         }
 
-        public void setValue(int value) {
+        public void setValue(long value) {
             this.bytes = new byte[] {
                 (byte) value,
                 (byte) (value >> 8),
@@ -174,43 +183,20 @@ public class Spin1Object {
             this.addr = addr;
         }
 
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append(String.format("%03X", addr));
-
-            int i = 0;
-            if (bytes != null) {
-                while (i < bytes.length && i < 4) {
-                    sb.append(String.format(" %02X", bytes[i++]));
-                }
-            }
-            while (i < 5) {
-                sb.append("   ");
-                i++;
-            }
-            sb.append(" | ");
-            if (text != null) {
-                sb.append(text);
-            }
-
-            return sb.toString();
-        }
-
     }
 
     public Spin1Object() {
 
     }
 
-    public LongDataObject writeLong(int value) {
+    public LongDataObject writeLong(long value) {
         LongDataObject rc = new LongDataObject(value);
         data.add(rc);
         size += 4;
         return rc;
     }
 
-    public LongDataObject writeLong(int value, String text) {
+    public LongDataObject writeLong(long value, String text) {
         LongDataObject rc = new LongDataObject(value, text);
         data.add(rc);
         size += 4;
@@ -265,6 +251,15 @@ public class Spin1Object {
         size += bytes.length;
     }
 
+    public void writeObject(Spin1Object object) {
+        data.add(new ObjectDataObject(object));
+        size += object.size;
+    }
+
+    public void writeComment(String text) {
+        data.add(new CommentDataObject(text));
+    }
+
     public int getSize() {
         return size;
     }
@@ -273,6 +268,7 @@ public class Spin1Object {
         if ((size % 2) != 0) {
             int padding = 2 - (size % 2);
             data.add(new DataObject(new byte[padding], "Padding"));
+            size += padding;
         }
     }
 
@@ -280,23 +276,135 @@ public class Spin1Object {
         if ((size % 4) != 0) {
             int padding = 4 - (size % 4);
             data.add(new DataObject(new byte[padding], "Padding"));
+            size += padding;
         }
     }
 
-    public void generateListing(int address, PrintStream ps) {
+    public int getClkFreq() {
+        return clkfreq;
+    }
 
+    public void setClkFreq(int clkfreq) {
+        this.clkfreq = clkfreq;
+    }
+
+    public int getClkMode() {
+        return clkmode;
+    }
+
+    public void setClkMode(int _clkmode) {
+        this.clkmode = _clkmode;
+    }
+
+    public int getVarSize() {
+        return varSize;
+    }
+
+    public void setVarSize(int varSize) {
+        this.varSize = varSize;
+    }
+
+    public void generateBinary(OutputStream os) throws IOException {
         for (DataObject obj : data) {
-            ps.print(String.format("%04X ", address));
-            ps.println(obj);
-            address += obj.bytes.length;
+            if (obj.bytes != null) {
+                os.write(obj.bytes);
+            }
         }
     }
 
-    public void writeBinary(OutputStream os) throws IOException {
+    public byte[] getBinary() throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        for (DataObject obj : data) {
+            if (obj.bytes != null) {
+                os.write(obj.bytes);
+            }
+        }
+        return os.toByteArray();
+    }
+
+    public void generateListing(PrintStream ps) {
+        int offset = 0;
+        generateListing(offset, ps);
+    }
+
+    protected int generateListing(int offset, PrintStream ps) {
+        int address = 0;
 
         for (DataObject obj : data) {
-            os.write(obj.bytes);
+            if (obj instanceof ObjectDataObject) {
+                address += ((ObjectDataObject) obj).getObject().generateListing(address + offset, ps);
+            }
+            else if (obj.bytes != null) {
+                if (obj instanceof PAsmDataObject) {
+                    int cogAddr = ((PAsmDataObject) obj).addr;
+
+                    ps.print(String.format("%05X %05X   ", address + offset, address));
+                    ps.print(cogAddr < 0x400 ? String.format("%03X", cogAddr) : "   ");
+
+                    int i = 0;
+                    while (i < obj.bytes.length) {
+                        if (i > 0 && (i % 4) == 0) {
+                            ps.print("   ");
+                            if (i == 4) {
+                                if (obj.text != null) {
+                                    ps.print(" " + obj.text);
+                                }
+                            }
+                            ps.println();
+                            cogAddr++;
+                            ps.print(String.format("%05X %05X   ", address + offset, address));
+                            ps.print(cogAddr < 0x400 ? String.format("%03X", cogAddr) : "   ");
+                        }
+                        ps.print(String.format(" %02X", obj.bytes[i++]));
+                        address++;
+                    }
+                    while (i < 4 || (i % 4) != 0) {
+                        ps.print("   ");
+                        i++;
+                    }
+                    ps.print("   ");
+                    if (i == 4) {
+                        if (obj.text != null) {
+                            ps.print(" " + obj.text);
+                        }
+                    }
+                    ps.println();
+                }
+                else if (obj.bytes.length != 0) {
+                    ps.print(String.format("%05X %05X      ", address + offset, address));
+
+                    int i = 0;
+                    while (i < obj.bytes.length) {
+                        if (i > 0 && (i % 5) == 0) {
+                            if (i == 5) {
+                                if (obj.text != null) {
+                                    ps.print(" " + obj.text);
+                                }
+                            }
+                            ps.println();
+                            ps.print(String.format("%05X %05X      ", address + offset, address));
+                        }
+                        ps.print(String.format(" %02X", obj.bytes[i++]));
+                        address++;
+                    }
+                    while (i < 5 || (i % 5) != 0) {
+                        ps.print("   ");
+                        i++;
+                    }
+                    if (i == 5) {
+                        if (obj.text != null) {
+                            ps.print(" " + obj.text);
+                        }
+                    }
+                    ps.println();
+                }
+            }
+            else if (obj.text != null) {
+                ps.println("' " + obj.text);
+            }
         }
+
+        return address;
     }
 
 }

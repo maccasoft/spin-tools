@@ -12,10 +12,10 @@ package com.maccasoft.propeller.spin1.bytecode;
 
 import org.apache.commons.lang3.BitField;
 
-import com.maccasoft.propeller.spin1.Spin1BytecodeInstruction;
+import com.maccasoft.propeller.spin1.Spin1Bytecode;
 import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class RegisterOp extends Spin1BytecodeInstruction {
+public class RegisterOp extends Spin1Bytecode {
 
     static final BitField op_oo = new BitField(0b0_11_00000);
     static final BitField op_xxxxx = new BitField(0b0_00_11111);
@@ -81,13 +81,13 @@ public class RegisterOp extends Spin1BytecodeInstruction {
         sb.append(String.format("$%03X", value));
 
         if (oo == Op.Assign) {
-            sb.append(" ");
-            sb.append(VariableOp.mathText[mathOp & 0x1F]);
-            sb.append(" ");
-            sb.append("ASSIGN");
-            if ((mathOp & 0b100_00000) != 0) {
-                sb.append(" (push)");
-            }
+            //sb.append(" ");
+            //sb.append(VariableOp.mathText[mathOp & 0x1F]);
+            //sb.append(" ");
+            //sb.append("ASSIGN");
+            //if ((mathOp & 0b100_00000) != 0) {
+            //    sb.append(" (push)");
+            //}
         }
         return sb.toString();
     }

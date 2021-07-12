@@ -13,18 +13,32 @@ package com.maccasoft.propeller.spin1;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.BitField;
+
+import com.maccasoft.propeller.expressions.LocalVariable;
+
 public class Spin1Method {
+
+    public static final BitField address = new BitField(0b0000000000000000_1111111111111111);
+    public static final BitField locals = new BitField(0b1111111111111111_0000000000000000);
 
     Spin1Context scope;
 
     String label;
-    int localSize;
+    List<LocalVariable> parameters;
+    List<LocalVariable> returns;
+    List<LocalVariable> localVariables;
 
-    List<Spin1BytecodeInstruction> source = new ArrayList<Spin1BytecodeInstruction>();
+    List<Spin1MethodLine> lines = new ArrayList<Spin1MethodLine>();
 
-    public Spin1Method(Spin1Context scope, String label) {
+    String comment;
+
+    public Spin1Method(Spin1Context scope, String label, List<LocalVariable> parameters, List<LocalVariable> returns, List<LocalVariable> localVariables) {
         this.scope = scope;
         this.label = label;
+        this.parameters = parameters;
+        this.returns = returns;
+        this.localVariables = localVariables;
     }
 
     public Spin1Context getScope() {
@@ -35,35 +49,71 @@ public class Spin1Method {
         return label;
     }
 
-    public void addBytecodeInstruction(Spin1BytecodeInstruction instruction) {
-        source.add(instruction);
-    }
-
-    public List<Spin1BytecodeInstruction> getSource() {
-        return source;
+    public void register() {
+        for (Spin1MethodLine line : lines) {
+            line.register(scope);
+        }
     }
 
     public int resolve(int address) {
-        scope.setAddress(address);
+        for (Spin1MethodLine line : lines) {
+            address = line.resolve(address);
+        }
         return address;
     }
 
-    public void setLocalSize(int localSize) {
-        this.localSize = localSize;
+    public int getReturnsCount() {
+        return returns.size();
     }
 
-    public int getLocalSize() {
-        return localSize;
+    public int getParametersCount() {
+        return parameters.size();
     }
 
-    public int getSize() {
-        int rc = 0;
+    public int getStackSize() {
+        int count = 0;
 
-        for (Spin1BytecodeInstruction instruction : source) {
-            rc += instruction.getSize();
+        for (LocalVariable var : localVariables) {
+            int size = 4;
+            if ("WORD".equalsIgnoreCase(var.getType())) {
+                size = 2;
+            }
+            else if ("BYTE".equalsIgnoreCase(var.getType())) {
+                size = 1;
+            }
+            if (var.getSize() != null) {
+                size = size * var.getSize().getNumber().intValue();
+            }
+            count += size;
         }
 
-        return rc;
+        return count;
+    }
+
+    public void addSource(Spin1MethodLine line) {
+        lines.add(line);
+    }
+
+    public List<Spin1MethodLine> getLines() {
+        return lines;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public void writeTo(Spin1Object obj) {
+        if (comment != null) {
+            obj.writeComment(comment);
+        }
+
+        for (Spin1MethodLine line : lines) {
+            line.writeTo(obj);
+        }
     }
 
 }

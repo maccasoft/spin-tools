@@ -78,10 +78,7 @@ public class Spin2Compiler {
 
     Spin2Context scope = new Spin2GlobalContext();
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
-
     List<Spin2Method> methods = new ArrayList<Spin2Method>();
-    List<Spin2Bytecode> bytecodeSource = new ArrayList<Spin2Bytecode>();
-
     List<Spin2Object> objects = new ArrayList<Spin2Object>();
 
     int varOffset = 4;
@@ -854,11 +851,18 @@ public class Spin2Compiler {
                             loopLine = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), null, Collections.emptyList());
                             line.addChild(loopLine);
                         }
-                        line.setData("next", loopLine);
 
                         line.addChilds(compileStatements(context, node.getChilds()));
 
-                        line.addChild(new Spin2MethodLine(context, String.format(".label_" + labelCounter++), "NEXT", Collections.emptyList()));
+                        if (arguments.size() == 3 || arguments.size() == 4) {
+                            loopLine = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), "REPEAT-LOOP", Collections.emptyList());
+                            line.addChild(loopLine);
+                        }
+                        else {
+                            line.addChild(new Spin2MethodLine(context, String.format(".label_" + labelCounter++), "NEXT", Collections.emptyList()));
+                        }
+
+                        line.setData("next", loopLine);
 
                         Spin2MethodLine quitLine = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), null, Collections.emptyList());
                         lines.add(quitLine);
@@ -1011,7 +1015,7 @@ public class Spin2Compiler {
             }
             line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), true));
             Spin2MethodLine target = (Spin2MethodLine) line.getData("false");
-            line.addSource(new Jz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+            line.addSource(new Jnz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
         }
         else if ("ELSE".equalsIgnoreCase(text)) {
 
@@ -1149,22 +1153,30 @@ public class Spin2Compiler {
             else if (repeat.getArgumentsCount() == 1) {
                 line.addSource(new Djnz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
             }
-            else if (repeat.getArgumentsCount() == 3 || repeat.getArgumentsCount() == 4) {
-                String varText = repeat.getArgument(0).getText();
-                Expression expression = line.getScope().getLocalSymbol(varText);
-                if (expression == null) {
-                    throw new Spin2CompilerMessage("undefined symbol " + varText, repeat.getArgument(0).getToken());
-                }
-                else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
-                    line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Setup, false, (Variable) expression));
-                    line.addSource(new Bytecode(line.getScope(), 0x7E, "REPEAT_LOOP"));
-                }
-                else {
-                    throw new RuntimeException("unsupported " + line.getArgument(0));
-                }
-            }
             else {
                 line.addSource(new Jmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+            }
+        }
+        else if ("REPEAT-LOOP".equalsIgnoreCase(text)) {
+            Spin2MethodLine repeat = line.getParent();
+            while (repeat != null) {
+                if ("REPEAT".equalsIgnoreCase(repeat.getStatement())) {
+                    break;
+                }
+                repeat = repeat.getParent();
+            }
+
+            String varText = repeat.getArgument(0).getText();
+            Expression expression = line.getScope().getLocalSymbol(varText);
+            if (expression == null) {
+                throw new Spin2CompilerMessage("undefined symbol " + varText, repeat.getArgument(0).getToken());
+            }
+            else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
+                line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Setup, false, (Variable) expression));
+                line.addSource(new Bytecode(line.getScope(), 0x7E, "REPEAT_LOOP"));
+            }
+            else {
+                throw new RuntimeException("unsupported " + line.getArgument(0));
             }
         }
         else if ("QUIT".equalsIgnoreCase(text)) {

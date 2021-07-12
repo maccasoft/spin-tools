@@ -14,10 +14,11 @@ import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin1.Spin1BytecodeInstruction;
+import com.maccasoft.propeller.expressions.Variable;
+import com.maccasoft.propeller.spin1.Spin1Bytecode;
 import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class MemoryOp extends Spin1BytecodeInstruction {
+public class MemoryOp extends Spin1Bytecode {
 
     static final BitField op_ss = new BitField(0b0_11_0_00_00);
     static final BitField op_i = new BitField(0b0_00_1_00_00);
@@ -53,15 +54,35 @@ public class MemoryOp extends Spin1BytecodeInstruction {
 
     @Override
     public int getSize() {
-        int value = expression.getNumber().intValue();
-        if (bb == Base.PBase && (expression instanceof ContextLiteral)) {
+        int value;
+        if (expression instanceof ContextLiteral) {
+            if (!((ContextLiteral) expression).getContext().isAddressSet()) {
+                return 3;
+            }
             value = ((ContextLiteral) expression).getContext().getHubAddress();
+        }
+        else if (expression instanceof Variable) {
+            value = ((Variable) expression).getOffset();
+        }
+        else {
+            value = expression.getNumber().intValue();
         }
         return value < 127 ? 2 : 3;
     }
 
     @Override
     public byte[] getBytes() {
+        int value;
+        if (expression instanceof ContextLiteral) {
+            value = ((ContextLiteral) expression).getContext().getHubAddress();
+        }
+        else if (expression instanceof Variable) {
+            value = ((Variable) expression).getOffset();
+        }
+        else {
+            value = expression.getNumber().intValue();
+        }
+
         int b0 = 0b1_00_0_00_00;
         b0 = op_ss.setValue(b0, ss.ordinal());
         b0 = op_i.setBoolean(b0, i);
@@ -74,7 +95,6 @@ public class MemoryOp extends Spin1BytecodeInstruction {
             };
         }
 
-        int value = expression.getNumber().intValue();
         if (bb == Base.PBase && (expression instanceof ContextLiteral)) {
             value = ((ContextLiteral) expression).getContext().getHubAddress();
         }
