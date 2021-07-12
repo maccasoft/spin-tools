@@ -36,6 +36,8 @@ import com.maccasoft.propeller.model.LocalVariableNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
+import com.maccasoft.propeller.model.ObjectNode;
+import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
@@ -45,6 +47,8 @@ import com.maccasoft.propeller.spin1.Spin1Bytecode.Descriptor;
 import com.maccasoft.propeller.spin1.Spin1Object.LongDataObject;
 import com.maccasoft.propeller.spin1.Spin1Object.WordDataObject;
 import com.maccasoft.propeller.spin1.bytecode.Bytecode;
+import com.maccasoft.propeller.spin1.bytecode.CaseJmp;
+import com.maccasoft.propeller.spin1.bytecode.CaseRangeJmp;
 import com.maccasoft.propeller.spin1.bytecode.Constant;
 import com.maccasoft.propeller.spin1.bytecode.Djnz;
 import com.maccasoft.propeller.spin1.bytecode.Jmp;
@@ -56,12 +60,14 @@ import com.maccasoft.propeller.spin1.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
 import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
+import com.maccasoft.propeller.spin2.Spin2CompilerMessage;
 
 public class Spin1Compiler {
 
     Spin1Context scope = new Spin1GlobalContext();
     List<Spin1PAsmLine> source = new ArrayList<Spin1PAsmLine>();
     List<Spin1Method> methods = new ArrayList<Spin1Method>();
+    List<Spin1Object> objects = new ArrayList<Spin1Object>();
 
     int varOffset = 0;
     int labelCounter;
@@ -82,7 +88,22 @@ public class Spin1Compiler {
         object.writeByte(scope.getLocalSymbol("CLKMODE").getNumber().intValue(), "CLKMODE");
         object.writeByte(0, "Checksum");
 
+        WordDataObject pbase = object.writeWord(0, "PBASE");
+        WordDataObject vbase = object.writeWord(0, "VBASE");
+        WordDataObject dbase = object.writeWord(0, "DBASE");
+
+        WordDataObject pcurr = object.writeWord(0, "PCURR");
+        WordDataObject dcurr = object.writeWord(0, "DCURR");
+
+        pbase.setValue(object.getSize());
+
         object.writeObject(obj);
+
+        vbase.setValue(object.getSize());
+        dbase.setValue(object.getSize() + obj.getVarSize() + 8);
+
+        pcurr.setValue((int) (pbase.getValue() + (((LongDataObject) obj.getObject(4)).getValue() & 0xFFFF)));
+        dcurr.setValue(dbase.getValue() + 4);
 
         return object;
     }
@@ -108,6 +129,12 @@ public class Spin1Compiler {
         determineClock();
 
         for (Node node : root.getChilds()) {
+            if (node instanceof ObjectsNode) {
+                compileObjBlock(node);
+            }
+        }
+
+        for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
                 compileDatBlock(node);
             }
@@ -116,20 +143,20 @@ public class Spin1Compiler {
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PUB".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin1Method method = compileMethod((MethodNode) node);
+                methods.add(method);
                 scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 method.register();
-                methods.add(method);
             }
         }
 
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PRI".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin1Method method = compileMethod((MethodNode) node);
+                methods.add(method);
                 scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 method.register();
-                methods.add(method);
             }
         }
 
@@ -176,7 +203,7 @@ public class Spin1Compiler {
 
         WordDataObject objectSize = object.writeWord(0, "Object size");
         object.writeByte(methods.size() + 1, "Method count + 1");
-        object.writeByte(0, "Object count");
+        object.writeByte(objects.size(), "Object count");
 
         LongDataObject[] ld = new LongDataObject[methods.size()];
         for (int i = 0; i < ld.length; i++) {
@@ -221,6 +248,10 @@ public class Spin1Compiler {
         //dbase.setValue(vbase.getValue() + varOffset + 4);
 
         //dcurr.setValue(dbase.getValue() + 4);
+
+        for (Spin1Object o : objects) {
+            object.writeObject(o);
+        }
 
         return object;
     }
@@ -326,6 +357,37 @@ public class Spin1Compiler {
             }
             varOffset += varSize;
         }
+    }
+
+    void compileObjBlock(Node parent) {
+
+        for (Node child : parent.getChilds()) {
+            ObjectNode node = (ObjectNode) child;
+            if (node.name != null && node.file != null) {
+                String file = node.file.getText().substring(1);
+                String text = getObjectSource(file.substring(0, file.length() - 1));
+
+                Spin1TokenStream stream = new Spin1TokenStream(text);
+                Spin1Parser subject = new Spin1Parser(stream);
+                Node root = subject.parse();
+
+                Spin1Compiler compiler = new Spin1Compiler();
+                objects.add(compiler.compileObject(root));
+
+                int index = 1;
+                for (Spin1Method method : compiler.methods) {
+                    String qualifiedName = node.name.getText() + "." + method.getLabel();
+                    Method symbol = new Method(qualifiedName, method.getParametersCount(), method.getReturnsCount(), index++);
+                    symbol.setObject(objects.size());
+                    scope.addSymbol(qualifiedName, symbol);
+                }
+            }
+
+        }
+    }
+
+    protected String getObjectSource(String fileName) {
+        return "";
     }
 
     void compileDatBlock(Node parent) {
@@ -779,13 +841,13 @@ public class Spin1Compiler {
 
                                 Spin1StatementNode expression = builder.getRoot();
                                 if ("OTHER".equalsIgnoreCase(expression.getText())) {
-                                    line.childs.add(0, targetLine);
+                                    expression.setData("other", targetLine);
                                 }
                                 else {
                                     expression.setData("true", targetLine);
-                                    line.addChild(targetLine);
-                                    arguments.add(expression);
                                 }
+                                line.addChild(targetLine);
+                                arguments.add(expression);
                             }
                         }
 
@@ -1034,6 +1096,53 @@ public class Spin1Compiler {
                 throw new RuntimeException("unsupported");
             }
         }
+        else if ("CASE".equalsIgnoreCase(text)) {
+            Spin1MethodLine end = (Spin1MethodLine) line.getData("end");
+            line.addSource(new Constant(line.getScope(), new Identifier(end.getLabel(), end.getScope())));
+
+            for (Spin1StatementNode arg : line.getArguments()) {
+                Spin1MethodLine target = (Spin1MethodLine) arg.getData("true");
+                if (target != null) {
+                    if ("..".equals(arg.getText())) {
+                        line.addSource(compileBytecodeExpression(line.getScope(), arg.getChild(0), false));
+                        line.addSource(compileBytecodeExpression(line.getScope(), arg.getChild(1), false));
+                        line.addSource(new CaseRangeJmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                    }
+                    else {
+                        line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
+                        line.addSource(new CaseJmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                    }
+                }
+                else {
+                    target = (Spin1MethodLine) arg.getData("other");
+                    if (target != null) {
+                        line.addSource(new Jmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                    }
+                    else {
+                        line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
+                    }
+                }
+            }
+        }
+        else if ("CASE_DONE".equalsIgnoreCase(text)) {
+            line.addSource(new Bytecode(line.getScope(), 0x0C, text));
+        }
+        else if (text != null) {
+            Descriptor desc = Spin1Bytecode.getDescriptor(text);
+            if (desc != null) {
+                if (line.getArgumentsCount() != desc.parameters) {
+                    throw new Spin2CompilerMessage("expected " + desc.parameters + " argument(s), found " + line.getArgumentsCount(), (Node) line.getData());
+                }
+                for (Spin1StatementNode arg : line.getArguments()) {
+                    List<Spin1Bytecode> list = compileBytecodeExpression(line.getScope(), arg, true);
+                    line.addSource(list);
+                }
+                line.addSource(new Bytecode(line.getScope(), desc.code, text));
+            }
+            else {
+                //throw new RuntimeException("unknown " + text);
+            }
+        }
         else {
             for (Spin1StatementNode arg : line.getArguments()) {
                 line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
@@ -1084,8 +1193,8 @@ public class Spin1Compiler {
         List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
 
         Spin1StatementNode argsNode = node;
-        if (node.getChildCount() == 1 && ",".equals(node.getChild(0).getText())) {
-            argsNode = node.getChild(0);
+        if (argsNode.getChildCount() == 1 && ",".equals(argsNode.getChild(0).getText())) {
+            argsNode = argsNode.getChild(0);
         }
 
         Descriptor desc = Spin1Bytecode.getDescriptor(node.getText());
@@ -1101,6 +1210,17 @@ public class Spin1Compiler {
         else if (node.getType() == Token.NUMBER) {
             Expression expression = new NumberLiteral(node.getText());
             source.add(new Constant(context, expression));
+        }
+        else if (node.getType() == Token.STRING) {
+            String s = node.getText().substring(1);
+            s = s.substring(0, s.length() - 1);
+            if (s.length() == 1) {
+                Expression expression = new CharacterLiteral(s.charAt(0));
+                source.add(new Constant(context, expression));
+            }
+            else {
+                throw new RuntimeException("string not yet implemented " + node.getText());
+            }
         }
         else if (":=".equals(node.getText())) {
             source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
@@ -1127,20 +1247,21 @@ public class Spin1Compiler {
 
             Spin1StatementNode left = node.getChild(0);
             if (left.getType() == Token.OPERATOR) {
-                source.addAll(compileBytecodeExpression(context, left, push));
+                source.addAll(compileBytecodeExpression(context, left, true));
             }
             else {
                 Expression expression = context.getLocalSymbol(left.getText());
                 if (expression instanceof Register) {
-                    source.add(new RegisterOp(context, RegisterOp.Op.Write, expression.getNumber().intValue()));
+                    source.add(new RegisterOp(context, RegisterOp.Op.Assign, expression.getNumber().intValue()));
                 }
                 else if (expression instanceof Variable) {
-                    source.add(new VariableOp(context, VariableOp.Op.Write, (Variable) expression));
+                    source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
                 }
                 else {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Long, !push, MemoryOp.Base.PBase, MemoryOp.Op.Write, expression));
+                    source.add(new MemoryOp(context, MemoryOp.Size.Long, !push, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
                 }
             }
+            source.add(new MathOp(context, node.getText()));
         }
         else if (MathOp.isMathOp(node.getText())) {
             if (node.getChildCount() != 2) {
@@ -1150,11 +1271,85 @@ public class Spin1Compiler {
             source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
             source.add(new MathOp(context, node.getText()));
         }
+        else if ("[".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 2) {
+                throw new RuntimeException("statement syntax error");
+            }
+            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+
+            Expression expression = context.getLocalSymbol(node.getChild(0).getText());
+            if (expression instanceof Register) {
+                source.add(new RegisterOp(context, push ? RegisterOp.Op.Assign : RegisterOp.Op.Write, expression.getNumber().intValue()));
+            }
+            else if (expression instanceof Variable) {
+                source.add(new VariableOp(context, push ? VariableOp.Op.Assign : VariableOp.Op.Write, (Variable) expression));
+            }
+            else {
+                source.add(new MemoryOp(context, MemoryOp.Size.Long, !push, MemoryOp.Base.PBase, MemoryOp.Op.Write, expression));
+            }
+        }
+        else if ("?".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 3) {
+                throw new RuntimeException("expression syntax error " + node.getText());
+            }
+
+            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+
+            List<Spin1Bytecode> falseSource = compileBytecodeExpression(context, node.getChild(2), true);
+            source.add(new Jz(context, new ContextLiteral(falseSource.get(0).getContext())));
+            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+
+            Spin1Bytecode endSource = new Spin1Bytecode(context);
+            source.add(new Jmp(context, new ContextLiteral(endSource.getContext())));
+
+            source.addAll(falseSource);
+            source.add(endSource);
+        }
         else if ("(".equalsIgnoreCase(node.getText())) {
             source.addAll(compileBytecodeExpression(context, node.getChild(0), push));
         }
+        else if ("\\".equalsIgnoreCase(node.getText())) {
+            Expression expression = context.getLocalSymbol(node.getChild(0).getText());
+            if (!(expression instanceof Method)) {
+                throw new RuntimeException("invalid symbol " + node.getText());
+            }
+
+            argsNode = node.getChild(0);
+            if (argsNode.getChildCount() == 1 && ",".equals(argsNode.getChild(0).getText())) {
+                argsNode = argsNode.getChild(0);
+            }
+
+            int parameters = ((Method) expression).getArgumentsCount();
+            if (argsNode.getChildCount() != parameters) {
+                throw new RuntimeException("expected " + parameters + " argument(s), found " + argsNode.getChildCount());
+            }
+            source.add(new Bytecode(context, new byte[] {
+                (byte) 0b00000011,
+            }, "ANCHOR (TRY)"));
+            for (int i = 0; i < parameters; i++) {
+                source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
+            }
+            int objectIndex = ((Method) expression).getObject();
+            int objectOffset = ((Method) expression).getOffset();
+            if (objectIndex == 0) {
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) 0b00000101,
+                    (byte) objectOffset
+                }, "CALL_SUB"));
+            }
+            else {
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) 0b00000110,
+                    (byte) objectIndex,
+                    (byte) objectOffset
+                }, "CALL_OBJ_SUB"));
+            }
+        }
         else {
             Expression expression = context.getLocalSymbol(node.getText());
+            if (expression == null) {
+                throw new RuntimeException("undefined symbol " + node.getText());
+            }
             if (expression instanceof Register) {
                 source.add(new RegisterOp(context, RegisterOp.Op.Read, expression.getNumber().intValue()));
             }
@@ -1164,6 +1359,33 @@ public class Spin1Compiler {
                 }
                 else {
                     source.add(new VariableOp(context, VariableOp.Op.Read, (Variable) expression));
+                }
+            }
+            else if (expression instanceof Method) {
+                int parameters = ((Method) expression).getArgumentsCount();
+                if (argsNode.getChildCount() != parameters) {
+                    throw new RuntimeException("expected " + parameters + " argument(s), found " + argsNode.getChildCount());
+                }
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) 0b00000001,
+                }, "ANCHOR"));
+                for (int i = 0; i < parameters; i++) {
+                    source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
+                }
+                int objectIndex = ((Method) expression).getObject();
+                int objectOffset = ((Method) expression).getOffset();
+                if (objectIndex == 0) {
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) 0b00000101,
+                        (byte) objectOffset
+                    }, "CALL_SUB"));
+                }
+                else {
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) 0b00000110,
+                        (byte) objectIndex,
+                        (byte) objectOffset
+                    }, "CALL_OBJ_SUB"));
                 }
             }
             else {

@@ -70,6 +70,10 @@ public class Spin1Bytecode {
         this.text = text;
     }
 
+    public Spin1Context getContext() {
+        return context;
+    }
+
     public int resolve(int address) {
         context.setAddress(address);
         return address + getSize();

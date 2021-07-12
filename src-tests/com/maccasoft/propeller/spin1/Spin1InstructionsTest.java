@@ -524,7 +524,7 @@ class Spin1InstructionsTest {
         Node root = parser.parse();
 
         Spin1Compiler compiler = new Spin1Compiler();
-        compiler.compile(root);
+        compiler.compileObject(root);
 
         Spin1InstructionObject obj = compiler.source.get(0).getInstructionObject();
         return obj.getBytes();

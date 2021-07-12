@@ -664,16 +664,6 @@ public class Spin2Compiler {
         return method;
     }
 
-    void print(Spin2MethodLine line) {
-        System.out.println(line);
-        for (Spin2StatementNode arg : line.getArguments()) {
-            print(arg, 1);
-        }
-        for (Spin2MethodLine child : line.getChilds()) {
-            print(child);
-        }
-    }
-
     List<Spin2MethodLine> compileStatements(Spin2Context context, List<Node> childs) {
         List<Spin2MethodLine> lines = new ArrayList<Spin2MethodLine>();
 
@@ -983,6 +973,7 @@ public class Spin2Compiler {
 
     void compileLine(Spin2MethodLine line) {
         String text = line.getStatement();
+
         if ("ABORT".equalsIgnoreCase(text)) {
             if (line.getArgumentsCount() == 0) {
                 line.addSource(new Bytecode(line.getScope(), 0x06, text));
@@ -1874,78 +1865,6 @@ public class Spin2Compiler {
         }
 
         return expressionBuilder.getExpression();
-    }
-
-    public static void main(String[] args) {
-        String text = ""
-            + "";
-
-        try {
-            Spin2TokenStream stream = new Spin2TokenStream(text);
-            Spin2Parser subject = new Spin2Parser(stream);
-            Node root = subject.parse();
-
-            Spin2Compiler compiler = new Spin2Compiler();
-            Spin2Object obj = compiler.compile(root);
-
-            obj.generateListing(System.out);
-
-            //FileOutputStream os = new FileOutputStream("test.binary");
-            //binary.generateBinary(os);
-            //os.close();
-
-            //System.out.println(String.format("PBASE: $%05X", interpreter.getPBase()));
-            //System.out.println(String.format("VBASE: $%05X", interpreter.getVBase()));
-            //System.out.println(String.format("DBASE: $%05X", interpreter.getDBase()));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    static void print(Node node, int indent) {
-        if (indent != 0) {
-            for (int i = 1; i < indent; i++) {
-                System.out.print("|    ");
-            }
-            System.out.print("+--- ");
-        }
-
-        System.out.print(node.getClass().getSimpleName());
-        //System.out.print(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
-        for (Token token : node.getTokens()) {
-            System.out.print(" [" + token.getText() + "]");
-        }
-        System.out.println();
-
-        for (Node child : node.getChilds()) {
-            print(child, indent + 1);
-        }
-    }
-
-    static void print(Spin2StatementNode node, int indent) {
-        if (indent != 0) {
-            for (int i = 1; i < indent; i++) {
-                System.out.print("|    ");
-            }
-            System.out.print("+--- ");
-        }
-
-        System.out.print(node.getClass().getSimpleName());
-        System.out.print(" [" + node.getText().replaceAll("\n", "\\\\n") + "] " + node.getPropertiesText());
-        if (node.getData("true") != null) {
-            Spin2MethodLine line = (Spin2MethodLine) node.getData("true");
-            System.out.print(" true -> " + line.getLabel());
-        }
-        if (node.getData("false") != null) {
-            Spin2MethodLine line = (Spin2MethodLine) node.getData("false");
-            System.out.print(" false -> " + line.getLabel());
-        }
-        System.out.println();
-
-        for (Spin2StatementNode child : node.getChilds()) {
-            print(child, indent + 1);
-        }
     }
 
 }

@@ -260,6 +260,10 @@ public class Spin1Object {
         data.add(new CommentDataObject(text));
     }
 
+    public DataObject getObject(int index) {
+        return data.get(index);
+    }
+
     public int getSize() {
         return size;
     }

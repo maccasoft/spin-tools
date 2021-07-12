@@ -8,7 +8,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin2;
+package com.maccasoft.propeller.spin1;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.Token;
 
-class Spin2TreeBuilderTest {
+class Spin1TreeBuilderTest {
 
     @Test
     void testOperatorPrecedence() {
@@ -309,10 +309,10 @@ class Spin2TreeBuilderTest {
     }
 
     String parse(int state, String text) {
-        Spin2TreeBuilder builder = new Spin2TreeBuilder();
+        Spin1TreeBuilder builder = new Spin1TreeBuilder();
         builder.setState(state);
 
-        Spin2TokenStream stream = new Spin2TokenStream(text);
+        Spin1TokenStream stream = new Spin1TokenStream(text);
         while (true) {
             Token token = stream.nextToken();
             if (token.type == Token.EOF) {
@@ -321,14 +321,14 @@ class Spin2TreeBuilderTest {
             builder.addToken(token);
         }
 
-        Spin2StatementNode root = builder.getRoot();
+        Spin1StatementNode root = builder.getRoot();
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         print(new PrintStream(os), root, 0);
         return os.toString();
     }
 
-    void print(PrintStream out, Spin2StatementNode node, int indent) {
+    void print(PrintStream out, Spin1StatementNode node, int indent) {
         if (indent != 0) {
             for (int i = 1; i < indent; i++) {
                 out.print("     ");
@@ -339,7 +339,7 @@ class Spin2TreeBuilderTest {
         out.print("[" + node.getText().replaceAll("\n", "\\\\n") + "]");
         out.println();
 
-        for (Spin2StatementNode child : node.getChilds()) {
+        for (Spin1StatementNode child : node.getChilds()) {
             print(out, child, indent + 1);
         }
     }

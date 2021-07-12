@@ -527,58 +527,13 @@ public class Spin1Parser {
                 }
                 ternary--;
             }
-            if ("(".equals(token.getText())) {
-                token = parseSubStatement(statement, token);
-                if (token.type == Token.NL || token.type == Token.EOF) {
-                    break;
-                }
-                if (")".equals(token.getText())) {
-                    statement.addToken(token);
-                }
-                token = stream.nextToken();
-            }
-            else {
-                token = stream.nextToken();
-            }
+            token = stream.nextToken();
             if (token.type == Token.NL || token.type == Token.EOF) {
                 break;
             }
         }
 
         return statement;
-    }
-
-    Token parseSubStatement(Node parent, Token token) {
-        Node node = new Node(parent);
-
-        while (true) {
-            token = stream.nextToken();
-            if (token.type == Token.NL || token.type == Token.EOF) {
-                return token;
-            }
-            if ("(".equals(token.getText())) {
-                token = parseSubStatement(node, token);
-                if (token.type == Token.NL || token.type == Token.EOF) {
-                    return token;
-                }
-                if (")".equals(token.getText())) {
-                    parent.addToken(token);
-                    continue;
-                }
-            }
-            if (",".equals(token.getText())) {
-                parent.addToken(token);
-                node = new Node(parent);
-                continue;
-            }
-            else if (")".equals(token.getText())) {
-                if (node.getParent() != parent) {
-                    node = node.getParent();
-                }
-                return token;
-            }
-            node.addToken(token);
-        }
     }
 
     void parseDat(Token start) {

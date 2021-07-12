@@ -12,6 +12,9 @@ package com.maccasoft.propeller.spin1;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -712,6 +715,190 @@ class Spin1CompilerTest {
     }
 
     @Test
+    void testModifyExpressions() throws Exception {
+        String text = ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a += 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main | a\n"
+            + "'     a += 1\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0000A 0000A       4C             ADD\n"
+            + "0000B 0000B       32             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testCase() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    case a\n"
+            + "        1: a := 4\n"
+            + "        2: a := 5\n"
+            + "        3: a := 6\n"
+            + "        other: a := 7\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       2C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main() | a\n"
+            + "'     case a\n"
+            + "00008 00008       38 28          CONSTANT (.label_13)\n"
+            + "0000A 0000A       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0000B 0000B       36             CONSTANT (1)\n"
+            + "0000C 0000C       0D 0A          CASE-JMP $00018 (10)\n"
+            + "0000E 0000E       38 02          CONSTANT (2)\n"
+            + "00010 00010       0D 0A          CASE-JMP $0001C (10)\n"
+            + "00012 00012       38 03          CONSTANT (3)\n"
+            + "00014 00014       0D 0A          CASE-JMP $00020 (10)\n"
+            + "00016 00016       04 0C          JMP $00024 (12)\n"
+            + "'         1: a := 4\n"
+            + "00018 00018       38 04          CONSTANT (4)\n"
+            + "0001A 0001A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0001B 0001B       0C             CASE_DONE\n"
+            + "'         2: a := 5\n"
+            + "0001C 0001C       38 05          CONSTANT (5)\n"
+            + "0001E 0001E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0001F 0001F       0C             CASE_DONE\n"
+            + "'         3: a := 6\n"
+            + "00020 00020       38 06          CONSTANT (6)\n"
+            + "00022 00022       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00023 00023       0C             CASE_DONE\n"
+            + "'         other: a := 7\n"
+            + "00024 00024       38 07          CONSTANT (7)\n"
+            + "00026 00026       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00027 00027       0C             CASE_DONE\n"
+            + "00028 00028       32             RETURN\n"
+            + "00029 00029       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testCaseRange() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    case a\n"
+            + "        1..5: a := 6\n"
+            + "        other: a := 7\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       1C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main() | a\n"
+            + "'     case a\n"
+            + "00008 00008       38 1A          CONSTANT (.label_7)\n"
+            + "0000A 0000A       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0000B 0000B       36             CONSTANT (1)\n"
+            + "0000C 0000C       38 05          CONSTANT (5)\n"
+            + "0000E 0000E       0E 02          CASE-RANGE-JMP $00012 (2)\n"
+            + "00010 00010       04 04          JMP $00016 (4)\n"
+            + "'         1..5: a := 6\n"
+            + "00012 00012       38 06          CONSTANT (6)\n"
+            + "00014 00014       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00015 00015       0C             CASE_DONE\n"
+            + "'         other: a := 7\n"
+            + "00016 00016       38 07          CONSTANT (7)\n"
+            + "00018 00018       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00019 00019       0C             CASE_DONE\n"
+            + "0001A 0001A       32             RETURN\n"
+            + "0001B 0001B       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testTernaryExpression() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    a := (b == 1) ? 2 : 3\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       18 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main() | a, b\n"
+            + "'     a := (b == 1) ? 2 : 3\n"
+            + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "00009 00009       36             CONSTANT (1)\n"
+            + "0000A 0000A       FC             TEST_EQUAL\n"
+            + "0000B 0000B       0A 04          JZ $00011 (4)\n"
+            + "0000D 0000D       38 02          CONSTANT (2)\n"
+            + "0000F 0000F       04 02          JMP $00013 (2)\n"
+            + "00011 00011       38 03          CONSTANT (3)\n"
+            + "00013 00013       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00014 00014       32             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMethodCall() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    function1(1, 2, 3)\n"
+            + "    \\function2\n"
+            + "\n"
+            + "PUB function1(a, b, c)\n"
+            + "\n"
+            + "PUB function2\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       20 00          Object size\n"
+            + "00002 00002       04             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       10 00 00 00    Function main @ $0010 (local size 0)\n"
+            + "00008 00008       1C 00 00 00    Function function1 @ $001C (local size 0)\n"
+            + "0000C 0000C       1D 00 00 00    Function function2 @ $001D (local size 0)\n"
+            + "' PUB main()\n"
+            + "'     function1(1, 2, 3)\n"
+            + "00010 00010       01             ANCHOR\n"
+            + "00011 00011       36             CONSTANT (1)\n"
+            + "00012 00012       38 02          CONSTANT (2)\n"
+            + "00014 00014       38 03          CONSTANT (3)\n"
+            + "00016 00016       05 02          CALL_SUB\n"
+            + "'     \\function2\n"
+            + "00018 00018       03             ANCHOR (TRY)\n"
+            + "00019 00019       05 03          CALL_SUB\n"
+            + "0001B 0001B       32             RETURN\n"
+            + "' PUB function1(a, b, c)\n"
+            + "0001C 0001C       32             RETURN\n"
+            + "' PUB function2\n"
+            + "0001D 0001D       32             RETURN\n"
+            + "0001E 0001E       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testCompilePAsm() throws Exception {
         String text = ""
             + "DAT             org     $000\n"
@@ -736,12 +923,122 @@ class Spin1CompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testObject() throws Exception {
+        String text = ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "";
+
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("text2", ""
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       01             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main() | a\n"
+            + "'     a := 1\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000A 0000A       32             RETURN\n"
+            + "0000B 0000B       00             Padding\n"
+            + "' Object header\n"
+            + "0000C 00000       10 00          Object size\n"
+            + "0000E 00002       02             Method count + 1\n"
+            + "0000F 00003       00             Object count\n"
+            + "00010 00004       08 00 04 00    Function start @ $0008 (local size 4)\n"
+            + "' PUB start(a, b) | c\n"
+            + "'     c := a + b\n"
+            + "00014 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00015 00009       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "00016 0000A       EC             ADD\n"
+            + "00017 0000B       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
+            + "00018 0000C       32             RETURN\n"
+            + "00019 0000D       00 00 00       Padding\n"
+            + "", compile(text, sources));
+    }
+
+    @Test
+    void testObjectMethodCall() throws Exception {
+        String text = ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    o.start(1, 2)\n"
+            + "\n"
+            + "";
+
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("text2", ""
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       01             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main() | a\n"
+            + "'     o.start(1, 2)\n"
+            + "00008 00008       01             ANCHOR\n"
+            + "00009 00009       36             CONSTANT (1)\n"
+            + "0000A 0000A       38 02          CONSTANT (2)\n"
+            + "0000C 0000C       06 01 01       CALL_OBJ_SUB\n"
+            + "0000F 0000F       32             RETURN\n"
+            + "' Object header\n"
+            + "00010 00000       10 00          Object size\n"
+            + "00012 00002       02             Method count + 1\n"
+            + "00013 00003       00             Object count\n"
+            + "00014 00004       08 00 04 00    Function start @ $0008 (local size 4)\n"
+            + "' PUB start(a, b) | c\n"
+            + "'     c := a + b\n"
+            + "00018 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00019 00009       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "0001A 0000A       EC             ADD\n"
+            + "0001B 0000B       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
+            + "0001C 0000C       32             RETURN\n"
+            + "0001D 0000D       00 00 00       Padding\n"
+            + "", compile(text, sources));
+    }
+
     String compile(String text) throws Exception {
+        return compile(text, Collections.emptyMap());
+    }
+
+    String compile(String text, Map<String, String> sources) throws Exception {
         Spin1TokenStream stream = new Spin1TokenStream(text);
         Spin1Parser subject = new Spin1Parser(stream);
         Node root = subject.parse();
 
-        Spin1Compiler compiler = new Spin1Compiler();
+        Spin1Compiler compiler = new Spin1Compiler() {
+
+            @Override
+            protected String getObjectSource(String fileName) {
+                return sources.get(fileName);
+            }
+
+        };
         Spin1Object obj = compiler.compileObject(root);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();

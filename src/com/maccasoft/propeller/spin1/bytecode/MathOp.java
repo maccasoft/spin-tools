@@ -109,14 +109,18 @@ public class MathOp extends Spin1Bytecode {
     }
 
     public static Descriptor getOperationDescriptor(String s) {
-        return operations.get(s.toUpperCase());
+        Descriptor desc = operations.get(s.toUpperCase());
+        if (desc == null) {
+            desc = assignOperations.get(s.toUpperCase());
+        }
+        return desc;
     }
 
     Descriptor op;
 
     public MathOp(Spin1Context context, String op) {
         super(context);
-        this.op = operations.get(op.toUpperCase());
+        this.op = getOperationDescriptor(op);
     }
 
     @Override

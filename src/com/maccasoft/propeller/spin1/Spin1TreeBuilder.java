@@ -22,6 +22,13 @@ public class Spin1TreeBuilder {
     static final int LEFT_TO_RIGHT = 0;
     static final int RIGHT_TO_LEFT = 1;
 
+    static Map<String, Integer> unaryOperatorPrecedence = new HashMap<String, Integer>();
+    static {
+        unaryOperatorPrecedence.put("\\", 2);
+        unaryOperatorPrecedence.put("-", 2);
+        unaryOperatorPrecedence.put("ENCOD", 2);
+    }
+
     static Map<String, Integer> operatorPrecedence = new HashMap<String, Integer>();
     static {
         operatorPrecedence.put("(", -2);
@@ -29,8 +36,6 @@ public class Spin1TreeBuilder {
 
         operatorPrecedence.put("[", -1);
         operatorPrecedence.put("]", 99);
-
-        operatorPrecedence.put("ENCOD", 2);
 
         operatorPrecedence.put(">>", 3);
         operatorPrecedence.put("<<", 3);
@@ -177,7 +182,7 @@ public class Spin1TreeBuilder {
 
         public UnaryOperator(Token token) {
             this.token = token;
-            this.precedence = operatorPrecedence.get(token.getText());
+            this.precedence = unaryOperatorPrecedence.get(token.getText());
             this.associativity = RIGHT_TO_LEFT;
         }
 
@@ -409,6 +414,10 @@ public class Spin1TreeBuilder {
 
         switch (state) {
             case 0:
+                if ("\\".equals(token.getText())) {
+                    addOperator(new UnaryOperator(token));
+                    break;
+                }
                 if (token.type != 0 && token.type != Token.NUMBER && token.type != Token.STRING) {
                     throw new RuntimeException("error: expecting identifier, got " + token.getText());
                 }
@@ -440,9 +449,9 @@ public class Spin1TreeBuilder {
                     addOperatorToken(token);
                     break;
                 }
-                Integer op = operatorPrecedence.get(token.getText().toUpperCase());
-                if (op != null && op.intValue() == 2) {
-                    addOperatorToken(token);
+                Integer op = unaryOperatorPrecedence.get(token.getText().toUpperCase());
+                if (op != null) {
+                    addOperator(new UnaryOperator(token));
                     break;
                 }
                 if (token.type != 0 && token.type != Token.NUMBER && token.type != Token.STRING) {

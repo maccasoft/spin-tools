@@ -26,7 +26,6 @@ public class RegisterOp extends Spin1Bytecode {
 
     public Op oo;
     public int value;
-    public int mathOp;
 
     public RegisterOp(Spin1Context context, Op oo, int value) {
         super(context);
@@ -34,16 +33,9 @@ public class RegisterOp extends Spin1Bytecode {
         this.value = value;
     }
 
-    public RegisterOp(Spin1Context context, Op oo, int value, int mathOp) {
-        super(context);
-        this.oo = oo;
-        this.value = value;
-        this.mathOp = mathOp;
-    }
-
     @Override
     public int getSize() {
-        return oo == Op.Assign ? 3 : 2;
+        return 2;
     }
 
     @Override
@@ -52,14 +44,9 @@ public class RegisterOp extends Spin1Bytecode {
         b1 = op_oo.setValue(b1, oo.ordinal());
         b1 = op_xxxxx.setValue(b1, value - 0x1E0);
 
-        if (oo == Op.Assign) {
-            return new byte[] {
-                0b00111111, (byte) b1, (byte) mathOp
-            };
-        }
-
         return new byte[] {
-            0b00111111, (byte) b1
+            (byte) (oo == Op.Read ? 0b00111111 : 0b00111101),
+            (byte) b1
         };
     }
 
@@ -79,16 +66,6 @@ public class RegisterOp extends Spin1Bytecode {
         }
         sb.append(" ");
         sb.append(String.format("$%03X", value));
-
-        if (oo == Op.Assign) {
-            //sb.append(" ");
-            //sb.append(VariableOp.mathText[mathOp & 0x1F]);
-            //sb.append(" ");
-            //sb.append("ASSIGN");
-            //if ((mathOp & 0b100_00000) != 0) {
-            //    sb.append(" (push)");
-            //}
-        }
         return sb.toString();
     }
 
