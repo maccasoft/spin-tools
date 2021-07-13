@@ -80,6 +80,27 @@ class Spin1TreeBuilderTest {
     }
 
     @Test
+    void testFunctionExpressionArguments() {
+        String text = "function(1 + 2 * 3, 4, (5 + 6) * 7)";
+        Assertions.assertEquals(""
+            + "[function]\n"
+            + " +-- [,]\n"
+            + "      +-- [+]\n"
+            + "           +-- [1]\n"
+            + "           +-- [*]\n"
+            + "                +-- [2]\n"
+            + "                +-- [3]\n"
+            + "      +-- [4]\n"
+            + "      +-- [*]\n"
+            + "           +-- [(]\n"
+            + "                +-- [+]\n"
+            + "                     +-- [5]\n"
+            + "                     +-- [6]\n"
+            + "           +-- [7]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
     void testFunctionAssignment() {
         String text = "a := function()";
         Assertions.assertEquals(""
@@ -297,6 +318,23 @@ class Spin1TreeBuilderTest {
             + "                +-- [4]\n"
             + "                +-- [5]\n"
             + "                +-- [6]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testLookdownArguments() {
+        String text = "a := lookdown(b : 1,2,3,4)";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [lookdown]\n"
+            + "      +-- [:]\n"
+            + "           +-- [b]\n"
+            + "           +-- [,]\n"
+            + "                +-- [1]\n"
+            + "                +-- [2]\n"
+            + "                +-- [3]\n"
+            + "                +-- [4]\n"
             + "", parseAssignment(text));
     }
 

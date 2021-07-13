@@ -1231,6 +1231,54 @@ public class Spin1Compiler {
             }
             source.add(new RegisterOp(context, RegisterOp.Op.Read, 0x1E9));
         }
+        else if ("LOOKDOWN".equalsIgnoreCase(node.getText()) || "LOOKUP".equalsIgnoreCase(node.getText())) {
+            if (argsNode.getChildCount() == 0) {
+                throw new RuntimeException("expected argument(s), found none");
+            }
+            argsNode = argsNode.getChild(0);
+            if (!":".equalsIgnoreCase(argsNode.getText()) || argsNode.getChildCount() != 2) {
+                throw new RuntimeException("invalid argument(s)");
+            }
+
+            int code = "LOOKDOWN".equalsIgnoreCase(node.getText()) ? 0b00010001 : 0b00010000;
+            int code_range = code | 0b00000010;
+
+            source.add(new Constant(context, new NumberLiteral(1)));
+
+            Spin1Bytecode end = new Spin1Bytecode(context);
+            source.add(new Constant(context, new ContextLiteral(end.getContext())));
+
+            source.addAll(compileBytecodeExpression(context, argsNode.getChild(0), true));
+
+            if (",".equals(argsNode.getChild(1).getText())) {
+                for (Spin1StatementNode arg : argsNode.getChild(1).getChilds()) {
+                    if ("..".equals(arg.getText())) {
+                        source.addAll(compileBytecodeExpression(context, arg.getChild(0), true));
+                        source.addAll(compileBytecodeExpression(context, arg.getChild(1), true));
+                        source.add(new Bytecode(context, code_range, node.getText().toUpperCase()));
+                    }
+                    else {
+                        source.addAll(compileBytecodeExpression(context, arg, true));
+                        source.add(new Bytecode(context, code, node.getText().toUpperCase()));
+                    }
+                }
+            }
+            else {
+                Spin1StatementNode arg = argsNode.getChild(1);
+                if ("..".equals(arg.getText())) {
+                    source.addAll(compileBytecodeExpression(context, arg.getChild(0), true));
+                    source.addAll(compileBytecodeExpression(context, arg.getChild(1), true));
+                    source.add(new Bytecode(context, code_range, node.getText().toUpperCase()));
+                }
+                else {
+                    source.addAll(compileBytecodeExpression(context, arg, true));
+                    source.add(new Bytecode(context, code, node.getText().toUpperCase()));
+                }
+            }
+
+            source.add(new Bytecode(context, 0b00001111, "LOOKDONE"));
+            source.add(end);
+        }
         else if (node.getType() == Token.NUMBER) {
             Expression expression = new NumberLiteral(node.getText());
             source.add(new Constant(context, expression));

@@ -522,19 +522,13 @@ public class Spin2Parser {
     }
 
     Node parseStatement(Node parent, Token token) {
-        int ternary = 0;
+        boolean isCase = parent.getTokens().size() != 0 && "CASE".equalsIgnoreCase(parent.getStartToken().getText());
         Node statement = new StatementNode(parent);
 
         while (true) {
             statement.addToken(token);
-            if ("?".equals(token.getText())) {
-                ternary++;
-            }
-            if (":".equals(token.getText())) {
-                if (ternary == 0) {
-                    break;
-                }
-                ternary--;
+            if (isCase && ":".equals(token.getText())) {
+                break;
             }
             token = stream.nextToken();
             if (token.type == Token.NL || token.type == Token.EOF) {
@@ -578,13 +572,7 @@ public class Spin2Parser {
             if (parseSection(token)) {
                 return;
             }
-            //if ("ORG".equalsIgnoreCase(token.getText()) || "ORGH".equalsIgnoreCase(token.getText())) {
-            //    parent = node;
-            //}
             parseDatLine(parent, token);
-            //if ("ORG".equalsIgnoreCase(token.getText()) || "ORGH".equalsIgnoreCase(token.getText())) {
-            //    parent = node.getChild(node.getChilds().size() - 1);
-            //}
         }
     }
 

@@ -87,6 +87,7 @@ public class Spin1TreeBuilder {
         operatorPrecedence.put("||", 12);
         operatorPrecedence.put("OR", 12);
 
+        operatorPrecedence.put(",", 16);
         operatorPrecedence.put(":", 16);
         operatorPrecedence.put("?", 16);
         operatorPrecedence.put("..", 16);
@@ -142,8 +143,6 @@ public class Spin1TreeBuilder {
         operatorPrecedence.put("XOR=", 17);
         operatorPrecedence.put("||=", 17);
         operatorPrecedence.put("OR=", 17);
-
-        operatorPrecedence.put(",", 98);
     }
 
     private static abstract class Operator {
@@ -242,8 +241,15 @@ public class Spin1TreeBuilder {
         @Override
         public Spin1StatementNode evaluate() {
             Spin1StatementNode right = operands.pop();
-            while (":".equals(operators.peek().token.getText())) {
-                operands.push(operators.pop().evaluate());
+            //while (":".equals(operators.peek().token.getText())) {
+            //    operands.push(operators.pop().evaluate());
+            //}
+
+            if (operators.peek().token == null || !"?".equals(operators.peek().token.getText())) {
+                Spin1StatementNode result = new Spin1StatementNode(token);
+                result.addChild(operands.pop());
+                result.addChild(right);
+                return result;
             }
 
             if ("?".equals(operators.peek().token.getText())) {
@@ -287,7 +293,7 @@ public class Spin1TreeBuilder {
 
         public SequenceOperator(Token token) {
             this.token = token;
-            this.precedence = 98;
+            this.precedence = operatorPrecedence.get(token.getText());
             this.associativity = RIGHT_TO_LEFT;
         }
 

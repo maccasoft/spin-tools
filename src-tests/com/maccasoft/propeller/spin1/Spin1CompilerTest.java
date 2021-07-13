@@ -745,7 +745,8 @@ class Spin1CompilerTest {
             + "\n"
             + "    case a\n"
             + "        1: a := 4\n"
-            + "        2: a := 5\n"
+            + "        2:\n"
+            + "           a := 5\n"
             + "        3: a := 6\n"
             + "        other: a := 7\n"
             + "\n"
@@ -772,7 +773,7 @@ class Spin1CompilerTest {
             + "00018 00018       38 04          CONSTANT (4)\n"
             + "0001A 0001A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "0001B 0001B       0C             CASE_DONE\n"
-            + "'         2: a := 5\n"
+            + "'            a := 5\n"
             + "0001C 0001C       38 05          CONSTANT (5)\n"
             + "0001E 0001E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "0001F 0001F       0C             CASE_DONE\n"
@@ -1192,6 +1193,73 @@ class Spin1CompilerTest {
             + "00020 0000C       32             RETURN\n"
             + "00021 0000D       00 00 00       Padding\n"
             + "", compile(text, sources));
+    }
+
+    @Test
+    void testLookdown() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := lookdown(b : 10, 20, 30, 40)\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       1C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main | a, b\n"
+            + "'     a := lookdown(b : 10, 20, 30, 40)\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       38 19          CONSTANT (25)\n"
+            + "0000B 0000B       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "0000C 0000C       38 0A          CONSTANT (10)\n"
+            + "0000E 0000E       11             LOOKDOWN\n"
+            + "0000F 0000F       38 14          CONSTANT (20)\n"
+            + "00011 00011       11             LOOKDOWN\n"
+            + "00012 00012       38 1E          CONSTANT (30)\n"
+            + "00014 00014       11             LOOKDOWN\n"
+            + "00015 00015       38 28          CONSTANT (40)\n"
+            + "00017 00017       11             LOOKDOWN\n"
+            + "00018 00018       0F             LOOKDONE\n"
+            + "00019 00019       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0001A 0001A       32             RETURN\n"
+            + "0001B 0001B       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testLookupRange() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := lookup(b : 10, 20..30, 40)\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       1C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main | a, b\n"
+            + "'     a := lookup(b : 10, 20..30, 40)\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       38 18          CONSTANT (24)\n"
+            + "0000B 0000B       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "0000C 0000C       38 0A          CONSTANT (10)\n"
+            + "0000E 0000E       10             LOOKUP\n"
+            + "0000F 0000F       38 14          CONSTANT (20)\n"
+            + "00011 00011       38 1E          CONSTANT (30)\n"
+            + "00013 00013       12             LOOKUP\n"
+            + "00014 00014       38 28          CONSTANT (40)\n"
+            + "00016 00016       10             LOOKUP\n"
+            + "00017 00017       0F             LOOKDONE\n"
+            + "00018 00018       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00019 00019       32             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
+            + "", compile(text));
     }
 
     String compile(String text) throws Exception {
