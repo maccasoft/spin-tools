@@ -899,6 +899,53 @@ class Spin1CompilerTest {
     }
 
     @Test
+    void testMethodReturn() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    return 1\n"
+            + "\n"
+            + "PUB function1 | a\n"
+            + "\n"
+            + "    return a\n"
+            + "\n"
+            + "PUB function2 : b\n"
+            + "\n"
+            + "    b := 1\n"
+            + "    return\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       1C 00          Object size\n"
+            + "00002 00002       04             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       10 00 00 00    Function main @ $0010 (local size 0)\n"
+            + "00008 00008       13 00 04 00    Function function1 @ $0013 (local size 4)\n"
+            + "0000C 0000C       16 00 00 00    Function function2 @ $0016 (local size 0)\n"
+            + "' PUB main()\n"
+            + "'     return 1\n"
+            + "00010 00010       36             CONSTANT (1)\n"
+            + "00011 00011       33             RETURN\n"
+            + "00012 00012       32             RETURN\n"
+            + "' PUB function1 | a\n"
+            + "'     return a\n"
+            + "00013 00013       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00014 00014       33             RETURN\n"
+            + "00015 00015       32             RETURN\n"
+            + "' PUB function2 : b\n"
+            + "'     b := 1\n"
+            + "00016 00016       36             CONSTANT (1)\n"
+            + "00017 00017       61             VAR_WRITE LONG DBASE+$0000 (short)\n"
+            + "'     return\n"
+            + "00018 00018       32             RETURN\n"
+            + "00019 00019       32             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testCompilePAsm() throws Exception {
         String text = ""
             + "DAT             org     $000\n"
@@ -920,6 +967,42 @@ class Spin1CompilerTest {
             + "00004 00004   000 01 04 FC 0C                        cogid   a\n"
             + "00008 00008   001 03 04 7C 0C                        cogstop a\n"
             + "0000C 0000C   002                a                   res     1\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testCompilePAsmReference() throws Exception {
+        String text = ""
+            + "PUB main\n"
+            + "\n"
+            + "    coginit(cogid, @start, 0)\n"
+            + "\n"
+            + "DAT             org     $000\n"
+            + "\n"
+            + "start           cogid   a\n"
+            + "                cogstop a\n"
+            + "\n"
+            + "a               res     1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       18 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       10 00 00 00    Function main @ $0010 (local size 0)\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 01 04 FC 0C    start               cogid   a\n"
+            + "0000C 0000C   001 03 04 7C 0C                        cogstop a\n"
+            + "00010 00010   002                a                   res     1\n"
+            + "' PUB main\n"
+            + "'     coginit(cogid, @start, 0)\n"
+            + "00010 00010       3F 89          REG_READ $1E9\n"
+            + "00012 00012       C7 08          MEM_ADDRESS LONG PBASE+$0008\n"
+            + "00014 00014       35             CONSTANT (0)\n"
+            + "00015 00015       2C             COGINIT\n"
+            + "00016 00016       32             RETURN\n"
+            + "00017 00017       00             Padding\n"
             + "", compile(text));
     }
 

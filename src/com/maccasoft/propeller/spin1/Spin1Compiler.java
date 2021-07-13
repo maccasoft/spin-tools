@@ -60,7 +60,6 @@ import com.maccasoft.propeller.spin1.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
 import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
-import com.maccasoft.propeller.spin2.Spin2CompilerMessage;
 
 public class Spin1Compiler {
 
@@ -73,7 +72,7 @@ public class Spin1Compiler {
     int labelCounter;
 
     boolean errors;
-    List<Spin1CompilerMessage> messages = new ArrayList<Spin1CompilerMessage>();
+    List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
 
     Spin1Object object = new Spin1Object();
 
@@ -84,8 +83,11 @@ public class Spin1Compiler {
     public Spin1Object compile(Node root) {
         Spin1Object obj = compileObject(root);
 
-        object.writeLong(scope.getLocalSymbol("CLKFREQ").getNumber().intValue(), "CLKFREQ");
-        object.writeByte(scope.getLocalSymbol("CLKMODE").getNumber().intValue(), "CLKMODE");
+        object.setClkFreq(obj.getClkFreq());
+        object.setClkMode(obj.getClkMode());
+
+        object.writeLong(object.getClkFreq(), "CLKFREQ");
+        object.writeByte(object.getClkMode(), "CLKMODE");
         object.writeByte(0, "Checksum");
 
         WordDataObject pbase = object.writeWord(0, "PBASE");
@@ -128,6 +130,9 @@ public class Spin1Compiler {
 
         determineClock();
 
+        object.setClkFreq(scope.getLocalSymbol("CLKFREQ").getNumber().intValue());
+        object.setClkMode(scope.getLocalSymbol("CLKMODE").getNumber().intValue());
+
         for (Node node : root.getChilds()) {
             if (node instanceof ObjectsNode) {
                 compileObjBlock(node);
@@ -160,46 +165,7 @@ public class Spin1Compiler {
             }
         }
 
-        for (Spin1Method method : methods) {
-            for (Spin1MethodLine line : method.getLines()) {
-                try {
-                    compileLine(line);
-                } catch (Spin1CompilerMessage e) {
-                    logMessage(e);
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    logMessage(new Spin1CompilerMessage(e.getMessage(), (Node) line.getData()));
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        for (Spin1PAsmLine line : source) {
-            line.getScope().setHubAddress(hubAddress);
-            try {
-                address = line.resolve(address);
-                if (address > 0x1F0) {
-                    throw new RuntimeException("error: cog code limit exceeded by " + (address - 0x1F0) + " long(s)");
-                }
-                hubAddress += line.getInstructionObject().getSize();
-            } catch (Exception e) {
-                line.getAnnotations().add(e.getMessage());
-            }
-        }
-
-        //object.writeLong(scope.getLocalSymbol("CLKFREQ").getNumber().intValue(), "CLKFREQ");
-        //object.writeByte(scope.getLocalSymbol("CLKMODE").getNumber().intValue(), "CLKMODE");
-        //object.writeByte(0, "Checksum");
-
-        //WordDataObject pbase = object.writeWord(0, "PBASE");
-        //WordDataObject vbase = object.writeWord(0, "VBASE");
-        //WordDataObject dbase = object.writeWord(0, "DBASE");
-        //WordDataObject pcurr = object.writeWord(0, "PCURR");
-        //WordDataObject dcurr = object.writeWord(0, "DCURR");
-
         object.writeComment("Object header");
-
-        //pbase.setValue(object.getSize());
 
         WordDataObject objectSize = object.writeWord(0, "Object size");
         object.writeByte(methods.size() + 1, "Method count + 1");
@@ -217,6 +183,34 @@ public class Spin1Compiler {
             variablesOffset[i] = object.writeWord(0, "Var offset");
         }
 
+        hubAddress = object.getSize();
+        for (Spin1PAsmLine line : source) {
+            line.getScope().setHubAddress(hubAddress);
+            try {
+                address = line.resolve(address);
+                if (address > 0x1F0) {
+                    throw new RuntimeException("error: cog code limit exceeded by " + (address - 0x1F0) + " long(s)");
+                }
+                hubAddress += line.getInstructionObject().getSize();
+            } catch (Exception e) {
+                line.getAnnotations().add(e.getMessage());
+            }
+        }
+
+        for (Spin1Method method : methods) {
+            for (Spin1MethodLine line : method.getLines()) {
+                try {
+                    compileLine(line);
+                } catch (CompilerMessage e) {
+                    logMessage(e);
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    logMessage(new CompilerMessage(e.getMessage(), (Node) line.getData()));
+                    e.printStackTrace();
+                }
+            }
+        }
+
         for (Spin1PAsmLine line : source) {
             hubAddress = line.getScope().getHubAddress();
             if (object.getSize() < hubAddress) {
@@ -225,8 +219,6 @@ public class Spin1Compiler {
             object.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());
         }
         object.alignToLong();
-
-        //pcurr.setValue(object.getSize());
 
         if (methods.size() != 0) {
             address = object.getSize();
@@ -251,10 +243,6 @@ public class Spin1Compiler {
         }
 
         objectSize.setValue(object.getSize());
-        //vbase.setValue(object.getSize());
-        //dbase.setValue(vbase.getValue() + varOffset + 4);
-
-        //dcurr.setValue(dbase.getValue() + 4);
 
         int index = 0;
         for (Spin1Object o : objects) {
@@ -285,16 +273,16 @@ public class Spin1Compiler {
                     expression.setData(node);
                     try {
                         scope.addSymbol(name, expression);
-                    } catch (Spin1CompilerMessage e) {
+                    } catch (CompilerMessage e) {
                         logMessage(e);
                     } catch (Exception e) {
-                        logMessage(new Spin1CompilerMessage(e.getMessage(), node.identifier));
+                        logMessage(new CompilerMessage(e.getMessage(), node.identifier));
                         e.printStackTrace();
                     }
-                } catch (Spin1CompilerMessage e) {
+                } catch (CompilerMessage e) {
                     logMessage(e);
                 } catch (Exception e) {
-                    logMessage(new Spin1CompilerMessage(e.getMessage(), node.expression));
+                    logMessage(new CompilerMessage(e.getMessage(), node.expression));
                     e.printStackTrace();
                 }
             }
@@ -317,7 +305,7 @@ public class Spin1Compiler {
                 try {
                     scope.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
                 } catch (Exception e) {
-                    logMessage(new Spin1CompilerMessage(e.getMessage(), node.identifier));
+                    logMessage(new CompilerMessage(e.getMessage(), node.identifier));
                     e.printStackTrace();
                     return;
                 }
@@ -355,7 +343,7 @@ public class Spin1Compiler {
                 scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
                 scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
             } catch (Exception e) {
-                logMessage(new Spin1CompilerMessage(e.getMessage(), node.identifier));
+                logMessage(new CompilerMessage(e.getMessage(), node.identifier));
                 e.printStackTrace();
                 continue;
             }
@@ -497,11 +485,11 @@ public class Spin1Compiler {
             String name = child.getText();
             Expression expression = localScope.getLocalSymbol(name);
             if (expression instanceof LocalVariable) {
-                logMessage(new Spin1CompilerMessage("symbol " + name + " already defined", child));
+                logMessage(new CompilerMessage("symbol " + name + " already defined", child));
                 continue;
             }
             else if (expression != null) {
-                logMessage(new Spin1CompilerMessage(Spin1CompilerMessage.WARNING, "parameter " + name + " hides global variable", child));
+                logMessage(new CompilerMessage(CompilerMessage.WARNING, "parameter " + name + " hides global variable", child));
             }
             LocalVariable var = new LocalVariable("LONG", name, new NumberLiteral(1), offset);
             localScope.addSymbol(name, var);
@@ -514,28 +502,27 @@ public class Spin1Compiler {
             String name = child.getText();
             Expression expression = localScope.getLocalSymbol(name);
             if (expression instanceof LocalVariable) {
-                logMessage(new Spin1CompilerMessage("symbol " + name + " already defined", child));
+                logMessage(new CompilerMessage("symbol " + name + " already defined", child));
                 continue;
             }
             else if (expression != null) {
-                logMessage(new Spin1CompilerMessage(Spin1CompilerMessage.WARNING, "return variable " + name + " hides global variable", child));
+                logMessage(new CompilerMessage(CompilerMessage.WARNING, "return variable " + name + " hides global variable", child));
             }
-            LocalVariable var = new LocalVariable("LONG", name, new NumberLiteral(1), offset);
+            LocalVariable var = new LocalVariable("LONG", name, new NumberLiteral(1), 0);
             localScope.addSymbol(name, var);
             localScope.addSymbol("@" + name, var);
             returns.add(var);
-            offset += 4;
         }
 
         for (LocalVariableNode child : node.getLocalVariables()) {
             String name = child.getIdentifier().getText();
             Expression expression = localScope.getLocalSymbol(name);
             if (expression instanceof LocalVariable) {
-                logMessage(new Spin1CompilerMessage("symbol " + name + " already defined", child.getIdentifier()));
+                logMessage(new CompilerMessage("symbol " + name + " already defined", child.getIdentifier()));
                 continue;
             }
             else if (expression != null) {
-                logMessage(new Spin1CompilerMessage(Spin1CompilerMessage.WARNING, "local variable " + name + " hides global variable", child.getIdentifier()));
+                logMessage(new CompilerMessage(CompilerMessage.WARNING, "local variable " + name + " hides global variable", child.getIdentifier()));
             }
 
             String type = "LONG";
@@ -547,11 +534,11 @@ public class Spin1Compiler {
                 try {
                     size = buildExpression(child.size.getTokens(), scope);
                     if (!size.isConstant()) {
-                        logMessage(new Spin1CompilerMessage("expression is not constant", child.size));
+                        logMessage(new CompilerMessage("expression is not constant", child.size));
                         continue;
                     }
                 } catch (Exception e) {
-                    logMessage(new Spin1CompilerMessage("expression syntax error", child.size));
+                    logMessage(new CompilerMessage("expression syntax error", child.size));
                     continue;
                 }
             }
@@ -804,6 +791,23 @@ public class Spin1Compiler {
 
                         repeatLine.setData("next", line);
                     }
+                    else if ("RETURN".equalsIgnoreCase(token.getText())) {
+                        List<Spin1StatementNode> arguments = new ArrayList<Spin1StatementNode>();
+
+                        if (iter.hasNext()) {
+                            Spin1TreeBuilder builder = new Spin1TreeBuilder();
+                            builder.setState(2);
+                            while (iter.hasNext()) {
+                                builder.addToken(iter.next());
+                            }
+                            arguments.add(builder.getRoot());
+                        }
+
+                        Spin1MethodLine line = new Spin1MethodLine(context, String.format(".label_" + labelCounter++), token.getText(), arguments);
+                        line.setText(node.getText());
+                        line.setData(node);
+                        lines.add(line);
+                    }
                     else if ("QUIT".equalsIgnoreCase(token.getText()) || "NEXT".equalsIgnoreCase(token.getText())) {
                         if (iter.hasNext()) {
                             throw new RuntimeException("syntax error");
@@ -882,11 +886,11 @@ public class Spin1Compiler {
                         lines.add(line);
                     }
 
-                } catch (Spin1CompilerMessage e) {
+                } catch (CompilerMessage e) {
                     logMessage(e);
                     throw e;
                 } catch (Exception e) {
-                    logMessage(new Spin1CompilerMessage(e.getMessage(), node));
+                    logMessage(new CompilerMessage(e.getMessage(), node));
                     e.printStackTrace();
                 }
             }
@@ -952,7 +956,7 @@ public class Spin1Compiler {
                 String varText = line.getArgument(0).getText();
                 Expression expression = line.getScope().getLocalSymbol(varText);
                 if (expression == null) {
-                    throw new Spin1CompilerMessage("undefined symbol " + varText, line.getArgument(0).getToken());
+                    throw new CompilerMessage("undefined symbol " + varText, line.getArgument(0).getToken());
                 }
                 else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
                     line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Write, (Variable) expression));
@@ -1051,7 +1055,7 @@ public class Spin1Compiler {
                 String varText = repeat.getArgument(0).getText();
                 Expression expression = line.getScope().getLocalSymbol(varText);
                 if (expression == null) {
-                    throw new Spin1CompilerMessage("undefined symbol " + varText, line.getArgument(0).getToken());
+                    throw new CompilerMessage("undefined symbol " + varText, line.getArgument(0).getToken());
                 }
                 else if (expression instanceof Variable) {
                     line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Read, (Variable) expression));
@@ -1070,7 +1074,7 @@ public class Spin1Compiler {
                 String varText = repeat.getArgument(0).getText();
                 Expression expression = line.getScope().getLocalSymbol(varText);
                 if (expression == null) {
-                    throw new Spin1CompilerMessage("undefined symbol " + varText, repeat.getArgument(0).getToken());
+                    throw new CompilerMessage("undefined symbol " + varText, repeat.getArgument(0).getToken());
                 }
                 else if (expression instanceof Variable) {
                     line.addSource(new RepeatLoop(line.getScope(), (Variable) expression, repeat.getArgumentsCount() == 4, new Identifier(target.getLabel(), target.getScope())));
@@ -1102,6 +1106,7 @@ public class Spin1Compiler {
                 line.addSource(new Bytecode(line.getScope(), 0b00110010, text));
             }
             else if (line.getArgumentsCount() == 1) {
+                line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), false));
                 line.addSource(new Bytecode(line.getScope(), 0b00110011, text));
             }
             else {
@@ -1143,7 +1148,7 @@ public class Spin1Compiler {
             Descriptor desc = Spin1Bytecode.getDescriptor(text);
             if (desc != null) {
                 if (line.getArgumentsCount() != desc.parameters) {
-                    throw new Spin2CompilerMessage("expected " + desc.parameters + " argument(s), found " + line.getArgumentsCount(), (Node) line.getData());
+                    throw new CompilerMessage("expected " + desc.parameters + " argument(s), found " + line.getArgumentsCount(), (Node) line.getData());
                 }
                 for (Spin1StatementNode arg : line.getArguments()) {
                     List<Spin1Bytecode> list = compileBytecodeExpression(line.getScope(), arg, true);
@@ -1217,7 +1222,13 @@ public class Spin1Compiler {
             for (int i = 0; i < desc.parameters; i++) {
                 source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
             }
-            source.add(new Bytecode(context, desc.code, node.getText()));
+            source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText()));
+        }
+        else if ("COGID".equalsIgnoreCase(node.getText())) {
+            if (argsNode.getChildCount() != 0) {
+                throw new RuntimeException("expected " + 0 + " argument(s), found " + argsNode.getChildCount());
+            }
+            source.add(new RegisterOp(context, RegisterOp.Op.Read, 0x1E9));
         }
         else if (node.getType() == Token.NUMBER) {
             Expression expression = new NumberLiteral(node.getText());
@@ -1489,8 +1500,8 @@ public class Spin1Compiler {
         return bitPos;
     }
 
-    protected void logMessage(Spin1CompilerMessage message) {
-        if (message.type == Spin1CompilerMessage.ERROR) {
+    protected void logMessage(CompilerMessage message) {
+        if (message.type == CompilerMessage.ERROR) {
             errors = true;
         }
         messages.add(message);
@@ -1500,7 +1511,7 @@ public class Spin1Compiler {
         return errors;
     }
 
-    public List<Spin1CompilerMessage> getMessages() {
+    public List<CompilerMessage> getMessages() {
         return messages;
     }
 

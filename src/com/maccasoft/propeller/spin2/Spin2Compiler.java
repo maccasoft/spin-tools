@@ -56,6 +56,7 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.spin1.CompilerMessage;
 import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
 import com.maccasoft.propeller.spin2.Spin2Object.LongDataObject;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
@@ -85,7 +86,7 @@ public class Spin2Compiler {
     int labelCounter;
 
     boolean errors;
-    List<Spin2CompilerMessage> messages = new ArrayList<Spin2CompilerMessage>();
+    List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
 
     Spin2Object object = new Spin2Object();
 
@@ -173,11 +174,11 @@ public class Spin2Compiler {
             for (Spin2MethodLine line : method.getLines()) {
                 try {
                     compileLine(line);
-                } catch (Spin2CompilerMessage e) {
+                } catch (CompilerMessage e) {
                     logMessage(e);
                     e.printStackTrace();
                 } catch (Exception e) {
-                    logMessage(new Spin2CompilerMessage(e.getMessage(), (Node) line.getData()));
+                    logMessage(new CompilerMessage(e.getMessage(), (Node) line.getData()));
                     e.printStackTrace();
                 }
             }
@@ -339,16 +340,16 @@ public class Spin2Compiler {
                     expression.setData(node);
                     try {
                         scope.addSymbol(name, expression);
-                    } catch (Spin2CompilerMessage e) {
+                    } catch (CompilerMessage e) {
                         logMessage(e);
                     } catch (Exception e) {
-                        logMessage(new Spin2CompilerMessage(e.getMessage(), node.identifier));
+                        logMessage(new CompilerMessage(e.getMessage(), node.identifier));
                         e.printStackTrace();
                     }
-                } catch (Spin2CompilerMessage e) {
+                } catch (CompilerMessage e) {
                     logMessage(e);
                 } catch (Exception e) {
-                    logMessage(new Spin2CompilerMessage(e.getMessage(), node.expression));
+                    logMessage(new CompilerMessage(e.getMessage(), node.expression));
                     e.printStackTrace();
                 }
             }
@@ -371,7 +372,7 @@ public class Spin2Compiler {
                 try {
                     scope.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
                 } catch (Exception e) {
-                    logMessage(new Spin2CompilerMessage(e.getMessage(), node.identifier));
+                    logMessage(new CompilerMessage(e.getMessage(), node.identifier));
                     e.printStackTrace();
                     return;
                 }
@@ -409,7 +410,7 @@ public class Spin2Compiler {
                 scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
                 scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
             } catch (Exception e) {
-                logMessage(new Spin2CompilerMessage(e.getMessage(), node.identifier));
+                logMessage(new CompilerMessage(e.getMessage(), node.identifier));
                 e.printStackTrace();
                 continue;
             }
@@ -576,11 +577,11 @@ public class Spin2Compiler {
             String name = child.getText();
             Expression expression = localScope.getLocalSymbol(name);
             if (expression instanceof LocalVariable) {
-                logMessage(new Spin2CompilerMessage("symbol " + name + " already defined", child));
+                logMessage(new CompilerMessage("symbol " + name + " already defined", child));
                 continue;
             }
             else if (expression != null) {
-                logMessage(new Spin2CompilerMessage(Spin2CompilerMessage.WARNING, "parameter " + name + " hides global variable", child));
+                logMessage(new CompilerMessage(CompilerMessage.WARNING, "parameter " + name + " hides global variable", child));
             }
             LocalVariable var = new LocalVariable("LONG", name, new NumberLiteral(1), offset);
             localScope.addSymbol(name, var);
@@ -593,11 +594,11 @@ public class Spin2Compiler {
             String name = child.getText();
             Expression expression = localScope.getLocalSymbol(name);
             if (expression instanceof LocalVariable) {
-                logMessage(new Spin2CompilerMessage("symbol " + name + " already defined", child));
+                logMessage(new CompilerMessage("symbol " + name + " already defined", child));
                 continue;
             }
             else if (expression != null) {
-                logMessage(new Spin2CompilerMessage(Spin2CompilerMessage.WARNING, "return variable " + name + " hides global variable", child));
+                logMessage(new CompilerMessage(CompilerMessage.WARNING, "return variable " + name + " hides global variable", child));
             }
             LocalVariable var = new LocalVariable("LONG", name, new NumberLiteral(1), offset);
             localScope.addSymbol(name, var);
@@ -610,11 +611,11 @@ public class Spin2Compiler {
             String name = child.getIdentifier().getText();
             Expression expression = localScope.getLocalSymbol(name);
             if (expression instanceof LocalVariable) {
-                logMessage(new Spin2CompilerMessage("symbol " + name + " already defined", child.getIdentifier()));
+                logMessage(new CompilerMessage("symbol " + name + " already defined", child.getIdentifier()));
                 continue;
             }
             else if (expression != null) {
-                logMessage(new Spin2CompilerMessage(Spin2CompilerMessage.WARNING, "local variable " + name + " hides global variable", child.getIdentifier()));
+                logMessage(new CompilerMessage(CompilerMessage.WARNING, "local variable " + name + " hides global variable", child.getIdentifier()));
             }
 
             String type = "LONG";
@@ -626,11 +627,11 @@ public class Spin2Compiler {
                 try {
                     size = buildExpression(child.size.getTokens(), scope);
                     if (!size.isConstant()) {
-                        logMessage(new Spin2CompilerMessage("expression is not constant", child.size));
+                        logMessage(new CompilerMessage("expression is not constant", child.size));
                         continue;
                     }
                 } catch (Exception e) {
-                    logMessage(new Spin2CompilerMessage("expression syntax error", child.size));
+                    logMessage(new CompilerMessage("expression syntax error", child.size));
                     continue;
                 }
             }
@@ -958,11 +959,11 @@ public class Spin2Compiler {
                         lines.add(line);
                     }
 
-                } catch (Spin2CompilerMessage e) {
+                } catch (CompilerMessage e) {
                     logMessage(e);
                     throw e;
                 } catch (Exception e) {
-                    logMessage(new Spin2CompilerMessage(e.getMessage(), node));
+                    logMessage(new CompilerMessage(e.getMessage(), node));
                     e.printStackTrace();
                 }
             }
@@ -1063,7 +1064,7 @@ public class Spin2Compiler {
                 String varText = line.getArgument(0).getText();
                 Expression expression = line.getScope().getLocalSymbol(varText);
                 if (expression == null) {
-                    throw new Spin2CompilerMessage("undefined symbol " + varText, line.getArgument(0).getToken());
+                    throw new CompilerMessage("undefined symbol " + varText, line.getArgument(0).getToken());
                 }
                 else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
                     line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Setup, false, (Variable) expression));
@@ -1160,7 +1161,7 @@ public class Spin2Compiler {
             String varText = repeat.getArgument(0).getText();
             Expression expression = line.getScope().getLocalSymbol(varText);
             if (expression == null) {
-                throw new Spin2CompilerMessage("undefined symbol " + varText, repeat.getArgument(0).getToken());
+                throw new CompilerMessage("undefined symbol " + varText, repeat.getArgument(0).getToken());
             }
             else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
                 line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Setup, false, (Variable) expression));
@@ -1226,7 +1227,7 @@ public class Spin2Compiler {
             Descriptor desc = Spin2Bytecode.getDescriptor(text);
             if (desc != null) {
                 if (line.getArgumentsCount() != desc.parameters) {
-                    throw new Spin2CompilerMessage("expected " + desc.parameters + " argument(s), found " + line.getArgumentsCount(), (Node) line.getData());
+                    throw new CompilerMessage("expected " + desc.parameters + " argument(s), found " + line.getArgumentsCount(), (Node) line.getData());
                 }
                 for (Spin2StatementNode arg : line.getArguments()) {
                     List<Spin2Bytecode> list = compileBytecodeExpression(line.getScope(), arg, true);
@@ -1324,7 +1325,7 @@ public class Spin2Compiler {
                     source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Write, expression));
                 }
                 else {
-                    throw new Spin2CompilerMessage("undefined symbol " + left.getText(), left.getToken());
+                    throw new CompilerMessage("undefined symbol " + left.getText(), left.getToken());
                 }
             }
         }
@@ -1355,7 +1356,7 @@ public class Spin2Compiler {
                     source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, expression));
                 }
                 else {
-                    throw new Spin2CompilerMessage("undefined symbol " + left.getText(), left.getToken());
+                    throw new CompilerMessage("undefined symbol " + left.getText(), left.getToken());
                 }
             }
             source.add(new MathOp(context, node.getText(), push));
@@ -1482,7 +1483,7 @@ public class Spin2Compiler {
         else {
             Expression expression = context.getLocalSymbol(node.getText());
             if (expression == null) {
-                throw new Spin2CompilerMessage("undefined symbol " + node.getText(), node.getToken());
+                throw new CompilerMessage("undefined symbol " + node.getText(), node.getToken());
             }
             if (expression instanceof Register) {
                 throw new RuntimeException("unhandled register expression");
@@ -1662,8 +1663,8 @@ public class Spin2Compiler {
         return source;
     }
 
-    protected void logMessage(Spin2CompilerMessage message) {
-        if (message.type == Spin2CompilerMessage.ERROR) {
+    protected void logMessage(CompilerMessage message) {
+        if (message.type == CompilerMessage.ERROR) {
             errors = true;
         }
         messages.add(message);
@@ -1673,7 +1674,7 @@ public class Spin2Compiler {
         return errors;
     }
 
-    public List<Spin2CompilerMessage> getMessages() {
+    public List<CompilerMessage> getMessages() {
         return messages;
     }
 
@@ -1745,7 +1746,7 @@ public class Spin2Compiler {
                     }
                     else {
                         if (token.type != 0) {
-                            throw new Spin2CompilerMessage("unexpected " + token.getText(), token);
+                            throw new CompilerMessage("unexpected " + token.getText(), token);
                         }
                         expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
                     }

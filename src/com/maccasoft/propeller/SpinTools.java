@@ -66,6 +66,7 @@ import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.TempDirectory;
+import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin2.Spin2Object;
 
 import jssc.SerialPort;
@@ -837,13 +838,7 @@ public class SpinTools {
         if (tabItem == null) {
             return;
         }
-        EditorTab editorTab = (EditorTab) tabItem.getData();
-        if (editorTab.getText().toLowerCase().endsWith(".spin2")) {
-            handleInternalCompile();
-        }
-        else {
-
-        }
+        handleInternalCompile();
     }
 
     private void handleInternalCompile() {
@@ -858,9 +853,17 @@ public class SpinTools {
             return;
         }
 
-        MemoryDialog2 dlg2 = new MemoryDialog2(shell);
-        dlg2.setObject(editorTab.getObject());
-        dlg2.open();
+        Object object = editorTab.getObject();
+        if (object instanceof Spin1Object) {
+            MemoryDialog dlg = new MemoryDialog(shell);
+            dlg.setObject((Spin1Object) object);
+            dlg.open();
+        }
+        else if (object instanceof Spin2Object) {
+            MemoryDialog2 dlg = new MemoryDialog2(shell);
+            dlg.setObject((Spin2Object) object);
+            dlg.open();
+        }
     }
 
     void exportObjectFile(String name) {
@@ -951,7 +954,7 @@ public class SpinTools {
             return;
         }
 
-        Spin2Object obj = editorTab.getObject();
+        Spin2Object obj = (Spin2Object) editorTab.getObject();
         SerialTerminal serialTerminal = getSerialTerminal();
 
         IRunnableWithProgress thread = new IRunnableWithProgress() {

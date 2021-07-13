@@ -17,6 +17,7 @@ public class Spin1Bytecode {
 
     static class Descriptor {
         byte[] code;
+        byte[] code_push;
         int parameters;
 
         public Descriptor(int b, int parameters) {
@@ -26,14 +27,17 @@ public class Spin1Bytecode {
             this.parameters = parameters;
         }
 
-        public Descriptor(int b0, int b1, int parameters) {
+        public Descriptor(int b, int b_push, int parameters) {
             this.code = new byte[] {
-                (byte) b0,
-                (byte) b1
+                (byte) b
+            };
+            this.code_push = new byte[] {
+                (byte) b_push
             };
             this.parameters = parameters;
         }
     }
+
     static Map<String, Descriptor> descriptors = new HashMap<String, Descriptor>();
     static {
         descriptors.put("BYTEFILL", new Descriptor(0b00011000, 3));
@@ -52,6 +56,11 @@ public class Spin1Bytecode {
         descriptors.put("WAITCNT", new Descriptor(0b00100011, 1));
 
         descriptors.put("WAITVID", new Descriptor(0b00100111, 2));
+
+        descriptors.put("COGINIT", new Descriptor(0b00101100, 0b00101000, 3));
+        descriptors.put("LOCKNEW", new Descriptor(0b00101101, 0b00101001, 0));
+        descriptors.put("LOCKSET", new Descriptor(0b00101110, 0b00101010, 1));
+        descriptors.put("LOCKCLR", new Descriptor(0b00101111, 0b00101011, 1));
     }
 
     public static Descriptor getDescriptor(String s) {

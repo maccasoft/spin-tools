@@ -24,11 +24,11 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
 import com.maccasoft.propeller.spin2.EditorTokenMarker;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Editor;
-import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 
 public class EditorTab {
@@ -46,7 +46,7 @@ public class EditorTab {
     AtomicBoolean pendingCompile = new AtomicBoolean(false);
 
     boolean errors;
-    Spin2Object object;
+    Object object;
 
     final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
 
@@ -64,7 +64,58 @@ public class EditorTab {
         }
     };
 
-    final Runnable compilerRunnable = new Runnable() {
+    final Runnable spin1CompilerRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            if (editor.getControl().isDisposed()) {
+                return;
+            }
+            if (!threadRunning.getAndSet(true)) {
+                pendingCompile.set(false);
+
+                Node root = tokenMarker.getRoot();
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Spin1Compiler compiler = new Spin1Compiler();
+                        try {
+                            object = compiler.compile(root);
+                            errors = compiler.hasErrors();
+                        } catch (Exception e) {
+                            errors = true;
+                            e.printStackTrace();
+                        }
+
+                        if (!pendingCompile.get()) {
+                            editor.setCompilerMessages(compiler.getMessages());
+                            Display.getDefault().asyncExec(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    if (editor == null || editor.getStyledText().isDisposed()) {
+                                        return;
+                                    }
+                                    editor.redraw();
+                                    updateTabItemText();
+                                }
+                            });
+                        }
+                        threadRunning.set(false);
+                    }
+
+                });
+                thread.start();
+            }
+            else {
+                pendingCompile.set(true);
+                Display.getDefault().timerExec(250, spin1CompilerRunnable);
+            }
+        }
+
+    };
+
+    final Runnable spin2CompilerRunnable = new Runnable() {
 
         @Override
         public void run() {
@@ -109,7 +160,7 @@ public class EditorTab {
             }
             else {
                 pendingCompile.set(true);
-                Display.getDefault().timerExec(250, compilerRunnable);
+                Display.getDefault().timerExec(250, spin2CompilerRunnable);
             }
         }
 
@@ -123,7 +174,7 @@ public class EditorTab {
 
         editor = new Spin2Editor(folder);
 
-        if (name.toLowerCase().endsWith(".spin2")) {
+        if (tabItemText.toLowerCase().endsWith(".spin2")) {
             tokenMarker = new Spin2TokenMarker();
         }
         else {
@@ -139,7 +190,12 @@ public class EditorTab {
                     dirty = true;
                     updateTabItemText();
                 }
-                Display.getDefault().timerExec(250, compilerRunnable);
+                if (tabItemText.toLowerCase().endsWith(".spin2")) {
+                    Display.getDefault().timerExec(250, spin2CompilerRunnable);
+                }
+                else {
+                    Display.getDefault().timerExec(250, spin1CompilerRunnable);
+                }
             }
         });
 
@@ -220,7 +276,12 @@ public class EditorTab {
 
     public void setEditorText(String text) {
         editor.setText(text);
-        Display.getDefault().timerExec(250, compilerRunnable);
+        if (tabItemText.toLowerCase().endsWith(".spin2")) {
+            Display.getDefault().timerExec(250, spin2CompilerRunnable);
+        }
+        else {
+            Display.getDefault().timerExec(250, spin1CompilerRunnable);
+        }
     }
 
     public String getEditorText() {
@@ -242,7 +303,7 @@ public class EditorTab {
         return errors;
     }
 
-    public Spin2Object getObject() {
+    public Object getObject() {
         return object;
     }
 

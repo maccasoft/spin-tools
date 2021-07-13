@@ -10,19 +10,25 @@
 
 package com.maccasoft.propeller;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.text.NumberFormat;
 
-import org.eclipse.core.databinding.observable.Realm;
-import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -43,14 +49,17 @@ import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 
 import com.maccasoft.propeller.internal.ColorRegistry;
+import com.maccasoft.propeller.spin1.Spin1Object;
 
 public class MemoryDialog extends Dialog {
 
     public static final int BYTES_PER_ROW = 16;
 
     Display display;
+
+    CTabFolder tabFolder;
     Canvas canvas;
-    ScrollBar verticalBar;
+    StyledText styledText;
 
     Font font;
     FontMetrics fontMetrics;
@@ -58,9 +67,11 @@ public class MemoryDialog extends Dialog {
     Color variablesBackground;
     Color stackFreeBackground;
 
+    Spin1Object object;
     byte[] data;
 
     int clkfreq;
+    int clkmode;
     int pbase;
     int vbase;
     int dbase;
@@ -92,6 +103,15 @@ public class MemoryDialog extends Dialog {
 
         display = parent.getDisplay();
 
+        Font dialogFont = parent.getFont();
+        FontData[] fontData = dialogFont.getFontData();
+        if ("win32".equals(SWT.getPlatform())) {
+            font = new Font(display, "Courier New", fontData[0].getHeight(), SWT.NONE);
+        }
+        else {
+            font = new Font(display, "mono", fontData[0].getHeight(), SWT.NONE);
+        }
+
         format = NumberFormat.getInstance();
         format.setGroupingUsed(true);
 
@@ -100,11 +120,50 @@ public class MemoryDialog extends Dialog {
         stackFreeBackground = ColorRegistry.getColor(191, 223, 255);
 
         createInfoGroup(content);
-        createMemoryView(content);
 
-        int rows = canvas.getClientArea().height / fontMetrics.getHeight();
-        int selection = verticalBar.getSelection();
-        verticalBar.setValues(selection, 0, data.length, rows * BYTES_PER_ROW, BYTES_PER_ROW, rows * BYTES_PER_ROW);
+        tabFolder = new CTabFolder(content, SWT.BORDER);
+        tabFolder.setMaximizeVisible(false);
+        tabFolder.setMinimizeVisible(false);
+        tabFolder.setTabHeight(24);
+
+        CTabItem tabItem = new CTabItem(tabFolder, SWT.NONE);
+        tabItem.setText("Memory");
+        tabItem.setControl(createMemoryView(tabFolder));
+
+        tabItem = new CTabItem(tabFolder, SWT.NONE);
+        tabItem.setText("Listing");
+        tabItem.setControl(createListingView(tabFolder));
+
+        tabFolder.setSelection(0);
+        tabFolder.getSelection().getControl().setFocus();
+
+        tabFolder.addTraverseListener(new TraverseListener() {
+
+            @Override
+            public void keyTraversed(TraverseEvent e) {
+                if (e.character != SWT.TAB || (e.stateMask & SWT.CTRL) == 0) {
+                    return;
+                }
+
+                int index = tabFolder.getSelectionIndex();
+                if ((e.stateMask & SWT.SHIFT) != 0) {
+                    index--;
+                    if (index < 0) {
+                        index = tabFolder.getItemCount() - 1;
+                    }
+                }
+                else {
+                    index++;
+                    if (index >= tabFolder.getItemCount()) {
+                        index = 0;
+                    }
+                }
+                tabFolder.setSelection(index);
+                tabFolder.getItem(index).getControl().setFocus();
+
+                e.doit = false;
+            }
+        });
 
         return content;
     }
@@ -199,15 +258,15 @@ public class MemoryDialog extends Dialog {
         label.setText("Clock Mode");
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-        if (data[4] == 0x00) {
+        if (clkmode == 0x00) {
             label.setText("RCFAST");
         }
-        else if (data[4] == 0x01) {
+        else if (clkmode == 0x01) {
             label.setText("RCSLOW");
         }
         else {
             String xtal = null, pll = null;
-            switch (data[4] & 0b0_0_1_11_000) {
+            switch (clkmode & 0b0_0_1_11_000) {
                 case 0b0_0_1_01_000:
                     xtal = "XTAL1";
                     break;
@@ -218,7 +277,7 @@ public class MemoryDialog extends Dialog {
                     xtal = "XTAL3";
                     break;
             }
-            switch (data[4] & 0b0_1_1_00_111) {
+            switch (clkmode & 0b0_1_1_00_111) {
                 case 0b0_1_1_00_011:
                     pll = "PLL1X";
                     break;
@@ -251,10 +310,10 @@ public class MemoryDialog extends Dialog {
         label.setText("Clock Freq.");
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-        if (data[4] == 0x00) {
+        if (clkmode == 0x00) {
             label.setText("~ " + format.format(12000000) + " Hz");
         }
-        else if (data[4] == 0x01) {
+        else if (clkmode == 0x01) {
             label.setText("~ " + format.format(20000) + " Hz");
         }
         else {
@@ -266,11 +325,11 @@ public class MemoryDialog extends Dialog {
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-        if ((data[4] & 0b00100000) == 0) {
+        if ((clkmode & 0b00100000) == 0) {
             label.setText("Ignored");
         }
         else {
-            switch (data[4] & 0b0_1_1_00_111) {
+            switch (clkmode & 0b0_1_1_00_111) {
                 case 0b0_1_1_00_011:
                     label.setText(format.format(clkfreq) + " Hz");
                     break;
@@ -290,21 +349,11 @@ public class MemoryDialog extends Dialog {
         }
     }
 
-    public void createMemoryView(Composite parent) {
-        Font dialogFont = parent.getFont();
-        FontData[] fontData = dialogFont.getFontData();
-        if ("win32".equals(SWT.getPlatform())) {
-            font = new Font(Display.getDefault(), "Courier New", fontData[0].getHeight(), SWT.NONE);
-        }
-        else {
-            font = new Font(Display.getDefault(), "mono", fontData[0].getHeight(), SWT.NONE);
-        }
-
+    Control createMemoryView(Composite parent) {
         Composite container = new Composite(parent, SWT.NONE);
         container.setLayout(new GridLayout(1, false));
-        container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        canvas = new Canvas(container, SWT.V_SCROLL | SWT.DOUBLE_BUFFERED | SWT.NO_FOCUS) {
+        canvas = new Canvas(container, SWT.V_SCROLL | SWT.DOUBLE_BUFFERED) {
 
             @Override
             public Point computeSize(int wHint, int hHint, boolean changed) {
@@ -317,6 +366,17 @@ public class MemoryDialog extends Dialog {
         canvas.setFont(font);
         canvas.setBackground(display.getSystemColor(SWT.COLOR_LIST_BACKGROUND));
         //canvas.setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
+
+        ScrollBar verticalBar = canvas.getVerticalBar();
+        verticalBar.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                int selection = verticalBar.getSelection();
+                verticalBar.setSelection(((selection + (BYTES_PER_ROW / 2)) / BYTES_PER_ROW) * BYTES_PER_ROW);
+                canvas.redraw();
+            }
+        });
 
         GC gc = new GC(canvas);
         fontMetrics = gc.getFontMetrics();
@@ -452,29 +512,150 @@ public class MemoryDialog extends Dialog {
             }
         });
 
-        verticalBar = canvas.getVerticalBar();
-        verticalBar.addSelectionListener(new SelectionAdapter() {
+        canvas.addTraverseListener(new TraverseListener() {
 
             @Override
-            public void widgetSelected(SelectionEvent e) {
-                int selection = verticalBar.getSelection();
-                verticalBar.setSelection(((selection + (BYTES_PER_ROW / 2)) / BYTES_PER_ROW) * BYTES_PER_ROW);
-                canvas.redraw();
+            public void keyTraversed(TraverseEvent e) {
+                e.doit = false;
+                if ((e.stateMask & SWT.CTRL) != 0) {
+                    Event event = new Event();
+                    event.character = e.character;
+                    event.stateMask = e.stateMask;
+                    event.detail = e.detail;
+                    e.display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            if (!canvas.isDisposed()) {
+                                Control control = canvas.getParent();
+                                while (!(control instanceof CTabFolder) && control.getParent() != null) {
+                                    control = control.getParent();
+                                }
+                                control.notifyListeners(SWT.Traverse, event);
+                            }
+                        }
+                    });
+                }
             }
         });
+
+        int rows = canvas.getClientArea().height / fontMetrics.getHeight();
+        int selection = (pbase / BYTES_PER_ROW) * BYTES_PER_ROW;
+        verticalBar.setValues(selection, 0, data.length, rows * BYTES_PER_ROW, BYTES_PER_ROW, rows * BYTES_PER_ROW);
+
+        display.asyncExec(new Runnable() {
+
+            @Override
+            public void run() {
+                verticalBar.setSelection(selection);
+                canvas.redraw();
+            }
+
+        });
+
+        return container;
     }
 
-    public Control getControl() {
-        return canvas;
+    Control createListingView(Composite parent) {
+        Composite container = new Composite(parent, SWT.NONE);
+        container.setLayout(new GridLayout(1, false));
+
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+        gridData.heightHint = fontMetrics.getHeight() * 30;
+        gridData.widthHint = (int) (fontMetrics.getAverageCharacterWidth() * 40);
+
+        styledText = new StyledText(container, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
+        styledText.setLayoutData(gridData);
+        styledText.setMargins(5, 5, 5, 5);
+        styledText.setTabs(8);
+        styledText.setFont(font);
+        styledText.setEditable(false);
+
+        styledText.addKeyListener(new KeyListener() {
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.keyCode == SWT.ESC) {
+                    handleShellCloseEvent();
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+        });
+        styledText.addTraverseListener(new TraverseListener() {
+
+            @Override
+            public void keyTraversed(TraverseEvent e) {
+                e.doit = false;
+                if ((e.stateMask & SWT.CTRL) != 0) {
+                    Event event = new Event();
+                    event.character = e.character;
+                    event.stateMask = e.stateMask;
+                    event.detail = e.detail;
+                    e.display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            if (!styledText.isDisposed()) {
+                                Control control = styledText.getParent();
+                                while (!(control instanceof CTabFolder) && control.getParent() != null) {
+                                    control = control.getParent();
+                                }
+                                control.notifyListeners(SWT.Traverse, event);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+        Thread thread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                try {
+                    object.generateListing(new PrintStream(os));
+                    display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            if (!styledText.isDisposed()) {
+                                styledText.setText(os.toString());
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    // Do nothing
+                }
+            }
+        });
+        thread.start();
+
+        return container;
     }
 
-    public void setData(byte[] data) {
-        this.data = data;
+    public void setObject(Spin1Object object) {
+        this.object = object;
 
-        clkfreq = readLong(0);
-        pbase = readWord(6);
-        vbase = readWord(8);
-        dbase = readWord(10) - 8;
+        try {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            object.generateBinary(os);
+
+            data = new byte[32 * 1024];
+            System.arraycopy(os.toByteArray(), 0, data, 0, Math.min(data.length, os.size()));
+
+            clkfreq = object.getClkFreq();
+            clkmode = object.getClkMode();
+
+            pbase = readWord(6);
+            vbase = readWord(8);
+            dbase = readWord(10) - 8;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     int readWord(int index) {
@@ -483,48 +664,6 @@ public class MemoryDialog extends Dialog {
 
     int readLong(int index) {
         return (data[index] & 0xFF) | ((data[index + 1] & 0xFF) << 8) | ((data[index + 2] & 0xFF) << 16) | ((data[index + 3] & 0xFF) << 24);
-    }
-
-    public static void main(String[] args) {
-        final Display display = new Display();
-
-        Realm.runWithDefault(DisplayRealm.getRealm(display), new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    MemoryDialog app = new MemoryDialog(null);
-
-                    byte[] data = new byte[32768];
-
-                    data[0] = (byte) 0x00;
-                    data[1] = (byte) 0xB4;
-                    data[2] = (byte) 0xC4;
-                    data[3] = (byte) 0x04;
-
-                    data[4] = (byte) 0x6F;
-                    data[5] = (byte) 0x00;
-
-                    data[6] = (byte) 0x10;
-                    data[7] = (byte) 0x00;
-
-                    data[8] = (byte) 0x00;
-                    data[9] = (byte) 0x01;
-
-                    data[10] = (byte) 0x88;
-                    data[11] = (byte) 0x01;
-
-                    app.setData(data);
-
-                    app.open();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return;
-                }
-            }
-        });
-
-        display.dispose();
     }
 
 }

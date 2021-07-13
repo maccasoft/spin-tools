@@ -35,6 +35,7 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.spin1.CompilerMessage;
 
 public abstract class EditorTokenMarker {
 
@@ -147,10 +148,10 @@ public abstract class EditorTokenMarker {
         return root;
     }
 
-    public void refreshCompilerTokens(List<Spin2CompilerMessage> messages) {
+    public void refreshCompilerTokens(List<CompilerMessage> messages) {
         TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
-        for (Spin2CompilerMessage message : messages) {
-            TokenId id = message.type == Spin2CompilerMessage.ERROR ? TokenId.ERROR : TokenId.WARNING;
+        for (CompilerMessage message : messages) {
+            TokenId id = message.type == CompilerMessage.ERROR ? TokenId.ERROR : TokenId.WARNING;
             TokenMarker marker = new TokenMarker(message.getStartToken(), message.getStopToken(), id);
             marker.setError(message.getMessage());
             tokens.add(marker);

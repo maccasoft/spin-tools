@@ -8,27 +8,27 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin2;
+package com.maccasoft.propeller.spin1;
 
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
 
-public class Spin2CompilerMessage extends RuntimeException {
+public class CompilerMessage extends RuntimeException {
 
-    private static final long serialVersionUID = 3321056003143890537L;
+    private static final long serialVersionUID = -5865769905704184825L;
 
     public static final int NONE = 0;
     public static final int WARNING = 1;
     public static final int ERROR = 2;
 
-    int type;
-    int line;
-    int column;
+    public int type;
+    public int line;
+    public int column;
 
     Token startToken;
     Token stopToken;
 
-    public Spin2CompilerMessage(String message, Node node) {
+    public CompilerMessage(String message, Node node) {
         super(message);
         this.type = ERROR;
         this.line = node.getStartToken().line + 1;
@@ -37,7 +37,7 @@ public class Spin2CompilerMessage extends RuntimeException {
         this.stopToken = node.getStopToken();
     }
 
-    public Spin2CompilerMessage(String message, Token token) {
+    public CompilerMessage(String message, Token token) {
         super(message);
         this.type = ERROR;
         this.line = token.line + 1;
@@ -46,7 +46,7 @@ public class Spin2CompilerMessage extends RuntimeException {
         this.stopToken = token;
     }
 
-    public Spin2CompilerMessage(int type, String message, Node node) {
+    public CompilerMessage(int type, String message, Node node) {
         super(message);
         this.type = type;
         this.line = node.getStartToken().line + 1;
@@ -55,7 +55,7 @@ public class Spin2CompilerMessage extends RuntimeException {
         this.stopToken = node.getStopToken();
     }
 
-    public Spin2CompilerMessage(int type, String message, Token token) {
+    public CompilerMessage(int type, String message, Token token) {
         super(message);
         this.type = type;
         this.line = token.line + 1;

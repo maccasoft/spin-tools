@@ -610,10 +610,6 @@ public class MemoryDialog2 extends Dialog {
         return container;
     }
 
-    public Control getControl() {
-        return canvas;
-    }
-
     public void setObject(Spin2Object object) {
         this.object = object;
 

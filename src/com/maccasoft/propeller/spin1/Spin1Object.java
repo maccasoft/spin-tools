@@ -296,8 +296,8 @@ public class Spin1Object {
         return clkmode;
     }
 
-    public void setClkMode(int _clkmode) {
-        this.clkmode = _clkmode;
+    public void setClkMode(int clkmode) {
+        this.clkmode = clkmode;
     }
 
     public int getVarSize() {
@@ -310,7 +310,11 @@ public class Spin1Object {
 
     public void generateBinary(OutputStream os) throws IOException {
         for (DataObject obj : data) {
-            if (obj.bytes != null) {
+            if (obj instanceof ObjectDataObject) {
+                byte[] bytes = ((ObjectDataObject) obj).getObject().getBinary();
+                os.write(bytes);
+            }
+            else if (obj.bytes != null) {
                 os.write(obj.bytes);
             }
         }
@@ -319,7 +323,11 @@ public class Spin1Object {
     public byte[] getBinary() throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         for (DataObject obj : data) {
-            if (obj.bytes != null) {
+            if (obj instanceof ObjectDataObject) {
+                byte[] bytes = ((ObjectDataObject) obj).getObject().getBinary();
+                os.write(bytes);
+            }
+            else if (obj.bytes != null) {
                 os.write(obj.bytes);
             }
         }

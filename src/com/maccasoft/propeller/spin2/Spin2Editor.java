@@ -77,6 +77,7 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.spin1.CompilerMessage;
 import com.maccasoft.propeller.spin2.EditorTokenMarker.TokenId;
 import com.maccasoft.propeller.spin2.EditorTokenMarker.TokenMarker;
 
@@ -1020,12 +1021,12 @@ public class Spin2Editor {
         styledText.setTopIndex(line > 10 ? line - 10 : 1);
     }
 
-    public void setCompilerMessages(List<Spin2CompilerMessage> messages) {
+    public void setCompilerMessages(List<CompilerMessage> messages) {
         tokenMarker.refreshCompilerTokens(messages);
 
         ruler.clearHighlights();
-        for (Spin2CompilerMessage msg : messages) {
-            if (msg.type == Spin2CompilerMessage.ERROR) {
+        for (CompilerMessage msg : messages) {
+            if (msg.type == CompilerMessage.ERROR) {
                 ruler.setHighlight(msg.line);
             }
         }
