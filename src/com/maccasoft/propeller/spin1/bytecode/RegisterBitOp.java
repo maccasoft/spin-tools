@@ -43,7 +43,7 @@ public class RegisterBitOp extends Spin1Bytecode {
 
     @Override
     public int getSize() {
-        return oo == Op.Assign ? 3 : 2;
+        return mathOp != 0 ? 3 : 2;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class RegisterBitOp extends Spin1Bytecode {
         b1 = op_oo.setValue(b1, oo.ordinal());
         b1 = op_xxxxx.setValue(b1, value - 0x1E0);
 
-        if (oo == Op.Assign) {
+        if (mathOp != 0) {
             return new byte[] {
                 0b00111101, (byte) b1, (byte) mathOp
             };
@@ -80,7 +80,7 @@ public class RegisterBitOp extends Spin1Bytecode {
         sb.append(" ");
         sb.append(String.format("$%03X", value));
 
-        if (oo == Op.Assign) {
+        if (mathOp != 0) {
             //sb.append(" ");
             //sb.append(VariableOp.mathText[mathOp & 0x1F]);
             //sb.append(" ");

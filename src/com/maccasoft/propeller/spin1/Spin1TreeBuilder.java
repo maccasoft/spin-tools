@@ -25,8 +25,18 @@ public class Spin1TreeBuilder {
     static Map<String, Integer> unaryOperatorPrecedence = new HashMap<String, Integer>();
     static {
         unaryOperatorPrecedence.put("\\", 2);
+
+        unaryOperatorPrecedence.put("--", 2);
+        unaryOperatorPrecedence.put("++", 2);
+        unaryOperatorPrecedence.put("~", 2);
+        unaryOperatorPrecedence.put("~~", 2);
+
         unaryOperatorPrecedence.put("-", 2);
-        unaryOperatorPrecedence.put("ENCOD", 2);
+        unaryOperatorPrecedence.put("^^", 2);
+        unaryOperatorPrecedence.put("||", 2);
+        unaryOperatorPrecedence.put("|<", 2);
+        unaryOperatorPrecedence.put(">|", 2);
+        unaryOperatorPrecedence.put("!", 2);
     }
 
     static Map<String, Integer> operatorPrecedence = new HashMap<String, Integer>();
@@ -39,25 +49,26 @@ public class Spin1TreeBuilder {
 
         operatorPrecedence.put(">>", 3);
         operatorPrecedence.put("<<", 3);
-        operatorPrecedence.put("SAR", 3);
-        operatorPrecedence.put("ROR", 3);
-        operatorPrecedence.put("ROL", 3);
-        operatorPrecedence.put("REV", 3);
-        operatorPrecedence.put("ZEROX", 3);
-        operatorPrecedence.put("SIGNX", 3);
+        operatorPrecedence.put("~>", 3);
+        operatorPrecedence.put("->", 3);
+        operatorPrecedence.put("<-", 3);
+        operatorPrecedence.put("><", 3);
+        //operatorPrecedence.put("ZEROX", 3);
+        //operatorPrecedence.put("SIGNX", 3);
 
         operatorPrecedence.put("&", 4);
         operatorPrecedence.put("^", 5);
-        operatorPrecedence.put("|", 6);
+        operatorPrecedence.put("|", 5);
 
         operatorPrecedence.put("*", 7);
+        operatorPrecedence.put("**", 7);
         operatorPrecedence.put("/", 7);
-        operatorPrecedence.put("+/", 7);
+        //operatorPrecedence.put("+/", 7);
         operatorPrecedence.put("//", 7);
-        operatorPrecedence.put("+//", 7);
-        operatorPrecedence.put("SCA", 7);
-        operatorPrecedence.put("SCAS", 7);
-        operatorPrecedence.put("FRAC", 7);
+        //operatorPrecedence.put("+//", 7);
+        //operatorPrecedence.put("SCA", 7);
+        //operatorPrecedence.put("SCAS", 7);
+        //operatorPrecedence.put("FRAC", 7);
 
         operatorPrecedence.put("+", 8);
         operatorPrecedence.put("-", 8);
@@ -65,27 +76,24 @@ public class Spin1TreeBuilder {
         operatorPrecedence.put("#>", 9);
         operatorPrecedence.put("<#", 9);
 
-        operatorPrecedence.put("ADDBITS", 10);
-        operatorPrecedence.put("ADDPINS", 10);
-
         operatorPrecedence.put("<", 11);
-        operatorPrecedence.put("+<", 11);
-        operatorPrecedence.put("<=", 11);
-        operatorPrecedence.put("+<=", 11);
+        //operatorPrecedence.put("+<", 11);
+        operatorPrecedence.put("=<", 11);
+        //operatorPrecedence.put("+<=", 11);
         operatorPrecedence.put("==", 11);
         operatorPrecedence.put("<>", 11);
-        operatorPrecedence.put(">=", 11);
-        operatorPrecedence.put("+>=", 11);
+        operatorPrecedence.put("=>", 11);
+        //operatorPrecedence.put("+>=", 11);
         operatorPrecedence.put(">", 11);
-        operatorPrecedence.put("+>", 11);
-        operatorPrecedence.put("<=>", 11);
+        //operatorPrecedence.put("+>", 11);
+        //operatorPrecedence.put("<=>", 11);
 
-        operatorPrecedence.put("&&", 12);
+        //operatorPrecedence.put("&&", 12);
         operatorPrecedence.put("AND", 12);
-        operatorPrecedence.put("^^", 12);
-        operatorPrecedence.put("XOR", 12);
-        operatorPrecedence.put("||", 12);
-        operatorPrecedence.put("OR", 12);
+        //operatorPrecedence.put("^^", 12);
+        //operatorPrecedence.put("XOR", 12);
+        //operatorPrecedence.put("||", 12);
+        operatorPrecedence.put("OR", 13);
 
         operatorPrecedence.put(",", 16);
         operatorPrecedence.put(":", 16);
@@ -96,25 +104,26 @@ public class Spin1TreeBuilder {
 
         operatorPrecedence.put(">>=", 17);
         operatorPrecedence.put("<<=", 17);
-        operatorPrecedence.put("SAR=", 17);
-        operatorPrecedence.put("ROR=", 17);
-        operatorPrecedence.put("ROL=", 17);
-        operatorPrecedence.put("REV=", 17);
-        operatorPrecedence.put("ZEROX=", 17);
-        operatorPrecedence.put("SIGNX=", 17);
+        operatorPrecedence.put("~>=", 17);
+        operatorPrecedence.put("->=", 17);
+        operatorPrecedence.put("<-=", 17);
+        operatorPrecedence.put("><=", 17);
+        //operatorPrecedence.put("ZEROX=", 17);
+        //operatorPrecedence.put("SIGNX=", 17);
 
         operatorPrecedence.put("&=", 17);
         operatorPrecedence.put("^=", 17);
         operatorPrecedence.put("|=", 17);
 
         operatorPrecedence.put("*=", 17);
+        operatorPrecedence.put("**=", 17);
         operatorPrecedence.put("/=", 17);
-        operatorPrecedence.put("+/=", 17);
+        //operatorPrecedence.put("+/=", 17);
         operatorPrecedence.put("//=", 17);
-        operatorPrecedence.put("+//=", 17);
-        operatorPrecedence.put("SCA=", 17);
-        operatorPrecedence.put("SCAS=", 17);
-        operatorPrecedence.put("FRAC=", 17);
+        //operatorPrecedence.put("+//=", 17);
+        //operatorPrecedence.put("SCA=", 17);
+        //operatorPrecedence.put("SCAS=", 17);
+        //operatorPrecedence.put("FRAC=", 17);
 
         operatorPrecedence.put("+=", 17);
         operatorPrecedence.put("-=", 17);
@@ -122,26 +131,23 @@ public class Spin1TreeBuilder {
         operatorPrecedence.put("#>=", 17);
         operatorPrecedence.put("<#=", 17);
 
-        operatorPrecedence.put("ADDBITS=", 17);
-        operatorPrecedence.put("ADDPINS=", 17);
-
         operatorPrecedence.put("<=", 17);
-        operatorPrecedence.put("+<=", 17);
-        operatorPrecedence.put("<==", 17);
-        operatorPrecedence.put("+<==", 17);
+        //operatorPrecedence.put("+<=", 17);
+        operatorPrecedence.put("=<=", 17);
+        //operatorPrecedence.put("+<==", 17);
         operatorPrecedence.put("===", 17);
         operatorPrecedence.put("<>=", 17);
-        operatorPrecedence.put(">==", 17);
-        operatorPrecedence.put("+>==", 17);
+        operatorPrecedence.put("=>=", 17);
+        //operatorPrecedence.put("+>==", 17);
         operatorPrecedence.put(">=", 17);
-        operatorPrecedence.put("+>=", 17);
-        operatorPrecedence.put("<=>=", 17);
+        //operatorPrecedence.put("+>=", 17);
+        //operatorPrecedence.put("<=>=", 17);
 
-        operatorPrecedence.put("&&=", 17);
+        //operatorPrecedence.put("&&=", 17);
         operatorPrecedence.put("AND=", 17);
-        operatorPrecedence.put("^^=", 17);
-        operatorPrecedence.put("XOR=", 17);
-        operatorPrecedence.put("||=", 17);
+        //operatorPrecedence.put("^^=", 17);
+        //operatorPrecedence.put("XOR=", 17);
+        //operatorPrecedence.put("||=", 17);
         operatorPrecedence.put("OR=", 17);
     }
 
@@ -189,6 +195,23 @@ public class Spin1TreeBuilder {
         public Spin1StatementNode evaluate() {
             Spin1StatementNode result = new Spin1StatementNode(token);
             result.addChild(operands.pop());
+            return result;
+        }
+
+    }
+
+    private class UnaryPostOperator extends Operator {
+
+        public UnaryPostOperator(Token token) {
+            this.token = token;
+            this.precedence = unaryOperatorPrecedence.get(token.getText());
+            this.associativity = RIGHT_TO_LEFT;
+        }
+
+        @Override
+        public Spin1StatementNode evaluate() {
+            Spin1StatementNode result = operands.pop();
+            result.addChild(new Spin1StatementNode(token));
             return result;
         }
 
@@ -417,10 +440,16 @@ public class Spin1TreeBuilder {
     }
 
     public void addToken(Token token) {
+        Integer op;
 
         switch (state) {
             case 0:
                 if ("\\".equals(token.getText())) {
+                    addOperator(new UnaryOperator(token));
+                    break;
+                }
+                op = unaryOperatorPrecedence.get(token.getText().toUpperCase());
+                if (op != null) {
                     addOperator(new UnaryOperator(token));
                     break;
                 }
@@ -430,7 +459,7 @@ public class Spin1TreeBuilder {
                 addValueToken(token);
                 state = 1;
                 break;
-            case 1: {
+            case 1:
                 if ("[".equals(token.getText())) {
                     addOperatorToken(token);
                     state = 5;
@@ -442,20 +471,24 @@ public class Spin1TreeBuilder {
                     state = 4;
                     break;
                 }
-                Integer op = operatorPrecedence.get(token.getText().toUpperCase());
+                op = unaryOperatorPrecedence.get(token.getText().toUpperCase());
+                if (op != null) {
+                    addOperator(new UnaryPostOperator(token));
+                    break;
+                }
+                op = operatorPrecedence.get(token.getText().toUpperCase());
                 if (op == null || op.intValue() != 17) {
                     throw new RuntimeException("error: expecting assignment operator, got " + token.getText());
                 }
                 addOperatorToken(token);
                 state = 2;
                 break;
-            }
-            case 2: {
+            case 2:
                 if ("(".equals(token.getText()) || "]".equals(token.getText())) {
                     addOperatorToken(token);
                     break;
                 }
-                Integer op = unaryOperatorPrecedence.get(token.getText().toUpperCase());
+                op = unaryOperatorPrecedence.get(token.getText().toUpperCase());
                 if (op != null) {
                     addOperator(new UnaryOperator(token));
                     break;
@@ -466,16 +499,20 @@ public class Spin1TreeBuilder {
                 addValueToken(token);
                 state = 3;
                 break;
-            }
-            case 3: {
+            case 3:
                 if ("(".equals(token.getText())) {
                     Spin1StatementNode node = operands.pop();
                     addOperator(new FunctionOperator(node.getToken(), token));
                     state = 4;
                     break;
                 }
-                Integer op = operatorPrecedence.get(token.getText().toUpperCase());
+                op = operatorPrecedence.get(token.getText().toUpperCase());
                 if (op == null) {
+                    op = unaryOperatorPrecedence.get(token.getText().toUpperCase());
+                    if (op != null) {
+                        addOperator(new UnaryPostOperator(token));
+                        break;
+                    }
                     throw new RuntimeException("error: expecting operator, got " + token.getText());
                 }
                 addOperatorToken(token);
@@ -484,7 +521,6 @@ public class Spin1TreeBuilder {
                 }
                 state = 2;
                 break;
-            }
             case 4:
                 if (")".equals(token.getText())) {
                     operators.pop();
@@ -506,8 +542,8 @@ public class Spin1TreeBuilder {
                 addValueToken(token);
                 state = 6;
                 break;
-            case 6: {
-                Integer op = operatorPrecedence.get(token.getText().toUpperCase());
+            case 6:
+                op = operatorPrecedence.get(token.getText().toUpperCase());
                 if (op == null) {
                     throw new RuntimeException("error: expecting operator, got " + token.getText());
                 }
@@ -521,7 +557,6 @@ public class Spin1TreeBuilder {
                 }
                 state = 2;
                 break;
-            }
         }
     }
 

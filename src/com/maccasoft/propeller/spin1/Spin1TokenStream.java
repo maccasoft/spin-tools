@@ -217,7 +217,8 @@ public class Spin1TokenStream extends TokenStream {
                     state = Token.START;
                     return token;
                 case Token.OPERATOR:
-                    if (ch == '|' || ch == '!' || ch == '=' || ch == '^' || ch == '+' || ch == '*' || ch == '-' || ch == '/' || ch == '#' || ch == ':' || ch == '>' || ch == '<' || ch == '.') {
+                    if (ch == '|' || ch == '!' || ch == '=' || ch == '^' || ch == '+' || ch == '*' || ch == '-' || ch == '/' || ch == '#' || ch == ':' || ch == '>' || ch == '<' || ch == '.'
+                        || ch == '~') {
                         token.stop++;
                         break;
                     }

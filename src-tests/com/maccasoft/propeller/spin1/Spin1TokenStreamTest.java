@@ -631,4 +631,36 @@ class Spin1TokenStreamTest {
         assertEquals("1.234", subject.nextToken().getText());
     }
 
+    @Test
+    void testPostIncrement() {
+        Spin1TokenStream subject = new Spin1TokenStream("a++");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("++", subject.nextToken().getText());
+    }
+
+    @Test
+    void testPostClear() {
+        Spin1TokenStream subject = new Spin1TokenStream("a~");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("~", subject.nextToken().getText());
+    }
+
+    @Test
+    void testPostSet() {
+        Spin1TokenStream subject = new Spin1TokenStream("a~~");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("~~", subject.nextToken().getText());
+    }
+
+    @Test
+    void testPreIncrement() {
+        Spin1TokenStream subject = new Spin1TokenStream("++a");
+
+        assertEquals("++", subject.nextToken().getText());
+        assertEquals("a", subject.nextToken().getText());
+    }
+
 }

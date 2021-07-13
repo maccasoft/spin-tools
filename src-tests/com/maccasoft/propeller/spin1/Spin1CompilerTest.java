@@ -1262,6 +1262,211 @@ class Spin1CompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testUnaryOperators() throws Exception {
+        String text = ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a++\n"
+            + "    a--\n"
+            + "    a~\n"
+            + "    a~~\n"
+            + "    ++a\n"
+            + "    --a\n"
+            + "    ~a\n"
+            + "    ~~a\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       1C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main | a\n"
+            + "'     a++\n"
+            + "00008 00008       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00009 00009       2E             POST_INC\n"
+            + "'     a--\n"
+            + "0000A 0000A       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0000B 0000B       3E             POST_DEC\n"
+            + "'     a~\n"
+            + "0000C 0000C       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0000D 0000D       18             POST_CLEAR\n"
+            + "'     a~~\n"
+            + "0000E 0000E       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0000F 0000F       1C             POST_SET\n"
+            + "'     ++a\n"
+            + "00010 00010       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00011 00011       26             PRE_INC\n"
+            + "'     --a\n"
+            + "00012 00012       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00013 00013       36             PRE_DEC\n"
+            + "'     ~a\n"
+            + "00014 00014       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00015 00015       10             SIGN_EXTEND_BYTE\n"
+            + "'     ~~a\n"
+            + "00016 00016       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00017 00017       14             SIGN_EXTEND_WORD\n"
+            + "00018 00018       32             RETURN\n"
+            + "00019 00019       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testUnaryOperatorsAssignment() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    b := a++\n"
+            + "    b := a--\n"
+            + "    b := a~\n"
+            + "    b := a~~\n"
+            + "    b := ++a\n"
+            + "    b := --a\n"
+            + "    b := ~a\n"
+            + "    b := ~~a\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       24 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main | a, b\n"
+            + "'     b := a++\n"
+            + "00008 00008       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00009 00009       AE             POST_INC\n"
+            + "0000A 0000A       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     b := a--\n"
+            + "0000B 0000B       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0000C 0000C       BE             POST_DEC\n"
+            + "0000D 0000D       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     b := a~\n"
+            + "0000E 0000E       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0000F 0000F       98             POST_CLEAR\n"
+            + "00010 00010       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     b := a~~\n"
+            + "00011 00011       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00012 00012       9C             POST_SET\n"
+            + "00013 00013       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     b := ++a\n"
+            + "00014 00014       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00015 00015       A6             PRE_INC\n"
+            + "00016 00016       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     b := --a\n"
+            + "00017 00017       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00018 00018       B6             PRE_DEC\n"
+            + "00019 00019       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     b := ~a\n"
+            + "0001A 0001A       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0001B 0001B       90             SIGN_EXTEND_BYTE\n"
+            + "0001C 0001C       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     b := ~~a\n"
+            + "0001D 0001D       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0001E 0001E       94             SIGN_EXTEND_WORD\n"
+            + "0001F 0001F       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "00020 00020       32             RETURN\n"
+            + "00021 00021       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRegisterUnaryOperators() throws Exception {
+        String text = ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    DIRA[1]~\n"
+            + "    DIRA[2]~~\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main | a\n"
+            + "'     DIRA[1]~\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       3D B6 18       REGBIT_WRITE $1F6\n"
+            + "'     DIRA[2]~~\n"
+            + "0000C 0000C       38 02          CONSTANT (2)\n"
+            + "0000E 0000E       3D B6 1C       REGBIT_WRITE $1F6\n"
+            + "00011 00011       32             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testVarSizeAssignment() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    BYTE[a] := 1\n"
+            + "    b := BYTE[a]\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main | a, b\n"
+            + "'     BYTE[a] := 1\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0000A 0000A       81             MEM_WRITE BYTE POP\n"
+            + "'     b := BYTE[a]\n"
+            + "0000B 0000B       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0000C 0000C       80             MEM_READ BYTE POP\n"
+            + "0000D 0000D       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "0000E 0000E       32             RETURN\n"
+            + "0000F 0000F       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testVarOrdering() throws Exception {
+        String text = ""
+            + "VAR\n"
+            + "\n"
+            + "    byte a\n"
+            + "    word b\n"
+            + "    long c\n"
+            + "\n"
+            + "PUB main\n"
+            + "\n"
+            + "    a := 1\n"
+            + "    b := 1\n"
+            + "    c := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 00 00    Function main @ $0008 (local size 0)\n"
+            + "' PUB main\n"
+            + "'     a := 1\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       89 06          VAR_WRITE BYTE VBASE+$0006\n"
+            + "'     b := 1\n"
+            + "0000B 0000B       36             CONSTANT (1)\n"
+            + "0000C 0000C       A9 04          VAR_WRITE WORD VBASE+$0004\n"
+            + "'     c := 1\n"
+            + "0000E 0000E       36             CONSTANT (1)\n"
+            + "0000F 0000F       41             VAR_WRITE LONG VBASE+$0000 (short)\n"
+            + "00010 00010       32             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, Collections.emptyMap());
     }

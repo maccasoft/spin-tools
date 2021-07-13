@@ -19,9 +19,18 @@ import com.maccasoft.propeller.spin1.Spin1Context;
 
 public class VariableOp extends Spin1Bytecode {
 
-    static final BitField op_b = new BitField(0b00_1_000_00);
-    static final BitField op_oo = new BitField(0b00_0_000_11);
-    static final BitField op_xxx = new BitField(0b00_0_111_00);
+    static final BitField vop_b = new BitField(0b00_1_000_00);
+    static final BitField vop_oo = new BitField(0b00_0_000_11);
+    static final BitField vop_xxx = new BitField(0b00_0_111_00);
+
+    static final BitField mop_ss = new BitField(0b0_11_0_00_00);
+    static final BitField mop_i = new BitField(0b0_00_1_00_00);
+    static final BitField mop_bb = new BitField(0b0_00_0_11_00);
+    static final BitField mop_oo = new BitField(0b0_00_0_00_11);
+
+    public enum Size {
+        Byte, Word, Long
+    };
 
     public static enum Base {
         VBase, DBase
@@ -31,54 +40,76 @@ public class VariableOp extends Spin1Bytecode {
         Read, Write, Assign, Address
     };
 
+    public Size ss;
     public Base b;
     public Op oo;
     public Variable value;
-    public MathOp.Descriptor mathOp;
-
-    VariableOp(Spin1Context context) {
-        super(context);
-        b = Base.DBase;
-        oo = Op.Read;
-    }
 
     public VariableOp(Spin1Context context, Op oo, Variable value) {
         super(context);
         this.b = value instanceof LocalVariable ? Base.DBase : Base.VBase;
         this.oo = oo;
         this.value = value;
-    }
 
-    public VariableOp(Spin1Context context, Op oo, Variable value, MathOp.Descriptor mathOp) {
-        super(context);
-        this.b = value instanceof LocalVariable ? Base.DBase : Base.VBase;
-        this.oo = oo;
-        this.value = value;
-        this.mathOp = mathOp;
+        if ("WORD".equalsIgnoreCase(value.getType())) {
+            this.ss = Size.Word;
+        }
+        else if ("BYTE".equalsIgnoreCase(value.getType())) {
+            this.ss = Size.Byte;
+        }
+        else {
+            this.ss = Size.Long;
+        }
     }
 
     @Override
     public int getSize() {
-        return oo == Op.Assign ? 2 : 1;
+        if (ss == Size.Long && (value.getOffset() / 4) < 8) {
+            return 1;
+        }
+        else {
+            if (value.getOffset() < 127) {
+                return 2;
+            }
+            else {
+                return 3;
+            }
+        }
     }
 
     @Override
     public byte[] getBytes() {
-        int b0 = 0b01_0_000_00;
-        b0 = op_b.setValue(b0, b.ordinal());
-        b0 = op_oo.setValue(b0, oo.ordinal());
-        b0 = op_xxx.setValue(b0, value.getOffset() / 4);
+        if (ss == Size.Long && (value.getOffset() / 4) < 8) {
+            int b0 = 0b01_0_000_00;
+            b0 = vop_b.setValue(b0, b.ordinal());
+            b0 = vop_oo.setValue(b0, oo.ordinal());
+            b0 = vop_xxx.setValue(b0, value.getOffset() / 4);
 
-        if (oo == Op.Assign && mathOp != null) {
             return new byte[] {
                 (byte) b0,
-                (byte) mathOp.value
             };
         }
+        else {
+            int b0 = 0b1_00_0_00_00;
+            b0 = mop_ss.setValue(b0, ss.ordinal());
+            b0 = mop_i.setBoolean(b0, false);
+            b0 = mop_bb.setValue(b0, b.ordinal() + 2);
+            b0 = mop_oo.setValue(b0, oo.ordinal());
 
-        return new byte[] {
-            (byte) b0,
-        };
+            if (value.getOffset() < 127) {
+                return new byte[] {
+                    (byte) b0,
+                    (byte) value.getOffset(),
+                };
+            }
+            else {
+                return new byte[] {
+                    (byte) b0,
+                    (byte) (0x80 | (value.getOffset() >> 8)),
+                    (byte) value.getOffset(),
+                };
+            }
+        }
     }
 
     @Override
@@ -99,7 +130,17 @@ public class VariableOp extends Spin1Bytecode {
                 break;
         }
         sb.append(" ");
-        sb.append("LONG");
+        switch (ss) {
+            case Byte:
+                sb.append("BYTE");
+                break;
+            case Word:
+                sb.append("WORD");
+                break;
+            case Long:
+                sb.append("LONG");
+                break;
+        }
         sb.append(" ");
         switch (b) {
             case VBase:
@@ -113,16 +154,8 @@ public class VariableOp extends Spin1Bytecode {
         }
         sb.append("+");
         sb.append(String.format("$%04X", value.getOffset()));
-        sb.append(" (short)");
-
-        if (oo == Op.Assign && mathOp != null) {
-            sb.append(" ");
-            sb.append(mathOp.text);
-            sb.append(" ");
-            sb.append("ASSIGN");
-            //if ((mathOp & 0b100_00000) != 0) {
-            //    sb.append(" (push)");
-            //}
+        if (ss == Size.Long && (value.getOffset() / 4) < 8) {
+            sb.append(" (short)");
         }
         return sb.toString();
     }

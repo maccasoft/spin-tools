@@ -45,7 +45,7 @@ public class RegisterOp extends Spin1Bytecode {
         b1 = op_xxxxx.setValue(b1, value - 0x1E0);
 
         return new byte[] {
-            (byte) (oo == Op.Read ? 0b00111111 : 0b00111101),
+            (byte) 0b00111111,
             (byte) b1
         };
     }

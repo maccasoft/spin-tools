@@ -14,6 +14,7 @@ import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
 import com.maccasoft.propeller.spin1.Spin1Context;
@@ -50,11 +51,28 @@ public class MemoryOp extends Spin1Bytecode {
         this.bb = bb;
         this.oo = oo;
         this.expression = expression;
+
+        if (expression instanceof Variable) {
+            this.bb = expression instanceof LocalVariable ? Base.DBase : Base.VBase;
+            String type = ((Variable) expression).getType();
+            if ("LONG".equalsIgnoreCase(type)) {
+                this.ss = Size.Long;
+            }
+            else if ("WORD".equalsIgnoreCase(type)) {
+                this.ss = Size.Word;
+            }
+            else if ("BYTE".equalsIgnoreCase(type)) {
+                this.ss = Size.Byte;
+            }
+        }
     }
 
     @Override
     public int getSize() {
         int value;
+        if (bb == Base.Pop) {
+            return 1;
+        }
         if (expression instanceof ContextLiteral) {
             if (!((ContextLiteral) expression).getContext().isAddressSet()) {
                 return 3;
@@ -72,15 +90,17 @@ public class MemoryOp extends Spin1Bytecode {
 
     @Override
     public byte[] getBytes() {
-        int value;
-        if (expression instanceof ContextLiteral) {
-            value = ((ContextLiteral) expression).getContext().getHubAddress();
-        }
-        else if (expression instanceof Variable) {
-            value = ((Variable) expression).getOffset();
-        }
-        else {
-            value = expression.getNumber().intValue();
+        int value = 0;
+        if (expression != null) {
+            if (expression instanceof ContextLiteral) {
+                value = ((ContextLiteral) expression).getContext().getHubAddress();
+            }
+            else if (expression instanceof Variable) {
+                value = ((Variable) expression).getOffset();
+            }
+            else {
+                value = expression.getNumber().intValue();
+            }
         }
 
         int b0 = 0b1_00_0_00_00;
@@ -159,7 +179,18 @@ public class MemoryOp extends Spin1Bytecode {
         }
         if (bb != Base.Pop) {
             sb.append("+");
-            int value = expression.getNumber().intValue();
+            int value = 0;
+            if (expression != null) {
+                if (expression instanceof ContextLiteral) {
+                    value = ((ContextLiteral) expression).getContext().getHubAddress();
+                }
+                else if (expression instanceof Variable) {
+                    value = ((Variable) expression).getOffset();
+                }
+                else {
+                    value = expression.getNumber().intValue();
+                }
+            }
             if (bb == Base.PBase && (expression instanceof ContextLiteral)) {
                 value = ((ContextLiteral) expression).getContext().getHubAddress();
             }

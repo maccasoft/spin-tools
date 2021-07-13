@@ -338,6 +338,51 @@ class Spin1TreeBuilderTest {
             + "", parseAssignment(text));
     }
 
+    @Test
+    void testPostIncrement() {
+        String text = "a++";
+        Assertions.assertEquals(""
+            + "[a]\n"
+            + " +-- [++]\n"
+            + "", parseExpression(text));
+    }
+
+    @Test
+    void testPreDecrement() {
+        String text = "--a";
+        Assertions.assertEquals(""
+            + "[--]\n"
+            + " +-- [a]\n"
+            + "", parseExpression(text));
+    }
+
+    @Test
+    void testUnaryEffectsExpression() {
+        String text = "a := b + c~~ * --d";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [+]\n"
+            + "      +-- [b]\n"
+            + "      +-- [*]\n"
+            + "           +-- [c]\n"
+            + "                +-- [~~]\n"
+            + "           +-- [--]\n"
+            + "                +-- [d]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testUnaryIndexAssigment() {
+        String text = "a[1]~~";
+        Assertions.assertEquals(""
+            + "[[]\n"
+            + " +-- [a]\n"
+            + " +-- [1]\n"
+            + " +-- [~~]\n"
+            + "", parseExpression(text));
+    }
+
     String parseAssignment(String text) {
         return parse(0, text);
     }
