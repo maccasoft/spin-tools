@@ -16,8 +16,8 @@ import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.spin2.EditorTokenMarker.TokenId;
-import com.maccasoft.propeller.spin2.EditorTokenMarker.TokenMarker;
+import com.maccasoft.propeller.EditorTokenMarker.TokenId;
+import com.maccasoft.propeller.EditorTokenMarker.TokenMarker;
 
 class Spin2TokenMarkerTest {
 
@@ -32,7 +32,7 @@ class Spin2TokenMarkerTest {
 
         Spin2TokenMarker subject = new Spin2TokenMarker();
         subject.refreshTokens(text);
-        Iterator<TokenMarker> iter = subject.tokens.iterator();
+        Iterator<TokenMarker> iter = subject.getTokens().iterator();
 
         TokenMarker entry = iter.next();
         Assertions.assertEquals(TokenId.COMMENT, entry.getId());
@@ -50,7 +50,7 @@ class Spin2TokenMarkerTest {
 
         Spin2TokenMarker subject = new Spin2TokenMarker();
         subject.refreshTokens(text);
-        Iterator<TokenMarker> iter = subject.tokens.iterator();
+        Iterator<TokenMarker> iter = subject.getTokens().iterator();
 
         TokenMarker entry = iter.next();
         Assertions.assertEquals(TokenId.SECTION, entry.getId());
@@ -70,9 +70,9 @@ class Spin2TokenMarkerTest {
         entry = iter.next();
         Assertions.assertEquals(TokenId.NUMBER, entry.getId());
 
-        Assertions.assertEquals(2, subject.symbols.size());
-        Assertions.assertEquals(TokenId.CONSTANT, subject.symbols.get("EnableFlow"));
-        Assertions.assertEquals(TokenId.CONSTANT, subject.symbols.get("DisableFlow"));
+        Assertions.assertEquals(2, subject.getSymbols().size());
+        Assertions.assertEquals(TokenId.CONSTANT, subject.getSymbols().get("EnableFlow"));
+        Assertions.assertEquals(TokenId.CONSTANT, subject.getSymbols().get("DisableFlow"));
     }
 
     @Test
@@ -84,7 +84,7 @@ class Spin2TokenMarkerTest {
 
         Spin2TokenMarker subject = new Spin2TokenMarker();
         subject.refreshTokens(text);
-        Iterator<TokenMarker> iter = subject.tokens.iterator();
+        Iterator<TokenMarker> iter = subject.getTokens().iterator();
 
         TokenMarker entry = iter.next();
         Assertions.assertEquals(TokenId.SECTION, entry.getId());

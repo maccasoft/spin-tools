@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
@@ -56,7 +57,6 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
-import com.maccasoft.propeller.spin1.CompilerMessage;
 import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
 import com.maccasoft.propeller.spin2.Spin2Object.LongDataObject;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;

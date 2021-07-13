@@ -8,7 +8,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin1;
+package com.maccasoft.propeller;
 
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;

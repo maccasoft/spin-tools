@@ -13,6 +13,7 @@ package com.maccasoft.propeller.spin2;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.maccasoft.propeller.EditorTokenMarker;
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
 import com.maccasoft.propeller.model.ConstantsNode;

@@ -8,7 +8,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin2;
+package com.maccasoft.propeller;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +35,6 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
-import com.maccasoft.propeller.spin1.CompilerMessage;
 
 public abstract class EditorTokenMarker {
 
@@ -511,6 +510,14 @@ public abstract class EditorTokenMarker {
         });
 
         return proposals;
+    }
+
+    public TreeSet<TokenMarker> getTokens() {
+        return tokens;
+    }
+
+    public Map<String, TokenId> getSymbols() {
+        return symbols;
     }
 
 }

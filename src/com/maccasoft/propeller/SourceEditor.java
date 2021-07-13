@@ -8,19 +8,16 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin2;
+package com.maccasoft.propeller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-import java.util.function.Consumer;
 
-import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.bindings.keys.KeyStroke;
-import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalProvider;
 import org.eclipse.swt.SWT;
@@ -68,6 +65,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
+import com.maccasoft.propeller.EditorTokenMarker.TokenId;
+import com.maccasoft.propeller.EditorTokenMarker.TokenMarker;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ContentProposalAdapter;
 import com.maccasoft.propeller.internal.HTMLStyledTextParser;
@@ -77,11 +76,9 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.spin1.CompilerMessage;
-import com.maccasoft.propeller.spin2.EditorTokenMarker.TokenId;
-import com.maccasoft.propeller.spin2.EditorTokenMarker.TokenMarker;
+import com.maccasoft.propeller.spin2.Spin2InstructionHelp;
 
-public class Spin2Editor {
+public class SourceEditor {
 
     private static final int UNDO_LIMIT = 500;
     private static final int CURRENT_CHANGE_TIMER_EXPIRE = 500;
@@ -106,7 +103,7 @@ public class Spin2Editor {
     EditorTokenMarker tokenMarker;
     Map<TokenId, TextStyle> styleMap = new HashMap<TokenId, TextStyle>();
 
-    Spin2EditorBackgroundDecorator backgroundDecorator;
+    SpinEditorBackgroundDecorator backgroundDecorator;
 
     boolean ignoreUndo;
     boolean ignoreRedo;
@@ -189,7 +186,7 @@ public class Spin2Editor {
 
     Shell window;
 
-    public Spin2Editor(Composite parent) {
+    public SourceEditor(Composite parent) {
         display = parent.getDisplay();
 
         container = new Composite(parent, SWT.NO_FOCUS);
@@ -432,7 +429,7 @@ public class Spin2Editor {
             }
         });
 
-        backgroundDecorator = new Spin2EditorBackgroundDecorator();
+        backgroundDecorator = new SpinEditorBackgroundDecorator();
         styledText.addLineBackgroundListener(new LineBackgroundListener() {
 
             @Override
@@ -1035,70 +1032,6 @@ public class Spin2Editor {
     public void redraw() {
         styledText.redraw();
         ruler.redraw();
-    }
-
-    public static void main(String[] args) {
-        final Display display = new Display();
-
-        display.setErrorHandler(new Consumer<Error>() {
-
-            @Override
-            public void accept(Error t) {
-                t.printStackTrace();
-            }
-
-        });
-        display.setRuntimeExceptionHandler(new Consumer<RuntimeException>() {
-
-            @Override
-            public void accept(RuntimeException t) {
-                t.printStackTrace();
-            }
-
-        });
-
-        Realm.runWithDefault(DisplayRealm.getRealm(display), new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    Shell shell = new Shell(display);
-                    shell.setText("Spin2 Editor");
-
-                    Rectangle screen = display.getClientArea();
-
-                    Rectangle rect = new Rectangle(0, 0, 800, 800);
-                    rect.x = (screen.width - rect.width) / 2;
-                    rect.y = (screen.height - rect.height) / 2;
-                    if (rect.y < 0) {
-                        rect.height += rect.y * 2;
-                        rect.y = 0;
-                    }
-
-                    shell.setLocation(rect.x, rect.y);
-                    shell.setSize(rect.width, rect.height);
-
-                    FillLayout layout = new FillLayout();
-                    layout.marginWidth = layout.marginHeight = 5;
-                    shell.setLayout(layout);
-
-                    new Spin2Editor(shell);
-
-                    shell.open();
-
-                    while (display.getShells().length != 0) {
-                        if (!display.readAndDispatch()) {
-                            display.sleep();
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return;
-                }
-            }
-        });
-
-        display.dispose();
     }
 
 }

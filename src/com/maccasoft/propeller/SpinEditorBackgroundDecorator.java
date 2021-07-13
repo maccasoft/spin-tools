@@ -8,7 +8,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin2;
+package com.maccasoft.propeller;
 
 import org.eclipse.swt.graphics.Color;
 
@@ -19,11 +19,11 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
-public class Spin2EditorBackgroundDecorator {
+public class SpinEditorBackgroundDecorator {
 
     int[] sectionCount = new int[6];
 
-    public Spin2EditorBackgroundDecorator() {
+    public SpinEditorBackgroundDecorator() {
 
     }
 

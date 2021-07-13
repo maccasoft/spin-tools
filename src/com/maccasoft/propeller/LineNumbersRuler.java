@@ -9,7 +9,7 @@
  *     Marco Maccaferri - initial API and implementation
  */
 
-package com.maccasoft.propeller.spin2;
+package com.maccasoft.propeller;
 
 import java.util.HashSet;
 import java.util.Set;

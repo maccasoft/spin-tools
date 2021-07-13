@@ -26,15 +26,13 @@ import org.eclipse.swt.widgets.Display;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
-import com.maccasoft.propeller.spin2.EditorTokenMarker;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
-import com.maccasoft.propeller.spin2.Spin2Editor;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 
 public class EditorTab {
 
     File file;
-    Spin2Editor editor;
+    SourceEditor editor;
     CTabItem tabItem;
 
     EditorTokenMarker tokenMarker;
@@ -172,7 +170,7 @@ public class EditorTab {
         tabItem.setText(tabItemText = name);
         tabItem.setData(this);
 
-        editor = new Spin2Editor(folder);
+        editor = new SourceEditor(folder);
 
         if (tabItemText.toLowerCase().endsWith(".spin2")) {
             tokenMarker = new Spin2TokenMarker();
