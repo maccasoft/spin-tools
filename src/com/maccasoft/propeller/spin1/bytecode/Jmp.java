@@ -45,30 +45,26 @@ public class Jmp extends Spin1Bytecode {
                 return 3;
             }
         }
-        int address = expression.getNumber().intValue();
-        int value = address - context.getAddress() - 2;
-        if (Math.abs(value) >= 0x40) {
-            value--;
-        }
-        return Math.abs(value) < 0x40 ? 2 : 3;
+        return getBytes().length;
     }
 
     @Override
     public byte[] getBytes() {
-        int address = expression.getNumber().intValue();
-        int value = address - context.getAddress() - 2;
-        if (Math.abs(value) < 0x40) {
+        int ourAddress = context.getAddress();
+        int destinationAddress = expression.getNumber().intValue();
+        int offset = destinationAddress - (ourAddress + 2);
+        if (Math.abs(offset) < 0x40) {
             return new byte[] {
                 (byte) code,
-                (byte) (value & 0x7F)
+                (byte) (offset & 0x7F)
             };
         }
         else {
-            value--;
+            offset--;
             return new byte[] {
                 (byte) code,
-                (byte) ((value & 0x7F) | 0x80),
-                (byte) ((value >> 7) & 0x7F)
+                (byte) (((offset >> 8) & 0x7F) | 0x80),
+                (byte) offset
             };
         }
     }

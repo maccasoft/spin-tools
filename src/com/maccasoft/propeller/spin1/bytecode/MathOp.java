@@ -117,10 +117,12 @@ public class MathOp extends Spin1Bytecode {
     }
 
     Descriptor op;
+    boolean push;
 
-    public MathOp(Spin1Context context, String op) {
+    public MathOp(Spin1Context context, String op, boolean push) {
         super(context);
         this.op = getOperationDescriptor(op);
+        this.push = push;
     }
 
     @Override
@@ -131,7 +133,7 @@ public class MathOp extends Spin1Bytecode {
     @Override
     public byte[] getBytes() {
         return new byte[] {
-            (byte) op.value
+            (byte) (op.value | (push ? 0b10000000 : 0b00000000))
         };
     }
 

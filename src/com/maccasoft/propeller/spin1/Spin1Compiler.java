@@ -1399,7 +1399,7 @@ public class Spin1Compiler {
                     source.add(new MemoryOp(context, MemoryOp.Size.Long, !push, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
                 }
             }
-            source.add(new MathOp(context, node.getText()));
+            source.add(new MathOp(context, node.getText(), push));
         }
         else if (MathOp.isMathOp(node.getText())) {
             if (node.getChildCount() != 2) {
@@ -1407,7 +1407,7 @@ public class Spin1Compiler {
             }
             source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
             source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-            source.add(new MathOp(context, node.getText()));
+            source.add(new MathOp(context, node.getText(), push));
         }
         else if ("[".equalsIgnoreCase(node.getText())) {
             if (node.getChildCount() != 2 && node.getChildCount() != 3) {
@@ -1432,21 +1432,20 @@ public class Spin1Compiler {
                     throw new CompilerMessage("undefined symbol " + node.getChild(0).getText(), node.getChild(0).getToken());
                 }
                 if (expression instanceof Register) {
-                    int mathOp = 0;
                     if (node.getChildCount() == 3) {
+                        source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, expression.getNumber().intValue()));
                         if ("~".equalsIgnoreCase(node.getChild(2).getText())) {
-                            mathOp = 0x18;
+                            source.add(new Bytecode(context, 0b0_00110_00, "POST_CLEAR"));
                         }
                         else if ("~~".equalsIgnoreCase(node.getChild(2).getText())) {
-                            mathOp = 0x1C;
+                            source.add(new Bytecode(context, 0b0_00111_00, "POST_SET"));
                         }
                         else {
                             throw new RuntimeException("invalid operator " + node.getChild(0).getText());
                         }
-                        source.add(new RegisterBitOp(context, RegisterBitOp.Op.Write, expression.getNumber().intValue(), mathOp));
                     }
                     else {
-                        source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Assign : RegisterBitOp.Op.Write, expression.getNumber().intValue(), mathOp));
+                        source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Assign : RegisterBitOp.Op.Write, expression.getNumber().intValue()));
                     }
                 }
                 else if (expression instanceof Variable) {
@@ -1493,7 +1492,7 @@ public class Spin1Compiler {
                 throw new RuntimeException("expected " + parameters + " argument(s), found " + argsNode.getChildCount());
             }
             source.add(new Bytecode(context, new byte[] {
-                (byte) 0b00000011,
+                (byte) (push ? 0b00000010 : 0b00000011),
             }, "ANCHOR (TRY)"));
             for (int i = 0; i < parameters; i++) {
                 source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
@@ -1666,7 +1665,7 @@ public class Spin1Compiler {
                     throw new RuntimeException("expected " + parameters + " argument(s), found " + argsNode.getChildCount());
                 }
                 source.add(new Bytecode(context, new byte[] {
-                    (byte) 0b00000001,
+                    (byte) (push ? 0b00000000 : 0b00000001),
                 }, "ANCHOR"));
                 for (int i = 0; i < parameters; i++) {
                     source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
