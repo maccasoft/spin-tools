@@ -15,7 +15,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import com.maccasoft.propeller.expressions.Expression;
 
 public class Spin1Object {
 
@@ -25,6 +29,8 @@ public class Spin1Object {
     int clkfreq;
     int clkmode;
     int varSize;
+
+    Map<String, Expression> symbols = new HashMap<String, Expression>();
 
     public static class DataObject {
         byte[] bytes;
@@ -306,6 +312,18 @@ public class Spin1Object {
 
     public void setVarSize(int varSize) {
         this.varSize = varSize;
+    }
+
+    public void addSymbol(String name, Expression expression) {
+        symbols.put(name, expression);
+    }
+
+    public Expression getSymbol(String name) {
+        return symbols.get(name);
+    }
+
+    public Map<String, Expression> getSymbols() {
+        return symbols;
     }
 
     public void generateBinary(OutputStream os) throws IOException {

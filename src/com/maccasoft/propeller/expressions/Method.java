@@ -25,6 +25,10 @@ public class Method extends Expression {
         this.offset = offset;
     }
 
+    public Method copy() {
+        return new Method(name, arguments, returns, offset);
+    }
+
     public int getArgumentsCount() {
         return arguments;
     }

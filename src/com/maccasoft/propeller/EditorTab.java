@@ -23,6 +23,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.widgets.Display;
 
+import com.maccasoft.propeller.EditorTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
@@ -303,6 +304,32 @@ public class EditorTab {
 
     public Object getObject() {
         return object;
+    }
+
+    public void goToNextError() {
+        int offset = editor.getStyledText().getCaretOffset();
+        int line = editor.getStyledText().getLineAtOffset(offset);
+        for (TokenMarker marker : tokenMarker.getCompilerTokens()) {
+            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
+            if (markerLine > line) {
+                editor.gotToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+                return;
+            }
+        }
+        Display.getDefault().beep();
+    }
+
+    public void goToPreviousError() {
+        int offset = editor.getStyledText().getCaretOffset();
+        int line = editor.getStyledText().getLineAtOffset(offset);
+        for (TokenMarker marker : tokenMarker.getCompilerTokens()) {
+            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
+            if (markerLine < line) {
+                editor.gotToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+                return;
+            }
+        }
+        Display.getDefault().beep();
     }
 
 }

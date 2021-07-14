@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
@@ -64,6 +65,8 @@ import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
 
 public class Spin1Compiler {
+
+    public static boolean OPENSPIN_COMPATIBILITY = false;
 
     Spin1Context scope = new Spin1GlobalContext();
     List<Spin1PAsmLine> source = new ArrayList<Spin1PAsmLine>();
@@ -118,7 +121,7 @@ public class Spin1Compiler {
 
         for (Node node : root.getChilds()) {
             if (node instanceof ConstantsNode) {
-                compileConBlock(node);
+                compileConBlock(node, object);
             }
         }
 
@@ -153,6 +156,7 @@ public class Spin1Compiler {
                 methods.add(method);
                 scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
+                object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 method.register();
             }
         }
@@ -223,14 +227,11 @@ public class Spin1Compiler {
         object.alignToLong();
 
         if (methods.size() != 0) {
-            address = object.getSize();
-            for (Spin1Method method : methods) {
-                address = method.resolve(address);
-            }
-
-            address = object.getSize();
-            for (Spin1Method method : methods) {
-                address = method.resolve(address);
+            for (int i = 0; i < 3; i++) {
+                address = object.getSize();
+                for (Spin1Method method : methods) {
+                    address = method.resolve(address);
+                }
             }
 
             int index = 0;
@@ -262,7 +263,7 @@ public class Spin1Compiler {
         return object;
     }
 
-    void compileConBlock(Node parent) {
+    void compileConBlock(Node parent, Spin1Object object) {
 
         parent.accept(new NodeVisitor() {
             int enumValue = 0, enumIncrement = 1;
@@ -275,6 +276,7 @@ public class Spin1Compiler {
                     expression.setData(node);
                     try {
                         scope.addSymbol(name, expression);
+                        object.addSymbol(name, expression);
                     } catch (CompilerMessage e) {
                         logMessage(e);
                     } catch (Exception e) {
@@ -306,6 +308,7 @@ public class Spin1Compiler {
             public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
                 try {
                     scope.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
+                    object.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
                 } catch (Exception e) {
                     logMessage(new CompilerMessage(e.getMessage(), node.identifier));
                     e.printStackTrace();
@@ -426,29 +429,28 @@ public class Spin1Compiler {
             ObjectNode node = (ObjectNode) child;
             if (node.name != null && node.file != null) {
                 String file = node.file.getText().substring(1);
-                String text = getObjectSource(file.substring(0, file.length() - 1));
+                Spin1Object object = getObject(file.substring(0, file.length() - 1));
+                objects.add(object);
 
-                Spin1TokenStream stream = new Spin1TokenStream(text);
-                Spin1Parser subject = new Spin1Parser(stream);
-                Node root = subject.parse();
-
-                Spin1Compiler compiler = new Spin1Compiler();
-                objects.add(compiler.compileObject(root));
-
-                int index = 1;
-                for (Spin1Method method : compiler.methods) {
-                    String qualifiedName = node.name.getText() + "." + method.getLabel();
-                    Method symbol = new Method(qualifiedName, method.getParametersCount(), method.getReturnsCount(), index++);
-                    symbol.setObject(objects.size() + 1);
-                    scope.addSymbol(qualifiedName, symbol);
+                for (Entry<String, Expression> entry : object.getSymbols().entrySet()) {
+                    if (entry.getValue() instanceof Method) {
+                        String qualifiedName = node.name.getText() + "." + entry.getKey();
+                        Method method = ((Method) entry.getValue()).copy();
+                        method.setObject(objects.size() + 1);
+                        scope.addSymbol(qualifiedName, method);
+                    }
+                    else {
+                        String qualifiedName = node.name.getText() + "#" + entry.getKey();
+                        scope.addSymbol(qualifiedName, entry.getValue());
+                    }
                 }
             }
 
         }
     }
 
-    protected String getObjectSource(String fileName) {
-        return "";
+    protected Spin1Object getObject(String fileName) {
+        return null;
     }
 
     void compileDatBlock(Node parent) {
@@ -918,13 +920,14 @@ public class Spin1Compiler {
 
                                 Spin1StatementNode expression = builder.getRoot();
                                 if ("OTHER".equalsIgnoreCase(expression.getText())) {
-                                    expression.setData("other", targetLine);
+                                    line.childs.add(0, targetLine);
+                                    line.setData("other", targetLine);
                                 }
                                 else {
                                     expression.setData("true", targetLine);
+                                    line.addChild(targetLine);
+                                    arguments.add(expression);
                                 }
-                                line.addChild(targetLine);
-                                arguments.add(expression);
                             }
                         }
 
@@ -1007,9 +1010,9 @@ public class Spin1Compiler {
                     line.addSource(new Constant(line.getScope(), expression));
                 } catch (Exception e) {
                     line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), true));
-                    Spin1MethodLine target = (Spin1MethodLine) line.getData("quit");
-                    line.addSource(new Tjz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
                 }
+                Spin1MethodLine target = (Spin1MethodLine) line.getData("quit");
+                line.addSource(new Tjz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
             }
             else if (line.getArgumentsCount() == 3 || line.getArgumentsCount() == 4) {
                 line.addSource(compileConstantExpression(line.getScope(), line.getArgument(1)));
@@ -1201,6 +1204,10 @@ public class Spin1Compiler {
                     }
                 }
             }
+
+            if (line.getData("other") == null) {
+                line.addSource(new Bytecode(line.getScope(), 0x0C, "JMP_POP"));
+            }
         }
         else if ("CASE_DONE".equalsIgnoreCase(text)) {
             line.addSource(new Bytecode(line.getScope(), 0x0C, text));
@@ -1284,6 +1291,14 @@ public class Spin1Compiler {
                 source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
             }
             source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText()));
+        }
+        else if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
+            source.add(new Constant(context, new NumberLiteral(0)));
+            source.add(new MemoryOp(context, MemoryOp.Size.Long, false, MemoryOp.Base.Pop, MemoryOp.Op.Read, null));
+        }
+        else if ("CLKMODE".equalsIgnoreCase(node.getText())) {
+            source.add(new Constant(context, new NumberLiteral(4)));
+            source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.Pop, MemoryOp.Op.Read, null));
         }
         else if ("COGID".equalsIgnoreCase(node.getText())) {
             if (argsNode.getChildCount() != 0) {

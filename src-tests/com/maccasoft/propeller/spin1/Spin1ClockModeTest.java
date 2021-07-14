@@ -34,7 +34,7 @@ class Spin1ClockModeTest {
         Node root = parser.parse();
 
         Spin1Compiler subject = new Spin1Compiler();
-        subject.compileConBlock(root.getChild(0));
+        subject.compileConBlock(root.getChild(0), new Spin1Object());
 
         Assertions.assertEquals("5_000_000", subject.scope.getSymbol("_XINFREQ").toString());
         Assertions.assertEquals("XTAL1 + PLL16X", subject.scope.getSymbol("_CLKMODE").toString());

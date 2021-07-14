@@ -16,12 +16,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.Node;
 
 class Spin1CompilerTest {
+
+    @AfterEach
+    void afterEach() {
+        Spin1Compiler.OPENSPIN_COMPATIBILITY = false;
+    }
 
     @Test
     void testEmptyMethod() throws Exception {
@@ -217,19 +223,20 @@ class Spin1CompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header\n"
-            + "00000 00000       10 00          Object size\n"
+            + "00000 00000       14 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
             + "' PUB main() | a\n"
             + "'     repeat 10\n"
             + "00008 00008       38 0A          CONSTANT (10)\n"
+            + "0000A 0000A       08 04          TJZ $00010 (4)\n"
             + "'         a := 1\n"
-            + "0000A 0000A       36             CONSTANT (1)\n"
-            + "0000B 0000B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
-            + "0000C 0000C       09 7C          DJNZ $0000A (-4)\n"
-            + "0000E 0000E       32             RETURN\n"
-            + "0000F 0000F       00             Padding\n"
+            + "0000C 0000C       36             CONSTANT (1)\n"
+            + "0000D 0000D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000E 0000E       09 7C          DJNZ $0000C (-4)\n"
+            + "00010 00010       32             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
             + "", compile(text));
     }
 
@@ -754,39 +761,38 @@ class Spin1CompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header\n"
-            + "00000 00000       2C 00          Object size\n"
+            + "00000 00000       28 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
             + "' PUB main() | a\n"
             + "'     case a\n"
-            + "00008 00008       38 28          CONSTANT (.label_13)\n"
+            + "00008 00008       38 26          CONSTANT (.label_13)\n"
             + "0000A 0000A       64             VAR_READ LONG DBASE+$0004 (short)\n"
             + "0000B 0000B       36             CONSTANT (1)\n"
-            + "0000C 0000C       0D 0A          CASE-JMP $00018 (10)\n"
+            + "0000C 0000C       0D 0C          CASE-JMP $0001A (12)\n"
             + "0000E 0000E       38 02          CONSTANT (2)\n"
-            + "00010 00010       0D 0A          CASE-JMP $0001C (10)\n"
+            + "00010 00010       0D 0C          CASE-JMP $0001E (12)\n"
             + "00012 00012       38 03          CONSTANT (3)\n"
-            + "00014 00014       0D 0A          CASE-JMP $00020 (10)\n"
-            + "00016 00016       04 0C          JMP $00024 (12)\n"
-            + "'         1: a := 4\n"
-            + "00018 00018       38 04          CONSTANT (4)\n"
-            + "0001A 0001A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
-            + "0001B 0001B       0C             CASE_DONE\n"
-            + "'            a := 5\n"
-            + "0001C 0001C       38 05          CONSTANT (5)\n"
-            + "0001E 0001E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
-            + "0001F 0001F       0C             CASE_DONE\n"
-            + "'         3: a := 6\n"
-            + "00020 00020       38 06          CONSTANT (6)\n"
-            + "00022 00022       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
-            + "00023 00023       0C             CASE_DONE\n"
+            + "00014 00014       0D 0C          CASE-JMP $00022 (12)\n"
             + "'         other: a := 7\n"
-            + "00024 00024       38 07          CONSTANT (7)\n"
-            + "00026 00026       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
-            + "00027 00027       0C             CASE_DONE\n"
-            + "00028 00028       32             RETURN\n"
-            + "00029 00029       00 00 00       Padding\n"
+            + "00016 00016       38 07          CONSTANT (7)\n"
+            + "00018 00018       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00019 00019       0C             CASE_DONE\n"
+            + "'         1: a := 4\n"
+            + "0001A 0001A       38 04          CONSTANT (4)\n"
+            + "0001C 0001C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0001D 0001D       0C             CASE_DONE\n"
+            + "'            a := 5\n"
+            + "0001E 0001E       38 05          CONSTANT (5)\n"
+            + "00020 00020       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00021 00021       0C             CASE_DONE\n"
+            + "'         3: a := 6\n"
+            + "00022 00022       38 06          CONSTANT (6)\n"
+            + "00024 00024       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00025 00025       0C             CASE_DONE\n"
+            + "00026 00026       32             RETURN\n"
+            + "00027 00027       00             Padding\n"
             + "", compile(text));
     }
 
@@ -809,22 +815,21 @@ class Spin1CompilerTest {
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
             + "' PUB main() | a\n"
             + "'     case a\n"
-            + "00008 00008       38 1A          CONSTANT (.label_7)\n"
+            + "00008 00008       38 18          CONSTANT (.label_7)\n"
             + "0000A 0000A       64             VAR_READ LONG DBASE+$0004 (short)\n"
             + "0000B 0000B       36             CONSTANT (1)\n"
             + "0000C 0000C       38 05          CONSTANT (5)\n"
-            + "0000E 0000E       0E 02          CASE-RANGE-JMP $00012 (2)\n"
-            + "00010 00010       04 04          JMP $00016 (4)\n"
-            + "'         1..5: a := 6\n"
-            + "00012 00012       38 06          CONSTANT (6)\n"
-            + "00014 00014       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
-            + "00015 00015       0C             CASE_DONE\n"
+            + "0000E 0000E       0E 04          CASE-RANGE-JMP $00014 (4)\n"
             + "'         other: a := 7\n"
-            + "00016 00016       38 07          CONSTANT (7)\n"
-            + "00018 00018       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
-            + "00019 00019       0C             CASE_DONE\n"
-            + "0001A 0001A       32             RETURN\n"
-            + "0001B 0001B       00             Padding\n"
+            + "00010 00010       38 07          CONSTANT (7)\n"
+            + "00012 00012       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00013 00013       0C             CASE_DONE\n"
+            + "'         1..5: a := 6\n"
+            + "00014 00014       38 06          CONSTANT (6)\n"
+            + "00016 00016       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00017 00017       0C             CASE_DONE\n"
+            + "00018 00018       32             RETURN\n"
+            + "00019 00019       00 00 00       Padding\n"
             + "", compile(text));
     }
 
@@ -1196,6 +1201,48 @@ class Spin1CompilerTest {
     }
 
     @Test
+    void testObjectConstant() throws Exception {
+        String text = ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := o#CONSTANT\n"
+            + "\n"
+            + "";
+
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("text2", ""
+            + "CON\n"
+            + "\n"
+            + "    CONSTANT = 1\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       01             Object count\n"
+            + "00004 00004       0C 00 04 00    Function main @ $000C (local size 4)\n"
+            + "00008 00008       10 00          Header offset\n"
+            + "0000A 0000A       00 00          Var offset\n"
+            + "' PUB main() | a\n"
+            + "'     a := o#CONSTANT\n"
+            + "0000C 0000C       36             CONSTANT (1)\n"
+            + "0000D 0000D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000E 0000E       32             RETURN\n"
+            + "0000F 0000F       00             Padding\n"
+            + "' Object header\n"
+            + "00010 00000       04 00          Object size\n"
+            + "00012 00002       01             Method count + 1\n"
+            + "00013 00003       00             Object count\n"
+            + "", compile(text, sources));
+    }
+
+    @Test
     void testLookdown() throws Exception {
         String text = ""
             + "PUB main | a, b\n"
@@ -1469,6 +1516,67 @@ class Spin1CompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testIfCaseElse() throws Exception {
+        Spin1Compiler.OPENSPIN_COMPATIBILITY = true;
+
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    if a >= 1\n"
+            + "        case a\n"
+            + "            1: a := 4\n"
+            + "            2: a := 5\n"
+            + "            3: a := 6\n"
+            + "    else\n"
+            + "        a := 8\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       30 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main() | a\n"
+            + "'     if a >= 1\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0000A 0000A       DA             TEST_ABOVE\n"
+            + "0000B 0000B       0A 1D          JZ $0002A (29)\n"
+            + "'         case a\n"
+            + "0000D 0000D       38 28          CONSTANT (.label_11)\n"
+            + "0000F 0000F       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00010 00010       36             CONSTANT (1)\n"
+            + "00011 00011       0D 09          CASE-JMP $0001C (9)\n"
+            + "00013 00013       37 00          CONSTANT (2)\n"
+            + "00015 00015       0D 09          CASE-JMP $00020 (9)\n"
+            + "00017 00017       37 21          CONSTANT (3)\n"
+            + "00019 00019       0D 09          CASE-JMP $00024 (9)\n"
+            + "0001B 0001B       0C             JMP_POP\n"
+            + "'             1: a := 4\n"
+            + "0001C 0001C       37 01          CONSTANT (4)\n"
+            + "0001E 0001E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0001F 0001F       0C             CASE_DONE\n"
+            + "'             2: a := 5\n"
+            + "00020 00020       38 05          CONSTANT (5)\n"
+            + "00022 00022       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00023 00023       0C             CASE_DONE\n"
+            + "'             3: a := 6\n"
+            + "00024 00024       38 06          CONSTANT (6)\n"
+            + "00026 00026       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00027 00027       0C             CASE_DONE\n"
+            + "00028 00028       04 03          JMP $0002D (3)\n"
+            + "'     else\n"
+            + "'         a := 8\n"
+            + "0002A 0002A       37 02          CONSTANT (8)\n"
+            + "0002C 0002C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0002D 0002D       32             RETURN\n"
+            + "0002E 0002E       00 00          Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, Collections.emptyMap());
     }
@@ -1481,8 +1589,14 @@ class Spin1CompilerTest {
         Spin1Compiler compiler = new Spin1Compiler() {
 
             @Override
-            protected String getObjectSource(String fileName) {
-                return sources.get(fileName);
+            protected Spin1Object getObject(String fileName) {
+                String text = sources.get(fileName);
+                Spin1TokenStream stream = new Spin1TokenStream(text);
+                Spin1Parser subject = new Spin1Parser(stream);
+                Node root = subject.parse();
+
+                Spin1Compiler compiler = new Spin1Compiler();
+                return compiler.compileObject(root);
             }
 
         };

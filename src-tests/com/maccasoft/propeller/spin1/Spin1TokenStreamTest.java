@@ -663,4 +663,18 @@ class Spin1TokenStreamTest {
         assertEquals("a", subject.nextToken().getText());
     }
 
+    @Test
+    void testObjectMethod() {
+        Spin1TokenStream subject = new Spin1TokenStream("object.method");
+
+        assertEquals("object.method", subject.nextToken().getText());
+    }
+
+    @Test
+    void testObjectConstant() {
+        Spin1TokenStream subject = new Spin1TokenStream("object#CONSTANT");
+
+        assertEquals("object#CONSTANT", subject.nextToken().getText());
+    }
+
 }
