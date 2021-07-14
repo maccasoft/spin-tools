@@ -217,6 +217,12 @@ public class Spin1TokenStream extends TokenStream {
                     state = Token.START;
                     return token;
                 case Token.OPERATOR:
+                    if (text.charAt(index - 1) == '#') {
+                        if (ch == ':') {
+                            state = Token.START;
+                            return token;
+                        }
+                    }
                     if (ch == '|' || ch == '!' || ch == '=' || ch == '^' || ch == '+' || ch == '*' || ch == '-' || ch == '/' || ch == '#' || ch == ':' || ch == '>' || ch == '<' || ch == '.'
                         || ch == '~') {
                         token.stop++;

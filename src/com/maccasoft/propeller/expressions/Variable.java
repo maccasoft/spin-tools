@@ -28,6 +28,10 @@ public class Variable extends Expression {
         return type;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public Expression getSize() {
         return size;
     }

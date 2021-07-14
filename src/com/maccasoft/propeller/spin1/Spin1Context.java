@@ -31,6 +31,7 @@ public class Spin1Context implements Context {
     int objectOffset;
 
     public Spin1Context() {
+
     }
 
     public Spin1Context(Spin1Context parent) {

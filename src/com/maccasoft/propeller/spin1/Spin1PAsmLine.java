@@ -34,7 +34,7 @@ public class Spin1PAsmLine {
     List<String> annotations = new ArrayList<String>();
 
     public Spin1PAsmLine(Spin1Context scope, String label, String condition, String mnemonic, List<Spin1PAsmExpression> arguments, String effect) {
-        this.scope = scope;
+        this.scope = new Spin1Context(scope);
         this.label = label;
         this.condition = condition;
         this.mnemonic = mnemonic;

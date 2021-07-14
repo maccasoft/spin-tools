@@ -677,4 +677,19 @@ class Spin1TokenStreamTest {
         assertEquals("object#CONSTANT", subject.nextToken().getText());
     }
 
+    @Test
+    void testLocalLabel() {
+        Spin1TokenStream subject = new Spin1TokenStream(":label");
+
+        assertEquals(":label", subject.nextToken().getText());
+    }
+
+    @Test
+    void testImmediateLocalLabel() {
+        Spin1TokenStream subject = new Spin1TokenStream("#:label");
+
+        assertEquals("#", subject.nextToken().getText());
+        assertEquals(":label", subject.nextToken().getText());
+    }
+
 }
