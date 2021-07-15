@@ -34,8 +34,8 @@ public class MathOp extends Spin1Bytecode {
         operations.put("<-", new Descriptor(0b111_00001, "ROTATE_LEFT")); //  rotate left
         operations.put(">>", new Descriptor(0b111_00010, "SHIFT_RIGHT")); //  shift right
         operations.put("<<", new Descriptor(0b111_00011, "SHIFT_LEFT")); //  shift left
-        operations.put("|>", new Descriptor(0b111_00100, "LIMIT_MINIMUM")); //  limit minimum (signed)
-        operations.put("<|", new Descriptor(0b111_00101, "LIMIT_MAXIMUM")); //  limit maximum (signed)
+        operations.put("#>", new Descriptor(0b111_00100, "LIMIT_MINIMUM")); //  limit minimum (signed)
+        operations.put("<#", new Descriptor(0b111_00101, "LIMIT_MAXIMUM")); //  limit maximum (signed)
         //operations.put("-", new Descriptor(0b111_00110, "NEGATE")); //   negate
         operations.put("!", new Descriptor(0b111_00111, "BITNOT")); //   bitwise not
         operations.put("&", new Descriptor(0b111_01000, "BITAND")); //   bitwise and
@@ -74,8 +74,8 @@ public class MathOp extends Spin1Bytecode {
         assignOperations.put("<-=", new Descriptor(0b010_00001, "ROTATE_LEFT")); //  rotate left
         assignOperations.put(">>=", new Descriptor(0b010_00010, "SHIFT_RIGHT")); //  shift right
         assignOperations.put("<<=", new Descriptor(0b010_00011, "SHIFT_LEFT")); //  shift left
-        assignOperations.put("|>=", new Descriptor(0b010_00100, "LIMIT_MINIMUM")); //  limit minimum (signed)
-        assignOperations.put("<|=", new Descriptor(0b010_00101, "LIMIT_MAXIMUM")); //  limit maximum (signed)
+        assignOperations.put("#>=", new Descriptor(0b010_00100, "LIMIT_MINIMUM")); //  limit minimum (signed)
+        assignOperations.put("<#=", new Descriptor(0b010_00101, "LIMIT_MAXIMUM")); //  limit maximum (signed)
         //assignOperations.put("-=", new Descriptor(0b010_00110, "NEGATE")); //   negate
         assignOperations.put("!=", new Descriptor(0b010_00111, "BITNOT")); //   bitwise not
         assignOperations.put("&=", new Descriptor(0b010_01000, "BITAND")); //   bitwise and

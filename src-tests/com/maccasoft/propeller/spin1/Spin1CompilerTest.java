@@ -174,15 +174,16 @@ class Spin1CompilerTest {
             + "' PUB main() | a, b\n"
             + "'     if (a := b) == 0\n"
             + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
-            + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
-            + "0000A 0000A       35             CONSTANT (0)\n"
-            + "0000B 0000B       FC             TEST_EQUAL\n"
-            + "0000C 0000C       0A 02          JZ $00010 (2)\n"
+            + "00009 00009       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0000A 0000A       80             WRITE\n"
+            + "0000B 0000B       35             CONSTANT (0)\n"
+            + "0000C 0000C       FC             TEST_EQUAL\n"
+            + "0000D 0000D       0A 02          JZ $00011 (2)\n"
             + "'         a := 1\n"
-            + "0000E 0000E       36             CONSTANT (1)\n"
-            + "0000F 0000F       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
-            + "00010 00010       32             RETURN\n"
-            + "00011 00011       00 00 00       Padding\n"
+            + "0000F 0000F       36             CONSTANT (1)\n"
+            + "00010 00010       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00011 00011       32             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
             + "", compile(text));
     }
 
@@ -1606,6 +1607,85 @@ class Spin1CompilerTest {
             + "0000F 0000F       B1             MEM_WRITE WORD POP\n"
             + "00010 00010       32             RETURN\n"
             + "00011 00011       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRepeatComplexExpression() throws Exception {
+        String text = ""
+            + "PUB main | a, b, c\n"
+            + "\n"
+            + "    repeat until ((a := byte[b][c++]) == 0)\n"
+            + "        a := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       18 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 0C 00    Function main @ $0008 (local size 12)\n"
+            + "' PUB main | a, b, c\n"
+            + "'     repeat until ((a := byte[b][c++]) == 0)\n"
+            + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "00009 00009       6E             VAR_MODIFY LONG DBASE+$000C (short)\n"
+            + "0000A 0000A       AE             POST_INC\n"
+            + "0000B 0000B       90             MEM_READ BYTE POP\n"
+            + "0000C 0000C       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "0000D 0000D       80             WRITE\n"
+            + "0000E 0000E       35             CONSTANT (0)\n"
+            + "0000F 0000F       FC             TEST_EQUAL\n"
+            + "00010 00010       0B 04          JNZ $00016 (4)\n"
+            + "'         a := 1\n"
+            + "00012 00012       36             CONSTANT (1)\n"
+            + "00013 00013       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00014 00014       04 72          JMP $00008 (-14)\n"
+            + "00016 00016       32             RETURN\n"
+            + "00017 00017       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testUnaryExpressions() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := -b\n"
+            + "    a := ?b\n"
+            + "    a := b?\n"
+            + "    a++\n"
+            + "    --a\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       18 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main | a, b\n"
+            + "'     a := -b\n"
+            + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "00009 00009       E6             NEGATE\n"
+            + "0000A 0000A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := ?b\n"
+            + "0000B 0000B       6A             VAR_MODIFY LONG DBASE+$0008 (short)\n"
+            + "0000C 0000C       88             RANDOM_FORWARD\n"
+            + "0000D 0000D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := b?\n"
+            + "0000E 0000E       6A             VAR_MODIFY LONG DBASE+$0008 (short)\n"
+            + "0000F 0000F       8C             RANDOM_REVERSE\n"
+            + "00010 00010       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a++\n"
+            + "00011 00011       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00012 00012       2E             POST_INC\n"
+            + "'     --a\n"
+            + "00013 00013       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00014 00014       36             PRE_DEC\n"
+            + "00015 00015       32             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
             + "", compile(text));
     }
 

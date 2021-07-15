@@ -37,10 +37,9 @@ class Spin1TreeBuilderTest {
         String text = "(1 + 2) * 3";
         Assertions.assertEquals(""
             + "[*]\n"
-            + " +-- [(]\n"
-            + "      +-- [+]\n"
-            + "           +-- [1]\n"
-            + "           +-- [2]\n"
+            + " +-- [+]\n"
+            + "      +-- [1]\n"
+            + "      +-- [2]\n"
             + " +-- [3]\n"
             + "", parseExpression(text));
     }
@@ -92,10 +91,9 @@ class Spin1TreeBuilderTest {
             + "                +-- [3]\n"
             + "      +-- [4]\n"
             + "      +-- [*]\n"
-            + "           +-- [(]\n"
-            + "                +-- [+]\n"
-            + "                     +-- [5]\n"
-            + "                     +-- [6]\n"
+            + "           +-- [+]\n"
+            + "                +-- [5]\n"
+            + "                +-- [6]\n"
             + "           +-- [7]\n"
             + "", parseAssignment(text));
     }
@@ -167,14 +165,13 @@ class Spin1TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [*]\n"
-            + "      +-- [(]\n"
-            + "           +-- [+]\n"
-            + "                +-- [function1]\n"
-            + "                     +-- [,]\n"
-            + "                          +-- [1]\n"
-            + "                          +-- [2]\n"
-            + "                +-- [function2]\n"
-            + "                     +-- [3]\n"
+            + "      +-- [+]\n"
+            + "           +-- [function1]\n"
+            + "                +-- [,]\n"
+            + "                     +-- [1]\n"
+            + "                     +-- [2]\n"
+            + "           +-- [function2]\n"
+            + "                +-- [3]\n"
             + "      +-- [function3]\n"
             + "           +-- [,]\n"
             + "                +-- [4]\n"
@@ -201,12 +198,11 @@ class Spin1TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [-]\n"
-            + "      +-- [(]\n"
-            + "           +-- [+]\n"
-            + "                +-- [1]\n"
-            + "                +-- [*]\n"
-            + "                     +-- [2]\n"
-            + "                     +-- [3]\n"
+            + "      +-- [+]\n"
+            + "           +-- [1]\n"
+            + "           +-- [*]\n"
+            + "                +-- [2]\n"
+            + "                +-- [3]\n"
             + "", parseAssignment(text));
     }
 
@@ -272,8 +268,9 @@ class Spin1TreeBuilderTest {
             + "      +-- [==]\n"
             + "           +-- [b]\n"
             + "           +-- [1]\n"
-            + "      +-- [2]\n"
-            + "      +-- [3]\n"
+            + "      +-- [:]\n"
+            + "           +-- [2]\n"
+            + "           +-- [3]\n"
             + "", parseAssignment(text));
     }
 
@@ -304,15 +301,14 @@ class Spin1TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [*]\n"
-            + "      +-- [(]\n"
-            + "           +-- [+]\n"
-            + "                +-- [function1]\n"
-            + "                     +-- [,]\n"
-            + "                          +-- [1]\n"
-            + "                          +-- [2]\n"
-            + "                +-- [\\]\n"
-            + "                     +-- [function2]\n"
-            + "                          +-- [3]\n"
+            + "      +-- [+]\n"
+            + "           +-- [function1]\n"
+            + "                +-- [,]\n"
+            + "                     +-- [1]\n"
+            + "                     +-- [2]\n"
+            + "           +-- [\\]\n"
+            + "                +-- [function2]\n"
+            + "                     +-- [3]\n"
             + "      +-- [function3]\n"
             + "           +-- [,]\n"
             + "                +-- [4]\n"
@@ -384,15 +380,25 @@ class Spin1TreeBuilderTest {
     }
 
     @Test
+    void testUnaryIndexPreAssigment() {
+        String text = "~~a[1]";
+        Assertions.assertEquals(""
+            + "[~~]\n"
+            + " +-- [[]\n"
+            + "      +-- [a]\n"
+            + "      +-- [1]\n"
+            + "", parseExpression(text));
+    }
+
+    @Test
     void testArray() {
         String text = "a := b[c][0]";
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [[]\n"
-            + "      +-- [[]\n"
-            + "           +-- [b]\n"
-            + "           +-- [c]\n"
+            + "      +-- [b]\n"
+            + "      +-- [c]\n"
             + "      +-- [0]\n"
             + "", parseAssignment(text));
     }
@@ -403,11 +409,28 @@ class Spin1TreeBuilderTest {
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [[]\n"
-            + "      +-- [[]\n"
-            + "           +-- [a]\n"
-            + "           +-- [c]\n"
+            + "      +-- [a]\n"
+            + "      +-- [c]\n"
             + "      +-- [0]\n"
             + " +-- [b]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testArgumentRange() {
+        String text = "a := c(b : 10, 20..30, 40)";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [c]\n"
+            + "      +-- [:]\n"
+            + "           +-- [b]\n"
+            + "           +-- [,]\n"
+            + "                +-- [10]\n"
+            + "                +-- [..]\n"
+            + "                     +-- [20]\n"
+            + "                     +-- [30]\n"
+            + "                +-- [40]\n"
             + "", parseAssignment(text));
     }
 
@@ -421,7 +444,6 @@ class Spin1TreeBuilderTest {
 
     String parse(int state, String text) {
         Spin1TreeBuilder builder = new Spin1TreeBuilder();
-        builder.setState(state);
 
         Spin1TokenStream stream = new Spin1TokenStream(text);
         while (true) {

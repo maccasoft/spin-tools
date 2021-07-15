@@ -86,7 +86,7 @@ public class Token {
 
     @Override
     public String toString() {
-        return String.format("type=%d, start=%d, stop=%d, line=%d, column=%d, text='%s'", type, start, stop, line, column, getText().replaceAll("\n", "\\\\n"));
+        return getText();
     }
 
 }

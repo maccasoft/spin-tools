@@ -2,7 +2,16 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" output="bin-tests" path="src-tests"/>
+	<classpathentry kind="src" output="bin-functional" path="src-functional">
+		<attributes>
+			<attribute name="test" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" output="bin-tests" path="src-tests">
+		<attributes>
+			<attribute name="test" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.12.0.jar" sourcepath="lib/commons-lang3-3.12.0-sources.jar"/>
 	<classpathentry kind="lib" path="lib/org.eclipse.core.commands_3.9.700.v20191217-1850.jar" sourcepath="lib/org.eclipse.core.commands.source_3.9.700.v20191217-1850.jar"/>
