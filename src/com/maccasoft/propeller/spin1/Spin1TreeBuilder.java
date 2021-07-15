@@ -24,16 +24,16 @@ public class Spin1TreeBuilder {
     static int highestPrecedence = 1;
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
-        precedence.put("(", highestPrecedence);
-        precedence.put(")", highestPrecedence);
-        highestPrecedence++;
+        //precedence.put("(", highestPrecedence);
+        //precedence.put(")", highestPrecedence);
+        //highestPrecedence++;
 
-        precedence.put("[", highestPrecedence);
-        precedence.put("]", highestPrecedence);
-        highestPrecedence++;
+        //precedence.put("[", highestPrecedence);
+        //precedence.put("]", highestPrecedence);
+        //highestPrecedence++;
 
-        precedence.put("\\", highestPrecedence);
-        highestPrecedence++;
+        //precedence.put("\\", highestPrecedence);
+        //highestPrecedence++;
 
         precedence.put(">>", highestPrecedence);
         precedence.put("<<", highestPrecedence);
@@ -95,7 +95,7 @@ public class Spin1TreeBuilder {
         precedence.put("..", highestPrecedence);
         highestPrecedence++;
 
-        precedence.put(",", highestPrecedence);
+        //precedence.put(",", highestPrecedence);
         precedence.put(":", highestPrecedence);
         precedence.put("?", highestPrecedence);
         highestPrecedence++;
@@ -151,6 +151,7 @@ public class Spin1TreeBuilder {
         precedence.put("OR=", highestPrecedence);
     }
 
+    int index;
     List<Token> tokens = new ArrayList<Token>();
 
     public void addToken(Token token) {
@@ -158,169 +159,175 @@ public class Spin1TreeBuilder {
     }
 
     public Spin1StatementNode getRoot() {
-        Spin1StatementNode root = buildTree(highestPrecedence, tokens);
-        tokens.clear();
-        return root;
-    }
+        Spin1StatementNode left = parseLevel(highestPrecedence);
 
-    public Spin1StatementNode buildTree(List<Token> tokens) {
-        Spin1StatementNode root = buildTree(highestPrecedence, tokens);
-        return root;
-    }
-
-    Spin1StatementNode buildTree(int level, List<Token> tokens) {
-        int nested;
-
-        if (tokens.size() == 1) {
-            return new Spin1StatementNode(tokens.get(0));
+        Token token = peek();
+        if (token == null) {
+            return left;
         }
-        if (tokens.size() == 2) {
-            Spin1StatementNode node = new Spin1StatementNode(tokens.get(0));
-            node.addChild(new Spin1StatementNode(tokens.get(1)));
+
+        Integer p = precedence.get(token.getText().toUpperCase());
+        if (p != null && p.intValue() == highestPrecedence) {
+            Spin1StatementNode node = new Spin1StatementNode(next());
+            node.addChild(left);
+            node.addChild(parseLevel(highestPrecedence));
             return node;
         }
 
-        String text = tokens.get(0).getText();
-        if ("-".equals(text) || "++".equals(text) || "--".equals(text) || "~".equals(text) || "~~".equals(text) || "?".equals(text) || "||".equals(text)) {
-            Spin1StatementNode node = new Spin1StatementNode(tokens.get(0));
-            node.addChild(buildTree(new ArrayList<Token>(tokens.subList(1, tokens.size()))));
+        throw new RuntimeException("unexpected " + token.getText());
+    }
+
+    Spin1StatementNode parseLevel(int level) {
+        Spin1StatementNode left = level == 0 ? parseAtom() : parseLevel(level - 1);
+
+        Token token = peek();
+        if (token == null) {
+            return left;
+        }
+
+        Integer p = precedence.get(token.getText().toUpperCase());
+        if (p != null && p.intValue() == level) {
+            Spin1StatementNode node = new Spin1StatementNode(next());
+            node.addChild(left);
+            node.addChild(level == 0 ? parseAtom() : parseLevel(level));
             return node;
         }
 
-        if (level == 0) {
-            throw new RuntimeException("expression syntax error");
+        return left;
+    }
+
+    Spin1StatementNode parseAtom() {
+        Token token = peek();
+
+        if ("+".equals(token.getText()) || "-".equals(token.getText()) || "?".equals(token.getText()) || "++".equals(token.getText()) || "--".equals(token.getText()) || "~".equals(token.getText())
+            || "~~".equals(token.getText()) || "\\".equals(token.getText()) || "||".equals(token.getText())) {
+            Spin1StatementNode node = new Spin1StatementNode(next());
+            node.addChild(parseAtom());
+            return node;
         }
 
-        int i = 0;
-        List<Token> left = new ArrayList<Token>();
+        if ("(".equals(token.getText())) {
+            next();
+            Spin1StatementNode node = parseLevel(highestPrecedence);
+            token = next();
+            if (token == null) {
+                throw new RuntimeException("expecting closing parenthesis");
+            }
+            if (!")".equals(token.getText())) {
+                throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+            }
+            return node;
+        }
 
-        while (i < tokens.size()) {
-            Token token = tokens.get(i);
+        if ("[".equals(token.getText())) {
+            next();
+            Spin1StatementNode node = parseLevel(highestPrecedence);
+            token = next();
+            if (token == null) {
+                throw new RuntimeException("expecting closing parenthesis");
+            }
+            if (!"]".equals(token.getText())) {
+                throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+            }
+            return node;
+        }
 
-            Integer p = precedence.get(token.getText().toUpperCase());
-            if (p != null && p.intValue() == level) {
-                Spin1StatementNode node = new Spin1StatementNode(token);
-
-                if (left.size() != 0) {
-                    Spin1StatementNode child = buildTree(level, left);
-                    node.addChild(child);
-                }
-
-                i++;
-
-                if ("[".equals(node.getText())) {
-                    List<Token> right = new ArrayList<Token>();
-
-                    while (i < tokens.size()) {
-                        token = tokens.get(i);
-                        if ("]".equals(token.getText())) {
-                            if (right.size() != 0) {
-                                Spin1StatementNode child = buildTree(highestPrecedence, right);
-                                node.addChild(child);
-                                right.clear();
-                            }
-                            if (i + 1 < tokens.size()) {
-                                if ("[".equals(tokens.get(i + 1).getText())) {
-                                    i++;
-                                }
-                            }
-                        }
-                        else {
-                            right.add(token);
-                        }
-                        i++;
+        if (token.type == 0) {
+            Spin1StatementNode node = new Spin1StatementNode(next());
+            if ((token = peek()) != null) {
+                if ("(".equals(token.getText())) {
+                    next();
+                    if (peek() != null && ")".equals(peek().getText())) {
+                        next();
+                        return node;
                     }
-
-                    if (right.size() != 0) {
-                        Spin1StatementNode child = buildTree(highestPrecedence, right);
-                        node.addChild(child);
-                        right.clear();
-                    }
-                }
-                else {
-                    List<Token> right = new ArrayList<Token>(tokens.subList(i, tokens.size()));
-                    if (right.size() != 0) {
-                        if ("(".equals(node.getText()) && ")".equals(right.get(right.size() - 1).getText())) {
-                            right.remove(right.size() - 1);
-                        }
-                    }
-                    if (right.size() != 0) {
-                        Spin1StatementNode child = buildTree("(".equals(node.getText()) || "[".equals(node.getText()) ? highestPrecedence : level, right);
-                        if (",".equals(token.getText()) && ",".equals(child.getText())) {
-                            node.getChilds().addAll(child.getChilds());
+                    for (;;) {
+                        Spin1StatementNode child = parseLevel(highestPrecedence);
+                        if (node.getChildCount() == 1 && ":".equals(node.getChild(0).getText())) {
+                            node.getChild(0).addChild(child);
                         }
                         else {
                             node.addChild(child);
                         }
-                    }
-                }
-
-                if ("(".equals(node.getText())) {
-                    if (node.getChildCount() == 1) {
-                        return node.getChild(0);
-                    }
-                    else {
-                        Spin1StatementNode newNode = new Spin1StatementNode(node.getChild(0).getToken());
-                        for (int x = 1; x < node.getChildCount(); x++) {
-                            newNode.addChild(node.getChild(x));
+                        token = next();
+                        if (token == null) {
+                            throw new RuntimeException("expecting closing parenthesis");
                         }
-                        return newNode;
-                    }
-
-                }
-
-                return node;
-            }
-
-            left.add(token);
-
-            if ("(".equals(token.getText())) {
-                i++;
-                nested = 0;
-                while (i < tokens.size()) {
-                    token = tokens.get(i);
-                    left.add(token);
-                    if ("(".equals(token.getText())) {
-                        nested++;
-                    }
-                    else if (")".equals(token.getText())) {
-                        if (nested == 0) {
-                            break;
+                        if (")".equals(token.getText())) {
+                            return node;
                         }
-                        nested--;
+                        if (!",".equals(token.getText()) && !":".equals(token.getText())) {
+                            throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                        }
                     }
-                    i++;
                 }
-            }
-            else if ("[".equals(token.getText())) {
-                i++;
-                nested = 0;
-                while (i < tokens.size()) {
-                    token = tokens.get(i);
-                    left.add(token);
+                if ("[".equals(token.getText())) {
+                    next();
+                    node.addChild(parseLevel(highestPrecedence));
+                    token = next();
+                    if (token == null) {
+                        throw new RuntimeException("expecting closing parenthesis");
+                    }
+                    if (!"]".equals(token.getText())) {
+                        throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                    }
+
+                    token = peek();
+                    if (token == null) {
+                        return node;
+                    }
                     if ("[".equals(token.getText())) {
-                        nested++;
-                    }
-                    else if ("]".equals(token.getText())) {
-                        if (nested == 0) {
-                            break;
+                        next();
+                        node.addChild(parseLevel(highestPrecedence));
+                        token = next();
+                        if (token == null) {
+                            throw new RuntimeException("expecting closing parenthesis");
                         }
-                        nested--;
+                        if (!"]".equals(token.getText())) {
+                            throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                        }
                     }
-                    i++;
+                }
+                if ("?".equals(token.getText()) || "++".equals(token.getText()) || "--".equals(token.getText()) || "~".equals(token.getText()) || "~~".equals(token.getText())) {
+                    node.addChild(new Spin1StatementNode(next()));
                 }
             }
-
-            i++;
+            return node;
         }
 
-        return buildTree(level - 1, tokens);
+        if (token.type != Token.OPERATOR) {
+            return new Spin1StatementNode(next());
+        }
+
+        throw new RuntimeException("unexpected " + token.getText());
+    }
+
+    Token peek() {
+        if (index < tokens.size()) {
+            return tokens.get(index);
+        }
+        return null;
+    }
+
+    Token next() {
+        if (index < tokens.size()) {
+            return tokens.get(index++);
+        }
+        return null;
     }
 
     public static void main(String[] args) {
         String text;
 
-        /*String text = "function(1 + 2 * 3, 4, (5 + 6) * 7)";
+        text = "1 + 2 + 3 + 4";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "chr := -15 + --chr & %11011111 + 39*(chr > 56)";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "function(1 + 2 * 3, 4, (5 + 6) * 7)";
         System.out.println(text);
         System.out.println(parse(text));
 
@@ -336,41 +343,37 @@ public class Spin1TreeBuilder {
         System.out.println(text);
         System.out.println(parse(text));
 
-        text = "a := b[c][0][1]";
-        System.out.println(text);
-        System.out.println(parse(text));
-
         text = "a := b[0+1*2] + e[4 + c * d] * long[@a][1]";
         System.out.println(text);
         System.out.println(parse(text));
-        
-        String text = "a[1]~~";
+
+        text = "a[1]~~";
         System.out.println(text);
         System.out.println(parse(text));
-        
+
         text = "~~a[1]";
         System.out.println(text);
         System.out.println(parse(text));
-        
+
         text = "    a := lookup(b : 10, 20..30, 40)";
         System.out.println(text);
         System.out.println(parse(text));
-        
+
         text = "((chr := byte[stringptr][index++]) == 0)";
         System.out.println(text);
-        System.out.println(parse(text));*/
+        System.out.println(parse(text));
 
-        //text = "z_pad or (div == 1)";
-        //System.out.println(text);
-        //System.out.println(parse(text));
+        text = "z_pad or (div == 1)";
+        System.out.println(text);
+        System.out.println(parse(text));
 
-        text = "chr := -15 + --chr & %11011111 + 39*(chr > 56)";
+        text = "r := a(1 + 2) * b++ - b(c += 6) * -c(8 + 9)";
         System.out.println(text);
         System.out.println(parse(text));
     }
 
     static String parse(String text) {
-        List<Token> tokens = new ArrayList<Token>();
+        Spin1TreeBuilder builder = new Spin1TreeBuilder();
 
         Spin1TokenStream stream = new Spin1TokenStream(text);
         while (true) {
@@ -378,11 +381,10 @@ public class Spin1TreeBuilder {
             if (token.type == Token.EOF) {
                 break;
             }
-            tokens.add(token);
+            builder.tokens.add(token);
         }
 
-        Spin1TreeBuilder builder = new Spin1TreeBuilder();
-        Spin1StatementNode root = builder.buildTree(tokens);
+        Spin1StatementNode root = builder.getRoot();
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         print(new PrintStream(os), root, 0);

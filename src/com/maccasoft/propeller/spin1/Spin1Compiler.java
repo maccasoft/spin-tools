@@ -17,16 +17,20 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.ContextLiteral;
+import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.ExpressionBuilder;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
+import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Register;
+import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
@@ -1008,12 +1012,7 @@ public class Spin1Compiler {
         }
         else if ("REPEAT".equalsIgnoreCase(text)) {
             if (line.getArgumentsCount() == 1) {
-                try {
-                    Expression expression = buildConstantExpression(line.getScope(), line.getArgument(0));
-                    line.addSource(new Constant(line.getScope(), expression));
-                } catch (Exception e) {
-                    line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), true));
-                }
+                line.addSource(compileConstantExpression(line.getScope(), line.getArgument(0)));
                 Spin1MethodLine target = (Spin1MethodLine) line.getData("quit");
                 line.addSource(new Tjz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
             }
@@ -1273,6 +1272,21 @@ public class Spin1Compiler {
             }
             throw new RuntimeException("string not allowed");
         }
+        else if (node.getType() == 0) {
+            return new Identifier(node.getText(), context);
+        }
+        else if ("-".equals(node.getText())) {
+            return new Subtract(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        else if ("+".equals(node.getText())) {
+            return new Add(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        else if ("*".equals(node.getText())) {
+            return new Multiply(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        else if ("/".equals(node.getText())) {
+            return new Divide(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
 
         throw new RuntimeException("unknown " + node.getText());
     }
@@ -1294,6 +1308,20 @@ public class Spin1Compiler {
                 source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
             }
             source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText()));
+        }
+        else if ("CONSTANT".equalsIgnoreCase(node.getText())) {
+            if (argsNode.getChildCount() != 1) {
+                throw new RuntimeException("expected " + 1 + " argument(s), found " + 0);
+            }
+            try {
+                Expression expression = buildConstantExpression(context, argsNode.getChild(0));
+                if (!expression.isConstant()) {
+                    throw new CompilerMessage("expression is not constant", argsNode.getChild(0).getToken());
+                }
+                source.add(new Constant(context, expression));
+            } catch (Exception e) {
+                throw new CompilerMessage("expression is not constant", argsNode.getChild(0).getToken());
+            }
         }
         else if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
             source.add(new Constant(context, new NumberLiteral(0)));
@@ -1319,40 +1347,28 @@ public class Spin1Compiler {
             desc = Spin1Bytecode.getDescriptor("COGINIT");
             source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText()));
         }
-        else if ("LOOKDOWN".equalsIgnoreCase(node.getText()) || "LOOKUP".equalsIgnoreCase(node.getText())) {
+        else if ("LOOKDOWN".equalsIgnoreCase(node.getText()) || "LOOKDOWNZ".equalsIgnoreCase(node.getText()) || "LOOKUP".equalsIgnoreCase(node.getText())
+            || "LOOKUPZ".equalsIgnoreCase(node.getText())) {
             if (argsNode.getChildCount() == 0) {
                 throw new RuntimeException("expected argument(s), found none");
             }
             argsNode = argsNode.getChild(0);
-            if (!":".equalsIgnoreCase(argsNode.getText()) || argsNode.getChildCount() != 2) {
+            if (!":".equalsIgnoreCase(argsNode.getText()) || argsNode.getChildCount() < 2) {
                 throw new RuntimeException("invalid argument(s)");
             }
 
             int code = "LOOKDOWN".equalsIgnoreCase(node.getText()) ? 0b00010001 : 0b00010000;
             int code_range = code | 0b00000010;
 
-            source.add(new Constant(context, new NumberLiteral(1)));
+            source.add(new Constant(context, new NumberLiteral(node.getText().toUpperCase().endsWith("Z") ? 0 : 1)));
 
             Spin1Bytecode end = new Spin1Bytecode(context);
             source.add(new Constant(context, new ContextLiteral(end.getContext())));
 
             source.addAll(compileBytecodeExpression(context, argsNode.getChild(0), true));
 
-            if (",".equals(argsNode.getChild(1).getText())) {
-                for (Spin1StatementNode arg : argsNode.getChild(1).getChilds()) {
-                    if ("..".equals(arg.getText())) {
-                        source.addAll(compileBytecodeExpression(context, arg.getChild(0), true));
-                        source.addAll(compileBytecodeExpression(context, arg.getChild(1), true));
-                        source.add(new Bytecode(context, code_range, node.getText().toUpperCase()));
-                    }
-                    else {
-                        source.addAll(compileBytecodeExpression(context, arg, true));
-                        source.add(new Bytecode(context, code, node.getText().toUpperCase()));
-                    }
-                }
-            }
-            else {
-                Spin1StatementNode arg = argsNode.getChild(1);
+            for (int i = 1; i < argsNode.getChildCount(); i++) {
+                Spin1StatementNode arg = argsNode.getChild(i);
                 if ("..".equals(arg.getText())) {
                     source.addAll(compileBytecodeExpression(context, arg.getChild(0), true));
                     source.addAll(compileBytecodeExpression(context, arg.getChild(1), true));
@@ -1389,13 +1405,35 @@ public class Spin1Compiler {
             if (left.getType() == Token.OPERATOR) {
                 source.addAll(compileBytecodeExpression(context, left, push));
             }
+            else if ("BYTE".equalsIgnoreCase(left.getText()) || "WORD".equalsIgnoreCase(left.getText()) || "LONG".equalsIgnoreCase(left.getText())) {
+                source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
+                if (left.getChildCount() > 1) {
+                    source.addAll(compileBytecodeExpression(context, left.getChild(1), true));
+                }
+
+                if ("BYTE".equalsIgnoreCase(left.getText())) {
+                    source.add(new MemoryOp(context, MemoryOp.Size.Byte, left.getChildCount() > 1, MemoryOp.Base.Pop, MemoryOp.Op.Write, null));
+                }
+                else if ("WORD".equalsIgnoreCase(left.getText())) {
+                    source.add(new MemoryOp(context, MemoryOp.Size.Word, left.getChildCount() > 1, MemoryOp.Base.Pop, MemoryOp.Op.Write, null));
+                }
+                else if ("LONG".equalsIgnoreCase(left.getText())) {
+                    source.add(new MemoryOp(context, MemoryOp.Size.Long, left.getChildCount() > 1, MemoryOp.Base.Pop, MemoryOp.Op.Write, null));
+                }
+            }
             else {
                 Expression expression = context.getLocalSymbol(left.getText());
                 if (expression == null) {
                     throw new CompilerMessage("undefined symbol " + left.getText(), left.getToken());
                 }
                 if (expression instanceof Register) {
-                    source.add(new RegisterOp(context, RegisterOp.Op.Write, expression.getNumber().intValue()));
+                    if (left.getChildCount() == 1) {
+                        source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
+                        source.add(new RegisterBitOp(context, RegisterBitOp.Op.Write, expression.getNumber().intValue()));
+                    }
+                    else {
+                        source.add(new RegisterOp(context, RegisterOp.Op.Write, expression.getNumber().intValue()));
+                    }
                 }
                 else if (expression instanceof Variable) {
                     if (push) {
@@ -1424,7 +1462,13 @@ public class Spin1Compiler {
                     throw new CompilerMessage("undefined symbol " + left.getText(), left.getToken());
                 }
                 if (expression instanceof Register) {
-                    source.add(new RegisterOp(context, RegisterOp.Op.Assign, expression.getNumber().intValue()));
+                    if (left.getChildCount() == 1) {
+                        source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
+                        source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, expression.getNumber().intValue()));
+                    }
+                    else {
+                        source.add(new RegisterOp(context, RegisterOp.Op.Assign, expression.getNumber().intValue()));
+                    }
                 }
                 else if (expression instanceof Variable) {
                     source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
@@ -1661,13 +1705,56 @@ public class Spin1Compiler {
                 source.add(new Bytecode(context, code, "SIGN_EXTEND_WORD"));
             }
         }
+        else if ("..".equalsIgnoreCase(node.getText())) {
+            if (argsNode.getChildCount() != 2) {
+                throw new RuntimeException("expression syntax error");
+            }
+            source.addAll(compileBytecodeExpression(context, argsNode.getChild(0), true));
+            source.addAll(compileBytecodeExpression(context, argsNode.getChild(1), true));
+        }
+        else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
+            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+            if (node.getChildCount() > 1) {
+                source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+            }
+
+            if ("BYTE".equalsIgnoreCase(node.getText())) {
+                source.add(new MemoryOp(context, MemoryOp.Size.Byte, node.getChildCount() > 1, MemoryOp.Base.Pop, push ? MemoryOp.Op.Read : MemoryOp.Op.Write, null));
+            }
+            else if ("WORD".equalsIgnoreCase(node.getText())) {
+                source.add(new MemoryOp(context, MemoryOp.Size.Word, node.getChildCount() > 1, MemoryOp.Base.Pop, push ? MemoryOp.Op.Read : MemoryOp.Op.Write, null));
+            }
+            else if ("LONG".equalsIgnoreCase(node.getText())) {
+                source.add(new MemoryOp(context, MemoryOp.Size.Long, node.getChildCount() > 1, MemoryOp.Base.Pop, push ? MemoryOp.Op.Read : MemoryOp.Op.Write, null));
+            }
+        }
         else {
             Expression expression = context.getLocalSymbol(node.getText());
             if (expression == null) {
                 throw new CompilerMessage("undefined symbol " + node.getText(), node.getToken());
             }
             if (expression instanceof Register) {
-                source.add(new RegisterOp(context, RegisterOp.Op.Read, expression.getNumber().intValue()));
+                if (node.getChildCount() != 0) {
+                    source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                    if (node.getChildCount() == 2) {
+                        source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, expression.getNumber().intValue()));
+                        if ("~".equalsIgnoreCase(node.getChild(1).getText())) {
+                            source.add(new Bytecode(context, 0b0_00110_00, "POST_CLEAR"));
+                        }
+                        else if ("~~".equalsIgnoreCase(node.getChild(1).getText())) {
+                            source.add(new Bytecode(context, 0b0_00111_00, "POST_SET"));
+                        }
+                        else {
+                            throw new RuntimeException("invalid operator " + node.getChild(0).getText());
+                        }
+                    }
+                    else {
+                        source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Assign : RegisterBitOp.Op.Write, expression.getNumber().intValue()));
+                    }
+                }
+                else {
+                    source.add(new RegisterOp(context, RegisterOp.Op.Read, expression.getNumber().intValue()));
+                }
             }
             else if (expression instanceof Variable) {
                 if (node.getText().startsWith("@")) {

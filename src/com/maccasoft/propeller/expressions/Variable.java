@@ -41,6 +41,11 @@ public class Variable extends Expression {
     }
 
     @Override
+    public boolean isConstant() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return name;
     }

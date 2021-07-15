@@ -1450,6 +1450,35 @@ class Spin1CompilerTest {
     }
 
     @Test
+    void testRegisterBit() throws Exception {
+        String text = ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    DIRA[1] := 1\n"
+            + "    DIRA[2..5] := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main | a\n"
+            + "'     DIRA[1] := 1\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       36             CONSTANT (1)\n"
+            + "0000A 0000A       3D B6          REGBIT_WRITE $1F6\n"
+            + "'     DIRA[2..5] := 1\n"
+            + "0000C 0000C       36             CONSTANT (1)\n"
+            + "0000D 0000D       38 02          CONSTANT (2)\n"
+            + "0000F 0000F       38 05          CONSTANT (5)\n"
+            + "00011 00011       3D B6          REGBIT_WRITE $1F6\n"
+            + "00013 00013       32             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testVarSizeAssignment() throws Exception {
         String text = ""
             + "PUB main | a, b\n"
@@ -1575,6 +1604,36 @@ class Spin1CompilerTest {
             + "0002C 0002C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "0002D 0002D       32             RETURN\n"
             + "0002E 0002E       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testIndex() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := WORD[b]\n"
+            + "    WORD[b] := a\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main | a, b\n"
+            + "'     a := WORD[b]\n"
+            + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "00009 00009       A0             MEM_READ WORD POP\n"
+            + "0000A 0000A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     WORD[b] := a\n"
+            + "0000B 0000B       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0000C 0000C       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "0000D 0000D       A1             MEM_WRITE WORD POP\n"
+            + "0000E 0000E       32             RETURN\n"
+            + "0000F 0000F       00             Padding\n"
             + "", compile(text));
     }
 
