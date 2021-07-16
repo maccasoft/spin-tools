@@ -487,6 +487,20 @@ class Spin1TokenStreamTest {
     }
 
     @Test
+    void testNumber() {
+        Spin1TokenStream subject = new Spin1TokenStream("1234");
+
+        assertEquals("1234", subject.nextToken().getText());
+    }
+
+    @Test
+    void testDecimalNumber() {
+        Spin1TokenStream subject = new Spin1TokenStream("1.234");
+
+        assertEquals("1.234", subject.nextToken().getText());
+    }
+
+    @Test
     void testBinaryNumber() {
         Spin1TokenStream subject = new Spin1TokenStream("%0001_0011");
 
@@ -606,13 +620,6 @@ class Spin1TokenStreamTest {
 
         assertEquals("{ first line\n{ second line }}", subject.nextToken(true).getText());
         assertEquals("\n", subject.nextToken(true).getText());
-    }
-
-    @Test
-    void testDecimalNumber() {
-        Spin1TokenStream subject = new Spin1TokenStream("1.234");
-
-        assertEquals("1.234", subject.nextToken().getText());
     }
 
     @Test

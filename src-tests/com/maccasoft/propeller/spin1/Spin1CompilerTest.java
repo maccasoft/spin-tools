@@ -1778,6 +1778,62 @@ class Spin1CompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testNegativeConstants() throws Exception {
+        String text = ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := -1\n"
+            + "    a := -10\n"
+            + "    a := -100\n"
+            + "    a := -1_000\n"
+            + "    a := -32_767\n"
+            + "    a := -32_768\n"
+            + "    a := -32_769\n"
+            + "    a := -100_000\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       2C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main | a\n"
+            + "'     a := -1\n"
+            + "00008 00008       34             CONSTANT (-1)\n"
+            + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := -10\n"
+            + "0000A 0000A       38 09          CONSTANT (10 - 1)\n"
+            + "0000C 0000C       E7             COMPLEMENT\n"
+            + "0000D 0000D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := -100\n"
+            + "0000E 0000E       38 63          CONSTANT (100 - 1)\n"
+            + "00010 00010       E7             COMPLEMENT\n"
+            + "00011 00011       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := -1_000\n"
+            + "00012 00012       39 03 E7       CONSTANT (1_000 - 1)\n"
+            + "00015 00015       E7             COMPLEMENT\n"
+            + "00016 00016       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := -32_767\n"
+            + "00017 00017       39 7F FE       CONSTANT (32_767 - 1)\n"
+            + "0001A 0001A       E7             COMPLEMENT\n"
+            + "0001B 0001B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := -32_768\n"
+            + "0001C 0001C       37 6E          CONSTANT (-32_768)\n"
+            + "0001E 0001E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := -32_769\n"
+            + "0001F 0001F       37 4E          CONSTANT (-32_769)\n"
+            + "00021 00021       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := -100_000\n"
+            + "00022 00022       3B FF FE 79 60 CONSTANT (-100_000)\n"
+            + "00027 00027       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00028 00028       32             RETURN\n"
+            + "00029 00029       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, Collections.emptyMap());
     }

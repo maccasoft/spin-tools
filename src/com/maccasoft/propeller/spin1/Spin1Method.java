@@ -70,7 +70,7 @@ public class Spin1Method {
         return parameters.size();
     }
 
-    public int getStackSize() {
+    public int getLocalsSize() {
         int count = 0;
 
         for (LocalVariable var : localVariables) {
@@ -88,6 +88,10 @@ public class Spin1Method {
         }
 
         return count;
+    }
+
+    public int getStackSize() {
+        return parameters.size() * 4 + getLocalsSize();
     }
 
     public void addSource(Spin1MethodLine line) {

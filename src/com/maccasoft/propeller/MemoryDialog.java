@@ -647,6 +647,12 @@ public class MemoryDialog extends Dialog {
             data = new byte[32 * 1024];
             System.arraycopy(os.toByteArray(), 0, data, 0, Math.min(data.length, os.size()));
 
+            byte sum = 0;
+            for (int i = 0; i < data.length; i++) {
+                sum += data[i];
+            }
+            data[5] = (byte) (0x14 - sum);
+
             clkfreq = object.getClkFreq();
             clkmode = object.getClkMode();
 

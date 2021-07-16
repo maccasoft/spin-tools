@@ -168,8 +168,9 @@ public class Spin1TreeBuilder {
         Integer p = precedence.get(token.getText().toUpperCase());
         if (p != null && p.intValue() == level) {
             Spin1StatementNode node = new Spin1StatementNode(next());
+            Spin1StatementNode right = level == 0 ? parseAtom() : parseLevel(level);
             node.addChild(left);
-            node.addChild(level == 0 ? parseAtom() : parseLevel(level));
+            node.addChild(right);
             return node;
         }
 
@@ -298,55 +299,7 @@ public class Spin1TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "1 + 2 + 3 + 4";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "chr := -15 + --chr & %11011111 + 39*(chr > 56)";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "function(1 + 2 * 3, 4, (5 + 6) * 7)";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "a := function1(1, 2) + function2(3) * function3(4, 5, 6)";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "a := b[c]";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "a := b[c][0]";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "a := b[0+1*2] + e[4 + c * d] * long[@a][1]";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "a[1]~~";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "~~a[1]";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "    a := lookup(b : 10, 20..30, 40)";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "((chr := byte[stringptr][index++]) == 0)";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "z_pad or (div == 1)";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "r := a(1 + 2) * b++ - b(c += 6) * -c(8 + 9)";
+        text = "width := 1 #> width <# constant(MAX_LEN - 1)";
         System.out.println(text);
         System.out.println(parse(text));
     }

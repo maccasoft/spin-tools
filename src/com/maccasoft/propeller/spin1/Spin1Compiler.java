@@ -28,6 +28,7 @@ import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Multiply;
+import com.maccasoft.propeller.expressions.Negative;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.Subtract;
@@ -250,8 +251,8 @@ public class Spin1Compiler {
 
             int index = 0;
             for (Spin1Method method : methods) {
-                ld[index].setValue((method.getStackSize() << 16) | object.getSize());
-                ld[index].setText(String.format("Function %s @ $%04X (local size %d)", method.getLabel(), object.getSize(), method.getStackSize()));
+                ld[index].setValue((method.getLocalsSize() << 16) | object.getSize());
+                ld[index].setText(String.format("Function %s @ $%04X (local size %d)", method.getLabel(), object.getSize(), method.getLocalsSize()));
                 method.writeTo(object);
                 index++;
             }
@@ -1176,7 +1177,7 @@ public class Spin1Compiler {
                 line.addSource(new Bytecode(line.getScope(), 0b00110010, text));
             }
             else if (line.getArgumentsCount() == 1) {
-                line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), false));
+                line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), true));
                 line.addSource(new Bytecode(line.getScope(), 0b00110011, text));
             }
             else {
@@ -1494,8 +1495,21 @@ public class Spin1Compiler {
             source.add(new MathOp(context, node.getText(), push));
         }
         else if ("-".equals(node.getText()) && node.getChildCount() == 1) {
-            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-            source.add(new Bytecode(context, 0b111_00110 | (push ? 0b10000000 : 0b00000000), "NEGATE"));
+            if (node.getChild(0).getToken().type == Token.NUMBER) {
+                Spin1Bytecode bc1 = new Constant(context, new Negative(new NumberLiteral(node.getChild(0).getText())));
+                Spin1Bytecode bc2 = new Constant(context, new Subtract(new NumberLiteral(node.getChild(0).getText()), new NumberLiteral(1)));
+                if (bc1.getSize() <= (bc2.getSize() + 1)) {
+                    source.add(bc1);
+                }
+                else {
+                    source.add(bc2);
+                    source.add(new Bytecode(context, 0b111_00111 | (push ? 0b10000000 : 0b00000000), "COMPLEMENT"));
+                }
+            }
+            else {
+                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                source.add(new Bytecode(context, 0b111_00110 | (push ? 0b10000000 : 0b00000000), "NEGATE"));
+            }
         }
         else if ("||".equals(node.getText()) && node.getChildCount() == 1) {
             source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
@@ -1697,7 +1711,7 @@ public class Spin1Compiler {
                         }
                     }
                     else {
-                        source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Assign : RegisterBitOp.Op.Write, expression.getNumber().intValue()));
+                        source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Read : RegisterBitOp.Op.Write, expression.getNumber().intValue()));
                     }
                 }
                 else {

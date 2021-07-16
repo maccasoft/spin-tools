@@ -10,10 +10,12 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -43,6 +45,8 @@ class Spin1CompilerFunctionalTest {
 
     @BeforeAll
     static void setUp() throws Exception {
+        Spin1Compiler.OPENSPIN_COMPATIBILITY = true;
+
         long n = random.nextLong();
         if (n == Long.MIN_VALUE) {
             n = 0; // corner case
@@ -62,8 +66,6 @@ class Spin1CompilerFunctionalTest {
                 throw new IOException("Unable to create temporary file, " + tmpdir);
             }
         }
-
-        Spin1Compiler.OPENSPIN_COMPATIBILITY = true;
     }
 
     @AfterAll
@@ -484,6 +486,46 @@ class Spin1CompilerFunctionalTest {
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
+    @Test
+    void testI2C() throws Exception {
+        String text = loadFromFile(new File("/home/marco/git/propeller-vt100-terminal", "i2c.spin"));
+
+        byte[] expected = compileReference(text, Collections.emptyMap());
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testSerial() throws Exception {
+        String text = loadFromFile(new File("/home/marco/git/propeller-vt100-terminal", "com.serial.spin"));
+
+        byte[] expected = compileReference(text, Collections.emptyMap());
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testWaitvid() throws Exception {
+        String text = loadFromFile(new File("/home/marco/git/propeller-vt100-terminal", "waitvid.80x25.driver.spin"));
+
+        byte[] expected = compileReference(text, Collections.emptyMap());
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    String loadFromFile(File file) throws Exception {
+        String line;
+        StringBuilder sb = new StringBuilder();
+
+        if (file.exists()) {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+                sb.append("\n");
+            }
+            reader.close();
+        }
+
+        return sb.toString();
+    }
+
     void compileAndCompare(String text, Map<String, String> sources, byte[] expected) throws Exception {
         Spin1TokenStream stream = new Spin1TokenStream(text);
         Spin1Parser subject = new Spin1Parser(stream);
@@ -510,10 +552,17 @@ class Spin1CompilerFunctionalTest {
 
         byte[] actual = os.toByteArray();
 
+        byte sum = 0;
+        for (int i = 0; i < actual.length; i++) {
+            sum += actual[i];
+        }
+        actual[5] = (byte) (0x14 - sum);
+
         os = new ByteArrayOutputStream();
         obj.generateListing(new PrintStream(os));
         String listing = os.toString();
 
+        expected[5] = actual[5] = 0;
         Assertions.assertArrayEquals(expected, actual, listing);
     }
 
@@ -549,8 +598,6 @@ class Spin1CompilerFunctionalTest {
         FileInputStream is = new FileInputStream(binaryFile);
         is.read(code);
         is.close();
-
-        code[5] = 0;
 
         return code;
     }
