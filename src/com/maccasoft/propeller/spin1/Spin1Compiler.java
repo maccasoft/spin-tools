@@ -1199,7 +1199,20 @@ public class Spin1Compiler {
             for (Spin1StatementNode arg : line.getArguments()) {
                 Spin1MethodLine target = (Spin1MethodLine) arg.getData("true");
                 if (target != null) {
-                    if ("..".equals(arg.getText())) {
+                    if (",".equals(arg.getText())) {
+                        for (Spin1StatementNode child : arg.getChilds()) {
+                            if ("..".equals(child.getText())) {
+                                line.addSource(compileBytecodeExpression(line.getScope(), child.getChild(0), false));
+                                line.addSource(compileBytecodeExpression(line.getScope(), child.getChild(1), false));
+                                line.addSource(new CaseRangeJmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                            }
+                            else {
+                                line.addSource(compileBytecodeExpression(line.getScope(), child, false));
+                                line.addSource(new CaseJmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                            }
+                        }
+                    }
+                    else if ("..".equals(arg.getText())) {
                         line.addSource(compileBytecodeExpression(line.getScope(), arg.getChild(0), false));
                         line.addSource(compileBytecodeExpression(line.getScope(), arg.getChild(1), false));
                         line.addSource(new CaseRangeJmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
@@ -1313,33 +1326,28 @@ public class Spin1Compiler {
     List<Spin1Bytecode> compileBytecodeExpression(Spin1Context context, Spin1StatementNode node, boolean push) {
         List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
 
-        Spin1StatementNode argsNode = node;
-        if (argsNode.getChildCount() == 1 && ",".equals(argsNode.getChild(0).getText())) {
-            argsNode = argsNode.getChild(0);
-        }
-
         Descriptor desc = Spin1Bytecode.getDescriptor(node.getText());
         if (desc != null) {
-            if (argsNode.getChildCount() != desc.parameters) {
-                throw new RuntimeException("expected " + desc.parameters + " argument(s), found " + argsNode.getChildCount());
+            if (node.getChildCount() != desc.parameters) {
+                throw new RuntimeException("expected " + desc.parameters + " argument(s), found " + node.getChildCount());
             }
             for (int i = 0; i < desc.parameters; i++) {
-                source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
+                source.addAll(compileBytecodeExpression(context, node.getChild(i), true));
             }
             source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText()));
         }
         else if ("CONSTANT".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() != 1) {
-                throw new RuntimeException("expected " + 1 + " argument(s), found " + 0);
+            if (node.getChildCount() != 1) {
+                throw new RuntimeException("expected " + 1 + " argument(s), found " + node.getChildCount());
             }
             try {
-                Expression expression = buildConstantExpression(context, argsNode.getChild(0));
+                Expression expression = buildConstantExpression(context, node.getChild(0));
                 if (!expression.isConstant()) {
-                    throw new CompilerMessage("expression is not constant", argsNode.getChild(0).getToken());
+                    throw new CompilerMessage("expression is not constant", node.getChild(0).getToken());
                 }
                 source.add(new Constant(context, expression));
             } catch (Exception e) {
-                throw new CompilerMessage("expression is not constant", argsNode.getChild(0).getToken());
+                throw new CompilerMessage("expression is not constant", node.getChild(0).getToken());
             }
         }
         else if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
@@ -1351,27 +1359,27 @@ public class Spin1Compiler {
             source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.Pop, MemoryOp.Op.Read, null));
         }
         else if ("COGID".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() != 0) {
-                throw new RuntimeException("expected " + 0 + " argument(s), found " + argsNode.getChildCount());
+            if (node.getChildCount() != 0) {
+                throw new RuntimeException("expected " + 0 + " argument(s), found " + node.getChildCount());
             }
             source.add(new RegisterOp(context, RegisterOp.Op.Read, 0x1E9));
         }
         else if ("COGNEW".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() != 2) {
-                throw new RuntimeException("expected " + 2 + " argument(s), found " + argsNode.getChildCount());
+            if (node.getChildCount() != 2) {
+                throw new RuntimeException("expected " + 2 + " argument(s), found " + node.getChildCount());
             }
             source.add(new Constant(context, new NumberLiteral(-1)));
-            source.addAll(compileBytecodeExpression(context, argsNode.getChild(0), true));
-            source.addAll(compileBytecodeExpression(context, argsNode.getChild(1), true));
+            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
             desc = Spin1Bytecode.getDescriptor("COGINIT");
             source.add(new Bytecode(context, push ? desc.code_push : desc.code, node.getText()));
         }
         else if ("LOOKDOWN".equalsIgnoreCase(node.getText()) || "LOOKDOWNZ".equalsIgnoreCase(node.getText()) || "LOOKUP".equalsIgnoreCase(node.getText())
             || "LOOKUPZ".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() == 0) {
+            if (node.getChildCount() == 0) {
                 throw new RuntimeException("expected argument(s), found none");
             }
-            argsNode = argsNode.getChild(0);
+            Spin1StatementNode argsNode = node.getChild(0);
             if (!":".equalsIgnoreCase(argsNode.getText()) || argsNode.getChildCount() < 2) {
                 throw new RuntimeException("invalid argument(s)");
             }
@@ -1558,9 +1566,9 @@ public class Spin1Compiler {
         }
         else if ("?".equalsIgnoreCase(node.getText())) {
             if (node.getChildCount() == 1) {
-                Expression expression = context.getLocalSymbol(argsNode.getChild(0).getText());
+                Expression expression = context.getLocalSymbol(node.getChild(0).getText());
                 if (expression == null) {
-                    throw new RuntimeException("undefined symbol " + argsNode.getChild(0).getText());
+                    throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
                 }
                 if (expression instanceof Variable) {
                     int code = 0b0_00010_00;
@@ -1606,7 +1614,7 @@ public class Spin1Compiler {
                 throw new RuntimeException("invalid symbol " + node.getText());
             }
 
-            argsNode = node.getChild(0);
+            Spin1StatementNode argsNode = node.getChild(0);
             if (argsNode.getChildCount() == 1 && ",".equals(argsNode.getChild(0).getText())) {
                 argsNode = argsNode.getChild(0);
             }
@@ -1638,12 +1646,12 @@ public class Spin1Compiler {
             }
         }
         else if ("++".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() != 1) {
+            if (node.getChildCount() != 1) {
                 throw new RuntimeException("expression syntax error");
             }
-            Expression expression = context.getLocalSymbol(argsNode.getChild(0).getText());
+            Expression expression = context.getLocalSymbol(node.getChild(0).getText());
             if (expression == null) {
-                throw new RuntimeException("undefined symbol " + argsNode.getChild(0).getText());
+                throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
             }
             if (expression instanceof Variable) {
                 int code = 0b0_0100_11_0;
@@ -1655,12 +1663,12 @@ public class Spin1Compiler {
             }
         }
         else if ("--".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() != 1) {
+            if (node.getChildCount() != 1) {
                 throw new RuntimeException("expression syntax error");
             }
-            Expression expression = context.getLocalSymbol(argsNode.getChild(0).getText());
+            Expression expression = context.getLocalSymbol(node.getChild(0).getText());
             if (expression == null) {
-                throw new RuntimeException("undefined symbol " + argsNode.getChild(0).getText());
+                throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
             }
             if (expression instanceof Variable) {
                 int code = 0b0_0110_11_0;
@@ -1672,12 +1680,12 @@ public class Spin1Compiler {
             }
         }
         else if ("~".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() != 1) {
+            if (node.getChildCount() != 1) {
                 throw new RuntimeException("expression syntax error");
             }
-            Expression expression = context.getLocalSymbol(argsNode.getChild(0).getText());
+            Expression expression = context.getLocalSymbol(node.getChild(0).getText());
             if (expression == null) {
-                throw new RuntimeException("undefined symbol " + argsNode.getChild(0).getText());
+                throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
             }
             if (expression instanceof Variable) {
                 int code = 0b0_00100_00;
@@ -1689,12 +1697,12 @@ public class Spin1Compiler {
             }
         }
         else if ("~~".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() != 1) {
+            if (node.getChildCount() != 1) {
                 throw new RuntimeException("expression syntax error");
             }
-            Expression expression = context.getLocalSymbol(argsNode.getChild(0).getText());
+            Expression expression = context.getLocalSymbol(node.getChild(0).getText());
             if (expression == null) {
-                throw new RuntimeException("undefined symbol " + argsNode.getChild(0).getText());
+                throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
             }
             if (expression instanceof Variable) {
                 int code = 0b0_00101_00;
@@ -1706,11 +1714,11 @@ public class Spin1Compiler {
             }
         }
         else if ("..".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() != 2) {
+            if (node.getChildCount() != 2) {
                 throw new RuntimeException("expression syntax error");
             }
-            source.addAll(compileBytecodeExpression(context, argsNode.getChild(0), true));
-            source.addAll(compileBytecodeExpression(context, argsNode.getChild(1), true));
+            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
         }
         else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
             Spin1StatementNode postEffect = null;
@@ -1872,14 +1880,14 @@ public class Spin1Compiler {
             }
             else if (expression instanceof Method) {
                 int parameters = ((Method) expression).getArgumentsCount();
-                if (argsNode.getChildCount() != parameters) {
-                    throw new RuntimeException("expected " + parameters + " argument(s), found " + argsNode.getChildCount());
+                if (node.getChildCount() != parameters) {
+                    throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChildCount());
                 }
                 source.add(new Bytecode(context, new byte[] {
                     (byte) (push ? 0b00000000 : 0b00000001),
                 }, "ANCHOR"));
                 for (int i = 0; i < parameters; i++) {
-                    source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
+                    source.addAll(compileBytecodeExpression(context, node.getChild(i), true));
                 }
                 int objectIndex = ((Method) expression).getObject();
                 int objectOffset = ((Method) expression).getOffset();

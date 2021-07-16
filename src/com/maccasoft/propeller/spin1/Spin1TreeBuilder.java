@@ -141,22 +141,26 @@ public class Spin1TreeBuilder {
     }
 
     public Spin1StatementNode getRoot() {
-        Spin1StatementNode left = parseLevel(highestPrecedence);
+        Spin1StatementNode node = parseLevel(highestPrecedence);
 
         Token token = peek();
-        if (token == null) {
-            return left;
+        while (token != null) {
+            if (",".equals(token.getText())) {
+                next();
+                if (!",".equals(node.getText())) {
+                    Spin1StatementNode newNode = new Spin1StatementNode(token);
+                    newNode.addChild(node);
+                    node = newNode;
+                }
+                node.addChild(parseLevel(highestPrecedence));
+                token = peek();
+            }
+            else {
+                throw new RuntimeException("unexpected " + token.getText());
+            }
         }
 
-        Integer p = precedence.get(token.getText().toUpperCase());
-        if (p != null && p.intValue() == highestPrecedence) {
-            Spin1StatementNode node = new Spin1StatementNode(next());
-            node.addChild(left);
-            node.addChild(parseLevel(highestPrecedence));
-            return node;
-        }
-
-        throw new RuntimeException("unexpected " + token.getText());
+        return node;
     }
 
     Spin1StatementNode parseLevel(int level) {

@@ -835,6 +835,46 @@ class Spin1CompilerTest {
     }
 
     @Test
+    void testCaseList() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    case a\n"
+            + "        1,2,5: a := 6\n"
+            + "        other: a := 7\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       20 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main() | a\n"
+            + "'     case a\n"
+            + "00008 00008       38 1E          CONSTANT (.label_7)\n"
+            + "0000A 0000A       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0000B 0000B       36             CONSTANT (1)\n"
+            + "0000C 0000C       0D 0C          CASE-JMP $0001A (12)\n"
+            + "0000E 0000E       38 02          CONSTANT (2)\n"
+            + "00010 00010       0D 08          CASE-JMP $0001A (8)\n"
+            + "00012 00012       38 05          CONSTANT (5)\n"
+            + "00014 00014       0D 04          CASE-JMP $0001A (4)\n"
+            + "'         other: a := 7\n"
+            + "00016 00016       38 07          CONSTANT (7)\n"
+            + "00018 00018       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00019 00019       0C             CASE_DONE\n"
+            + "'       1,2,5: a := 6\n"
+            + "0001A 0001A       38 06          CONSTANT (6)\n"
+            + "0001C 0001C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0001D 0001D       0C             CASE_DONE\n"
+            + "0001E 0001E       32             RETURN\n"
+            + "0001F 0001F       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testTernaryExpression() throws Exception {
         String text = ""
             + "PUB main() | a, b\n"
