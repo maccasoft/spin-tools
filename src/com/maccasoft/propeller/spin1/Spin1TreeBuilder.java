@@ -114,12 +114,14 @@ public class Spin1TreeBuilder {
         unary.add("+");
         unary.add("-");
         unary.add("?");
+        unary.add("!");
         unary.add("\\");
         unary.add("~");
         unary.add("++");
         unary.add("--");
         unary.add("||");
         unary.add("~~");
+        unary.add("|<");
     }
 
     static Set<String> postEffect = new HashSet<String>();
@@ -268,7 +270,8 @@ public class Spin1TreeBuilder {
                         }
                     }
                 }
-                if (postEffect.contains(token.getText())) {
+                token = peek();
+                if (token != null && postEffect.contains(token.getText())) {
                     node.addChild(new Spin1StatementNode(next()));
                 }
             }
@@ -299,7 +302,7 @@ public class Spin1TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "width := 1 #> width <# constant(MAX_LEN - 1)";
+        text = "A, B, C";
         System.out.println(text);
         System.out.println(parse(text));
     }

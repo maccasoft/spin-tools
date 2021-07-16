@@ -7,13 +7,23 @@ public class Decod extends UnaryOperator {
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
+    public boolean isNumber() {
+        return true;
+    }
+
+    @Override
     public Number getNumber() {
         return 1L << (term.getNumber().longValue() & 0x1F);
     }
 
     @Override
     public String getLexeme() {
-        return "decod";
+        return "|<";
     }
 
 }

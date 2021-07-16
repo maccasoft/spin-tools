@@ -387,6 +387,19 @@ class Spin1TreeBuilderTest {
     }
 
     @Test
+    void testArrayPost() {
+        String text = "a := b[c][0]~";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [b]\n"
+            + "      +-- [c]\n"
+            + "      +-- [0]\n"
+            + "      +-- [~]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
     void testArrayAssignment() {
         String text = "a[c][0] := b";
         Assertions.assertEquals(""
