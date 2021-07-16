@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.maccasoft.propeller.expressions.ContextLiteral;
+import com.maccasoft.propeller.model.Node;
 
 public class Spin1MethodLine {
 
@@ -32,7 +33,7 @@ public class Spin1MethodLine {
     String text;
     List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
 
-    protected Object data;
+    protected Node data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
     public Spin1MethodLine(Spin1Context scope, String label, String statement, Spin1StatementNode argument) {
@@ -141,11 +142,11 @@ public class Spin1MethodLine {
         return source;
     }
 
-    public Object getData() {
+    public Node getData() {
         return data;
     }
 
-    public void setData(Object data) {
+    public void setData(Node data) {
         this.data = data;
     }
 

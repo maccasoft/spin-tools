@@ -22,7 +22,7 @@ class MemoryOpTest {
         MemoryOp op = new MemoryOp(new Spin1Context(), MemoryOp.Size.Byte, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
 
         Assertions.assertEquals("90", toString(op.getBytes()));
-        Assertions.assertEquals("MEM_READ BYTE POP", op.toString());
+        Assertions.assertEquals("MEM_READ_INDEXED BYTE POP", op.toString());
     }
 
     @Test
@@ -30,7 +30,7 @@ class MemoryOpTest {
         MemoryOp op = new MemoryOp(new Spin1Context(), MemoryOp.Size.Word, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
 
         Assertions.assertEquals("B0", toString(op.getBytes()));
-        Assertions.assertEquals("MEM_READ WORD POP", op.toString());
+        Assertions.assertEquals("MEM_READ_INDEXED WORD POP", op.toString());
     }
 
     @Test
@@ -38,7 +38,7 @@ class MemoryOpTest {
         MemoryOp op = new MemoryOp(new Spin1Context(), MemoryOp.Size.Long, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
 
         Assertions.assertEquals("D0", toString(op.getBytes()));
-        Assertions.assertEquals("MEM_READ LONG POP", op.toString());
+        Assertions.assertEquals("MEM_READ_INDEXED LONG POP", op.toString());
     }
 
     String toString(byte[] b) {

@@ -14,8 +14,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.maccasoft.propeller.model.Token;
 
@@ -24,25 +26,12 @@ public class Spin1TreeBuilder {
     static int highestPrecedence = 1;
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
-        //precedence.put("(", highestPrecedence);
-        //precedence.put(")", highestPrecedence);
-        //highestPrecedence++;
-
-        //precedence.put("[", highestPrecedence);
-        //precedence.put("]", highestPrecedence);
-        //highestPrecedence++;
-
-        //precedence.put("\\", highestPrecedence);
-        //highestPrecedence++;
-
         precedence.put(">>", highestPrecedence);
         precedence.put("<<", highestPrecedence);
         precedence.put("~>", highestPrecedence);
         precedence.put("->", highestPrecedence);
         precedence.put("<-", highestPrecedence);
         precedence.put("><", highestPrecedence);
-        //precedence.put("ZEROX", 3);
-        //precedence.put("SIGNX", 3);
         highestPrecedence++;
 
         precedence.put("&", highestPrecedence);
@@ -54,12 +43,7 @@ public class Spin1TreeBuilder {
         precedence.put("*", highestPrecedence);
         precedence.put("**", highestPrecedence);
         precedence.put("/", highestPrecedence);
-        //precedence.put("+/", 7);
         precedence.put("//", highestPrecedence);
-        //precedence.put("+//", 7);
-        //precedence.put("SCA", 7);
-        //precedence.put("SCAS", 7);
-        //precedence.put("FRAC", 7);
         highestPrecedence++;
 
         precedence.put("+", highestPrecedence);
@@ -71,23 +55,14 @@ public class Spin1TreeBuilder {
         highestPrecedence++;
 
         precedence.put("<", highestPrecedence);
-        //precedence.put("+<", 11);
         precedence.put("=<", highestPrecedence);
-        //precedence.put("+<=", 11);
         precedence.put("==", highestPrecedence);
         precedence.put("<>", highestPrecedence);
         precedence.put("=>", highestPrecedence);
-        //precedence.put("+>=", 11);
         precedence.put(">", highestPrecedence);
-        //precedence.put("+>", 11);
-        //precedence.put("<=>", 11);
         highestPrecedence++;
 
-        //precedence.put("&&", 12);
         precedence.put("AND", highestPrecedence);
-        //precedence.put("^^", 12);
-        //precedence.put("XOR", 12);
-        //precedence.put("||", 12);
         highestPrecedence++;
         precedence.put("OR", highestPrecedence);
         highestPrecedence++;
@@ -95,7 +70,6 @@ public class Spin1TreeBuilder {
         precedence.put("..", highestPrecedence);
         highestPrecedence++;
 
-        //precedence.put(",", highestPrecedence);
         precedence.put(":", highestPrecedence);
         precedence.put("?", highestPrecedence);
         highestPrecedence++;
@@ -108,8 +82,6 @@ public class Spin1TreeBuilder {
         precedence.put("->=", highestPrecedence);
         precedence.put("<-=", highestPrecedence);
         precedence.put("><=", highestPrecedence);
-        //precedence.put("ZEROX=", highestPrecedence);
-        //precedence.put("SIGNX=", highestPrecedence);
 
         precedence.put("&=", highestPrecedence);
         precedence.put("^=", highestPrecedence);
@@ -118,12 +90,7 @@ public class Spin1TreeBuilder {
         precedence.put("*=", highestPrecedence);
         precedence.put("**=", highestPrecedence);
         precedence.put("/=", highestPrecedence);
-        //precedence.put("+/=", highestPrecedence);
         precedence.put("//=", highestPrecedence);
-        //precedence.put("+//=", highestPrecedence);
-        //precedence.put("SCA=", highestPrecedence);
-        //precedence.put("SCAS=", highestPrecedence);
-        //precedence.put("FRAC=", highestPrecedence);
 
         precedence.put("+=", highestPrecedence);
         precedence.put("-=", highestPrecedence);
@@ -132,23 +99,36 @@ public class Spin1TreeBuilder {
         precedence.put("<#=", highestPrecedence);
 
         precedence.put("<=", highestPrecedence);
-        //precedence.put("+<=", highestPrecedence);
         precedence.put("=<=", highestPrecedence);
-        //precedence.put("+<==", highestPrecedence);
         precedence.put("===", highestPrecedence);
         precedence.put("<>=", highestPrecedence);
         precedence.put("=>=", highestPrecedence);
-        //precedence.put("+>==", highestPrecedence);
         precedence.put(">=", highestPrecedence);
-        //precedence.put("+>=", highestPrecedence);
-        //precedence.put("<=>=", highestPrecedence);
 
-        //precedence.put("&&=", highestPrecedence);
         precedence.put("AND=", highestPrecedence);
-        //precedence.put("^^=", highestPrecedence);
-        //precedence.put("XOR=", highestPrecedence);
-        //precedence.put("||=", highestPrecedence);
         precedence.put("OR=", highestPrecedence);
+    }
+
+    static Set<String> unary = new HashSet<String>();
+    static {
+        unary.add("+");
+        unary.add("-");
+        unary.add("?");
+        unary.add("\\");
+        unary.add("~");
+        unary.add("++");
+        unary.add("--");
+        unary.add("||");
+        unary.add("~~");
+    }
+
+    static Set<String> postEffect = new HashSet<String>();
+    static {
+        postEffect.add("?");
+        postEffect.add("~");
+        postEffect.add("++");
+        postEffect.add("--");
+        postEffect.add("~~");
     }
 
     int index;
@@ -199,8 +179,7 @@ public class Spin1TreeBuilder {
     Spin1StatementNode parseAtom() {
         Token token = peek();
 
-        if ("+".equals(token.getText()) || "-".equals(token.getText()) || "?".equals(token.getText()) || "++".equals(token.getText()) || "--".equals(token.getText()) || "~".equals(token.getText())
-            || "~~".equals(token.getText()) || "\\".equals(token.getText()) || "||".equals(token.getText())) {
+        if (unary.contains(token.getText())) {
             Spin1StatementNode node = new Spin1StatementNode(next());
             node.addChild(parseAtom());
             return node;
@@ -288,7 +267,7 @@ public class Spin1TreeBuilder {
                         }
                     }
                 }
-                if ("?".equals(token.getText()) || "++".equals(token.getText()) || "--".equals(token.getText()) || "~".equals(token.getText()) || "~~".equals(token.getText())) {
+                if (postEffect.contains(token.getText())) {
                     node.addChild(new Spin1StatementNode(next()));
                 }
             }

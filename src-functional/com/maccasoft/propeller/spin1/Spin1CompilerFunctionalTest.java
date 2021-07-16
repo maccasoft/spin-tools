@@ -33,10 +33,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.spin1.Spin1Compiler;
-import com.maccasoft.propeller.spin1.Spin1Object;
-import com.maccasoft.propeller.spin1.Spin1Parser;
-import com.maccasoft.propeller.spin1.Spin1TokenStream;
 
 class Spin1CompilerFunctionalTest {
 

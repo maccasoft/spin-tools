@@ -42,12 +42,18 @@ public class VariableOp extends Spin1Bytecode {
 
     public Size ss;
     public Base b;
+    public boolean i;
     public Op oo;
     public Variable value;
 
     public VariableOp(Spin1Context context, Op oo, Variable value) {
+        this(context, oo, false, value);
+    }
+
+    public VariableOp(Spin1Context context, Op oo, boolean i, Variable value) {
         super(context);
         this.b = value instanceof LocalVariable ? Base.DBase : Base.VBase;
+        this.i = i;
         this.oo = oo;
         this.value = value;
 
@@ -64,7 +70,7 @@ public class VariableOp extends Spin1Bytecode {
 
     @Override
     public int getSize() {
-        if (ss == Size.Long && (value.getOffset() / 4) < 8) {
+        if (ss == Size.Long && (value.getOffset() / 4) < 8 && !i) {
             return 1;
         }
         else {
@@ -79,7 +85,7 @@ public class VariableOp extends Spin1Bytecode {
 
     @Override
     public byte[] getBytes() {
-        if (ss == Size.Long && (value.getOffset() / 4) < 8) {
+        if (ss == Size.Long && (value.getOffset() / 4) < 8 && !i) {
             int b0 = 0b01_0_000_00;
             b0 = vop_b.setValue(b0, b.ordinal());
             b0 = vop_oo.setValue(b0, oo.ordinal());
@@ -92,7 +98,7 @@ public class VariableOp extends Spin1Bytecode {
         else {
             int b0 = 0b1_00_0_00_00;
             b0 = mop_ss.setValue(b0, ss.ordinal());
-            b0 = mop_i.setBoolean(b0, false);
+            b0 = mop_i.setBoolean(b0, i);
             b0 = mop_bb.setValue(b0, b.ordinal() + 2);
             b0 = mop_oo.setValue(b0, oo.ordinal());
 
@@ -128,6 +134,9 @@ public class VariableOp extends Spin1Bytecode {
             case Address:
                 sb.append("ADDRESS");
                 break;
+        }
+        if (i) {
+            sb.append("_INDEXED");
         }
         sb.append(" ");
         switch (ss) {

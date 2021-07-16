@@ -1608,7 +1608,7 @@ class Spin1CompilerTest {
     }
 
     @Test
-    void testIndex() throws Exception {
+    void testTypeIndex() throws Exception {
         String text = ""
             + "PUB main | a, b\n"
             + "\n"
@@ -1657,13 +1657,43 @@ class Spin1CompilerTest {
             + "'     a := WORD[b][0]\n"
             + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
             + "00009 00009       35             CONSTANT (0)\n"
-            + "0000A 0000A       B0             MEM_READ WORD POP\n"
+            + "0000A 0000A       B0             MEM_READ_INDEXED WORD POP\n"
             + "0000B 0000B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "'     WORD[b][0] := a\n"
             + "0000C 0000C       64             VAR_READ LONG DBASE+$0004 (short)\n"
             + "0000D 0000D       68             VAR_READ LONG DBASE+$0008 (short)\n"
             + "0000E 0000E       35             CONSTANT (0)\n"
-            + "0000F 0000F       B1             MEM_WRITE WORD POP\n"
+            + "0000F 0000F       B1             MEM_WRITE_INDEXED WORD POP\n"
+            + "00010 00010       32             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testVariableIndex() throws Exception {
+        String text = ""
+            + "PUB main | a, b[5]\n"
+            + "\n"
+            + "    a := b[1]\n"
+            + "    b[1] := a\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 18 00    Function main @ $0008 (local size 24)\n"
+            + "' PUB main | a, b[5]\n"
+            + "'     a := b[1]\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       DC 08          VAR_READ_INDEXED LONG DBASE+$0008 (short)\n"
+            + "0000B 0000B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     b[1] := a\n"
+            + "0000C 0000C       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0000D 0000D       36             CONSTANT (1)\n"
+            + "0000E 0000E       DD 08          VAR_WRITE_INDEXED LONG DBASE+$0008 (short)\n"
             + "00010 00010       32             RETURN\n"
             + "00011 00011       00 00 00       Padding\n"
             + "", compile(text));
@@ -1690,7 +1720,7 @@ class Spin1CompilerTest {
             + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
             + "00009 00009       6E             VAR_MODIFY LONG DBASE+$000C (short)\n"
             + "0000A 0000A       AE             POST_INC\n"
-            + "0000B 0000B       90             MEM_READ BYTE POP\n"
+            + "0000B 0000B       90             MEM_READ_INDEXED BYTE POP\n"
             + "0000C 0000C       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
             + "0000D 0000D       80             WRITE\n"
             + "0000E 0000E       35             CONSTANT (0)\n"

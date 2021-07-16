@@ -155,10 +155,10 @@ public class Spin1TokenStream extends TokenStream {
                     }
                     else if (ch == '}') {
                         if (nested == 0) {
-                            index++;
                             state = Token.START;
                             hiddenTokens.add(token);
                             if (comments) {
+                                index++;
                                 return token;
                             }
                             token = EOF_TOKEN;

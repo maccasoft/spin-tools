@@ -150,6 +150,9 @@ public class MemoryOp extends Spin1Bytecode {
                 sb.append("ADDRESS");
                 break;
         }
+        if (i) {
+            sb.append("_INDEXED");
+        }
         sb.append(" ");
         switch (ss) {
             case Byte:

@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.model.Token;
+
 class Spin1TokenStreamTest {
 
     @Test
@@ -607,24 +609,6 @@ class Spin1TokenStreamTest {
     }
 
     @Test
-    void testNumericRangeOperator() {
-        Spin1TokenStream subject = new Spin1TokenStream("12..34");
-
-        assertEquals("12", subject.nextToken().getText());
-        assertEquals("..", subject.nextToken().getText());
-        assertEquals("34", subject.nextToken().getText());
-    }
-
-    @Test
-    void testKeywordRangeOperator() {
-        Spin1TokenStream subject = new Spin1TokenStream("ab..cd");
-
-        assertEquals("ab", subject.nextToken().getText());
-        assertEquals("..", subject.nextToken().getText());
-        assertEquals("cd", subject.nextToken().getText());
-    }
-
-    @Test
     void testDecimalNumber() {
         Spin1TokenStream subject = new Spin1TokenStream("1.234");
 
@@ -690,6 +674,36 @@ class Spin1TokenStreamTest {
 
         assertEquals("#", subject.nextToken().getText());
         assertEquals(":label", subject.nextToken().getText());
+    }
+
+    @Test
+    void testBlockCommentLineNumbers() {
+        Spin1TokenStream subject = new Spin1TokenStream("{ \n }\nA\n");
+
+        Token token = subject.nextToken(true);
+        assertEquals("{ \n }", token.getText());
+        assertEquals(0, token.line);
+
+        token = subject.nextToken(true);
+        assertEquals("\n", token.getText());
+        assertEquals(1, token.line);
+
+        token = subject.nextToken(true);
+        assertEquals("A", token.getText());
+        assertEquals(2, token.line);
+    }
+
+    @Test
+    void testHiddenBlockCommentLineNumbers() {
+        Spin1TokenStream subject = new Spin1TokenStream("{ \n }\nA\n");
+
+        Token token = subject.nextToken(false);
+        assertEquals("\n", token.getText());
+        assertEquals(1, token.line);
+
+        token = subject.nextToken(true);
+        assertEquals("A", token.getText());
+        assertEquals(2, token.line);
     }
 
 }
