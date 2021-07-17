@@ -10,559 +10,373 @@
 
 package com.maccasoft.propeller.spin2;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.maccasoft.propeller.model.Token;
 
 public class Spin2TreeBuilder {
 
-    static final int LEFT_TO_RIGHT = 0;
-    static final int RIGHT_TO_LEFT = 1;
-
-    static Map<String, Integer> unaryOperatorPrecedence = new HashMap<String, Integer>();
+    static int highestPrecedence = 1;
+    static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
-        unaryOperatorPrecedence.put("\\", 2);
-        unaryOperatorPrecedence.put("-", 2);
-        unaryOperatorPrecedence.put("ENCOD", 2);
+        precedence.put(">>", highestPrecedence);
+        precedence.put("<<", highestPrecedence);
+        precedence.put("SAR", highestPrecedence);
+        precedence.put("ROR", highestPrecedence);
+        precedence.put("ROL", highestPrecedence);
+        precedence.put("REV", highestPrecedence);
+        precedence.put("ZEROX", highestPrecedence);
+        precedence.put("SIGNX", highestPrecedence);
+        highestPrecedence++;
+
+        precedence.put("&", highestPrecedence++);
+        precedence.put("^", highestPrecedence++);
+        precedence.put("|", highestPrecedence++);
+
+        precedence.put("*", highestPrecedence);
+        precedence.put("/", highestPrecedence);
+        precedence.put("+/", highestPrecedence);
+        precedence.put("//", highestPrecedence);
+        precedence.put("+//", highestPrecedence);
+        precedence.put("SCA", highestPrecedence);
+        precedence.put("SCAS", highestPrecedence);
+        precedence.put("FRAC", highestPrecedence);
+        highestPrecedence++;
+
+        precedence.put("+", highestPrecedence);
+        precedence.put("-", highestPrecedence);
+        highestPrecedence++;
+
+        precedence.put("#>", highestPrecedence);
+        precedence.put("<#", highestPrecedence);
+        highestPrecedence++;
+
+        precedence.put("ADDBITS", highestPrecedence);
+        precedence.put("ADDPINS", highestPrecedence);
+        highestPrecedence++;
+
+        precedence.put("<", highestPrecedence);
+        precedence.put("+<", highestPrecedence);
+        precedence.put("<=", highestPrecedence);
+        precedence.put("+<=", highestPrecedence);
+        precedence.put("==", highestPrecedence);
+        precedence.put("<>", highestPrecedence);
+        precedence.put(">=", highestPrecedence);
+        precedence.put("+>=", highestPrecedence);
+        precedence.put(">", highestPrecedence);
+        precedence.put("+>", highestPrecedence);
+        precedence.put("<=>", highestPrecedence);
+        highestPrecedence++;
+
+        precedence.put("&&", highestPrecedence);
+        precedence.put("AND", highestPrecedence);
+        precedence.put("^^", highestPrecedence);
+        precedence.put("XOR", highestPrecedence);
+        precedence.put("||", highestPrecedence);
+        precedence.put("OR", highestPrecedence);
+        highestPrecedence++;
+
+        precedence.put("..", highestPrecedence);
+        highestPrecedence++;
+
+        precedence.put(":", highestPrecedence);
+        precedence.put("?", highestPrecedence);
+        highestPrecedence++;
+
+        precedence.put(":=", highestPrecedence);
+
+        precedence.put(">>=", highestPrecedence);
+        precedence.put("<<=", highestPrecedence);
+        precedence.put("SAR=", highestPrecedence);
+        precedence.put("ROR=", highestPrecedence);
+        precedence.put("ROL=", highestPrecedence);
+        precedence.put("REV=", highestPrecedence);
+        precedence.put("ZEROX=", highestPrecedence);
+        precedence.put("SIGNX=", highestPrecedence);
+
+        precedence.put("&=", highestPrecedence);
+        precedence.put("^=", highestPrecedence);
+        precedence.put("|=", highestPrecedence);
+
+        precedence.put("*=", highestPrecedence);
+        precedence.put("/=", highestPrecedence);
+        precedence.put("+/=", highestPrecedence);
+        precedence.put("//=", highestPrecedence);
+        precedence.put("+//=", highestPrecedence);
+        precedence.put("SCA=", highestPrecedence);
+        precedence.put("SCAS=", highestPrecedence);
+        precedence.put("FRAC=", highestPrecedence);
+
+        precedence.put("+=", highestPrecedence);
+        precedence.put("-=", highestPrecedence);
+
+        precedence.put("#>=", highestPrecedence);
+        precedence.put("<#=", highestPrecedence);
+
+        precedence.put("ADDBITS=", highestPrecedence);
+        precedence.put("ADDPINS=", highestPrecedence);
+
+        precedence.put("<=", highestPrecedence);
+        precedence.put("+<=", highestPrecedence);
+        precedence.put("<==", highestPrecedence);
+        precedence.put("+<==", highestPrecedence);
+        precedence.put("===", highestPrecedence);
+        precedence.put("<>=", highestPrecedence);
+        precedence.put(">==", highestPrecedence);
+        precedence.put("+>==", highestPrecedence);
+        precedence.put(">=", highestPrecedence);
+        precedence.put("+>=", highestPrecedence);
+        precedence.put("<=>=", highestPrecedence);
+
+        precedence.put("&&=", highestPrecedence);
+        precedence.put("AND=", highestPrecedence);
+        precedence.put("^^=", highestPrecedence);
+        precedence.put("XOR=", highestPrecedence);
+        precedence.put("||=", highestPrecedence);
+        precedence.put("OR=", highestPrecedence);
     }
 
-    static Map<String, Integer> operatorPrecedence = new HashMap<String, Integer>();
+    static Set<String> unary = new HashSet<String>();
     static {
-        operatorPrecedence.put("(", -2);
-        operatorPrecedence.put(")", 99);
-
-        operatorPrecedence.put("[", -1);
-        operatorPrecedence.put("]", 99);
-
-        operatorPrecedence.put(">>", 3);
-        operatorPrecedence.put("<<", 3);
-        operatorPrecedence.put("SAR", 3);
-        operatorPrecedence.put("ROR", 3);
-        operatorPrecedence.put("ROL", 3);
-        operatorPrecedence.put("REV", 3);
-        operatorPrecedence.put("ZEROX", 3);
-        operatorPrecedence.put("SIGNX", 3);
-
-        operatorPrecedence.put("&", 4);
-        operatorPrecedence.put("^", 5);
-        operatorPrecedence.put("|", 6);
-
-        operatorPrecedence.put("*", 7);
-        operatorPrecedence.put("/", 7);
-        operatorPrecedence.put("+/", 7);
-        operatorPrecedence.put("//", 7);
-        operatorPrecedence.put("+//", 7);
-        operatorPrecedence.put("SCA", 7);
-        operatorPrecedence.put("SCAS", 7);
-        operatorPrecedence.put("FRAC", 7);
-
-        operatorPrecedence.put("+", 8);
-        operatorPrecedence.put("-", 8);
-
-        operatorPrecedence.put("#>", 9);
-        operatorPrecedence.put("<#", 9);
-
-        operatorPrecedence.put("ADDBITS", 10);
-        operatorPrecedence.put("ADDPINS", 10);
-
-        operatorPrecedence.put("<", 11);
-        operatorPrecedence.put("+<", 11);
-        operatorPrecedence.put("<=", 11);
-        operatorPrecedence.put("+<=", 11);
-        operatorPrecedence.put("==", 11);
-        operatorPrecedence.put("<>", 11);
-        operatorPrecedence.put(">=", 11);
-        operatorPrecedence.put("+>=", 11);
-        operatorPrecedence.put(">", 11);
-        operatorPrecedence.put("+>", 11);
-        operatorPrecedence.put("<=>", 11);
-
-        operatorPrecedence.put("&&", 12);
-        operatorPrecedence.put("AND", 12);
-        operatorPrecedence.put("^^", 12);
-        operatorPrecedence.put("XOR", 12);
-        operatorPrecedence.put("||", 12);
-        operatorPrecedence.put("OR", 12);
-
-        operatorPrecedence.put(":", 16);
-        operatorPrecedence.put("?", 16);
-        operatorPrecedence.put("..", 16);
-
-        operatorPrecedence.put(":=", 17);
-
-        operatorPrecedence.put(">>=", 17);
-        operatorPrecedence.put("<<=", 17);
-        operatorPrecedence.put("SAR=", 17);
-        operatorPrecedence.put("ROR=", 17);
-        operatorPrecedence.put("ROL=", 17);
-        operatorPrecedence.put("REV=", 17);
-        operatorPrecedence.put("ZEROX=", 17);
-        operatorPrecedence.put("SIGNX=", 17);
-
-        operatorPrecedence.put("&=", 17);
-        operatorPrecedence.put("^=", 17);
-        operatorPrecedence.put("|=", 17);
-
-        operatorPrecedence.put("*=", 17);
-        operatorPrecedence.put("/=", 17);
-        operatorPrecedence.put("+/=", 17);
-        operatorPrecedence.put("//=", 17);
-        operatorPrecedence.put("+//=", 17);
-        operatorPrecedence.put("SCA=", 17);
-        operatorPrecedence.put("SCAS=", 17);
-        operatorPrecedence.put("FRAC=", 17);
-
-        operatorPrecedence.put("+=", 17);
-        operatorPrecedence.put("-=", 17);
-
-        operatorPrecedence.put("#>=", 17);
-        operatorPrecedence.put("<#=", 17);
-
-        operatorPrecedence.put("ADDBITS=", 17);
-        operatorPrecedence.put("ADDPINS=", 17);
-
-        operatorPrecedence.put("<=", 17);
-        operatorPrecedence.put("+<=", 17);
-        operatorPrecedence.put("<==", 17);
-        operatorPrecedence.put("+<==", 17);
-        operatorPrecedence.put("===", 17);
-        operatorPrecedence.put("<>=", 17);
-        operatorPrecedence.put(">==", 17);
-        operatorPrecedence.put("+>==", 17);
-        operatorPrecedence.put(">=", 17);
-        operatorPrecedence.put("+>=", 17);
-        operatorPrecedence.put("<=>=", 17);
-
-        operatorPrecedence.put("&&=", 17);
-        operatorPrecedence.put("AND=", 17);
-        operatorPrecedence.put("^^=", 17);
-        operatorPrecedence.put("XOR=", 17);
-        operatorPrecedence.put("||=", 17);
-        operatorPrecedence.put("OR=", 17);
-
-        operatorPrecedence.put(",", 98);
+        unary.add("+");
+        unary.add("-");
+        unary.add("?");
+        unary.add("!");
+        unary.add("\\");
+        unary.add("~");
+        unary.add("++");
+        unary.add("--");
+        unary.add("||");
+        unary.add("~~");
+        unary.add("|<");
     }
 
-    private static abstract class Operator {
-
-        public Token token;
-        protected int precedence;
-        protected int associativity;
-
-        protected Operator() {
-
-        }
-
-        public Operator(int precedence, int associativity) {
-            this.precedence = precedence;
-            this.associativity = associativity;
-        }
-
-        public boolean yieldsTo(Operator other) {
-            if (associativity == LEFT_TO_RIGHT) {
-                return precedence > other.precedence;
-            }
-            else {
-                return precedence >= other.precedence;
-            }
-        }
-
-        public abstract Spin2StatementNode evaluate();
-
-        @Override
-        public String toString() {
-            return token.getText();
-        }
+    static Set<String> postEffect = new HashSet<String>();
+    static {
+        postEffect.add("?");
+        postEffect.add("~");
+        postEffect.add("++");
+        postEffect.add("--");
+        postEffect.add("~~");
     }
 
-    private class UnaryOperator extends Operator {
+    int index;
+    List<Token> tokens = new ArrayList<Token>();
 
-        public UnaryOperator(Token token) {
-            this.token = token;
-            this.precedence = unaryOperatorPrecedence.get(token.getText());
-            this.associativity = RIGHT_TO_LEFT;
-        }
-
-        @Override
-        public Spin2StatementNode evaluate() {
-            Spin2StatementNode result = new Spin2StatementNode(token);
-            result.addChild(operands.pop());
-            return result;
-        }
-
-    }
-
-    private class GroupOperator extends Operator {
-
-        public GroupOperator(Token token) {
-            this.token = token;
-            this.precedence = operatorPrecedence.get(token.getText());
-            this.associativity = LEFT_TO_RIGHT;
-        }
-
-        @Override
-        public Spin2StatementNode evaluate() {
-            Spin2StatementNode result = new Spin2StatementNode(token);
-            result.addChild(operands.pop());
-            return result;
-        }
-
-    }
-
-    private class BinaryOperator extends Operator {
-
-        public BinaryOperator(Token token) {
-            this.token = token;
-            this.precedence = operatorPrecedence.get(token.getText().toUpperCase());
-            this.associativity = LEFT_TO_RIGHT;
-        }
-
-        @Override
-        public Spin2StatementNode evaluate() {
-            Spin2StatementNode right = operands.pop();
-            Spin2StatementNode result = new Spin2StatementNode(token);
-            result.addChild(operands.pop());
-            result.addChild(right);
-            return result;
-        }
-
-    }
-
-    private class TernaryOperator extends Operator {
-
-        public TernaryOperator(Token token) {
-            this.token = token;
-            this.precedence = operatorPrecedence.get(token.getText().toUpperCase());
-            this.associativity = RIGHT_TO_LEFT;
-        }
-
-        @Override
-        public Spin2StatementNode evaluate() {
-            Spin2StatementNode right = operands.pop();
-            while (":".equals(operators.peek().token.getText())) {
-                operands.push(operators.pop().evaluate());
-            }
-
-            if ("?".equals(operators.peek().token.getText())) {
-                Token token = operators.pop().token;
-                Spin2StatementNode middle = operands.pop();
-
-                Spin2StatementNode result = new Spin2StatementNode(token);
-                result.addChild(operands.pop());
-                result.addChild(middle);
-                result.addChild(right);
-                return result;
-            }
-            throw new RuntimeException("ternary else (:) without if (?).");
-        }
-
-    }
-
-    private class FunctionOperator extends Operator {
-
-        Token name;
-
-        public FunctionOperator(Token name, Token token) {
-            this.name = name;
-            this.name.type = Token.FUNCTION;
-            this.token = token;
-            this.precedence = operatorPrecedence.get(token.getText());
-            this.associativity = LEFT_TO_RIGHT;
-        }
-
-        @Override
-        public Spin2StatementNode evaluate() {
-            Spin2StatementNode right = operands.pop();
-            Spin2StatementNode result = new Spin2StatementNode(name);
-            result.addChild(right);
-            return result;
-        }
-
-    }
-
-    private class SequenceOperator extends Operator {
-
-        public SequenceOperator(Token token) {
-            this.token = token;
-            this.precedence = 98;
-            this.associativity = RIGHT_TO_LEFT;
-        }
-
-        @Override
-        public Spin2StatementNode evaluate() {
-            Spin2StatementNode node0 = operands.pop();
-            Spin2StatementNode node1 = operands.pop();
-
-            if (",".equals(node0.getText())) {
-                node0.addChild(0, node1);
-                return node0;
-            }
-
-            Spin2StatementNode result = new Spin2StatementNode(token);
-            result.addChild(node1);
-            result.addChild(node0);
-            return result;
-        }
-
-    }
-
-    int state;
-    Deque<Spin2StatementNode> operands = new ArrayDeque<Spin2StatementNode>();
-    Deque<Operator> operators = new ArrayDeque<Operator>();
-
-    public final Operator SENTINEL = new Operator(99, RIGHT_TO_LEFT) {
-
-        @Override
-        public Spin2StatementNode evaluate() {
-            throw new RuntimeException("Can not evaluate sentinel.");
-        }
-
-        @Override
-        public String toString() {
-            return "SENTINEL";
-        };
-    };
-
-    public Spin2TreeBuilder() {
-        operators.push(SENTINEL);
-    }
-
-    public void addValueToken(Token token) {
-        Spin2StatementNode operand = new Spin2StatementNode(token);
-        operands.push(operand);
-    }
-
-    public void addOperatorToken(Token token) {
-        Operator operator;
-        if (",".equals(token.getText())) {
-            operator = new SequenceOperator(token);
-        }
-        else if ("(".equals(token.getText())) {
-            operator = new GroupOperator(token);
-        }
-        else if ("?".equals(token.getText()) || ":".equals(token.getText())) {
-            operator = new TernaryOperator(token);
-        }
-        else {
-            operator = new BinaryOperator(token);
-        }
-        addOperator(operator);
-    }
-
-    public void addUnaryOperator(Token token) {
-        addOperator(new UnaryOperator(token));
-    }
-
-    public void addOperator(Operator operator) {
-        evaluateNotYieldingTo(operator);
-
-        if ("(".equals(operator.token.getText()) || "[".equals(operator.token.getText())) {
-            operators.push(operator);
-            operators.push(SENTINEL);
-        }
-        else if (")".equals(operator.token.getText()) || "]".equals(operator.token.getText())) {
-            if (operators.pop() != SENTINEL) {
-                throw new RuntimeException("Sentinel expected.");
-            }
-            if (")".equals(operator.token.getText()) && !"(".equals(operators.peek().token.getText())) {
-                throw new RuntimeException("Group open expected.");
-            }
-            if ("]".equals(operator.token.getText()) && !"[".equals(operators.peek().token.getText())) {
-                throw new RuntimeException("Index open expected.");
-            }
-        }
-        else {
-            operators.push(operator);
-        }
-    }
-
-    public void addFunctionOperatorToken(Token name, Token token) {
-        Operator operator = new FunctionOperator(name, token);
-        addOperator(operator);
-    }
-
-    private void evaluateNotYieldingTo(Operator operator) {
-        while (!operators.peek().yieldsTo(operator)) {
-            operands.push(operators.pop().evaluate());
-        }
+    public void addToken(Token token) {
+        tokens.add(token);
     }
 
     public Spin2StatementNode getRoot() {
-        if (operands.isEmpty() || operators.isEmpty()) {
-            throw new RuntimeException("Operands / operators is empty: " + this);
+        Spin2StatementNode node = parseLevel(highestPrecedence);
+
+        Token token = peek();
+        while (token != null) {
+            if (",".equals(token.getText())) {
+                next();
+                if (!",".equals(node.getText())) {
+                    Spin2StatementNode newNode = new Spin2StatementNode(token);
+                    newNode.addChild(node);
+                    node = newNode;
+                }
+                node.addChild(parseLevel(highestPrecedence));
+                token = peek();
+            }
+            else {
+                throw new RuntimeException("unexpected " + token.getText());
+            }
         }
 
-        // process remainder
-        evaluateNotYieldingTo(SENTINEL);
-
-        if (operators.size() > 1 && operators.peek() == SENTINEL) {
-            throw new RuntimeException("Group close expected.");
-        }
-        if (operands.size() > 1 || operators.size() != 1) {
-            throw new RuntimeException("Not all operands / operators were processed: " + this);
-        }
-
-        state = 0;
-
-        return operands.pop();
+        return node;
     }
 
-    public void addToken(Token token) {
+    Spin2StatementNode parseLevel(int level) {
+        Spin2StatementNode left = level == 0 ? parseAtom() : parseLevel(level - 1);
 
-        switch (state) {
-            case 0:
-                if ("\\".equals(token.getText())) {
-                    addOperator(new UnaryOperator(token));
-                    break;
+        Token token = peek();
+        if (token == null) {
+            return left;
+        }
+
+        Integer p = precedence.get(token.getText().toUpperCase());
+        if (p != null && p.intValue() == level) {
+            Spin2StatementNode node = new Spin2StatementNode(next());
+            Spin2StatementNode right = level == 0 ? parseAtom() : parseLevel(level);
+            node.addChild(left);
+            node.addChild(right);
+            return node;
+        }
+
+        return left;
+    }
+
+    Spin2StatementNode parseAtom() {
+        Token token = peek();
+
+        if (unary.contains(token.getText())) {
+            Spin2StatementNode node = new Spin2StatementNode(next());
+            node.addChild(parseAtom());
+            return node;
+        }
+
+        if ("(".equals(token.getText())) {
+            next();
+            Spin2StatementNode node = parseLevel(highestPrecedence);
+            token = next();
+            if (token == null) {
+                throw new RuntimeException("expecting closing parenthesis");
+            }
+            if (!")".equals(token.getText())) {
+                throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+            }
+            return node;
+        }
+
+        if ("[".equals(token.getText())) {
+            next();
+            Spin2StatementNode node = parseLevel(highestPrecedence);
+            token = next();
+            if (token == null) {
+                throw new RuntimeException("expecting closing parenthesis");
+            }
+            if (!"]".equals(token.getText())) {
+                throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+            }
+            return node;
+        }
+
+        if (token.type == 0) {
+            Spin2StatementNode node = new Spin2StatementNode(next());
+            if ((token = peek()) != null) {
+                if ("(".equals(token.getText())) {
+                    next();
+                    if (peek() != null && ")".equals(peek().getText())) {
+                        next();
+                        return node;
+                    }
+                    for (;;) {
+                        Spin2StatementNode child = parseLevel(highestPrecedence);
+                        if (node.getChildCount() == 1 && ":".equals(node.getChild(0).getText())) {
+                            node.getChild(0).addChild(child);
+                        }
+                        else {
+                            node.addChild(child);
+                        }
+                        token = next();
+                        if (token == null) {
+                            throw new RuntimeException("expecting closing parenthesis");
+                        }
+                        if (")".equals(token.getText())) {
+                            return node;
+                        }
+                        if (!",".equals(token.getText()) && !":".equals(token.getText())) {
+                            throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                        }
+                    }
                 }
-                if (token.type != 0 && token.type != Token.NUMBER && token.type != Token.STRING) {
-                    throw new RuntimeException("error: expecting identifier, got " + token.getText());
-                }
-                addValueToken(token);
-                state = 1;
-                break;
-            case 1: {
                 if ("[".equals(token.getText())) {
-                    addOperatorToken(token);
-                    state = 5;
-                    break;
+                    next();
+                    node.addChild(parseLevel(highestPrecedence));
+                    token = next();
+                    if (token == null) {
+                        throw new RuntimeException("expecting closing parenthesis");
+                    }
+                    if (!"]".equals(token.getText())) {
+                        throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                    }
+
+                    token = peek();
+                    if (token == null) {
+                        return node;
+                    }
+                    if ("[".equals(token.getText())) {
+                        next();
+                        node.addChild(parseLevel(highestPrecedence));
+                        token = next();
+                        if (token == null) {
+                            throw new RuntimeException("expecting closing parenthesis");
+                        }
+                        if (!"]".equals(token.getText())) {
+                            throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                        }
+                    }
                 }
-                if ("(".equals(token.getText())) {
-                    Spin2StatementNode node = operands.pop();
-                    addOperator(new FunctionOperator(node.getToken(), token));
-                    state = 4;
-                    break;
+                token = peek();
+                if (token != null && postEffect.contains(token.getText())) {
+                    node.addChild(new Spin2StatementNode(next()));
                 }
-                Integer op = operatorPrecedence.get(token.getText().toUpperCase());
-                if (op == null || op.intValue() != 17) {
-                    throw new RuntimeException("error: expecting assignment operator, got " + token.getText());
-                }
-                addOperatorToken(token);
-                state = 2;
-                break;
             }
-            case 2: {
-                if ("(".equals(token.getText()) || "]".equals(token.getText())) {
-                    addOperatorToken(token);
-                    break;
-                }
-                Integer op = unaryOperatorPrecedence.get(token.getText().toUpperCase());
-                if (op != null) {
-                    addOperator(new UnaryOperator(token));
-                    break;
-                }
-                if (token.type != 0 && token.type != Token.NUMBER && token.type != Token.STRING) {
-                    throw new RuntimeException("error: expecting constant or identifier, got " + token.getText());
-                }
-                addValueToken(token);
-                state = 3;
-                break;
-            }
-            case 3: {
-                if ("(".equals(token.getText())) {
-                    Spin2StatementNode node = operands.pop();
-                    addOperator(new FunctionOperator(node.getToken(), token));
-                    state = 4;
-                    break;
-                }
-                Integer op = operatorPrecedence.get(token.getText().toUpperCase());
-                if (op == null) {
-                    throw new RuntimeException("error: expecting operator, got " + token.getText());
-                }
-                addOperatorToken(token);
-                if (")".equals(token.getText()) || "]".equals(token.getText())) {
-                    break;
-                }
-                state = 2;
-                break;
-            }
-            case 4:
-                if (")".equals(token.getText())) {
-                    operators.pop();
-                    FunctionOperator operator = (FunctionOperator) operators.pop();
-                    operands.push(new Spin2StatementNode(operator.name));
-                    state = 3;
-                    break;
-                }
-                if (token.type != 0 && token.type != Token.NUMBER && token.type != Token.STRING) {
-                    throw new RuntimeException("error: expecting constant or identifier, got " + token.getText());
-                }
-                addValueToken(token);
-                state = 3;
-                break;
-            case 5:
-                if (token.type != 0 && token.type != Token.NUMBER && token.type != Token.STRING) {
-                    throw new RuntimeException("error: expecting constant or identifier, got " + token.getText());
-                }
-                addValueToken(token);
-                state = 6;
-                break;
-            case 6: {
-                Integer op = operatorPrecedence.get(token.getText().toUpperCase());
-                if (op == null) {
-                    throw new RuntimeException("error: expecting operator, got " + token.getText());
-                }
-                addOperatorToken(token);
-                if (")".equals(token.getText())) {
-                    break;
-                }
-                if ("]".equals(token.getText())) {
-                    state = 1;
-                    break;
-                }
-                state = 2;
-                break;
-            }
+            return node;
         }
+
+        if (token.type != Token.OPERATOR) {
+            return new Spin2StatementNode(next());
+        }
+
+        throw new RuntimeException("unexpected " + token.getText());
     }
 
-    public void setState(int state) {
-        this.state = state;
+    Token peek() {
+        if (index < tokens.size()) {
+            return tokens.get(index);
+        }
+        return null;
+    }
+
+    Token next() {
+        if (index < tokens.size()) {
+            return tokens.get(index++);
+        }
+        return null;
     }
 
     public static void main(String[] args) {
-        Token[] tokens = new Token[] {
-            //new Token(0, "a"), new Token(Token.OPERATOR, ":="), new Token(Token.NUMBER, "1"), new Token(Token.NL, "\n"),
-            //new Token(0, "b"), new Token(Token.OPERATOR, ":="), new Token(Token.NUMBER, "2"), new Token(Token.NL, "\n"),
-            //new Token(0, "a"), new Token(Token.OPERATOR, ":="), new Token(Token.OPERATOR, "("), new Token(0, "b"), new Token(Token.OPERATOR, "+"), new Token(0, "c"), new Token(Token.OPERATOR, ")"),
-            //new Token(Token.OPERATOR, "*"), new Token(Token.NUMBER, "3"),
-            //new Token(Token.NL, "\n"),
-            //new Token(0, "waitcnt"), new Token(Token.OPERATOR, "("), new Token(Token.OPERATOR, ")"), new Token(Token.NL, "\n"),
-            //new Token(0, "waitcnt"), new Token(Token.OPERATOR, "("), new Token(Token.NUMBER, "1"), new Token(Token.OPERATOR, ")"), new Token(Token.NL, "\n"),
-            //new Token(0, "waitcnt"), new Token(Token.OPERATOR, "("), new Token(Token.NUMBER, "a"), new Token(Token.OPERATOR, "+="), new Token(Token.NUMBER, "1_000"), new Token(Token.OPERATOR, ")"),
-            //new Token(Token.NL, "\n"),
-            new Token(0, "b"), new Token(Token.OPERATOR, "["), new Token(Token.NUMBER, "1"), new Token(Token.OPERATOR, "]"), new Token(Token.OPERATOR, ":="), new Token(0, "a"),
-            new Token(Token.NL, "\n"),
-        };
-        Spin2TreeBuilder builder = new Spin2TreeBuilder();
-        for (int i = 0; i < tokens.length; i++) {
-            if (tokens[i].type == Token.NL) {
-                Spin2StatementNode root = builder.getRoot();
-                print(root, 0);
-            }
-            else {
-                builder.addToken(tokens[i]);
-            }
-        }
+        String text;
+
+        text = "A, B, C";
+        System.out.println(text);
+        System.out.println(parse(text));
     }
 
-    static void print(Spin2StatementNode node, int indent) {
-        if (indent != 0) {
-            for (int i = 1; i < indent; i++) {
-                System.out.print("|    ");
+    static String parse(String text) {
+        Spin2TreeBuilder builder = new Spin2TreeBuilder();
+
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+        while (true) {
+            Token token = stream.nextToken();
+            if (token.type == Token.EOF) {
+                break;
             }
-            System.out.print("+--- ");
+            builder.tokens.add(token);
         }
 
-        System.out.print(node.getClass().getSimpleName());
-        System.out.print(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
-        System.out.println();
+        Spin2StatementNode root = builder.getRoot();
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        print(new PrintStream(os), root, 0);
+        return os.toString();
+    }
+
+    static void print(PrintStream out, Spin2StatementNode node, int indent) {
+        if (indent != 0) {
+            for (int i = 1; i < indent; i++) {
+                out.print("     ");
+            }
+            out.print(" +-- ");
+        }
+
+        out.print("[" + node.getText().replaceAll("\n", "\\\\n") + "]");
+        out.println();
 
         for (Spin2StatementNode child : node.getChilds()) {
-            print(child, indent + 1);
+            print(out, child, indent + 1);
         }
     }
 }

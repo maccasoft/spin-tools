@@ -701,7 +701,6 @@ public class Spin2Compiler {
                         }
 
                         Spin2TreeBuilder builder = new Spin2TreeBuilder();
-                        builder.setState(2);
                         while (iter.hasNext()) {
                             builder.addToken(iter.next());
                         }
@@ -726,7 +725,6 @@ public class Spin2Compiler {
                         }
 
                         Spin2TreeBuilder builder = new Spin2TreeBuilder();
-                        builder.setState(2);
                         while (iter.hasNext()) {
                             builder.addToken(iter.next());
                         }
@@ -775,7 +773,6 @@ public class Spin2Compiler {
                             if ("WHILE".equalsIgnoreCase(token.getText()) || "UNTIL".equalsIgnoreCase(token.getText())) {
                                 text += " " + token.getText();
                                 Spin2TreeBuilder builder = new Spin2TreeBuilder();
-                                builder.setState(2);
                                 while (iter.hasNext()) {
                                     builder.addToken(iter.next());
                                 }
@@ -783,7 +780,6 @@ public class Spin2Compiler {
                             }
                             else {
                                 Spin2TreeBuilder builder = new Spin2TreeBuilder();
-                                builder.setState(2);
                                 builder.addToken(token);
 
                                 while (iter.hasNext()) {
@@ -797,7 +793,6 @@ public class Spin2Compiler {
 
                                 if ("FROM".equalsIgnoreCase(token.getText())) {
                                     builder = new Spin2TreeBuilder();
-                                    builder.setState(2);
                                     while (iter.hasNext()) {
                                         token = iter.next();
                                         if ("TO".equalsIgnoreCase(token.getText())) {
@@ -809,7 +804,6 @@ public class Spin2Compiler {
 
                                     if ("TO".equalsIgnoreCase(token.getText())) {
                                         builder = new Spin2TreeBuilder();
-                                        builder.setState(2);
                                         while (iter.hasNext()) {
                                             token = iter.next();
                                             if ("STEP".equalsIgnoreCase(token.getText())) {
@@ -821,7 +815,6 @@ public class Spin2Compiler {
 
                                         if ("STEP".equalsIgnoreCase(token.getText())) {
                                             builder = new Spin2TreeBuilder();
-                                            builder.setState(2);
                                             while (iter.hasNext()) {
                                                 builder.addToken(iter.next());
                                             }
@@ -864,7 +857,6 @@ public class Spin2Compiler {
                             throw new RuntimeException("expected expression");
                         }
                         Spin2TreeBuilder builder = new Spin2TreeBuilder();
-                        builder.setState(2);
                         while (iter.hasNext()) {
                             builder.addToken(iter.next());
                         }
@@ -899,7 +891,6 @@ public class Spin2Compiler {
                             throw new RuntimeException("expected expression");
                         }
                         Spin2TreeBuilder builder = new Spin2TreeBuilder();
-                        builder.setState(2);
                         while (iter.hasNext()) {
                             builder.addToken(iter.next());
                         }
@@ -912,7 +903,6 @@ public class Spin2Compiler {
                                     throw new RuntimeException("expected expression");
                                 }
 
-                                builder.setState(2);
                                 while (childIter.hasNext()) {
                                     token = childIter.next();
                                     if (":".equals(token.getText())) {
@@ -1260,18 +1250,13 @@ public class Spin2Compiler {
     List<Spin2Bytecode> compileBytecodeExpression(Spin2Context context, Spin2StatementNode node, boolean push) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
-        Spin2StatementNode argsNode = node;
-        if (node.getChildCount() == 1 && ",".equals(node.getChild(0).getText())) {
-            argsNode = node.getChild(0);
-        }
-
         Descriptor desc = Spin2Bytecode.getDescriptor(node.getText());
         if (desc != null) {
-            if (argsNode.getChildCount() != desc.parameters) {
-                throw new RuntimeException("expected " + desc.parameters + " argument(s), found " + argsNode.getChildCount());
+            if (node.getChildCount() != desc.parameters) {
+                throw new RuntimeException("expected " + desc.parameters + " argument(s), found " + node.getChildCount());
             }
             for (int i = 0; i < desc.parameters; i++) {
-                source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
+                source.addAll(compileBytecodeExpression(context, node.getChild(i), true));
             }
             source.add(new Bytecode(context, desc.code, node.getText()));
         }
@@ -1304,6 +1289,27 @@ public class Spin2Compiler {
             Spin2StatementNode left = node.getChild(0);
             if (left.getType() == Token.OPERATOR) {
                 source.addAll(compileBytecodeExpression(context, left, push));
+            }
+            else if ("BYTE".equalsIgnoreCase(left.getText()) || "WORD".equalsIgnoreCase(left.getText()) || "LONG".equalsIgnoreCase(left.getText())) {
+                if (left.getChildCount() != 1) {
+                    throw new RuntimeException("expression syntax error " + left.getText());
+                }
+                source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
+                if ("BYTE".equalsIgnoreCase(left.getText())) {
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) 0x65, push ? (byte) 0x82 : (byte) 0x81
+                    }, left.getText().toUpperCase() + (push ? "_MODIFY" : "_WRITE")));
+                }
+                else if ("WORD".equalsIgnoreCase(left.getText())) {
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) 0x66, push ? (byte) 0x82 : (byte) 0x81
+                    }, left.getText().toUpperCase() + (push ? "_MODIFY" : "_WRITE")));
+                }
+                else if ("LONG".equalsIgnoreCase(left.getText())) {
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) 0x67, push ? (byte) 0x82 : (byte) 0x81
+                    }, left.getText().toUpperCase() + (push ? "_MODIFY" : "_WRITE")));
+                }
             }
             else {
                 Expression expression = context.getLocalSymbol(left.getText());
@@ -1374,48 +1380,53 @@ public class Spin2Compiler {
                 source.add(new MathOp(context, node.getText(), false));
             }
         }
-        else if ("[".equalsIgnoreCase(node.getText())) {
-            if (node.getChildCount() != 2) {
+        else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 1) {
                 throw new RuntimeException("expression syntax error " + node.getText());
             }
-            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-            if ("BYTE".equalsIgnoreCase(node.getChild(0).getText())) {
+            source.addAll(compileConstantExpression(context, node.getChild(0)));
+            if ("BYTE".equalsIgnoreCase(node.getText())) {
                 source.add(new Bytecode(context, new byte[] {
                     (byte) 0x65, push ? (byte) 0x80 : (byte) 0x81
-                }, node.getChild(0).getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
+                }, node.getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
             }
-            else if ("WORD".equalsIgnoreCase(node.getChild(0).getText())) {
+            else if ("WORD".equalsIgnoreCase(node.getText())) {
                 source.add(new Bytecode(context, new byte[] {
                     (byte) 0x66, push ? (byte) 0x80 : (byte) 0x81
-                }, node.getChild(0).getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
+                }, node.getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
             }
-            else if ("LONG".equalsIgnoreCase(node.getChild(0).getText())) {
+            else if ("LONG".equalsIgnoreCase(node.getText())) {
                 source.add(new Bytecode(context, new byte[] {
                     (byte) 0x67, push ? (byte) 0x80 : (byte) 0x81
-                }, node.getChild(0).getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
-            }
-            else {
-                throw new RuntimeException("unknown " + node.getChild(0).getText());
+                }, node.getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
             }
         }
         else if ("?".equalsIgnoreCase(node.getText())) {
-            if (node.getChildCount() != 3) {
+            if (node.getChildCount() != 2) {
                 throw new RuntimeException("expression syntax error " + node.getText());
             }
-            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-            source.addAll(compileBytecodeExpression(context, node.getChild(2), true));
+            if (!":".equals(node.getChild(1).getText())) {
+                throw new RuntimeException("expression syntax error " + node.getText());
+            }
+            source.addAll(compileConstantExpression(context, node.getChild(0)));
+            source.addAll(compileConstantExpression(context, node.getChild(1).getChild(0)));
+            source.addAll(compileConstantExpression(context, node.getChild(1).getChild(1)));
             source.add(new Bytecode(context, 0x6B, "TERNARY_IF_ELSE"));
         }
         else if ("(".equalsIgnoreCase(node.getText())) {
             source.addAll(compileBytecodeExpression(context, node.getChild(0), push));
         }
+        else if (",".equalsIgnoreCase(node.getText())) {
+            for (Spin2StatementNode child : node.getChilds()) {
+                source.addAll(compileBytecodeExpression(context, child, push));
+            }
+        }
         else if ("ABORT".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() == 0) {
+            if (node.getChildCount() == 0) {
                 source.add(new Bytecode(context, 0x06, node.getText().toUpperCase()));
             }
-            else if (argsNode.getChildCount() == 1) {
-                source.addAll(compileBytecodeExpression(context, argsNode.getChild(0), true));
+            else if (node.getChildCount() == 1) {
+                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                 source.add(new Bytecode(context, 0x07, node.getText().toUpperCase()));
             }
             else {
@@ -1423,33 +1434,33 @@ public class Spin2Compiler {
             }
         }
         else if ("RECV".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() != 0) {
+            if (node.getChildCount() != 0) {
                 throw new RuntimeException("expected " + 0 + " argument(s), found " + node.getChildCount());
             }
             source.add(new Bytecode(context, 0x0C, node.getText().toUpperCase()));
         }
         else if ("SEND".equalsIgnoreCase(node.getText())) {
-            if (argsNode.getChildCount() == 0) {
+            if (node.getChildCount() == 0) {
                 throw new RuntimeException("syntax error");
             }
             boolean bytes = true;
-            for (Spin2StatementNode child : argsNode.getChilds()) {
+            for (Spin2StatementNode child : node.getChilds()) {
                 if (child.getType() != Token.NUMBER) {
                     bytes = false;
                     break;
                 }
             }
             if (bytes) {
-                byte[] code = new byte[argsNode.getChildCount() + 2];
+                byte[] code = new byte[node.getChildCount() + 2];
                 code[0] = 0x0E;
-                code[1] = (byte) argsNode.getChildCount();
-                for (int i = 0; i < argsNode.getChildCount(); i++) {
-                    code[i + 2] = (byte) new NumberLiteral(argsNode.getChild(i).getText()).getNumber().intValue();
+                code[1] = (byte) node.getChildCount();
+                for (int i = 0; i < node.getChildCount(); i++) {
+                    code[i + 2] = (byte) new NumberLiteral(node.getChild(i).getText()).getNumber().intValue();
                 }
                 source.add(new Bytecode(context, code, node.getText().toUpperCase()));
             }
             else {
-                for (Spin2StatementNode child : argsNode.getChilds()) {
+                for (Spin2StatementNode child : node.getChilds()) {
                     source.addAll(compileBytecodeExpression(context, child, true));
                     source.add(new Bytecode(context, 0x0D, node.getText().toUpperCase()));
                 }
@@ -1460,7 +1471,7 @@ public class Spin2Compiler {
         }
         else if ("STRING".equalsIgnoreCase(node.getText())) {
             StringBuilder sb = new StringBuilder();
-            for (Spin2StatementNode child : argsNode.getChilds()) {
+            for (Spin2StatementNode child : node.getChilds()) {
                 if (child.getType() == Token.STRING) {
                     String s = child.getText().substring(1);
                     sb.append(s.substring(0, s.length() - 1));
@@ -1512,14 +1523,14 @@ public class Spin2Compiler {
             }
             else if (expression instanceof Method) {
                 int parameters = ((Method) expression).getArgumentsCount();
-                if (argsNode.getChildCount() != parameters) {
-                    throw new RuntimeException("expected " + parameters + " argument(s), found " + argsNode.getChildCount());
+                if (node.getChildCount() != parameters) {
+                    throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChildCount());
                 }
                 source.add(new Bytecode(context, new byte[] {
                     (byte) ((Method) expression).getReturnsCount(),
                 }, "RETURNS_COUNT (" + ((Method) expression).getReturnsCount() + ")"));
                 for (int i = 0; i < parameters; i++) {
-                    source.addAll(compileBytecodeExpression(context, argsNode.getChild(i), true));
+                    source.addAll(compileBytecodeExpression(context, node.getChild(i), true));
                 }
                 source.add(new Bytecode(context, new byte[] {
                     (byte) 0x0A,
@@ -1541,11 +1552,23 @@ public class Spin2Compiler {
                 source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, expression));
             }
             else {
-                source.add(new Constant(context, expression));
+                throw new RuntimeException("unhandled " + node.getText());
             }
         }
 
         return source;
+    }
+
+    List<Spin2Bytecode> compileConstantExpression(Spin2Context context, Spin2StatementNode node) {
+        try {
+            Expression expression = buildConstantExpression(context, node);
+            if (expression.isConstant()) {
+                return Collections.singletonList(new Constant(context, expression));
+            }
+        } catch (Exception e) {
+
+        }
+        return compileBytecodeExpression(context, node, true);
     }
 
     Expression buildConstantExpression(Spin2Context context, Spin2StatementNode node) {

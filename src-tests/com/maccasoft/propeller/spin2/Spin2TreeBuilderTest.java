@@ -37,10 +37,9 @@ class Spin2TreeBuilderTest {
         String text = "(1 + 2) * 3";
         Assertions.assertEquals(""
             + "[*]\n"
-            + " +-- [(]\n"
-            + "      +-- [+]\n"
-            + "           +-- [1]\n"
-            + "           +-- [2]\n"
+            + " +-- [+]\n"
+            + "      +-- [1]\n"
+            + "      +-- [2]\n"
             + " +-- [3]\n"
             + "", parseExpression(text));
     }
@@ -72,10 +71,28 @@ class Spin2TreeBuilderTest {
         String text = "function(1, 2, 3)";
         Assertions.assertEquals(""
             + "[function]\n"
-            + " +-- [,]\n"
+            + " +-- [1]\n"
+            + " +-- [2]\n"
+            + " +-- [3]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testFunctionExpressionArguments() {
+        String text = "function(1 + 2 * 3, 4, (5 + 6) * 7)";
+        Assertions.assertEquals(""
+            + "[function]\n"
+            + " +-- [+]\n"
             + "      +-- [1]\n"
-            + "      +-- [2]\n"
-            + "      +-- [3]\n"
+            + "      +-- [*]\n"
+            + "           +-- [2]\n"
+            + "           +-- [3]\n"
+            + " +-- [4]\n"
+            + " +-- [*]\n"
+            + "      +-- [+]\n"
+            + "           +-- [5]\n"
+            + "           +-- [6]\n"
+            + "      +-- [7]\n"
             + "", parseAssignment(text));
     }
 
@@ -96,10 +113,9 @@ class Spin2TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [function]\n"
-            + "      +-- [,]\n"
-            + "           +-- [1]\n"
-            + "           +-- [2]\n"
-            + "           +-- [3]\n"
+            + "      +-- [1]\n"
+            + "      +-- [2]\n"
+            + "      +-- [3]\n"
             + "", parseAssignment(text));
     }
 
@@ -125,17 +141,15 @@ class Spin2TreeBuilderTest {
             + " +-- [a]\n"
             + " +-- [+]\n"
             + "      +-- [function1]\n"
-            + "           +-- [,]\n"
-            + "                +-- [1]\n"
-            + "                +-- [2]\n"
+            + "           +-- [1]\n"
+            + "           +-- [2]\n"
             + "      +-- [*]\n"
             + "           +-- [function2]\n"
             + "                +-- [3]\n"
             + "           +-- [function3]\n"
-            + "                +-- [,]\n"
-            + "                     +-- [4]\n"
-            + "                     +-- [5]\n"
-            + "                     +-- [6]\n"
+            + "                +-- [4]\n"
+            + "                +-- [5]\n"
+            + "                +-- [6]\n"
             + "", parseAssignment(text));
     }
 
@@ -146,19 +160,16 @@ class Spin2TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [*]\n"
-            + "      +-- [(]\n"
-            + "           +-- [+]\n"
-            + "                +-- [function1]\n"
-            + "                     +-- [,]\n"
-            + "                          +-- [1]\n"
-            + "                          +-- [2]\n"
-            + "                +-- [function2]\n"
-            + "                     +-- [3]\n"
+            + "      +-- [+]\n"
+            + "           +-- [function1]\n"
+            + "                +-- [1]\n"
+            + "                +-- [2]\n"
+            + "           +-- [function2]\n"
+            + "                +-- [3]\n"
             + "      +-- [function3]\n"
-            + "           +-- [,]\n"
-            + "                +-- [4]\n"
-            + "                +-- [5]\n"
-            + "                +-- [6]\n"
+            + "           +-- [4]\n"
+            + "           +-- [5]\n"
+            + "           +-- [6]\n"
             + "", parseAssignment(text));
     }
 
@@ -180,12 +191,11 @@ class Spin2TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [-]\n"
-            + "      +-- [(]\n"
-            + "           +-- [+]\n"
-            + "                +-- [1]\n"
-            + "                +-- [*]\n"
-            + "                     +-- [2]\n"
-            + "                     +-- [3]\n"
+            + "      +-- [+]\n"
+            + "           +-- [1]\n"
+            + "           +-- [*]\n"
+            + "                +-- [2]\n"
+            + "                +-- [3]\n"
             + "", parseAssignment(text));
     }
 
@@ -195,8 +205,7 @@ class Spin2TreeBuilderTest {
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
-            + " +-- [[]\n"
-            + "      +-- [b]\n"
+            + " +-- [b]\n"
             + "      +-- [1]\n"
             + "", parseAssignment(text));
     }
@@ -206,8 +215,7 @@ class Spin2TreeBuilderTest {
         String text = "a[1] := b";
         Assertions.assertEquals(""
             + "[:=]\n"
-            + " +-- [[]\n"
-            + "      +-- [a]\n"
+            + " +-- [a]\n"
             + "      +-- [1]\n"
             + " +-- [b]\n"
             + "", parseAssignment(text));
@@ -219,8 +227,7 @@ class Spin2TreeBuilderTest {
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
-            + " +-- [[]\n"
-            + "      +-- [b]\n"
+            + " +-- [b]\n"
             + "      +-- [..]\n"
             + "           +-- [1]\n"
             + "           +-- [5]\n"
@@ -232,8 +239,7 @@ class Spin2TreeBuilderTest {
         String text = "a[1..5] := b";
         Assertions.assertEquals(""
             + "[:=]\n"
-            + " +-- [[]\n"
-            + "      +-- [a]\n"
+            + " +-- [a]\n"
             + "      +-- [..]\n"
             + "           +-- [1]\n"
             + "           +-- [5]\n"
@@ -251,8 +257,9 @@ class Spin2TreeBuilderTest {
             + "      +-- [==]\n"
             + "           +-- [b]\n"
             + "           +-- [1]\n"
-            + "      +-- [2]\n"
-            + "      +-- [3]\n"
+            + "      +-- [:]\n"
+            + "           +-- [2]\n"
+            + "           +-- [3]\n"
             + "", parseAssignment(text));
     }
 
@@ -283,20 +290,139 @@ class Spin2TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [*]\n"
-            + "      +-- [(]\n"
-            + "           +-- [+]\n"
-            + "                +-- [function1]\n"
-            + "                     +-- [,]\n"
-            + "                          +-- [1]\n"
-            + "                          +-- [2]\n"
-            + "                +-- [\\]\n"
-            + "                     +-- [function2]\n"
-            + "                          +-- [3]\n"
+            + "      +-- [+]\n"
+            + "           +-- [function1]\n"
+            + "                +-- [1]\n"
+            + "                +-- [2]\n"
+            + "           +-- [\\]\n"
+            + "                +-- [function2]\n"
+            + "                     +-- [3]\n"
             + "      +-- [function3]\n"
-            + "           +-- [,]\n"
-            + "                +-- [4]\n"
-            + "                +-- [5]\n"
-            + "                +-- [6]\n"
+            + "           +-- [4]\n"
+            + "           +-- [5]\n"
+            + "           +-- [6]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testLookdownArguments() {
+        String text = "a := lookdown(b : 1,2,3,4)";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [lookdown]\n"
+            + "      +-- [:]\n"
+            + "           +-- [b]\n"
+            + "           +-- [1]\n"
+            + "           +-- [2]\n"
+            + "           +-- [3]\n"
+            + "           +-- [4]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testPostIncrement() {
+        String text = "a++";
+        Assertions.assertEquals(""
+            + "[a]\n"
+            + " +-- [++]\n"
+            + "", parseExpression(text));
+    }
+
+    @Test
+    void testPreDecrement() {
+        String text = "--a";
+        Assertions.assertEquals(""
+            + "[--]\n"
+            + " +-- [a]\n"
+            + "", parseExpression(text));
+    }
+
+    @Test
+    void testUnaryEffectsExpression() {
+        String text = "a := b + c~~ * --d";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [+]\n"
+            + "      +-- [b]\n"
+            + "      +-- [*]\n"
+            + "           +-- [c]\n"
+            + "                +-- [~~]\n"
+            + "           +-- [--]\n"
+            + "                +-- [d]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testUnaryIndexAssigment() {
+        String text = "a[1]~~";
+        Assertions.assertEquals(""
+            + "[a]\n"
+            + " +-- [1]\n"
+            + " +-- [~~]\n"
+            + "", parseExpression(text));
+    }
+
+    @Test
+    void testUnaryIndexPreAssigment() {
+        String text = "~~a[1]";
+        Assertions.assertEquals(""
+            + "[~~]\n"
+            + " +-- [a]\n"
+            + "      +-- [1]\n"
+            + "", parseExpression(text));
+    }
+
+    @Test
+    void testArray() {
+        String text = "a := b[c][0]";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [b]\n"
+            + "      +-- [c]\n"
+            + "      +-- [0]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testArrayPost() {
+        String text = "a := b[c][0]~";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [b]\n"
+            + "      +-- [c]\n"
+            + "      +-- [0]\n"
+            + "      +-- [~]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testArrayAssignment() {
+        String text = "a[c][0] := b";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + "      +-- [c]\n"
+            + "      +-- [0]\n"
+            + " +-- [b]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testArgumentRange() {
+        String text = "a := c(10, 20..30, 40)";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [c]\n"
+            + "      +-- [10]\n"
+            + "      +-- [..]\n"
+            + "           +-- [20]\n"
+            + "           +-- [30]\n"
+            + "      +-- [40]\n"
             + "", parseAssignment(text));
     }
 
@@ -310,7 +436,6 @@ class Spin2TreeBuilderTest {
 
     String parse(int state, String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder();
-        builder.setState(state);
 
         Spin2TokenStream stream = new Spin2TokenStream(text);
         while (true) {
