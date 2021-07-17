@@ -388,12 +388,11 @@ public class Spin1Object {
                         ps.print(String.format(" %02X", obj.bytes[i++]));
                         address++;
                     }
-                    while (i < 4 || (i % 4) != 0) {
+                    while (i < 5) {
                         ps.print("   ");
                         i++;
                     }
-                    ps.print("   ");
-                    if (i == 4) {
+                    if (i == 5) {
                         if (obj.text != null) {
                             ps.print(" " + obj.text);
                         }
@@ -417,7 +416,7 @@ public class Spin1Object {
                         ps.print(String.format(" %02X", obj.bytes[i++]));
                         address++;
                     }
-                    while (i < 5 || (i % 5) != 0) {
+                    while (i < 5) {
                         ps.print("   ");
                         i++;
                     }

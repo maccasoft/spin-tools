@@ -27,6 +27,8 @@ import com.maccasoft.propeller.expressions.ExpressionBuilder;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.LocalVariable;
+import com.maccasoft.propeller.expressions.LogicalAnd;
+import com.maccasoft.propeller.expressions.LogicalOr;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.Negative;
@@ -82,6 +84,7 @@ public class Spin1Compiler {
 
     int varOffset = 0;
     int labelCounter;
+    Spin1MethodLine dataLine;
 
     boolean errors;
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
@@ -221,7 +224,9 @@ public class Spin1Compiler {
         }
 
         for (Spin1Method method : methods) {
-            for (Spin1MethodLine line : method.getLines()) {
+            List<Spin1MethodLine> lines = method.getLines();
+            dataLine = lines.get(lines.size() - 1);
+            for (Spin1MethodLine line : lines) {
                 try {
                     compileLine(line);
                 } catch (CompilerMessage e) {
@@ -653,6 +658,7 @@ public class Spin1Compiler {
 
         List<Spin1MethodLine> childs = compileStatements(localScope, node.getChilds());
         childs.add(new Spin1MethodLine(localScope, String.format(".label_" + labelCounter++), "RETURN", Collections.emptyList()));
+        childs.add(new Spin1MethodLine(localScope, null, null, Collections.emptyList()));
         for (Spin1MethodLine line : childs) {
             method.addSource(line);
         }
@@ -1298,10 +1304,16 @@ public class Spin1Compiler {
             }
             throw new RuntimeException("string not allowed");
         }
-        else if (node.getType() == 0) {
-            return new Identifier(node.getText(), context);
+
+        Expression expression = context.getLocalSymbol(node.getText());
+        if (expression != null) {
+            if (expression.isConstant()) {
+                return expression;
+            }
+            throw new RuntimeException("not a constant (" + expression + ")");
         }
-        else if ("-".equals(node.getText())) {
+
+        if ("-".equals(node.getText())) {
             return new Subtract(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
         else if ("+".equals(node.getText())) {
@@ -1315,6 +1327,12 @@ public class Spin1Compiler {
         }
         else if ("^".equals(node.getText())) {
             return new Xor(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        else if ("AND".equalsIgnoreCase(node.getText())) {
+            return new LogicalAnd(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        else if ("OR".equalsIgnoreCase(node.getText())) {
+            return new LogicalOr(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
         else if ("|<".equals(node.getText())) {
             return new Decod(buildConstantExpression(context, node.getChild(0)));
@@ -1410,6 +1428,29 @@ public class Spin1Compiler {
             source.add(new Bytecode(context, 0b00001111, "LOOKDONE"));
             source.add(end);
         }
+        else if ("STRING".equalsIgnoreCase(node.getText())) {
+            StringBuilder sb = new StringBuilder();
+            for (Spin1StatementNode child : node.getChilds()) {
+                if (child.getType() == Token.STRING) {
+                    String s = child.getText().substring(1);
+                    sb.append(s.substring(0, s.length() - 1));
+                }
+                else if (child.getType() == Token.NUMBER) {
+                    NumberLiteral expression = new NumberLiteral(child.getText());
+                    sb.append((char) expression.getNumber().intValue());
+                }
+            }
+            if (sb.length() == 1) {
+                Expression expression = new CharacterLiteral(sb.charAt(0));
+                source.add(new Constant(context, expression));
+            }
+            else {
+                sb.append((char) 0x00);
+                Spin1Bytecode target = new Bytecode(context, sb.toString().getBytes(), "STRING".toUpperCase());
+                source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, new ContextLiteral(target.getContext())));
+                dataLine.addSource(target);
+            }
+        }
         else if (node.getType() == Token.NUMBER) {
             Expression expression = new NumberLiteral(node.getText());
             source.add(new Constant(context, expression));
@@ -1422,7 +1463,10 @@ public class Spin1Compiler {
                 source.add(new Constant(context, expression));
             }
             else {
-                throw new RuntimeException("string not yet implemented " + node.getText());
+                s += (char) 0x00;
+                Spin1Bytecode target = new Bytecode(context, s.getBytes(), "STRING".toUpperCase());
+                source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, new ContextLiteral(target.getContext())));
+                dataLine.addSource(target);
             }
         }
         else if (":=".equals(node.getText())) {
@@ -1560,9 +1604,21 @@ public class Spin1Compiler {
             if (node.getChildCount() != 2) {
                 throw new RuntimeException("expression syntax error " + node.getText());
             }
-            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-            source.add(new MathOp(context, node.getText(), push));
+            if (OPENSPIN_COMPATIBILITY) {
+                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+                source.add(new MathOp(context, node.getText(), push));
+            }
+            else {
+                try {
+                    Expression expression = buildConstantExpression(context, node);
+                    source.add(new Constant(context, expression));
+                } catch (Exception e) {
+                    source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                    source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+                    source.add(new MathOp(context, node.getText(), push));
+                }
+            }
         }
         else if ("?".equalsIgnoreCase(node.getText())) {
             if (node.getChildCount() == 1) {
