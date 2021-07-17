@@ -23,124 +23,114 @@ import com.maccasoft.propeller.model.Token;
 
 public class Spin2TreeBuilder {
 
-    static int highestPrecedence = 1;
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
-        precedence.put(">>", highestPrecedence);
-        precedence.put("<<", highestPrecedence);
-        precedence.put("SAR", highestPrecedence);
-        precedence.put("ROR", highestPrecedence);
-        precedence.put("ROL", highestPrecedence);
-        precedence.put("REV", highestPrecedence);
-        precedence.put("ZEROX", highestPrecedence);
-        precedence.put("SIGNX", highestPrecedence);
-        highestPrecedence++;
+        precedence.put(">>", 13);
+        precedence.put("<<", 13);
+        precedence.put("SAR", 13);
+        precedence.put("ROR", 13);
+        precedence.put("ROL", 13);
+        precedence.put("REV", 13);
+        precedence.put("ZEROX", 13);
+        precedence.put("SIGNX", 13);
 
-        precedence.put("&", highestPrecedence++);
-        precedence.put("^", highestPrecedence++);
-        precedence.put("|", highestPrecedence++);
+        precedence.put("&", 12);
+        precedence.put("^", 11);
+        precedence.put("|", 10);
 
-        precedence.put("*", highestPrecedence);
-        precedence.put("/", highestPrecedence);
-        precedence.put("+/", highestPrecedence);
-        precedence.put("//", highestPrecedence);
-        precedence.put("+//", highestPrecedence);
-        precedence.put("SCA", highestPrecedence);
-        precedence.put("SCAS", highestPrecedence);
-        precedence.put("FRAC", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("*", 9);
+        precedence.put("/", 9);
+        precedence.put("+/", 9);
+        precedence.put("//", 9);
+        precedence.put("+//", 9);
+        precedence.put("SCA", 9);
+        precedence.put("SCAS", 9);
+        precedence.put("FRAC", 9);
 
-        precedence.put("+", highestPrecedence);
-        precedence.put("-", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("+", 8);
+        precedence.put("-", 8);
 
-        precedence.put("#>", highestPrecedence);
-        precedence.put("<#", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("#>", 7);
+        precedence.put("<#", 7);
 
-        precedence.put("ADDBITS", highestPrecedence);
-        precedence.put("ADDPINS", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("ADDBITS", 6);
+        precedence.put("ADDPINS", 6);
 
-        precedence.put("<", highestPrecedence);
-        precedence.put("+<", highestPrecedence);
-        precedence.put("<=", highestPrecedence);
-        precedence.put("+<=", highestPrecedence);
-        precedence.put("==", highestPrecedence);
-        precedence.put("<>", highestPrecedence);
-        precedence.put(">=", highestPrecedence);
-        precedence.put("+>=", highestPrecedence);
-        precedence.put(">", highestPrecedence);
-        precedence.put("+>", highestPrecedence);
-        precedence.put("<=>", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("<", 5);
+        precedence.put("+<", 5);
+        precedence.put("<=", 5);
+        precedence.put("+<=", 5);
+        precedence.put("==", 5);
+        precedence.put("<>", 5);
+        precedence.put(">=", 5);
+        precedence.put("+>=", 5);
+        precedence.put(">", 5);
+        precedence.put("+>", 5);
+        precedence.put("<=>", 5);
 
-        precedence.put("&&", highestPrecedence);
-        precedence.put("AND", highestPrecedence);
-        precedence.put("^^", highestPrecedence);
-        precedence.put("XOR", highestPrecedence);
-        precedence.put("||", highestPrecedence);
-        precedence.put("OR", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("&&", 4);
+        precedence.put("AND", 4);
+        precedence.put("^^", 4);
+        precedence.put("XOR", 4);
+        precedence.put("||", 4);
+        precedence.put("OR", 4);
 
-        precedence.put("..", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("..", 3);
 
-        precedence.put(":", highestPrecedence);
-        precedence.put("?", highestPrecedence);
-        highestPrecedence++;
+        precedence.put(":", 2);
+        precedence.put("?", 2);
 
-        precedence.put(":=", highestPrecedence);
+        precedence.put(":=", 1);
 
-        precedence.put(">>=", highestPrecedence);
-        precedence.put("<<=", highestPrecedence);
-        precedence.put("SAR=", highestPrecedence);
-        precedence.put("ROR=", highestPrecedence);
-        precedence.put("ROL=", highestPrecedence);
-        precedence.put("REV=", highestPrecedence);
-        precedence.put("ZEROX=", highestPrecedence);
-        precedence.put("SIGNX=", highestPrecedence);
+        precedence.put(">>=", 1);
+        precedence.put("<<=", 1);
+        precedence.put("SAR=", 1);
+        precedence.put("ROR=", 1);
+        precedence.put("ROL=", 1);
+        precedence.put("REV=", 1);
+        precedence.put("ZEROX=", 1);
+        precedence.put("SIGNX=", 1);
 
-        precedence.put("&=", highestPrecedence);
-        precedence.put("^=", highestPrecedence);
-        precedence.put("|=", highestPrecedence);
+        precedence.put("&=", 1);
+        precedence.put("^=", 1);
+        precedence.put("|=", 1);
 
-        precedence.put("*=", highestPrecedence);
-        precedence.put("/=", highestPrecedence);
-        precedence.put("+/=", highestPrecedence);
-        precedence.put("//=", highestPrecedence);
-        precedence.put("+//=", highestPrecedence);
-        precedence.put("SCA=", highestPrecedence);
-        precedence.put("SCAS=", highestPrecedence);
-        precedence.put("FRAC=", highestPrecedence);
+        precedence.put("*=", 1);
+        precedence.put("/=", 1);
+        precedence.put("+/=", 1);
+        precedence.put("//=", 1);
+        precedence.put("+//=", 1);
+        precedence.put("SCA=", 1);
+        precedence.put("SCAS=", 1);
+        precedence.put("FRAC=", 1);
 
-        precedence.put("+=", highestPrecedence);
-        precedence.put("-=", highestPrecedence);
+        precedence.put("+=", 1);
+        precedence.put("-=", 1);
 
-        precedence.put("#>=", highestPrecedence);
-        precedence.put("<#=", highestPrecedence);
+        precedence.put("#>=", 1);
+        precedence.put("<#=", 1);
 
-        precedence.put("ADDBITS=", highestPrecedence);
-        precedence.put("ADDPINS=", highestPrecedence);
+        precedence.put("ADDBITS=", 1);
+        precedence.put("ADDPINS=", 1);
 
-        precedence.put("<=", highestPrecedence);
-        precedence.put("+<=", highestPrecedence);
-        precedence.put("<==", highestPrecedence);
-        precedence.put("+<==", highestPrecedence);
-        precedence.put("===", highestPrecedence);
-        precedence.put("<>=", highestPrecedence);
-        precedence.put(">==", highestPrecedence);
-        precedence.put("+>==", highestPrecedence);
-        precedence.put(">=", highestPrecedence);
-        precedence.put("+>=", highestPrecedence);
-        precedence.put("<=>=", highestPrecedence);
+        precedence.put("<=", 1);
+        precedence.put("+<=", 1);
+        precedence.put("<==", 1);
+        precedence.put("+<==", 1);
+        precedence.put("===", 1);
+        precedence.put("<>=", 1);
+        precedence.put(">==", 1);
+        precedence.put("+>==", 1);
+        precedence.put(">=", 1);
+        precedence.put("+>=", 1);
+        precedence.put("<=>=", 1);
 
-        precedence.put("&&=", highestPrecedence);
-        precedence.put("AND=", highestPrecedence);
-        precedence.put("^^=", highestPrecedence);
-        precedence.put("XOR=", highestPrecedence);
-        precedence.put("||=", highestPrecedence);
-        precedence.put("OR=", highestPrecedence);
+        precedence.put("&&=", 1);
+        precedence.put("AND=", 1);
+        precedence.put("^^=", 1);
+        precedence.put("XOR=", 1);
+        precedence.put("||=", 1);
+        precedence.put("OR=", 1);
     }
 
     static Set<String> unary = new HashSet<String>();
@@ -170,12 +160,16 @@ public class Spin2TreeBuilder {
     int index;
     List<Token> tokens = new ArrayList<Token>();
 
+    public Spin2TreeBuilder() {
+
+    }
+
     public void addToken(Token token) {
         tokens.add(token);
     }
 
     public Spin2StatementNode getRoot() {
-        Spin2StatementNode node = parseLevel(highestPrecedence);
+        Spin2StatementNode node = parseLevel(parseAtom(), 0);
 
         Token token = peek();
         while (token != null) {
@@ -186,7 +180,7 @@ public class Spin2TreeBuilder {
                     newNode.addChild(node);
                     node = newNode;
                 }
-                node.addChild(parseLevel(highestPrecedence));
+                node.addChild(parseLevel(parseAtom(), 0));
                 token = peek();
             }
             else {
@@ -197,24 +191,37 @@ public class Spin2TreeBuilder {
         return node;
     }
 
-    Spin2StatementNode parseLevel(int level) {
-        Spin2StatementNode left = level == 0 ? parseAtom() : parseLevel(level - 1);
+    Spin2StatementNode parseLevel(Spin2StatementNode left, int level) {
+        for (;;) {
+            Token token = peek();
+            if (token == null) {
+                return left;
+            }
 
-        Token token = peek();
-        if (token == null) {
-            return left;
-        }
+            Integer p = precedence.get(token.getText().toUpperCase());
+            if (p == null || p.intValue() < level) {
+                return left;
+            }
+            token = next();
 
-        Integer p = precedence.get(token.getText().toUpperCase());
-        if (p != null && p.intValue() == level) {
-            Spin2StatementNode node = new Spin2StatementNode(next());
-            Spin2StatementNode right = level == 0 ? parseAtom() : parseLevel(level);
+            Spin2StatementNode right = parseAtom();
+            for (;;) {
+                Token nextToken = peek();
+                if (nextToken == null) {
+                    break;
+                }
+                Integer nextP = precedence.get(nextToken.getText().toUpperCase());
+                if (nextP == null || nextP.intValue() <= p.intValue()) {
+                    break;
+                }
+                right = parseLevel(right, level + 1);
+            }
+
+            Spin2StatementNode node = new Spin2StatementNode(token);
             node.addChild(left);
             node.addChild(right);
-            return node;
+            left = node;
         }
-
-        return left;
     }
 
     Spin2StatementNode parseAtom() {
@@ -228,7 +235,7 @@ public class Spin2TreeBuilder {
 
         if ("(".equals(token.getText())) {
             next();
-            Spin2StatementNode node = parseLevel(highestPrecedence);
+            Spin2StatementNode node = parseLevel(parseAtom(), 0);
             token = next();
             if (token == null) {
                 throw new RuntimeException("expecting closing parenthesis");
@@ -241,7 +248,7 @@ public class Spin2TreeBuilder {
 
         if ("[".equals(token.getText())) {
             next();
-            Spin2StatementNode node = parseLevel(highestPrecedence);
+            Spin2StatementNode node = parseLevel(parseAtom(), 0);
             token = next();
             if (token == null) {
                 throw new RuntimeException("expecting closing parenthesis");
@@ -262,7 +269,7 @@ public class Spin2TreeBuilder {
                         return node;
                     }
                     for (;;) {
-                        Spin2StatementNode child = parseLevel(highestPrecedence);
+                        Spin2StatementNode child = parseLevel(parseAtom(), 0);
                         if (node.getChildCount() == 1 && ":".equals(node.getChild(0).getText())) {
                             node.getChild(0).addChild(child);
                         }
@@ -283,7 +290,7 @@ public class Spin2TreeBuilder {
                 }
                 if ("[".equals(token.getText())) {
                     next();
-                    node.addChild(parseLevel(highestPrecedence));
+                    node.addChild(parseLevel(parseAtom(), 0));
                     token = next();
                     if (token == null) {
                         throw new RuntimeException("expecting closing parenthesis");
@@ -298,7 +305,7 @@ public class Spin2TreeBuilder {
                     }
                     if ("[".equals(token.getText())) {
                         next();
-                        node.addChild(parseLevel(highestPrecedence));
+                        node.addChild(parseLevel(parseAtom(), 0));
                         token = next();
                         if (token == null) {
                             throw new RuntimeException("expecting closing parenthesis");
@@ -343,6 +350,22 @@ public class Spin2TreeBuilder {
         text = "A, B, C";
         System.out.println(text);
         System.out.println(parse(text));
+
+        text = "16 / 2 / 2";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "160 * 25 - 1";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "a := 1 ? 2 : 3";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "a := b := c := 1";
+        System.out.println(text);
+        System.out.println(parse(text));
     }
 
     static String parse(String text) {
@@ -379,4 +402,5 @@ public class Spin2TreeBuilder {
             print(out, child, indent + 1);
         }
     }
+
 }

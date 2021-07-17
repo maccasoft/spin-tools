@@ -24,7 +24,6 @@ import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.ExpressionBuilder;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.LocalVariable;
@@ -1401,16 +1400,16 @@ public class Spin2Compiler {
                 }, node.getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
             }
         }
-        else if ("?".equalsIgnoreCase(node.getText())) {
+        else if (":".equalsIgnoreCase(node.getText())) {
             if (node.getChildCount() != 2) {
                 throw new RuntimeException("expression syntax error " + node.getText());
             }
-            if (!":".equals(node.getChild(1).getText())) {
+            if (!"?".equals(node.getChild(0).getText())) {
                 throw new RuntimeException("expression syntax error " + node.getText());
             }
-            source.addAll(compileConstantExpression(context, node.getChild(0)));
-            source.addAll(compileConstantExpression(context, node.getChild(1).getChild(0)));
-            source.addAll(compileConstantExpression(context, node.getChild(1).getChild(1)));
+            source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(0), true));
+            source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(1), true));
+            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
             source.add(new Bytecode(context, 0x6B, "TERNARY_IF_ELSE"));
         }
         else if ("(".equalsIgnoreCase(node.getText())) {
@@ -1706,188 +1705,7 @@ public class Spin2Compiler {
     }
 
     Expression buildExpression(List<Token> tokens, Spin2Context scope) {
-        int state = 0;
-        ExpressionBuilder expressionBuilder = new ExpressionBuilder();
-
-        Iterator<Token> iter = tokens.iterator();
-        while (iter.hasNext()) {
-            Token token = iter.next();
-
-            if ("(".equals(token.getText())) {
-                expressionBuilder.addOperatorToken(expressionBuilder.GROUP_OPEN);
-                state = 0;
-                continue;
-            }
-            else if (")".equals(token.getText())) {
-                expressionBuilder.addOperatorToken(expressionBuilder.GROUP_CLOSE);
-                state = 1;
-                continue;
-            }
-
-            switch (state) {
-                case 0:
-                    if ("!".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.NOT);
-                    }
-                    else if ("!!".equals(token.getText()) || "NOT".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_NOT);
-                    }
-                    else if ("+".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.POSITIVE);
-                    }
-                    else if ("-".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.NEGATIVE);
-                    }
-                    else if ("ABS".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ABS);
-                    }
-                    else if ("ENCOD".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ENCOD);
-                    }
-                    else if ("DECOD".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.DECOD);
-                    }
-                    else if ("BMASK".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.BMASK);
-                    }
-                    else if ("SQRT".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.SQRT);
-                    }
-                    else if ("ROUND".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ROUND);
-                    }
-                    else if (token.type == Token.NUMBER) {
-                        if ("$".equals(token.getText())) {
-                            expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
-                        }
-                        else {
-                            expressionBuilder.addValueToken(new NumberLiteral(token.getText()));
-                        }
-                    }
-                    else if (token.type == Token.STRING) {
-                        expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
-                    }
-                    else {
-                        if (token.type != 0) {
-                            throw new CompilerMessage("unexpected " + token.getText(), token);
-                        }
-                        expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
-                    }
-                    state = 1;
-                    break;
-                case 1:
-                    if ("!".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.NOT);
-                    }
-                    else if ("!!".equals(token.getText()) || "NOT".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_NOT);
-                    }
-                    else if ("ABS".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ABS);
-                    }
-                    else if ("ENCOD".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ENCOD);
-                    }
-                    else if ("DECOD".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.DECOD);
-                    }
-                    else if ("BMASK".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.BMASK);
-                    }
-                    else if ("SQRT".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.SQRT);
-                    }
-                    else if (">>".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.SHIFT_RIGHT);
-                    }
-                    else if ("<<".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.SHIFT_LEFT);
-                    }
-                    else if ("&".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.AND);
-                    }
-                    else if ("^".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.XOR);
-                    }
-                    else if ("|".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.OR);
-                    }
-                    else if ("*".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.MULTIPLY);
-                    }
-                    else if ("/".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.DIVIDE);
-                    }
-                    else if ("//".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.MODULO);
-                    }
-                    else if ("+/".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.UNSIGNED_DIVIDE);
-                    }
-                    else if ("+//".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.UNSIGNED_MODULO);
-                    }
-                    else if ("SCA".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.SCA);
-                    }
-                    else if ("SCAS".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.SCAS);
-                    }
-                    else if ("FRAC".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.FRAC);
-                    }
-                    else if ("+".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ADD);
-                    }
-                    else if ("-".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.SUBTRACT);
-                    }
-                    else if ("ADDBITS".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ADDBITS);
-                    }
-                    else if ("ADDPINS".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ADDPINS);
-                    }
-                    else if ("&&".equalsIgnoreCase(token.getText()) || "AND".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_AND);
-                    }
-                    else if ("^^".equalsIgnoreCase(token.getText()) || "XOR".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_XOR);
-                    }
-                    else if ("||".equalsIgnoreCase(token.getText()) || "OR".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_OR);
-                    }
-                    else if ("?".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.TERNARYIF);
-                    }
-                    else if (":".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.TERNARYELSE);
-                    }
-                    else if ("ROUND".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ROUND);
-                    }
-                    else if (token.type == Token.NUMBER) {
-                        if ("$".equals(token.getText())) {
-                            expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
-                        }
-                        else {
-                            expressionBuilder.addValueToken(new NumberLiteral(token.getText()));
-                        }
-                        break;
-                    }
-                    else if (token.type == Token.STRING) {
-                        expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
-                        break;
-                    }
-                    else {
-                        expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
-                        break;
-                    }
-                    state = 0;
-                    break;
-            }
-        }
-
+        Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(scope, tokens);
         return expressionBuilder.getExpression();
     }
 
