@@ -89,6 +89,36 @@ class VariableOpTest {
         Assertions.assertEquals("VAR_WRITE BYTE DBASE+$0004", op.toString());
     }
 
+    @Test
+    void testModifyLocalVarLong() {
+        LocalVariable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 4);
+
+        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Assign, var);
+
+        Assertions.assertEquals("66", toString(op.getBytes()));
+        Assertions.assertEquals("VAR_MODIFY LONG DBASE+$0004 (short)", op.toString());
+    }
+
+    @Test
+    void testModifyLocalVarWord() {
+        LocalVariable var = new LocalVariable("WORD", "a", new NumberLiteral(1), 4);
+
+        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Assign, var);
+
+        Assertions.assertEquals("AE 04", toString(op.getBytes()));
+        Assertions.assertEquals("VAR_MODIFY WORD DBASE+$0004", op.toString());
+    }
+
+    @Test
+    void testModifyLocalVarByte() {
+        LocalVariable var = new LocalVariable("BYTE", "a", new NumberLiteral(1), 4);
+
+        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Assign, var);
+
+        Assertions.assertEquals("8E 04", toString(op.getBytes()));
+        Assertions.assertEquals("VAR_MODIFY BYTE DBASE+$0004", op.toString());
+    }
+
     String toString(byte[] b) {
         StringBuilder sb = new StringBuilder();
 

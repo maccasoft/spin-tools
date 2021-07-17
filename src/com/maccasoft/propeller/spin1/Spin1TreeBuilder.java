@@ -23,90 +23,80 @@ import com.maccasoft.propeller.model.Token;
 
 public class Spin1TreeBuilder {
 
-    static int highestPrecedence = 1;
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
-        precedence.put(">>", highestPrecedence);
-        precedence.put("<<", highestPrecedence);
-        precedence.put("~>", highestPrecedence);
-        precedence.put("->", highestPrecedence);
-        precedence.put("<-", highestPrecedence);
-        precedence.put("><", highestPrecedence);
-        highestPrecedence++;
+        precedence.put(">>", 12);
+        precedence.put("<<", 12);
+        precedence.put("~>", 12);
+        precedence.put("->", 12);
+        precedence.put("<-", 12);
+        precedence.put("><", 12);
 
-        precedence.put("&", highestPrecedence);
-        highestPrecedence++;
-        precedence.put("^", highestPrecedence);
-        precedence.put("|", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("&", 11);
 
-        precedence.put("*", highestPrecedence);
-        precedence.put("**", highestPrecedence);
-        precedence.put("/", highestPrecedence);
-        precedence.put("//", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("^", 10);
+        precedence.put("|", 10);
 
-        precedence.put("+", highestPrecedence);
-        precedence.put("-", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("*", 9);
+        precedence.put("**", 9);
+        precedence.put("/", 9);
+        precedence.put("//", 9);
 
-        precedence.put("#>", highestPrecedence);
-        precedence.put("<#", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("+", 8);
+        precedence.put("-", 8);
 
-        precedence.put("<", highestPrecedence);
-        precedence.put("=<", highestPrecedence);
-        precedence.put("==", highestPrecedence);
-        precedence.put("<>", highestPrecedence);
-        precedence.put("=>", highestPrecedence);
-        precedence.put(">", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("#>", 7);
+        precedence.put("<#", 7);
 
-        precedence.put("AND", highestPrecedence);
-        highestPrecedence++;
-        precedence.put("OR", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("<", 6);
+        precedence.put("=<", 6);
+        precedence.put("==", 6);
+        precedence.put("<>", 6);
+        precedence.put("=>", 6);
+        precedence.put(">", 6);
 
-        precedence.put("..", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("AND", 5);
 
-        precedence.put(":", highestPrecedence);
-        precedence.put("?", highestPrecedence);
-        highestPrecedence++;
+        precedence.put("OR", 4);
 
-        precedence.put(":=", highestPrecedence);
+        precedence.put("..", 3);
 
-        precedence.put(">>=", highestPrecedence);
-        precedence.put("<<=", highestPrecedence);
-        precedence.put("~>=", highestPrecedence);
-        precedence.put("->=", highestPrecedence);
-        precedence.put("<-=", highestPrecedence);
-        precedence.put("><=", highestPrecedence);
+        precedence.put(":", 2);
+        precedence.put("?", 2);
 
-        precedence.put("&=", highestPrecedence);
-        precedence.put("^=", highestPrecedence);
-        precedence.put("|=", highestPrecedence);
+        precedence.put(":=", 1);
 
-        precedence.put("*=", highestPrecedence);
-        precedence.put("**=", highestPrecedence);
-        precedence.put("/=", highestPrecedence);
-        precedence.put("//=", highestPrecedence);
+        precedence.put(">>=", 1);
+        precedence.put("<<=", 1);
+        precedence.put("~>=", 1);
+        precedence.put("->=", 1);
+        precedence.put("<-=", 1);
+        precedence.put("><=", 1);
 
-        precedence.put("+=", highestPrecedence);
-        precedence.put("-=", highestPrecedence);
+        precedence.put("&=", 1);
+        precedence.put("^=", 1);
+        precedence.put("|=", 1);
 
-        precedence.put("#>=", highestPrecedence);
-        precedence.put("<#=", highestPrecedence);
+        precedence.put("*=", 1);
+        precedence.put("**=", 1);
+        precedence.put("/=", 1);
+        precedence.put("//=", 1);
 
-        precedence.put("<=", highestPrecedence);
-        precedence.put("=<=", highestPrecedence);
-        precedence.put("===", highestPrecedence);
-        precedence.put("<>=", highestPrecedence);
-        precedence.put("=>=", highestPrecedence);
-        precedence.put(">=", highestPrecedence);
+        precedence.put("+=", 1);
+        precedence.put("-=", 1);
 
-        precedence.put("AND=", highestPrecedence);
-        precedence.put("OR=", highestPrecedence);
+        precedence.put("#>=", 1);
+        precedence.put("<#=", 1);
+
+        precedence.put("<=", 1);
+        precedence.put("=<=", 1);
+        precedence.put("===", 1);
+        precedence.put("<>=", 1);
+        precedence.put("=>=", 1);
+        precedence.put(">=", 1);
+
+        precedence.put("AND=", 1);
+        precedence.put("OR=", 1);
     }
 
     static Set<String> unary = new HashSet<String>();
@@ -136,12 +126,16 @@ public class Spin1TreeBuilder {
     int index;
     List<Token> tokens = new ArrayList<Token>();
 
+    public Spin1TreeBuilder() {
+
+    }
+
     public void addToken(Token token) {
         tokens.add(token);
     }
 
     public Spin1StatementNode getRoot() {
-        Spin1StatementNode node = parseLevel(highestPrecedence);
+        Spin1StatementNode node = parseLevel(parseAtom(), 0);
 
         Token token = peek();
         while (token != null) {
@@ -152,7 +146,7 @@ public class Spin1TreeBuilder {
                     newNode.addChild(node);
                     node = newNode;
                 }
-                node.addChild(parseLevel(highestPrecedence));
+                node.addChild(parseLevel(parseAtom(), 0));
                 token = peek();
             }
             else {
@@ -163,24 +157,37 @@ public class Spin1TreeBuilder {
         return node;
     }
 
-    Spin1StatementNode parseLevel(int level) {
-        Spin1StatementNode left = level == 0 ? parseAtom() : parseLevel(level - 1);
+    Spin1StatementNode parseLevel(Spin1StatementNode left, int level) {
+        for (;;) {
+            Token token = peek();
+            if (token == null) {
+                return left;
+            }
 
-        Token token = peek();
-        if (token == null) {
-            return left;
-        }
+            Integer p = precedence.get(token.getText().toUpperCase());
+            if (p == null || p.intValue() < level) {
+                return left;
+            }
+            token = next();
 
-        Integer p = precedence.get(token.getText().toUpperCase());
-        if (p != null && p.intValue() == level) {
-            Spin1StatementNode node = new Spin1StatementNode(next());
-            Spin1StatementNode right = level == 0 ? parseAtom() : parseLevel(level);
+            Spin1StatementNode right = parseAtom();
+            for (;;) {
+                Token nextToken = peek();
+                if (nextToken == null) {
+                    break;
+                }
+                Integer nextP = precedence.get(nextToken.getText().toUpperCase());
+                if (nextP == null || nextP.intValue() <= p.intValue()) {
+                    break;
+                }
+                right = parseLevel(right, level + 1);
+            }
+
+            Spin1StatementNode node = new Spin1StatementNode(token);
             node.addChild(left);
             node.addChild(right);
-            return node;
+            left = node;
         }
-
-        return left;
     }
 
     Spin1StatementNode parseAtom() {
@@ -194,7 +201,7 @@ public class Spin1TreeBuilder {
 
         if ("(".equals(token.getText())) {
             next();
-            Spin1StatementNode node = parseLevel(highestPrecedence);
+            Spin1StatementNode node = parseLevel(parseAtom(), 0);
             token = next();
             if (token == null) {
                 throw new RuntimeException("expecting closing parenthesis");
@@ -207,7 +214,7 @@ public class Spin1TreeBuilder {
 
         if ("[".equals(token.getText())) {
             next();
-            Spin1StatementNode node = parseLevel(highestPrecedence);
+            Spin1StatementNode node = parseLevel(parseAtom(), 0);
             token = next();
             if (token == null) {
                 throw new RuntimeException("expecting closing parenthesis");
@@ -228,7 +235,7 @@ public class Spin1TreeBuilder {
                         return node;
                     }
                     for (;;) {
-                        Spin1StatementNode child = parseLevel(highestPrecedence);
+                        Spin1StatementNode child = parseLevel(parseAtom(), 0);
                         if (node.getChildCount() == 1 && ":".equals(node.getChild(0).getText())) {
                             node.getChild(0).addChild(child);
                         }
@@ -249,7 +256,7 @@ public class Spin1TreeBuilder {
                 }
                 if ("[".equals(token.getText())) {
                     next();
-                    node.addChild(parseLevel(highestPrecedence));
+                    node.addChild(parseLevel(parseAtom(), 0));
                     token = next();
                     if (token == null) {
                         throw new RuntimeException("expecting closing parenthesis");
@@ -264,7 +271,7 @@ public class Spin1TreeBuilder {
                     }
                     if ("[".equals(token.getText())) {
                         next();
-                        node.addChild(parseLevel(highestPrecedence));
+                        node.addChild(parseLevel(parseAtom(), 0));
                         token = next();
                         if (token == null) {
                             throw new RuntimeException("expecting closing parenthesis");
@@ -307,6 +314,22 @@ public class Spin1TreeBuilder {
         String text;
 
         text = "A, B, C";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "16 / 2 / 2";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "160 * 25 - 1";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "a := 1 ? 2 : 3";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "a := b := c := 1";
         System.out.println(text);
         System.out.println(parse(text));
     }

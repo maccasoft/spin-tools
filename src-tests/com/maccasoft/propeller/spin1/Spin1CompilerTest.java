@@ -1988,6 +1988,32 @@ class Spin1CompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testMultipleAssignment() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := b := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main | a, b\n"
+            + "'     a := b := 1\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       6A             VAR_MODIFY LONG DBASE+$0008 (short)\n"
+            + "0000A 0000A       80             WRITE\n"
+            + "0000B 0000B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000C 0000C       32             RETURN\n"
+            + "0000D 0000D       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, Collections.emptyMap());
     }

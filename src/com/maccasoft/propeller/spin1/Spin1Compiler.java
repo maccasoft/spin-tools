@@ -23,7 +23,6 @@ import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.ExpressionBuilder;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.LocalVariable;
@@ -1469,113 +1468,6 @@ public class Spin1Compiler {
                 dataLine.addSource(target);
             }
         }
-        else if (":=".equals(node.getText())) {
-            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-
-            Spin1StatementNode left = node.getChild(0);
-            if (left.getType() == Token.OPERATOR) {
-                source.addAll(compileBytecodeExpression(context, left, push));
-            }
-            else if ("BYTE".equalsIgnoreCase(left.getText()) || "WORD".equalsIgnoreCase(left.getText()) || "LONG".equalsIgnoreCase(left.getText())) {
-                source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
-                if (left.getChildCount() > 1) {
-                    source.addAll(compileBytecodeExpression(context, left.getChild(1), true));
-                }
-
-                if ("BYTE".equalsIgnoreCase(left.getText())) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Byte, left.getChildCount() > 1, MemoryOp.Base.Pop, MemoryOp.Op.Write, null));
-                }
-                else if ("WORD".equalsIgnoreCase(left.getText())) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Word, left.getChildCount() > 1, MemoryOp.Base.Pop, MemoryOp.Op.Write, null));
-                }
-                else if ("LONG".equalsIgnoreCase(left.getText())) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Long, left.getChildCount() > 1, MemoryOp.Base.Pop, MemoryOp.Op.Write, null));
-                }
-            }
-            else {
-                Expression expression = context.getLocalSymbol(left.getText());
-                if (expression == null) {
-                    throw new CompilerMessage("undefined symbol " + left.getText(), left.getToken());
-                }
-                if (expression instanceof Register) {
-                    if (left.getChildCount() == 1) {
-                        source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
-                        source.add(new RegisterBitOp(context, RegisterBitOp.Op.Write, expression.getNumber().intValue()));
-                    }
-                    else {
-                        source.add(new RegisterOp(context, RegisterOp.Op.Write, expression.getNumber().intValue()));
-                    }
-                }
-                else if (expression instanceof Variable) {
-                    boolean indexed = false;
-                    if (left.getChildCount() != 0) {
-                        source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
-                        indexed = true;
-                    }
-                    if (push) {
-                        source.add(new VariableOp(context, VariableOp.Op.Assign, indexed, (Variable) expression));
-                        source.add(new Bytecode(context, 0x80, "WRITE"));
-                    }
-                    else {
-                        source.add(new VariableOp(context, VariableOp.Op.Write, indexed, (Variable) expression));
-                    }
-                }
-                else {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Long, !push, MemoryOp.Base.PBase, MemoryOp.Op.Write, expression));
-                }
-            }
-        }
-        else if (MathOp.isAssignMathOp(node.getText())) {
-            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-
-            Spin1StatementNode left = node.getChild(0);
-            if (left.getType() == Token.OPERATOR) {
-                source.addAll(compileBytecodeExpression(context, left, true));
-            }
-            else if ("BYTE".equalsIgnoreCase(left.getText()) || "WORD".equalsIgnoreCase(left.getText()) || "LONG".equalsIgnoreCase(left.getText())) {
-                source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
-                if (left.getChildCount() > 1) {
-                    source.addAll(compileBytecodeExpression(context, left.getChild(1), true));
-                }
-
-                if ("BYTE".equalsIgnoreCase(left.getText())) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Byte, left.getChildCount() > 1, MemoryOp.Base.Pop, MemoryOp.Op.Write, null));
-                }
-                else if ("WORD".equalsIgnoreCase(left.getText())) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Word, left.getChildCount() > 1, MemoryOp.Base.Pop, MemoryOp.Op.Write, null));
-                }
-                else if ("LONG".equalsIgnoreCase(left.getText())) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Long, left.getChildCount() > 1, MemoryOp.Base.Pop, MemoryOp.Op.Write, null));
-                }
-            }
-            else {
-                Expression expression = context.getLocalSymbol(left.getText());
-                if (expression == null) {
-                    throw new CompilerMessage("undefined symbol " + left.getText(), left.getToken());
-                }
-                if (expression instanceof Register) {
-                    if (left.getChildCount() == 1) {
-                        source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
-                        source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, expression.getNumber().intValue()));
-                    }
-                    else {
-                        source.add(new RegisterOp(context, RegisterOp.Op.Assign, expression.getNumber().intValue()));
-                    }
-                }
-                else if (expression instanceof Variable) {
-                    boolean indexed = false;
-                    if (left.getChildCount() != 0) {
-                        source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
-                        indexed = true;
-                    }
-                    source.add(new VariableOp(context, VariableOp.Op.Assign, indexed, (Variable) expression));
-                }
-                else {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Long, !push, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
-                }
-            }
-            source.add(new MathOp(context, node.getText(), push));
-        }
         else if ("-".equals(node.getText()) && node.getChildCount() == 1) {
             if (node.getChild(0).getToken().type == Token.NUMBER) {
                 Spin1Bytecode bc1 = new Constant(context, new Negative(new NumberLiteral(node.getChild(0).getText())));
@@ -1589,9 +1481,27 @@ public class Spin1Compiler {
                 }
             }
             else {
-                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-                source.add(new Bytecode(context, 0b111_00110 | (push ? 0b10000000 : 0b00000000), "NEGATE"));
+                Expression expression = context.getLocalSymbol(node.getChild(0).getText());
+                if (expression == null) {
+                    throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
+                }
+                if (expression instanceof Variable) {
+                    source.add(new VariableOp(context, push ? VariableOp.Op.Read : VariableOp.Op.Assign, (Variable) expression));
+                    source.add(new Bytecode(context, push ? 0b111_00110 : 0b010_00110, "NEGATE"));
+                }
             }
+        }
+        else if (":=".equals(node.getText())) {
+            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+            source.addAll(leftAssign(context, node.getChild(0), push));
+            if (push) {
+                source.add(new Bytecode(context, 0x80, "WRITE"));
+            }
+        }
+        else if (MathOp.isAssignMathOp(node.getText())) {
+            source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+            source.addAll(leftAssign(context, node.getChild(0), true));
+            source.add(new MathOp(context, node.getText(), push));
         }
         else if ("||".equals(node.getText()) || "|<".equals(node.getText()) || "!".equals(node.getText()) || "NOT".equalsIgnoreCase(node.getText())) {
             if (node.getChildCount() != 1) {
@@ -1621,40 +1531,41 @@ public class Spin1Compiler {
             }
         }
         else if ("?".equalsIgnoreCase(node.getText())) {
-            if (node.getChildCount() == 1) {
-                Expression expression = context.getLocalSymbol(node.getChild(0).getText());
-                if (expression == null) {
-                    throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
-                }
-                if (expression instanceof Variable) {
-                    int code = 0b0_00010_00;
-                    if (push) {
-                        code |= 0b10000000;
-                    }
-                    source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
-                    source.add(new Bytecode(context, code, "RANDOM_FORWARD"));
-                }
+            if (node.getChildCount() != 1) {
+                throw new RuntimeException("expression syntax error " + node.getText());
             }
-            else {
-                if (node.getChildCount() != 2) {
-                    throw new RuntimeException("expression syntax error " + node.getText());
-                }
-                if (!":".equals(node.getChild(1).getText())) {
-                    throw new RuntimeException("expression syntax error " + node.getText());
-                }
-
-                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-
-                List<Spin1Bytecode> falseSource = compileBytecodeExpression(context, node.getChild(1).getChild(1), true);
-                source.add(new Jz(context, new ContextLiteral(falseSource.get(0).getContext())));
-                source.addAll(compileBytecodeExpression(context, node.getChild(1).getChild(0), true));
-
-                Spin1Bytecode endSource = new Spin1Bytecode(context);
-                source.add(new Jmp(context, new ContextLiteral(endSource.getContext())));
-
-                source.addAll(falseSource);
-                source.add(endSource);
+            Expression expression = context.getLocalSymbol(node.getChild(0).getText());
+            if (expression == null) {
+                throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
             }
+            if (expression instanceof Variable) {
+                int code = 0b0_00010_00;
+                if (push) {
+                    code |= 0b10000000;
+                }
+                source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
+                source.add(new Bytecode(context, code, "RANDOM_FORWARD"));
+            }
+        }
+        else if (":".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 2) {
+                throw new RuntimeException("expression syntax error " + node.getText());
+            }
+            if (!"?".equals(node.getChild(0).getText())) {
+                throw new RuntimeException("expression syntax error " + node.getText());
+            }
+
+            source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(0), true));
+
+            List<Spin1Bytecode> falseSource = compileBytecodeExpression(context, node.getChild(1), true);
+            source.add(new Jz(context, new ContextLiteral(falseSource.get(0).getContext())));
+            source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(1), true));
+
+            Spin1Bytecode endSource = new Spin1Bytecode(context);
+            source.add(new Jmp(context, new ContextLiteral(endSource.getContext())));
+
+            source.addAll(falseSource);
+            source.add(endSource);
         }
         else if ("(".equalsIgnoreCase(node.getText())) {
             source.addAll(compileBytecodeExpression(context, node.getChild(0), push));
@@ -1975,6 +1886,61 @@ public class Spin1Compiler {
         return source;
     }
 
+    List<Spin1Bytecode> leftAssign(Spin1Context context, Spin1StatementNode left, boolean push) {
+        List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
+
+        if (left.getType() == Token.OPERATOR) {
+            source.addAll(leftAssign(context, left.getChild(1), true));
+            source.add(new Bytecode(context, 0x80, "WRITE"));
+            source.addAll(leftAssign(context, left.getChild(0), left.getChild(0).getType() == Token.OPERATOR));
+        }
+        else if ("BYTE".equalsIgnoreCase(left.getText()) || "WORD".equalsIgnoreCase(left.getText()) || "LONG".equalsIgnoreCase(left.getText())) {
+            source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
+            if (left.getChildCount() > 1) {
+                source.addAll(compileBytecodeExpression(context, left.getChild(1), true));
+            }
+
+            MemoryOp.Op op = push ? MemoryOp.Op.Assign : MemoryOp.Op.Write;
+            if ("BYTE".equalsIgnoreCase(left.getText())) {
+                source.add(new MemoryOp(context, MemoryOp.Size.Byte, left.getChildCount() > 1, MemoryOp.Base.Pop, op, null));
+            }
+            else if ("WORD".equalsIgnoreCase(left.getText())) {
+                source.add(new MemoryOp(context, MemoryOp.Size.Word, left.getChildCount() > 1, MemoryOp.Base.Pop, op, null));
+            }
+            else if ("LONG".equalsIgnoreCase(left.getText())) {
+                source.add(new MemoryOp(context, MemoryOp.Size.Long, left.getChildCount() > 1, MemoryOp.Base.Pop, op, null));
+            }
+        }
+        else {
+            Expression expression = context.getLocalSymbol(left.getText());
+            if (expression == null) {
+                throw new CompilerMessage("undefined symbol " + left.getText(), left.getToken());
+            }
+            if (expression instanceof Register) {
+                if (left.getChildCount() == 1) {
+                    source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
+                    source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Assign : RegisterBitOp.Op.Write, expression.getNumber().intValue()));
+                }
+                else {
+                    source.add(new RegisterOp(context, push ? RegisterOp.Op.Assign : RegisterOp.Op.Write, expression.getNumber().intValue()));
+                }
+            }
+            else if (expression instanceof Variable) {
+                boolean indexed = false;
+                if (left.getChildCount() != 0) {
+                    source.addAll(compileBytecodeExpression(context, left.getChild(0), true));
+                    indexed = true;
+                }
+                source.add(new VariableOp(context, push ? VariableOp.Op.Assign : VariableOp.Op.Write, indexed, (Variable) expression));
+            }
+            else {
+                source.add(new MemoryOp(context, MemoryOp.Size.Long, false, MemoryOp.Base.PBase, push ? MemoryOp.Op.Assign : MemoryOp.Op.Write, expression));
+            }
+        }
+
+        return source;
+    }
+
     int getArgumentsCount(Spin1StatementNode node) {
         int count = 0;
 
@@ -2090,180 +2056,7 @@ public class Spin1Compiler {
     }
 
     Expression buildExpression(List<Token> tokens, Spin1Context scope) {
-        int state = 0;
-        ExpressionBuilder expressionBuilder = new ExpressionBuilder();
-
-        Iterator<Token> iter = tokens.iterator();
-        while (iter.hasNext()) {
-            Token token = iter.next();
-
-            if ("(".equals(token.getText())) {
-                expressionBuilder.addOperatorToken(expressionBuilder.GROUP_OPEN);
-                state = 0;
-                continue;
-            }
-            else if (")".equals(token.getText())) {
-                expressionBuilder.addOperatorToken(expressionBuilder.GROUP_CLOSE);
-                state = 1;
-                continue;
-            }
-
-            switch (state) {
-                case 0:
-                    if ("+".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.POSITIVE);
-                    }
-                    else if ("-".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.NEGATIVE);
-                    }
-                    else if ("^^".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.SQRT);
-                    }
-                    else if ("||".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ABS);
-                    }
-                    else if ("~".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.SIGNX7);
-                    }
-                    else if ("~~".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.SIGNX15);
-                    }
-                    else if ("?".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.RND);
-                    }
-                    else if ("|<".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.DECOD);
-                    }
-                    else if (">|".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ENCOD);
-                    }
-                    else if ("!".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.NOT);
-                    }
-                    else if ("NOT".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_NOT);
-                    }
-                    else if (token.type == Token.NUMBER) {
-                        if ("$".equals(token.getText())) {
-                            expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
-                        }
-                        else {
-                            expressionBuilder.addValueToken(new NumberLiteral(token.getText()));
-                        }
-                    }
-                    else if (token.type == Token.STRING) {
-                        expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
-                    }
-                    else {
-                        expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
-                    }
-                    state = 1;
-                    break;
-                case 1:
-                    if ("+".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.ADD);
-                    }
-                    else if ("-".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.SUBTRACT);
-                    }
-                    else if ("*".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.MULTIPLY);
-                    }
-                    else if ("**".equals(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.MULTIPLY_UPPER);
-                    }
-                    else if ("/".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.DIVIDE);
-                    }
-                    else if ("//".equals(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.MODULO);
-                    }
-                    else if ("#>".equals(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.LIMIT_MIN);
-                    }
-                    else if ("<#".equals(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.LIMIT_MAX);
-                    }
-                    else if ("~>".equals(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.SAR);
-                    }
-                    else if ("<<".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.SHIFT_LEFT);
-                    }
-                    else if (">>".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.SHIFT_RIGHT);
-                    }
-                    else if ("<-".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.ROTATE_LEFT);
-                    }
-                    else if ("->".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.ROTATE_RIGHT);
-                    }
-                    else if ("><".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.REVERSE);
-                    }
-                    else if ("&".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.AND);
-                    }
-                    else if ("|".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.OR);
-                    }
-                    else if ("^".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.XOR);
-                    }
-                    else if ("AND".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_AND);
-                    }
-                    else if ("OR".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_OR);
-                    }
-                    else if ("XOR".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.LOGICAL_XOR);
-                    }
-                    else if ("==".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.EQUAL);
-                    }
-                    else if ("<>".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.NOT_EQUAL);
-                    }
-                    else if ("<".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.LESS_THAN);
-                    }
-                    else if (">".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.GREAT_THAN);
-                    }
-                    else if ("=<".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.LESS_OR_EQUAL);
-                    }
-                    else if ("=>".equalsIgnoreCase(token.getText())) {
-                        // TODO expressionBuilder.addOperatorToken(expressionBuilder.GREAT_OR_EQUAL);
-                    }
-                    else if ("?".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.TERNARYIF);
-                    }
-                    else if (":".equalsIgnoreCase(token.getText())) {
-                        expressionBuilder.addOperatorToken(expressionBuilder.TERNARYELSE);
-                    }
-                    else if (token.type == Token.NUMBER) {
-                        if ("$".equals(token.getText())) {
-                            expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
-                        }
-                        else {
-                            expressionBuilder.addValueToken(new NumberLiteral(token.getText()));
-                        }
-                    }
-                    else if (token.type == Token.STRING) {
-                        expressionBuilder.addValueToken(new CharacterLiteral(token.getText().charAt(1)));
-                    }
-                    else {
-                        expressionBuilder.addValueToken(new Identifier(token.getText(), scope));
-                    }
-                    state = 0;
-                    break;
-            }
-        }
-
-        return expressionBuilder.getExpression();
+        return new Spin1ExpressionBuilder(scope, tokens).getExpression();
     }
 
 }
