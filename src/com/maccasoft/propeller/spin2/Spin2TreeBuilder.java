@@ -77,7 +77,7 @@ public class Spin2TreeBuilder {
 
         precedence.put("..", 3);
 
-        precedence.put(":", 2);
+        precedence.put(":", 3);
         precedence.put("?", 2);
 
         precedence.put(":=", 1);
@@ -146,11 +146,11 @@ public class Spin2TreeBuilder {
         unary.add("||");
         unary.add("~~");
         unary.add("|<");
+        unary.add("ENCOD");
     }
 
     static Set<String> postEffect = new HashSet<String>();
     static {
-        postEffect.add("?");
         postEffect.add("~");
         postEffect.add("++");
         postEffect.add("--");
@@ -227,7 +227,7 @@ public class Spin2TreeBuilder {
     Spin2StatementNode parseAtom() {
         Token token = peek();
 
-        if (unary.contains(token.getText())) {
+        if (unary.contains(token.getText().toUpperCase())) {
             Spin2StatementNode node = new Spin2StatementNode(next());
             node.addChild(parseAtom());
             return node;
@@ -359,11 +359,19 @@ public class Spin2TreeBuilder {
         System.out.println(text);
         System.out.println(parse(text));
 
-        text = "a := 1 ? 2 : 3";
+        text = "a := b := c := 1";
         System.out.println(text);
         System.out.println(parse(text));
 
-        text = "a := b := c := 1";
+        text = "dotf := muldiv64(x_total, pal ? pal_cf * 4 * 128 : ntsc_cf * 4 * 128, pal ? pal_cc : ntsc_cc)";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "x_total := pal ? 416 : 378";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "31 - encod clkfreq";
         System.out.println(text);
         System.out.println(parse(text));
     }

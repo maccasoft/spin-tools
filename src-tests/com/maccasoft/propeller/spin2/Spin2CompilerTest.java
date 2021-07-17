@@ -12,6 +12,9 @@ package com.maccasoft.propeller.spin2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -1825,7 +1828,7 @@ class Spin2CompilerTest {
 
     @Test
     void testObject() throws Exception {
-        String text1 = ""
+        String text = ""
             + "OBJ\n"
             + "\n"
             + "    o : \"text2\"\n"
@@ -1836,29 +1839,13 @@ class Spin2CompilerTest {
             + "\n"
             + "";
 
-        String text2 = ""
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("text2", ""
             + "PUB start(a, b) | c\n"
             + "\n"
             + "    c := a + b\n"
             + "\n"
-            + "";
-
-        Spin2TokenStream stream = new Spin2TokenStream(text1);
-        Spin2Parser subject = new Spin2Parser(stream);
-        Node root = subject.parse();
-
-        Spin2Compiler compiler = new Spin2Compiler() {
-
-            @Override
-            protected String getObjectSource(String fileName) {
-                return text2;
-            }
-
-        };
-        Spin2Object obj = compiler.compile(root);
-
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        obj.generateListing(new PrintStream(os));
+            + "");
 
         Assertions.assertEquals(""
             + "01088 00000       14 00 00 00    Object @ $00014\n"
@@ -1882,15 +1869,26 @@ class Spin2CompilerTest {
             + "010A8 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
             + "010A9 0000D       04             RETURN\n"
             + "010AA 0000E       00 00          Padding\n"
-            + "", os.toString());
+            + "", compile(text, sources));
     }
 
     String compile(String text) throws Exception {
+        return compile(text, Collections.emptyMap());
+    }
+
+    String compile(String text, Map<String, String> sources) throws Exception {
         Spin2TokenStream stream = new Spin2TokenStream(text);
         Spin2Parser subject = new Spin2Parser(stream);
         Node root = subject.parse();
 
-        Spin2Compiler compiler = new Spin2Compiler();
+        Spin2Compiler compiler = new Spin2Compiler() {
+
+            @Override
+            protected String getObjectSource(String fileName) {
+                return sources.get(fileName);
+            }
+
+        };
         Spin2Object obj = compiler.compile(root);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();

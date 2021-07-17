@@ -253,13 +253,13 @@ class Spin2TreeBuilderTest {
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
-            + " +-- [:]\n"
-            + "      +-- [?]\n"
-            + "           +-- [==]\n"
-            + "                +-- [b]\n"
-            + "                +-- [1]\n"
+            + " +-- [?]\n"
+            + "      +-- [==]\n"
+            + "           +-- [b]\n"
+            + "           +-- [1]\n"
+            + "      +-- [:]\n"
             + "           +-- [2]\n"
-            + "      +-- [3]\n"
+            + "           +-- [3]\n"
             + "", parseAssignment(text));
     }
 
