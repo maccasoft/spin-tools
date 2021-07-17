@@ -48,11 +48,16 @@ public class Modz extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
+            Integer zval = mod.get(dst.getExpression().toString().toLowerCase());
+            if (zval == null) {
+                zval = dst.getInteger() & 0b1111;
+            }
+
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
             value = o.setValue(value, 0b1101011);
             value = z.setBoolean(value, "wz".equalsIgnoreCase(effect));
             value = i.setValue(value, 1);
-            value = d.setValue(value, mod.get(dst.getExpression().toString().toLowerCase()));
+            value = d.setValue(value, zval);
             value = s.setValue(value, 0b001101111);
             return getBytes(value);
         }
