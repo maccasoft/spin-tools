@@ -82,6 +82,7 @@ public class Spin1TokenStream extends TokenStream {
                             if (text.charAt(index + 1) == '%') {
                                 token.stop++;
                                 index++;
+                                column++;
                             }
                         }
                         state = token.type = Token.NUMBER;
@@ -109,6 +110,7 @@ public class Spin1TokenStream extends TokenStream {
                             if (ch1 == '.') {
                                 token.stop++;
                                 index++;
+                                column++;
                                 state = Token.KEYWORD;
                                 break;
                             }
@@ -116,6 +118,7 @@ public class Spin1TokenStream extends TokenStream {
                         token.type = Token.OPERATOR;
                         if (ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';') {
                             index++;
+                            column++;
                             state = Token.START;
                             return token;
                         }
@@ -159,6 +162,7 @@ public class Spin1TokenStream extends TokenStream {
                             hiddenTokens.add(token);
                             if (comments) {
                                 index++;
+                                column++;
                                 return token;
                             }
                             token = EOF_TOKEN;
@@ -191,6 +195,7 @@ public class Spin1TokenStream extends TokenStream {
                     }
                     if (ch == '"') {
                         index++;
+                        column++;
                         state = Token.START;
                         return token;
                     }
@@ -212,6 +217,7 @@ public class Spin1TokenStream extends TokenStream {
                     if (ch == '=') {
                         token.stop++;
                         index++;
+                        column++;
                     }
 
                     state = Token.START;

@@ -340,7 +340,7 @@ class Spin2TreeBuilderTest {
 
     @Test
     void testUnaryEffectsExpression() {
-        String text = "a := b + c~~ * --d";
+        String text = "a := b + c++ * --d";
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
@@ -348,7 +348,7 @@ class Spin2TreeBuilderTest {
             + "      +-- [b]\n"
             + "      +-- [*]\n"
             + "           +-- [c]\n"
-            + "                +-- [~~]\n"
+            + "                +-- [++]\n"
             + "           +-- [--]\n"
             + "                +-- [d]\n"
             + "", parseAssignment(text));
@@ -356,19 +356,19 @@ class Spin2TreeBuilderTest {
 
     @Test
     void testUnaryIndexAssigment() {
-        String text = "a[1]~~";
+        String text = "a[1]++";
         Assertions.assertEquals(""
             + "[a]\n"
             + " +-- [1]\n"
-            + " +-- [~~]\n"
+            + " +-- [++]\n"
             + "", parseExpression(text));
     }
 
     @Test
     void testUnaryIndexPreAssigment() {
-        String text = "~~a[1]";
+        String text = "++a[1]";
         Assertions.assertEquals(""
-            + "[~~]\n"
+            + "[++]\n"
             + " +-- [a]\n"
             + "      +-- [1]\n"
             + "", parseExpression(text));
@@ -388,14 +388,14 @@ class Spin2TreeBuilderTest {
 
     @Test
     void testArrayPost() {
-        String text = "a := b[c][0]~";
+        String text = "a := b[c][0]++";
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [b]\n"
             + "      +-- [c]\n"
             + "      +-- [0]\n"
-            + "      +-- [~]\n"
+            + "      +-- [++]\n"
             + "", parseAssignment(text));
     }
 

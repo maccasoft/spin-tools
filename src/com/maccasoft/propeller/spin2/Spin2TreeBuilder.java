@@ -25,57 +25,57 @@ public class Spin2TreeBuilder {
 
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
-        precedence.put(">>", 13);
-        precedence.put("<<", 13);
-        precedence.put("SAR", 13);
-        precedence.put("ROR", 13);
-        precedence.put("ROL", 13);
-        precedence.put("REV", 13);
-        precedence.put("ZEROX", 13);
-        precedence.put("SIGNX", 13);
+        precedence.put(">>", 14);
+        precedence.put("<<", 14);
+        precedence.put("SAR", 14);
+        precedence.put("ROR", 14);
+        precedence.put("ROL", 14);
+        precedence.put("REV", 14);
+        precedence.put("ZEROX", 14);
+        precedence.put("SIGNX", 14);
 
-        precedence.put("&", 12);
-        precedence.put("^", 11);
-        precedence.put("|", 10);
+        precedence.put("&", 13);
+        precedence.put("^", 12);
+        precedence.put("|", 11);
 
-        precedence.put("*", 9);
-        precedence.put("/", 9);
-        precedence.put("+/", 9);
-        precedence.put("//", 9);
-        precedence.put("+//", 9);
-        precedence.put("SCA", 9);
-        precedence.put("SCAS", 9);
-        precedence.put("FRAC", 9);
+        precedence.put("*", 10);
+        precedence.put("/", 10);
+        precedence.put("+/", 10);
+        precedence.put("//", 10);
+        precedence.put("+//", 10);
+        precedence.put("SCA", 10);
+        precedence.put("SCAS", 10);
+        precedence.put("FRAC", 10);
 
-        precedence.put("+", 8);
-        precedence.put("-", 8);
+        precedence.put("+", 9);
+        precedence.put("-", 9);
 
-        precedence.put("#>", 7);
-        precedence.put("<#", 7);
+        precedence.put("#>", 8);
+        precedence.put("<#", 8);
 
-        precedence.put("ADDBITS", 6);
-        precedence.put("ADDPINS", 6);
+        precedence.put("ADDBITS", 7);
+        precedence.put("ADDPINS", 7);
 
-        precedence.put("<", 5);
-        precedence.put("+<", 5);
-        precedence.put("<=", 5);
-        precedence.put("+<=", 5);
-        precedence.put("==", 5);
-        precedence.put("<>", 5);
-        precedence.put(">=", 5);
-        precedence.put("+>=", 5);
-        precedence.put(">", 5);
-        precedence.put("+>", 5);
-        precedence.put("<=>", 5);
+        precedence.put("<", 6);
+        precedence.put("+<", 6);
+        precedence.put("<=", 6);
+        precedence.put("+<=", 6);
+        precedence.put("==", 6);
+        precedence.put("<>", 6);
+        precedence.put(">=", 6);
+        precedence.put("+>=", 6);
+        precedence.put(">", 6);
+        precedence.put("+>", 6);
+        precedence.put("<=>", 6);
 
-        precedence.put("&&", 4);
-        precedence.put("AND", 4);
-        precedence.put("^^", 4);
-        precedence.put("XOR", 4);
-        precedence.put("||", 4);
-        precedence.put("OR", 4);
+        precedence.put("&&", 5);
+        precedence.put("AND", 5);
+        precedence.put("^^", 5);
+        precedence.put("XOR", 5);
+        precedence.put("||", 5);
+        precedence.put("OR", 5);
 
-        precedence.put("..", 3);
+        precedence.put("..", 4);
 
         precedence.put(":", 3);
         precedence.put("?", 2);
@@ -137,24 +137,29 @@ public class Spin2TreeBuilder {
     static {
         unary.add("+");
         unary.add("-");
-        unary.add("?");
-        unary.add("!");
-        unary.add("\\");
-        unary.add("~");
         unary.add("++");
         unary.add("--");
-        unary.add("||");
-        unary.add("~~");
-        unary.add("|<");
+        unary.add("??");
+        unary.add("\\");
+        unary.add("!!");
+        unary.add("NOT");
+        unary.add("!");
+        unary.add("ABS");
         unary.add("ENCOD");
+        unary.add("DECOD");
+        unary.add("BMASK");
+        unary.add("ONES");
+        unary.add("SQRT");
+        unary.add("QLOG");
+        unary.add("QEXP");
     }
 
     static Set<String> postEffect = new HashSet<String>();
     static {
-        postEffect.add("~");
         postEffect.add("++");
         postEffect.add("--");
-        postEffect.add("~~");
+        postEffect.add("!!");
+        postEffect.add("!");
     }
 
     int index;
@@ -261,8 +266,8 @@ public class Spin2TreeBuilder {
 
         if (token.type == 0) {
             Spin2StatementNode node = new Spin2StatementNode(next());
-            if ((token = peek()) != null) {
-                if ("(".equals(token.getText())) {
+            if (peek() != null) {
+                if ("(".equals(peek().getText())) {
                     next();
                     if (peek() != null && ")".equals(peek().getText())) {
                         next();
@@ -288,7 +293,7 @@ public class Spin2TreeBuilder {
                         }
                     }
                 }
-                if ("[".equals(token.getText())) {
+                if ("[".equals(peek().getText())) {
                     next();
                     node.addChild(parseLevel(parseAtom(), 0));
                     token = next();
@@ -299,11 +304,10 @@ public class Spin2TreeBuilder {
                         throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
                     }
 
-                    token = peek();
-                    if (token == null) {
+                    if (peek() == null) {
                         return node;
                     }
-                    if ("[".equals(token.getText())) {
+                    if ("[".equals(peek().getText())) {
                         next();
                         node.addChild(parseLevel(parseAtom(), 0));
                         token = next();
@@ -315,9 +319,11 @@ public class Spin2TreeBuilder {
                         }
                     }
                 }
-                token = peek();
-                if (token != null && postEffect.contains(token.getText())) {
-                    node.addChild(new Spin2StatementNode(next()));
+                Token postToken = peek();
+                if (postToken != null && postEffect.contains(postToken.getText())) {
+                    if (!"?".equals(postToken.getText()) || postToken.column == (token.column + 1)) {
+                        node.addChild(new Spin2StatementNode(next()));
+                    }
                 }
             }
             return node;

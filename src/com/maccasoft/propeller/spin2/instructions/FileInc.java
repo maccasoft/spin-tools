@@ -61,7 +61,7 @@ public class FileInc extends Spin2PAsmInstructionFactory {
                 } while (rc > 0);
                 is.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new RuntimeException(e.getMessage());
             }
             return os.toByteArray();
         }

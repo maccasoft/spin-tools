@@ -41,18 +41,6 @@ public class MathOp extends Spin2Bytecode {
         operations.put(">", new Descriptor(0x74, "GREATER_THAN"));
         operations.put("+>", new Descriptor(0x75, "GREATER_THAN (unsigned)"));
         operations.put("<=>", new Descriptor(0x76, ""));
-        operations.put("!!", new Descriptor(0x77, "BOOLEAN_NOT"));
-        operations.put("NOT", new Descriptor(0x77, "BOOLEAN_NOT"));
-        operations.put("!", new Descriptor(0x78, "BITNOT"));
-        //operations.put("-", new Descriptor(0x79, "NEGATE"));
-        operations.put("ABS", new Descriptor(0x7A, "ABS"));
-        operations.put("ENCOD", new Descriptor(0x7B, "ENCOD"));
-        operations.put("DECOD", new Descriptor(0x7C, "DECOD"));
-        operations.put("BMASK", new Descriptor(0x7D, "BMASK"));
-        operations.put("ONES", new Descriptor(0x7E, "ONES"));
-        operations.put("SQRT", new Descriptor(0x7F, "SQRT"));
-        operations.put("QLOG", new Descriptor(0x80, "QLOG"));
-        operations.put("QEXP", new Descriptor(0x81, "QEXP"));
         operations.put(">>", new Descriptor(0x82, "SHIFT_RIGHT"));
         operations.put("<<", new Descriptor(0x83, "SHIFT_LEFT"));
         operations.put("SAR", new Descriptor(0x84, "SAR"));
@@ -88,6 +76,26 @@ public class MathOp extends Spin2Bytecode {
 
     public static boolean isMathOp(String s) {
         return operations.containsKey(s.toUpperCase());
+    }
+
+    static Map<String, Descriptor> unary = new HashMap<String, Descriptor>();
+    static {
+        operations.put("!!", new Descriptor(0x77, "BOOLEAN_NOT"));
+        operations.put("NOT", new Descriptor(0x77, "BOOLEAN_NOT"));
+        operations.put("!", new Descriptor(0x78, "BITNOT"));
+        //unary.put("-", new Descriptor(0x79, "NEGATE"));
+        unary.put("ABS", new Descriptor(0x7A, "ABS"));
+        unary.put("ENCOD", new Descriptor(0x7B, "ENCOD"));
+        unary.put("DECOD", new Descriptor(0x7C, "DECOD"));
+        unary.put("BMASK", new Descriptor(0x7D, "BMASK"));
+        unary.put("ONES", new Descriptor(0x7E, "ONES"));
+        unary.put("SQRT", new Descriptor(0x7F, "SQRT"));
+        unary.put("QLOG", new Descriptor(0x80, "QLOG"));
+        unary.put("QEXP", new Descriptor(0x81, "QEXP"));
+    }
+
+    public static boolean isUnaryMathOp(String s) {
+        return unary.containsKey(s.toUpperCase());
     }
 
     static Map<String, Descriptor> assignOperations = new HashMap<String, Descriptor>();
@@ -147,6 +155,9 @@ public class MathOp extends Spin2Bytecode {
     public MathOp(Spin2Context context, String op, boolean push) {
         super(context);
         this.op = operations.get(op.toUpperCase());
+        if (this.op == null) {
+            this.op = unary.get(op.toUpperCase());
+        }
         if (this.op == null) {
             this.op = assignOperations.get(op.toUpperCase());
         }

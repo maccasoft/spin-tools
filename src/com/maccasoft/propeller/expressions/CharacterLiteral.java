@@ -2,29 +2,30 @@ package com.maccasoft.propeller.expressions;
 
 public class CharacterLiteral extends Literal {
 
-    private final char character;
+    private final String str;
 
-    public CharacterLiteral(char character) {
-        this.character = character;
+    public CharacterLiteral(String str) {
+        this.str = str;
     }
 
-    public char getCharacter() {
-        return character;
+    @Override
+    public String getString() {
+        return str;
     }
 
     @Override
     public boolean isNumber() {
-        return true;
+        return str.length() == 1;
     }
 
     @Override
     public Number getNumber() {
-        return Long.valueOf(character);
+        return Long.valueOf(str.charAt(0));
     }
 
     @Override
     public String toString() {
-        String escaped = Character.toString(character);
+        String escaped = str;
         escaped = escaped.replace("\\", "\\\\");
         escaped = escaped.replace("\'", "\\\'");
         escaped = escaped.replace("\0", "\\0");

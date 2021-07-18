@@ -880,7 +880,7 @@ class Spin1CompilerTest {
             + "00016 00016       38 07          CONSTANT (7)\n"
             + "00018 00018       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "00019 00019       0C             CASE_DONE\n"
-            + "'       1,2,5: a := 6\n"
+            + "'         1,2,5: a := 6\n"
             + "0001A 0001A       38 06          CONSTANT (6)\n"
             + "0001C 0001C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "0001D 0001D       0C             CASE_DONE\n"

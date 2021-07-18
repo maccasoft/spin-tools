@@ -1299,7 +1299,7 @@ public class Spin1Compiler {
             String s = node.getText().substring(1);
             s = s.substring(0, s.length() - 1);
             if (s.length() == 1) {
-                return new CharacterLiteral(s.charAt(0));
+                return new CharacterLiteral(s);
             }
             throw new RuntimeException("string not allowed");
         }
@@ -1440,7 +1440,7 @@ public class Spin1Compiler {
                 }
             }
             if (sb.length() == 1) {
-                Expression expression = new CharacterLiteral(sb.charAt(0));
+                Expression expression = new CharacterLiteral(sb.toString());
                 source.add(new Constant(context, expression));
             }
             else {
@@ -1458,7 +1458,7 @@ public class Spin1Compiler {
             String s = node.getText().substring(1);
             s = s.substring(0, s.length() - 1);
             if (s.length() == 1) {
-                Expression expression = new CharacterLiteral(s.charAt(0));
+                Expression expression = new CharacterLiteral(s);
                 source.add(new Constant(context, expression));
             }
             else {
@@ -1531,41 +1531,40 @@ public class Spin1Compiler {
             }
         }
         else if ("?".equalsIgnoreCase(node.getText())) {
-            if (node.getChildCount() != 1) {
-                throw new RuntimeException("expression syntax error " + node.getText());
-            }
-            Expression expression = context.getLocalSymbol(node.getChild(0).getText());
-            if (expression == null) {
-                throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
-            }
-            if (expression instanceof Variable) {
-                int code = 0b0_00010_00;
-                if (push) {
-                    code |= 0b10000000;
+            if (node.getChildCount() == 1) {
+                Expression expression = context.getLocalSymbol(node.getChild(0).getText());
+                if (expression == null) {
+                    throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
                 }
-                source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
-                source.add(new Bytecode(context, code, "RANDOM_FORWARD"));
+                if (expression instanceof Variable) {
+                    int code = 0b0_00010_00;
+                    if (push) {
+                        code |= 0b10000000;
+                    }
+                    source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
+                    source.add(new Bytecode(context, code, "RANDOM_FORWARD"));
+                }
             }
-        }
-        else if (":".equalsIgnoreCase(node.getText())) {
-            if (node.getChildCount() != 2) {
-                throw new RuntimeException("expression syntax error " + node.getText());
+            else {
+                if (node.getChildCount() != 2) {
+                    throw new RuntimeException("expression syntax error " + node.getText());
+                }
+                if (!":".equals(node.getChild(1).getText())) {
+                    throw new RuntimeException("expression syntax error " + node.getText());
+                }
+
+                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+
+                List<Spin1Bytecode> falseSource = compileBytecodeExpression(context, node.getChild(1).getChild(1), true);
+                source.add(new Jz(context, new ContextLiteral(falseSource.get(0).getContext())));
+                source.addAll(compileBytecodeExpression(context, node.getChild(1).getChild(0), true));
+
+                Spin1Bytecode endSource = new Spin1Bytecode(context);
+                source.add(new Jmp(context, new ContextLiteral(endSource.getContext())));
+
+                source.addAll(falseSource);
+                source.add(endSource);
             }
-            if (!"?".equals(node.getChild(0).getText())) {
-                throw new RuntimeException("expression syntax error " + node.getText());
-            }
-
-            source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(0), true));
-
-            List<Spin1Bytecode> falseSource = compileBytecodeExpression(context, node.getChild(1), true);
-            source.add(new Jz(context, new ContextLiteral(falseSource.get(0).getContext())));
-            source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(1), true));
-
-            Spin1Bytecode endSource = new Spin1Bytecode(context);
-            source.add(new Jmp(context, new ContextLiteral(endSource.getContext())));
-
-            source.addAll(falseSource);
-            source.add(endSource);
         }
         else if ("(".equalsIgnoreCase(node.getText())) {
             source.addAll(compileBytecodeExpression(context, node.getChild(0), push));

@@ -82,6 +82,7 @@ public class Spin2TokenStream extends TokenStream {
                             if (text.charAt(index + 1) == '%') {
                                 token.stop++;
                                 index++;
+                                column++;
                             }
                         }
                         state = token.type = Token.NUMBER;
@@ -109,6 +110,7 @@ public class Spin2TokenStream extends TokenStream {
                             if (ch1 == '.') {
                                 token.stop++;
                                 index++;
+                                column++;
                                 state = Token.KEYWORD;
                                 break;
                             }
@@ -116,6 +118,7 @@ public class Spin2TokenStream extends TokenStream {
                         token.type = Token.OPERATOR;
                         if (ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';') {
                             index++;
+                            column++;
                             state = Token.START;
                             return token;
                         }
@@ -155,10 +158,11 @@ public class Spin2TokenStream extends TokenStream {
                     }
                     else if (ch == '}') {
                         if (nested == 0) {
-                            //index++;
                             state = Token.START;
                             hiddenTokens.add(token);
                             if (comments) {
+                                index++;
+                                column++;
                                 return token;
                             }
                             token = EOF_TOKEN;
@@ -191,6 +195,7 @@ public class Spin2TokenStream extends TokenStream {
                     }
                     if (ch == '"') {
                         index++;
+                        column++;
                         state = Token.START;
                         return token;
                     }
@@ -212,6 +217,7 @@ public class Spin2TokenStream extends TokenStream {
                     if (ch == '=') {
                         token.stop++;
                         index++;
+                        column++;
                     }
 
                     state = Token.START;
@@ -221,47 +227,56 @@ public class Spin2TokenStream extends TokenStream {
                     if (ch == ch0) {
                         token.stop++;
                         index++;
+                        column++;
                         if (index < text.length()) {
                             ch = text.charAt(index);
                             if (ch == '=') {
                                 token.stop++;
                                 index++;
+                                column++;
                             }
                         }
                     }
                     else if (ch0 == '+' && ch == '/') {
                         token.stop++;
                         index++;
+                        column++;
                         if (index < text.length()) {
                             ch = text.charAt(index);
                             if (ch == '/') {
                                 token.stop++;
                                 index++;
+                                column++;
                             }
                         }
                     }
                     else if (ch0 == '+' && (ch == '<' || ch == '>')) {
                         token.stop++;
                         index++;
+                        column++;
                         if (index < text.length()) {
                             ch = text.charAt(index);
                             if (ch == '=') {
                                 token.stop++;
                                 index++;
+                                column++;
                             }
                         }
                     }
                     else if (ch0 == '<' && ch == '>') {
                         token.stop++;
                         index++;
+                        column++;
                     }
                     else if (ch0 == '<' && ch == '=' && (index + 1 < text.length() && text.charAt(index + 1) == '>')) {
                         token.stop += 2;
                         index += 2;
+                        column += 2;
                     }
                     else if (ch == '=') {
                         token.stop++;
                         index++;
+                        column++;
                     }
                     state = Token.START;
                     return token;

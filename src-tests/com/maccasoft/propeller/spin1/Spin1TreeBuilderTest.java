@@ -249,17 +249,37 @@ class Spin1TreeBuilderTest {
 
     @Test
     void testTernary() {
-        String text = "a := b == 1 ? 2 : 3";
+        String text = "a := b ? c : d";
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
-            + " +-- [:]\n"
-            + "      +-- [?]\n"
-            + "           +-- [==]\n"
-            + "                +-- [b]\n"
+            + " +-- [?]\n"
+            + "      +-- [b]\n"
+            + "      +-- [:]\n"
+            + "           +-- [c]\n"
+            + "           +-- [d]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testTernaryExpression() {
+        String text = "a := b > 1 ? c + 1 : d + e * 4";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [?]\n"
+            + "      +-- [>]\n"
+            + "           +-- [b]\n"
+            + "           +-- [1]\n"
+            + "      +-- [:]\n"
+            + "           +-- [+]\n"
+            + "                +-- [c]\n"
             + "                +-- [1]\n"
-            + "           +-- [2]\n"
-            + "      +-- [3]\n"
+            + "           +-- [+]\n"
+            + "                +-- [d]\n"
+            + "                +-- [*]\n"
+            + "                     +-- [e]\n"
+            + "                     +-- [4]\n"
             + "", parseAssignment(text));
     }
 

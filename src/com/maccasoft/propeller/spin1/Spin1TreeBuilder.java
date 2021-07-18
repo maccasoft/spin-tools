@@ -25,43 +25,43 @@ public class Spin1TreeBuilder {
 
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
-        precedence.put(">>", 12);
-        precedence.put("<<", 12);
-        precedence.put("~>", 12);
-        precedence.put("->", 12);
-        precedence.put("<-", 12);
-        precedence.put("><", 12);
+        precedence.put(">>", 13);
+        precedence.put("<<", 13);
+        precedence.put("~>", 13);
+        precedence.put("->", 13);
+        precedence.put("<-", 13);
+        precedence.put("><", 13);
 
-        precedence.put("&", 11);
+        precedence.put("&", 12);
 
-        precedence.put("^", 10);
-        precedence.put("|", 10);
+        precedence.put("^", 11);
+        precedence.put("|", 11);
 
-        precedence.put("*", 9);
-        precedence.put("**", 9);
-        precedence.put("/", 9);
-        precedence.put("//", 9);
+        precedence.put("*", 10);
+        precedence.put("**", 10);
+        precedence.put("/", 10);
+        precedence.put("//", 10);
 
-        precedence.put("+", 8);
-        precedence.put("-", 8);
+        precedence.put("+", 9);
+        precedence.put("-", 9);
 
-        precedence.put("#>", 7);
-        precedence.put("<#", 7);
+        precedence.put("#>", 8);
+        precedence.put("<#", 8);
 
-        precedence.put("<", 6);
-        precedence.put("=<", 6);
-        precedence.put("==", 6);
-        precedence.put("<>", 6);
-        precedence.put("=>", 6);
-        precedence.put(">", 6);
+        precedence.put("<", 7);
+        precedence.put("=<", 7);
+        precedence.put("==", 7);
+        precedence.put("<>", 7);
+        precedence.put("=>", 7);
+        precedence.put(">", 7);
 
-        precedence.put("AND", 5);
+        precedence.put("AND", 6);
 
-        precedence.put("OR", 4);
+        precedence.put("OR", 5);
 
-        precedence.put("..", 3);
+        precedence.put("..", 4);
 
-        precedence.put(":", 2);
+        precedence.put(":", 3);
         precedence.put("?", 2);
 
         precedence.put(":=", 1);
@@ -227,8 +227,8 @@ public class Spin1TreeBuilder {
 
         if (token.type == 0) {
             Spin1StatementNode node = new Spin1StatementNode(next());
-            if ((token = peek()) != null) {
-                if ("(".equals(token.getText())) {
+            if (peek() != null) {
+                if ("(".equals(peek().getText())) {
                     next();
                     if (peek() != null && ")".equals(peek().getText())) {
                         next();
@@ -254,7 +254,7 @@ public class Spin1TreeBuilder {
                         }
                     }
                 }
-                if ("[".equals(token.getText())) {
+                if ("[".equals(peek().getText())) {
                     next();
                     node.addChild(parseLevel(parseAtom(), 0));
                     token = next();
@@ -265,11 +265,10 @@ public class Spin1TreeBuilder {
                         throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
                     }
 
-                    token = peek();
-                    if (token == null) {
+                    if (peek() == null) {
                         return node;
                     }
-                    if ("[".equals(token.getText())) {
+                    if ("[".equals(peek().getText())) {
                         next();
                         node.addChild(parseLevel(parseAtom(), 0));
                         token = next();
@@ -281,9 +280,11 @@ public class Spin1TreeBuilder {
                         }
                     }
                 }
-                token = peek();
-                if (token != null && postEffect.contains(token.getText())) {
-                    node.addChild(new Spin1StatementNode(next()));
+                Token postToken = peek();
+                if (postToken != null && postEffect.contains(postToken.getText())) {
+                    if (!"?".equals(postToken.getText()) || postToken.column == (token.column + 1)) {
+                        node.addChild(new Spin1StatementNode(next()));
+                    }
                 }
             }
             return node;

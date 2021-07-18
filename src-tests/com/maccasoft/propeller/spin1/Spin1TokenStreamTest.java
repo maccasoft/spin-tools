@@ -713,4 +713,42 @@ class Spin1TokenStreamTest {
         assertEquals(2, token.line);
     }
 
+    @Test
+    void testColumnCount() {
+        Token token;
+        Spin1TokenStream subject = new Spin1TokenStream("a := b[0] + 1");
+
+        token = subject.nextToken();
+        assertEquals("a", token.getText());
+        assertEquals(0, token.column);
+
+        token = subject.nextToken();
+        assertEquals(":=", token.getText());
+        assertEquals(2, token.column);
+
+        token = subject.nextToken();
+        assertEquals("b", token.getText());
+        assertEquals(5, token.column);
+
+        token = subject.nextToken();
+        assertEquals("[", token.getText());
+        assertEquals(6, token.column);
+
+        token = subject.nextToken();
+        assertEquals("0", token.getText());
+        assertEquals(7, token.column);
+
+        token = subject.nextToken();
+        assertEquals("]", token.getText());
+        assertEquals(8, token.column);
+
+        token = subject.nextToken();
+        assertEquals("+", token.getText());
+        assertEquals(10, token.column);
+
+        token = subject.nextToken();
+        assertEquals("1", token.getText());
+        assertEquals(12, token.column);
+    }
+
 }

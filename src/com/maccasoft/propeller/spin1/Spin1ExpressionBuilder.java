@@ -28,6 +28,7 @@ import com.maccasoft.propeller.expressions.GreaterOrEquals;
 import com.maccasoft.propeller.expressions.GreaterThan;
 import com.maccasoft.propeller.expressions.Group;
 import com.maccasoft.propeller.expressions.Identifier;
+import com.maccasoft.propeller.expressions.IfElse;
 import com.maccasoft.propeller.expressions.LessOrEquals;
 import com.maccasoft.propeller.expressions.LessThan;
 import com.maccasoft.propeller.expressions.LogicalAnd;
@@ -49,44 +50,44 @@ public class Spin1ExpressionBuilder {
 
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
-        precedence.put(">>", 11);
-        precedence.put("<<", 11);
-        precedence.put("~>", 11);
-        precedence.put("->", 11);
-        precedence.put("<-", 11);
-        precedence.put("><", 11);
+        precedence.put(">>", 13);
+        precedence.put("<<", 13);
+        precedence.put("~>", 13);
+        precedence.put("->", 13);
+        precedence.put("<-", 13);
+        precedence.put("><", 13);
 
-        precedence.put("&", 10);
+        precedence.put("&", 12);
 
-        precedence.put("^", 9);
-        precedence.put("|", 9);
+        precedence.put("^", 11);
+        precedence.put("|", 11);
 
-        precedence.put("*", 8);
-        precedence.put("**", 8);
-        precedence.put("/", 8);
-        precedence.put("//", 8);
+        precedence.put("*", 10);
+        precedence.put("**", 10);
+        precedence.put("/", 10);
+        precedence.put("//", 10);
 
-        precedence.put("+", 7);
-        precedence.put("-", 7);
+        precedence.put("+", 9);
+        precedence.put("-", 9);
 
-        precedence.put("#>", 6);
-        precedence.put("<#", 6);
+        precedence.put("#>", 8);
+        precedence.put("<#", 8);
 
-        precedence.put("<", 5);
-        precedence.put("=<", 5);
-        precedence.put("==", 5);
-        precedence.put("<>", 5);
-        precedence.put("=>", 5);
-        precedence.put(">", 5);
+        precedence.put("<", 7);
+        precedence.put("=<", 7);
+        precedence.put("==", 7);
+        precedence.put("<>", 7);
+        precedence.put("=>", 7);
+        precedence.put(">", 7);
 
-        precedence.put("AND", 4);
+        precedence.put("AND", 6);
 
-        precedence.put("OR", 3);
+        precedence.put("OR", 5);
 
-        precedence.put("..", 2);
+        precedence.put("..", 4);
 
-        precedence.put(":", 1);
-        precedence.put("?", 1);
+        precedence.put(":", 3);
+        precedence.put("?", 2);
     }
 
     static Set<String> unary = new HashSet<String>();
@@ -235,10 +236,15 @@ public class Spin1ExpressionBuilder {
                     left = new LogicalOr(left, right);
                     break;
 
-                case ":":
-                    throw new RuntimeException("invalid binary operator " + token.getText());
                 case "?":
-                    throw new RuntimeException("invalid binary operator " + token.getText());
+                    if (!(right instanceof IfElse)) {
+                        throw new RuntimeException("invalid binary operator " + token.getText());
+                    }
+                    left = new IfElse(left, ((IfElse) right).getTrueTerm(), ((IfElse) right).getFalseTerm());
+                    break;
+                case ":":
+                    left = new IfElse(null, left, right);
+                    break;
 
                 default:
                     throw new RuntimeException("invalid binary operator " + token.getText());
@@ -304,7 +310,7 @@ public class Spin1ExpressionBuilder {
                         return new NumberLiteral(token.getText());
                     }
                     if (token.type == Token.STRING) {
-                        return new CharacterLiteral(token.getText().charAt(1));
+                        return new CharacterLiteral(token.getText());
                     }
                     return new Identifier(token.getText(), context);
             }

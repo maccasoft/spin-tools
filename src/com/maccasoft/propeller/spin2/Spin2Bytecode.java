@@ -61,7 +61,6 @@ public class Spin2Bytecode {
         descriptors.put("QSIN", new Descriptor(0x19, 0x82, 3));
         descriptors.put("QCOS", new Descriptor(0x19, 0x84, 3));
 
-        descriptors.put("COGINIT", new Descriptor(0x25, 3));
         descriptors.put("COGSTOP", new Descriptor(0x27, 1));
         descriptors.put("COGID", new Descriptor(0x28, 0));
         descriptors.put("COGCHK", new Descriptor(0x29, 1));
