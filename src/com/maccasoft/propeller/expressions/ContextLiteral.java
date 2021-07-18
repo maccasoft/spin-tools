@@ -2,7 +2,7 @@ package com.maccasoft.propeller.expressions;
 
 public class ContextLiteral extends Literal {
 
-    private final Context context;
+    protected final Context context;
 
     public ContextLiteral(Context context) {
         this.context = context;

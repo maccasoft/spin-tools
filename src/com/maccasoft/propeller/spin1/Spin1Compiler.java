@@ -20,6 +20,7 @@ import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.ContextLiteral;
+import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
@@ -56,6 +57,7 @@ import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1Bytecode.Descriptor;
 import com.maccasoft.propeller.spin1.Spin1Object.LongDataObject;
 import com.maccasoft.propeller.spin1.Spin1Object.WordDataObject;
+import com.maccasoft.propeller.spin1.bytecode.Address;
 import com.maccasoft.propeller.spin1.bytecode.Bytecode;
 import com.maccasoft.propeller.spin1.bytecode.CaseJmp;
 import com.maccasoft.propeller.spin1.bytecode.CaseRangeJmp;
@@ -71,6 +73,8 @@ import com.maccasoft.propeller.spin1.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
 import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
+import com.maccasoft.propeller.spin1.instructions.Org;
+import com.maccasoft.propeller.spin1.instructions.Word;
 
 public class Spin1Compiler {
 
@@ -212,8 +216,13 @@ public class Spin1Compiler {
         for (Spin1PAsmLine line : source) {
             line.getScope().setHubAddress(hubAddress);
             try {
+                if (line.getInstructionFactory() instanceof Org) {
+                    while ((hubAddress % 4) != 0) {
+                        hubAddress++;
+                    }
+                }
                 address = line.resolve(address);
-                if (address > 0x1F0) {
+                if ((address >> 2) > 0x1F0) {
                     throw new RuntimeException("error: cog code limit exceeded by " + (address - 0x1F0) + " long(s)");
                 }
                 hubAddress += line.getInstructionObject().getSize();
@@ -543,7 +552,14 @@ public class Spin1Compiler {
                     if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
                         scope = savedContext;
                     }
-                    scope.addSymbol(pasmLine.getLabel(), new ContextLiteral(pasmLine.getScope()));
+                    int size = 4;
+                    if (pasmLine.getInstructionFactory() instanceof Word) {
+                        size = 2;
+                    }
+                    else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
+                        size = 1;
+                    }
+                    scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), size));
                     scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
                     if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
                         scope = pasmLine.getScope();
@@ -1348,6 +1364,9 @@ public class Spin1Compiler {
             if (node.getChildCount() != desc.parameters) {
                 throw new RuntimeException("expected " + desc.parameters + " argument(s), found " + node.getChildCount());
             }
+            if (push && desc.code_push == null) {
+                throw new RuntimeException("function " + node.getText() + " doesn't return a value");
+            }
             for (int i = 0; i < desc.parameters; i++) {
                 source.addAll(compileBytecodeExpression(context, node.getChild(i), true));
             }
@@ -1401,13 +1420,16 @@ public class Spin1Compiler {
                 throw new RuntimeException("invalid argument(s)");
             }
 
-            int code = "LOOKDOWN".equalsIgnoreCase(node.getText()) ? 0b00010001 : 0b00010000;
+            int code = 0b00010000;
+            if ("LOOKDOWN".equalsIgnoreCase(node.getText()) || "LOOKDOWNZ".equalsIgnoreCase(node.getText())) {
+                code |= 0b00000001;
+            }
             int code_range = code | 0b00000010;
 
             source.add(new Constant(context, new NumberLiteral(node.getText().toUpperCase().endsWith("Z") ? 0 : 1)));
 
             Spin1Bytecode end = new Spin1Bytecode(context);
-            source.add(new Constant(context, new ContextLiteral(end.getContext())));
+            source.add(new Address(context, new ContextLiteral(end.getContext())));
 
             source.addAll(compileBytecodeExpression(context, argsNode.getChild(0), true));
 
@@ -1481,14 +1503,16 @@ public class Spin1Compiler {
                 }
             }
             else {
-                Expression expression = context.getLocalSymbol(node.getChild(0).getText());
-                if (expression == null) {
-                    throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
-                }
-                if (expression instanceof Variable) {
-                    source.add(new VariableOp(context, push ? VariableOp.Op.Read : VariableOp.Op.Assign, (Variable) expression));
-                    source.add(new Bytecode(context, push ? 0b111_00110 : 0b010_00110, "NEGATE"));
-                }
+                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                //Expression expression = context.getLocalSymbol(node.getChild(0).getText());
+                //if (expression == null) {
+                //    throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
+                //}
+                //if (expression instanceof Variable) {
+                //    source.add(new VariableOp(context, push ? VariableOp.Op.Read : VariableOp.Op.Assign, (Variable) expression));
+                //    source.add(new Bytecode(context, push ? 0b111_00110 : 0b010_00110, "NEGATE"));
+                //}
+                source.add(new Bytecode(context, push ? 0b111_00110 : 0b010_00110, "NEGATE"));
             }
         }
         else if (":=".equals(node.getText())) {
@@ -1757,7 +1781,7 @@ public class Spin1Compiler {
             }
         }
         else {
-            Expression expression = context.getLocalSymbol(node.getText());
+            Expression expression = context.getLocalSymbol(node.getText().startsWith("@") ? node.getText().substring(1) : node.getText());
             if (expression == null) {
                 throw new CompilerMessage("undefined symbol " + node.getText(), node.getToken());
             }
@@ -1786,7 +1810,13 @@ public class Spin1Compiler {
             }
             else if (expression instanceof Variable) {
                 if (node.getText().startsWith("@")) {
-                    source.add(new VariableOp(context, VariableOp.Op.Address, (Variable) expression));
+                    if (node.getChildCount() != 0) {
+                        source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                        source.add(new VariableOp(context, VariableOp.Op.Address, true, (Variable) expression));
+                    }
+                    else {
+                        source.add(new VariableOp(context, VariableOp.Op.Address, (Variable) expression));
+                    }
                 }
                 else {
                     int index = 0;
@@ -1872,13 +1902,25 @@ public class Spin1Compiler {
                 }
             }
             else if (node.getText().startsWith("@")) {
-                source.add(new MemoryOp(context, MemoryOp.Size.Long, !push, MemoryOp.Base.PBase, MemoryOp.Op.Address, expression));
+                if (node.getChildCount() != 0) {
+                    source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                    source.add(new MemoryOp(context, MemoryOp.Size.Long, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, expression));
+                }
+                else {
+                    source.add(new MemoryOp(context, MemoryOp.Size.Long, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, expression));
+                }
             }
             else if (expression.isConstant()) {
                 source.add(new Constant(context, expression));
             }
             else {
-                source.add(new MemoryOp(context, MemoryOp.Size.Long, !push, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
+                if (node.getChildCount() != 0) {
+                    source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                    source.add(new MemoryOp(context, MemoryOp.Size.Long, true, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
+                }
+                else {
+                    source.add(new MemoryOp(context, MemoryOp.Size.Long, false, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
+                }
             }
         }
 

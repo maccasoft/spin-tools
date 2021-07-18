@@ -982,7 +982,129 @@ public class SpinTools {
             handleInternalCompileAndUpload();
         }
         else {
+            handleSpin1InternalCompileAndUpload();
+        }
+    }
 
+    private void handleSpin1InternalCompileAndUpload() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem == null) {
+            return;
+        }
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+        if (editorTab.hasErrors()) {
+            MessageDialog.open(MessageDialog.INFORMATION, shell, APP_TITLE, "Editor has errors, fix all errors before upload.", SWT.NONE);
+            return;
+        }
+
+        Spin1Object obj = (Spin1Object) editorTab.getObject();
+        SerialTerminal serialTerminal = getSerialTerminal();
+
+        IRunnableWithProgress thread = new IRunnableWithProgress() {
+
+            @Override
+            public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+                monitor.beginTask("Upload", IProgressMonitor.UNKNOWN);
+
+                try {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    obj.generateBinary(os);
+
+                    SerialPort serialPort = null;
+                    boolean shared = false;
+
+                    if (serialTerminal != null) {
+                        SerialPort terminalPort = serialTerminal.getSerialPort();
+                        if (terminalPort.getPortName().equals(serialPortList.getSelection())) {
+                            Display.getDefault().syncExec(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    serialTerminal.setSerialPort(null);
+                                }
+                            });
+                            serialPort = terminalPort;
+                            shared = true;
+                        }
+                    }
+                    if (serialPort == null) {
+                        serialPort = new SerialPort(serialPortList.getSelection());
+                    }
+
+                    PropellerLoader loader = new PropellerLoader(serialPort, shared) {
+
+                        @Override
+                        protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
+                            monitor.setTaskName("Loading " + text + " to RAM");
+                            super.bufferUpload(type, binaryImage, text);
+                        }
+
+                        @Override
+                        protected void notifyProgress(int sent, int total) {
+                            if (sent == total) {
+                                monitor.subTask(String.format("%d bytes sent", total));
+                            }
+                            else {
+                                monitor.subTask(String.format("%d bytes remaining", total - sent));
+                            }
+                        }
+
+                        @Override
+                        protected void verifyRam() throws SerialPortException, IOException {
+                            monitor.setTaskName("Verifying RAM ... ");
+                            super.verifyRam();
+                        }
+
+                        @Override
+                        protected void eepromWrite() throws SerialPortException, IOException {
+                            monitor.setTaskName("Writing EEPROM ... ");
+                            super.eepromWrite();
+                        }
+
+                        @Override
+                        protected void eepromVerify() throws SerialPortException, IOException {
+                            monitor.setTaskName("Verifying EEPROM ... ");
+                            super.eepromVerify();
+                        }
+
+                    };
+
+                    byte[] image = os.toByteArray();
+
+                    byte sum = 0;
+                    for (int i = 0; i < image.length; i++) {
+                        sum += image[i];
+                    }
+                    image[5] = (byte) (0x14 - sum);
+
+                    loader.upload(image, PropellerLoader.DOWNLOAD_RUN_BINARY);
+
+                    if (shared) {
+                        SerialPort terminalPort = serialPort;
+                        Display.getDefault().syncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                if (serialTerminal != null) {
+                                    serialTerminal.setSerialPort(terminalPort);
+                                }
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                monitor.done();
+            }
+
+        };
+
+        ProgressMonitorDialog dlg = new ProgressMonitorDialog(shell);
+        try {
+            dlg.run(true, true, thread);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

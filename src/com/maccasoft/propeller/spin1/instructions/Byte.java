@@ -35,12 +35,6 @@ public class Byte extends Spin1PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address) {
-            context.setAddress(address);
-            return address + (getSize() + 3) / 4;
-        }
-
-        @Override
         public int getSize() {
             int size = 0;
             for (Spin1PAsmExpression exp : arguments) {

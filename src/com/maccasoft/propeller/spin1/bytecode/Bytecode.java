@@ -27,6 +27,9 @@ public class Bytecode extends Spin1Bytecode {
     public Bytecode(Spin1Context context, byte[] code, String text) {
         super(context, text.toUpperCase());
         this.code = code;
+        if (code == null) {
+            System.out.println("null " + text);
+        }
     }
 
     @Override

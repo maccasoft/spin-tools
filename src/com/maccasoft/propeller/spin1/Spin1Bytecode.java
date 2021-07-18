@@ -40,8 +40,8 @@ public class Spin1Bytecode {
 
     static Map<String, Descriptor> descriptors = new HashMap<String, Descriptor>();
     static {
-        descriptors.put("STRSIZE", new Descriptor(0b00010110, 1));
-        descriptors.put("STRCOMP", new Descriptor(0b00010111, 2));
+        descriptors.put("STRSIZE", new Descriptor(0b00010110, 0b00010110, 1));
+        descriptors.put("STRCOMP", new Descriptor(0b00010111, 0b00010111, 2));
 
         descriptors.put("BYTEFILL", new Descriptor(0b00011000, 3));
         descriptors.put("WORDFILL", new Descriptor(0b00011001, 3));

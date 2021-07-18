@@ -150,7 +150,17 @@ public class Spin1TreeBuilder {
                 token = peek();
             }
             else {
-                throw new RuntimeException("unexpected " + token.getText());
+                StringBuilder sb = new StringBuilder();
+                sb.append("unexpected " + token.getText());
+                sb.append(" [");
+                for (int i = 0; i < tokens.size(); i++) {
+                    if (i != 0) {
+                        sb.append(", ");
+                    }
+                    sb.append(tokens.get(i).getText());
+                }
+                sb.append("]");
+                throw new RuntimeException(sb.toString());
             }
         }
 
@@ -193,7 +203,7 @@ public class Spin1TreeBuilder {
     Spin1StatementNode parseAtom() {
         Token token = peek();
 
-        if (unary.contains(token.getText())) {
+        if (unary.contains(token.getText().toUpperCase())) {
             Spin1StatementNode node = new Spin1StatementNode(next());
             node.addChild(parseAtom());
             return node;
@@ -253,6 +263,10 @@ public class Spin1TreeBuilder {
                             throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
                         }
                     }
+                }
+                if ("NOT".equalsIgnoreCase(node.getText())) {
+                    node.addChild(parseLevel(parseAtom(), 0));
+                    return node;
                 }
                 if ("[".equals(peek().getText())) {
                     next();
@@ -314,23 +328,7 @@ public class Spin1TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "A, B, C";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "16 / 2 / 2";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "160 * 25 - 1";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "a := 1 ? 2 : 3";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "a := b := c := 1";
+        text = "@colors[c & 3]";
         System.out.println(text);
         System.out.println(parse(text));
     }

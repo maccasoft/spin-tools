@@ -22,31 +22,11 @@ public abstract class Spin1PAsmSchema {
         "wz",
         "wr",
         "nr",
-        "wc,nr",
-        "wz,nr",
-        "wc,wr",
-        "wz,wr",
-        "nr,wc",
-        "nr,wz",
-        "wr,wc",
-        "wr,wz",
-        "wc,wz",
-        "wz,wc",
-        "wc,wz,nr",
-        "wz,wc,nr",
-        "wc,wz,wr",
-        "wz,wc,wr",
-        "nr,wc,wz",
-        "nr,wz,wc",
-        "wr,wc,wz",
-        "wr,wz,wc",
     }));
 
     public static Set<String> E_WC_WZ = new HashSet<String>(Arrays.asList(new String[] {
         "wc",
         "wz",
-        "wc,wz",
-        "wz,wc",
     }));
 
     /**
@@ -71,7 +51,7 @@ public abstract class Spin1PAsmSchema {
             if (arguments.size() != 2) {
                 throw new RuntimeException("error: expected 2 operands, found " + arguments.size());
             }
-            return arguments.size() == 2 && arguments.get(0).prefix == null && (effect == null || E_ALL.contains(effect.toLowerCase()));
+            return arguments.size() == 2 && arguments.get(0).prefix == null;
         }
 
     };
@@ -86,7 +66,7 @@ public abstract class Spin1PAsmSchema {
             if (arguments.size() != 2) {
                 throw new RuntimeException("error: expected 2 operands, found " + arguments.size());
             }
-            return arguments.size() == 2 && arguments.get(0).prefix == null && (effect == null || E_WC_WZ.contains(effect.toLowerCase()));
+            return arguments.size() == 2 && arguments.get(0).prefix == null;
         }
 
     };
@@ -116,7 +96,7 @@ public abstract class Spin1PAsmSchema {
             if (arguments.size() != 1) {
                 throw new RuntimeException("error: expected 2 operands, found " + arguments.size());
             }
-            return arguments.size() == 1 && arguments.get(0).prefix == null && (effect == null || E_WC_WZ.contains(effect.toLowerCase()));
+            return arguments.size() == 1 && arguments.get(0).prefix == null;
         }
 
     };
@@ -131,7 +111,7 @@ public abstract class Spin1PAsmSchema {
             if (arguments.size() != 1) {
                 throw new RuntimeException("error: expected 2 operands, found " + arguments.size());
             }
-            return arguments.size() == 1 && (effect == null || E_ALL.contains(effect.toLowerCase()));
+            return arguments.size() == 1;
         }
 
     };

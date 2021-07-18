@@ -103,8 +103,8 @@ public abstract class Spin1InstructionObject {
     }
 
     public int resolve(int address) {
-        context.setAddress(address);
-        return context.getAddress() + (getSize() + 3) / 4;
+        context.setAddress(address >> 2);
+        return address + getSize();
     }
 
     public int getSize() {
@@ -117,6 +117,7 @@ public abstract class Spin1InstructionObject {
 
     protected int encodeEffect(int result, String effect) {
         if (effect != null) {
+            effect = effect.toLowerCase();
             if (effect.contains("wz")) {
                 result |= 0b100;
             }

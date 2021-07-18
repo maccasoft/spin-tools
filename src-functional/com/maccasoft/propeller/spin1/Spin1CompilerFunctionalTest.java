@@ -487,6 +487,62 @@ class Spin1CompilerFunctionalTest {
     }
 
     @Test
+    void testCharType() throws Exception {
+        String text = loadFromFile(new File("/home/marco/workspace/propeller-tools/libraries/spin-standard-library", "char.type.spin"));
+
+        byte[] expected = compileReference(text, Collections.emptyMap());
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testComSerial() throws Exception {
+        String text = loadFromFile(new File("/home/marco/workspace/propeller-tools/libraries/spin-standard-library", "com.serial.spin"));
+
+        byte[] expected = compileReference(text, Collections.emptyMap());
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testComSpi() throws Exception {
+        String text = loadFromFile(new File("/home/marco/workspace/propeller-tools/libraries/spin-standard-library", "com.spi.spin"));
+
+        byte[] expected = compileReference(text, Collections.emptyMap());
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testDisplatTV() throws Exception {
+        String text = loadFromFile(new File("/home/marco/workspace/propeller-tools/libraries/spin-standard-library", "display.tv.spin"));
+
+        byte[] expected = compileReference(text, Collections.emptyMap());
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testDisplatVGABitmap() throws Exception {
+        String text = loadFromFile(new File("/home/marco/workspace/propeller-tools/libraries/spin-standard-library", "display.vga.bitmap.512x384.spin"));
+
+        byte[] expected = compileReference(text, Collections.emptyMap());
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testDisplatVGA() throws Exception {
+        String text = loadFromFile(new File("/home/marco/workspace/propeller-tools/libraries/spin-standard-library", "display.vga.spin"));
+
+        byte[] expected = compileReference(text, Collections.emptyMap());
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testMathFloat() throws Exception {
+        String text = loadFromFile(new File("/home/marco/workspace/propeller-tools/libraries/spin-standard-library", "math.float.spin"));
+
+        byte[] expected = compileReference(text, Collections.emptyMap());
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
     void testI2C() throws Exception {
         String text = loadFromFile(new File("/home/marco/git/propeller-vt100-terminal", "i2c.spin"));
 

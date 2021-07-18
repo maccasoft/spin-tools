@@ -13,6 +13,7 @@ package com.maccasoft.propeller.spin1.bytecode;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.ContextLiteral;
+import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
@@ -52,6 +53,19 @@ public class MemoryOp extends Spin1Bytecode {
         this.oo = oo;
         this.expression = expression;
 
+        if (expression instanceof DataVariable) {
+            switch (((DataVariable) expression).getSize()) {
+                case 1:
+                    this.ss = Size.Byte;
+                    break;
+                case 2:
+                    this.ss = Size.Word;
+                    break;
+                case 4:
+                    this.ss = Size.Long;
+                    break;
+            }
+        }
         if (expression instanceof Variable) {
             this.bb = expression instanceof LocalVariable ? Base.DBase : Base.VBase;
             String type = ((Variable) expression).getType();

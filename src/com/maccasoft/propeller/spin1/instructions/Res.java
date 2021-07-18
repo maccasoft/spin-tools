@@ -45,8 +45,8 @@ public class Res extends Spin1PAsmInstructionFactory {
 
         @Override
         public int resolve(int address) {
-            context.setAddress(address);
-            return context.getAddress() + argument.getInteger();
+            context.setAddress(address >> 2);
+            return address + (argument.getInteger() << 2);
         }
 
         @Override

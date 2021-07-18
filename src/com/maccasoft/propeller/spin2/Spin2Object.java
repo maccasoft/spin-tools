@@ -15,7 +15,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import com.maccasoft.propeller.expressions.Expression;
 
 public class Spin2Object {
 
@@ -26,6 +30,8 @@ public class Spin2Object {
     int clkfreq;
     int clkmode;
     int varSize;
+
+    Map<String, Expression> symbols = new HashMap<String, Expression>();
 
     public static class DataObject {
         byte[] bytes;
@@ -321,12 +327,28 @@ public class Spin2Object {
         this.varSize = varSize;
     }
 
+    public void addSymbol(String name, Expression expression) {
+        symbols.put(name, expression);
+    }
+
+    public Expression getSymbol(String name) {
+        return symbols.get(name);
+    }
+
+    public Map<String, Expression> getSymbols() {
+        return symbols;
+    }
+
     public void generateBinary(OutputStream os) throws IOException {
         if (interpreter != null) {
             os.write(interpreter.code);
         }
         for (DataObject obj : data) {
-            if (obj.bytes != null) {
+            if (obj instanceof ObjectDataObject) {
+                byte[] bytes = ((ObjectDataObject) obj).getObject().getBinary();
+                os.write(bytes);
+            }
+            else if (obj.bytes != null) {
                 os.write(obj.bytes);
             }
         }
@@ -335,7 +357,11 @@ public class Spin2Object {
     public byte[] getBinary() throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         for (DataObject obj : data) {
-            if (obj.bytes != null) {
+            if (obj instanceof ObjectDataObject) {
+                byte[] bytes = ((ObjectDataObject) obj).getObject().getBinary();
+                os.write(bytes);
+            }
+            else if (obj.bytes != null) {
                 os.write(obj.bytes);
             }
         }
