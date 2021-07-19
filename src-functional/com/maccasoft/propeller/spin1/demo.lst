@@ -1,0 +1,1068 @@
+0000     04C4B400      Frequency 80000000 Hz
+0004     6F            Clock mode: Xtal1 + Pll16X
+0005     E7            Check Sum
+0006     0010          Base of Program
+0008     0624          Base of Variables
+000A     074C          Base of Stack
+000C     001C          Initial Program Counter
+000E     0750          Initial Stack Pointer
+                       File "demo.spin"
+0010     002C 0102     Link to Next Object
+0014     000C 0000     Link to PUB Main
+0018                   OBJ
+0018     002C 0000         ser : "com.serial.terminal"
+001C                   PUB Main
+001C                       ser.Start(115_200)
+001C     01            ; Frame_Call_Noreturn
+001D     3A 01C200     ; Push_Mid_Lit, $01C200
+0021     06 02 01      ; Objcall, $02, $01
+0024                       ser.Str(string("Hello, World", 13))
+0024     01            ; Frame_Call_Noreturn
+0025     87 80 1E      ; Reference_ObjectMem_Byte, $001E
+0028     06 02 09      ; Objcall, $02, $09
+002B                       repeat
+002B     04 7E         ; Branch, $FFFE
+002D     32            ; Return
+002E     48            ; Push_VariableMem_Long_2
+002F     65            ; Pop_LocalMem_Long_1
+0030     6C            ; Push_LocalMem_Long_3
+0031     6C            ; Push_LocalMem_Long_3
+0032     6F            ; Reference_LocalMem_Long_3
+0033     2C            ; Coginit
+0034     20            ; Clkset
+0035     57            ; Reference_VariableMem_Long_5
+0036     6F            ; Reference_LocalMem_Long_3
+0037     72 6C         ; Effect_LocalMem_Long_4, Add
+0039     64            ; Push_LocalMem_Long_1
+003A     0D 00         ; Compare_Case, $0000
+                       File "com.serial.terminal.spin"
+003C     01E0 021C     Link to Next Object
+0040     0078 0000     Link to PUB Start(baudrate) : okay
+0044     0084 0000     Link to PUB StartRxTx(rxpin, txpin, mode, baudrate)
+0048     008E 0000     Link to PUB Stop
+004C     0093 0000     Link to PUB Count
+0050     0099 0000     Link to PUB Flush
+0054     009E 0000     Link to PUB Char(ch)
+0058     00A4 0000     Link to PUB Chars(ch, size)
+005C     00AF 0000     Link to PUB CharIn
+0060     00B5 0000     Link to PUB Str(stringptr)
+0064     00C3 0000     Link to PUB StrIn(stringptr)
+0068     00C9 0000     Link to PUB StrInMax(stringptr, maxcount)
+006C     00EA 0000     Link to PUB Dec(value)
+0070     00F3 0000     Link to PUB DecIn
+0074     0104 0000     Link to PUB Bin(value, digits)
+0078     010E 0000     Link to PUB BinIn
+007C     011F 0000     Link to PUB Hex(value, digits)
+0080     0129 0000     Link to PUB HexIn
+0084     013A 0000     Link to PUB Clear
+0088     0141 0000     Link to PUB NewLine
+008C     0148 0000     Link to PUB Position(x, y)
+0090     0159 0000     Link to PUB PositionX(x)
+0094     0165 0000     Link to PUB PositionY(y)
+0098     0171 0000     Link to PUB MoveLeft(x)
+009C     017D 0000     Link to PUB MoveRight(x)
+00A0     0189 0000     Link to PUB MoveUp(y)
+00A4     0195 0000     Link to PUB MoveDown(y)
+00A8     01A1 0004     Link to PUB ReadLine(line, maxline) : size | c
+00AC                   OBJ
+00AC     01E0 0034         ser : "com.serial"
+00B0     03E8 00DC         num : "string.integer"
+00B4                   PUB Start(baudrate) : okay
+00B4                       okay := ser.Start(baudrate)
+00B4     00            ; Frame_Call_Return
+00B5     64            ; Push_LocalMem_Long_1
+00B6     06 1C 01      ; Objcall, $1C, $01
+00B9     61            ; Pop_LocalMem_Long_0
+00BA                       Clear
+00BA     01            ; Frame_Call_Noreturn
+00BB     05 12         ; Call, $12
+00BD                       return okay
+00BD     60            ; Push_LocalMem_Long_0
+00BE     33            ; Pop_Return
+00BF     32            ; Return
+00C0                   PUB StartRxTx(rxpin, txpin, mode, baudrate)
+00C0                       return ser.StartRxTx(rxpin, txpin, mode, baudrate)
+00C0     00            ; Frame_Call_Return
+00C1     64            ; Push_LocalMem_Long_1
+00C2     68            ; Push_LocalMem_Long_2
+00C3     6C            ; Push_LocalMem_Long_3
+00C4     70            ; Push_LocalMem_Long_4
+00C5     06 1C 02      ; Objcall, $1C, $02
+00C8     33            ; Pop_Return
+00C9     32            ; Return
+00CA                   PUB Stop
+00CA                       ser.Stop
+00CA     01            ; Frame_Call_Noreturn
+00CB     06 1C 03      ; Objcall, $1C, $03
+00CE     32            ; Return
+00CF                   PUB Count
+00CF                       return ser.Count
+00CF     00            ; Frame_Call_Return
+00D0     06 1C 04      ; Objcall, $1C, $04
+00D3     33            ; Pop_Return
+00D4     32            ; Return
+00D5                   PUB Flush
+00D5                       ser.Flush
+00D5     01            ; Frame_Call_Noreturn
+00D6     06 1C 05      ; Objcall, $1C, $05
+00D9     32            ; Return
+00DA                   PUB Char(ch)
+00DA                       ser.Char(ch)
+00DA     01            ; Frame_Call_Noreturn
+00DB     64            ; Push_LocalMem_Long_1
+00DC     06 1C 06      ; Objcall, $1C, $06
+00DF     32            ; Return
+00E0                   PUB Chars(ch, size)
+00E0                       repeat size
+00E0     68            ; Push_LocalMem_Long_2
+00E1     08 07         ; Loop_Start, $0007
+00E3                           ser.Char(ch)
+00E3     01            ; Frame_Call_Noreturn
+00E4     64            ; Push_LocalMem_Long_1
+00E5     06 1C 06      ; Objcall, $1C, $06
+00E8     09 79         ; Loop_Continue, $FFF9
+00EA     32            ; Return
+00EB                   PUB CharIn
+00EB                       return ser.CharIn
+00EB     00            ; Frame_Call_Return
+00EC     06 1C 07      ; Objcall, $1C, $07
+00EF     33            ; Pop_Return
+00F0     32            ; Return
+00F1                   PUB Str(stringptr)
+00F1                       repeat strsize(stringptr)
+00F1     64            ; Push_LocalMem_Long_1
+00F2     16            ; Strsize
+00F3     08 09         ; Loop_Start, $0009
+00F5                           ser.Char(byte[stringptr++])
+00F5     01            ; Frame_Call_Noreturn
+00F6     66 AE         ; Effect_LocalMem_Long_1, post-inc, long
+00F8     80            ; Push_MainMem_Byte
+00F9     06 1C 06      ; Objcall, $1C, $06
+00FC     09 77         ; Loop_Continue, $FFF7
+00FE     32            ; Return
+00FF                   PUB StrIn(stringptr)
+00FF                       StrInMax(stringptr, -1)
+00FF     01            ; Frame_Call_Noreturn
+0100     64            ; Push_LocalMem_Long_1
+0101     34            ; Push_Neg1
+0102     05 0B         ; Call, $0B
+0104     32            ; Return
+0105                   PUB StrInMax(stringptr, maxcount)
+0105                       repeat while (maxcount--)                                                     'While maxcount not reached
+0105     6A BE         ; Effect_LocalMem_Long_2, post-dec, long
+0107     0A 11         ; Jump_If_False, $0011
+0109                           if (byte[stringptr++] := ser.CharIn) == NL                                      'Get chars until NL
+0109     00            ; Frame_Call_Return
+010A     06 1C 07      ; Objcall, $1C, $07
+010D     66 AE         ; Effect_LocalMem_Long_1, post-inc, long
+010F     82 80         ; Effect_MainMem_Byte, write, push
+0111     38 0D         ; Push_Byte_Lit, $0D
+0113     FC            ; Equal
+0114     0A 02         ; Jump_If_False, $0002
+0116                               quit
+0116     04 02         ; Branch, $0002
+0118     04 6B         ; Branch, $FFEB
+011A                       byte[stringptr+(byte[stringptr-1] == NL)]~                                    'Zero terminate string; overwrite NL or append 0 char
+011A     64            ; Push_LocalMem_Long_1
+011B     64            ; Push_LocalMem_Long_1
+011C     36            ; Push_1
+011D     ED            ; Subtract
+011E     80            ; Push_MainMem_Byte
+011F     38 0D         ; Push_Byte_Lit, $0D
+0121     FC            ; Equal
+0122     EC            ; Add
+0123     82 18         ; Effect_MainMem_Byte, post-clear
+0125     32            ; Return
+0126                   PUB Dec(value)
+0126                       Str(num.Dec(value))
+0126     01            ; Frame_Call_Noreturn
+0127     00            ; Frame_Call_Return
+0128     64            ; Push_LocalMem_Long_1
+0129     06 1D 01      ; Objcall, $1D, $01
+012C     05 09         ; Call, $09
+012E     32            ; Return
+012F                   PUB DecIn
+012F                       StrInMax(@str_buffer, MAXSTR_LENGTH)
+012F     01            ; Frame_Call_Noreturn
+0130     8B 00         ; Reference_VariableMem_Byte, $0000
+0132     38 31         ; Push_Byte_Lit, $31
+0134     05 0B         ; Call, $0B
+0136                       return num.StrToBase(@str_buffer, 10)
+0136     00            ; Frame_Call_Return
+0137     8B 00         ; Reference_VariableMem_Byte, $0000
+0139     38 0A         ; Push_Byte_Lit, $0A
+013B     06 1D 08      ; Objcall, $1D, $08
+013E     33            ; Pop_Return
+013F     32            ; Return
+0140                   PUB Bin(value, digits)
+0140                       Str(num.Bin(value,digits))
+0140     01            ; Frame_Call_Noreturn
+0141     00            ; Frame_Call_Return
+0142     64            ; Push_LocalMem_Long_1
+0143     68            ; Push_LocalMem_Long_2
+0144     06 1D 06      ; Objcall, $1D, $06
+0147     05 09         ; Call, $09
+0149     32            ; Return
+014A                   PUB BinIn
+014A                       StrInMax(@str_buffer, MAXSTR_LENGTH)
+014A     01            ; Frame_Call_Noreturn
+014B     8B 00         ; Reference_VariableMem_Byte, $0000
+014D     38 31         ; Push_Byte_Lit, $31
+014F     05 0B         ; Call, $0B
+0151                       return num.StrToBase(@str_buffer, 2)
+0151     00            ; Frame_Call_Return
+0152     8B 00         ; Reference_VariableMem_Byte, $0000
+0154     37 00         ; Push_Packed_Lit, $00000002
+0156     06 1D 08      ; Objcall, $1D, $08
+0159     33            ; Pop_Return
+015A     32            ; Return
+015B                   PUB Hex(value, digits)
+015B                       Str(num.Hex(value, digits))
+015B     01            ; Frame_Call_Noreturn
+015C     00            ; Frame_Call_Return
+015D     64            ; Push_LocalMem_Long_1
+015E     68            ; Push_LocalMem_Long_2
+015F     06 1D 04      ; Objcall, $1D, $04
+0162     05 09         ; Call, $09
+0164     32            ; Return
+0165                   PUB HexIn
+0165                       StrInMax(@str_buffer, MAXSTR_LENGTH)
+0165     01            ; Frame_Call_Noreturn
+0166     8B 00         ; Reference_VariableMem_Byte, $0000
+0168     38 31         ; Push_Byte_Lit, $31
+016A     05 0B         ; Call, $0B
+016C                       return num.StrToBase(@str_buffer, 16)
+016C     00            ; Frame_Call_Return
+016D     8B 00         ; Reference_VariableMem_Byte, $0000
+016F     37 03         ; Push_Packed_Lit, $00000010
+0171     06 1D 08      ; Objcall, $1D, $08
+0174     33            ; Pop_Return
+0175     32            ; Return
+0176                   PUB Clear
+0176                       ser.Char(CS)
+0176     01            ; Frame_Call_Noreturn
+0177     37 03         ; Push_Packed_Lit, $00000010
+0179     06 1C 06      ; Objcall, $1C, $06
+017C     32            ; Return
+017D                   PUB NewLine
+017D                       ser.Char(NL)
+017D     01            ; Frame_Call_Noreturn
+017E     38 0D         ; Push_Byte_Lit, $0D
+0180     06 1C 06      ; Objcall, $1C, $06
+0183     32            ; Return
+0184                   PUB Position(x, y)
+0184                       ser.Char(PC)
+0184     01            ; Frame_Call_Noreturn
+0185     37 00         ; Push_Packed_Lit, $00000002
+0187     06 1C 06      ; Objcall, $1C, $06
+018A                       ser.Char(x)
+018A     01            ; Frame_Call_Noreturn
+018B     64            ; Push_LocalMem_Long_1
+018C     06 1C 06      ; Objcall, $1C, $06
+018F                       ser.Char(y)
+018F     01            ; Frame_Call_Noreturn
+0190     68            ; Push_LocalMem_Long_2
+0191     06 1C 06      ; Objcall, $1C, $06
+0194     32            ; Return
+0195                   PUB PositionX(x)
+0195                       ser.Char(PX)
+0195     01            ; Frame_Call_Noreturn
+0196     38 0E         ; Push_Byte_Lit, $0E
+0198     06 1C 06      ; Objcall, $1C, $06
+019B                       ser.Char(x)
+019B     01            ; Frame_Call_Noreturn
+019C     64            ; Push_LocalMem_Long_1
+019D     06 1C 06      ; Objcall, $1C, $06
+01A0     32            ; Return
+01A1                   PUB PositionY(y)
+01A1                       ser.Char(PY)
+01A1     01            ; Frame_Call_Noreturn
+01A2     37 23         ; Push_Packed_Lit, $0000000F
+01A4     06 1C 06      ; Objcall, $1C, $06
+01A7                       ser.Char(y)
+01A7     01            ; Frame_Call_Noreturn
+01A8     64            ; Push_LocalMem_Long_1
+01A9     06 1C 06      ; Objcall, $1C, $06
+01AC     32            ; Return
+01AD                   PUB MoveLeft(x)
+01AD                       repeat x
+01AD     64            ; Push_LocalMem_Long_1
+01AE     08 08         ; Loop_Start, $0008
+01B0                           ser.Char(ML)
+01B0     01            ; Frame_Call_Noreturn
+01B1     37 21         ; Push_Packed_Lit, $00000003
+01B3     06 1C 06      ; Objcall, $1C, $06
+01B6     09 78         ; Loop_Continue, $FFF8
+01B8     32            ; Return
+01B9                   PUB MoveRight(x)
+01B9                       repeat x
+01B9     64            ; Push_LocalMem_Long_1
+01BA     08 08         ; Loop_Start, $0008
+01BC                           ser.Char(MR)
+01BC     01            ; Frame_Call_Noreturn
+01BD     37 01         ; Push_Packed_Lit, $00000004
+01BF     06 1C 06      ; Objcall, $1C, $06
+01C2     09 78         ; Loop_Continue, $FFF8
+01C4     32            ; Return
+01C5                   PUB MoveUp(y)
+01C5                       repeat y
+01C5     64            ; Push_LocalMem_Long_1
+01C6     08 08         ; Loop_Start, $0008
+01C8                           ser.Char(MU)
+01C8     01            ; Frame_Call_Noreturn
+01C9     38 05         ; Push_Byte_Lit, $05
+01CB     06 1C 06      ; Objcall, $1C, $06
+01CE     09 78         ; Loop_Continue, $FFF8
+01D0     32            ; Return
+01D1                   PUB MoveDown(y)
+01D1                       repeat y
+01D1     64            ; Push_LocalMem_Long_1
+01D2     08 08         ; Loop_Start, $0008
+01D4                           ser.Char(MD)
+01D4     01            ; Frame_Call_Noreturn
+01D5     38 06         ; Push_Byte_Lit, $06
+01D7     06 1C 06      ; Objcall, $1C, $06
+01DA     09 78         ; Loop_Continue, $FFF8
+01DC     32            ; Return
+01DD                   PUB ReadLine(line, maxline) : size | c
+01DD                       repeat
+01DD                           case c := CharIn
+01DD     39 01DC       ; Push_Word_Lit, $01DC
+01E0     00            ; Frame_Call_Return
+01E1     05 08         ; Call, $08
+01E3     6E 80         ; Effect_LocalMem_Long_3, write, push
+01E5     37 02         ; Push_Packed_Lit, $00000008
+01E7     0D 17         ; Compare_Case, $0017
+01E9     38 0D         ; Push_Byte_Lit, $0D
+01EB     0D 1D         ; Compare_Case, $001D
+01ED     38 0A         ; Push_Byte_Lit, $0A
+01EF     0D 19         ; Compare_Case, $0019
+01F1     60            ; Push_LocalMem_Long_0
+01F2     68            ; Push_LocalMem_Long_2
+01F3     F9            ; Less
+01F4     0A 09         ; Jump_If_False, $0009
+01F6     6C            ; Push_LocalMem_Long_3
+01F7     64            ; Push_LocalMem_Long_1
+01F8     62 AE         ; Effect_LocalMem_Long_0, post-inc, long
+01FA     91            ; Pop_Indexed_MainMem_Byte
+01FB     01            ; Frame_Call_Noreturn
+01FC     6C            ; Push_LocalMem_Long_3
+01FD     05 06         ; Call, $06
+01FF     0C            ; Jump_From_Stack
+0200                               BS:     if size
+0200     60            ; Push_LocalMem_Long_0
+0201     0A 06         ; Jump_If_False, $0006
+0203                                           size--
+0203     62 3E         ; Effect_LocalMem_Long_0, post-dec, long
+0205                                           Char(c)
+0205     01            ; Frame_Call_Noreturn
+0206     6C            ; Push_LocalMem_Long_3
+0207     05 06         ; Call, $06
+0209     0C            ; Jump_From_Stack
+020A                               NL, LF: byte[line][size] := 0
+020A     35            ; Push_0
+020B     64            ; Push_LocalMem_Long_1
+020C     60            ; Push_LocalMem_Long_0
+020D     91            ; Pop_Indexed_MainMem_Byte
+020E                                       Char(c)
+020E     01            ; Frame_Call_Noreturn
+020F     6C            ; Push_LocalMem_Long_3
+0210     05 06         ; Call, $06
+0212                                       quit
+0212     37 02         ; Push_Packed_Lit, $00000008
+0214     14            ; Quit
+0215     04 03         ; Branch, $0003
+0217     0C            ; Jump_From_Stack
+0218                               other:  if size < maxline
+0218     04 43         ; Branch, $FFC3
+021A     32            ; Return
+021B     00            ; Frame_Call_Return
+                       File "com.serial.spin"
+021C     0208 0009     Link to Next Object
+0220     0174 0000     Link to PUB Start(baudrate) : okay
+0224     017F 0000     Link to PUB StartRxTx(rxpin, txpin, mode, baudrate) : okay
+0228     01A1 0000     Link to PUB Stop
+022C     01AF 0000     Link to PUB Count
+0230     01BE 0000     Link to PUB Flush
+0234     01C8 0000     Link to PUB Char(ch)
+0238     01E9 0000     Link to PUB CharIn
+023C     01F5 0000     Link to PRI RxCheck
+0240 000               DAT
+0240 000                                       org
+0240 000 A0BCA9F0      entry                   mov     t1,par                'get structure address
+0244 001 80FCA810                              add     t1,#4 << 2            'skip past heads and tails
+0248 002 08BCAA54                              rdlong  t2,t1                 'get rx_pin
+024C 003 A0FCB201                              mov     rxmask,#1
+0250 004 2CBCB255                              shl     rxmask,t2
+0254 005 80FCA804                              add     t1,#4                 'get tx_pin
+0258 006 08BCAA54                              rdlong  t2,t1
+025C 007 A0FCBE01                              mov     txmask,#1
+0260 008 2CBCBE55                              shl     txmask,t2
+0264 009 80FCA804                              add     t1,#4                 'get rxtx_mode
+0268 00A 08BCAE54                              rdlong  rxtxmode,t1
+026C 00B 80FCA804                              add     t1,#4                 'get bit_ticks
+0270 00C 08BCB054                              rdlong  bitticks,t1
+0274 00D 80FCA804                              add     t1,#4                 'get buffer_ptr
+0278 00E 08BCB454                              rdlong  rxbuff,t1
+027C 00F A0BCC05A                              mov     txbuff,rxbuff
+0280 010 80FCC040                              add     txbuff,#BUFFER_LENGTH
+0284 011 627CAE04                              test    rxtxmode,#%100  wz    'init tx pin according to mode
+0288 012 617CAE02                              test    rxtxmode,#%010  wc
+028C 013 689BE85F              if_z_ne_c       or      outa,txmask
+0290 014 68ABEC5F              if_z            or      dira,txmask
+0294 015 A0FCC833                              mov     txcode,#transmit      'initialize ping-pong multitasking
+0298 016 5CBCBC64      receive                 jmpret  rxcode,txcode         'run chunk of tx code, then return
+029C 017 627CAE01                              test    rxtxmode,#%001  wz    'wait for start bit on rx pin
+02A0 018 613CB3F2                              test    rxmask,ina      wc
+02A4 019 5C640016              if_z_eq_c       jmp     #receive
+02A8 01A A0FCB809                              mov     rxbits,#9             'ready to receive byte
+02AC 01B A0BCBA58                              mov     rxcnt,bitticks
+02B0 01C 28FCBA01                              shr     rxcnt,#1
+02B4 01D 80BCBBF1                              add     rxcnt,cnt
+02B8 01E 80BCBA58      :bit                    add     rxcnt,bitticks        'ready next bit period
+02BC 01F 5CBCBC64      :wait                   jmpret  rxcode,txcode         'run chunk of tx code, then return
+02C0 020 A0BCA85D                              mov     t1,rxcnt              'check if bit receive period done
+02C4 021 84BCA9F1                              sub     t1,cnt
+02C8 022 C17CA800                              cmps    t1,#0           wc
+02CC 023 5C4C001F              if_nc           jmp     #:wait
+02D0 024 613CB3F2                              test    rxmask,ina      wc    'receive bit on rx pin
+02D4 025 30FCB601                              rcr     rxdata,#1
+02D8 026 E4FCB81E                              djnz    rxbits,#:bit
+02DC 027 28FCB617                              shr     rxdata,#32-9          'justify and trim received byte
+02E0 028 60FCB6FF                              and     rxdata,#$FF
+02E4 029 627CAE01                              test    rxtxmode,#%001  wz    'if rx inverted, invert byte
+02E8 02A 6CD4B6FF              if_nz           xor     rxdata,#$FF
+02EC 02B 08BCABF0                              rdlong  t2,par                'save received byte and inc head
+02F0 02C 80BCAA5A                              add     t2,rxbuff
+02F4 02D 003CB655                              wrbyte  rxdata,t2
+02F8 02E 84BCAA5A                              sub     t2,rxbuff
+02FC 02F 80FCAA01                              add     t2,#1
+0300 030 60FCAA3F                              and     t2,#BUFFER_MASK
+0304 031 083CABF0                              wrlong  t2,par
+0308 032 5C7C0016                              jmp     #receive              'byte done, receive next byte
+030C 033 5CBCC85E      transmit                jmpret  txcode,rxcode         'run chunk of rx code, then return
+0310 034 A0BCA9F0                              mov     t1,par                'check for head <> tail
+0314 035 80FCA808                              add     t1,#2 << 2
+0318 036 08BCAA54                              rdlong  t2,t1
+031C 037 80FCA804                              add     t1,#1 << 2
+0320 038 08BCAC54                              rdlong  t3,t1
+0324 039 863CAA56                              cmp     t2,t3           wz
+0328 03A 5C680033              if_z            jmp     #transmit
+032C 03B 80BCAC60                              add     t3,txbuff             'get byte and inc tail
+0330 03C 00BCC256                              rdbyte  txdata,t3
+0334 03D 84BCAC60                              sub     t3,txbuff
+0338 03E 80FCAC01                              add     t3,#1
+033C 03F 60FCAC3F                              and     t3,#BUFFER_MASK
+0340 040 083CAC54                              wrlong  t3,t1
+0344 041 68FCC300                              or      txdata,#$100          'ready byte to transmit
+0348 042 2CFCC202                              shl     txdata,#2
+034C 043 68FCC201                              or      txdata,#1
+0350 044 A0FCC40B                              mov     txbits,#11
+0354 045 A0BCC7F1                              mov     txcnt,cnt
+0358 046 627CAE04      :bit                    test    rxtxmode,#%100  wz    'output bit on tx pin
+035C 047 617CAE02                              test    rxtxmode,#%010  wc    'according to mode
+0360 048 6CE0C201              if_z_and_c      xor     txdata,#1
+0364 049 29FCC201                              shr     txdata,#1       wc
+0368 04A 70ABE85F              if_z            muxc    outa,txmask
+036C 04B 7497EC5F              if_nz           muxnc   dira,txmask
+0370 04C 80BCC658                              add     txcnt,bitticks        'ready next cnt
+0374 04D 5CBCC85E      :wait                   jmpret  txcode,rxcode         'run chunk of rx code, then return
+0378 04E A0BCA863                              mov     t1,txcnt              'check if bit transmit period done
+037C 04F 84BCA9F1                              sub     t1,cnt
+0380 050 C17CA800                              cmps    t1,#0           wc
+0384 051 5C4C004D              if_nc           jmp     #:wait
+0388 052 E4FCC446                              djnz    txbits,#:bit          'another bit to transmit?
+038C 053 5C7C0033                              jmp     #transmit             'byte done, transmit next byte
+0390 054               t1                      res     1
+0390 055               t2                      res     1
+0390 056               t3                      res     1
+0390 057               rxtxmode                res     1
+0390 058               bitticks                res     1
+0390 059               rxmask                  res     1
+0390 05A               rxbuff                  res     1
+0390 05B               rxdata                  res     1
+0390 05C               rxbits                  res     1
+0390 05D               rxcnt                   res     1
+0390 05E               rxcode                  res     1
+0390 05F               txmask                  res     1
+0390 060               txbuff                  res     1
+0390 061               txdata                  res     1
+0390 062               txbits                  res     1
+0390 063               txcnt                   res     1
+0390 064               txcode                  res     1
+0390                   PUB Start(baudrate) : okay
+0390                       okay := StartRxTx(31, 30, 0, baudrate)
+0390     00            ; Frame_Call_Return
+0391     37 24         ; Push_Packed_Lit, $0000001F
+0393     38 1E         ; Push_Byte_Lit, $1E
+0395     35            ; Push_0
+0396     64            ; Push_LocalMem_Long_1
+0397     05 02         ; Call, $02
+0399     61            ; Pop_LocalMem_Long_0
+039A     32            ; Return
+039B                   PUB StartRxTx(rxpin, txpin, mode, baudrate) : okay
+039B                       Stop
+039B     01            ; Frame_Call_Noreturn
+039C     05 03         ; Call, $03
+039E                       longfill(@rx_head, 0, 4)
+039E     47            ; Reference_VariableMem_Long_1
+039F     35            ; Push_0
+03A0     37 01         ; Push_Packed_Lit, $00000004
+03A2     1A            ; Longfill
+03A3                       longmove(@rx_pin, @rxpin, 3)
+03A3     57            ; Reference_VariableMem_Long_5
+03A4     67            ; Reference_LocalMem_Long_1
+03A5     37 21         ; Push_Packed_Lit, $00000003
+03A7     1E            ; Longmove
+03A8                       bit_ticks := clkfreq / baudrate
+03A8     35            ; Push_0
+03A9     C0            ; Push_MainMem_Long
+03AA     70            ; Push_LocalMem_Long_4
+03AB     F6            ; Divide
+03AC     C9 20         ; Pop_VariableMem_Long, $0020
+03AE                       buffer_ptr := @rx_buffer
+03AE     8B 28         ; Reference_VariableMem_Byte, $0028
+03B0     C9 24         ; Pop_VariableMem_Long, $0024
+03B2                       okay := cog := cognew(@entry, @rx_head) + 1
+03B2     34            ; Push_Neg1
+03B3     C7 24         ; Reference_ObjectMem_Long, $0024
+03B5     47            ; Reference_VariableMem_Long_1
+03B6     28            ; Coginit_Returns
+03B7     36            ; Push_1
+03B8     EC            ; Add
+03B9     42 80         ; Effect_VariableMem_Long_0, write, push
+03BB     61            ; Pop_LocalMem_Long_0
+03BC     32            ; Return
+03BD                   PUB Stop
+03BD                       if cog
+03BD     40            ; Push_VariableMem_Long_0
+03BE     0A 05         ; Jump_If_False, $0005
+03C0                           cogstop(cog~ - 1)
+03C0     42 98         ; Effect_VariableMem_Long_0, post-clear, push
+03C2     36            ; Push_1
+03C3     ED            ; Subtract
+03C4     21            ; Cogstop
+03C5                       longfill(@rx_head, 0, 9)
+03C5     47            ; Reference_VariableMem_Long_1
+03C6     35            ; Push_0
+03C7     38 09         ; Push_Byte_Lit, $09
+03C9     1A            ; Longfill
+03CA     32            ; Return
+03CB                   PUB Count
+03CB                       result := rx_head - rx_tail
+03CB     44            ; Push_VariableMem_Long_1
+03CC     48            ; Push_VariableMem_Long_2
+03CD     ED            ; Subtract
+03CE     61            ; Pop_LocalMem_Long_0
+03CF                       result -= BUFFER_LENGTH*(Count < 0)
+03CF     37 05         ; Push_Packed_Lit, $00000040
+03D1     00            ; Frame_Call_Return
+03D2     05 04         ; Call, $04
+03D4     35            ; Push_0
+03D5     F9            ; Less
+03D6     F4            ; Multiply
+03D7     62 4D         ; Effect_LocalMem_Long_0, Subtract, swap
+03D9     32            ; Return
+03DA                   PUB Flush
+03DA                       repeat while RxCheck => 0
+03DA     00            ; Frame_Call_Return
+03DB     05 08         ; Call, $08
+03DD     35            ; Push_0
+03DE     FE            ; Greater_Equal
+03DF     0A 02         ; Jump_If_False, $0002
+03E1     04 77         ; Branch, $FFF7
+03E3     32            ; Return
+03E4                   PUB Char(ch)
+03E4                       repeat until (tx_tail <> ((tx_head + 1) & BUFFER_MASK))
+03E4     50            ; Push_VariableMem_Long_4
+03E5     4C            ; Push_VariableMem_Long_3
+03E6     36            ; Push_1
+03E7     EC            ; Add
+03E8     37 25         ; Push_Packed_Lit, $0000003F
+03EA     E8            ; Bit_And
+03EB     FB            ; Not_Equal
+03EC     0B 02         ; Jump_If_True, $0002
+03EE     04 74         ; Branch, $FFF4
+03F0                       tx_buffer[tx_head] := ch
+03F0     64            ; Push_LocalMem_Long_1
+03F1     4C            ; Push_VariableMem_Long_3
+03F2     99 68         ; Pop_Indexed_VariableMem_Byte, $0068
+03F4                       tx_head := (tx_head + 1) & BUFFER_MASK
+03F4     4C            ; Push_VariableMem_Long_3
+03F5     36            ; Push_1
+03F6     EC            ; Add
+03F7     37 25         ; Push_Packed_Lit, $0000003F
+03F9     E8            ; Bit_And
+03FA     4D            ; Pop_VariableMem_Long_3
+03FB                       if rxtx_mode & %1000
+03FB     5C            ; Push_VariableMem_Long_7
+03FC     37 02         ; Push_Packed_Lit, $00000008
+03FE     E8            ; Bit_And
+03FF     0A 03         ; Jump_If_False, $0003
+0401                           CharIn
+0401     01            ; Frame_Call_Noreturn
+0402     05 07         ; Call, $07
+0404     32            ; Return
+0405                   PUB CharIn
+0405                       repeat while (result := RxCheck) < 0
+0405     00            ; Frame_Call_Return
+0406     05 08         ; Call, $08
+0408     62 80         ; Effect_LocalMem_Long_0, write, push
+040A     35            ; Push_0
+040B     F9            ; Less
+040C     0A 02         ; Jump_If_False, $0002
+040E     04 75         ; Branch, $FFF5
+0410     32            ; Return
+0411                   PRI RxCheck
+0411                       result~~
+0411     62 1C         ; Effect_LocalMem_Long_0, post-set
+0413                       if rx_tail <> rx_head
+0413     48            ; Push_VariableMem_Long_2
+0414     44            ; Push_VariableMem_Long_1
+0415     FB            ; Not_Equal
+0416     0A 0B         ; Jump_If_False, $000B
+0418                           result := rx_buffer[rx_tail]
+0418     48            ; Push_VariableMem_Long_2
+0419     98 28         ; Push_Indexed_VariableMem_Byte, $0028
+041B     61            ; Pop_LocalMem_Long_0
+041C                           rx_tail := (rx_tail + 1) & BUFFER_MASK
+041C     48            ; Push_VariableMem_Long_2
+041D     36            ; Push_1
+041E     EC            ; Add
+041F     37 25         ; Push_Packed_Lit, $0000003F
+0421     E8            ; Bit_And
+0422     49            ; Pop_VariableMem_Long_2
+0423     32            ; Return
+                       File "string.integer.spin"
+0424     0200 000D     Link to Next Object
+0428     0034 0000     Link to PUB Dec(value)
+042C     0041 0008     Link to PUB DecPadded(value, width) | t_val, field
+0430     0083 0004     Link to PUB DecZeroed(value, digits) | div
+0434     00D6 0000     Link to PUB Hex(value, digits)
+0438     00E4 0000     Link to PUB HexIndicated(value, digits)
+043C     00F8 0000     Link to PUB Bin(value, digits)
+0440     0106 0000     Link to PUB BinIndicated(value, digits)
+0444     011A 0008     Link to PUB StrToBase(stringptr, base) : value | chr, index
+0448     015B 0000     Link to PRI ClearStr(strAddr, size)
+044C     0162 0008     Link to PRI DecToStr(value) | div, z_pad
+0450     01A8 0000     Link to PRI HexToStr(value, digits)
+0454     01DB 0000     Link to PRI BinToStr(value, digits)
+0458                   PUB Dec(value)
+0458                       ClearStr(@nstr, MAX_LEN)                                ' clear output string
+0458     01            ; Frame_Call_Noreturn
+0459     8B 04         ; Reference_VariableMem_Byte, $0004
+045B     37 05         ; Push_Packed_Lit, $00000040
+045D     05 09         ; Call, $09
+045F                       return DecToStr(value)                                  ' return pointer to numeric string
+045F     00            ; Frame_Call_Return
+0460     64            ; Push_LocalMem_Long_1
+0461     05 0A         ; Call, $0A
+0463     33            ; Pop_Return
+0464     32            ; Return
+0465                   PUB DecPadded(value, width) | t_val, field
+0465                       ClearStr(@nstr, MAX_LEN)
+0465     01            ; Frame_Call_Noreturn
+0466     8B 04         ; Reference_VariableMem_Byte, $0004
+0468     37 05         ; Push_Packed_Lit, $00000040
+046A     05 09         ; Call, $09
+046C                       width := 1 #> width <# constant(MAX_LEN - 1)          ' qualify field width
+046C     36            ; Push_1
+046D     68            ; Push_LocalMem_Long_2
+046E     E4            ; Limit_Min
+046F     37 25         ; Push_Packed_Lit, $0000003F
+0471     E5            ; Limit_Max
+0472     69            ; Pop_LocalMem_Long_2
+0473                       t_val := ||value                                      ' work with absolute
+0473     64            ; Push_LocalMem_Long_1
+0474     E9            ; Absolute_Value
+0475     6D            ; Pop_LocalMem_Long_3
+0476                       field~                                                ' clear field
+0476     72 18         ; Effect_LocalMem_Long_4, post-clear
+0478                       repeat while t_val > 0                                ' count number of digits
+0478     6C            ; Push_LocalMem_Long_3
+0479     35            ; Push_0
+047A     FA            ; Greater
+047B     0A 08         ; Jump_If_False, $0008
+047D                           field++
+047D     72 2E         ; Effect_LocalMem_Long_4, post-inc, long
+047F                           t_val /= 10
+047F     38 0A         ; Push_Byte_Lit, $0A
+0481     6E 56         ; Effect_LocalMem_Long_3, Divide, swap
+0483     04 73         ; Branch, $FFF3
+0485                       field #>= 1                                           ' min field width is 1
+0485     36            ; Push_1
+0486     72 44         ; Effect_LocalMem_Long_4, Limit_Min, swap
+0488                       if value < 0                                          ' if value is negative
+0488     64            ; Push_LocalMem_Long_1
+0489     35            ; Push_0
+048A     F9            ; Less
+048B     0A 02         ; Jump_If_False, $0002
+048D                           field++                                             '   bump field for neg sign indicator
+048D     72 2E         ; Effect_LocalMem_Long_4, post-inc, long
+048F                       if field < width                                      ' need padding?
+048F     70            ; Push_LocalMem_Long_4
+0490     68            ; Push_LocalMem_Long_2
+0491     F9            ; Less
+0492     0A 0D         ; Jump_If_False, $000D
+0494                           repeat (width - field)                              ' yes
+0494     68            ; Push_LocalMem_Long_2
+0495     70            ; Push_LocalMem_Long_4
+0496     ED            ; Subtract
+0497     08 08         ; Loop_Start, $0008
+0499                               nstr[idx++] := " "                                '   pad with space(s)
+0499     37 04         ; Push_Packed_Lit, $00000020
+049B     42 AE         ; Effect_VariableMem_Long_0, post-inc, long
+049D     99 04         ; Pop_Indexed_VariableMem_Byte, $0004
+049F     09 78         ; Loop_Continue, $FFF8
+04A1                       return DecToStr(value)
+04A1     00            ; Frame_Call_Return
+04A2     64            ; Push_LocalMem_Long_1
+04A3     05 0A         ; Call, $0A
+04A5     33            ; Pop_Return
+04A6     32            ; Return
+04A7                   PUB DecZeroed(value, digits) | div
+04A7                       ClearStr(@nstr, MAX_LEN)
+04A7     01            ; Frame_Call_Noreturn
+04A8     8B 04         ; Reference_VariableMem_Byte, $0004
+04AA     37 05         ; Push_Packed_Lit, $00000040
+04AC     05 09         ; Call, $09
+04AE                       digits := 1 #> digits <# 10
+04AE     36            ; Push_1
+04AF     68            ; Push_LocalMem_Long_2
+04B0     E4            ; Limit_Min
+04B1     38 0A         ; Push_Byte_Lit, $0A
+04B3     E5            ; Limit_Max
+04B4     69            ; Pop_LocalMem_Long_2
+04B5                       if (value < 0)                                        ' negative value?
+04B5     64            ; Push_LocalMem_Long_1
+04B6     35            ; Push_0
+04B7     F9            ; Less
+04B8     0A 08         ; Jump_If_False, $0008
+04BA                           -value                                              '   yes, make positive
+04BA     66 46         ; Effect_LocalMem_Long_1, Negate, swap
+04BC                           nstr[idx++] := "-"                                  '   and print sign indicator
+04BC     38 2D         ; Push_Byte_Lit, $2D
+04BE     42 AE         ; Effect_VariableMem_Long_0, post-inc, long
+04C0     99 04         ; Pop_Indexed_VariableMem_Byte, $0004
+04C2                       div := 1_000_000_000                                  ' initialize divisor
+04C2     3B 3B9ACA00   ; Push_Long_Lit, $3B9ACA00
+04C7     6D            ; Pop_LocalMem_Long_3
+04C8                       if digits < 10                                        ' less than 10 digits?
+04C8     68            ; Push_LocalMem_Long_2
+04C9     38 0A         ; Push_Byte_Lit, $0A
+04CB     F9            ; Less
+04CC     0A 0C         ; Jump_If_False, $000C
+04CE                           repeat (10 - digits)                                '   yes, adjust divisor
+04CE     38 0A         ; Push_Byte_Lit, $0A
+04D0     68            ; Push_LocalMem_Long_2
+04D1     ED            ; Subtract
+04D2     08 06         ; Loop_Start, $0006
+04D4                               div /= 10
+04D4     38 0A         ; Push_Byte_Lit, $0A
+04D6     6E 56         ; Effect_LocalMem_Long_3, Divide, swap
+04D8     09 7A         ; Loop_Continue, $FFFA
+04DA                       value //= (div * 10)                                  ' truncate unused digits
+04DA     6C            ; Push_LocalMem_Long_3
+04DB     38 0A         ; Push_Byte_Lit, $0A
+04DD     F4            ; Multiply
+04DE     66 57         ; Effect_LocalMem_Long_1, Modulo, swap
+04E0                       repeat digits
+04E0     68            ; Push_LocalMem_Long_2
+04E1     08 13         ; Loop_Start, $0013
+04E3                           nstr[idx++] := (value / div + "0")                  ' convert digit to ASCII
+04E3     64            ; Push_LocalMem_Long_1
+04E4     6C            ; Push_LocalMem_Long_3
+04E5     F6            ; Divide
+04E6     38 30         ; Push_Byte_Lit, $30
+04E8     EC            ; Add
+04E9     42 AE         ; Effect_VariableMem_Long_0, post-inc, long
+04EB     99 04         ; Pop_Indexed_VariableMem_Byte, $0004
+04ED                           value //= div                                       ' update value
+04ED     6C            ; Push_LocalMem_Long_3
+04EE     66 57         ; Effect_LocalMem_Long_1, Modulo, swap
+04F0                           div /= 10                                           ' update divisor
+04F0     38 0A         ; Push_Byte_Lit, $0A
+04F2     6E 56         ; Effect_LocalMem_Long_3, Divide, swap
+04F4     09 6D         ; Loop_Continue, $FFED
+04F6                       return @nstr
+04F6     8B 04         ; Reference_VariableMem_Byte, $0004
+04F8     33            ; Pop_Return
+04F9     32            ; Return
+04FA                   PUB Hex(value, digits)
+04FA                       ClearStr(@nstr, MAX_LEN)
+04FA     01            ; Frame_Call_Noreturn
+04FB     8B 04         ; Reference_VariableMem_Byte, $0004
+04FD     37 05         ; Push_Packed_Lit, $00000040
+04FF     05 09         ; Call, $09
+0501                       return HexToStr(value, digits)
+0501     00            ; Frame_Call_Return
+0502     64            ; Push_LocalMem_Long_1
+0503     68            ; Push_LocalMem_Long_2
+0504     05 0B         ; Call, $0B
+0506     33            ; Pop_Return
+0507     32            ; Return
+0508                   PUB HexIndicated(value, digits)
+0508                       ClearStr(@nstr, MAX_LEN)
+0508     01            ; Frame_Call_Noreturn
+0509     8B 04         ; Reference_VariableMem_Byte, $0004
+050B     37 05         ; Push_Packed_Lit, $00000040
+050D     05 09         ; Call, $09
+050F                       nstr[idx++] := "$"
+050F     38 24         ; Push_Byte_Lit, $24
+0511     42 AE         ; Effect_VariableMem_Long_0, post-inc, long
+0513     99 04         ; Pop_Indexed_VariableMem_Byte, $0004
+0515                       return HexToStr(value, digits)
+0515     00            ; Frame_Call_Return
+0516     64            ; Push_LocalMem_Long_1
+0517     68            ; Push_LocalMem_Long_2
+0518     05 0B         ; Call, $0B
+051A     33            ; Pop_Return
+051B     32            ; Return
+051C                   PUB Bin(value, digits)
+051C                       ClearStr(@nstr, MAX_LEN)
+051C     01            ; Frame_Call_Noreturn
+051D     8B 04         ; Reference_VariableMem_Byte, $0004
+051F     37 05         ; Push_Packed_Lit, $00000040
+0521     05 09         ; Call, $09
+0523                       return BinToStr(value, digits)
+0523     00            ; Frame_Call_Return
+0524     64            ; Push_LocalMem_Long_1
+0525     68            ; Push_LocalMem_Long_2
+0526     05 0C         ; Call, $0C
+0528     33            ; Pop_Return
+0529     32            ; Return
+052A                   PUB BinIndicated(value, digits)
+052A                       ClearStr(@nstr, MAX_LEN)
+052A     01            ; Frame_Call_Noreturn
+052B     8B 04         ; Reference_VariableMem_Byte, $0004
+052D     37 05         ; Push_Packed_Lit, $00000040
+052F     05 09         ; Call, $09
+0531                       nstr[idx++] := "%"                                    ' preface with binary indicator
+0531     38 25         ; Push_Byte_Lit, $25
+0533     42 AE         ; Effect_VariableMem_Long_0, post-inc, long
+0535     99 04         ; Pop_Indexed_VariableMem_Byte, $0004
+0537                       return BinToStr(value, digits)
+0537     00            ; Frame_Call_Return
+0538     64            ; Push_LocalMem_Long_1
+0539     68            ; Push_LocalMem_Long_2
+053A     05 0C         ; Call, $0C
+053C     33            ; Pop_Return
+053D     32            ; Return
+053E                   PUB StrToBase(stringptr, base) : value | chr, index
+053E                       value := index := 0
+053E     35            ; Push_0
+053F     72 80         ; Effect_LocalMem_Long_4, write, push
+0541     61            ; Pop_LocalMem_Long_0
+0542                       repeat until ((chr := byte[stringptr][index++]) == 0)
+0542     64            ; Push_LocalMem_Long_1
+0543     72 AE         ; Effect_LocalMem_Long_4, post-inc, long
+0545     90            ; Push_Indexed_MainMem_Byte
+0546     6E 80         ; Effect_LocalMem_Long_3, write, push
+0548     35            ; Push_0
+0549     FC            ; Equal
+054A     0B 23         ; Jump_If_True, $0023
+054C                           chr := -15 + --chr & %11011111 + 39*(chr > 56)                      ' Make "0"-"9","A"-"F","a"-"f" be 0 - 15, others out of range
+054C     38 0E         ; Push_Byte_Lit, $0E
+054E     E7            ; Complement
+054F     6E B6         ; Effect_LocalMem_Long_3, pre-dec, long
+0551     38 DF         ; Push_Byte_Lit, $DF
+0553     E8            ; Bit_And
+0554     EC            ; Add
+0555     38 27         ; Push_Byte_Lit, $27
+0557     6C            ; Push_LocalMem_Long_3
+0558     38 38         ; Push_Byte_Lit, $38
+055A     FA            ; Greater
+055B     F4            ; Multiply
+055C     EC            ; Add
+055D     6D            ; Pop_LocalMem_Long_3
+055E                           if (chr > -1) and (chr < base)                                      ' Accumulate valid values into result; ignore others
+055E     6C            ; Push_LocalMem_Long_3
+055F     34            ; Push_Neg1
+0560     FA            ; Greater
+0561     6C            ; Push_LocalMem_Long_3
+0562     68            ; Push_LocalMem_Long_2
+0563     F9            ; Less
+0564     F0            ; Logical_And
+0565     0A 06         ; Jump_If_False, $0006
+0567                               value := value * base + chr
+0567     60            ; Push_LocalMem_Long_0
+0568     68            ; Push_LocalMem_Long_2
+0569     F4            ; Multiply
+056A     6C            ; Push_LocalMem_Long_3
+056B     EC            ; Add
+056C     61            ; Pop_LocalMem_Long_0
+056D     04 53         ; Branch, $FFD3
+056F                       if (base == 10) and (byte[stringptr] == "-")                            ' If decimal, address negative sign; ignore otherwise
+056F     68            ; Push_LocalMem_Long_2
+0570     38 0A         ; Push_Byte_Lit, $0A
+0572     FC            ; Equal
+0573     64            ; Push_LocalMem_Long_1
+0574     80            ; Push_MainMem_Byte
+0575     38 2D         ; Push_Byte_Lit, $2D
+0577     FC            ; Equal
+0578     F0            ; Logical_And
+0579     0A 03         ; Jump_If_False, $0003
+057B                           value := - value
+057B     60            ; Push_LocalMem_Long_0
+057C     E6            ; Negate
+057D     61            ; Pop_LocalMem_Long_0
+057E     32            ; Return
+057F                   PRI ClearStr(strAddr, size)
+057F                       bytefill(strAddr, 0, size)                            ' clear string to zeros
+057F     64            ; Push_LocalMem_Long_1
+0580     35            ; Push_0
+0581     68            ; Push_LocalMem_Long_2
+0582     18            ; Bytefill
+0583                       idx~                                                  ' reset index
+0583     42 18         ; Effect_VariableMem_Long_0, post-clear
+0585     32            ; Return
+0586                   PRI DecToStr(value) | div, z_pad
+0586                       if (value < 0)                                        ' negative value?
+0586     64            ; Push_LocalMem_Long_1
+0587     35            ; Push_0
+0588     F9            ; Less
+0589     0A 08         ; Jump_If_False, $0008
+058B                           -value                                              '   yes, make positive
+058B     66 46         ; Effect_LocalMem_Long_1, Negate, swap
+058D                           nstr[idx++] := "-"                                  '   and print sign indicator
+058D     38 2D         ; Push_Byte_Lit, $2D
+058F     42 AE         ; Effect_VariableMem_Long_0, post-inc, long
+0591     99 04         ; Pop_Indexed_VariableMem_Byte, $0004
+0593                       div := 1_000_000_000                                  ' initialize divisor
+0593     3B 3B9ACA00   ; Push_Long_Lit, $3B9ACA00
+0598     69            ; Pop_LocalMem_Long_2
+0599                       z_pad~                                                ' clear zero-pad flag
+0599     6E 18         ; Effect_LocalMem_Long_3, post-clear
+059B                       repeat 10
+059B     38 0A         ; Push_Byte_Lit, $0A
+059D     08 29         ; Loop_Start, $0029
+059F                           if (value => div)                                   ' printable character?
+059F     64            ; Push_LocalMem_Long_1
+05A0     68            ; Push_LocalMem_Long_2
+05A1     FE            ; Greater_Equal
+05A2     0A 11         ; Jump_If_False, $0011
+05A4                               nstr[idx++] := (value / div + "0")                '   yes, print ASCII digit
+05A4     64            ; Push_LocalMem_Long_1
+05A5     68            ; Push_LocalMem_Long_2
+05A6     F6            ; Divide
+05A7     38 30         ; Push_Byte_Lit, $30
+05A9     EC            ; Add
+05AA     42 AE         ; Effect_VariableMem_Long_0, post-inc, long
+05AC     99 04         ; Pop_Indexed_VariableMem_Byte, $0004
+05AE                               value //= div                                     '   update value
+05AE     68            ; Push_LocalMem_Long_2
+05AF     66 57         ; Effect_LocalMem_Long_1, Modulo, swap
+05B1                               z_pad~~                                           '   set zflag
+05B1     6E 1C         ; Effect_LocalMem_Long_3, post-set
+05B3     04 0D         ; Branch, $000D
+05B5     6C            ; Push_LocalMem_Long_3
+05B6     68            ; Push_LocalMem_Long_2
+05B7     36            ; Push_1
+05B8     FC            ; Equal
+05B9     F2            ; Logical_Or
+05BA     0A 06         ; Jump_If_False, $0006
+05BC                               nstr[idx++] := "0"
+05BC     38 30         ; Push_Byte_Lit, $30
+05BE     42 AE         ; Effect_VariableMem_Long_0, post-inc, long
+05C0     99 04         ; Pop_Indexed_VariableMem_Byte, $0004
+05C2                           div /= 10
+05C2     38 0A         ; Push_Byte_Lit, $0A
+05C4     6A 56         ; Effect_LocalMem_Long_2, Divide, swap
+05C6     09 57         ; Loop_Continue, $FFD7
+05C8                       return @nstr
+05C8     8B 04         ; Reference_VariableMem_Byte, $0004
+05CA     33            ; Pop_Return
+05CB     32            ; Return
+05CC                   PRI HexToStr(value, digits)
+05CC                       digits := 1 #> digits <# 8                            ' qualify digits
+05CC     36            ; Push_1
+05CD     68            ; Push_LocalMem_Long_2
+05CE     E4            ; Limit_Min
+05CF     37 02         ; Push_Packed_Lit, $00000008
+05D1     E5            ; Limit_Max
+05D2     69            ; Pop_LocalMem_Long_2
+05D3                       value <<= (8 - digits) << 2                           ' prep most significant digit
+05D3     37 02         ; Push_Packed_Lit, $00000008
+05D5     68            ; Push_LocalMem_Long_2
+05D6     ED            ; Subtract
+05D7     37 00         ; Push_Packed_Lit, $00000002
+05D9     E3            ; Shift_Left
+05DA     66 43         ; Effect_LocalMem_Long_1, Shift_Left, swap
+05DC                       repeat digits
+05DC     68            ; Push_LocalMem_Long_2
+05DD     08 1C         ; Loop_Start, $001C
+05DF                           nstr[idx++] := lookupz((value <-= 4) & $F : "0".."9", "A".."F")
+05DF     35            ; Push_0
+05E0     39 01D1       ; Push_Word_Lit, $01D1
+05E3     37 01         ; Push_Packed_Lit, $00000004
+05E5     66 C1         ; Effect_LocalMem_Long_1, Rotate_Left, swap
+05E7     37 23         ; Push_Packed_Lit, $0000000F
+05E9     E8            ; Bit_And
+05EA     38 30         ; Push_Byte_Lit, $30
+05EC     38 39         ; Push_Byte_Lit, $39
+05EE     12            ; Lookuprange_Compare
+05EF     38 41         ; Push_Byte_Lit, $41
+05F1     38 46         ; Push_Byte_Lit, $46
+05F3     12            ; Lookuprange_Compare
+05F4     0F            ; Look_Abort
+05F5     42 AE         ; Effect_VariableMem_Long_0, post-inc, long
+05F7     99 04         ; Pop_Indexed_VariableMem_Byte, $0004
+05F9     09 64         ; Loop_Continue, $FFE4
+05FB                       return @nstr
+05FB     8B 04         ; Reference_VariableMem_Byte, $0004
+05FD     33            ; Pop_Return
+05FE     32            ; Return
+05FF                   PRI BinToStr(value, digits)
+05FF                       digits := 1 #> digits <# 32                           ' qualify digits
+05FF     36            ; Push_1
+0600     68            ; Push_LocalMem_Long_2
+0601     E4            ; Limit_Min
+0602     37 04         ; Push_Packed_Lit, $00000020
+0604     E5            ; Limit_Max
+0605     69            ; Pop_LocalMem_Long_2
+0606                       value <<= 32 - digits                                 ' prep MSB
+0606     37 04         ; Push_Packed_Lit, $00000020
+0608     68            ; Push_LocalMem_Long_2
+0609     ED            ; Subtract
+060A     66 43         ; Effect_LocalMem_Long_1, Shift_Left, swap
+060C                       repeat digits
+060C     68            ; Push_LocalMem_Long_2
+060D     08 0E         ; Loop_Start, $000E
+060F                           nstr[idx++] := (value <-= 1) & 1 + "0"              ' move digits (ASCII) to string
+060F     36            ; Push_1
+0610     66 C1         ; Effect_LocalMem_Long_1, Rotate_Left, swap
+0612     36            ; Push_1
+0613     E8            ; Bit_And
+0614     38 30         ; Push_Byte_Lit, $30
+0616     EC            ; Add
+0617     42 AE         ; Effect_VariableMem_Long_0, post-inc, long
+0619     99 04         ; Pop_Indexed_VariableMem_Byte, $0004
+061B     09 72         ; Loop_Continue, $FFF2
+061D                       return @nstr
+061D     8B 04         ; Reference_VariableMem_Byte, $0004
+061F     33            ; Pop_Return
+0620     32            ; Return
+0621     00            ; Frame_Call_Return
+0622     00            ; Frame_Call_Return
+0623     00            ; Frame_Call_Return
+                       Variables for TOP.SER (com.serial.terminal.spin)
+0624     0000          byte STR_BUFFER[50]
+                       Variables for TOP.SER.SER (com.serial.spin)
+0658     0000          long COG
+065C     0004          long RX_HEAD
+0660     0008          long RX_TAIL
+0664     000C          long TX_HEAD
+0668     0010          long TX_TAIL
+066C     0014          long RX_PIN
+0670     0018          long TX_PIN
+0674     001C          long RXTX_MODE
+0678     0020          long BIT_TICKS
+067C     0024          long BUFFER_PTR
+0680     0028          byte RX_BUFFER[64]
+06C0     0068          byte TX_BUFFER[64]
+                       Variables for TOP.SER.NUM (string.integer.spin)
+0700     0000          long IDX
+0704     0004          byte NSTR[64]
+0744                   Reserved 8 bytes.
+074C                   Base of stack.
+075C                   Top of stack.

@@ -1,0 +1,220 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     63            Check Sum
+0006     0010          Base of Program
+0008     012C          Base of Variables
+000A     0188          Base of Stack
+000C     0028          Initial Program Counter
+000E     0198          Initial Stack Pointer
+                       File "math.rctime.spin"
+0010     007C 0204     Link to Next Object
+0014     0018 0000     Link to PUB Start(pin, state, rcvalueaddr)
+0018     002D 0000     Link to PUB stop
+001C     0034 0000     Link to PUB CalculateRCTime(pin,state,rcvalueaddr)
+0020                   OBJ
+0020     007C 0050         time : "time"
+0024     00E0 0054         io   : "io"
+0028                   PUB Start(pin, state, rcvalueaddr)
+0028                     stop
+0028     01            ; Frame_Call_Noreturn
+0029     05 02         ; Call, $02
+002B                     cogon := (cog := cognew(CalculateRCTime(pin, state, rcvalueaddr),@RCStack)) > 0
+002B     64            ; Push_LocalMem_Long_1
+002C     68            ; Push_LocalMem_Long_2
+002D     6C            ; Push_LocalMem_Long_3
+002E     39 0303       ; Push_Word_Lit, $0303
+0031     4B            ; Reference_VariableMem_Long_2
+0032     15            ; Mark_Interpreted
+0033     28            ; Coginit_Returns
+0034     46 80         ; Effect_VariableMem_Long_1, write, push
+0036     35            ; Push_0
+0037     FA            ; Greater
+0038     41            ; Pop_VariableMem_Long_0
+0039                     mode := 1
+0039     36            ; Push_1
+003A     C9 4C         ; Pop_VariableMem_Long, $004C
+003C     32            ; Return
+003D                   PUB stop
+003D                     if cogon~
+003D     42 98         ; Effect_VariableMem_Long_0, post-clear, push
+003F     0A 02         ; Jump_If_False, $0002
+0041                       cogstop(cog)
+0041     44            ; Push_VariableMem_Long_1
+0042     21            ; Cogstop
+0043     32            ; Return
+0044                   PUB CalculateRCTime(pin,state,rcvalueaddr)
+0044                       repeat
+0044                              io.Set (pin, state)                  'make I/O an output in the state you wish to measure... and then charge cap
+0044     01            ; Frame_Call_Noreturn
+0045     64            ; Push_LocalMem_Long_1
+0046     68            ; Push_LocalMem_Long_2
+0047     06 05 06      ; Objcall, $05, $06
+004A                              io.Output (pin)
+004A     01            ; Frame_Call_Noreturn
+004B     64            ; Push_LocalMem_Long_1
+004C     06 05 01      ; Objcall, $05, $01
+004F                              time.MSleep(1)                       'pause for 1mS to charge cap
+004F     01            ; Frame_Call_Noreturn
+0050     36            ; Push_1
+0051     06 04 02      ; Objcall, $04, $02
+0054                              io.Input (pin)                       'make I/O an input
+0054     01            ; Frame_Call_Noreturn
+0055     64            ; Push_LocalMem_Long_1
+0056     06 05 02      ; Objcall, $05, $02
+0059                              rctemp := cnt                        'grab clock tick counter value
+0059     3F 91 C9      ; Memory_Op, $11C9
+005C     48            ; Push_VariableMem_Long_2
+005D                              waitpeq(1 - state, |< pin, 0)        'wait until pin goes into the opposite state you wish to measure; state: 1=discharge 0=charge
+005D     36            ; Push_1
+005E     68            ; Push_LocalMem_Long_2
+005F     ED            ; Subtract
+0060     64            ; Push_LocalMem_Long_1
+0061     F3            ; Decode
+0062     35            ; Push_0
+0063     1B            ; Waitpeq
+0064                              rctemp := cnt - rctemp               'see how many clock cycles passed until desired state changed
+0064     3F 91 C8      ; Memory_Op, $11C8
+0067     48            ; Push_VariableMem_Long_2
+0068     ED            ; Subtract
+0069     C9 48         ; Pop_VariableMem_Long, $0048
+006B                              rctemp := rctemp - 1600              'offset adjustment (entry and exit clock cycles Note: this can vary slightly with code changes)
+006B     C8 48         ; Push_VariableMem_Long, $0048
+006D     39 0640       ; Push_Word_Lit, $0640
+0070     ED            ; Subtract
+0071     C9 48         ; Pop_VariableMem_Long, $0048
+0073                              rctemp := rctemp >> 4                'scale result (divide by 16) <<-number of clock cycles per itteration loop
+0073     C8 48         ; Push_VariableMem_Long, $0048
+0075     37 01         ; Push_Packed_Lit, $00000004
+0077     E2            ; Shift_Right
+0078     C9 48         ; Pop_VariableMem_Long, $0048
+007A                              long [rcvalueaddr] := rctemp         'Write rctemp to RCValue
+007A     C8 48         ; Push_VariableMem_Long, $0048
+007C     6C            ; Push_LocalMem_Long_3
+007D     C1            ; Pop_MainMem_Long
+007E                              if mode == 0                         'Check for forground (0) or background (1) mode of operation; forground = no seperate cog / background = seperate running cog
+007E     C8 4C         ; Push_VariableMem_Long, $004C
+0080     35            ; Push_0
+0081     FC            ; Equal
+0082     0A 02         ; Jump_If_False, $0002
+0084                                 quit
+0084     04 03         ; Branch, $0003
+0086     04 FF BB      ; Branch, $FFBB
+0089     32            ; Return
+008A     00            ; Frame_Call_Return
+008B     00            ; Frame_Call_Return
+                       File "time.spin"
+008C     0064 0006     Link to Next Object
+0090     0018 0000     Link to PUB Sleep(secs)
+0094     0029 0000     Link to PUB MSleep(msecs)
+0098     003E 0000     Link to PUB USleep(usecs)
+009C     0054 0000     Link to PUB SetSync
+00A0     0058 0000     Link to PUB WaitForSync(secs)
+00A4                   PUB Sleep(secs)
+00A4                       waitcnt(((clkfreq * secs - 3016) #> WMIN) + cnt)
+00A4     35            ; Push_0
+00A5     C0            ; Push_MainMem_Long
+00A6     64            ; Push_LocalMem_Long_1
+00A7     F4            ; Multiply
+00A8     39 0BC8       ; Push_Word_Lit, $0BC8
+00AB     ED            ; Subtract
+00AC     39 017D       ; Push_Word_Lit, $017D
+00AF     E4            ; Limit_Min
+00B0     3F 91 EC      ; Memory_Op, $11EC
+00B3     23            ; Waitcnt
+00B4     32            ; Return
+00B5                   PUB MSleep(msecs)
+00B5                       waitcnt(((clkfreq / 1_000 * msecs - 3932) #> WMIN) + cnt)
+00B5     35            ; Push_0
+00B6     C0            ; Push_MainMem_Long
+00B7     39 03E8       ; Push_Word_Lit, $03E8
+00BA     F6            ; Divide
+00BB     64            ; Push_LocalMem_Long_1
+00BC     F4            ; Multiply
+00BD     39 0F5C       ; Push_Word_Lit, $0F5C
+00C0     ED            ; Subtract
+00C1     39 017D       ; Push_Word_Lit, $017D
+00C4     E4            ; Limit_Min
+00C5     3F 91 EC      ; Memory_Op, $11EC
+00C8     23            ; Waitcnt
+00C9     32            ; Return
+00CA                   PUB USleep(usecs)
+00CA                       waitcnt(((clkfreq / 1_000_000 * usecs - 3928) #> WMIN) + cnt)
+00CA     35            ; Push_0
+00CB     C0            ; Push_MainMem_Long
+00CC     3A 0F4240     ; Push_Mid_Lit, $0F4240
+00D0     F6            ; Divide
+00D1     64            ; Push_LocalMem_Long_1
+00D2     F4            ; Multiply
+00D3     39 0F58       ; Push_Word_Lit, $0F58
+00D6     ED            ; Subtract
+00D7     39 017D       ; Push_Word_Lit, $017D
+00DA     E4            ; Limit_Min
+00DB     3F 91 EC      ; Memory_Op, $11EC
+00DE     23            ; Waitcnt
+00DF     32            ; Return
+00E0                   PUB SetSync
+00E0                       sync := cnt
+00E0     3F 91 41      ; Memory_Op, $1141
+00E3     32            ; Return
+00E4                   PUB WaitForSync(secs)
+00E4                       waitcnt(sync += ((clkfreq * secs) #> WMIN))
+00E4     35            ; Push_0
+00E5     C0            ; Push_MainMem_Long
+00E6     64            ; Push_LocalMem_Long_1
+00E7     F4            ; Multiply
+00E8     39 017D       ; Push_Word_Lit, $017D
+00EB     E4            ; Limit_Min
+00EC     42 CC         ; Effect_VariableMem_Long_0, Add, swap
+00EE     23            ; Waitcnt
+00EF     32            ; Return
+                       File "io.spin"
+00F0     003C 0007     Link to Next Object
+00F4     001C 0000     Link to PUB Output(pin)
+00F8     0021 0000     Link to PUB Input(pin)
+00FC     0026 0000     Link to PUB High(pin)
+0100     002B 0000     Link to PUB Low(pin)
+0104     0030 0000     Link to PUB Toggle(pin)
+0108     0035 0000     Link to PUB Set(pin, enabled)
+010C                   PUB Output(pin)
+010C                       dira[pin]~~
+010C     64            ; Push_LocalMem_Long_1
+010D     3D D6 1C      ; Indexed_Mem_Op, $561C
+0110     32            ; Return
+0111                   PUB Input(pin)
+0111                       dira[pin]~
+0111     64            ; Push_LocalMem_Long_1
+0112     3D D6 18      ; Indexed_Mem_Op, $5618
+0115     32            ; Return
+0116                   PUB High(pin)
+0116                       outa[pin]~~
+0116     64            ; Push_LocalMem_Long_1
+0117     3D D4 1C      ; Indexed_Mem_Op, $541C
+011A     32            ; Return
+011B                   PUB Low(pin)
+011B                       outa[pin]~
+011B     64            ; Push_LocalMem_Long_1
+011C     3D D4 18      ; Indexed_Mem_Op, $5418
+011F     32            ; Return
+0120                   PUB Toggle(pin)
+0120                       ~outa[pin]
+0120     64            ; Push_LocalMem_Long_1
+0121     3D D4 10      ; Indexed_Mem_Op, $5410
+0124     32            ; Return
+0125                   PUB Set(pin, enabled)
+0125                       outa[pin] := enabled
+0125     68            ; Push_LocalMem_Long_2
+0126     64            ; Push_LocalMem_Long_1
+0127     3D B4 32      ; Indexed_Mem_Op, $3432
+012A     00            ; Frame_Call_Return
+012B     00            ; Frame_Call_Return
+                       Variables for TOP (math.rctime.spin)
+012C     0000          long COGON
+0130     0004          long COG
+0134     0008          long RCSTACK[16]
+0174     0048          long RCTEMP
+0178     004C          long MODE
+                       Variables for TOP.TIME (time.spin)
+017C     0000          long SYNC
+0180                   Reserved 8 bytes.
+0188                   Base of stack.
+0198                   Top of stack.

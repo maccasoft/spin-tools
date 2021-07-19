@@ -1,0 +1,59 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     B3            Check Sum
+0006     0010          Base of Program
+0008     009C          Base of Variables
+000A     00A4          Base of Stack
+000C     0094          Initial Program Counter
+000E     00AC          Initial Stack Pointer
+                       File "signal.dither.spin"
+0010     008C 0002     Link to Next Object
+0014     0084 0000     Link to pub start(ptr)
+0018 000               dat
+0018 000                                       org
+0018 000 A0BFF016      entry                   mov     ctra,ctra_
+001C 001 A0BFF217                              mov     ctrb,ctrb_
+0020 002 A0BFEC18                              mov     dira,dira_
+0024 003 08BC3FF0      loop                    rdlong  left,par                '20 instructions per loop = 1us period @80MHz
+0028 004 A0BC401F                              mov     right,left
+002C 005 60BC3E1D                              and     left,hFFFF0000
+0030 006 2CFC4010                              shl     right,#16
+0034 007 80BC3E1E                              add     left,h80000000
+0038 008 80BC401E                              add     right,h80000000
+003C 009 613C321B                              test    lfsr0,taps0     wc
+0040 00A 34FC3201                              rcl     lfsr0,#1
+0044 00B 613C341C                              test    lfsr1,taps1     wc
+0048 00C 34FC3401                              rcl     lfsr1,#1
+004C 00D A0BC4219                              mov     t1,lfsr0                'update left output
+0050 00E 38FC4205                              sar     t1,#dither
+0054 00F 80BC421F                              add     t1,left
+0058 010 A0BFF421                              mov     frqa,t1
+005C 011 A0BC421A                              mov     t1,lfsr1                'update right output
+0060 012 38FC4205                              sar     t1,#dither
+0064 013 80BC4220                              add     t1,right
+0068 014 A0BFF621                              mov     frqb,t1
+006C 015 5C7C0003                              jmp     #loop
+0070 016 1800000B      ctra_                   long    $18000000+11
+0074 017 1800000A      ctrb_                   long    $18000000+10
+0078 018 00000C00      dira_                   long    |<11 + |<10
+007C 019 00000001      lfsr0                   long    1
+0080 01A 00000001      lfsr1                   long    1
+0084 01B A4000080      taps0                   long    $A4000080
+0088 01C 80A01000      taps1                   long    $80A01000
+008C 01D FFFF0000      hFFFF0000               long    $FFFF0000
+0090 01E 80000000      h80000000               long    $80000000
+0094 01F               left                    res     1
+0094 020               right                   res     1
+0094 021               t1                      res     1
+0094                   pub start(ptr)
+0094                     cognew(@entry, ptr)
+0094     34            ; Push_Neg1
+0095     C7 08         ; Reference_ObjectMem_Long, $0008
+0097     64            ; Push_LocalMem_Long_1
+0098     2C            ; Coginit
+0099     32            ; Return
+009A     00            ; Frame_Call_Return
+009B     00            ; Frame_Call_Return
+009C                   Reserved 8 bytes.
+00A4                   Base of stack.
+00B4                   Top of stack.

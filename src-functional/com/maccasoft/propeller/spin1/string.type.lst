@@ -1,0 +1,267 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     3D            Check Sum
+0006     0010          Base of Program
+0008     0154          Base of Variables
+000A     015C          Base of Stack
+000C     0030          Initial Program Counter
+000E     0164          Initial Stack Pointer
+                       File "string.type.spin"
+0010     00A0 0107     Link to Next Object
+0014     0020 0000     Link to PUB IsAlphaNumeric(str)
+0018     0035 0000     Link to PUB IsAlpha(str)
+001C     004A 0000     Link to PUB IsDigit(str)
+0020     005F 0000     Link to PUB IsLower(str)
+0024     0074 0000     Link to PUB IsUpper(str)
+0028     0089 0000     Link to PUB IsSpace(str)
+002C                   OBJ
+002C     00A0 0000         cc : "char.type"
+0030                   PUB IsAlphaNumeric(str)
+0030                       repeat strsize(str)
+0030     64            ; Push_LocalMem_Long_1
+0031     16            ; Strsize
+0032     08 0E         ; Loop_Start, $000E
+0034                           if not cc.IsAlphaNumeric (byte[str++])
+0034     00            ; Frame_Call_Return
+0035     66 AE         ; Effect_LocalMem_Long_1, post-inc, long
+0037     80            ; Push_MainMem_Byte
+0038     06 07 01      ; Objcall, $07, $01
+003B     FF            ; Logical_Not
+003C     0A 02         ; Jump_If_False, $0002
+003E                               return false
+003E     35            ; Push_0
+003F     33            ; Pop_Return
+0040     09 72         ; Loop_Continue, $FFF2
+0042                       return true
+0042     34            ; Push_Neg1
+0043     33            ; Pop_Return
+0044     32            ; Return
+0045                   PUB IsAlpha(str)
+0045                       repeat strsize(str)
+0045     64            ; Push_LocalMem_Long_1
+0046     16            ; Strsize
+0047     08 0E         ; Loop_Start, $000E
+0049                           if not cc.IsAlpha (byte[str++])
+0049     00            ; Frame_Call_Return
+004A     66 AE         ; Effect_LocalMem_Long_1, post-inc, long
+004C     80            ; Push_MainMem_Byte
+004D     06 07 02      ; Objcall, $07, $02
+0050     FF            ; Logical_Not
+0051     0A 02         ; Jump_If_False, $0002
+0053                               return false
+0053     35            ; Push_0
+0054     33            ; Pop_Return
+0055     09 72         ; Loop_Continue, $FFF2
+0057                       return true
+0057     34            ; Push_Neg1
+0058     33            ; Pop_Return
+0059     32            ; Return
+005A                   PUB IsDigit(str)
+005A                       repeat strsize(str)
+005A     64            ; Push_LocalMem_Long_1
+005B     16            ; Strsize
+005C     08 0E         ; Loop_Start, $000E
+005E                           if not cc.IsDigit (byte[str++])
+005E     00            ; Frame_Call_Return
+005F     66 AE         ; Effect_LocalMem_Long_1, post-inc, long
+0061     80            ; Push_MainMem_Byte
+0062     06 07 03      ; Objcall, $07, $03
+0065     FF            ; Logical_Not
+0066     0A 02         ; Jump_If_False, $0002
+0068                               return false
+0068     35            ; Push_0
+0069     33            ; Pop_Return
+006A     09 72         ; Loop_Continue, $FFF2
+006C                       return true
+006C     34            ; Push_Neg1
+006D     33            ; Pop_Return
+006E     32            ; Return
+006F                   PUB IsLower(str)
+006F                       repeat strsize(str)
+006F     64            ; Push_LocalMem_Long_1
+0070     16            ; Strsize
+0071     08 0E         ; Loop_Start, $000E
+0073                           if not cc.IsLower (byte[str++])
+0073     00            ; Frame_Call_Return
+0074     66 AE         ; Effect_LocalMem_Long_1, post-inc, long
+0076     80            ; Push_MainMem_Byte
+0077     06 07 04      ; Objcall, $07, $04
+007A     FF            ; Logical_Not
+007B     0A 02         ; Jump_If_False, $0002
+007D                               return false
+007D     35            ; Push_0
+007E     33            ; Pop_Return
+007F     09 72         ; Loop_Continue, $FFF2
+0081                       return true
+0081     34            ; Push_Neg1
+0082     33            ; Pop_Return
+0083     32            ; Return
+0084                   PUB IsUpper(str)
+0084                       repeat strsize(str)
+0084     64            ; Push_LocalMem_Long_1
+0085     16            ; Strsize
+0086     08 0E         ; Loop_Start, $000E
+0088                           if not cc.IsUpper (byte[str++])
+0088     00            ; Frame_Call_Return
+0089     66 AE         ; Effect_LocalMem_Long_1, post-inc, long
+008B     80            ; Push_MainMem_Byte
+008C     06 07 05      ; Objcall, $07, $05
+008F     FF            ; Logical_Not
+0090     0A 02         ; Jump_If_False, $0002
+0092                               return false
+0092     35            ; Push_0
+0093     33            ; Pop_Return
+0094     09 72         ; Loop_Continue, $FFF2
+0096                       return true
+0096     34            ; Push_Neg1
+0097     33            ; Pop_Return
+0098     32            ; Return
+0099                   PUB IsSpace(str)
+0099                       repeat strsize(str)
+0099     64            ; Push_LocalMem_Long_1
+009A     16            ; Strsize
+009B     08 0E         ; Loop_Start, $000E
+009D                           if not cc.IsSpace (byte[str++])
+009D     00            ; Frame_Call_Return
+009E     66 AE         ; Effect_LocalMem_Long_1, post-inc, long
+00A0     80            ; Push_MainMem_Byte
+00A1     06 07 06      ; Objcall, $07, $06
+00A4     FF            ; Logical_Not
+00A5     0A 02         ; Jump_If_False, $0002
+00A7                               return false
+00A7     35            ; Push_0
+00A8     33            ; Pop_Return
+00A9     09 72         ; Loop_Continue, $FFF2
+00AB                       return true
+00AB     34            ; Push_Neg1
+00AC     33            ; Pop_Return
+00AD     32            ; Return
+00AE     00            ; Frame_Call_Return
+00AF     00            ; Frame_Call_Return
+                       File "char.type.spin"
+00B0     00A4 0009     Link to Next Object
+00B4     0024 0000     Link to PUB IsAlphaNumeric(c)
+00B8     003A 0000     Link to PUB IsAlpha(c)
+00BC     004B 0000     Link to PUB IsDigit(c)
+00C0     0057 0000     Link to PUB IsLower(c)
+00C4     0063 0000     Link to PUB IsUpper(c)
+00C8     006F 0000     Link to PUB IsSpace(c)
+00CC     0082 0000     Link to PUB Upper(c)
+00D0     0092 0000     Link to PUB Lower(c)
+00D4                   PUB IsAlphaNumeric(c)
+00D4                       return lookdown(c: "0".."9", "a".."z", "A".."Z")
+00D4     36            ; Push_1
+00D5     38 38         ; Push_Byte_Lit, $38
+00D7     64            ; Push_LocalMem_Long_1
+00D8     38 30         ; Push_Byte_Lit, $30
+00DA     38 39         ; Push_Byte_Lit, $39
+00DC     13            ; Lookdownrange_Compare
+00DD     38 61         ; Push_Byte_Lit, $61
+00DF     38 7A         ; Push_Byte_Lit, $7A
+00E1     13            ; Lookdownrange_Compare
+00E2     38 41         ; Push_Byte_Lit, $41
+00E4     38 5A         ; Push_Byte_Lit, $5A
+00E6     13            ; Lookdownrange_Compare
+00E7     0F            ; Look_Abort
+00E8     33            ; Pop_Return
+00E9     32            ; Return
+00EA                   PUB IsAlpha(c)
+00EA                       return lookdown(c: "a".."z", "A".."Z")
+00EA     36            ; Push_1
+00EB     38 49         ; Push_Byte_Lit, $49
+00ED     64            ; Push_LocalMem_Long_1
+00EE     38 61         ; Push_Byte_Lit, $61
+00F0     38 7A         ; Push_Byte_Lit, $7A
+00F2     13            ; Lookdownrange_Compare
+00F3     38 41         ; Push_Byte_Lit, $41
+00F5     38 5A         ; Push_Byte_Lit, $5A
+00F7     13            ; Lookdownrange_Compare
+00F8     0F            ; Look_Abort
+00F9     33            ; Pop_Return
+00FA     32            ; Return
+00FB                   PUB IsDigit(c)
+00FB                       return lookdown(c: "0".."9")
+00FB     36            ; Push_1
+00FC     38 55         ; Push_Byte_Lit, $55
+00FE     64            ; Push_LocalMem_Long_1
+00FF     38 30         ; Push_Byte_Lit, $30
+0101     38 39         ; Push_Byte_Lit, $39
+0103     13            ; Lookdownrange_Compare
+0104     0F            ; Look_Abort
+0105     33            ; Pop_Return
+0106     32            ; Return
+0107                   PUB IsLower(c)
+0107                       return lookdown(c: "a".."z")
+0107     36            ; Push_1
+0108     38 61         ; Push_Byte_Lit, $61
+010A     64            ; Push_LocalMem_Long_1
+010B     38 61         ; Push_Byte_Lit, $61
+010D     38 7A         ; Push_Byte_Lit, $7A
+010F     13            ; Lookdownrange_Compare
+0110     0F            ; Look_Abort
+0111     33            ; Pop_Return
+0112     32            ; Return
+0113                   PUB IsUpper(c)
+0113                       return lookdown(c: "A".."Z")
+0113     36            ; Push_1
+0114     38 6D         ; Push_Byte_Lit, $6D
+0116     64            ; Push_LocalMem_Long_1
+0117     38 41         ; Push_Byte_Lit, $41
+0119     38 5A         ; Push_Byte_Lit, $5A
+011B     13            ; Lookdownrange_Compare
+011C     0F            ; Look_Abort
+011D     33            ; Pop_Return
+011E     32            ; Return
+011F                   PUB IsSpace(c)
+011F                       return lookdown(c: " ", 9, 10, 13)
+011F     36            ; Push_1
+0120     38 80         ; Push_Byte_Lit, $80
+0122     64            ; Push_LocalMem_Long_1
+0123     37 04         ; Push_Packed_Lit, $00000020
+0125     11            ; Lookdown_Compare
+0126     38 09         ; Push_Byte_Lit, $09
+0128     11            ; Lookdown_Compare
+0129     38 0A         ; Push_Byte_Lit, $0A
+012B     11            ; Lookdown_Compare
+012C     38 0D         ; Push_Byte_Lit, $0D
+012E     11            ; Lookdown_Compare
+012F     0F            ; Look_Abort
+0130     33            ; Pop_Return
+0131     32            ; Return
+0132                   PUB Upper(c)
+0132                       if IsLower(c)
+0132     00            ; Frame_Call_Return
+0133     64            ; Push_LocalMem_Long_1
+0134     05 04         ; Call, $04
+0136     0A 07         ; Jump_If_False, $0007
+0138                           return c - 32
+0138     64            ; Push_LocalMem_Long_1
+0139     37 04         ; Push_Packed_Lit, $00000020
+013B     ED            ; Subtract
+013C     33            ; Pop_Return
+013D     04 02         ; Branch, $0002
+013F                           return c
+013F     64            ; Push_LocalMem_Long_1
+0140     33            ; Pop_Return
+0141     32            ; Return
+0142                   PUB Lower(c)
+0142                       if IsUpper(c)
+0142     00            ; Frame_Call_Return
+0143     64            ; Push_LocalMem_Long_1
+0144     05 05         ; Call, $05
+0146     0A 07         ; Jump_If_False, $0007
+0148                           return c + 32
+0148     64            ; Push_LocalMem_Long_1
+0149     37 04         ; Push_Packed_Lit, $00000020
+014B     EC            ; Add
+014C     33            ; Pop_Return
+014D     04 02         ; Branch, $0002
+014F                           return c
+014F     64            ; Push_LocalMem_Long_1
+0150     33            ; Pop_Return
+0151     32            ; Return
+0152     00            ; Frame_Call_Return
+0153     00            ; Frame_Call_Return
+0154                   Reserved 8 bytes.
+015C                   Base of stack.
+016C                   Top of stack.

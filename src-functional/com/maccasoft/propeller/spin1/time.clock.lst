@@ -1,0 +1,96 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     6B            Check Sum
+0006     0010          Base of Program
+0008     0090          Base of Variables
+000A     0098          Base of Stack
+000C     0030          Initial Program Counter
+000E     00A4          Initial Stack Pointer
+                       File "time.clock.spin"
+0010     0080 0002     Link to Next Object
+0014     0020 0000     Link to PUB SetClock(xinfrequency, mode): newFreq
+0018 000               DAT
+0018 000 00B71B00      ircFreq         long    12_000_000                                              ' Ideal RCFAST frequency
+001C 001 00004E20                      long    20_000                                                  ' Ideal RCSLOW frequency
+0020 002 00000000      xinFreq         long    0                                                       ' External source (XIN) frequency (updated by .Init); MUST reside immediately after ircFreq
+0024 003 00030D40      oscDelay        long    20_000_000 / 100                                        ' Sys Counter offset for 10 ms oscillator startup delay based on worst-case RCFAST frequency
+0028 004 0000017D                      long    33_000 / 100 #> WMIN                                    ' <same as above> but based on worst-case RCSLOW frequency; limited to WMIN to prevent freeze
+002C 005 00000000                      long    0 {xinFreq / 100 #> WMIN}                               ' <same as above> but based on external source (XIN) frequency; updated by .Init
+0030                   PUB SetClock(xinfrequency, mode): newFreq
+0030                       xinFreq := xinfrequency                                                     ' Update xinFreq
+0030     64            ; Push_LocalMem_Long_1
+0031     C5 10         ; Pop_ObjectMem_Long, $0010
+0033                       oscDelay[2] := xinFreq / 100 #> WMIN                                        ' Update oscDelay for XINPUT 10 ms delay
+0033     C4 10         ; Push_ObjectMem_Long, $0010
+0035     38 64         ; Push_Byte_Lit, $64
+0037     F6            ; Divide
+0038     39 017D       ; Push_Word_Lit, $017D
+003B     E4            ; Limit_Min
+003C     37 00         ; Push_Packed_Lit, $00000002
+003E     D5 14         ; Pop_Indexed_ObjectMem_Long, $0014
+0040                       ifnot (clkmode & $18) and (mode & $18)                                      ' If switching from a non-feedback to a feedback-based clock source
+0040     38 04         ; Push_Byte_Lit, $04
+0042     80            ; Push_MainMem_Byte
+0043     38 18         ; Push_Byte_Lit, $18
+0045     E8            ; Bit_And
+0046     68            ; Push_LocalMem_Long_2
+0047     38 18         ; Push_Byte_Lit, $18
+0049     E8            ; Bit_And
+004A     F0            ; Logical_And
+004B     0B 2A         ; Jump_If_True, $002A
+004D                           clkset(clkmode & $07 | mode & $78, clkfreq)                             '   first rev up oscillator and possibly PLL circuits (using current clock source RCSLOW, RCFAST, XINPUT, or XINPUT + PLLxxx)
+004D     38 04         ; Push_Byte_Lit, $04
+004F     80            ; Push_MainMem_Byte
+0050     37 22         ; Push_Packed_Lit, $00000007
+0052     E8            ; Bit_And
+0053     68            ; Push_LocalMem_Long_2
+0054     38 78         ; Push_Byte_Lit, $78
+0056     E8            ; Bit_And
+0057     EA            ; Bit_Or
+0058     35            ; Push_0
+0059     C0            ; Push_MainMem_Long
+005A     20            ; Clkset
+005B                           waitcnt(oscDelay[clkmode & $7 <# 2] * |<(clkmode & $7 - 3 #> 0) + cnt)  '   and wait 10 ms to stabilize, accounting for worst-case IRC speed (or XIN + PLL speed)
+005B     38 04         ; Push_Byte_Lit, $04
+005D     80            ; Push_MainMem_Byte
+005E     37 22         ; Push_Packed_Lit, $00000007
+0060     E8            ; Bit_And
+0061     37 00         ; Push_Packed_Lit, $00000002
+0063     E5            ; Limit_Max
+0064     D4 14         ; Push_Indexed_ObjectMem_Long, $0014
+0066     38 04         ; Push_Byte_Lit, $04
+0068     80            ; Push_MainMem_Byte
+0069     37 22         ; Push_Packed_Lit, $00000007
+006B     E8            ; Bit_And
+006C     37 21         ; Push_Packed_Lit, $00000003
+006E     ED            ; Subtract
+006F     35            ; Push_0
+0070     E4            ; Limit_Min
+0071     F3            ; Decode
+0072     F4            ; Multiply
+0073     3F 91 EC      ; Memory_Op, $11EC
+0076     23            ; Waitcnt
+0077                       clkset(mode, newFreq := ircFreq[mode <# 2] * |<(mode & $7 - 3 #> 0))        ' Switch to new clock mode, indicate new frequency (ideal RCFAST, ideal RCSLOW, or
+0077     68            ; Push_LocalMem_Long_2
+0078     68            ; Push_LocalMem_Long_2
+0079     37 00         ; Push_Packed_Lit, $00000002
+007B     E5            ; Limit_Max
+007C     D4 08         ; Push_Indexed_ObjectMem_Long, $0008
+007E     68            ; Push_LocalMem_Long_2
+007F     37 22         ; Push_Packed_Lit, $00000007
+0081     E8            ; Bit_And
+0082     37 21         ; Push_Packed_Lit, $00000003
+0084     ED            ; Subtract
+0085     35            ; Push_0
+0086     E4            ; Limit_Min
+0087     F3            ; Decode
+0088     F4            ; Multiply
+0089     62 80         ; Effect_LocalMem_Long_0, write, push
+008B     20            ; Clkset
+008C     32            ; Return
+008D     00            ; Frame_Call_Return
+008E     00            ; Frame_Call_Return
+008F     00            ; Frame_Call_Return
+0090                   Reserved 8 bytes.
+0098                   Base of stack.
+00A8                   Top of stack.

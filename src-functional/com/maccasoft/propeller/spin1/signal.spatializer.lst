@@ -1,0 +1,422 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     75            Check Sum
+0006     0010          Base of Program
+0008     04A4          Base of Variables
+000A     04D4          Base of Stack
+000C     0410          Initial Program Counter
+000E     04F8          Initial Stack Pointer
+                       File "signal.spatializer.spin"
+0010     0494 0004     Link to Next Object
+0014     0400 0004     Link to PUB start(settings_ptr, buffer_ptr, buffer_size, lpos_pin, lneg_pin, rpos_pin, rneg_pin) : okay | i
+0018     0482 0000     Link to PUB stop
+001C     0490 0000     Link to PUB sample_ptr : ptr
+0020 000               DAT
+0020 000               entry                   org
+0020 000 A0FDF800      :zero                   mov     reserves,#0             'zero all reserved data
+0024 001 80BC00F6                              add     :zero,h00000200
+0028 002 E4FDF600                              djnz    clear_cnt,#:zero
+002C 003 A0BE3BF0                              mov     t1,par                  'get settings pointers
+0030 004 84FE3A0C                              sub     t1,#3*4
+0034 005 08BE071D                              rdlong  input_ptr,t1
+0038 006 A0BE0903                              mov     angle_ptr,input_ptr
+003C 007 80FE0808                              add     angle_ptr,#4*2
+0040 008 A0BE0B04                              mov     depth_ptr,angle_ptr
+0044 009 80FE0A08                              add     depth_ptr,#4*2
+0048 00A A0BE0D05                              mov     knobs_ptr,depth_ptr
+004C 00B 80FE0C08                              add     knobs_ptr,#4*2
+0050 00C 80FE3A04                              add     t1,#1*4                 'get buffer base
+0054 00D 08BDFD1D                              rdlong  buff_base,t1
+0058 00E 80FE3A04                              add     t1,#1*4                 'get buffer size
+005C 00F 08BDFF1D                              rdlong  buff_size,t1
+0060 010 2CFDFE02                              shl     buff_size,#2
+0064 011 A0BE00FF                              mov     buff_limit,buff_size    'compute buffer limit
+0068 012 84FE0004                              sub     buff_limit,#4
+006C 013 A0BE02FF                              mov     buff_clamp,buff_size    'compute buffer clamp
+0070 014 84FE0240                              sub     buff_clamp,#16*4
+0074 015 2CFE0206                              shl     buff_clamp,#8-2
+0078 016 80FE3A08                              add     t1,#2*4                 'get dira/dirb/ctra/ctrb
+007C 017 A0FE3C04                              mov     t2,#4
+0080 018 08BFED1D      :regs                   rdlong  dira,t1
+0084 019 80FE3A04                              add     t1,#1*4
+0088 01A 80BC30F6                              add     :regs,h00000200
+008C 01B E4FE3C18                              djnz    t2,#:regs
+0090 01C 08BDFB1D                              rdlong  cnt_ticks,t1            'get cnt ticks
+0094 01D A0BDF9F1                              mov     cnt_value,cnt           'prepare for initial waitcnt
+0098 01E 80BDF8FD                              add     cnt_value,cnt_ticks
+009C 01F F8BDF8FD      loop                    waitcnt cnt_value,cnt_ticks     'wait for sample period
+00A0 020 A0FE1804                              mov     inputs,#4               'ready to spatialize 4 inputs
+00A4 021 04BE3B06                              rdword  t1,knobs_ptr            'get knob settings
+00A8 022 A0BE0F1D                              mov     decay,t1                'get depth decay rate
+00AC 023 60FE0E07                              and     decay,#7
+00B0 024 28FE3A03                              shr     t1,#3                   'get parallel echo level
+00B4 025 A4BE111D                              neg     pecho,t1
+00B8 026 62FE1007                              and     pecho,#7        wz
+00BC 027 A0EA1008              if_z            mov     pecho,#8
+00C0 028 28FE3A03                              shr     t1,#3                   'get cross echo level
+00C4 029 A4BE131D                              neg     xecho,t1
+00C8 02A 62FE1207                              and     xecho,#7        wz
+00CC 02B A0EA1208              if_z            mov     xecho,#8
+00D0 02C 28FE3A03                              shr     t1,#3                   'get dither level
+00D4 02D A0BE151D                              mov     dither,t1
+00D8 02E 60FE1407                              and     dither,#7
+00DC 02F 80FE1408                              add     dither,#8
+00E0 030 A0BE3AF7      :input                  mov     t1,lfsr0                'update left duty output
+00E4 031 38BE3B0A                              sar     t1,dither
+00E8 032 80BE3B22                              add     t1,left
+00EC 033 A0BFF51D                              mov     frqa,t1
+00F0 034 A0BE3AF9                              mov     t1,lfsr1                'update right duty output
+00F4 035 38BE3B0A                              sar     t1,dither
+00F8 036 80BE3B23                              add     t1,right
+00FC 037 A0BFF71D                              mov     frqb,t1
+0100 038 06BE4103                              rdword  lx,input_ptr    wz      'get input pointer, check if 0
+0104 039 613DEEF8                              test    lfsr0,taps0     wc      'iterate left dither source
+0108 03A 34FDEE01                              rcl     lfsr0,#1
+010C 03B 08964120              if_nz           rdlong  lx,lx                   'if pointer not 0, get sample, else use 0
+0110 03C 613DF2FA                              test    lfsr1,taps1     wc      'iterate right dither source
+0114 03D 34FDF201                              rcl     lfsr1,#1
+0118 03E A9BE4120                              abs     lx,lx           wc      '** sample is signed value
+011C 03F 70FE1601                              muxc    sign,#1                 'absolutize value and store sign
+0120 040 623E40ED                              test    lx,hFFFF0000    wz      'msb-justify value and track whole exponent
+0124 041 2CEA4010              if_z            shl     lx,#16
+0128 042 7CFCA810                              muxnz   :whole,#$10
+012C 043 623E40EE                              test    lx,hFF000000    wz
+0130 044 2CEA4008              if_z            shl     lx,#8
+0134 045 7CFCA808                              muxnz   :whole,#$08
+0138 046 623E40EF                              test    lx,hF0000000    wz
+013C 047 2CEA4004              if_z            shl     lx,#4
+0140 048 7CFCA804                              muxnz   :whole,#$04
+0144 049 623E40F0                              test    lx,hC0000000    wz
+0148 04A 2CEA4002              if_z            shl     lx,#2
+014C 04B 7CFCA802                              muxnz   :whole,#$02
+0150 04C 623E40F1                              test    lx,h80000000    wz
+0154 04D 2CEA4001              if_z            shl     lx,#1
+0158 04E 7CFCA801                              muxnz   :whole,#$01
+015C 04F 2CFE4001                              shl     lx,#1                   'lookup fractional exponent
+0160 050 50FE400C                              movs    lx,#$C
+0164 051 24FE400C                              rol     lx,#12
+0168 052 04BE4120                              rdword  lx,lx
+016C 053 2CFE4010                              shl     lx,#16                  'insert whole exponent
+0170 054 68FE4000      :whole                  or      lx,#%00000
+0174 055 20FE4005                              ror     lx,#5                   '** sample is now in log form with isolated sign
+0178 056 A0BE1D11      :angle0                 mov     angle,angles            'get current angle
+017C 057 04BE3B04                              rdword  t1,angle_ptr            'get target angle
+0180 058 85BE3B0E                              sub     t1,angle        wc      'get target-current difference
+0184 059 A8BE3B1D                              abs     t1,t1                   'absolutize difference
+0188 05A 4CFE3A20                              max     t1,#$20                 'limit difference
+018C 05B 90BE1D1D                              sumc    angle,t1                'add limited difference to current angle
+0190 05C A0BE230E      :angle1                 mov     angles,angle            'store current angle
+0194 05D 28FE1C04                              shr     angle,#16-12            'make 12-bit angle within quadrants 1|4
+0198 05E 85BE1CF5                              sub     angle,h00000800 wc      'subtract π/2, get quadrant 4 into c
+019C 05F B0BE1D0E                              negc    angle,angle             'if quadrant 4, negate table offset
+01A0 060 68BE1CF4                              or      angle,h00007000         'insert sine table base address >> 1
+01A4 061 2CFE1C01                              shl     angle,#1                'shift left to get final word address
+01A8 062 04BE1D0E                              rdword  angle,angle             'read sine word from table
+01AC 063 B0BE1D0E                              negc    angle,angle             'if quadrant 4, negate word (max ± $FFFF)
+01B0 064 A0BE1F15      :depth0                 mov     depth,depths            'get current depth
+01B4 065 04BE3B05                              rdword  t1,depth_ptr            'get target depth
+01B8 066 2CFE3A0F                              shl     t1,#15                  'shift up target for scaling space
+01BC 067 84BE3B0F                              sub     t1,depth                'get target-current difference
+01C0 068 38FE3A13                              sar     t1,#19                  'scale difference
+01C4 069 A0BE2119      :veloc0                 mov     veloc,velocs            'get velocity
+01C8 06A 80BE211D                              add     veloc,t1                'add scaled difference to velocity
+01CC 06B 80BE1F10                              add     depth,veloc             'add velocity to current depth
+01D0 06C 40FE1E00                              mins    depth,#0                'insure current depth doesn't go negative
+01D4 06D A0BE2B0F      :depth1                 mov     depths,depth            'store current depth
+01D8 06E A0BE3B10                              mov     t1,veloc                'dampen velocity
+01DC 06F 38FE3A08                              sar     t1,#8
+01E0 070 84BE211D                              sub     veloc,t1
+01E4 071 A0BE3310      :veloc1                 mov     velocs,veloc            'store velocity
+01E8 072 28FE1E03                              shr     depth,#19-16            'reduce fractional depth to 16 bits
+01EC 073 A0BE3B0F                              mov     t1,depth                'attenuate sample by depth and decay rate
+01F0 074 2CBE3B07                              shl     t1,decay                '(logarithmic curve approximates 1/d²)
+01F4 075 85BE411D                              sub     lx,t1           wc
+01F8 076 A0F24000              if_c            mov     lx,#0                   'clamp underflow
+01FC 077 28FE1E08                              shr     depth,#16-8             'reduce fractional depth to 8 bits
+0200 078 4CBE1F01                              max     depth,buff_clamp        'confine depth to buffer space
+0204 079 A0BE4320                              mov     rx,lx                   'samples initially identical
+0208 07A 2CFE1C0A                              shl     angle,#10               'shift up ear sine
+020C 07B A0BE3AF3                              mov     t1,h04000000            'attenuate left sample by left ear sine
+0210 07C 80BE3B0E                              add     t1,angle
+0214 07D 85BE411D                              sub     lx,t1           wc
+0218 07E A0F24000              if_c            mov     lx,#0                   'clamp underflow
+021C 07F A0BE3AF3                              mov     t1,h04000000            'attenuate right sample by right ear sine
+0220 080 84BE3B0E                              sub     t1,angle
+0224 081 85BE431D                              sub     rx,t1           wc
+0228 082 A0F24200              if_c            mov     rx,#0                   'clamp underflow
+022C 083 A0FE1A02                              mov     channels,#2             'ready for left and right channels
+0230 084 A0BE3B0E                              mov     t1,angle                'multiply ear sine by 7/8 to get <700µs
+0234 085 38FE3A03                              sar     t1,#3                   '...ear-to-ear delay (<14 samples @20KHz)
+0238 086 84BE1D1D                              sub     angle,t1
+023C 087 38FE1C0F                              sar     angle,#10+5             'get +/- <7.0 into signed 3.8 format
+0240 088 A0BE3B0E                              mov     t1,angle                'get left ear sine (lx holds left ear sample)
+0244 089 80BE3B0F      :channel                add     t1,depth                'get ear sine + depth (with 8 fractional bits)
+0248 08A 6CFDFC02                              xor     buff_base,#2            'toggle left/right buffer channel
+024C 08B A0BE3D1D                              mov     t2,t1                   'compute buffer offset for sample summing
+0250 08C 38FE3C08                              sar     t2,#8                   'get ear sine + depth whole offset
+0254 08D 80FE3C08                              add     t2,#8                   'add center-of-head offset
+0258 08E 2CFE3C02                              shl     t2,#2                   'convert to long offset
+025C 08F 80BE3D02                              add     t2,buff_ptr             'add buffer pointer
+0260 090 E0BE3CFF                              cmpsub  t2,buff_size            'insure buffer wrap
+0264 091 863E3D00                              cmp     t2,buff_limit   wz      'remember if last location
+0268 092 80BE3CFE                              add     t2,buff_base            'add buffer base with left/right channel
+026C 093 24FE4005                              rol     lx,#5                   '** sample is in log form with isolated sign
+0270 094 50BD3720                              movs    :shr,lx                 'get whole log
+0274 095 6CFD361F                              xor     :shr,#$1F               'not whole log
+0278 096 50FE400D                              movs    lx,#$D                  'use fractional log to lookup antilog
+027C 097 24FE400C                              rol     lx,#12
+0280 098 04BE4120                              rdword  lx,lx
+0284 099 2CFE400F                              shl     lx,#15                  'msb-justify antilog with leading 1
+0288 09A 68BE40F1                              or      lx,h80000000
+028C 09B 28FE4000      :shr                    shr     lx,#0                   'shift antilog down by not whole log
+0290 09C 617E1601                              test    sign,#1         wc      'restore sign
+0294 09D B0BE4120                              negc    lx,lx                   '** sample is now signed value
+0298 09E A0BE3F20                              mov     t3,lx                   'get whole sample
+029C 09F 38FE4008                              sar     lx,#8                   'compute fractional sample for precise
+02A0 0A0 2CFE4007                              shl     lx,#8-1                 '...inter-sample summation
+02A4 0A1 60FE3AFF                              and     t1,#$FF                 '(uses 8 fractional bits of ear sine + depth)
+02A8 0A2 29FE3A01                              shr     t1,#1           wc
+02AC 0A3 80B23B20              if_c            add     t1,lx
+02B0 0A4 39FE3A01                              sar     t1,#1           wc
+02B4 0A5 80B23B20              if_c            add     t1,lx
+02B8 0A6 39FE3A01                              sar     t1,#1           wc
+02BC 0A7 80B23B20              if_c            add     t1,lx
+02C0 0A8 39FE3A01                              sar     t1,#1           wc
+02C4 0A9 80B23B20              if_c            add     t1,lx
+02C8 0AA 39FE3A01                              sar     t1,#1           wc
+02CC 0AB 80B23B20              if_c            add     t1,lx
+02D0 0AC 39FE3A01                              sar     t1,#1           wc
+02D4 0AD 80B23B20              if_c            add     t1,lx
+02D8 0AE 39FE3A01                              sar     t1,#1           wc
+02DC 0AF 80B23B20              if_c            add     t1,lx
+02E0 0B0 39FE3A01                              sar     t1,#1           wc
+02E4 0B1 80B23B20              if_c            add     t1,lx
+02E8 0B2 84BE3F1D                              sub     t3,t1                   'get whole-minus-fractional sample
+02EC 0B3 04BE411E                              rdword  lx,t2                   'sum whole-minus-fractional sample into +0
+02F0 0B4 28FE3E10                              shr     t3,#16
+02F4 0B5 80BE411F                              add     lx,t3
+02F8 0B6 043E411E                              wrword  lx,t2
+02FC 0B7 80D63C04              if_nz           add     t2,#4                   'increment buffer offset
+0300 0B8 A0AA3CFE              if_z            mov     t2,buff_base            'insure buffer wrap
+0304 0B9 04BE411E                              rdword  lx,t2                   'sum fractional sample into +1
+0308 0BA 28FE3A10                              shr     t1,#16
+030C 0BB 80BE411D                              add     lx,t1
+0310 0BC 043E411E                              wrword  lx,t2
+0314 0BD A0BE4121                              mov     lx,rx                   'get right ear sample
+0318 0BE A4BE3B0E                              neg     t1,angle                'get right ear sine
+031C 0BF E4FE1A89                              djnz    channels,#:channel      'loop once for right channel
+0320 0C0 80FE0602                              add     input_ptr,#2            'increment pointers
+0324 0C1 80FE0802                              add     angle_ptr,#2
+0328 0C2 80FE0A02                              add     depth_ptr,#2
+032C 0C3 80FCAC01                              add     :angle0,#1
+0330 0C4 80BCB8F6                              add     :angle1,h00000200
+0334 0C5 80FCC801                              add     :depth0,#1
+0338 0C6 80BCDAF6                              add     :depth1,h00000200
+033C 0C7 80FCD201                              add     :veloc0,#1
+0340 0C8 80BCE2F6                              add     :veloc1,h00000200
+0344 0C9 E4FE1830                              djnz    inputs,#:input          'another input channel?
+0348 0CA 84FE0608                              sub     input_ptr,#4*2          'done, reset pointers
+034C 0CB 84FE0A08                              sub     depth_ptr,#4*2
+0350 0CC 84FE0808                              sub     angle_ptr,#4*2
+0354 0CD 84FCAC04                              sub     :angle0,#4
+0358 0CE 84BCB8F5                              sub     :angle1,h00000800
+035C 0CF 84FCC804                              sub     :depth0,#4
+0360 0D0 84BCDAF5                              sub     :depth1,h00000800
+0364 0D1 84FCD204                              sub     :veloc0,#4
+0368 0D2 84BCE2F5                              sub     :veloc1,h00000800
+036C 0D3 A0BE3B02                              mov     t1,buff_ptr             'read sample pair from buffer
+0370 0D4 80BE3AFE                              add     t1,buff_base
+0374 0D5 08BE451D                              rdlong  left,t1
+0378 0D6 80FE0404                              add     buff_ptr,#4             'advance buffer pointer
+037C 0D7 E0BE04FF                              cmpsub  buff_ptr,buff_size      'insure buffer wrap
+0380 0D8 083E45F0                              wrlong  left,par                'update sample pair in main memory
+0384 0D9 A0BE4722                              mov     right,left              'unpack left and right samples
+0388 0DA 2CFE4610                              shl     right,#16
+038C 0DB 60BE44ED                              and     left,hFFFF0000
+0390 0DC A0BE4122                              mov     lx,left                 'compute parallel echoes
+0394 0DD 38BE4108                              sar     lx,pecho
+0398 0DE A0BE4323                              mov     rx,right
+039C 0DF 38BE4308                              sar     rx,pecho
+03A0 0E0 A0BE3D23                              mov     t2,right                'compute cross echoes
+03A4 0E1 38BE3D09                              sar     t2,xecho
+03A8 0E2 80BE411E                              add     lx,t2
+03AC 0E3 A0BE3D22                              mov     t2,left
+03B0 0E4 38BE3D09                              sar     t2,xecho
+03B4 0E5 80BE431E                              add     rx,t2
+03B8 0E6 80BE44F1                              add     left,h80000000          'convert samples to duty cycles
+03BC 0E7 80BE46F1                              add     right,h80000000
+03C0 0E8 60BE40ED                              and     lx,hFFFF0000            'write echoes back to buffer
+03C4 0E9 28FE4210                              shr     rx,#16
+03C8 0EA 68BE4121                              or      lx,rx
+03CC 0EB 083E411D                              wrlong  lx,t1
+03D0 0EC 5C7C001F                              jmp     #loop
+03D4 0ED FFFF0000      hFFFF0000               long    $FFFF0000               'miscellaneous constants greater than 9 bits
+03D8 0EE FF000000      hFF000000               long    $FF000000
+03DC 0EF F0000000      hF0000000               long    $F0000000
+03E0 0F0 C0000000      hC0000000               long    $C0000000
+03E4 0F1 80000000      h80000000               long    $80000000
+03E8 0F2 10000000      h10000000               long    $10000000
+03EC 0F3 04000000      h04000000               long    $04000000
+03F0 0F4 00007000      h00007000               long    $00007000
+03F4 0F5 00000800      h00000800               long    $00000800
+03F8 0F6 00000200      h00000200               long    $00000200
+03FC 0F7 00000001      lfsr0                   long    1                       'linear feedback shift registers for dither noise
+0400 0F8 A4000080      taps0                   long    $A4000080
+0404 0F9 00000001      lfsr1                   long    1
+0408 0FA 80A01000      taps1                   long    $80A01000
+040C 0FB 000000F4      clear_cnt               long    $1F0 - reserves         'number of reserved registers to clear on startup
+0410 0FC               reserves
+0410 0FC               cnt_value               res     1                       'reserved registers that get cleared on startup
+0410 0FD               cnt_ticks               res     1
+0410 0FE               buff_base               res     1
+0410 0FF               buff_size               res     1
+0410 100               buff_limit              res     1
+0410 101               buff_clamp              res     1
+0410 102               buff_ptr                res     1
+0410 103               input_ptr               res     1
+0410 104               angle_ptr               res     1
+0410 105               depth_ptr               res     1
+0410 106               knobs_ptr               res     1
+0410 107               decay                   res     1
+0410 108               pecho                   res     1
+0410 109               xecho                   res     1
+0410 10A               dither                  res     1
+0410 10B               sign                    res     1
+0410 10C               inputs                  res     1
+0410 10D               channels                res     1
+0410 10E               angle                   res     1
+0410 10F               depth                   res     1
+0410 110               veloc                   res     1
+0410 111               angles                  res     4
+0410 115               depths                  res     4
+0410 119               velocs                  res     4
+0410 11D               t1                      res     1
+0410 11E               t2                      res     1
+0410 11F               t3                      res     1
+0410 120               lx                      res     1
+0410 121               rx                      res     1
+0410 122               left                    res     1
+0410 123               right                   res     1
+0410                   PUB start(settings_ptr, buffer_ptr, buffer_size, lpos_pin, lneg_pin, rpos_pin, rneg_pin) : okay | i
+0410                     stop
+0410     01            ; Frame_Call_Noreturn
+0411     05 02         ; Call, $02
+0413                     longmove(@args, @settings_ptr, 3)
+0413     47            ; Reference_VariableMem_Long_1
+0414     67            ; Reference_LocalMem_Long_1
+0415     37 21         ; Push_Packed_Lit, $00000003
+0417     1E            ; Longmove
+0418                     repeat i from 0 to 2 step 2
+0418     35            ; Push_0
+0419     CD 20         ; Pop_LocalMem_Long, $0020
+041B                       if lpos_pin[i] > -1
+041B     CC 20         ; Push_LocalMem_Long, $0020
+041D     DC 10         ; Push_Indexed_LocalMem_Long, $0010
+041F     34            ; Push_Neg1
+0420     FA            ; Greater
+0421     0A 80 51      ; Jump_If_False, $0051
+0424                         dira_[lpos_pin[i] >> 5 & 1] |= |< lpos_pin[i]
+0424     CC 20         ; Push_LocalMem_Long, $0020
+0426     DC 10         ; Push_Indexed_LocalMem_Long, $0010
+0428     F3            ; Decode
+0429     CC 20         ; Push_LocalMem_Long, $0020
+042B     DC 10         ; Push_Indexed_LocalMem_Long, $0010
+042D     38 05         ; Push_Byte_Lit, $05
+042F     E2            ; Shift_Right
+0430     36            ; Push_1
+0431     E8            ; Bit_And
+0432     DA 14 4A      ; Effect_Indexed_VariableMem_Long, $0014, Bit_Or, swap
+0435                         ctra_[i >> 1] := $18000000 + lpos_pin[i] & $3F
+0435     3B 18000000   ; Push_Long_Lit, $18000000
+043A     CC 20         ; Push_LocalMem_Long, $0020
+043C     DC 10         ; Push_Indexed_LocalMem_Long, $0010
+043E     37 25         ; Push_Packed_Lit, $0000003F
+0440     E8            ; Bit_And
+0441     EC            ; Add
+0442     CC 20         ; Push_LocalMem_Long, $0020
+0444     36            ; Push_1
+0445     E2            ; Shift_Right
+0446     D9 1C         ; Pop_Indexed_VariableMem_Long, $001C
+0448                         if lneg_pin[i] > -1
+0448     CC 20         ; Push_LocalMem_Long, $0020
+044A     DC 14         ; Push_Indexed_LocalMem_Long, $0014
+044C     34            ; Push_Neg1
+044D     FA            ; Greater
+044E     0A 25         ; Jump_If_False, $0025
+0450                           dira_[lneg_pin[i] >> 5 & 1] |= |< lneg_pin[i]
+0450     CC 20         ; Push_LocalMem_Long, $0020
+0452     DC 14         ; Push_Indexed_LocalMem_Long, $0014
+0454     F3            ; Decode
+0455     CC 20         ; Push_LocalMem_Long, $0020
+0457     DC 14         ; Push_Indexed_LocalMem_Long, $0014
+0459     38 05         ; Push_Byte_Lit, $05
+045B     E2            ; Shift_Right
+045C     36            ; Push_1
+045D     E8            ; Bit_And
+045E     DA 14 4A      ; Effect_Indexed_VariableMem_Long, $0014, Bit_Or, swap
+0461                           ctra_[i >> 1] += $04000000 + (lneg_pin[i] & $3F) << 9
+0461     37 19         ; Push_Packed_Lit, $04000000
+0463     CC 20         ; Push_LocalMem_Long, $0020
+0465     DC 14         ; Push_Indexed_LocalMem_Long, $0014
+0467     37 25         ; Push_Packed_Lit, $0000003F
+0469     E8            ; Bit_And
+046A     38 09         ; Push_Byte_Lit, $09
+046C     E3            ; Shift_Left
+046D     EC            ; Add
+046E     CC 20         ; Push_LocalMem_Long, $0020
+0470     36            ; Push_1
+0471     E2            ; Shift_Right
+0472     DA 1C 4C      ; Effect_Indexed_VariableMem_Long, $001C, Add, swap
+0475     37 00         ; Push_Packed_Lit, $00000002
+0477     35            ; Push_0
+0478     37 00         ; Push_Packed_Lit, $00000002
+047A     CE 20 06 FF 9C ; Effect_LocalMem_Long, $0020, repeat-var loop, pop step, $FF9C
+047F                     cnt_ := clkfreq / 20_000
+047F     35            ; Push_0
+0480     C0            ; Push_MainMem_Long
+0481     39 4E20       ; Push_Word_Lit, $4E20
+0484     F6            ; Divide
+0485     C9 24         ; Pop_VariableMem_Long, $0024
+0487                     return cog := cognew(@entry, @samples) + 1
+0487     34            ; Push_Neg1
+0488     C7 10         ; Reference_ObjectMem_Long, $0010
+048A     53            ; Reference_VariableMem_Long_4
+048B     28            ; Coginit_Returns
+048C     36            ; Push_1
+048D     EC            ; Add
+048E     42 80         ; Effect_VariableMem_Long_0, write, push
+0490     33            ; Pop_Return
+0491     32            ; Return
+0492                   PUB stop
+0492                     if cog
+0492     40            ; Push_VariableMem_Long_0
+0493     0A 05         ; Jump_If_False, $0005
+0495                       cogstop(cog~ -  1)
+0495     42 98         ; Effect_VariableMem_Long_0, post-clear, push
+0497     36            ; Push_1
+0498     ED            ; Subtract
+0499     21            ; Cogstop
+049A                     longfill(@dira_, 0, 4)
+049A     57            ; Reference_VariableMem_Long_5
+049B     35            ; Push_0
+049C     37 01         ; Push_Packed_Lit, $00000004
+049E     1A            ; Longfill
+049F     32            ; Return
+04A0                   PUB sample_ptr : ptr
+04A0                     return @samples
+04A0     53            ; Reference_VariableMem_Long_4
+04A1     33            ; Pop_Return
+04A2     32            ; Return
+04A3     00            ; Frame_Call_Return
+                       Variables for TOP (signal.spatializer.spin)
+04A4     0000          long COG
+04A8     0004          long ARGS[3]
+04B4     0010          long SAMPLES
+04B8     0014          long DIRA_
+04BC     0018          long DIRB_
+04C0     001C          long CTRA_
+04C4     0020          long CTRB_
+04C8     0024          long CNT_
+04CC                   Reserved 8 bytes.
+04D4                   Base of stack.
+04E4                   Top of stack.

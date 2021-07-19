@@ -10,24 +10,14 @@
 
 package com.maccasoft.propeller.spin1;
 
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,67 +26,21 @@ import com.maccasoft.propeller.model.Node;
 
 class Spin1CompilerFunctionalTest {
 
-    private static File systemTmpdir = new File(System.getProperty("java.io.tmpdir"));
-    private static final String prefix = "spin_tools_tests_";
-    private static final SecureRandom random = new SecureRandom();
-    private static File tmpdir;
-
     @BeforeAll
     static void setUp() throws Exception {
         Spin1Compiler.OPENSPIN_COMPATIBILITY = true;
-
-        long n = random.nextLong();
-        if (n == Long.MIN_VALUE) {
-            n = 0; // corner case
-        }
-        else {
-            n = Math.abs(n);
-        }
-
-        String name = prefix + Long.toString(n);
-        tmpdir = new File(systemTmpdir, name);
-        tmpdir.mkdir();
-        if (!name.equals(tmpdir.getName())) {
-            if (System.getSecurityManager() != null) {
-                throw new IOException("Unable to create temporary file");
-            }
-            else {
-                throw new IOException("Unable to create temporary file, " + tmpdir);
-            }
-        }
     }
 
     @AfterAll
     static void cleanUp() throws Exception {
         Spin1Compiler.OPENSPIN_COMPATIBILITY = false;
-
-        tmpdir.delete();
-    }
-
-    @AfterEach
-    void clean() {
-        if (!tmpdir.exists() || !tmpdir.getName().startsWith(prefix) || tmpdir.equals(systemTmpdir)) {
-            return;
-        }
-
-        String[] files = tmpdir.list(new FilenameFilter() {
-
-            @Override
-            public boolean accept(File dir, String name) {
-                return !"..".equals(name) && !".".equals(name);
-            }
-        });
-        for (int i = 0; i < files.length; i++) {
-            File f = new File(tmpdir, files[i]);
-            f.delete();
-        }
     }
 
     @Test
     void testCharType() throws Exception {
         String text = getResourceAsString("char.type.spin");
 
-        byte[] expected = compileReference(text, Collections.emptyMap());
+        byte[] expected = getResource("char.type.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
@@ -104,7 +48,7 @@ class Spin1CompilerFunctionalTest {
     void testComSerial() throws Exception {
         String text = getResourceAsString("com.serial.spin");
 
-        byte[] expected = compileReference(text, Collections.emptyMap());
+        byte[] expected = getResource("com.serial.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
@@ -112,7 +56,7 @@ class Spin1CompilerFunctionalTest {
     void testComSpi() throws Exception {
         String text = getResourceAsString("com.spi.spin");
 
-        byte[] expected = compileReference(text, Collections.emptyMap());
+        byte[] expected = getResource("com.spi.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
@@ -120,7 +64,7 @@ class Spin1CompilerFunctionalTest {
     void testDisplayTV() throws Exception {
         String text = getResourceAsString("display.tv.spin");
 
-        byte[] expected = compileReference(text, Collections.emptyMap());
+        byte[] expected = getResource("display.tv.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
@@ -128,7 +72,7 @@ class Spin1CompilerFunctionalTest {
     void testDisplayVGA() throws Exception {
         String text = getResourceAsString("display.vga.spin");
 
-        byte[] expected = compileReference(text, Collections.emptyMap());
+        byte[] expected = getResource("display.vga.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
@@ -136,7 +80,102 @@ class Spin1CompilerFunctionalTest {
     void testDisplayVGABitmap() throws Exception {
         String text = getResourceAsString("display.vga.bitmap.512x384.spin");
 
-        byte[] expected = compileReference(text, Collections.emptyMap());
+        byte[] expected = getResource("display.vga.bitmap.512x384.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testInputKeyboard() throws Exception {
+        String text = getResourceAsString("input.keyboard.spin");
+
+        byte[] expected = getResource("input.keyboard.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testIO() throws Exception {
+        String text = getResourceAsString("io.spin");
+
+        byte[] expected = getResource("io.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testMathRCTime() throws Exception {
+        String text = getResourceAsString("math.rctime.spin");
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("io", getResourceAsString("io.spin"));
+        sources.put("time", getResourceAsString("time.spin"));
+
+        byte[] expected = getResource("math.rctime.binary");
+        compileAndCompare(text, sources, expected);
+    }
+
+    @Test
+    void testSignalADC() throws Exception {
+        String text = getResourceAsString("signal.adc.spin");
+
+        byte[] expected = getResource("signal.adc.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testSignalADC3208() throws Exception {
+        String text = getResourceAsString("signal.adc.mcp3208.spin");
+
+        byte[] expected = getResource("signal.adc.mcp3208.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testSignalDither() throws Exception {
+        String text = getResourceAsString("signal.dither.spin");
+
+        byte[] expected = getResource("signal.dither.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testSignalSpatializer() throws Exception {
+        String text = getResourceAsString("signal.spatializer.spin");
+
+        byte[] expected = getResource("signal.spatializer.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testString() throws Exception {
+        String text = getResourceAsString("string.spin");
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("char.type", getResourceAsString("char.type.spin"));
+
+        byte[] expected = getResource("string.binary");
+        compileAndCompare(text, sources, expected);
+    }
+
+    @Test
+    void testStringType() throws Exception {
+        String text = getResourceAsString("string.type.spin");
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("char.type", getResourceAsString("char.type.spin"));
+
+        byte[] expected = getResource("string.type.binary");
+        compileAndCompare(text, sources, expected);
+    }
+
+    @Test
+    void testTimeClock() throws Exception {
+        String text = getResourceAsString("time.clock.spin");
+
+        byte[] expected = getResource("time.clock.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testTime() throws Exception {
+        String text = getResourceAsString("time.spin");
+
+        byte[] expected = getResource("time.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
@@ -146,6 +185,17 @@ class Spin1CompilerFunctionalTest {
             byte[] b = new byte[is.available()];
             is.read(b);
             return new String(b);
+        } finally {
+            is.close();
+        }
+    }
+
+    byte[] getResource(String name) throws Exception {
+        InputStream is = getClass().getResourceAsStream(name);
+        try {
+            byte[] b = new byte[is.available()];
+            is.read(b);
+            return b;
         } finally {
             is.close();
         }
@@ -213,42 +263,6 @@ class Spin1CompilerFunctionalTest {
             System.out.println(sb.toString());
             Assertions.fail(sb.toString());
         }
-    }
-
-    byte[] compileReference(String text, Map<String, String> sources) throws Exception {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(new File(tmpdir, "text.spin")));
-        writer.write(text);
-        writer.close();
-
-        for (Entry<String, String> entry : sources.entrySet()) {
-            writer = new BufferedWriter(new FileWriter(new File(tmpdir, entry.getKey() + ".spin")));
-            writer.write(entry.getValue());
-            writer.close();
-        }
-
-        List<String> cmd = new ArrayList<String>();
-        cmd.add("/opt/parallax/bin/openspin");
-        cmd.add("-b");
-        cmd.add("-o");
-        cmd.add("text.spin.binary");
-        cmd.add("text.spin");
-
-        ProcessBuilder builder = new ProcessBuilder(cmd);
-        //builder.inheritIO();
-        builder.directory(tmpdir);
-
-        Process p = builder.start();
-        p.waitFor();
-
-        File binaryFile = new File(tmpdir, "text.spin.binary");
-
-        byte[] code = new byte[(int) binaryFile.length()];
-
-        FileInputStream is = new FileInputStream(binaryFile);
-        is.read(code);
-        is.close();
-
-        return code;
     }
 
 }

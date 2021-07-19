@@ -1,0 +1,51 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     26            Check Sum
+0006     0010          Base of Program
+0008     004C          Base of Variables
+000A     0054          Base of Stack
+000C     002C          Initial Program Counter
+000E     005C          Initial Stack Pointer
+                       File "io.spin"
+0010     003C 0007     Link to Next Object
+0014     001C 0000     Link to PUB Output(pin)
+0018     0021 0000     Link to PUB Input(pin)
+001C     0026 0000     Link to PUB High(pin)
+0020     002B 0000     Link to PUB Low(pin)
+0024     0030 0000     Link to PUB Toggle(pin)
+0028     0035 0000     Link to PUB Set(pin, enabled)
+002C                   PUB Output(pin)
+002C                       dira[pin]~~
+002C     64            ; Push_LocalMem_Long_1
+002D     3D D6 1C      ; Indexed_Mem_Op, $561C
+0030     32            ; Return
+0031                   PUB Input(pin)
+0031                       dira[pin]~
+0031     64            ; Push_LocalMem_Long_1
+0032     3D D6 18      ; Indexed_Mem_Op, $5618
+0035     32            ; Return
+0036                   PUB High(pin)
+0036                       outa[pin]~~
+0036     64            ; Push_LocalMem_Long_1
+0037     3D D4 1C      ; Indexed_Mem_Op, $541C
+003A     32            ; Return
+003B                   PUB Low(pin)
+003B                       outa[pin]~
+003B     64            ; Push_LocalMem_Long_1
+003C     3D D4 18      ; Indexed_Mem_Op, $5418
+003F     32            ; Return
+0040                   PUB Toggle(pin)
+0040                       ~outa[pin]
+0040     64            ; Push_LocalMem_Long_1
+0041     3D D4 10      ; Indexed_Mem_Op, $5410
+0044     32            ; Return
+0045                   PUB Set(pin, enabled)
+0045                       outa[pin] := enabled
+0045     68            ; Push_LocalMem_Long_2
+0046     64            ; Push_LocalMem_Long_1
+0047     3D B4 32      ; Indexed_Mem_Op, $3432
+004A     00            ; Frame_Call_Return
+004B     00            ; Frame_Call_Return
+004C                   Reserved 8 bytes.
+0054                   Base of stack.
+0064                   Top of stack.

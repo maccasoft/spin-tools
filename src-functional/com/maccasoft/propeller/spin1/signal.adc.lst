@@ -1,0 +1,46 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     DB            Check Sum
+0006     0010          Base of Program
+0008     005C          Base of Variables
+000A     0064          Base of Stack
+000C     0054          Initial Program Counter
+000E     006C          Initial Stack Pointer
+                       File "signal.adc.spin"
+0010     004C 0002     Link to Next Object
+0014     0044 0000     Link to PUB SigmaDelta (sample)
+0018 000               DAT
+0018 000                             org
+0018 000 A0FFEC40      asm_entry     mov       dira,#1<<SDF                    'make SDF pin an output
+001C 001 50FFF007                    movs      ctra,#SDI                       'POS W/FEEDBACK mode for CTRA
+0020 002 54FFF006                    movd      ctra,#SDF
+0024 003 58FFF048                    movi      ctra,#%01001_000
+0028 004 A0FFF401                    mov       frqa,#1
+002C 005 A0BC1FF1                    mov       asm_c,cnt                       'prepare for WAITCNT loop
+0030 006 80BC1E0E                    add       asm_c,asm_cycles
+0034 007 F8BC1E0E      :loop         waitcnt   asm_c,asm_cycles                'wait for next CNT value
+0038 008 A0BC23FC                    mov       asm_new,phsa                    'capture PHSA
+003C 009 A0BC2611                    mov       asm_sample,asm_new              'compute sample from 'new' - 'old'
+0040 00A 84BC2612                    sub       asm_sample,asm_old
+0044 00B A0BC2411                    mov       asm_old,asm_new
+0048 00C 083C27F0                    wrlong    asm_sample,par                  'write sample back to Spin variable "sample"
+004C 00D 5C7C0007                    jmp       #:loop                          'wait for next sample
+0050 00E 0000FFFF      asm_cycles    long      $FFFF                           '(use $FFFF for 16-bit, $FFF for 12-bit, or $FF for 8-bit)
+0054 00F               asm_c         res       1                               'uninitialized variables follow emitted data
+0054 010               asm_cnt       res       1
+0054 011               asm_new       res       1
+0054 012               asm_old       res       1
+0054 013               asm_sample    res       1
+0054 014               asm_temp      res       1
+0054                   PUB SigmaDelta (sample)
+0054                       cognew(@asm_entry, sample)   'launch assembly program in a COG
+0054     34            ; Push_Neg1
+0055     C7 08         ; Reference_ObjectMem_Long, $0008
+0057     64            ; Push_LocalMem_Long_1
+0058     2C            ; Coginit
+0059     32            ; Return
+005A     00            ; Frame_Call_Return
+005B     00            ; Frame_Call_Return
+005C                   Reserved 8 bytes.
+0064                   Base of stack.
+0074                   Top of stack.

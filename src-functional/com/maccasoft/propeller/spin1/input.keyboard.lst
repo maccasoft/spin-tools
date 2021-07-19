@@ -1,0 +1,520 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     90            Check Sum
+0006     0010          Base of Program
+0008     0554          Base of Variables
+000A     05AC          Base of Stack
+000C     04EC          Initial Program Counter
+000E     05B8          Initial Stack Pointer
+                       File "input.keyboard.spin"
+0010     0544 000B     Link to Next Object
+0014     04DC 0000     Link to PUB start(dpin, cpin) : okay
+0018     04E7 0000     Link to PUB startx(dpin, cpin, locks, auto) : okay
+001C     04FB 0000     Link to PUB stop
+0020     0509 0000     Link to PUB present : truefalse
+0024     050D 0000     Link to PUB key : keycode
+0028     051E 0000     Link to PUB getkey : keycode
+002C     0528 0000     Link to PUB newkey : keycode
+0030     052F 0000     Link to PUB gotkey : truefalse
+0034     0534 0000     Link to PUB clearkeys
+0038     0537 0000     Link to PUB keystate(k) : state
+003C 000               DAT
+003C 000                                       org
+003C 000 54FC093D      entry                   movd    :par,#_dpin             'load input parameters _dpin/_cpin/_locks/_auto
+0040 001 A0BE61F0                              mov     x,par
+0044 002 80FE602C                              add     x,#11*4
+0048 003 A0FE6204                              mov     y,#4
+004C 004 08BC0130      :par                    rdlong  0,x
+0050 005 80BC08D8                              add     :par,dlsb
+0054 006 80FE6004                              add     x,#4
+0058 007 E4FE6204                              djnz    y,#:par
+005C 008 A0FE5801                              mov     dmask,#1                'set pin masks
+0060 009 2CBE593D                              shl     dmask,_dpin
+0064 00A A0FE5A01                              mov     cmask,#1
+0068 00B 2CBE5B3E                              shl     cmask,_cpin
+006C 00C 617E7A20                              test    _dpin,#$20      wc      'modify port registers within code
+0070 00D 70BD3ED8                              muxc    _d1,dlsb
+0074 00E 70BD52D8                              muxc    _d2,dlsb
+0078 00F 70FD7601                              muxc    _d3,#1
+007C 010 70FD9401                              muxc    _d4,#1
+0080 011 617E7C20                              test    _cpin,#$20      wc
+0084 012 70BD38D8                              muxc    _c1,dlsb
+0088 013 70BD44D8                              muxc    _c2,dlsb
+008C 014 70FD9201                              muxc    _c3,#1
+0090 015 A0FE6600                              mov     _head,#0                'reset output parameter _head
+0094 016 A0FFEC00      reset                   mov     dira,#0                 'reset directions
+0098 017 A0FFEE00                              mov     dirb,#0
+009C 018 54FC3534                              movd    :par,#_present          'reset output parameters _present/_states[8]
+00A0 019 A0FE6009                              mov     x,#1+8
+00A4 01A A0FC0000      :par                    mov     0,#0
+00A8 01B 80BC34D8                              add     :par,dlsb
+00AC 01C E4FE601A                              djnz    x,#:par
+00B0 01D A0FE5C08                              mov     stat,#8                 'set reset flag
+00B4 01E 54FC4533      update                  movd    :par,#_head             'update output parameters _head/_present/_states[8]
+00B8 01F A0BE61F0                              mov     x,par
+00BC 020 80FE6004                              add     x,#1*4
+00C0 021 A0FE620A                              mov     y,#1+1+8
+00C4 022 083C0130      :par                    wrlong  0,x
+00C8 023 80BC44D8                              add     :par,dlsb
+00CC 024 80FE6004                              add     x,#4
+00D0 025 E4FE6222                              djnz    y,#:par
+00D4 026 617E5C08                              test    stat,#8         wc      'if reset flag, transmit reset command
+00D8 027 A0F25EFF              if_c            mov     data,#$FF
+00DC 028 5CF1689C              if_c            call    #transmit
+00E0 029 A0FE5C00      newcode                 mov     stat,#0                 'reset state
+00E4 02A 5CFD88B5      :same                   call    #receive                'receive byte from keyboard
+00E8 02B 857E5E84                              cmp     data,#$83+1     wc      'scancode?
+00EC 02C 864E5EAA              if_nc           cmp     data,#$AA       wz      'powerup/reset?
+00F0 02D 5C480080              if_nc_and_z     jmp     #configure
+00F4 02E 864E5EE0              if_nc           cmp     data,#$E0       wz      'extended?
+00F8 02F 68CA5C01              if_nc_and_z     or      stat,#1
+00FC 030 5C48002A              if_nc_and_z     jmp     #:same
+0100 031 864E5EF0              if_nc           cmp     data,#$F0       wz      'released?
+0104 032 68CA5C02              if_nc_and_z     or      stat,#2
+0108 033 5C48002A              if_nc_and_z     jmp     #:same
+010C 034 5C4C0029              if_nc           jmp     #newcode                'unknown, ignore
+0110 035 617E5C01                              test    stat,#1         wc      'lookup code with extended flag
+0114 036 34FE5E01                              rcl     data,#1
+0118 037 5CFD8894                              call    #look
+011C 038 867E5E00                              cmp     data,#0         wz      'if unknown, ignore
+0120 039 5C680029              if_z            jmp     #newcode
+0124 03A A0BE653B                              mov     t,_states+6             'remember lock keys in _states
+0128 03B A0BE612F                              mov     x,data                  'set/clear key bit in _states
+012C 03C 28FE6005                              shr     x,#5
+0130 03D 80FE6135                              add     x,#_states
+0134 03E 54BC8530                              movd    :reg,x
+0138 03F A0FE6201                              mov     y,#1
+013C 040 2CBE632F                              shl     y,data
+0140 041 617E5C02                              test    stat,#2         wc
+0144 042 74BC0131      :reg                    muxnc   0,y
+0148 043 E1CE5EF0              if_nc           cmpsub  data,#$F0       wc      'if released or shift/ctrl/alt/win, done
+014C 044 5C70001E              if_c            jmp     #update
+0150 045 A0BE633C                              mov     y,_states+7             'get shift/ctrl/alt/win bit pairs
+0154 046 28FE6210                              shr     y,#16
+0158 047 E1FE5EE0                              cmpsub  data,#$E0       wc      'translate keypad, considering numlock
+015C 048 62727E04              if_c            test    _locks,#%100    wz
+0160 049 80E25F08              if_c_and_z      add     data,#@keypad1-@table
+0164 04A 80D25F18              if_c_and_nz     add     data,#@keypad2-@table
+0168 04B 5CF18894              if_c            call    #look
+016C 04C 5C70006A              if_c            jmp     #:flags
+0170 04D E1FE5EDD                              cmpsub  data,#$DD       wc      'handle scrlock/capslock/numlock
+0174 04E A0F26008              if_c            mov     x,#%001_000
+0178 04F 2CB2612F              if_c            shl     x,data
+017C 050 64B2613F              if_c            andn    x,_locks
+0180 051 28F26003              if_c            shr     x,#3
+0184 052 28F2641D              if_c            shr     t,#29                   'ignore auto-repeat
+0188 053 66B26132              if_c            andn    x,t             wz
+018C 054 6CB27F30              if_c            xor     _locks,x
+0190 055 80F25EDD              if_c            add     data,#$DD
+0194 056 68D25C04              if_c_and_nz     or      stat,#4                 'if change, set configure flag to update leds
+0198 057 627E6203                              test    y,#%11          wz      'get shift into nz
+019C 058 85565E61              if_nz           cmp     data,#$60+1     wc      'check shift1
+01A0 059 E1D25E5B              if_nz_and_c     cmpsub  data,#$5B       wc
+01A4 05A 80D25F28              if_nz_and_c     add     data,#@shift1-@table
+01A8 05B 5CD18894              if_nz_and_c     call    #look
+01AC 05C 64D26203              if_nz_and_c     andn    y,#%11
+01B0 05D 85565E3E              if_nz           cmp     data,#$3D+1     wc      'check shift2
+01B4 05E E1D25E27              if_nz_and_c     cmpsub  data,#$27       wc
+01B8 05F 80D25F2E              if_nz_and_c     add     data,#@shift2-@table
+01BC 060 5CD18894              if_nz_and_c     call    #look
+01C0 061 64D26203              if_nz_and_c     andn    y,#%11
+01C4 062 617E7E02                              test    _locks,#%010    wc      'check shift-alpha, considering capslock
+01C8 063 74FCD020                              muxnc   :shift,#$20
+01CC 064 617E7E40                              test    _locks,#$40     wc
+01D0 065 6CC4D020              if_nz_and_nc    xor     :shift,#$20
+01D4 066 857E5E7B                              cmp     data,#"z"+1     wc
+01D8 067 E1F25E61              if_c            cmpsub  data,#"a"       wc
+01DC 068 80F25E41      :shift  if_c            add     data,#"A"
+01E0 069 64F26203              if_c            andn    y,#%11
+01E4 06A 20FE5E08      :flags                  ror     data,#8                 'add shift/ctrl/alt/win flags
+01E8 06B A0FE6004                              mov     x,#4                    '+$100 if shift
+01EC 06C 627E6203      :loop                   test    y,#%11          wz      '+$200 if ctrl
+01F0 06D 28FE6202                              shr     y,#2                    '+$400 if alt
+01F4 06E 68D65E01              if_nz           or      data,#1                 '+$800 if win
+01F8 06F 20FE5E01                              ror     data,#1
+01FC 070 E4FE606C                              djnz    x,#:loop
+0200 071 24FE5E0C                              rol     data,#12
+0204 072 08BE61F0                              rdlong  x,par                   'if room in buffer and key valid, enter
+0208 073 84FE6001                              sub     x,#1
+020C 074 60FE600F                              and     x,#$F
+0210 075 863E6133                              cmp     x,_head         wz
+0214 076 62565EFF              if_nz           test    data,#$FF       wz
+0218 077 A09661F0              if_nz           mov     x,par
+021C 078 80D6602C              if_nz           add     x,#11*4
+0220 079 80966133              if_nz           add     x,_head
+0224 07A 80966133              if_nz           add     x,_head
+0228 07B 04165F30              if_nz           wrword  data,x
+022C 07C 80D66601              if_nz           add     _head,#1
+0230 07D 60D6660F              if_nz           and     _head,#$F
+0234 07E 617E5C04                              test    stat,#4         wc      'if not configure flag, done
+0238 07F 5C4C001E              if_nc           jmp     #update                 'else configure to update leds
+023C 080 A0FE5EF3      configure               mov     data,#$F3               'set keyboard auto-repeat
+0240 081 5CFD689C                              call    #transmit
+0244 082 A0BE5F40                              mov     data,_auto
+0248 083 60FE5E7F                              and     data,#%11_11111
+024C 084 5CFD689C                              call    #transmit
+0250 085 A0FE5EED                              mov     data,#$ED               'set keyboard lock-leds
+0254 086 5CFD689C                              call    #transmit
+0258 087 A0BE5F3F                              mov     data,_locks
+025C 088 3CFE5E1D                              rev     data,#-3 & $1F
+0260 089 617E5E04                              test    data,#%100      wc
+0264 08A 34FE5E01                              rcl     data,#1
+0268 08B 60FE5E07                              and     data,#%111
+026C 08C 5CFD689C                              call    #transmit
+0270 08D A0BE613F                              mov     x,_locks                'insert locks into _states
+0274 08E 60FE6007                              and     x,#%111
+0278 08F 2CFE7803                              shl     _states+7,#3
+027C 090 68BE7930                              or      _states+7,x
+0280 091 20FE7803                              ror     _states+7,#3
+0284 092 A0FE6801                              mov     _present,#1             'set _present
+0288 093 5C7C001E                              jmp     #update                 'done
+028C 094 20FE5E02      look                    ror     data,#2                 'perform lookup
+0290 095 50BD332F                              movs    :reg,data
+0294 096 80FD32DA                              add     :reg,#table
+0298 097 28FE5E1B                              shr     data,#27
+029C 098 A0BE612F                              mov     x,data
+02A0 099 A0BE5E00      :reg                    mov     data,0
+02A4 09A 28BE5F30                              shr     data,x
+02A8 09B 5C7C00C3                              jmp     #rand                   'isolate byte
+02AC 09C               transmit
+02AC 09C 68BFED2D      _c1                     or      dira,cmask              'pull clock low
+02B0 09D 50FDA60D                              movs    napshr,#13              'hold clock for ~128us (must be >100us)
+02B4 09E 5CFDAED2                              call    #nap
+02B8 09F 68BFED2C      _d1                     or      dira,dmask              'pull data low
+02BC 0A0 50FDA612                              movs    napshr,#18              'hold data for ~4us
+02C0 0A1 5CFDAED2                              call    #nap
+02C4 0A2 6CBFED2D      _c2                     xor     dira,cmask              'release clock
+02C8 0A3 617E5EFF                              test    data,#$0FF      wc      'append parity and stop bits to byte
+02CC 0A4 74FE5F00                              muxnc   data,#$100
+02D0 0A5 68BE5ED8                              or      data,dlsb
+02D4 0A6 A0FE600A                              mov     x,#10                   'ready 10 bits
+02D8 0A7 5CFD9AC5      transmit_bit            call    #wait_c0                'wait until clock low
+02DC 0A8 29FE5E01                              shr     data,#1         wc      'output data bit
+02E0 0A9 74BFED2C      _d2                     muxnc   dira,dmask
+02E4 0AA A0BD96CF                              mov     wcond,c1                'wait until clock high
+02E8 0AB 5CFD9AC6                              call    #wait
+02EC 0AC E4FE60A7                              djnz    x,#transmit_bit         'another bit?
+02F0 0AD A0BD96D0                              mov     wcond,c0d0              'wait until clock and data low
+02F4 0AE 5CFD9AC6                              call    #wait
+02F8 0AF A0BD96D1                              mov     wcond,c1d1              'wait until clock and data high
+02FC 0B0 5CFD9AC6                              call    #wait
+0300 0B1 5CFD88B7                              call    #receive_ack            'receive ack byte with timed wait
+0304 0B2 867E5EFA                              cmp     data,#$FA       wz      'if ack error, reset keyboard
+0308 0B3 5C540016              if_nz           jmp     #reset
+030C 0B4 5C7C0000      transmit_ret            ret
+0310 0B5 617E7C20      receive                 test    _cpin,#$20      wc      'wait indefinitely for initial clock low
+0314 0B6 F43E5B2D                              waitpne cmask,cmask
+0318 0B7               receive_ack
+0318 0B7 A0FE600B                              mov     x,#11                   'ready 11 bits
+031C 0B8 5CFD9AC5      receive_bit             call    #wait_c0                'wait until clock low
+0320 0B9 50FDA610                              movs    napshr,#16              'pause ~16us
+0324 0BA 5CFDAED2                              call    #nap
+0328 0BB 613E59F2      _d3                     test    dmask,ina       wc      'input data bit
+032C 0BC 30FE5E01                              rcr     data,#1
+0330 0BD A0BD96CF                              mov     wcond,c1                'wait until clock high
+0334 0BE 5CFD9AC6                              call    #wait
+0338 0BF E4FE60B8                              djnz    x,#receive_bit          'another bit?
+033C 0C0 28FE5E16                              shr     data,#22                'align byte
+0340 0C1 617E5FFF                              test    data,#$1FF      wc      'if parity error, reset keyboard
+0344 0C2 5C4C0016              if_nc           jmp     #reset
+0348 0C3 60FE5EFF      rand                    and     data,#$FF               'isolate byte
+034C 0C4               look_ret
+034C 0C4               receive_ack_ret
+034C 0C4 5C7C0000      receive_ret             ret
+0350 0C5 A0BD96CE      wait_c0                 mov     wcond,c0                '(wait until clock low)
+0354 0C6 A0BE62D9      wait                    mov     y,tenms                 'set timeout to 10ms
+0358 0C7 50FDA612      wloop                   movs    napshr,#18              'nap ~4us
+035C 0C8 5CFDAED2                              call    #nap
+0360 0C9 613E5BF2      _c3                     test    cmask,ina       wc      'check required state(s)
+0364 0CA 623E59F2      _d4                     test    dmask,ina       wz      'loop until got state(s) or timeout
+0368 0CB E4C262C7      wcond   if_never        djnz    y,#wloop                '(replaced with c0/c1/c0d0/c1d1)
+036C 0CC EC7E6216                              tjz     y,#reset                'if timeout, reset keyboard
+0370 0CD               wait_ret
+0370 0CD 5C7C0000      wait_c0_ret             ret
+0374 0CE E4F262C7      c0      if_c            djnz    y,#wloop                '(if_never replacements)
+0378 0CF E4CE62C7      c1      if_nc           djnz    y,#wloop
+037C 0D0 E4F662C7      c0d0    if_c_or_nz      djnz    y,#wloop
+0380 0D1 E4EE62C7      c1d1    if_nc_or_z      djnz    y,#wloop
+0384 0D2 08FE6400      nap                     rdlong  t,#0                    'get clkfreq
+0388 0D3 28FE6400      napshr                  shr     t,#18/16/13             'shr scales time
+038C 0D4 48FE6403                              min     t,#3                    'ensure waitcnt won't snag
+0390 0D5 80BE65F1                              add     t,cnt                   'add cnt to time
+0394 0D6 F8FE6400                              waitcnt t,#0                    'wait until time elapses (nap)
+0398 0D7 5C7C0000      nap_ret                 ret
+039C 0D8 00000200      dlsb                    long    1 << 9
+03A0 0D9 000009C4      tenms                   long    10_000 / 4
+03A4 0DA 0000          table                   word    $0000   '00
+03A6     00D8                                  word    $00D8   '01             F9
+03A8 0DB 0000                                  word    $0000   '02
+03AA     00D4                                  word    $00D4   '03             F5
+03AC 0DC 00D2                                  word    $00D2   '04             F3
+03AE     00D0                                  word    $00D0   '05             F1
+03B0 0DD 00D1                                  word    $00D1   '06             F2
+03B2     00DB                                  word    $00DB   '07             F12
+03B4 0DE 0000                                  word    $0000   '08
+03B6     00D9                                  word    $00D9   '09             F10
+03B8 0DF 00D7                                  word    $00D7   '0A             F8
+03BA     00D5                                  word    $00D5   '0B             F6
+03BC 0E0 00D3                                  word    $00D3   '0C             F4
+03BE     0009                                  word    $0009   '0D             Tab
+03C0 0E1 0060                                  word    $0060   '0E             `
+03C2     0000                                  word    $0000   '0F
+03C4 0E2 0000                                  word    $0000   '10
+03C6     F5F4                                  word    $F5F4   '11     Alt-R   Alt-L
+03C8 0E3 00F0                                  word    $00F0   '12             Shift-L
+03CA     0000                                  word    $0000   '13
+03CC 0E4 F3F2                                  word    $F3F2   '14     Ctrl-R  Ctrl-L
+03CE     0071                                  word    $0071   '15             q
+03D0 0E5 0031                                  word    $0031   '16             1
+03D2     0000                                  word    $0000   '17
+03D4 0E6 0000                                  word    $0000   '18
+03D6     0000                                  word    $0000   '19
+03D8 0E7 007A                                  word    $007A   '1A             z
+03DA     0073                                  word    $0073   '1B             s
+03DC 0E8 0061                                  word    $0061   '1C             a
+03DE     0077                                  word    $0077   '1D             w
+03E0 0E9 0032                                  word    $0032   '1E             2
+03E2     F600                                  word    $F600   '1F     Win-L
+03E4 0EA 0000                                  word    $0000   '20
+03E6     0063                                  word    $0063   '21             c
+03E8 0EB 0078                                  word    $0078   '22             x
+03EA     0064                                  word    $0064   '23             d
+03EC 0EC 0065                                  word    $0065   '24             e
+03EE     0034                                  word    $0034   '25             4
+03F0 0ED 0033                                  word    $0033   '26             3
+03F2     F700                                  word    $F700   '27     Win-R
+03F4 0EE 0000                                  word    $0000   '28
+03F6     0020                                  word    $0020   '29             Space
+03F8 0EF 0076                                  word    $0076   '2A             v
+03FA     0066                                  word    $0066   '2B             f
+03FC 0F0 0074                                  word    $0074   '2C             t
+03FE     0072                                  word    $0072   '2D             r
+0400 0F1 0035                                  word    $0035   '2E             5
+0402     CC00                                  word    $CC00   '2F     Apps
+0404 0F2 0000                                  word    $0000   '30
+0406     006E                                  word    $006E   '31             n
+0408 0F3 0062                                  word    $0062   '32             b
+040A     0068                                  word    $0068   '33             h
+040C 0F4 0067                                  word    $0067   '34             g
+040E     0079                                  word    $0079   '35             y
+0410 0F5 0036                                  word    $0036   '36             6
+0412     CD00                                  word    $CD00   '37     Power
+0414 0F6 0000                                  word    $0000   '38
+0416     0000                                  word    $0000   '39
+0418 0F7 006D                                  word    $006D   '3A             m
+041A     006A                                  word    $006A   '3B             j
+041C 0F8 0075                                  word    $0075   '3C             u
+041E     0037                                  word    $0037   '3D             7
+0420 0F9 0038                                  word    $0038   '3E             8
+0422     CE00                                  word    $CE00   '3F     Sleep
+0424 0FA 0000                                  word    $0000   '40
+0426     002C                                  word    $002C   '41             ,
+0428 0FB 006B                                  word    $006B   '42             k
+042A     0069                                  word    $0069   '43             i
+042C 0FC 006F                                  word    $006F   '44             o
+042E     0030                                  word    $0030   '45             0
+0430 0FD 0039                                  word    $0039   '46             9
+0432     0000                                  word    $0000   '47
+0434 0FE 0000                                  word    $0000   '48
+0436     002E                                  word    $002E   '49             .
+0438 0FF EF2F                                  word    $EF2F   '4A     (/)     /
+043A     006C                                  word    $006C   '4B             l
+043C 100 003B                                  word    $003B   '4C             ;
+043E     0070                                  word    $0070   '4D             p
+0440 101 002D                                  word    $002D   '4E             -
+0442     0000                                  word    $0000   '4F
+0444 102 0000                                  word    $0000   '50
+0446     0000                                  word    $0000   '51
+0448 103 0027                                  word    $0027   '52             '
+044A     0000                                  word    $0000   '53
+044C 104 005B                                  word    $005B   '54             [
+044E     003D                                  word    $003D   '55             =
+0450 105 0000                                  word    $0000   '56
+0452     0000                                  word    $0000   '57
+0454 106 00DE                                  word    $00DE   '58             CapsLock
+0456     00F1                                  word    $00F1   '59             Shift-R
+0458 107 EB0D                                  word    $EB0D   '5A     (Enter) Enter
+045A     005D                                  word    $005D   '5B             ]
+045C 108 0000                                  word    $0000   '5C
+045E     005C                                  word    $005C   '5D             \
+0460 109 CF00                                  word    $CF00   '5E     WakeUp
+0462     0000                                  word    $0000   '5F
+0464 10A 0000                                  word    $0000   '60
+0466     0000                                  word    $0000   '61
+0468 10B 0000                                  word    $0000   '62
+046A     0000                                  word    $0000   '63
+046C 10C 0000                                  word    $0000   '64
+046E     0000                                  word    $0000   '65
+0470 10D 00C8                                  word    $00C8   '66             BackSpace
+0472     0000                                  word    $0000   '67
+0474 10E 0000                                  word    $0000   '68
+0476     C5E1                                  word    $C5E1   '69     End     (1)
+0478 10F 0000                                  word    $0000   '6A
+047A     C0E4                                  word    $C0E4   '6B     Left    (4)
+047C 110 C4E7                                  word    $C4E7   '6C     Home    (7)
+047E     0000                                  word    $0000   '6D
+0480 111 0000                                  word    $0000   '6E
+0482     0000                                  word    $0000   '6F
+0484 112 CAE0                                  word    $CAE0   '70     Insert  (0)
+0486     C9EA                                  word    $C9EA   '71     Delete  (.)
+0488 113 C3E2                                  word    $C3E2   '72     Down    (2)
+048A     00E5                                  word    $00E5   '73             (5)
+048C 114 C1E6                                  word    $C1E6   '74     Right   (6)
+048E     C2E8                                  word    $C2E8   '75     Up      (8)
+0490 115 00CB                                  word    $00CB   '76             Esc
+0492     00DF                                  word    $00DF   '77             NumLock
+0494 116 00DA                                  word    $00DA   '78             F11
+0496     00EC                                  word    $00EC   '79             (+)
+0498 117 C7E3                                  word    $C7E3   '7A     PageDn  (3)
+049A     00ED                                  word    $00ED   '7B             (-)
+049C 118 DCEE                                  word    $DCEE   '7C     PrScr   (*)
+049E     C6E9                                  word    $C6E9   '7D     PageUp  (9)
+04A0 119 00DD                                  word    $00DD   '7E             ScrLock
+04A2     0000                                  word    $0000   '7F
+04A4 11A 0000                                  word    $0000   '80
+04A6     0000                                  word    $0000   '81
+04A8 11B 0000                                  word    $0000   '82
+04AA     00D6                                  word    $00D6   '83             F7
+04AC 11C CA            keypad1                 byte    $CA, $C5, $C3, $C7, $C0, 0, $C1, $C4, $C2, $C6, $C9, $0D, "+-*/"
+04AD     C5 C3 C7 C0 00 C1 C4 C2 C6 C9 0D 2B 2D 2A 2F
+04BC 120 30            keypad2                 byte    "0123456789.", $0D, "+-*/"
+04BD     31 32 33 34 35 36 37 38 39 2E 0D 2B 2D 2A 2F
+04CC 124 7B            shift1                  byte    "{|}", 0, 0, "~"
+04CD     7C 7D 00 00 7E
+04D2     22            shift2                  byte    $22, 0, 0, 0, 0, "<_>?)!@#$%^&*(", 0, ":", 0, "+"
+04D3     00 00 00 00 3C 5F 3E 3F 29 21 40 23 24 25 5E 26
+04E3     2A 28 00 3A 00 2B
+04E9                   dmask                   res     1
+04E9     00 00 00
+04EC 12D               cmask                   res     1
+04EC 12E               stat                    res     1
+04EC 12F               data                    res     1
+04EC 130               x                       res     1
+04EC 131               y                       res     1
+04EC 132               t                       res     1
+04EC 133               _head                   res     1       'write-only
+04EC 134               _present                res     1       'write-only
+04EC 135               _states                 res     8       'write-only
+04EC 13D               _dpin                   res     1       'read-only at start
+04EC 13E               _cpin                   res     1       'read-only at start
+04EC 13F               _locks                  res     1       'read-only at start
+04EC 140               _auto                   res     1       'read-only at start
+04EC                   PUB start(dpin, cpin) : okay
+04EC                     okay := startx(dpin, cpin, %0_000_100, %01_01000)
+04EC     00            ; Frame_Call_Return
+04ED     64            ; Push_LocalMem_Long_1
+04EE     68            ; Push_LocalMem_Long_2
+04EF     37 01         ; Push_Packed_Lit, $00000004
+04F1     38 28         ; Push_Byte_Lit, $28
+04F3     05 02         ; Call, $02
+04F5     61            ; Pop_LocalMem_Long_0
+04F6     32            ; Return
+04F7                   PUB startx(dpin, cpin, locks, auto) : okay
+04F7                     stop
+04F7     01            ; Frame_Call_Noreturn
+04F8     05 03         ; Call, $03
+04FA                     longmove(@par_keys, @dpin, 4)
+04FA     CB 30         ; Reference_VariableMem_Long, $0030
+04FC     67            ; Reference_LocalMem_Long_1
+04FD     37 01         ; Push_Packed_Lit, $00000004
+04FF     1E            ; Longmove
+0500                     okay := cog := cognew(@entry, @par_tail) + 1
+0500     34            ; Push_Neg1
+0501     C7 2C         ; Reference_ObjectMem_Long, $002C
+0503     47            ; Reference_VariableMem_Long_1
+0504     28            ; Coginit_Returns
+0505     36            ; Push_1
+0506     EC            ; Add
+0507     42 80         ; Effect_VariableMem_Long_0, write, push
+0509     61            ; Pop_LocalMem_Long_0
+050A     32            ; Return
+050B                   PUB stop
+050B                     if cog
+050B     40            ; Push_VariableMem_Long_0
+050C     0A 05         ; Jump_If_False, $0005
+050E                       cogstop(cog~ -  1)
+050E     42 98         ; Effect_VariableMem_Long_0, post-clear, push
+0510     36            ; Push_1
+0511     ED            ; Subtract
+0512     21            ; Cogstop
+0513                     longfill(@par_tail, 0, 19)
+0513     47            ; Reference_VariableMem_Long_1
+0514     35            ; Push_0
+0515     38 13         ; Push_Byte_Lit, $13
+0517     1A            ; Longfill
+0518     32            ; Return
+0519                   PUB present : truefalse
+0519                     truefalse := -par_present
+0519     4C            ; Push_VariableMem_Long_3
+051A     E6            ; Negate
+051B     61            ; Pop_LocalMem_Long_0
+051C     32            ; Return
+051D                   PUB key : keycode
+051D                     if par_tail <> par_head
+051D     44            ; Push_VariableMem_Long_1
+051E     48            ; Push_VariableMem_Long_2
+051F     FB            ; Not_Equal
+0520     0A 0B         ; Jump_If_False, $000B
+0522                       keycode := word[@par_keys][par_tail]
+0522     CB 30         ; Reference_VariableMem_Long, $0030
+0524     44            ; Push_VariableMem_Long_1
+0525     B0            ; Push_Indexed_MainMem_Word
+0526     61            ; Pop_LocalMem_Long_0
+0527                       par_tail := ++par_tail & $F
+0527     46 A6         ; Effect_VariableMem_Long_1, pre-inc, long
+0529     37 23         ; Push_Packed_Lit, $0000000F
+052B     E8            ; Bit_And
+052C     45            ; Pop_VariableMem_Long_1
+052D     32            ; Return
+052E                   PUB getkey : keycode
+052E                     repeat until (keycode := key)
+052E     00            ; Frame_Call_Return
+052F     05 05         ; Call, $05
+0531     62 80         ; Effect_LocalMem_Long_0, write, push
+0533     0B 02         ; Jump_If_True, $0002
+0535     04 77         ; Branch, $FFF7
+0537     32            ; Return
+0538                   PUB newkey : keycode
+0538                     par_tail := par_head
+0538     48            ; Push_VariableMem_Long_2
+0539     45            ; Pop_VariableMem_Long_1
+053A                     keycode := getkey
+053A     00            ; Frame_Call_Return
+053B     05 06         ; Call, $06
+053D     61            ; Pop_LocalMem_Long_0
+053E     32            ; Return
+053F                   PUB gotkey : truefalse
+053F                     truefalse := par_tail <> par_head
+053F     44            ; Push_VariableMem_Long_1
+0540     48            ; Push_VariableMem_Long_2
+0541     FB            ; Not_Equal
+0542     61            ; Pop_LocalMem_Long_0
+0543     32            ; Return
+0544                   PUB clearkeys
+0544                     par_tail := par_head
+0544     48            ; Push_VariableMem_Long_2
+0545     45            ; Pop_VariableMem_Long_1
+0546     32            ; Return
+0547                   PUB keystate(k) : state
+0547                     state := -(par_states[k >> 5] >> k & 1)
+0547     64            ; Push_LocalMem_Long_1
+0548     38 05         ; Push_Byte_Lit, $05
+054A     E2            ; Shift_Right
+054B     D8 10         ; Push_Indexed_VariableMem_Long, $0010
+054D     64            ; Push_LocalMem_Long_1
+054E     E2            ; Shift_Right
+054F     36            ; Push_1
+0550     E8            ; Bit_And
+0551     E6            ; Negate
+0552     61            ; Pop_LocalMem_Long_0
+0553     32            ; Return
+                       Variables for TOP (input.keyboard.spin)
+0554     0000          long COG
+0558     0004          long PAR_TAIL
+055C     0008          long PAR_HEAD
+0560     000C          long PAR_PRESENT
+0564     0010          long PAR_STATES[8]
+0584     0030          long PAR_KEYS[8]
+05A4                   Reserved 8 bytes.
+05AC                   Base of stack.
+05BC                   Top of stack.

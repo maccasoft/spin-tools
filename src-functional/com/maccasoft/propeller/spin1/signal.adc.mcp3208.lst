@@ -1,0 +1,218 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     EF            Check Sum
+0006     0010          Base of Program
+0008     01A0          Base of Variables
+000A     01C8          Base of Stack
+000C     0130          Initial Program Counter
+000E     01DC          Initial Stack Pointer
+                       File "signal.adc.mcp3208.spin"
+0010     0190 0009     Link to Next Object
+0014     0120 0000     Link to PUB start(dpin, cpin, spin, mode) : okay
+0018     0127 0000     Link to PUB start1(dpin, cpin, spin, mode, xpin) : okay
+001C     0134 0000     Link to PUB start2(dpin, cpin, spin, mode, xpin, ypin) : okay
+0020     014C 0000     Link to PUB stop
+0024     0155 0000     Link to PUB in(channel) : sample
+0028     015A 0004     Link to PUB average(channel, n) : sample | c
+002C     0173 0000     Link to PUB out(x, y)
+0030     0178 0000     Link to PRI startx(ptr, dacmode) : okay
+0034 000               DAT
+0034 000                                       org
+0034 000 A0BC7FF0      entry                   mov     t1,par                  'read parameters
+0038 001 5CFC7837                              call    #param                  'setup DIN/DOUT pin
+003C 002 A0BC8640                              mov     dmask,t2
+0040 003 5CFC7837                              call    #param                  'setup CLK pin
+0044 004 A0BC8840                              mov     cmask,t2
+0048 005 5CFC7837                              call    #param                  'setup CS pin
+004C 006 A0BC8A40                              mov     smask,t2
+0050 007 5CFC7837                              call    #param                  'set mode
+0054 008 A0BC8C41                              mov     enables,t3
+0058 009 5CFC7837                              call    #param                  'setup DAC configuration
+005C 00A 68B3EC40              if_c            or      dira,t2
+0060 00B 50B3F041              if_c            movs    ctra,t3
+0064 00C 58F3F030              if_c            movi    ctra,#%00110_000
+0068 00D 28FC8208                              shr     t3,#8
+006C 00E 5CFC7839                              call    #param2
+0070 00F 68B3EC40              if_c            or      dira,t2
+0074 010 50B3F241              if_c            movs    ctrb,t3
+0078 011 58F3F230              if_c            movi    ctrb,#%00110_000
+007C 012 68BFEC44                              or      dira,cmask              'output CLK
+0080 013 68BFEC45                              or      dira,smask              'output CS
+0084 014 A0FC8E10      main_loop               mov     command,#$10            'init command
+0088 015 A0BC7FF0                              mov     t1,par                  'reset sample pointer
+008C 016 A0BC8046                              mov     t2,enables              'get enables
+0090 017 A0FC8208                              mov     t3,#8                   'ready 8 channels
+0094 018 29FC8001      cloop                   shr     t2,#1           wc      'if channel disabled, skip
+0098 019 5C4C0031              if_nc           jmp     #skip
+009C 01A 617C8080                              test    t2,#$80         wc      'channel enabled, get single/diff mode
+00A0 01B 74FC8E08                              muxnc   command,#$08
+00A4 01C A0BC9047                              mov     stream,command
+00A8 01D 68BFE845                              or      outa,smask              'CS high
+00AC 01E 68BFEC43                              or      dira,dmask              'make DIN/DOUT output
+00B0 01F A0FC9214                              mov     bits,#20                'ready 20 bits (cs+1+diff+ch[3]+0+0+data[12])
+00B4 020 617C9020      bloop                   test    stream,#$20     wc      'update DIN/DOUT
+00B8 021 70BFE843                              muxc    outa,dmask
+00BC 022 867C920E                              cmp     bits,#14        wz      'if command done, input DIN/DOUT
+00C0 023 64ABEC43              if_z            andn    dira,dmask
+00C4 024 64BFE844                              andn    outa,cmask              'CLK low
+00C8 025 A0BC85F0                              mov     t4,par                  'update DACs between clock transitions
+00CC 026 80FC8414                              add     t4,#20
+00D0 027 08BFF442                              rdlong  frqa,t4
+00D4 028 80FC8404                              add     t4,#4
+00D8 029 08BFF642                              rdlong  frqb,t4
+00DC 02A 68BFE844                              or      outa,cmask              'CLK high
+00E0 02B 613C87F2                              test    dmask,ina       wc      'sample DIN/DOUT
+00E4 02C 34FC9001                              rcl     stream,#1
+00E8 02D 64BFE845                              andn    outa,smask              'CS low
+00EC 02E E4FC9220                              djnz    bits,#bloop             'next data bit
+00F0 02F 60BC903E                              and     stream,mask12           'trim and write sample
+00F4 030 043C903F                              wrword  stream,t1
+00F8 031 80FC7E02      skip                    add     t1,#2                   'advance sample pointer
+00FC 032 80FC8E01                              add     command,#$01            'advance command
+0100 033 E4FC8218                              djnz    t3,#cloop               'more channels?
+0104 034 083C943F                              wrlong  counter,t1              'channels done, update counter
+0108 035 80FC9401                              add     counter,#1
+010C 036 5C7C0014                              jmp     #main_loop              'perform conversions again
+0110 037 08BC823F      param                   rdlong  t3,t1                   'get parameter into t3
+0114 038 80FC7E04                              add     t1,#4                   'point to next parameter
+0118 039 A0FC8001      param2                  mov     t2,#1                   'make pin mask in t2
+011C 03A 2CBC8041                              shl     t2,t3
+0120 03B 617C8280                              test    t3,#$80         wc      'get DAC flag into c
+0124 03C               param2_ret
+0124 03C 5C7C0000      param_ret               ret
+0128 03D 00000200      dlsb                    long    1 << 9
+012C 03E 00000FFF      mask12                  long    $FFF
+0130 03F               t1                      res     1
+0130 040               t2                      res     1
+0130 041               t3                      res     1
+0130 042               t4                      res     1
+0130 043               dmask                   res     1
+0130 044               cmask                   res     1
+0130 045               smask                   res     1
+0130 046               enables                 res     1
+0130 047               command                 res     1
+0130 048               stream                  res     1
+0130 049               bits                    res     1
+0130 04A               counter                 res     1
+0130                   PUB start(dpin, cpin, spin, mode) : okay
+0130                     return startx(@dpin, 0)
+0130     00            ; Frame_Call_Return
+0131     67            ; Reference_LocalMem_Long_1
+0132     35            ; Push_0
+0133     05 08         ; Call, $08
+0135     33            ; Pop_Return
+0136     32            ; Return
+0137                   PUB start1(dpin, cpin, spin, mode, xpin) : okay
+0137                     return startx(@dpin, xpin & $1F | $80)
+0137     00            ; Frame_Call_Return
+0138     67            ; Reference_LocalMem_Long_1
+0139     74            ; Push_LocalMem_Long_5
+013A     37 24         ; Push_Packed_Lit, $0000001F
+013C     E8            ; Bit_And
+013D     37 06         ; Push_Packed_Lit, $00000080
+013F     EA            ; Bit_Or
+0140     05 08         ; Call, $08
+0142     33            ; Pop_Return
+0143     32            ; Return
+0144                   PUB start2(dpin, cpin, spin, mode, xpin, ypin) : okay
+0144                     return startx(@dpin, (ypin & $1F | $80) << 8 + xpin & $1F | $80)
+0144     00            ; Frame_Call_Return
+0145     67            ; Reference_LocalMem_Long_1
+0146     78            ; Push_LocalMem_Long_6
+0147     37 24         ; Push_Packed_Lit, $0000001F
+0149     E8            ; Bit_And
+014A     37 06         ; Push_Packed_Lit, $00000080
+014C     EA            ; Bit_Or
+014D     37 02         ; Push_Packed_Lit, $00000008
+014F     E3            ; Shift_Left
+0150     74            ; Push_LocalMem_Long_5
+0151     37 24         ; Push_Packed_Lit, $0000001F
+0153     E8            ; Bit_And
+0154     37 06         ; Push_Packed_Lit, $00000080
+0156     EA            ; Bit_Or
+0157     EC            ; Add
+0158     05 08         ; Call, $08
+015A     33            ; Pop_Return
+015B     32            ; Return
+015C                   PUB stop
+015C                     if cog
+015C     40            ; Push_VariableMem_Long_0
+015D     0A 05         ; Jump_If_False, $0005
+015F                       cogstop(cog~ - 1)
+015F     42 98         ; Effect_VariableMem_Long_0, post-clear, push
+0161     36            ; Push_1
+0162     ED            ; Subtract
+0163     21            ; Cogstop
+0164     32            ; Return
+0165                   PUB in(channel) : sample
+0165                     return ins.word[channel]
+0165     64            ; Push_LocalMem_Long_1
+0166     B8 04         ; Push_Indexed_VariableMem_Word, $0004
+0168     33            ; Pop_Return
+0169     32            ; Return
+016A                   PUB average(channel, n) : sample | c
+016A                     c := count
+016A     54            ; Push_VariableMem_Long_5
+016B     6D            ; Pop_LocalMem_Long_3
+016C                     repeat n
+016C     68            ; Push_LocalMem_Long_2
+016D     08 10         ; Loop_Start, $0010
+016F                       repeat while c == count
+016F     6C            ; Push_LocalMem_Long_3
+0170     54            ; Push_VariableMem_Long_5
+0171     FC            ; Equal
+0172     0A 02         ; Jump_If_False, $0002
+0174     04 79         ; Branch, $FFF9
+0176                       sample += ins.word[channel]
+0176     64            ; Push_LocalMem_Long_1
+0177     B8 04         ; Push_Indexed_VariableMem_Word, $0004
+0179     62 4C         ; Effect_LocalMem_Long_0, Add, swap
+017B                       c++
+017B     6E 2E         ; Effect_LocalMem_Long_3, post-inc, long
+017D     09 70         ; Loop_Continue, $FFF0
+017F                     sample /= n
+017F     68            ; Push_LocalMem_Long_2
+0180     62 56         ; Effect_LocalMem_Long_0, Divide, swap
+0182     32            ; Return
+0183                   PUB out(x, y)
+0183                     dacx := x
+0183     64            ; Push_LocalMem_Long_1
+0184     59            ; Pop_VariableMem_Long_6
+0185                     dacy := y
+0185     68            ; Push_LocalMem_Long_2
+0186     5D            ; Pop_VariableMem_Long_7
+0187     32            ; Return
+0188                   PRI startx(ptr, dacmode) : okay
+0188                     stop
+0188     01            ; Frame_Call_Noreturn
+0189     05 04         ; Call, $04
+018B                     longmove(@ins, ptr, 4)
+018B     47            ; Reference_VariableMem_Long_1
+018C     64            ; Push_LocalMem_Long_1
+018D     37 01         ; Push_Packed_Lit, $00000004
+018F     1E            ; Longmove
+0190                     count := dacmode
+0190     68            ; Push_LocalMem_Long_2
+0191     55            ; Pop_VariableMem_Long_5
+0192                     return cog := cognew(@entry, @ins) + 1
+0192     34            ; Push_Neg1
+0193     C7 24         ; Reference_ObjectMem_Long, $0024
+0195     47            ; Reference_VariableMem_Long_1
+0196     28            ; Coginit_Returns
+0197     36            ; Push_1
+0198     EC            ; Add
+0199     42 80         ; Effect_VariableMem_Long_0, write, push
+019B     33            ; Pop_Return
+019C     32            ; Return
+019D     00            ; Frame_Call_Return
+019E     00            ; Frame_Call_Return
+019F     00            ; Frame_Call_Return
+                       Variables for TOP (signal.adc.mcp3208.spin)
+01A0     0000          long COG
+01A4     0004          long INS[4]
+01B4     0014          long COUNT
+01B8     0018          long DACX
+01BC     001C          long DACY
+01C0                   Reserved 8 bytes.
+01C8                   Base of stack.
+01D8                   Top of stack.

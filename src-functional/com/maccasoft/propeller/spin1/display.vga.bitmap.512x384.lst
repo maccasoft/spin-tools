@@ -1,0 +1,156 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     AB            Check Sum
+0006     0010          Base of Program
+0008     0154          Base of Variables
+000A     0160          Base of Stack
+000C     0104          Initial Program Counter
+000E     017C          Initial Stack Pointer
+                       File "display.vga.bitmap.512x384.spin"
+0010     0144 0003     Link to Next Object
+0014     00F4 0008     Link to PUB start(BasePin, ColorPtr, PixelPtr, SyncPtr) : okay | i, j
+0018     0138 0004     Link to PUB stop | i
+001C 000               DAT
+001C 000                                       org                             'set origin to $000 for start of program
+001C 000 A0BFEC30      init                    mov     dira,reg_dira           'set pin directions
+0020 001 A0BFEE31                              mov     dirb,reg_dirb
+0024 002 58FFF00D                              movi    ctra,#%00001_101        'enable PLL in ctra (VCO runs at 4x)
+0028 003 58FFF438                              movi    frqa,#(pr / 5) << 3     'set pixel rate
+002C 004 A0BFFC32                              mov     vcfg,reg_vcfg           'set video configuration
+0030 005 A0BC7433      field                   mov     color_ptr,color_base    'reset color pointer
+0034 006 A0BC7634                              mov     pixel_ptr,pixel_base    'reset pixel pointer
+0038 007 A0FC7E0C                              mov     y,#ytiles               'set y tiles
+003C 008 A0FC8020      :ytile                  mov     yl,#32                  'set y lines per tile
+0040 009 A0FC8202      :yline                  mov     yx,#2                   'set y expansion
+0044 00A A0FC7C10      :yexpand                mov     x,#xtiles               'set x tiles
+0048 00B A0BFFE35                              mov     vscl,vscl_pixel         'set pixel vscl
+004C 00C 04BC783A      :xtile                  rdword  color,color_ptr         'get color word
+0050 00D 60BC7836                              and     color,colormask         'clear h/v bits
+0054 00E 68BC7838                              or      color,hv                'set h/v inactive states
+0058 00F 08BC7A3B                              rdlong  pixel,pixel_ptr         'get pixel long
+005C 010 FC3C783D                              waitvid color,pixel             'pass colors and pixels to video
+0060 011 80FC7402                              add     color_ptr,#2            'point to next color word
+0064 012 80FC7604                              add     pixel_ptr,#4            'point to next pixel long
+0068 013 E4FC7C0C                              djnz    x,#:xtile               'another x tile?
+006C 014 84FC7420                              sub     color_ptr,#xtiles * 2   'repoint to first colors in same line
+0070 015 84FC7640                              sub     pixel_ptr,#xtiles * 4   'repoint to first pixels in same line
+0074 016 A0FC7C01                              mov     x,#1                    'do horizontal sync
+0078 017 5CFC5E28                              call    #hsync
+007C 018 E4FC820A                              djnz    yx,#:yexpand            'y expand?
+0080 019 80FC7640                              add     pixel_ptr,#xtiles * 4   'point to first pixels in next line
+0084 01A E4FC8009                              djnz    yl,#:yline              'another y line in same tile?
+0088 01B 80FC7420                              add     color_ptr,#xtiles * 2   'point to first colors in next tile
+008C 01C E4FC7E08                              djnz    y,#:ytile               'another y tile?
+0090 01D 083C6DF0                              wrlong   colormask,par          'visible done, write non-0 to sync
+0094 01E A0FC7C01                              mov     x,#vf                   'do vertical front porch lines
+0098 01F 5CFC5E26                              call    #blank
+009C 020 A0FC7C03                              mov     x,#vs                   'do vertical sync lines
+00A0 021 5CFC5E25                              call    #vsync
+00A4 022 A0FC7C1C                              mov     x,#vb                   'do vertical back porch lines
+00A8 023 5CFC5E25                              call    #vsync
+00AC 024 5C7C0005                              jmp     #field                  'field done, loop
+00B0 025 6CFC7301      vsync                   xor     hvsync,#$101            'flip vertical sync bits
+00B4 026 A0BFFE37      blank                   mov     vscl,hvis               'do blank pixels
+00B8 027 FC7C7200                              waitvid hvsync,#0
+00BC 028 A0FFFE08      hsync                   mov     vscl,#hf                'do horizontal front porch pixels
+00C0 029 FC7C7200                              waitvid hvsync,#0
+00C4 02A A0FFFE30                              mov     vscl,#hs                'do horizontal sync pixels
+00C8 02B FC7C7201                              waitvid hvsync,#1
+00CC 02C A0FFFE58                              mov     vscl,#hb                'do horizontal back porch pixels
+00D0 02D FC7C7200                              waitvid hvsync,#0
+00D4 02E E4FC7C26                              djnz    x,#blank                'another line?
+00D8 02F               hsync_ret
+00D8 02F               blank_ret
+00D8 02F 5C7C0000      vsync_ret               ret
+00DC 030 00000000      reg_dira                long    0                       'set at runtime
+00E0 031 00000000      reg_dirb                long    0                       'set at runtime
+00E4 032 00000000      reg_vcfg                long    0                       'set at runtime
+00E8 033 00000000      color_base              long    0                       'set at runtime (2 contiguous longs)
+00EC 034 00000000      pixel_base              long    0                       'set at runtime
+00F0 035 00001020      vscl_pixel              long    1 << 12 + 32            '1 pixel per clock and 32 pixels per set
+00F4 036 0000FCFC      colormask               long    $FCFC                   'mask to isolate R,G,B bits from H,V
+00F8 037 00000200      hvis                    long    hp                      'visible pixels per scan line
+00FC 038 00000303      hv                      long    hv_inactive             '-H,-V states
+0100 039 00000103      hvsync                  long    hv_inactive ^ $200      '+/-H,-V states
+0104 03A               color_ptr               res     1
+0104 03B               pixel_ptr               res     1
+0104 03C               color                   res     1
+0104 03D               pixel                   res     1
+0104 03E               x                       res     1
+0104 03F               y                       res     1
+0104 040               yl                      res     1
+0104 041               yx                      res     1
+0104                   PUB start(BasePin, ColorPtr, PixelPtr, SyncPtr) : okay | i, j
+0104                     stop
+0104     01            ; Frame_Call_Noreturn
+0105     05 02         ; Call, $02
+0107                     reg_vcfg := $200000FF + (BasePin & %111000) << 6
+0107     3B 200000FF   ; Push_Long_Lit, $200000FF
+010C     64            ; Push_LocalMem_Long_1
+010D     38 38         ; Push_Byte_Lit, $38
+010F     E8            ; Bit_And
+0110     38 06         ; Push_Byte_Lit, $06
+0112     E3            ; Shift_Left
+0113     EC            ; Add
+0114     C5 80 D4      ; Pop_ObjectMem_Long, $00D4
+0117                     i := $FF << (BasePin & %011000)
+0117     37 27         ; Push_Packed_Lit, $000000FF
+0119     64            ; Push_LocalMem_Long_1
+011A     38 18         ; Push_Byte_Lit, $18
+011C     E8            ; Bit_And
+011D     E3            ; Shift_Left
+011E     75            ; Pop_LocalMem_Long_5
+011F                     j := BasePin & %100000 == 0
+011F     64            ; Push_LocalMem_Long_1
+0120     37 04         ; Push_Packed_Lit, $00000020
+0122     E8            ; Bit_And
+0123     35            ; Push_0
+0124     FC            ; Equal
+0125     79            ; Pop_LocalMem_Long_6
+0126                     reg_dira := i & j
+0126     74            ; Push_LocalMem_Long_5
+0127     78            ; Push_LocalMem_Long_6
+0128     E8            ; Bit_And
+0129     C5 80 CC      ; Pop_ObjectMem_Long, $00CC
+012C                     reg_dirb := i & !j
+012C     74            ; Push_LocalMem_Long_5
+012D     78            ; Push_LocalMem_Long_6
+012E     E7            ; Complement
+012F     E8            ; Bit_And
+0130     C5 80 D0      ; Pop_ObjectMem_Long, $00D0
+0133                     longmove(@color_base, @ColorPtr, 2)
+0133     C7 80 D8      ; Reference_ObjectMem_Long, $00D8
+0136     6B            ; Reference_LocalMem_Long_2
+0137     37 00         ; Push_Packed_Lit, $00000002
+0139     1E            ; Longmove
+013A                     if (cog := cognew(@init, SyncPtr) + 1)
+013A     34            ; Push_Neg1
+013B     C7 0C         ; Reference_ObjectMem_Long, $000C
+013D     70            ; Push_LocalMem_Long_4
+013E     28            ; Coginit_Returns
+013F     36            ; Push_1
+0140     EC            ; Add
+0141     42 80         ; Effect_VariableMem_Long_0, write, push
+0143     0A 02         ; Jump_If_False, $0002
+0145                       return true
+0145     34            ; Push_Neg1
+0146     33            ; Pop_Return
+0147     32            ; Return
+0148                   PUB stop | i
+0148                     if cog
+0148     40            ; Push_VariableMem_Long_0
+0149     0A 05         ; Jump_If_False, $0005
+014B                       cogstop(cog~ - 1)
+014B     42 98         ; Effect_VariableMem_Long_0, post-clear, push
+014D     36            ; Push_1
+014E     ED            ; Subtract
+014F     21            ; Cogstop
+0150     32            ; Return
+0151     00            ; Frame_Call_Return
+0152     00            ; Frame_Call_Return
+0153     00            ; Frame_Call_Return
+                       Variables for TOP (display.vga.bitmap.512x384.spin)
+0154     0000          long COG
+0158                   Reserved 8 bytes.
+0160                   Base of stack.
+0170                   Top of stack.
