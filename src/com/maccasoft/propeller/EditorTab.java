@@ -15,6 +15,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -26,8 +27,10 @@ import org.eclipse.swt.widgets.Display;
 import com.maccasoft.propeller.EditorTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
+import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
+import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 
 public class EditorTab {
@@ -63,6 +66,28 @@ public class EditorTab {
         }
     };
 
+    class Spin1CompilerAdapter extends Spin1Compiler {
+
+        @Override
+        protected Spin1Object getObject(String fileName) {
+            AtomicReference<Node> result = new AtomicReference<Node>();
+            Display.getDefault().syncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    Node node = getNodeRootFromTab(fileName);
+                    result.set(node);
+                }
+            });
+            if (result.get() != null) {
+                Spin1CompilerAdapter c = new Spin1CompilerAdapter();
+                return c.compileObject(result.get());
+            }
+            return null;
+        }
+
+    }
+
     final Runnable spin1CompilerRunnable = new Runnable() {
 
         @Override
@@ -75,9 +100,10 @@ public class EditorTab {
 
                 Node root = tokenMarker.getRoot();
                 Thread thread = new Thread(new Runnable() {
+
                     @Override
                     public void run() {
-                        Spin1Compiler compiler = new Spin1Compiler();
+                        Spin1Compiler compiler = new Spin1CompilerAdapter();
                         try {
                             object = compiler.compile(root);
                             errors = compiler.hasErrors();
@@ -114,6 +140,28 @@ public class EditorTab {
 
     };
 
+    class Spin2CompilerAdapter extends Spin2Compiler {
+
+        @Override
+        protected Spin2Object getObject(String fileName) {
+            AtomicReference<Node> result = new AtomicReference<Node>();
+            Display.getDefault().syncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    Node node = getNodeRootFromTab(fileName);
+                    result.set(node);
+                }
+            });
+            if (result.get() != null) {
+                Spin2CompilerAdapter c = new Spin2CompilerAdapter();
+                return c.compileObject(result.get());
+            }
+            return null;
+        }
+
+    }
+
     final Runnable spin2CompilerRunnable = new Runnable() {
 
         @Override
@@ -128,7 +176,7 @@ public class EditorTab {
                 Thread thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        Spin2Compiler compiler = new Spin2Compiler();
+                        Spin2Compiler compiler = new Spin2CompilerAdapter();
                         try {
                             object = compiler.compile(root);
                             errors = compiler.hasErrors();
@@ -330,6 +378,26 @@ public class EditorTab {
             }
         }
         Display.getDefault().beep();
+    }
+
+    protected Node getNodeRootFromTab(String fileName) {
+        File fileParent = file != null ? file.getParentFile() : null;
+        String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
+
+        CTabFolder tabFolder = tabItem.getParent();
+        for (int i = 0; i < tabFolder.getItemCount(); i++) {
+            EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
+            File tabParent = editorTab.file != null ? editorTab.file.getParentFile() : new File("");
+            if (fileParent == null || tabParent.equals(fileParent)) {
+                int extIndex = editorTab.tabItemText.lastIndexOf('.');
+                String tabType = editorTab.tabItemText.substring(extIndex);
+                if (tabType.equals(fileType) && fileName.equals(editorTab.tabItemText.substring(0, extIndex))) {
+                    return editorTab.tokenMarker.getRoot();
+                }
+            }
+        }
+
+        return null;
     }
 
 }

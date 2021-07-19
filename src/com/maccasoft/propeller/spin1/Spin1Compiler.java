@@ -68,6 +68,7 @@ import com.maccasoft.propeller.spin1.bytecode.Jnz;
 import com.maccasoft.propeller.spin1.bytecode.Jz;
 import com.maccasoft.propeller.spin1.bytecode.MathOp;
 import com.maccasoft.propeller.spin1.bytecode.MemoryOp;
+import com.maccasoft.propeller.spin1.bytecode.MemoryRef;
 import com.maccasoft.propeller.spin1.bytecode.RegisterBitOp;
 import com.maccasoft.propeller.spin1.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
@@ -122,9 +123,6 @@ public class Spin1Compiler {
         vbase.setValue(object.getSize());
 
         int offset = obj.getVarSize() + 8;
-        for (Spin1Object child : objects) {
-            offset += child.getVarSize();
-        }
         dbase.setValue(object.getSize() + offset);
 
         pcurr.setValue((int) (pbase.getValue() + (((LongDataObject) obj.getObject(4)).getValue() & 0xFFFF)));
@@ -154,18 +152,10 @@ public class Spin1Compiler {
             }
         }
 
-        object.setVarSize(varOffset);
-
         determineClock();
 
         object.setClkFreq(scope.getLocalSymbol("CLKFREQ").getNumber().intValue());
         object.setClkMode(scope.getLocalSymbol("CLKMODE").getNumber().intValue());
-
-        for (Node node : root.getChilds()) {
-            if (node instanceof ObjectsNode) {
-                compileObjBlock(node);
-            }
-        }
 
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
@@ -191,6 +181,12 @@ public class Spin1Compiler {
                 scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                 method.register();
+            }
+        }
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof ObjectsNode) {
+                compileObjBlock(node);
             }
         }
 
@@ -285,6 +281,7 @@ public class Spin1Compiler {
             varOffset += o.getVarSize();
             index++;
         }
+        object.setVarSize(varOffset);
 
         return object;
     }
@@ -470,7 +467,7 @@ public class Spin1Compiler {
                     if (entry.getValue() instanceof Method) {
                         String qualifiedName = node.name.getText() + "." + entry.getKey();
                         Method method = ((Method) entry.getValue()).copy();
-                        method.setObject(objects.size() + 1);
+                        method.setObject(methods.size() + objects.size());
                         scope.addSymbol(qualifiedName, method);
                     }
                     else {
@@ -1185,8 +1182,12 @@ public class Spin1Compiler {
             }
         }
         else if ("QUIT".equalsIgnoreCase(text)) {
+            int pop = 0;
             Spin1MethodLine repeat = line.getParent();
             while (repeat != null) {
+                if ("CASE".equalsIgnoreCase(repeat.getStatement())) {
+                    pop += 8;
+                }
                 if ("REPEAT".equalsIgnoreCase(repeat.getStatement())) {
                     break;
                 }
@@ -1197,6 +1198,10 @@ public class Spin1Compiler {
                     break;
                 }
                 repeat = repeat.getParent();
+            }
+            if (pop != 0) {
+                line.addSource(new Constant(line.getScope(), new NumberLiteral(pop)));
+                line.addSource(new Bytecode(line.getScope(), 0x14, "POP"));
             }
             Spin1MethodLine target = (Spin1MethodLine) repeat.getData("quit");
             line.addSource(new Jmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
@@ -1249,7 +1254,7 @@ public class Spin1Compiler {
                         line.addSource(new Jmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
                     }
                     else {
-                        line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
+                        line.addSource(compileBytecodeExpression(line.getScope(), arg, true));
                     }
                 }
             }
@@ -1468,7 +1473,7 @@ public class Spin1Compiler {
             else {
                 sb.append((char) 0x00);
                 Spin1Bytecode target = new Bytecode(context, sb.toString().getBytes(), "STRING".toUpperCase());
-                source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, new ContextLiteral(target.getContext())));
+                source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
                 dataLine.addSource(target);
             }
         }
@@ -1503,7 +1508,13 @@ public class Spin1Compiler {
                 }
             }
             else {
-                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                Expression expression = context.getLocalSymbol(node.getChild(0).getText());
+                if (!push && (expression instanceof Variable)) {
+                    source.add(new VariableOp(context, VariableOp.Op.Assign, false, (Variable) expression));
+                }
+                else {
+                    source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                }
                 //Expression expression = context.getLocalSymbol(node.getChild(0).getText());
                 //if (expression == null) {
                 //    throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
