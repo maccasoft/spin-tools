@@ -655,7 +655,8 @@ class Spin1CompilerTest {
             + "0000D 0000D       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
             + "0000E 0000E       36             CONSTANT (1)\n"
             + "0000F 0000F       38 0A          CONSTANT (10)\n"
-            + "00011 00011       66 02 76       VAR_MODIFY LONG DBASE+$0004 (short) REPEAT-JMP $0000A (-10)\n"
+            + "00011 00011       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00012 00012       02 76          REPEAT-JMP $0000A (-10)\n"
             + "00014 00014       32             RETURN\n"
             + "00015 00015       00 00 00       Padding\n"
             + "", compile(text));
@@ -690,7 +691,8 @@ class Spin1CompilerTest {
             + "0000D 0000D       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
             + "0000E 0000E       44             VAR_READ LONG VBASE+$0004 (short)\n"
             + "0000F 0000F       64             VAR_READ LONG DBASE+$0004 (short)\n"
-            + "00010 00010       42 02 77       VAR_MODIFY LONG VBASE+$0000 (short) REPEAT-JMP $0000A (-9)\n"
+            + "00010 00010       42             VAR_MODIFY LONG VBASE+$0000 (short)\n"
+            + "00011 00011       02 77          REPEAT-JMP $0000A (-9)\n"
             + "00013 00013       32             RETURN\n"
             + "", compile(text));
     }
@@ -725,7 +727,8 @@ class Spin1CompilerTest {
             + "0000E 0000E       38 05          CONSTANT (5)\n"
             + "00010 00010       44             VAR_READ LONG VBASE+$0004 (short)\n"
             + "00011 00011       64             VAR_READ LONG DBASE+$0004 (short)\n"
-            + "00012 00012       42 06 75       VAR_MODIFY LONG VBASE+$0000 (short) REPEAT-JMP $0000A (-11)\n"
+            + "00012 00012       42             VAR_MODIFY LONG VBASE+$0000 (short)\n"
+            + "00013 00013       06 75          REPEAT-JMP $0000A (-11)\n"
             + "00015 00015       32             RETURN\n"
             + "00016 00016       00 00          Padding\n"
             + "", compile(text));
@@ -770,7 +773,8 @@ class Spin1CompilerTest {
             + "00016 00016       38 05          CONSTANT (5)\n"
             + "00018 00018       44             VAR_READ LONG VBASE+$0004 (short)\n"
             + "00019 00019       64             VAR_READ LONG DBASE+$0004 (short)\n"
-            + "0001A 0001A       42 06 6D       VAR_MODIFY LONG VBASE+$0000 (short) REPEAT-JMP $0000A (-19)\n"
+            + "0001A 0001A       42             VAR_MODIFY LONG VBASE+$0000 (short)\n"
+            + "0001B 0001B       06 6D          REPEAT-JMP $0000A (-19)\n"
             + "0001D 0001D       32             RETURN\n"
             + "0001E 0001E       00 00          Padding\n"
             + "", compile(text));
@@ -1428,6 +1432,7 @@ class Spin1CompilerTest {
             + "    --a\n"
             + "    ~a\n"
             + "    ~~a\n"
+            + "    -a\n"
             + "";
 
         Assertions.assertEquals(""
@@ -1461,8 +1466,11 @@ class Spin1CompilerTest {
             + "'     ~~a\n"
             + "00016 00016       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
             + "00017 00017       14             SIGN_EXTEND_WORD\n"
-            + "00018 00018       32             RETURN\n"
-            + "00019 00019       00 00 00       Padding\n"
+            + "'     -a\n"
+            + "00018 00018       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
+            + "00019 00019       46             NEGATE\n"
+            + "0001A 0001A       32             RETURN\n"
+            + "0001B 0001B       00             Padding\n"
             + "", compile(text));
     }
 
@@ -1479,6 +1487,7 @@ class Spin1CompilerTest {
             + "    b := --a\n"
             + "    b := ~a\n"
             + "    b := ~~a\n"
+            + "    b := -a\n"
             + "";
 
         Assertions.assertEquals(""
@@ -1520,8 +1529,11 @@ class Spin1CompilerTest {
             + "0001D 0001D       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
             + "0001E 0001E       94             SIGN_EXTEND_WORD\n"
             + "0001F 0001F       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
-            + "00020 00020       32             RETURN\n"
-            + "00021 00021       00 00 00       Padding\n"
+            + "'     b := -a\n"
+            + "00020 00020       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00021 00021       E6             NEGATE\n"
+            + "00022 00022       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "00023 00023       32             RETURN\n"
             + "", compile(text));
     }
 
@@ -2075,6 +2087,110 @@ class Spin1CompilerTest {
             + "0000B 0000B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "0000C 0000C       32             RETURN\n"
             + "0000D 0000D       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testCognewInterpreter() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    cognew(thread(1,2), @b)\n"
+            + "\n"
+            + "PUB thread(p1,p2)\n"
+            + "\n"
+            + "    p1 := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       1C 00          Object size\n"
+            + "00002 00002       03             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       0C 00 08 00    Function main @ $000C (local size 8)\n"
+            + "00008 00008       16 00 00 00    Function thread @ $0016 (local size 0)\n"
+            + "' PUB main | a, b\n"
+            + "'     cognew(thread(1,2), @b)\n"
+            + "0000C 0000C       36             CONSTANT (1)\n"
+            + "0000D 0000D       38 02          CONSTANT (2)\n"
+            + "0000F 0000F       39 02 02       CONSTANT (514)\n"
+            + "00012 00012       6B             VAR_ADDRESS LONG DBASE+$0008 (short)\n"
+            + "00013 00013       15             MARK_INTERPRETED\n"
+            + "00014 00014       2C             COGNEW\n"
+            + "00015 00015       32             RETURN\n"
+            + "' PUB thread(p1,p2)\n"
+            + "'     p1 := 1\n"
+            + "00016 00016       36             CONSTANT (1)\n"
+            + "00017 00017       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00018 00018       32             RETURN\n"
+            + "00019 00019       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testCognewPAsm() throws Exception {
+        String text = ""
+            + "PUB main\n"
+            + "\n"
+            + "    cognew(@start, 0)\n"
+            + "\n"
+            + "DAT             org     $000\n"
+            + "\n"
+            + "start           cogid   a\n"
+            + "                cogstop a\n"
+            + "\n"
+            + "a               res     1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       18 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       10 00 00 00    Function main @ $0010 (local size 0)\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 01 04 FC 0C    start               cogid   a\n"
+            + "0000C 0000C   001 03 04 7C 0C                        cogstop a\n"
+            + "00010 00010   002                a                   res     1\n"
+            + "' PUB main\n"
+            + "'     cognew(@start, 0)\n"
+            + "00010 00010       34             CONSTANT (-1)\n"
+            + "00011 00011       C7 08          MEM_ADDRESS LONG PBASE+$0008\n"
+            + "00013 00013       35             CONSTANT (0)\n"
+            + "00014 00014       2C             COGNEW\n"
+            + "00015 00015       32             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testVariableTypeIndex() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := b.byte[1]\n"
+            + "    b.byte[1] := a\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main | a, b\n"
+            + "'     a := b.byte[1]\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       9C 08          MEM_READ_INDEXED BYTE DBASE+$0008\n"
+            + "0000B 0000B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     b.byte[1] := a\n"
+            + "0000C 0000C       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0000D 0000D       36             CONSTANT (1)\n"
+            + "0000E 0000E       9D 08          MEM_WRITE_INDEXED BYTE DBASE+$0008\n"
+            + "00010 00010       32             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
             + "", compile(text));
     }
 

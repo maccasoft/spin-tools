@@ -54,30 +54,38 @@ public class MemoryOp extends Spin1Bytecode {
         this.expression = expression;
 
         if (expression instanceof DataVariable) {
-            switch (((DataVariable) expression).getSize()) {
-                case 1:
-                    this.ss = Size.Byte;
-                    break;
-                case 2:
-                    this.ss = Size.Word;
-                    break;
-                case 4:
-                    this.ss = Size.Long;
-                    break;
+            if (ss == null) {
+                switch (((DataVariable) expression).getSize()) {
+                    case 1:
+                        this.ss = Size.Byte;
+                        break;
+                    case 2:
+                        this.ss = Size.Word;
+                        break;
+                    case 4:
+                        this.ss = Size.Long;
+                        break;
+                }
             }
         }
         if (expression instanceof Variable) {
             this.bb = expression instanceof LocalVariable ? Base.DBase : Base.VBase;
-            String type = ((Variable) expression).getType();
-            if ("LONG".equalsIgnoreCase(type)) {
-                this.ss = Size.Long;
+            if (ss == null) {
+                String type = ((Variable) expression).getType();
+                if ("LONG".equalsIgnoreCase(type)) {
+                    this.ss = Size.Long;
+                }
+                else if ("WORD".equalsIgnoreCase(type)) {
+                    this.ss = Size.Word;
+                }
+                else if ("BYTE".equalsIgnoreCase(type)) {
+                    this.ss = Size.Byte;
+                }
             }
-            else if ("WORD".equalsIgnoreCase(type)) {
-                this.ss = Size.Word;
-            }
-            else if ("BYTE".equalsIgnoreCase(type)) {
-                this.ss = Size.Byte;
-            }
+        }
+
+        if (this.ss == null) {
+            this.ss = Size.Long;
         }
     }
 

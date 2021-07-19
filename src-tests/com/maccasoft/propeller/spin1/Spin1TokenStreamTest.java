@@ -487,6 +487,15 @@ class Spin1TokenStreamTest {
     }
 
     @Test
+    void testImmediateExpression() {
+        Spin1TokenStream subject = new Spin1TokenStream("#-1");
+
+        assertEquals("#", subject.nextToken().getText());
+        assertEquals("-", subject.nextToken().getText());
+        assertEquals("1", subject.nextToken().getText());
+    }
+
+    @Test
     void testNumber() {
         Spin1TokenStream subject = new Spin1TokenStream("1234");
 

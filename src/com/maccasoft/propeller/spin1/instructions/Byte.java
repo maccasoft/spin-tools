@@ -13,6 +13,7 @@ package com.maccasoft.propeller.spin1.instructions;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
+import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
@@ -38,7 +39,12 @@ public class Byte extends Spin1PAsmInstructionFactory {
         public int getSize() {
             int size = 0;
             for (Spin1PAsmExpression exp : arguments) {
-                size += exp.getCount();
+                if (exp.getExpression() instanceof CharacterLiteral) {
+                    size += ((CharacterLiteral) exp.getExpression()).getString().length();
+                }
+                else {
+                    size += exp.getCount();
+                }
             }
             return size;
         }
@@ -48,9 +54,14 @@ public class Byte extends Spin1PAsmInstructionFactory {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
                 for (Spin1PAsmExpression exp : arguments) {
-                    int value = exp.getInteger();
-                    for (int i = 0; i < exp.getCount(); i++) {
-                        os.write(value);
+                    if (exp.getExpression() instanceof CharacterLiteral) {
+                        os.write(((CharacterLiteral) exp.getExpression()).getString().getBytes());
+                    }
+                    else {
+                        int value = exp.getInteger();
+                        for (int i = 0; i < exp.getCount(); i++) {
+                            os.write(value);
+                        }
                     }
                 }
             } catch (Exception e) {

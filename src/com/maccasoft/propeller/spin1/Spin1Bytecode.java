@@ -13,7 +13,26 @@ package com.maccasoft.propeller.spin1;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.BitField;
+
 public class Spin1Bytecode {
+
+    public static final BitField op_ss = new BitField(0b00000110);
+    public static final BitField op_p = new BitField(0b10000000);
+
+    public static enum Type {
+        Byte, Word, Long;
+
+        public static Type fromString(String type) {
+            if ("BYTE".equalsIgnoreCase(type)) {
+                return Type.Byte;
+            }
+            if ("WORD".equalsIgnoreCase(type)) {
+                return Type.Word;
+            }
+            return Type.Long;
+        }
+    };
 
     static class Descriptor {
         byte[] code;

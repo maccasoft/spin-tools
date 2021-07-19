@@ -31,6 +31,8 @@ import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.IfElse;
 import com.maccasoft.propeller.expressions.LessOrEquals;
 import com.maccasoft.propeller.expressions.LessThan;
+import com.maccasoft.propeller.expressions.LimitMax;
+import com.maccasoft.propeller.expressions.LimitMin;
 import com.maccasoft.propeller.expressions.LogicalAnd;
 import com.maccasoft.propeller.expressions.LogicalOr;
 import com.maccasoft.propeller.expressions.Multiply;
@@ -206,9 +208,11 @@ public class Spin1ExpressionBuilder {
                     break;
 
                 case "#>":
-                    throw new RuntimeException("invalid binary operator " + token.getText());
+                    left = new LimitMin(left, right);
+                    break;
                 case "<#":
-                    throw new RuntimeException("invalid binary operator " + token.getText());
+                    left = new LimitMax(left, right);
+                    break;
 
                 case "<":
                     left = new LessThan(left, right);
@@ -310,7 +314,8 @@ public class Spin1ExpressionBuilder {
                         return new NumberLiteral(token.getText());
                     }
                     if (token.type == Token.STRING) {
-                        return new CharacterLiteral(token.getText());
+                        String s = token.getText().substring(1);
+                        return new CharacterLiteral(s.substring(0, s.length() - 1));
                     }
                     return new Identifier(token.getText(), context);
             }

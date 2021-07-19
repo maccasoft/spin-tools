@@ -51,6 +51,14 @@ class Spin1ExpressionBuilderTest {
         Assertions.assertEquals(text, expression.toString());
     }
 
+    @Test
+    void testExpression() {
+        String text = "-3 & $1F";
+        Expression expression = parse(text);
+        Assertions.assertEquals(text, expression.toString());
+        Assertions.assertEquals(new Long(0x1D), expression.getNumber());
+    }
+
     Expression parse(String text) {
         List<Token> tokens = new ArrayList<Token>();
 
