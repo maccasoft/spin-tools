@@ -16,29 +16,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.model.Node;
 
 class Spin1CompilerTest {
-
-    static String lineSeparator;
-
-    @BeforeAll
-    static void testSetup() {
-        lineSeparator = System.getProperty("line.separator");
-        System.setProperty("line.separator", "\n");
-    }
-
-    @AfterAll
-    static void testTerminate() {
-        System.setProperty("line.separator", lineSeparator);
-    }
 
     @AfterEach
     void afterEach() {
@@ -2229,7 +2214,7 @@ class Spin1CompilerTest {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateListing(new PrintStream(os));
 
-        return os.toString();
+        return os.toString().replaceAll("\\r\\n", "\n");
     }
 
 }

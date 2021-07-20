@@ -16,9 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.DataLineNode;
@@ -26,19 +24,6 @@ import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
 
 class Spin2CompilerTest {
-
-    static String lineSeparator;
-
-    @BeforeAll
-    static void testSetup() {
-        lineSeparator = System.getProperty("line.separator");
-        System.setProperty("line.separator", "\n");
-    }
-
-    @AfterAll
-    static void testTerminate() {
-        System.setProperty("line.separator", lineSeparator);
-    }
 
     @Test
     void testDollarSymbol() throws Exception {
@@ -1234,7 +1219,7 @@ class Spin2CompilerTest {
             + "'     function(string(\"1234\"))\n"
             + "0000D 0000D       00             ANCHOR\n"
             + "0000E 0000E       9E 05 31 32 33 STRING\n"
-            + "00013 00013       34 00         \n"
+            + "00013 00013       34 00\n"
             + "00015 00015       0A 01          CALL_SUB (1)\n"
             + "00017 00017       04             RETURN\n"
             + "' PUB function(a)\n"
@@ -1264,7 +1249,7 @@ class Spin2CompilerTest {
             + "'     function(\"1234\")\n"
             + "0000D 0000D       00             ANCHOR\n"
             + "0000E 0000E       9E 05 31 32 33 STRING\n"
-            + "00013 00013       34 00         \n"
+            + "00013 00013       34 00\n"
             + "00015 00015       0A 01          CALL_SUB (1)\n"
             + "00017 00017       04             RETURN\n"
             + "' PUB function(a)\n"
@@ -1294,7 +1279,7 @@ class Spin2CompilerTest {
             + "'     function(string(\"1234\", 13, 10))\n"
             + "0000D 0000D       00             ANCHOR\n"
             + "0000E 0000E       9E 07 31 32 33 STRING\n"
-            + "00013 00013       34 0D 0A 00   \n"
+            + "00013 00013       34 0D 0A 00\n"
             + "00017 00017       0A 01          CALL_SUB (1)\n"
             + "00019 00019       04             RETURN\n"
             + "' PUB function(a)\n"
@@ -1583,6 +1568,29 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testModifyExpressions() throws Exception {
+        String text = ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a += 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       0D 00 00 00    End\n"
+            + "' PUB main | a\n"
+            + "00008 00008       04             (stack size)\n"
+            + "'     a += 1\n"
+            + "00009 00009       A2             CONSTANT (1)\n"
+            + "0000A 0000A       D0             VAR_LONG DBASE+$00000 (short)\n"
+            + "0000B 0000B       A3             ADD_ASSIGN\n"
+            + "0000C 0000C       04             RETURN\n"
+            + "0000D 0000D       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testCase() throws Exception {
         String text = ""
             + "PUB main() | a\n"
@@ -1815,20 +1823,26 @@ class Spin2CompilerTest {
             + "PUB main() | a, b\n"
             + "\n"
             + "    a := BYTE[@b]\n"
+            + "    a := BYTE[@b][1]\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       0F 00 00 00    End\n"
+            + "00004 00004       15 00 00 00    End\n"
             + "' PUB main() | a, b\n"
             + "00008 00008       08             (stack size)\n"
             + "'     a := BYTE[@b]\n"
             + "00009 00009       D1 7F          VAR_ADDRESS LONG DBASE+$00001 (short)\n"
             + "0000B 0000B       65 80          BYTE_READ\n"
             + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "0000E 0000E       04             RETURN\n"
-            + "0000F 0000F       00             Padding\n"
+            + "'     a := BYTE[@b][1]\n"
+            + "0000E 0000E       D1 7F          VAR_ADDRESS LONG DBASE+$00001 (short)\n"
+            + "00010 00010       A2             CONSTANT (1)\n"
+            + "00011 00011       62 80          BYTE_READ\n"
+            + "00013 00013       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00014 00014       04             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
             + "", compile(text));
     }
 
@@ -1838,20 +1852,26 @@ class Spin2CompilerTest {
             + "PUB main() | a, b\n"
             + "\n"
             + "    BYTE[@b] := a\n"
+            + "    BYTE[@b][1] := a\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       0F 00 00 00    End\n"
+            + "00004 00004       15 00 00 00    End\n"
             + "' PUB main() | a, b\n"
             + "00008 00008       08             (stack size)\n"
             + "'     BYTE[@b] := a\n"
             + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
             + "0000A 0000A       D1 7F          VAR_ADDRESS LONG DBASE+$00001 (short)\n"
             + "0000C 0000C       65 81          BYTE_WRITE\n"
-            + "0000E 0000E       04             RETURN\n"
-            + "0000F 0000F       00             Padding\n"
+            + "'     BYTE[@b][1] := a\n"
+            + "0000E 0000E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000F 0000F       D1 7F          VAR_ADDRESS LONG DBASE+$00001 (short)\n"
+            + "00011 00011       A2             CONSTANT (1)\n"
+            + "00012 00012       62 81          BYTE_WRITE_INDEXED\n"
+            + "00014 00014       04             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
             + "", compile(text));
     }
 
@@ -1879,6 +1899,133 @@ class Spin2CompilerTest {
             + "0000F 0000F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "00010 00010       04             RETURN\n"
             + "00011 00011       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testListAssignment() throws Exception {
+        String text = ""
+            + "PUB start() : r | a, b\n"
+            + "\n"
+            + "    r, a, b := b, a, r\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000 00000       08 00 10 80    Method start @ $00008 (0 parameters, 1 returns)\n"
+            + "00004 00004       10 00 00 00    End\n"
+            + "' PUB start() : r | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     r, a, b := b, a, r\n"
+            + "00009 00009       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "0000A 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000B 0000B       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000C 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "0000D 0000D       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "0000E 0000E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000F 0000F       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testPostEffects() throws Exception {
+        String text = ""
+            + "PUB start() : r | a, b\n"
+            + "\n"
+            + "    a++\n"
+            + "    b--\n"
+            + "    byte[a++] := 1\n"
+            + "    byte[b--] := 2\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000 00000       08 00 10 80    Method start @ $00008 (0 parameters, 1 returns)\n"
+            + "00004 00004       18 00 00 00    End\n"
+            + "' PUB start() : r | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     a++\n"
+            + "00009 00009       D1             VAR_LONG DBASE+$00001 (short)\n"
+            + "0000A 0000A       83             POST_INC\n"
+            + "'     b--\n"
+            + "0000B 0000B       D2             VAR_LONG DBASE+$00002 (short)\n"
+            + "0000C 0000C       84             POST_DEC\n"
+            + "'     byte[a++] := 1\n"
+            + "0000D 0000D       A2             CONSTANT (1)\n"
+            + "0000E 0000E       D1             VAR_LONG DBASE+$00001 (short)\n"
+            + "0000F 0000F       87             POST_INC (PUSH)\n"
+            + "00010 00010       65 81          BYTE_WRITE\n"
+            + "'     byte[b--] := 2\n"
+            + "00012 00012       A3             CONSTANT (2)\n"
+            + "00013 00013       D2             VAR_LONG DBASE+$00002 (short)\n"
+            + "00014 00014       88             POST_DEC (PUSH)\n"
+            + "00015 00015       65 81          BYTE_WRITE\n"
+            + "00017 00017       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testPreEffects() throws Exception {
+        String text = ""
+            + "PUB start() : r | a, b\n"
+            + "\n"
+            + "    ++a\n"
+            + "    --b\n"
+            + "    byte[++a] := 1\n"
+            + "    byte[--b] := 2\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000 00000       08 00 10 80    Method start @ $00008 (0 parameters, 1 returns)\n"
+            + "00004 00004       18 00 00 00    End\n"
+            + "' PUB start() : r | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     ++a\n"
+            + "00009 00009       D1             VAR_LONG DBASE+$00001 (short)\n"
+            + "0000A 0000A       83             PRE_INC\n"
+            + "'     --b\n"
+            + "0000B 0000B       D2             VAR_LONG DBASE+$00002 (short)\n"
+            + "0000C 0000C       84             PRE_DEC\n"
+            + "'     byte[++a] := 1\n"
+            + "0000D 0000D       A2             CONSTANT (1)\n"
+            + "0000E 0000E       D1             VAR_LONG DBASE+$00001 (short)\n"
+            + "0000F 0000F       85             PRE_INC (PUSH)\n"
+            + "00010 00010       65 81          BYTE_WRITE\n"
+            + "'     byte[--b] := 2\n"
+            + "00012 00012       A3             CONSTANT (2)\n"
+            + "00013 00013       D2             VAR_LONG DBASE+$00002 (short)\n"
+            + "00014 00014       86             PRE_DEC (PUSH)\n"
+            + "00015 00015       65 81          BYTE_WRITE\n"
+            + "00017 00017       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testListAssignmentEffects() throws Exception {
+        String text = ""
+            + "PUB start() : r | a, b\n"
+            + "\n"
+            + "    byte[a++], byte[b--] := byte[b++], byte[a--]\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000 00000       08 00 10 80    Method start @ $00008 (0 parameters, 1 returns)\n"
+            + "00004 00004       1A 00 00 00    End\n"
+            + "' PUB start() : r | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     byte[a++], byte[b--] := byte[b++], byte[a--]\n"
+            + "00009 00009       D2             VAR_LONG DBASE+$00002 (short)\n"
+            + "0000A 0000A       87             POST_INC (PUSH)\n"
+            + "0000B 0000B       65 80          BYTE_READ\n"
+            + "0000D 0000D       D1             VAR_LONG DBASE+$00001 (short)\n"
+            + "0000E 0000E       88             POST_DEC (PUSH)\n"
+            + "0000F 0000F       65 80          BYTE_READ\n"
+            + "00011 00011       D2             VAR_LONG DBASE+$00002 (short)\n"
+            + "00012 00012       88             POST_DEC (PUSH)\n"
+            + "00013 00013       65 81          BYTE_WRITE\n"
+            + "00015 00015       D1             VAR_LONG DBASE+$00001 (short)\n"
+            + "00016 00016       87             POST_INC (PUSH)\n"
+            + "00017 00017       65 81          BYTE_WRITE\n"
+            + "00019 00019       04             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
             + "", compile(text));
     }
 
@@ -2117,7 +2264,7 @@ class Spin2CompilerTest {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateListing(new PrintStream(os));
 
-        return os.toString();
+        return os.toString().replaceAll("\\r\\n", "\n");
     }
 
 }

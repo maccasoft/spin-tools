@@ -470,7 +470,7 @@ class Spin1TreeBuilderTest {
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         print(new PrintStream(os), root, 0);
-        return os.toString();
+        return os.toString().replaceAll("\\r\\n", "\n");
     }
 
     void print(PrintStream out, Spin1StatementNode node, int indent) {

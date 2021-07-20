@@ -1349,49 +1349,7 @@ public class Spin2Compiler {
         }
         else if (MathOp.isAssignMathOp(node.getText())) {
             source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-
-            Spin2StatementNode left = node.getChild(0);
-            if (left.getType() == Token.OPERATOR) {
-                source.addAll(compileBytecodeExpression(context, left, true));
-            }
-            else if ("BYTE".equalsIgnoreCase(left.getText())) {
-                source.add(new Bytecode(context, new byte[] {
-                    (byte) 0x65, push ? (byte) 0x82 : (byte) 0x81
-                }, left.getText().toUpperCase() + (push ? "_MODIFY" : "_WRITE")));
-            }
-            else if ("WORD".equalsIgnoreCase(left.getText())) {
-                source.add(new Bytecode(context, new byte[] {
-                    (byte) 0x66, push ? (byte) 0x82 : (byte) 0x81
-                }, left.getText().toUpperCase() + (push ? "_MODIFY" : "_WRITE")));
-            }
-            else if ("LONG".equalsIgnoreCase(left.getText())) {
-                source.add(new Bytecode(context, new byte[] {
-                    (byte) 0x67, push ? (byte) 0x82 : (byte) 0x81
-                }, left.getText().toUpperCase() + (push ? "_MODIFY" : "_WRITE")));
-            }
-            else {
-                Expression expression = context.getLocalSymbol(left.getText());
-                if (expression instanceof Register) {
-                    throw new RuntimeException("unhandled register expression");
-                }
-                else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, (Variable) expression));
-                }
-                else if (expression instanceof ContextLiteral) {
-                    MemoryOp.Size ss = MemoryOp.Size.Long;
-                    MemoryOp.Base bb = MemoryOp.Base.PBase;
-                    if (expression instanceof LocalVariable) {
-                        bb = MemoryOp.Base.DBase;
-                    }
-                    else if (expression instanceof Variable) {
-                        bb = MemoryOp.Base.VBase;
-                    }
-                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, expression));
-                }
-                else {
-                    throw new CompilerMessage("undefined symbol " + left.getText(), left.getToken());
-                }
-            }
+            source.addAll(leftAssign(context, node.getChild(0), true));
             source.add(new MathOp(context, node.getText(), push));
         }
         else if ("-".equalsIgnoreCase(node.getText()) && node.getChildCount() == 1) {
@@ -1460,7 +1418,7 @@ public class Spin2Compiler {
                 source.add(new Constant(context, expression));
             } catch (Exception e) {
                 source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-                source.add(new MathOp(context, node.getText(), false));
+                source.add(new MathOp(context, node.getText(), push));
             }
         }
         else if (MathOp.isMathOp(node.getText())) {
@@ -1477,23 +1435,34 @@ public class Spin2Compiler {
             }
         }
         else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
-            if (node.getChildCount() != 1) {
-                throw new RuntimeException("expression syntax error " + node.getText());
+            boolean indexed = false;
+
+            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+            if (node.getChildCount() > 1) {
+                source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+                indexed = true;
+                if (node.getChildCount() > 2) {
+                    throw new RuntimeException("expression syntax error " + node.getText());
+                }
             }
-            source.addAll(compileConstantExpression(context, node.getChild(0)));
+
+            StringBuilder sb = new StringBuilder(node.getText().toUpperCase());
+            sb.append(push ? "_READ" : "_WRITE");
+            sb.append(indexed ? "_INDEXED" : "");
+
             if ("BYTE".equalsIgnoreCase(node.getText())) {
                 source.add(new Bytecode(context, new byte[] {
-                    (byte) 0x65, push ? (byte) 0x80 : (byte) 0x81
+                    indexed ? (byte) 0x62 : (byte) 0x65, push ? (byte) 0x80 : (byte) 0x81
                 }, node.getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
             }
             else if ("WORD".equalsIgnoreCase(node.getText())) {
                 source.add(new Bytecode(context, new byte[] {
-                    (byte) 0x66, push ? (byte) 0x80 : (byte) 0x81
+                    indexed ? (byte) 0x63 : (byte) 0x66, push ? (byte) 0x80 : (byte) 0x81
                 }, node.getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
             }
             else if ("LONG".equalsIgnoreCase(node.getText())) {
                 source.add(new Bytecode(context, new byte[] {
-                    (byte) 0x67, push ? (byte) 0x80 : (byte) 0x81
+                    indexed ? (byte) 0x64 : (byte) 0x67, push ? (byte) 0x80 : (byte) 0x81
                 }, node.getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
             }
         }
@@ -1688,19 +1657,19 @@ public class Spin2Compiler {
                     }, "CALL_SUB (" + ((Method) expression).getOffset() + ")"));
                 }
             }
-            else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
+            else if (expression instanceof Variable) {
                 if (node.getChildCount() == 1) {
                     source.add(new VariableOp(context, VariableOp.Op.Setup, (Variable) expression));
                     if ("++".equalsIgnoreCase(node.getChild(0).getText())) {
                         source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
                     }
-                    else if ("--".equalsIgnoreCase(node.getText())) {
+                    else if ("--".equalsIgnoreCase(node.getChild(0).getText())) {
                         source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
                     }
-                    else if ("!!".equalsIgnoreCase(node.getText())) {
+                    else if ("!!".equalsIgnoreCase(node.getChild(0).getText())) {
                         source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
                     }
-                    else if ("!".equalsIgnoreCase(node.getText())) {
+                    else if ("!".equalsIgnoreCase(node.getChild(0).getText())) {
                         source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
                     }
                 }
@@ -1733,33 +1702,46 @@ public class Spin2Compiler {
     List<Spin2Bytecode> leftAssign(Spin2Context context, Spin2StatementNode node, boolean push) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
-        if (node.getType() == Token.OPERATOR) {
+        if (",".equals(node.getText())) {
+            for (int i = node.getChildCount() - 1; i >= 0; i--) {
+                source.addAll(leftAssign(context, node.getChild(i), push));
+            }
+        }
+        else if (node.getType() == Token.OPERATOR) {
             source.addAll(leftAssign(context, node.getChild(1), true));
             source.add(new Bytecode(context, 0x82, "WRITE"));
             source.addAll(leftAssign(context, node.getChild(0), node.getChild(0).getType() == Token.OPERATOR));
         }
         else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
-            if (node.getChildCount() != 1) {
-                throw new RuntimeException("expression syntax error " + node.getText());
-            }
+            boolean indexed = false;
+
             source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
             if (node.getChildCount() > 1) {
                 source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+                indexed = true;
+                if (node.getChildCount() > 2) {
+                    throw new RuntimeException("expression syntax error " + node.getText());
+                }
             }
+
+            StringBuilder sb = new StringBuilder(node.getText().toUpperCase());
+            sb.append(push ? "_MODIFY" : "_WRITE");
+            sb.append(indexed ? "_INDEXED" : "");
+
             if ("BYTE".equalsIgnoreCase(node.getText())) {
                 source.add(new Bytecode(context, new byte[] {
-                    (byte) 0x65, push ? (byte) 0x82 : (byte) 0x81
-                }, node.getText().toUpperCase() + (push ? "_MODIFY" : "_WRITE")));
+                    indexed ? (byte) 0x62 : (byte) 0x65, push ? (byte) 0x82 : (byte) 0x81
+                }, sb.toString()));
             }
             else if ("WORD".equalsIgnoreCase(node.getText())) {
                 source.add(new Bytecode(context, new byte[] {
-                    (byte) 0x66, push ? (byte) 0x82 : (byte) 0x81
-                }, node.getText().toUpperCase() + (push ? "_MODIFY" : "_WRITE")));
+                    indexed ? (byte) 0x63 : (byte) 0x66, push ? (byte) 0x82 : (byte) 0x81
+                }, sb.toString()));
             }
             else if ("LONG".equalsIgnoreCase(node.getText())) {
                 source.add(new Bytecode(context, new byte[] {
-                    (byte) 0x67, push ? (byte) 0x82 : (byte) 0x81
-                }, node.getText().toUpperCase() + (push ? "_MODIFY" : "_WRITE")));
+                    indexed ? (byte) 0x64 : (byte) 0x67, push ? (byte) 0x82 : (byte) 0x81
+                }, sb.toString()));
             }
         }
         else {
@@ -1770,8 +1752,8 @@ public class Spin2Compiler {
             if (expression instanceof Register) {
                 source.add(new RegisterOp(context, RegisterOp.Op.Write, expression));
             }
-            else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
-                source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, push, (Variable) expression));
+            else if (expression instanceof Variable) {
+                source.add(new VariableOp(context, VariableOp.Op.Write, push, (Variable) expression));
             }
             else if (expression instanceof ContextLiteral) {
                 MemoryOp.Size ss = MemoryOp.Size.Long;
@@ -1782,7 +1764,7 @@ public class Spin2Compiler {
                 else if (expression instanceof Variable) {
                     bb = MemoryOp.Base.VBase;
                 }
-                source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Write, expression));
+                source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, expression));
             }
             else {
                 throw new CompilerMessage("undefined symbol " + node.getText(), node.getToken());

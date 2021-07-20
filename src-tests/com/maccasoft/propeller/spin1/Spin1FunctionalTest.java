@@ -162,7 +162,7 @@ public class Spin1FunctionalTest {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateListing(new PrintStream(os));
 
-        return os.toString();
+        return os.toString().replaceAll("\\r\\n", "\n");
     }
 
 }
