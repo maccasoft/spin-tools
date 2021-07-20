@@ -23,7 +23,7 @@ public class Jmp extends Spin1PAsmInstructionFactory {
     @Override
     public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
         if (Spin1PAsmSchema.S.check(arguments, effect)) {
-            return new Jmpret_(context, condition, arguments.get(0), effect);
+            return new Jmp_(context, condition, arguments.get(0), effect);
         }
         throw new RuntimeException("error: invalid arguments");
     }
@@ -31,13 +31,13 @@ public class Jmp extends Spin1PAsmInstructionFactory {
     /*
      * JMP     {#}S
      */
-    public class Jmpret_ extends Spin1InstructionObject {
+    public class Jmp_ extends Spin1InstructionObject {
 
         String condition;
         Spin1PAsmExpression src;
         String effect;
 
-        public Jmpret_(Spin1Context context, String condition, Spin1PAsmExpression src, String effect) {
+        public Jmp_(Spin1Context context, String condition, Spin1PAsmExpression src, String effect) {
             super(context);
             this.condition = condition;
             this.src = src;
@@ -49,7 +49,7 @@ public class Jmp extends Spin1PAsmInstructionFactory {
         @Override
         public byte[] getBytes() {
             int value = instr.setValue(0, 0b010111);
-            value = con.setValue(value, condition == null ? 0b1111 : conditions.get(condition));
+            value = con.setValue(value, encodeCondition(condition));
             value = zcr.setValue(value, encodeEffect(0b000, effect));
             value = i.setBoolean(value, src.isLiteral());
             value = s.setValue(value, src.getInteger());

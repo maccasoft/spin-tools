@@ -51,7 +51,7 @@ public class Enc extends Spin1PAsmInstructionFactory {
         @Override
         public byte[] getBytes() {
             int value = instr.setValue(0, 0b000110);
-            value = con.setValue(value, condition == null ? 0b1111 : conditions.get(condition));
+            value = con.setValue(value, encodeCondition(condition));
             value = zcr.setValue(value, encodeEffect(effect));
             value = i.setBoolean(value, src.isLiteral());
             value = d.setValue(value, dst.getInteger());

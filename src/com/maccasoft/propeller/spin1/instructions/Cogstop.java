@@ -47,7 +47,7 @@ public class Cogstop extends Spin1PAsmInstructionFactory {
         @Override
         public byte[] getBytes() {
             int value = instr.setValue(0, 0b000011);
-            value = con.setValue(value, condition == null ? 0b1111 : conditions.get(condition));
+            value = con.setValue(value, encodeCondition(condition));
             value = zcr.setValue(value, 0b000);
             value = i.setBoolean(value, true);
             value = d.setValue(value, dst.getInteger());

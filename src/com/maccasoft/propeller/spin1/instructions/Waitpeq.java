@@ -51,7 +51,7 @@ public class Waitpeq extends Spin1PAsmInstructionFactory {
         @Override
         public byte[] getBytes() {
             int value = instr.setValue(0, 0b111100);
-            value = con.setValue(value, condition == null ? 0b1111 : conditions.get(condition));
+            value = con.setValue(value, encodeCondition(condition));
             value = zcr.setValue(value, encodeEffect(0b000, effect));
             value = i.setBoolean(value, src.isLiteral());
             value = d.setValue(value, dst.getInteger());

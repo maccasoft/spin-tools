@@ -134,6 +134,14 @@ public abstract class Spin1InstructionObject {
         return result;
     }
 
+    protected int encodeCondition(String condition) {
+        if (condition == null) {
+            return 0b1111;
+        }
+        Integer v = conditions.get(condition.toLowerCase());
+        return v != null ? v.intValue() : 0b1111;
+    }
+
     public void generateObjectCode(OutputStream output) throws IOException {
         byte[] object = getBytes();
         output.write(object, 0, object.length);

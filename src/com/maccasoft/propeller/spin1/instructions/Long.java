@@ -57,7 +57,7 @@ public class Long extends Spin1PAsmInstructionFactory {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
                 for (Spin1PAsmExpression exp : arguments) {
-                    byte[] value = getBytes(exp.getInteger());
+                    byte[] value = exp.getLong();
                     for (int i = 0; i < exp.getCount(); i++) {
                         os.write(value);
                     }
