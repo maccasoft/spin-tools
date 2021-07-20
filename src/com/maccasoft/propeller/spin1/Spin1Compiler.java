@@ -220,8 +220,17 @@ public class Spin1Compiler {
                 }
                 cogMode = true;
             }
-            address = line.resolve(address);
-            hubAddress += line.getInstructionObject().getSize();
+            try {
+                address = line.resolve(address);
+                hubAddress += line.getInstructionObject().getSize();
+                for (CompilerMessage msg : line.getAnnotations()) {
+                    logMessage(msg);
+                }
+            } catch (CompilerMessage e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerMessage(e.getMessage(), (Node) line.getData()));
+            }
             if (line.getInstructionFactory() instanceof Fit) {
                 cogMode = false;
             }
@@ -238,10 +247,8 @@ public class Spin1Compiler {
                     compileLine(line);
                 } catch (CompilerMessage e) {
                     logMessage(e);
-                    e.printStackTrace();
                 } catch (Exception e) {
                     logMessage(new CompilerMessage(e.getMessage(), line.getData()));
-                    e.printStackTrace();
                 }
             }
         }
@@ -311,13 +318,11 @@ public class Spin1Compiler {
                         logMessage(e);
                     } catch (Exception e) {
                         logMessage(new CompilerMessage(e.getMessage(), node.identifier));
-                        e.printStackTrace();
                     }
                 } catch (CompilerMessage e) {
                     logMessage(e);
                 } catch (Exception e) {
                     logMessage(new CompilerMessage(e.getMessage(), node.expression));
-                    e.printStackTrace();
                 }
             }
 
@@ -341,7 +346,6 @@ public class Spin1Compiler {
                     object.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
                 } catch (Exception e) {
                     logMessage(new CompilerMessage(e.getMessage(), node.identifier));
-                    e.printStackTrace();
                     return;
                 }
                 if (node.multiplier != null) {
@@ -380,7 +384,6 @@ public class Spin1Compiler {
                     scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
                 } catch (Exception e) {
                     logMessage(new CompilerMessage(e.getMessage(), node.identifier));
-                    e.printStackTrace();
                     continue;
                 }
 
@@ -410,7 +413,6 @@ public class Spin1Compiler {
                     scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
                 } catch (Exception e) {
                     logMessage(new CompilerMessage(e.getMessage(), node.identifier));
-                    e.printStackTrace();
                     continue;
                 }
 
@@ -440,7 +442,6 @@ public class Spin1Compiler {
                     scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
                 } catch (Exception e) {
                     logMessage(new CompilerMessage(e.getMessage(), node.identifier));
-                    e.printStackTrace();
                     continue;
                 }
 
@@ -499,78 +500,75 @@ public class Spin1Compiler {
             String modifier = node.modifier != null ? node.modifier.getText() : null;
             List<Spin1PAsmExpression> parameters = new ArrayList<Spin1PAsmExpression>();
 
-            Spin1PAsmLine pasmLine = new Spin1PAsmLine(scope, label, condition, mnemonic, parameters, modifier);
-            pasmLine.setData(node);
+            try {
+                Spin1PAsmLine pasmLine = new Spin1PAsmLine(scope, label, condition, mnemonic, parameters, modifier);
+                pasmLine.setData(node);
 
-            for (ParameterNode param : node.parameters) {
-                int index = 0;
-                String prefix = null;
-                Expression expression = null, count = null;
+                for (ParameterNode param : node.parameters) {
+                    int index = 0;
+                    String prefix = null;
+                    Expression expression = null, count = null;
 
-                Token token;
-                if (index < param.getTokens().size()) {
-                    token = param.getToken(index);
-                    if (token.getText().startsWith("#")) {
-                        prefix = (prefix == null ? "" : prefix) + token.getText();
-                        index++;
-                    }
-                }
-                if (index < param.getTokens().size()) {
-                    token = param.getToken(index);
-                    if ("\\".equals(token.getText())) {
-                        prefix = (prefix == null ? "" : prefix) + token.getText();
-                        index++;
-                    }
-                }
-                if (index < param.getTokens().size()) {
-                    try {
-                        expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), pasmLine.getScope());
-                    } catch (Exception e) {
-                        for (Token t : param.getTokens().subList(index, param.getTokens().size())) {
-                            System.err.print(" " + t.getText());
+                    Token token;
+                    if (index < param.getTokens().size()) {
+                        token = param.getToken(index);
+                        if (token.getText().startsWith("#")) {
+                            prefix = (prefix == null ? "" : prefix) + token.getText();
+                            index++;
                         }
-                        System.err.println();
-                        throw e;
                     }
-                }
-
-                if (param.count != null) {
-                    try {
-                        count = buildExpression(param.count.getTokens(), pasmLine.getScope());
-                    } catch (Exception e) {
-                        for (Token t : param.count.getTokens()) {
-                            System.err.print(" " + t.getText());
+                    if (index < param.getTokens().size()) {
+                        token = param.getToken(index);
+                        if ("\\".equals(token.getText())) {
+                            prefix = (prefix == null ? "" : prefix) + token.getText();
+                            index++;
                         }
-                        System.err.println();
-                        throw e;
                     }
-                }
-                parameters.add(new Spin1PAsmExpression(prefix, expression, count));
-            }
+                    if (index < param.getTokens().size()) {
+                        try {
+                            expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), pasmLine.getScope());
+                        } catch (Exception e) {
+                            throw new CompilerMessage(e.getMessage(), param);
+                        }
+                    }
 
-            if (pasmLine.getLabel() != null) {
-                try {
-                    if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
-                        scope = savedContext;
+                    if (param.count != null) {
+                        try {
+                            count = buildExpression(param.count.getTokens(), pasmLine.getScope());
+                        } catch (Exception e) {
+                            throw new CompilerMessage(e.getMessage(), param.count);
+                        }
                     }
-                    int size = 4;
-                    if (pasmLine.getInstructionFactory() instanceof Word) {
-                        size = 2;
-                    }
-                    else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
-                        size = 1;
-                    }
-                    scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), size));
-                    scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
-                    if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
-                        scope = pasmLine.getScope();
-                    }
-                } catch (RuntimeException e) {
-                    System.err.println(pasmLine);
-                    e.printStackTrace();
+                    parameters.add(new Spin1PAsmExpression(prefix, expression, count));
                 }
+
+                if (pasmLine.getLabel() != null) {
+                    try {
+                        if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
+                            scope = savedContext;
+                        }
+                        int size = 4;
+                        if (pasmLine.getInstructionFactory() instanceof Word) {
+                            size = 2;
+                        }
+                        else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
+                            size = 1;
+                        }
+                        scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), size));
+                        scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
+                        if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
+                            scope = pasmLine.getScope();
+                        }
+                    } catch (RuntimeException e) {
+                        throw new CompilerMessage(e.getMessage(), node.label);
+                    }
+                }
+                source.addAll(pasmLine.expand());
+            } catch (CompilerMessage e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerMessage(e.getMessage(), node.instruction));
             }
-            source.addAll(pasmLine.expand());
         }
 
         scope = savedContext;
@@ -995,10 +993,8 @@ public class Spin1Compiler {
 
                 } catch (CompilerMessage e) {
                     logMessage(e);
-                    throw e;
                 } catch (Exception e) {
                     logMessage(new CompilerMessage(e.getMessage(), node));
-                    e.printStackTrace();
                 }
             }
         }

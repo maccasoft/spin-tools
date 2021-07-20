@@ -257,22 +257,22 @@ public class Spin1Object {
     }
 
     public void writeBytes(byte[] bytes) {
-        data.add(new DataObject(bytes));
+        data.add(new DataObject(bytes.clone()));
         size += bytes.length;
     }
 
     public void writeBytes(byte[] bytes, String text) {
-        data.add(new DataObject(bytes, text));
+        data.add(new DataObject(bytes.clone(), text));
         size += bytes.length;
     }
 
     public void writeBytes(int addr, byte[] bytes) {
-        data.add(new PAsmDataObject(addr, bytes));
+        data.add(new PAsmDataObject(addr, bytes.clone()));
         size += bytes.length;
     }
 
     public void writeBytes(int addr, byte[] bytes, String text) {
-        data.add(new PAsmDataObject(addr, bytes, text));
+        data.add(new PAsmDataObject(addr, bytes.clone(), text));
         size += bytes.length;
     }
 

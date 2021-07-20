@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.model.Token;
 
 public class Spin1TreeBuilder {
@@ -150,17 +151,7 @@ public class Spin1TreeBuilder {
                 token = peek();
             }
             else {
-                StringBuilder sb = new StringBuilder();
-                sb.append("unexpected " + token.getText());
-                sb.append(" [");
-                for (int i = 0; i < tokens.size(); i++) {
-                    if (i != 0) {
-                        sb.append(", ");
-                    }
-                    sb.append(tokens.get(i).getText());
-                }
-                sb.append("]");
-                throw new RuntimeException(sb.toString());
+                throw new CompilerMessage("unexpected " + token.getText(), token);
             }
         }
 
@@ -202,6 +193,9 @@ public class Spin1TreeBuilder {
 
     Spin1StatementNode parseAtom() {
         Token token = peek();
+        if (token == null) {
+            throw new CompilerMessage("expecting operand", tokens.get(tokens.size() - 1));
+        }
 
         if (unary.contains(token.getText().toUpperCase())) {
             Spin1StatementNode node = new Spin1StatementNode(next());
@@ -213,11 +207,8 @@ public class Spin1TreeBuilder {
             next();
             Spin1StatementNode node = parseLevel(parseAtom(), 0);
             token = next();
-            if (token == null) {
-                throw new RuntimeException("expecting closing parenthesis");
-            }
-            if (!")".equals(token.getText())) {
-                throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+            if (token == null || !")".equals(token.getText())) {
+                throw new CompilerMessage("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
             }
             return node;
         }
@@ -226,11 +217,8 @@ public class Spin1TreeBuilder {
             next();
             Spin1StatementNode node = parseLevel(parseAtom(), 0);
             token = next();
-            if (token == null) {
-                throw new RuntimeException("expecting closing parenthesis");
-            }
-            if (!"]".equals(token.getText())) {
-                throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+            if (token == null || !"]".equals(token.getText())) {
+                throw new CompilerMessage("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
             }
             return node;
         }
@@ -254,13 +242,13 @@ public class Spin1TreeBuilder {
                         }
                         token = next();
                         if (token == null) {
-                            throw new RuntimeException("expecting closing parenthesis");
+                            throw new CompilerMessage("expecting )", tokens.get(tokens.size() - 1));
                         }
                         if (")".equals(token.getText())) {
                             return node;
                         }
                         if (!",".equals(token.getText()) && !":".equals(token.getText())) {
-                            throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                            throw new CompilerMessage("expecting )", token);
                         }
                     }
                 }
@@ -272,11 +260,8 @@ public class Spin1TreeBuilder {
                     next();
                     node.addChild(parseLevel(parseAtom(), 0));
                     token = next();
-                    if (token == null) {
-                        throw new RuntimeException("expecting closing parenthesis");
-                    }
-                    if (!"]".equals(token.getText())) {
-                        throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                    if (token == null || !"]".equals(token.getText())) {
+                        throw new CompilerMessage("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
 
                     if (peek() == null) {
@@ -286,11 +271,8 @@ public class Spin1TreeBuilder {
                         next();
                         node.addChild(parseLevel(parseAtom(), 0));
                         token = next();
-                        if (token == null) {
-                            throw new RuntimeException("expecting closing parenthesis");
-                        }
-                        if (!"]".equals(token.getText())) {
-                            throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                        if (token == null || !"]".equals(token.getText())) {
+                            throw new CompilerMessage("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                         }
                     }
                 }
@@ -308,7 +290,7 @@ public class Spin1TreeBuilder {
             return new Spin1StatementNode(next());
         }
 
-        throw new RuntimeException("unexpected " + token.getText());
+        throw new CompilerMessage("unexpected " + token.getText(), token);
     }
 
     Token peek() {

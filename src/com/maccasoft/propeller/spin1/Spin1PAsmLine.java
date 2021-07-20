@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.spin1.instructions.Empty;
 
 public class Spin1PAsmLine {
@@ -31,7 +32,7 @@ public class Spin1PAsmLine {
     Spin1InstructionObject instructionObject;
 
     //String originalText;
-    List<String> annotations = new ArrayList<String>();
+    List<CompilerMessage> annotations = new ArrayList<CompilerMessage>();
     Object data;
 
     public Spin1PAsmLine(Spin1Context scope, String label, String condition, String mnemonic, List<Spin1PAsmExpression> arguments, String effect) {
@@ -45,7 +46,7 @@ public class Spin1PAsmLine {
         if (mnemonic != null) {
             this.instructionFactory = Spin1PAsmInstructionFactory.get(mnemonic);
             if (this.instructionFactory == null) {
-                this.annotations.add("error: invalid instruction " + mnemonic);
+                throw new RuntimeException("invalid instruction " + mnemonic);
             }
         }
         if (this.instructionFactory == null) {
@@ -120,11 +121,11 @@ public class Spin1PAsmLine {
         }
     }
 
-    public void addAnnotation(String s) {
-        annotations.add(s);
+    public void addAnnotation(CompilerMessage message) {
+        annotations.add(message);
     }
 
-    public List<String> getAnnotations() {
+    public List<CompilerMessage> getAnnotations() {
         return annotations;
     }
 

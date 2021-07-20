@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.model.Node;
 
 class Spin1CompilerTest {
@@ -2218,6 +2219,12 @@ class Spin1CompilerTest {
 
         };
         Spin1Object obj = compiler.compileObject(root);
+
+        for (CompilerMessage msg : compiler.getMessages()) {
+            if (msg.type == CompilerMessage.ERROR) {
+                throw msg;
+            }
+        }
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateListing(new PrintStream(os));

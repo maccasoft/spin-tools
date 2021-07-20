@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.model.Node;
 
 class Spin1CompilerFunctionalTest {
@@ -288,6 +289,12 @@ class Spin1CompilerFunctionalTest {
 
         Spin1CompilerAdapter compiler = new Spin1CompilerAdapter(sources);
         Spin1Object obj = compiler.compile(root);
+
+        for (CompilerMessage msg : compiler.getMessages()) {
+            if (msg.type == CompilerMessage.ERROR) {
+                throw msg;
+            }
+        }
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateBinary(os);

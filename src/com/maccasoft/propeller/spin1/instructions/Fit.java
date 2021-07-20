@@ -26,8 +26,7 @@ public class Fit extends Spin1PAsmInstructionFactory {
         if (line.getArgumentCount() == 1) {
             return new Fit_(line.getScope(), line.getArgument(0));
         }
-        line.addAnnotation("error: expected 0 or 1 arguments, found " + line.getArgumentCount());
-        return null;
+        throw new RuntimeException("expected 0 or 1 arguments, found " + line.getArgumentCount());
     }
 
     public class Fit_ extends Spin1InstructionObject {
