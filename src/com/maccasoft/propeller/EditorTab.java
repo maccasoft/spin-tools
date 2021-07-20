@@ -13,7 +13,9 @@ package com.maccasoft.propeller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -28,7 +30,9 @@ import com.maccasoft.propeller.EditorTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Object;
+import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
+import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
@@ -79,11 +83,42 @@ public class EditorTab {
                     result.set(node);
                 }
             });
-            if (result.get() != null) {
+            Node root = result.get();
+            if (root == null) {
+                File fileParent = file != null ? file.getParentFile() : null;
+                String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
+                File file = new File(fileParent, fileName + fileType);
+                if (file.exists()) {
+                    try {
+                        Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
+                        Spin1Parser subject = new Spin1Parser(stream);
+                        root = subject.parse();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            if (root != null) {
                 Spin1CompilerAdapter c = new Spin1CompilerAdapter();
-                return c.compileObject(result.get());
+                return c.compileObject(root);
             }
             return null;
+        }
+
+        String loadFromFile(File file) throws Exception {
+            String line;
+            StringBuilder sb = new StringBuilder();
+
+            if (file.exists()) {
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                    sb.append("\n");
+                }
+                reader.close();
+            }
+
+            return sb.toString();
         }
 
     }

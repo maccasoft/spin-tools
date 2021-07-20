@@ -511,6 +511,7 @@ public class Spin1TokenMarker extends EditorTokenMarker {
     public void refreshTokens(String text) {
         tokens.clear();
         symbols.clear();
+        compilerTokens.clear();
 
         Spin1TokenStream stream = new Spin1TokenStream(text);
         Spin1Parser subject = new Spin1Parser(stream);

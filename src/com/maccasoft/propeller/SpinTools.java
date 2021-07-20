@@ -38,6 +38,8 @@ import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabFolder2Adapter;
+import org.eclipse.swt.custom.CTabFolderEvent;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -142,6 +144,14 @@ public class SpinTools {
                 tab.setFocus();
 
                 e.doit = false;
+            }
+        });
+        tabFolder.addCTabFolder2Listener(new CTabFolder2Adapter() {
+
+            @Override
+            public void close(CTabFolderEvent event) {
+                EditorTab tab = (EditorTab) event.item.getData();
+                event.doit = canCloseEditorTab(tab);
             }
         });
 
@@ -582,6 +592,7 @@ public class SpinTools {
                 writer.write(editorTab.getEditorText());
                 writer.close();
                 editorTab.setFile(fileToSave);
+                editorTab.setText(fileToSave.getName());
                 editorTab.clearDirty();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1302,6 +1313,31 @@ public class SpinTools {
         tabFolder.setTopRight(toolBar);
     }
 
+    boolean canCloseEditorTab(EditorTab editorTab) {
+        if (editorTab.isDirty()) {
+            int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL;
+            MessageBox messageBox = new MessageBox(shell, style);
+            messageBox.setText(APP_TITLE);
+            messageBox.setMessage("Editor contains unsaved changes.  Save before close?");
+            switch (messageBox.open()) {
+                case SWT.CANCEL:
+                    return false;
+                case SWT.YES:
+                    try {
+                        doFileSave(editorTab);
+                        if (editorTab.isDirty()) {
+                            return false;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return false;
+                    }
+                    break;
+            }
+        }
+        return true;
+    }
+
     boolean handleUnsavedContent() {
         boolean dirty = false;
 
@@ -1332,8 +1368,8 @@ public class SpinTools {
                                 }
                             }
                         }
-                    } catch (Exception e1) {
-                        e1.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
                         return false;
                     }
                     return true;
