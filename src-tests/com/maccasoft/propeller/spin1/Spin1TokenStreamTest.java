@@ -388,6 +388,15 @@ class Spin1TokenStreamTest {
     }
 
     @Test
+    void testEqualOperatorNoSpace() {
+        Spin1TokenStream subject = new Spin1TokenStream("a==b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("==", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
     void testEqualAssignmentOperator() {
         Spin1TokenStream subject = new Spin1TokenStream("a === b");
 

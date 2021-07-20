@@ -33,6 +33,9 @@ public class Spin1TokenStream extends TokenStream {
 
     public Spin1TokenStream(String text) {
         this.text = text;
+        if (text == null) {
+            throw new NullPointerException();
+        }
     }
 
     @Override
@@ -215,9 +218,26 @@ public class Spin1TokenStream extends TokenStream {
                     }
 
                     if (ch == '=') {
-                        token.stop++;
-                        index++;
-                        column++;
+                        if ((token.stop - token.start) == 2) {
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'A') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'N') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'D') {
+                                        token.stop++;
+                                        index++;
+                                        column++;
+                                    }
+                                }
+                            }
+                        }
+                        else if ((token.stop - token.start) == 1) {
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'O') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'R') {
+                                    token.stop++;
+                                    index++;
+                                    column++;
+                                }
+                            }
+                        }
                     }
 
                     state = Token.START;

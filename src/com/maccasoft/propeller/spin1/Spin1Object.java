@@ -49,6 +49,20 @@ public class Spin1Object {
             this.text = text;
         }
 
+        public int setBytes(byte[] bytes, int index) {
+            if (this.bytes == null) {
+                return index;
+            }
+            int n = Math.min(bytes.length - index, this.bytes.length);
+            for (int i = 0; i < n; i++, index++) {
+                if (this.bytes[i] != bytes[index]) {
+                    text = "";
+                }
+                this.bytes[i] = bytes[index];
+            }
+            return index;
+        }
+
     }
 
     public static class CommentDataObject extends DataObject {
@@ -69,6 +83,11 @@ public class Spin1Object {
 
         public Spin1Object getObject() {
             return object;
+        }
+
+        @Override
+        public int setBytes(byte[] bytes, int index) {
+            return object.setBytes(bytes, index);
         }
 
     }
@@ -434,6 +453,13 @@ public class Spin1Object {
         }
 
         return address;
+    }
+
+    public int setBytes(byte[] bytes, int index) {
+        for (DataObject obj : data) {
+            index = obj.setBytes(bytes, index);
+        }
+        return index;
     }
 
 }

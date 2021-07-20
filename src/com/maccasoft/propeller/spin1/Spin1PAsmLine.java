@@ -32,6 +32,7 @@ public class Spin1PAsmLine {
 
     //String originalText;
     List<String> annotations = new ArrayList<String>();
+    Object data;
 
     public Spin1PAsmLine(Spin1Context scope, String label, String condition, String mnemonic, List<Spin1PAsmExpression> arguments, String effect) {
         this.scope = new Spin1Context(scope);
@@ -125,6 +126,14 @@ public class Spin1PAsmLine {
 
     public List<String> getAnnotations() {
         return annotations;
+    }
+
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
     }
 
     @Override

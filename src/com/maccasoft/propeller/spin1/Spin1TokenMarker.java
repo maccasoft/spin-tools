@@ -91,6 +91,7 @@ public class Spin1TokenMarker extends EditorTokenMarker {
         keywords.put("WHILE", TokenId.KEYWORD);
         keywords.put("UNTIL", TokenId.KEYWORD);
         keywords.put("RESULT", TokenId.METHOD_RETURN);
+        keywords.put("@RESULT", TokenId.METHOD_RETURN);
         keywords.put("RETURN", TokenId.KEYWORD);
         keywords.put("STRCOMP", TokenId.FUNCTION);
         keywords.put("STRING", TokenId.FUNCTION);

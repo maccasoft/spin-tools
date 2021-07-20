@@ -1,0 +1,156 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     29            Check Sum
+0006     0010          Base of Program
+0008     0290          Base of Variables
+000A     0298          Base of Stack
+000C     0288          Initial Program Counter
+000E     02A0          Initial Stack Pointer
+                       File "motor.servo.ramp.spin"
+0010     0280 0002     Link to Next Object
+0014     0278 0000     Link to PUB StartRamp (ServoData)
+0018 000               DAT
+0018 000                                       org
+0018 000               RampStart
+0018 000 A0BCEDF0                              mov     Address1,       par              'ServoData
+001C 001 A0BCEE76                              mov     Address2,       Address1
+0020 002 80FCEE80                              add     Address2,       #128             'ServoTarget
+0024 003 A0BCF077                              mov     Address3,       Address2
+0028 004 80FCF080                              add     Address3,       #128             'ServoDelay
+002C 005 85FCF801      Ch01                    sub      dly + 00,      #1      wc
+0030 006 08B0F878                         if_c rdlong   dly + 00,      Address3         'Move Delay into temp delay value
+0034 007 5CFCE066                              call     #RampCore
+0038 008 85FCFA01      Ch02                    sub      dly + 01,      #1      wc
+003C 009 08B0FA78                         if_c rdlong   dly + 01,      Address3         'Move Delay into temp delay value
+0040 00A 5CFCE066                              call     #RampCore
+0044 00B 85FCFC01      Ch03                    sub      dly + 02,      #1      wc
+0048 00C 08B0FC78                         if_c rdlong   dly + 02,      Address3         'Move Delay into temp delay value
+004C 00D 5CFCE066                              call     #RampCore
+0050 00E 85FD0001      Ch04                    sub      dly + 04,      #1      wc
+0054 00F 08B10078                         if_c rdlong   dly + 04,      Address3         'Move Delay into temp delay value
+0058 010 5CFCE066                              call     #RampCore
+005C 011 85FD0201      Ch05                    sub      dly + 05,      #1      wc
+0060 012 08B10278                         if_c rdlong   dly + 05,      Address3         'Move Delay into temp delay value
+0064 013 5CFCE066                              call     #RampCore
+0068 014 85FD0401      Ch06                    sub      dly + 06,      #1      wc
+006C 015 08B10478                         if_c rdlong   dly + 06,      Address3         'Move Delay into temp delay value
+0070 016 5CFCE066                              call     #RampCore
+0074 017 85FD0601      Ch07                    sub      dly + 07,      #1      wc
+0078 018 08B10678                         if_c rdlong   dly + 07,      Address3         'Move Delay into temp delay value
+007C 019 5CFCE066                              call     #RampCore
+0080 01A 85FD0801      Ch08                    sub      dly + 08,      #1      wc
+0084 01B 08B10878                         if_c rdlong   dly + 08,      Address3         'Move Delay into temp delay value
+0088 01C 5CFCE066                              call     #RampCore
+008C 01D 85FD0A01      Ch09                    sub      dly + 09,      #1      wc
+0090 01E 08B10A78                         if_c rdlong   dly + 09,      Address3         'Move Delay into temp delay value
+0094 01F 5CFCE066                              call     #RampCore
+0098 020 85FD0C01      Ch10                    sub      dly + 10,      #1      wc
+009C 021 08B10C78                         if_c rdlong   dly + 10,      Address3         'Move Delay into temp delay value
+00A0 022 5CFCE066                              call     #RampCore
+00A4 023 85FD0E01      Ch11                    sub      dly + 11,      #1      wc
+00A8 024 08B10E78                         if_c rdlong   dly + 11,      Address3         'Move Delay into temp delay value
+00AC 025 5CFCE066                              call     #RampCore
+00B0 026 85FD1001      Ch12                    sub      dly + 12,      #1      wc
+00B4 027 08B11078                         if_c rdlong   dly + 12,      Address3         'Move Delay into temp delay value
+00B8 028 5CFCE066                              call     #RampCore
+00BC 029 85FD1201      Ch13                    sub      dly + 13,      #1      wc
+00C0 02A 08B11278                         if_c rdlong   dly + 13,      Address3         'Move Delay into temp delay value
+00C4 02B 5CFCE066                              call     #RampCore
+00C8 02C 85FD1401      Ch14                    sub      dly + 14,      #1      wc
+00CC 02D 08B11478                         if_c rdlong   dly + 14,      Address3         'Move Delay into temp delay value
+00D0 02E 5CFCE066                              call     #RampCore
+00D4 02F 85FD1601      Ch15                    sub      dly + 15,      #1      wc
+00D8 030 08B11678                         if_c rdlong   dly + 15,      Address3         'Move Delay into temp delay value
+00DC 031 5CFCE066                              call     #RampCore
+00E0 032 85FD1801      Ch16                    sub      dly + 16,      #1      wc
+00E4 033 08B11878                         if_c rdlong   dly + 16,      Address3         'Move Delay into temp delay value
+00E8 034 5CFCE066                              call     #RampCore
+00EC 035 85FD1A01      Ch17                    sub      dly + 17,      #1      wc
+00F0 036 08B11A78                         if_c rdlong   dly + 17,      Address3         'Move Delay into temp delay value
+00F4 037 5CFCE066                              call     #RampCore
+00F8 038 85FD1C01      Ch18                    sub      dly + 18,      #1      wc
+00FC 039 08B11C78                         if_c rdlong   dly + 18,      Address3         'Move Delay into temp delay value
+0100 03A 5CFCE066                              call     #RampCore
+0104 03B 85FD1E01      Ch19                    sub      dly + 19,      #1      wc
+0108 03C 08B11E78                         if_c rdlong   dly + 19,      Address3         'Move Delay into temp delay value
+010C 03D 5CFCE066                              call     #RampCore
+0110 03E 85FD2001      Ch20                    sub      dly + 20,      #1      wc
+0114 03F 08B12078                         if_c rdlong   dly + 20,      Address3         'Move Delay into temp delay value
+0118 040 5CFCE066                              call     #RampCore
+011C 041 85FD2201      Ch21                    sub      dly + 21,      #1      wc
+0120 042 08B12278                         if_c rdlong   dly + 21,      Address3         'Move Delay into temp delay value
+0124 043 5CFCE066                              call     #RampCore
+0128 044 85FD2401      Ch22                    sub      dly + 22,      #1      wc
+012C 045 08B12478                         if_c rdlong   dly + 22,      Address3         'Move Delay into temp delay value
+0130 046 5CFCE066                              call     #RampCore
+0134 047 85FD2601      Ch23                    sub      dly + 23,      #1      wc
+0138 048 08B12678                         if_c rdlong   dly + 23,      Address3         'Move Delay into temp delay value
+013C 049 5CFCE066                              call     #RampCore
+0140 04A 85FD2801      Ch24                    sub      dly + 24,      #1      wc
+0144 04B 08B12878                         if_c rdlong   dly + 24,      Address3         'Move Delay into temp delay value
+0148 04C 5CFCE066                              call     #RampCore
+014C 04D 85FD2A01      Ch25                    sub      dly + 25,      #1      wc
+0150 04E 08B12A78                         if_c rdlong   dly + 25,      Address3         'Move Delay into temp delay value
+0154 04F 5CFCE066                              call     #RampCore
+0158 050 85FD2C01      Ch26                    sub      dly + 26,      #1      wc
+015C 051 08B12C78                         if_c rdlong   dly + 26,      Address3         'Move Delay into temp delay value
+0160 052 5CFCE066                              call     #RampCore
+0164 053 85FD2E01      Ch27                    sub      dly + 27,      #1      wc
+0168 054 08B12E78                         if_c rdlong   dly + 27,      Address3         'Move Delay into temp delay value
+016C 055 5CFCE066                              call     #RampCore
+0170 056 85FD3001      Ch28                    sub      dly + 28,      #1      wc
+0174 057 08B13078                         if_c rdlong   dly + 28,      Address3         'Move Delay into temp delay value
+0178 058 5CFCE066                              call     #RampCore
+017C 059 85FD3201      Ch29                    sub      dly + 29,      #1      wc
+0180 05A 08B13278                         if_c rdlong   dly + 29,      Address3         'Move Delay into temp delay value
+0184 05B 5CFCE066                              call     #RampCore
+0188 05C 85FD3401      Ch30                    sub      dly + 30,      #1      wc
+018C 05D 08B13478                         if_c rdlong   dly + 30,      Address3         'Move Delay into temp delay value
+0190 05E 5CFCE066                              call     #RampCore
+0194 05F 85FD3601      Ch31                    sub      dly + 31,      #1      wc
+0198 060 08B13678                         if_c rdlong   dly + 31,      Address3         'Move Delay into temp delay value
+019C 061 5CFCE066                              call     #RampCore
+01A0 062 85FD3801      Ch32                    sub      dly + 32,      #1      wc
+01A4 063 08B13878                         if_c rdlong   dly + 32,      Address3         'Move Delay into temp delay value
+01A8 064 5CFCE066                              call     #RampCore
+01AC 065 5C7C0000                              jmp     #RampStart
+01B0 066               RampCore
+01B0 066 08BCF476                              rdlong   temp1,         Address1         'Move ServoData into temp1
+01B4 067 08BCF677                              rdlong   temp2,         Address2         'Move ServoTarget into temp2
+01B8 068 5C4C0071                        if_nc jmp      #CodeBalance
+01BC 069 873CF47B                              cmp      temp1,         temp2   wc,wz
+01C0 06A 8090F475                  if_c_and_nz add      temp1,         _CoreSpeed        'Increment ServoData if ServoTarget is greater
+01C4 06B 8484F475                 if_nc_and_nz sub      temp1,         _CoreSpeed        'Decrement ServoData if ServoTarget is less
+01C8 06C 083CF476      OutLoop                 wrlong   temp1,         Address1         'Update ServoData value
+01CC 06D 80FCEC04                              add      Address1,      #4               'Increment Delay pointer
+01D0 06E 80FCEE04                              add      Address2,      #4               'Increment ServoData pointer
+01D4 06F 80FCF004                              add      Address3,      #4
+01D8 070 5C7C0000      RampCore_ret            ret
+01DC 071               CodeBalance             nop                                      'makes for equal code branch path
+01DC 071 00 00 00 00
+01E0 072 5C7C006C                              jmp     #OutLoop
+01E4 073 00000000      time1                   long    0
+01E8 074 00000000      time2                   long    0
+01EC 075 0000026C      _CoreSpeed              long    CoreSpeed
+01F0 076 00000000      Address1                long    0
+01F4 077 00000000      Address2                long    0
+01F8 078 00000000      Address3                long    0
+01FC 079 00000000      Address4                long    0
+0200 07A 00000000      temp1                   long    0
+0204 07B 00000000      temp2                   long    0
+0208 07C 00000000      dly                     long    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+020C 07D 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0248 08C 00000000                              long    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+024C 08D 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0288                   PUB StartRamp (ServoData)
+0288                       cognew(@RampStart,ServoData)
+0288     34            ; Push_Neg1
+0289     C7 08         ; Reference_ObjectMem_Long, $0008
+028B     64            ; Push_LocalMem_Long_1
+028C     2C            ; Coginit
+028D     32            ; Return
+028E     00            ; Frame_Call_Return
+028F     00            ; Frame_Call_Return
+0290                   Reserved 8 bytes.
+0298                   Base of stack.
+02A8                   Top of stack.

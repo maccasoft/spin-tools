@@ -74,6 +74,7 @@ import com.maccasoft.propeller.spin1.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
 import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
+import com.maccasoft.propeller.spin1.instructions.Fit;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Word;
 
@@ -209,21 +210,23 @@ public class Spin1Compiler {
         }
 
         hubAddress = object.getSize();
+
+        boolean cogMode = false;
         for (Spin1PAsmLine line : source) {
             line.getScope().setHubAddress(hubAddress);
-            try {
-                if (line.getInstructionFactory() instanceof Org) {
-                    while ((hubAddress % 4) != 0) {
-                        hubAddress++;
-                    }
+            if (line.getInstructionFactory() instanceof Org) {
+                while ((hubAddress % 4) != 0) {
+                    hubAddress++;
                 }
-                address = line.resolve(address);
-                if ((address >> 2) > 0x1F0) {
-                    throw new RuntimeException("error: cog code limit exceeded by " + (address - 0x1F0) + " long(s)");
-                }
-                hubAddress += line.getInstructionObject().getSize();
-            } catch (Exception e) {
-                line.getAnnotations().add(e.getMessage());
+                cogMode = true;
+            }
+            address = line.resolve(address);
+            hubAddress += line.getInstructionObject().getSize();
+            if (line.getInstructionFactory() instanceof Fit) {
+                cogMode = false;
+            }
+            if (cogMode && (address >> 2) > 0x1F0) {
+                logMessage(new CompilerMessage("cog code limit exceeded", (Node) line.getData()));
             }
         }
 
@@ -497,6 +500,7 @@ public class Spin1Compiler {
             List<Spin1PAsmExpression> parameters = new ArrayList<Spin1PAsmExpression>();
 
             Spin1PAsmLine pasmLine = new Spin1PAsmLine(scope, label, condition, mnemonic, parameters, modifier);
+            pasmLine.setData(node);
 
             for (ParameterNode param : node.parameters) {
                 int index = 0;

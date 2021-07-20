@@ -31,6 +31,13 @@ public class Constant extends Spin1Bytecode {
 
     @Override
     public byte[] getBytes() {
+        if (expression.getNumber() instanceof Double) {
+            int value = Float.floatToIntBits(expression.getNumber().floatValue());
+            return new byte[] {
+                0x37 + 4, (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value
+            };
+        }
+
         int value = expression.getNumber().intValue();
 
         if (value == -1 || value == 0 || value == 1) {

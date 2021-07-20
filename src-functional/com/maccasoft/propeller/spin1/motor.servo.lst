@@ -1,0 +1,455 @@
+0000     00B71B00      Frequency 12000000 Hz
+0004     00            RCFast
+0005     3B            Check Sum
+0006     0010          Base of Program
+0008     055C          Base of Variables
+000A     06F4          Base of Stack
+000C     0220          Initial Program Counter
+000E     06F8          Initial Stack Pointer
+                       File "motor.servo.spin"
+0010     02CC 0105     Link to Next Object
+0014     0210 0000     Link to PUB Start
+0018     0232 0000     Link to PUB Ramp
+001C     023A 0004     Link to PUB SetRamp(Pin, Width,Delay)|S_Width
+0020     0278 0004     Link to PUB Set(Pin, Width)|S_Width                                                     'Set Servo value
+0024                   OBJ
+0024     02CC 0190         SERVO : "motor.servo.ramp.spin"
+0028 000               DAT
+0028 000                                       org
+0028 000 A0BD1FF0      ServoStart              mov     Index,                  par                     'Set Index Pointer
+002C 001 08BD308F                              rdlong  _ZoneClocks,            Index                   'Get ZoneClock value
+0030 002 80FD1E04                              add     Index,                  #4                      'Increment Index to next Pointer
+0034 003 08BD328F                              rdlong  _NoGlitch,              Index                   'Get NoGlitch value
+0038 004 80FD1E04                              add     Index,                  #4                      'Increment Index to next Pointer
+003C 005 A0BCAC8F                              mov     PinDirectionAddress,    Index                   'Set pointer for I/O direction Address
+0040 006 80FD1E20                              add     Index,                  #32                     'Increment Index to END of Zone1 Pointer
+0044 007 A0BD228F                              mov     Zone1Index,             Index                   'Set Index Pointer for Zone1
+0048 008 80FD1E20                              add     Index,                  #32                     'Increment Index to END of Zone2 Pointer
+004C 009 A0BD248F                              mov     Zone2Index,             Index                   'Set Index Pointer for Zone2
+0050 00A 80FD1E20                              add     Index,                  #32                     'Increment Index to END of Zone3 Pointer
+0054 00B A0BD268F                              mov     Zone3Index,             Index                   'Set Index Pointer for Zone3
+0058 00C 80FD1E20                              add     Index,                  #32                     'Increment Index to END of Zone4 Pointer
+005C 00D A0BD288F                              mov     Zone4Index,             Index                   'Set Index Pointer for Zone4
+0060 00E 08BFEC56      IOupdate                rdlong  dira,                   PinDirectionAddress     'Get and set I/O pin directions
+0064 00F A0BD2091      Zone1                   mov     ZoneIndex,              Zone1Index              'Set Index Pointer for Zone1
+0068 010 5CFC481C                              call    #ResetZone
+006C 011 5CFCA82E                              call    #ZoneCore
+0070 012 A0BD2092      Zone2                   mov     ZoneIndex,              Zone2Index              'Set Index Pointer for Zone2
+0074 013 5CFC5A25                              call    #IncrementZone
+0078 014 5CFCA82E                              call    #ZoneCore
+007C 015 A0BD2093      Zone3                   mov     ZoneIndex,              Zone3Index              'Set Index Pointer for Zone3
+0080 016 5CFC5A25                              call    #IncrementZone
+0084 017 5CFCA82E                              call    #ZoneCore
+0088 018 A0BD2094      Zone4                   mov     ZoneIndex,              Zone4Index              'Set Index Pointer for Zone4
+008C 019 5CFC5A25                              call    #IncrementZone
+0090 01A 5CFCA82E                              call    #ZoneCore
+0094 01B 5C7C000E                              jmp     #IOupdate
+0098 01C A0FD0C01      ResetZone               mov     ZoneShift1,             #1
+009C 01D A0FD0E02                              mov     ZoneShift2,             #2
+00A0 01E A0FD1004                              mov     ZoneShift3,             #4
+00A4 01F A0FD1208                              mov     ZoneShift4,             #8
+00A8 020 A0FD1410                              mov     ZoneShift5,             #16
+00AC 021 A0FD1620                              mov     ZoneShift6,             #32
+00B0 022 A0FD1840                              mov     ZoneShift7,             #64
+00B4 023 A0FD1A80                              mov     ZoneShift8,             #128
+00B8 024 5C7C0000      ResetZone_RET           ret
+00BC 025 2CFD0C08      IncrementZone           shl     ZoneShift1,             #8
+00C0 026 2CFD0E08                              shl     ZoneShift2,             #8
+00C4 027 2CFD1008                              shl     ZoneShift3,             #8
+00C8 028 2CFD1208                              shl     ZoneShift4,             #8
+00CC 029 2CFD1408                              shl     ZoneShift5,             #8
+00D0 02A 2CFD1608                              shl     ZoneShift6,             #8
+00D4 02B 2CFD1808                              shl     ZoneShift7,             #8
+00D8 02C 2CFD1A08                              shl     ZoneShift8,             #8
+00DC 02D 5C7C0000      IncrementZone_RET       ret
+00E0 02E A0FD2C00      ZoneCore                mov     ServoByte,              #0                      'Clear ServoByte
+00E4 02F A0BD1E90                              mov     Index,                  ZoneIndex               'Set Index Pointer for proper Zone
+00E8 030 A0BD2BF1      ZoneSync                mov     SyncPoint,              cnt                     'Create a Sync Point with the system counter
+00EC 031 853D3295                              sub     _NoGlitch,              SyncPoint         nr,wc 'Test to make sure 'cnt' value won't rollover within Servo's pulse width
+00F0 032 5C700030                    if_C      jmp     #ZoneSync                                       'If C flag is set get a new Sync Point, otherwise we are ok.
+00F4 033 80FD2B04                              add     SyncPoint,              #260                    'Add overhead offset to counter Sync point
+00F8 034 A0FD2E08                              mov     LoopCounter,            #8                      'Set Loop Counter to 8 Servos for this Zone
+00FC 035 54FC6E85                              movd    LoadServos,             #ServoWidth8            'Restore/Set self-modifying code on "LoadServos" line
+0100 036 54FC7485                              movd    ServoSync,              #ServoWidth8            'Restore/Set self-modifying code on "ServoSync" line
+0104 037 08BD0A8F              LoadServos      rdlong  ServoWidth8,            Index                   'Get Servo Data
+0108 038 84FD1E04                              sub     Index,                  #4                      'Decrement Index pointer to next address
+010C 039                                       nop
+010C 039 00 00 00 00
+0110 03A 80BD0A95              ServoSync       add     ServoWidth8,            SyncPoint               'Determine system counter location where pulse should end
+0114 03B 84BC6E55                              sub     LoadServos,             d_field                 'self-modify destination pointer for "LoadServos" line
+0118 03C 84BC7455                              sub     ServoSync,              d_field                 'self-modify destination pointer for "ServoSync" line
+011C 03D E4FD2E37                              djnz    LoopCounter,            #LoadServos             'Do ALL 8 servo positions for this Zone
+0120 03E A0BD1C98                              mov     temp,                   _ZoneClocks             'Move _ZoneClocks into temp
+0124 03F 80BD1C95                              add     temp,                   SyncPoint               'Add SyncPoint to _ZoneClocks
+0128 040 A0BCBBF1               ZoneLoop       mov     tempcnt,                cnt                     '(4 - clocks) take a snapshot of current counter value
+012C 041 E13CFC5D                              cmpsub  ServoWidth1,            tempcnt       nr,wc     '(4 - clocks) compare system counter to ServoWidth ; write result in C flag
+0130 042 70BD2C86                              muxc    ServoByte,              ZoneShift1              '(4 - clocks) Set ServoByte.Bit0 to "0" or "1" depending on the value of "C"
+0134 043 E13CFE5D                              cmpsub  ServoWidth2,            tempcnt       nr,wc     '(4 - clocks) compare system counter to ServoWidth ; write result in C flag
+0138 044 70BD2C87                              muxc    ServoByte,              ZoneShift2              '(4 - clocks) Set ServoByte.Bit1 to "0" or "1" depending on the value of "C"
+013C 045 E13D005D                              cmpsub  ServoWidth3,            tempcnt       nr,wc     '(4 - clocks) compare system counter to ServoWidth ; write result in C flag
+0140 046 70BD2C88                              muxc    ServoByte,              ZoneShift3              '(4 - clocks) Set ServoByte.Bit2 to "0" or "1" depending on the value of "C"
+0144 047 E13D025D                              cmpsub  ServoWidth4,            tempcnt       nr,wc     '(4 - clocks) compare system counter to ServoWidth ; write result in C flag
+0148 048 70BD2C89                              muxc    ServoByte,              ZoneShift4              '(4 - clocks) Set ServoByte.Bit3 to "0" or "1" depending on the value of "C"
+014C 049 E13D045D                              cmpsub  ServoWidth5,            tempcnt       nr,wc     '(4 - clocks) compare system counter to ServoWidth ; write result in C flag
+0150 04A 70BD2C8A                              muxc    ServoByte,              ZoneShift5              '(4 - clocks) Set ServoByte.Bit4 to "0" or "1" depending on the value of "C"
+0154 04B E13D065D                              cmpsub  ServoWidth6,            tempcnt       nr,wc     '(4 - clocks) compare system counter to ServoWidth ; write result in C flag
+0158 04C 70BD2C8B                              muxc    ServoByte,              ZoneShift6              '(4 - clocks) Set ServoByte.Bit5 to "0" or "1" depending on the value of "C"
+015C 04D E13D085D                              cmpsub  ServoWidth7,            tempcnt       nr,wc     '(4 - clocks) compare system counter to ServoWidth ; write result in C flag
+0160 04E 70BD2C8C                              muxc    ServoByte,              ZoneShift7              '(4 - clocks) Set ServoByte.Bit6 to "0" or "1" depending on the value of "C"
+0164 04F E13D0A5D                              cmpsub  ServoWidth8,            tempcnt       nr,wc     '(4 - clocks) compare system counter to ServoWidth ; write result in C flag
+0168 050 70BD2C8D                              muxc    ServoByte,              ZoneShift8              '(4 - clocks) Set ServoByte.Bit7 to "0" or "1" depending on the value of "C"
+016C 051 A0BFE896                              mov     outa,                   ServoByte               '(4 - clocks) Send ServoByte to Zone Port
+0170 052 853D1C5D                              cmp     temp,                   tempcnt       nr,wc     '(4 - clocks) Determine if cnt has exceeded width of _ZoneClocks ; write result in C flag
+0174 053 5C4C0040                    if_NC     jmp     #ZoneLoop                                       '(4 - clocks) if the "C Flag" is not set stay in the current Zone
+0178 054 5C7C0000       ZoneCore_RET            ret
+017C 055 00000200      d_field                 long    $0000_0200
+0180 056 00000000      PinDirectionAddress     long    0
+0184 057 00000000      counter                 long    0
+0188 058 00000000      Address1                long    0
+018C 059 00000000      Address2                long    0
+0190 05A 00000000      Address3                long    0
+0194 05B 00000000      temp1                   long    0
+0198 05C 00000000      temp2                   long    0
+019C 05D 00000000      tempcnt                 long    0
+01A0 05E 00000000      dly                     long    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+01A4 05F 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+01E0 06E 00000000                              long    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+01E4 06F 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0220 07E               ServoWidth1             res     1
+0220 07F               ServoWidth2             res     1
+0220 080               ServoWidth3             res     1
+0220 081               ServoWidth4             res     1
+0220 082               ServoWidth5             res     1
+0220 083               ServoWidth6             res     1
+0220 084               ServoWidth7             res     1
+0220 085               ServoWidth8             res     1
+0220 086               ZoneShift1              res     1
+0220 087               ZoneShift2              res     1
+0220 088               ZoneShift3              res     1
+0220 089               ZoneShift4              res     1
+0220 08A               ZoneShift5              res     1
+0220 08B               ZoneShift6              res     1
+0220 08C               ZoneShift7              res     1
+0220 08D               ZoneShift8              res     1
+0220 08E               temp                    res     1
+0220 08F               Index                   res     1
+0220 090               ZoneIndex               res     1
+0220 091               Zone1Index              res     1
+0220 092               Zone2Index              res     1
+0220 093               Zone3Index              res     1
+0220 094               Zone4Index              res     1
+0220 095               SyncPoint               res     1
+0220 096               ServoByte               res     1
+0220 097               LoopCounter             res     1
+0220 098               _ZoneClocks             res     1
+0220 099               _NoGlitch               res     1
+0220 09A               _ServoPinDirection      res     1
+0220                   PUB Start
+0220                       RampFlag := 0
+0220     35            ; Push_0
+0221     41            ; Pop_VariableMem_Long_0
+0222                       ZoneClocks := (clkfreq / _1uS * ZonePeriod)                                 'calculate # of clocks per ZonePeriod
+0222     35            ; Push_0
+0223     C0            ; Push_MainMem_Long
+0224     3A 0F4240     ; Push_Mid_Lit, $0F4240
+0228     F6            ; Divide
+0229     39 1388       ; Push_Word_Lit, $1388
+022C     F4            ; Multiply
+022D     45            ; Pop_VariableMem_Long_1
+022E                       NoGlitch   := $FFFF_FFFF-(clkfreq / _1uS * NoGlitchWindow)                  'calculate # of clocks for GlitchFree servos. Problem occurs when 'cnt' value rollover is less than the servo's pulse width.
+022E     34            ; Push_Neg1
+022F     35            ; Push_0
+0230     C0            ; Push_MainMem_Long
+0231     3A 0F4240     ; Push_Mid_Lit, $0F4240
+0235     F6            ; Divide
+0236     39 0BB8       ; Push_Word_Lit, $0BB8
+0239     F4            ; Multiply
+023A     ED            ; Subtract
+023B     49            ; Pop_VariableMem_Long_2
+023C                       cognew(@ServoStart,@ZoneClocks)
+023C     34            ; Push_Neg1
+023D     C7 18         ; Reference_ObjectMem_Long, $0018
+023F     47            ; Reference_VariableMem_Long_1
+0240     2C            ; Coginit
+0241     32            ; Return
+0242                   PUB Ramp
+0242                       SERVO.StartRamp(@ServoData)
+0242     01            ; Frame_Call_Noreturn
+0243     53            ; Reference_VariableMem_Long_4
+0244     06 05 01      ; Objcall, $05, $01
+0247                       RampFlag := 1
+0247     36            ; Push_1
+0248     41            ; Pop_VariableMem_Long_0
+0249     32            ; Return
+024A                   PUB SetRamp(Pin, Width,Delay)|S_Width
+024A                         ServoDelay[Pin] := Delay 'Note: The resolution of Delay is about 38.75us
+024A     6C            ; Push_LocalMem_Long_3
+024B     64            ; Push_LocalMem_Long_1
+024C     D9 81 10      ; Pop_Indexed_VariableMem_Long, $0110
+024F                         S_Width := LowRange #> Width <# HighRange                                 'limit Width value
+024F     39 01F4       ; Push_Word_Lit, $01F4
+0252     68            ; Push_LocalMem_Long_2
+0253     E4            ; Limit_Min
+0254     39 09C4       ; Push_Word_Lit, $09C4
+0257     E5            ; Limit_Max
+0258     71            ; Pop_LocalMem_Long_4
+0259                         Pin :=    0 #> Pin <# 31                                                  'limit Pin value between 0 and 31
+0259     35            ; Push_0
+025A     64            ; Push_LocalMem_Long_1
+025B     E4            ; Limit_Min
+025C     37 24         ; Push_Packed_Lit, $0000001F
+025E     E5            ; Limit_Max
+025F     65            ; Pop_LocalMem_Long_1
+0260                         ServoTarget[Pin] := ((clkfreq / _1uS * S_Width)/SERVO#CoreSpeed)*SERVO#CoreSpeed
+0260     35            ; Push_0
+0261     C0            ; Push_MainMem_Long
+0262     3A 0F4240     ; Push_Mid_Lit, $0F4240
+0266     F6            ; Divide
+0267     70            ; Push_LocalMem_Long_4
+0268     F4            ; Multiply
+0269     39 026C       ; Push_Word_Lit, $026C
+026C     F6            ; Divide
+026D     39 026C       ; Push_Word_Lit, $026C
+0270     F4            ; Multiply
+0271     64            ; Push_LocalMem_Long_1
+0272     D9 80 90      ; Pop_Indexed_VariableMem_Long, $0090
+0275                         if S_Width==Width
+0275     70            ; Push_LocalMem_Long_4
+0276     68            ; Push_LocalMem_Long_2
+0277     FC            ; Equal
+0278     0A 06         ; Jump_If_False, $0006
+027A                            dira[Pin] := 1                                                         'set selected servo pin as an OUTPUT
+027A     36            ; Push_1
+027B     64            ; Push_LocalMem_Long_1
+027C     3D B6 04      ; Indexed_Mem_Op, $3604
+027F     04 35         ; Branch, $0035
+0280                            dira[Pin] := 0                                                         'set selected servo pin as an INPUT only if Width out of range
+0280     35            ; Push_0
+0281     64            ; Push_LocalMem_Long_1
+0282     3D B6 3F      ; Indexed_Mem_Op, $363F
+0284                         ServoPinDirection := dira                                                 'Read I/O state of ALL pins
+0284     3F 96 4D      ; Memory_Op, $164D
+0287     32            ; Return
+0288                   PUB Set(Pin, Width)|S_Width                                                     'Set Servo value
+0288                         S_Width := LowRange #> Width <# HighRange                                 'limit Width value
+0288     39 01F4       ; Push_Word_Lit, $01F4
+028B     68            ; Push_LocalMem_Long_2
+028C     E4            ; Limit_Min
+028D     39 09C4       ; Push_Word_Lit, $09C4
+0290     E5            ; Limit_Max
+0291     6D            ; Pop_LocalMem_Long_3
+0292                         Pin :=    0 #> Pin <# 31                                                  'limit Pin value between 0 and 31
+0292     35            ; Push_0
+0293     64            ; Push_LocalMem_Long_1
+0294     E4            ; Limit_Min
+0295     37 24         ; Push_Packed_Lit, $0000001F
+0297     E5            ; Limit_Max
+0298     65            ; Pop_LocalMem_Long_1
+0299                         if RampFlag == 0
+0299     40            ; Push_VariableMem_Long_0
+029A     35            ; Push_0
+029B     FC            ; Equal
+029C     0A 0E         ; Jump_If_False, $000E
+029E                            ServoData[Pin] := (clkfreq / _1uS * S_Width)                           'calculate # of clocks for a specific Pulse Width
+029E     35            ; Push_0
+029F     C0            ; Push_MainMem_Long
+02A0     3A 0F4240     ; Push_Mid_Lit, $0F4240
+02A4     F6            ; Divide
+02A5     6C            ; Push_LocalMem_Long_3
+02A6     F4            ; Multiply
+02A7     64            ; Push_LocalMem_Long_1
+02A8     D9 10         ; Pop_Indexed_VariableMem_Long, $0010
+02AA     04 14         ; Branch, $0014
+02AC                            ServoData[Pin] := ((clkfreq / _1uS * S_Width)/SERVO#CoreSpeed)*SERVO#CoreSpeed
+02AC     35            ; Push_0
+02AD     C0            ; Push_MainMem_Long
+02AE     3A 0F4240     ; Push_Mid_Lit, $0F4240
+02B2     F6            ; Divide
+02B3     6C            ; Push_LocalMem_Long_3
+02B4     F4            ; Multiply
+02B5     39 026C       ; Push_Word_Lit, $026C
+02B8     F6            ; Divide
+02B9     39 026C       ; Push_Word_Lit, $026C
+02BC     F4            ; Multiply
+02BD     64            ; Push_LocalMem_Long_1
+02BE     D9 10         ; Pop_Indexed_VariableMem_Long, $0010
+02C0                         ServoTarget[Pin] := ServoData[Pin]
+02C0     64            ; Push_LocalMem_Long_1
+02C1     D8 10         ; Push_Indexed_VariableMem_Long, $0010
+02C3     64            ; Push_LocalMem_Long_1
+02C4     D9 80 90      ; Pop_Indexed_VariableMem_Long, $0090
+02C7                         if S_Width==Width
+02C7     6C            ; Push_LocalMem_Long_3
+02C8     68            ; Push_LocalMem_Long_2
+02C9     FC            ; Equal
+02CA     0A 06         ; Jump_If_False, $0006
+02CC                            dira[Pin] := 1                                                         'set selected servo pin as an OUTPUT
+02CC     36            ; Push_1
+02CD     64            ; Push_LocalMem_Long_1
+02CE     3D B6 04      ; Indexed_Mem_Op, $3604
+02D1     04 35         ; Branch, $0035
+02D2                            dira[Pin] := 0                                                         'set selected servo pin as an INPUT only if Width out of range
+02D2     35            ; Push_0
+02D3     64            ; Push_LocalMem_Long_1
+02D4     3D B6 3F      ; Indexed_Mem_Op, $363F
+02D6                         ServoPinDirection := dira                                                 'Read I/O state of ALL pins
+02D6     3F 96 4D      ; Memory_Op, $164D
+02D9     32            ; Return
+02DA     00            ; Frame_Call_Return
+02DB     00            ; Frame_Call_Return
+                       File "motor.servo.ramp.spin"
+02DC     0280 0002     Link to Next Object
+02E0     0278 0000     Link to PUB StartRamp (ServoData)
+02E4 000               DAT
+02E4 000                                       org
+02E4 000               RampStart
+02E4 000 A0BCEDF0                              mov     Address1,       par              'ServoData
+02E8 001 A0BCEE76                              mov     Address2,       Address1
+02EC 002 80FCEE80                              add     Address2,       #128             'ServoTarget
+02F0 003 A0BCF077                              mov     Address3,       Address2
+02F4 004 80FCF080                              add     Address3,       #128             'ServoDelay
+02F8 005 85FCF801      Ch01                    sub      dly + 00,      #1      wc
+02FC 006 08B0F878                         if_c rdlong   dly + 00,      Address3         'Move Delay into temp delay value
+0300 007 5CFCE066                              call     #RampCore
+0304 008 85FCFA01      Ch02                    sub      dly + 01,      #1      wc
+0308 009 08B0FA78                         if_c rdlong   dly + 01,      Address3         'Move Delay into temp delay value
+030C 00A 5CFCE066                              call     #RampCore
+0310 00B 85FCFC01      Ch03                    sub      dly + 02,      #1      wc
+0314 00C 08B0FC78                         if_c rdlong   dly + 02,      Address3         'Move Delay into temp delay value
+0318 00D 5CFCE066                              call     #RampCore
+031C 00E 85FD0001      Ch04                    sub      dly + 04,      #1      wc
+0320 00F 08B10078                         if_c rdlong   dly + 04,      Address3         'Move Delay into temp delay value
+0324 010 5CFCE066                              call     #RampCore
+0328 011 85FD0201      Ch05                    sub      dly + 05,      #1      wc
+032C 012 08B10278                         if_c rdlong   dly + 05,      Address3         'Move Delay into temp delay value
+0330 013 5CFCE066                              call     #RampCore
+0334 014 85FD0401      Ch06                    sub      dly + 06,      #1      wc
+0338 015 08B10478                         if_c rdlong   dly + 06,      Address3         'Move Delay into temp delay value
+033C 016 5CFCE066                              call     #RampCore
+0340 017 85FD0601      Ch07                    sub      dly + 07,      #1      wc
+0344 018 08B10678                         if_c rdlong   dly + 07,      Address3         'Move Delay into temp delay value
+0348 019 5CFCE066                              call     #RampCore
+034C 01A 85FD0801      Ch08                    sub      dly + 08,      #1      wc
+0350 01B 08B10878                         if_c rdlong   dly + 08,      Address3         'Move Delay into temp delay value
+0354 01C 5CFCE066                              call     #RampCore
+0358 01D 85FD0A01      Ch09                    sub      dly + 09,      #1      wc
+035C 01E 08B10A78                         if_c rdlong   dly + 09,      Address3         'Move Delay into temp delay value
+0360 01F 5CFCE066                              call     #RampCore
+0364 020 85FD0C01      Ch10                    sub      dly + 10,      #1      wc
+0368 021 08B10C78                         if_c rdlong   dly + 10,      Address3         'Move Delay into temp delay value
+036C 022 5CFCE066                              call     #RampCore
+0370 023 85FD0E01      Ch11                    sub      dly + 11,      #1      wc
+0374 024 08B10E78                         if_c rdlong   dly + 11,      Address3         'Move Delay into temp delay value
+0378 025 5CFCE066                              call     #RampCore
+037C 026 85FD1001      Ch12                    sub      dly + 12,      #1      wc
+0380 027 08B11078                         if_c rdlong   dly + 12,      Address3         'Move Delay into temp delay value
+0384 028 5CFCE066                              call     #RampCore
+0388 029 85FD1201      Ch13                    sub      dly + 13,      #1      wc
+038C 02A 08B11278                         if_c rdlong   dly + 13,      Address3         'Move Delay into temp delay value
+0390 02B 5CFCE066                              call     #RampCore
+0394 02C 85FD1401      Ch14                    sub      dly + 14,      #1      wc
+0398 02D 08B11478                         if_c rdlong   dly + 14,      Address3         'Move Delay into temp delay value
+039C 02E 5CFCE066                              call     #RampCore
+03A0 02F 85FD1601      Ch15                    sub      dly + 15,      #1      wc
+03A4 030 08B11678                         if_c rdlong   dly + 15,      Address3         'Move Delay into temp delay value
+03A8 031 5CFCE066                              call     #RampCore
+03AC 032 85FD1801      Ch16                    sub      dly + 16,      #1      wc
+03B0 033 08B11878                         if_c rdlong   dly + 16,      Address3         'Move Delay into temp delay value
+03B4 034 5CFCE066                              call     #RampCore
+03B8 035 85FD1A01      Ch17                    sub      dly + 17,      #1      wc
+03BC 036 08B11A78                         if_c rdlong   dly + 17,      Address3         'Move Delay into temp delay value
+03C0 037 5CFCE066                              call     #RampCore
+03C4 038 85FD1C01      Ch18                    sub      dly + 18,      #1      wc
+03C8 039 08B11C78                         if_c rdlong   dly + 18,      Address3         'Move Delay into temp delay value
+03CC 03A 5CFCE066                              call     #RampCore
+03D0 03B 85FD1E01      Ch19                    sub      dly + 19,      #1      wc
+03D4 03C 08B11E78                         if_c rdlong   dly + 19,      Address3         'Move Delay into temp delay value
+03D8 03D 5CFCE066                              call     #RampCore
+03DC 03E 85FD2001      Ch20                    sub      dly + 20,      #1      wc
+03E0 03F 08B12078                         if_c rdlong   dly + 20,      Address3         'Move Delay into temp delay value
+03E4 040 5CFCE066                              call     #RampCore
+03E8 041 85FD2201      Ch21                    sub      dly + 21,      #1      wc
+03EC 042 08B12278                         if_c rdlong   dly + 21,      Address3         'Move Delay into temp delay value
+03F0 043 5CFCE066                              call     #RampCore
+03F4 044 85FD2401      Ch22                    sub      dly + 22,      #1      wc
+03F8 045 08B12478                         if_c rdlong   dly + 22,      Address3         'Move Delay into temp delay value
+03FC 046 5CFCE066                              call     #RampCore
+0400 047 85FD2601      Ch23                    sub      dly + 23,      #1      wc
+0404 048 08B12678                         if_c rdlong   dly + 23,      Address3         'Move Delay into temp delay value
+0408 049 5CFCE066                              call     #RampCore
+040C 04A 85FD2801      Ch24                    sub      dly + 24,      #1      wc
+0410 04B 08B12878                         if_c rdlong   dly + 24,      Address3         'Move Delay into temp delay value
+0414 04C 5CFCE066                              call     #RampCore
+0418 04D 85FD2A01      Ch25                    sub      dly + 25,      #1      wc
+041C 04E 08B12A78                         if_c rdlong   dly + 25,      Address3         'Move Delay into temp delay value
+0420 04F 5CFCE066                              call     #RampCore
+0424 050 85FD2C01      Ch26                    sub      dly + 26,      #1      wc
+0428 051 08B12C78                         if_c rdlong   dly + 26,      Address3         'Move Delay into temp delay value
+042C 052 5CFCE066                              call     #RampCore
+0430 053 85FD2E01      Ch27                    sub      dly + 27,      #1      wc
+0434 054 08B12E78                         if_c rdlong   dly + 27,      Address3         'Move Delay into temp delay value
+0438 055 5CFCE066                              call     #RampCore
+043C 056 85FD3001      Ch28                    sub      dly + 28,      #1      wc
+0440 057 08B13078                         if_c rdlong   dly + 28,      Address3         'Move Delay into temp delay value
+0444 058 5CFCE066                              call     #RampCore
+0448 059 85FD3201      Ch29                    sub      dly + 29,      #1      wc
+044C 05A 08B13278                         if_c rdlong   dly + 29,      Address3         'Move Delay into temp delay value
+0450 05B 5CFCE066                              call     #RampCore
+0454 05C 85FD3401      Ch30                    sub      dly + 30,      #1      wc
+0458 05D 08B13478                         if_c rdlong   dly + 30,      Address3         'Move Delay into temp delay value
+045C 05E 5CFCE066                              call     #RampCore
+0460 05F 85FD3601      Ch31                    sub      dly + 31,      #1      wc
+0464 060 08B13678                         if_c rdlong   dly + 31,      Address3         'Move Delay into temp delay value
+0468 061 5CFCE066                              call     #RampCore
+046C 062 85FD3801      Ch32                    sub      dly + 32,      #1      wc
+0470 063 08B13878                         if_c rdlong   dly + 32,      Address3         'Move Delay into temp delay value
+0474 064 5CFCE066                              call     #RampCore
+0478 065 5C7C0000                              jmp     #RampStart
+047C 066               RampCore
+047C 066 08BCF476                              rdlong   temp1,         Address1         'Move ServoData into temp1
+0480 067 08BCF677                              rdlong   temp2,         Address2         'Move ServoTarget into temp2
+0484 068 5C4C0071                        if_nc jmp      #CodeBalance
+0488 069 873CF47B                              cmp      temp1,         temp2   wc,wz
+048C 06A 8090F475                  if_c_and_nz add      temp1,         _CoreSpeed        'Increment ServoData if ServoTarget is greater
+0490 06B 8484F475                 if_nc_and_nz sub      temp1,         _CoreSpeed        'Decrement ServoData if ServoTarget is less
+0494 06C 083CF476      OutLoop                 wrlong   temp1,         Address1         'Update ServoData value
+0498 06D 80FCEC04                              add      Address1,      #4               'Increment Delay pointer
+049C 06E 80FCEE04                              add      Address2,      #4               'Increment ServoData pointer
+04A0 06F 80FCF004                              add      Address3,      #4
+04A4 070 5C7C0000      RampCore_ret            ret
+04A8 071               CodeBalance             nop                                      'makes for equal code branch path
+04A8 071 00 00 00 00
+04AC 072 5C7C006C                              jmp     #OutLoop
+04B0 073 00000000      time1                   long    0
+04B4 074 00000000      time2                   long    0
+04B8 075 0000026C      _CoreSpeed              long    CoreSpeed
+04BC 076 00000000      Address1                long    0
+04C0 077 00000000      Address2                long    0
+04C4 078 00000000      Address3                long    0
+04C8 079 00000000      Address4                long    0
+04CC 07A 00000000      temp1                   long    0
+04D0 07B 00000000      temp2                   long    0
+04D4 07C 00000000      dly                     long    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+04D8 07D 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0514 08C 00000000                              long    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+0518 08D 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+0554                   PUB StartRamp (ServoData)
+0554                       cognew(@RampStart,ServoData)
+0554     34            ; Push_Neg1
+0555     C7 08         ; Reference_ObjectMem_Long, $0008
+0557     64            ; Push_LocalMem_Long_1
+0558     2C            ; Coginit
+0559     32            ; Return
+055A     00            ; Frame_Call_Return
+055B     00            ; Frame_Call_Return
+                       Variables for TOP (motor.servo.spin)
+055C     0000          long RAMPFLAG
+0560     0004          long ZONECLOCKS
+0564     0008          long NOGLITCH
+0568     000C          long SERVOPINDIRECTION
+056C     0010          long SERVODATA[32]
+05EC     0090          long SERVOTARGET[32]
+066C     0110          long SERVODELAY[32]
+06EC                   Reserved 8 bytes.
+06F4                   Base of stack.
+0704                   Top of stack.

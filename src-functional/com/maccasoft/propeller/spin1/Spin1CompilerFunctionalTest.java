@@ -179,6 +179,24 @@ class Spin1CompilerFunctionalTest {
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
+    @Test
+    void testMathRandom() throws Exception {
+        String text = getResourceAsString("math.random.spin");
+
+        byte[] expected = getResource("math.random.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testMotorServo() throws Exception {
+        String text = getResourceAsString("motor.servo.spin");
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("motor.servo.ramp", getResourceAsString("motor.servo.ramp.spin"));
+
+        byte[] expected = getResource("motor.servo.binary");
+        compileAndCompare(text, sources, expected);
+    }
+
     String getResourceAsString(String name) throws Exception {
         InputStream is = getClass().getResourceAsStream(name);
         try {
@@ -212,6 +230,9 @@ class Spin1CompilerFunctionalTest {
         @Override
         protected Spin1Object getObject(String fileName) {
             String text = getObjectSource(fileName);
+            if (text == null) {
+                throw new RuntimeException("file " + fileName + " not found");
+            }
             Spin1TokenStream stream = new Spin1TokenStream(text);
             Spin1Parser subject = new Spin1Parser(stream);
             Node root = subject.parse();
@@ -227,6 +248,40 @@ class Spin1CompilerFunctionalTest {
     }
 
     void compileAndCompare(String text, Map<String, String> sources, byte[] expected) throws Exception {
+        Spin1TokenStream stream = new Spin1TokenStream(text);
+        Spin1Parser subject = new Spin1Parser(stream);
+        Node root = subject.parse();
+
+        Spin1CompilerAdapter compiler = new Spin1CompilerAdapter(sources);
+        Spin1Object obj = compiler.compile(root);
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        obj.generateBinary(os);
+
+        byte[] actual = os.toByteArray();
+
+        byte sum = 0;
+        for (int i = 0; i < actual.length; i++) {
+            sum += actual[i];
+        }
+        actual[5] = (byte) (0x14 - sum);
+
+        expected[5] = actual[5] = 0;
+
+        os = new ByteArrayOutputStream();
+        obj.generateListing(new PrintStream(os));
+        String actualListing = os.toString();
+
+        obj.setBytes(expected, 0);
+
+        os = new ByteArrayOutputStream();
+        obj.generateListing(new PrintStream(os));
+        String expectedListing = os.toString();
+
+        Assertions.assertEquals(expectedListing, actualListing);
+    }
+
+    void compileAndCompare2(String text, Map<String, String> sources, byte[] expected) throws Exception {
         Spin1TokenStream stream = new Spin1TokenStream(text);
         Spin1Parser subject = new Spin1Parser(stream);
         Node root = subject.parse();
