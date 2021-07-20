@@ -9,12 +9,17 @@ public class NumberLiteral extends Literal {
     private final int base;
     private String text;
 
-    public NumberLiteral(Number value) {
+    public NumberLiteral(long value) {
         this.value = value;
         this.base = 10;
     }
 
-    public NumberLiteral(Number value, int base) {
+    public NumberLiteral(double value) {
+        this.value = value;
+        this.base = 10;
+    }
+
+    public NumberLiteral(long value, int base) {
         this.value = value;
         this.base = base;
     }
