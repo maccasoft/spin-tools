@@ -125,6 +125,13 @@ public class Constant extends Spin2Bytecode {
 
     @Override
     public byte[] getBytes() {
+        if (expression.getNumber() instanceof Double) {
+            int value = Float.floatToIntBits(expression.getNumber().floatValue());
+            return new byte[] {
+                0x49, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
+            };
+        }
+
         long value = expression.getNumber().longValue();
 
         if (value >= -1 && value <= 14) {
@@ -141,21 +148,6 @@ public class Constant extends Spin2Bytecode {
 
         value &= 0xFFFFFFFFL;
 
-        for (long i = 0, b = 1; i < 32; i++, b <<= 1) {
-            if (value == b) {
-                return new byte[] {
-                    (byte) 0x4A,
-                    (byte) i
-                };
-            }
-            if (value == (b ^ 0xFFFFFFFFL)) {
-                return new byte[] {
-                    (byte) 0x4B,
-                    (byte) i
-                };
-            }
-        }
-
         for (long i = 31, b = 0xFFFFFFFFL; i >= 0; i--, b >>= 1) {
             if (value == b) {
                 return new byte[] {
@@ -166,6 +158,21 @@ public class Constant extends Spin2Bytecode {
             if (value == (b ^ 0xFFFFFFFFL)) {
                 return new byte[] {
                     (byte) 0x4D,
+                    (byte) i
+                };
+            }
+        }
+
+        for (long i = 0, b = 1; i < 32; i++, b <<= 1) {
+            if (value == b) {
+                return new byte[] {
+                    (byte) 0x4A,
+                    (byte) i
+                };
+            }
+            if (value == (b ^ 0xFFFFFFFFL)) {
+                return new byte[] {
+                    (byte) 0x4B,
                     (byte) i
                 };
             }

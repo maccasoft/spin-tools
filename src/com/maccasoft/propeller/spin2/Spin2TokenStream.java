@@ -33,6 +33,9 @@ public class Spin2TokenStream extends TokenStream {
 
     public Spin2TokenStream(String text) {
         this.text = text;
+        if (text == null) {
+            throw new NullPointerException();
+        }
     }
 
     @Override
@@ -116,7 +119,7 @@ public class Spin2TokenStream extends TokenStream {
                             }
                         }
                         token.type = Token.OPERATOR;
-                        if (ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';') {
+                        if (ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';' || ch == '\\') {
                             index++;
                             column++;
                             state = Token.START;
@@ -215,72 +218,53 @@ public class Spin2TokenStream extends TokenStream {
                     }
 
                     if (ch == '=') {
-                        token.stop++;
-                        index++;
-                        column++;
+                        if ((token.stop - token.start) == 2) {
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'A') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'N') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'D') {
+                                        token.stop++;
+                                        index++;
+                                        column++;
+                                    }
+                                }
+                            }
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'X') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'O') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'R') {
+                                        token.stop++;
+                                        index++;
+                                        column++;
+                                    }
+                                }
+                            }
+                        }
+                        else if ((token.stop - token.start) == 1) {
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'O') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'R') {
+                                    token.stop++;
+                                    index++;
+                                    column++;
+                                }
+                            }
+                        }
                     }
 
                     state = Token.START;
                     return token;
-                case Token.OPERATOR: {
-                    char ch0 = text.charAt(index - 1);
-                    if (ch == ch0) {
-                        token.stop++;
-                        index++;
-                        column++;
-                        if (index < text.length()) {
-                            ch = text.charAt(index);
-                            if (ch == '=') {
-                                token.stop++;
-                                index++;
-                                column++;
-                            }
+                case Token.OPERATOR:
+                    if (text.charAt(index - 1) == '#') {
+                        if (ch != '>' && ch != '=' && ch != '#') {
+                            state = Token.START;
+                            return token;
                         }
                     }
-                    else if (ch0 == '+' && ch == '/') {
+                    if (ch == '|' || ch == '!' || ch == '=' || ch == '^' || ch == '+' || ch == '*' || ch == '-' || ch == '/' || ch == '#' || ch == ':' || ch == '>' || ch == '<' || ch == '.'
+                        || ch == '~' || ch == '&') {
                         token.stop++;
-                        index++;
-                        column++;
-                        if (index < text.length()) {
-                            ch = text.charAt(index);
-                            if (ch == '/') {
-                                token.stop++;
-                                index++;
-                                column++;
-                            }
-                        }
-                    }
-                    else if (ch0 == '+' && (ch == '<' || ch == '>')) {
-                        token.stop++;
-                        index++;
-                        column++;
-                        if (index < text.length()) {
-                            ch = text.charAt(index);
-                            if (ch == '=') {
-                                token.stop++;
-                                index++;
-                                column++;
-                            }
-                        }
-                    }
-                    else if (ch0 == '<' && ch == '>') {
-                        token.stop++;
-                        index++;
-                        column++;
-                    }
-                    else if (ch0 == '<' && ch == '=' && (index + 1 < text.length() && text.charAt(index + 1) == '>')) {
-                        token.stop += 2;
-                        index += 2;
-                        column += 2;
-                    }
-                    else if (ch == '=') {
-                        token.stop++;
-                        index++;
-                        column++;
+                        break;
                     }
                     state = Token.START;
                     return token;
-                }
                 case Token.DEBUG:
                     if (ch == '(') {
                         nested++;

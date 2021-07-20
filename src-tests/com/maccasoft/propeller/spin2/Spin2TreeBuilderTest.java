@@ -426,6 +426,24 @@ class Spin2TreeBuilderTest {
             + "", parseAssignment(text));
     }
 
+    @Test
+    void testListAssignment() {
+        String text = "a, b, c := d, e, f";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [,]\n"
+            + "      +-- [,]\n"
+            + "           +-- [a]\n"
+            + "           +-- [b]\n"
+            + "      +-- [c]\n"
+            + " +-- [,]\n"
+            + "      +-- [,]\n"
+            + "           +-- [d]\n"
+            + "           +-- [e]\n"
+            + "      +-- [f]\n"
+            + "", parseAssignment(text));
+    }
+
     String parseAssignment(String text) {
         return parse(0, text);
     }

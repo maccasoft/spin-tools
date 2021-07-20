@@ -19,66 +19,69 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.model.Token;
 
 public class Spin2TreeBuilder {
 
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
-        precedence.put(">>", 14);
-        precedence.put("<<", 14);
-        precedence.put("SAR", 14);
-        precedence.put("ROR", 14);
-        precedence.put("ROL", 14);
-        precedence.put("REV", 14);
-        precedence.put("ZEROX", 14);
-        precedence.put("SIGNX", 14);
+        precedence.put(">>", 15);
+        precedence.put("<<", 15);
+        precedence.put("SAR", 15);
+        precedence.put("ROR", 15);
+        precedence.put("ROL", 15);
+        precedence.put("REV", 15);
+        precedence.put("ZEROX", 15);
+        precedence.put("SIGNX", 15);
 
-        precedence.put("&", 13);
-        precedence.put("^", 12);
-        precedence.put("|", 11);
+        precedence.put("&", 14);
+        precedence.put("^", 13);
+        precedence.put("|", 12);
 
-        precedence.put("*", 10);
-        precedence.put("/", 10);
-        precedence.put("+/", 10);
-        precedence.put("//", 10);
-        precedence.put("+//", 10);
-        precedence.put("SCA", 10);
-        precedence.put("SCAS", 10);
-        precedence.put("FRAC", 10);
+        precedence.put("*", 11);
+        precedence.put("/", 11);
+        precedence.put("+/", 11);
+        precedence.put("//", 11);
+        precedence.put("+//", 11);
+        precedence.put("SCA", 11);
+        precedence.put("SCAS", 11);
+        precedence.put("FRAC", 11);
 
-        precedence.put("+", 9);
-        precedence.put("-", 9);
+        precedence.put("+", 10);
+        precedence.put("-", 10);
 
-        precedence.put("#>", 8);
-        precedence.put("<#", 8);
+        precedence.put("#>", 9);
+        precedence.put("<#", 9);
 
-        precedence.put("ADDBITS", 7);
-        precedence.put("ADDPINS", 7);
+        precedence.put("ADDBITS", 8);
+        precedence.put("ADDPINS", 8);
 
-        precedence.put("<", 6);
-        precedence.put("+<", 6);
-        precedence.put("<=", 6);
-        precedence.put("+<=", 6);
-        precedence.put("==", 6);
-        precedence.put("<>", 6);
-        precedence.put(">=", 6);
-        precedence.put("+>=", 6);
-        precedence.put(">", 6);
-        precedence.put("+>", 6);
-        precedence.put("<=>", 6);
+        precedence.put("<", 7);
+        precedence.put("+<", 7);
+        precedence.put("<=", 7);
+        precedence.put("+<=", 7);
+        precedence.put("==", 7);
+        precedence.put("<>", 7);
+        precedence.put(">=", 7);
+        precedence.put("+>=", 7);
+        precedence.put(">", 7);
+        precedence.put("+>", 7);
+        precedence.put("<=>", 7);
 
-        precedence.put("&&", 5);
-        precedence.put("AND", 5);
-        precedence.put("^^", 5);
-        precedence.put("XOR", 5);
-        precedence.put("||", 5);
-        precedence.put("OR", 5);
+        precedence.put("&&", 6);
+        precedence.put("AND", 6);
+        precedence.put("^^", 6);
+        precedence.put("XOR", 6);
+        precedence.put("||", 6);
+        precedence.put("OR", 6);
 
-        precedence.put("..", 4);
+        precedence.put("..", 5);
 
-        precedence.put(":", 3);
-        precedence.put("?", 2);
+        precedence.put(":", 4);
+        precedence.put("?", 3);
+
+        precedence.put(",", 2);
 
         precedence.put(":=", 1);
 
@@ -174,7 +177,7 @@ public class Spin2TreeBuilder {
     }
 
     public Spin2StatementNode getRoot() {
-        Spin2StatementNode node = parseLevel(parseAtom(), 0);
+        Spin2StatementNode node = parseLevel(parseAtom(), 0, true);
 
         Token token = peek();
         while (token != null) {
@@ -185,21 +188,24 @@ public class Spin2TreeBuilder {
                     newNode.addChild(node);
                     node = newNode;
                 }
-                node.addChild(parseLevel(parseAtom(), 0));
+                node.addChild(parseLevel(parseAtom(), 0, true));
                 token = peek();
             }
             else {
-                throw new RuntimeException("unexpected " + token.getText());
+                throw new CompilerMessage("unexpected " + token.getText(), token);
             }
         }
 
         return node;
     }
 
-    Spin2StatementNode parseLevel(Spin2StatementNode left, int level) {
+    Spin2StatementNode parseLevel(Spin2StatementNode left, int level, boolean comma) {
         for (;;) {
             Token token = peek();
             if (token == null) {
+                return left;
+            }
+            if (",".equals(token.getText()) && !comma) {
                 return left;
             }
 
@@ -219,7 +225,10 @@ public class Spin2TreeBuilder {
                 if (nextP == null || nextP.intValue() <= p.intValue()) {
                     break;
                 }
-                right = parseLevel(right, level + 1);
+                if (",".equals(token.getText()) && !comma) {
+                    break;
+                }
+                right = parseLevel(right, level + 1, comma);
             }
 
             Spin2StatementNode node = new Spin2StatementNode(token);
@@ -231,6 +240,9 @@ public class Spin2TreeBuilder {
 
     Spin2StatementNode parseAtom() {
         Token token = peek();
+        if (token == null) {
+            throw new CompilerMessage("expecting operand", tokens.get(tokens.size() - 1));
+        }
 
         if (unary.contains(token.getText().toUpperCase())) {
             Spin2StatementNode node = new Spin2StatementNode(next());
@@ -240,26 +252,20 @@ public class Spin2TreeBuilder {
 
         if ("(".equals(token.getText())) {
             next();
-            Spin2StatementNode node = parseLevel(parseAtom(), 0);
+            Spin2StatementNode node = parseLevel(parseAtom(), 0, false);
             token = next();
-            if (token == null) {
-                throw new RuntimeException("expecting closing parenthesis");
-            }
-            if (!")".equals(token.getText())) {
-                throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+            if (token == null || !")".equals(token.getText())) {
+                throw new CompilerMessage("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
             }
             return node;
         }
 
         if ("[".equals(token.getText())) {
             next();
-            Spin2StatementNode node = parseLevel(parseAtom(), 0);
+            Spin2StatementNode node = parseLevel(parseAtom(), 0, false);
             token = next();
-            if (token == null) {
-                throw new RuntimeException("expecting closing parenthesis");
-            }
-            if (!"]".equals(token.getText())) {
-                throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+            if (token == null || !"]".equals(token.getText())) {
+                throw new CompilerMessage("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
             }
             return node;
         }
@@ -274,7 +280,7 @@ public class Spin2TreeBuilder {
                         return node;
                     }
                     for (;;) {
-                        Spin2StatementNode child = parseLevel(parseAtom(), 0);
+                        Spin2StatementNode child = parseLevel(parseAtom(), 0, false);
                         if (node.getChildCount() == 1 && ":".equals(node.getChild(0).getText())) {
                             node.getChild(0).addChild(child);
                         }
@@ -283,25 +289,26 @@ public class Spin2TreeBuilder {
                         }
                         token = next();
                         if (token == null) {
-                            throw new RuntimeException("expecting closing parenthesis");
+                            throw new CompilerMessage("expecting )", tokens.get(tokens.size() - 1));
                         }
                         if (")".equals(token.getText())) {
                             return node;
                         }
                         if (!",".equals(token.getText()) && !":".equals(token.getText())) {
-                            throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                            throw new CompilerMessage("expecting )", token);
                         }
                     }
                 }
+                if ("NOT".equalsIgnoreCase(node.getText())) {
+                    node.addChild(parseLevel(parseAtom(), 0, false));
+                    return node;
+                }
                 if ("[".equals(peek().getText())) {
                     next();
-                    node.addChild(parseLevel(parseAtom(), 0));
+                    node.addChild(parseLevel(parseAtom(), 0, false));
                     token = next();
-                    if (token == null) {
-                        throw new RuntimeException("expecting closing parenthesis");
-                    }
-                    if (!"]".equals(token.getText())) {
-                        throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                    if (token == null || !"]".equals(token.getText())) {
+                        throw new CompilerMessage("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
 
                     if (peek() == null) {
@@ -309,13 +316,10 @@ public class Spin2TreeBuilder {
                     }
                     if ("[".equals(peek().getText())) {
                         next();
-                        node.addChild(parseLevel(parseAtom(), 0));
+                        node.addChild(parseLevel(parseAtom(), 0, false));
                         token = next();
-                        if (token == null) {
-                            throw new RuntimeException("expecting closing parenthesis");
-                        }
-                        if (!"]".equals(token.getText())) {
-                            throw new RuntimeException("expecting closing parenthesis, got " + token.getText());
+                        if (token == null || !"]".equals(token.getText())) {
+                            throw new CompilerMessage("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                         }
                     }
                 }
@@ -333,7 +337,7 @@ public class Spin2TreeBuilder {
             return new Spin2StatementNode(next());
         }
 
-        throw new RuntimeException("unexpected " + token.getText());
+        throw new CompilerMessage("unexpected " + token.getText(), token);
     }
 
     Token peek() {
@@ -353,31 +357,7 @@ public class Spin2TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "A, B, C";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "16 / 2 / 2";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "160 * 25 - 1";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "a := b := c := 1";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "dotf := muldiv64(x_total, pal ? pal_cf * 4 * 128 : ntsc_cf * 4 * 128, pal ? pal_cc : ntsc_cc)";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "x_total := pal ? 416 : 378";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "31 - encod clkfreq";
+        text = "A, B := C, D";
         System.out.println(text);
         System.out.println(parse(text));
     }

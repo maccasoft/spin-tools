@@ -145,6 +145,7 @@ public class Spin2TokenMarker extends EditorTokenMarker {
         keywords.put("UNTIL", TokenId.KEYWORD);
         keywords.put("NEXT", TokenId.KEYWORD);
         keywords.put("QUIT", TokenId.KEYWORD);
+        keywords.put("RETURN", TokenId.KEYWORD);
 
         keywords.put("END", TokenId.KEYWORD);
 

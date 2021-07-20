@@ -50,6 +50,20 @@ public class Spin2Object {
             this.text = text;
         }
 
+        public int setBytes(byte[] bytes, int index) {
+            if (this.bytes == null) {
+                return index;
+            }
+            int n = Math.min(bytes.length - index, this.bytes.length);
+            for (int i = 0; i < n; i++, index++) {
+                if (this.bytes[i] != bytes[index]) {
+                    text = "";
+                }
+                this.bytes[i] = bytes[index];
+            }
+            return index;
+        }
+
     }
 
     public static class CommentDataObject extends DataObject {
@@ -70,6 +84,11 @@ public class Spin2Object {
 
         public Spin2Object getObject() {
             return object;
+        }
+
+        @Override
+        public int setBytes(byte[] bytes, int index) {
+            return object.setBytes(bytes, index);
         }
 
     }
@@ -239,22 +258,22 @@ public class Spin2Object {
     }
 
     public void writeBytes(byte[] bytes) {
-        data.add(new DataObject(bytes));
+        data.add(new DataObject(bytes.clone()));
         size += bytes.length;
     }
 
     public void writeBytes(byte[] bytes, String text) {
-        data.add(new DataObject(bytes, text));
+        data.add(new DataObject(bytes.clone(), text));
         size += bytes.length;
     }
 
     public void writeBytes(int addr, byte[] bytes) {
-        data.add(new PAsmDataObject(addr, bytes));
+        data.add(new PAsmDataObject(addr, bytes.clone()));
         size += bytes.length;
     }
 
     public void writeBytes(int addr, byte[] bytes, String text) {
-        data.add(new PAsmDataObject(addr, bytes, text));
+        data.add(new PAsmDataObject(addr, bytes.clone(), text));
         size += bytes.length;
     }
 
@@ -404,12 +423,11 @@ public class Spin2Object {
                         ps.print(String.format(" %02X", obj.bytes[i++]));
                         address++;
                     }
-                    while (i < 4 || (i % 4) != 0) {
+                    while (i < 5) {
                         ps.print("   ");
                         i++;
                     }
-                    ps.print("   ");
-                    if (i == 4) {
+                    if (i == 5) {
                         if (obj.text != null) {
                             ps.print(" " + obj.text);
                         }
@@ -433,7 +451,7 @@ public class Spin2Object {
                         ps.print(String.format(" %02X", obj.bytes[i++]));
                         address++;
                     }
-                    while (i < 5 || (i % 5) != 0) {
+                    while (i < 5) {
                         ps.print("   ");
                         i++;
                     }
@@ -451,6 +469,13 @@ public class Spin2Object {
         }
 
         return address;
+    }
+
+    public int setBytes(byte[] bytes, int index) {
+        for (DataObject obj : data) {
+            index = obj.setBytes(bytes, index);
+        }
+        return index;
     }
 
 }

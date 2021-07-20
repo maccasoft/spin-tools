@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
@@ -153,7 +154,7 @@ public class Spin2ExpressionBuilder {
 
         Token token = peek();
         if (token != null) {
-            throw new RuntimeException("unexpected " + token.getText());
+            throw new CompilerMessage("unexpected " + token.getText(), token);
         }
 
         return node;
@@ -193,13 +194,13 @@ public class Spin2ExpressionBuilder {
                     left = new ShiftLeft(left, right);
                     break;
                 case "~>":
-                    throw new RuntimeException("invalid binary operator " + token.getText());
+                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
                 case "->":
-                    throw new RuntimeException("invalid binary operator " + token.getText());
+                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
                 case "<-":
-                    throw new RuntimeException("invalid binary operator " + token.getText());
+                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
                 case "><":
-                    throw new RuntimeException("invalid binary operator " + token.getText());
+                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
 
                 case "&":
                     left = new And(left, right);
@@ -215,7 +216,7 @@ public class Spin2ExpressionBuilder {
                     left = new Multiply(left, right);
                     break;
                 case "**":
-                    throw new RuntimeException("invalid binary operator " + token.getText());
+                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
                 case "/":
                     left = new Divide(left, right);
                     break;
@@ -283,7 +284,7 @@ public class Spin2ExpressionBuilder {
 
                 case "?":
                     if (!(right instanceof IfElse)) {
-                        throw new RuntimeException("invalid binary operator " + token.getText());
+                        throw new CompilerMessage("unsupported operator " + token.getText(), token);
                     }
                     left = new IfElse(left, ((IfElse) right).getTrueTerm(), ((IfElse) right).getFalseTerm());
                     break;
@@ -292,13 +293,16 @@ public class Spin2ExpressionBuilder {
                     break;
 
                 default:
-                    throw new RuntimeException("invalid binary operator " + token.getText());
+                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
             }
         }
     }
 
     Expression parseAtom() {
         Token token = peek();
+        if (token == null) {
+            throw new CompilerMessage("expecting operand", tokens.get(tokens.size() - 1));
+        }
 
         if (unary.contains(token.getText())) {
             token = next();
@@ -317,7 +321,7 @@ public class Spin2ExpressionBuilder {
                 case "DECOD":
                     return new Decod(parseAtom());
                 default:
-                    throw new RuntimeException("invalid unary operator " + token.getText());
+                    throw new CompilerMessage("invalid unary operator " + token.getText(), token);
             }
         }
 
@@ -326,7 +330,7 @@ public class Spin2ExpressionBuilder {
             Group expression = new Group(parseLevel(parseAtom(), 0));
             token = next();
             if (token == null || !")".equals(token.getText())) {
-                throw new RuntimeException("expecting closing parenthesis");
+                throw new CompilerMessage("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
             }
             return expression;
         }
@@ -339,7 +343,7 @@ public class Spin2ExpressionBuilder {
                     Expression expression = new com.maccasoft.propeller.expressions.Float(parseLevel(parseAtom(), 0));
                     token = next();
                     if (token == null || !")".equals(token.getText())) {
-                        throw new RuntimeException("expecting closing parenthesis");
+                        throw new CompilerMessage("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
                     return expression;
                 }
@@ -348,7 +352,7 @@ public class Spin2ExpressionBuilder {
                     Expression expression = new Trunc(parseLevel(parseAtom(), 0));
                     token = next();
                     if (token == null || !")".equals(token.getText())) {
-                        throw new RuntimeException("expecting closing parenthesis");
+                        throw new CompilerMessage("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
                     return expression;
                 }
@@ -357,7 +361,7 @@ public class Spin2ExpressionBuilder {
                     Expression expression = new Round(parseLevel(parseAtom(), 0));
                     token = next();
                     if (token == null || !")".equals(token.getText())) {
-                        throw new RuntimeException("expecting closing parenthesis");
+                        throw new CompilerMessage("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
                     return expression;
                 }
@@ -376,7 +380,7 @@ public class Spin2ExpressionBuilder {
             }
         }
 
-        throw new RuntimeException("unexpected " + token.getText());
+        throw new CompilerMessage("unexpected " + token.getText(), token);
     }
 
     Token peek() {

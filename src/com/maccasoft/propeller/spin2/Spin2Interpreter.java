@@ -34,6 +34,10 @@ public class Spin2Interpreter {
         }
     }
 
+    public int getSize() {
+        return code.length;
+    }
+
     public void setPBase(int value) {
         writeLong(0x30, value);
     }

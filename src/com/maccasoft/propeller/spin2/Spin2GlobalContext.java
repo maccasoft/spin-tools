@@ -279,9 +279,22 @@ public class Spin2GlobalContext extends Spin2Context {
         addBuiltinSymbol("event_xrl", 13);
         addBuiltinSymbol("event_atn", 14);
         addBuiltinSymbol("event_qmt", 15);
+
+        // Predefined constants
+
+        addBuiltinSymbol("false", 0);
+        addBuiltinSymbol("true", -1);
+        addBuiltinSymbol("negx", Integer.MIN_VALUE);
+        addBuiltinSymbol("posx", Integer.MAX_VALUE);
+        addBuiltinSymbol("pi", Math.PI);
     }
 
-    void addBuiltinSymbol(String name, int value) {
+    void addBuiltinSymbol(String name, long value) {
+        symbols.put(name.toLowerCase(), new NumberLiteral(value));
+        symbols.put(name.toUpperCase(), new NumberLiteral(value));
+    }
+
+    void addBuiltinSymbol(String name, double value) {
         symbols.put(name.toLowerCase(), new NumberLiteral(value));
         symbols.put(name.toUpperCase(), new NumberLiteral(value));
     }
