@@ -1510,11 +1510,14 @@ public class Spin2Compiler {
                 throw new RuntimeException("expression syntax error " + node.getText());
             }
             source.addAll(compileConstantExpression(context, node.getChild(1)));
-            source.addAll(leftAssign(context, node.getChild(0), push, false));
+            source.addAll(leftAssign(context, node.getChild(0), push));
+            if (push) {
+                source.add(new Bytecode(context, 0x82, "WRITE"));
+            }
         }
         else if (MathOp.isAssignMathOp(node.getText())) {
             source.addAll(compileConstantExpression(context, node.getChild(1)));
-            source.addAll(leftAssign(context, node.getChild(0), false, true));
+            source.addAll(leftAssign(context, node.getChild(0), true));
             source.add(new MathOp(context, node.getText(), push));
         }
         else if (MathOp.isUnaryMathOp(node.getText())) {
@@ -1589,7 +1592,7 @@ public class Spin2Compiler {
                 throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
             }
             if (expression instanceof Variable) {
-                source.add(new VariableOp(context, VariableOp.Op.Setup, (Variable) expression));
+                source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
                 source.add(new Bytecode(context, push ? 0x85 : 0x83, "PRE_INC" + (push ? " (push)" : "")));
             }
             else {
@@ -1605,7 +1608,7 @@ public class Spin2Compiler {
                 throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
             }
             if (expression instanceof Variable) {
-                source.add(new VariableOp(context, VariableOp.Op.Setup, (Variable) expression));
+                source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
                 source.add(new Bytecode(context, push ? 0x86 : 0x84, "PRE_DEC" + (push ? " (push)" : "")));
             }
             else {
@@ -1621,7 +1624,7 @@ public class Spin2Compiler {
                 throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
             }
             if (expression instanceof Variable) {
-                source.add(new VariableOp(context, VariableOp.Op.Setup, (Variable) expression));
+                source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
                 source.add(new Bytecode(context, push ? 0x8F : 0x8E, "PRE_RND" + (push ? " (push)" : "")));
             }
             else {
@@ -1737,8 +1740,8 @@ public class Spin2Compiler {
                             (byte) ((Method) expression).getOffset()
                         }, "SUB_ADDRESS (" + ((Method) expression).getOffset() + ")"));
                     }
-                    else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
-                        source.add(new VariableOp(context, VariableOp.Op.Address, (Variable) expression));
+                    else if (expression instanceof Variable) {
+                        source.add(new VariableOp(context, VariableOp.Op.Address, false, (Variable) expression));
                     }
                     else {
                         MemoryOp.Size ss = MemoryOp.Size.Long;
@@ -1780,13 +1783,13 @@ public class Spin2Compiler {
                     if (node.getChildCount() == 1) {
                         if ("~".equalsIgnoreCase(node.getChild(0).getText())) {
                             source.add(new Constant(context, new NumberLiteral(0)));
-                            source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, (Variable) expression));
+                            source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, false, (Variable) expression));
                             if (push) {
                                 source.add(new Bytecode(context, 0x8D, "SWAP"));
                             }
                         }
                         else {
-                            source.add(new VariableOp(context, VariableOp.Op.Setup, (Variable) expression));
+                            source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
                             if ("++".equalsIgnoreCase(node.getChild(0).getText())) {
                                 source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
                             }
@@ -1805,7 +1808,7 @@ public class Spin2Compiler {
                         }
                     }
                     else {
-                        source.add(new VariableOp(context, VariableOp.Op.Read, (Variable) expression));
+                        source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression));
                     }
                 }
                 else if (expression instanceof ContextLiteral) {
@@ -1831,7 +1834,7 @@ public class Spin2Compiler {
         return source;
     }
 
-    List<Spin2Bytecode> leftAssign(Spin2Context context, Spin2StatementNode node, boolean push, boolean setup) {
+    List<Spin2Bytecode> leftAssign(Spin2Context context, Spin2StatementNode node, boolean push) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
         String[] s = node.getText().split("[\\.]");
@@ -1890,13 +1893,13 @@ public class Spin2Compiler {
         }
         else if (",".equals(node.getText())) {
             for (int i = node.getChildCount() - 1; i >= 0; i--) {
-                source.addAll(leftAssign(context, node.getChild(i), push, setup));
+                source.addAll(leftAssign(context, node.getChild(i), push));
             }
         }
         else if (node.getType() == Token.OPERATOR) {
-            source.addAll(leftAssign(context, node.getChild(1), true, true));
+            source.addAll(leftAssign(context, node.getChild(1), true));
             source.add(new Bytecode(context, 0x82, "WRITE"));
-            source.addAll(leftAssign(context, node.getChild(0), push, node.getChild(0).getType() == Token.OPERATOR));
+            source.addAll(leftAssign(context, node.getChild(0), node.getChild(0).getType() == Token.OPERATOR));
         }
         else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
             boolean indexed = false;
@@ -1939,7 +1942,7 @@ public class Spin2Compiler {
                 source.add(new RegisterOp(context, RegisterOp.Op.Write, expression));
             }
             else if (expression instanceof Variable) {
-                source.add(new VariableOp(context, setup ? VariableOp.Op.Setup : VariableOp.Op.Write, push, (Variable) expression));
+                source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, false, (Variable) expression));
             }
             else if (expression instanceof ContextLiteral) {
                 MemoryOp.Size ss = MemoryOp.Size.Long;
