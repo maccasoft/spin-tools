@@ -1,0 +1,69 @@
+CON MAX_STR = 1024
+PUB replaceAll(strptr, replaceme, replacewith) | ptr, size
+'' replaces all instances of a given char in a given string with a new char
+'' PARAMS: strptr: @pointer to string being edited
+'' replaceme: byte to be replaced
+'' replacewith: byte to replace with
+  ptr := 0
+  size := strsize(strptr)
+  if(size > MAX_STR)
+    return
+  repeat until (ptr >= size) || (ptr > MAX_STR )
+    if(byte[strptr+ptr] == replaceme)
+      byte[strptr+ptr] := replacewith
+    ptr++      
+
+PUB firstIndexOf(strptr, findme) : index | ptr, size
+'' returns the first index of a value in a given string
+'' PARAMS: strptr: @pointer to string being searched
+'' findme: byte to be searched for in a string
+'' RETURN: index of first occurrance of (findme) in the string, or -1 if not found.
+  index := -1
+  ptr := 0
+  size := strsize(strptr)
+  if(size > MAX_STR)
+    return
+  repeat until ( ptr >= size)
+    if(byte[strptr+ptr] == findme)
+      index := ptr      
+      return             
+    ptr++  
+  return
+PUB startsWith(strptr, findme) : rslt | size, ptr
+  size := strsize(findme) 
+  if(strsize(strptr) < size) || (size > MAX_STR) ' can't start with a longer string!
+    rslt := false
+    return
+  rslt := true
+  ptr := 0
+  repeat until (ptr >= size)
+    if(byte[strptr+ptr] <> byte[findme+ptr])
+      rslt := false
+      return
+    ptr++ 
+PUB contains(stringToSearch, stringToFind): rslt | index, size '' 7 Stack Longs
+
+'' ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+'' // Searches a string of characters for the first occurence of the specified string of characters.
+'' //
+'' // Returns the address of that string of characters if found and zero if not found.
+'' //
+'' // StringToSearch - A pointer to the string of characters to search.
+'' // StringToFind - A pointer to the string of characters to find in the string of characters to search.
+'' ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+'' PORTED FROM "ASCII0 String Engine" by Kwabena W. Agyeman, under MIT license, from Parallax Object Exchange
+'' ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  size := strsize(stringToFind)
+  if(size--)
+
+    repeat strsize(stringToSearch--)
+      if(byte[++stringToSearch] == byte[stringToFind])
+
+        repeat index from 0 to size
+          if(byte[stringToSearch][index] <> byte[stringToFind][index])
+            rslt := true
+            quit
+
+        ifnot(rslt~)
+          rslt := stringToSearch
+          return  

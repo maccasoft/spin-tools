@@ -39,7 +39,7 @@ public class Spin2Bytecode {
         descriptors.put("HUBSET", new Descriptor(0x19, 0x54, 1));
         descriptors.put("CLKSET", new Descriptor(0x19, 0x56, 2));
         descriptors.put("CLKFREQ", new Descriptor(0x19, 0x58, 0));
-        descriptors.put("COGSPIN", new Descriptor(0x19, 0x5A, 3));
+        //descriptors.put("COGSPIN", new Descriptor(0x19, 0x5A, 3));
         descriptors.put("REGEXEC", new Descriptor(0x19, 0x5E, 1));
         descriptors.put("REGLOAD", new Descriptor(0x19, 0x60, 1));
         descriptors.put("CALL", new Descriptor(0x19, 0x62, 1));

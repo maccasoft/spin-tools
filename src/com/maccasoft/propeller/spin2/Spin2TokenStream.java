@@ -218,35 +218,16 @@ public class Spin2TokenStream extends TokenStream {
                     }
 
                     if (ch == '=') {
-                        if ((token.stop - token.start) == 2) {
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'A') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'N') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'D') {
-                                        token.stop++;
-                                        index++;
-                                        column++;
-                                    }
-                                }
-                            }
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'X') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'O') {
-                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'R') {
-                                        token.stop++;
-                                        index++;
-                                        column++;
-                                    }
-                                }
+                        if (index + 1 < text.length()) {
+                            char ch1 = text.charAt(index + 1);
+                            if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '=') {
+                                state = Token.START;
+                                return token;
                             }
                         }
-                        else if ((token.stop - token.start) == 1) {
-                            if (Character.toUpperCase(text.charAt(token.start)) == 'O') {
-                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'R') {
-                                    token.stop++;
-                                    index++;
-                                    column++;
-                                }
-                            }
-                        }
+                        token.stop++;
+                        index++;
+                        column++;
                     }
 
                     state = Token.START;

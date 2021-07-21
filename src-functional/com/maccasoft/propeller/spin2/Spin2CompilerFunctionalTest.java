@@ -19,6 +19,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.model.Node;
 
 class Spin2CompilerFunctionalTest {
@@ -70,6 +71,30 @@ class Spin2CompilerFunctionalTest {
         String text = getResourceAsString("jm_nstr.spin2");
 
         byte[] expected = getResource("jm_nstr.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testStrings() throws Exception {
+        String text = getResourceAsString("strings.spin2");
+
+        byte[] expected = getResource("strings.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testVGA() throws Exception {
+        String text = getResourceAsString("vga_tile_driver.spin2");
+
+        byte[] expected = getResource("vga_tile_driver.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testEZSound() throws Exception {
+        String text = getResourceAsString("jm_ez_sound.spin2");
+
+        byte[] expected = getResource("jm_ez_sound.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
@@ -136,6 +161,12 @@ class Spin2CompilerFunctionalTest {
 
         Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
         Spin2Object obj = compiler.compile(root);
+
+        for (CompilerMessage msg : compiler.getMessages()) {
+            if (msg.type == CompilerMessage.ERROR) {
+                throw msg;
+            }
+        }
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateBinary(os);
