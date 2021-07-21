@@ -149,18 +149,35 @@ public class Spin2StatementNode {
                     sb.append("]");
                 }
                 else if ("?".equals(token.getText())) {
-                    sb.append(childs.get(0));
-                    sb.append(" ? ");
-                    sb.append(childs.get(1));
-                    sb.append(" : ");
-                    sb.append(childs.get(2));
+                    if (childs.size() == 3) {
+                        sb.append(childs.get(0));
+                        sb.append(" ? ");
+                        sb.append(childs.get(1));
+                        sb.append(" : ");
+                        sb.append(childs.get(2));
+                    }
+                    else {
+                        sb.append(token.getText());
+                        for (int i = 0; i < childs.size(); i++) {
+                            sb.append(" ");
+                            sb.append(childs.get(i));
+                        }
+                    }
                 }
                 else {
-                    sb.append(childs.get(0));
-                    sb.append(" ");
-                    sb.append(token.getText());
-                    sb.append(" ");
-                    sb.append(childs.get(1));
+                    if (childs.size() > 0) {
+                        sb.append(childs.get(0));
+                        if (childs.size() > 1) {
+                            sb.append(" ");
+                            sb.append(token.getText());
+                            sb.append(" ");
+                            sb.append(childs.get(1));
+                        }
+                    }
+                    else {
+                        sb.append(" ");
+                        sb.append(token.getText());
+                    }
                 }
                 break;
             case Token.FUNCTION:

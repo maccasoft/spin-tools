@@ -145,6 +145,11 @@ public class Constant extends Spin2Bytecode {
                 0x45, (byte) value
             };
         }
+        if ((value & 0xFFFFFF00L) == 0xFFFFFF00L) {
+            return new byte[] {
+                0x46, (byte) (value ^ 0xFF)
+            };
+        }
 
         value &= 0xFFFFFFFFL;
 

@@ -19,6 +19,11 @@ public class Register extends Literal {
     }
 
     @Override
+    public boolean isConstant() {
+        return false;
+    }
+
+    @Override
     public boolean isNumber() {
         return true;
     }

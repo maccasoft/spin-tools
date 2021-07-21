@@ -45,9 +45,7 @@ public class Jmp extends Spin2Bytecode {
                 return 3;
             }
         }
-        int address = expression.getNumber().intValue();
-        int value = address - (context.getAddress() + 1);
-        return Constant.wrVarsSize(value) + 1;
+        return getBytes().length;
     }
 
     @Override

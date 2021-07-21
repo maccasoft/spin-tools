@@ -12,6 +12,9 @@ package com.maccasoft.propeller.spin2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
+import java.util.Collections;
+import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -19,153 +22,6 @@ import org.junit.jupiter.api.Test;
 import com.maccasoft.propeller.model.Node;
 
 class Spin2CompilerFunctionalTest {
-
-    @Test
-    void testCompileBlink() throws Exception {
-        String text = ""
-            + "CON\n"
-            + "\n"
-            + "    _clkfreq = 160_000_000\n"
-            + "    delay    = _clkfreq / 2\n"
-            + "\n"
-            + "DAT\n"
-            + "\n"
-            + "                org   $000\n"
-            + "\n"
-            + "start\n"
-            + "                asmclk                      ' set clock\n"
-            + "\n"
-            + "                getct   ct                  ' get current timer\n"
-            + ".loop           drvnot  #56                 ' toggle output\n"
-            + "                addct1  ct, ##delay         ' set delay to timer 1\n"
-            + "                waitct1                     ' wait for timer 1 expire\n"
-            + "                jmp     #\\.loop\n"
-            + "\n"
-            + "ct              res     1\n";
-
-        byte[] expected = new byte[] {
-            /* 000000 000 */ // |                     org     0
-            /* 000000 000 */ // | start
-            /* 000000 000 */ (byte) 0x03, (byte) 0x80, (byte) 0x80, (byte) 0xFF, // |                     hubset  ##clkmode_ & !%11
-            /* 000004 001 */ (byte) 0x00, (byte) 0xF0, (byte) 0x67, (byte) 0xFD, // |
-            /* 000008 002 */ (byte) 0x86, (byte) 0x01, (byte) 0x80, (byte) 0xFF, // |                     waitx   ##20000000 / 100
-            /* 00000C 003 */ (byte) 0x1F, (byte) 0x80, (byte) 0x66, (byte) 0xFD, // |
-            /* 000010 004 */ (byte) 0x03, (byte) 0x80, (byte) 0x80, (byte) 0xFF, // |                     hubset  ##clkmode_
-            /* 000014 005 */ (byte) 0x00, (byte) 0xF6, (byte) 0x67, (byte) 0xFD, // |
-            /* 000018 006 */ (byte) 0x1A, (byte) 0x18, (byte) 0x60, (byte) 0xFD, // |                     getct   ct
-            /* 00001C 007 */ (byte) 0x5F, (byte) 0x70, (byte) 0x64, (byte) 0xFD, // | .loop               drvnot  #56
-            /* 000020 008 */ (byte) 0x5A, (byte) 0x62, (byte) 0x02, (byte) 0xFF, // |
-            /* 000024 009 */ (byte) 0x00, (byte) 0x18, (byte) 0x64, (byte) 0xFA, // |                     addct1  ct, ##delay
-            /* 000028 00A */ (byte) 0x24, (byte) 0x22, (byte) 0x60, (byte) 0xFD, // |                     waitct1
-            /* 00002C 00B */ (byte) 0x07, (byte) 0x00, (byte) 0x80, (byte) 0xFD, // |                     jmp     #\.loop
-            /* 000030 00C */ // | ct                  res     1
-        };
-
-        byte[] result = compile(text);
-        Assertions.assertArrayEquals(expected, result);
-    }
-
-    @Test
-    void testCompileBlinkHubexec() throws Exception {
-        String text = ""
-            + "CON\n"
-            + "\n"
-            + "    _clkfreq = 160_000_000\n"
-            + "    delay    = _clkfreq / 2\n"
-            + "\n"
-            + "DAT\n"
-            + "\n"
-            + "                org   $000\n"
-            + "\n"
-            + "start\n"
-            + "                asmclk                      ' set clock\n"
-            + "                jmp     #@main              ' jump to hub program\n"
-            + "\n"
-            + "ct              res     1\n"
-            + "\n"
-            + "' HUB Program\n"
-            + "\n"
-            + "                orgh    $400\n"
-            + "\n"
-            + "main\n"
-            + "\n"
-            + "                getct   ct                  ' get current timer\n"
-            + ".loop           drvnot  #56                 ' toggle output\n"
-            + "                addct1  ct, ##delay         ' set delay to timer 1\n"
-            + "                waitct1                     ' wait for timer 1 expire\n"
-            + "                jmp     #.loop\n"
-            + "\n";
-
-        byte[] part0 = new byte[] {
-            /* 000000 000 */ // |                     org     0
-            /* 000000 000 */ // | start
-            /* 000000 000 */ (byte) 0x03, (byte) 0x80, (byte) 0x80, (byte) 0xFF, // |                     hubset  ##clkmode_ & !%11
-            /* 000004 001 */ (byte) 0x00, (byte) 0xF0, (byte) 0x67, (byte) 0xFD, // |
-            /* 000008 002 */ (byte) 0x86, (byte) 0x01, (byte) 0x80, (byte) 0xFF, // |                     waitx   ##20000000 / 100
-            /* 00000C 003 */ (byte) 0x1F, (byte) 0x80, (byte) 0x66, (byte) 0xFD, // |
-            /* 000010 004 */ (byte) 0x03, (byte) 0x80, (byte) 0x80, (byte) 0xFF, // |                     hubset  ##clkmode_
-            /* 000014 005 */ (byte) 0x00, (byte) 0xF6, (byte) 0x67, (byte) 0xFD, // |
-            /* 000018 006 */ (byte) 0x00, (byte) 0x04, (byte) 0x80, (byte) 0xFD, // |                     jmp     #@main
-        };
-        byte[] part1 = new byte[] {
-            /* 00001C 007 */ // | ct                  res     1
-            /* 00001C 000 */ // |                     orgh    1024
-            /* 000400     */ // | main
-            /* 000400     */ (byte) 0x1A, (byte) 0x0E, (byte) 0x60, (byte) 0xFD, // |                     getct   ct
-            /* 000404     */ (byte) 0x5F, (byte) 0x70, (byte) 0x64, (byte) 0xFD, // | .loop               drvnot  #56
-            /* 000408     */ (byte) 0x5A, (byte) 0x62, (byte) 0x02, (byte) 0xFF, // |                     addct1  ct, ##delay
-            /* 00040C     */ (byte) 0x00, (byte) 0x0E, (byte) 0x64, (byte) 0xFA, // |
-            /* 000410     */ (byte) 0x24, (byte) 0x22, (byte) 0x60, (byte) 0xFD, // |                     waitct1
-            /* 000414     */ (byte) 0xEC, (byte) 0xFF, (byte) 0x9F, (byte) 0xFD, // |                     jmp     #.loop
-        };
-
-        byte[] expected = new byte[0x400 + part1.length];
-        System.arraycopy(part0, 0, expected, 0, part0.length);
-        System.arraycopy(part1, 0, expected, 0x400, part1.length);
-
-        byte[] result = compile(text);
-        Assertions.assertArrayEquals(expected, result);
-    }
-
-    @Test
-    void testCompileMath() throws Exception {
-        String text = ""
-            + "PUB main() | a, b, c\n"
-            + "\n"
-            + "    a := 1\n"
-            + "    b := 2\n"
-            + "    c := a + b * 3\n"
-            + "";
-
-        byte[] expected = new byte[] {
-            /* 88 10 00 00    PBASE $1088     */
-            /* 9C 10 00 00    VBASE $109C     */
-            /* A0 10 00 00    DBASE $10A0     */
-            /* 00 01 00 00    CLEAR $0010     */
-
-            /* 1088 (0000) - */ (byte) 0x08, (byte) 0x00, (byte) 0x00, (byte) 0x80,
-            /* 108C (0004) - */ (byte) 0x14, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-            /*                                       */
-            /* 1090 (0008) - */ (byte) 0x0C, /*             STACK SIZE (RFVAR) */
-            /* 1091 (0009) - */ (byte) 0xA2, /*             CONSTANT (1)    */
-            /* 1092 (000A) - */ (byte) 0xF0, /*             WRITE DBASE+$0  */
-            /* 1093 (000B) - */ (byte) 0xA3, /*             CONSTANT (2)    */
-            /* 1094 (000C) - */ (byte) 0xF1, /*             WRITE DBASE+$1  */
-            /* 1095 (000D) - */ (byte) 0xE0, /*             READ DBASE +$0  */
-            /* 1096 (000E) - */ (byte) 0xE1, /*             READ DBASE +$1  */
-            /* 1097 (000F) - */ (byte) 0xA4, /*             CONSTANT (3)    */
-            /* 1098 (0010) - */ (byte) 0x96, /*             MULTIPLY        */
-            /* 1099 (0011) - */ (byte) 0x8A, /*             ADD             */
-            /* 109A (0012) - */ (byte) 0xF2, /*             WRITE DBASE +$2 */
-            /* 109B (0013) - */ (byte) 0x04, /*             RETURN          */
-
-            /* 109C - 00 00 00 00    VBASE           */
-            /* 10A0 - 00 00 00 00    DBASE           */
-        };
-
-        byte[] result = compileObject(text);
-        Assertions.assertArrayEquals(expected, result);
-    }
 
     @Test
     void testCompileBlinkSpin() throws Exception {
@@ -180,45 +36,41 @@ class Spin2CompilerFunctionalTest {
             + "        pint(56)                    ' toggle pin 56\n"
             + "        waitct(ct += _clkfreq / 2)  ' wait half second\n"
             + "";
+
         byte[] expected = getResource("blink.binary");
-
-        compileAndCompare(text, expected);
-
-        byte[] result = compile(text);
-        Assertions.assertArrayEquals(expected, result);
+        compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
     @Test
-    void testReference1() throws Exception {
+    void testInterpreter() throws Exception {
         String text = getResourceAsString("Spin2_interpreter.spin2");
+
         byte[] expected = getResource("Spin2_interpreter.binary");
-
-        compileAndCompare(text, expected);
-
-        byte[] result = compile(text);
-        Assertions.assertArrayEquals(expected, result);
+        compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
     @Test
-    void testReference2() throws Exception {
-        String text = getResourceAsString("m6502_apple1_cvbs.spin2");
-        byte[] expected = getResource("m6502_apple1_cvbs.binary");
-
-        Assertions.assertTrue(compileAndCompare(text, expected));
-
-        byte[] result = compile(text);
-        Assertions.assertArrayEquals(expected, result);
-    }
-
-    @Test
-    void testReference3() throws Exception {
+    void testApple1VGA() throws Exception {
         String text = getResourceAsString("m6502_apple1_vga.spin2");
+
         byte[] expected = getResource("m6502_apple1_vga.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
 
-        Assertions.assertTrue(compileAndCompare(text, expected));
+    @Test
+    void testApple1CVBS() throws Exception {
+        String text = getResourceAsString("m6502_apple1_cvbs.spin2");
 
-        byte[] result = compile(text);
-        Assertions.assertArrayEquals(expected, result);
+        byte[] expected = getResource("m6502_apple1_cvbs.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testNstr() throws Exception {
+        String text = getResourceAsString("jm_nstr.spin2");
+
+        byte[] expected = getResource("jm_nstr.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
     String getResourceAsString(String name) throws Exception {
@@ -238,126 +90,73 @@ class Spin2CompilerFunctionalTest {
             byte[] b = new byte[is.available()];
             is.read(b);
             return b;
+        } catch (Exception e) {
+            return null;
         } finally {
-            is.close();
+            try {
+                is.close();
+            } catch (Exception e) {
+
+            }
         }
     }
 
-    byte[] compile(String text) throws Exception {
+    class Spin2CompilerAdapter extends Spin2Compiler {
+
+        Map<String, String> sources;
+
+        public Spin2CompilerAdapter(Map<String, String> sources) {
+            this.sources = sources;
+        }
+
+        @Override
+        protected Spin2Object getObject(String fileName) {
+            String text = getObjectSource(fileName);
+            if (text == null) {
+                throw new RuntimeException("file " + fileName + " not found");
+            }
+            Spin2TokenStream stream = new Spin2TokenStream(text);
+            Spin2Parser subject = new Spin2Parser(stream);
+            Node root = subject.parse();
+
+            Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
+            return compiler.compileObject(root);
+        }
+
+        protected String getObjectSource(String fileName) {
+            return sources.get(fileName);
+        }
+
+    }
+
+    void compileAndCompare(String text, Map<String, String> sources, byte[] expected) throws Exception {
         Spin2TokenStream stream = new Spin2TokenStream(text);
         Spin2Parser subject = new Spin2Parser(stream);
         Node root = subject.parse();
 
-        Spin2Compiler compiler = new Spin2Compiler();
+        Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
         Spin2Object obj = compiler.compile(root);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateBinary(os);
-        return os.toByteArray();
-    }
 
-    byte[] compileObject(String text) throws Exception {
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser subject = new Spin2Parser(stream);
-        Node root = subject.parse();
+        os = new ByteArrayOutputStream();
+        obj.generateListing(new PrintStream(os));
+        String actualListing = os.toString().replaceAll("\\r\\n", "\n");
 
-        Spin2Compiler compiler = new Spin2Compiler();
-        Spin2Object obj = compiler.compile(root);
+        String expectedListing;
+        if (expected != null) {
+            obj.setBytes(expected, obj.getInterpreter() != null ? obj.getInterpreter().getPBase() : 0x0000);
 
-        return obj.getBinary();
-    }
-
-    boolean compileAndCompare(String text, byte[] ref) throws Exception {
-        byte[] refLong = new byte[4];
-
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser subject = new Spin2Parser(stream);
-        Node root = subject.parse();
-
-        Spin2Compiler compiler = new Spin2Compiler();
-        compiler.compile(root);
-
-        boolean result = true;
-
-        for (Spin2PAsmLine line : compiler.getSource()) {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            line.generateObjectCode(os);
-            byte[] code = os.toByteArray();
-
-            int address = line.getScope().getHubAddress();
-            int addr = line.getScope().getAddress();
-
-            int index = 0;
-
-            StringBuilder out = new StringBuilder();
-            out.append(String.format("%06X ", address));
-            out.append(addr < 0x400 ? String.format("%03X ", addr++) : "    ");
-
-            refLong[0] = (address < ref.length) ? ref[address] : 0x00;
-            refLong[1] = (address + 1 < ref.length) ? ref[address + 1] : 0x00;
-            refLong[2] = (address + 2 < ref.length) ? ref[address + 2] : 0x00;
-            refLong[3] = (address + 3 < ref.length) ? ref[address + 3] : 0x00;
-
-            StringBuilder refbytes = new StringBuilder();
-            refbytes.append((index < code.length && address < ref.length) ? String.format(" %02X", ref[address]) : "   ");
-            refbytes.append((index + 1 < code.length && address + 1 < ref.length) ? String.format(" %02X", ref[address + 1]) : "   ");
-            refbytes.append((index + 2 < code.length && address + 2 < ref.length) ? String.format(" %02X", ref[address + 2]) : "   ");
-            refbytes.append((index + 3 < code.length && address + 3 < ref.length) ? String.format(" %02X", ref[address + 3]) : "   ");
-
-            StringBuilder ourbytes = new StringBuilder();
-            ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-            ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-            ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-            ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-
-            out.append(refbytes);
-            out.append(refbytes.toString().equals(ourbytes.toString()) ? " | " : " * ");
-            out.append(ourbytes);
-            out.append(" | " + line);
-
-            if (!refbytes.toString().equals(ourbytes.toString())) {
-                if (code.length >= 4) {
-                    Assertions.assertEquals(Spin2InstructionObject.decodeToString(refLong), Spin2InstructionObject.decodeToString(code), "\n" + out.toString() + "\n");
-                }
-                result = false;
-            }
-
-            while (index < code.length) {
-                out = new StringBuilder();
-                out.append(String.format("%06X ", address + index));
-                out.append(addr < 0x400 ? String.format("%03X ", addr++) : "    ");
-
-                refLong[0] = (address < ref.length) ? ref[address] : 0x00;
-                refLong[1] = (address + 1 < ref.length) ? ref[address + 1] : 0x00;
-                refLong[2] = (address + 2 < ref.length) ? ref[address + 2] : 0x00;
-                refLong[3] = (address + 3 < ref.length) ? ref[address + 3] : 0x00;
-
-                refbytes = new StringBuilder();
-                refbytes.append((index < code.length && address + index < ref.length) ? String.format(" %02X", ref[address + index]) : "   ");
-                refbytes.append((index + 1 < code.length && address + index + 1 < ref.length) ? String.format(" %02X", ref[address + index + 1]) : "   ");
-                refbytes.append((index + 2 < code.length && address + index + 2 < ref.length) ? String.format(" %02X", ref[address + index + 2]) : "   ");
-                refbytes.append((index + 3 < code.length && address + index + 3 < ref.length) ? String.format(" %02X", ref[address + index + 3]) : "   ");
-
-                ourbytes = new StringBuilder();
-                ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-                ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-                ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-                ourbytes.append((index < code.length) ? String.format(" %02X", code[index++]) : "   ");
-
-                out.append(refbytes);
-                out.append(refbytes.toString().equals(ourbytes.toString()) ? " | " : " * ");
-                out.append(ourbytes);
-                out.append(" | ");
-
-                if (!refbytes.toString().equals(ourbytes.toString())) {
-                    if (code.length >= 4) {
-                        Assertions.assertEquals(Spin2InstructionObject.decodeToString(refLong), Spin2InstructionObject.decodeToString(code), "\n" + out.toString() + "\n");
-                    }
-                    result = false;
-                }
-            }
+            os = new ByteArrayOutputStream();
+            obj.generateListing(new PrintStream(os));
+            expectedListing = os.toString().replaceAll("\\r\\n", "\n");
+        }
+        else {
+            expectedListing = "";
         }
 
-        return result;
+        Assertions.assertEquals(expectedListing, actualListing);
     }
+
 }

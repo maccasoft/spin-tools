@@ -357,7 +357,7 @@ public class Spin2TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "A, B := C, D";
+        text = "width := -PBUF_SIZE+1 #> width <# PBUF_SIZE-1";
         System.out.println(text);
         System.out.println(parse(text));
     }
