@@ -163,6 +163,7 @@ public class Spin2TreeBuilder {
         postEffect.add("--");
         postEffect.add("!!");
         postEffect.add("!");
+        postEffect.add("~");
     }
 
     int index;

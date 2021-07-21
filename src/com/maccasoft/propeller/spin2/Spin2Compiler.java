@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -794,6 +795,7 @@ public class Spin2Compiler {
                     else if ("REPEAT".equalsIgnoreCase(token.getText())) {
                         List<Spin2StatementNode> arguments = new ArrayList<Spin2StatementNode>();
 
+                        int pop = 0;
                         String text = token.getText();
 
                         if (iter.hasNext()) {
@@ -820,6 +822,8 @@ public class Spin2Compiler {
                                 arguments.add(builder.getRoot());
 
                                 if ("FROM".equalsIgnoreCase(token.getText())) {
+                                    pop = 12;
+
                                     builder = new Spin2TreeBuilder();
                                     while (iter.hasNext()) {
                                         token = iter.next();
@@ -830,24 +834,26 @@ public class Spin2Compiler {
                                     }
                                     arguments.add(builder.getRoot());
 
-                                    if ("TO".equalsIgnoreCase(token.getText())) {
+                                    if (!"TO".equalsIgnoreCase(token.getText())) {
+                                        throw new CompilerMessage("expected TO", token);
+                                    }
+
+                                    builder = new Spin2TreeBuilder();
+                                    while (iter.hasNext()) {
+                                        token = iter.next();
+                                        if ("STEP".equalsIgnoreCase(token.getText())) {
+                                            break;
+                                        }
+                                        builder.addToken(token);
+                                    }
+                                    arguments.add(builder.getRoot());
+
+                                    if ("STEP".equalsIgnoreCase(token.getText())) {
                                         builder = new Spin2TreeBuilder();
                                         while (iter.hasNext()) {
-                                            token = iter.next();
-                                            if ("STEP".equalsIgnoreCase(token.getText())) {
-                                                break;
-                                            }
-                                            builder.addToken(token);
+                                            builder.addToken(iter.next());
                                         }
                                         arguments.add(builder.getRoot());
-
-                                        if ("STEP".equalsIgnoreCase(token.getText())) {
-                                            builder = new Spin2TreeBuilder();
-                                            while (iter.hasNext()) {
-                                                builder.addToken(iter.next());
-                                            }
-                                            arguments.add(builder.getRoot());
-                                        }
                                     }
                                 }
                             }
@@ -856,6 +862,9 @@ public class Spin2Compiler {
                         Spin2MethodLine line = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), text, arguments);
                         line.setText(node.getText());
                         line.setData(node);
+                        if (pop != 0) {
+                            line.setData("pop", new Integer(pop));
+                        }
                         lines.add(line);
 
                         Spin2MethodLine loopLine = line;
@@ -1206,8 +1215,16 @@ public class Spin2Compiler {
             }
         }
         else if ("QUIT".equalsIgnoreCase(text)) {
+            int pop = 0;
+
             Spin2MethodLine repeat = line.getParent();
             while (repeat != null) {
+                if ("CASE".equalsIgnoreCase(repeat.getStatement())) {
+                    if (pop != 0) {
+                        pop += 4;
+                    }
+                    pop += 4;
+                }
                 if ("REPEAT".equalsIgnoreCase(repeat.getStatement())) {
                     break;
                 }
@@ -1218,6 +1235,24 @@ public class Spin2Compiler {
                     break;
                 }
                 repeat = repeat.getParent();
+            }
+
+            if (repeat.getData("pop") != null) {
+                if (pop != 0) {
+                    pop += 4;
+                }
+                pop += (Integer) repeat.getData("pop");
+            }
+
+            if (pop != 0) {
+                try {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    os.write(0x18);
+                    os.write(Constant.wrVars(pop));
+                    line.addSource(new Bytecode(line.getScope(), os.toByteArray(), "POP"));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
             Spin2MethodLine target = (Spin2MethodLine) repeat.getData("quit");
             line.addSource(new Jmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
@@ -1656,18 +1691,30 @@ public class Spin2Compiler {
             }
             else if (expression instanceof Variable) {
                 if (node.getChildCount() == 1) {
-                    source.add(new VariableOp(context, VariableOp.Op.Setup, (Variable) expression));
-                    if ("++".equalsIgnoreCase(node.getChild(0).getText())) {
-                        source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                    if ("~".equalsIgnoreCase(node.getChild(0).getText())) {
+                        source.add(new Constant(context, new NumberLiteral(0)));
+                        source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, (Variable) expression));
+                        if (push) {
+                            source.add(new Bytecode(context, 0x8D, "SWAP"));
+                        }
                     }
-                    else if ("--".equalsIgnoreCase(node.getChild(0).getText())) {
-                        source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
-                    }
-                    else if ("!!".equalsIgnoreCase(node.getChild(0).getText())) {
-                        source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
-                    }
-                    else if ("!".equalsIgnoreCase(node.getChild(0).getText())) {
-                        source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
+                    else {
+                        source.add(new VariableOp(context, VariableOp.Op.Setup, (Variable) expression));
+                        if ("++".equalsIgnoreCase(node.getChild(0).getText())) {
+                            source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                        }
+                        else if ("--".equalsIgnoreCase(node.getChild(0).getText())) {
+                            source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
+                        }
+                        else if ("!!".equalsIgnoreCase(node.getChild(0).getText())) {
+                            source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
+                        }
+                        else if ("!".equalsIgnoreCase(node.getChild(0).getText())) {
+                            source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
+                        }
+                        else {
+                            throw new CompilerMessage("unhandled post effect " + node.getChild(0).getText(), node.getToken());
+                        }
                     }
                 }
                 else {
