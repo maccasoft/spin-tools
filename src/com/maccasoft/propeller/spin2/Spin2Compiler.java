@@ -1799,26 +1799,40 @@ public class Spin2Compiler {
                     }
                 }
                 else if (expression instanceof Variable) {
+                    int n = 0;
                     int index = 0;
+                    boolean indexed = false;
 
-                    if (node.getChildCount() > index) {
-                        if (!isPostEffect(node.getChild(index).getText())) {
-                            source.addAll(compileBytecodeExpression(context, node.getChild(index), true));
-                            index++;
+                    if (node.getChildCount() > n) {
+                        if (!isPostEffect(node.getChild(n).getText())) {
+                            try {
+                                Expression exp = buildConstantExpression(context, node.getChild(n));
+                                if (exp.isConstant()) {
+                                    index = exp.getNumber().intValue();
+                                }
+                                else {
+                                    source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
+                                    indexed = true;
+                                }
+                            } catch (Exception e) {
+                                source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
+                                indexed = true;
+                            }
+                            n++;
                         }
                     }
 
-                    if (node.getChildCount() > index) {
-                        Spin2StatementNode effectNode = node.getChild(index);
+                    if (node.getChildCount() > n) {
+                        Spin2StatementNode effectNode = node.getChild(n);
                         if ("~".equalsIgnoreCase(effectNode.getText())) {
                             source.add(new Constant(context, new NumberLiteral(0)));
-                            source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, index > 0, (Variable) expression));
+                            source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, indexed, (Variable) expression, index));
                             if (push) {
                                 source.add(new Bytecode(context, 0x8D, "SWAP"));
                             }
                         }
                         else {
-                            source.add(new VariableOp(context, VariableOp.Op.Setup, index > 0, (Variable) expression));
+                            source.add(new VariableOp(context, VariableOp.Op.Setup, indexed, (Variable) expression, index));
                             if ("++".equalsIgnoreCase(effectNode.getText())) {
                                 source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
                             }
@@ -1837,7 +1851,7 @@ public class Spin2Compiler {
                         }
                     }
                     else {
-                        source.add(new VariableOp(context, VariableOp.Op.Read, index > 0, (Variable) expression));
+                        source.add(new VariableOp(context, VariableOp.Op.Read, indexed, (Variable) expression, index));
                     }
                 }
                 else if (expression instanceof ContextLiteral) {
@@ -1986,7 +2000,30 @@ public class Spin2Compiler {
                 source.add(new RegisterOp(context, RegisterOp.Op.Write, expression));
             }
             else if (expression instanceof Variable) {
-                source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, false, (Variable) expression));
+                int n = 0;
+                int index = 0;
+                boolean indexed = false;
+
+                if (node.getChildCount() > n) {
+                    if (!isPostEffect(node.getChild(n).getText())) {
+                        try {
+                            Expression exp = buildConstantExpression(context, node.getChild(n));
+                            if (exp.isConstant()) {
+                                index = exp.getNumber().intValue();
+                            }
+                            else {
+                                source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
+                                indexed = true;
+                            }
+                        } catch (Exception e) {
+                            source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
+                            indexed = true;
+                        }
+                        n++;
+                    }
+                }
+
+                source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, indexed, (Variable) expression, index));
             }
             else if (expression instanceof ContextLiteral) {
                 MemoryOp.Size ss = MemoryOp.Size.Long;

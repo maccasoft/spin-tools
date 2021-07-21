@@ -66,7 +66,7 @@ class Spin2CompilerFunctionalTest {
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
-    //@Test
+    @Test
     void testHD485() throws Exception {
         String text = getResourceAsString("jm_hd485.spin2");
 

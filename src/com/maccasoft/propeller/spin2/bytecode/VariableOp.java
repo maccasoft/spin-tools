@@ -50,18 +50,23 @@ public class VariableOp extends Spin2Bytecode {
         }
     }
 
-    public VariableOp(Spin2Context context, Op op, Variable variable, int index) {
+    public VariableOp(Spin2Context context, Op op, boolean indexed, Variable variable, int index) {
         super(context);
         this.op = op;
+        this.indexed = indexed;
         this.variable = variable;
         this.index = index;
 
-        this.ss = Size.Long;
-        if ("BYTE".equalsIgnoreCase(variable.getType())) {
-            this.ss = Size.Byte;
+        if ("LONG".equalsIgnoreCase(variable.getType())) {
+            this.ss = Size.Long;
+            this.index = index * 4;
         }
         else if ("WORD".equalsIgnoreCase(variable.getType())) {
             this.ss = Size.Word;
+            this.index = index * 2;
+        }
+        else {
+            this.ss = Size.Byte;
         }
     }
 
@@ -78,7 +83,7 @@ public class VariableOp extends Spin2Bytecode {
         int size = 0;
         int offset = variable.getOffset() + index;
 
-        if (!indexed && ss == Size.Long && (offset >> 2) <= 15) {
+        if (!indexed && index == 0 && ss == Size.Long && (offset >> 2) <= 15) {
             if (variable instanceof LocalVariable) {
                 if (op == Op.Read) {
                     size++;
@@ -129,7 +134,7 @@ public class VariableOp extends Spin2Bytecode {
         int offset = variable.getOffset() + index;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-        if (!indexed && ss == Size.Long && (offset >> 2) <= 15) {
+        if (!indexed && index == 0 && ss == Size.Long && (offset >> 2) <= 15) {
             offset >>= 2;
 
             if (variable instanceof LocalVariable) {

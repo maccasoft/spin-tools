@@ -2529,30 +2529,38 @@ class Spin2CompilerTest {
             + "", compile(text));
     }
 
-    //@Test
+    @Test
     void testVariableIndex() throws Exception {
         String text = ""
             + "PUB main | a, b, c\n"
             + "\n"
             + "    a := b[c]\n"
+            + "    a := b[1]\n"
             + "    b[c] := a\n"
+            + "    b[1] := a\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       14 00 00 00    End\n"
+            + "00004 00004       1C 00 00 00    End\n"
             + "' PUB main | a, b, c\n"
             + "00008 00008       0C             (stack size)\n"
             + "'     a := b[c]\n"
             + "00009 00009       E2             VAR_READ LONG DBASE+$00002 (short)\n"
             + "0000A 0000A       61 04 80       VAR_READ_INDEXED LONG DBASE+$00004\n"
             + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := b[1]\n"
+            + "0000E 0000E       5E 08 80       VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00011 00011       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "'     b[c] := a\n"
-            + "0000E 0000E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
-            + "0000F 0000F       E2             VAR_READ LONG DBASE+$00002 (short)\n"
-            + "00010 00010       61 04 81       VAR_WRITE_INDEXED LONG DBASE+$00004\n"
-            + "00013 00013       04             RETURN\n"
+            + "00012 00012       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00013 00013       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00014 00014       61 04 81       VAR_WRITE_INDEXED LONG DBASE+$00004\n"
+            + "'     b[1] := a\n"
+            + "00017 00017       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00018 00018       5E 08 81       VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "0001B 0001B       04             RETURN\n"
             + "", compile(text));
     }
 
