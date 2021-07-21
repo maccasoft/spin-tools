@@ -379,15 +379,23 @@ public class SpinTools {
                 public void handleEvent(Event event) {
                     try {
                         EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName());
-                        try {
-                            editorTab.setEditorText(loadFromFile(fileToOpen));
-                            editorTab.setFile(fileToOpen);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
                         tabFolder.setSelection(tabFolder.getItemCount() - 1);
                         editorTab.setFocus();
                         preferences.addToLru(fileToOpen);
+
+                        tabFolder.getDisplay().asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                try {
+                                    editorTab.setEditorText(loadFromFile(fileToOpen));
+                                    editorTab.setFile(fileToOpen);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                        });
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
@@ -501,16 +509,24 @@ public class SpinTools {
             File fileToOpen = new File(fileName);
 
             EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName());
-            try {
-                editorTab.setEditorText(loadFromFile(fileToOpen));
-                editorTab.setFile(fileToOpen);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
 
             tabFolder.setSelection(tabFolder.getItemCount() - 1);
             editorTab.setFocus();
             preferences.addToLru(fileToOpen);
+
+            tabFolder.getDisplay().asyncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        editorTab.setEditorText(loadFromFile(fileToOpen));
+                        editorTab.setFile(fileToOpen);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            });
         }
     }
 

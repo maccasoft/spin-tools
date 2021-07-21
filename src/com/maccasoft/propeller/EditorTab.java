@@ -22,8 +22,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.EditorTokenMarker.TokenMarker;
@@ -42,6 +46,8 @@ public class EditorTab {
     File file;
     SourceEditor editor;
     CTabItem tabItem;
+
+    Font busyFont;
 
     EditorTokenMarker tokenMarker;
 
@@ -230,6 +236,7 @@ public class EditorTab {
                                         return;
                                     }
                                     editor.redraw();
+                                    tabItem.setFont(null);
                                     updateTabItemText();
                                 }
                             });
@@ -254,6 +261,9 @@ public class EditorTab {
         tabItem.setText(tabItemText = name);
         tabItem.setData(this);
 
+        FontData[] fontData = tabItem.getFont().getFontData();
+        busyFont = new Font(tabItem.getDisplay(), fontData[0].getName(), fontData[0].getHeight(), SWT.ITALIC);
+
         editor = new SourceEditor(folder);
 
         if (tabItemText.toLowerCase().endsWith(".spin2")) {
@@ -273,12 +283,22 @@ public class EditorTab {
                     updateTabItemText();
                 }
                 if (tabItemText.toLowerCase().endsWith(".spin2")) {
-                    Display.getDefault().timerExec(250, spin2CompilerRunnable);
+                    Display.getDefault().timerExec(500, spin2CompilerRunnable);
                 }
                 else {
-                    Display.getDefault().timerExec(250, spin1CompilerRunnable);
+                    Display.getDefault().timerExec(500, spin1CompilerRunnable);
                 }
+                tabItem.setFont(busyFont);
             }
+        });
+
+        tabItem.addDisposeListener(new DisposeListener() {
+
+            @Override
+            public void widgetDisposed(DisposeEvent e) {
+                busyFont.dispose();
+            }
+
         });
 
         tabItem.setControl(editor.getControl());
@@ -359,11 +379,12 @@ public class EditorTab {
     public void setEditorText(String text) {
         editor.setText(text);
         if (tabItemText.toLowerCase().endsWith(".spin2")) {
-            Display.getDefault().timerExec(250, spin2CompilerRunnable);
+            Display.getDefault().timerExec(1000, spin2CompilerRunnable);
         }
         else {
-            Display.getDefault().timerExec(250, spin1CompilerRunnable);
+            Display.getDefault().timerExec(1000, spin1CompilerRunnable);
         }
+        tabItem.setFont(busyFont);
     }
 
     public String getEditorText() {
