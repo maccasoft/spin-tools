@@ -232,7 +232,7 @@ class VariableOpTest {
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("C1 7F", toString(code));
-        Assertions.assertEquals("VAR_ADDRESS LONG VBASE+$00001 (short)", op.toString());
+        Assertions.assertEquals("VAR_ADDRESS VBASE+$00001 (short)", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
 
@@ -244,7 +244,7 @@ class VariableOpTest {
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("5D 40 7F", toString(code));
-        Assertions.assertEquals("VAR_ADDRESS LONG VBASE+$00040", op.toString());
+        Assertions.assertEquals("VAR_ADDRESS VBASE+$00040", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
 
@@ -256,7 +256,7 @@ class VariableOpTest {
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("D1 7F", toString(code));
-        Assertions.assertEquals("VAR_ADDRESS LONG DBASE+$00001 (short)", op.toString());
+        Assertions.assertEquals("VAR_ADDRESS DBASE+$00001 (short)", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
 
@@ -268,7 +268,7 @@ class VariableOpTest {
         byte[] code = op.getBytes();
 
         Assertions.assertEquals("5E 40 7F", toString(code));
-        Assertions.assertEquals("VAR_ADDRESS LONG DBASE+$00040", op.toString());
+        Assertions.assertEquals("VAR_ADDRESS DBASE+$00040", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
 

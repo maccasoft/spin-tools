@@ -43,18 +43,42 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testInterpreter() throws Exception {
-        String text = getResourceAsString("Spin2_interpreter.spin2");
+    void testEZButton() throws Exception {
+        String text = getResourceAsString("jm_ez_button.spin2");
 
-        byte[] expected = getResource("Spin2_interpreter.binary");
+        byte[] expected = getResource("jm_ez_button.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
     @Test
-    void testApple1VGA() throws Exception {
-        String text = getResourceAsString("m6502_apple1_vga.spin2");
+    void testEZSound() throws Exception {
+        String text = getResourceAsString("jm_ez_sound.spin2");
 
-        byte[] expected = getResource("m6502_apple1_vga.binary");
+        byte[] expected = getResource("jm_ez_sound.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testEZSPI() throws Exception {
+        String text = getResourceAsString("jm_ez_spi.spin2");
+
+        byte[] expected = getResource("jm_ez_spi.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    //@Test
+    void testHD485() throws Exception {
+        String text = getResourceAsString("jm_hd485.spin2");
+
+        byte[] expected = getResource("jm_hd485.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testNstr() throws Exception {
+        String text = getResourceAsString("jm_nstr.spin2");
+
+        byte[] expected = getResource("jm_nstr.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
@@ -67,10 +91,18 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testNstr() throws Exception {
-        String text = getResourceAsString("jm_nstr.spin2");
+    void testApple1VGA() throws Exception {
+        String text = getResourceAsString("m6502_apple1_vga.spin2");
 
-        byte[] expected = getResource("jm_nstr.binary");
+        byte[] expected = getResource("m6502_apple1_vga.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testInterpreter() throws Exception {
+        String text = getResourceAsString("Spin2_interpreter.spin2");
+
+        byte[] expected = getResource("Spin2_interpreter.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
@@ -87,14 +119,6 @@ class Spin2CompilerFunctionalTest {
         String text = getResourceAsString("vga_tile_driver.spin2");
 
         byte[] expected = getResource("vga_tile_driver.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
-    }
-
-    @Test
-    void testEZSound() throws Exception {
-        String text = getResourceAsString("jm_ez_sound.spin2");
-
-        byte[] expected = getResource("jm_ez_sound.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 

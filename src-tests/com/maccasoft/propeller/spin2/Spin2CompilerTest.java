@@ -19,6 +19,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
@@ -1625,7 +1626,7 @@ class Spin2CompilerTest {
             + "' PUB main() | a\n"
             + "0000C 0000C       04             (stack size)\n"
             + "'         a := b\n"
-            + "0000D 0000D       5C 08 80       MEM_READ PBASE+$00008\n"
+            + "0000D 0000D       5C 08 80       MEM_READ LONG PBASE+$00008\n"
             + "00010 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "00011 00011       04             RETURN\n"
             + "00012 00012       00 00          Padding\n"
@@ -1654,7 +1655,7 @@ class Spin2CompilerTest {
             + "0000C 0000C       04             (stack size)\n"
             + "'         b := a\n"
             + "0000D 0000D       E0             VAR_READ LONG DBASE+$00000 (short)\n"
-            + "0000E 0000E       5C 08 81       MEM_WRITE PBASE+$00008\n"
+            + "0000E 0000E       5C 08 81       MEM_WRITE LONG PBASE+$00008\n"
             + "00011 00011       04             RETURN\n"
             + "00012 00012       00 00          Padding\n"
             + "", compile(text));
@@ -1677,7 +1678,7 @@ class Spin2CompilerTest {
             + "' PUB main() | a\n"
             + "00008 00008       04             (stack size)\n"
             + "'         a := @b\n"
-            + "00009 00009       C1 7F          VAR_ADDRESS LONG VBASE+$00001 (short)\n"
+            + "00009 00009       C1 7F          VAR_ADDRESS VBASE+$00001 (short)\n"
             + "0000B 0000B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "0000C 0000C       04             RETURN\n"
             + "0000D 0000D       00 00 00       Padding\n"
@@ -1699,7 +1700,7 @@ class Spin2CompilerTest {
             + "' PUB main() | a, b[10]\n"
             + "00008 00008       2C             (stack size)\n"
             + "'         a := @b\n"
-            + "00009 00009       D1 7F          VAR_ADDRESS LONG DBASE+$00001 (short)\n"
+            + "00009 00009       D1 7F          VAR_ADDRESS DBASE+$00001 (short)\n"
             + "0000B 0000B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "0000C 0000C       04             RETURN\n"
             + "0000D 0000D       00 00 00       Padding\n"
@@ -2016,11 +2017,11 @@ class Spin2CompilerTest {
             + "' PUB main() | a, b\n"
             + "00008 00008       08             (stack size)\n"
             + "'     a := BYTE[@b]\n"
-            + "00009 00009       D1 7F          VAR_ADDRESS LONG DBASE+$00001 (short)\n"
+            + "00009 00009       D1 7F          VAR_ADDRESS DBASE+$00001 (short)\n"
             + "0000B 0000B       65 80          BYTE_READ\n"
             + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "'     a := BYTE[@b][1]\n"
-            + "0000E 0000E       D1 7F          VAR_ADDRESS LONG DBASE+$00001 (short)\n"
+            + "0000E 0000E       D1 7F          VAR_ADDRESS DBASE+$00001 (short)\n"
             + "00010 00010       A2             CONSTANT (1)\n"
             + "00011 00011       62 80          BYTE_READ\n"
             + "00013 00013       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
@@ -2046,11 +2047,11 @@ class Spin2CompilerTest {
             + "00008 00008       08             (stack size)\n"
             + "'     BYTE[@b] := a\n"
             + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
-            + "0000A 0000A       D1 7F          VAR_ADDRESS LONG DBASE+$00001 (short)\n"
+            + "0000A 0000A       D1 7F          VAR_ADDRESS DBASE+$00001 (short)\n"
             + "0000C 0000C       65 81          BYTE_WRITE\n"
             + "'     BYTE[@b][1] := a\n"
             + "0000E 0000E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
-            + "0000F 0000F       D1 7F          VAR_ADDRESS LONG DBASE+$00001 (short)\n"
+            + "0000F 0000F       D1 7F          VAR_ADDRESS DBASE+$00001 (short)\n"
             + "00011 00011       A2             CONSTANT (1)\n"
             + "00012 00012       62 81          BYTE_WRITE_INDEXED\n"
             + "00014 00014       04             RETURN\n"
@@ -2450,6 +2451,111 @@ class Spin2CompilerTest {
             + "", compile(text, sources));
     }
 
+    @Test
+    void testVariableTypeConstantIndex() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := b.byte[1]\n"
+            + "    b.byte[1] := a\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       12 00 00 00    End\n"
+            + "' PUB main | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     a := b.byte[1]\n"
+            + "00009 00009       52 05 80       MEM_READ BYTE DBASE+$00005\n"
+            + "0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     b.byte[1] := a\n"
+            + "0000D 0000D       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000E 0000E       52 05 81       MEM_WRITE BYTE DBASE+$00005\n"
+            + "00011 00011       04             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testVariableTypeIndex() throws Exception {
+        String text = ""
+            + "PUB main | a, b, c\n"
+            + "\n"
+            + "    a := b.byte[c]\n"
+            + "    b.byte[c] := a\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       14 00 00 00    End\n"
+            + "' PUB main | a, b, c\n"
+            + "00008 00008       0C             (stack size)\n"
+            + "'     a := b.byte[c]\n"
+            + "00009 00009       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "0000A 0000A       55 04 80       MEM_READ BYTE INDEXED DBASE+$00004\n"
+            + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     b.byte[c] := a\n"
+            + "0000E 0000E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000F 0000F       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00010 00010       55 04 81       MEM_WRITE BYTE INDEXED DBASE+$00004\n"
+            + "00013 00013       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testChainedAssignments() throws Exception {
+        String text = ""
+            + "PUB main | a, b, c\n"
+            + "\n"
+            + "    a := b := c := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       10 00 00 00    End\n"
+            + "' PUB main | a, b, c\n"
+            + "00008 00008       0C             (stack size)\n"
+            + "'     a := b := c := 1\n"
+            + "00009 00009       A2             CONSTANT (1)\n"
+            + "0000A 0000A       D2             VAR_SETUP LONG DBASE+$00002 (short)\n"
+            + "0000B 0000B       82             WRITE\n"
+            + "0000C 0000C       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "0000D 0000D       82             WRITE\n"
+            + "0000E 0000E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000F 0000F       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    //@Test
+    void testVariableIndex() throws Exception {
+        String text = ""
+            + "PUB main | a, b, c\n"
+            + "\n"
+            + "    a := b[c]\n"
+            + "    b[c] := a\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       14 00 00 00    End\n"
+            + "' PUB main | a, b, c\n"
+            + "00008 00008       0C             (stack size)\n"
+            + "'     a := b[c]\n"
+            + "00009 00009       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "0000A 0000A       61 04 80       VAR_READ_INDEXED LONG DBASE+$00004\n"
+            + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     b[c] := a\n"
+            + "0000E 0000E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000F 0000F       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00010 00010       61 04 81       VAR_WRITE_INDEXED LONG DBASE+$00004\n"
+            + "00013 00013       04             RETURN\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, Collections.emptyMap());
     }
@@ -2474,6 +2580,12 @@ class Spin2CompilerTest {
 
         };
         Spin2Object obj = compiler.compileObject(root);
+
+        for (CompilerMessage msg : compiler.getMessages()) {
+            if (msg.type == CompilerMessage.ERROR) {
+                throw msg;
+            }
+        }
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateListing(new PrintStream(os));

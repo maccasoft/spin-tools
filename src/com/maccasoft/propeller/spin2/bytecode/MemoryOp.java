@@ -10,8 +10,12 @@
 
 package com.maccasoft.propeller.spin2.bytecode;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Context;
@@ -33,7 +37,9 @@ public class MemoryOp extends Spin2Bytecode {
     public Size ss;
     public Base base;
     public Op op;
+    public boolean pop;
     public Expression expression;
+    public int index;
 
     public MemoryOp(Spin2Context context, Size ss, Base bb, Op op, Expression expression) {
         super(context);
@@ -43,99 +49,198 @@ public class MemoryOp extends Spin2Bytecode {
         this.expression = expression;
     }
 
-    @Override
-    public int getSize() {
-        int value;
-        if (expression instanceof ContextLiteral) {
-            value = ((ContextLiteral) expression).getContext().getHubAddress();
+    public MemoryOp(Spin2Context context, Size ss, Base bb, Op op, boolean pop, Expression expression) {
+        super(context);
+        this.ss = ss;
+        this.base = bb;
+        this.op = op;
+        this.pop = pop;
+        this.expression = expression;
+    }
+
+    public MemoryOp(Spin2Context context, Size ss, Base bb, Op op, Expression expression, int index) {
+        super(context);
+        this.ss = ss;
+        this.base = bb;
+        this.op = op;
+        this.expression = expression;
+        if (this.ss == Size.Long) {
+            this.index = index * 4;
         }
-        else if (expression instanceof Variable) {
-            value = ((Variable) expression).getOffset();
+        else if (this.ss == Size.Word) {
+            this.index = index * 2;
         }
         else {
-            value = expression.getNumber().intValue();
+            this.index = index;
         }
-        return Constant.wrVarSize(value) + 2;
+    }
+
+    @Override
+    public int getSize() {
+        int size = 1;
+
+        int offset;
+        if (expression instanceof ContextLiteral) {
+            if (!((ContextLiteral) expression).getContext().isAddressSet()) {
+                return 4;
+            }
+            offset = ((ContextLiteral) expression).getContext().getHubAddress();
+        }
+        else if (expression instanceof Identifier) {
+            if (!((Identifier) expression).getContext().isAddressSet()) {
+                return 4;
+            }
+            offset = ((ContextLiteral) expression).getContext().getHubAddress();
+        }
+        else if (expression instanceof Variable) {
+            offset = ((Variable) expression).getOffset();
+        }
+        else {
+            offset = expression.getNumber().intValue();
+        }
+
+        size += Constant.wrVarsSize(offset + index);
+
+        if (op == Op.Address) {
+            size++;
+        }
+        else if (op == Op.Read) {
+            size++;
+        }
+        else if (op == Op.Write) {
+            size++;
+        }
+
+        return size;
     }
 
     @Override
     public byte[] getBytes() {
-        int value;
+        int offset;
         if (expression instanceof ContextLiteral) {
-            value = ((ContextLiteral) expression).getContext().getHubAddress();
+            offset = ((ContextLiteral) expression).getContext().getHubAddress();
         }
         else if (expression instanceof Variable) {
-            value = ((Variable) expression).getOffset();
+            offset = ((Variable) expression).getOffset();
         }
         else {
-            value = expression.getNumber().intValue();
+            offset = expression.getNumber().intValue();
         }
 
-        byte[] v = Constant.wrVar(value);
-        byte[] b = new byte[v.length + 2];
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        switch (base) {
+            case PBase:
+                if (ss == Size.Byte) {
+                    os.write(pop ? 0x53 : 0x50);
+                }
+                else if (ss == Size.Word) {
+                    os.write(pop ? 0x59 : 0x56);
+                }
+                else {
+                    os.write(pop ? 0x5F : 0x5C);
+                }
+                break;
+            case VBase:
+                if (ss == Size.Byte) {
+                    os.write(pop ? 0x54 : 0x51);
+                }
+                else if (ss == Size.Word) {
+                    os.write(pop ? 0x5A : 0x57);
+                }
+                else {
+                    os.write(pop ? 0x60 : 0x5D);
+                }
+                break;
+            case DBase:
+                if (ss == Size.Byte) {
+                    os.write(pop ? 0x55 : 0x52);
+                }
+                else if (ss == Size.Word) {
+                    os.write(pop ? 0x5B : 0x58);
+                }
+                else {
+                    os.write(pop ? 0x61 : 0x5E);
+                }
+                break;
+        }
 
-        b[0] = 0x50;
-        if (base == Base.VBase) {
-            b[0] = 0x51;
-        }
-        else if (base == Base.DBase) {
-            b[0] = 0x52;
+        try {
+            os.write(Constant.wrVar(offset + index));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        if (ss == Size.Word) {
-            b[0] += 0x06;
-        }
-        else if (ss == Size.Long) {
-            b[0] += 0x0C;
-        }
-
-        for (int i = 0; i < v.length; i++) {
-            b[i + 1] = v[i];
-        }
         if (op == Op.Address) {
-            b[b.length - 1] = (byte) 0x7F;
+            os.write(0x7F);
         }
-        else {
-            b[b.length - 1] = (byte) (op == Op.Read ? 0x80 : 0x81);
+        else if (op == Op.Read) {
+            os.write(0x80);
+        }
+        else if (op == Op.Write) {
+            os.write(0x81);
         }
 
-        return b;
+        return os.toByteArray();
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("MEM_");
+
         if (op == Op.Read) {
-            sb.append("READ ");
+            sb.append("READ");
         }
         else if (op == Op.Write) {
-            sb.append("WRITE ");
+            sb.append("WRITE");
+        }
+        else if (op == Op.Setup) {
+            sb.append("SETUP");
         }
         else if (op == Op.Address) {
-            sb.append("ADDRESS ");
+            sb.append("ADDRESS");
         }
 
-        if (base == Base.PBase) {
-            sb.append("PBASE");
-        }
-        else if (base == Base.VBase) {
-            sb.append("VBASE");
-        }
-        else if (base == Base.DBase) {
-            sb.append("DBASE");
+        if (op != Op.Address) {
+            switch (ss) {
+                case Byte:
+                    sb.append(" BYTE");
+                    break;
+                case Word:
+                    sb.append(" WORD");
+                    break;
+                case Long:
+                    sb.append(" LONG");
+                    break;
+            }
         }
 
-        int value;
+        if (pop) {
+            sb.append(" INDEXED");
+        }
+
+        switch (base) {
+            case PBase:
+                sb.append(" PBASE");
+                break;
+            case VBase:
+                sb.append(" VBASE");
+                break;
+            case DBase:
+                sb.append(" DBASE");
+                break;
+        }
+
+        int offset;
         if (expression instanceof ContextLiteral) {
-            value = ((ContextLiteral) expression).getContext().getHubAddress();
+            offset = ((ContextLiteral) expression).getContext().getHubAddress();
         }
         else if (expression instanceof Variable) {
-            value = ((Variable) expression).getOffset();
+            offset = ((Variable) expression).getOffset();
         }
         else {
-            value = expression.getNumber().intValue();
+            offset = expression.getNumber().intValue();
         }
-        sb.append(String.format("+$%05X", value));
+        sb.append(String.format("+$%05X", offset + index));
 
         return sb.toString();
     }

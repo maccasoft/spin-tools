@@ -1674,7 +1674,7 @@ public class Spin2Compiler {
             String[] s = node.getText().split("[\\.]");
             if (s.length == 2 && ("BYTE".equalsIgnoreCase(s[1]) || "WORD".equalsIgnoreCase(s[1]) || "LONG".equalsIgnoreCase(s[1]))) {
                 Spin2StatementNode postEffect = null;
-                boolean indexed = false;
+                Spin2StatementNode indexNode = null;
 
                 Expression expression = context.getLocalSymbol(s[0]);
                 if (expression == null) {
@@ -1682,8 +1682,7 @@ public class Spin2Compiler {
                 }
 
                 if (node.getChildCount() != 0) {
-                    indexed = true;
-                    source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                    indexNode = node.getChild(0);
                     if (node.getChildCount() > 1) {
                         if (isPostEffect(node.getChild(1).getText())) {
                             postEffect = node.getChild(1);
@@ -1705,7 +1704,27 @@ public class Spin2Compiler {
                 else if (expression instanceof Variable) {
                     bb = MemoryOp.Base.VBase;
                 }
-                source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Read : MemoryOp.Op.Write, expression));
+                if (indexNode != null) {
+                    Expression index = null;
+                    try {
+                        index = buildConstantExpression(context, indexNode);
+                        if (!index.isConstant()) {
+                            index = null;
+                        }
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                    if (index != null) {
+                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, expression, index.getNumber().intValue()));
+                    }
+                    else {
+                        source.addAll(compileBytecodeExpression(context, indexNode, true));
+                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, true, expression));
+                    }
+                }
+                else {
+                    source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Read : MemoryOp.Op.Write, expression));
+                }
 
                 if (postEffect != null) {
                     if ("++".equalsIgnoreCase(postEffect.getText())) {
@@ -1780,26 +1799,36 @@ public class Spin2Compiler {
                     }
                 }
                 else if (expression instanceof Variable) {
-                    if (node.getChildCount() == 1) {
-                        if ("~".equalsIgnoreCase(node.getChild(0).getText())) {
+                    int index = 0;
+
+                    if (node.getChildCount() > index) {
+                        if (!isPostEffect(node.getChild(index).getText())) {
+                            source.addAll(compileBytecodeExpression(context, node.getChild(index), true));
+                            index++;
+                        }
+                    }
+
+                    if (node.getChildCount() > index) {
+                        Spin2StatementNode effectNode = node.getChild(index);
+                        if ("~".equalsIgnoreCase(effectNode.getText())) {
                             source.add(new Constant(context, new NumberLiteral(0)));
-                            source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, false, (Variable) expression));
+                            source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, index > 0, (Variable) expression));
                             if (push) {
                                 source.add(new Bytecode(context, 0x8D, "SWAP"));
                             }
                         }
                         else {
-                            source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
-                            if ("++".equalsIgnoreCase(node.getChild(0).getText())) {
+                            source.add(new VariableOp(context, VariableOp.Op.Setup, index > 0, (Variable) expression));
+                            if ("++".equalsIgnoreCase(effectNode.getText())) {
                                 source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
                             }
-                            else if ("--".equalsIgnoreCase(node.getChild(0).getText())) {
+                            else if ("--".equalsIgnoreCase(effectNode.getText())) {
                                 source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
                             }
-                            else if ("!!".equalsIgnoreCase(node.getChild(0).getText())) {
+                            else if ("!!".equalsIgnoreCase(effectNode.getText())) {
                                 source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
                             }
-                            else if ("!".equalsIgnoreCase(node.getChild(0).getText())) {
+                            else if ("!".equalsIgnoreCase(effectNode.getText())) {
                                 source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
                             }
                             else {
@@ -1808,7 +1837,7 @@ public class Spin2Compiler {
                         }
                     }
                     else {
-                        source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression));
+                        source.add(new VariableOp(context, VariableOp.Op.Read, index > 0, (Variable) expression));
                     }
                 }
                 else if (expression instanceof ContextLiteral) {
@@ -1840,7 +1869,7 @@ public class Spin2Compiler {
         String[] s = node.getText().split("[\\.]");
         if (s.length == 2 && ("BYTE".equalsIgnoreCase(s[1]) || "WORD".equalsIgnoreCase(s[1]) || "LONG".equalsIgnoreCase(s[1]))) {
             Spin2StatementNode postEffect = null;
-            boolean indexed = false;
+            Spin2StatementNode indexNode = null;
 
             Expression expression = context.getLocalSymbol(s[0]);
             if (expression == null) {
@@ -1848,8 +1877,7 @@ public class Spin2Compiler {
             }
 
             if (node.getChildCount() != 0) {
-                indexed = true;
-                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                indexNode = node.getChild(0);
                 if (node.getChildCount() > 1) {
                     if (isPostEffect(node.getChild(1).getText())) {
                         postEffect = node.getChild(1);
@@ -1871,7 +1899,23 @@ public class Spin2Compiler {
             else if (expression instanceof Variable) {
                 bb = MemoryOp.Base.VBase;
             }
-            source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, expression));
+
+            Expression index = null;
+            try {
+                index = buildConstantExpression(context, indexNode);
+                if (!index.isConstant()) {
+                    index = null;
+                }
+            } catch (Exception e) {
+                // Do nothing
+            }
+            if (index != null) {
+                source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, expression, index.getNumber().intValue()));
+            }
+            else {
+                source.addAll(compileBytecodeExpression(context, indexNode, true));
+                source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, true, expression));
+            }
 
             if (postEffect != null) {
                 if ("++".equalsIgnoreCase(postEffect.getText())) {
@@ -1964,7 +2008,7 @@ public class Spin2Compiler {
     }
 
     boolean isPostEffect(String s) {
-        return "++".equals(s) || "--".equals(s) || "!!".equals(s) || "!".equals(s);
+        return "++".equals(s) || "--".equals(s) || "!!".equals(s) || "!".equals(s) || "~".equals(s);
     }
 
     List<Spin2Bytecode> compileConstantExpression(Spin2Context context, Spin2StatementNode node) {

@@ -1,0 +1,379 @@
+'' =================================================================================================
+''
+''   File....... jm_hd485.spin2
+''   Purpose.... Half-duplex, true-mode serial IO for EIA-485 network
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2009-2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 27 OCT 2020
+''
+'' =================================================================================================
+
+
+{{
+
+  Example interface
+
+              +3.3v         +3.3v
+                             
+                │             │
+            10k              │
+            4k7 │ ┌─────────┐ │
+      rx ────┻─┤1°      8├─┘
+     txe ──────┳─┤2       7├────────┳────────── Pin 2
+                ┣─┤3       6├────────┼─┳──────── Pin 3
+      tx ──────┼─┤4       5├─┐      │ │    ┌─── Pin 1
+                │ └─────────┘ │      │ │    │
+            10k    MAX485    │      │ └ ┐  └ ┐
+                │             │  120  ┌ ┘  ┌ ┘
+                │             │      │ │    │
+                                   └─┘    
+
+   1  RO   Receive output
+   2  /RE  Receive enable  (active low)
+   3  DE   Transmit enable (active high)
+   4  DI   Transmit input
+   5  Vss  ground
+   6  A    differential IO
+   7  B    differential IO
+   8  Vdd  +5v
+
+   Note: 4.7k into RX pin limits current when output is driven.  10K pull-up
+         on RX keeps RX at idle when RO disabled, allowing this circuit to
+         work with full-duplex drivers (e.g., FDS)
+
+
+   Note: Buffer size no longer has to be power-of-2 integer.
+
+   Note: This object lacks string-formatting methods
+
+}}
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }
+  SF_SDO   = 59  { O }
+  SF_SDI   = 58  { I }
+
+
+con { configuration }
+
+  BUF_SIZE = 64
+
+  TXE_US   = 10                                                 ' 10us txe delay
+
+
+var
+
+  long  cog                                                     ' cog flag/id
+
+  long  rx2       {ptra[ 0]}                                    ' rs-485 rx
+  long  tx2       {ptra[ 1]}                                    ' rs-485 tx
+  long  txe2      {ptra[ 2]}                                    ' rs-485 tx enable
+  long  txeticks  {ptra[ 3]}                                    ' rs-485 tx enable delay (ticks)
+  long  bitticks  {ptra[ 4]}                                    ' ticks in one serial bit
+  long  rxhub     {ptra[ 5]}                                    ' hub address of rxbuf
+  long  txhub     {ptra[ 6]}                                    ' hub address of txbuf
+
+  long  rxhead    {ptra[ 7]}                                    ' rx head index
+  long  rxtail    {ptra[ 8]}                                    ' rx tail index
+  long  txhead    {ptra[ 9]}                                    ' tx head index
+  long  txtail    {ptra[10]}                                    ' tx tail index
+
+  byte  rxbuf[BUF_SIZE]                                         ' buffers
+  byte  txbuf[BUF_SIZE]
+
+
+pub null()
+
+'' This is not a top level object
+
+
+pub start(rxpin, txpin, txepin, baud) : result
+
+'' Half-duplex, true mode uart
+'' -- rxpin is rx pin (in)
+'' -- txpin is tx pin (out)
+'' -- txepin is tx enable pin (out, -1 if not used; e.g, standard connections)
+'' -- baud is baud rate for coms
+
+  stop()
+
+  longmove(@rx2, @rxpin, 3)                                     ' copy pins
+  txeticks := clkfreq / 1_000_000 * TXE_US                      ' set txe delay (in ticks)
+  bitticks := clkfreq / baud                                    ' ticks in one serial bit
+  rxhub := @rxbuf
+  txhub := @txbuf
+
+  if (rx2 >= 0)                                                 ' clear pins that are used
+    pinclear(rx2)
+
+  if (tx2 >= 0)
+    pinclear(tx2)
+
+  if (txe2 >= 0)
+    pinclear(txe2)
+
+  cog := coginit(COGEXEC_NEW, @hd485, @rx2) + 1                 ' start uart manager cog
+
+  return cog
+
+
+pub stop()
+
+'' Stops uart manager cog
+
+  if (cog)
+    cogstop(cog - 1)
+    cog := 0
+
+  longfill(@rxhead, 0, 4)
+
+
+pub rx() : b
+
+'' Pulls c from receive buffer if available
+'' -- will wait if buffer is empty
+
+  repeat while (rxtail == rxhead)                               ' hold while buffer empty
+
+  b := rxbuf[rxtail]                                            ' get a byte
+  if (++rxtail == BUF_SIZE)                                     ' update tail pointer
+    rxtail := 0
+
+
+pub rxcheck() : b
+
+'' Pulls c from receive buffer if available
+'' -- returns -1 if buffer is empty
+
+  if (rxtail <> rxhead)                                         ' something in buffer?
+    b := rxbuf[rxtail]                                          ' get it
+    if (++rxtail == BUF_SIZE)                                   ' update tail pointer
+      rxtail := 0
+  else
+    b := -1                                                     ' mark no byte available
+
+
+pub rxtime(ms) : c | mstix, t
+
+'' Wait ms milliseconds for a byte to be received
+'' -- returns -1 if no byte received, $00..$FF if byte
+
+  mstix := clkfreq / 1000
+
+  t := getct()
+  repeat until ((c := rxcheck()) >= 0) || (((getct()-t) / mstix) >= ms)
+
+
+pub rxtix(tix) : c | t
+
+'' Waits tix clock ticks for a byte to be received
+'' -- returns -1 if no byte received
+
+  t := getct()
+  repeat until ((c := rxcheck()) >= 0) || ((getct()-t) > tix)
+
+
+pub rxflush()
+
+'' Flush receive buffer
+
+  repeat while (rxcheck() >= 0)
+
+
+pub available() : count
+
+'' Returns # of bytes waiting in rx buffer
+
+  if (rxtail <> rxhead)                                         ' if byte(s) available
+    count := rxhead - rxtail                                    ' get count
+    if (count < 0)
+      count += BUF_SIZE                                         ' fix for wrap around
+
+
+pub tx(b) | n
+
+'' Move byte into transmit buffer if room is available
+'' -- will wait if buffer is full
+
+  repeat
+    n := txhead - txtail                                        ' bytes in buffer
+    if (n < 0)                                                  ' fix for index wrap-around
+      n += BUF_SIZE
+    if (n < BUF_SIZE-1)
+      quit
+
+  txbuf[txhead] := b                                            ' move to buffer
+  if (++txhead == BUF_SIZE)                                     ' update head pointer
+    txhead := 0
+
+
+pub txn(b, n)
+
+'' Emit byte n times
+
+  repeat n
+    tx(b)
+
+
+pub str(p_str)
+
+'' Emit z-string at p_str
+
+  repeat (strsize(p_str))
+    tx(byte[p_str++])
+
+
+pub txflush()
+
+'' Wait for transmit buffer to empty, then wait for tx enable line to drop
+
+  repeat until (txtail == txhead)                               ' let buffer empty
+  repeat until (pinread(txe2) == 0)                             ' wait for txe to go low (tx disabled)
+
+
+dat { hd rs-485 driver}
+
+                org       0
+
+hd485           setq      #7-1                                  ' get 7 parameters from hub
+                rdlong    rxd, ptra
+
+                fltl      rxd                                   ' enable pull-up for rx
+                wrpin     ##(P_HIGH_15K | P_OE), rxd
+                drvh      rxd
+
+                drvl      txe                                   ' set to rx mode
+                drvh      txd                                   ' set tx to idle
+
+
+' =========
+'  RECEIVE
+' =========
+
+rx_serial       testb     rxd, #31                      wc      ' using rx?
+    if_c        jmp       #tx_serial
+
+                getct     bittimer                              ' sync bit timer
+                testp     rxd                           wc      ' sample rx
+    if_c        jmp       #tx_serial                            ' if idle, check tx
+
+                mov       t3, #0                                ' clear workspace
+
+                mov       t1, bittix                            ' wait for middle of start bit
+                shr       t1, #1
+                addct1    bittimer, t1
+                waitct1
+
+rx_byte         rep       #5, #8                                ' 5 (inst) x 8 bits
+                 addct1   bittimer, bittix                      ' update bit timer
+                 waitct1                                        ' let bit timer expire
+                 testp    rxd                           wc      ' sample rx
+                 shr      t3, #1                                ' prep for new bit
+                 muxc     t3, #%1000_0000                       ' add to result
+
+rx_putbuf       mov       t1, p_rxbuf                           ' t1 := @rxbuf
+                rdlong    t2, ptra[7]                           ' t2 := rxhead
+                add       t1, t2
+                wrbyte    t3, t1                                ' rxbuf[rxhead] := t3
+                incmod    t2, #(BUF_SIZE-1)                     ' update head index
+                wrlong    t2, ptra[7]                           ' write head index back to hub
+
+                testp     rxd                           wc      ' wait for stop bit
+    if_nc       jmp       #$-1
+
+                jmp       #rx_serial
+
+
+' ==========
+'  TRANSMIT
+' ==========
+
+tx_serial       testb     txd, #31                      wc      ' using tx?
+    if_c        jmp       #tx_disable
+
+tx_chkbuf       rdlong    t1, ptra[9]                           ' t1 = txhead
+                rdlong    t2, ptra[10]                          ' t2 = txtail
+                cmp       t1, t2                        wz      ' byte(s) to tx?
+    if_ne       jmp       #tx_enable                            ' yes, enable transmitter
+
+tx_disable      testb     txe, #31                      wc      ' using txe?
+    if_nc       drvl      txe                                   ' disable transmitter
+                jmp       #rx_serial                            ' check rx
+
+tx_enable       testb     txe, #31                      wc      ' using txe?
+    if_c        jmp       #tx_getbyte                           ' skip enable if not used
+
+                testp     txe                           wc      ' already enabled?
+                drvh      txe                                   ' enable/refresh tx mode
+    if_nc       waitx     txetix                                ' hold if new enable
+
+tx_getbyte      mov       t1, p_txbuf                           ' start of buffer
+                add       t1, t2                                ' add tail index
+                rdbyte    t3, t1                                ' t3 := txbuf[txtail]
+
+tx_byte         or        t3, ##$F00                            ' add stop bits (1s)
+                shl       t3, #1                                ' add start bit (0)
+                getct     bittimer                              ' start timing bits
+                rep       #4, #11                               ' 4 (inst) x 11 bits (start, 8 bits, 2 stop)
+                 shr      t3, #1                        wc      ' sample bit into c (from LSB end)
+                 drvc     txd                                   ' output the bit
+                 addct1   bittimer, bittix                      ' update bit timer
+                 waitct1                                        ' let bit timer expire
+
+                incmod    t2, #(BUF_SIZE-1)                     ' update tx tail index
+                wrlong    t2, ptra[10]
+
+                jmp       #tx_chkbuf
+
+' -------------------------------------------------------------------------------------------------
+
+rxd             res       1                                     ' receive pin
+txd             res       1                                     ' transmit pin
+txe             res       1                                     ' transmit enable pin (active-high)
+txetix          res       1                                     ' txe timing (ticks in 10us)
+bittix          res       1                                     ' ticks in one full byte
+p_rxbuf         res       1                                     ' pointer to rxbuf
+p_txbuf         res       1                                     ' pointer to txbuf
+
+bittimer        res       1
+
+t1              res       1                                     ' work vars
+t2              res       1
+t3              res       1
+
+                fit       472
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}
