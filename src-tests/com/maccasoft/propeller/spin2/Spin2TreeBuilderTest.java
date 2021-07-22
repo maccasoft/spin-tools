@@ -444,6 +444,17 @@ class Spin2TreeBuilderTest {
             + "", parseAssignment(text));
     }
 
+    @Test
+    void testBitField() {
+        String text = "a := b.[1]";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [b.]\n"
+            + "      +-- [1]\n"
+            + "", parseAssignment(text));
+    }
+
     String parseAssignment(String text) {
         return parse(0, text);
     }

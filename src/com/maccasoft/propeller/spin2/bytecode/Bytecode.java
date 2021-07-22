@@ -18,14 +18,14 @@ public class Bytecode extends Spin2Bytecode {
     byte[] code;
 
     public Bytecode(Spin2Context context, int code, String text) {
-        super(context, text.toUpperCase());
+        super(context, text);
         this.code = new byte[] {
             (byte) code
         };
     }
 
     public Bytecode(Spin2Context context, byte[] code, String text) {
-        super(context, text.toUpperCase());
+        super(context, text);
         this.code = code;
     }
 

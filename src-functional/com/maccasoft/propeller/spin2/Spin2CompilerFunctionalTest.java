@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
@@ -64,6 +65,18 @@ class Spin2CompilerFunctionalTest {
 
         byte[] expected = getResource("jm_ez_spi.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    //@Test
+    //            ours: 01356 002CE       12 03          JMP $002D2 (3)
+    // propeller tools: 01356 002CE       14 03          TJZ $002D2 (3) <- doesn't make sense...
+    void testFullDuplexSerial() throws Exception {
+        String text = getResourceAsString("jm_fullduplexserial.spin2");
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("jm_nstr", getResourceAsString("jm_nstr.spin2"));
+
+        byte[] expected = getResource("jm_fullduplexserial.binary");
+        compileAndCompare(text, sources, expected);
     }
 
     @Test

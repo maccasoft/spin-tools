@@ -39,7 +39,9 @@ import com.maccasoft.propeller.spin1.Spin1TokenMarker;
 import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Object;
+import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
+import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class EditorTab {
 
@@ -194,11 +196,42 @@ public class EditorTab {
                     result.set(node);
                 }
             });
-            if (result.get() != null) {
+            Node root = result.get();
+            if (root == null) {
+                File fileParent = file != null ? file.getParentFile() : null;
+                String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
+                File file = new File(fileParent, fileName + fileType);
+                if (file.exists()) {
+                    try {
+                        Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(file));
+                        Spin2Parser subject = new Spin2Parser(stream);
+                        root = subject.parse();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            if (root != null) {
                 Spin2CompilerAdapter c = new Spin2CompilerAdapter();
-                return c.compileObject(result.get());
+                return c.compileObject(root);
             }
             return null;
+        }
+
+        String loadFromFile(File file) throws Exception {
+            String line;
+            StringBuilder sb = new StringBuilder();
+
+            if (file.exists()) {
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                    sb.append("\n");
+                }
+                reader.close();
+            }
+
+            return sb.toString();
         }
 
     }
