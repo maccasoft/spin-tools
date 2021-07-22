@@ -358,7 +358,7 @@ public class Spin2TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "width := -PBUF_SIZE+1 #> width <# PBUF_SIZE-1";
+        text = "nrOfMixes := (ones ((!outputMixMask_4) & $00_ffffff)) / 3";
         System.out.println(text);
         System.out.println(parse(text));
     }

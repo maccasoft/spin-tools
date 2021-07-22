@@ -88,9 +88,9 @@ public class MathOp extends Spin2Bytecode {
 
     static Map<String, Descriptor> unary = new HashMap<String, Descriptor>();
     static {
-        operations.put("!!", new Descriptor(0x77, "BOOLEAN_NOT"));
-        operations.put("NOT", new Descriptor(0x77, "BOOLEAN_NOT"));
-        operations.put("!", new Descriptor(0x78, "BITNOT"));
+        unary.put("!!", new Descriptor(0x77, "BOOLEAN_NOT"));
+        unary.put("NOT", new Descriptor(0x77, "BOOLEAN_NOT"));
+        unary.put("!", new Descriptor(0x78, "BITNOT"));
         //unary.put("-", new Descriptor(0x79, "NEGATE"));
         unary.put("ABS", new Descriptor(0x7A, "ABS"));
         unary.put("ENCOD", new Descriptor(0x7B, "ENCOD"));

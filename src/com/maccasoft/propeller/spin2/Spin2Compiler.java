@@ -67,6 +67,7 @@ import com.maccasoft.propeller.spin2.bytecode.CaseJmp;
 import com.maccasoft.propeller.spin2.bytecode.CaseRangeJmp;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
 import com.maccasoft.propeller.spin2.bytecode.Djnz;
+import com.maccasoft.propeller.spin2.bytecode.InlinePAsm;
 import com.maccasoft.propeller.spin2.bytecode.Jmp;
 import com.maccasoft.propeller.spin2.bytecode.Jnz;
 import com.maccasoft.propeller.spin2.bytecode.Jz;
@@ -87,6 +88,8 @@ public class Spin2Compiler {
 
     int varOffset = 4;
     int labelCounter;
+
+    int nested;
 
     boolean errors;
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
@@ -409,6 +412,7 @@ public class Spin2Compiler {
     }
 
     void compileVarBlock(Node parent) {
+        String type = "LONG";
 
         for (Node child : parent.getChilds()) {
             VariableNode node = (VariableNode) child;
@@ -416,32 +420,88 @@ public class Spin2Compiler {
                 continue;
             }
 
-            String type = "LONG";
             if (node.type != null) {
                 type = node.type.getText().toUpperCase();
             }
 
-            Expression size = new NumberLiteral(1);
-            if (node.size != null) {
-                size = buildExpression(node.size.getTokens(), scope);
-            }
+            if ("LONG".equalsIgnoreCase(type)) {
+                Expression size = new NumberLiteral(1);
+                if (node.size != null) {
+                    size = buildExpression(node.size.getTokens(), scope);
+                }
 
-            try {
-                scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-            } catch (Exception e) {
-                logMessage(new CompilerMessage(e.getMessage(), node.identifier));
+                try {
+                    scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                    scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                } catch (Exception e) {
+                    logMessage(new CompilerMessage(e.getMessage(), node.identifier));
+                    continue;
+                }
+
+                varOffset += size.getNumber().intValue() * 4;
+            }
+        }
+
+        type = "LONG";
+        for (Node child : parent.getChilds()) {
+            VariableNode node = (VariableNode) child;
+            if (node.identifier == null) {
                 continue;
             }
 
-            int varSize = size.getNumber().intValue();
+            if (node.type != null) {
+                type = node.type.getText().toUpperCase();
+            }
+
             if ("WORD".equalsIgnoreCase(type)) {
-                varSize = varSize * 2;
+                Expression size = new NumberLiteral(1);
+                if (node.size != null) {
+                    size = buildExpression(node.size.getTokens(), scope);
+                }
+
+                try {
+                    scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                    scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                } catch (Exception e) {
+                    logMessage(new CompilerMessage(e.getMessage(), node.identifier));
+                    continue;
+                }
+
+                varOffset += size.getNumber().intValue() * 2;
             }
-            else if (!"BYTE".equalsIgnoreCase(type)) {
-                varSize = varSize * 4;
+        }
+
+        type = "LONG";
+        for (Node child : parent.getChilds()) {
+            VariableNode node = (VariableNode) child;
+            if (node.identifier == null) {
+                continue;
             }
-            varOffset += varSize;
+
+            if (node.type != null) {
+                type = node.type.getText().toUpperCase();
+            }
+
+            if ("BYTE".equalsIgnoreCase(type)) {
+                Expression size = new NumberLiteral(1);
+                if (node.size != null) {
+                    size = buildExpression(node.size.getTokens(), scope);
+                }
+
+                try {
+                    scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                    scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                } catch (Exception e) {
+                    logMessage(new CompilerMessage(e.getMessage(), node.identifier));
+                    continue;
+                }
+
+                varOffset += size.getNumber().intValue() * 1;
+            }
+        }
+
+        while ((varOffset % 4) != 0) {
+            varOffset++;
         }
     }
 
@@ -480,6 +540,7 @@ public class Spin2Compiler {
 
     void compileDatBlock(Node parent) {
         Spin2Context savedContext = scope;
+        nested = 0;
 
         for (Node child : parent.getChilds()) {
             DataLineNode node = (DataLineNode) child;
@@ -551,8 +612,9 @@ public class Spin2Compiler {
         Spin2PAsmLine pasmLine = new Spin2PAsmLine(localScope, label, condition, mnemonic, parameters, modifier);
         if (pasmLine.getLabel() != null) {
             try {
-                if (!pasmLine.isLocalLabel() && scope.getParent() != null) {
+                if (!pasmLine.isLocalLabel() && nested > 0) {
                     scope = scope.getParent();
+                    nested--;
                 }
                 int size = 4;
                 if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Word) {
@@ -565,6 +627,7 @@ public class Spin2Compiler {
                 scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
                 if (!pasmLine.isLocalLabel()) {
                     scope = new Spin2Context(scope);
+                    nested++;
                 }
             } catch (RuntimeException e) {
                 throw new CompilerMessage(e.getMessage(), node.label);
@@ -690,7 +753,7 @@ public class Spin2Compiler {
         Spin2Method method = new Spin2Method(localScope, node.name.getText(), parameters, returns, localVariables);
         method.setComment(node.getText());
 
-        List<Spin2MethodLine> childs = compileStatements(localScope, node.getChilds());
+        List<Spin2MethodLine> childs = compileStatements(method, node.getChilds());
         childs.add(new Spin2MethodLine(localScope, String.format(".label_" + labelCounter++), "RETURN", Collections.emptyList()));
         for (Spin2MethodLine line : childs) {
             method.addSource(line);
@@ -699,10 +762,13 @@ public class Spin2Compiler {
         return method;
     }
 
-    List<Spin2MethodLine> compileStatements(Spin2Context context, List<Node> childs) {
+    List<Spin2MethodLine> compileStatements(Spin2Method method, List<Node> childs) {
+        Spin2Context context = method.getScope();
         List<Spin2MethodLine> lines = new ArrayList<Spin2MethodLine>();
 
-        for (Node node : childs) {
+        Iterator<Node> linesIterator = childs.iterator();
+        while (linesIterator.hasNext()) {
+            Node node = linesIterator.next();
             if (node instanceof StatementNode) {
                 try {
                     Iterator<Token> iter = node.getTokens().iterator();
@@ -744,7 +810,7 @@ public class Spin2Compiler {
                         line.setData(node);
                         lines.add(line);
 
-                        line.addChilds(compileStatements(context, node.getChilds()));
+                        line.addChilds(compileStatements(method, node.getChilds()));
 
                         Spin2MethodLine falseLine = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), null, Collections.emptyList());
                         lines.add(falseLine);
@@ -772,7 +838,7 @@ public class Spin2Compiler {
                         line.setData(node);
                         lines.add(line);
 
-                        line.addChilds(compileStatements(context, node.getChilds()));
+                        line.addChilds(compileStatements(method, node.getChilds()));
 
                         Spin2MethodLine falseLine = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), null, Collections.emptyList());
                         lines.add(falseLine);
@@ -793,7 +859,7 @@ public class Spin2Compiler {
                         line.setData(node);
                         lines.add(line);
 
-                        line.addChilds(compileStatements(context, node.getChilds()));
+                        line.addChilds(compileStatements(method, node.getChilds()));
 
                         lines.add(exitLine);
                     }
@@ -878,7 +944,7 @@ public class Spin2Compiler {
                             line.addChild(loopLine);
                         }
 
-                        line.addChilds(compileStatements(context, node.getChilds()));
+                        line.addChilds(compileStatements(method, node.getChilds()));
 
                         if (arguments.size() == 3 || arguments.size() == 4) {
                             loopLine = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), "REPEAT-LOOP", Collections.emptyList());
@@ -974,7 +1040,7 @@ public class Spin2Compiler {
                                 }
 
                                 Spin2MethodLine targetLine = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), null, Collections.emptyList());
-                                targetLine.addChilds(compileStatements(context, child.getChilds()));
+                                targetLine.addChilds(compileStatements(method, child.getChilds()));
                                 targetLine.addChild(new Spin2MethodLine(context, String.format(".label_" + labelCounter++), "CASE_DONE", Collections.emptyList()));
 
                                 Spin2StatementNode expression = builder.getRoot();
@@ -1018,9 +1084,56 @@ public class Spin2Compiler {
                     logMessage(new CompilerMessage(e.getMessage(), node));
                 }
             }
+            else if (node instanceof DataLineNode) {
+                Spin2MethodLine line = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), node.getStartToken().getText(), Collections.emptyList());
+                line.setData(node);
+                lines.add(line);
+
+                Spin2Context savedContext = scope;
+                try {
+                    scope = line.getScope();
+                    nested = 0;
+
+                    int address = 0x1E0;
+                    for (LocalVariable var : method.getLocalVariables()) {
+                        scope.addSymbol(var.getName(), new NumberLiteral(address));
+                        address += 1;
+                        if (address >= 0x1F0) {
+                            break;
+                        }
+                    }
+
+                    Spin2PAsmLine pasmLine = compileDataLine((DataLineNode) node);
+                    line.addSource(new InlinePAsm(line.getScope(), pasmLine));
+
+                    compileInlinePAsmStatements(linesIterator, line);
+
+                } finally {
+                    scope = savedContext;
+                }
+            }
         }
 
         return lines;
+    }
+
+    void compileInlinePAsmStatements(Iterator<Node> linesIterator, Spin2MethodLine line) {
+        Spin2Context localScope = new Spin2Context(line.getScope());
+
+        while (linesIterator.hasNext()) {
+            Node node = linesIterator.next();
+            if (node instanceof DataLineNode) {
+                Spin2PAsmLine pasmLine = compileDataLine((DataLineNode) node);
+                line.addSource(new InlinePAsm(localScope, pasmLine));
+            }
+            else if (node instanceof StatementNode) {
+                if ("END".equalsIgnoreCase(node.getStartToken().getText())) {
+                    Spin2PAsmLine pasmLine = new Spin2PAsmLine(line.getScope(), null, null, "ret", Collections.emptyList(), null);
+                    line.addSource(new InlinePAsm(localScope, pasmLine));
+                    return;
+                }
+            }
+        }
     }
 
     void compileLine(Spin2MethodLine line) {
@@ -1313,6 +1426,19 @@ public class Spin2Compiler {
         else if ("CASE_DONE".equalsIgnoreCase(text)) {
             line.addSource(new Bytecode(line.getScope(), 0x1E, text));
         }
+        else if ("ORG".equalsIgnoreCase(text)) {
+            int org = 0;
+            int count = line.getSource().size() - 2;
+            line.source.add(0, new Bytecode(line.getScope(), new byte[] {
+                (byte) org,
+                (byte) (org >> 8),
+                (byte) count,
+                (byte) (count >> 8),
+            }, String.format("ORG=$%03x, %d", org, count + 1)));
+            line.source.add(0, new Bytecode(line.getScope(), new byte[] {
+                0x19, 0x5C
+            }, "INLINE-EXEC"));
+        }
         else if (text != null) {
             Descriptor desc = Spin2Bytecode.getDescriptor(text);
             if (desc != null) {
@@ -1458,6 +1584,9 @@ public class Spin2Compiler {
             }
         }
         else if ("DEBUG".equalsIgnoreCase(node.getText())) {
+            // Ignored
+        }
+        else if ("END".equalsIgnoreCase(node.getText())) {
             // Ignored
         }
         else if ("STRING".equalsIgnoreCase(node.getText())) {

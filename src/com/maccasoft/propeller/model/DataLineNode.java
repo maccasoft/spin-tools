@@ -26,6 +26,11 @@ public class DataLineNode extends Node {
     }
 
     @Override
+    public void addToken(Token token) {
+        tokens.add(token);
+    }
+
+    @Override
     public void accept(NodeVisitor visitor) {
         visitor.visitDataLine(this);
         super.accept(visitor);

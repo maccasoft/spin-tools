@@ -72,6 +72,14 @@ public class Spin2Method {
         return parameters.size();
     }
 
+    public List<LocalVariable> getLocalVariables() {
+        List<LocalVariable> list = new ArrayList<LocalVariable>();
+        list.addAll(parameters);
+        list.addAll(returns);
+        list.addAll(localVariables);
+        return list;
+    }
+
     public int getStackSize() {
         int count = 0;
 

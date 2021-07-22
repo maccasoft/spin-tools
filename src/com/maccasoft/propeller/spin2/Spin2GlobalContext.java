@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spin2;
 
+import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Register;
 
@@ -19,22 +20,22 @@ public class Spin2GlobalContext extends Spin2Context {
 
         // Registers
 
-        addSymbol("ijmp3", new Register(0x1F0));
-        addSymbol("iret3", new Register(0x1F1));
-        addSymbol("ijmp2", new Register(0x1F2));
-        addSymbol("iret2", new Register(0x1F3));
-        addSymbol("ijmp1", new Register(0x1F4));
-        addSymbol("iret1", new Register(0x1F5));
-        addSymbol("pa", new Register(0x1F6));
-        addSymbol("pb", new Register(0x1F7));
-        addSymbol("ptra", new Register(0x1F8));
-        addSymbol("ptrb", new Register(0x1F9));
-        addSymbol("dira", new Register(0x1FA));
-        addSymbol("dirb", new Register(0x1FB));
-        addSymbol("outa", new Register(0x1FC));
-        addSymbol("outb", new Register(0x1FD));
-        addSymbol("ina", new Register(0x1FE));
-        addSymbol("inb", new Register(0x1FF));
+        addBuiltinSymbol("ijmp3", new Register(0x1F0));
+        addBuiltinSymbol("iret3", new Register(0x1F1));
+        addBuiltinSymbol("ijmp2", new Register(0x1F2));
+        addBuiltinSymbol("iret2", new Register(0x1F3));
+        addBuiltinSymbol("ijmp1", new Register(0x1F4));
+        addBuiltinSymbol("iret1", new Register(0x1F5));
+        addBuiltinSymbol("pa", new Register(0x1F6));
+        addBuiltinSymbol("pb", new Register(0x1F7));
+        addBuiltinSymbol("ptra", new Register(0x1F8));
+        addBuiltinSymbol("ptrb", new Register(0x1F9));
+        addBuiltinSymbol("dira", new Register(0x1FA));
+        addBuiltinSymbol("dirb", new Register(0x1FB));
+        addBuiltinSymbol("outa", new Register(0x1FC));
+        addBuiltinSymbol("outb", new Register(0x1FD));
+        addBuiltinSymbol("ina", new Register(0x1FE));
+        addBuiltinSymbol("inb", new Register(0x1FF));
 
         // Smart-pin constants
 
@@ -287,6 +288,11 @@ public class Spin2GlobalContext extends Spin2Context {
         addBuiltinSymbol("negx", Integer.MIN_VALUE);
         addBuiltinSymbol("posx", Integer.MAX_VALUE);
         addBuiltinSymbol("pi", Math.PI);
+    }
+
+    void addBuiltinSymbol(String name, Expression value) {
+        symbols.put(name.toLowerCase(), value);
+        symbols.put(name.toUpperCase(), value);
     }
 
     void addBuiltinSymbol(String name, long value) {
