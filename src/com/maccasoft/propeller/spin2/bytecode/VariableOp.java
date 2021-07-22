@@ -83,7 +83,7 @@ public class VariableOp extends Spin2Bytecode {
         int size = 0;
         int offset = variable.getOffset() + index;
 
-        if (!indexed && index == 0 && ss == Size.Long && (offset >> 2) <= 15) {
+        if (!indexed && index == 0 && ss == Size.Long && (offset % 4) == 0 && (offset >> 2) <= 15) {
             if (variable instanceof LocalVariable) {
                 if (op == Op.Read) {
                     size++;
@@ -134,7 +134,7 @@ public class VariableOp extends Spin2Bytecode {
         int offset = variable.getOffset() + index;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-        if (!indexed && index == 0 && ss == Size.Long && (offset >> 2) <= 15) {
+        if (!indexed && index == 0 && ss == Size.Long && (offset % 4) == 0 && (offset >> 2) <= 15) {
             offset >>= 2;
 
             if (variable instanceof LocalVariable) {
@@ -246,7 +246,7 @@ public class VariableOp extends Spin2Bytecode {
         }
 
         int offset = variable.getOffset();
-        if (!indexed && ss == Size.Long && (offset >> 2) <= 15) {
+        if (!indexed && ss == Size.Long && (offset % 4) == 0 && (offset >> 2) <= 15) {
             sb.append(String.format("+$%05X", offset >> 2));
             sb.append(" (short)");
         }

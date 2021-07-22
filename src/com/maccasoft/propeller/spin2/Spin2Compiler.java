@@ -412,7 +412,6 @@ public class Spin2Compiler {
     }
 
     void compileVarBlock(Node parent) {
-        String type = "LONG";
 
         for (Node child : parent.getChilds()) {
             VariableNode node = (VariableNode) child;
@@ -420,88 +419,32 @@ public class Spin2Compiler {
                 continue;
             }
 
+            String type = "LONG";
             if (node.type != null) {
                 type = node.type.getText().toUpperCase();
             }
 
-            if ("LONG".equalsIgnoreCase(type)) {
-                Expression size = new NumberLiteral(1);
-                if (node.size != null) {
-                    size = buildExpression(node.size.getTokens(), scope);
-                }
-
-                try {
-                    scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                    scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                } catch (Exception e) {
-                    logMessage(new CompilerMessage(e.getMessage(), node.identifier));
-                    continue;
-                }
-
-                varOffset += size.getNumber().intValue() * 4;
+            Expression size = new NumberLiteral(1);
+            if (node.size != null) {
+                size = buildExpression(node.size.getTokens(), scope);
             }
-        }
 
-        type = "LONG";
-        for (Node child : parent.getChilds()) {
-            VariableNode node = (VariableNode) child;
-            if (node.identifier == null) {
+            try {
+                scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+            } catch (Exception e) {
+                logMessage(new CompilerMessage(e.getMessage(), node.identifier));
                 continue;
             }
 
-            if (node.type != null) {
-                type = node.type.getText().toUpperCase();
-            }
-
+            int varSize = size.getNumber().intValue();
             if ("WORD".equalsIgnoreCase(type)) {
-                Expression size = new NumberLiteral(1);
-                if (node.size != null) {
-                    size = buildExpression(node.size.getTokens(), scope);
-                }
-
-                try {
-                    scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                    scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                } catch (Exception e) {
-                    logMessage(new CompilerMessage(e.getMessage(), node.identifier));
-                    continue;
-                }
-
-                varOffset += size.getNumber().intValue() * 2;
+                varSize = varSize * 2;
             }
-        }
-
-        type = "LONG";
-        for (Node child : parent.getChilds()) {
-            VariableNode node = (VariableNode) child;
-            if (node.identifier == null) {
-                continue;
+            else if (!"BYTE".equalsIgnoreCase(type)) {
+                varSize = varSize * 4;
             }
-
-            if (node.type != null) {
-                type = node.type.getText().toUpperCase();
-            }
-
-            if ("BYTE".equalsIgnoreCase(type)) {
-                Expression size = new NumberLiteral(1);
-                if (node.size != null) {
-                    size = buildExpression(node.size.getTokens(), scope);
-                }
-
-                try {
-                    scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                    scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                } catch (Exception e) {
-                    logMessage(new CompilerMessage(e.getMessage(), node.identifier));
-                    continue;
-                }
-
-                varOffset += size.getNumber().intValue() * 1;
-            }
-        }
-
-        while ((varOffset % 4) != 0) {
-            varOffset++;
+            varOffset += varSize;
         }
     }
 
@@ -616,14 +559,14 @@ public class Spin2Compiler {
                     scope = scope.getParent();
                     nested--;
                 }
-                int size = 4;
+                String type = "LONG";
                 if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Word) {
-                    size = 2;
+                    type = "WORD";
                 }
                 else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) {
-                    size = 1;
+                    type = "BYTE";
                 }
-                scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), size));
+                scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
                 scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
                 if (!pasmLine.isLocalLabel()) {
                     scope = new Spin2Context(scope);
@@ -2073,6 +2016,29 @@ public class Spin2Compiler {
                     }
                 }
                 else if (expression instanceof ContextLiteral) {
+                    int n = 0;
+                    int index = 0;
+                    boolean indexed = false;
+
+                    if (node.getChildCount() > n) {
+                        if (!isPostEffect(node.getChild(n).getText())) {
+                            try {
+                                Expression exp = buildConstantExpression(context, node.getChild(n));
+                                if (exp.isConstant()) {
+                                    index = exp.getNumber().intValue();
+                                }
+                                else {
+                                    source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
+                                    indexed = true;
+                                }
+                            } catch (Exception e) {
+                                source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
+                                indexed = true;
+                            }
+                            n++;
+                        }
+                    }
+
                     MemoryOp.Size ss = MemoryOp.Size.Long;
                     MemoryOp.Base bb = MemoryOp.Base.PBase;
                     if (expression instanceof LocalVariable) {
@@ -2081,7 +2047,18 @@ public class Spin2Compiler {
                     else if (expression instanceof Variable) {
                         bb = MemoryOp.Base.VBase;
                     }
-                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, expression));
+                    if (expression instanceof DataVariable) {
+                        switch (((DataVariable) expression).getType()) {
+                            case "BYTE":
+                                ss = MemoryOp.Size.Byte;
+                                break;
+                            case "WORD":
+                                ss = MemoryOp.Size.Word;
+                                break;
+                        }
+                    }
+
+                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, indexed, expression, index));
                 }
                 else if (expression.isConstant()) {
                     source.add(new Constant(context, expression));
@@ -2247,6 +2224,29 @@ public class Spin2Compiler {
                 source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, indexed, (Variable) expression, index));
             }
             else if (expression instanceof ContextLiteral) {
+                int n = 0;
+                int index = 0;
+                boolean indexed = false;
+
+                if (node.getChildCount() > n) {
+                    if (!isPostEffect(node.getChild(n).getText())) {
+                        try {
+                            Expression exp = buildConstantExpression(context, node.getChild(n));
+                            if (exp.isConstant()) {
+                                index = exp.getNumber().intValue();
+                            }
+                            else {
+                                source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
+                                indexed = true;
+                            }
+                        } catch (Exception e) {
+                            source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
+                            indexed = true;
+                        }
+                        n++;
+                    }
+                }
+
                 MemoryOp.Size ss = MemoryOp.Size.Long;
                 MemoryOp.Base bb = MemoryOp.Base.PBase;
                 if (expression instanceof LocalVariable) {
@@ -2255,7 +2255,18 @@ public class Spin2Compiler {
                 else if (expression instanceof Variable) {
                     bb = MemoryOp.Base.VBase;
                 }
-                source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, expression));
+                if (expression instanceof DataVariable) {
+                    switch (((DataVariable) expression).getType()) {
+                        case "BYTE":
+                            ss = MemoryOp.Size.Byte;
+                            break;
+                        case "WORD":
+                            ss = MemoryOp.Size.Word;
+                            break;
+                    }
+                }
+
+                source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, indexed, expression, index));
             }
             else {
                 throw new CompilerMessage("undefined symbol " + node.getText(), node.getToken());

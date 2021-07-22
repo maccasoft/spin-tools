@@ -12,15 +12,15 @@ package com.maccasoft.propeller.expressions;
 
 public class DataVariable extends ContextLiteral {
 
-    private final int size;
+    private final String type;
 
-    public DataVariable(Context context, int size) {
+    public DataVariable(Context context, String type) {
         super(context);
-        this.size = size;
+        this.type = type;
     }
 
-    public int getSize() {
-        return size;
+    public String getType() {
+        return type;
     }
 
     public int getAddress() {

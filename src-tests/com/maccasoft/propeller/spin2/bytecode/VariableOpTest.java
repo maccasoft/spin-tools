@@ -272,6 +272,18 @@ class VariableOpTest {
         Assertions.assertEquals(code.length, op.getSize());
     }
 
+    @Test
+    void testReadUnalignedVarLong() {
+        Variable var = new Variable("LONG", "a", new NumberLiteral(1), 0x02);
+
+        VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Read, false, var);
+        byte[] code = op.getBytes();
+
+        Assertions.assertEquals("5D 02 80", toString(code));
+        Assertions.assertEquals("VAR_READ LONG VBASE+$00002", op.toString());
+        Assertions.assertEquals(code.length, op.getSize());
+    }
+
     String toString(byte[] b) {
         StringBuilder sb = new StringBuilder();
 

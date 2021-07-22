@@ -112,6 +112,14 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
+    void testReSound() throws Exception {
+        String text = getResourceAsString("reSound.spin2");
+
+        byte[] expected = getResource("reSound.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
     void testInterpreter() throws Exception {
         String text = getResourceAsString("Spin2_interpreter.spin2");
 

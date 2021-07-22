@@ -75,6 +75,24 @@ public class MemoryOp extends Spin2Bytecode {
         }
     }
 
+    public MemoryOp(Spin2Context context, Size ss, Base bb, Op op, boolean pop, Expression expression, int index) {
+        super(context);
+        this.ss = ss;
+        this.base = bb;
+        this.op = op;
+        this.pop = pop;
+        this.expression = expression;
+        if (this.ss == Size.Long) {
+            this.index = index * 4;
+        }
+        else if (this.ss == Size.Word) {
+            this.index = index * 2;
+        }
+        else {
+            this.index = index;
+        }
+    }
+
     @Override
     public int getSize() {
         int size = 1;

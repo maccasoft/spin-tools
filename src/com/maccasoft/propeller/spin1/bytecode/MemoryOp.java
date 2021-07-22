@@ -55,14 +55,14 @@ public class MemoryOp extends Spin1Bytecode {
 
         if (expression instanceof DataVariable) {
             if (ss == null) {
-                switch (((DataVariable) expression).getSize()) {
-                    case 1:
+                switch (((DataVariable) expression).getType()) {
+                    case "BYTE":
                         this.ss = Size.Byte;
                         break;
-                    case 2:
+                    case "WORD":
                         this.ss = Size.Word;
                         break;
-                    case 4:
+                    case "LONG":
                         this.ss = Size.Long;
                         break;
                 }

@@ -76,7 +76,6 @@ import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
 import com.maccasoft.propeller.spin1.instructions.Fit;
 import com.maccasoft.propeller.spin1.instructions.Org;
-import com.maccasoft.propeller.spin1.instructions.Word;
 
 public class Spin1Compiler {
 
@@ -547,14 +546,14 @@ public class Spin1Compiler {
                         if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
                             scope = savedContext;
                         }
-                        int size = 4;
-                        if (pasmLine.getInstructionFactory() instanceof Word) {
-                            size = 2;
+                        String type = "LONG";
+                        if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Word) {
+                            type = "WORD";
                         }
                         else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
-                            size = 1;
+                            type = "BYTE";
                         }
-                        scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), size));
+                        scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
                         scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
                         if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
                             scope = pasmLine.getScope();
