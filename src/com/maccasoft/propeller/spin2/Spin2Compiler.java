@@ -143,6 +143,20 @@ public class Spin2Compiler {
         else if (scope.hasSymbol("_CLKFREQ")) {
             _clkfreq = scope.getSymbol("_CLKFREQ").getNumber().intValue();
         }
+        int _xinfreq = 20000000;
+        if (scope.hasSymbol("_xinfreq")) {
+            _xinfreq = scope.getSymbol("_xinfreq").getNumber().intValue();
+        }
+        else if (scope.hasSymbol("_XINFREQ")) {
+            _xinfreq = scope.getSymbol("_XINFREQ").getNumber().intValue();
+        }
+
+        if (!scope.hasSymbol("_xinfreq")) {
+            scope.addSymbol("_xinfreq", new NumberLiteral(_xinfreq));
+        }
+        if (!scope.hasSymbol("_XINFREQ")) {
+            scope.addSymbol("_XINFREQ", new NumberLiteral(_xinfreq));
+        }
 
         if (!scope.hasSymbol("_clkfreq")) {
             scope.addSymbol("_clkfreq", new NumberLiteral(_clkfreq));
@@ -151,7 +165,7 @@ public class Spin2Compiler {
             scope.addSymbol("_CLKFREQ", new NumberLiteral(_clkfreq));
         }
 
-        int _clkmode = getClockMode(20000000, _clkfreq);
+        int _clkmode = getClockMode(_xinfreq, _clkfreq);
         if (!scope.hasSymbol("clkmode_")) {
             scope.addSymbol("clkmode_", new NumberLiteral(_clkmode));
         }

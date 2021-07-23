@@ -294,12 +294,12 @@ public class MemoryDialog2 extends Dialog {
                 sb.append("RCSLOW");
                 break;
             case 0b10:
-                sb.append("XIN");
+                sb.append("XTAL" + cm_cc.getValue(clkmode));
                 break;
             case 0b11:
-                sb.append("XTAL" + (cm_cc.getValue(clkmode) + 1));
-                if (cm_pll.getValue(clkmode) == 1) {
-                    sb.append("+PLL" + (cm_xi_div.getValue(clkmode) + 1) + "X");
+                sb.append("XTAL" + cm_cc.getValue(clkmode));
+                if (cm_pll.isSet(clkmode)) {
+                    sb.append("+PLL" + ((cm_vco_mul.getValue(clkmode) + 1) / (cm_xi_div.getValue(clkmode) + 1)) + "X");
                 }
                 break;
         }
@@ -310,7 +310,19 @@ public class MemoryDialog2 extends Dialog {
         label.setText("Clock Freq.");
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-        label.setText(format.format(clkfreq) + " Hz");
+
+        switch (cm_ss.getValue(clkmode)) {
+            case 0b00:
+                label.setText("~" + format.format(20000000) + " Hz");
+                break;
+            case 0b01:
+                label.setText("~" + format.format(20000) + " Hz");
+                break;
+            case 0b10:
+            case 0b11:
+                label.setText(format.format(clkfreq) + " Hz");
+                break;
+        }
 
         label = new Label(group, SWT.NONE);
         label.setText("XIN Freq.");
@@ -318,8 +330,18 @@ public class MemoryDialog2 extends Dialog {
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
 
-        int value = clkfreq / (cm_vco_mul.getValue(clkmode) + 1) * (cm_xi_div.getValue(clkmode) + 1);
-        label.setText(format.format(value) + " Hz");
+        switch (cm_ss.getValue(clkmode)) {
+            case 0b00:
+            case 0b01:
+                label.setText("Ignored");
+                break;
+            case 0b10:
+                label.setText(format.format(clkfreq * (cm_xi_div.getValue(clkmode) + 1)) + " Hz");
+                break;
+            case 0b11:
+                label.setText(format.format(clkfreq / (cm_vco_mul.getValue(clkmode) + 1) * (cm_xi_div.getValue(clkmode) + 1)) + " Hz");
+                break;
+        }
     }
 
     Control createMemoryView(Composite parent) {
@@ -625,7 +647,7 @@ public class MemoryDialog2 extends Dialog {
 
             if (object.getInterpreter() != null) {
                 pbase = readLong(0x30);
-                vbase = readLong(0x34);
+                vbase = readLong(0x34) & 0xFFFFF;
                 dbase = readLong(0x38);
             }
             else {
