@@ -23,6 +23,10 @@ public class InlinePAsm extends Spin2Bytecode {
         this.line = line;
     }
 
+    public Spin2PAsmLine getLine() {
+        return line;
+    }
+
     @Override
     public int resolve(int address) {
         return line.resolve(address);

@@ -88,11 +88,43 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
+    void testI2C() throws Exception {
+        String text = getResourceAsString("jm_i2c.spin2");
+
+        byte[] expected = getResource("jm_i2c.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    //@Test
+    //            ours: 01203 0017B       12 03          JMP $0017F (3)
+    // propeller tools: 01203 0017B       14 03          TJZ $0017F (3) <- doesn't make sense...
+    void testLCD_PCF8574() throws Exception {
+        String text = getResourceAsString("jm_lcd_pcf8574.spin2");
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("jm_pcf8574", getResourceAsString("jm_pcf8574.spin2"));
+        sources.put("jm_nstr", getResourceAsString("jm_nstr.spin2"));
+        sources.put("jm_i2c", getResourceAsString("jm_i2c.spin2"));
+
+        byte[] expected = getResource("jm_lcd_pcf8574.binary");
+        compileAndCompare(text, sources, expected);
+    }
+
+    @Test
     void testNstr() throws Exception {
         String text = getResourceAsString("jm_nstr.spin2");
 
         byte[] expected = getResource("jm_nstr.binary");
         compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testPCF8574() throws Exception {
+        String text = getResourceAsString("jm_pcf8574.spin2");
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("jm_i2c", getResourceAsString("jm_i2c.spin2"));
+
+        byte[] expected = getResource("jm_pcf8574.binary");
+        compileAndCompare(text, sources, expected);
     }
 
     @Test
@@ -215,9 +247,15 @@ class Spin2CompilerFunctionalTest {
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateBinary(os);
+        byte[] actual = os.toByteArray();
 
         os = new ByteArrayOutputStream();
-        obj.generateListing(new PrintStream(os));
+        PrintStream out = new PrintStream(os);
+
+        if (obj.getInterpreter() != null) {
+            printInterpreterParameters(actual, out);
+        }
+        obj.generateListing(out);
         String actualListing = os.toString().replaceAll("\\r\\n", "\n");
 
         String expectedListing;
@@ -225,7 +263,11 @@ class Spin2CompilerFunctionalTest {
             obj.setBytes(expected, obj.getInterpreter() != null ? obj.getInterpreter().getPBase() : 0x0000);
 
             os = new ByteArrayOutputStream();
-            obj.generateListing(new PrintStream(os));
+            out = new PrintStream(os);
+            if (obj.getInterpreter() != null) {
+                printInterpreterParameters(expected, out);
+            }
+            obj.generateListing(out);
             expectedListing = os.toString().replaceAll("\\r\\n", "\n");
         }
         else {
@@ -233,6 +275,17 @@ class Spin2CompilerFunctionalTest {
         }
 
         Assertions.assertEquals(expectedListing, actualListing);
+    }
+
+    void printInterpreterParameters(byte[] binary, PrintStream out) {
+        out.println(String.format("%02X %02X %02X %02X PBASE", binary[0x30], binary[0x31], binary[0x32], binary[0x33]));
+        out.println(String.format("%02X %02X %02X %02X VBASE", binary[0x34], binary[0x35], binary[0x36], binary[0x37]));
+        out.println(String.format("%02X %02X %02X %02X DBASE", binary[0x38], binary[0x39], binary[0x3A], binary[0x3B]));
+        out.println(String.format("%02X %02X %02X %02X Longs to clear", binary[0x3C], binary[0x3D], binary[0x3E], binary[0x3F]));
+        out.println();
+        out.println(String.format("%02X %02X %02X %02X CLKMODE", binary[0x40], binary[0x41], binary[0x42], binary[0x43]));
+        out.println(String.format("%02X %02X %02X %02X CLKFREQ", binary[0x44], binary[0x45], binary[0x46], binary[0x47]));
+        out.println();
     }
 
 }

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.maccasoft.propeller.expressions.ContextLiteral;
+import com.maccasoft.propeller.spin2.bytecode.InlinePAsm;
 
 public class Spin2MethodLine {
 
@@ -155,7 +156,13 @@ public class Spin2MethodLine {
         }
 
         for (Spin2Bytecode bc : source) {
-            obj.writeBytes(bc.getBytes(), bc.toString());
+            if (bc instanceof InlinePAsm) {
+                Spin2PAsmLine line = ((InlinePAsm) bc).getLine();
+                obj.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());
+            }
+            else {
+                obj.writeBytes(bc.getBytes(), bc.toString());
+            }
         }
 
         for (Spin2MethodLine line : childs) {

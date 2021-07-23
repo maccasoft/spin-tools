@@ -34,6 +34,7 @@ import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.Negative;
+import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
@@ -76,6 +77,7 @@ import com.maccasoft.propeller.spin2.bytecode.MemoryOp;
 import com.maccasoft.propeller.spin2.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin2.bytecode.Tjz;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
+import com.maccasoft.propeller.spin2.instructions.Empty;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
 
@@ -130,7 +132,9 @@ public class Spin2Compiler {
             }
         }
 
-        object.setVarSize(varOffset);
+        while ((varOffset % 4) != 0) {
+            varOffset++;
+        }
 
         int _clkfreq = 20000000;
         if (scope.hasSymbol("_clkfreq")) {
@@ -343,6 +347,8 @@ public class Spin2Compiler {
                 }
             }
         }
+
+        object.setVarSize(varOffset);
 
         return object;
     }
@@ -1371,7 +1377,22 @@ public class Spin2Compiler {
         }
         else if ("ORG".equalsIgnoreCase(text)) {
             int org = 0;
-            int count = line.getSource().size() - 2;
+
+            int count = 0;
+            for (Spin2Bytecode bc : line.getSource()) {
+                if (bc instanceof InlinePAsm) {
+                    Spin2PAsmLine pasmLine = ((InlinePAsm) bc).getLine();
+                    if (pasmLine.getInstructionFactory() instanceof Org) {
+                        continue;
+                    }
+                    if (pasmLine.getInstructionFactory() instanceof Empty) {
+                        continue;
+                    }
+                    count++;
+                }
+            }
+
+            count--;
             line.source.add(0, new Bytecode(line.getScope(), new byte[] {
                 (byte) org,
                 (byte) (org >> 8),
@@ -2325,6 +2346,12 @@ public class Spin2Compiler {
             }
             return new Subtract(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
+        if ("!".equals(node.getText())) {
+            if (node.getChildCount() == 1) {
+                return new Not(buildConstantExpression(context, node.getChild(0)));
+            }
+            throw new RuntimeException("unary operator with " + node.getChildCount() + " arguments");
+        }
         if ("*".equals(node.getText())) {
             return new Multiply(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
@@ -2373,6 +2400,10 @@ public class Spin2Compiler {
         //double result_Fout = 0;
         int result_pppp = 0, result_divd = 0;
         double error = 1e9;
+
+        if (clkfreq == 20000000) {
+            return 0;
+        }
 
         for (int pppp = 0; pppp <= 15; pppp++) {
             if (pppp == 0) {
