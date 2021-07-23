@@ -204,7 +204,7 @@ public abstract class Spin2InstructionObject {
 
     public int resolve(int address) {
         context.setAddress(address);
-        return context.getAddress() + (getSize() + 3) / 4;
+        return address + (getSize() + 3) / 4;
     }
 
     public int getSize() {

@@ -285,7 +285,7 @@ class Spin2ParseDatLineTest {
         Node root = subject.parse();
         DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
 
-        Assertions.assertNull(line0.label);
+        Assertions.assertEquals("long1", line0.label.getText());
         Assertions.assertNull(line0.condition);
         Assertions.assertNull(line0.instruction);
         Assertions.assertEquals(0, line0.parameters.size());

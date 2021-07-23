@@ -35,6 +35,7 @@ public class Alignl extends Spin2PAsmInstructionFactory {
 
         @Override
         public int resolve(int address) {
+            context.setAddress(address);
             return (address + 3) & ~3;
         }
 

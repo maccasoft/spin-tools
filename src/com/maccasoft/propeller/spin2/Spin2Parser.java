@@ -600,13 +600,16 @@ public class Spin2Parser {
                         state = 3;
                         break;
                     }
-                    if (token.column == 0) {
-                        parent.label = new Node(parent);
-                        parent.label.addToken(token);
-                        state = 2;
+                    if (Spin2Model.isInstruction(token.getText()) || Spin2Model.isType(token.getText())) {
+                        parent.instruction = new Node(parent);
+                        parent.instruction.addToken(token);
+                        state = 4;
                         break;
                     }
-                    // fall-through
+                    parent.label = new Node(parent);
+                    parent.label.addToken(token);
+                    state = 2;
+                    break;
                 case 2:
                     if (Spin2Model.isCondition(token.getText())) {
                         parent.condition = new Node(parent);
@@ -622,7 +625,7 @@ public class Spin2Parser {
                         state = 4;
                         break;
                     }
-                    child = new ErrorNode(parent, parent.condition == null ? "Invalid condition or instruction" : "Invalid instruction");
+                    child = new ErrorNode(parent, parent.condition == null ? "invalid condition or instruction" : "invalid instruction");
                     child.addToken(token);
                     child = parent;
                     state = 9;
