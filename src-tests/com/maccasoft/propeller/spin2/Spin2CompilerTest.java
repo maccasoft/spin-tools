@@ -2639,6 +2639,131 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testNestedObjectsLink() throws Exception {
+        String text = ""
+            + "VAR\n"
+            + "\n"
+            + "    long a\n"
+            + "    byte b\n"
+            + "    word c\n"
+            + "    long d\n"
+            + "\n"
+            + "OBJ\n"
+            + "\n"
+            + "    t1 : \"text1\"\n"
+            + "    t2 : \"text2\"\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "    a := 1\n"
+            + "    b := 2\n"
+            + "    c := 3\n"
+            + "    d := 4\n"
+            + "";
+
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("text1", ""
+            + "OBJ\n"
+            + "\n"
+            + "    t3 : \"text3\"\n"
+            + "\n"
+            + "VAR\n"
+            + "\n"
+            + "    long a1\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "    a1 := 5\n"
+            + "");
+        sources.put("text2", ""
+            + "VAR\n"
+            + "\n"
+            + "    word a2\n"
+            + "    word b2\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "    a2 := 6\n"
+            + "    b2 := 7\n"
+            + "");
+        sources.put("text3", ""
+            + "VAR\n"
+            + "\n"
+            + "    byte a3\n"
+            + "    long b3\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "    a3 := 8\n"
+            + "    b3 := 9\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       2C 00 00 00    Object @ $0002C\n"
+            + "00004 00004       10 00 00 00    Variables @ $00010\n"
+            + "00008 00008       58 00 00 00    Object @ PBASE+$00058\n"
+            + "0000C 0000C       24 00 00 00    Variables @ VBASE+$00024\n"
+            + "00010 00010       18 00 00 80    Method main @ $00018 (0 parameters, 0 returns)\n"
+            + "00014 00014       29 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "00018 00018       00             (stack size)\n"
+            + "'     a := 1\n"
+            + "00019 00019       A2             CONSTANT (1)\n"
+            + "0001A 0001A       C1 81          VAR_WRITE LONG VBASE+$00001 (short)\n"
+            + "'     b := 2\n"
+            + "0001C 0001C       A3             CONSTANT (2)\n"
+            + "0001D 0001D       51 08 81       VAR_WRITE BYTE VBASE+$00008\n"
+            + "'     c := 3\n"
+            + "00020 00020       A4             CONSTANT (3)\n"
+            + "00021 00021       57 09 81       VAR_WRITE WORD VBASE+$00009\n"
+            + "'     d := 4\n"
+            + "00024 00024       A5             CONSTANT (4)\n"
+            + "00025 00025       5D 0B 81       VAR_WRITE LONG VBASE+$0000B\n"
+            + "00028 00028       04             RETURN\n"
+            + "00029 00029       00 00 00       Padding\n"
+            + "' Object header\n"
+            + "0002C 00000       18 00 00 00    Object @ $00018\n"
+            + "00030 00004       08 00 00 00    Variables @ $00008\n"
+            + "00034 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "00038 0000C       15 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "0003C 00010       00             (stack size)\n"
+            + "'     a1 := 5\n"
+            + "0003D 00011       A6             CONSTANT (5)\n"
+            + "0003E 00012       C1 81          VAR_WRITE LONG VBASE+$00001 (short)\n"
+            + "00040 00014       04             RETURN\n"
+            + "00041 00015       00 00 00       Padding\n"
+            + "' Object header\n"
+            + "00044 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00048 00004       12 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "0004C 00008       00             (stack size)\n"
+            + "'     a3 := 8\n"
+            + "0004D 00009       A9             CONSTANT (8)\n"
+            + "0004E 0000A       51 04 81       VAR_WRITE BYTE VBASE+$00004\n"
+            + "'     b3 := 9\n"
+            + "00051 0000D       AA             CONSTANT (9)\n"
+            + "00052 0000E       5D 05 81       VAR_WRITE LONG VBASE+$00005\n"
+            + "00055 00011       04             RETURN\n"
+            + "00056 00012       00 00          Padding\n"
+            + "' Object header\n"
+            + "00058 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "0005C 00004       12 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "00060 00008       00             (stack size)\n"
+            + "'     a2 := 6\n"
+            + "00061 00009       A7             CONSTANT (6)\n"
+            + "00062 0000A       57 04 81       VAR_WRITE WORD VBASE+$00004\n"
+            + "'     b2 := 7\n"
+            + "00065 0000D       A8             CONSTANT (7)\n"
+            + "00066 0000E       57 06 81       VAR_WRITE WORD VBASE+$00006\n"
+            + "00069 00011       04             RETURN\n"
+            + "0006A 00012       00 00          Padding\n"
+            + "", compile(text, sources));
+    }
+
+    @Test
     void testVariableTypeConstantIndex() throws Exception {
         String text = ""
             + "PUB main | a, b\n"
@@ -2831,25 +2956,40 @@ class Spin2CompilerTest {
         return compile(text, Collections.emptyMap());
     }
 
+    class Spin2CompilerAdapter extends Spin2Compiler {
+
+        Map<String, String> sources;
+
+        public Spin2CompilerAdapter(Map<String, String> sources) {
+            this.sources = sources;
+        }
+
+        @Override
+        protected Spin2Object getObject(String fileName) {
+            String text = getObjectSource(fileName);
+            if (text == null) {
+                throw new RuntimeException("file " + fileName + " not found");
+            }
+            Spin2TokenStream stream = new Spin2TokenStream(text);
+            Spin2Parser subject = new Spin2Parser(stream);
+            Node root = subject.parse();
+
+            Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
+            return compiler.compileObject(root);
+        }
+
+        protected String getObjectSource(String fileName) {
+            return sources.get(fileName);
+        }
+
+    }
+
     String compile(String text, Map<String, String> sources) throws Exception {
         Spin2TokenStream stream = new Spin2TokenStream(text);
         Spin2Parser subject = new Spin2Parser(stream);
         Node root = subject.parse();
 
-        Spin2Compiler compiler = new Spin2Compiler() {
-
-            @Override
-            protected Spin2Object getObject(String fileName) {
-                String text = sources.get(fileName);
-                Spin2TokenStream stream = new Spin2TokenStream(text);
-                Spin2Parser subject = new Spin2Parser(stream);
-                Node root = subject.parse();
-
-                Spin2Compiler compiler = new Spin2Compiler();
-                return compiler.compileObject(root);
-            }
-
-        };
+        Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
         Spin2Object obj = compiler.compileObject(root);
 
         for (CompilerMessage msg : compiler.getMessages()) {
