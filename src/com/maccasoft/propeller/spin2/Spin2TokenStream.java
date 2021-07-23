@@ -210,17 +210,15 @@ public class Spin2TokenStream extends TokenStream {
                     }
 
                     if ((ch == '.' || ch == '#')) {
-                        if (index + 1 >= text.length()) {
-                            token.stop++;
-                            break;
+                        if (index + 1 < text.length()) {
+                            char ch1 = text.charAt(index + 1);
+                            if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '=') {
+                                token.stop++;
+                                break;
+                            }
                         }
-                        char ch1 = text.charAt(index + 1);
-                        if (ch1 == ch) {
-                            state = Token.START;
-                            return token;
-                        }
-                        token.stop++;
-                        break;
+                        state = Token.START;
+                        return token;
                     }
 
                     if (ch == '=') {

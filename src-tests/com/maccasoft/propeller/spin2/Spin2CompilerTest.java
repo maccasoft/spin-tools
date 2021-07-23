@@ -2923,6 +2923,91 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testTypedBitField() throws Exception {
+        String text = ""
+            + "PUB main | a, b, c, d\n"
+            + "\n"
+            + "    a := b.byte[1]\n"
+            + "    a := b.byte[2..1]\n"
+            + "    a := b.word[c]\n"
+            + "    a := b.word[d..c]\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       1F 00 00 00    End\n"
+            + "' PUB main | a, b, c, d\n"
+            + "00008 00008       10             (stack size)\n"
+            + "'     a := b.byte[1]\n"
+            + "00009 00009       52 05 80       MEM_READ BYTE DBASE+$00005\n"
+            + "0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := b.byte[2..1]\n"
+            + "0000D 0000D       A3             CONSTANT (2)\n"
+            + "0000E 0000E       A2             CONSTANT (1)\n"
+            + "0000F 0000F       55 04 80       MEM_READ BYTE INDEXED DBASE+$00004\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := b.word[c]\n"
+            + "00013 00013       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00014 00014       5B 04 80       MEM_READ WORD INDEXED DBASE+$00004\n"
+            + "00017 00017       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := b.word[d..c]\n"
+            + "00018 00018       E3             VAR_READ LONG DBASE+$00003 (short)\n"
+            + "00019 00019       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "0001A 0001A       5B 04 80       MEM_READ WORD INDEXED DBASE+$00004\n"
+            + "0001D 0001D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0001E 0001E       04             RETURN\n"
+            + "0001F 0001F       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testIndexedBitField() throws Exception {
+        String text = ""
+            + "PUB main | a, b, c, d\n"
+            + "\n"
+            + "    a := b[3].[1]\n"
+            + "    a := b[3].[2..1]\n"
+            + "    a := b[a].[c]\n"
+            + "    a := b[a].[d..c]\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       26 00 00 00    End\n"
+            + "' PUB main | a, b, c, d\n"
+            + "00008 00008       10             (stack size)\n"
+            + "'     a := b[3].[1]\n"
+            + "00009 00009       5E 10          VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "0000B 0000B       E1 80          BITFIELD_READ (short)\n"
+            + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := b[3].[2..1]\n"
+            + "0000E 0000E       5E 10          VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "00010 00010       DF 21 80       BITFIELD_READ\n"
+            + "00013 00013       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := b[a].[c]\n"
+            + "00014 00014       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00015 00015       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00016 00016       61 04          VAR_SETUP_INDEXED LONG DBASE+$00004\n"
+            + "00018 00018       DE 80          BITFIELD_READ (pop)\n"
+            + "0001A 0001A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := b[a].[d..c]\n"
+            + "0001B 0001B       E3             VAR_READ LONG DBASE+$00003 (short)\n"
+            + "0001C 0001C       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "0001D 0001D       9F 94          ADDBITS\n"
+            + "0001F 0001F       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00020 00020       61 04          VAR_SETUP_INDEXED LONG DBASE+$00004\n"
+            + "00022 00022       DE 80          BITFIELD_READ (pop)\n"
+            + "00024 00024       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00025 00025       04             RETURN\n"
+            + "00026 00026       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testInlineAssembly() throws Exception {
         String text = ""
             + "PUB main(a)\n"

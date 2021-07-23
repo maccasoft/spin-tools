@@ -304,6 +304,12 @@ public class Spin2TreeBuilder {
                     node.addChild(parseLevel(parseAtom(), 0, false));
                     return node;
                 }
+                if (".".equals(peek().getText())) {
+                    node.addChild(new Spin2StatementNode(next()));
+                    if (peek() == null) {
+                        return node;
+                    }
+                }
                 if ("[".equals(peek().getText())) {
                     next();
                     node.addChild(parseLevel(parseAtom(), 0, false));
@@ -314,6 +320,12 @@ public class Spin2TreeBuilder {
 
                     if (peek() == null) {
                         return node;
+                    }
+                    if (".".equals(peek().getText())) {
+                        node.addChild(new Spin2StatementNode(next()));
+                        if (peek() == null) {
+                            return node;
+                        }
                     }
                     if ("[".equals(peek().getText())) {
                         next();
@@ -358,7 +370,7 @@ public class Spin2TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "nrOfMixes := (ones ((!outputMixMask_4) & $00_ffffff)) / 3";
+        text = "row := basepin + lut[rc].[%00011_00100]";
         System.out.println(text);
         System.out.println(parse(text));
     }

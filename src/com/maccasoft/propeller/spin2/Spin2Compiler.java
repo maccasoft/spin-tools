@@ -698,7 +698,7 @@ public class Spin2Compiler {
             if (size != null) {
                 count = count * size.getNumber().intValue();
             }
-            offset += ((count + 3) / 4) * 4;
+            offset += count;
         }
 
         Spin2Method method = new Spin2Method(localScope, node.name.getText(), parameters, returns, localVariables);
@@ -1795,84 +1795,7 @@ public class Spin2Compiler {
         }
         else {
             String[] s = node.getText().split("[\\.]");
-            if (s.length == 1 && node.getText().contains(".")) {
-                Expression expression = context.getLocalSymbol(s[0]);
-                if (expression == null) {
-                    throw new CompilerMessage("undefined symbol " + node.getText(), node.getToken());
-                }
-
-                int index = -1;
-                if ("..".equals(node.getChild(0).getText())) {
-                    try {
-                        Expression exp1 = buildConstantExpression(context, node.getChild(0).getChild(0));
-                        Expression exp2 = buildConstantExpression(context, node.getChild(0).getChild(1));
-                        if (exp1.isConstant() && exp2.isConstant()) {
-                            int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                            int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                            Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                            index = exp.getNumber().intValue();
-                        }
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-
-                    if (index != -1) {
-                        source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
-                        try {
-                            ByteArrayOutputStream os = new ByteArrayOutputStream();
-                            os.write(0xDF);
-                            os.write(Constant.wrVar(index));
-                            os.write(0x80);
-                            source.add(new Bytecode(context, os.toByteArray(), "BITFIELD_READ"));
-                        } catch (Exception e) {
-                            // Do nothing
-                        }
-                    }
-                    else {
-                        source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-                        source.add(new Bytecode(context, new byte[] {
-                            (byte) 0x9F, (byte) 0x94
-                        }, "ADDBITS"));
-                        source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
-                        source.add(new Bytecode(context, new byte[] {
-                            (byte) 0xDE, (byte) 0x80
-                        }, "BITFIELD_READ (pop)"));
-                    }
-
-                }
-                else {
-                    try {
-                        Expression exp = buildConstantExpression(context, node.getChild(0));
-                        if (exp.isConstant()) {
-                            index = exp.getNumber().intValue();
-                        }
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-
-                    if (index != -1) {
-                        source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
-                        if (index >= 0 && index <= 15) {
-                            source.add(new Bytecode(context, new byte[] {
-                                (byte) (0xE0 + index), (byte) 0x80
-                            }, "BITFIELD_READ (short)"));
-                        }
-                        else if (index >= 16 && index <= 31) {
-                            source.add(new Bytecode(context, new byte[] {
-                                (byte) (0xF0 + index), (byte) 0x80
-                            }, "BITFIELD_READ (short)"));
-                        }
-                    }
-                    else {
-                        source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-                        source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
-                        source.add(new Bytecode(context, new byte[] {
-                            (byte) 0xDE, (byte) 0x80
-                        }, "BITFIELD_READ (pop)"));
-                    }
-                }
-            }
-            else if (s.length == 2 && ("BYTE".equalsIgnoreCase(s[1]) || "WORD".equalsIgnoreCase(s[1]) || "LONG".equalsIgnoreCase(s[1]))) {
+            if (s.length == 2 && ("BYTE".equalsIgnoreCase(s[1]) || "WORD".equalsIgnoreCase(s[1]) || "LONG".equalsIgnoreCase(s[1]))) {
                 Spin2StatementNode postEffect = null;
                 Spin2StatementNode indexNode = null;
 
@@ -1946,6 +1869,9 @@ public class Spin2Compiler {
             }
             else {
                 Expression expression = context.getLocalSymbol(node.getText());
+                if (expression instanceof HubContextLiteral) {
+                    expression = context.getLocalSymbol(node.getText().substring(1));
+                }
                 if (expression == null) {
                     throw new CompilerMessage("undefined symbol " + node.getText(), node.getToken());
                 }
@@ -1965,11 +1891,15 @@ public class Spin2Compiler {
                     else {
                         MemoryOp.Size ss = MemoryOp.Size.Long;
                         MemoryOp.Base bb = MemoryOp.Base.PBase;
-                        if (expression instanceof LocalVariable) {
-                            bb = MemoryOp.Base.DBase;
-                        }
-                        else if (expression instanceof Variable) {
-                            bb = MemoryOp.Base.VBase;
+                        if (expression instanceof DataVariable) {
+                            switch (((DataVariable) expression).getType()) {
+                                case "BYTE":
+                                    ss = MemoryOp.Size.Byte;
+                                    break;
+                                case "WORD":
+                                    ss = MemoryOp.Size.Word;
+                                    break;
+                            }
                         }
                         source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, expression));
                     }
@@ -1999,111 +1929,244 @@ public class Spin2Compiler {
                     }
                 }
                 else if (expression instanceof Variable) {
-                    int n = 0;
-                    int index = 0;
-                    boolean indexed = false;
-
-                    if (node.getChildCount() > n) {
-                        if (!isPostEffect(node.getChild(n).getText())) {
-                            try {
-                                Expression exp = buildConstantExpression(context, node.getChild(n));
-                                if (exp.isConstant()) {
-                                    index = exp.getNumber().intValue();
-                                }
-                                else {
-                                    source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
-                                    indexed = true;
-                                }
-                            } catch (Exception e) {
-                                source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
-                                indexed = true;
-                            }
-                            n++;
-                        }
-                    }
-
-                    if (node.getChildCount() > n) {
-                        Spin2StatementNode effectNode = node.getChild(n);
-                        if ("~".equalsIgnoreCase(effectNode.getText())) {
-                            source.add(new Constant(context, new NumberLiteral(0)));
-                            source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, indexed, (Variable) expression, index));
-                            if (push) {
-                                source.add(new Bytecode(context, 0x8D, "SWAP"));
-                            }
-                        }
-                        else {
-                            source.add(new VariableOp(context, VariableOp.Op.Setup, indexed, (Variable) expression, index));
-                            if ("++".equalsIgnoreCase(effectNode.getText())) {
-                                source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
-                            }
-                            else if ("--".equalsIgnoreCase(effectNode.getText())) {
-                                source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
-                            }
-                            else if ("!!".equalsIgnoreCase(effectNode.getText())) {
-                                source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
-                            }
-                            else if ("!".equalsIgnoreCase(effectNode.getText())) {
-                                source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
-                            }
-                            else {
-                                throw new CompilerMessage("unhandled post effect " + node.getChild(0).getText(), node.getToken());
-                            }
-                        }
-                    }
-                    else {
-                        source.add(new VariableOp(context, VariableOp.Op.Read, indexed, (Variable) expression, index));
-                    }
+                    source.addAll(compileVariableOperation(context, expression, node, push));
                 }
                 else if (expression instanceof ContextLiteral) {
-                    int n = 0;
-                    int index = 0;
-                    boolean indexed = false;
-
-                    if (node.getChildCount() > n) {
-                        if (!isPostEffect(node.getChild(n).getText())) {
-                            try {
-                                Expression exp = buildConstantExpression(context, node.getChild(n));
-                                if (exp.isConstant()) {
-                                    index = exp.getNumber().intValue();
-                                }
-                                else {
-                                    source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
-                                    indexed = true;
-                                }
-                            } catch (Exception e) {
-                                source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
-                                indexed = true;
-                            }
-                            n++;
-                        }
-                    }
-
-                    MemoryOp.Size ss = MemoryOp.Size.Long;
-                    MemoryOp.Base bb = MemoryOp.Base.PBase;
-                    if (expression instanceof LocalVariable) {
-                        bb = MemoryOp.Base.DBase;
-                    }
-                    else if (expression instanceof Variable) {
-                        bb = MemoryOp.Base.VBase;
-                    }
-                    if (expression instanceof DataVariable) {
-                        switch (((DataVariable) expression).getType()) {
-                            case "BYTE":
-                                ss = MemoryOp.Size.Byte;
-                                break;
-                            case "WORD":
-                                ss = MemoryOp.Size.Word;
-                                break;
-                        }
-                    }
-
-                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, indexed, expression, index));
+                    source.addAll(compileVariableOperation(context, expression, node, push));
                 }
                 else if (expression.isConstant()) {
                     source.add(new Constant(context, expression));
                 }
                 else {
                     source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
+                }
+            }
+        }
+
+        return source;
+    }
+
+    List<Spin2Bytecode> compileVariableOperation(Spin2Context context, Expression expression, Spin2StatementNode node, boolean push) {
+        Spin2StatementNode indexNode = null;
+        Spin2StatementNode bitfieldNode = null;
+        Spin2StatementNode postEffectNode = null;
+        List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
+
+        MemoryOp.Size ss = MemoryOp.Size.Long;
+        MemoryOp.Base bb = MemoryOp.Base.PBase;
+        if (expression instanceof DataVariable) {
+            switch (((DataVariable) expression).getType()) {
+                case "BYTE":
+                    ss = MemoryOp.Size.Byte;
+                    break;
+                case "WORD":
+                    ss = MemoryOp.Size.Word;
+                    break;
+            }
+        }
+
+        int n = 0;
+        if (n < node.getChildCount()) {
+            if (!".".equals(node.getChild(n).getText()) && !isPostEffect(node.getChild(n).getText())) {
+                indexNode = node.getChild(n++);
+            }
+        }
+        if (n < node.getChildCount()) {
+            if (".".equals(node.getChild(n).getText())) {
+                n++;
+                if (n >= node.getChildCount()) {
+                    throw new CompilerMessage("expected bitfield expression", node.getToken());
+                }
+                bitfieldNode = node.getChild(n++);
+            }
+        }
+        if (n < node.getChildCount()) {
+            if (isPostEffect(node.getChild(n).getText())) {
+                postEffectNode = node.getChild(n++);
+            }
+        }
+        if (n < node.getChildCount()) {
+            throw new CompilerMessage("unexpected " + node.getChild(n).getText(), node.getChild(n).getToken());
+        }
+
+        int index = 0;
+        boolean popIndex = false;
+
+        if (indexNode != null) {
+            popIndex = true;
+            try {
+                Expression exp = buildConstantExpression(context, indexNode);
+                if (exp.isConstant()) {
+                    index = exp.getNumber().intValue();
+                    popIndex = false;
+                }
+            } catch (Exception e) {
+                // Do nothing
+            }
+        }
+
+        if (bitfieldNode != null) {
+            int bitfield = -1;
+            if ("..".equals(bitfieldNode.getText())) {
+                try {
+                    Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
+                    Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
+                    if (exp1.isConstant() && exp2.isConstant()) {
+                        int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
+                        int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
+                        Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
+                        bitfield = exp.getNumber().intValue();
+                    }
+                } catch (Exception e) {
+                    // Do nothing
+                }
+
+                if (bitfield != -1) {
+                    if (popIndex) {
+                        source.addAll(compileBytecodeExpression(context, indexNode, true));
+                    }
+                    if (expression instanceof ContextLiteral) {
+                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
+                    }
+                    else {
+                        source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, index));
+                    }
+                    try {
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        os.write(0xDF);
+                        os.write(Constant.wrVar(bitfield));
+                        os.write(0x80);
+                        source.add(new Bytecode(context, os.toByteArray(), "BITFIELD_READ"));
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                }
+                else {
+                    source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) 0x9F, (byte) 0x94
+                    }, "ADDBITS"));
+                    if (popIndex) {
+                        source.addAll(compileBytecodeExpression(context, indexNode, true));
+                    }
+                    if (expression instanceof ContextLiteral) {
+                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
+                    }
+                    else {
+                        source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, index));
+                    }
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) 0xDE, (byte) 0x80
+                    }, "BITFIELD_READ (pop)"));
+                }
+
+            }
+            else {
+                try {
+                    Expression exp = buildConstantExpression(context, bitfieldNode);
+                    if (exp.isConstant()) {
+                        bitfield = exp.getNumber().intValue();
+                    }
+                } catch (Exception e) {
+                    // Do nothing
+                }
+
+                if (bitfield != -1) {
+                    if (popIndex) {
+                        source.addAll(compileBytecodeExpression(context, indexNode, true));
+                    }
+                    if (expression instanceof ContextLiteral) {
+                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
+                    }
+                    else {
+                        source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, index));
+                    }
+                    if (bitfield >= 0 && bitfield <= 15) {
+                        source.add(new Bytecode(context, new byte[] {
+                            (byte) (0xE0 + bitfield), (byte) 0x80
+                        }, "BITFIELD_READ (short)"));
+                    }
+                    else if (bitfield >= 16 && bitfield <= 31) {
+                        source.add(new Bytecode(context, new byte[] {
+                            (byte) (0xF0 + bitfield), (byte) 0x80
+                        }, "BITFIELD_READ (short)"));
+                    }
+                    else {
+                        try {
+                            ByteArrayOutputStream os = new ByteArrayOutputStream();
+                            os.write(0xDF);
+                            os.write(Constant.wrVar(bitfield));
+                            os.write(0x80);
+                            source.add(new Bytecode(context, os.toByteArray(), "BITFIELD_READ"));
+                        } catch (Exception e) {
+                            // Do nothing
+                        }
+                    }
+                }
+                else {
+                    source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
+                    if (popIndex) {
+                        source.addAll(compileBytecodeExpression(context, indexNode, true));
+                    }
+                    if (expression instanceof ContextLiteral) {
+                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
+                    }
+                    else {
+                        source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, index));
+                    }
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) 0xDE, (byte) 0x80
+                    }, "BITFIELD_READ (pop)"));
+                }
+            }
+        }
+        else {
+            if (popIndex) {
+                source.addAll(compileBytecodeExpression(context, indexNode, true));
+            }
+            if (postEffectNode != null) {
+                if ("~".equalsIgnoreCase(postEffectNode.getText())) {
+                    source.add(new Constant(context, new NumberLiteral(0)));
+                    if (expression instanceof ContextLiteral) {
+                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, popIndex, expression, index));
+                    }
+                    else {
+                        source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, (Variable) expression, index));
+                    }
+                    if (push) {
+                        source.add(new Bytecode(context, 0x8D, "SWAP"));
+                    }
+                }
+                else {
+                    if (expression instanceof ContextLiteral) {
+                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
+                    }
+                    else {
+                        source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, index));
+                    }
+                    if ("++".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                    }
+                    else if ("--".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
+                    }
+                    else if ("!!".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
+                    }
+                    else if ("!".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
+                    }
+                    else {
+                        throw new CompilerMessage("unsupported post effect " + postEffectNode.getText(), postEffectNode.getToken());
+                    }
+                }
+            }
+            else {
+                if (expression instanceof ContextLiteral) {
+                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, popIndex, expression, index));
+                }
+                else {
+                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression, index));
                 }
             }
         }

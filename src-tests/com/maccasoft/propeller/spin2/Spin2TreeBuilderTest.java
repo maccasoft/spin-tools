@@ -450,7 +450,21 @@ class Spin2TreeBuilderTest {
         Assertions.assertEquals(""
             + "[:=]\n"
             + " +-- [a]\n"
-            + " +-- [b.]\n"
+            + " +-- [b]\n"
+            + "      +-- [.]\n"
+            + "      +-- [1]\n"
+            + "", parseAssignment(text));
+    }
+
+    @Test
+    void testIndexedBitField() {
+        String text = "a := b[0].[1]";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [b]\n"
+            + "      +-- [0]\n"
+            + "      +-- [.]\n"
             + "      +-- [1]\n"
             + "", parseAssignment(text));
     }

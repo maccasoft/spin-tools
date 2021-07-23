@@ -97,6 +97,10 @@ public class Spin2Method {
             count += size;
         }
 
+        while ((count % 4) != 0) {
+            count++;
+        }
+
         return count;
     }
 
