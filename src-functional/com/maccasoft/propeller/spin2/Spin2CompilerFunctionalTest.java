@@ -44,6 +44,41 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
+    void testLedMatrix() throws Exception {
+        String text = getResourceAsString("cjmj_pin_test_w_led_matrix.spin2");
+
+        byte[] expected = getResource("cjmj_pin_test_w_led_matrix.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void test1Wire() throws Exception {
+        String text = getResourceAsString("jm_1-wire.spin2");
+
+        byte[] expected = getResource("jm_1-wire.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
+    void testAPA102C() throws Exception {
+        String text = getResourceAsString("jm_apa102c.spin2");
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("jm_gamma8", getResourceAsString("jm_gamma8.spin2"));
+
+        byte[] expected = getResource("jm_apa102c.binary");
+        compileAndCompare(text, sources, expected);
+    }
+
+    //@Test
+    // Fails because of different sequence of same-priority operators
+    void testEZAnalog() throws Exception {
+        String text = getResourceAsString("jm_ez_analog.spin2");
+
+        byte[] expected = getResource("jm_ez_analog.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
+    }
+
+    @Test
     void testEZButton() throws Exception {
         String text = getResourceAsString("jm_ez_button.spin2");
 
@@ -75,6 +110,14 @@ class Spin2CompilerFunctionalTest {
 
         byte[] expected = getResource("jm_fullduplexserial.binary");
         compileAndCompare(text, sources, expected);
+    }
+
+    @Test
+    void testGamma8() throws Exception {
+        String text = getResourceAsString("jm_gamma8.spin2");
+
+        byte[] expected = getResource("jm_gamma8.binary");
+        compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
     @Test
