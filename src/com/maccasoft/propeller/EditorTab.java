@@ -15,7 +15,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -215,6 +217,30 @@ public class EditorTab {
                 Spin2CompilerAdapter c = new Spin2CompilerAdapter();
                 return c.compileObject(root);
             }
+            return null;
+        }
+
+        @Override
+        protected byte[] getBinaryFile(String fileName) {
+            File fileParent = file != null ? file.getParentFile() : null;
+
+            try {
+                InputStream is = new FileInputStream(new File(fileParent, fileName));
+                try {
+                    byte[] b = new byte[is.available()];
+                    is.read(b);
+                    return b;
+                } finally {
+                    try {
+                        is.close();
+                    } catch (Exception e) {
+
+                    }
+                }
+            } catch (Exception e) {
+
+            }
+
             return null;
         }
 

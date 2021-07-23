@@ -96,6 +96,10 @@ public class Spin2PAsmLine {
         return address;
     }
 
+    public void setInstructionObject(Spin2InstructionObject instructionObject) {
+        this.instructionObject = instructionObject;
+    }
+
     public Spin2InstructionObject getInstructionObject() {
         try {
             if (instructionObject == null) {

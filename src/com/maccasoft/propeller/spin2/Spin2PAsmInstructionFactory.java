@@ -397,13 +397,11 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
         symbols.put("long", new Long());
         symbols.put("word", new Word());
         symbols.put("byte", new Byte());
-        symbols.put("file", new FileInc());
     }
 
     public static Spin2PAsmInstructionFactory get(String mnemonic) {
         Spin2PAsmInstructionFactory factory = mnemonic != null ? symbols.get(mnemonic.toLowerCase()) : Empty.instance;
         if (factory == null) {
-            System.err.println("Can't find factory for mnemonic " + mnemonic + "");
             factory = Empty.instance;
         }
         return factory;

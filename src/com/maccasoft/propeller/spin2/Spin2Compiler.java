@@ -78,6 +78,7 @@ import com.maccasoft.propeller.spin2.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin2.bytecode.Tjz;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 import com.maccasoft.propeller.spin2.instructions.Empty;
+import com.maccasoft.propeller.spin2.instructions.FileInc;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
 
@@ -575,6 +576,21 @@ public class Spin2Compiler {
         }
 
         Spin2PAsmLine pasmLine = new Spin2PAsmLine(localScope, label, condition, mnemonic, parameters, modifier);
+
+        try {
+            if ("FILE".equalsIgnoreCase(mnemonic)) {
+                String fileName = parameters.get(0).toString().substring(1);
+                fileName = fileName.substring(0, fileName.length() - 1);
+                byte[] data = getBinaryFile(fileName);
+                if (data == null) {
+                    throw new CompilerMessage("file \"" + fileName + "\" not found", node.parameters.get(0));
+                }
+                pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data));
+            }
+        } catch (RuntimeException e) {
+            throw new CompilerMessage(e.getMessage(), node);
+        }
+
         if (pasmLine.getLabel() != null) {
             try {
                 if (!pasmLine.isLocalLabel() && nested > 0) {
@@ -600,6 +616,10 @@ public class Spin2Compiler {
         }
 
         return pasmLine;
+    }
+
+    protected byte[] getBinaryFile(String fileName) {
+        return null;
     }
 
     Spin2Method compileMethod(MethodNode node) {
@@ -1144,7 +1164,7 @@ public class Spin2Compiler {
                     line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), true));
                     Spin2MethodLine target = (Spin2MethodLine) line.getData("quit");
                     line.addSource(new Tjz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
-                    line.setData("pop", new Integer(4));
+                    line.setData("pop", Integer.valueOf(4));
                 }
             }
             else if (line.getArgumentsCount() == 3 || line.getArgumentsCount() == 4) {
@@ -1185,7 +1205,7 @@ public class Spin2Compiler {
                     line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(1), true));
                 }
 
-                line.setData("pop", new Integer(12));
+                line.setData("pop", Integer.valueOf(12));
 
                 String varText = line.getArgument(0).getText();
                 Expression expression = line.getScope().getLocalSymbol(varText);
