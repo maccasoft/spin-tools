@@ -1396,6 +1396,17 @@ public class Spin2Compiler {
                         continue;
                     }
                     count++;
+                    List<Spin2PAsmExpression> arguments = pasmLine.getArguments();
+                    if (arguments.size() > 0) {
+                        if (arguments.get(0).isLongLiteral()) {
+                            count++;
+                        }
+                        if (arguments.size() > 1) {
+                            if (arguments.get(1).isLongLiteral()) {
+                                count++;
+                            }
+                        }
+                    }
                 }
             }
 
