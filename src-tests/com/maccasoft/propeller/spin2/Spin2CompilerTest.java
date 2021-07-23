@@ -120,6 +120,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0A 00 00 00    End\n"
             + "' PUB main()\n"
@@ -139,6 +140,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0C 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -170,6 +172,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       19 00 00 00    End\n"
             + "' PUB main()\n"
@@ -201,6 +204,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       10 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -226,6 +230,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0C 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -247,6 +252,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0D 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -270,6 +276,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       11 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -298,6 +305,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       13 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -330,6 +338,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       15 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -367,6 +376,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       23 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -419,6 +429,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       27 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -469,6 +480,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0E 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -493,6 +505,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0F 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -509,7 +522,7 @@ class Spin2CompilerTest {
     }
 
     @Test
-    void testRepeatVarCounter() throws Exception {
+    void testRepeatVar() throws Exception {
         String text = ""
             + "PUB main() | a\n"
             + "\n"
@@ -518,6 +531,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       11 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -535,6 +549,45 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testRepeatVarQuit() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat a\n"
+            + "        if a == 0\n"
+            + "            a := 1\n"
+            + "        else\n"
+            + "            quit\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       1A 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       04             (stack size)\n"
+            + "'     repeat a\n"
+            + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A 0000A       15 0E          TJZ $00019 (14)\n"
+            + "'         if a == 0\n"
+            + "0000C 0000C       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000D 0000D       A1             CONSTANT (0)\n"
+            + "0000E 0000E       70             EQUAL\n"
+            + "0000F 0000F       13 05          JZ $00015 (5)\n"
+            + "'             a := 1\n"
+            + "00011 00011       A2             CONSTANT (1)\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00013 00013       12 03          JMP $00017 (3)\n"
+            + "'         else\n"
+            + "'             quit\n"
+            + "00015 00015       14 03          JNZ $00019 (3)\n"
+            + "00017 00017       16 74          DJNZ $0000C (-12)\n"
+            + "00019 00019       04             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testRepeatQuit() throws Exception {
         String text = ""
             + "PUB main() | a\n"
@@ -546,6 +599,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       15 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -579,6 +633,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       15 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -610,6 +665,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       13 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -638,6 +694,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       13 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -668,6 +725,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       1A 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -704,6 +762,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       11 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -733,6 +792,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       11 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -764,6 +824,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       18 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -801,6 +862,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       18 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -835,6 +897,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       16 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -867,6 +930,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       16 00 00 00    End\n"
             + "' PUB main() | a, b, c, d\n"
@@ -899,6 +963,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       16 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -931,6 +996,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       17 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -966,6 +1032,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       1E 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -1008,6 +1075,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       20 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -1050,6 +1118,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       1A 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -1086,6 +1155,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       21 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -1132,6 +1202,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       2A 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -1184,6 +1255,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       31 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -1243,6 +1315,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
             + "00004 00004       22 00 00 00    End\n"
             + "00008 00008   000 01 00 00 00    c                   long    1\n"
@@ -1279,6 +1352,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       11 00 00 80    Method function @ $00011 (0 parameters, 0 returns)\n"
             + "00008 00008       13 00 00 00    End\n"
@@ -1307,6 +1381,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       12 00 00 81    Method function @ $00012 (1 parameters, 0 returns)\n"
             + "00008 00008       14 00 00 00    End\n"
@@ -1335,6 +1410,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       12 00 10 80    Method function @ $00012 (0 parameters, 1 returns)\n"
             + "00008 00008       14 00 00 00    End\n"
@@ -1363,6 +1439,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       12 00 10 80    Method function @ $00012 (0 parameters, 1 returns)\n"
             + "00008 00008       14 00 00 00    End\n"
@@ -1391,6 +1468,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       13 00 00 81    Method function @ $00013 (1 parameters, 0 returns)\n"
             + "00008 00008       15 00 00 00    End\n"
@@ -1420,6 +1498,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       18 00 00 81    Method function @ $00018 (1 parameters, 0 returns)\n"
             + "00008 00008       1A 00 00 00    End\n"
@@ -1450,6 +1529,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       18 00 00 81    Method function @ $00018 (1 parameters, 0 returns)\n"
             + "00008 00008       1A 00 00 00    End\n"
@@ -1480,6 +1560,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       1A 00 00 81    Method function @ $0001A (1 parameters, 0 returns)\n"
             + "00008 00008       1C 00 00 00    End\n"
@@ -1509,6 +1590,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
             + "00004 00004       12 00 00 80    Method function2 @ $00012 (0 parameters, 0 returns)\n"
             + "00008 00008       14 00 00 80    Method function1 @ $00014 (0 parameters, 0 returns)\n"
@@ -1540,6 +1622,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
             + "00004 00004       15 00 00 80    Method function2 @ $00015 (0 parameters, 0 returns)\n"
             + "00008 00008       17 00 00 80    Method function1 @ $00017 (0 parameters, 0 returns)\n"
@@ -1570,6 +1653,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0B 00 00 00    End\n"
             + "' PUB main()\n"
@@ -1591,6 +1675,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0C 00 00 00    End\n"
             + "' PUB main()\n"
@@ -1616,6 +1701,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       12 00 00 00    End\n"
             + "00008 00008   000                                    org     $000\n"
@@ -1644,6 +1730,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       12 00 00 00    End\n"
             + "00008 00008   000                                    org     $000\n"
@@ -1672,6 +1759,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       12 00 00 00    End\n"
             + "00008 00008   000                                    org     $000\n"
@@ -1698,6 +1786,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0D 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -1720,6 +1809,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0D 00 00 00    End\n"
             + "' PUB main() | a, b[10]\n"
@@ -1742,6 +1832,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       10 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -1766,6 +1857,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0A 00 00 00    End\n"
             + "' PUB main()\n"
@@ -1786,6 +1878,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0D 00 00 00    End\n"
             + "' PUB main | a\n"
@@ -1812,6 +1905,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       20 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -1856,6 +1950,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       22 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -1902,6 +1997,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       17 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -1935,6 +2031,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0C 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -1956,6 +2053,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0F 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -1977,6 +2075,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       10 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -2004,6 +2103,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       13 00 00 80    Method out @ $00013 (0 parameters, 0 returns)\n"
             + "00008 00008       15 00 00 00    End\n"
@@ -2030,6 +2130,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0C 00 00 00    End\n"
             + "' PUB main() | a\n"
@@ -2053,6 +2154,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       13 00 00 80    Method in @ $00013 (0 parameters, 0 returns)\n"
             + "00008 00008       15 00 00 00    End\n"
@@ -2080,6 +2182,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       15 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -2109,6 +2212,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       15 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -2137,6 +2241,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       11 00 00 00    End\n"
             + "' PUB main() | a, b\n"
@@ -2163,6 +2268,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 10 80    Method start @ $00008 (0 parameters, 1 returns)\n"
             + "00004 00004       10 00 00 00    End\n"
             + "' PUB start() : r | a, b\n"
@@ -2190,6 +2296,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 10 80    Method start @ $00008 (0 parameters, 1 returns)\n"
             + "00004 00004       18 00 00 00    End\n"
             + "' PUB start() : r | a, b\n"
@@ -2226,6 +2333,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 10 80    Method start @ $00008 (0 parameters, 1 returns)\n"
             + "00004 00004       18 00 00 00    End\n"
             + "' PUB start() : r | a, b\n"
@@ -2259,6 +2367,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 10 80    Method start @ $00008 (0 parameters, 1 returns)\n"
             + "00004 00004       1A 00 00 00    End\n"
             + "' PUB start() : r | a, b\n"
@@ -2292,6 +2401,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       13 00 00 00    End\n"
             + "' PUB start() | a, b\n"
@@ -2334,6 +2444,7 @@ class Spin2CompilerTest {
             + "");
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       14 00 00 00    Object @ $00014\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
@@ -2344,6 +2455,7 @@ class Spin2CompilerTest {
             + "00011 00011       A2             CONSTANT (1)\n"
             + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "00013 00013       04             RETURN\n"
+            + "' Object header\n"
             + "00014 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
             + "00018 00004       0E 00 00 00    End\n"
             + "' PUB start(a, b) | c\n"
@@ -2380,6 +2492,7 @@ class Spin2CompilerTest {
             + "");
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       14 00 00 00    Object @ $00014\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
@@ -2390,6 +2503,7 @@ class Spin2CompilerTest {
             + "00011 00011       A2             CONSTANT (1)\n"
             + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "00013 00013       04             RETURN\n"
+            + "' Object header\n"
             + "", compile(text, sources));
     }
 
@@ -2434,6 +2548,7 @@ class Spin2CompilerTest {
             + "");
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       1C 00 00 00    Object @ $0001C\n"
             + "00004 00004       08 00 00 00    Variables @ $00008\n"
             + "00008 00008       2C 00 00 00    Object @ PBASE+$0002C\n"
@@ -2446,6 +2561,7 @@ class Spin2CompilerTest {
             + "00019 00019       A2             CONSTANT (1)\n"
             + "0001A 0001A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "0001B 0001B       04             RETURN\n"
+            + "' Object header\n"
             + "0001C 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
             + "00020 00004       0E 00 00 00    End\n"
             + "' PUB start(a, b) | c\n"
@@ -2457,6 +2573,7 @@ class Spin2CompilerTest {
             + "00028 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
             + "00029 0000D       04             RETURN\n"
             + "0002A 0000E       00 00          Padding\n"
+            + "' Object header\n"
             + "0002C 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
             + "00030 00004       0E 00 00 00    End\n"
             + "' PUB start(a, b) | c\n"
@@ -2493,6 +2610,7 @@ class Spin2CompilerTest {
             + "");
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       18 00 00 00    Object @ $00018\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
@@ -2505,6 +2623,7 @@ class Spin2CompilerTest {
             + "00013 00013       A3             CONSTANT (2)\n"
             + "00014 00014       08 00 00       CALL_OBJ_SUB (0.0)\n"
             + "00017 00017       04             RETURN\n"
+            + "' Object header\n"
             + "00018 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
             + "0001C 00004       0E 00 00 00    End\n"
             + "' PUB start(a, b) | c\n"
@@ -2530,6 +2649,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       12 00 00 00    End\n"
             + "' PUB main | a, b\n"
@@ -2556,6 +2676,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       14 00 00 00    End\n"
             + "' PUB main | a, b, c\n"
@@ -2582,6 +2703,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       10 00 00 00    End\n"
             + "' PUB main | a, b, c\n"
@@ -2610,6 +2732,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       1C 00 00 00    End\n"
             + "' PUB main | a, b, c\n"
@@ -2645,6 +2768,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       20 00 00 00    End\n"
             + "' PUB main | a, b, c, d\n"
@@ -2687,6 +2811,7 @@ class Spin2CompilerTest {
             + "";
 
         Assertions.assertEquals(""
+            + "' Object header\n"
             + "00000 00000       08 00 00 81    Method main @ $00008 (1 parameters, 0 returns)\n"
             + "00004 00004       20 00 00 00    End\n"
             + "' PUB main(a)\n"

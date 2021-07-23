@@ -209,6 +209,8 @@ public class Spin2Compiler {
             }
         }
 
+        object.writeComment("Object header");
+
         LongDataObject[] ldo = new LongDataObject[objects.size() * 2];
 
         if (objects.size() != 0) {
@@ -815,7 +817,6 @@ public class Spin2Compiler {
                     else if ("REPEAT".equalsIgnoreCase(token.getText())) {
                         List<Spin2StatementNode> arguments = new ArrayList<Spin2StatementNode>();
 
-                        int pop = 0;
                         String text = token.getText();
 
                         if (iter.hasNext()) {
@@ -842,8 +843,6 @@ public class Spin2Compiler {
                                 arguments.add(builder.getRoot());
 
                                 if ("FROM".equalsIgnoreCase(token.getText())) {
-                                    pop = 12;
-
                                     builder = new Spin2TreeBuilder();
                                     while (iter.hasNext()) {
                                         token = iter.next();
@@ -882,9 +881,6 @@ public class Spin2Compiler {
                         Spin2MethodLine line = new Spin2MethodLine(context, String.format(".label_" + labelCounter++), text, arguments);
                         line.setText(node.getText());
                         line.setData(node);
-                        if (pop != 0) {
-                            line.setData("pop", new Integer(pop));
-                        }
                         lines.add(line);
 
                         Spin2MethodLine loopLine = line;
@@ -1134,6 +1130,7 @@ public class Spin2Compiler {
                     line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), true));
                     Spin2MethodLine target = (Spin2MethodLine) line.getData("quit");
                     line.addSource(new Tjz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                    line.setData("pop", new Integer(4));
                 }
             }
             else if (line.getArgumentsCount() == 3 || line.getArgumentsCount() == 4) {
@@ -1173,6 +1170,8 @@ public class Spin2Compiler {
                     }
                     line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(1), true));
                 }
+
+                line.setData("pop", new Integer(12));
 
                 String varText = line.getArgument(0).getText();
                 Expression expression = line.getScope().getLocalSymbol(varText);
@@ -1286,6 +1285,7 @@ public class Spin2Compiler {
         }
         else if ("QUIT".equalsIgnoreCase(text)) {
             int pop = 0;
+            boolean hasCase = false;
 
             Spin2MethodLine repeat = line.getParent();
             while (repeat != null) {
@@ -1294,6 +1294,7 @@ public class Spin2Compiler {
                         pop += 4;
                     }
                     pop += 4;
+                    hasCase = true;
                 }
                 if ("REPEAT".equalsIgnoreCase(repeat.getStatement())) {
                     break;
@@ -1314,18 +1315,24 @@ public class Spin2Compiler {
                 pop += (Integer) repeat.getData("pop");
             }
 
-            if (pop != 0) {
-                try {
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    os.write(0x18);
-                    os.write(Constant.wrVars(pop));
-                    line.addSource(new Bytecode(line.getScope(), os.toByteArray(), "POP"));
-                } catch (Exception e) {
-                    // Do nothing
-                }
+            if (hasCase == false && pop == 4) {
+                Spin2MethodLine target = (Spin2MethodLine) repeat.getData("quit");
+                line.addSource(new Jnz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
             }
-            Spin2MethodLine target = (Spin2MethodLine) repeat.getData("quit");
-            line.addSource(new Jmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+            else {
+                if (pop != 0) {
+                    try {
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        os.write(0x18);
+                        os.write(Constant.wrVars(pop));
+                        line.addSource(new Bytecode(line.getScope(), os.toByteArray(), "POP"));
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                }
+                Spin2MethodLine target = (Spin2MethodLine) repeat.getData("quit");
+                line.addSource(new Jmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+            }
         }
         else if ("RETURN".equalsIgnoreCase(text)) {
             if (line.getArgumentsCount() == 0) {

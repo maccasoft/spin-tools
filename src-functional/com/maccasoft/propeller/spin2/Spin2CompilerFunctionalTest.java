@@ -67,9 +67,7 @@ class Spin2CompilerFunctionalTest {
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
-    //@Test
-    //            ours: 01356 002CE       12 03          JMP $002D2 (3)
-    // propeller tools: 01356 002CE       14 03          TJZ $002D2 (3) <- doesn't make sense...
+    @Test
     void testFullDuplexSerial() throws Exception {
         String text = getResourceAsString("jm_fullduplexserial.spin2");
         Map<String, String> sources = new HashMap<String, String>();
@@ -95,9 +93,7 @@ class Spin2CompilerFunctionalTest {
         compileAndCompare(text, Collections.emptyMap(), expected);
     }
 
-    //@Test
-    //            ours: 01203 0017B       12 03          JMP $0017F (3)
-    // propeller tools: 01203 0017B       14 03          TJZ $0017F (3) <- doesn't make sense...
+    @Test
     void testLCD_PCF8574() throws Exception {
         String text = getResourceAsString("jm_lcd_pcf8574.spin2");
         Map<String, String> sources = new HashMap<String, String>();
