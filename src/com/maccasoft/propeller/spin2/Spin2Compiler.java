@@ -238,18 +238,26 @@ public class Spin2Compiler {
             }
         }
 
+        LongDataObject[] ld = new LongDataObject[methods.size() + 1];
+
         if (methods.size() != 0) {
             scope.addSymbol("@CLKMODE", new NumberLiteral(0x40));
             scope.addSymbol("@clkmode", new NumberLiteral(0x40));
             scope.addSymbol("@CLKFREQ", new NumberLiteral(0x44));
             scope.addSymbol("@clkfreq", new NumberLiteral(0x44));
-            hubAddress = (methods.size() + 1) * 4;
+
+            int index = 0;
+            for (Spin2Method method : methods) {
+                ld[index] = object.writeLong(0, "Method " + method.getLabel());
+                index++;
+            }
+            ld[index] = object.writeLong(0, "End");
         }
 
-        offset = objects.size() * 8;
+        hubAddress = object.getSize();
 
         for (Spin2PAsmLine line : source) {
-            line.getScope().setHubAddress(hubAddress + offset);
+            line.getScope().setHubAddress(hubAddress);
             if (line.getInstructionFactory() instanceof Orgh) {
                 hubMode = true;
             }
@@ -260,7 +268,7 @@ public class Spin2Compiler {
             boolean isCogCode = address < 0x200;
 
             try {
-                address = line.resolve(hubMode ? (hubAddress + offset) : address);
+                address = line.resolve(hubMode ? hubAddress : address);
                 hubAddress += line.getInstructionObject().getSize();
             } catch (CompilerMessage e) {
                 logMessage(e);
@@ -287,17 +295,6 @@ public class Spin2Compiler {
                     throw new RuntimeException("lut code limit exceeded by " + (address - 0x400) + " long(s)");
                 }
             }
-        }
-
-        LongDataObject[] ld = new LongDataObject[methods.size() + 1];
-
-        if (methods.size() != 0) {
-            int index = 0;
-            for (Spin2Method method : methods) {
-                ld[index] = object.writeLong(0, "Method " + method.getLabel());
-                index++;
-            }
-            ld[index] = object.writeLong(0, "End");
         }
 
         for (Spin2PAsmLine line : source) {
