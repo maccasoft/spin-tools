@@ -167,15 +167,6 @@ public class Spin2TokenMarker extends EditorTokenMarker {
         keywords.put("NEGX", TokenId.CONSTANT);
         keywords.put("PI", TokenId.CONSTANT);
 
-        keywords.put("PR0", TokenId.PASM_LABEL);
-        keywords.put("PR1", TokenId.PASM_LABEL);
-        keywords.put("PR2", TokenId.PASM_LABEL);
-        keywords.put("PR3", TokenId.PASM_LABEL);
-        keywords.put("PR4", TokenId.PASM_LABEL);
-        keywords.put("PR5", TokenId.PASM_LABEL);
-        keywords.put("PR6", TokenId.PASM_LABEL);
-        keywords.put("PR7", TokenId.PASM_LABEL);
-
         keywords.put("P_TRUE_A", TokenId.CONSTANT);
         keywords.put("P_INVERT_A", TokenId.CONSTANT);
 
@@ -415,27 +406,39 @@ public class Spin2TokenMarker extends EditorTokenMarker {
         keywords.put("EVENT_XRL", TokenId.CONSTANT);
         keywords.put("EVENT_ATN", TokenId.CONSTANT);
         keywords.put("EVENT_QMT", TokenId.CONSTANT);
+
+        keywords.put("IJMP3", TokenId.PASM_INSTRUCTION);
+        keywords.put("IRET3", TokenId.PASM_INSTRUCTION);
+        keywords.put("IJMP2", TokenId.PASM_INSTRUCTION);
+        keywords.put("IRET2", TokenId.PASM_INSTRUCTION);
+        keywords.put("IJMP1", TokenId.PASM_INSTRUCTION);
+        keywords.put("IRET1", TokenId.PASM_INSTRUCTION);
+        keywords.put("PA", TokenId.PASM_INSTRUCTION);
+        keywords.put("PB", TokenId.PASM_INSTRUCTION);
+        keywords.put("PTRA", TokenId.PASM_INSTRUCTION);
+        keywords.put("PTRB", TokenId.PASM_INSTRUCTION);
+        keywords.put("DIRA", TokenId.PASM_INSTRUCTION);
+        keywords.put("DIRB", TokenId.PASM_INSTRUCTION);
+        keywords.put("OUTA", TokenId.PASM_INSTRUCTION);
+        keywords.put("OUTB", TokenId.PASM_INSTRUCTION);
+        keywords.put("INA", TokenId.PASM_INSTRUCTION);
+        keywords.put("INB", TokenId.PASM_INSTRUCTION);
+    }
+
+    static Map<String, TokenId> spinKeywords = new HashMap<String, TokenId>();
+    static {
+        spinKeywords.put("PR0", TokenId.PASM_INSTRUCTION);
+        spinKeywords.put("PR1", TokenId.PASM_INSTRUCTION);
+        spinKeywords.put("PR2", TokenId.PASM_INSTRUCTION);
+        spinKeywords.put("PR3", TokenId.PASM_INSTRUCTION);
+        spinKeywords.put("PR4", TokenId.PASM_INSTRUCTION);
+        spinKeywords.put("PR5", TokenId.PASM_INSTRUCTION);
+        spinKeywords.put("PR6", TokenId.PASM_INSTRUCTION);
+        spinKeywords.put("PR7", TokenId.PASM_INSTRUCTION);
     }
 
     static Map<String, TokenId> pasmKeywords = new HashMap<String, TokenId>();
     static {
-        pasmKeywords.put("IJMP3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("IRET3", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("IJMP2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("IRET2", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("IJMP1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("IRET1", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PTRA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("PTRB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DIRA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("DIRB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("OUTA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("OUTB", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("INA", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("INB", TokenId.PASM_INSTRUCTION);
-
         pasmKeywords.put("_CLR", TokenId.PASM_INSTRUCTION);
         pasmKeywords.put("_NC_AND_Z", TokenId.PASM_INSTRUCTION);
         pasmKeywords.put("_Z_AND_NC", TokenId.PASM_INSTRUCTION);
@@ -636,6 +639,9 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                 if (child instanceof StatementNode) {
                     markTokens(child);
                 }
+                else if (child instanceof DataLineNode) {
+                    markDataTokens((DataLineNode) child, true);
+                }
             }
         }
 
@@ -652,6 +658,9 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                 }
                 else {
                     TokenId id = keywords.get(token.getText().toUpperCase());
+                    if (id == null) {
+                        id = spinKeywords.get(token.getText().toUpperCase());
+                    }
                     if (id == null) {
                         id = locals.get(token.getText());
                     }
@@ -671,10 +680,12 @@ public class Spin2TokenMarker extends EditorTokenMarker {
         @Override
         public void visitData(DataNode node) {
             lastLabel = "";
+            for (Node child : node.getChilds()) {
+                markDataTokens((DataLineNode) child, false);
+            }
         }
 
-        @Override
-        public void visitDataLine(DataLineNode node) {
+        public void markDataTokens(DataLineNode node, boolean inline) {
             if (node.label != null) {
                 String s = node.label.getText();
                 if (!s.startsWith(".")) {
@@ -705,6 +716,15 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                         }
                         if (id == null) {
                             id = keywords.get(token.getText().toUpperCase());
+                        }
+                        if (inline && id == null) {
+                            id = pasmKeywords.get(token.getText().toUpperCase());
+                            if (id == null) {
+                                id = spinKeywords.get(token.getText().toUpperCase());
+                            }
+                            if (id == null) {
+                                id = locals.get(token.getText());
+                            }
                         }
                         if (id != null) {
                             tokens.add(new TokenMarker(token, id));
