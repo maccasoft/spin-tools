@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -167,6 +168,7 @@ public class EditorTab {
                                         return;
                                     }
                                     editor.redraw();
+                                    tabItem.setFont(null);
                                     updateTabItemText();
                                 }
                             });
@@ -274,6 +276,7 @@ public class EditorTab {
 
                 Node root = tokenMarker.getRoot();
                 Thread thread = new Thread(new Runnable() {
+
                     @Override
                     public void run() {
                         Spin2Compiler compiler = new Spin2CompilerAdapter();
@@ -469,29 +472,60 @@ public class EditorTab {
         return object;
     }
 
+    public void goToFirstError() {
+        Iterator<TokenMarker> iter = tokenMarker.getCompilerTokens().iterator();
+        if (iter.hasNext()) {
+            TokenMarker marker = iter.next();
+            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
+            editor.gotToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+        }
+    }
+
     public void goToNextError() {
         int offset = editor.getStyledText().getCaretOffset();
         int line = editor.getStyledText().getLineAtOffset(offset);
-        for (TokenMarker marker : tokenMarker.getCompilerTokens()) {
+
+        Iterator<TokenMarker> iter = tokenMarker.getCompilerTokens().iterator();
+        while (iter.hasNext()) {
+            TokenMarker marker = iter.next();
             int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
             if (markerLine > line) {
                 editor.gotToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
                 return;
             }
         }
+
+        iter = tokenMarker.getCompilerTokens().iterator();
+        if (iter.hasNext()) {
+            TokenMarker marker = iter.next();
+            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
+            editor.gotToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+        }
+
         Display.getDefault().beep();
     }
 
     public void goToPreviousError() {
         int offset = editor.getStyledText().getCaretOffset();
         int line = editor.getStyledText().getLineAtOffset(offset);
-        for (TokenMarker marker : tokenMarker.getCompilerTokens()) {
+
+        Iterator<TokenMarker> iter = tokenMarker.getCompilerTokens().descendingIterator();
+        while (iter.hasNext()) {
+            TokenMarker marker = iter.next();
             int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
             if (markerLine < line) {
                 editor.gotToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
                 return;
             }
         }
+
+        iter = tokenMarker.getCompilerTokens().descendingIterator();
+        if (iter.hasNext()) {
+            TokenMarker marker = iter.next();
+            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
+            editor.gotToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+        }
+
         Display.getDefault().beep();
     }
 

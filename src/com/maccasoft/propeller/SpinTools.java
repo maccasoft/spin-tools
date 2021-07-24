@@ -610,6 +610,7 @@ public class SpinTools {
                 editorTab.setFile(fileToSave);
                 editorTab.setText(fileToSave.getName());
                 editorTab.clearDirty();
+                preferences.addToLru(fileToSave);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -919,6 +920,7 @@ public class SpinTools {
         EditorTab editorTab = (EditorTab) tabItem.getData();
 
         if (editorTab.hasErrors()) {
+            editorTab.goToFirstError();
             MessageDialog.open(MessageDialog.INFORMATION, shell, APP_TITLE, "Editor has errors, fix all errors before opening the information dialog.", SWT.NONE);
             return;
         }
@@ -1020,6 +1022,7 @@ public class SpinTools {
         }
         EditorTab editorTab = (EditorTab) tabItem.getData();
         if (editorTab.hasErrors()) {
+            editorTab.goToFirstError();
             MessageDialog.open(MessageDialog.INFORMATION, shell, APP_TITLE, "Editor has errors, fix all errors before upload.", SWT.NONE);
             return;
         }
@@ -1142,6 +1145,7 @@ public class SpinTools {
         }
         EditorTab editorTab = (EditorTab) tabItem.getData();
         if (editorTab.hasErrors()) {
+            editorTab.goToFirstError();
             MessageDialog.open(MessageDialog.INFORMATION, shell, APP_TITLE, "Editor has errors, fix all errors before upload.", SWT.NONE);
             return;
         }
