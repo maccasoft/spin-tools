@@ -2322,6 +2322,33 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testIndexPostEffects() throws Exception {
+        String text = ""
+            + "PUB start() | a, b\n"
+            + "\n"
+            + "    b[3]++\n"
+            + "    a := b[3]++\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       11 00 00 00    End\n"
+            + "' PUB start() | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     b[3]++\n"
+            + "00009 00009       5E 10          VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "0000B 0000B       83             POST_INC\n"
+            + "'     a := b[3]++\n"
+            + "0000C 0000C       5E 10          VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "0000E 0000E       87             POST_INC (push)\n"
+            + "0000F 0000F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00010 00010       04             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testPreEffects() throws Exception {
         String text = ""
             + "PUB start() : r | a, b\n"
@@ -2411,6 +2438,38 @@ class Spin2CompilerTest {
             + "0000A 0000A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "'     if (a~)\n"
             + "0000B 0000B       A1             CONSTANT (0)\n"
+            + "0000C 0000C       D0             VAR_SETUP LONG DBASE+$00000 (short)\n"
+            + "0000D 0000D       8D             SWAP\n"
+            + "0000E 0000E       13 03          JZ $00012 (3)\n"
+            + "'         b := 1\n"
+            + "00010 00010       A2             CONSTANT (1)\n"
+            + "00011 00011       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "00012 00012       04             RETURN\n"
+            + "00013 00013       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testPostSet() throws Exception {
+        String text = ""
+            + "PUB start() | a, b\n"
+            + "\n"
+            + "    a~~\n"
+            + "    if (a~~)\n"
+            + "        b := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       13 00 00 00    End\n"
+            + "' PUB start() | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     a~~\n"
+            + "00009 00009       A0             CONSTANT (-1)\n"
+            + "0000A 0000A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     if (a~~)\n"
+            + "0000B 0000B       A0             CONSTANT (-1)\n"
             + "0000C 0000C       D0             VAR_SETUP LONG DBASE+$00000 (short)\n"
             + "0000D 0000D       8D             SWAP\n"
             + "0000E 0000E       13 03          JZ $00012 (3)\n"
@@ -2919,6 +2978,50 @@ class Spin2CompilerTest {
             + "0001C 0001C       DE 80          BITFIELD_READ (pop)\n"
             + "0001E 0001E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "0001F 0001F       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testBitFieldPostEffect() throws Exception {
+        String text = ""
+            + "PUB main | a, b, c, d\n"
+            + "\n"
+            + "    a := b.[1]~\n"
+            + "    a := b.[2..1]++\n"
+            + "    a := b.[c]!!\n"
+            + "    a := b.[d..c]--\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       21 00 00 00    End\n"
+            + "' PUB main | a, b, c, d\n"
+            + "00008 00008       10             (stack size)\n"
+            + "'     a := b.[1]~\n"
+            + "00009 00009       A1             CONSTANT (0)\n"
+            + "0000A 0000A       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "0000B 0000B       E1 8D          BITFIELD_SWAP (short) (push)\n"
+            + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := b.[2..1]++\n"
+            + "0000E 0000E       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "0000F 0000F       DF 21 87       BITFIELD_POST_INC (push)\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := b.[c]!!\n"
+            + "00013 00013       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00014 00014       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "00015 00015       DE 8A          BITFIELD_POST_LOGICAL_NOT (pop) (push)\n"
+            + "00017 00017       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := b.[d..c]--\n"
+            + "00018 00018       E3             VAR_READ LONG DBASE+$00003 (short)\n"
+            + "00019 00019       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "0001A 0001A       9F 94          ADDBITS\n"
+            + "0001C 0001C       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "0001D 0001D       DE 88          BITFIELD_POST_DEC (pop) (push)\n"
+            + "0001F 0001F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00020 00020       04             RETURN\n"
+            + "00021 00021       00 00 00       Padding\n"
             + "", compile(text));
     }
 
