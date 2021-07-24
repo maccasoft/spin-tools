@@ -399,14 +399,7 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                     if (id == null) {
                         id = symbols.get(token.getText());
                     }
-                    if (id == null) {
-                        if (token.getText().indexOf('.') <= 0) {
-                            TokenMarker marker = new TokenMarker(token, TokenId.ERROR);
-                            marker.setError("Symbol is undefined");
-                            tokens.add(marker);
-                        }
-                    }
-                    else {
+                    if (id != null) {
                         tokens.add(new TokenMarker(token, id));
                     }
                 }
@@ -451,12 +444,7 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                         if (id == null) {
                             id = pasmKeywords.get(token.getText().toUpperCase());
                         }
-                        if (id == null) {
-                            TokenMarker marker = new TokenMarker(token, TokenId.ERROR);
-                            marker.setError("Symbol is undefined");
-                            tokens.add(marker);
-                        }
-                        else {
+                        if (id != null) {
                             tokens.add(new TokenMarker(token, id));
                         }
                     }
@@ -481,12 +469,7 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                     if (id == null) {
                         id = symbols.get(token.getText());
                     }
-                    if (id == null) {
-                        TokenMarker marker = new TokenMarker(token, TokenId.ERROR);
-                        marker.setError("Symbol is undefined");
-                        tokens.add(marker);
-                    }
-                    else {
+                    if (id != null) {
                         tokens.add(new TokenMarker(token, id));
                     }
                 }

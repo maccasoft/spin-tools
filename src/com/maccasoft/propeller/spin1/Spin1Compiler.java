@@ -12,12 +12,16 @@ package com.maccasoft.propeller.spin1;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.apache.commons.collections4.map.ListOrderedMap;
+
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.expressions.Add;
+import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
@@ -27,14 +31,18 @@ import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.LocalVariable;
-import com.maccasoft.propeller.expressions.LogicalAnd;
-import com.maccasoft.propeller.expressions.LogicalOr;
 import com.maccasoft.propeller.expressions.Method;
+import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.Negative;
+import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
+import com.maccasoft.propeller.expressions.ShiftLeft;
+import com.maccasoft.propeller.expressions.ShiftRight;
 import com.maccasoft.propeller.expressions.Subtract;
+import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
@@ -84,7 +92,7 @@ public class Spin1Compiler {
     Spin1Context scope = new Spin1GlobalContext();
     List<Spin1PAsmLine> source = new ArrayList<Spin1PAsmLine>();
     List<Spin1Method> methods = new ArrayList<Spin1Method>();
-    List<Spin1Object> objects = new ArrayList<Spin1Object>();
+    ListOrderedMap<String, Spin1Object> objects = ListOrderedMap.listOrderedMap(new HashMap<String, Spin1Object>());
 
     int varOffset = 0;
     int labelCounter;
@@ -141,6 +149,12 @@ public class Spin1Compiler {
         Spin1Object object = new Spin1Object();
 
         for (Node node : root.getChilds()) {
+            if (node instanceof ObjectsNode) {
+                compileObjBlock(node);
+            }
+        }
+
+        for (Node node : root.getChilds()) {
             if (node instanceof ConstantsNode) {
                 compileConBlock(node, object);
             }
@@ -184,10 +198,17 @@ public class Spin1Compiler {
             }
         }
 
-        for (Node node : root.getChilds()) {
-            if (node instanceof ObjectsNode) {
-                compileObjBlock(node);
+        int objectIndex = methods.size() + 1;
+        for (Entry<String, Spin1Object> entry : objects.entrySet()) {
+            for (Entry<String, Expression> objentry : entry.getValue().getSymbols().entrySet()) {
+                if (objentry.getValue() instanceof Method) {
+                    String qualifiedName = entry.getKey() + "." + objentry.getKey();
+                    Method method = ((Method) objentry.getValue()).copy();
+                    method.setObject(objectIndex);
+                    scope.addSymbol(qualifiedName, method);
+                }
             }
+            objectIndex++;
         }
 
         object.writeComment("Object header");
@@ -283,7 +304,7 @@ public class Spin1Compiler {
         objectSize.setValue(object.getSize());
 
         int index = 0;
-        for (Spin1Object o : objects) {
+        for (Spin1Object o : objects.values()) {
             headerOffset[index].setValue(object.getSize());
             variablesOffset[index].setValue(varOffset);
             object.writeObject(o);
@@ -381,12 +402,14 @@ public class Spin1Compiler {
                 try {
                     scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
                     scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                    try {
+                        varOffset += size.getNumber().intValue() * 4;
+                    } catch (Exception e) {
+                        logMessage(new CompilerMessage(e.getMessage(), node.size));
+                    }
                 } catch (Exception e) {
                     logMessage(new CompilerMessage(e.getMessage(), node.identifier));
-                    continue;
                 }
-
-                varOffset += size.getNumber().intValue() * 4;
             }
         }
 
@@ -410,12 +433,14 @@ public class Spin1Compiler {
                 try {
                     scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
                     scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                    try {
+                        varOffset += size.getNumber().intValue() * 2;
+                    } catch (Exception e) {
+                        logMessage(new CompilerMessage(e.getMessage(), node.size));
+                    }
                 } catch (Exception e) {
                     logMessage(new CompilerMessage(e.getMessage(), node.identifier));
-                    continue;
                 }
-
-                varOffset += size.getNumber().intValue() * 2;
             }
         }
 
@@ -439,12 +464,14 @@ public class Spin1Compiler {
                 try {
                     scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
                     scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                    try {
+                        varOffset += size.getNumber().intValue() * 1;
+                    } catch (Exception e) {
+                        logMessage(new CompilerMessage(e.getMessage(), node.size));
+                    }
                 } catch (Exception e) {
                     logMessage(new CompilerMessage(e.getMessage(), node.identifier));
-                    continue;
                 }
-
-                varOffset += size.getNumber().intValue() * 1;
             }
         }
 
@@ -464,16 +491,10 @@ public class Spin1Compiler {
                     logMessage(new CompilerMessage("object not found", node));
                     continue;
                 }
-                objects.add(object);
+                objects.put(node.name.getText(), object);
 
                 for (Entry<String, Expression> entry : object.getSymbols().entrySet()) {
-                    if (entry.getValue() instanceof Method) {
-                        String qualifiedName = node.name.getText() + "." + entry.getKey();
-                        Method method = ((Method) entry.getValue()).copy();
-                        method.setObject(methods.size() + objects.size());
-                        scope.addSymbol(qualifiedName, method);
-                    }
-                    else {
+                    if (!(entry.getValue() instanceof Method)) {
                         String qualifiedName = node.name.getText() + "#" + entry.getKey();
                         scope.addSymbol(qualifiedName, entry.getValue());
                     }
@@ -1334,28 +1355,55 @@ public class Spin1Compiler {
             throw new RuntimeException("not a constant (" + expression + ")");
         }
 
-        if ("-".equals(node.getText())) {
-            return new Subtract(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
-        }
-        else if ("+".equals(node.getText())) {
+        if ("+".equals(node.getText())) {
+            if (node.getChildCount() == 1) {
+                return buildConstantExpression(context, node.getChild(0));
+            }
             return new Add(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
-        else if ("*".equals(node.getText())) {
+        if ("-".equals(node.getText())) {
+            if (node.getChildCount() == 1) {
+                return new Negative(buildConstantExpression(context, node.getChild(0)));
+            }
+            return new Subtract(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("!".equals(node.getText())) {
+            if (node.getChildCount() == 1) {
+                return new Not(buildConstantExpression(context, node.getChild(0)));
+            }
+            throw new RuntimeException("unary operator with " + node.getChildCount() + " arguments");
+        }
+        if ("*".equals(node.getText())) {
             return new Multiply(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
-        else if ("/".equals(node.getText())) {
+        if ("/".equals(node.getText())) {
             return new Divide(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
-        else if ("^".equals(node.getText())) {
+        if ("//".equals(node.getText())) {
+            return new Modulo(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("|".equals(node.getText())) {
+            return new Or(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("&".equals(node.getText())) {
+            return new And(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("^".equals(node.getText())) {
             return new Xor(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
-        else if ("AND".equalsIgnoreCase(node.getText())) {
-            return new LogicalAnd(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        if ("<<".equals(node.getText())) {
+            return new ShiftLeft(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
-        else if ("OR".equalsIgnoreCase(node.getText())) {
-            return new LogicalOr(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        if (">>".equals(node.getText())) {
+            return new ShiftRight(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
-        else if ("|<".equals(node.getText())) {
+        if ("TRUNC".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() != 1) {
+                throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+            }
+            return new Trunc(buildConstantExpression(context, node.getChild(0)));
+        }
+        if ("|<".equals(node.getText())) {
             return new Decod(buildConstantExpression(context, node.getChild(0)));
         }
 
@@ -1985,6 +2033,74 @@ public class Spin1Compiler {
                         }
                         else {
                             source.add(new VariableOp(context, VariableOp.Op.Read, indexed, (Variable) expression));
+                        }
+                    }
+                }
+                else if (expression instanceof ContextLiteral) {
+                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    if (expression instanceof DataVariable) {
+                        switch (((DataVariable) expression).getType()) {
+                            case "BYTE":
+                                ss = MemoryOp.Size.Byte;
+                                break;
+                            case "WORD":
+                                ss = MemoryOp.Size.Word;
+                                break;
+                        }
+                    }
+
+                    if (node.getText().startsWith("@")) {
+                        source.add(new MemoryOp(context, ss, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, expression));
+                    }
+                    else {
+                        int index = 0;
+                        boolean indexed = false;
+
+                        if (index < node.getChildCount()) {
+                            if (!isPostEffect(node.getChild(index).getText())) {
+                                source.addAll(compileBytecodeExpression(context, node.getChild(index), true));
+                                indexed = true;
+                                index++;
+                            }
+                        }
+
+                        if (index < node.getChildCount() && isPostEffect(node.getChild(index).getText())) {
+                            Spin1StatementNode postEffect = node.getChild(index++);
+                            source.add(new MemoryOp(context, ss, indexed, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
+                            if ("++".equals(postEffect.getText())) {
+                                Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
+                                int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, type.ordinal() + 1);
+                                source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_INC"));
+                            }
+                            else if ("--".equals(postEffect.getText())) {
+                                Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
+                                int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, type.ordinal() + 1);
+                                source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_DEC"));
+                            }
+                            else if ("~".equals(postEffect.getText())) {
+                                int code = 0b0_00110_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "POST_CLEAR"));
+                            }
+                            else if ("~~".equals(postEffect.getText())) {
+                                int code = 0b0_00111_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "POST_SET"));
+                            }
+                            else if ("?".equals(postEffect.getText())) {
+                                int code = 0b0_00011_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "RANDOM_REVERSE"));
+                            }
+                        }
+                        else {
+                            source.add(new MemoryOp(context, ss, indexed, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
                         }
                     }
                 }

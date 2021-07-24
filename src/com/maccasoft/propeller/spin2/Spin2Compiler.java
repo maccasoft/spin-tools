@@ -13,9 +13,12 @@ package com.maccasoft.propeller.spin2;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+
+import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.expressions.Add;
@@ -87,7 +90,7 @@ public class Spin2Compiler {
     Spin2Context scope = new Spin2GlobalContext();
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
     List<Spin2Method> methods = new ArrayList<Spin2Method>();
-    List<Spin2Object> objects = new ArrayList<Spin2Object>();
+    ListOrderedMap<String, Spin2Object> objects = ListOrderedMap.listOrderedMap(new HashMap<String, Spin2Object>());
 
     int varOffset = 4;
     int labelCounter;
@@ -120,6 +123,12 @@ public class Spin2Compiler {
     public Spin2Object compileObject(Node root) {
         boolean hubMode = false;
         int address = 0, hubAddress = 0;
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof ObjectsNode) {
+                compileObjBlock(node);
+            }
+        }
 
         for (Node node : root.getChilds()) {
             if (node instanceof ConstantsNode) {
@@ -178,12 +187,6 @@ public class Spin2Compiler {
         object.setClkMode(_clkmode);
 
         for (Node node : root.getChilds()) {
-            if (node instanceof ObjectsNode) {
-                compileObjBlock(node);
-            }
-        }
-
-        for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
                 compileDatBlock(node);
             }
@@ -210,6 +213,19 @@ public class Spin2Compiler {
                 offset++;
                 methods.add(method);
             }
+        }
+
+        int objectIndex = 1;
+        for (Entry<String, Spin2Object> entry : objects.entrySet()) {
+            for (Entry<String, Expression> objentry : entry.getValue().getSymbols().entrySet()) {
+                String qualifiedName = entry.getKey() + "." + objentry.getKey();
+                if (objentry.getValue() instanceof Method) {
+                    Method method = ((Method) objentry.getValue()).copy();
+                    method.setObject(objectIndex);
+                    scope.addSymbol(qualifiedName, method);
+                }
+            }
+            objectIndex++;
         }
 
         for (Spin2Method method : methods) {
@@ -345,7 +361,7 @@ public class Spin2Compiler {
                 ldo[index].setText(String.format("Variables @ $%05X", varOffset));
                 index++;
 
-                Iterator<Spin2Object> iter = objects.iterator();
+                Iterator<Spin2Object> iter = objects.values().iterator();
                 while (iter.hasNext()) {
                     Spin2Object obj = iter.next();
                     object.writeObject(obj);
@@ -479,16 +495,11 @@ public class Spin2Compiler {
                     logMessage(new CompilerMessage("object not found", node));
                     continue;
                 }
-                objects.add(object);
+                objects.put(node.name.getText(), object);
 
                 for (Entry<String, Expression> entry : object.getSymbols().entrySet()) {
                     String qualifiedName = node.name.getText() + "." + entry.getKey();
-                    if (entry.getValue() instanceof Method) {
-                        Method method = ((Method) entry.getValue()).copy();
-                        method.setObject(objects.size());
-                        scope.addSymbol(qualifiedName, method);
-                    }
-                    else {
+                    if (!(entry.getValue() instanceof Method)) {
                         scope.addSymbol(qualifiedName, entry.getValue());
                     }
                 }

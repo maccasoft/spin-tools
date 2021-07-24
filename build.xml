@@ -107,6 +107,7 @@
         <pathelement location="lib/jackson-annotations-2.7.0.jar" />
         <pathelement location="lib/jackson-databind-2.7.0.jar" />
         <pathelement location="lib/commons-lang3-3.12.0.jar" />
+        <pathelement location="lib/commons-collections4-4.4.jar" />
     </path>
 
     <target name="copy-common-files">
@@ -131,6 +132,7 @@
             <fileset dir="lib" includes="jackson-annotations-2.7.0.jar" />
             <fileset dir="lib" includes="jackson-databind-2.7.0.jar" />
             <fileset dir="lib" includes="commons-lang3-3.12.0.jar" />
+            <fileset dir="lib" includes="commons-collections4-4.4.jar" />
         </copy>
 
         <copy todir="${work}/${folder}">
