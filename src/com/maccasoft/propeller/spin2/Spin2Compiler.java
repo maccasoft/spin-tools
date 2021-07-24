@@ -1917,10 +1917,7 @@ public class Spin2Compiler {
                 if (expression == null) {
                     throw new CompilerMessage("undefined symbol " + node.getText(), node.getToken());
                 }
-                if (expression instanceof Register) {
-                    throw new RuntimeException("unhandled register expression");
-                }
-                else if (node.getText().startsWith("@")) {
+                if (node.getText().startsWith("@")) {
                     if (expression instanceof Method) {
                         source.add(new Bytecode(context, new byte[] {
                             (byte) 0x11,
@@ -1970,6 +1967,9 @@ public class Spin2Compiler {
                         }, "CALL_SUB (" + ((Method) expression).getOffset() + ")"));
                     }
                 }
+                else if (expression instanceof Register) {
+                    source.addAll(compileVariableRead(context, expression, node, push));
+                }
                 else if (expression instanceof Variable) {
                     source.addAll(compileVariableRead(context, expression, node, push));
                 }
@@ -2011,10 +2011,17 @@ public class Spin2Compiler {
         if (n < node.getChildCount()) {
             if (!".".equals(node.getChild(n).getText()) && !isPostEffect(node.getChild(n).getText())) {
                 indexNode = node.getChild(n++);
+                if ("..".equals(indexNode.getText())) {
+                    bitfieldNode = indexNode;
+                    indexNode = null;
+                }
             }
         }
         if (n < node.getChildCount()) {
             if (".".equals(node.getChild(n).getText())) {
+                if (bitfieldNode != null) {
+                    throw new CompilerMessage("invalid bitfield expression", node.getToken());
+                }
                 n++;
                 if (n >= node.getChildCount()) {
                     throw new CompilerMessage("expected bitfield expression", node.getToken());
@@ -2100,7 +2107,10 @@ public class Spin2Compiler {
                 source.addAll(compileBytecodeExpression(context, indexNode, true));
             }
 
-            if (expression instanceof ContextLiteral) {
+            if (expression instanceof Register) {
+                source.add(new RegisterOp(context, RegisterOp.Op.Setup, popIndex, expression, index));
+            }
+            else if (expression instanceof ContextLiteral) {
                 source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
             }
             else {
@@ -2191,7 +2201,10 @@ public class Spin2Compiler {
                     else {
                         source.add(new Constant(context, new NumberLiteral(-1)));
                     }
-                    if (expression instanceof ContextLiteral) {
+                    if (expression instanceof Register) {
+                        source.add(new RegisterOp(context, push ? RegisterOp.Op.Setup : RegisterOp.Op.Write, popIndex, expression, index));
+                    }
+                    else if (expression instanceof ContextLiteral) {
                         source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, popIndex, expression, index));
                     }
                     else {
@@ -2202,7 +2215,10 @@ public class Spin2Compiler {
                     }
                 }
                 else {
-                    if (expression instanceof ContextLiteral) {
+                    if (expression instanceof Register) {
+                        source.add(new RegisterOp(context, RegisterOp.Op.Setup, popIndex, expression, index));
+                    }
+                    else if (expression instanceof ContextLiteral) {
                         source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
                     }
                     else {
@@ -2226,7 +2242,10 @@ public class Spin2Compiler {
                 }
             }
             else {
-                if (expression instanceof ContextLiteral) {
+                if (expression instanceof Register) {
+                    source.add(new RegisterOp(context, RegisterOp.Op.Read, popIndex, expression, index));
+                }
+                else if (expression instanceof ContextLiteral) {
                     source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, popIndex, expression, index));
                 }
                 else {
@@ -2361,7 +2380,30 @@ public class Spin2Compiler {
                 throw new CompilerMessage("undefined symbol " + node.getText(), node.getToken());
             }
             if (expression instanceof Register) {
-                source.add(new RegisterOp(context, RegisterOp.Op.Write, expression));
+                int n = 0;
+                int index = 0;
+                boolean popIndex = false;
+
+                if (node.getChildCount() > n) {
+                    if (!isPostEffect(node.getChild(n).getText())) {
+                        try {
+                            Expression exp = buildConstantExpression(context, node.getChild(n));
+                            if (exp.isConstant()) {
+                                index = exp.getNumber().intValue();
+                            }
+                            else {
+                                source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
+                                popIndex = true;
+                            }
+                        } catch (Exception e) {
+                            source.addAll(compileBytecodeExpression(context, node.getChild(n), true));
+                            popIndex = true;
+                        }
+                        n++;
+                    }
+                }
+
+                source.add(new RegisterOp(context, push ? RegisterOp.Op.Setup : RegisterOp.Op.Write, popIndex, expression, index));
             }
             else if (expression instanceof Variable) {
                 int n = 0;

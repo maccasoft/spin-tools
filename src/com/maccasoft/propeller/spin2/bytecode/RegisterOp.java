@@ -10,6 +10,9 @@
 
 package com.maccasoft.propeller.spin2.bytecode;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Context;
@@ -17,58 +20,92 @@ import com.maccasoft.propeller.spin2.Spin2Context;
 public class RegisterOp extends Spin2Bytecode {
 
     public static enum Op {
-        Read, Write
+        Read, Write, Setup
     }
 
     public Op op;
+    public boolean indexed;
     public Expression expression;
+    public int index;
 
-    public RegisterOp(Spin2Context context, Op op, Expression expression) {
+    public RegisterOp(Spin2Context context, Op op, boolean indexed, Expression expression, int index) {
         super(context);
         this.op = op;
+        this.indexed = indexed;
         this.expression = expression;
+        this.index = index;
     }
 
     @Override
     public int getSize() {
-        int value = expression.getNumber().intValue() - 0x200;
-        return Constant.wrVarsSize(value) + 2;
+        int value = expression.getNumber().intValue() + index;
+        if (!indexed && index == 0) {
+            if (value >= 0x1D8 && value <= 0x1DF) {
+                return 2;
+            }
+            else if (value >= 0x1F8 && value <= 0x1FF) {
+                return 2;
+            }
+        }
+        return Constant.wrVarsSize(value - 200) + 2;
     }
 
     @Override
     public byte[] getBytes() {
-        int value = expression.getNumber().intValue() - 0x200;
+        int value = expression.getNumber().intValue() + index;
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-        byte[] c = Constant.wrVars(value);
-        byte[] code = new byte[c.length + 2];
+        try {
+            if (!indexed && index == 0 && value >= 0x1D8 && value <= 0x1DF) {
+                os.write(0xB0 + (value - 0x1D8));
+            }
+            else if (!indexed && index == 0 && value >= 0x1F8 && value <= 0x1FF) {
+                os.write(0xB0 + (value - 0x1F8) + 8);
+            }
+            else {
+                os.write(indexed ? 0x4F : 0x4E);
+                os.write(Constant.wrVars(value - 0x200));
+            }
 
-        int index = 0;
-        code[index++] = (byte) 0x4E;
-        for (int i = 0; i < c.length; i++) {
-            code[index++] = c[i];
-        }
-        if (op == Op.Read) {
-            code[index] = (byte) 0x80;
-        }
-        else if (op == Op.Write) {
-            code[index] = (byte) 0x81;
+            if (op == Op.Read) {
+                os.write(0x80);
+            }
+            else if (op == Op.Write) {
+                os.write(0x81);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        return code;
+        return os.toByteArray();
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("REG_");
         if (op == Op.Read) {
-            sb.append("READ ");
+            sb.append("READ");
         }
         else if (op == Op.Write) {
-            sb.append("WRITE ");
+            sb.append("WRITE");
+        }
+        else if (op == Op.Setup) {
+            sb.append("SETUP");
         }
 
-        int value = expression.getNumber().intValue();
-        sb.append(String.format("+$%03X", value));
+        if (indexed) {
+            sb.append("_INDEXED");
+        }
+
+        int value = expression.getNumber().intValue() + index;
+        sb.append(String.format(" +$%03X", value));
+
+        if (!indexed && index == 0 && value >= 0x1D8 && value <= 0x1DF) {
+            sb.append(" (short)");
+        }
+        else if (!indexed && index == 0 && value >= 0x1F8 && value <= 0x1FF) {
+            sb.append(" (short)");
+        }
 
         return sb.toString();
     }
