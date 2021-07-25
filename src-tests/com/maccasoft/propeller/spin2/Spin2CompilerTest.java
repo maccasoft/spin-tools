@@ -3129,6 +3129,7 @@ class Spin2CompilerTest {
             + "00004 00004       20 00 00 00    End\n"
             + "' PUB main(a)\n"
             + "00008 00008       00             (stack size)\n"
+            + "'         org\n"
             + "00009 00009       19 5C          INLINE-EXEC\n"
             + "0000B 0000B       00 00 03 00    ORG=$000, 4\n"
             + "0000F 0000F   000                                    org\n"

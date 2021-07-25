@@ -16,13 +16,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.maccasoft.propeller.expressions.ContextLiteral;
+import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.bytecode.InlinePAsm;
 
 public class Spin2MethodLine {
 
     Spin2Context scope;
-    String label;
     String statement;
     List<Spin2StatementNode> arguments = new ArrayList<Spin2StatementNode>();
 
@@ -35,18 +34,24 @@ public class Spin2MethodLine {
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
-    public Spin2MethodLine(Spin2Context scope, String label, String statement) {
+    public Spin2MethodLine(Spin2Context scope) {
         this.scope = new Spin2Context(scope);
-        this.label = label;
+    }
+
+    public Spin2MethodLine(Spin2Context scope, String statement) {
+        this.scope = new Spin2Context(scope);
         this.statement = statement;
+    }
+
+    public Spin2MethodLine(Spin2Context scope, String statement, Node node) {
+        this.scope = new Spin2Context(scope);
+        this.statement = statement;
+        this.data = node;
+        this.text = node.getText();
     }
 
     public Spin2Context getScope() {
         return scope;
-    }
-
-    public String getLabel() {
-        return label;
     }
 
     public void setStatement(String statement) {
@@ -66,9 +71,6 @@ public class Spin2MethodLine {
     }
 
     public void register(Spin2Context context) {
-        if (label != null) {
-            context.addSymbol(label, new ContextLiteral(scope));
-        }
         for (Spin2MethodLine line : childs) {
             line.register(context);
         }
@@ -172,20 +174,13 @@ public class Spin2MethodLine {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if (label != null) {
-            sb.append(label);
-            sb.append(" ");
-        }
-        while (sb.length() < 16) {
-            sb.append(" ");
-        }
         if (statement != null) {
-            sb.append(statement);
-        }
-        while (sb.length() < 22) {
-            sb.append(" ");
+            sb.append(statement.toUpperCase());
         }
         if (text != null) {
+            while (sb.length() < 15) {
+                sb.append(" ");
+            }
             sb.append(" | ");
             sb.append(text);
         }
