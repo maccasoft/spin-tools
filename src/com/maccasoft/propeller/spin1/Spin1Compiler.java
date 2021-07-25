@@ -20,6 +20,8 @@ import java.util.Map.Entry;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.SpinObject.LongDataObject;
+import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
@@ -63,8 +65,6 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1Bytecode.Descriptor;
-import com.maccasoft.propeller.spin1.Spin1Object.LongDataObject;
-import com.maccasoft.propeller.spin1.Spin1Object.WordDataObject;
 import com.maccasoft.propeller.spin1.bytecode.Address;
 import com.maccasoft.propeller.spin1.bytecode.Bytecode;
 import com.maccasoft.propeller.spin1.bytecode.CaseJmp;

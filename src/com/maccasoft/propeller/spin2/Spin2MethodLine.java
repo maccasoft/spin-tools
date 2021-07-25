@@ -12,7 +12,6 @@ package com.maccasoft.propeller.spin2;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +24,7 @@ public class Spin2MethodLine {
     Spin2Context scope;
     String label;
     String statement;
-    List<Spin2StatementNode> arguments;
+    List<Spin2StatementNode> arguments = new ArrayList<Spin2StatementNode>();
 
     Spin2MethodLine parent;
     List<Spin2MethodLine> childs = new ArrayList<Spin2MethodLine>();
@@ -36,18 +35,10 @@ public class Spin2MethodLine {
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
-    public Spin2MethodLine(Spin2Context scope, String label, String statement, Spin2StatementNode argument) {
+    public Spin2MethodLine(Spin2Context scope, String label, String statement) {
         this.scope = new Spin2Context(scope);
         this.label = label;
         this.statement = statement;
-        this.arguments = Collections.singletonList(argument);
-    }
-
-    public Spin2MethodLine(Spin2Context scope, String label, String statement, List<Spin2StatementNode> arguments) {
-        this.scope = new Spin2Context(scope);
-        this.label = label;
-        this.statement = statement;
-        this.arguments = arguments;
     }
 
     public Spin2Context getScope() {
@@ -56,6 +47,10 @@ public class Spin2MethodLine {
 
     public String getLabel() {
         return label;
+    }
+
+    public void setStatement(String statement) {
+        this.statement = statement;
     }
 
     public String getStatement() {
@@ -88,6 +83,10 @@ public class Spin2MethodLine {
             address = line.resolve(address);
         }
         return address;
+    }
+
+    public void addArgument(Spin2StatementNode node) {
+        arguments.add(node);
     }
 
     public int getArgumentsCount() {
