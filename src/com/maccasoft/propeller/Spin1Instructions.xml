@@ -1,0 +1,107 @@
+<content>
+    <section class="Root">
+        <entry name="CON"><![CDATA[<b>CON</b><p>Constant declarations (CON is the initial/default block type)</p>]]></entry>
+        <entry name="VAR"><![CDATA[<b>VAR</b><p>Variable declarations</p>]]></entry>
+        <entry name="OBJ"><![CDATA[<b>OBJ</b><p>Child-object instantiations</p>]]></entry>
+        <entry name="PUB"><![CDATA[<b>PUB</b><p>Public method for use by the parent object and within this object</p>]]></entry>
+        <entry name="PRI"><![CDATA[<b>PRI</b><p>Private method for use within this object</p>]]></entry>
+        <entry name="DAT"><![CDATA[<b>DAT</b><p>Data declarations, including PASM code</p>]]></entry>
+    </section>
+
+    <section class="ConstantsNode,ExpressionNode">
+        <entry name="CHIPVER">><![CDATA[<b>CHIPVER</b><p>Propeller chip version number</p>]]></entry>
+        <entry name="CLKMODE"><![CDATA[<b>CLKMODE</b><p>Current clock mode setting</p>]]></entry>
+        <entry name="_CLKMODE"><![CDATA[<b>_CLKMODE</b><p>Application-defined clock mode (read-only)</p>]]></entry>
+        <entry name="CLKFREQ"><![CDATA[<b>CLKFREQ</b><p>Current clock frequency</p>]]></entry>
+        <entry name="_CLKFREQ"><![CDATA[<b>_CLKFREQ</b><p>Application-defined clock frequency (read-only)</p>]]></entry>
+        <entry name="CLKSET"><![CDATA[<b>CLKSET</b><p>Set clock mode and clock frequency</p>]]></entry>
+        <entry name="_XINFREQ"><![CDATA[<b>_XINFREQ</b><p>Application-defined external clock frequency (read-only)</p>]]></entry>
+        <entry name="_STACK"><![CDATA[<b>_STACK</b><p>Application-defined stack space to reserve (read-only)</p>]]></entry>
+        <entry name="_FREE"><![CDATA[<b>_FREE</b><p>Application-defined free space to reserve (read-only)</p>]]></entry>
+        <entry name="RCFAST"><![CDATA[<b>RCFAST</b><p>Constant for _CLKMODE : internal fast oscillator</p>]]></entry>
+        <entry name="RCSLOW"><![CDATA[<b>RCSLOW</b><p>Constant for _CLKMODE : internal slow oscillator</p>]]></entry>
+        <entry name="XINPUT"><![CDATA[<b>XINPUT</b><p>Constant for _CLKMODE : external clock/osc (XI pin)</p>]]></entry>
+        <entry name="XTAL1"><![CDATA[<b>XTAL1</b><p>Constant for _CLKMODE : external low-speed crystal</p>]]></entry>
+        <entry name="XTAL2"><![CDATA[<b>XTAL2</b><p>Constant for _CLKMODE : external med-speed crystal</p>]]></entry>
+        <entry name="XTAL3"><![CDATA[<b>XTAL3</b><p>Constant for _CLKMODE : external high-speed crystal</p>]]></entry>
+        <entry name="PLL1X"><![CDATA[<b>PLL1X</b><p>Constant for _CLKMODE : external frequency times 1</p>]]></entry>
+        <entry name="PLL2X"><![CDATA[<b>PLL2X</b><p>Constant for _CLKMODE : external frequency times 2</p>]]></entry>
+        <entry name="PLL4X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 4</p>]]></entry>
+        <entry name="PLL8X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 8</p>]]></entry>
+        <entry name="PLL16X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 16</p>]]></entry>
+
+        <entry name="TRUE"><![CDATA[<b>TRUE</b><p>Logical true: -1 ($FFFFFFFF)</p>]]></entry>
+        <entry name="FALSE"><![CDATA[<b>TRUE</b><p>Logical false: 0 ($00000000)</p>]]></entry>
+        <entry name="POSX"><![CDATA[<b>POSX</b><p>Maximum positive integer: 2,147,483,647 ($7FFFFFFF)</p>]]></entry>
+        <entry name="NEGX"><![CDATA[<b>NEGX</b><p>Maximum negative integer: -2,147,483,648 ($80000000)</p>]]></entry>
+        <entry name="PI"><![CDATA[<b>PI</b><p>Floating-point value for PI: ~3.141593 ($40490FDB)</p>]]></entry>
+    </section>
+
+    <section class="StatementNode">
+        <entry name="abort"><![CDATA[<b>ABORT &lt;Value&gt;</b><p>Exit from PUB / PRI method using abort status with optional return Value.</p>]]></entry>
+        <entry name="if"></entry>
+        <entry name="ifnot"></entry>
+        <entry name="elseif"></entry>
+        <entry name="elseifnot"></entry>
+        <entry name="else"></entry>
+        <entry name="case"><![CDATA[<b>CASE CaseExpression</b><p>Compare expression against matching expression(s) and execute code block if match found.</p>]]></entry>
+        <entry name="other"></entry>
+        <entry name="repeat"><![CDATA[<b>REPEAT</b><p>All looping is achieved through REPEAT constructs, which have several forms:</p>
+<b>REPEAT</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+
+<b>REPEAT &lt;count&gt;</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+
+<b>REPEAT &lt;variable&gt; FROM &lt;first&gt; TO &lt;last&gt;</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+
+<b>REPEAT WHILE &lt;condition&gt;</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+
+<b>REPEAT UNTIL &lt;condition&gt;</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+
+<b>REPEAT</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/>
+<b>WHILE &lt;condition&gt;</b><br/><br/>
+
+<b>REPEAT</b><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/>
+<b>UNTIL &lt;condition&gt;</b><br/><br/>
+]]></entry>
+        <entry name="from"></entry>
+        <entry name="to"></entry>
+        <entry name="step"></entry>
+        <entry name="while"></entry>
+        <entry name="until"></entry>
+        <entry name="next"></entry>
+        <entry name="quit"></entry>
+
+        <entry name="result"><![CDATA[<b>RESULT</b><p>Default result variable for PUB / PRI methods.</p>]]></entry>
+
+        <entry name="bytefill" insert="bytefill(dest, value, count)"><![CDATA[<b>BYTEFILL(Dest, Value, Count)</b><br/><br/>Fill Count bytes at Dest with Value]]></entry>
+        <entry name="wordfill" insert="wordfill(dest, value, count)"><![CDATA[<b>WORDFILL(Dest, Value, Count)</b><br/><br/>Fill Count words at Dest with Value]]></entry>
+        <entry name="longfill" insert="longfill(dest, value, count)"><![CDATA[<b>LONGFILL(Dest, Value, Count)</b><br/><br/>Fill Count longs at Dest with Value]]></entry>
+        <entry name="bytemove" insert="bytemove(dest, source, count)"><![CDATA[<b>BYTEMOVE(Dest, Source, Count)</b><br/><br/>Move Count bytes from Source to Dest]]></entry>
+        <entry name="wordmove" insert="wordmove(dest, source, count)"><![CDATA[<b>WORDMOVE(Dest, Source, Count)</b><br/><br/>Move Count words from Source to Dest]]></entry>
+        <entry name="longmove" insert="longmove(dest, source, count)"><![CDATA[<b>LONGMOVE(Dest, Source, Count)</b><br/><br/>Move Count longs from Source to Dest]]></entry>
+    
+        <entry name="lookup" insert="lookup(index: v1, v2..v3, etc)"><![CDATA[<b>LOOKUP(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 1-based index, return value (0 if index out of range)]]></entry>
+        <entry name="lookupz" insert="lookupz(index: v1, v2..v3, etc)"><![CDATA[<b>LOOKUPZ(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 0-based index, return value (0 if index out of range)]]></entry>
+        <entry name="lookdown" insert="lookdown(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWN(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 1-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
+        <entry name="lookdownz" insert="lookdownz(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWNZ(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 0-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
+    
+        <entry name="strsize" insert="strsize(addr)"><![CDATA[<b>STRSIZE(Addr) : Size</b><br/><br/>Count bytes in zero-terminated string at Addr, return string size, not including zero terminator]]></entry>
+        <entry name="strcomp" insert="strcomp(addra, addrb)"><![CDATA[<b>STRCOMP(AddrA, AddrB) : Match</b><br/><br/>Compare zero-terminated strings at AddrA and AddrB, return -1 if match or 0 if mismatch]]></entry>
+        <entry name="string" insert="string(&quot;text&quot;,9)"><![CDATA[<b>STRING("Text",9) : StringAddress</b><br/><br/>Compose a zero-terminated string (quoted characters and values 1..255 allowed), return address of string]]></entry>
+
+        <entry name="cogid"><![CDATA[<b>COGID</b><p>The current cog’s ID (0-7).</p>]]></entry>
+    </section>
+
+    <section class="DatNode,DataLineNode,Instruction">
+    </section>
+    <section class="DatNode,DataLineNode,Condition">
+    </section>
+
+</content>

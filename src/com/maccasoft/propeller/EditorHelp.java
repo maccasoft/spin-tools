@@ -8,7 +8,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin2;
+package com.maccasoft.propeller;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -25,12 +25,18 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-public class Spin2InstructionHelp {
+public class EditorHelp {
 
-    public static String getString(String context, String key) {
+    final String helpFile;
+
+    public EditorHelp(String helpFile) {
+        this.helpFile = helpFile;
+    }
+
+    public String getString(String context, String key) {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try {
-            InputStream is = Spin2InstructionHelp.class.getResourceAsStream("Spin2Instructions.xml");
+            InputStream is = EditorHelp.class.getResourceAsStream(helpFile);
             try {
                 DocumentBuilder db = dbf.newDocumentBuilder();
                 Document doc = db.parse(is);
@@ -73,12 +79,12 @@ public class Spin2InstructionHelp {
         return null;
     }
 
-    public static List<IContentProposal> fillProposals(String context, String token) {
+    public List<IContentProposal> fillProposals(String context, String token) {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try {
-            InputStream is = Spin2InstructionHelp.class.getResourceAsStream("Spin2Instructions.xml");
+            InputStream is = EditorHelp.class.getResourceAsStream(helpFile);
             try {
                 DocumentBuilder db = dbf.newDocumentBuilder();
                 Document doc = db.parse(is);

@@ -76,7 +76,6 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.spin2.Spin2InstructionHelp;
 
 public class SourceEditor {
 
@@ -104,6 +103,7 @@ public class SourceEditor {
     Map<TokenId, TextStyle> styleMap = new HashMap<TokenId, TextStyle>();
 
     SpinEditorBackgroundDecorator backgroundDecorator;
+    EditorHelp helpProvider;
 
     boolean ignoreUndo;
     boolean ignoreRedo;
@@ -500,7 +500,7 @@ public class SourceEditor {
                 }
 
                 if (token != null) {
-                    String text = Spin2InstructionHelp.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
+                    String text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
                     if (text == null) {
                         text = tokenMarker.getMethod(token.getText());
                     }
@@ -733,6 +733,10 @@ public class SourceEditor {
         styledText.redraw();
     }
 
+    public void setHelpProvider(EditorHelp helpProvider) {
+        this.helpProvider = helpProvider;
+    }
+
     public void addModifyListener(ModifyListener l) {
         modifyListeners.add(l);
     }
@@ -944,9 +948,16 @@ public class SourceEditor {
     public IContentProposal[] computeProposals(String contents, int position) {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
 
+        Node node = tokenMarker.getContextAt(styledText.getCaretOffset());
+
         int start = position;
         while (start > 0) {
-            if (contents.charAt(start - 1) != '_' && !Character.isAlphabetic(contents.charAt(start - 1))) {
+            if (node instanceof DataLineNode) {
+                if (contents.charAt(start - 1) == '#') {
+                    break;
+                }
+            }
+            if (contents.charAt(start - 1) != '.' && contents.charAt(start - 1) != '#' && contents.charAt(start - 1) != '_' && !Character.isAlphabetic(contents.charAt(start - 1))) {
                 break;
             }
             start--;
@@ -955,25 +966,24 @@ public class SourceEditor {
         String token = contents.substring(start, position).toUpperCase();
 
         if (position == 0) {
-            proposals.addAll(Spin2InstructionHelp.fillProposals("Root", token));
+            proposals.addAll(helpProvider.fillProposals("Root", token));
         }
         else {
-            Node node = tokenMarker.getContextAt(styledText.getCaretOffset());
             if (node instanceof DataLineNode) {
                 DataLineNode line = (DataLineNode) node;
                 position = styledText.getCaretOffset();
 
                 if (line.condition != null) {
                     if (position >= line.condition.getStartIndex() && position <= line.condition.getStopIndex() + 1) {
-                        proposals.addAll(Spin2InstructionHelp.fillProposals("Condition", token));
+                        proposals.addAll(helpProvider.fillProposals("Condition", token));
                     }
                 }
                 if (line.instruction != null) {
                     if (position >= line.instruction.getStartIndex() && position <= line.instruction.getStopIndex() + 1) {
-                        proposals.addAll(Spin2InstructionHelp.fillProposals("Instruction", token));
+                        proposals.addAll(helpProvider.fillProposals("Instruction", token));
                     }
                     if (position > line.instruction.getStopIndex() + 1) {
-                        proposals.addAll(Spin2InstructionHelp.fillProposals(line.instruction.getText().toUpperCase(), token));
+                        proposals.addAll(helpProvider.fillProposals(line.instruction.getText().toUpperCase(), token));
                         if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
                             proposals.addAll(tokenMarker.getMethodProposals(node.getParent(), token));
                         }
@@ -984,17 +994,17 @@ public class SourceEditor {
                 }
 
                 if (line.condition == null && line.instruction == null) {
-                    proposals.addAll(Spin2InstructionHelp.fillProposals("Condition", token));
-                    proposals.addAll(Spin2InstructionHelp.fillProposals("Instruction", token));
+                    proposals.addAll(helpProvider.fillProposals("Condition", token));
+                    proposals.addAll(helpProvider.fillProposals("Instruction", token));
                 }
                 else if (line.condition != null && line.instruction == null) {
                     if (position > line.condition.getStopIndex() + 1) {
-                        proposals.addAll(Spin2InstructionHelp.fillProposals("Instruction", token));
+                        proposals.addAll(helpProvider.fillProposals("Instruction", token));
                     }
                 }
                 else if (line.condition == null && line.instruction != null) {
                     if (position < line.instruction.getStartIndex()) {
-                        proposals.addAll(Spin2InstructionHelp.fillProposals("Condition", token));
+                        proposals.addAll(helpProvider.fillProposals("Condition", token));
                     }
                 }
             }
@@ -1002,7 +1012,7 @@ public class SourceEditor {
                 if (node instanceof StatementNode) {
                     proposals.addAll(tokenMarker.getMethodProposals(node, token));
                 }
-                proposals.addAll(Spin2InstructionHelp.fillProposals(node.getClass().getSimpleName(), token));
+                proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), token));
             }
         }
 

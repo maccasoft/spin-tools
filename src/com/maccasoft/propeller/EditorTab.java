@@ -116,22 +116,6 @@ public class EditorTab {
             return null;
         }
 
-        String loadFromFile(File file) throws Exception {
-            String line;
-            StringBuilder sb = new StringBuilder();
-
-            if (file.exists()) {
-                BufferedReader reader = new BufferedReader(new FileReader(file));
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line);
-                    sb.append("\n");
-                }
-                reader.close();
-            }
-
-            return sb.toString();
-        }
-
     }
 
     final Runnable spin1CompilerRunnable = new Runnable() {
@@ -186,6 +170,39 @@ public class EditorTab {
         }
 
     };
+
+    class Spin2TokenMarkerAdatper extends Spin2TokenMarker {
+
+        @Override
+        protected Node getObjectTree(String fileName) {
+            AtomicReference<Node> result = new AtomicReference<Node>();
+            Display.getDefault().syncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    Node node = getNodeRootFromTab(fileName);
+                    result.set(node);
+                }
+            });
+            Node root = result.get();
+            if (root == null) {
+                File fileParent = file != null ? file.getParentFile() : null;
+                String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
+                File file = new File(fileParent, fileName + fileType);
+                if (file.exists()) {
+                    try {
+                        Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(file));
+                        Spin2Parser subject = new Spin2Parser(stream);
+                        root = subject.parse();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            return root;
+        }
+
+    }
 
     class Spin2CompilerAdapter extends Spin2Compiler {
 
@@ -244,22 +261,6 @@ public class EditorTab {
             }
 
             return null;
-        }
-
-        String loadFromFile(File file) throws Exception {
-            String line;
-            StringBuilder sb = new StringBuilder();
-
-            if (file.exists()) {
-                BufferedReader reader = new BufferedReader(new FileReader(file));
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line);
-                    sb.append("\n");
-                }
-                reader.close();
-            }
-
-            return sb.toString();
         }
 
     }
@@ -329,12 +330,13 @@ public class EditorTab {
         editor = new SourceEditor(folder);
 
         if (tabItemText.toLowerCase().endsWith(".spin2")) {
-            tokenMarker = new Spin2TokenMarker();
+            editor.setTokenMarker(tokenMarker = new Spin2TokenMarkerAdatper());
+            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml"));
         }
         else {
-            tokenMarker = new Spin1TokenMarker();
+            editor.setTokenMarker(tokenMarker = new Spin1TokenMarker());
+            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml"));
         }
-        editor.setTokenMarker(tokenMarker);
 
         editor.addModifyListener(new ModifyListener() {
 
@@ -384,12 +386,13 @@ public class EditorTab {
     public void setFile(File file) {
         this.file = file;
         if (file.getName().toLowerCase().endsWith(".spin2")) {
-            tokenMarker = new Spin2TokenMarker();
+            editor.setTokenMarker(tokenMarker = new Spin2TokenMarkerAdatper());
+            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml"));
         }
         else {
-            tokenMarker = new Spin1TokenMarker();
+            editor.setTokenMarker(tokenMarker = new Spin1TokenMarker());
+            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml"));
         }
-        editor.setTokenMarker(tokenMarker);
     }
 
     public void setFocus() {
@@ -547,6 +550,22 @@ public class EditorTab {
         }
 
         return null;
+    }
+
+    String loadFromFile(File file) throws Exception {
+        String line;
+        StringBuilder sb = new StringBuilder();
+
+        if (file.exists()) {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+                sb.append("\n");
+            }
+            reader.close();
+        }
+
+        return sb.toString();
     }
 
 }

@@ -11,8 +11,6 @@
 package com.maccasoft.propeller;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +28,7 @@ import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
+import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
@@ -284,61 +283,137 @@ public abstract class EditorTokenMarker {
     public String getMethod(String symbol) {
         StringBuilder sb = new StringBuilder();
 
-        root.accept(new NodeVisitor() {
-
-            @Override
-            public void visitConstantAssign(ConstantAssignNode node) {
-                if (node.getIdentifier() == null) {
-                    return;
-                }
-                if (!symbol.equals(node.getIdentifier().getText())) {
-                    return;
-                }
-                sb.append("<b>");
-                sb.append(node.getText());
-                sb.append("</b>");
+        if (symbol.indexOf('.') != -1) {
+            String[] s = symbol.split("[\\.]");
+            if (s.length != 2) {
+                return null;
             }
+            root.accept(new NodeVisitor() {
 
-            @Override
-            public void visitMethod(MethodNode node) {
-                if (node.getName() == null) {
-                    return;
-                }
-                if (!symbol.equals(node.getName().getText())) {
-                    return;
-                }
+                @Override
+                public void visitObject(ObjectNode node) {
+                    if (node.name != null && node.file != null && node.name.getText().equalsIgnoreCase(s[0])) {
+                        String file = node.file.getText().substring(1);
+                        Node objectRoot = getObjectTree(file.substring(0, file.length() - 1));
+                        if (objectRoot != null) {
+                            objectRoot.accept(new NodeVisitor() {
 
-                sb.append("<b>");
-                sb.append(node.getType().getText());
-                sb.append(" ");
-                if (node.getName() != null) {
-                    sb.append(node.getName().getText());
-                }
+                                @Override
+                                public void visitConstantAssign(ConstantAssignNode node) {
+                                    if (node.getIdentifier() == null) {
+                                        return;
+                                    }
+                                    if (!s[1].equals(node.getIdentifier().getText())) {
+                                        return;
+                                    }
+                                    sb.append("<b>");
+                                    sb.append(node.getText());
+                                    sb.append("</b>");
+                                }
 
-                sb.append("(");
-                for (Node child : node.getParameters()) {
-                    if (sb.charAt(sb.length() - 1) != '(') {
-                        sb.append(", ");
+                                @Override
+                                public void visitMethod(MethodNode node) {
+                                    if (node.getName() == null) {
+                                        return;
+                                    }
+                                    if (!s[1].equals(node.getName().getText())) {
+                                        return;
+                                    }
+
+                                    sb.append("<b>");
+                                    sb.append(node.getType().getText());
+                                    sb.append(" ");
+                                    if (node.getName() != null) {
+                                        sb.append(node.getName().getText());
+                                    }
+
+                                    sb.append("(");
+                                    for (Node child : node.getParameters()) {
+                                        if (sb.charAt(sb.length() - 1) != '(') {
+                                            sb.append(", ");
+                                        }
+                                        sb.append(child.getText());
+                                        tokens.add(new TokenMarker(child, TokenId.METHOD_LOCAL));
+                                    }
+                                    sb.append(")");
+
+                                    if (node.getReturnVariables().size() != 0) {
+                                        sb.append(" : ");
+                                        for (Node child : node.getReturnVariables()) {
+                                            if (sb.charAt(sb.length() - 2) != ':') {
+                                                sb.append(", ");
+                                            }
+                                            sb.append(child.getText());
+                                            tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
+                                        }
+                                    }
+                                    sb.append("</b>");
+                                }
+
+                            });
+                        }
                     }
-                    sb.append(child.getText());
-                    tokens.add(new TokenMarker(child, TokenId.METHOD_LOCAL));
                 }
-                sb.append(")");
 
-                if (node.getReturnVariables().size() != 0) {
-                    sb.append(" : ");
-                    for (Node child : node.getReturnVariables()) {
-                        if (sb.charAt(sb.length() - 2) != ':') {
+            });
+        }
+        else {
+            root.accept(new NodeVisitor() {
+
+                @Override
+                public void visitConstantAssign(ConstantAssignNode node) {
+                    if (node.getIdentifier() == null) {
+                        return;
+                    }
+                    if (!symbol.equals(node.getIdentifier().getText())) {
+                        return;
+                    }
+                    sb.append("<b>");
+                    sb.append(node.getText());
+                    sb.append("</b>");
+                }
+
+                @Override
+                public void visitMethod(MethodNode node) {
+                    if (node.getName() == null) {
+                        return;
+                    }
+                    if (!symbol.equals(node.getName().getText())) {
+                        return;
+                    }
+
+                    sb.append("<b>");
+                    sb.append(node.getType().getText());
+                    sb.append(" ");
+                    if (node.getName() != null) {
+                        sb.append(node.getName().getText());
+                    }
+
+                    sb.append("(");
+                    for (Node child : node.getParameters()) {
+                        if (sb.charAt(sb.length() - 1) != '(') {
                             sb.append(", ");
                         }
                         sb.append(child.getText());
-                        tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
+                        tokens.add(new TokenMarker(child, TokenId.METHOD_LOCAL));
                     }
-                }
-                sb.append("</b>");
-            }
+                    sb.append(")");
 
-        });
+                    if (node.getReturnVariables().size() != 0) {
+                        sb.append(" : ");
+                        for (Node child : node.getReturnVariables()) {
+                            if (sb.charAt(sb.length() - 2) != ':') {
+                                sb.append(", ");
+                            }
+                            sb.append(child.getText());
+                            tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
+                        }
+                    }
+                    sb.append("</b>");
+                }
+
+            });
+        }
 
         return sb.length() != 0 ? sb.toString() : null;
     }
@@ -346,42 +421,59 @@ public abstract class EditorTokenMarker {
     public List<IContentProposal> getMethodProposals(Node context, String token) {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
 
+        if (token.indexOf('.') != -1) {
+            String[] s = token.split("[\\.]");
+            return getObjectMethodProposals(context, s[0], s.length == 2 ? s[1] : "");
+        }
+
         if (root != null) {
             while (!(context instanceof MethodNode) && context.getParent() != null) {
                 context = context.getParent();
             }
+
+            root.accept(new NodeVisitor() {
+
+                @Override
+                public void visitMethod(MethodNode node) {
+                    if (node.getName() != null) {
+                        String text = node.getName().getText();
+                        if (text.toUpperCase().contains(token)) {
+                            String s = node.getText();
+                            if (s.indexOf(':') != -1) {
+                                s = s.substring(0, s.indexOf(':'));
+                            }
+                            if (s.indexOf('|') != -1) {
+                                s = s.substring(0, s.indexOf('|'));
+                            }
+                            proposals.add(new ContentProposal(text, text, "<b>" + s.trim() + "</b>"));
+                        }
+                    }
+                }
+
+            });
+
             context.accept(new NodeVisitor() {
 
                 @Override
                 public void visitMethod(MethodNode node) {
                     for (Node child : node.getParameters()) {
                         String text = child.getText();
-                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
-                            proposals.add(new ContentProposal(text, text, null));
+                        if (!text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
 
                     for (Node child : node.getReturnVariables()) {
                         String text = child.getText();
-                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
-                            proposals.add(new ContentProposal(text, text, null));
+                        if (!text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
 
                     for (Node child : node.getLocalVariables()) {
                         String text = child.getText();
-                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
-                            proposals.add(new ContentProposal(text, text, null));
-                        }
-                    }
-                }
-
-                @Override
-                public void visitDataLine(DataLineNode node) {
-                    if (node.label != null) {
-                        String text = node.label.getText();
-                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
-                            proposals.add(new ContentProposal(text, text, null));
+                        if (!text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
                 }
@@ -395,7 +487,7 @@ public abstract class EditorTokenMarker {
                     if (node.identifier != null) {
                         String text = node.identifier.getText();
                         if (text.toUpperCase().contains(token)) {
-                            proposals.add(new ContentProposal(text, text, null));
+                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
                 }
@@ -405,7 +497,7 @@ public abstract class EditorTokenMarker {
                     if (node.identifier != null) {
                         String text = node.identifier.getText();
                         if (text.toUpperCase().contains(token)) {
-                            proposals.add(new ContentProposal(text, text, null));
+                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
                 }
@@ -415,30 +507,90 @@ public abstract class EditorTokenMarker {
                     if (node.getIdentifier() != null) {
                         String text = node.getIdentifier().getText();
                         if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
-                            proposals.add(new ContentProposal(text, text, null));
+                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
                 }
 
+            });
+
+            root.accept(new NodeVisitor() {
+
                 @Override
-                public void visitMethod(MethodNode node) {
-                    if (node.getName() != null) {
-                        String text = node.getName().getText();
+                public void visitDataLine(DataLineNode node) {
+                    if (node.label != null) {
+                        String text = node.label.getText();
                         if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
                             proposals.add(new ContentProposal(text, text, null));
                         }
                     }
                 }
 
+            });
+
+        }
+
+        return proposals;
+    }
+
+    public List<IContentProposal> getObjectMethodProposals(Node context, String object, String token) {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+
+        if (root != null) {
+            root.accept(new NodeVisitor() {
+
                 @Override
-                public void visitData(DataNode node) {
-                    for (Node child : node.getChilds()) {
-                        DataLineNode lineNode = (DataLineNode) child;
-                        if (lineNode.label != null) {
-                            String text = lineNode.label.getText();
-                            if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
-                                proposals.add(new ContentProposal(text, text, null));
-                            }
+                public void visitObject(ObjectNode node) {
+                    if (node.name != null && node.file != null && node.name.getText().equalsIgnoreCase(object)) {
+                        String file = node.file.getText().substring(1);
+                        Node objectRoot = getObjectTree(file.substring(0, file.length() - 1));
+                        if (objectRoot != null) {
+                            objectRoot.accept(new NodeVisitor() {
+
+                                @Override
+                                public void visitMethod(MethodNode node) {
+                                    if (node.getType() == null || node.getName() == null) {
+                                        return;
+                                    }
+                                    if ("PUB".equalsIgnoreCase(node.getType().getText())) {
+                                        String text = node.getName().getText();
+                                        if (text.toUpperCase().contains(token)) {
+                                            String s = node.getText();
+                                            if (s.indexOf(':') != -1) {
+                                                s = s.substring(0, s.indexOf(':'));
+                                            }
+                                            if (s.indexOf('|') != -1) {
+                                                s = s.substring(0, s.indexOf('|'));
+                                            }
+                                            proposals.add(new ContentProposal(text, text, "<b>" + s.trim() + "</b>"));
+                                        }
+                                    }
+                                }
+
+                            });
+                            objectRoot.accept(new NodeVisitor() {
+
+                                @Override
+                                public void visitConstantAssign(ConstantAssignNode node) {
+                                    if (node.identifier != null) {
+                                        String text = node.identifier.getText();
+                                        if (text.toUpperCase().contains(token)) {
+                                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
+                                    if (node.identifier != null) {
+                                        String text = node.identifier.getText();
+                                        if (text.toUpperCase().contains(token)) {
+                                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                                        }
+                                    }
+                                }
+
+                            });
                         }
                     }
                 }
@@ -446,16 +598,11 @@ public abstract class EditorTokenMarker {
             });
         }
 
-        Collections.sort(proposals, new Comparator<IContentProposal>() {
-
-            @Override
-            public int compare(IContentProposal o1, IContentProposal o2) {
-                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
-            }
-
-        });
-
         return proposals;
+    }
+
+    protected Node getObjectTree(String fileName) {
+        return null;
     }
 
     public List<IContentProposal> getPAsmProposals(String token) {
@@ -499,15 +646,6 @@ public abstract class EditorTokenMarker {
 
             });
         }
-
-        Collections.sort(proposals, new Comparator<IContentProposal>() {
-
-            @Override
-            public int compare(IContentProposal o1, IContentProposal o2) {
-                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
-            }
-
-        });
 
         return proposals;
     }
