@@ -429,21 +429,21 @@ public abstract class EditorTokenMarker {
             public void visitMethod(MethodNode node) {
                 for (Node child : node.getParameters()) {
                     String text = child.getText();
-                    if (!text.toUpperCase().contains(token)) {
+                    if (text.toUpperCase().contains(token)) {
                         proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
                 }
 
                 for (Node child : node.getReturnVariables()) {
                     String text = child.getText();
-                    if (!text.toUpperCase().contains(token)) {
+                    if (text.toUpperCase().contains(token)) {
                         proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
                 }
 
                 for (Node child : node.getLocalVariables()) {
                     String text = child.getText();
-                    if (!text.toUpperCase().contains(token)) {
+                    if (text.toUpperCase().contains(token)) {
                         proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
                 }

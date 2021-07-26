@@ -233,15 +233,46 @@ public class Spin1TokenMarker extends EditorTokenMarker {
         @Override
         public void visitObjects(ObjectsNode node) {
             tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
-            for (Node child : node.getChilds()) {
-                ObjectNode obj = (ObjectNode) child;
-                if (obj.name != null) {
-                    symbols.put(obj.name.getText(), TokenId.OBJECT);
-                    tokens.add(new TokenMarker(obj.name, TokenId.OBJECT));
-                    if (obj.file != null) {
-                        tokens.add(new TokenMarker(obj.file, TokenId.STRING));
+        }
+
+        @Override
+        public void visitObject(ObjectNode objectNode) {
+            if (objectNode.name == null || objectNode.file == null) {
+                return;
+            }
+
+            symbols.put(objectNode.name.getText(), TokenId.OBJECT);
+            tokens.add(new TokenMarker(objectNode.name, TokenId.OBJECT));
+            if (objectNode.file != null) {
+                tokens.add(new TokenMarker(objectNode.file, TokenId.STRING));
+            }
+
+            String file = objectNode.file.getText().substring(1);
+            Node objectRoot = getObjectTree(file.substring(0, file.length() - 1));
+            if (objectRoot != null) {
+                objectRoot.accept(new NodeVisitor() {
+
+                    @Override
+                    public void visitConstantAssign(ConstantAssignNode node) {
+                        symbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
                     }
-                }
+
+                    @Override
+                    public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
+                        symbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
+                    }
+
+                    @Override
+                    public void visitMethod(MethodNode node) {
+                        if (node.name == null) {
+                            return;
+                        }
+                        if ("PUB".equalsIgnoreCase(node.type.getText())) {
+                            symbols.put(objectNode.name.getText() + "." + node.name.getText(), TokenId.METHOD_PUB);
+                        }
+                    }
+
+                });
             }
         }
 
@@ -400,7 +431,19 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                         id = symbols.get(token.getText());
                     }
                     if (id != null) {
-                        tokens.add(new TokenMarker(token, id));
+                        if (id == TokenId.METHOD_PUB && token.getText().contains(".")) {
+                            int dot = token.getText().indexOf('.');
+                            tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
+                            tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
+                        }
+                        else if (id == TokenId.CONSTANT && token.getText().contains("#")) {
+                            int dot = token.getText().indexOf('#');
+                            tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
+                            tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
+                        }
+                        else {
+                            tokens.add(new TokenMarker(token, id));
+                        }
                     }
                 }
             }
@@ -445,7 +488,14 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                             id = pasmKeywords.get(token.getText().toUpperCase());
                         }
                         if (id != null) {
-                            tokens.add(new TokenMarker(token, id));
+                            if (id == TokenId.CONSTANT && token.getText().contains("#")) {
+                                int dot = token.getText().indexOf('#');
+                                tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
+                                tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
+                            }
+                            else {
+                                tokens.add(new TokenMarker(token, id));
+                            }
                         }
                     }
                 }
@@ -470,7 +520,14 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                         id = symbols.get(token.getText());
                     }
                     if (id != null) {
-                        tokens.add(new TokenMarker(token, id));
+                        if (id == TokenId.CONSTANT && token.getText().contains("#")) {
+                            int dot = token.getText().indexOf('#');
+                            tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
+                            tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
+                        }
+                        else {
+                            tokens.add(new TokenMarker(token, id));
+                        }
                     }
                 }
             }

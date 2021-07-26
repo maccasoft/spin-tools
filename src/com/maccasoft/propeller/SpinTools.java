@@ -280,6 +280,26 @@ public class SpinTools {
             }
         });
 
+        final Menu openFromMenu = new Menu(parent.getParent(), SWT.DROP_DOWN);
+        openFromMenu.addMenuListener(new MenuListener() {
+
+            @Override
+            public void menuShown(MenuEvent e) {
+                MenuItem[] item = openFromMenu.getItems();
+                for (int i = 0; i < item.length; i++) {
+                    item[i].dispose();
+                }
+                populateOpenFromMenu(openFromMenu);
+            }
+
+            @Override
+            public void menuHidden(MenuEvent e) {
+            }
+        });
+        item = new MenuItem(menu, SWT.CASCADE);
+        item.setText("Open From...");
+        item.setMenu(openFromMenu);
+
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
@@ -362,6 +382,31 @@ public class SpinTools {
             public void menuHidden(MenuEvent e) {
             }
         });
+    }
+
+    void populateOpenFromMenu(Menu menu) {
+        List<String> list = new ArrayList<String>();
+
+        Iterator<String> iter = Preferences.getInstance().getLru().iterator();
+        while (iter.hasNext()) {
+            String folder = new File(iter.next()).getParent();
+            if (!list.contains(folder)) {
+                MenuItem item = new MenuItem(menu, SWT.PUSH);
+                item.setText(folder);
+                item.addListener(SWT.Selection, new Listener() {
+
+                    @Override
+                    public void handleEvent(Event event) {
+                        try {
+                            handleFileOpenFrom(folder);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                });
+                list.add(folder);
+            }
+        }
     }
 
     void populateLruFiles(Menu menu, int itemIndex, List<MenuItem> list) {
@@ -502,6 +547,48 @@ public class SpinTools {
 
         if (filterPath != null) {
             dlg.setFilterPath(filterPath.getParent());
+        }
+
+        String fileName = dlg.open();
+        if (fileName != null) {
+            File fileToOpen = new File(fileName);
+
+            EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName());
+
+            tabFolder.setSelection(tabFolder.getItemCount() - 1);
+            editorTab.setFocus();
+            preferences.addToLru(fileToOpen);
+
+            tabFolder.getDisplay().asyncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    try {
+                        editorTab.setEditorText(loadFromFile(fileToOpen));
+                        editorTab.setFile(fileToOpen);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            });
+        }
+    }
+
+    private void handleFileOpenFrom(String filterPath) {
+        FileDialog dlg = new FileDialog(shell, SWT.OPEN);
+        dlg.setText("Open Spin File");
+        String[] filterNames = new String[] {
+            "Spin Files"
+        };
+        String[] filterExtensions = new String[] {
+            "*.spin;*.spin2"
+        };
+        dlg.setFilterNames(filterNames);
+        dlg.setFilterExtensions(filterExtensions);
+
+        if (filterPath != null) {
+            dlg.setFilterPath(filterPath);
         }
 
         String fileName = dlg.open();

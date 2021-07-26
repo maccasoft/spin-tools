@@ -81,6 +81,39 @@ public class EditorTab {
         }
     };
 
+    class Spin1TokenMarkerAdatper extends Spin1TokenMarker {
+
+        @Override
+        protected Node getObjectTree(String fileName) {
+            AtomicReference<Node> result = new AtomicReference<Node>();
+            Display.getDefault().syncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    Node node = getNodeRootFromTab(fileName);
+                    result.set(node);
+                }
+            });
+            Node root = result.get();
+            if (root == null) {
+                File fileParent = file != null ? file.getParentFile() : null;
+                String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
+                File file = new File(fileParent, fileName + fileType);
+                if (file.exists()) {
+                    try {
+                        Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
+                        Spin1Parser subject = new Spin1Parser(stream);
+                        root = subject.parse();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            return root;
+        }
+
+    }
+
     class Spin1CompilerAdapter extends Spin1Compiler {
 
         @Override
@@ -334,7 +367,7 @@ public class EditorTab {
             editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml"));
         }
         else {
-            editor.setTokenMarker(tokenMarker = new Spin1TokenMarker());
+            editor.setTokenMarker(tokenMarker = new Spin1TokenMarkerAdatper());
             editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml"));
         }
 
@@ -390,7 +423,7 @@ public class EditorTab {
             editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml"));
         }
         else {
-            editor.setTokenMarker(tokenMarker = new Spin1TokenMarker());
+            editor.setTokenMarker(tokenMarker = new Spin1TokenMarkerAdatper());
             editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml"));
         }
     }

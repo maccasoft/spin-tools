@@ -184,7 +184,8 @@ public class SourceEditor {
         }
     };
 
-    Shell window;
+    Shell popupWindow;
+    Rectangle popupMouseBounds;
 
     public SourceEditor(Composite parent) {
         display = parent.getDisplay();
@@ -450,52 +451,57 @@ public class SourceEditor {
 
             @Override
             public void mouseMove(MouseEvent e) {
-                if (window != null) {
-                    window.dispose();
-                    window = null;
+                if (popupWindow == null) {
+                    return;
+                }
+                if (popupMouseBounds != null && !popupMouseBounds.contains(e.x, e.y)) {
+                    popupWindow.dispose();
+                    popupWindow = null;
+                    popupMouseBounds = null;
                 }
             }
         });
 
         styledText.addMouseTrackListener(new MouseTrackListener() {
 
+            Token token;
+
             @Override
             public void mouseHover(MouseEvent e) {
-                if (window != null) {
-                    window.dispose();
+                if (popupWindow != null) {
+                    return;
                 }
 
                 int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
 
-                Token token = tokenMarker.getTokenAt(offset);
+                token = tokenMarker.getTokenAt(offset);
                 if (token == null) {
                     return;
                 }
-                Rectangle bounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
+
+                popupMouseBounds = styledText.getTextBounds(token.start, token.stop);
+                popupMouseBounds.x -= 5;
+                popupMouseBounds.y -= 5;
+                popupMouseBounds.width += 10;
+                popupMouseBounds.height += 10;
 
                 Node context = tokenMarker.getContextAt(offset);
                 TokenMarker marker = tokenMarker.getMarkerAtOffset(offset);
+                Rectangle bounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
 
                 if (marker != null && marker.getError() != null) {
-                    window = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
+                    popupWindow = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
                     FillLayout layout = new FillLayout();
                     layout.marginHeight = layout.marginWidth = 5;
-                    window.setLayout(layout);
-                    Label content = new Label(window, SWT.NONE);
+                    popupWindow.setLayout(layout);
+                    Label content = new Label(popupWindow, SWT.NONE);
                     content.setText(marker.getError());
-                    window.pack();
+                    popupWindow.pack();
 
-                    Point size = window.getSize();
-                    window.setLocation(bounds.x, bounds.y - size.y - 3);
+                    Point size = popupWindow.getSize();
+                    popupWindow.setLocation(bounds.x, bounds.y - size.y - 3);
 
-                    window.open();
-                    display.asyncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            styledText.setFocus();
-                        }
-                    });
+                    popupWindow.open();
                     return;
                 }
 
@@ -505,16 +511,16 @@ public class SourceEditor {
                         text = tokenMarker.getMethod(token.getText());
                     }
                     if (text != null) {
-                        window = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
+                        popupWindow = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
                         FillLayout layout = new FillLayout();
                         layout.marginHeight = layout.marginWidth = 5;
-                        window.setLayout(layout);
+                        popupWindow.setLayout(layout);
 
-                        StyledText content = new StyledText(window, SWT.READ_ONLY | SWT.WRAP | SWT.V_SCROLL);
+                        StyledText content = new StyledText(popupWindow, SWT.READ_ONLY | SWT.WRAP | SWT.V_SCROLL);
                         content.setCaret(null);
                         new HTMLStyledTextParser(content).setText(text);
 
-                        window.pack();
+                        popupWindow.pack();
 
                         bounds.y += bounds.height + 3;
                         if (bounds.width < 640) {
@@ -524,16 +530,8 @@ public class SourceEditor {
                             bounds.height = 240;
                         }
 
-                        window.setBounds(bounds);
-
-                        window.open();
-                        display.asyncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                styledText.setFocus();
-                            }
-                        });
+                        popupWindow.setBounds(bounds);
+                        popupWindow.open();
                     }
                 }
 
