@@ -36,6 +36,7 @@ import com.maccasoft.propeller.expressions.LimitMax;
 import com.maccasoft.propeller.expressions.LimitMin;
 import com.maccasoft.propeller.expressions.LogicalAnd;
 import com.maccasoft.propeller.expressions.LogicalOr;
+import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.Negative;
 import com.maccasoft.propeller.expressions.Not;
@@ -199,7 +200,8 @@ public class Spin1ExpressionBuilder {
                     left = new Divide(left, right);
                     break;
                 case "//":
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
+                    left = new Modulo(left, right);
+                    break;
 
                 case "+":
                     left = new Add(left, right);

@@ -2180,6 +2180,132 @@ class Spin1CompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testAddress() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := @b\n"
+            + "    a := @@b\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main | a, b\n"
+            + "'     a := @b\n"
+            + "00008 00008       6B             VAR_ADDRESS LONG DBASE+$0008 (short)\n"
+            + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := @@b\n"
+            + "0000A 0000A       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "0000B 0000B       97 00          MEM_ADDRESS_INDEXED BYTE PBASE+$0000\n"
+            + "0000D 0000D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000E 0000E       32             RETURN\n"
+            + "0000F 0000F       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testVarAddress() throws Exception {
+        String text = ""
+            + "VAR\n"
+            + "\n"
+            + "    long b\n"
+            + "\n"
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := @b\n"
+            + "    a := @@b\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main | a\n"
+            + "'     a := @b\n"
+            + "00008 00008       43             VAR_ADDRESS LONG VBASE+$0000 (short)\n"
+            + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := @@b\n"
+            + "0000A 0000A       40             VAR_READ LONG VBASE+$0000 (short)\n"
+            + "0000B 0000B       97 00          MEM_ADDRESS_INDEXED BYTE PBASE+$0000\n"
+            + "0000D 0000D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000E 0000E       32             RETURN\n"
+            + "0000F 0000F       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testTypedAddress() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := @word[b]\n"
+            + "    a := @@word[b]\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main | a, b\n"
+            + "'     a := @word[b]\n"
+            + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "00009 00009       A3             MEM_ADDRESS WORD POP\n"
+            + "0000A 0000A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := @@word[b]\n"
+            + "0000B 0000B       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "0000C 0000C       A0             MEM_READ WORD POP\n"
+            + "0000D 0000D       97 00          MEM_ADDRESS_INDEXED BYTE PBASE+$0000\n"
+            + "0000F 0000F       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00010 00010       32             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testTypedAddressIndex() throws Exception {
+        String text = ""
+            + "PUB main | a, b, c\n"
+            + "\n"
+            + "    a := @word[b][c]\n"
+            + "    a := @@word[b][c]\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 0C 00    Function main @ $0008 (local size 12)\n"
+            + "' PUB main | a, b, c\n"
+            + "'     a := @word[b][c]\n"
+            + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "00009 00009       6C             VAR_READ LONG DBASE+$000C (short)\n"
+            + "0000A 0000A       B3             MEM_ADDRESS_INDEXED WORD POP\n"
+            + "0000B 0000B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := @@word[b][c]\n"
+            + "0000C 0000C       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "0000D 0000D       6C             VAR_READ LONG DBASE+$000C (short)\n"
+            + "0000E 0000E       B0             MEM_READ_INDEXED WORD POP\n"
+            + "0000F 0000F       97 00          MEM_ADDRESS_INDEXED BYTE PBASE+$0000\n"
+            + "00011 00011       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00012 00012       32             RETURN\n"
+            + "00013 00013       00             Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, Collections.emptyMap());
     }

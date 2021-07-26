@@ -64,6 +64,15 @@ public class CompilerMessage extends RuntimeException {
         this.stopToken = token;
     }
 
+    public CompilerMessage(Exception cause, Node node) {
+        super(cause);
+        this.type = ERROR;
+        this.line = node.getStartToken().line + 1;
+        this.column = node.getStartToken().column;
+        this.startToken = node.getStartToken();
+        this.stopToken = node.getStopToken();
+    }
+
     public int getType() {
         return type;
     }

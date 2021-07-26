@@ -673,6 +673,20 @@ class Spin1TokenStreamTest {
     }
 
     @Test
+    void testAddress() {
+        Spin1TokenStream subject = new Spin1TokenStream("@a");
+
+        assertEquals("@a", subject.nextToken().getText());
+    }
+
+    @Test
+    void testAbsoluteAddress() {
+        Spin1TokenStream subject = new Spin1TokenStream("@@a");
+
+        assertEquals("@@a", subject.nextToken().getText());
+    }
+
+    @Test
     void testObjectMethod() {
         Spin1TokenStream subject = new Spin1TokenStream("object.method");
 

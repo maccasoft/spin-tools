@@ -110,7 +110,7 @@ public class Spin1TokenStream extends TokenStream {
                                 state = Token.KEYWORD;
                                 break;
                             }
-                            if (ch1 == '.') {
+                            if (ch1 == '.' || ch1 == '@') {
                                 token.stop++;
                                 index++;
                                 column++;
