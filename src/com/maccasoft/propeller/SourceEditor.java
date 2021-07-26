@@ -568,7 +568,9 @@ public class SourceEditor {
 
             },
             keyStroke,
-            null);
+            new char[] {
+                '.', '#', '@'
+            });
         adapter.setPopupSize(new Point(200, 300));
         adapter.setPropagateKeys(true);
         adapter.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);

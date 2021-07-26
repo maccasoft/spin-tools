@@ -320,39 +320,9 @@ public class Spin2Parser {
                 return;
             }
             if (token.type == Token.NL) {
-                state = 0;
-                continue;
+                break;
             }
             switch (state) {
-                case 0:
-                    if (parseSection(token)) {
-                        return;
-                    }
-
-                    if (child.getTokens().size() != 0) {
-                        while (token.column < child.getToken(0).column && child.getParent() != node) {
-                            child = child.getParent();
-                            parent = child.getParent();
-                        }
-
-                        if (token.column > child.getToken(0).column) {
-                            if (Spin2Model.isBlockStart(child.getToken(0).getText())) {
-                                parent = child;
-                            }
-                            else if (child.getText().endsWith(":")) {
-                                parent = child;
-                            }
-                        }
-                    }
-
-                    if ("ORG".equalsIgnoreCase(token.getText())) {
-                        parseInlineCode(parent, token);
-                        break;
-                    }
-
-                    child = parseStatement(parent, token);
-                    break;
-
                 case 1:
                     child.addToken(token);
                     break;
@@ -517,6 +487,64 @@ public class Spin2Parser {
                     }
                     local.size.addToken(token);
                     break;
+            }
+        }
+
+        boolean acceptComments = true;
+        while (true) {
+            Token token = stream.nextToken(acceptComments);
+            if (token.type == Token.EOF) {
+                return;
+            }
+            if (token.type == Token.NL) {
+                continue;
+            }
+
+            if (token.type == Token.COMMENT) {
+                if (token.getText().startsWith("''")) {
+                    node.addDocument(token);
+                    continue;
+                }
+                acceptComments = false;
+                continue;
+            }
+            else if (token.type == Token.BLOCK_COMMENT) {
+                if (token.getText().startsWith("{{")) {
+                    node.addDocument(token);
+                    continue;
+                }
+                acceptComments = false;
+                continue;
+            }
+            else {
+                acceptComments = false;
+            }
+
+            if (parseSection(token)) {
+                return;
+            }
+
+            if (child.getTokens().size() != 0) {
+                while (token.column < child.getToken(0).column && child.getParent() != node) {
+                    child = child.getParent();
+                    parent = child.getParent();
+                }
+
+                if (token.column > child.getToken(0).column) {
+                    if (Spin2Model.isBlockStart(child.getToken(0).getText())) {
+                        parent = child;
+                    }
+                    else if (child.getText().endsWith(":")) {
+                        parent = child;
+                    }
+                }
+            }
+
+            if ("ORG".equalsIgnoreCase(token.getText())) {
+                parseInlineCode(parent, token);
+            }
+            else {
+                child = parseStatement(parent, token);
             }
         }
     }
