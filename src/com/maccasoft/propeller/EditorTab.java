@@ -100,6 +100,9 @@ public class EditorTab {
                 File fileParent = file != null ? file.getParentFile() : null;
                 String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
                 File file = new File(fileParent, fileName + fileType);
+                if (!file.exists()) {
+                    file = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName + fileType);
+                }
                 if (file.exists()) {
                     try {
                         Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
@@ -133,6 +136,9 @@ public class EditorTab {
                 File fileParent = file != null ? file.getParentFile() : null;
                 String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
                 File file = new File(fileParent, fileName + fileType);
+                if (!file.exists()) {
+                    file = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName + fileType);
+                }
                 if (file.exists()) {
                     try {
                         Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
@@ -223,6 +229,9 @@ public class EditorTab {
                 File fileParent = file != null ? file.getParentFile() : null;
                 String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
                 File file = new File(fileParent, fileName + fileType);
+                if (!file.exists()) {
+                    file = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName + fileType);
+                }
                 if (file.exists()) {
                     try {
                         Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(file));
@@ -256,6 +265,9 @@ public class EditorTab {
                 File fileParent = file != null ? file.getParentFile() : null;
                 String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
                 File file = new File(fileParent, fileName + fileType);
+                if (!file.exists()) {
+                    file = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName + fileType);
+                }
                 if (file.exists()) {
                     try {
                         Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(file));

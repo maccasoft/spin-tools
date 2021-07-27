@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
@@ -406,12 +407,40 @@ public class SpinTools {
     }
 
     void populateOpenFromMenu(Menu menu) {
+        List<String> defaultList = Arrays.asList(new String[] {
+            new File("examples/spin1").getAbsolutePath(),
+            new File("examples/spin2").getAbsolutePath(),
+            new File("library/spin1").getAbsolutePath(),
+            new File("library/spin2").getAbsolutePath()
+        });
         List<String> list = new ArrayList<String>();
+
+        for (String folder : defaultList) {
+            MenuItem item = new MenuItem(menu, SWT.PUSH);
+            item.setText(folder);
+            item.addListener(SWT.Selection, new Listener() {
+
+                @Override
+                public void handleEvent(Event event) {
+                    try {
+                        handleFileOpenFrom(folder);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+        }
 
         Iterator<String> iter = Preferences.getInstance().getLru().iterator();
         while (iter.hasNext()) {
+            boolean addSeparator = true;
+
             String folder = new File(iter.next()).getParent();
-            if (!list.contains(folder)) {
+            if (!list.contains(folder) && !defaultList.contains(folder)) {
+                if (addSeparator) {
+                    new MenuItem(menu, SWT.SEPARATOR);
+                    addSeparator = false;
+                }
                 MenuItem item = new MenuItem(menu, SWT.PUSH);
                 item.setText(folder);
                 item.addListener(SWT.Selection, new Listener() {

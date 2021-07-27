@@ -18,7 +18,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -29,6 +32,8 @@ public class Preferences {
     public static final String PROP_EDITOR_FONT = "editorFont";
     public static final String PROP_LRU = "lru";
     public static final String PROP_PORT = "port";
+    public static final String PROP_SPIN1_LIBRARY_PATH = "spin1LibraryPath";
+    public static final String PROP_SPIN2_LIBRARY_PATH = "spin2LibraryPath";
 
     public static final String PREFERENCES_NAME = ".spin-tools";
 
@@ -56,12 +61,17 @@ public class Preferences {
         return instance;
     }
 
-    boolean showLineNumbers;
-    String editorFont;
-    final List<String> lru = new ArrayList<String>();
-    String port;
+    private boolean showLineNumbers;
+    private String editorFont;
+    private String port;
+    private String spin1LibraryPath;
+    private String spin2LibraryPath;
+    private final List<String> lru = new ArrayList<String>();
 
-    final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
+    private String defaultSpin1LibraryPath = "library/spin1";
+    private String defaultSpin2LibraryPath = "library/spin2";
+
+    private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     Preferences() {
 
@@ -120,6 +130,46 @@ public class Preferences {
 
     public void setPort(String port) {
         changeSupport.firePropertyChange(PROP_PORT, this.port, this.port = port);
+    }
+
+    @JsonGetter("spin1LibraryPath")
+    public String getSerializableSpin1LibraryPath() {
+        return spin1LibraryPath;
+    }
+
+    @JsonIgnore
+    public String getSpin1LibraryPath() {
+        return spin1LibraryPath != null ? spin1LibraryPath : defaultSpin1LibraryPath;
+    }
+
+    @JsonSetter("spin1LibraryPath")
+    public void setSpin1LibraryPath(String path) {
+        if (defaultSpin1LibraryPath.equals(path)) {
+            this.spin1LibraryPath = null;
+        }
+        else {
+            this.spin1LibraryPath = path;
+        }
+    }
+
+    @JsonGetter("spin2LibraryPath")
+    public String getSerializableSpin2LibraryPath() {
+        return spin2LibraryPath;
+    }
+
+    @JsonIgnore
+    public String getSpin2LibraryPath() {
+        return spin2LibraryPath != null ? spin2LibraryPath : defaultSpin2LibraryPath;
+    }
+
+    @JsonSetter("spin2LibraryPath")
+    public void setSpin2LibraryPath(String path) {
+        if (defaultSpin2LibraryPath.equals(path)) {
+            this.spin2LibraryPath = null;
+        }
+        else {
+            this.spin2LibraryPath = path;
+        }
     }
 
     public void save() throws IOException {
