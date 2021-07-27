@@ -21,9 +21,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintStream;
-import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -1052,78 +1050,141 @@ public class SpinTools {
 
         Object object = editorTab.getObject();
         if (object instanceof Spin1Object) {
-            MemoryDialog dlg = new MemoryDialog(shell);
+            MemoryDialog dlg = new MemoryDialog(shell) {
+
+                @Override
+                protected void doSaveBinary() {
+                    try {
+                        handleBinaryExport(object);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                protected void doSaveListing() {
+                    try {
+                        handleListingExport(object);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            };
             dlg.setObject((Spin1Object) object);
             dlg.open();
         }
         else if (object instanceof Spin2Object) {
-            MemoryDialog2 dlg = new MemoryDialog2(shell);
+            MemoryDialog2 dlg = new MemoryDialog2(shell) {
+
+                @Override
+                protected void doSaveBinary() {
+                    try {
+                        handleBinaryExport(object);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                protected void doSaveListing() {
+                    try {
+                        handleListingExport(object);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            };
             dlg.setObject((Spin2Object) object);
             dlg.open();
         }
     }
 
-    void exportObjectFile(String name) {
-        CTabItem[] tabItem = tabFolder.getItems();
-        for (int i = 0; i < tabItem.length; i++) {
-            EditorTab editorTab = (EditorTab) tabItem[i].getData();
-            if (name.equals(editorTab.getText())) {
-                File file = new File(TempDirectory.location(), editorTab.getText());
-                try {
-                    Writer os = new OutputStreamWriter(new FileOutputStream(file));
-                    os.write(editorTab.getEditorText());
-                    os.close();
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
+    private void handleBinaryExport(SpinObject object) {
+        FileDialog dlg = new FileDialog(shell, SWT.SAVE);
+        dlg.setText("Save Binary File");
+        String[] filterNames = new String[] {
+            "Binary Files"
+        };
+        String[] filterExtensions = new String[] {
+            "*.bin;*.binary"
+        };
+        dlg.setFilterNames(filterNames);
+        dlg.setFilterExtensions(filterExtensions);
+
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem == null) {
+            return;
+        }
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+
+        String name = editorTab.getText();
+        int i = name.lastIndexOf('.');
+        dlg.setFileName(name.substring(0, i) + ".binary");
+
+        File filterPath = editorTab.getFile();
+        if (filterPath == null && preferences.getLru().size() != 0) {
+            filterPath = new File(preferences.getLru().get(0));
+        }
+        if (filterPath != null) {
+            dlg.setFilterPath(filterPath.getParent());
+        }
+
+        String fileName = dlg.open();
+        if (fileName != null) {
+            File fileToSave = new File(fileName);
+            try {
+                FileOutputStream os = new FileOutputStream(fileToSave);
+                object.generateBinary(os);
+                os.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
 
-    int runCommand(List<String> cmd, File outDir) throws IOException, InterruptedException {
-        PrintStream out = System.out;
-        PrintStream err = System.err;
-
-        ProcessBuilder builder = new ProcessBuilder(cmd);
-        builder.directory(outDir);
-
-        StringBuilder sb = new StringBuilder();
-        for (String s : cmd) {
-            if (sb.length() != 0) {
-                sb.append(" ");
-            }
-            sb.append(s);
-        }
-        out.println(sb.toString());
-
-        Process p = builder.start();
-        Thread ioStream = new Thread() {
-            int outLength, errLength;
-            byte[] buffer = new byte[1024];
-
-            @Override
-            public void run() {
-                try {
-                    InputStream outIs = p.getInputStream();
-                    InputStream errIs = p.getErrorStream();
-                    do {
-                        while ((outLength = outIs.read(buffer)) > 0) {
-                            out.write(buffer, 0, outLength);
-                        }
-                        while ((errLength = errIs.read(buffer)) > 0) {
-                            err.write(buffer, 0, errLength);
-                        }
-                    } while (outLength != -1 || errLength != -1);
-                    outIs.close();
-                    errIs.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+    private void handleListingExport(SpinObject object) {
+        FileDialog dlg = new FileDialog(shell, SWT.SAVE);
+        dlg.setText("Save Listing File");
+        String[] filterNames = new String[] {
+            "Listing Files"
         };
-        ioStream.start();
+        String[] filterExtensions = new String[] {
+            "*.lst"
+        };
+        dlg.setFilterNames(filterNames);
+        dlg.setFilterExtensions(filterExtensions);
 
-        return p.waitFor();
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem == null) {
+            return;
+        }
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+
+        String name = editorTab.getText();
+        int i = name.lastIndexOf('.');
+        dlg.setFileName(name.substring(0, i) + ".lst");
+
+        File filterPath = editorTab.getFile();
+        if (filterPath == null && preferences.getLru().size() != 0) {
+            filterPath = new File(preferences.getLru().get(0));
+        }
+        if (filterPath != null) {
+            dlg.setFilterPath(filterPath.getParent());
+        }
+
+        String fileName = dlg.open();
+        if (fileName != null) {
+            File fileToSave = new File(fileName);
+            try {
+                PrintStream ps = new PrintStream(new FileOutputStream(fileToSave));
+                object.generateListing(ps);
+                ps.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void handleCompileAndUpload() {

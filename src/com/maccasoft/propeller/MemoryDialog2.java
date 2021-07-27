@@ -176,6 +176,13 @@ public class MemoryDialog2 extends Dialog {
         return content;
     }
 
+    @Override
+    protected void createButtonsForButtonBar(Composite parent) {
+        createButton(parent, IDialogConstants.CLIENT_ID + 1, "Save Binary", false);
+        createButton(parent, IDialogConstants.CLIENT_ID + 2, "Save Listing", false);
+        super.createButtonsForButtonBar(parent);
+    }
+
     public void createInfoGroup(Composite parent) {
         Composite container = new Composite(parent, SWT.NONE);
         container.setLayout(new GridLayout(1, false));
@@ -665,6 +672,27 @@ public class MemoryDialog2 extends Dialog {
 
     int readLong(int index) {
         return (data[index] & 0xFF) | ((data[index + 1] & 0xFF) << 8) | ((data[index + 2] & 0xFF) << 16) | ((data[index + 3] & 0xFF) << 24);
+    }
+
+    @Override
+    protected void buttonPressed(int buttonId) {
+        if (buttonId == IDialogConstants.CLIENT_ID + 1) {
+            doSaveBinary();
+            return;
+        }
+        if (buttonId == IDialogConstants.CLIENT_ID + 2) {
+            doSaveListing();
+            return;
+        }
+        super.buttonPressed(buttonId);
+    }
+
+    protected void doSaveBinary() {
+
+    }
+
+    protected void doSaveListing() {
+
     }
 
 }
