@@ -11,10 +11,8 @@
 package com.maccasoft.propeller;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -139,8 +137,6 @@ public abstract class EditorTokenMarker {
     protected Node root;
     protected TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
     protected TreeSet<TokenMarker> compilerTokens = new TreeSet<TokenMarker>();
-
-    protected Map<String, TokenId> symbols = new HashMap<String, TokenId>();
 
     public abstract void refreshTokens(String text);
 
@@ -649,10 +645,6 @@ public abstract class EditorTokenMarker {
 
     public TreeSet<TokenMarker> getTokens() {
         return tokens;
-    }
-
-    public Map<String, TokenId> getSymbols() {
-        return symbols;
     }
 
 }

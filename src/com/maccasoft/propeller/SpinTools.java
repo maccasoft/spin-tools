@@ -41,6 +41,9 @@ import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabFolder2Adapter;
 import org.eclipse.swt.custom.CTabFolderEvent;
 import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.custom.CaretEvent;
+import org.eclipse.swt.custom.CaretListener;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.MenuEvent;
@@ -82,9 +85,20 @@ public class SpinTools {
 
     Shell shell;
     CTabFolder tabFolder;
+    StatusLine statusLine;
+
     SerialPortList serialPortList;
 
     Preferences preferences;
+
+    final CaretListener caretListener = new CaretListener() {
+
+        @Override
+        public void caretMoved(CaretEvent event) {
+            updateCaretPosition();
+        }
+
+    };
 
     public SpinTools(Shell shell) {
         this.shell = shell;
@@ -114,6 +128,7 @@ public class SpinTools {
                 if (e.item != null && e.item.getData() != null) {
                     ((CTabItem) e.item).getControl().setFocus();
                 }
+                updateCaretPosition();
             }
         });
         createTabFolderMenu();
@@ -142,6 +157,7 @@ public class SpinTools {
 
                 EditorTab tab = (EditorTab) tabFolder.getItem(index).getData();
                 tab.setFocus();
+                updateCaretPosition();
 
                 e.doit = false;
             }
@@ -155,6 +171,11 @@ public class SpinTools {
             }
         });
 
+        statusLine = new StatusLine(container);
+        GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
+        layoutData.heightHint = 24;
+        statusLine.setLayoutData(layoutData);
+
         preferences = Preferences.getInstance();
 
         serialPortList = new SerialPortList();
@@ -162,6 +183,7 @@ public class SpinTools {
         String port = preferences.getPort();
         if (port != null) {
             serialPortList.setSelection(port);
+            statusLine.setPort(port);
         }
 
         serialPortList.addPropertyChangeListener(new PropertyChangeListener() {
@@ -184,6 +206,7 @@ public class SpinTools {
                     }
                 }
                 preferences.setPort(port);
+                statusLine.setPort(port);
             }
 
         });
@@ -428,6 +451,8 @@ public class SpinTools {
                         editorTab.setFocus();
                         preferences.addToLru(fileToOpen);
 
+                        editorTab.addCaretListener(caretListener);
+
                         tabFolder.getDisplay().asyncExec(new Runnable() {
 
                             @Override
@@ -435,6 +460,7 @@ public class SpinTools {
                                 try {
                                     editorTab.setEditorText(loadFromFile(fileToOpen));
                                     editorTab.setFile(fileToOpen);
+                                    updateCaretPosition();
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -468,6 +494,8 @@ public class SpinTools {
         EditorTab editorTab = new EditorTab(tabFolder, name);
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
+        editorTab.addCaretListener(caretListener);
+        updateCaretPosition();
     }
 
     private void handleFileNewSpin1() {
@@ -476,6 +504,8 @@ public class SpinTools {
         editorTab.setEditorText(getResourceAsString("template.spin"));
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
+        editorTab.addCaretListener(caretListener);
+        updateCaretPosition();
     }
 
     private void handleFileNewSpin2() {
@@ -484,6 +514,8 @@ public class SpinTools {
         editorTab.setEditorText(getResourceAsString("template.spin2"));
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
+        editorTab.addCaretListener(caretListener);
+        updateCaretPosition();
     }
 
     String getUniqueName(String prefix, String suffix) {
@@ -559,6 +591,8 @@ public class SpinTools {
             editorTab.setFocus();
             preferences.addToLru(fileToOpen);
 
+            editorTab.addCaretListener(caretListener);
+
             tabFolder.getDisplay().asyncExec(new Runnable() {
 
                 @Override
@@ -566,6 +600,7 @@ public class SpinTools {
                     try {
                         editorTab.setEditorText(loadFromFile(fileToOpen));
                         editorTab.setFile(fileToOpen);
+                        updateCaretPosition();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -601,6 +636,8 @@ public class SpinTools {
             editorTab.setFocus();
             preferences.addToLru(fileToOpen);
 
+            editorTab.addCaretListener(caretListener);
+
             tabFolder.getDisplay().asyncExec(new Runnable() {
 
                 @Override
@@ -608,6 +645,7 @@ public class SpinTools {
                     try {
                         editorTab.setEditorText(loadFromFile(fileToOpen));
                         editorTab.setFile(fileToOpen);
+                        updateCaretPosition();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -1494,6 +1532,25 @@ public class SpinTools {
             }
         }
         return null;
+    }
+
+    void updateCaretPosition() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem == null) {
+            return;
+        }
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+
+        StyledText styledText = editorTab.getEditor().getStyledText();
+        if (styledText != null) {
+            int offset = styledText.getCaretOffset();
+            int y = styledText.getLineAtOffset(offset);
+            int x = offset - styledText.getOffsetAtLine(y);
+            statusLine.setCaretPositionText(String.format("%d : %d : %d", y + 1, x + 1, offset));
+        }
+        else {
+            statusLine.setCaretPositionText("");
+        }
     }
 
     static {

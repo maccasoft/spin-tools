@@ -11,15 +11,17 @@
 package com.maccasoft.propeller.spin1;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.EditorTokenMarker;
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
-import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.ExpressionNode;
 import com.maccasoft.propeller.model.LocalVariableNode;
 import com.maccasoft.propeller.model.MethodNode;
@@ -236,43 +238,14 @@ public class Spin1TokenMarker extends EditorTokenMarker {
         }
 
         @Override
-        public void visitObject(ObjectNode objectNode) {
-            if (objectNode.name == null || objectNode.file == null) {
+        public void visitObject(ObjectNode node) {
+            if (node.name == null || node.file == null) {
                 return;
             }
 
-            symbols.put(objectNode.name.getText(), TokenId.OBJECT);
-            tokens.add(new TokenMarker(objectNode.name, TokenId.OBJECT));
-            if (objectNode.file != null) {
-                tokens.add(new TokenMarker(objectNode.file, TokenId.STRING));
-            }
-
-            String file = objectNode.file.getText().substring(1);
-            Node objectRoot = getObjectTree(file.substring(0, file.length() - 1));
-            if (objectRoot != null) {
-                objectRoot.accept(new NodeVisitor() {
-
-                    @Override
-                    public void visitConstantAssign(ConstantAssignNode node) {
-                        symbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
-                    }
-
-                    @Override
-                    public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
-                        symbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
-                    }
-
-                    @Override
-                    public void visitMethod(MethodNode node) {
-                        if (node.name == null) {
-                            return;
-                        }
-                        if ("PUB".equalsIgnoreCase(node.type.getText())) {
-                            symbols.put(objectNode.name.getText() + "." + node.name.getText(), TokenId.METHOD_PUB);
-                        }
-                    }
-
-                });
+            tokens.add(new TokenMarker(node.name, TokenId.OBJECT));
+            if (node.file != null) {
+                tokens.add(new TokenMarker(node.file, TokenId.STRING));
             }
         }
 
@@ -430,6 +403,9 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                     if (id == null) {
                         id = symbols.get(token.getText());
                     }
+                    if (id == null) {
+                        id = compilerSymbols.get(token.getText());
+                    }
                     if (id != null) {
                         if (id == TokenId.METHOD_PUB && token.getText().contains(".")) {
                             int dot = token.getText().indexOf('.');
@@ -483,9 +459,12 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                         if (s.startsWith(":") || s.startsWith("@:")) {
                             s = lastLabel + s;
                         }
-                        id = symbols.get(s);
+                        id = pasmKeywords.get(token.getText().toUpperCase());
                         if (id == null) {
-                            id = pasmKeywords.get(token.getText().toUpperCase());
+                            id = symbols.get(s);
+                        }
+                        if (id == null) {
+                            id = compilerSymbols.get(token.getText());
                         }
                         if (id != null) {
                             if (id == TokenId.CONSTANT && token.getText().contains("#")) {
@@ -519,6 +498,9 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                     if (id == null) {
                         id = symbols.get(token.getText());
                     }
+                    if (id == null) {
+                        id = compilerSymbols.get(token.getText());
+                    }
                     if (id != null) {
                         if (id == TokenId.CONSTANT && token.getText().contains("#")) {
                             int dot = token.getText().indexOf('#');
@@ -533,16 +515,10 @@ public class Spin1TokenMarker extends EditorTokenMarker {
             }
         }
 
-        @Override
-        public void visitError(ErrorNode node) {
-            TokenMarker marker = new TokenMarker(node.getStartToken(), node.getStopToken(), TokenId.ERROR);
-            if (node.getDescription() != null) {
-                marker.setError(node.getDescription());
-            }
-            tokens.add(marker);
-        }
-
     };
+
+    Map<String, TokenId> symbols = new HashMap<String, TokenId>();
+    Map<String, TokenId> compilerSymbols = new HashMap<String, TokenId>();
 
     public Spin1TokenMarker() {
 
@@ -568,6 +544,63 @@ public class Spin1TokenMarker extends EditorTokenMarker {
 
         // Update symbols references from expressions
         root.accept(updateReferencesVisitor);
+    }
+
+    @Override
+    public void refreshCompilerTokens(List<CompilerMessage> messages) {
+        symbols.clear();
+        compilerTokens.clear();
+
+        Iterator<TokenMarker> iter = tokens.iterator();
+        while (iter.hasNext()) {
+            if (iter.next().getId() != TokenId.COMMENT) {
+                iter.remove();
+            }
+        }
+
+        root.accept(collectKeywordsVisitor);
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitObject(ObjectNode objectNode) {
+                if (objectNode.name == null || objectNode.file == null) {
+                    return;
+                }
+
+                String file = objectNode.file.getText().substring(1);
+                Node objectRoot = getObjectTree(file.substring(0, file.length() - 1));
+                if (objectRoot != null) {
+                    objectRoot.accept(new NodeVisitor() {
+
+                        @Override
+                        public void visitConstantAssign(ConstantAssignNode node) {
+                            compilerSymbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
+                        }
+
+                        @Override
+                        public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
+                            compilerSymbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
+                        }
+
+                        @Override
+                        public void visitMethod(MethodNode node) {
+                            if (node.name == null) {
+                                return;
+                            }
+                            if ("PUB".equalsIgnoreCase(node.type.getText())) {
+                                compilerSymbols.put(objectNode.name.getText() + "." + node.name.getText(), TokenId.METHOD_PUB);
+                            }
+                        }
+
+                    });
+                }
+            }
+
+        });
+
+        root.accept(updateReferencesVisitor);
+
+        super.refreshCompilerTokens(messages);
     }
 
 }

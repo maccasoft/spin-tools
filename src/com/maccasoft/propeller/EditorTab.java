@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.ModifyEvent;
@@ -401,6 +402,22 @@ public class EditorTab {
         tabItem.setControl(editor.getControl());
     }
 
+    public void addCaretListener(CaretListener listener) {
+        editor.getStyledText().addCaretListener(listener);
+    }
+
+    public void removeCaretListener(CaretListener listener) {
+        editor.getStyledText().removeCaretListener(listener);
+    }
+
+    public void addDisposeListener(DisposeListener listener) {
+        editor.getControl().addDisposeListener(listener);
+    }
+
+    public void removeDisposeListener(DisposeListener listener) {
+        editor.getControl().removeDisposeListener(listener);
+    }
+
     void updateTabItemText() {
         if (dirty) {
             tabItem.setText("*" + tabItemText);
@@ -599,6 +616,10 @@ public class EditorTab {
         }
 
         return sb.toString();
+    }
+
+    public SourceEditor getEditor() {
+        return editor;
     }
 
 }

@@ -11,8 +11,11 @@
 package com.maccasoft.propeller.spin2;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.EditorTokenMarker;
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
@@ -698,6 +701,9 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                     if (id == null) {
                         id = symbols.get(token.getText());
                     }
+                    if (id == null) {
+                        id = compilerSymbols.get(token.getText());
+                    }
                     if (id != null) {
                         if ((id == TokenId.METHOD_PUB || id == TokenId.CONSTANT) && token.getText().contains(".")) {
                             int dot = token.getText().indexOf('.');
@@ -750,6 +756,9 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                         }
                         id = symbols.get(s);
                         if (id == null) {
+                            id = compilerSymbols.get(token.getText());
+                        }
+                        if (id == null) {
                             id = pasmKeywords.get(token.getText().toUpperCase());
                         }
                         if (id == null) {
@@ -796,6 +805,9 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                     if (id == null) {
                         id = symbols.get(token.getText());
                     }
+                    if (id == null) {
+                        id = compilerSymbols.get(token.getText());
+                    }
                     if (id != null) {
                         if (id == TokenId.CONSTANT && token.getText().contains(".")) {
                             int dot = token.getText().indexOf('.');
@@ -811,6 +823,9 @@ public class Spin2TokenMarker extends EditorTokenMarker {
         }
 
     };
+
+    Map<String, TokenId> symbols = new HashMap<String, TokenId>();
+    Map<String, TokenId> compilerSymbols = new HashMap<String, TokenId>();
 
     public Spin2TokenMarker() {
 
@@ -836,6 +851,63 @@ public class Spin2TokenMarker extends EditorTokenMarker {
 
         // Update symbols references from expressions
         root.accept(updateReferencesVisitor);
+    }
+
+    @Override
+    public void refreshCompilerTokens(List<CompilerMessage> messages) {
+        symbols.clear();
+        compilerTokens.clear();
+
+        Iterator<TokenMarker> iter = tokens.iterator();
+        while (iter.hasNext()) {
+            if (iter.next().getId() != TokenId.COMMENT) {
+                iter.remove();
+            }
+        }
+
+        root.accept(collectKeywordsVisitor);
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitObject(ObjectNode objectNode) {
+                if (objectNode.name == null || objectNode.file == null) {
+                    return;
+                }
+
+                String file = objectNode.file.getText().substring(1);
+                Node objectRoot = getObjectTree(file.substring(0, file.length() - 1));
+                if (objectRoot != null) {
+                    objectRoot.accept(new NodeVisitor() {
+
+                        @Override
+                        public void visitConstantAssign(ConstantAssignNode node) {
+                            compilerSymbols.put(objectNode.name.getText() + "." + node.getIdentifier().getText(), TokenId.CONSTANT);
+                        }
+
+                        @Override
+                        public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
+                            compilerSymbols.put(objectNode.name.getText() + "." + node.getIdentifier().getText(), TokenId.CONSTANT);
+                        }
+
+                        @Override
+                        public void visitMethod(MethodNode node) {
+                            if (node.name == null) {
+                                return;
+                            }
+                            if ("PUB".equalsIgnoreCase(node.type.getText())) {
+                                compilerSymbols.put(objectNode.name.getText() + "." + node.name.getText(), TokenId.METHOD_PUB);
+                            }
+                        }
+
+                    });
+                }
+            }
+
+        });
+
+        root.accept(updateReferencesVisitor);
+
+        super.refreshCompilerTokens(messages);
     }
 
 }

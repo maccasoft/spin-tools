@@ -173,6 +173,8 @@ public class SourceEditor {
         }
     };
 
+    Map<Integer, StyleRange[]> styleCache = new HashMap<Integer, StyleRange[]>();
+
     final Runnable refreshViewRunnable = new Runnable() {
 
         @Override
@@ -180,6 +182,7 @@ public class SourceEditor {
             if (styledText == null || styledText.isDisposed()) {
                 return;
             }
+            styleCache.clear();
             styledText.redraw();
         }
     };
@@ -398,7 +401,6 @@ public class SourceEditor {
 
             @Override
             public void lineGetStyle(LineStyleEvent event) {
-                List<StyleRange> ranges = new ArrayList<StyleRange>();
 
                 if (tokenMarker != null) {
                     if (modified) {
@@ -410,6 +412,13 @@ public class SourceEditor {
                         }
                         modified = false;
                     }
+
+                    event.styles = styleCache.get(event.lineOffset);
+                    if (event.styles != null) {
+                        return;
+                    }
+
+                    List<StyleRange> ranges = new ArrayList<StyleRange>();
 
                     try {
                         for (TokenMarker entry : tokenMarker.getLineTokens(event.lineOffset, event.lineText)) {
@@ -424,9 +433,10 @@ public class SourceEditor {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                }
 
-                event.styles = ranges.toArray(new StyleRange[ranges.size()]);
+                    event.styles = ranges.toArray(new StyleRange[ranges.size()]);
+                    styleCache.put(event.lineOffset, event.styles);
+                }
             }
         });
 
