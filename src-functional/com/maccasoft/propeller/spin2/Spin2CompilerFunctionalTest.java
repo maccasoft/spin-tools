@@ -10,12 +10,12 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -40,130 +40,120 @@ class Spin2CompilerFunctionalTest {
             + "";
 
         byte[] expected = getResource("blink.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testLedMatrix() throws Exception {
-        String text = getResourceAsString("cjmj_pin_test_w_led_matrix.spin2");
+        String text = loadFromFile(new File("library/spin2", "cjmj_pin_test_w_led_matrix.spin2"));
 
         byte[] expected = getResource("cjmj_pin_test_w_led_matrix.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void test1Wire() throws Exception {
-        String text = getResourceAsString("jm_1-wire.spin2");
+        String text = loadFromFile(new File("library/spin2", "jm_1-wire.spin2"));
 
         byte[] expected = getResource("jm_1-wire.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testAPA102C() throws Exception {
-        String text = getResourceAsString("jm_apa102c.spin2");
-        Map<String, String> sources = new HashMap<String, String>();
-        sources.put("jm_gamma8", getResourceAsString("jm_gamma8.spin2"));
+        String text = loadFromFile(new File("library/spin2", "jm_apa102c.spin2"));
 
         byte[] expected = getResource("jm_apa102c.binary");
-        compileAndCompare(text, sources, expected);
+        compileAndCompare(text, expected);
     }
 
     //@Test
     // Fails because of different sequence of same-priority operators
     void testEZAnalog() throws Exception {
-        String text = getResourceAsString("jm_ez_analog.spin2");
+        String text = loadFromFile(new File("library/spin2", "jm_ez_analog.spin2"));
 
         byte[] expected = getResource("jm_ez_analog.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testEZButton() throws Exception {
-        String text = getResourceAsString("jm_ez_button.spin2");
+        String text = loadFromFile(new File("library/spin2", "jm_ez_button.spin2"));
 
         byte[] expected = getResource("jm_ez_button.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testEZSound() throws Exception {
-        String text = getResourceAsString("jm_ez_sound.spin2");
+        String text = loadFromFile(new File("library/spin2", "jm_ez_sound.spin2"));
 
         byte[] expected = getResource("jm_ez_sound.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testEZSPI() throws Exception {
-        String text = getResourceAsString("jm_ez_spi.spin2");
+        String text = loadFromFile(new File("library/spin2", "jm_ez_spi.spin2"));
 
         byte[] expected = getResource("jm_ez_spi.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testFullDuplexSerial() throws Exception {
-        String text = getResourceAsString("jm_fullduplexserial.spin2");
-        Map<String, String> sources = new HashMap<String, String>();
-        sources.put("jm_nstr", getResourceAsString("jm_nstr.spin2"));
+        String text = loadFromFile(new File("library/spin2", "jm_fullduplexserial.spin2"));
 
         byte[] expected = getResource("jm_fullduplexserial.binary");
-        compileAndCompare(text, sources, expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testGamma8() throws Exception {
-        String text = getResourceAsString("jm_gamma8.spin2");
+        String text = loadFromFile(new File("library/spin2", "jm_gamma8.spin2"));
 
         byte[] expected = getResource("jm_gamma8.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testHD485() throws Exception {
-        String text = getResourceAsString("jm_hd485.spin2");
+        String text = loadFromFile(new File("library/spin2", "jm_hd485.spin2"));
 
         byte[] expected = getResource("jm_hd485.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testI2C() throws Exception {
-        String text = getResourceAsString("jm_i2c.spin2");
+        String text = loadFromFile(new File("library/spin2", "jm_i2c.spin2"));
 
         byte[] expected = getResource("jm_i2c.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testLCD_PCF8574() throws Exception {
-        String text = getResourceAsString("jm_lcd_pcf8574.spin2");
-        Map<String, String> sources = new HashMap<String, String>();
-        sources.put("jm_pcf8574", getResourceAsString("jm_pcf8574.spin2"));
-        sources.put("jm_nstr", getResourceAsString("jm_nstr.spin2"));
-        sources.put("jm_i2c", getResourceAsString("jm_i2c.spin2"));
+        String text = loadFromFile(new File("library/spin2", "jm_lcd_pcf8574.spin2"));
 
         byte[] expected = getResource("jm_lcd_pcf8574.binary");
-        compileAndCompare(text, sources, expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testNstr() throws Exception {
-        String text = getResourceAsString("jm_nstr.spin2");
+        String text = loadFromFile(new File("library/spin2", "jm_nstr.spin2"));
 
         byte[] expected = getResource("jm_nstr.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testPCF8574() throws Exception {
-        String text = getResourceAsString("jm_pcf8574.spin2");
-        Map<String, String> sources = new HashMap<String, String>();
-        sources.put("jm_i2c", getResourceAsString("jm_i2c.spin2"));
+        String text = loadFromFile(new File("library/spin2", "jm_pcf8574.spin2"));
 
         byte[] expected = getResource("jm_pcf8574.binary");
-        compileAndCompare(text, sources, expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
@@ -171,7 +161,7 @@ class Spin2CompilerFunctionalTest {
         String text = getResourceAsString("m6502_apple1_cvbs.spin2");
 
         byte[] expected = getResource("m6502_apple1_cvbs.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
@@ -179,15 +169,15 @@ class Spin2CompilerFunctionalTest {
         String text = getResourceAsString("m6502_apple1_vga.spin2");
 
         byte[] expected = getResource("m6502_apple1_vga.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testReSound() throws Exception {
-        String text = getResourceAsString("reSound.spin2");
+        String text = loadFromFile(new File("library/spin2", "reSound.spin2"));
 
         byte[] expected = getResource("reSound.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
@@ -195,44 +185,33 @@ class Spin2CompilerFunctionalTest {
         String text = getResourceAsString("Spin2_interpreter.spin2");
 
         byte[] expected = getResource("Spin2_interpreter.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testStrings() throws Exception {
-        String text = getResourceAsString("strings.spin2");
+        String text = loadFromFile(new File("library/spin2", "strings.spin2"));
 
         byte[] expected = getResource("strings.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
     @Test
     void testVGA() throws Exception {
-        String text = getResourceAsString("vga_tile_driver.spin2");
+        String text = loadFromFile(new File("library/spin2", "vga_tile_driver.spin2"));
 
         byte[] expected = getResource("vga_tile_driver.binary");
-        compileAndCompare(text, Collections.emptyMap(), expected);
+        compileAndCompare(text, expected);
     }
 
-    String getResourceAsString(String name) throws Exception {
+    String getResourceAsString(String name) {
         InputStream is = getClass().getResourceAsStream(name);
         try {
             byte[] b = new byte[is.available()];
             is.read(b);
             return new String(b);
-        } finally {
-            is.close();
-        }
-    }
-
-    byte[] getResource(String name) throws Exception {
-        InputStream is = getClass().getResourceAsStream(name);
-        try {
-            byte[] b = new byte[is.available()];
-            is.read(b);
-            return b;
         } catch (Exception e) {
-            return null;
+            throw new RuntimeException("can't find resource " + name, e);
         } finally {
             try {
                 is.close();
@@ -242,12 +221,47 @@ class Spin2CompilerFunctionalTest {
         }
     }
 
+    byte[] getResource(String name) {
+        InputStream is = getClass().getResourceAsStream(name);
+        try {
+            byte[] b = new byte[is.available()];
+            is.read(b);
+            return b;
+        } catch (Exception e) {
+            throw new RuntimeException("can't find resource " + name, e);
+        } finally {
+            try {
+                is.close();
+            } catch (Exception e) {
+
+            }
+        }
+    }
+
+    String loadFromFile(File file) {
+        String line;
+        StringBuilder sb = new StringBuilder();
+
+        if (file.exists()) {
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(file));
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                    sb.append("\n");
+                }
+                reader.close();
+            } catch (Exception e) {
+                throw new RuntimeException("error reading file " + file, e);
+            }
+        }
+
+        return sb.toString();
+    }
+
     class Spin2CompilerAdapter extends Spin2Compiler {
 
-        Map<String, String> sources;
+        public Spin2CompilerAdapter() {
 
-        public Spin2CompilerAdapter(Map<String, String> sources) {
-            this.sources = sources;
         }
 
         @Override
@@ -260,22 +274,27 @@ class Spin2CompilerFunctionalTest {
             Spin2Parser subject = new Spin2Parser(stream);
             Node root = subject.parse();
 
-            Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
+            Spin2CompilerAdapter compiler = new Spin2CompilerAdapter();
             return compiler.compileObject(root);
         }
 
         protected String getObjectSource(String fileName) {
-            return sources.get(fileName);
+            fileName += ".spin2";
+            File file = new File("library/spin2", fileName);
+            if (file.exists()) {
+                return loadFromFile(file);
+            }
+            return getResourceAsString(fileName);
         }
 
     }
 
-    void compileAndCompare(String text, Map<String, String> sources, byte[] expected) throws Exception {
+    void compileAndCompare(String text, byte[] expected) throws Exception {
         Spin2TokenStream stream = new Spin2TokenStream(text);
         Spin2Parser subject = new Spin2Parser(stream);
         Node root = subject.parse();
 
-        Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
+        Spin2CompilerAdapter compiler = new Spin2CompilerAdapter();
         Spin2Object obj = compiler.compile(root);
 
         for (CompilerMessage msg : compiler.getMessages()) {
