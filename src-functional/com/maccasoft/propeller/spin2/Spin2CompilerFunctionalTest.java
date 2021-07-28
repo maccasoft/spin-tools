@@ -67,9 +67,10 @@ class Spin2CompilerFunctionalTest {
         compileAndCompare(text, expected);
     }
 
-    //@Test
-    // Fails because of different sequence of same-priority operators
+    @Test
     void testEZAnalog() throws Exception {
+        // Comparison with binary from Propeller Tool fails
+        // because of different sequence of same-priority operators (limit-min and limit-max in this case)
         String text = loadFromFile(new File("library/spin2", "jm_ez_analog.spin2"));
 
         byte[] expected = getResource("jm_ez_analog.binary");
@@ -157,34 +158,10 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testApple1CVBS() throws Exception {
-        String text = getResourceAsString("m6502_apple1_cvbs.spin2");
-
-        byte[] expected = getResource("m6502_apple1_cvbs.binary");
-        compileAndCompare(text, expected);
-    }
-
-    @Test
-    void testApple1VGA() throws Exception {
-        String text = getResourceAsString("m6502_apple1_vga.spin2");
-
-        byte[] expected = getResource("m6502_apple1_vga.binary");
-        compileAndCompare(text, expected);
-    }
-
-    @Test
     void testReSound() throws Exception {
         String text = loadFromFile(new File("library/spin2", "reSound.spin2"));
 
         byte[] expected = getResource("reSound.binary");
-        compileAndCompare(text, expected);
-    }
-
-    @Test
-    void testInterpreter() throws Exception {
-        String text = getResourceAsString("Spin2_interpreter.spin2");
-
-        byte[] expected = getResource("Spin2_interpreter.binary");
         compileAndCompare(text, expected);
     }
 
@@ -201,6 +178,30 @@ class Spin2CompilerFunctionalTest {
         String text = loadFromFile(new File("library/spin2", "vga_tile_driver.spin2"));
 
         byte[] expected = getResource("vga_tile_driver.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
+    void testApple1CVBS() throws Exception {
+        String text = loadFromFile(new File("examples/P2", "m6502_apple1_cvbs.spin2"));
+
+        byte[] expected = getResource("m6502_apple1_cvbs.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
+    void testApple1VGA() throws Exception {
+        String text = loadFromFile(new File("examples/P2", "m6502_apple1_vga.spin2"));
+
+        byte[] expected = getResource("m6502_apple1_vga.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
+    void testInterpreter() throws Exception {
+        String text = getResourceAsString("Spin2_interpreter.spin2");
+
+        byte[] expected = getResource("Spin2_interpreter.binary");
         compileAndCompare(text, expected);
     }
 

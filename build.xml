@@ -118,6 +118,24 @@
             </fileset>
         </jar>
 
+        <copy todir="${work}/${folder}/examples">
+            <fileset dir="examples">
+                <exclude name="**/.*" />
+                <exclude name="**/*.o" />
+                <exclude name="**/*.elf" />
+                <exclude name="**/.*/**" />
+            </fileset>
+        </copy>
+
+        <copy todir="${work}/${folder}/library">
+            <fileset dir="libraries">
+                <exclude name="**/.*" />
+                <exclude name="**/*.o" />
+                <exclude name="**/*.elf" />
+                <exclude name="**/.*/**" />
+            </fileset>
+        </copy>
+
         <copy todir="${work}/${folder}/lib">
             <fileset dir="lib" includes="org.eclipse.core.commands_3.9.700.v20191217-1850.jar" />
             <fileset dir="lib" includes="org.eclipse.core.databinding_1.9.0.v20200519-1409.jar" />
