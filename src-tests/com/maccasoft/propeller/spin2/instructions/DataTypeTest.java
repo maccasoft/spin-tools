@@ -52,7 +52,7 @@ class DataTypeTest {
     void testByteSize() throws Exception {
         Assertions.assertArrayEquals(new byte[] {
             (byte) 0x01, (byte) 0x01, (byte) 0x03, (byte) 0x03,
-            (byte) 0x03, (byte) 0x03, (byte) 0x00, (byte) 0x00
+            (byte) 0x03, (byte) 0x03,
         }, compile("DAT\n  byte 1[2],3[4]\n"));
     }
 

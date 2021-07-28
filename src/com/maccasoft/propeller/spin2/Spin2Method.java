@@ -58,6 +58,8 @@ public class Spin2Method {
     }
 
     public int resolve(int address) {
+        scope.setAddress(address);
+        address++;
         for (Spin2MethodLine line : lines) {
             address = line.resolve(address);
         }

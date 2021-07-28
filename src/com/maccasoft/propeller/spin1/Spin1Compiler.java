@@ -84,6 +84,7 @@ import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
 import com.maccasoft.propeller.spin1.instructions.Fit;
 import com.maccasoft.propeller.spin1.instructions.Org;
+import com.maccasoft.propeller.spin1.instructions.Res;
 
 public class Spin1Compiler {
 
@@ -234,10 +235,8 @@ public class Spin1Compiler {
         boolean cogMode = false;
         for (Spin1PAsmLine line : source) {
             line.getScope().setHubAddress(hubAddress);
-            if (line.getInstructionFactory() instanceof Org) {
-                while ((hubAddress % 4) != 0) {
-                    hubAddress++;
-                }
+            if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
+                hubAddress = (hubAddress + 3) & ~3;
                 cogMode = true;
             }
             try {
@@ -280,7 +279,6 @@ public class Spin1Compiler {
             }
             object.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());
         }
-        object.alignToLong();
 
         if (methods.size() != 0) {
             for (int i = 0; i < 3; i++) {
@@ -475,9 +473,7 @@ public class Spin1Compiler {
             }
         }
 
-        while ((varOffset % 4) != 0) {
-            varOffset++;
-        }
+        varOffset = (varOffset + 3) & ~3;
     }
 
     void compileObjBlock(Node parent) {

@@ -30,6 +30,7 @@ import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Divide;
+import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
@@ -84,6 +85,7 @@ import com.maccasoft.propeller.spin2.instructions.Empty;
 import com.maccasoft.propeller.spin2.instructions.FileInc;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
+import com.maccasoft.propeller.spin2.instructions.Res;
 
 public class Spin2Compiler {
 
@@ -277,7 +279,7 @@ public class Spin2Compiler {
             if (line.getInstructionFactory() instanceof Orgh) {
                 hubMode = true;
             }
-            if (line.getInstructionFactory() instanceof Org) {
+            if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
                 hubMode = false;
                 hubAddress = (hubAddress + 3) & ~3;
             }
@@ -324,13 +326,11 @@ public class Spin2Compiler {
                 logMessage(new CompilerMessage(e.getMessage(), (Node) line.getData()));
             }
         }
-        object.alignToLong();
 
         if (methods.size() != 0) {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 4; i++) {
                 address = object.getSize();
                 for (Spin2Method method : methods) {
-                    address++;
                     address = method.resolve(address);
                 }
             }
@@ -1129,7 +1129,7 @@ public class Spin2Compiler {
             if (line.getArgumentsCount() != 1) {
                 throw new RuntimeException("syntax error");
             }
-            line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), true));
+            line.addSource(compileConstantExpression(line.getScope(), line.getArgument(0)));
             Spin2MethodLine target = (Spin2MethodLine) line.getData("false");
             line.addSource(new Jz(line.getScope(), new ContextLiteral(target.getScope())));
         }
@@ -1156,8 +1156,8 @@ public class Spin2Compiler {
                     line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(0), true));
                     Spin2MethodLine target = (Spin2MethodLine) line.getData("quit");
                     line.addSource(new Tjz(line.getScope(), new ContextLiteral(target.getScope())));
-                    line.setData("pop", Integer.valueOf(4));
                 }
+                line.setData("pop", Integer.valueOf(4));
             }
             else if (line.getArgumentsCount() == 3 || line.getArgumentsCount() == 4) {
                 Spin2MethodLine end = line.getChilds().get(0);
@@ -2595,6 +2595,9 @@ public class Spin2Compiler {
                 throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
             }
             return new Trunc(buildConstantExpression(context, node.getChild(0)));
+        }
+        if ("==".equals(node.getText())) {
+            return new Equals(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
 
         throw new RuntimeException("unknown " + node.getText());

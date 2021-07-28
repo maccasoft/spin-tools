@@ -95,41 +95,17 @@ public class MemoryOp extends Spin2Bytecode {
 
     @Override
     public int getSize() {
-        int size = 1;
-
-        int offset;
         if (expression instanceof ContextLiteral) {
             if (!((ContextLiteral) expression).getContext().isAddressSet()) {
                 return 4;
             }
-            offset = ((ContextLiteral) expression).getContext().getHubAddress();
         }
         else if (expression instanceof Identifier) {
             if (!((Identifier) expression).getContext().isAddressSet()) {
                 return 4;
             }
-            offset = ((ContextLiteral) expression).getContext().getHubAddress();
         }
-        else if (expression instanceof Variable) {
-            offset = ((Variable) expression).getOffset();
-        }
-        else {
-            offset = expression.getNumber().intValue();
-        }
-
-        size += Constant.wrVarsSize(offset + index);
-
-        if (op == Op.Address) {
-            size++;
-        }
-        else if (op == Op.Read) {
-            size++;
-        }
-        else if (op == Op.Write) {
-            size++;
-        }
-
-        return size;
+        return getBytes().length;
     }
 
     @Override
