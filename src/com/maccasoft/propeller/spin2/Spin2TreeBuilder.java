@@ -339,7 +339,7 @@ public class Spin2TreeBuilder {
                 }
                 Token postToken = peek();
                 if (postToken != null && postEffect.contains(postToken.getText())) {
-                    if (!"?".equals(postToken.getText()) || postToken.column == (token.column + 1)) {
+                    if (!"?".equals(postToken.getText()) || postToken.start == (token.stop + 1)) {
                         node.addChild(new Spin2StatementNode(next()));
                     }
                 }
