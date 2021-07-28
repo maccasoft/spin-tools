@@ -1,0 +1,41 @@
+pub parseNextInt(addr): outInt, outaddr | addr2, NextInt ' this returns the address at which we are to look for the next int, NOT the outaddr. outaddr is stored in NextInt
+
+    ' find where the first number after addr starts
+    addr--
+    outInt~
+    outaddr~
+    repeat
+      addr++
+      outaddr++
+    until (IsDigit(byte[addr]) or (outaddr>12))
+    if (outaddr>12)
+         outaddr := -1
+         return
+
+    ' find where the first number after addr ends
+    addr2:=addr
+    outaddr~
+    repeat
+      addr2++
+      outaddr++
+    until ((IsDigit(byte[addr2])==false) or (outaddr>12))
+    if (outaddr>12)
+         outaddr := -2
+         return
+
+    outaddr:=addr2-addr ' this is the number of digits we have to parse
+
+    NextInt~
+    repeat outaddr ' go through the digits and add
+       NextInt*=10
+       NextInt+=(byte[addr]-48) ' ascii 0
+       addr++
+
+    if (byte[addr-outaddr-1]=="-") ' go back and see if there's a minus sign
+       NextInt := -NextInt
+    outaddr:= addr2+1 ' this is nonzero (signals successful acquisition) and also tells us where to look next
+    outInt := NextInt
+    return
+pri IsDigit(me): digit
+
+    digit := (me>="0" and me<="9")

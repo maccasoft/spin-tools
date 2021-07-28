@@ -408,8 +408,8 @@ public class SpinTools {
 
     void populateOpenFromMenu(Menu menu) {
         List<String> defaultList = Arrays.asList(new String[] {
-            new File("examples/spin1").getAbsolutePath(),
-            new File("examples/spin2").getAbsolutePath(),
+            new File("examples/P1").getAbsolutePath(),
+            new File("examples/P2").getAbsolutePath(),
             new File("library/spin1").getAbsolutePath(),
             new File("library/spin2").getAbsolutePath()
         });

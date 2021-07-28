@@ -23,28 +23,10 @@ import org.junit.jupiter.api.Test;
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.model.Node;
 
-class Spin2CompilerFunctionalTest {
+class Spin2LibraryTest {
 
     @Test
-    void testCompileBlinkSpin() throws Exception {
-        String text = ""
-            + "CON\n"
-            + "    _clkfreq = 160_000_000\n"
-            + "\n"
-            + "PUB main() | ct\n"
-            + "\n"
-            + "    ct := getct()                   ' get current timer\n"
-            + "    repeat\n"
-            + "        pint(56)                    ' toggle pin 56\n"
-            + "        waitct(ct += _clkfreq / 2)  ' wait half second\n"
-            + "";
-
-        byte[] expected = getResource("blink.binary");
-        compileAndCompare(text, expected);
-    }
-
-    @Test
-    void testLedMatrix() throws Exception {
+    void test_cjmj_pin_test_w_led_matrix() throws Exception {
         String text = loadFromFile(new File("library/spin2", "cjmj_pin_test_w_led_matrix.spin2"));
 
         byte[] expected = getResource("cjmj_pin_test_w_led_matrix.binary");
@@ -52,7 +34,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void test1Wire() throws Exception {
+    void test_jm_1_wire() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_1-wire.spin2"));
 
         byte[] expected = getResource("jm_1-wire.binary");
@@ -60,7 +42,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testAPA102C() throws Exception {
+    void test_jm_apa102c() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_apa102c.spin2"));
 
         byte[] expected = getResource("jm_apa102c.binary");
@@ -68,7 +50,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testEZAnalog() throws Exception {
+    void test_jm_ez_analog() throws Exception {
         // Comparison with binary from Propeller Tool fails
         // because of different sequence of same-priority operators (limit-min and limit-max in this case)
         String text = loadFromFile(new File("library/spin2", "jm_ez_analog.spin2"));
@@ -78,7 +60,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testEZButton() throws Exception {
+    void test_jm_ez_button() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_ez_button.spin2"));
 
         byte[] expected = getResource("jm_ez_button.binary");
@@ -86,7 +68,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testEZSound() throws Exception {
+    void test_jm_ez_sound() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_ez_sound.spin2"));
 
         byte[] expected = getResource("jm_ez_sound.binary");
@@ -94,7 +76,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testEZSPI() throws Exception {
+    void test_jm_ez_spi() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_ez_spi.spin2"));
 
         byte[] expected = getResource("jm_ez_spi.binary");
@@ -102,7 +84,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testFullDuplexSerial() throws Exception {
+    void test_jm_fullduplexserial() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_fullduplexserial.spin2"));
 
         byte[] expected = getResource("jm_fullduplexserial.binary");
@@ -110,7 +92,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testGamma8() throws Exception {
+    void test_jm_gamma8() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_gamma8.spin2"));
 
         byte[] expected = getResource("jm_gamma8.binary");
@@ -118,7 +100,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testHD485() throws Exception {
+    void test_jm_hd485() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_hd485.spin2"));
 
         byte[] expected = getResource("jm_hd485.binary");
@@ -126,7 +108,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testI2C() throws Exception {
+    void test_jm_i2c() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_i2c.spin2"));
 
         byte[] expected = getResource("jm_i2c.binary");
@@ -134,7 +116,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testLCD_PCF8574() throws Exception {
+    void test_jm_lcd_pcf8574() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_lcd_pcf8574.spin2"));
 
         byte[] expected = getResource("jm_lcd_pcf8574.binary");
@@ -142,7 +124,15 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testNstr() throws Exception {
+    void test_jm_serial() throws Exception {
+        String text = loadFromFile(new File("library/spin2", "jm_serial.spin2"));
+
+        byte[] expected = getResource("jm_serial.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
+    void test_jm_nstr() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_nstr.spin2"));
 
         byte[] expected = getResource("jm_nstr.binary");
@@ -150,7 +140,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testPCF8574() throws Exception {
+    void test_jm_pcf8574() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_pcf8574.spin2"));
 
         byte[] expected = getResource("jm_pcf8574.binary");
@@ -158,7 +148,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testReSound() throws Exception {
+    void test_reSound() throws Exception {
         String text = loadFromFile(new File("library/spin2", "reSound.spin2"));
 
         byte[] expected = getResource("reSound.binary");
@@ -166,7 +156,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testStrings() throws Exception {
+    void test_strings() throws Exception {
         String text = loadFromFile(new File("library/spin2", "strings.spin2"));
 
         byte[] expected = getResource("strings.binary");
@@ -174,7 +164,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testVGA() throws Exception {
+    void test_vga_tile_driver() throws Exception {
         String text = loadFromFile(new File("library/spin2", "vga_tile_driver.spin2"));
 
         byte[] expected = getResource("vga_tile_driver.binary");
@@ -182,23 +172,7 @@ class Spin2CompilerFunctionalTest {
     }
 
     @Test
-    void testApple1CVBS() throws Exception {
-        String text = loadFromFile(new File("examples/P2", "m6502_apple1_cvbs.spin2"));
-
-        byte[] expected = getResource("m6502_apple1_cvbs.binary");
-        compileAndCompare(text, expected);
-    }
-
-    @Test
-    void testApple1VGA() throws Exception {
-        String text = loadFromFile(new File("examples/P2", "m6502_apple1_vga.spin2"));
-
-        byte[] expected = getResource("m6502_apple1_vga.binary");
-        compileAndCompare(text, expected);
-    }
-
-    @Test
-    void testInterpreter() throws Exception {
+    void test_Spin2_interpreter() throws Exception {
         String text = getResourceAsString("Spin2_interpreter.spin2");
 
         byte[] expected = getResource("Spin2_interpreter.binary");
