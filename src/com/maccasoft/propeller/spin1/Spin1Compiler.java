@@ -1529,6 +1529,17 @@ public class Spin1Compiler {
                     NumberLiteral expression = new NumberLiteral(child.getText());
                     sb.append((char) expression.getNumber().intValue());
                 }
+                else {
+                    try {
+                        Expression expression = buildConstantExpression(context, child);
+                        if (!expression.isConstant()) {
+                            throw new CompilerMessage("expression is not constant", child.getToken());
+                        }
+                        sb.append((char) expression.getNumber().intValue());
+                    } catch (Exception e) {
+                        throw new CompilerMessage("expression is not constant", child.getToken());
+                    }
+                }
             }
             if (sb.length() == 1) {
                 Expression expression = new CharacterLiteral(sb.toString());
