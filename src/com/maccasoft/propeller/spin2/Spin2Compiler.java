@@ -1732,6 +1732,18 @@ public class Spin2Compiler {
                 source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
                 source.add(new Bytecode(context, push ? 0x85 : 0x83, "PRE_INC" + (push ? " (push)" : "")));
             }
+            else if (expression instanceof DataVariable) {
+                String type = ((DataVariable) expression).getType();
+                MemoryOp.Size ss = MemoryOp.Size.Long;
+                if ("BYTE".equalsIgnoreCase(type)) {
+                    ss = MemoryOp.Size.Byte;
+                }
+                else if ("WORD".equalsIgnoreCase(type)) {
+                    ss = MemoryOp.Size.Word;
+                }
+                source.add(new MemoryOp(context, ss, MemoryOp.Base.PBase, MemoryOp.Op.Setup, expression));
+                source.add(new Bytecode(context, push ? 0x85 : 0x83, "PRE_INC" + (push ? " (push)" : "")));
+            }
             else {
                 throw new CompilerMessage("unsupported operation on " + node.getChild(0).getText(), node.getChild(0).getToken());
             }
@@ -1748,6 +1760,18 @@ public class Spin2Compiler {
                 source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
                 source.add(new Bytecode(context, push ? 0x86 : 0x84, "PRE_DEC" + (push ? " (push)" : "")));
             }
+            else if (expression instanceof DataVariable) {
+                String type = ((DataVariable) expression).getType();
+                MemoryOp.Size ss = MemoryOp.Size.Long;
+                if ("BYTE".equalsIgnoreCase(type)) {
+                    ss = MemoryOp.Size.Byte;
+                }
+                else if ("WORD".equalsIgnoreCase(type)) {
+                    ss = MemoryOp.Size.Word;
+                }
+                source.add(new MemoryOp(context, ss, MemoryOp.Base.PBase, MemoryOp.Op.Setup, expression));
+                source.add(new Bytecode(context, push ? 0x86 : 0x84, "PRE_DEC" + (push ? " (push)" : "")));
+            }
             else {
                 throw new CompilerMessage("unsupported operation on " + node.getChild(0).getText(), node.getChild(0).getToken());
             }
@@ -1762,6 +1786,18 @@ public class Spin2Compiler {
             }
             if (expression instanceof Variable) {
                 source.add(new VariableOp(context, VariableOp.Op.Setup, false, (Variable) expression));
+                source.add(new Bytecode(context, push ? 0x8F : 0x8E, "PRE_RND" + (push ? " (push)" : "")));
+            }
+            else if (expression instanceof DataVariable) {
+                String type = ((DataVariable) expression).getType();
+                MemoryOp.Size ss = MemoryOp.Size.Long;
+                if ("BYTE".equalsIgnoreCase(type)) {
+                    ss = MemoryOp.Size.Byte;
+                }
+                else if ("WORD".equalsIgnoreCase(type)) {
+                    ss = MemoryOp.Size.Word;
+                }
+                source.add(new MemoryOp(context, ss, MemoryOp.Base.PBase, MemoryOp.Op.Setup, expression));
                 source.add(new Bytecode(context, push ? 0x8F : 0x8E, "PRE_RND" + (push ? " (push)" : "")));
             }
             else {

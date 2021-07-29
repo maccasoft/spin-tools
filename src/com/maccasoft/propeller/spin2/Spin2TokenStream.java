@@ -244,7 +244,7 @@ public class Spin2TokenStream extends TokenStream {
                         }
                     }
                     if (ch == '|' || ch == '!' || ch == '=' || ch == '^' || ch == '+' || ch == '*' || ch == '-' || ch == '/' || ch == '#' || ch == ':' || ch == '>' || ch == '<' || ch == '.'
-                        || ch == '~' || ch == '&') {
+                        || ch == '~' || ch == '&' || ch == '?') {
                         token.stop++;
                         break;
                     }

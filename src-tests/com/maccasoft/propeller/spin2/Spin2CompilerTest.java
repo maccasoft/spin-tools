@@ -2386,6 +2386,39 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testDatVariablePreEffects() throws Exception {
+        String text = ""
+            + "PUB start()\n"
+            + "\n"
+            + "    ++a\n"
+            + "    --b\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "a       long    0\n"
+            + "b       long    0\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00 00 80    Method start @ $00010 (0 parameters, 0 returns)\n"
+            + "00004 00004       18 00 00 00    End\n"
+            + "00008 00008   000 00 00 00 00    a                   long    0\n"
+            + "0000C 0000C   001 00 00 00 00    b                   long    0\n"
+            + "' PUB start()\n"
+            + "00010 00010       00             (stack size)\n"
+            + "'     ++a\n"
+            + "00011 00011       5C 08          MEM_SETUP LONG PBASE+$00008\n"
+            + "00013 00013       83             PRE_INC\n"
+            + "'     --b\n"
+            + "00014 00014       5C 0C          MEM_SETUP LONG PBASE+$0000C\n"
+            + "00016 00016       84             PRE_DEC\n"
+            + "00017 00017       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testListAssignmentEffects() throws Exception {
         String text = ""
             + "PUB start() : r | a, b\n"
