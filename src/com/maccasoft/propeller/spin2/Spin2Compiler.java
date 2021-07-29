@@ -1574,6 +1574,46 @@ public class Spin2Compiler {
         else if ("END".equalsIgnoreCase(node.getText())) {
             // Ignored
         }
+        else if ("LOOKDOWN".equalsIgnoreCase(node.getText()) || "LOOKDOWNZ".equalsIgnoreCase(node.getText()) || "LOOKUP".equalsIgnoreCase(node.getText())
+            || "LOOKUPZ".equalsIgnoreCase(node.getText())) {
+            if (node.getChildCount() == 0) {
+                throw new RuntimeException("expected argument(s), found none");
+            }
+            Spin2StatementNode argsNode = node.getChild(0);
+            if (!":".equalsIgnoreCase(argsNode.getText()) || argsNode.getChildCount() < 2) {
+                throw new RuntimeException("invalid argument(s)");
+            }
+
+            int code = 0x1F;
+            int code_range = 0x21;
+            if ("LOOKDOWN".equalsIgnoreCase(node.getText()) || "LOOKDOWNZ".equalsIgnoreCase(node.getText())) {
+                code = 0x20;
+                code_range = 0x22;
+            }
+
+            Spin2Bytecode end = new Spin2Bytecode(context);
+            source.add(new Constant(context, new ContextLiteral(end.getContext())));
+
+            source.addAll(compileBytecodeExpression(context, argsNode.getChild(0), true));
+
+            source.add(new Constant(context, new NumberLiteral(node.getText().toUpperCase().endsWith("Z") ? 0 : 1)));
+
+            for (int i = 1; i < argsNode.getChildCount(); i++) {
+                Spin2StatementNode arg = argsNode.getChild(i);
+                if ("..".equals(arg.getText())) {
+                    source.addAll(compileBytecodeExpression(context, arg.getChild(0), true));
+                    source.addAll(compileBytecodeExpression(context, arg.getChild(1), true));
+                    source.add(new Bytecode(context, code_range, node.getText().toUpperCase()));
+                }
+                else {
+                    source.addAll(compileBytecodeExpression(context, arg, true));
+                    source.add(new Bytecode(context, code, node.getText().toUpperCase()));
+                }
+            }
+
+            source.add(new Bytecode(context, 0x23, "LOOKDONE"));
+            source.add(end);
+        }
         else if ("STRING".equalsIgnoreCase(node.getText())) {
             StringBuilder sb = new StringBuilder();
             for (Spin2StatementNode child : node.getChilds()) {

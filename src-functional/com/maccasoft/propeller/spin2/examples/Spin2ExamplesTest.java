@@ -109,6 +109,14 @@ class Spin2ExamplesTest {
     }
 
     @Test
+    void test_jm_lcd_pcf8574_demo() throws Exception {
+        String text = loadFromFile(new File("examples/P2", "jm_lcd_pcf8574_demo.spin2"));
+
+        byte[] expected = getResource("jm_lcd_pcf8574_demo.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
     void test_m6502_apple1_cvbs() throws Exception {
         String text = loadFromFile(new File("examples/P2", "m6502_apple1_cvbs.spin2"));
 

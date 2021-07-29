@@ -124,6 +124,10 @@ public class Spin2Bytecode {
         this.text = text;
     }
 
+    public Spin2Context getContext() {
+        return context;
+    }
+
     public int resolve(int address) {
         context.setAddress(address);
         return address + getSize();

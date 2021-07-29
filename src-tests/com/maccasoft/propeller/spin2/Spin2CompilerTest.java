@@ -3236,6 +3236,38 @@ class Spin2CompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testLookup() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := lookup(b : 10, 20..30, 40)\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       1A 00 00 00    End\n"
+            + "' PUB main | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     a := lookup(b : 10, 20..30, 40)\n"
+            + "00009 00009       45 18          CONSTANT ($00018)\n"
+            + "0000B 0000B       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000C 0000C       A2             CONSTANT (1)\n"
+            + "0000D 0000D       AB             CONSTANT (10)\n"
+            + "0000E 0000E       1F             LOOKUP\n"
+            + "0000F 0000F       45 14          CONSTANT (20)\n"
+            + "00011 00011       45 1E          CONSTANT (30)\n"
+            + "00013 00013       21             LOOKUP\n"
+            + "00014 00014       45 28          CONSTANT (40)\n"
+            + "00016 00016       1F             LOOKUP\n"
+            + "00017 00017       23             LOOKDONE\n"
+            + "00018 00018       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00019 00019       04             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, Collections.emptyMap());
     }

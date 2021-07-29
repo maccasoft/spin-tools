@@ -1,0 +1,176 @@
+'' =================================================================================================
+''
+''   File....... jm_lcd_pcf8574_demo.spin2
+''   Purpose.... Demonstrates jm_lcd_pcf8574 interface
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (C) 2018-2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 30 JUN 2020
+''
+'' =================================================================================================
+
+
+con { timing }
+
+  CLK_FREQ = 200_000_000                                        ' system freq as a constant
+  MS_001   = CLK_FREQ / 1_000                                   ' ticks in 1ms
+  US_001   = CLK_FREQ / 1_000_000                               ' ticks in 1us
+
+  BR_TERM  = 115_200                                            ' terminal baud rate
+
+  _clkfreq = CLK_FREQ                                           ' set system clock
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }                                           
+                                                                 
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }                                           
+  SF_SDO   = 59  { O }                                           
+  SF_SDI   = 58  { I }                                           
+                                                                 
+  SD_SCK   = 61  { O }                                          ' sd card
+  SD_CS    = 60  { O }                                           
+  SD_SDI   = 59  { O }                                           
+  SD_SDO   = 58  { I }                                           
+                                                                 
+  SDA1     = 57  { IO }                                         ' i2c connections
+  SCL1     = 56  { IO }  
+
+
+con { app io pins }
+
+
+con
+
+  #true,  ON, OFF 
+  #false, NO, YES
+
+  
+  LCD_ADDR  = %111                                              ' LCD I2C addresses
+  
+  LCD_WIDTH = 16                                                ' LCD size
+  LCD_LINES =  2
+
+
+obj
+
+  lcd : "jm_lcd_pcf8574"                                        '   pcf8574-based LCD (I2C)
+
+
+pub main()
+
+  setup()
+
+  repeat
+    lcd.cmd(lcd.CLS)
+    waitms(250)
+
+    scroll_animate_demo()
+    waitms(2000)
+
+    numbers_demo()    
+    waitms(500)
+
+    backlight_demo() 
+
+
+pub scroll_animate_demo() | pos, char, frame, newchar
+
+  ' scroll on 1st line  
+
+  repeat pos from 0 to LCD_WIDTH
+    lcd.crsr_xy(0, 0)
+    lcd.sub_str(@Banner1, pos, LCD_WIDTH)
+    waitms(125)
+   
+  ' animate 2nd line
+   
+  repeat pos from 0 to LCD_WIDTH-1                              ' scroll through all chars
+    char := byte[@Banner2][pos]                                 ' get char from banner2
+    repeat frame from 1 to 5                                    ' loop through animation frames
+      lcd.crsr_xy(pos, 1)                                       ' position cursor
+      newchar := lookup(frame : 0, 1, 2, 1, char)               ' get char for frame
+      lcd.out(newchar)                                          ' write it
+      waitms(75)                                                ' short, inter-frame delay
+                                                                 
+
+pub numbers_demo() | tf, tc 
+
+  lcd.cmd(lcd.CLS)
+  lcd.str(string("TEMP"))
+   
+  repeat tf from 98_6 to 105_7                                  ' fahrenheit range
+    tc := (tf - 32_0) * 5 / 9                                   ' convert to celsius
+    lcd.crsr_xy(10, 0)
+    lcd.jdpdec(tf, 1, 5, " ")                                   ' justified decimal point, 1 digit
+    lcd.out("F")
+    lcd.crsr_xy(10, 1)
+    lcd.jdpdec(tc, 1, 5, " ")
+    lcd.out("C")
+    waitms(150)
+
+
+pub backlight_demo()
+
+  repeat 3                                                      ' backlight control
+    lcd.backlight(false)
+    waitms(500)
+    lcd.backlight(true)
+    waitms(500)
+   
+
+pub setup()
+
+  lcd.start(LCD_ADDR, SCL1, SDA1, 100, lcd.PU_15K)              ' connect to I2C @ 100kHz w/15K pull-ups
+  lcd.set_char(0, @Mouth0)                                      ' define custom characters
+  lcd.set_char(1, @Mouth1)
+  lcd.set_char(2, @Mouth2)
+  lcd.set_char(3, @Smile)
+
+
+dat
+
+  Mouth0        byte    $0E, $1F, $1C, $18, $1C, $1F, $0E, $00
+  Mouth1        byte    $0E, $1F, $1F, $18, $1F, $1F, $0E, $00
+  Mouth2        byte    $0E, $1F, $1F, $1F, $1F, $1F, $0E, $00
+  Smile         byte    $00, $0A, $0A, $00, $11, $0E, $06, $00
+
+  Banner1       byte    $20, $20, $20, $20, $20, $20, $20, $20
+                byte    $20, $20, $20, $20, $20, $20, $20, $20
+                byte    $4A, $4F, $4E, $4E, $59, $4D, $41, $43
+                byte    $20, $52, $55, $4C, $45, $53, $21, $03
+                byte    $00
+
+  Banner2       byte    "P2 I2C LCD DEMO ", 0
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+}}
