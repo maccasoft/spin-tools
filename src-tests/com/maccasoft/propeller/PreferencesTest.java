@@ -39,7 +39,7 @@ class PreferencesTest {
         Assertions.assertEquals("{\n"
             + "  \"showLineNumbers\" : false,\n"
             + "  \"spin1LibraryPath\" : \"spin1/path\"\n"
-            + "}", os.toString());
+            + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
     @Test
@@ -74,7 +74,7 @@ class PreferencesTest {
         Assertions.assertEquals("{\n"
             + "  \"showLineNumbers\" : false,\n"
             + "  \"spin2LibraryPath\" : \"spin2/path\"\n"
-            + "}", os.toString());
+            + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
     @Test
