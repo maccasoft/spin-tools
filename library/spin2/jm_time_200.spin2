@@ -1,0 +1,209 @@
+'' =================================================================================================
+''
+''   File....... jm_time_200.spin2
+''   Purpose.... For delays and differential timing
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 02 AUG 2020
+''
+'' =================================================================================================
+
+
+con { timing }
+
+  CLK_FREQ = 200_000_000
+
+  US_001   = CLK_FREQ / 1_000_000                               ' ticks per microsecond
+  MS_001   = CLK_FREQ / 1_000                                   ' ticks per millisecond
+
+
+var
+
+  long  marklo, markhi                                          ' start of timing window
+  long  holdlo, holdhi                                          ' start of timing hold
+  long  offset
+  long  holdms
+
+
+pub null()
+
+  '' This is not a top level object
+
+
+pub start()
+
+'' Mark start of timing window
+
+  marklo, markhi := getct64()                                   ' get system clock
+  longfill(@holdlo, 0, 4)                                       ' clear hold & timing
+
+
+pri getct64() : lo, hi
+
+  org
+                getct     hi                            wc      ' get system counter
+                getct     lo
+  end
+
+
+pub set(ms)
+
+'' Start timer at ms milliseconds.
+
+  start()
+  offset := ms
+
+
+pub adjust(ms)
+
+'' Adjust timer by ms milliseconds.
+
+  offset += ms
+
+
+pub set_secs(s)
+
+'' Start timer at s seconds.
+
+  start()
+  offset := s * 1000
+
+
+pub adjust_secs(s)
+
+'' Adjust running timer by s seconds.
+
+  offset += s * 1000
+
+
+pub hold()
+
+'' Enter timing hold; millis will not advance
+
+  holdlo, holdhi := getct64()
+
+
+pub on_hold() : result
+
+'' Returns true when timer hold is enabled
+
+  return (holdlo | holdhi) ? true : false
+
+
+pub release() : result
+
+'' Release hold state
+'' -- returns current timer
+
+  result := millis()
+  longfill(@holdlo, 0, 2)
+
+
+pub millis() : ms | now[2], delta[2], tmark[2], hmark[2], tixms
+
+'' Return delta milliseconds between mark point and system counter.
+'' -- use start() to set mark point
+
+  longmove(@tmark, @marklo, 4)                                  ' copy timer and hold marks
+
+  org
+                getct     now+1                         wc      ' get system counter
+                getct     now+0
+
+                mov       delta+0, now+0                        ' delta := now - mark
+                mov       delta+1, now+1                         
+                sub       delta+0, tmark+0              wc               
+                subx      delta+1, tmark+1                       
+                setq      delta+1                               ' divide delta by ticks/ms
+                qdiv      delta+0, ##MS_001                         
+                getqx     ms                                    ' raw timer millis
+                                                                 
+                tjnz      hmark+0, #.update_hold                ' check hold state
+                tjnz      hmark+1, #.update_hold                 
+                mov       delta+0, #0                           ' no hold adjustment
+                jmp       #.done
+
+.update_hold    mov       delta+0, now+0                        ' delta := now - hmark
+                mov       delta+1, now+1
+                sub       delta+0, hmark+0              wc
+                subx      delta+1, hmark+1
+                setq      delta+1
+                qdiv      delta+0, ##MS_001 
+                getqx     delta+0                               ' ms while on hold
+.done
+  end
+
+  ms += offset                                                  ' adjust timing
+  ms -= (holdms += delta[0])
+
+  if (holdlo || holdhi)
+    holdlo, holdhi := now[0], now[1]                            ' update hold mark
+
+
+pub msar() : ms | lo, hi, tixms
+
+'' Return milliseconds after reset.
+'' -- system counter is fixed; cannot be changed by user
+
+  org
+                getct     hi                            wc      ' get cnt (now)
+                getct     lo                               
+                setq      hi                                    ' divide cnt by ticks/ms
+                qdiv      lo, ##MS_001                               
+                getqx     ms
+  end
+
+
+pub pause(ms) | t0, tixms
+
+'' Delay in milliseconds
+'' -- for long delays (>10s)
+
+  org
+                getct     t0                                    ' snapshot counter
+                rep       #2, ms                                ' delay
+                 addct1   t0, ##MS_001 
+                 waitct1
+  end
+
+
+pub pause_us(us) | t0, tixus
+
+'' Delay in microseconds
+'' -- for low speed system frequency, use waitus()
+
+  org
+                getct     t0                                    ' snapshot counter
+                rep       #2, us                                ' delay
+                 addct1   t0, ##US_001                            
+                 waitct1                                          
+  end
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

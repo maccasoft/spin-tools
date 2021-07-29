@@ -132,6 +132,14 @@ class Spin2LibraryTest {
     }
 
     @Test
+    void test_jm_time_200() throws Exception {
+        String text = loadFromFile(new File("library/spin2", "jm_time_200.spin2"));
+
+        byte[] expected = getResource("jm_time_200.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
     void test_jm_nstr() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_nstr.spin2"));
 

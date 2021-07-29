@@ -2011,6 +2011,7 @@ public class Spin2Compiler {
         }
 
         int index = 0;
+        boolean hasIndex = false;
         boolean popIndex = false;
 
         if (indexNode != null) {
@@ -2019,6 +2020,7 @@ public class Spin2Compiler {
                 Expression exp = buildConstantExpression(context, indexNode);
                 if (exp.isConstant()) {
                     index = exp.getNumber().intValue();
+                    hasIndex = true;
                     popIndex = false;
                 }
             } catch (Exception e) {
@@ -2086,7 +2088,7 @@ public class Spin2Compiler {
                 source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
             }
             else {
-                source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, index));
+                source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
             }
 
             ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -2180,7 +2182,7 @@ public class Spin2Compiler {
                         source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, popIndex, expression, index));
                     }
                     else {
-                        source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, (Variable) expression, index));
+                        source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, (Variable) expression, hasIndex, index));
                     }
                     if (push) {
                         source.add(new Bytecode(context, 0x8D, "SWAP"));
@@ -2194,7 +2196,7 @@ public class Spin2Compiler {
                         source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, popIndex, expression, index));
                     }
                     else {
-                        source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, index));
+                        source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
                     }
                     if ("++".equalsIgnoreCase(postEffectNode.getText())) {
                         source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
@@ -2221,7 +2223,7 @@ public class Spin2Compiler {
                     source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, popIndex, expression, index));
                 }
                 else {
-                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression, index));
+                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression, hasIndex, index));
                 }
             }
         }
@@ -2332,6 +2334,8 @@ public class Spin2Compiler {
                 throw new CompilerMessage("undefined symbol " + node.getText(), node.getToken());
             }
 
+            boolean hasIndex = false;
+
             int n = 0;
             if (n < node.getChildCount()) {
                 indexNode = node.getChild(n++);
@@ -2340,6 +2344,7 @@ public class Spin2Compiler {
                     Expression exp = buildConstantExpression(context, indexNode);
                     if (exp.isConstant()) {
                         index = exp.getNumber().intValue();
+                        hasIndex = true;
                         popIndex = false;
                     }
                 } catch (Exception e) {
@@ -2428,7 +2433,7 @@ public class Spin2Compiler {
                 source.add(new MemoryOp(context, ss, bb, bitfieldNode != null || push ? MemoryOp.Op.Setup : MemoryOp.Op.Write, popIndex, expression, index));
             }
             else {
-                source.add(new VariableOp(context, bitfieldNode != null || push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, (Variable) expression, index));
+                source.add(new VariableOp(context, bitfieldNode != null || push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, (Variable) expression, hasIndex, index));
             }
 
             if (bitfieldNode != null) {
