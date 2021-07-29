@@ -473,6 +473,21 @@ public class SpinTools {
                 @Override
                 public void handleEvent(Event event) {
                     try {
+                        if (!fileToOpen.exists()) {
+                            MessageDialog.openError(shell, APP_TITLE, "File " + fileToOpen + " not found");
+                            Preferences.getInstance().getLru().remove(fileToOpen.toString());
+
+                            File parentFIle = fileToOpen.getParentFile();
+                            while (parentFIle != null) {
+                                if (parentFIle.exists()) {
+                                    break;
+                                }
+                                parentFIle = parentFIle.getParentFile();
+                            }
+                            handleFileOpenFrom(parentFIle != null ? parentFIle.getAbsolutePath() : "");
+                            return;
+                        }
+
                         EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName());
                         tabFolder.setSelection(tabFolder.getItemCount() - 1);
                         editorTab.setFocus();
