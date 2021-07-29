@@ -311,22 +311,12 @@ pub format(p_str, p_args) | idx, c, asc, field, digits
     elseif (c == "%")
       p_str, field, digits := get_nargs(p_str)
       c := byte[p_str++]
-      if (c == "f")
-        str(nstr.fmt_number(long[p_args][idx++], 99, digits, field, " "))
-      elseif (c == "d")
-        str(nstr.fmt_number(long[p_args][idx++], 10, digits, field, " "))
-      elseif (c == "x")
-        str(nstr.fmt_number(long[p_args][idx++], 16, digits, field, " "))
-      elseif (c == "o")
-        str(nstr.fmt_number(long[p_args][idx++], 08, digits, field, " "))
-      elseif (c == "q")
-        str(nstr.fmt_number(long[p_args][idx++], 04, digits, field, " "))
-      elseif (c == "b")
-        str(nstr.fmt_number(long[p_args][idx++], 02, digits, field, " "))
-      elseif (c == "s")
+      if (c == "s")
         str(nstr.padstr(long[p_args][idx++], field, " "))
       elseif (c == "c")
         txn(long[p_args][idx++], (abs field) #> 1)
+      else
+        str(nstr.fmt_number(long[p_args][idx++], c, digits, field, " "))
 
     else
       tx(c)

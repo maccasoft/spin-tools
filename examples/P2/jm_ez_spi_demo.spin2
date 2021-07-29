@@ -1,0 +1,199 @@
+'' =================================================================================================
+''
+''   File....... jm_ez_spi_demo.spin2
+''   Purpose.... Demonstrates the use of smart pins for mode 0 SPI coms
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 01 SEP 2020
+''
+''   {$P2} 
+''
+'' =================================================================================================
+
+
+con { timing }
+
+  CLK_FREQ = 200_000_000                                        ' system freq as a constant
+  MS_001   = CLK_FREQ / 1_000                                   ' ticks in 1ms
+  US_001   = CLK_FREQ / 1_000_000                               ' ticks in 1us
+
+  BR_TERM  = 115_200                                            ' terminal baud rate
+
+  _clkfreq = CLK_FREQ                                           ' set system clock
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }                                           
+                                                                 
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }                                           
+  SF_SDO   = 59  { O }                                           
+  SF_SDI   = 58  { I }                                           
+                                                                 
+  SD_SCK   = 61  { O }                                          ' sd card
+  SD_CS    = 60  { O }                                           
+  SD_SDO   = 59  { O }                                           
+  SD_SDI   = 58  { I }                                          
+                                                                 
+  SDA1     = 57  { IO }                                         ' i2c (optional)
+  SCL1     = 56  { IO }                                          
+                                                                 
+
+con
+
+  #true,  ON, OFF 
+  #false, NO, YES
+
+  
+obj
+
+' main                                                          ' * master Spin cog
+  spi  : "jm_ez_spi"                                            '   smart pin mode 0 spi coms
+  term : "jm_fullduplexserial"                                  ' * serial IO for terminal    
+
+' * uses cog when loaded
+
+      
+pub main() | whoami0, whoami1, id, jedec
+
+  setup()
+                                                 
+  wait_for_terminal(true)
+  waitms(250)
+
+  term.fstr0(string("P2 EVAL Flash\r\r"))
+ 
+  whoami1, whoami0 := sf_unique_id()
+  term.fstr2(string("Unique ID...... %0.8x %0.8x\r\r"), whoami1, whoami0)
+
+  id := sf_device_type()    
+  term.fstr1(string("Manufacturer... %2.2x\r"), id.byte[1])
+  term.fstr1(string("Device......... %2.2x\r\r"), id.byte[0])
+ 
+  jedec := sf_jedec_info()
+  term.fstr1(string("Manufacturer... %2.2x\r"), jedec.byte[2])
+  term.fstr1(string("Mem Type....... %2.2x\r"), jedec.byte[1])
+  term.fstr2(string("Capacity....... %2.2x (%d bytes)\r\r"), jedec.byte[0], 1 << jedec.byte[0])
+
+  repeat
+    waitct(0)
+
+
+pub setup()
+
+  pinh(SF_CS)                                                   ' disable flash
+
+  spi.start(SF_SDI, SF_SDO, SF_SCK, 10_000)                     ' spi to flash @ 10MHz
+
+  term.start(RX1, TX1, %0000, BR_TERM)                          ' start terminal io
+
+
+pub wait_for_terminal(clear)
+
+  ' Download to RAM with F10
+  ' F12 to open PST
+  ' Click [Enable]
+  ' Press Enter
+
+  term.rxflush()
+  term.rx()
+  if (clear)
+    term.tx(term.CLS)
+
+
+con { flash interface }
+
+  ' status register
+  
+  SR3_HOLD     = %10000000 
+  SR3_DRV1     = %01000000 
+  SR3_DRV0     = %00100000 
+  SR3_R20      = %00010000                                      ' reserved        
+  SR3_R19      = %00001000                                      ' reserved        
+  SR3_WPS      = %00000100                                       
+  SR3_R17      = %00000010                                      ' reserved        
+  SR3_R16      = %00000001                                      ' reserved        
+                                                                 
+  SR2_SUS      = %10000000                                       
+  SR2_CMP      = %01000000                                       
+  SR2_LB3      = %00100000                                       
+  SR2_LB2      = %00010000                                       
+  SR2_LB1      = %00001000                                       
+  SR2_R10      = %00000100                                      ' reserved
+  SR2_QE       = %00000010                                       
+  SR2_SRL      = %00000001                                       
+                                                                 
+  SR1_SRP      = %10000000                                      ' status register protect
+  SR1_SEC      = %01000000                                      ' sector protect
+  SR1_TB       = %00100000                                      ' top/bottom protect
+  SR1_BP2      = %00010000                                      ' block protect
+  SR1_BP1      = %00001000                                      ' block protect
+  SR1_BP0      = %00000100                                      ' block protect
+  SR1_WEL      = %00000010                                      ' write enable latch
+  SR1_BUSY     = %00000001                                       
+
+  WR_ENABLE    = $06
+  WR_DISABLE   = $04
+
+  SECTOR_ERASE = $20
+  BLK_32_ERASE = $52
+  BLK_64_ERASE = $D8
+  
+  RD_STATUS1   = $05
+
+
+pub sf_unique_id() : result1, result0
+
+  pinl(SF_CS)                                                   ' select flash
+  spi.shiftout(spi.MSBFIRST, $4B,  8)                           ' unique id 
+  spi.shiftout(spi.MSBFIRST, $00, 32)                           ' 32 dummy bits
+  result1 := spi.shiftin(spi.MSBFIRST, 32)                      ' 64-bit id
+  result0 := spi.shiftin(spi.MSBFIRST, 32)
+  pinh(SF_CS)                                                   ' de-select flash
+
+
+pub sf_device_type() : result
+
+  pinl(SF_CS)
+  spi.shiftout(spi.MSBFIRST, $90000000, 32)                     ' manufacturer / device
+  result := spi.shiftin(spi.MSBFIRST, 16)
+  pinh(SF_CS)
+
+
+pub sf_jedec_info() : result
+
+  pinl(SF_CS)
+  spi.shiftout(spi.MSBFIRST, $9F, 8)                            ' jedec id
+  result := spi.shiftin(spi.MSBFIRST, 24)
+  pinh(SF_CS) 
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

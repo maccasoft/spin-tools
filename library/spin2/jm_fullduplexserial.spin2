@@ -418,26 +418,13 @@ pub format(p_str, p_args) | idx, c, asc, field, digits
 
     elseif (c == "%")
       p_str, field, digits := get_nargs(p_str)
-      c := lower(byte[p_str++])
-
-      if (c == "d")
-        str(nstr.fmt_number(long[p_args][idx++], "d", digits, field, " "))
-      elseif (c == "u")
-        str(nstr.fmt_number(long[p_args][idx++], "u", digits, field, " "))
-      elseif (c == "f")
-        str(nstr.fmt_number(long[p_args][idx++], "f", digits, field, " "))
-      elseif (c == "b")
-        str(nstr.fmt_number(long[p_args][idx++], "b", digits, field, " "))
-      elseif (c == "q")
-        str(nstr.fmt_number(long[p_args][idx++], "q", digits, field, " "))
-      elseif (c == "o")
-        str(nstr.fmt_number(long[p_args][idx++], "o", digits, field, " "))
-      elseif (c == "x")
-        str(nstr.fmt_number(long[p_args][idx++], "x", digits, field, " "))
-      elseif (c == "s")
+      c := byte[p_str++]
+      if (c == "s")
         str(nstr.padstr(long[p_args][idx++], field, " "))
       elseif (c == "c")
         txn(long[p_args][idx++], (abs field) #> 1)
+      else
+        str(nstr.fmt_number(long[p_args][idx++], c, digits, field, " "))
 
     else
       tx(c)

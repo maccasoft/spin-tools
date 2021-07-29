@@ -1,0 +1,150 @@
+'' =================================================================================================
+''
+''   File....... jm_ez_button_demo.spin2
+''   Purpose.... Configure P2 input with pull-up or pull-down for button or switch
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 29 JUN 2020
+''
+''   {$P2} 
+''
+'' =================================================================================================
+
+
+con { timing }
+
+  CLK_FREQ = 200_000_000                                        ' system freq as a constant
+  MS_001   = CLK_FREQ / 1_000                                   ' ticks in 1ms
+  US_001   = CLK_FREQ / 1_000_000                               ' ticks in 1us
+
+  BR_TERM  = 115_200                                            ' terminal baud rate
+
+  _clkfreq = CLK_FREQ                                           ' set system clock
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }                                           
+                                                                 
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }                                           
+  SF_SDO   = 59  { O }                                           
+  SF_SDI   = 58  { I }                                           
+                                                                 
+  SD_SCK   = 61  { O }                                          ' sd card
+  SD_CS    = 60  { O }                                           
+  SD_SDI   = 59  { O }                                           
+  SD_SDO   = 58  { I }                                           
+                                                                 
+  SDA1     = 57  { IO }                                         ' i2c (optional)
+  SCL1     = 56  { IO }                                          
+                                                                 
+
+con { app io pins }
+
+  BTN2     = 31                                                 ' N.O. between +3.3v and pin
+  BTN1     = 24                                                 ' N.O. between ground and pin
+
+
+con
+
+  #true,  ON, OFF 
+  #false, NO, YES
+
+  
+obj
+
+' main                                                          ' * master Spin cog
+  b1   : "jm_ez_button"                                         '   buttonw/switch input
+  b2   : "jm_ez_button"                                         '   buttonw/switch input               
+  term : "jm_serial"                                            '   serial IO for terminal    
+
+' * uses cog when loaded
+
+
+dat
+
+  Banner        byte    "P2 EZ Button Demo", 0
+
+  IsPressed     byte    "Pressed     ", 0
+  NotPressed    byte    "Not Pressed ", 0
+
+
+var
+                                                        
+          
+pub main() | t                                                       
+                                                                 
+  setup() 
+                                                                   
+  wait_for_terminal(true)
+
+  t := getct()
+  repeat
+    term.fstr1(string("\001%s\r"), @Banner)    
+    
+    term.fstr0(string("\rButton 1: "))
+    term.str((b1.active()) ? @IsPressed : @NotPressed)          ' direct read
+    
+    term.fstr0(string("\rButton 2: "))
+    term.str((b2.debounce(5)) ? @IsPressed : @NotPressed)       ' debounced for 5ms
+    
+    waitct(t += (50 * MS_001))
+
+
+pub setup()
+
+' buttons may be configured using active state (LOW or HIGH)
+
+  b1.start(BTN1, b1.LOW)                                        ' active-low input
+' b2.start(BTN2, b2.HIGH)                                       ' active-high input
+
+' buttons may be configured by specifiying PULLUP or PULLDOWN)
+
+' b1.start(BTN1, b1.PULLUP)                                     ' active-low input
+  b2.start(BTN2, b2.PULLDOWN)                                   ' active-high input
+ 
+  term.start(BR_TERM)                                           ' start terminal io
+
+
+pub wait_for_terminal(clear)
+
+  ' Download to RAM with F10
+  ' F12 to open PST
+  ' Click [Enable]
+  ' Press Enter
+
+  term.rxflush()
+  term.rx()
+  if (clear)
+    term.tx(term.CLS)
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

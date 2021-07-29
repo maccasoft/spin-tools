@@ -128,7 +128,7 @@
         </copy>
 
         <copy todir="${work}/${folder}/library">
-            <fileset dir="libraries">
+            <fileset dir="library">
                 <exclude name="**/.*" />
                 <exclude name="**/*.o" />
                 <exclude name="**/*.elf" />

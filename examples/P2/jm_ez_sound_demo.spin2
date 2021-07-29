@@ -1,0 +1,174 @@
+'' =================================================================================================
+''
+''   File....... jm_ez_sound_demo.spin2     
+''   Purpose....
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 30 JUN 2020
+''
+''   {$P2} 
+''
+'' =================================================================================================
+
+
+con { timing }
+
+  CLK_FREQ = 200_000_000                                        ' system freq as a constant
+  MS_001   = CLK_FREQ / 1_000                                   ' ticks in 1ms
+  US_001   = CLK_FREQ / 1_000_000                               ' ticks in 1us
+
+  BR_TERM  = 115_200                                            ' terminal baud rate
+
+  _clkfreq = CLK_FREQ                                           ' set system clock
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }                                           
+                                                                 
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }                                           
+  SF_SDO   = 59  { O }                                           
+  SF_SDI   = 58  { I }                                           
+                                                                 
+  SD_SCK   = 61  { O }                                          ' sd card
+  SD_CS    = 60  { O }                                           
+  SD_SDI   = 59  { O }                                           
+  SD_SDO   = 58  { I }                                           
+                                                                 
+  SDA1     = 57  { IO }                                         ' i2c (optional)
+  SCL1     = 56  { IO }                                         
+                                                                 
+
+con { app io pins }
+
+  LEDS     = 56  { O }                                          ' base pin for P2 EVAL LEDs
+  PIEZO    = 48  { O }                                          ' piezo "speaker" for sound
+  
+
+con
+
+  #true,  ON, OFF 
+  #false, NO, YES
+
+  
+obj
+
+' main                                                          ' * master Spin cog
+  prng  : "jm_prng"                                             '   random #s
+  sound : "jm_ez_sound"                                         ' + beeps, boops, and notes
+  
+' * uses cog when loaded
+' + transient cog
+                             
+
+dat
+
+  BPM           long    240
+                         
+  Charge        long    sound.N_G3, sound.T_8,  sound.REST, sound.T_64   
+                long    sound.N_C4, sound.T_8,  sound.REST, sound.T_64   
+                long    sound.N_E4, sound.T_8,  sound.REST, sound.T_64    
+                long    sound.N_G4, sound.T_D8, sound.REST, sound.T_64  
+                long    sound.N_E4, sound.T_8,  sound.REST, sound.T_64    
+                long    sound.N_G4, sound.T_D2, sound.REST, sound.T_64
+                long     0,  0
+                long    -1, -1
+
+
+  ' https://www.musicnotes.com/sheetmusic/mtd.asp?ppn=MN0133739
+
+  Vader         long    sound.N_A3,  sound.T_4, sound.REST, sound.T_64
+                long    sound.N_A3,  sound.T_4, sound.REST, sound.T_64
+                long    sound.N_A3,  sound.T_4, sound.REST, sound.T_64
+                long    sound.N_F3,  sound.T_8, sound.REST, sound.T_64
+                long    sound.N_C4,  sound.T_8, sound.REST, sound.T_64
+                long    sound.N_A3,  sound.T_4, sound.REST, sound.T_64
+                long    sound.N_F3,  sound.T_8, sound.REST, sound.T_64
+                long    sound.N_C4,  sound.T_8, sound.REST, sound.T_64
+                long    sound.N_A3,  sound.T_2, sound.REST, sound.T_64
+                long    sound.N_E4,  sound.T_4, sound.REST, sound.T_64
+                long    sound.N_E4,  sound.T_4, sound.REST, sound.T_64
+                long    sound.N_E4,  sound.T_4, sound.REST, sound.T_64
+                long    sound.N_F4,  sound.T_8, sound.REST, sound.T_64
+                long    sound.N_C4,  sound.T_8, sound.REST, sound.T_64
+                long    sound.N_Ab3, sound.T_4, sound.REST, sound.T_64
+                long    sound.N_F3,  sound.T_8, sound.REST, sound.T_64
+                long    sound.N_C4,  sound.T_8, sound.REST, sound.T_64
+                long    sound.N_A3,  sound.T_2, sound.REST, sound.T_64
+                long     0,  0
+                long    -1, -1
+                    
+
+var                                                    
+                                                                 
+          
+pub main()                                                       
+                                                                 
+  setup()
+
+  repeat
+    vaders_march()
+    waitms(1000)
+    sci_fi_computer(10_000)
+    waitms(1000)
+
+
+pub vaders_march()
+
+  sound.play_tune(PIEZO, @Vader, 120, sound.NO_COG)             ' play a tune
+
+
+pub sci_fi_computer(runtime) | t, note
+
+'' Emulate sound of old sci-fi computer from movies and TV
+'' -- runtime is duration to run in milliseconds
+
+  runtime *= MS_001                                             ' convert ms to ticks
+
+  t := getct()                                                  ' start timer
+
+  repeat 
+    note := prng.xrandom() & $FF                                ' randomize beep or boop
+    pinwrite(LEDS addpins 7, note)                              ' display on P2 EVAL LEDs
+    sound.sound(PIEZO, note & $7F, 100)                         ' play via BS1 SOUND command
+    waitms(25)                                                  ' allow sound to be crisp
+
+    if ((getct() - t) >= runtime)                               ' check run time
+      pinwrite(LEDS addpins 7, $FF)                             ' LEDs off (P2 EVAL)
+      quit
+         
+
+pub setup()
+
+  prng.start(getct())         
+  
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

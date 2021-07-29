@@ -48,6 +48,59 @@ class Spin2ExamplesTest {
     }
 
     @Test
+    void test_jm_1_wire_demo() throws Exception {
+        String text = loadFromFile(new File("examples/P2", "jm_1-wire_demo.spin2"));
+
+        byte[] expected = getResource("jm_1-wire_demo.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
+    void test_jm_apa102c_demo() throws Exception {
+        String text = loadFromFile(new File("examples/P2", "jm_apa102c_demo.spin2"));
+
+        byte[] expected = getResource("jm_apa102c_demo.binary");
+        compileAndCompare(text, expected);
+    }
+
+    //@Test
+    // Fails with limit-min / limit-max sequence
+    void test_jm_ez_analog_demo() throws Exception {
+        String text = loadFromFile(new File("examples/P2", "jm_ez_analog_demo.spin2"));
+
+        byte[] expected = getResource("jm_ez_analog_demo.binary");
+        compileAndCompare(text, expected);
+    }
+
+    //@Test
+    // Fails
+    //  b1   : "jm_ez_button"                                         '   buttonw/switch input
+    //  b2   : "jm_ez_button"                                         '   buttonw/switch input
+    // objects optimization is not yet supported
+    void test_jm_ez_button_demo() throws Exception {
+        String text = loadFromFile(new File("examples/P2", "jm_ez_button_demo.spin2"));
+
+        byte[] expected = getResource("jm_ez_button_demo.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
+    void test_jm_ez_sound_demo() throws Exception {
+        String text = loadFromFile(new File("examples/P2", "jm_ez_sound_demo.spin2"));
+
+        byte[] expected = getResource("jm_ez_sound_demo.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
+    void test_jm_ez_spi_demo() throws Exception {
+        String text = loadFromFile(new File("examples/P2", "jm_ez_spi_demo.spin2"));
+
+        byte[] expected = getResource("jm_ez_spi_demo.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
     void test_jm_i2c_scanner() throws Exception {
         String text = loadFromFile(new File("examples/P2", "jm_i2c_scanner.spin2"));
 

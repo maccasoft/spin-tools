@@ -124,6 +124,14 @@ class Spin2LibraryTest {
     }
 
     @Test
+    void test_jm_prng() throws Exception {
+        String text = loadFromFile(new File("library/spin2", "jm_prng.spin2"));
+
+        byte[] expected = getResource("jm_prng.binary");
+        compileAndCompare(text, expected);
+    }
+
+    @Test
     void test_jm_serial() throws Exception {
         String text = loadFromFile(new File("library/spin2", "jm_serial.spin2"));
 
