@@ -725,9 +725,9 @@ public class Spin2Compiler {
                     continue;
                 }
             }
-            LocalVariable var = new LocalVariable(type, child.getText(), size, offset);
-            localScope.addSymbol(child.getIdentifier().getText(), var);
-            localScope.addSymbol("@" + child.getIdentifier().getText(), var);
+            LocalVariable var = new LocalVariable(type, name, size, offset);
+            localScope.addSymbol(name, var);
+            localScope.addSymbol("@" + name, var);
             localVariables.add(var);
 
             int count = 4;
@@ -1068,7 +1068,12 @@ public class Spin2Compiler {
                     int address = 0x1E0;
                     for (LocalVariable var : method.getLocalVariables()) {
                         scope.addSymbol(var.getName(), new NumberLiteral(address));
-                        address += 1;
+                        if (var.getSize() != null) {
+                            address += var.getSize().getNumber().intValue();
+                        }
+                        else {
+                            address += 1;
+                        }
                         if (address >= 0x1F0) {
                             break;
                         }
@@ -1163,39 +1168,11 @@ public class Spin2Compiler {
                 Spin2MethodLine end = line.getChilds().get(0);
                 line.addSource(new Constant(line.getScope(), new ContextLiteral(end.getScope())));
 
-                try {
-                    Expression from = buildConstantExpression(line.getScope(), line.getArgument(1));
-                    Expression to = buildConstantExpression(line.getScope(), line.getArgument(2));
-                    if (to.isConstant() && from.isConstant()) {
-                        if (to.getNumber().intValue() < from.getNumber().intValue()) {
-                            line.addSource(new Constant(line.getScope(), new NumberLiteral(from.getNumber().intValue())));
-                            if (line.getArgumentsCount() == 4) {
-                                line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(3), true));
-                            }
-                            line.addSource(new Constant(line.getScope(), new NumberLiteral(to.getNumber().intValue())));
-                        }
-                        else {
-                            line.addSource(new Constant(line.getScope(), new NumberLiteral(to.getNumber().intValue())));
-                            if (line.getArgumentsCount() == 4) {
-                                line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(3), true));
-                            }
-                            line.addSource(new Constant(line.getScope(), new NumberLiteral(from.getNumber().intValue())));
-                        }
-                    }
-                    else {
-                        line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(2), true));
-                        if (line.getArgumentsCount() == 4) {
-                            line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(3), true));
-                        }
-                        line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(1), true));
-                    }
-                } catch (Exception e) {
-                    line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(2), true));
-                    if (line.getArgumentsCount() == 4) {
-                        line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(3), true));
-                    }
-                    line.addSource(compileBytecodeExpression(line.getScope(), line.getArgument(1), true));
+                line.addSource(compileConstantExpression(line.getScope(), line.getArgument(2)));
+                if (line.getArgumentsCount() == 4) {
+                    line.addSource(compileConstantExpression(line.getScope(), line.getArgument(3)));
                 }
+                line.addSource(compileConstantExpression(line.getScope(), line.getArgument(1)));
 
                 line.setData("pop", Integer.valueOf(12));
 
