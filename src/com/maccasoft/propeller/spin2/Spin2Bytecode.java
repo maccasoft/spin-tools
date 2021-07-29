@@ -81,7 +81,7 @@ public class Spin2Bytecode {
         descriptors.put("WAITCT", new Descriptor(0x35, 1));
 
         descriptors.put("PINW", new Descriptor(0x36, 1));
-        descriptors.put("PINWRITE", new Descriptor(0x36, 1));
+        descriptors.put("PINWRITE", new Descriptor(0x36, 2));
         descriptors.put("PINL", new Descriptor(0x37, 1));
         descriptors.put("PINLOW", new Descriptor(0x37, 1));
         descriptors.put("PINH", new Descriptor(0x38, 1));
