@@ -91,7 +91,9 @@ public class EditorTab {
 
                 @Override
                 public void run() {
-                    Node node = getNodeRootFromTab(fileName);
+                    String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
+                    File libraryPath = new File(Preferences.getInstance().getSpin1LibraryPath()).getAbsoluteFile();
+                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
                     result.set(node);
                 }
             });
@@ -127,7 +129,9 @@ public class EditorTab {
 
                 @Override
                 public void run() {
-                    Node node = getNodeRootFromTab(fileName);
+                    String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
+                    File libraryPath = new File(Preferences.getInstance().getSpin1LibraryPath()).getAbsoluteFile();
+                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
                     result.set(node);
                 }
             });
@@ -220,7 +224,9 @@ public class EditorTab {
 
                 @Override
                 public void run() {
-                    Node node = getNodeRootFromTab(fileName);
+                    String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
+                    File libraryPath = new File(Preferences.getInstance().getSpin2LibraryPath()).getAbsoluteFile();
+                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
                     result.set(node);
                 }
             });
@@ -256,7 +262,9 @@ public class EditorTab {
 
                 @Override
                 public void run() {
-                    Node node = getNodeRootFromTab(fileName);
+                    String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
+                    File libraryPath = new File(Preferences.getInstance().getSpin2LibraryPath()).getAbsoluteFile();
+                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
                     result.set(node);
                 }
             });
@@ -594,18 +602,15 @@ public class EditorTab {
         Display.getDefault().beep();
     }
 
-    protected Node getNodeRootFromTab(String fileName) {
-        File fileParent = file != null ? file.getParentFile() : null;
-        String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
+    protected Node getNodeRootFromTab(String fileName, File libraryPath) {
+        File fileParent = file != null ? file.getParentFile().getAbsoluteFile() : null;
 
         CTabFolder tabFolder = tabItem.getParent();
         for (int i = 0; i < tabFolder.getItemCount(); i++) {
             EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
-            File tabParent = editorTab.file != null ? editorTab.file.getParentFile() : new File("");
-            if (fileParent == null || tabParent.equals(fileParent)) {
-                int extIndex = editorTab.tabItemText.lastIndexOf('.');
-                String tabType = editorTab.tabItemText.substring(extIndex);
-                if (tabType.equals(fileType) && fileName.equals(editorTab.tabItemText.substring(0, extIndex))) {
+            File tabParent = editorTab.file != null ? editorTab.file.getParentFile().getAbsoluteFile() : new File("").getAbsoluteFile();
+            if (fileParent == null || tabParent.equals(fileParent) || tabParent.equals(libraryPath)) {
+                if (fileName.equals(editorTab.tabItemText)) {
                     return editorTab.tokenMarker.getRoot();
                 }
             }

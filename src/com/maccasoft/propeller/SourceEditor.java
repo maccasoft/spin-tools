@@ -157,24 +157,6 @@ public class SourceEditor {
         }
     };
 
-    final Runnable refreshMarkersRunnable = new Runnable() {
-
-        @Override
-        public void run() {
-            if (styledText == null || styledText.isDisposed()) {
-                return;
-            }
-            try {
-                tokenMarker.refreshTokens(styledText.getText());
-                styledText.redraw();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    };
-
-    Map<Integer, StyleRange[]> styleCache = new HashMap<Integer, StyleRange[]>();
-
     final Runnable refreshViewRunnable = new Runnable() {
 
         @Override
@@ -182,7 +164,6 @@ public class SourceEditor {
             if (styledText == null || styledText.isDisposed()) {
                 return;
             }
-            styleCache.clear();
             styledText.redraw();
         }
     };
@@ -278,7 +259,6 @@ public class SourceEditor {
 
             @Override
             public void modifyText(ModifyEvent e) {
-                //e.display.timerExec(500, refreshMarkersRunnable);
                 if (!ignoreModify) {
                     Object[] l = modifyListeners.getListeners();
                     for (int i = 0; i < l.length; i++) {
@@ -413,11 +393,6 @@ public class SourceEditor {
                         modified = false;
                     }
 
-                    event.styles = styleCache.get(event.lineOffset);
-                    if (event.styles != null) {
-                        return;
-                    }
-
                     List<StyleRange> ranges = new ArrayList<StyleRange>();
 
                     try {
@@ -435,7 +410,6 @@ public class SourceEditor {
                     }
 
                     event.styles = ranges.toArray(new StyleRange[ranges.size()]);
-                    styleCache.put(event.lineOffset, event.styles);
                 }
             }
         });
