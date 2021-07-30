@@ -10,6 +10,8 @@
 
 package com.maccasoft.propeller;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,9 +30,13 @@ import org.w3c.dom.NodeList;
 public class EditorHelp {
 
     final String helpFile;
+    final File sourceFolder;
+    final String sourceFilter;
 
-    public EditorHelp(String helpFile) {
+    public EditorHelp(String helpFile, File sourceFolder, String sourceFilter) {
         this.helpFile = helpFile;
+        this.sourceFolder = sourceFolder;
+        this.sourceFilter = sourceFilter.toLowerCase();
     }
 
     public String getString(String context, String key) {
@@ -133,6 +139,49 @@ public class EditorHelp {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+
+        Collections.sort(proposals, new Comparator<IContentProposal>() {
+
+            @Override
+            public int compare(IContentProposal o1, IContentProposal o2) {
+                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+            }
+
+        });
+
+        return proposals;
+    }
+
+    public List<IContentProposal> fillSourceProposals() {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+        proposals.addAll(getSourceProposals(sourceFolder));
+
+        File file = new File(".spin2".equals(sourceFilter) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath());
+        proposals.addAll(getSourceProposals(file));
+
+        return proposals;
+    }
+
+    List<IContentProposal> getSourceProposals(File folder) {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+        File[] list = folder.listFiles(new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase().endsWith(sourceFilter);
+            }
+
+        });
+        if (list != null) {
+            for (int i = 0; i < list.length; i++) {
+                String name = list[i].getName();
+                name = name.substring(0, name.indexOf(sourceFilter));
+                proposals.add(new ContentProposal(name, name, null));
+            }
+        }
+        else {
+            System.err.println(folder);
         }
 
         Collections.sort(proposals, new Comparator<IContentProposal>() {

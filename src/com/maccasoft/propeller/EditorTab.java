@@ -385,11 +385,11 @@ public class EditorTab {
 
         if (tabItemText.toLowerCase().endsWith(".spin2")) {
             editor.setTokenMarker(tokenMarker = new Spin2TokenMarkerAdatper());
-            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml"));
+            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", new File(""), ".spin2"));
         }
         else {
             editor.setTokenMarker(tokenMarker = new Spin1TokenMarkerAdatper());
-            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml"));
+            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", new File(""), ".spin"));
         }
 
         editor.addModifyListener(new ModifyListener() {
@@ -457,11 +457,11 @@ public class EditorTab {
         this.file = file;
         if (file.getName().toLowerCase().endsWith(".spin2")) {
             editor.setTokenMarker(tokenMarker = new Spin2TokenMarkerAdatper());
-            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml"));
+            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", file.getParentFile(), ".spin2"));
         }
         else {
             editor.setTokenMarker(tokenMarker = new Spin1TokenMarkerAdatper());
-            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml"));
+            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", file.getParentFile(), ".spin"));
         }
     }
 

@@ -250,6 +250,11 @@ public abstract class EditorTokenMarker {
             }
 
             @Override
+            public void visitObject(ObjectNode node) {
+                allNodes.add(node);
+            }
+
+            @Override
             public void visitStatement(StatementNode node) {
                 allNodes.add(node);
             }

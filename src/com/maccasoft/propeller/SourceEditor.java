@@ -74,6 +74,7 @@ import com.maccasoft.propeller.internal.StyledTextContentAdapter;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 
@@ -953,7 +954,10 @@ public class SourceEditor {
             proposals.addAll(helpProvider.fillProposals("Root", token));
         }
         else {
-            if (node instanceof DataLineNode) {
+            if (node instanceof ObjectNode) {
+                proposals.addAll(helpProvider.fillSourceProposals());
+            }
+            else if (node instanceof DataLineNode) {
                 DataLineNode line = (DataLineNode) node;
                 position = styledText.getCaretOffset();
 
