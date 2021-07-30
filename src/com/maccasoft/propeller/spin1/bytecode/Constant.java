@@ -46,6 +46,12 @@ public class Constant extends Spin1Bytecode {
             };
         }
 
+        if ((value & 0xFFFFFF00) == 0xFFFFFF00) {
+            return new byte[] {
+                0x37 + 1, (byte) (value ^ 0xFF), (byte) 0xE7
+            };
+        }
+
         if (Spin1Compiler.OPENSPIN_COMPATIBILITY || (value & 0xFFFFFF00) != 0) {
             for (int i = 0; i < 128; i++) {
                 int testVal = 2;

@@ -407,13 +407,13 @@ class Spin1InstructionsTest {
     @Test
     void testSubs() throws Exception {
         byte[] code = compile("DAT             subs    1, 2");
-        Assertions.assertEquals(decodeToString("02 02 BC C0"), Spin1InstructionObject.decodeToString(code));
+        Assertions.assertEquals(decodeToString("02 02 BC D4"), Spin1InstructionObject.decodeToString(code));
     }
 
     @Test
     void testSubsx() throws Exception {
         byte[] code = compile("DAT             subsx   1, 2");
-        Assertions.assertEquals(decodeToString("02 02 BC C4"), Spin1InstructionObject.decodeToString(code));
+        Assertions.assertEquals(decodeToString("02 02 BC DC"), Spin1InstructionObject.decodeToString(code));
     }
 
     @Test

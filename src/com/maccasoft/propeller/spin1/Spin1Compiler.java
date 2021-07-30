@@ -277,7 +277,13 @@ public class Spin1Compiler {
             if (object.getSize() < hubAddress) {
                 object.writeBytes(new byte[hubAddress - object.getSize()], "(filler)");
             }
-            object.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());
+            try {
+                object.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());
+            } catch (CompilerMessage e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerMessage(e, (Node) line.getData()));
+            }
         }
 
         if (methods.size() != 0) {
@@ -2378,12 +2384,24 @@ public class Spin1Compiler {
                 source.add(new VariableOp(context, push ? VariableOp.Op.Assign : VariableOp.Op.Write, indexed, (Variable) expression));
             }
             else {
+                MemoryOp.Size ss = MemoryOp.Size.Long;
+                if (expression instanceof DataVariable) {
+                    switch (((DataVariable) expression).getType()) {
+                        case "BYTE":
+                            ss = MemoryOp.Size.Byte;
+                            break;
+                        case "WORD":
+                            ss = MemoryOp.Size.Word;
+                            break;
+                    }
+                }
+
                 boolean indexed = false;
                 if (node.getChildCount() != 0) {
                     source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                     indexed = true;
                 }
-                source.add(new MemoryOp(context, MemoryOp.Size.Long, indexed, MemoryOp.Base.PBase, push ? MemoryOp.Op.Assign : MemoryOp.Op.Write, expression));
+                source.add(new MemoryOp(context, ss, indexed, MemoryOp.Base.PBase, push ? MemoryOp.Op.Assign : MemoryOp.Op.Write, expression));
             }
         }
 

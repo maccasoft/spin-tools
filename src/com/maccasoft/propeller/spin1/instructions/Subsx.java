@@ -46,11 +46,11 @@ public class Subsx extends Spin1PAsmInstructionFactory {
             this.effect = effect;
         }
 
-        // 110001_001i_1111_ddddddddd_sssssssss
+        // 110111_001i_1111_ddddddddd_sssssssss
 
         @Override
         public byte[] getBytes() {
-            int value = instr.setValue(0, 0b110001);
+            int value = instr.setValue(0, 0b110111);
             value = con.setValue(value, encodeCondition(condition));
             value = zcr.setValue(value, encodeEffect(effect));
             value = i.setBoolean(value, src.isLiteral());
