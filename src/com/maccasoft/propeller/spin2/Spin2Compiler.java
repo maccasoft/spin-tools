@@ -14,11 +14,10 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -34,8 +33,12 @@ import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.GreaterOrEquals;
+import com.maccasoft.propeller.expressions.GreaterThan;
 import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
+import com.maccasoft.propeller.expressions.LessOrEquals;
+import com.maccasoft.propeller.expressions.LessThan;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Modulo;
@@ -274,6 +277,7 @@ public class Spin2Compiler {
             ld[index] = object.writeLong(0, "End");
         }
 
+        hubMode = true;
         hubAddress = object.getSize();
 
         for (Spin2PAsmLine line : source) {
@@ -308,8 +312,8 @@ public class Spin2Compiler {
                 }
             }
             else {
-                if (isCogCode && address > 0x200) {
-                    throw new RuntimeException("cog code limit exceeded by " + (address - 0x200) + " long(s)");
+                if (isCogCode && address > 0x1F0) {
+                    throw new RuntimeException("cog code limit exceeded by " + (address - 0x1F0) + " long(s)");
                 }
                 else if (!isCogCode && address > 0x400) {
                     throw new RuntimeException("lut code limit exceeded by " + (address - 0x400) + " long(s)");
@@ -514,7 +518,7 @@ public class Spin2Compiler {
         return null;
     }
 
-    Set<String> pendingAlias = new HashSet<String>();
+    Map<String, Spin2Context> pendingAlias = new HashMap<String, Spin2Context>();
 
     void compileDatBlock(Node parent) {
         Spin2Context savedContext = scope;
@@ -610,23 +614,28 @@ public class Spin2Compiler {
                     scope = scope.getParent();
                     nested--;
                 }
-                String type = "LONG";
+                String type = pasmLine.getMnemonic() != null ? "LONG" : "BYTE";
                 if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Word) {
                     type = "WORD";
                 }
                 else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) {
                     type = "BYTE";
                 }
+                else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                    type = "BYTE";
+                }
                 scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
                 scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
 
                 if (pasmLine.getMnemonic() == null) {
-                    pendingAlias.add(pasmLine.getLabel());
+                    if (!pasmLine.isLocalLabel()) {
+                        pendingAlias.put(pasmLine.getLabel(), scope);
+                    }
                 }
                 else if (pendingAlias.size() != 0) {
-                    for (String s : pendingAlias) {
-                        scope.addOrUpdateSymbol(s, new DataVariable(pasmLine.getScope(), type));
-                        scope.addOrUpdateSymbol("@" + s, new HubContextLiteral(pasmLine.getScope()));
+                    for (Entry<String, Spin2Context> entry : pendingAlias.entrySet()) {
+                        entry.getValue().addOrUpdateSymbol(entry.getKey(), new DataVariable(pasmLine.getScope(), type));
+                        entry.getValue().addOrUpdateSymbol("@" + entry.getKey(), new HubContextLiteral(pasmLine.getScope()));
                     }
                     pendingAlias.clear();
                 }
@@ -647,10 +656,13 @@ public class Spin2Compiler {
             else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) {
                 type = "BYTE";
             }
+            else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                type = "BYTE";
+            }
 
-            for (String s : pendingAlias) {
-                scope.addOrUpdateSymbol(s, new DataVariable(pasmLine.getScope(), type));
-                scope.addOrUpdateSymbol("@" + s, new HubContextLiteral(pasmLine.getScope()));
+            for (Entry<String, Spin2Context> entry : pendingAlias.entrySet()) {
+                entry.getValue().addOrUpdateSymbol(entry.getKey(), new DataVariable(pasmLine.getScope(), type));
+                entry.getValue().addOrUpdateSymbol("@" + entry.getKey(), new HubContextLiteral(pasmLine.getScope()));
             }
             pendingAlias.clear();
         }
@@ -2768,6 +2780,18 @@ public class Spin2Compiler {
         }
         if (">>".equals(node.getText())) {
             return new ShiftRight(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if (">".equals(node.getText())) {
+            return new GreaterThan(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if (">=".equals(node.getText())) {
+            return new GreaterOrEquals(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("<".equals(node.getText())) {
+            return new LessThan(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+        }
+        if ("<=".equals(node.getText())) {
+            return new LessOrEquals(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
         if ("ADDPINS".equalsIgnoreCase(node.getText())) {
             return new Addpins(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
