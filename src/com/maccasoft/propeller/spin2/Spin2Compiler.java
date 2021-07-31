@@ -308,8 +308,8 @@ public class Spin2Compiler {
                 }
             }
             else {
-                if (isCogCode && address > 0x1F0) {
-                    throw new RuntimeException("cog code limit exceeded by " + (address - 0x1F0) + " long(s)");
+                if (isCogCode && address > 0x200) {
+                    throw new RuntimeException("cog code limit exceeded by " + (address - 0x200) + " long(s)");
                 }
                 else if (!isCogCode && address > 0x400) {
                     throw new RuntimeException("lut code limit exceeded by " + (address - 0x400) + " long(s)");
@@ -1564,7 +1564,7 @@ public class Spin2Compiler {
             }, node.getText().toUpperCase()));
 
             source.add(new Bytecode(context, new byte[] {
-                0x04, (byte) (push ? 0x26 : 0x25)
+                (byte) methodNode.getChildCount(), (byte) (push ? 0x26 : 0x25)
             }, "POP_RETURN (???)"));
         }
         else if ("RECV".equalsIgnoreCase(node.getText())) {
