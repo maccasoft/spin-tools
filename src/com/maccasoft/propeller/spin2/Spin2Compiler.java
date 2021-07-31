@@ -2532,26 +2532,35 @@ public class Spin2Compiler {
 
             int n = 0;
             if (n < node.getChildCount()) {
-                indexNode = node.getChild(n++);
-                popIndex = true;
-                try {
-                    Expression exp = buildConstantExpression(context, indexNode);
-                    if (exp.isConstant()) {
-                        index = exp.getNumber().intValue();
-                        hasIndex = true;
-                        popIndex = false;
-                    }
-                } catch (Exception e) {
-                    // Do nothing
-                }
-            }
-            if (n < node.getChildCount()) {
                 if (".".equals(node.getChild(n).getText())) {
                     n++;
                     if (n >= node.getChildCount()) {
                         throw new CompilerMessage("expected bitfield expression", node.getToken());
                     }
                     bitfieldNode = node.getChild(n++);
+                }
+                else {
+                    indexNode = node.getChild(n++);
+                    popIndex = true;
+                    try {
+                        Expression exp = buildConstantExpression(context, indexNode);
+                        if (exp.isConstant()) {
+                            index = exp.getNumber().intValue();
+                            hasIndex = true;
+                            popIndex = false;
+                        }
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                    if (n < node.getChildCount()) {
+                        if (".".equals(node.getChild(n).getText())) {
+                            n++;
+                            if (n >= node.getChildCount()) {
+                                throw new CompilerMessage("expected bitfield expression", node.getToken());
+                            }
+                            bitfieldNode = node.getChild(n++);
+                        }
+                    }
                 }
             }
             if (n < node.getChildCount()) {
