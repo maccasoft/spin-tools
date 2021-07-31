@@ -14,9 +14,11 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -512,6 +514,8 @@ public class Spin2Compiler {
         return null;
     }
 
+    Set<String> pendingAlias = new HashSet<String>();
+
     void compileDatBlock(Node parent) {
         Spin2Context savedContext = scope;
         nested = 0;
@@ -529,6 +533,7 @@ public class Spin2Compiler {
             }
         }
 
+        pendingAlias.clear();
         scope = savedContext;
     }
 
@@ -614,6 +619,18 @@ public class Spin2Compiler {
                 }
                 scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
                 scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
+
+                if (pasmLine.getMnemonic() == null) {
+                    pendingAlias.add(pasmLine.getLabel());
+                }
+                else if (pendingAlias.size() != 0) {
+                    for (String s : pendingAlias) {
+                        scope.addOrUpdateSymbol(s, new DataVariable(pasmLine.getScope(), type));
+                        scope.addOrUpdateSymbol("@" + s, new HubContextLiteral(pasmLine.getScope()));
+                    }
+                    pendingAlias.clear();
+                }
+
                 if (!pasmLine.isLocalLabel()) {
                     scope = new Spin2Context(scope);
                     nested++;
@@ -621,6 +638,21 @@ public class Spin2Compiler {
             } catch (RuntimeException e) {
                 throw new CompilerMessage(e.getMessage(), node.label);
             }
+        }
+        else if (pasmLine.getMnemonic() != null && pendingAlias.size() != 0) {
+            String type = "LONG";
+            if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Word) {
+                type = "WORD";
+            }
+            else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) {
+                type = "BYTE";
+            }
+
+            for (String s : pendingAlias) {
+                scope.addOrUpdateSymbol(s, new DataVariable(pasmLine.getScope(), type));
+                scope.addOrUpdateSymbol("@" + s, new HubContextLiteral(pasmLine.getScope()));
+            }
+            pendingAlias.clear();
         }
 
         return pasmLine;

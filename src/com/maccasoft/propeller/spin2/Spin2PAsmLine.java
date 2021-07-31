@@ -87,6 +87,7 @@ public class Spin2PAsmLine {
     }
 
     public int resolve(int address) {
+        scope.setAddress(address);
         try {
             return getInstructionObject().resolve(address);
         } catch (Exception e) {
