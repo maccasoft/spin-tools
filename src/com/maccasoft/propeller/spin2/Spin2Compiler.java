@@ -2455,20 +2455,39 @@ public class Spin2Compiler {
             sb.append(push ? "_MODIFY" : "_WRITE");
             sb.append(indexed ? "_INDEXED" : "");
 
-            if ("BYTE".equalsIgnoreCase(node.getText())) {
-                source.add(new Bytecode(context, new byte[] {
-                    indexed ? (byte) 0x62 : (byte) 0x65, push ? (byte) 0x82 : (byte) 0x81
-                }, sb.toString()));
+            if (push) {
+                if ("BYTE".equalsIgnoreCase(node.getText())) {
+                    source.add(new Bytecode(context, new byte[] {
+                        indexed ? (byte) 0x62 : (byte) 0x65
+                    }, sb.toString()));
+                }
+                else if ("WORD".equalsIgnoreCase(node.getText())) {
+                    source.add(new Bytecode(context, new byte[] {
+                        indexed ? (byte) 0x63 : (byte) 0x66
+                    }, sb.toString()));
+                }
+                else if ("LONG".equalsIgnoreCase(node.getText())) {
+                    source.add(new Bytecode(context, new byte[] {
+                        indexed ? (byte) 0x64 : (byte) 0x67
+                    }, sb.toString()));
+                }
             }
-            else if ("WORD".equalsIgnoreCase(node.getText())) {
-                source.add(new Bytecode(context, new byte[] {
-                    indexed ? (byte) 0x63 : (byte) 0x66, push ? (byte) 0x82 : (byte) 0x81
-                }, sb.toString()));
-            }
-            else if ("LONG".equalsIgnoreCase(node.getText())) {
-                source.add(new Bytecode(context, new byte[] {
-                    indexed ? (byte) 0x64 : (byte) 0x67, push ? (byte) 0x82 : (byte) 0x81
-                }, sb.toString()));
+            else {
+                if ("BYTE".equalsIgnoreCase(node.getText())) {
+                    source.add(new Bytecode(context, new byte[] {
+                        indexed ? (byte) 0x62 : (byte) 0x65, (byte) 0x81
+                    }, sb.toString()));
+                }
+                else if ("WORD".equalsIgnoreCase(node.getText())) {
+                    source.add(new Bytecode(context, new byte[] {
+                        indexed ? (byte) 0x63 : (byte) 0x66, (byte) 0x81
+                    }, sb.toString()));
+                }
+                else if ("LONG".equalsIgnoreCase(node.getText())) {
+                    source.add(new Bytecode(context, new byte[] {
+                        indexed ? (byte) 0x64 : (byte) 0x67, (byte) 0x81
+                    }, sb.toString()));
+                }
             }
         }
         else {
