@@ -1886,21 +1886,32 @@ public class Spin2Compiler {
         else {
             String[] s = node.getText().split("[\\.]");
             if (s.length == 2 && ("BYTE".equalsIgnoreCase(s[1]) || "WORD".equalsIgnoreCase(s[1]) || "LONG".equalsIgnoreCase(s[1]))) {
-                Spin2StatementNode postEffect = null;
+                int index = 0;
+                boolean popIndex = false;
                 Spin2StatementNode indexNode = null;
+                Spin2StatementNode postEffectNode = null;
 
                 Expression expression = context.getLocalSymbol(s[0]);
+                if (expression instanceof HubContextLiteral) {
+                    expression = context.getLocalSymbol(s[0].substring(1));
+                }
                 if (expression == null) {
                     throw new CompilerMessage("undefined symbol " + node.getText(), node.getToken());
                 }
 
-                if (node.getChildCount() != 0) {
-                    indexNode = node.getChild(0);
-                    if (node.getChildCount() > 1) {
-                        if (isPostEffect(node.getChild(1).getText())) {
-                            postEffect = node.getChild(1);
-                        }
+                int n = 0;
+                if (n < node.getChildCount()) {
+                    if (!isPostEffect(node.getChild(n).getText())) {
+                        indexNode = node.getChild(n++);
                     }
+                }
+                if (n < node.getChildCount()) {
+                    if (isPostEffect(node.getChild(n).getText())) {
+                        postEffectNode = node.getChild(n++);
+                    }
+                }
+                if (n < node.getChildCount()) {
+                    throw new RuntimeException("syntax error");
                 }
 
                 MemoryOp.Size ss = MemoryOp.Size.Long;
@@ -1917,43 +1928,45 @@ public class Spin2Compiler {
                 else if (expression instanceof Variable) {
                     bb = MemoryOp.Base.VBase;
                 }
+
                 if (indexNode != null) {
-                    Expression index = null;
+                    popIndex = true;
                     try {
-                        index = buildConstantExpression(context, indexNode);
-                        if (!index.isConstant()) {
-                            index = null;
+                        Expression exp = buildConstantExpression(context, indexNode);
+                        if (exp.isConstant()) {
+                            index = exp.getNumber().intValue();
+                            popIndex = false;
                         }
                     } catch (Exception e) {
                         // Do nothing
                     }
-                    if (index != null) {
-                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, expression, index.getNumber().intValue()));
-                    }
-                    else {
+                    if (popIndex) {
                         source.addAll(compileBytecodeExpression(context, indexNode, true));
-                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, true, expression));
                     }
-                }
-                else {
-                    source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Read : MemoryOp.Op.Write, expression));
                 }
 
-                if (postEffect != null) {
-                    if ("++".equalsIgnoreCase(postEffect.getText())) {
+                if (s[0].startsWith("@")) {
+                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, popIndex, expression, index));
+                }
+                else {
+                    source.add(new MemoryOp(context, ss, bb, push ? MemoryOp.Op.Read : MemoryOp.Op.Write, popIndex, expression, index));
+                }
+
+                if (postEffectNode != null) {
+                    if ("++".equalsIgnoreCase(postEffectNode.getText())) {
                         source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
                     }
-                    else if ("--".equalsIgnoreCase(postEffect.getText())) {
+                    else if ("--".equalsIgnoreCase(postEffectNode.getText())) {
                         source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
                     }
-                    else if ("!!".equalsIgnoreCase(postEffect.getText())) {
+                    else if ("!!".equalsIgnoreCase(postEffectNode.getText())) {
                         source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
                     }
-                    else if ("!".equalsIgnoreCase(postEffect.getText())) {
+                    else if ("!".equalsIgnoreCase(postEffectNode.getText())) {
                         source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
                     }
                     else {
-                        throw new CompilerMessage("unhandled post effect " + postEffect.getText(), postEffect.getToken());
+                        throw new CompilerMessage("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
                     }
                 }
             }
@@ -1976,6 +1989,42 @@ public class Spin2Compiler {
                         source.add(new VariableOp(context, VariableOp.Op.Address, false, (Variable) expression));
                     }
                     else {
+                        int index = 0;
+                        boolean popIndex = false;
+                        Spin2StatementNode indexNode = null;
+                        Spin2StatementNode postEffectNode = null;
+
+                        int n = 0;
+                        if (n < node.getChildCount()) {
+                            if (!isPostEffect(node.getChild(n).getText())) {
+                                indexNode = node.getChild(n++);
+                            }
+                        }
+                        if (n < node.getChildCount()) {
+                            if (isPostEffect(node.getChild(n).getText())) {
+                                postEffectNode = node.getChild(n++);
+                            }
+                        }
+                        if (n < node.getChildCount()) {
+                            throw new RuntimeException("syntax error");
+                        }
+
+                        if (indexNode != null) {
+                            popIndex = true;
+                            try {
+                                Expression exp = buildConstantExpression(context, indexNode);
+                                if (exp.isConstant()) {
+                                    index = exp.getNumber().intValue();
+                                    popIndex = false;
+                                }
+                            } catch (Exception e) {
+                                // Do nothing
+                            }
+                            if (popIndex) {
+                                source.addAll(compileBytecodeExpression(context, indexNode, true));
+                            }
+                        }
+
                         MemoryOp.Size ss = MemoryOp.Size.Long;
                         MemoryOp.Base bb = MemoryOp.Base.PBase;
                         if (expression instanceof DataVariable) {
@@ -1988,7 +2037,25 @@ public class Spin2Compiler {
                                     break;
                             }
                         }
-                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, expression));
+                        source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, popIndex, expression, index));
+
+                        if (postEffectNode != null) {
+                            if ("++".equalsIgnoreCase(postEffectNode.getText())) {
+                                source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                            }
+                            else if ("--".equalsIgnoreCase(postEffectNode.getText())) {
+                                source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
+                            }
+                            else if ("!!".equalsIgnoreCase(postEffectNode.getText())) {
+                                source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
+                            }
+                            else if ("!".equalsIgnoreCase(postEffectNode.getText())) {
+                                source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
+                            }
+                            else {
+                                throw new CompilerMessage("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
+                            }
+                        }
                     }
                 }
                 else if (expression instanceof Method) {
