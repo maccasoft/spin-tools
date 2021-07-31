@@ -1,0 +1,170 @@
+'' =================================================================================================
+''
+''   File....... jm_click_4-20ma_tx.spin2
+''   Purpose.... Interface for MikroElektronika 4-20mA_T Click board
+''               -- adapted from MikroElektronika source
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 03 OCT 2020
+''
+'' =================================================================================================
+
+
+{{
+
+    P2 Eval Click Adapter IO Assignments
+    * - used by 4-20mA_T Click board
+
+               ┌─────────────────────────────┐
+    Base + 06  │ [ ] AN              PWM [ ] │  Base + 05
+               │                             │
+    Base + 07  │ ( ) RST             INT ( ) │  Base + 04
+               │                             │
+    Base + 08  │ (*) CS          <-- RX  ( ) │  Base + 03  (marked TX on Click modules)
+               │                             │
+    Base + 09  │ (*) SCK  <--    --> TX  ( ) │  Base + 02  (marked RX on Click modules)
+               │                             │
+    Base + 10  │ ( ) MISO -->    --> SCL ( ) │  Base + 01
+               │                             │
+    Base + 11  │ (*) MOSI <--    <-> SDA ( ) │  Base + 00
+               │                             │
+               │ ( ) 3v3             5v0 ( ) │
+               │                             │
+               │ ( ) GND             GND ( ) │
+               └─────────────────────────────/
+
+    CS    Active-low select of MCP4921
+    SCK   Clock to MCP4921
+    MOSI  Serial data to MCP4921
+
+    MikroElektronika Source
+    -- https://github.com/MikroElektronika/4-20mA_T_click
+
+}}
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }
+  SF_SDO   = 59  { O }
+  SF_SDI   = 58  { I }
+
+
+con { click pin offsets }
+
+  #true,  ON, OFF
+  #false, NO, YES
+
+  #00, P_SDA, P_SCL, P_TX,   P_RX                               ' click board pin offsets
+  #04, P_INT, P_PWM, P_AN,   P_RST
+  #08, P_CS,  P_SCK, P_MISO, P_MOSI
+
+
+obj
+
+  spi : "jm_spi"                                                ' synchronous serial coms
+
+
+var { globals }
+
+  byte  cspin                                                   ' chip select for MCP4921
+
+
+pub null()
+
+'' This is not a top-level object
+
+
+pub start(basepin)
+
+'' Connect to 4-20mA_T Click
+
+  cspin := basepin+P_CS
+  pinh(cspin)                                                   ' deselect DAC
+
+  ' configure SPI connection @ 1MHz
+
+  spi.start(basepin+P_MISO, basepin+P_MOSI, basepin+P_SCK, spi.MODE_0, 1_000)
+
+
+pub dac_output(value)
+
+'' Write value to DAC
+'' -- value is 0..4095
+
+  value := (0 #> value <# $0FFF) | $3000
+
+  pinl(cspin)
+  spi.write(spi.MSBFIRST, value, 16)
+  pinh(cspin)
+
+
+pub set_i_out(iout) | value
+
+'' Set current output
+'' -- value is 4 to 20mA in 0.1mA steps
+''    * 4mA = 40, 20mA = 200
+
+  if (value >= 4_0) && (value <= 20_0)
+    value *= 20
+    dac_output(value)
+
+
+pub scale_out(value, lo, hi)
+
+'' Set 4-20mA output for value in range of lo..hi
+'' -- lo is value for  4mA output
+'' -- hi is value for 20mA output
+
+  if (value <= lo)
+    set_i_out(4_0)                                              ' constrain value to 4mA
+  elseif (value >= hi)
+    set_i_out(20_0)                                             ' constrain value to 20mA
+  else
+    set_i_out(scale(value, lo, hi, 4_0, 20_0))                  ' scale value to 4..20mA
+
+
+pub scale(value, inmin, inmax, outmin, outmax) : result
+
+'' Scales value in range inmin..inmax to new value in range outmin..outmax
+'' -- constrains value to inmin..inmax
+
+  if (value <= inmin)
+    return outmin
+  elseif (value >= inmax)
+    return outmax
+  else
+    return (value - inmin) * (outmax - outmin) / (inmax - inmin) + outmin
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

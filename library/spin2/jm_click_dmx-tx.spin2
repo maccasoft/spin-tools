@@ -1,0 +1,174 @@
+'' =================================================================================================
+''
+''   File....... jm_click_dmx-tx.spin2
+''   Purpose.... DMX output for MikroElektronika RS485 Click 3v3 board
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 26 OCT 2020
+''
+'' =================================================================================================
+
+
+{{
+
+    P2 Eval Click Adapter IO Assignments
+    * - used by RS485 Click 3v3 board
+
+               ┌─────────────────────────────┐
+    Base + 06  │ [ ] AN              PWM [*] │  Base + 05
+               │                             │
+    Base + 07  │ ( ) RST             INT ( ) │  Base + 04
+               │                             │
+    Base + 08  │ ( ) CS          <-- RX  ( ) │  Base + 03  (marked TX on Click modules)
+               │                             │
+    Base + 09  │ ( ) SCK  <--    --> TX  (*) │  Base + 02  (marked RX on Click modules)
+               │                             │
+    Base + 10  │ ( ) MISO -->    --> SCL ( ) │  Base + 01
+               │                             │
+    Base + 11  │ ( ) MOSI <--    <-> SDA ( ) │  Base + 00
+               │                             │
+               │ ( ) 3v3             5v0 ( ) │
+               │                             │
+               │ ( ) GND             GND ( ) │
+               └─────────────────────────────/
+
+    PWM   Active-high transmit enable
+
+}}
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }
+  SF_SDO   = 59  { O }
+  SF_SDI   = 58  { I }
+
+
+con { click pin offsets }
+
+  #true,  ON, OFF
+  #false, NO, YES
+
+  #00, P_SDA, P_SCL, P_TX,   P_RX                               ' click board pin offsets
+  #04, P_INT, P_PWM, P_AN,   P_RST
+  #08, P_CS,  P_SCK, P_MISO, P_MOSI
+
+
+obj
+
+  dmx : "jm_dmx_tx"                                             ' * dmx transmit
+  gc  : "jm_gamma8"                                             '   gamma correction for LED fixtures
+
+' * uses cog when loaded
+
+
+var { globals }
+
+  byte  dmxbuf[513]                                             ' dmx output buffer
+
+
+pub null()
+
+'' This is not a top-level object
+
+
+pub start(basepin)
+
+'' Start DMX transmit driver using Click RS-485 board
+
+  dmx.start(basepin+P_TX, basepin+P_PWM, @dmxbuf)
+
+
+pub write(slot, level)
+
+'' Writes level to slot (0 - 512)
+'' -- slot 0 is DMX start code
+'' -- slot 1 to slot N are slot values (DMX levels)
+
+  dmx.write(slot, level)
+
+
+pub write_all(scode, level)
+
+'' Fills DMX buffer with start code and level (all slots)
+'' -- scode is the start code for stream (DMX is $00)
+'' -- level is the brightess level (0..255) for all slots
+
+  dmx.write_all(scode, level)
+
+
+pub read(slot) : result
+
+'' Reads value in DMX slot (from tx buffer)
+
+  return dmx.read(slot)
+
+
+pub high(slot)
+
+'' Writes 255 to slot
+'' -- max level
+
+  dmx.high(slot)
+
+
+pub low(slot)
+
+'' Writes 0 to slot
+'' -- off
+
+  dmx.low(slot)
+
+
+pub toggle(slot)
+
+'' Inverts slot level based on 50% threshold
+
+  dmx.toggle(slot)
+
+
+pub address() : result
+
+'' Return address of DMX buffer
+
+  return @dmxbuf
+
+
+pub gamma(level) : result
+
+'' Returns gamma correct value for level
+
+  return gc.gamma(level)
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

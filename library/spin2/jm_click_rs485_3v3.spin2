@@ -1,0 +1,170 @@
+'' =================================================================================================
+''
+''   File....... jm_click_rs485_3v3.spin2
+''   Purpose.... Interface for MikroElektronika RS485 Click 3v3 board
+''               -- adapted from MikroElektronika source
+''               -- additions by Jon McPhalen
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 27 OCT 2020
+''
+'' =================================================================================================
+
+
+{{
+
+    P2 Eval Click Adapter IO Assignments
+    * - used by RS485 Click 3v3 board
+
+               ┌─────────────────────────────┐
+    Base + 06  │ [ ] AN              PWM [*] │  Base + 05
+               │                             │
+    Base + 07  │ ( ) RST             INT ( ) │  Base + 04
+               │                             │
+    Base + 08  │ ( ) CS          <-- RX  (*) │  Base + 03  (marked TX on Click modules)
+               │                             │
+    Base + 09  │ ( ) SCK  <--    --> TX  (*) │  Base + 02  (marked RX on Click modules)
+               │                             │
+    Base + 10  │ ( ) MISO -->    --> SCL ( ) │  Base + 01
+               │                             │
+    Base + 11  │ ( ) MOSI <--    <-> SDA ( ) │  Base + 00
+               │                             │
+               │ ( ) 3v3             5v0 ( ) │
+               │                             │
+               │ ( ) GND             GND ( ) │
+               └─────────────────────────────/
+
+    PWM   Active-high transmit enable
+
+    MikroElektronika Source
+    -- https://github.com/MikroElektronika/RS485_click_3V3
+
+}}
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }
+  SF_SDO   = 59  { O }
+  SF_SDI   = 58  { I }
+
+
+con
+
+  #true,  ON, OFF
+  #false, NO, YES
+
+  #00, P_SDA, P_SCL, P_TX,   P_RX                               ' click board pin offsets
+  #04, P_INT, P_PWM, P_AN,   P_RST
+  #08, P_CS,  P_SCK, P_MISO, P_MOSI
+
+
+obj
+
+  uart : "jm_hd485"                                             ' * async serial coms
+
+' * uses cog when loaded
+
+
+pub null()
+
+'' This is not a top-level object
+
+
+pub start(basepin, baud)
+
+'' Connect to RS-485 driver
+
+  uart.start(basepin+P_RX, basepin+P_TX, basepin+P_PWM, baud)
+
+
+pub write_byte(b)
+
+'' Write byte to RS-485
+
+  uart.tx(b)
+
+
+pub write_str(p_str)
+
+'' Write string to RS-485
+
+  uart.str(p_str)
+
+
+pub txflush()
+
+'' Waits for tx buffer to empty
+
+  uart.txflush()
+
+
+pub read_byte() : b
+
+'' Returns next available byte
+'' -- will block if rx buffer is empty (use byte_ready())
+
+  return uart.rx()
+
+
+pub check_byte() : b
+
+'' Returns byte if availalbe; -1 if rx buffer empty
+
+  return uart.rxcheck()
+
+
+pub wait_byte(ms) : b
+
+'' Waits up to ms milliseconds for byte
+'' -- returns -1 if no byte available in timeout periood
+
+  return uart.rxtime(ms)
+
+
+pub byte_ready() : count
+
+'' Returns number of bytes available in receive buffer
+'' -- use before read_byte() to prevent program delay if empty rx buffer
+
+  return uart.available()
+
+
+pub rxflush()
+
+'' Flushes receive buffer
+
+  uart.rxflush()
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

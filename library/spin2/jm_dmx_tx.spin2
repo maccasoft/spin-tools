@@ -1,0 +1,333 @@
+'' =================================================================================================
+''
+''   File....... jm_dmx_tx.spin2
+''   Purpose.... DMX512-A transmitter with configurable transmission parameters
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (C) 2009-2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon@jonmcphalen.com
+''   Started.... 05 JUL 2009
+''   Updated.... 27 OCT 2020
+''
+'' =================================================================================================
+
+{{
+
+   Example Circuit
+
+                +5v           +5v
+                              
+                 │             │
+                 10k          │
+             4k7 │ ┌─────────┐ │
+   dmxrx  ────┻─┤1°      8├─┘
+    txrx  ──────┳─┤2       7├────────┳──────┳─────── Pin 2 XLR-F
+                 ┣─┤3       6├────────┼─┳────┼─┳───── Pin 3 XLR-F    DMX OUT
+   dmxtx  ──────┼─┤4       5├─┐      │ │    │ │ ┌─── Pin 1 XLR-F
+                 │ └─────────┘ │      │ └ ┐  │ │ │
+             10k    ST485BN   │  120  ┌ ┘  └─┼─┼─── Pin 2 XLR-M
+                 │             │      │ │      └─┼─── Pin 3 XLR-M    DMX IN
+                                    └─┘        ┣─── Pin 1 XLR-M
+                                                 └ ┐
+                                                 ┌ ┘
+                                                 
+
+   ST485BN (Mouser 511-ST485BN) pins
+
+   1  RO   Receive output
+   2  /RE  Receive enable  (active low)
+   3  DE   Transmit enable (active high)
+   4  DI   Transmit input
+   5  Vss  ground
+   6  A    differential IO
+   7  B    differential IO
+   8  Vdd  +5v
+
+
+   Resources
+
+   * http://www.erwinrol.com/index.php?stagecraft/dmx.php
+   * http://www.dmx512-online.com/packt.html
+   * http://en.wikipedia.org/wiki/DMX512-A
+
+
+   Author's Note
+
+   I have found that most DMX devices will tolerate a short packet, that is, a packet of less than
+   512 slots that runs faster than every 23ms. The .startx() method allows the appliction to set the size
+   of the packet and the break-to-break timing. I inserted some temporary test code to determine the
+   actual time required for short packet settings. I use these values for guidance when configuring an
+   app with a short packet.
+
+   Packet      Suggested B2B
+
+     10             0_7
+     25             1_4
+     50             2_5
+    100             4_7
+    150             6_9
+    200             9_1
+    250            11_4
+    300            13_6
+    400            18_0
+    512            23_0
+
+   The programmer is responsible for testing B2B timing with target device(s).
+
+}}
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }
+  SF_SDO   = 59  { O }
+  SF_SDI   = 58  { I }
+
+
+con
+
+  #true,  ON, OFF
+  #false, NO, YES
+
+
+con
+
+  BREAK_US = 92
+  MAB_US   = 12
+
+
+var
+
+  long  cog                                                     ' cog running DMX UART
+
+  long  tx2                                                     ' dmx transmit pin
+  long  txe2                                                    ' dmx transmit enable pin
+  long  lastslot                                                ' last slot of packet, 1 to 512
+  long  bufaddr                                                 ' address of brightness levels
+  long  b2bticks                                                ' ticks, break-to-break
+  long  breakticks                                              ' ticks in BREAK period
+  long  mabticks                                                ' ticks in MAB period
+  long  baudticks                                               ' ticks in one bit (4us)
+
+
+pub null()
+
+'' This is not a top-level object
+
+
+pub start(txpin, txepin, p_buf) : result
+
+'' Standard initialization of DMX transmitter cog
+'' -- txpin.... transmit pin
+'' -- txepin... transmit enable pin; make high to transmit (-1 if not used)
+'' -- p_buf.... pointer to DMX buffer (array of 513 bytes)
+
+  return startx(txpin, txepin, 0, 512, 23_0, p_buf)             ' full universe every 23.0ms (~43.5 fps)
+
+
+pub startx(txpin, txepin, scode, last, b2bt, p_buf) : result | us1
+
+'' Extended initialization of DMX transmitter cog
+'' -- txpin.... transmit pin
+'' -- txepin... transmit enable pin; make high to transmit (-1 if not used)
+'' -- scode... system start code (usually $00)
+'' -- last.... last slot in packet (1 to 512)
+'' -- b2bt.... break-to-break timing, 1.0ms to 1000.0ms
+''             -- timing expressed in 0.1ms units
+''             -- for full packet, use 23_0 (23.0ms)
+'' -- p_buf... pointer to DMX buffer (array of 2..513 bytes)
+
+  stop()
+
+  tx2        := txpin                                           ' set pins
+  txe2       := txepin
+  lastslot   := 1 #> last <# 512                                ' set slots
+  bufaddr    := p_buf                                           ' point to dmx buffer
+
+  ' User is responsible for correct break-to-break setting for size of packet
+  ' -- approximately 92us + 12us + 44us { start code} + (44us x slots)
+  ' -- use 0 for auto retransmit with no delay between packets
+
+  us1 := clkfreq / 1_000_000                                    ' ticks in 1us
+
+  b2bticks   := (0 #> b2bt <# 1000_0) * (clkfreq / 10_000)      ' set break-to-break timing
+  breakticks := us1 * BREAK_US                                  ' ticks in standard break
+  mabticks   := us1 * MAB_US                                    ' ticks in standard mab
+  baudticks  := clkfreq / 250_000                               ' tick per bit @ 250kBaud
+
+  write_all(scode, 0)                                           ' initialize buffer to 0s
+
+  cog := coginit(COGEXEC_NEW, @dmx_tx, @tx2) + 1                ' start DMX cog
+
+  return cog
+
+
+pub stop()
+
+'' Stops DMX TX driver; frees a cog
+
+  if (cog)                                                      ' if running
+    cogstop(cog - 1)                                            '  stop
+    cog := 0                                                    '  mark stopped
+    write_all(0, 0)
+
+
+pub write(slot, level)
+
+'' Writes level to slot (0 - 512)
+'' -- slot 0 is DMX start code
+'' -- slot 1 to slot N are slot values (DMX levels)
+
+  if ((slot >= 0) and (slot <= lastslot))                       ' valid slot?
+    byte[bufaddr][slot] := 0 #> level <# 255                    ' set it
+
+
+pub write_all(scode, level)
+
+'' Fills DMX buffer with start code and level (all slots)
+'' -- scode is the start code for stream (DMX is $00)
+'' -- level is the brightess level (0..255) for all slots
+
+  byte[bufaddr][0] := 0 #> scode <# 255                         ' limit start code
+
+  level := 0 #> level <# 255                                    ' limit level
+  bytefill(bufaddr+1, level, lastslot)                          ' fill slots
+
+
+pub read(slot) : result
+
+'' Reads value in DMX slot (from tx buffer)
+
+  if ((slot >= 0) && (slot <= lastslot))
+    return byte[bufaddr][slot]
+  else
+    return 0
+
+
+pub high(slot)
+
+'' Writes 255 to slot
+'' -- max level
+
+  if ((slot > 0) && (slot <= lastslot))
+    byte[bufaddr][slot] := 255
+
+
+pub low(slot)
+
+'' Writes 0 to slot
+'' -- off
+
+  if ((slot > 0) && (slot <= lastslot))
+    byte[bufaddr][slot] := 0
+
+
+pub toggle(slot)
+
+'' Inverts slot level based on 50% threshold
+
+  if ((slot > 0) && (slot <= lastslot))
+    if (byte[bufaddr][slot] < 128)
+      byte[bufaddr][slot] := 255
+    else
+      byte[bufaddr][slot] := 0
+
+
+dat { dmx transmit driver }
+
+                org       0
+
+dmx_tx          setq      #8-1                                  ' read 8 longs from hub
+                rdlong    tx, ptra
+                add       slots, #1                             ' inc for start code
+
+                drvh      tx                                    ' set tx to idle
+
+                testb     txe, #31                      wc      ' using txe? (sign bit is 0)
+    if_nc       drvh      txe                                   ' if yes, enable
+                waitx     mabtix                                ' let transmitter turn on
+
+                getct     b2btimer                              ' start break-to-break timing
+
+                ' dmx transmit loop
+
+tx_break        drvl      tx                                    ' break
+                waitx     breaktix
+
+tx_mab          drvh      tx                                    ' mark after break
+                waitx     mabtix
+
+                mov       bufpntr, hub                          ' bufpntr := @dmxbuf[0]
+                mov       count, slots                          ' slots to tx
+
+
+tx_byte         rdbyte    t1, bufpntr                           ' get byte from buffer
+                or        t1, ##$F00                            ' add stop bits (1s)
+                shl       t1, #1                                ' add start bit (0)
+                getct     bittimer                              ' start timing bits
+                rep       #4, #11                               ' 4 (inst) x 11 bits (start, 8 bits, 2 stop)
+                 shr      t1, #1                        wc      ' sample bit into c (from LSB end)
+                 drvc     tx                                    ' output the bit
+                 addct2   bittimer, bittix                      ' update bit timer
+                 waitct2                                        ' let bit timer expire
+
+                add       bufpntr, #1                           ' point to next byte
+                djnz      count, #tx_byte                       ' update count -- done?
+
+                tjz       b2btix, #tx_break                     ' no waiting; restart now
+
+                addct1    b2btimer, b2btix                      ' update break-to-break timer
+                waitct1                                         ' let it finish
+
+                jmp       #tx_break                             ' back to top
+
+' --------------------------------------------------------------------------------------------------
+
+tx              res       1                                     ' tx pin
+txe             res       1                                     ' tx enable pin
+slots           res       1                                     ' slots to tx
+hub             res       1                                     ' pointer to levels (in hub)
+b2btix          res       1                                     ' break-to-break (23 to 1000ms)
+breaktix        res       1                                     ' ticks in break (92us)
+mabtix          res       1                                     ' ticks in mark after break (12us)
+bittix          res       1                                     ' ticks in one bit (4us)
+
+b2btimer        res       1                                     ' break-to-break timer
+bufpntr         res       1                                     ' hub address of byte to tx
+count           res       1                                     ' bytes to tx
+bittimer        res       1                                     ' bit timer
+
+t1              res       1                                     ' work vars
+t2              res       1
+
+                fit       496
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

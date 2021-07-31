@@ -1,0 +1,195 @@
+'' =================================================================================================
+''
+''   File....... jm_click_4-20ma_rx.spin2
+''   Purpose.... Interface for MikroElektronika 4-20mA_R Click board
+''               -- adapted from MikroElektronika source
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 04 OCT 2020
+''
+'' =================================================================================================
+
+
+{{
+
+    P2 Eval Click Adapter IO Assignments
+    * - used by 4-20mA R
+
+               ┌─────────────────────────────┐
+    Base + 06  │ [ ] AN              PWM [ ] │  Base + 05
+               │                             │
+    Base + 07  │ ( ) RST             INT (*) │  Base + 04
+               │                             │
+    Base + 08  │ (*) CS          <-- RX  ( ) │  Base + 03  (marked TX on Click modules)
+               │                             │
+    Base + 09  │ (*) SCK  <--    --> TX  ( ) │  Base + 02  (marked RX on Click modules)
+               │                             │
+    Base + 10  │ (*) MISO -->    --> SCL ( ) │  Base + 01
+               │                             │
+    Base + 11  │ ( ) MOSI <--    <-> SDA ( ) │  Base + 00
+               │                             │
+               │ ( ) 3v3             5v0 ( ) │
+               │                             │
+               │ ( ) GND             GND ( ) │
+               └─────────────────────────────/
+
+    INT   Active-low shut-down of current supply
+    CS    Active-low select of MCP3201
+    SCK   Clock to MCP3201
+    MISO  Serial data from MCP3201
+
+    MikroElektronika Source
+    -- https://github.com/MikroElektronika/4-20mA_R_click
+
+}}
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }
+  SF_SDO   = 59  { O }
+  SF_SDI   = 58  { I }
+
+
+con { click pin offsets }
+
+  #true,  ON, OFF
+  #false, NO, YES
+
+  #00, P_SDA, P_SCL, P_TX,   P_RX                               ' click board pin offsets
+  #04, P_INT, P_PWM, P_AN,   P_RST
+  #08, P_CS,  P_SCK, P_MISO, P_MOSI
+
+
+obj
+
+  spi : "jm_spi"                                                ' synchronous serial coms
+
+
+var { globals }
+
+  byte  cspin                                                   ' chip select for MCP3201
+  byte  enpin                                                   ' loop power enable
+
+
+pub null()
+
+'' This is not a top-level object
+
+
+pub start(basepin)
+
+'' Connect to 4-20mA_R Click
+
+  enpin := basepin+P_INT
+  pinh(enpin)                                                   ' enable loop power
+
+  cspin := basepin+P_CS
+  pinh(cspin)                                                   ' deselect ADC
+
+  ' configure SPI connection @ 1MHz
+
+  spi.start(basepin+P_MISO, basepin+P_MOSI, basepin+P_SCK, spi.MODE_0, 1_000)
+
+
+pub set_loop_power(state)
+
+'' Set loop power supply enable
+'' -- enables supply if state is not 0
+
+  pinw(enpin, state ? 1 : 0)
+
+
+pub read_adc() : result
+
+'' Read and return raw ADC value
+
+  pinl(cspin)
+  result := spi.read(spi.MSBFIRST, 15) & $0FFF
+  pinh(cspin)
+
+
+pub get_adc() : result | lo, hi, sum, value
+
+'' Returns filtered value from ADC
+'' -- result is average of 8 of 10 readings
+''    * low and high readings removed
+
+  lo  := 4095                                                   ' initialize locals
+  hi  := 0
+  sum := 0
+
+  repeat 10
+    value := read_adc()
+    sum += value                                                ' update sum
+    lo <#= value                                                ' save new low
+    hi #>= value                                                ' save new high
+
+  sum -= (lo + hi)                                              ' remove low and high readings
+
+  result := sum >> 3                                            ' average 8 readings
+
+
+pub convert_adc(value) : result
+
+'' Converts raw ADC reading to 4-20mA
+'' -- output is fixed point in 0.1mA units
+''    * 4mA = 40, 20mA = 200
+
+  if ((value <= 4095) && (value > 750))                         ' if good reading
+    result := 20_0 * value / 4095                               '  scale to 4_0 to 20_0
+  else
+    result := 0
+
+
+pub scale_adc(value, lo, hi) : result
+
+'' Converts raw ADC reading to user range lo..hi
+
+  return scale(value, 800, 4095, lo, hi)
+
+
+pub scale(value, inmin, inmax, outmin, outmax) : result
+
+'' Scales value in range inmin..inmax to new value in range outmin..outmax
+'' -- constrains value to inmin..inmax
+
+  if (value <= inmin)
+    return outmin
+  elseif (value >= inmax)
+    return outmax
+  else
+    return (value - inmin) * (outmax - outmin) / (inmax - inmin) + outmin
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

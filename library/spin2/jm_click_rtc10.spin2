@@ -1,0 +1,671 @@
+'' =================================================================================================
+''
+''   File....... jm_click_rtc10.spin2
+''   Purpose.... Interface for MikroElektronika RTC 10 Click board
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 09 OCT 2020
+''
+'' =================================================================================================
+
+{{
+
+    P2 Eval Click Adapter IO Assignments
+    * - used by RTC 10
+
+               ┌─────────────────────────────┐
+    Base + 06  │ [*] AN              PWM [ ] │  Base + 05
+               │                             │
+    Base + 07  │ (*) RST             INT (*) │  Base + 04
+               │                             │
+    Base + 08  │ ( ) CS          <-- RX  ( ) │  Base + 03  (marked TX on Click modules)
+               │                             │
+    Base + 09  │ ( ) SCK  <--    --> TX  ( ) │  Base + 02  (marked RX on Click modules)
+               │                             │
+    Base + 10  │ ( ) MISO -->    --> SCL (*) │  Base + 01
+               │                             │
+    Base + 11  │ ( ) MOSI <--    <-> SDA (*) │  Base + 00
+               │                             │
+               │ ( ) 3v3             5v0 ( ) │
+               │                             │
+               │ ( ) GND             GND ( ) │
+               └─────────────────────────────/
+
+    SDA { I/O }  I2C data
+    SCL { O }    I2C clock
+    INT { O }    Interrupt / 1Hz Square Wave output (open drain; click has pull-up)
+    AN  { O }    32kHz output from RTC (open drain; click has pull-up)
+    RST { I/O }  Hardware reset (open drain; RTC has internal pull-up)
+
+    MikroElektronika Source
+    -- https://github.com/MikroElektronika/4-20mA_T_click
+    -- some functions from original source not included
+
+}}
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }
+  SF_SDO   = 59  { O }
+  SF_SDI   = 58  { I }
+
+
+con { click pin offsets }
+
+  #true,  ON, OFF
+  #false, NO, YES
+
+  #00, P_SDA, P_SCL, P_TX,   P_RX                               ' click module pin offsets
+  #04, P_INT, P_PWM, P_AN,   P_RST
+  #08, P_CS,  P_SCK, P_MISO, P_MOSI
+
+
+con { rtc registers }
+
+  DS3231M_WR = %1101_000_0                                      ' i2c slave id
+  DS3231M_RD = %1101_000_1
+
+
+  ' registers
+
+  #$00, R_SC, R_MN, R_HR                                        ' time
+  #$03, R_WKDAY, R_DATE, R_MON, R_YR                            ' date
+
+  #$07, R_A1SCS, R_A1MNS, R_A1HRS                               ' alarm 1 time
+  #$0A, R_A1DYDT                                                ' alarm 1 day / date
+
+  #$0B, R_A2MNS, R_A2HRS                                        ' alarm 2 time
+  #$0D, R_A2DYDT                                                ' alarm 2 day / date
+
+  #$0E, R_CTRL                                                  ' control register
+  #$0F, R_STATUS                                                ' status register
+
+  #$10, R_OFFSET                                                ' aging offset
+
+  #$11, R_TMSB, R_TLSB                                          ' temp registers
+
+
+obj
+
+  i2c : "jm_i2c"
+
+
+var { globals }
+
+  byte  intpin
+  byte  khz32pin
+  byte  rstpin
+
+
+pub null()
+
+'' This is not a top-level object
+
+
+pub start(basepin)
+
+'' Configure IO for Click RTC 10 module
+
+  intpin := basepin + P_INT                                     ' setup IO
+  pinf(intpin)
+
+  khz32pin := basepin + P_AN
+  pinf(khz32pin)
+
+  rstpin := basepin + P_RST
+  pinf(rstpin)
+
+  i2c.setup(basepin+P_SCL, basepin+P_SDA, 100, i2c.PU_NONE)     ' i2c for RTC @ 100kHz
+
+
+pub present() : result
+
+  return i2c.present(DS3231M_WR)
+
+
+pub hw_reset()
+
+'' Drive reset pin low, then release
+
+  pinl(rstpin)
+  waitms(100)
+  pinf(rstpin)
+  waitms(100)
+
+
+pub check_interrupt() : istate
+
+'' Returns state of interupt pin
+
+  istate := pinr(intpin)
+
+
+pub get_seconds() : sc
+
+'' Read seconds register of RTC
+'' -- returns seconds (0..59) in decimal format
+
+  generic_read(R_SC, @sc, 1)
+
+  return bcd2dec(sc)
+
+
+pub set_seconds(sc)
+
+'' Write seconds register of RTC
+'' -- sc is seconds (0..59) in decimal format
+
+  sc := dec2bcd(sc // 60)
+
+  generic_write(R_SC, @sc, 1)
+
+
+pub get_minutes() : mn
+
+'' Read minutes register of RTC
+'' -- returns minutes (0..59) in decimal format
+
+  generic_read(R_MN, @mn, 1)
+
+  return bcd2dec(mn)
+
+
+pub set_minutes(mn)
+
+'' Write minutes register of RTC
+'' -- mn is minutes (0..59) in decimal format
+
+  mn := dec2bcd(mn // 60)
+
+  generic_write(R_MN, @mn, 1)
+
+
+pub get_hours() : hr
+
+'' Read hours register of RTC
+'' -- returns hours (0..23) in decimal format
+
+  generic_read(R_HR, @hr, 1)
+
+  return bcd2dec(hr)
+
+
+pub set_hours(hr)
+
+'' Write hours register of RTC
+'' -- hr is hours (0..23) in decimal format
+
+  hr := dec2bcd(hr // 24)
+
+  generic_write(R_HR, @hr, 1)
+
+
+pub get_time() : sc, mn, hr | now
+
+'' Returns seconds, minutes, and hours of RTC
+'' -- values returned as demimal
+
+  generic_read(R_SC, @now, 3)
+
+  sc := bcd2dec(now.byte[0])
+  mn := bcd2dec(now.byte[1])
+  hr := bcd2dec(now.byte[2])
+
+
+pub read_time(p_dest) | byte sc, byte mn, byte hr
+
+'' Reads seconds..hours registers to byte array at p_dest
+'' -- values returned as demimal
+
+  generic_read(R_SC, @sc, 3)
+
+  byte[p_dest+0] := bcd2dec(sc)
+  byte[p_dest+1] := bcd2dec(mn)
+  byte[p_dest+2] := bcd2dec(hr)
+
+
+pub set_time(sc, mn, hr) | now
+
+'' Write time values to RTC
+'' -- time elements in decimal
+
+  now.byte[0] := dec2bcd(sc // 60)
+  now.byte[1] := dec2bcd(mn // 60)
+  now.byte[2] := dec2bcd(hr // 24)
+
+  generic_write(R_SC, @now, 3)
+
+
+pub get_weekday() : wkday
+
+'' Read day of week register of RTC
+
+  generic_read(R_WKDAY, @wkday, 1)
+
+
+pub set_weekday(wkday)
+
+'' Write day of week register of RTC
+'' -- wkday is 1..7
+
+  generic_write(R_WKDAY, @wkday, 1)
+
+
+pub get_date() : date
+
+'' Read date (day of month) register of RTC
+
+  generic_read(R_DATE, @date, 1)
+
+
+pub set_date(date)
+
+'' Write day of month register of RTC
+'' -- date is 1..31 (based on month)
+
+  generic_write(R_DATE, @date, 1)
+
+
+pub get_month() : mon
+
+'' Read month register of RTC
+
+  generic_read(R_MON, @mon, 1)
+
+  return bcd2dec(mon & $1F)
+
+
+pub set_month(mon)
+
+'' Write day of week register of RTC
+'' -- mon is 1..12
+
+  mon := dec2bcd(mon)
+
+  generic_write(R_MON, @mon, 1)
+
+
+pub get_year() : yr
+
+'' Read year register of RTC
+'' -- return 2000..2099
+
+  generic_read(R_YR, @yr, 1)
+
+  yr := 2000 + bcd2dec(yr)
+
+
+pub set_year(yr)
+
+'' Write year register of RTC
+'' -- yr is 0..99 or 2000..2099
+
+  yr := dec2bcd(yr // 100)
+
+  generic_write(R_YR, @yr, 1)
+
+
+pub get_calendar() : date, mon, yr | today
+
+'' Returns day of month, month, and year RTC
+'' -- values returned as demimal
+
+  generic_read(R_DATE, @today, 3)
+
+  date := bcd2dec(today.byte[0])
+  mon  := bcd2dec(today.byte[1])
+  yr   := bcd2dec(today.byte[2]) + 2000
+
+
+pub set_calendar(date, mon, yr) | today
+
+'' Write time values to RTC
+'' -- date elements in decimal
+
+  today.byte[0] := dec2bcd(date)
+  today.byte[1] := dec2bcd(mon)
+  today.byte[2] := dec2bcd(yr // 100)
+
+  generic_write(R_DATE, @today, 3)
+
+
+dat { time a string }
+
+  TimeHHMM      byte    "hh:mm",       0
+  TimeShort     byte    "hh:mm:ss",    0
+  TimeLong      byte    "hh:mm:ss xM", 0
+
+
+pub time_hhmm(hr, mn) : p_str
+
+'' Returns pointer to time string in HH:MM format
+'' -- time elements in decimal
+
+  time2str(@TimeHHMM, hr, mn, -1)
+
+  return @TimeHHMM
+
+
+pub time_24(hr, mn, sc) : p_str | now
+
+'' Returns pointer to time string in 24-hr format
+'' -- time elements in decimal
+
+  time2str(@TimeShort, hr, mn, sc)
+
+  return @TimeShort
+
+
+pub time_12(hr, mn, sc) : p_str | now
+
+'' Returns pointer to time string in 12-hr format
+'' -- time elements in decimal
+'' -- set sc to -1 to remove seconds from string
+
+  if (hr < 12)                                                  ' set AM/PM
+    TimeLong[9] := "A"
+  else
+    TimeLong[9] := "P"
+
+  if (hr == 0)                                                  ' 12am?
+    hr := 12
+  elseif (hr > 12)                                              ' convert PM times to 12-hr
+    hr -= 12
+
+  time2str(@TimeLong, hr, mn, sc)
+
+  return @TimeLong
+
+
+pri time2str(p_str, hr, mn, sc)
+
+'' Converts time elements to string
+'' -- p_str is [pre-formatted] output string address
+
+  byte[p_str+0] := "0" + (hr  / 10)
+  byte[p_str+1] := "0" + (hr // 10)
+
+  byte[p_str+3] := "0" + (mn  / 10)
+  byte[p_str+4] := "0" + (mn // 10)
+
+  if (sc < 0)
+    return
+
+  byte[p_str+6] := "0" + (sc  / 10)
+  byte[p_str+7] := "0" + (sc // 10)
+
+
+dat { days as strings }
+
+  Unknown       byte    "???", 0
+
+  DayShort      byte    "SUN", 0
+                byte    "MON", 0
+                byte    "TUE", 0
+                byte    "WED", 0
+                byte    "THU", 0
+                byte    "FRI", 0
+                byte    "SAT", 0
+
+  DayLong       byte    "Sunday",    0
+                byte    "Monday",    0
+                byte    "Tuesday",   0
+                byte    "Wednesday", 0
+                byte    "Thursday",  0
+                byte    "Friday",    0
+                byte    "Saturday",  0
+
+
+pub day_name_short(dow) : p_str
+
+'' Return pointer to short name of day
+
+  if (dow < 1) || (dow > 7)
+    return @Unknown
+
+  return @DayShort + ((dow-1) << 2)
+
+
+pub day_name_long(dow) : p_str
+
+'' Return pointer to long name of day
+
+  if (dow < 1) || (dow > 7)
+    return @Unknown
+
+  p_str := @DayLong                                             ' point to names list
+  dow -= 1                                                      ' correct 0 index
+
+  repeat while (dow > 0)
+    p_str += strsize(p_str)+1                                   ' skip ahead to next
+    dow -= 1
+
+
+dat { month as string }
+
+  MonthShort    byte    "JAN", 0
+                byte    "FEB", 0
+                byte    "MAR", 0
+                byte    "APR", 0
+                byte    "MAY", 0
+                byte    "JUN", 0
+                byte    "JUL", 0
+                byte    "AUG", 0
+                byte    "SEP", 0
+                byte    "OCT", 0
+                byte    "NOV", 0
+                byte    "DEC", 0
+
+  MonthLong     byte    "January",   0
+                byte    "February",  0
+                byte    "March",     0
+                byte    "April",     0
+                byte    "May",       0
+                byte    "June",      0
+                byte    "July",      0
+                byte    "August",    0
+                byte    "September", 0
+                byte    "October",   0
+                byte    "November",  0
+                byte    "December",  0
+
+
+pub month_name_short(mon) : p_str
+
+'' Return pointer to short name of month
+
+  if (mon < 1) || (mon > 12)
+    return @Unknown
+
+  return @MonthShort + ((mon-1) << 2)
+
+
+pub month_name_long(mon) : p_str
+
+'' Return pointer to long name of month
+
+  if (mon < 1) || (mon > 12)
+    return @Unknown
+
+  p_str := @MonthLong                                           ' point to names list
+  mon -= 1                                                      ' correct 0 index
+
+  repeat while (mon > 0)
+    p_str += strsize(p_str)+1                                   ' skip ahead to next
+    mon -= 1
+
+
+dat { calendar as string }
+
+  CalShort      byte    "dd mmm 20yy", 0
+
+
+pub calendar(date, mon, yr) : p_str
+
+'' Convert date elements to formatted string
+'' -- caution: does not qualify values
+
+  CalShort[00] := "0" + (date  / 10)
+  CalShort[01] := "0" + (date // 10)
+
+  bytemove(@CalShort[3], @MonthShort[(mon-1)<<2], 3)
+
+  yr //= 100                                                    ' remove century
+  CalShort[09] := "0" + (yr  / 10)
+  CalShort[10] := "0" + (yr // 10)
+
+  return @CalShort
+
+
+pub temp_c() : tc
+
+'' Returns temperature in degrees Celcius
+'' -- returns in 1/100s
+
+  generic_read(R_TMSB, @tc.byte[3], 1)
+  generic_read(R_TLSB, @tc.byte[2], 1)
+
+  return (tc sar 22) * 25
+
+
+pub tc2tf(tc) : tf
+
+'' Converts Celsius (in 1/100s) to Fahrenheit
+
+  tf := tc * 9 / 5 + 32_00
+
+
+con { utilities }
+
+dat { days in month }
+
+  DaysInMonth   byte    31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+
+
+pub days_in_month(mon, yr) : days
+
+'' Returns days in month for given year
+'' -- set year to -1 to ignore leap year
+
+  if (mon < 1) || (mon > 12)
+    return 0
+  elseif (mon == 2)
+    return leap_year(yr) ? 29 : 28
+  else
+    return DaysInMonth[mon-1]
+
+
+pub day_number(date, mon, yr) : n | idx
+
+'' Returns calendar date as a number 1..365 (366 in leap years)
+
+  if (mon == 1)
+    return date
+  elseif (mon == 2)
+    return 31 + date
+  else
+    DaysInMonth[1] := leap_year(yr) ? 29 : 28                  ' update Feb for leap year
+    repeat idx from 0 to mon-2                                 ' accumulate preceding months
+      n += DaysInMonth[idx]
+    n += date                                                  ' days in this month
+
+
+pub calendar_from_day_number(n, yr) : date, mon | check
+
+'' Returns date (1..31) and month for day number in year
+
+  DaysInMonth[1] := leap_year(yr) ? 29 : 28                     ' update Feb for leap year
+
+  repeat while (n > DaysInMonth[mon])
+    n -= DaysInMonth[mon++]
+
+  ++mon                                                         ' fix month from z-index
+  date := n
+
+
+pub leap_year(yr) : result
+
+'' Returns true if yr is a leap year
+
+  if (yr // 400 == 0)
+    return true
+
+  if (yr // 100 == 0)
+    return false
+
+  if (yr // 4 == 0)
+    return true
+
+
+pub bcd2dec(bcd) : result
+
+  return ((bcd >> 4) * 10) + (bcd & $0F)
+
+
+pub dec2bcd(dec) : result
+
+  return ((dec / 10) << 4) | (dec // 10)
+
+
+pub generic_write(r, p_buf, len)
+
+'' Write block of registers from p_buf to RTC
+'' -- r is first register
+'' -- p_buf is pointer to source bytes
+'' -- len is number of registers to write
+
+  i2c.start()
+  i2c.write(DS3231M_WR)
+  i2c.write(r)
+  i2c.wr_block(p_buf, len)
+  i2c.stop()
+
+
+pub generic_read(r, p_buf, len)
+
+'' Read block of registers from RTC to p_buf
+'' -- r is first register
+'' -- p_buf is pointer to destination bytes
+'' -- len is number of registers to read
+
+  i2c.start()
+  i2c.write(DS3231M_WR)
+  i2c.write(r)
+  i2c.start()
+  i2c.write(DS3231M_RD)
+  i2c.rd_block(p_buf, len, i2c.NAK)
+  i2c.stop()
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

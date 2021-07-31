@@ -1,0 +1,174 @@
+'' =================================================================================================
+''
+''   File....... jm_max31855.spin2
+''   Purpose.... Interface for MAX31855 Cold-Junction Compensated Thermocouple-to-Digital Converter
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2011-2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 07 SEP 2020
+''
+''   {$P2}
+''
+'' =================================================================================================
+
+{{
+
+      3v3                   3v3
+                            
+       │       MAX31855      │
+       │    ┌────────────┐    10K
+       │ ┌──┤1 GND   NC 8├─  │
+   T ─┼─┼──┤2 T-    SO 7├───┼─── sdi
+   C ─┼─┼──┤3 T+   /CS 6├───┻─── cs
+       └─┼──┤4 Vcc  SCK 4├─────── sck
+         │  └────────────┘
+         
+
+}}
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }
+  SF_SDO   = 59  { O }
+  SF_SDI   = 58  { I }
+
+
+con
+
+  #true,  ON, OFF
+  #false, NO, YES
+
+
+var
+
+  long  sdi                                                     ' io pins
+  long  clk
+  long  cs
+
+  long  setup                                                   ' marks configured
+
+  long  lastscan                                                ' last data from device
+
+
+pub null()
+
+'' This is not a top-level object
+
+
+pub start(sdipin, clkpin, cspin)
+
+'' Setup IO for MAX31855
+'' -- sdipin is data from device
+'' -- clkpin is clock to device
+'' -- cspin is chip select to device
+
+  longmove(@sdi, @sdipin, 3)                                    ' save pins
+
+  pinf(sdi)                                                     ' configure pins
+  pinl(clk)
+  pinh(cs)
+
+  setup := true
+
+
+pub stop() | idx
+
+  if (setup)
+    pinf(clk)
+    pinf(cs)
+    longfill(@setup, 0, 2)
+
+
+pub read_tc(rescan) : tc
+
+'' Reads thermocouple junction (external temperature)
+'' -- if recan is false (0), value from last scan is used
+'' -- returns signed 14-bit value in 0.25 degree units
+
+  if (rescan)
+    lastscan := read_raw()
+
+  tc := lastscan sar (32-14)
+
+
+pub read_cj(rescan) : cj
+
+'' Reads cold junction (internal temperature)
+'' -- if recan is false (0), value from last scan is used
+'' -- returns signed, 12-bit value in 0.0625 degree units
+
+  if (rescan)
+    lastscan := read_raw()
+
+  cj := (lastscan << 16) sar (32-12)
+
+
+pub read_faults(rescan) : fbits
+
+'' Returns fault bits
+'' -- if recan is false (0), value from last scan is used
+
+  if (rescan)
+    lastscan := read_raw()
+
+  fbits := lastscan & %111
+
+
+pub read_raw() : scan
+
+'' Reads 32-bit raw value from device
+'' -- includes tc, internal, and fault bits
+
+  pinl(cs)                                                      ' select
+
+  repeat 32
+    scan := (scan << 1) | pinr(sdi)                             ' get bits, MSB-first
+    pinh(clk)                                                   ' clock next bit
+    pinl(clk)
+
+  pinh(cs)                                                      ' de-select
+
+
+pub fault_str(faultbits) : p_str
+
+'' Convert fault bit to string output
+
+  case faultbits
+    %000  : return string("No fault")
+    %001  : return string("Open circuit")
+    %010  : return string("Short to GND")
+    %100  : return string("Short to Vcc")
+    other : return string("Multiple faults")
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

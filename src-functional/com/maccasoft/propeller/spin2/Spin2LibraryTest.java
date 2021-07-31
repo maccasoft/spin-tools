@@ -44,6 +44,46 @@ class Spin2LibraryTest {
     }
 
     @Test
+    void test_jm_click_4_20ma_rx() throws Exception {
+        compileAndCompare(new File(path, "jm_click_4-20ma_rx.spin2"), new File(path, "jm_click_4-20ma_rx.binary"));
+    }
+
+    @Test
+    void test_jm_click_4_20ma_tx() throws Exception {
+        compileAndCompare(new File(path, "jm_click_4-20ma_tx.spin2"), new File(path, "jm_click_4-20ma_tx.binary"));
+    }
+
+    @Test
+    void test_jm_click_dmx_tx() throws Exception {
+        compileAndCompare(new File(path, "jm_click_dmx-tx.spin2"), new File(path, "jm_click_dmx-tx.binary"));
+    }
+
+    @Test
+    void test_jm_click_relay2() throws Exception {
+        compileAndCompare(new File(path, "jm_click_relay2.spin2"), new File(path, "jm_click_relay2.binary"));
+    }
+
+    @Test
+    void test_jm_click_rs485_3v3() throws Exception {
+        compileAndCompare(new File(path, "jm_click_rs485_3v3.spin2"), new File(path, "jm_click_rs485_3v3.binary"));
+    }
+
+    @Test
+    void test_jm_click_rtc10() throws Exception {
+        compileAndCompare(new File(path, "jm_click_rtc10.spin2"), new File(path, "jm_click_rtc10.binary"));
+    }
+
+    @Test
+    void test_jm_dc_motor() throws Exception {
+        compileAndCompare(new File(path, "jm_dc_motor.spin2"), new File(path, "jm_dc_motor.binary"));
+    }
+
+    @Test
+    void test_jm_dmx_tx() throws Exception {
+        compileAndCompare(new File(path, "jm_dmx_tx.spin2"), new File(path, "jm_dmx_tx.binary"));
+    }
+
+    @Test
     void test_jm_ez_analog() throws Exception {
         // Comparison with binary from Propeller Tool fails
         // because of different sequence of same-priority operators (limit-min and limit-max in this case)
@@ -91,6 +131,21 @@ class Spin2LibraryTest {
     }
 
     @Test
+    void test_jm_led_gamma() throws Exception {
+        compileAndCompare(new File(path, "jm_led_gamma.spin2"), new File(path, "jm_led_gamma.binary"));
+    }
+
+    @Test
+    void test_jm_max31855() throws Exception {
+        compileAndCompare(new File(path, "jm_max31855.spin2"), new File(path, "jm_max31855.binary"));
+    }
+
+    @Test
+    void test_jm_max7219_ez() throws Exception {
+        compileAndCompare(new File(path, "jm_max7219_ez.spin2"), new File(path, "jm_max7219_ez.binary"));
+    }
+
+    @Test
     void test_jm_prng() throws Exception {
         compileAndCompare(new File(path, "jm_prng.spin2"), new File(path, "jm_prng.binary"));
     }
@@ -98,6 +153,11 @@ class Spin2LibraryTest {
     @Test
     void test_jm_serial() throws Exception {
         compileAndCompare(new File(path, "jm_serial.spin2"), new File(path, "jm_serial.binary"));
+    }
+
+    @Test
+    void test_jm_spi() throws Exception {
+        compileAndCompare(new File(path, "jm_spi.spin2"), new File(path, "jm_spi.binary"));
     }
 
     @Test
