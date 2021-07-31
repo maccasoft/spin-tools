@@ -188,6 +188,12 @@ public class Constant extends Spin2Bytecode {
                 0x47, (byte) value, (byte) (value >> 8)
             };
         }
+        if ((value & 0xFFFF0000L) == 0xFFFF0000L) {
+            value ^= 0xFFFF;
+            return new byte[] {
+                0x48, (byte) value, (byte) (value >> 8)
+            };
+        }
 
         return new byte[] {
             0x49, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
