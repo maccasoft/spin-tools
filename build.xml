@@ -123,6 +123,7 @@
                 <exclude name="**/.*" />
                 <exclude name="**/*.o" />
                 <exclude name="**/*.elf" />
+                <exclude name="**/*.binary" />
                 <exclude name="**/.*/**" />
             </fileset>
         </copy>
@@ -132,6 +133,7 @@
                 <exclude name="**/.*" />
                 <exclude name="**/*.o" />
                 <exclude name="**/*.elf" />
+                <exclude name="**/*.binary" />
                 <exclude name="**/.*/**" />
             </fileset>
         </copy>
