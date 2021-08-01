@@ -298,7 +298,11 @@ public class EditorTab {
             File fileParent = file != null ? file.getParentFile() : null;
 
             try {
-                InputStream is = new FileInputStream(new File(fileParent, fileName));
+                File fileToLoad = new File(fileParent, fileName);
+                if (!fileToLoad.exists()) {
+                    fileToLoad = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
+                }
+                InputStream is = new FileInputStream(fileToLoad);
                 try {
                     byte[] b = new byte[is.available()];
                     is.read(b);
@@ -311,7 +315,7 @@ public class EditorTab {
                     }
                 }
             } catch (Exception e) {
-
+                e.printStackTrace();
             }
 
             return null;
