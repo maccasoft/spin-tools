@@ -1958,12 +1958,12 @@ public class Spin2Compiler {
 
                 int n = 0;
                 if (n < node.getChildCount()) {
-                    if (!isPostEffect(node.getChild(n).getText())) {
+                    if (!isPostEffect(node.getChild(n))) {
                         indexNode = node.getChild(n++);
                     }
                 }
                 if (n < node.getChildCount()) {
-                    if (isPostEffect(node.getChild(n).getText())) {
+                    if (isPostEffect(node.getChild(n))) {
                         postEffectNode = node.getChild(n++);
                     }
                 }
@@ -2053,12 +2053,12 @@ public class Spin2Compiler {
 
                         int n = 0;
                         if (n < node.getChildCount()) {
-                            if (!isPostEffect(node.getChild(n).getText())) {
+                            if (!isPostEffect(node.getChild(n))) {
                                 indexNode = node.getChild(n++);
                             }
                         }
                         if (n < node.getChildCount()) {
-                            if (isPostEffect(node.getChild(n).getText())) {
+                            if (isPostEffect(node.getChild(n))) {
                                 postEffectNode = node.getChild(n++);
                             }
                         }
@@ -2181,7 +2181,7 @@ public class Spin2Compiler {
 
         int n = 0;
         if (n < node.getChildCount()) {
-            if (!".".equals(node.getChild(n).getText()) && !isPostEffect(node.getChild(n).getText())) {
+            if (!".".equals(node.getChild(n).getText()) && !isPostEffect(node.getChild(n))) {
                 indexNode = node.getChild(n++);
                 if ("..".equals(indexNode.getText())) {
                     bitfieldNode = indexNode;
@@ -2202,7 +2202,7 @@ public class Spin2Compiler {
             }
         }
         if (n < node.getChildCount()) {
-            if (isPostEffect(node.getChild(n).getText())) {
+            if (isPostEffect(node.getChild(n))) {
                 postEffectNode = node.getChild(n++);
             }
         }
@@ -2715,7 +2715,11 @@ public class Spin2Compiler {
         return source;
     }
 
-    boolean isPostEffect(String s) {
+    boolean isPostEffect(Spin2StatementNode node) {
+        if (node.getChildCount() != 0) {
+            return false;
+        }
+        String s = node.getText();
         return "++".equals(s) || "--".equals(s) || "!!".equals(s) || "!".equals(s) || "~".equals(s) || "~~".equals(s);
     }
 

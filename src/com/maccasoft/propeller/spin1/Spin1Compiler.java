@@ -1827,13 +1827,13 @@ public class Spin1Compiler {
 
             int n = 1;
             if (n < node.getChildCount()) {
-                if (!isPostEffect(node.getChild(n).getText())) {
+                if (!isPostEffect(node.getChild(n))) {
                     source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
                     popIndex = true;
                 }
             }
             if (n < node.getChildCount()) {
-                if (isPostEffect(node.getChild(n).getText())) {
+                if (isPostEffect(node.getChild(n))) {
                     postEffectNode = node.getChild(n++);
                 }
             }
@@ -1902,7 +1902,7 @@ public class Spin1Compiler {
             int n = 1;
             boolean popIndex = false;
             if (n < node.getChildCount()) {
-                if (!isPostEffect(node.getChild(n).getText())) {
+                if (!isPostEffect(node.getChild(n))) {
                     source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
                     popIndex = true;
                 }
@@ -1963,7 +1963,7 @@ public class Spin1Compiler {
                     indexed = true;
                     source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                     if (node.getChildCount() > 1) {
-                        if (isPostEffect(node.getChild(1).getText())) {
+                        if (isPostEffect(node.getChild(1))) {
                             postEffect = node.getChild(1);
                         }
                     }
@@ -2106,13 +2106,13 @@ public class Spin1Compiler {
 
                     int n = 0;
                     if (n < node.getChildCount()) {
-                        if (!isPostEffect(node.getChild(n).getText())) {
+                        if (!isPostEffect(node.getChild(n))) {
                             source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
                             popIndex = true;
                         }
                     }
                     if (n < node.getChildCount()) {
-                        if (isPostEffect(node.getChild(n).getText())) {
+                        if (isPostEffect(node.getChild(n))) {
                             postEffectNode = node.getChild(n++);
                         }
                     }
@@ -2164,13 +2164,13 @@ public class Spin1Compiler {
 
                     int n = 0;
                     if (n < node.getChildCount()) {
-                        if (!isPostEffect(node.getChild(n).getText())) {
+                        if (!isPostEffect(node.getChild(n))) {
                             source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
                             popIndex = true;
                         }
                     }
                     if (n < node.getChildCount()) {
-                        if (isPostEffect(node.getChild(n).getText())) {
+                        if (isPostEffect(node.getChild(n))) {
                             postEffectNode = node.getChild(n++);
                         }
                     }
@@ -2284,7 +2284,7 @@ public class Spin1Compiler {
                 indexed = true;
                 source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                 if (node.getChildCount() > 1) {
-                    if (isPostEffect(node.getChild(1).getText())) {
+                    if (isPostEffect(node.getChild(1))) {
                         postEffect = node.getChild(1);
                     }
                 }
@@ -2423,7 +2423,11 @@ public class Spin1Compiler {
         return count;
     }
 
-    boolean isPostEffect(String s) {
+    boolean isPostEffect(Spin1StatementNode node) {
+        if (node.getChildCount() != 0) {
+            return false;
+        }
+        String s = node.getText();
         return "++".equals(s) || "--".equals(s) || "~".equals(s) || "~~".equals(s) || "?".equals(s);
     }
 
