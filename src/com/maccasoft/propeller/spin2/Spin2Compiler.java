@@ -81,6 +81,7 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
+import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
 import com.maccasoft.propeller.spin2.bytecode.CaseJmp;
 import com.maccasoft.propeller.spin2.bytecode.CaseRangeJmp;
@@ -1223,7 +1224,7 @@ public class Spin2Compiler {
             }
             else if (line.getArgumentsCount() == 3 || line.getArgumentsCount() == 4) {
                 Spin2MethodLine end = line.getChilds().get(0);
-                line.addSource(new Constant(line.getScope(), new ContextLiteral(end.getScope())));
+                line.addSource(new Address(line.getScope(), new ContextLiteral(end.getScope())));
 
                 line.addSource(compileConstantExpression(line.getScope(), line.getArgument(2)));
                 if (line.getArgumentsCount() == 4) {
@@ -1407,7 +1408,7 @@ public class Spin2Compiler {
         }
         else if ("CASE".equalsIgnoreCase(text)) {
             Spin2MethodLine end = (Spin2MethodLine) line.getData("end");
-            line.addSource(new Constant(line.getScope(), new ContextLiteral(end.getScope())));
+            line.addSource(new Address(line.getScope(), new ContextLiteral(end.getScope())));
 
             for (Spin2StatementNode arg : line.getArguments()) {
                 Spin2MethodLine target = (Spin2MethodLine) arg.getData("true");
@@ -1649,7 +1650,7 @@ public class Spin2Compiler {
             }
 
             Spin2Bytecode end = new Spin2Bytecode(context);
-            source.add(new Constant(context, new ContextLiteral(end.getContext())));
+            source.add(new Address(context, new ContextLiteral(end.getContext())));
 
             source.addAll(compileBytecodeExpression(context, argsNode.getChild(0), true));
 
