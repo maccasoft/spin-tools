@@ -10,8 +10,6 @@
 
 package com.maccasoft.propeller.spin2.bytecode;
 
-import java.io.ByteArrayOutputStream;
-
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Context;
@@ -32,40 +30,33 @@ public class Address extends Spin2Bytecode {
         } catch (Exception e) {
             // Do nothing
         }
-        return 2;
+        return 5;
     }
 
     @Override
     public byte[] getBytes() {
         int value = expression.getNumber().intValue();
 
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        try {
-            if ((value & 0xFFFFFF00L) == 0) {
-                return new byte[] {
-                    0x45, (byte) value
-                };
-            }
-            if ((value & 0xFFFF0000L) == 0) {
-                return new byte[] {
-                    0x47, (byte) value, (byte) (value >> 8)
-                };
-            }
-            if ((value & 0xFFFF0000L) == 0xFFFF0000L) {
-                value ^= 0xFFFF;
-                return new byte[] {
-                    0x48, (byte) value, (byte) (value >> 8)
-                };
-            }
-
+        if ((value & 0xFFFFFF00L) == 0) {
             return new byte[] {
-                0x49, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
+                0x45, (byte) value
             };
-
-        } catch (Exception e) {
-
         }
-        return os.toByteArray();
+        if ((value & 0xFFFF0000L) == 0) {
+            return new byte[] {
+                0x47, (byte) value, (byte) (value >> 8)
+            };
+        }
+        if ((value & 0xFFFF0000L) == 0xFFFF0000L) {
+            value ^= 0xFFFF;
+            return new byte[] {
+                0x48, (byte) value, (byte) (value >> 8)
+            };
+        }
+
+        return new byte[] {
+            0x49, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
+        };
     }
 
     @Override

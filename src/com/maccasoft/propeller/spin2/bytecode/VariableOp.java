@@ -82,53 +82,7 @@ public class VariableOp extends Spin2Bytecode {
 
     @Override
     public int getSize() {
-        int size = 0;
-        int offset = variable.getOffset() + index;
-
-        if (!indexed && !hasIndex && ss == Size.Long && (offset % 4) == 0 && (offset >> 2) <= 15) {
-            if (variable instanceof LocalVariable) {
-                if (op == Op.Read) {
-                    size++;
-                }
-                else if (op == Op.Write) {
-                    size++;
-                }
-                else {
-                    size++;
-                    if (op == Op.Address) {
-                        size++;
-                    }
-                }
-            }
-            else {
-                size++;
-                if (op == Op.Read) {
-                    size++;
-                }
-                else if (op == Op.Write) {
-                    size++;
-                }
-                else if (op == Op.Address) {
-                    size++;
-                }
-            }
-        }
-        else {
-            size++;
-            size += Constant.wrVarSize(offset);
-
-            if (op == Op.Address) {
-                size++;
-            }
-            else if (op == Op.Read) {
-                size++;
-            }
-            else if (op == Op.Write) {
-                size++;
-            }
-        }
-
-        return size;
+        return getBytes().length;
     }
 
     @Override
@@ -136,79 +90,79 @@ public class VariableOp extends Spin2Bytecode {
         int offset = variable.getOffset() + index;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-        if (!indexed && !hasIndex && ss == Size.Long && (offset % 4) == 0 && (offset >> 2) <= 15) {
-            offset >>= 2;
+        try {
+            if (!indexed && !hasIndex && ss == Size.Long && (offset % 4) == 0 && (offset >> 2) <= 15) {
+                offset >>= 2;
 
-            if (variable instanceof LocalVariable) {
-                if (op == Op.Read) {
-                    os.write(0xE0 + offset);
-                }
-                else if (op == Op.Write) {
-                    os.write(0xF0 + offset);
+                if (variable instanceof LocalVariable) {
+                    if (op == Op.Read) {
+                        os.write(0xE0 + offset);
+                    }
+                    else if (op == Op.Write) {
+                        os.write(0xF0 + offset);
+                    }
+                    else {
+                        os.write(0xD0 + offset);
+                        if (op == Op.Address) {
+                            os.write(0x7F);
+                        }
+                    }
                 }
                 else {
-                    os.write(0xD0 + offset);
-                    if (op == Op.Address) {
+                    os.write(0xC0 + offset);
+                    if (op == Op.Read) {
+                        os.write(0x80);
+                    }
+                    else if (op == Op.Write) {
+                        os.write(0x81);
+                    }
+                    else if (op == Op.Address) {
                         os.write(0x7F);
                     }
                 }
             }
             else {
-                os.write(0xC0 + offset);
-                if (op == Op.Read) {
+                if (indexed) {
+                    switch (ss) {
+                        case Byte:
+                            os.write((variable instanceof LocalVariable) ? 0x55 : 0x54);
+                            break;
+                        case Word:
+                            os.write((variable instanceof LocalVariable) ? 0x5B : 0x5A);
+                            break;
+                        case Long:
+                            os.write((variable instanceof LocalVariable) ? 0x61 : 0x60);
+                            break;
+                    }
+                }
+                else {
+                    switch (ss) {
+                        case Byte:
+                            os.write((variable instanceof LocalVariable) ? 0x52 : 0x51);
+                            break;
+                        case Word:
+                            os.write((variable instanceof LocalVariable) ? 0x58 : 0x57);
+                            break;
+                        case Long:
+                            os.write((variable instanceof LocalVariable) ? 0x5E : 0x5D);
+                            break;
+                    }
+                }
+
+                os.write(Constant.wrVar(offset));
+
+                if (op == Op.Address) {
+                    os.write(0x7F);
+                }
+                else if (op == Op.Read) {
                     os.write(0x80);
                 }
                 else if (op == Op.Write) {
                     os.write(0x81);
                 }
-                else if (op == Op.Address) {
-                    os.write(0x7F);
-                }
             }
-        }
-        else {
-            if (indexed) {
-                switch (ss) {
-                    case Byte:
-                        os.write((variable instanceof LocalVariable) ? 0x55 : 0x54);
-                        break;
-                    case Word:
-                        os.write((variable instanceof LocalVariable) ? 0x5B : 0x5A);
-                        break;
-                    case Long:
-                        os.write((variable instanceof LocalVariable) ? 0x61 : 0x60);
-                        break;
-                }
-            }
-            else {
-                switch (ss) {
-                    case Byte:
-                        os.write((variable instanceof LocalVariable) ? 0x52 : 0x51);
-                        break;
-                    case Word:
-                        os.write((variable instanceof LocalVariable) ? 0x58 : 0x57);
-                        break;
-                    case Long:
-                        os.write((variable instanceof LocalVariable) ? 0x5E : 0x5D);
-                        break;
-                }
-            }
-
-            try {
-                os.write(Constant.wrVar(offset));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            if (op == Op.Address) {
-                os.write(0x7F);
-            }
-            else if (op == Op.Read) {
-                os.write(0x80);
-            }
-            else if (op == Op.Write) {
-                os.write(0x81);
-            }
+        } catch (IOException e) {
+            // Do nothing
         }
 
         return os.toByteArray();

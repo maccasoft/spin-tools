@@ -38,23 +38,14 @@ public class RegisterOp extends Spin2Bytecode {
 
     @Override
     public int getSize() {
-        int value = expression.getNumber().intValue() + index;
-        if (!indexed && index == 0) {
-            if (value >= 0x1D8 && value <= 0x1DF) {
-                return 2;
-            }
-            else if (value >= 0x1F8 && value <= 0x1FF) {
-                return 2;
-            }
-        }
-        return Constant.wrVarsSize(value - 200) + 2;
+        return getBytes().length;
     }
 
     @Override
     public byte[] getBytes() {
         int value = expression.getNumber().intValue() + index;
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
 
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
             if (!indexed && index == 0 && value >= 0x1D8 && value <= 0x1DF) {
                 os.write(0xB0 + (value - 0x1D8));
@@ -74,9 +65,8 @@ public class RegisterOp extends Spin2Bytecode {
                 os.write(0x81);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            // Do nothing
         }
-
         return os.toByteArray();
     }
 

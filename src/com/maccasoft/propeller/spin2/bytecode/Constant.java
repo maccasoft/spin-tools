@@ -109,18 +109,12 @@ public class Constant extends Spin2Bytecode {
 
     @Override
     public int getSize() {
-        if (expression instanceof ContextLiteral) {
-            if (!((ContextLiteral) expression).getContext().isAddressSet()) {
-                return 5;
-            }
+        try {
+            return getBytes().length;
+        } catch (Exception e) {
+            // Do nothing
         }
-        else if (expression instanceof Identifier) {
-            if (!((Identifier) expression).getContext().isAddressSet()) {
-                return 5;
-            }
-        }
-
-        return getBytes().length;
+        return 5;
     }
 
     @Override

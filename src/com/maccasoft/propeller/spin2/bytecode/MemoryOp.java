@@ -15,7 +15,6 @@ import java.io.IOException;
 
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Context;
@@ -95,17 +94,12 @@ public class MemoryOp extends Spin2Bytecode {
 
     @Override
     public int getSize() {
-        if (expression instanceof ContextLiteral) {
-            if (!((ContextLiteral) expression).getContext().isAddressSet()) {
-                return 4;
-            }
+        try {
+            return getBytes().length;
+        } catch (Exception e) {
+            // Do nothing
         }
-        else if (expression instanceof Identifier) {
-            if (!((Identifier) expression).getContext().isAddressSet()) {
-                return 4;
-            }
-        }
-        return getBytes().length;
+        return 5;
     }
 
     @Override
@@ -122,56 +116,56 @@ public class MemoryOp extends Spin2Bytecode {
         }
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        switch (base) {
-            case PBase:
-                if (ss == Size.Byte) {
-                    os.write(pop ? 0x53 : 0x50);
-                }
-                else if (ss == Size.Word) {
-                    os.write(pop ? 0x59 : 0x56);
-                }
-                else {
-                    os.write(pop ? 0x5F : 0x5C);
-                }
-                break;
-            case VBase:
-                if (ss == Size.Byte) {
-                    os.write(pop ? 0x54 : 0x51);
-                }
-                else if (ss == Size.Word) {
-                    os.write(pop ? 0x5A : 0x57);
-                }
-                else {
-                    os.write(pop ? 0x60 : 0x5D);
-                }
-                break;
-            case DBase:
-                if (ss == Size.Byte) {
-                    os.write(pop ? 0x55 : 0x52);
-                }
-                else if (ss == Size.Word) {
-                    os.write(pop ? 0x5B : 0x58);
-                }
-                else {
-                    os.write(pop ? 0x61 : 0x5E);
-                }
-                break;
-        }
-
         try {
-            os.write(Constant.wrVar(offset + index));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            switch (base) {
+                case PBase:
+                    if (ss == Size.Byte) {
+                        os.write(pop ? 0x53 : 0x50);
+                    }
+                    else if (ss == Size.Word) {
+                        os.write(pop ? 0x59 : 0x56);
+                    }
+                    else {
+                        os.write(pop ? 0x5F : 0x5C);
+                    }
+                    break;
+                case VBase:
+                    if (ss == Size.Byte) {
+                        os.write(pop ? 0x54 : 0x51);
+                    }
+                    else if (ss == Size.Word) {
+                        os.write(pop ? 0x5A : 0x57);
+                    }
+                    else {
+                        os.write(pop ? 0x60 : 0x5D);
+                    }
+                    break;
+                case DBase:
+                    if (ss == Size.Byte) {
+                        os.write(pop ? 0x55 : 0x52);
+                    }
+                    else if (ss == Size.Word) {
+                        os.write(pop ? 0x5B : 0x58);
+                    }
+                    else {
+                        os.write(pop ? 0x61 : 0x5E);
+                    }
+                    break;
+            }
 
-        if (op == Op.Address) {
-            os.write(0x7F);
-        }
-        else if (op == Op.Read) {
-            os.write(0x80);
-        }
-        else if (op == Op.Write) {
-            os.write(0x81);
+            os.write(Constant.wrVar(offset + index));
+
+            if (op == Op.Address) {
+                os.write(0x7F);
+            }
+            else if (op == Op.Read) {
+                os.write(0x80);
+            }
+            else if (op == Op.Write) {
+                os.write(0x81);
+            }
+        } catch (IOException e) {
+            // Do nothing
         }
 
         return os.toByteArray();

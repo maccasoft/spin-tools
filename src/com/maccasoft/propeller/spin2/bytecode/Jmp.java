@@ -10,9 +10,10 @@
 
 package com.maccasoft.propeller.spin2.bytecode;
 
-import com.maccasoft.propeller.expressions.ContextLiteral;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.spin2.Spin2Context;
 
@@ -35,32 +36,29 @@ public class Jmp extends Spin2Bytecode {
 
     @Override
     public int getSize() {
-        if (expression instanceof ContextLiteral) {
-            if (!((ContextLiteral) expression).getContext().isAddressSet()) {
-                return 3;
-            }
+        try {
+            return getBytes().length;
+        } catch (Exception e) {
+            // Do nothing
         }
-        else if (expression instanceof Identifier) {
-            if (!((Identifier) expression).getContext().isAddressSet()) {
-                return 3;
-            }
-        }
-        return getBytes().length;
+        return 5;
     }
 
     @Override
     public byte[] getBytes() {
-        int address = expression.getNumber().intValue();
-        int value = address - (context.getAddress() + 1);
-        byte[] v = Constant.wrVars(value);
+        int target = expression.getNumber().intValue();
+        int our = context.getAddress();
+        int value = target - (our + 1);
 
-        byte[] b = new byte[v.length + 1];
-        b[0] = (byte) code;
-        for (int i = 0; i < v.length; i++) {
-            b[i + 1] = v[i];
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try {
+            os.write(code);
+            os.write(Constant.wrVars(value));
+        } catch (IOException e) {
+            // Do nothing
         }
 
-        return b;
+        return os.toByteArray();
     }
 
     public String toString(String prefix) {
