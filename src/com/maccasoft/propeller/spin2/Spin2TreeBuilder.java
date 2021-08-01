@@ -116,15 +116,13 @@ public class Spin2TreeBuilder {
         precedence.put("ADDBITS=", 1);
         precedence.put("ADDPINS=", 1);
 
-        precedence.put("<=", 1);
         precedence.put("+<=", 1);
         precedence.put("<==", 1);
         precedence.put("+<==", 1);
         precedence.put("===", 1);
         precedence.put("<>=", 1);
-        precedence.put(">==", 1);
         precedence.put("+>==", 1);
-        precedence.put(">=", 1);
+        precedence.put(">==", 1);
         precedence.put("+>=", 1);
         precedence.put("<=>=", 1);
 
@@ -371,7 +369,11 @@ public class Spin2TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "row := basepin + lut[rc].[%00011_00100]";
+        text = "1 + 2 * 3";
+        System.out.println(text);
+        System.out.println(parse(text));
+
+        text = "digit >= 0 and digit <= 9";
         System.out.println(text);
         System.out.println(parse(text));
     }

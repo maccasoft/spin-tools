@@ -266,7 +266,7 @@ public class Spin2ExpressionBuilder {
                 case "<":
                     left = new LessThan(left, right);
                     break;
-                case "=<":
+                case "<=":
                     left = new LessOrEquals(left, right);
                     break;
                 case "==":
@@ -275,7 +275,7 @@ public class Spin2ExpressionBuilder {
                 case "<>":
                     left = new NotEquals(left, right);
                     break;
-                case "=>":
+                case ">=":
                     left = new GreaterOrEquals(left, right);
                     break;
                 case ">":
