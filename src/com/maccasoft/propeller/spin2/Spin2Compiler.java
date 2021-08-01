@@ -518,7 +518,7 @@ public class Spin2Compiler {
         return null;
     }
 
-    Map<String, Spin2Context> pendingAlias = new HashMap<String, Spin2Context>();
+    Map<Spin2PAsmLine, Spin2Context> pendingAlias = new HashMap<Spin2PAsmLine, Spin2Context>();
 
     void compileDatBlock(Node parent) {
         Spin2Context savedContext = scope;
@@ -614,7 +614,7 @@ public class Spin2Compiler {
                     scope = scope.getParent();
                     nested--;
                 }
-                String type = pasmLine.getMnemonic() != null ? "LONG" : "BYTE";
+                String type = "LONG";
                 if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Word) {
                     type = "WORD";
                 }
@@ -629,13 +629,15 @@ public class Spin2Compiler {
 
                 if (pasmLine.getMnemonic() == null) {
                     if (!pasmLine.isLocalLabel()) {
-                        pendingAlias.put(pasmLine.getLabel(), scope);
+                        pendingAlias.put(pasmLine, scope);
                     }
                 }
                 else if (pendingAlias.size() != 0) {
-                    for (Entry<String, Spin2Context> entry : pendingAlias.entrySet()) {
-                        entry.getValue().addOrUpdateSymbol(entry.getKey(), new DataVariable(pasmLine.getScope(), type));
-                        entry.getValue().addOrUpdateSymbol("@" + entry.getKey(), new HubContextLiteral(pasmLine.getScope()));
+                    for (Entry<Spin2PAsmLine, Spin2Context> entry : pendingAlias.entrySet()) {
+                        Spin2PAsmLine line = entry.getKey();
+                        Spin2Context context = entry.getValue();
+                        context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                        context.addOrUpdateSymbol("@" + line.getLabel(), new HubContextLiteral(line.getScope()));
                     }
                     pendingAlias.clear();
                 }
@@ -660,9 +662,11 @@ public class Spin2Compiler {
                 type = "BYTE";
             }
 
-            for (Entry<String, Spin2Context> entry : pendingAlias.entrySet()) {
-                entry.getValue().addOrUpdateSymbol(entry.getKey(), new DataVariable(pasmLine.getScope(), type));
-                entry.getValue().addOrUpdateSymbol("@" + entry.getKey(), new HubContextLiteral(pasmLine.getScope()));
+            for (Entry<Spin2PAsmLine, Spin2Context> entry : pendingAlias.entrySet()) {
+                Spin2PAsmLine line = entry.getKey();
+                Spin2Context context = entry.getValue();
+                context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                context.addOrUpdateSymbol("@" + line.getLabel(), new HubContextLiteral(line.getScope()));
             }
             pendingAlias.clear();
         }
