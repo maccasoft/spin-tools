@@ -171,8 +171,58 @@ class Spin2LibraryTest {
     }
 
     @Test
+    void test_jm_p2_es_control() throws Exception {
+        compileAndCompare(new File(path, "jm_p2-es_control.spin2"), new File(path, "jm_p2-es_control.binary"));
+    }
+
+    @Test
+    void test_jm_p2_es_matrix() throws Exception {
+        compileAndCompare(new File(path, "jm_p2-es_matrix.spin2"), new File(path, "jm_p2-es_matrix.binary"));
+    }
+
+    @Test
     void test_jm_pcf8574() throws Exception {
         compileAndCompare(new File(path, "jm_pcf8574.spin2"), new File(path, "jm_pcf8574.binary"));
+    }
+
+    @Test
+    void test_jm_pwm() throws Exception {
+        compileAndCompare(new File(path, "jm_pwm.spin2"), new File(path, "jm_pwm.binary"));
+    }
+
+    @Test
+    void test_jm_quadrature() throws Exception {
+        compileAndCompare(new File(path, "jm_quadrature.spin2"), new File(path, "jm_quadrature.binary"));
+    }
+
+    @Test
+    void test_jm_rgbx_pixel() throws Exception {
+        compileAndCompare(new File(path, "jm_rgbx_pixel.spin2"), new File(path, "jm_rgbx_pixel.binary"));
+    }
+
+    @Test
+    void test_jm_servo() throws Exception {
+        compileAndCompare(new File(path, "jm_servo.spin2"), new File(path, "jm_servo.binary"));
+    }
+
+    @Test
+    void test_jm_sircs_rx() throws Exception {
+        compileAndCompare(new File(path, "jm_sircs_rx.spin2"), new File(path, "jm_sircs_rx.binary"));
+    }
+
+    @Test
+    void test_jm_tm1638() throws Exception {
+        compileAndCompare(new File(path, "jm_tm1638.spin2"), new File(path, "jm_tm1638.binary"));
+    }
+
+    @Test
+    void test_jm_tm163x_segs7() throws Exception {
+        compileAndCompare(new File(path, "jm_tm163x_segs7.spin2"), new File(path, "jm_tm163x_segs7.binary"));
+    }
+
+    @Test
+    void test_jm_sircs_tx() throws Exception {
+        compileAndCompare(new File(path, "jm_sircs_tx.spin2"), new File(path, "jm_sircs_tx.binary"));
     }
 
     @Test
@@ -218,6 +268,11 @@ class Spin2LibraryTest {
             Node root = subject.parse();
 
             Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(parent);
+            if (compiler.hasErrors()) {
+                for (CompilerMessage msg : compiler.getMessages()) {
+                    logMessage(msg);
+                }
+            }
             return compiler.compileObject(root);
         }
 
@@ -228,6 +283,15 @@ class Spin2LibraryTest {
                 return loadFromFile(file);
             }
             throw new RuntimeException("file " + file + " not found");
+        }
+
+        @Override
+        protected byte[] getBinaryFile(String fileName) {
+            File file = new File(parent, fileName);
+            if (file.exists()) {
+                return loadBinaryFromFile(file);
+            }
+            return null;
         }
 
     }
@@ -284,34 +348,29 @@ class Spin2LibraryTest {
         String line;
         StringBuilder sb = new StringBuilder();
 
-        if (file.exists()) {
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(file));
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line);
-                    sb.append("\n");
-                }
-                reader.close();
-            } catch (Exception e) {
-                throw new RuntimeException("error reading file " + file, e);
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+                sb.append("\n");
             }
+            reader.close();
+        } catch (Exception e) {
+            throw new RuntimeException("error reading file " + file, e);
         }
 
         return sb.toString();
     }
 
-    byte[] loadBinaryFromFile(File file) throws Exception {
-        InputStream is = new FileInputStream(file);
+    byte[] loadBinaryFromFile(File file) {
         try {
+            InputStream is = new FileInputStream(file);
             byte[] b = new byte[is.available()];
             is.read(b);
+            is.close();
             return b;
-        } finally {
-            try {
-                is.close();
-            } catch (Exception e) {
-
-            }
+        } catch (Exception e) {
+            throw new RuntimeException("error reading file " + file, e);
         }
     }
 

@@ -1,0 +1,262 @@
+'' =================================================================================================
+''
+''   File....... jm_sircs_rx.spin2
+''   Purpose.... Sonry SIRCS protocol receiver
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 19 JUL 2020 
+''
+'' =================================================================================================
+
+{{
+
+    Example IR Connection (e.g., PNA4602M)
+ 
+             ┌───┐
+             │(*)│ 3.3v
+             └┬┬┬┘  
+       ir ───┘│└───┘
+               
+
+    Note: 500K pull-down can be added to IR input to detect bad/missing sensor
+
+    Protocol Reference:
+    -- http://www.sbprojects.com/knowledge/ir/sirc.php
+
+    Bit Formatting:
+                    Command    Device     Extended
+    -- 12-bit       6..0       11..7 
+    -- 15-bit       6..0       14..7 
+    -- 20-bit       6..0       11..7      19..12
+
+    This object does not include bit error detection (e.g., detect collisions between
+    multiple IR signals).
+             
+}}
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }                                           
+                                                                 
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }                                           
+  SF_SDO   = 59  { O }                                           
+  SF_SDI   = 58  { I }
+
+
+con
+
+  IR_DISABLE = -1
+  IR_ENABLE  =  0
+
+
+var
+
+  long  cog                                                     ' cog id
+
+  long  irpin
+
+  long  ircode                                                  ' rx'd code
+  long  irbits                                                  ' bits in code
+
+
+pub null()
+
+'' This is not a top-level object
+  
+    
+pub start(p) : result 
+
+'' Start SIRCS receiver on pin p
+
+  stop()                                                        ' stop if running on another pin
+
+  irpin  := ircode := p                                         ' set pin        
+  irbits := 2_400 * (clkfreq / 1_000_000)                       ' ticks in 2.4ms
+  
+  cog    := coginit(COGEXEC_NEW, @rx_sircs, @ircode) + 1        ' start sircs cog  
+                                                             
+  repeat                                                         
+  until (irbits == IR_DISABLE)                                  ' wait for cog to initialize
+                                                                 
+  return cog
+  
+
+pub stop()
+
+'' Stops SIRCS receiver cog if running
+
+  if (cog)
+    cogstop(cog-1)
+    cog := 0
+
+  longfill(@ircode, 0, 2)
+    
+
+pub enable()
+
+'' Enables SIRCS receive process
+
+  longfill(@ircode, IR_ENABLE, 2)
+
+
+pub disable()
+
+'' Disable SIRCS receive process
+
+  longfill(@ircode, IR_DISABLE, 2) 
+
+     
+pub rx() : result1, result0
+
+'' Enables and waits for ir input
+'' -- warning: blocks until IR code received!
+'' -- does not remove code/bits from buffer
+
+  enable()                                                      ' allow ir rx
+  repeat until (irbits > 0)                                     ' wait for code
+
+  return ircode, irbits 
+
+
+pub rxcheck() : result1, result0
+
+'' Returns code and bit count if available, -1 if none
+'' -- must have previously been enabled
+'' -- does not remove code/bits from buffer
+
+  if (irbits > 0)                                               ' if code ready
+    return ircode, irbits
+  else
+    return -1, 0
+
+
+pub sensor_check() : result
+
+'' Returns true if sensor is pressent
+'' -- scans IR input for up to 3ms
+'' -- sensor pin should have hi-z (~500K) pull-down
+
+  repeat 20
+    if (pinread(irpin) == 1)                                    ' sensor pin pulled up?
+      return true                                               ' if yes, sensor is present
+    waitus(150) 
+  
+    
+dat { sircs receiver }
+
+                org
+
+rx_sircs        setq      #2-1                                  ' read pin & timing from hub
+                rdlong    irp, ptra
+
+                fltl      irp                                   ' clear pin to input state
+                
+                mov       t0, starttix
+                shr       t0, #4                                ' t0 = 1/16th starttix
+                sub       starttix, t0                          ' test is 15/16ths nominal timing
+                mov       bit1tix, starttix                     ' "1" bit == 1/2 start bit
+                shr       bit1tix, #1
+                
+                mov       rxcode, ##IR_DISABLE                  ' tell hub cog is setup
+                mov       bitcount, ##IR_DISABLE 
+              
+done            setq      #2-1                                  ' write results to hub
+                wrlong    rxcode, ptra
+                 
+wait_enable     rdlong    t0, ptra                              ' look for enable signal
+                tjnz      t0, #wait_enable
+
+get_start       getct     tfall                                 ' mark 1->0
+                testp     irp                           wc
+    if_c        jmp       #get_start                            ' wait for 1->0 transition
+
+wait_start      getct     trise                                 ' mark 0->1
+                testp     irp                           wc
+    if_nc       jmp       #wait_start                           ' wait for 0->1 transition
+
+check_start     mov       tdelta, trise                         ' calculate pulse width
+                subs      tdelta, tfall
+                cmps      tdelta, starttix              wcz     ' validate against start pulse width
+    if_b        jmp       #wait_start
+
+                mov       rxcode, #0                            ' clear results
+                mov       bitcount, #0
+
+get_bits        getct     tdelta                                ' wait for start of data bit (1->0)
+                testp     irp                           wc
+    if_nc       mov       tfall, tdelta                         ' detected, mark time & continue
+    if_nc       jmp       #wait_bit
+                subs      tdelta, trise                         ' time-out (end of data bits)?
+                cmps      tdelta, bit1tix               wcz
+    if_b        jmp       #get_bits
+    
+                jmp       #update_code                          ' time-out, clean-up bits
+
+wait_bit        getct     trise                                 ' wait for end of data bit (0->1)
+                testp     irp                           wc
+    if_nc       jmp       #wait_bit          
+
+check_bit       mov       tdelta, trise
+                subs      tdelta, tfall
+                cmps      tdelta, bit1tix               wcz
+                shl       rxcode, #1                            ' make space for bit
+    if_a        or        rxcode, #1                            ' write new bit
+                add       bitcount, #1                          ' update count      
+                jmp       #get_bits
+
+update_code     rev       rxcode                                ' correct lsbs
+                mov       tdelta, #32
+                sub       tdelta, bitcount
+                shr       rxcode, tdelta
+                jmp       #done
+
+' -------------------------------------------------------------------------------------------------
+
+irp             res       1                                     ' ir input pin
+starttix        res       1                                     ' ticks in start bit
+
+bit1tix         res       1                                     ' "1" bit timing
+
+rxcode          res       1                                     ' recieved SIRCS code
+bitcount        res       1                                     ' bits in code          
+
+tfall           res       1                                     ' for bit & idle timing
+trise           res       1
+tdelta          res       1
+
+t0              res       1                                     ' work vars                                                                   
+t1              res       1                                     
+                                                                 
+                fit       496
+                
+                           
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}
