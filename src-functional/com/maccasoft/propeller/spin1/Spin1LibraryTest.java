@@ -63,6 +63,13 @@ class Spin1LibraryTest {
     }
 
     @Test
+    // Comparison with binary from OpenSpin fails
+    //  - different sequence of same-priority operators
+    void test_display_lcd_serial() throws Exception {
+        compileAndCompare(new File(path, "display.lcd.serial.spin"), new File(path, "display.lcd.serial.binary"));
+    }
+
+    @Test
     void test_display_tv() throws Exception {
         compileAndCompare(new File(path, "display.tv.spin"), new File(path, "display.tv.binary"));
     }
@@ -78,8 +85,30 @@ class Spin1LibraryTest {
     }
 
     @Test
+    void test_display_vga_text() throws Exception {
+        compileAndCompare(new File(path, "display.vga.text.spin"), new File(path, "display.vga.text.binary"));
+    }
+
+    @Test
+    void test_display_vga_tile_1280x1024() throws Exception {
+        compileAndCompare(new File(path, "display.vga.tile.1280x1024.spin"), new File(path, "display.vga.tile.1280x1024.binary"));
+    }
+
+    @Test
+    void test_display_vga_tile_1600x1200() throws Exception {
+        compileAndCompare(new File(path, "display.vga.tile.1600x1200.spin"), new File(path, "display.vga.tile.1600x1200.binary"));
+    }
+
+    @Test
     void test_input_keyboard() throws Exception {
         compileAndCompare(new File(path, "input.keyboard.spin"), new File(path, "input.keyboard.binary"));
+    }
+
+    @Test
+    // Comparison with binary from OpenSpin fails
+    //  - different sequence of same-priority operators
+    void test_input_mouse() throws Exception {
+        compileAndCompare(new File(path, "input.mouse.spin"), new File(path, "input.mouse.binary"));
     }
 
     @Test

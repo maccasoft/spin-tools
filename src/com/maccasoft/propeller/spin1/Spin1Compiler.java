@@ -2075,16 +2075,61 @@ public class Spin1Compiler {
                     }
                 }
                 else if (node.getText().startsWith("@")) {
-                    if (node.getChildCount() != 0) {
-                        throw new CompilerMessage("syntax error", node.getToken());
+                    boolean popIndex = false;
+                    Spin1StatementNode postEffectNode = null;
+
+                    int n = 0;
+                    if (n < node.getChildCount()) {
+                        if (!isPostEffect(node.getChild(n))) {
+                            source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
+                            popIndex = true;
+                        }
+                    }
+                    if (n < node.getChildCount()) {
+                        if (isPostEffect(node.getChild(n))) {
+                            postEffectNode = node.getChild(n++);
+                        }
+                    }
+                    if (n < node.getChildCount()) {
+                        throw new RuntimeException("syntax error");
                     }
                     if (expression instanceof Variable) {
-                        if (node.getChildCount() != 0) {
-                            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-                            source.add(new VariableOp(context, VariableOp.Op.Address, true, (Variable) expression));
+                        if (postEffectNode != null) {
+                            source.add(new VariableOp(context, VariableOp.Op.Assign, popIndex, (Variable) expression));
+                            if ("++".equals(postEffectNode.getText())) {
+                                Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
+                                int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, type.ordinal() + 1);
+                                source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_INC"));
+                            }
+                            else if ("--".equals(postEffectNode.getText())) {
+                                Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
+                                int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, type.ordinal() + 1);
+                                source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_DEC"));
+                            }
+                            else if ("~".equals(postEffectNode.getText())) {
+                                int code = 0b0_00110_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "POST_CLEAR"));
+                            }
+                            else if ("~~".equals(postEffectNode.getText())) {
+                                int code = 0b0_00111_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "POST_SET"));
+                            }
+                            else if ("?".equals(postEffectNode.getText())) {
+                                int code = 0b0_00011_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "RANDOM_REVERSE"));
+                            }
                         }
                         else {
-                            source.add(new VariableOp(context, VariableOp.Op.Address, (Variable) expression));
+                            source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression));
                         }
                     }
                     else if (expression instanceof ContextLiteral) {
@@ -2099,7 +2144,43 @@ public class Spin1Compiler {
                                     break;
                             }
                         }
-                        source.add(new MemoryOp(context, ss, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, expression));
+                        if (postEffectNode != null) {
+                            source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
+                            if ("++".equals(postEffectNode.getText())) {
+                                Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
+                                int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, type.ordinal() + 1);
+                                source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_INC"));
+                            }
+                            else if ("--".equals(postEffectNode.getText())) {
+                                Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
+                                int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, type.ordinal() + 1);
+                                source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_DEC"));
+                            }
+                            else if ("~".equals(postEffectNode.getText())) {
+                                int code = 0b0_00110_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "POST_CLEAR"));
+                            }
+                            else if ("~~".equals(postEffectNode.getText())) {
+                                int code = 0b0_00111_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "POST_SET"));
+                            }
+                            else if ("?".equals(postEffectNode.getText())) {
+                                int code = 0b0_00011_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "RANDOM_REVERSE"));
+                            }
+                        }
+                        else {
+                            source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Address, expression));
+                        }
                     }
                     else {
                         throw new CompilerMessage("syntax error", node.getToken());
