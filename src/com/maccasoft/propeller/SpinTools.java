@@ -1147,6 +1147,7 @@ public class SpinTools {
 
     private void handleBinaryExport(SpinObject object) {
         FileDialog dlg = new FileDialog(shell, SWT.SAVE);
+        dlg.setOverwrite(true);
         dlg.setText("Save Binary File");
         String[] filterNames = new String[] {
             "Binary Files"
@@ -1190,6 +1191,7 @@ public class SpinTools {
 
     private void handleListingExport(SpinObject object) {
         FileDialog dlg = new FileDialog(shell, SWT.SAVE);
+        dlg.setOverwrite(true);
         dlg.setText("Save Listing File");
         String[] filterNames = new String[] {
             "Listing Files"
