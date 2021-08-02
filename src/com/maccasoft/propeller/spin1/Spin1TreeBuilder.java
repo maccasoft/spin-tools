@@ -113,6 +113,7 @@ public class Spin1TreeBuilder {
         unary.add("||");
         unary.add("~~");
         unary.add("|<");
+        unary.add(">|");
         unary.add("@@");
     }
 

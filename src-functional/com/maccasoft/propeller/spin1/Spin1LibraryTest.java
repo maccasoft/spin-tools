@@ -51,6 +51,13 @@ class Spin1LibraryTest {
     }
 
     @Test
+    // Comparison with binary from OpenSpin fails
+    //  - different sequence of same-priority operators
+    void test_com_serial_terminal() throws Exception {
+        compileAndCompare(new File(path, "com.serial.terminal.spin"), new File(path, "com.serial.terminal.binary"));
+    }
+
+    @Test
     void test_com_spi() throws Exception {
         compileAndCompare(new File(path, "com.spi.spin"), new File(path, "com.spi.binary"));
     }
@@ -81,8 +88,18 @@ class Spin1LibraryTest {
     }
 
     @Test
+    void test_math_random() throws Exception {
+        compileAndCompare(new File(path, "math.random.spin"), new File(path, "math.random.binary"));
+    }
+
+    @Test
     void test_math_rctime() throws Exception {
         compileAndCompare(new File(path, "math.rctime.spin"), new File(path, "math.rctime.binary"));
+    }
+
+    @Test
+    void test_motor_servo() throws Exception {
+        compileAndCompare(new File(path, "motor.servo.spin"), new File(path, "motor.servo.binary"));
     }
 
     @Test
@@ -126,13 +143,25 @@ class Spin1LibraryTest {
     }
 
     @Test
-    void test_math_random() throws Exception {
-        compileAndCompare(new File(path, "math.random.spin"), new File(path, "math.random.binary"));
+    void test_tiny_com_i2c_spin() throws Exception {
+        compileAndCompare(new File(path, "tiny.com.i2c.spin"), new File(path, "tiny.com.i2c.binary"));
     }
 
     @Test
-    void test_motor_servo() throws Exception {
-        compileAndCompare(new File(path, "motor.servo.spin"), new File(path, "motor.servo.binary"));
+    void test_tiny_com_serial_spin() throws Exception {
+        compileAndCompare(new File(path, "tiny.com.serial.spin"), new File(path, "tiny.com.serial.binary"));
+    }
+
+    @Test
+    void test_tiny_com_spi_spin() throws Exception {
+        compileAndCompare(new File(path, "tiny.com.spi.spin"), new File(path, "tiny.com.spi.binary"));
+    }
+
+    @Test
+    // Comparison with binary from OpenSpin fails
+    //  - different sequence of same-priority operators
+    void test_tiny_math_float_spin() throws Exception {
+        compileAndCompare(new File(path, "tiny.math.float.spin"), new File(path, "tiny.math.float.binary"));
     }
 
     class Spin1CompilerAdapter extends Spin1Compiler {

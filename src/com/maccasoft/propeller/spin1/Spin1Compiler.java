@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1069,6 +1070,7 @@ public class Spin1Compiler {
                 line.addSource(compileConstantExpression(line.getScope(), line.getArgument(0)));
                 Spin1MethodLine target = (Spin1MethodLine) line.getData("quit");
                 line.addSource(new Tjz(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+                line.setData("pop", Integer.valueOf(4));
             }
             else if (line.getArgumentsCount() == 3 || line.getArgumentsCount() == 4) {
                 line.addSource(compileConstantExpression(line.getScope(), line.getArgument(1)));
@@ -1207,10 +1209,13 @@ public class Spin1Compiler {
         }
         else if ("QUIT".equalsIgnoreCase(text)) {
             int pop = 0;
+            boolean hasCase = false;
+
             Spin1MethodLine repeat = line.getParent();
             while (repeat != null) {
                 if ("CASE".equalsIgnoreCase(repeat.getStatement())) {
                     pop += 8;
+                    hasCase = true;
                 }
                 if ("REPEAT".equalsIgnoreCase(repeat.getStatement())) {
                     break;
@@ -1223,12 +1228,29 @@ public class Spin1Compiler {
                 }
                 repeat = repeat.getParent();
             }
-            if (pop != 0) {
-                line.addSource(new Constant(line.getScope(), new NumberLiteral(pop)));
-                line.addSource(new Bytecode(line.getScope(), 0x14, "POP"));
+
+            if (repeat.getData("pop") != null) {
+                pop += (Integer) repeat.getData("pop");
             }
-            Spin1MethodLine target = (Spin1MethodLine) repeat.getData("quit");
-            line.addSource(new Jmp(line.getScope(), new Identifier(target.getLabel(), target.getScope())));
+
+            if (hasCase == false && pop == 4) {
+                Spin1MethodLine target = (Spin1MethodLine) repeat.getData("quit");
+                line.addSource(new Jnz(line.getScope(), new ContextLiteral(target.getScope())));
+            }
+            else {
+                if (pop != 0) {
+                    try {
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        os.write(new Constant(line.getScope(), new NumberLiteral(pop)).getBytes());
+                        os.write(0x14);
+                        line.addSource(new Bytecode(line.getScope(), os.toByteArray(), String.format("POP %d", pop)));
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                }
+                Spin1MethodLine target = (Spin1MethodLine) repeat.getData("quit");
+                line.addSource(new Jmp(line.getScope(), new ContextLiteral(target.getScope())));
+            }
         }
         else if ("RETURN".equalsIgnoreCase(text)) {
             if (line.getArgumentsCount() == 0) {
@@ -1607,12 +1629,18 @@ public class Spin1Compiler {
             source.addAll(leftAssign(context, node.getChild(0), true));
             source.add(new MathOp(context, node.getText(), push));
         }
-        else if ("||".equals(node.getText()) || "|<".equals(node.getText()) || "!".equals(node.getText()) || "NOT".equalsIgnoreCase(node.getText())) {
+        else if ("||".equals(node.getText()) || "|<".equals(node.getText()) || ">|".equals(node.getText()) || "!".equals(node.getText()) || "NOT".equalsIgnoreCase(node.getText())) {
             if (node.getChildCount() != 1) {
                 throw new RuntimeException("expression syntax error " + node.getText());
             }
-            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-            source.add(new MathOp(context, node.getText(), push));
+            if (!push) {
+                source.addAll(leftAssign(context, node.getChild(0), true));
+                source.add(new MathOp(context, node.getText() + "=", false));
+            }
+            else {
+                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                source.add(new MathOp(context, node.getText(), push));
+            }
         }
         else if (MathOp.isMathOp(node.getText())) {
             if (node.getChildCount() != 2) {
