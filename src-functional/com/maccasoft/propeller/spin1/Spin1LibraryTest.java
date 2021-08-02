@@ -112,8 +112,27 @@ class Spin1LibraryTest {
     }
 
     @Test
+    // Comparison with binary from OpenSpin fails
+    //  - different sequence of same-priority operators
+    void test_input_quadrature() throws Exception {
+        compileAndCompare(new File(path, "input.quadrature.spin"), new File(path, "input.quadrature.binary"));
+    }
+
+    @Test
+    void test_input_trim_ad8803() throws Exception {
+        compileAndCompare(new File(path, "input.trim.ad8803.spin"), new File(path, "input.trim.ad8803.binary"));
+    }
+
+    @Test
     void test_io() throws Exception {
         compileAndCompare(new File(path, "io.spin"), new File(path, "io.binary"));
+    }
+
+    @Test
+    void test_math_float() throws Exception {
+        // Comparison with binary from OpenSpin fails
+        //  - floating point rounding
+        compileAndCompare(new File(path, "math.float.spin"), new File(path, "math.float.binary"));
     }
 
     @Test
@@ -154,6 +173,20 @@ class Spin1LibraryTest {
     @Test
     void test_string() throws Exception {
         compileAndCompare(new File(path, "string.spin"), new File(path, "string.binary"));
+    }
+
+    @Test
+    // Comparison with binary from OpenSpin fails
+    //  - different sequence of same-priority operators
+    void test_string_float() throws Exception {
+        compileAndCompare(new File(path, "string.float.spin"), new File(path, "string.float.binary"));
+    }
+
+    @Test
+    // Comparison with binary from OpenSpin fails
+    //  - different sequence of same-priority operators
+    void test_string_integer() throws Exception {
+        compileAndCompare(new File(path, "string.integer.spin"), new File(path, "string.integer.binary"));
     }
 
     @Test
