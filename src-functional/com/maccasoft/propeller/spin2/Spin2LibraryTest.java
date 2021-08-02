@@ -29,6 +29,14 @@ class Spin2LibraryTest {
     static final String path = "library/spin2";
 
     @Test
+    void test_ansi() throws Exception {
+        // Comparison with binary from Propeller Tool fails
+        //  - different sequence of same-priority operators
+        //  - dat variables readed as long instead of bytes
+        compileAndCompare(new File(path, "ansi.spin2"), new File(path, "ansi.binary"));
+    }
+
+    @Test
     void test_cjmj_pin_test_w_led_matrix() throws Exception {
         compileAndCompare(new File(path, "cjmj_pin_test_w_led_matrix.spin2"), new File(path, "cjmj_pin_test_w_led_matrix.binary"));
     }
@@ -86,7 +94,7 @@ class Spin2LibraryTest {
     @Test
     void test_jm_ez_analog() throws Exception {
         // Comparison with binary from Propeller Tool fails
-        // because of different sequence of same-priority operators (limit-min and limit-max in this case)
+        //  - different sequence of same-priority operators
         compileAndCompare(new File(path, "jm_ez_analog.spin2"), new File(path, "jm_ez_analog.binary"));
     }
 

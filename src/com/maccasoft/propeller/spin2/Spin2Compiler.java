@@ -344,7 +344,7 @@ public class Spin2Compiler {
         }
 
         if (methods.size() != 0) {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 5; i++) {
                 address = object.getSize();
                 for (Spin2Method method : methods) {
                     address = method.resolve(address);
