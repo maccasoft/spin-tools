@@ -596,13 +596,22 @@ public class Spin1Parser {
                     state = 1;
                     // fall-through
                 case 1:
-                    if (token.column == 0) {
-                        parent.label = new Node(parent);
-                        parent.label.addToken(token);
-                        state = 2;
+                    if (Spin1Model.isCondition(token.getText())) {
+                        parent.condition = new Node(parent);
+                        parent.condition.addToken(token);
+                        state = 3;
                         break;
                     }
-                    // fall-through
+                    if (Spin1Model.isInstruction(token.getText()) || Spin1Model.isType(token.getText())) {
+                        parent.instruction = new Node(parent);
+                        parent.instruction.addToken(token);
+                        state = 4;
+                        break;
+                    }
+                    parent.label = new Node(parent);
+                    parent.label.addToken(token);
+                    state = 2;
+                    break;
                 case 2:
                     if (Spin1Model.isCondition(token.getText())) {
                         parent.condition = new Node(parent);

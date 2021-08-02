@@ -275,25 +275,4 @@ class Spin1ParseDatLineTest {
         Assertions.assertEquals("                long    1[2], 3, 4, 5[6]", line0.getText());
     }
 
-    @Test
-    void testParseUnknownTypeData() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "DAT\n"
-            + "                long1   1, 2, 3, 4\n"
-            + ""));
-
-        Node root = subject.parse();
-        DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
-
-        Assertions.assertNull(line0.label);
-        Assertions.assertNull(line0.condition);
-        Assertions.assertNull(line0.instruction);
-        Assertions.assertEquals(0, line0.parameters.size());
-        Assertions.assertNull(line0.modifier);
-
-        Assertions.assertEquals(ErrorNode.class, line0.getChild(line0.getChilds().size() - 1).getClass());
-
-        Assertions.assertEquals("                long1   1, 2, 3, 4", line0.getText());
-    }
-
 }
