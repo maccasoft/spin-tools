@@ -55,7 +55,7 @@ public class Address extends Spin1Bytecode {
 
     @Override
     public String toString() {
-        return "CONSTANT (" + expression + ")";
+        return String.format("ADDRESS ($%04X)", expression.getNumber().intValue());
     }
 
 }

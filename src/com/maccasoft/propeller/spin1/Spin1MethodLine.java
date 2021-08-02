@@ -12,20 +12,17 @@ package com.maccasoft.propeller.spin1;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.model.Node;
 
 public class Spin1MethodLine {
 
     Spin1Context scope;
-    String label;
     String statement;
-    List<Spin1StatementNode> arguments;
+    List<Spin1StatementNode> arguments = new ArrayList<Spin1StatementNode>();
 
     Spin1MethodLine parent;
     List<Spin1MethodLine> childs = new ArrayList<Spin1MethodLine>();
@@ -36,26 +33,28 @@ public class Spin1MethodLine {
     protected Node data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
-    public Spin1MethodLine(Spin1Context scope, String label, String statement, Spin1StatementNode argument) {
+    public Spin1MethodLine(Spin1Context scope) {
         this.scope = new Spin1Context(scope);
-        this.label = label;
-        this.statement = statement;
-        this.arguments = Collections.singletonList(argument);
     }
 
-    public Spin1MethodLine(Spin1Context scope, String label, String statement, List<Spin1StatementNode> arguments) {
+    public Spin1MethodLine(Spin1Context scope, String statement) {
         this.scope = new Spin1Context(scope);
-        this.label = label;
         this.statement = statement;
-        this.arguments = arguments;
+    }
+
+    public Spin1MethodLine(Spin1Context scope, String statement, Node node) {
+        this.scope = new Spin1Context(scope);
+        this.statement = statement;
+        this.data = node;
+        this.text = node.getText();
     }
 
     public Spin1Context getScope() {
         return scope;
     }
 
-    public String getLabel() {
-        return label;
+    public void setStatement(String statement) {
+        this.statement = statement;
     }
 
     public String getStatement() {
@@ -71,9 +70,6 @@ public class Spin1MethodLine {
     }
 
     public void register(Spin1Context context) {
-        if (label != null) {
-            context.addSymbol(label, new ContextLiteral(scope));
-        }
         for (Spin1MethodLine line : childs) {
             line.register(context);
         }
@@ -89,6 +85,10 @@ public class Spin1MethodLine {
             address = line.resolve(address);
         }
         return address;
+    }
+
+    public void addArgument(Spin1StatementNode node) {
+        arguments.add(node);
     }
 
     public int getArgumentsCount() {
@@ -176,20 +176,13 @@ public class Spin1MethodLine {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if (label != null) {
-            sb.append(label);
-            sb.append(" ");
-        }
-        while (sb.length() < 16) {
-            sb.append(" ");
-        }
         if (statement != null) {
-            sb.append(statement);
-        }
-        while (sb.length() < 22) {
-            sb.append(" ");
+            sb.append(statement.toUpperCase());
         }
         if (text != null) {
+            while (sb.length() < 15) {
+                sb.append(" ");
+            }
             sb.append(" | ");
             sb.append(text);
         }
