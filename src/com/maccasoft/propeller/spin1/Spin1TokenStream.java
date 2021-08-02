@@ -180,6 +180,11 @@ public class Spin1TokenStream extends TokenStream {
                         break;
                     }
 
+                    if ((ch == '+' || ch == '-') && (text.charAt(index - 1) == 'e' || text.charAt(index - 1) == 'E')) {
+                        token.stop++;
+                        break;
+                    }
+
                     if (ch == '.' && index + 1 < text.length()) {
                         char ch1 = text.charAt(index + 1);
                         if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '_') {

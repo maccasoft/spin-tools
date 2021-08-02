@@ -783,4 +783,25 @@ class Spin1TokenStreamTest {
         assertEquals(12, token.column);
     }
 
+    @Test
+    void testScientificNotation1() {
+        Spin1TokenStream subject = new Spin1TokenStream("1e2");
+
+        assertEquals("1e2", subject.nextToken().getText());
+    }
+
+    @Test
+    void testScientificNotation2() {
+        Spin1TokenStream subject = new Spin1TokenStream("1e+2");
+
+        assertEquals("1e+2", subject.nextToken().getText());
+    }
+
+    @Test
+    void testScientificNotation3() {
+        Spin1TokenStream subject = new Spin1TokenStream("1e-2");
+
+        assertEquals("1e-2", subject.nextToken().getText());
+    }
+
 }

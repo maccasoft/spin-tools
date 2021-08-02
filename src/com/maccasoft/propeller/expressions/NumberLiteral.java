@@ -41,7 +41,10 @@ public class NumberLiteral extends Literal {
         else {
             this.base = 10;
         }
-        if (s.contains(".")) {
+        if (this.base == 10 && (s.contains("e") || s.contains("E"))) {
+            this.value = Double.parseDouble(s.replace("_", ""));
+        }
+        else if (s.contains(".")) {
             this.value = Double.parseDouble(s.replace("_", ""));
         }
         else {
