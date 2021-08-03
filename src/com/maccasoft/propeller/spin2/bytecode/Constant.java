@@ -61,18 +61,18 @@ public class Constant extends Spin2Bytecode {
     }
 
     public static byte[] wrVars(long value) {
-        if (Math.abs(value) < 0x40) {
+        if (value >= -64 && value < 64) {
             return new byte[] {
                 (byte) (value & 0x7F)
             };
         }
-        if (Math.abs(value) < 0x2000) {
+        if (value >= -8291 && value < 8291) {
             return new byte[] {
                 (byte) ((value & 0x7F) | 0x80),
                 (byte) ((value >> 7) & 0x7F)
             };
         }
-        if (Math.abs(value) < 0x100000) {
+        if (value >= -1048576 && value < 1048576) {
             return new byte[] {
                 (byte) ((value & 0x7F) | 0x80),
                 (byte) (((value >> 7) & 0x7F) | 0x80),
@@ -88,13 +88,13 @@ public class Constant extends Spin2Bytecode {
     }
 
     public static int wrVarsSize(long value) {
-        if (Math.abs(value) < 0x40) {
+        if (value >= -64 && value < 64) {
             return 1;
         }
-        if (Math.abs(value) < 0x2000) {
+        if (value >= -8291 && value < 8291) {
             return 2;
         }
-        if (Math.abs(value) < 0x100000) {
+        if (value >= -1048576 && value < 1048576) {
             return 3;
         }
         return 4;
