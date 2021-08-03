@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.collections4.map.ListOrderedMap;
-
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.expressions.Add;
@@ -104,10 +102,20 @@ import com.maccasoft.propeller.spin2.instructions.Res;
 
 public class Spin2Compiler {
 
+    class ObjectInfo {
+        String name;
+        String fileName;
+        Spin2Object object;
+
+        int offset;
+    }
+
     Spin2Context scope = new Spin2GlobalContext();
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
     List<Spin2Method> methods = new ArrayList<Spin2Method>();
-    ListOrderedMap<String, Spin2Object> objects = ListOrderedMap.listOrderedMap(new HashMap<String, Spin2Object>());
+    List<ObjectInfo> objects = new ArrayList<ObjectInfo>();
+
+    List<ObjectInfo> childObjects = new ArrayList<ObjectInfo>();
 
     int varOffset = 4;
     int labelCounter;
@@ -233,10 +241,10 @@ public class Spin2Compiler {
         }
 
         int objectIndex = 1;
-        for (Entry<String, Spin2Object> entry : objects.entrySet()) {
-            for (Entry<String, Expression> objentry : entry.getValue().getSymbols().entrySet()) {
-                String qualifiedName = entry.getKey() + "." + objentry.getKey();
+        for (ObjectInfo info : objects) {
+            for (Entry<String, Expression> objentry : info.object.getSymbols().entrySet()) {
                 if (objentry.getValue() instanceof Method) {
+                    String qualifiedName = info.name + "." + objentry.getKey();
                     Method method = ((Method) objentry.getValue()).copy();
                     method.setObject(objectIndex);
                     scope.addSymbol(qualifiedName, method);
@@ -367,30 +375,51 @@ public class Spin2Compiler {
             ld[index].setValue(object.getSize());
 
             object.alignToLong();
+            int objectSize = object.getSize();
 
-            if (objects.size() != 0) {
-                index = 0;
-                ldo[index].setValue(object.getSize());
-                ldo[index].setText(String.format("Object @ $%05X", object.getSize()));
+            index = 0;
+            Iterator<ObjectInfo> iter = objects.iterator();
+            while (iter.hasNext()) {
+                ObjectInfo info = iter.next();
+
+                for (ObjectInfo prevInfo : childObjects) {
+                    if (prevInfo == info) {
+                        break;
+                    }
+                    if (prevInfo.fileName.equals(info.fileName)) {
+                        ObjectInfo newInfo = new ObjectInfo();
+                        newInfo.name = info.name;
+                        newInfo.fileName = prevInfo.fileName;
+                        newInfo.object = prevInfo.object;
+                        newInfo.offset = prevInfo.offset + objectSize;
+                        info = newInfo;
+                        break;
+                    }
+                }
+                if (info.offset == 0) {
+                    for (ObjectInfo prevInfo : objects) {
+                        if (prevInfo == info) {
+                            break;
+                        }
+                        if (prevInfo.fileName.equals(info.fileName)) {
+                            info = prevInfo;
+                            break;
+                        }
+                    }
+                }
+                if (info.offset == 0) {
+                    info.offset = object.getSize();
+                    object.writeObject(info.object);
+                }
+
+                ldo[index].setValue(info.offset);
+                ldo[index].setText(String.format("Object %s @ $%05X", info.fileName, info.offset));
                 index++;
                 ldo[index].setValue(varOffset);
                 ldo[index].setText(String.format("Variables @ $%05X", varOffset));
                 index++;
 
-                Iterator<Spin2Object> iter = objects.values().iterator();
-                while (iter.hasNext()) {
-                    Spin2Object obj = iter.next();
-                    object.writeObject(obj);
-                    varOffset += obj.getVarSize();
-                    if (iter.hasNext()) {
-                        ldo[index].setValue(object.getSize());
-                        ldo[index].setText(String.format("Object @ PBASE+$%05X", object.getSize()));
-                        index++;
-                        ldo[index].setValue(varOffset);
-                        ldo[index].setText(String.format("Variables @ VBASE+$%05X", varOffset));
-                        index++;
-                    }
-                }
+                varOffset += info.object.getVarSize();
             }
         }
 
@@ -500,18 +529,45 @@ public class Spin2Compiler {
         }
     }
 
+    public void addChildObjects(Spin2Compiler compiler) {
+        childObjects.addAll(compiler.objects);
+    }
+
     void compileObjBlock(Node parent) {
 
         for (Node child : parent.getChilds()) {
             ObjectNode node = (ObjectNode) child;
             if (node.name != null && node.file != null) {
-                String file = node.file.getText().substring(1);
-                Spin2Object object = getObject(file.substring(0, file.length() - 1));
+                String fileName = node.file.getText().substring(0, node.file.getText().length() - 1).substring(1);
+
+                Spin2Object object = null;
+                for (ObjectInfo info : childObjects) {
+                    if (info.fileName.equals(fileName)) {
+                        object = info.object;
+                        break;
+                    }
+                }
+                if (object == null) {
+                    for (ObjectInfo info : objects) {
+                        if (info.fileName.equals(fileName)) {
+                            object = info.object;
+                            break;
+                        }
+                    }
+                }
+                if (object == null) {
+                    object = getObject(fileName);
+                }
                 if (object == null) {
                     logMessage(new CompilerMessage("object not found", node));
                     continue;
                 }
-                objects.put(node.name.getText(), object);
+
+                ObjectInfo info = new ObjectInfo();
+                info.name = node.name.getText();
+                info.fileName = fileName;
+                info.object = object;
+                objects.add(info);
 
                 for (Entry<String, Expression> entry : object.getSymbols().entrySet()) {
                     String qualifiedName = node.name.getText() + "." + entry.getKey();

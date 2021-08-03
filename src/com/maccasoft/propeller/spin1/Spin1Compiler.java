@@ -13,12 +13,9 @@ package com.maccasoft.propeller.spin1;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-
-import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
@@ -90,10 +87,20 @@ public class Spin1Compiler {
 
     public static boolean OPENSPIN_COMPATIBILITY = false;
 
+    class ObjectInfo {
+        String name;
+        String fileName;
+        Spin1Object object;
+
+        int offset;
+    }
+
     Spin1Context scope = new Spin1GlobalContext();
     List<Spin1PAsmLine> source = new ArrayList<Spin1PAsmLine>();
     List<Spin1Method> methods = new ArrayList<Spin1Method>();
-    ListOrderedMap<String, Spin1Object> objects = ListOrderedMap.listOrderedMap(new HashMap<String, Spin1Object>());
+    List<ObjectInfo> objects = new ArrayList<ObjectInfo>();
+
+    List<ObjectInfo> childObjects = new ArrayList<ObjectInfo>();
 
     int varOffset = 0;
     int labelCounter;
@@ -200,10 +207,10 @@ public class Spin1Compiler {
         }
 
         int objectIndex = methods.size() + 1;
-        for (Entry<String, Spin1Object> entry : objects.entrySet()) {
-            for (Entry<String, Expression> objentry : entry.getValue().getSymbols().entrySet()) {
+        for (ObjectInfo info : objects) {
+            for (Entry<String, Expression> objentry : info.object.getSymbols().entrySet()) {
                 if (objentry.getValue() instanceof Method) {
-                    String qualifiedName = entry.getKey() + "." + objentry.getKey();
+                    String qualifiedName = info.name + "." + objentry.getKey();
                     Method method = ((Method) objentry.getValue()).copy();
                     method.setObject(objectIndex);
                     scope.addSymbol(qualifiedName, method);
@@ -223,11 +230,9 @@ public class Spin1Compiler {
             ld[i] = object.writeLong(0, "Function " + methods.get(i).getLabel());
         }
 
-        WordDataObject[] headerOffset = new WordDataObject[objects.size()];
-        WordDataObject[] variablesOffset = new WordDataObject[objects.size()];
-        for (int i = 0; i < headerOffset.length; i++) {
-            headerOffset[i] = object.writeWord(0, "Header offset");
-            variablesOffset[i] = object.writeWord(0, "Var offset");
+        LongDataObject[] objectLink = new LongDataObject[objects.size()];
+        for (int i = 0; i < objects.size(); i++) {
+            objectLink[i] = object.writeLong(0, "Object");
         }
 
         hubAddress = object.getSize();
@@ -287,7 +292,7 @@ public class Spin1Compiler {
         }
 
         if (methods.size() != 0) {
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 10; i++) {
                 address = object.getSize();
                 for (Spin1Method method : methods) {
                     address = method.resolve(address);
@@ -308,11 +313,39 @@ public class Spin1Compiler {
         objectSize.setValue(object.getSize());
 
         int index = 0;
-        for (Spin1Object o : objects.values()) {
-            headerOffset[index].setValue(object.getSize());
-            variablesOffset[index].setValue(varOffset);
-            object.writeObject(o);
-            varOffset += o.getVarSize();
+        for (ObjectInfo info : objects) {
+            for (ObjectInfo prevInfo : childObjects) {
+                if (prevInfo == info) {
+                    break;
+                }
+                if (prevInfo.fileName.equals(info.fileName)) {
+                    ObjectInfo newInfo = new ObjectInfo();
+                    newInfo.name = info.name;
+                    newInfo.fileName = prevInfo.fileName;
+                    newInfo.object = prevInfo.object;
+                    newInfo.offset = prevInfo.offset + objectSize.getValue();
+                    info = newInfo;
+                    break;
+                }
+            }
+            if (info.offset == 0) {
+                for (ObjectInfo prevInfo : objects) {
+                    if (prevInfo == info) {
+                        break;
+                    }
+                    if (prevInfo.fileName.equals(info.fileName)) {
+                        info = prevInfo;
+                        break;
+                    }
+                }
+            }
+            if (info.offset == 0) {
+                info.offset = object.getSize();
+                object.writeObject(info.object);
+            }
+            objectLink[index].setValue(info.offset | (varOffset << 16));
+            objectLink[index].setText(String.format("Object %s @ $%04X (variables @ $%04X)", info.fileName, info.offset, varOffset));
+            varOffset += info.object.getVarSize();
             index++;
         }
         object.setVarSize(varOffset);
@@ -482,22 +515,49 @@ public class Spin1Compiler {
         varOffset = (varOffset + 3) & ~3;
     }
 
+    public void addChildObjects(Spin1Compiler compiler) {
+        childObjects.addAll(compiler.objects);
+    }
+
     void compileObjBlock(Node parent) {
 
         for (Node child : parent.getChilds()) {
             ObjectNode node = (ObjectNode) child;
             if (node.name != null && node.file != null) {
-                String file = node.file.getText().substring(1);
-                Spin1Object object = getObject(file.substring(0, file.length() - 1));
+                String fileName = node.file.getText().substring(0, node.file.getText().length() - 1).substring(1);
+
+                Spin1Object object = null;
+                for (ObjectInfo info : childObjects) {
+                    if (info.fileName.equals(fileName)) {
+                        object = info.object;
+                        break;
+                    }
+                }
+                if (object == null) {
+                    for (ObjectInfo info : objects) {
+                        if (info.fileName.equals(fileName)) {
+                            object = info.object;
+                            break;
+                        }
+                    }
+                }
+                if (object == null) {
+                    object = getObject(fileName);
+                }
                 if (object == null) {
                     logMessage(new CompilerMessage("object not found", node));
                     continue;
                 }
-                objects.put(node.name.getText(), object);
+
+                ObjectInfo info = new ObjectInfo();
+                info.name = node.name.getText();
+                info.fileName = fileName;
+                info.object = object;
+                objects.add(info);
 
                 for (Entry<String, Expression> entry : object.getSymbols().entrySet()) {
                     if (!(entry.getValue() instanceof Method)) {
-                        String qualifiedName = node.name.getText() + "#" + entry.getKey();
+                        String qualifiedName = info.name + "#" + entry.getKey();
                         scope.addSymbol(qualifiedName, entry.getValue());
                     }
                 }

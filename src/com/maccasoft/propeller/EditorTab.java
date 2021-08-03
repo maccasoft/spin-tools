@@ -155,7 +155,12 @@ public class EditorTab {
             }
             if (root != null) {
                 Spin1CompilerAdapter c = new Spin1CompilerAdapter();
-                return c.compileObject(root);
+                Spin1Object obj = c.compileObject(root);
+                if (c.hasErrors()) {
+                    throw new RuntimeException("object has errors");
+                }
+                addChildObjects(c);
+                return obj;
             }
             return null;
         }
@@ -288,7 +293,12 @@ public class EditorTab {
             }
             if (root != null) {
                 Spin2CompilerAdapter c = new Spin2CompilerAdapter();
-                return c.compileObject(root);
+                Spin2Object obj = c.compileObject(root);
+                if (c.hasErrors()) {
+                    throw new RuntimeException("object has errors");
+                }
+                addChildObjects(c);
+                return obj;
             }
             return null;
         }
