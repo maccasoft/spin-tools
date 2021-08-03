@@ -10,9 +10,7 @@
 
 package com.maccasoft.propeller.spin1.bytecode;
 
-import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
 import com.maccasoft.propeller.spin1.Spin1Context;
 
@@ -35,17 +33,12 @@ public class Jmp extends Spin1Bytecode {
 
     @Override
     public int getSize() {
-        if (expression instanceof ContextLiteral) {
-            if (!((ContextLiteral) expression).getContext().isAddressSet()) {
-                return 3;
-            }
+        try {
+            return getBytes().length;
+        } catch (Exception e) {
+            // Do nothing
         }
-        else if (expression instanceof Identifier) {
-            if (!((Identifier) expression).getContext().isAddressSet()) {
-                return 3;
-            }
-        }
-        return getBytes().length;
+        return 3;
     }
 
     @Override
@@ -53,7 +46,7 @@ public class Jmp extends Spin1Bytecode {
         int ourAddress = context.getAddress();
         int destinationAddress = expression.getNumber().intValue();
         int offset = destinationAddress - (ourAddress + 2);
-        if (Math.abs(offset) < 0x40) {
+        if (offset >= -64 && offset < 64) {
             return new byte[] {
                 (byte) code,
                 (byte) (offset & 0x7F)
