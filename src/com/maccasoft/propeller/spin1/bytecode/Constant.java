@@ -26,7 +26,12 @@ public class Constant extends Spin1Bytecode {
 
     @Override
     public int getSize() {
-        return getBytes().length;
+        try {
+            return getBytes().length;
+        } catch (Exception e) {
+            // Do nothing
+        }
+        return 5;
     }
 
     @Override

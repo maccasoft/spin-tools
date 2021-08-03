@@ -91,23 +91,12 @@ public class MemoryOp extends Spin1Bytecode {
 
     @Override
     public int getSize() {
-        int value;
-        if (bb == Base.Pop) {
-            return 1;
+        try {
+            return getBytes().length;
+        } catch (Exception e) {
+            // Do nothing
         }
-        if (expression instanceof ContextLiteral) {
-            if (!((ContextLiteral) expression).getContext().isAddressSet()) {
-                return 3;
-            }
-            value = ((ContextLiteral) expression).getContext().getHubAddress();
-        }
-        else if (expression instanceof Variable) {
-            value = ((Variable) expression).getOffset();
-        }
-        else {
-            value = expression.getNumber().intValue();
-        }
-        return value < 127 ? 2 : 3;
+        return 3;
     }
 
     @Override

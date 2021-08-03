@@ -83,6 +83,11 @@ public class MemoryRef extends Spin1Bytecode {
 
     @Override
     public int getSize() {
+        try {
+            return getBytes().length;
+        } catch (Exception e) {
+            // Do nothing
+        }
         return 3;
     }
 

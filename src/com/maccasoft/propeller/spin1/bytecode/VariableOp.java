@@ -70,17 +70,12 @@ public class VariableOp extends Spin1Bytecode {
 
     @Override
     public int getSize() {
-        if (ss == Size.Long && (value.getOffset() / 4) < 8 && !i) {
-            return 1;
+        try {
+            return getBytes().length;
+        } catch (Exception e) {
+            // Do nothing
         }
-        else {
-            if (value.getOffset() < 127) {
-                return 2;
-            }
-            else {
-                return 3;
-            }
-        }
+        return 3;
     }
 
     @Override
