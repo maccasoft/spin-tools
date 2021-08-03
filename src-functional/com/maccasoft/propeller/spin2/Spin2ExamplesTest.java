@@ -40,6 +40,31 @@ class Spin2ExamplesTest {
     }
 
     @Test
+    void test_jm_click_dmx_tx_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_click_dmx-tx_demo.spin2"), new File(path, "jm_click_dmx-tx_demo.binary"));
+    }
+
+    @Test
+    void test_jm_click_rs485_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_click_rs485_demo.spin2"), new File(path, "jm_click_rs485_demo.binary"));
+    }
+
+    @Test
+    void test_jm_click_rs485_test() throws Exception {
+        compileAndCompare(new File(path, "jm_click_rs485_test.spin2"), new File(path, "jm_click_rs485_test.binary"));
+    }
+
+    @Test
+    void test_jm_click_rtc_10_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_click_rtc-10_demo.spin2"), new File(path, "jm_click_rtc-10_demo.binary"));
+    }
+
+    @Test
+    void test_jm_dc_motor_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_dc_motor_demo.spin2"), new File(path, "jm_dc_motor_demo.binary"));
+    }
+
+    @Test
     void test_jm_ez_analog_demo() throws Exception {
         compileAndCompare(new File(path, "jm_ez_analog_demo.spin2"), new File(path, "jm_ez_analog_demo.binary"));
     }
@@ -67,6 +92,11 @@ class Spin2ExamplesTest {
     @Test
     void test_jm_lcd_pcf8574_demo() throws Exception {
         compileAndCompare(new File(path, "jm_lcd_pcf8574_demo.spin2"), new File(path, "jm_lcd_pcf8574_demo.binary"));
+    }
+
+    @Test
+    void test_jm_pwm_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_pwm_demo.spin2"), new File(path, "jm_pwm_demo.binary"));
     }
 
     @Test

@@ -1,0 +1,227 @@
+'' =================================================================================================
+''
+''   File....... jm_click_dmx-tx_demo.spin2
+''   Purpose.... DMX512-A output to Chauvet LED-Splash fixture
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 26 OCT 2020
+''
+''   {$P1}
+''
+'' =================================================================================================
+
+{{
+
+   Set fixture to address 1 (SW1 on), and slave mode (SW10 on). Others are off.
+
+   Fixture channels:
+   - 1 : reserved ($00)
+   - 2 : blackout ($00-$01) / strobe ($02-$7F) / master dimmer ($80-$FF)
+   - 3 : red   ($00-$FF)
+   - 4 : green ($00-$FF)
+   - 5 : blue  ($00-$FF)
+
+}}
+
+
+con { timing }
+
+  CLK_FREQ = 200_000_000                                        ' system freq as a constant
+  MS_001   = CLK_FREQ / 1_000                                   ' ticks in 1ms
+  US_001   = CLK_FREQ / 1_000_000                               ' ticks in 1us
+
+  BR_TERM  = 115_200                                            ' terminal baud rate
+
+  _clkfreq = CLK_FREQ                                           ' set system clock
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' serial flash
+  SF_SCK   = 60  { O }
+  SF_SDO   = 59  { O }
+  SF_SDI   = 58  { I }
+
+  SD_SCK   = 61  { O }                                          ' sd card
+  SD_CS    = 60  { O }
+  SD_SDI   = 59  { O }
+  SD_SDO   = 58  { I }
+
+  SDA1     = 57  { IO }                                         ' i2c (optional)
+  SCL1     = 56  { IO }
+
+
+con { app io pins }
+
+  CLICK2   = 32
+  CLICK1   = 16
+  CLICK0   =  0
+
+
+con
+
+  #true,  ON, OFF
+  #false, NO, YES
+
+  DMX_CH = 1                                                    ' base channel for fixture
+
+
+obj
+
+' main                                                          ' * master Spin cog
+  dmx : "jm_click_dmx-tx"                                       ' * dmx output
+
+' * uses cog when loaded
+
+
+dat { pre-initialized }
+
+  Red           byte      $FF, $FF, $00, $00
+  Green         byte      $FF, $00, $FF, $00
+  Blue          byte      $FF, $00, $00, $FF
+  Black         byte      $FF, $00, $00, $00
+
+
+var { globals }
+
+
+pub main() | level
+
+  setup()
+
+  set_master($FF)                                               ' control brightness via channels
+
+  repeat 3                                                      ' flash colors
+    rgb_cycle(333)
+
+  repeat
+    set_rgb(255, 0, 0)
+    waitms(500)
+
+    repeat level from 0 to 255                                  ' red --> green
+      set_red(dmx.gamma(255-level))
+      set_green(dmx.gamma(level))
+      waitms(5)
+
+    set_rgb(0, 255, 0)
+    waitms(500)
+
+    repeat level from 0 to 255                                  ' green --> blue
+      set_green(dmx.gamma(255-level))
+      set_blue(dmx.gamma(level))
+      waitms(5)
+
+    set_rgb(0, 0, 255)
+    waitms(500)
+
+    repeat level from 0 to 255                                  ' blue --> red
+      set_blue(dmx.gamma(255-level))
+      set_red(dmx.gamma(level))
+      waitms(5)
+
+  repeat
+    waitct(0)
+
+
+pub rgb_cycle(ms)
+
+  set_rgb($FF, $00, $00)
+  waitms(ms)
+
+  set_rgb($00, $FF, $00)
+  waitms(ms)
+
+  set_rgb($00, $00, $FF)
+  waitms(ms)
+
+  set_rgb($00, $00, $00)
+
+
+pub preset(p_levels)
+
+'' Set master level and rgb channels
+'' -- p_levels is pointer to 4 bytes (master, red, green, blue)
+
+  bytemove(dmx.address()+DMX_CH+1, p_levels, 4)
+
+
+pub set_master(level)
+
+'' Set master brightness level, 0 to 255 (0 to 100%)
+
+  if (level <= 0)
+    dmx.write(DMX_CH+1, $80)
+  elseif (level >= 255)
+    dmx.write(DMX_CH+1, $FF)
+  else
+    dmx.write(DMX_CH+1, (level >> 1) + $80)
+
+
+pub set_rgb(r, g, b)
+
+'' Set RGB color mix
+
+  dmx.write(DMX_CH+2, $00 #> r <# $FF)
+  dmx.write(DMX_CH+3, $00 #> g <# $FF)
+  dmx.write(DMX_CH+4, $00 #> b <# $FF)
+
+
+pub set_red(level)
+
+'' Set red brightness level
+
+  dmx.write(DMX_CH+2, $00 #> level <# $FF)
+
+
+pub set_green(level)
+
+'' Set green brightness level
+
+  dmx.write(DMX_CH+3, $00 #> level <# $FF)
+
+
+pub set_blue(level)
+
+'' Set blue brightness level
+
+  dmx.write(DMX_CH+4, $00 #> level <# $FF)
+
+
+pub setup()
+
+'' Setup IO and objects for application
+
+  dmx.start(CLICK0)
+
+
+con { license }
+
+{{
+
+  MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+}}
