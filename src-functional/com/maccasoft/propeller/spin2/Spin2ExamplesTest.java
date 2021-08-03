@@ -39,17 +39,12 @@ class Spin2ExamplesTest {
         compileAndCompare(new File(path, "jm_apa102c_demo.spin2"), new File(path, "jm_apa102c_demo.binary"));
     }
 
-    //@Test
-    // Fails with limit-min / limit-max sequence
+    @Test
     void test_jm_ez_analog_demo() throws Exception {
         compileAndCompare(new File(path, "jm_ez_analog_demo.spin2"), new File(path, "jm_ez_analog_demo.binary"));
     }
 
-    //@Test
-    // Fails
-    //  b1   : "jm_ez_button"                                         '   buttonw/switch input
-    //  b2   : "jm_ez_button"                                         '   buttonw/switch input
-    // objects optimization is not yet supported
+    @Test
     void test_jm_ez_button_demo() throws Exception {
         compileAndCompare(new File(path, "jm_ez_button_demo.spin2"), new File(path, "jm_ez_button_demo.binary"));
     }
