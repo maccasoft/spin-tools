@@ -41,7 +41,6 @@ import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
 import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
-import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
@@ -251,7 +250,7 @@ public class EditorTab {
     class Spin2CompilerAdapter extends Spin2Compiler {
 
         @Override
-        protected Spin2Object getObject(String fileName) {
+        protected Node getParsedObject(String fileName) {
             AtomicReference<Node> result = new AtomicReference<Node>();
             Display.getDefault().syncExec(new Runnable() {
 
@@ -281,16 +280,7 @@ public class EditorTab {
                     }
                 }
             }
-            if (root != null) {
-                Spin2CompilerAdapter c = new Spin2CompilerAdapter();
-                Spin2Object obj = c.compileObject(root);
-                if (c.hasErrors()) {
-                    throw new RuntimeException("object has errors");
-                }
-                addChildObjects(c);
-                return obj;
-            }
-            return null;
+            return root;
         }
 
         @Override

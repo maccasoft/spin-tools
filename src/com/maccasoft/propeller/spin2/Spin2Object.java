@@ -13,12 +13,51 @@ package com.maccasoft.propeller.spin2;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.maccasoft.propeller.SpinObject;
 
 public class Spin2Object extends SpinObject {
 
+    public static class LinkDataObject extends DataObject {
+
+        Spin2Object object;
+        long offset;
+
+        public LinkDataObject(Spin2Object object, long offset) {
+            super(new byte[] {
+                (byte) offset,
+                (byte) (offset >> 8),
+                (byte) (offset >> 16),
+                (byte) (offset >> 24)
+            });
+            this.object = object;
+            this.offset = offset;
+        }
+
+        public long getOffset() {
+            return offset;
+        }
+
+        public void setOffset(long offset) {
+            this.bytes = new byte[] {
+                (byte) offset,
+                (byte) (offset >> 8),
+                (byte) (offset >> 16),
+                (byte) (offset >> 24)
+            };
+            this.offset = offset;
+        }
+
+        public Spin2Object getObject() {
+            return object;
+        }
+
+    }
+
     Spin2Interpreter interpreter;
+    List<LinkDataObject> links = new ArrayList<LinkDataObject>();
 
     public Spin2Object() {
 

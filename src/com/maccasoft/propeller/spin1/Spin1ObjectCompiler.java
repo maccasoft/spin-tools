@@ -112,7 +112,6 @@ public class Spin1ObjectCompiler {
     Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<String, ObjectInfo>());
 
     int varOffset = 0;
-    int labelCounter;
     Spin1MethodLine dataLine;
 
     boolean errors;
@@ -481,10 +480,6 @@ public class Spin1ObjectCompiler {
             }
 
         }
-    }
-
-    protected Spin1Object getObject(String fileName) {
-        return null;
     }
 
     void compileDatBlock(Spin1Context scope, Node parent) {

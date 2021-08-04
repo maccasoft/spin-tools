@@ -118,17 +118,14 @@ class Spin2ExamplesTest {
         }
 
         @Override
-        protected Spin2Object getObject(String fileName) {
+        protected Node getParsedObject(String fileName) {
             String text = getObjectSource(fileName);
             if (text == null) {
-                throw new RuntimeException("file " + fileName + " not found");
+                return null;
             }
             Spin2TokenStream stream = new Spin2TokenStream(text);
             Spin2Parser subject = new Spin2Parser(stream);
-            Node root = subject.parse();
-
-            Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(parent);
-            return compiler.compileObject(root);
+            return subject.parse();
         }
 
         protected String getObjectSource(String fileName) {

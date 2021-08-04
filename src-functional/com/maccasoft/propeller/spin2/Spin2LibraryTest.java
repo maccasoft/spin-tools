@@ -252,7 +252,7 @@ class Spin2LibraryTest {
     @Test
     void test_Spin2_interpreter() throws Exception {
         String text = getResourceAsString("Spin2_interpreter.spin2");
-    
+
         new File(path, "Spin2_interpreter.binary");
         compileAndCompare(text, expected);
     }
@@ -266,22 +266,14 @@ class Spin2LibraryTest {
         }
 
         @Override
-        protected Spin2Object getObject(String fileName) {
+        protected Node getParsedObject(String fileName) {
             String text = getObjectSource(fileName);
             if (text == null) {
-                throw new RuntimeException("file " + fileName + " not found");
+                return null;
             }
             Spin2TokenStream stream = new Spin2TokenStream(text);
             Spin2Parser subject = new Spin2Parser(stream);
-            Node root = subject.parse();
-
-            Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(parent);
-            if (compiler.hasErrors()) {
-                for (CompilerMessage msg : compiler.getMessages()) {
-                    logMessage(msg);
-                }
-            }
-            return compiler.compileObject(root);
+            return subject.parse();
         }
 
         protected String getObjectSource(String fileName) {
