@@ -27,7 +27,7 @@ class Spin1CompilerTest {
 
     @AfterEach
     void afterEach() {
-        Spin1Compiler.OPENSPIN_COMPATIBILITY = false;
+        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = false;
     }
 
     @Test
@@ -1118,19 +1118,19 @@ class Spin1CompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 0)\n"
             + "00000 00000       10 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       01             Object count\n"
             + "00004 00004       0C 00 04 00    Function main @ $000C (local size 4)\n"
-            + "00008 00008       10 00 00 00    Object text2 @ $0010 (variables @ $0000)\n"
+            + "00008 00008       10 00 00 00    Object \"text2\" @ $0010 (variables @ $0000)\n"
             + "' PUB main() | a\n"
             + "'     a := 1\n"
             + "0000C 0000C       36             CONSTANT (1)\n"
             + "0000D 0000D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "0000E 0000E       32             RETURN\n"
             + "0000F 0000F       00             Padding\n"
-            + "' Object header\n"
+            + "' Object \"text2\" header (var size 0)\n"
             + "00010 00000       10 00          Object size\n"
             + "00012 00002       02             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -1187,20 +1187,20 @@ class Spin1CompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 4)\n"
             + "00000 00000       14 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       02             Object count\n"
             + "00004 00004       10 00 04 00    Function main @ $0010 (local size 4)\n"
-            + "00008 00008       14 00 04 00    Object text1 @ $0014 (variables @ $0004)\n"
-            + "0000C 0000C       24 00 0C 00    Object text2 @ $0024 (variables @ $000C)\n"
+            + "00008 00008       14 00 04 00    Object \"text1\" @ $0014 (variables @ $0004)\n"
+            + "0000C 0000C       24 00 0C 00    Object \"text2\" @ $0024 (variables @ $000C)\n"
             + "' PUB main() | a\n"
             + "'     a := 1\n"
             + "00010 00010       36             CONSTANT (1)\n"
             + "00011 00011       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "00012 00012       32             RETURN\n"
             + "00013 00013       00             Padding\n"
-            + "' Object header\n"
+            + "' Object \"text1\" header (var size 8)\n"
             + "00014 00000       10 00          Object size\n"
             + "00016 00002       02             Method count + 1\n"
             + "00017 00003       00             Object count\n"
@@ -1213,7 +1213,7 @@ class Spin1CompilerTest {
             + "0001F 0000B       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
             + "00020 0000C       32             RETURN\n"
             + "00021 0000D       00 00 00       Padding\n"
-            + "' Object header\n"
+            + "' Object \"text2\" header (var size 16)\n"
             + "00024 00000       10 00          Object size\n"
             + "00026 00002       02             Method count + 1\n"
             + "00027 00003       00             Object count\n"
@@ -1255,14 +1255,14 @@ class Spin1CompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 0)\n"
             + "00000 00000       20 00          Object size\n"
             + "00002 00002       04             Method count + 1\n"
             + "00003 00003       01             Object count\n"
             + "00004 00004       14 00 04 00    Function main @ $0014 (local size 4)\n"
             + "00008 00008       1C 00 00 00    Function f1 @ $001C (local size 0)\n"
             + "0000C 0000C       1D 00 00 00    Function f2 @ $001D (local size 0)\n"
-            + "00010 00010       20 00 00 00    Object text2 @ $0020 (variables @ $0000)\n"
+            + "00010 00010       20 00 00 00    Object \"text2\" @ $0020 (variables @ $0000)\n"
             + "' PUB main() | a\n"
             + "'     o.start(1, 2)\n"
             + "00014 00014       01             ANCHOR\n"
@@ -1275,7 +1275,7 @@ class Spin1CompilerTest {
             + "' PUB f2\n"
             + "0001D 0001D       32             RETURN\n"
             + "0001E 0001E       00 00          Padding\n"
-            + "' Object header\n"
+            + "' Object \"text2\" header (var size 0)\n"
             + "00020 00000       10 00          Object size\n"
             + "00022 00002       02             Method count + 1\n"
             + "00023 00003       00             Object count\n"
@@ -1313,19 +1313,19 @@ class Spin1CompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 0)\n"
             + "00000 00000       10 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       01             Object count\n"
             + "00004 00004       0C 00 04 00    Function main @ $000C (local size 4)\n"
-            + "00008 00008       10 00 00 00    Object text2 @ $0010 (variables @ $0000)\n"
+            + "00008 00008       10 00 00 00    Object \"text2\" @ $0010 (variables @ $0000)\n"
             + "' PUB main() | a\n"
             + "'     a := o#CONSTANT\n"
             + "0000C 0000C       36             CONSTANT (1)\n"
             + "0000D 0000D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "0000E 0000E       32             RETURN\n"
             + "0000F 0000F       00             Padding\n"
-            + "' Object header\n"
+            + "' Object \"text2\" header (var size 0)\n"
             + "00010 00000       04 00          Object size\n"
             + "00012 00002       01             Method count + 1\n"
             + "00013 00003       00             Object count\n"
@@ -1645,7 +1645,7 @@ class Spin1CompilerTest {
 
     @Test
     void testIfCaseElse() throws Exception {
-        Spin1Compiler.OPENSPIN_COMPATIBILITY = true;
+        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = true;
 
         String text = ""
             + "PUB main() | a\n"
@@ -2340,14 +2340,14 @@ class Spin1CompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 4)\n"
             + "00000 00000       28 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       03             Object count\n"
             + "00004 00004       14 00 04 00    Function main @ $0014 (local size 4)\n"
-            + "00008 00008       28 00 04 00    Object object1 @ $0028 (variables @ $0004)\n"
-            + "0000C 0000C       28 00 0C 00    Object object1 @ $0028 (variables @ $000C)\n"
-            + "00010 00010       38 00 14 00    Object object2 @ $0038 (variables @ $0014)\n"
+            + "00008 00008       28 00 04 00    Object \"object1\" @ $0028 (variables @ $0004)\n"
+            + "0000C 0000C       28 00 0C 00    Object \"object1\" @ $0028 (variables @ $000C)\n"
+            + "00010 00010       38 00 14 00    Object \"object2\" @ $0038 (variables @ $0014)\n"
             + "' PUB main | a\n"
             + "'     o1.function(1)\n"
             + "00014 00014       01             ANCHOR\n"
@@ -2363,7 +2363,7 @@ class Spin1CompilerTest {
             + "00022 00022       06 04 01       CALL_OBJ_SUB\n"
             + "00025 00025       32             RETURN\n"
             + "00026 00026       00 00          Padding\n"
-            + "' Object header\n"
+            + "' Object \"object1\" header (var size 8)\n"
             + "00028 00000       10 00          Object size\n"
             + "0002A 00002       02             Method count + 1\n"
             + "0002B 00003       00             Object count\n"
@@ -2378,7 +2378,7 @@ class Spin1CompilerTest {
             + "00035 0000D       33             RETURN\n"
             + "00036 0000E       32             RETURN\n"
             + "00037 0000F       00             Padding\n"
-            + "' Object header\n"
+            + "' Object \"object2\" header (var size 4)\n"
             + "00038 00000       14 00          Object size\n"
             + "0003A 00002       02             Method count + 1\n"
             + "0003B 00003       00             Object count\n"
@@ -2445,14 +2445,14 @@ class Spin1CompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 4)\n"
             + "00000 00000       28 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       03             Object count\n"
             + "00004 00004       14 00 04 00    Function main @ $0014 (local size 4)\n"
-            + "00008 00008       28 00 04 00    Object object1 @ $0028 (variables @ $0004)\n"
-            + "0000C 0000C       28 00 10 00    Object object1 @ $0028 (variables @ $0010)\n"
-            + "00010 00010       44 00 1C 00    Object object2 @ $0044 (variables @ $001C)\n"
+            + "00008 00008       28 00 04 00    Object \"object1\" @ $0028 (variables @ $0004)\n"
+            + "0000C 0000C       28 00 10 00    Object \"object1\" @ $0028 (variables @ $0010)\n"
+            + "00010 00010       44 00 1C 00    Object \"object2\" @ $0044 (variables @ $001C)\n"
             + "' PUB main | a\n"
             + "'     o1.function(1)\n"
             + "00014 00014       01             ANCHOR\n"
@@ -2468,12 +2468,12 @@ class Spin1CompilerTest {
             + "00022 00022       06 04 01       CALL_OBJ_SUB\n"
             + "00025 00025       32             RETURN\n"
             + "00026 00026       00 00          Padding\n"
-            + "' Object header\n"
+            + "' Object \"object1\" header (var size 12)\n"
             + "00028 00000       1C 00          Object size\n"
             + "0002A 00002       02             Method count + 1\n"
             + "0002B 00003       01             Object count\n"
             + "0002C 00004       0C 00 00 00    Function function @ $000C (local size 0)\n"
-            + "00030 00008       1C 00 08 00    Object object2 @ $001C (variables @ $0008)\n"
+            + "00030 00008       1C 00 08 00    Object \"object2\" @ $001C (variables @ $0008)\n"
             + "' PUB function(a)\n"
             + "'     e := o3.function(3)\n"
             + "00034 0000C       00             ANCHOR\n"
@@ -2489,7 +2489,7 @@ class Spin1CompilerTest {
             + "00040 00018       33             RETURN\n"
             + "00041 00019       32             RETURN\n"
             + "00042 0001A       00 00          Padding\n"
-            + "' Object header\n"
+            + "' Object \"object2\" header (var size 4)\n"
             + "00044 00000       14 00          Object size\n"
             + "00046 00002       02             Method count + 1\n"
             + "00047 00003       00             Object count\n"
@@ -2518,22 +2518,14 @@ class Spin1CompilerTest {
         }
 
         @Override
-        protected Spin1Object getObject(String fileName) {
+        protected Node getParsedObject(String fileName) {
             String text = sources.get(fileName);
+            if (text == null) {
+                return null;
+            }
             Spin1TokenStream stream = new Spin1TokenStream(text);
             Spin1Parser subject = new Spin1Parser(stream);
-            Node root = subject.parse();
-
-            Spin1Compiler compiler = new Spin1CompilerAdapter(sources);
-            Spin1Object object = compiler.compileObject(root);
-
-            addChildObjects(compiler);
-
-            for (CompilerMessage msg : compiler.getMessages()) {
-                logMessage(msg);
-            }
-
-            return object;
+            return subject.parse();
         }
 
     }

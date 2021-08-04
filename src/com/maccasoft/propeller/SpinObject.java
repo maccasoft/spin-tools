@@ -24,7 +24,7 @@ import com.maccasoft.propeller.expressions.Expression;
 public abstract class SpinObject {
 
     int size;
-    List<DataObject> data = new ArrayList<DataObject>();
+    protected List<DataObject> data = new ArrayList<DataObject>();
 
     int clkfreq;
     int clkmode;
@@ -33,8 +33,8 @@ public abstract class SpinObject {
     Map<String, Expression> symbols = new HashMap<String, Expression>();
 
     public static class DataObject {
-        byte[] bytes;
-        String text;
+        protected byte[] bytes;
+        protected String text;
 
         public DataObject(byte[] bytes) {
             this.bytes = bytes;
@@ -283,6 +283,11 @@ public abstract class SpinObject {
 
     public void writeComment(String text) {
         data.add(new CommentDataObject(text));
+    }
+
+    public void write(DataObject object) {
+        data.add(object);
+        size += object.bytes.length;
     }
 
     public DataObject getObject(int index) {

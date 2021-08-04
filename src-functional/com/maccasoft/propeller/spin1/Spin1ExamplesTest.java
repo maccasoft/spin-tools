@@ -33,12 +33,12 @@ class Spin1ExamplesTest {
 
     @BeforeAll
     static void setUp() throws Exception {
-        Spin1Compiler.OPENSPIN_COMPATIBILITY = true;
+        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = true;
     }
 
     @AfterAll
     static void cleanUp() throws Exception {
-        Spin1Compiler.OPENSPIN_COMPATIBILITY = false;
+        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = false;
     }
 
     @Test
@@ -89,17 +89,14 @@ class Spin1ExamplesTest {
         }
 
         @Override
-        protected Spin1Object getObject(String fileName) {
+        protected Node getParsedObject(String fileName) {
             String text = getObjectSource(fileName);
             if (text == null) {
-                throw new RuntimeException("file " + fileName + " not found");
+                return null;
             }
             Spin1TokenStream stream = new Spin1TokenStream(text);
             Spin1Parser subject = new Spin1Parser(stream);
-            Node root = subject.parse();
-
-            Spin1CompilerAdapter compiler = new Spin1CompilerAdapter(parent);
-            return compiler.compileObject(root);
+            return subject.parse();
         }
 
         protected String getObjectSource(String fileName) {

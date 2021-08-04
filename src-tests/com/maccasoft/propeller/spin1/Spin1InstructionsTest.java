@@ -10,6 +10,8 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.util.Collections;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -523,7 +525,7 @@ class Spin1InstructionsTest {
         Spin1Parser parser = new Spin1Parser(stream);
         Node root = parser.parse();
 
-        Spin1Compiler compiler = new Spin1Compiler();
+        Spin1ObjectCompiler compiler = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         compiler.compileObject(root);
 
         Spin1InstructionObject obj = compiler.source.get(0).getInstructionObject();

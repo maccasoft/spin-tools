@@ -70,8 +70,8 @@ import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.TempDirectory;
-import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Object;
+import com.maccasoft.propeller.spin1.Spin1ObjectCompiler;
 import com.maccasoft.propeller.spin2.Spin2Object;
 
 import jssc.SerialPort;
@@ -1663,7 +1663,7 @@ public class SpinTools {
     static {
         Display.setAppName(APP_TITLE);
         Display.setAppVersion(APP_VERSION);
-        Spin1Compiler.OPENSPIN_COMPATIBILITY = true;
+        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = true;
     }
 
     public static void main(String[] args) {

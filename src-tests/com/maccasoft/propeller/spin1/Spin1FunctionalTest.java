@@ -23,7 +23,7 @@ public class Spin1FunctionalTest {
 
     @AfterEach
     void afterEach() {
-        Spin1Compiler.OPENSPIN_COMPATIBILITY = false;
+        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = false;
     }
 
     @Test
@@ -88,7 +88,7 @@ public class Spin1FunctionalTest {
 
     @Test
     void testBlinkOpenSpin() throws Exception {
-        Spin1Compiler.OPENSPIN_COMPATIBILITY = true;
+        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = true;
 
         String text = ""
             + "CON\n"

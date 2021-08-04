@@ -37,7 +37,6 @@ import org.eclipse.swt.widgets.Display;
 import com.maccasoft.propeller.EditorTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
-import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
 import com.maccasoft.propeller.spin1.Spin1TokenStream;
@@ -123,7 +122,7 @@ public class EditorTab {
     class Spin1CompilerAdapter extends Spin1Compiler {
 
         @Override
-        protected Spin1Object getObject(String fileName) {
+        protected Node getParsedObject(String fileName) {
             AtomicReference<Node> result = new AtomicReference<Node>();
             Display.getDefault().syncExec(new Runnable() {
 
@@ -153,16 +152,7 @@ public class EditorTab {
                     }
                 }
             }
-            if (root != null) {
-                Spin1CompilerAdapter c = new Spin1CompilerAdapter();
-                Spin1Object obj = c.compileObject(root);
-                if (c.hasErrors()) {
-                    throw new RuntimeException("object has errors");
-                }
-                addChildObjects(c);
-                return obj;
-            }
-            return null;
+            return root;
         }
 
     }

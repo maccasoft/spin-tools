@@ -10,6 +10,8 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.util.Collections;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +35,7 @@ class Spin1ClockModeTest {
         Spin1Parser parser = new Spin1Parser(stream);
         Node root = parser.parse();
 
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.compileConBlock(root.getChild(0), new Spin1Object());
 
         Assertions.assertEquals("5_000_000", subject.scope.getSymbol("_XINFREQ").toString());
@@ -42,7 +44,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClockDefault() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
 
         subject.determineClock();
 
@@ -52,7 +54,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_RCFAST() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Identifier("RCFAST", subject.scope));
 
         subject.determineClock();
@@ -63,7 +65,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_RCSLOW() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Identifier("RCSLOW", subject.scope));
 
         subject.determineClock();
@@ -74,7 +76,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XINPUT() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Identifier("XINPUT", subject.scope));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -86,7 +88,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XINPUT_PLL1X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XINPUT", subject.scope), new Identifier("PLL1X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -98,7 +100,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XINPUT_PLL2X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XINPUT", subject.scope), new Identifier("PLL2X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -110,7 +112,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XINPUT_PLL4X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XINPUT", subject.scope), new Identifier("PLL4X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -122,7 +124,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XINPUT_PLL8X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XINPUT", subject.scope), new Identifier("PLL8X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -134,7 +136,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XINPUT_PLL16X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XINPUT", subject.scope), new Identifier("PLL16X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -146,7 +148,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL1_PLL1X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL1", subject.scope), new Identifier("PLL1X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -158,7 +160,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL1_PLL2X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL1", subject.scope), new Identifier("PLL2X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -170,7 +172,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL1_PLL4X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL1", subject.scope), new Identifier("PLL4X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -182,7 +184,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL1_PLL8X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL1", subject.scope), new Identifier("PLL8X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -194,7 +196,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL1_PLL16X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL1", subject.scope), new Identifier("PLL16X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -206,7 +208,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL2_PLL1X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL2", subject.scope), new Identifier("PLL1X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -218,7 +220,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL2_PLL2X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL2", subject.scope), new Identifier("PLL2X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -230,7 +232,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL2_PLL4X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL2", subject.scope), new Identifier("PLL4X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -242,7 +244,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL2_PLL8X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL2", subject.scope), new Identifier("PLL8X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -254,7 +256,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL2_PLL16X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL2", subject.scope), new Identifier("PLL16X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -266,7 +268,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL3_PLL1X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL3", subject.scope), new Identifier("PLL1X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -278,7 +280,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL3_PLL2X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL3", subject.scope), new Identifier("PLL2X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -290,7 +292,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL3_PLL4X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL3", subject.scope), new Identifier("PLL4X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -302,7 +304,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL3_PLL8X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL3", subject.scope), new Identifier("PLL8X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
@@ -314,7 +316,7 @@ class Spin1ClockModeTest {
 
     @Test
     void testDetermineClock_XTAL3_PLL16X() {
-        Spin1Compiler subject = new Spin1Compiler();
+        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1GlobalContext(), Collections.emptyMap());
         subject.scope.addSymbol("_CLKMODE", new Add(new Identifier("XTAL3", subject.scope), new Identifier("PLL16X", subject.scope)));
         subject.scope.addSymbol("_XINFREQ", new NumberLiteral(5_000_000));
 
