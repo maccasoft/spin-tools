@@ -2011,7 +2011,34 @@ public class Spin2ObjectCompiler {
                         }, "SUB_ADDRESS (" + ((Method) expression).getOffset() + ")"));
                     }
                     else if (expression instanceof Variable) {
-                        source.add(new VariableOp(context, VariableOp.Op.Address, false, (Variable) expression));
+                        Spin2StatementNode indexNode = null;
+
+                        int n = 0;
+                        if (n < node.getChildCount()) {
+                            if (!isPostEffect(node.getChild(n))) {
+                                indexNode = node.getChild(n++);
+                            }
+                        }
+
+                        int index = 0;
+                        boolean hasIndex = false;
+                        boolean popIndex = false;
+
+                        if (indexNode != null) {
+                            popIndex = true;
+                            try {
+                                Expression exp = buildConstantExpression(context, indexNode);
+                                if (exp.isConstant()) {
+                                    index = exp.getNumber().intValue();
+                                    hasIndex = true;
+                                    popIndex = false;
+                                }
+                            } catch (Exception e) {
+                                // Do nothing
+                            }
+                        }
+
+                        source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression, hasIndex, index));
                     }
                     else {
                         int index = 0;

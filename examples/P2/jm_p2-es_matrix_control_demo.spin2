@@ -1,0 +1,273 @@
+'' =================================================================================================
+''
+''   File....... jm_p2-es_matrix_control_demo.spin2
+''   Purpose.... Demo code for P2-ES Matrix and Control accessories
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 28 JUN 2020
+''
+''   {$P2} 
+''
+'' =================================================================================================
+
+{
+
+   After downloading program (F10 is okay)
+   -- open PST
+   -- click [Enable]
+   -- press [Enter] on your keyboard
+   -- follow menu
+   
+}
+   
+
+con { timing }
+
+  CLK_FREQ = 200_000_000                                        ' system freq as a constant
+  MS_001   = CLK_FREQ / 1_000                                   ' ticks in 1ms
+  US_001   = CLK_FREQ / 1_000_000                               ' ticks in 1us
+
+  BR_TERM  = 115_200                                            ' terminal baud rate
+
+  _clkfreq = CLK_FREQ                                           ' set system clock
+
+
+con { fixed io pins }
+
+  RX1      = 63  { I }                                          ' programming / debug
+  TX1      = 62  { O }                                           
+                                                                 
+  FS_CS    = 61  { O }                                          ' flash storage
+  FS_CLK   = 60  { O }                                           
+  FS_MOSI  = 59  { O }                                           
+  FS_MISO  = 58  { I }                                           
+                                                                 
+  SD_CLK   = 61  { O }                                          ' usd card storage
+  SD_CS    = 60  { O }                                           
+  SD_MOSI  = 59  { O }                                           
+  SD_MISO  = 58  { I }                                           
+                                                                 
+  SDA1     = 57  { IO }                                         ' i2c (optional)
+  SCL1     = 56  { IO }                                          
+                                                                 
+
+con { app io pins }
+
+  LEDS     = 40                                                 ' base pin for P2-ES matrix
+  BTNS     = 32                                                 ' base pin for P2-ES control
+
+
+con
+
+  #true,  ON, OFF 
+  #false, NO, YES
+
+  ESC = 27                                                      ' Esc key
+
+  
+obj
+
+' main                                                          ' * master Spin cog
+  prng    : "jm_prng"                                           '   random #s
+  matrix  : "jm_p2-es_matrix"                                   ' * P2-ES Matrix output
+  control : "jm_p2-es_control"                                  '   P2-ES Control IO
+  term    : "jm_serial"                                         '   serial IO for terminal    
+                                                                 
+' * uses cog when loaded
+
+
+dat
+
+  Menu          byte    "-----------------------------", 13
+                byte    " P2-ES Matrix & Buttons Demo ", 13
+                byte    "-----------------------------", 13
+                byte    13
+                byte    "[1] Scrolling message", 13
+                byte    "[2] Scrolling dot plot", 13
+                byte    "[3] Scrolling line plot", 13
+                byte    "[4] Test buttons", 13
+                byte    13
+                byte    ">> "
+                byte    0
+
+  BigArrow      byte    %00010000                                       ' custom character 1
+                byte    %00110000  
+                byte    %01111111
+                byte    %11111111  
+                byte    %01111111  
+                byte    %00110000  
+                byte    %00010000 
+
+  Smiley        byte    %00000000                                       ' custom character 2
+                byte    %00010100
+                byte    %00000000
+                byte    %00100010
+                byte    %00011100
+                byte    %00000000
+                byte    %00000000        
+
+  Banner        byte    " ", 1, "THE PARALLAX P2 IS FUN! ", 2, 0       ' banner with custom character
+
+
+var                                                             
+                                                                 
+          
+pub main() | k                                                
+                                                                 
+  setup()                                                          
+                                                                 
+  wait_for_terminal(true)
+
+  repeat
+    term.tx(term.CLS)
+    term.str(@Menu)
+    term.rxflush()
+    k := term.rx()
+
+    case k
+      "1" : scroll_message_demo()
+      "2" : plot_demo(0)
+      "3" : plot_demo(1)
+      "4" : test_buttons()
+
+
+pub scroll_message_demo()
+
+'' Scroll string through matrix
+'' -- use DAT string facilitates use of custom characters
+
+  matrix.scroll(@Banner, 62)
+
+
+pub plot_demo(mode) | level
+
+'' Demonstrate dot and line plotting using random values
+'' -- mode is 0 for dot, 1 for line
+
+  matrix.clear()
+
+  level := 4
+
+  repeat 40
+    matrix.shift_display(-1)                                    ' scroll data left
+    level := 0 #> level + prng.xrandomize(-1, 1) <# 7           ' randomize level -1/+1
+    if (mode == 0)
+      matrix.dot(7, level)
+    else
+      matrix.bar(7, level)
+    waitms(125)
+
+  repeat 8                                                      ' clear via scrolling
+    matrix.shift_display(-1)  
+    waitms(125) 
+
+
+dat
+
+  ButtonsTest   byte    "--------------------", 13
+                byte    " P2-ES Buttons Demo ", 13
+                byte    " -- [Esc] to Exit   ", 13
+                byte    "--------------------", 13
+                byte    13
+                byte    "[ ]  [ ]", 13                          ' 3 @ 1,5  /  2 @ 6,5
+                byte    13
+                byte    "[ ]  [ ]", 13                          ' 1 @ 1,7  /  0 @ 6,7
+                byte    13
+                byte    0 
+  
+    
+pub test_buttons() | k, bstates, last
+
+'' Test buttons on P2-ES Control board
+'' -- corresponding LED is lit
+
+  term.tx(term.CLS)
+  term.str(@ButtonsTest)
+
+  last := -1                                                    ' force first refresh
+
+  repeat
+    k := term.rxcheck()
+    if (k == ESC)
+      matrix.clear()
+      quit
+
+    bstates := control.rd_btns()                                ' get button states
+
+    if (bstates <> last)
+      last := bstates                                           ' for next cycle
+      control.wr_leds(bstates)                                  ' copy to control leds
+      k := lookupz(bstates : "0".."9","A".."F")                 ' convert buttons to hex
+      matrix.putc(k)                                            ' update matrix
+      show_state(1, 5, bstates.[3])                             ' update PST
+      show_state(6, 5, bstates.[2]) 
+      show_state(1, 7, bstates.[1])
+      show_state(6, 7, bstates.[0])
+
+    waitms(25)
+
+    
+pub show_state(x, y, state)
+
+'' Print state as * or space on PST at x/y
+
+  term.tx(term.CRSR_XY)
+  term.tx(x)
+  term.tx(y)
+  if (state)
+    term.tx("*")
+  else
+    term.tx(" ")
+    
+
+pub setup()
+
+  matrix.start(LEDS)                                            ' start matrix cog
+  matrix.set_custom(1, @BigArrow)                               ' load custom characters
+  matrix.set_custom(2, @Smiley)
+
+  control.start(BTNS)                                           ' configure control IO
+
+  term.start(BR_TERM)                                           ' start terminal io
+
+
+pub wait_for_terminal(clear)
+
+  ' Download to RAM with F10
+  ' F12 to open PST
+  ' Click [Enable]
+  ' Press Enter on you keyboard
+
+  term.rxflush()
+  term.rx()
+  if (clear)
+    term.tx(term.CLS)
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

@@ -40,6 +40,16 @@ class Spin2ExamplesTest {
     }
 
     @Test
+    void test_jm_chauvet_led_splash() throws Exception {
+        compileAndCompare(new File(path, "jm_chauvet_led-splash.spin2"), new File(path, "jm_chauvet_led-splash.binary"));
+    }
+
+    @Test
+    void test_jm_click_4_20ma_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_click_4-20ma_demo.spin2"), new File(path, "jm_click_4-20ma_demo.binary"));
+    }
+
+    @Test
     void test_jm_click_dmx_tx_demo() throws Exception {
         compileAndCompare(new File(path, "jm_click_dmx-tx_demo.spin2"), new File(path, "jm_click_dmx-tx_demo.binary"));
     }
@@ -85,6 +95,11 @@ class Spin2ExamplesTest {
     }
 
     @Test
+    void test_jm_format_strings_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_format_strings_demo.spin2"), new File(path, "jm_format_strings_demo.binary"));
+    }
+
+    @Test
     void test_jm_i2c_scanner() throws Exception {
         compileAndCompare(new File(path, "jm_i2c_scanner.spin2"), new File(path, "jm_i2c_scanner.binary"));
     }
@@ -92,6 +107,21 @@ class Spin2ExamplesTest {
     @Test
     void test_jm_lcd_pcf8574_demo() throws Exception {
         compileAndCompare(new File(path, "jm_lcd_pcf8574_demo.spin2"), new File(path, "jm_lcd_pcf8574_demo.binary"));
+    }
+
+    @Test
+    void test_jm_max31855_k_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_max31855-k_demo.spin2"), new File(path, "jm_max31855-k_demo.binary"));
+    }
+
+    @Test
+    void test_jm_max7219_ez_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_max7219_ez_demo.spin2"), new File(path, "jm_max7219_ez_demo.binary"));
+    }
+
+    @Test
+    void test_jm_p2_es_matrix_control_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_p2-es_matrix_control_demo.spin2"), new File(path, "jm_p2-es_matrix_control_demo.binary"));
     }
 
     @Test
