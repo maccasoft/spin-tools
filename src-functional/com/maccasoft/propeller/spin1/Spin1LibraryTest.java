@@ -75,6 +75,16 @@ class Spin1LibraryTest {
     }
 
     @Test
+    void test_display_tv_graphics() throws Exception {
+        compileAndCompare(new File(path, "display.tv.graphics.spin"), new File(path, "display.tv.graphics.binary"));
+    }
+
+    @Test
+    void test_display_tv_text() throws Exception {
+        compileAndCompare(new File(path, "display.tv.text.spin"), new File(path, "display.tv.text.binary"));
+    }
+
+    @Test
     void test_display_vga() throws Exception {
         compileAndCompare(new File(path, "display.vga.spin"), new File(path, "display.vga.binary"));
     }
@@ -102,6 +112,11 @@ class Spin1LibraryTest {
     @Test
     void test_input_keyboard() throws Exception {
         compileAndCompare(new File(path, "input.keyboard.spin"), new File(path, "input.keyboard.binary"));
+    }
+
+    @Test
+    void test_input_keypad_4x4() throws Exception {
+        compileAndCompare(new File(path, "input.keypad.4x4.spin"), new File(path, "input.keypad.4x4.binary"));
     }
 
     @Test

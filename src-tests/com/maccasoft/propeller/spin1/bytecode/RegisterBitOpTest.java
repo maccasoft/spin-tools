@@ -19,21 +19,21 @@ class RegisterBitOpTest {
 
     @Test
     void testRead() {
-        RegisterBitOp op = new RegisterBitOp(new Spin1Context(), RegisterBitOp.Op.Read, 0x1F6);
+        RegisterBitOp op = new RegisterBitOp(new Spin1Context(), RegisterBitOp.Op.Read, false, 0x1F6);
         Assertions.assertEquals("3D 96", toString(op.getBytes()));
         Assertions.assertEquals("REGBIT_READ $1F6", op.toString());
     }
 
     @Test
     void testWrite() {
-        RegisterBitOp op = new RegisterBitOp(new Spin1Context(), RegisterBitOp.Op.Write, 0x1F6);
+        RegisterBitOp op = new RegisterBitOp(new Spin1Context(), RegisterBitOp.Op.Write, false, 0x1F6);
         Assertions.assertEquals("3D B6", toString(op.getBytes()));
         Assertions.assertEquals("REGBIT_WRITE $1F6", op.toString());
     }
 
     @Test
     void testAssign() {
-        RegisterBitOp op = new RegisterBitOp(new Spin1Context(), RegisterBitOp.Op.Assign, 0x1F6);
+        RegisterBitOp op = new RegisterBitOp(new Spin1Context(), RegisterBitOp.Op.Assign, false, 0x1F6);
         Assertions.assertEquals("3D D6", toString(op.getBytes()));
         Assertions.assertEquals("REGBIT_MODIFY $1F6", op.toString());
     }

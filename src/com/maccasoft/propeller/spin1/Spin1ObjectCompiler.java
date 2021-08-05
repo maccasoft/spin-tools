@@ -1744,8 +1744,9 @@ public class Spin1ObjectCompiler {
             }
             if (expression instanceof Register) {
                 if (node.getChild(0).getChildCount() == 1) {
+                    boolean range = "..".equals(node.getChild(0).getChild(0).getText());
                     source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(0), true));
-                    source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, expression.getNumber().intValue()));
+                    source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, range, expression.getNumber().intValue()));
                 }
                 else {
                     source.add(new RegisterOp(context, RegisterOp.Op.Assign, expression.getNumber().intValue()));
@@ -1773,8 +1774,9 @@ public class Spin1ObjectCompiler {
             }
             if (expression instanceof Register) {
                 if (node.getChild(0).getChildCount() == 1) {
+                    boolean range = "..".equals(node.getChild(0).getChild(0).getText());
                     source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(0), true));
-                    source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, expression.getNumber().intValue()));
+                    source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, range, expression.getNumber().intValue()));
                 }
                 else {
                     source.add(new RegisterOp(context, RegisterOp.Op.Assign, expression.getNumber().intValue()));
@@ -2143,9 +2145,10 @@ public class Spin1ObjectCompiler {
                 }
                 else if (expression instanceof Register) {
                     if (node.getChildCount() != 0) {
+                        boolean range = "..".equals(node.getChild(0).getText());
                         source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                         if (node.getChildCount() == 2) {
-                            source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, expression.getNumber().intValue()));
+                            source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, range, expression.getNumber().intValue()));
                             if ("~".equalsIgnoreCase(node.getChild(1).getText())) {
                                 source.add(new Bytecode(context, 0b0_00110_00, "POST_CLEAR"));
                             }
@@ -2157,7 +2160,7 @@ public class Spin1ObjectCompiler {
                             }
                         }
                         else {
-                            source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Read : RegisterBitOp.Op.Write, expression.getNumber().intValue()));
+                            source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Read : RegisterBitOp.Op.Write, range, expression.getNumber().intValue()));
                         }
                     }
                     else {
@@ -2432,8 +2435,9 @@ public class Spin1ObjectCompiler {
             }
             if (expression instanceof Register) {
                 if (node.getChildCount() == 1) {
+                    boolean range = "..".equals(node.getChild(0).getText());
                     source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-                    source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Assign : RegisterBitOp.Op.Write, expression.getNumber().intValue()));
+                    source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Assign : RegisterBitOp.Op.Write, range, expression.getNumber().intValue()));
                 }
                 else {
                     source.add(new RegisterOp(context, push ? RegisterOp.Op.Assign : RegisterOp.Op.Write, expression.getNumber().intValue()));

@@ -1570,7 +1570,7 @@ class Spin1CompilerTest {
             + "0000C 0000C       36             CONSTANT (1)\n"
             + "0000D 0000D       38 02          CONSTANT (2)\n"
             + "0000F 0000F       38 05          CONSTANT (5)\n"
-            + "00011 00011       3D B6          REGBIT_WRITE $1F6\n"
+            + "00011 00011       3E B6          REGBIT_RANGE_WRITE $1F6\n"
             + "00013 00013       32             RETURN\n"
             + "", compile(text));
     }

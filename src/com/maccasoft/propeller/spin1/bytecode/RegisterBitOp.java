@@ -25,11 +25,13 @@ public class RegisterBitOp extends Spin1Bytecode {
     };
 
     public Op oo;
+    public boolean range;
     public int value;
 
-    public RegisterBitOp(Spin1Context context, Op oo, int value) {
+    public RegisterBitOp(Spin1Context context, Op oo, boolean range, int value) {
         super(context);
         this.oo = oo;
+        this.range = range;
         this.value = value;
     }
 
@@ -45,13 +47,17 @@ public class RegisterBitOp extends Spin1Bytecode {
         b1 = op_xxxxx.setValue(b1, value - 0x1E0);
 
         return new byte[] {
-            0b00111101, (byte) b1
+            range ? (byte) 0b00111110 : (byte) 0b00111101,
+            (byte) b1
         };
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("REGBIT_");
+        if (range) {
+            sb.append("RANGE_");
+        }
         switch (oo) {
             case Read:
                 sb.append("READ");
