@@ -139,6 +139,11 @@ class Spin2ExamplesTest {
         compileAndCompare(new File(path, "m6502_apple1_vga.spin2"), new File(path, "m6502_apple1_vga.binary"));
     }
 
+    @Test
+    void test_Spin2_interpreter() throws Exception {
+        compileAndCompare(new File("Spin2_interpreter.spin2"), new File("Spin2_interpreter.binary"));
+    }
+
     class Spin2CompilerAdapter extends Spin2Compiler {
 
         File parent;
@@ -235,21 +240,47 @@ class Spin2ExamplesTest {
                 throw new RuntimeException("error reading file " + file, e);
             }
         }
+        else {
+            try {
+                InputStream is = getClass().getResourceAsStream(file.getName());
+                byte[] b = new byte[is.available()];
+                is.read(b);
+                return new String(b);
+            } catch (Exception e) {
+                throw new RuntimeException("error reading file " + file, e);
+            }
+        }
 
         return sb.toString();
     }
 
     byte[] loadBinaryFromFile(File file) throws Exception {
-        InputStream is = new FileInputStream(file);
-        try {
-            byte[] b = new byte[is.available()];
-            is.read(b);
-            return b;
-        } finally {
+        if (file.exists()) {
+            InputStream is = new FileInputStream(file);
             try {
-                is.close();
-            } catch (Exception e) {
+                byte[] b = new byte[is.available()];
+                is.read(b);
+                return b;
+            } finally {
+                try {
+                    is.close();
+                } catch (Exception e) {
 
+                }
+            }
+        }
+        else {
+            InputStream is = getClass().getResourceAsStream(file.getName());
+            try {
+                byte[] b = new byte[is.available()];
+                is.read(b);
+                return b;
+            } finally {
+                try {
+                    is.close();
+                } catch (Exception e) {
+
+                }
             }
         }
     }
