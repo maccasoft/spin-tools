@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
@@ -39,7 +42,11 @@ public class Spin1Compiler {
     }
 
     public Spin1Object compile(Node root) {
-        Spin1Object obj = compileObject(root);
+        return compile("", root);
+    }
+
+    public Spin1Object compile(String rootFileName, Node root) {
+        Spin1Object obj = compileObject(rootFileName, root);
 
         Spin1Object object = new Spin1Object();
         object.setClkFreq(obj.getClkFreq());
@@ -73,46 +80,80 @@ public class Spin1Compiler {
         return object;
     }
 
-    public Spin1Object compileObject(Node root) {
-        List<String> list = new ArrayList<String>();
-        Map<String, Node> map = new HashMap<String, Node>();
-        NodeVisitor objectNodeVisitor = new NodeVisitor() {
+    class ObjectNodeVisitor extends NodeVisitor {
 
-            @Override
-            public void visitObject(ObjectNode node) {
-                if (node.name == null || node.file == null) {
-                    return;
-                }
-                String fileName = node.file.getText().substring(0, node.file.getText().length() - 1).substring(1);
-                list.remove(fileName);
-                list.add(0, fileName);
+        String parent;
+        ListOrderedMap<String, Node> list;
 
-                Node objectRoot = map.get(fileName);
-                if (objectRoot == null) {
-                    objectRoot = getParsedObject(fileName);
-                }
-                if (objectRoot == null) {
-                    logMessage(new CompilerMessage("Object file " + fileName + " not found", node));
-                    return;
-                }
-                map.put(fileName, objectRoot);
-                objectRoot.accept(this);
-            }
-
-        };
-        root.accept(objectNodeVisitor);
-
-        for (String fileName : list) {
-            Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompiler(scope, childObjects);
-            Spin1Object object = objectCompiler.compileObject(map.get(fileName));
-            childObjects.put(fileName, new ObjectInfo(fileName, object));
+        public ObjectNodeVisitor(String parent, ListOrderedMap<String, Node> list) {
+            this.parent = parent;
+            this.list = list;
         }
 
-        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompiler(scope, childObjects);
+        @Override
+        public void visitObject(ObjectNode node) {
+            if (node.name == null || node.file == null) {
+                return;
+            }
+            String fileName = node.file.getText().substring(0, node.file.getText().length() - 1).substring(1);
+            if (parent.equals(fileName)) {
+                throw new CompilerMessage("\"" + fileName + "\" illegal circular reference", node);
+            }
+
+            Node objectRoot = list.get(fileName);
+            if (objectRoot == null) {
+                objectRoot = getParsedObject(fileName);
+            }
+            if (objectRoot == null) {
+                logMessage(new CompilerMessage("object file " + fileName + " not found", node));
+                return;
+            }
+
+            list.remove(fileName);
+            list.put(0, fileName, objectRoot);
+
+            objectRoot.accept(new ObjectNodeVisitor(fileName, list));
+        }
+
+    }
+
+    class Spin1ObjectCompilerProxy extends Spin1ObjectCompiler {
+
+        String fileName;
+
+        public Spin1ObjectCompilerProxy(String fileName, Spin1Context scope, Map<String, ObjectInfo> childObjects) {
+            super(scope, childObjects);
+            this.fileName = fileName;
+        }
+
+        @Override
+        protected void logMessage(CompilerMessage message) {
+            message.fileName = fileName;
+            Spin1Compiler.this.logMessage(message);
+        }
+
+    }
+
+    public Spin1Object compileObject(Node root) {
+        return compileObject("", root);
+    }
+
+    public Spin1Object compileObject(String rootFileName, Node root) {
+        ListOrderedMap<String, Node> objects = ListOrderedMap.listOrderedMap(new HashMap<String, Node>());
+
+        root.accept(new ObjectNodeVisitor(rootFileName, objects));
+
+        for (Entry<String, Node> entry : objects.entrySet()) {
+            Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey(), scope, childObjects);
+            Spin1Object object = objectCompiler.compileObject(entry.getValue());
+            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object));
+        }
+
+        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFileName, scope, childObjects);
         Spin1Object object = objectCompiler.compileObject(root);
 
-        for (int i = list.size() - 1; i >= 0; i--) {
-            String fileName = list.get(i);
+        for (int i = objects.size() - 1; i >= 0; i--) {
+            String fileName = objects.get(i);
             ObjectInfo info = childObjects.get(fileName);
             info.offset = object.getSize();
             info.object.getObject(0).setText("Object \"" + fileName + "\" header (var size " + info.object.getVarSize() + ")");

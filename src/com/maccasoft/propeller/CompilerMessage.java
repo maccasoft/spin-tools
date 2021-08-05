@@ -21,6 +21,8 @@ public class CompilerMessage extends RuntimeException {
     public static final int WARNING = 1;
     public static final int ERROR = 2;
 
+    public String fileName;
+
     public int type;
     public int line;
     public int column;
@@ -73,6 +75,10 @@ public class CompilerMessage extends RuntimeException {
         this.stopToken = node.getStopToken();
     }
 
+    public String getFileName() {
+        return fileName;
+    }
+
     public int getType() {
         return type;
     }
@@ -96,10 +102,14 @@ public class CompilerMessage extends RuntimeException {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        if (fileName != null) {
+            sb.append(fileName);
+            sb.append(": ");
+        }
         sb.append(line);
         sb.append(":");
         sb.append(column);
-        sb.append(": ");
+        sb.append(" : ");
         if (type == WARNING) {
             sb.append("warning");
         }
