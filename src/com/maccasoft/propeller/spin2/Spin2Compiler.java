@@ -77,9 +77,9 @@ public class Spin2Compiler {
             if (node.name == null || node.file == null) {
                 return;
             }
-            String fileName = node.file.getText().substring(0, node.file.getText().length() - 1).substring(1);
+            String fileName = node.file.getText().substring(0, node.file.getText().length() - 1).substring(1) + ".spin2";
             if (parent.equals(fileName)) {
-                throw new CompilerMessage("\"" + fileName + "\" illegal circular reference", node);
+                throw new CompilerMessage(parent, "\"" + fileName + "\" illegal circular reference", node);
             }
 
             Node objectRoot = list.get(fileName);
@@ -87,7 +87,7 @@ public class Spin2Compiler {
                 objectRoot = getParsedObject(fileName);
             }
             if (objectRoot == null) {
-                logMessage(new CompilerMessage("object file " + fileName + " not found", node));
+                logMessage(new CompilerMessage(parent, "object file " + fileName + " not found", node));
                 return;
             }
 

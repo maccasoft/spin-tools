@@ -159,7 +159,6 @@ class Spin2ExamplesTest {
         }
 
         protected String getObjectSource(String fileName) {
-            fileName += ".spin2";
             File file = new File(parent, fileName);
             if (!file.exists()) {
                 file = new File(libraryPath, fileName);
@@ -167,7 +166,7 @@ class Spin2ExamplesTest {
             if (file.exists()) {
                 return loadFromFile(file);
             }
-            throw new RuntimeException("file " + file + " not found");
+            return null;
         }
 
     }

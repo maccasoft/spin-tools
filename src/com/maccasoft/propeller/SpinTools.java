@@ -1087,7 +1087,7 @@ public class SpinTools {
         EditorTab editorTab = (EditorTab) tabItem.getData();
 
         if (editorTab.hasErrors()) {
-            editorTab.goToFirstError();
+            highlightError(editorTab);
             MessageDialog.open(MessageDialog.INFORMATION, shell, APP_TITLE, "Editor has errors, fix all errors before opening the information dialog.", SWT.NONE);
             return;
         }
@@ -1143,6 +1143,61 @@ public class SpinTools {
             dlg.setObject((Spin2Object) object);
             dlg.open();
         }
+    }
+
+    void highlightError(EditorTab editorTab) {
+        for (CompilerMessage msg : editorTab.getMessages()) {
+            if (msg.type == CompilerMessage.ERROR) {
+                EditorTab tab = findFileEditorTab(msg.fileName);
+                if (tab == null) {
+                    File parentFile = editorTab.getFile() != null ? editorTab.getFile().getParentFile() : new File("");
+                    File fileToOpen = new File(parentFile, msg.fileName);
+                    if (!fileToOpen.exists()) {
+                        return;
+                    }
+
+                    tab = new EditorTab(tabFolder, fileToOpen.getName());
+
+                    tabFolder.setSelection(tabFolder.getItemCount() - 1);
+                    tab.setFocus();
+                    preferences.addToLru(fileToOpen);
+
+                    tab.addCaretListener(caretListener);
+
+                    try {
+                        tab.setEditorText(loadFromFile(fileToOpen));
+                        tab.setFile(fileToOpen);
+                        updateCaretPosition();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (tab != editorTab) {
+                    List<CompilerMessage> list = new ArrayList<CompilerMessage>();
+                    for (CompilerMessage m : editorTab.getMessages()) {
+                        if (tab.getText().equals(m.fileName)) {
+                            list.add(m);
+                        }
+                    }
+                    tab.getEditor().setCompilerMessages(list);
+                }
+                tab.goToFirstError();
+                break;
+            }
+        }
+    }
+
+    EditorTab findFileEditorTab(String fileName) {
+        for (int i = 0; i < tabFolder.getItemCount(); i++) {
+            EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
+            if (editorTab.getText().equals(fileName)) {
+                tabFolder.setSelection(i);
+                editorTab.setFocus();
+                updateCaretPosition();
+                return editorTab;
+            }
+        }
+        return null;
     }
 
     private void handleBinaryExport(SpinObject object) {

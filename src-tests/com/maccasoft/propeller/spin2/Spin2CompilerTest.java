@@ -2528,7 +2528,7 @@ class Spin2CompilerTest {
             + "";
 
         Map<String, String> sources = new HashMap<String, String>();
-        sources.put("text2", ""
+        sources.put("text2.spin2", ""
             + "PUB start(a, b) | c\n"
             + "\n"
             + "    c := a + b\n"
@@ -2537,7 +2537,7 @@ class Spin2CompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header\n"
-            + "00000 00000       14 00 00 00    Object \"text2\" @ $00014\n"
+            + "00000 00000       14 00 00 00    Object \"text2.spin2\" @ $00014\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
             + "0000C 0000C       14 00 00 00    End\n"
@@ -2547,7 +2547,7 @@ class Spin2CompilerTest {
             + "00011 00011       A2             CONSTANT (1)\n"
             + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "00013 00013       04             RETURN\n"
-            + "' Object \"text2\" header (var size 4)\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
             + "00014 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
             + "00018 00004       0E 00 00 00    End\n"
             + "' PUB start(a, b) | c\n"
@@ -2576,7 +2576,7 @@ class Spin2CompilerTest {
             + "";
 
         Map<String, String> sources = new HashMap<String, String>();
-        sources.put("text2", ""
+        sources.put("text2.spin2", ""
             + "CON\n"
             + "\n"
             + "    CONSTANT = 1\n"
@@ -2585,7 +2585,7 @@ class Spin2CompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header\n"
-            + "00000 00000       14 00 00 00    Object \"text2\" @ $00014\n"
+            + "00000 00000       14 00 00 00    Object \"text2.spin2\" @ $00014\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
             + "0000C 0000C       14 00 00 00    End\n"
@@ -2595,7 +2595,7 @@ class Spin2CompilerTest {
             + "00011 00011       A2             CONSTANT (1)\n"
             + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "00013 00013       04             RETURN\n"
-            + "' Object \"text2\" header (var size 4)\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
             + "", compile(text, sources));
     }
 
@@ -2618,7 +2618,7 @@ class Spin2CompilerTest {
             + "";
 
         Map<String, String> sources = new HashMap<String, String>();
-        sources.put("text1", ""
+        sources.put("text1.spin2", ""
             + "VAR\n"
             + "\n"
             + "    long d, e\n"
@@ -2628,7 +2628,7 @@ class Spin2CompilerTest {
             + "    c := a + b\n"
             + "\n"
             + "");
-        sources.put("text2", ""
+        sources.put("text2.spin2", ""
             + "VAR\n"
             + "\n"
             + "    long d, e, f, g\n"
@@ -2641,9 +2641,9 @@ class Spin2CompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header\n"
-            + "00000 00000       1C 00 00 00    Object \"text1\" @ $0001C\n"
+            + "00000 00000       1C 00 00 00    Object \"text1.spin2\" @ $0001C\n"
             + "00004 00004       08 00 00 00    Variables @ $00008\n"
-            + "00008 00008       2C 00 00 00    Object \"text2\" @ $0002C\n"
+            + "00008 00008       2C 00 00 00    Object \"text2.spin2\" @ $0002C\n"
             + "0000C 0000C       14 00 00 00    Variables @ $00014\n"
             + "00010 00010       18 00 00 80    Method main @ $00018 (0 parameters, 0 returns)\n"
             + "00014 00014       1C 00 00 00    End\n"
@@ -2653,7 +2653,7 @@ class Spin2CompilerTest {
             + "00019 00019       A2             CONSTANT (1)\n"
             + "0001A 0001A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "0001B 0001B       04             RETURN\n"
-            + "' Object \"text1\" header (var size 12)\n"
+            + "' Object \"text1.spin2\" header (var size 12)\n"
             + "0001C 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
             + "00020 00004       0E 00 00 00    End\n"
             + "' PUB start(a, b) | c\n"
@@ -2665,7 +2665,7 @@ class Spin2CompilerTest {
             + "00028 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
             + "00029 0000D       04             RETURN\n"
             + "0002A 0000E       00 00          Padding\n"
-            + "' Object \"text2\" header (var size 20)\n"
+            + "' Object \"text2.spin2\" header (var size 20)\n"
             + "0002C 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
             + "00030 00004       0E 00 00 00    End\n"
             + "' PUB start(a, b) | c\n"
@@ -2694,7 +2694,7 @@ class Spin2CompilerTest {
             + "";
 
         Map<String, String> sources = new HashMap<String, String>();
-        sources.put("text2", ""
+        sources.put("text2.spin2", ""
             + "PUB start(a, b) | c\n"
             + "\n"
             + "    c := a + b\n"
@@ -2703,7 +2703,7 @@ class Spin2CompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header\n"
-            + "00000 00000       18 00 00 00    Object \"text2\" @ $00018\n"
+            + "00000 00000       18 00 00 00    Object \"text2.spin2\" @ $00018\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
             + "0000C 0000C       18 00 00 00    End\n"
@@ -2715,7 +2715,7 @@ class Spin2CompilerTest {
             + "00013 00013       A3             CONSTANT (2)\n"
             + "00014 00014       08 00 00       CALL_OBJ_SUB (0.0)\n"
             + "00017 00017       04             RETURN\n"
-            + "' Object \"text2\" header (var size 4)\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
             + "00018 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
             + "0001C 00004       0E 00 00 00    End\n"
             + "' PUB start(a, b) | c\n"
@@ -2754,7 +2754,7 @@ class Spin2CompilerTest {
             + "";
 
         Map<String, String> sources = new HashMap<String, String>();
-        sources.put("text1", ""
+        sources.put("text1.spin2", ""
             + "OBJ\n"
             + "\n"
             + "    t3 : \"text3\"\n"
@@ -2767,7 +2767,7 @@ class Spin2CompilerTest {
             + "\n"
             + "    a1 := 5\n"
             + "");
-        sources.put("text2", ""
+        sources.put("text2.spin2", ""
             + "VAR\n"
             + "\n"
             + "    word a2\n"
@@ -2778,7 +2778,7 @@ class Spin2CompilerTest {
             + "    a2 := 6\n"
             + "    b2 := 7\n"
             + "");
-        sources.put("text3", ""
+        sources.put("text3.spin2", ""
             + "VAR\n"
             + "\n"
             + "    byte a3\n"
@@ -2792,9 +2792,9 @@ class Spin2CompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header\n"
-            + "00000 00000       2C 00 00 00    Object \"text1\" @ $0002C\n"
+            + "00000 00000       2C 00 00 00    Object \"text1.spin2\" @ $0002C\n"
             + "00004 00004       10 00 00 00    Variables @ $00010\n"
-            + "00008 00008       58 00 00 00    Object \"text2\" @ $00058\n"
+            + "00008 00008       58 00 00 00    Object \"text2.spin2\" @ $00058\n"
             + "0000C 0000C       24 00 00 00    Variables @ $00024\n"
             + "00010 00010       18 00 00 80    Method main @ $00018 (0 parameters, 0 returns)\n"
             + "00014 00014       29 00 00 00    End\n"
@@ -2814,8 +2814,8 @@ class Spin2CompilerTest {
             + "00025 00025       5D 0B 81       VAR_WRITE LONG VBASE+$0000B\n"
             + "00028 00028       04             RETURN\n"
             + "00029 00029       00 00 00       Padding\n"
-            + "' Object \"text1\" header (var size 20)\n"
-            + "0002C 00000       18 00 00 00    Object \"text3\" @ $00018\n"
+            + "' Object \"text1.spin2\" header (var size 20)\n"
+            + "0002C 00000       18 00 00 00    Object \"text3.spin2\" @ $00018\n"
             + "00030 00004       08 00 00 00    Variables @ $00008\n"
             + "00034 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
             + "00038 0000C       15 00 00 00    End\n"
@@ -2826,7 +2826,7 @@ class Spin2CompilerTest {
             + "0003E 00012       C1 81          VAR_WRITE LONG VBASE+$00001 (short)\n"
             + "00040 00014       04             RETURN\n"
             + "00041 00015       00 00 00       Padding\n"
-            + "' Object \"text3\" header (var size 12)\n"
+            + "' Object \"text3.spin2\" header (var size 12)\n"
             + "00044 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00048 00004       12 00 00 00    End\n"
             + "' PUB main()\n"
@@ -2839,7 +2839,7 @@ class Spin2CompilerTest {
             + "00052 0000E       5D 05 81       VAR_WRITE LONG VBASE+$00005\n"
             + "00055 00011       04             RETURN\n"
             + "00056 00012       00 00          Padding\n"
-            + "' Object \"text2\" header (var size 8)\n"
+            + "' Object \"text2.spin2\" header (var size 8)\n"
             + "00058 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "0005C 00004       12 00 00 00    End\n"
             + "' PUB main()\n"
@@ -3289,7 +3289,7 @@ class Spin2CompilerTest {
             + "";
 
         Map<String, String> sources = new HashMap<String, String>();
-        sources.put("object1", ""
+        sources.put("object1.spin2", ""
             + "VAR\n"
             + "\n"
             + "    long d\n"
@@ -3299,7 +3299,7 @@ class Spin2CompilerTest {
             + "\n"
             + "    return a + d * e\n"
             + "");
-        sources.put("object2", ""
+        sources.put("object2.spin2", ""
             + "VAR\n"
             + "\n"
             + "    long d\n"
@@ -3311,11 +3311,11 @@ class Spin2CompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header\n"
-            + "00000 00000       34 00 00 00    Object \"object1\" @ $00034\n"
+            + "00000 00000       34 00 00 00    Object \"object1.spin2\" @ $00034\n"
             + "00004 00004       08 00 00 00    Variables @ $00008\n"
-            + "00008 00008       34 00 00 00    Object \"object1\" @ $00034\n"
+            + "00008 00008       34 00 00 00    Object \"object1.spin2\" @ $00034\n"
             + "0000C 0000C       14 00 00 00    Variables @ $00014\n"
-            + "00010 00010       48 00 00 00    Object \"object2\" @ $00048\n"
+            + "00010 00010       48 00 00 00    Object \"object2.spin2\" @ $00048\n"
             + "00014 00014       20 00 00 00    Variables @ $00020\n"
             + "00018 00018       20 00 00 80    Method main @ $00020 (0 parameters, 0 returns)\n"
             + "0001C 0001C       31 00 00 00    End\n"
@@ -3335,7 +3335,7 @@ class Spin2CompilerTest {
             + "0002D 0002D       08 02 00       CALL_OBJ_SUB (2.0)\n"
             + "00030 00030       04             RETURN\n"
             + "00031 00031       00 00 00       Padding\n"
-            + "' Object \"object1\" header (var size 12)\n"
+            + "' Object \"object1.spin2\" header (var size 12)\n"
             + "00034 00000       08 00 10 81    Method function @ $00008 (1 parameters, 1 returns)\n"
             + "00038 00004       12 00 00 00    End\n"
             + "' PUB function(a) : r\n"
@@ -3349,7 +3349,7 @@ class Spin2CompilerTest {
             + "00044 00010       05             return\n"
             + "00045 00011       04             RETURN\n"
             + "00046 00012       00 00          Padding\n"
-            + "' Object \"object2\" header (var size 8)\n"
+            + "' Object \"object2.spin2\" header (var size 8)\n"
             + "00048 00000       08 00 10 81    Method function @ $00008 (1 parameters, 1 returns)\n"
             + "0004C 00004       13 00 00 00    End\n"
             + "' PUB function(a) : r | b, c\n"
@@ -3389,7 +3389,7 @@ class Spin2CompilerTest {
             + "";
 
         Map<String, String> sources = new HashMap<String, String>();
-        sources.put("object1", ""
+        sources.put("object1.spin2", ""
             + "VAR\n"
             + "\n"
             + "    long d\n"
@@ -3404,7 +3404,7 @@ class Spin2CompilerTest {
             + "    e := o3.function(3)\n"
             + "    return a + d * e\n"
             + "");
-        sources.put("object2", ""
+        sources.put("object2.spin2", ""
             + "VAR\n"
             + "\n"
             + "    long d\n"
@@ -3416,11 +3416,11 @@ class Spin2CompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header\n"
-            + "00000 00000       34 00 00 00    Object \"object1\" @ $00034\n"
+            + "00000 00000       34 00 00 00    Object \"object1.spin2\" @ $00034\n"
             + "00004 00004       08 00 00 00    Variables @ $00008\n"
-            + "00008 00008       34 00 00 00    Object \"object1\" @ $00034\n"
+            + "00008 00008       34 00 00 00    Object \"object1.spin2\" @ $00034\n"
             + "0000C 0000C       1C 00 00 00    Variables @ $0001C\n"
-            + "00010 00010       58 00 00 00    Object \"object2\" @ $00058\n"
+            + "00010 00010       58 00 00 00    Object \"object2.spin2\" @ $00058\n"
             + "00014 00014       30 00 00 00    Variables @ $00030\n"
             + "00018 00018       20 00 00 80    Method main @ $00020 (0 parameters, 0 returns)\n"
             + "0001C 0001C       31 00 00 00    End\n"
@@ -3440,8 +3440,8 @@ class Spin2CompilerTest {
             + "0002D 0002D       08 02 00       CALL_OBJ_SUB (2.0)\n"
             + "00030 00030       04             RETURN\n"
             + "00031 00031       00 00 00       Padding\n"
-            + "' Object \"object1\" header (var size 20)\n"
-            + "00034 00000       24 00 00 00    Object \"object2\" @ $00024\n"
+            + "' Object \"object1.spin2\" header (var size 20)\n"
+            + "00034 00000       24 00 00 00    Object \"object2.spin2\" @ $00024\n"
             + "00038 00004       0C 00 00 00    Variables @ $0000C\n"
             + "0003C 00008       10 00 10 81    Method function @ $00010 (1 parameters, 1 returns)\n"
             + "00040 0000C       21 00 00 00    End\n"
@@ -3461,7 +3461,7 @@ class Spin2CompilerTest {
             + "00053 0001F       05             return\n"
             + "00054 00020       04             RETURN\n"
             + "00055 00021       00 00 00       Padding\n"
-            + "' Object \"object2\" header (var size 8)\n"
+            + "' Object \"object2.spin2\" header (var size 8)\n"
             + "00058 00000       08 00 10 81    Method function @ $00008 (1 parameters, 1 returns)\n"
             + "0005C 00004       13 00 00 00    End\n"
             + "' PUB function(a) : r | b, c\n"
@@ -3499,7 +3499,7 @@ class Spin2CompilerTest {
             + "";
 
         Map<String, String> sources = new HashMap<String, String>();
-        sources.put("object1", ""
+        sources.put("object1.spin2", ""
             + "VAR\n"
             + "\n"
             + "    long d\n"
@@ -3514,7 +3514,7 @@ class Spin2CompilerTest {
             + "    e := o3.function(4)\n"
             + "    return a + d * e\n"
             + "");
-        sources.put("object2", ""
+        sources.put("object2.spin2", ""
             + "VAR\n"
             + "\n"
             + "    long d\n"
@@ -3529,7 +3529,7 @@ class Spin2CompilerTest {
             + "    e := o3.function(5)\n"
             + "    return a + d / e\n"
             + "");
-        sources.put("object3", ""
+        sources.put("object3.spin2", ""
             + "VAR\n"
             + "\n"
             + "    long d\n"
@@ -3541,9 +3541,9 @@ class Spin2CompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header\n"
-            + "00000 00000       24 00 00 00    Object \"object1\" @ $00024\n"
+            + "00000 00000       24 00 00 00    Object \"object1.spin2\" @ $00024\n"
             + "00004 00004       08 00 00 00    Variables @ $00008\n"
-            + "00008 00008       48 00 00 00    Object \"object2\" @ $00048\n"
+            + "00008 00008       48 00 00 00    Object \"object2.spin2\" @ $00048\n"
             + "0000C 0000C       1C 00 00 00    Variables @ $0001C\n"
             + "00010 00010       18 00 00 80    Method main @ $00018 (0 parameters, 0 returns)\n"
             + "00014 00014       24 00 00 00    End\n"
@@ -3558,8 +3558,8 @@ class Spin2CompilerTest {
             + "0001F 0001F       A3             CONSTANT (2)\n"
             + "00020 00020       08 01 02       CALL_OBJ_SUB (1.2)\n"
             + "00023 00023       04             RETURN\n"
-            + "' Object \"object1\" header (var size 20)\n"
-            + "00024 00000       48 00 00 00    Object \"object3\" @ $00048\n"
+            + "' Object \"object1.spin2\" header (var size 20)\n"
+            + "00024 00000       48 00 00 00    Object \"object3.spin2\" @ $00048\n"
             + "00028 00004       0C 00 00 00    Variables @ $0000C\n"
             + "0002C 00008       10 00 10 81    Method function @ $00010 (1 parameters, 1 returns)\n"
             + "00030 0000C       21 00 00 00    End\n"
@@ -3579,8 +3579,8 @@ class Spin2CompilerTest {
             + "00043 0001F       05             return\n"
             + "00044 00020       04             RETURN\n"
             + "00045 00021       00 00 00       Padding\n"
-            + "' Object \"object2\" header (var size 20)\n"
-            + "00048 00000       24 00 00 00    Object \"object3\" @ $00024\n"
+            + "' Object \"object2.spin2\" header (var size 20)\n"
+            + "00048 00000       24 00 00 00    Object \"object3.spin2\" @ $00024\n"
             + "0004C 00004       0C 00 00 00    Variables @ $0000C\n"
             + "00050 00008       10 00 10 81    Method function @ $00010 (1 parameters, 1 returns)\n"
             + "00054 0000C       21 00 00 00    End\n"
@@ -3600,7 +3600,7 @@ class Spin2CompilerTest {
             + "00067 0001F       05             return\n"
             + "00068 00020       04             RETURN\n"
             + "00069 00021       00 00 00       Padding\n"
-            + "' Object \"object3\" header (var size 8)\n"
+            + "' Object \"object3.spin2\" header (var size 8)\n"
             + "0006C 00000       08 00 10 81    Method function @ $00008 (1 parameters, 1 returns)\n"
             + "00070 00004       13 00 00 00    End\n"
             + "' PUB function(a) : r | b, c\n"

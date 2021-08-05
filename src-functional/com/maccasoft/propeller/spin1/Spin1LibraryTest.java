@@ -246,12 +246,11 @@ class Spin1LibraryTest {
         }
 
         protected String getObjectSource(String fileName) {
-            fileName += ".spin";
             File file = new File(parent, fileName);
             if (file.exists()) {
                 return loadFromFile(file);
             }
-            throw new RuntimeException("file " + file + " not found");
+            return null;
         }
 
     }

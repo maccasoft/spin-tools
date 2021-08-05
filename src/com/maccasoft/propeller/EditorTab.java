@@ -18,7 +18,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -62,6 +64,7 @@ public class EditorTab {
     AtomicBoolean pendingCompile = new AtomicBoolean(false);
 
     boolean errors;
+    List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
     Object object;
 
     final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
@@ -89,19 +92,17 @@ public class EditorTab {
 
                 @Override
                 public void run() {
-                    String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
                     File libraryPath = new File(Preferences.getInstance().getSpin1LibraryPath()).getAbsoluteFile();
-                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
+                    Node node = getNodeRootFromTab(fileName, libraryPath);
                     result.set(node);
                 }
             });
             Node root = result.get();
             if (root == null) {
                 File fileParent = file != null ? file.getParentFile() : null;
-                String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
-                File file = new File(fileParent, fileName + fileType);
+                File file = new File(fileParent, fileName);
                 if (!file.exists()) {
-                    file = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName + fileType);
+                    file = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName);
                 }
                 if (file.exists()) {
                     try {
@@ -127,19 +128,17 @@ public class EditorTab {
 
                 @Override
                 public void run() {
-                    String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
                     File libraryPath = new File(Preferences.getInstance().getSpin1LibraryPath()).getAbsoluteFile();
-                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
+                    Node node = getNodeRootFromTab(fileName, libraryPath);
                     result.set(node);
                 }
             });
             Node root = result.get();
             if (root == null) {
                 File fileParent = file != null ? file.getParentFile() : null;
-                String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
-                File file = new File(fileParent, fileName + fileType);
+                File file = new File(fileParent, fileName);
                 if (!file.exists()) {
-                    file = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName + fileType);
+                    file = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName);
                 }
                 if (file.exists()) {
                     try {
@@ -173,7 +172,7 @@ public class EditorTab {
                     public void run() {
                         Spin1Compiler compiler = new Spin1CompilerAdapter();
                         try {
-                            object = compiler.compile(root);
+                            object = compiler.compile(tabItemText, root);
                             errors = compiler.hasErrors();
                         } catch (Exception e) {
                             errors = true;
@@ -181,7 +180,17 @@ public class EditorTab {
                         }
 
                         if (!pendingCompile.get()) {
-                            editor.setCompilerMessages(compiler.getMessages());
+                            messages.clear();
+                            messages.addAll(compiler.getMessages());
+
+                            List<CompilerMessage> list = new ArrayList<CompilerMessage>();
+                            for (CompilerMessage msg : messages) {
+                                if (tabItemText.equals(msg.fileName)) {
+                                    list.add(msg);
+                                }
+                            }
+                            editor.setCompilerMessages(list);
+
                             Display.getDefault().asyncExec(new Runnable() {
 
                                 @Override
@@ -218,19 +227,17 @@ public class EditorTab {
 
                 @Override
                 public void run() {
-                    String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
                     File libraryPath = new File(Preferences.getInstance().getSpin2LibraryPath()).getAbsoluteFile();
-                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
+                    Node node = getNodeRootFromTab(fileName, libraryPath);
                     result.set(node);
                 }
             });
             Node root = result.get();
             if (root == null) {
                 File fileParent = file != null ? file.getParentFile() : null;
-                String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
-                File file = new File(fileParent, fileName + fileType);
+                File file = new File(fileParent, fileName);
                 if (!file.exists()) {
-                    file = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName + fileType);
+                    file = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
                 }
                 if (file.exists()) {
                     try {
@@ -256,19 +263,17 @@ public class EditorTab {
 
                 @Override
                 public void run() {
-                    String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
                     File libraryPath = new File(Preferences.getInstance().getSpin2LibraryPath()).getAbsoluteFile();
-                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
+                    Node node = getNodeRootFromTab(fileName, libraryPath);
                     result.set(node);
                 }
             });
             Node root = result.get();
             if (root == null) {
                 File fileParent = file != null ? file.getParentFile() : null;
-                String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
-                File file = new File(fileParent, fileName + fileType);
+                File file = new File(fileParent, fileName);
                 if (!file.exists()) {
-                    file = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName + fileType);
+                    file = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
                 }
                 if (file.exists()) {
                     try {
@@ -330,7 +335,7 @@ public class EditorTab {
                     public void run() {
                         Spin2Compiler compiler = new Spin2CompilerAdapter();
                         try {
-                            object = compiler.compile(root);
+                            object = compiler.compile(tabItemText, root);
                             errors = compiler.hasErrors();
                         } catch (Exception e) {
                             errors = true;
@@ -338,7 +343,17 @@ public class EditorTab {
                         }
 
                         if (!pendingCompile.get()) {
-                            editor.setCompilerMessages(compiler.getMessages());
+                            messages.clear();
+                            messages.addAll(compiler.getMessages());
+
+                            List<CompilerMessage> list = new ArrayList<CompilerMessage>();
+                            for (CompilerMessage msg : messages) {
+                                if (tabItemText.equals(msg.fileName)) {
+                                    list.add(msg);
+                                }
+                            }
+                            editor.setCompilerMessages(list);
+
                             Display.getDefault().asyncExec(new Runnable() {
 
                                 @Override
@@ -533,6 +548,10 @@ public class EditorTab {
 
     public boolean hasErrors() {
         return errors;
+    }
+
+    public List<CompilerMessage> getMessages() {
+        return messages;
     }
 
     public Object getObject() {

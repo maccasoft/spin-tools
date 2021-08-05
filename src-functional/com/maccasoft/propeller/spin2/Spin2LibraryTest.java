@@ -252,7 +252,7 @@ class Spin2LibraryTest {
     @Test
     void test_Spin2_interpreter() throws Exception {
         String text = getResourceAsString("Spin2_interpreter.spin2");
-
+    
         new File(path, "Spin2_interpreter.binary");
         compileAndCompare(text, expected);
     }
@@ -277,12 +277,11 @@ class Spin2LibraryTest {
         }
 
         protected String getObjectSource(String fileName) {
-            fileName += ".spin2";
             File file = new File(parent, fileName);
             if (file.exists()) {
                 return loadFromFile(file);
             }
-            throw new RuntimeException("file " + file + " not found");
+            return null;
         }
 
         @Override
