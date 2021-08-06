@@ -11,7 +11,6 @@
 package com.maccasoft.propeller;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -179,7 +178,7 @@ public abstract class EditorTokenMarker {
     }
 
     public Set<TokenMarker> getLineTokens(int lineStart, int lineStop) {
-        Set<TokenMarker> result = new HashSet<TokenMarker>();
+        Set<TokenMarker> result = new TreeSet<TokenMarker>();
 
         if (tokens.size() != 0) {
             TokenMarker firstMarker = tokens.floor(new TokenMarker(lineStart, lineStart, null));

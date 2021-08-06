@@ -64,11 +64,18 @@ public class Spin2Compiler {
 
     class ObjectNodeVisitor extends NodeVisitor {
 
-        String parent;
+        ObjectNodeVisitor parent;
+        String fileName;
         ListOrderedMap<String, Node> list;
 
-        public ObjectNodeVisitor(String parent, ListOrderedMap<String, Node> list) {
+        public ObjectNodeVisitor(String fileName, ListOrderedMap<String, Node> list) {
+            this.fileName = fileName;
+            this.list = list;
+        }
+
+        public ObjectNodeVisitor(ObjectNodeVisitor parent, String fileName, ListOrderedMap<String, Node> list) {
             this.parent = parent;
+            this.fileName = fileName;
             this.list = list;
         }
 
@@ -77,24 +84,29 @@ public class Spin2Compiler {
             if (node.name == null || node.file == null) {
                 return;
             }
-            String fileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin2";
-            if (parent.equals(fileName)) {
-                throw new CompilerMessage(parent, "\"" + fileName + "\" illegal circular reference", node);
+            String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin2";
+
+            ObjectNodeVisitor p = parent;
+            while (p != null) {
+                if (p.fileName.equals(objectFileName)) {
+                    throw new CompilerMessage(fileName, "\"" + objectFileName + "\" illegal circular reference", node);
+                }
+                p = p.parent;
             }
 
-            Node objectRoot = list.get(fileName);
+            Node objectRoot = list.get(objectFileName);
             if (objectRoot == null) {
-                objectRoot = getParsedObject(fileName);
+                objectRoot = getParsedObject(objectFileName);
             }
             if (objectRoot == null) {
-                logMessage(new CompilerMessage(parent, "object file " + fileName + " not found", node));
+                logMessage(new CompilerMessage(fileName, "object file \"" + objectFileName + "\" not found", node));
                 return;
             }
 
-            list.remove(fileName);
-            list.put(0, fileName, objectRoot);
+            list.remove(objectFileName);
+            list.put(0, objectFileName, objectRoot);
 
-            objectRoot.accept(new ObjectNodeVisitor(fileName, list));
+            objectRoot.accept(new ObjectNodeVisitor(this, objectFileName, list));
         }
 
     }
