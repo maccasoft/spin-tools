@@ -301,8 +301,8 @@ public abstract class EditorTokenMarker {
                     if (!node.name.getText().equalsIgnoreCase(s[0])) {
                         return;
                     }
-                    String file = node.file.getText().substring(1);
-                    Node objectRoot = getObjectTree(file.substring(0, file.length() - 1));
+                    String fileName = node.file.getText().substring(1, node.file.getText().length() - 1);
+                    Node objectRoot = getObjectTree(fileName);
                     if (objectRoot != null) {
                         objectRoot.accept(new NodeVisitor() {
 
@@ -399,8 +399,8 @@ public abstract class EditorTokenMarker {
                 if (objectNode.name == null || objectNode.file == null) {
                     return;
                 }
-                String file = objectNode.file.getText().substring(1);
-                Node objectRoot = getObjectTree(file.substring(0, file.length() - 1));
+                String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                Node objectRoot = getObjectTree(fileName);
                 if (objectRoot == null) {
                     return;
                 }
@@ -492,8 +492,8 @@ public abstract class EditorTokenMarker {
                 if (objectNode.name == null || objectNode.file == null) {
                     return;
                 }
-                String file = objectNode.file.getText().substring(1);
-                Node objectRoot = getObjectTree(file.substring(0, file.length() - 1));
+                String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                Node objectRoot = getObjectTree(fileName);
                 if (objectRoot == null) {
                     return;
                 }

@@ -461,7 +461,7 @@ public class Spin1ObjectCompiler {
         for (Node child : parent.getChilds()) {
             ObjectNode node = (ObjectNode) child;
             if (node.name != null && node.file != null) {
-                String fileName = node.file.getText().substring(0, node.file.getText().length() - 1).substring(1) + ".spin";
+                String fileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin";
 
                 ObjectInfo info = childObjects.get(fileName);
                 if (info == null) {

@@ -535,8 +535,8 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                 tokens.add(new TokenMarker(objectNode.file, TokenId.STRING));
             }
 
-            String file = objectNode.file.getText().substring(1);
-            Node objectRoot = getObjectTree(file.substring(0, file.length() - 1));
+            String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+            Node objectRoot = getObjectTree(fileName);
             if (objectRoot != null) {
                 objectRoot.accept(new NodeVisitor() {
 
@@ -874,8 +874,8 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                     return;
                 }
 
-                String file = objectNode.file.getText().substring(1);
-                Node objectRoot = getObjectTree(file.substring(0, file.length() - 1));
+                String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                Node objectRoot = getObjectTree(fileName);
                 if (objectRoot != null) {
                     objectRoot.accept(new NodeVisitor() {
 

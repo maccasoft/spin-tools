@@ -87,22 +87,23 @@ public class EditorTab {
 
         @Override
         protected Node getObjectTree(String fileName) {
+            String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
             AtomicReference<Node> result = new AtomicReference<Node>();
             Display.getDefault().syncExec(new Runnable() {
 
                 @Override
                 public void run() {
                     File libraryPath = new File(Preferences.getInstance().getSpin1LibraryPath()).getAbsoluteFile();
-                    Node node = getNodeRootFromTab(fileName, libraryPath);
+                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
                     result.set(node);
                 }
             });
             Node root = result.get();
             if (root == null) {
                 File fileParent = file != null ? file.getParentFile() : null;
-                File file = new File(fileParent, fileName);
+                File file = new File(fileParent, fileName + fileType);
                 if (!file.exists()) {
-                    file = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName);
+                    file = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName + fileType);
                 }
                 if (file.exists()) {
                     try {
@@ -222,22 +223,23 @@ public class EditorTab {
 
         @Override
         protected Node getObjectTree(String fileName) {
+            String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
             AtomicReference<Node> result = new AtomicReference<Node>();
             Display.getDefault().syncExec(new Runnable() {
 
                 @Override
                 public void run() {
                     File libraryPath = new File(Preferences.getInstance().getSpin2LibraryPath()).getAbsoluteFile();
-                    Node node = getNodeRootFromTab(fileName, libraryPath);
+                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
                     result.set(node);
                 }
             });
             Node root = result.get();
             if (root == null) {
                 File fileParent = file != null ? file.getParentFile() : null;
-                File file = new File(fileParent, fileName);
+                File file = new File(fileParent, fileName + fileType);
                 if (!file.exists()) {
-                    file = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
+                    file = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName + fileType);
                 }
                 if (file.exists()) {
                     try {

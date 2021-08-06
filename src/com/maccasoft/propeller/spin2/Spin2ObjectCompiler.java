@@ -474,7 +474,7 @@ public class Spin2ObjectCompiler {
         for (Node child : parent.getChilds()) {
             ObjectNode node = (ObjectNode) child;
             if (node.name != null && node.file != null) {
-                String fileName = node.file.getText().substring(0, node.file.getText().length() - 1).substring(1) + ".spin2";
+                String fileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin2";
 
                 ObjectInfo info = childObjects.get(fileName);
                 if (info == null) {
