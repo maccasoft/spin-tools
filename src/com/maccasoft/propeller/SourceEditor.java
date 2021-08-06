@@ -583,7 +583,7 @@ public class SourceEditor {
                 try {
                     clientArea = styledText.getClientArea();
                     clientArea.y += styledText.getTopMargin();
-                    clientArea.height -= styledText.getBottomMargin();
+                    clientArea.height -= styledText.getTopMargin() + styledText.getBottomMargin();
 
                     gc.setAdvanced(true);
                     gc.setAntialias(SWT.OFF);
@@ -618,15 +618,22 @@ public class SourceEditor {
             }
 
             void paintBlock(GC gc, Node node, int level, int yref) {
+                List<Node> childs = node.getChilds();
+
                 Rectangle r = styledText.getTextBounds(node.getStartToken().start, node.getStartToken().start);
                 int x0 = r.x + r.width / 2;
                 int y0 = r.y + r.height;
 
-                if (y0 >= clientArea.height) {
+                if (y0 >= clientArea.height || childs.size() == 0) {
                     return;
                 }
 
-                for (Node child : node.getChilds()) {
+                Rectangle r1 = styledText.getTextBounds(childs.get(childs.size() - 1).getStartToken().start, childs.get(childs.size() - 1).getStartToken().start);
+                if (r1.y < clientArea.y) {
+                    return;
+                }
+
+                for (Node child : childs) {
                     if (!(child instanceof StatementNode) && !(child instanceof DataLineNode)) {
                         continue;
                     }

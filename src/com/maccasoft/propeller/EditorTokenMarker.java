@@ -11,6 +11,7 @@
 package com.maccasoft.propeller;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -121,7 +122,7 @@ public abstract class EditorTokenMarker {
 
         @Override
         public int compareTo(TokenMarker o) {
-            return Integer.compare(start, o.start);
+            return start - o.start;
         }
 
         public String getError() {
@@ -178,24 +179,43 @@ public abstract class EditorTokenMarker {
     }
 
     public Set<TokenMarker> getLineTokens(int lineStart, int lineStop) {
-        Set<TokenMarker> result = new TreeSet<TokenMarker>();
+        Set<TokenMarker> result = new HashSet<TokenMarker>();
 
         if (tokens.size() != 0) {
-            TokenMarker firstMarker = tokens.floor(new TokenMarker(lineStart, lineStop, null));
+            TokenMarker firstMarker = tokens.floor(new TokenMarker(lineStart, lineStart, null));
             if (firstMarker == null) {
                 firstMarker = tokens.first();
             }
-            for (TokenMarker entry : tokens.tailSet(firstMarker)) {
-                int start = entry.getStart();
-                int stop = entry.getStop();
-                if ((lineStart >= start && lineStart <= stop) || (lineStop >= start && lineStop <= stop)) {
-                    result.add(entry);
+            TokenMarker lastMarker = tokens.ceiling(new TokenMarker(lineStop, lineStop, null));
+            if (lastMarker == null) {
+                lastMarker = tokens.last();
+            }
+            if (firstMarker == lastMarker) {
+                int start = firstMarker.getStart();
+                int stop = firstMarker.getStop();
+                if (stop >= lineStart && start <= lineStop) {
+                    if (start < lineStart) {
+                        start = lineStart;
+                    }
+                    if (stop > lineStop) {
+                        stop = lineStop;
+                    }
+                    result.add(new TokenMarker(start, stop, firstMarker.getId()));
                 }
-                else if (stop >= lineStart && stop <= lineStop) {
-                    result.add(entry);
-                }
-                if (start >= lineStop) {
-                    break;
+            }
+            else {
+                for (TokenMarker entry : tokens.subSet(firstMarker, lastMarker)) {
+                    int start = entry.getStart();
+                    int stop = entry.getStop();
+                    if (stop >= lineStart && start <= lineStop) {
+                        if (start < lineStart) {
+                            start = lineStart;
+                        }
+                        if (stop > lineStop) {
+                            stop = lineStop;
+                        }
+                        result.add(new TokenMarker(start, stop, entry.getId()));
+                    }
                 }
             }
         }
