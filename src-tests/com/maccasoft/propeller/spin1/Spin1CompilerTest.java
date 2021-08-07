@@ -690,7 +690,7 @@ class Spin1CompilerTest {
         Node root = subject.parse();
 
         Spin1Compiler compiler = new Spin1CompilerAdapter(sources);
-        Spin1Object obj = compiler.compileObject(root);
+        Spin1Object obj = compiler.compileObject(rootFile, root);
 
         for (CompilerMessage msg : compiler.getMessages()) {
             if (msg.type == CompilerMessage.ERROR) {

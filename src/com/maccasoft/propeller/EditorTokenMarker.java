@@ -148,7 +148,7 @@ public abstract class EditorTokenMarker {
         TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
         for (CompilerMessage message : messages) {
             TokenId id = message.type == CompilerMessage.ERROR ? TokenId.ERROR : TokenId.WARNING;
-            TokenMarker marker = new TokenMarker(message.getStartToken(), message.getStopToken(), id);
+            TokenMarker marker = message.getStartToken() != null ? new TokenMarker(message.getStartToken(), message.getStopToken(), id) : new TokenMarker(0, 0, id);
             marker.setError(message.getMessage());
             tokens.add(marker);
         }

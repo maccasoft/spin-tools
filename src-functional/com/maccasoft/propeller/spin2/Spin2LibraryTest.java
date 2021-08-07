@@ -252,7 +252,7 @@ class Spin2LibraryTest {
     @Test
     void test_Spin2_interpreter() throws Exception {
         String text = getResourceAsString("Spin2_interpreter.spin2");
-    
+
         new File(path, "Spin2_interpreter.binary");
         compileAndCompare(text, expected);
     }
@@ -304,7 +304,7 @@ class Spin2LibraryTest {
         Node root = subject.parse();
 
         Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(source.getParentFile());
-        Spin2Object obj = compiler.compile(root);
+        Spin2Object obj = compiler.compile(source.getName(), root);
         for (CompilerMessage msg : compiler.getMessages()) {
             if (msg.type == CompilerMessage.ERROR) {
                 throw msg;

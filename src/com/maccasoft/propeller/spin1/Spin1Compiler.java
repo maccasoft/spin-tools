@@ -21,11 +21,9 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
-import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
-import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin1.Spin1Object.LinkDataObject;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
 
@@ -39,10 +37,6 @@ public class Spin1Compiler {
 
     public Spin1Compiler() {
 
-    }
-
-    public Spin1Object compile(Node root) {
-        return compile("", root);
     }
 
     public Spin1Object compile(String rootFileName, Node root) {
@@ -76,6 +70,30 @@ public class Spin1Compiler {
 
         offset = 4 + obj.getDcurr();
         dcurr.setValue(dbase.getValue() + offset);
+
+        int stackRequired = 16;
+        if (scope.hasSymbol("_STACK")) {
+            stackRequired = scope.getLocalSymbol("_STACK").getNumber().intValue();
+        }
+        else if (scope.hasSymbol("_stack")) {
+            stackRequired = scope.getLocalSymbol("_stack").getNumber().intValue();
+        }
+        if (scope.hasSymbol("_FREE")) {
+            stackRequired += scope.getLocalSymbol("_FREE").getNumber().intValue();
+        }
+        else if (scope.hasSymbol("_free")) {
+            stackRequired += scope.getLocalSymbol("_free").getNumber().intValue();
+        }
+
+        if (stackRequired > 0x2000) {
+            logMessage(new CompilerMessage(rootFileName, "_STACK and _FREE must sum to under 8k longs."));
+        }
+        else {
+            int requiredSize = object.getSize() + obj.getVarSize() + (stackRequired << 2);
+            if (requiredSize >= 0x8000) {
+                logMessage(new CompilerMessage(rootFileName, "object exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs."));
+            }
+        }
 
         return object;
     }
@@ -146,11 +164,7 @@ public class Spin1Compiler {
 
     }
 
-    public Spin1Object compileObject(Node root) {
-        return compileObject("", root);
-    }
-
-    public Spin1Object compileObject(String rootFileName, Node root) {
+    Spin1Object compileObject(String rootFileName, Node root) {
         ListOrderedMap<String, Node> objects = ListOrderedMap.listOrderedMap(new HashMap<String, Node>());
 
         root.accept(new ObjectNodeVisitor(rootFileName, objects));
@@ -215,14 +229,6 @@ public class Spin1Compiler {
 
     public List<CompilerMessage> getMessages() {
         return messages;
-    }
-
-    Expression buildExpression(Node node, Spin1Context scope) {
-        return buildExpression(node.getTokens(), scope);
-    }
-
-    Expression buildExpression(List<Token> tokens, Spin1Context scope) {
-        return new Spin1ExpressionBuilder(scope, tokens).getExpression();
     }
 
 }

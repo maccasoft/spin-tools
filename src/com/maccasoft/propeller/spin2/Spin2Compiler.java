@@ -41,10 +41,6 @@ public class Spin2Compiler {
 
     }
 
-    public Spin2Object compile(Node root) {
-        return compile("", root);
-    }
-
     public Spin2Object compile(String rootFileName, Node root) {
         Spin2Object obj = compileObject(rootFileName, root);
 
@@ -131,10 +127,6 @@ public class Spin2Compiler {
             Spin2Compiler.this.logMessage(message);
         }
 
-    }
-
-    public Spin2Object compileObject(Node root) {
-        return compileObject("", root);
     }
 
     public Spin2Object compileObject(String rootFileName, Node root) {

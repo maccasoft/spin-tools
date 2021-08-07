@@ -789,7 +789,7 @@ class Spin2CompilerTest {
         Node root = subject.parse();
 
         Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
-        Spin2Object obj = compiler.compileObject(root);
+        Spin2Object obj = compiler.compileObject(rootFile, root);
 
         for (CompilerMessage msg : compiler.getMessages()) {
             if (msg.type == CompilerMessage.ERROR) {

@@ -185,7 +185,7 @@ class Spin2ExamplesTest {
         Node root = subject.parse();
 
         Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(source.getParentFile());
-        Spin2Object obj = compiler.compile(root);
+        Spin2Object obj = compiler.compile(source.getName(), root);
         for (CompilerMessage msg : compiler.getMessages()) {
             if (msg.type == CompilerMessage.ERROR) {
                 throw msg;

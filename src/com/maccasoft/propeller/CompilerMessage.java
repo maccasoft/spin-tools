@@ -30,6 +30,11 @@ public class CompilerMessage extends RuntimeException {
     Token startToken;
     Token stopToken;
 
+    public CompilerMessage(String message) {
+        super(message);
+        this.type = ERROR;
+    }
+
     public CompilerMessage(String message, Node node) {
         super(message);
         this.type = ERROR;
@@ -37,6 +42,12 @@ public class CompilerMessage extends RuntimeException {
         this.column = node.getStartToken().column;
         this.startToken = node.getStartToken();
         this.stopToken = node.getStopToken();
+    }
+
+    public CompilerMessage(String fileName, String message) {
+        super(message);
+        this.fileName = fileName;
+        this.type = ERROR;
     }
 
     public CompilerMessage(String fileName, String message, Node node) {

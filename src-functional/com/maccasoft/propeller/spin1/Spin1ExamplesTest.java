@@ -121,7 +121,7 @@ class Spin1ExamplesTest {
         Node root = subject.parse();
 
         Spin1CompilerAdapter compiler = new Spin1CompilerAdapter(source.getParentFile());
-        Spin1Object obj = compiler.compile(root);
+        Spin1Object obj = compiler.compile(source.getName(), root);
         for (CompilerMessage msg : compiler.getMessages()) {
             if (msg.type == CompilerMessage.ERROR) {
                 throw msg;

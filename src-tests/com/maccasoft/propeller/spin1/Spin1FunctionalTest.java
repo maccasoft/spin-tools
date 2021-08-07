@@ -157,7 +157,7 @@ public class Spin1FunctionalTest {
         Node root = subject.parse();
 
         Spin1Compiler compiler = new Spin1Compiler();
-        Spin1Object obj = compiler.compile(root);
+        Spin1Object obj = compiler.compile("main.spin", root);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateListing(new PrintStream(os));
