@@ -63,6 +63,26 @@ class Spin1LibraryTest {
     }
 
     @Test
+    void test_commandparser() throws Exception {
+        compileAndCompare(new File(path, "commandparser.spin"), new File(path, "commandparser.binary"));
+    }
+
+    @Test
+    void test_debug_emulator_rtc() throws Exception {
+        compileAndCompare(new File(path, "debug.emulator.rtc.spin"), new File(path, "debug.emulator.rtc.binary"));
+    }
+
+    @Test
+    void test_debug_shell() throws Exception {
+        compileAndCompare(new File(path, "debug.shell.spin"), new File(path, "debug.shell.binary"));
+    }
+
+    @Test
+    void test_debug_stacklength() throws Exception {
+        compileAndCompare(new File(path, "debug.stacklength.spin"), new File(path, "debug.stacklength.binary"));
+    }
+
+    @Test
     // Comparison with binary from OpenSpin fails
     //  - different sequence of same-priority operators
     void test_display_lcd_serial() throws Exception {
@@ -213,6 +233,16 @@ class Spin1LibraryTest {
     @Test
     void test_signal_spatializer() throws Exception {
         compileAndCompare(new File(path, "signal.spatializer.spin"), new File(path, "signal.spatializer.binary"));
+    }
+
+    @Test
+    void test_signal_synth() throws Exception {
+        compileAndCompare(new File(path, "signal.synth.spin"), new File(path, "signal.synth.binary"));
+    }
+
+    @Test
+    void test_signal_synth_speech() throws Exception {
+        compileAndCompare(new File(path, "signal.synth.speech.spin"), new File(path, "signal.synth.speech.binary"));
     }
 
     @Test

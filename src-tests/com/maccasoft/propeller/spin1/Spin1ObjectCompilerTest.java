@@ -1790,19 +1790,20 @@ class Spin1ObjectCompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header\n"
-            + "00000 00000       10 00          Object size\n"
+            + "00000 00000       14 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
             + "' PUB main | a, b\n"
             + "'     a := string(\"1\")\n"
-            + "00008 00008       38 31          CONSTANT (\"1\")\n"
-            + "0000A 0000A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00008 00008       87 80 10       MEM_ADDRESS BYTE PBASE+$0010\n"
+            + "0000B 0000B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "'     b := \"2\"\n"
-            + "0000B 0000B       38 32          CONSTANT (\"2\")\n"
-            + "0000D 0000D       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
-            + "0000E 0000E       32             RETURN\n"
-            + "0000F 0000F       00             Padding\n"
+            + "0000C 0000C       38 32          CONSTANT (\"2\")\n"
+            + "0000E 0000E       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "0000F 0000F       32             RETURN\n"
+            + "00010 00010       31 00          STRING\n"
+            + "00012 00012       00 00          Padding\n"
             + "", compile(text));
     }
 

@@ -1419,6 +1419,11 @@ public class Spin1ObjectCompiler {
                 throw new CompilerMessage("expression is not constant", node.getChild(0).getToken());
             }
         }
+        else if ("CHIPVER".equalsIgnoreCase(node.getText())) {
+            source.add(new Bytecode(context, new byte[] {
+                (byte) 0x34, (byte) 0x80
+            }, "CHIPVER"));
+        }
         else if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
             source.add(new Constant(context, new NumberLiteral(0)));
             source.add(new MemoryOp(context, MemoryOp.Size.Long, false, MemoryOp.Base.Pop, MemoryOp.Op.Read, null));
@@ -1520,16 +1525,10 @@ public class Spin1ObjectCompiler {
                     }
                 }
             }
-            if (sb.length() == 1) {
-                Expression expression = new CharacterLiteral(sb.toString());
-                source.add(new Constant(context, expression));
-            }
-            else {
-                sb.append((char) 0x00);
-                Spin1Bytecode target = new Bytecode(context, sb.toString().getBytes(), "STRING".toUpperCase());
-                source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
-                dataLine.addSource(target);
-            }
+            sb.append((char) 0x00);
+            Spin1Bytecode target = new Bytecode(context, sb.toString().getBytes(), "STRING".toUpperCase());
+            source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
+            dataLine.addSource(target);
         }
         else if (node.getType() == Token.NUMBER) {
             Expression expression = new NumberLiteral(node.getText());
