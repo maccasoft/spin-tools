@@ -1446,7 +1446,7 @@ public class Spin1ObjectCompiler {
                 for (int i = 0; i < methodNode.getChildCount(); i++) {
                     source.addAll(compileBytecodeExpression(context, methodNode.getChild(i), true));
                 }
-                source.add(new Constant(context, new NumberLiteral((methodNode.getChildCount() << 8) | methodNode.getChildCount())));
+                source.add(new Constant(context, new NumberLiteral((methodNode.getChildCount() << 8) | ((Method) expression).getOffset())));
                 source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
                 source.add(new Bytecode(context, 0x15, "MARK_INTERPRETED"));
             }

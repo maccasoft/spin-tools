@@ -166,6 +166,36 @@ class Spin1LibraryTest {
     }
 
     @Test
+    void test_sensor_accel_dual_memsic2125() throws Exception {
+        compileAndCompare(new File(path, "sensor.accel.dual.memsic2125.spin"), new File(path, "sensor.accel.dual.memsic2125.binary"));
+    }
+
+    @Test
+    void test_sensor_accel_dual_mxd2125() throws Exception {
+        compileAndCompare(new File(path, "sensor.accel.dual.mxd2125.spin"), new File(path, "sensor.accel.dual.mxd2125.binary"));
+    }
+
+    @Test
+    void test_sensor_accel_tri_h48c() throws Exception {
+        compileAndCompare(new File(path, "sensor.accel.tri.h48c.spin"), new File(path, "sensor.accel.tri.h48c.binary"));
+    }
+
+    @Test
+    void test_sensor_compass_hm55b() throws Exception {
+        compileAndCompare(new File(path, "sensor.compass.hm55b.spin"), new File(path, "sensor.compass.hm55b.binary"));
+    }
+
+    @Test
+    void test_sensor_light2frequency_tsl230() throws Exception {
+        compileAndCompare(new File(path, "sensor.light2frequency.tsl230.spin"), new File(path, "sensor.light2frequency.tsl230.binary"));
+    }
+
+    @Test
+    void test_sensor_ping() throws Exception {
+        compileAndCompare(new File(path, "sensor.ping.spin"), new File(path, "sensor.ping.binary"));
+    }
+
+    @Test
     void test_signal_adc() throws Exception {
         compileAndCompare(new File(path, "signal.adc.spin"), new File(path, "signal.adc.binary"));
     }
@@ -239,6 +269,11 @@ class Spin1LibraryTest {
     //  - different sequence of same-priority operators
     void test_tiny_math_float_spin() throws Exception {
         compileAndCompare(new File(path, "tiny.math.float.spin"), new File(path, "tiny.math.float.binary"));
+    }
+
+    @Test
+    void test_tiny_sensor_accel_dual_mxd2125() throws Exception {
+        compileAndCompare(new File(path, "tiny.sensor.accel.dual.mxd2125.spin"), new File(path, "tiny.sensor.accel.dual.mxd2125.binary"));
     }
 
     class Spin1CompilerAdapter extends Spin1Compiler {
