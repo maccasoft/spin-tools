@@ -71,6 +71,10 @@ public class Preferences {
     private String defaultSpin1LibraryPath = "library/spin1";
     private String defaultSpin2LibraryPath = "library/spin2";
 
+    private int[] tabStops = new int[] {
+        4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80
+    };
+
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     Preferences() {
@@ -170,6 +174,14 @@ public class Preferences {
         else {
             this.spin2LibraryPath = path;
         }
+    }
+
+    public int[] getTabStops() {
+        return tabStops;
+    }
+
+    public void setTabStops(int[] tabStops) {
+        this.tabStops = tabStops;
     }
 
     public void save() throws IOException {

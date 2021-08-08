@@ -28,6 +28,7 @@ import org.eclipse.swt.custom.LineBackgroundEvent;
 import org.eclipse.swt.custom.LineBackgroundListener;
 import org.eclipse.swt.custom.LineStyleEvent;
 import org.eclipse.swt.custom.LineStyleListener;
+import org.eclipse.swt.custom.ST;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.TextChangeListener;
@@ -218,22 +219,35 @@ public class SourceEditor {
         styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x80, 0x00, 0x00), null));
         styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
 
-        TextStyle warningStyle = new TextStyle();
-        warningStyle.underline = true;
-        warningStyle.underlineColor = ColorRegistry.getColor(0xFC, 0xAF, 0x3E);
-        warningStyle.underlineStyle = SWT.UNDERLINE_SQUIGGLE;
-        styleMap.put(TokenId.WARNING, warningStyle);
-
-        TextStyle errorStyle = new TextStyle();
-        errorStyle.underline = true;
-        errorStyle.underlineColor = ColorRegistry.getColor(0xC0, 0x00, 0x00);
-        errorStyle.underlineStyle = SWT.UNDERLINE_SQUIGGLE;
-        styleMap.put(TokenId.ERROR, errorStyle);
-
         ruler = new LineNumbersRuler(container);
         ruler.setFont(font);
 
-        styledText = new StyledText(container, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
+        styledText = new StyledText(container, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL) {
+
+            @Override
+            public void invokeAction(int action) {
+                switch (action) {
+                    case ST.LINE_START:
+                        SourceEditor.this.doLineStart(false);
+                        break;
+                    case ST.LINE_END:
+                        SourceEditor.this.doLineEnd(false);
+                        break;
+                    case ST.SELECT_LINE_START:
+                        SourceEditor.this.doLineStart(true);
+                        break;
+                    case ST.SELECT_LINE_END:
+                        SourceEditor.this.doLineEnd(true);
+                        break;
+                    case ST.PASTE:
+                        SourceEditor.this.paste();
+                        break;
+                    default:
+                        super.invokeAction(action);
+                }
+            }
+
+        };
         styledText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         styledText.setMargins(5, 5, 5, 5);
         styledText.setTabs(8);
@@ -344,7 +358,11 @@ public class SourceEditor {
 
             @Override
             public void verifyKey(VerifyEvent e) {
-                if (e.keyCode == SWT.TAB) {
+                if (e.keyCode == SWT.CR) {
+                    doAutoIndent();
+                    e.doit = false;
+                }
+                else if (e.keyCode == SWT.TAB) {
                     e.doit = false;
                     if ((e.stateMask & SWT.CTRL) != 0) {
                         return;
@@ -876,16 +894,184 @@ public class SourceEditor {
         styledText.selectAll();
     }
 
+    void doLineStart(boolean doSelect) {
+        int offset = styledText.getCaretOffset();
+        int lineNumber = styledText.getLineAtOffset(offset);
+        int lineOffset = offset - styledText.getOffsetAtLine(lineNumber);
+        String line = styledText.getLine(lineNumber);
+        int nonBlankOffset = 0;
+        while (nonBlankOffset < line.length() && (line.charAt(nonBlankOffset) == ' ' || line.charAt(nonBlankOffset) == '\t')) {
+            nonBlankOffset++;
+        }
+        if (lineOffset == nonBlankOffset) {
+            lineOffset = 0;
+        }
+        else {
+            lineOffset = nonBlankOffset;
+        }
+
+        styledText.setRedraw(false);
+        try {
+            int newOffset = lineOffset + styledText.getOffsetAtLine(lineNumber);
+            if (doSelect) {
+                Point selection = styledText.getSelection();
+                if (offset == selection.x) {
+                    styledText.setSelection(selection.y, newOffset);
+                }
+                else if (offset == selection.y) {
+                    styledText.setSelection(selection.x, newOffset);
+                }
+                else {
+                    styledText.setSelection(offset, newOffset);
+                }
+            }
+            styledText.setCaretOffset(newOffset);
+            styledText.setHorizontalIndex(0);
+            styledText.showSelection();
+        } finally {
+            styledText.setRedraw(true);
+        }
+    }
+
+    void doLineEnd(boolean doSelect) {
+        int offset = styledText.getCaretOffset();
+        int lineNumber = styledText.getLineAtOffset(offset);
+        int lineOffset = offset - styledText.getOffsetAtLine(lineNumber);
+        String line = styledText.getLine(lineNumber);
+        int nonBlankOffset = line.length();
+        while (nonBlankOffset > 0 && (line.charAt(nonBlankOffset - 1) == ' ' || line.charAt(nonBlankOffset - 1) == '\t')) {
+            nonBlankOffset--;
+        }
+        if (lineOffset == nonBlankOffset) {
+            lineOffset = line.length();
+        }
+        else {
+            lineOffset = nonBlankOffset;
+        }
+
+        styledText.setRedraw(false);
+        try {
+            int newOffset = lineOffset + styledText.getOffsetAtLine(lineNumber);
+            if (doSelect) {
+                Point selection = styledText.getSelection();
+                if (offset == selection.x) {
+                    styledText.setSelection(selection.y, newOffset);
+                }
+                else if (offset == selection.y) {
+                    styledText.setSelection(selection.x, newOffset);
+                }
+                else {
+                    styledText.setSelection(offset, newOffset);
+                }
+            }
+            styledText.setCaretOffset(newOffset);
+            styledText.showSelection();
+        } finally {
+            styledText.setRedraw(true);
+        }
+    }
+
+    void doAutoIndent() {
+        int caretOffset = styledText.getCaretOffset();
+        int lineNumber = styledText.getLineAtOffset(caretOffset);
+        int lineStart = styledText.getOffsetAtLine(lineNumber);
+        String lineText = styledText.getLine(lineNumber);
+        int currentColumn = caretOffset - lineStart;
+
+        String leftText = lineText.substring(0, currentColumn);
+        String rightText = lineText.substring(currentColumn);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(leftText);
+        sb.append(styledText.getLineDelimiter());
+
+        int indentColumn = 0;
+        while (indentColumn < leftText.length() && Character.isWhitespace(leftText.charAt(indentColumn))) {
+            indentColumn++;
+        }
+        if (indentColumn < leftText.length()) {
+            String trimmedText = leftText.substring(indentColumn).toUpperCase();
+            if (startsWithBlock(trimmedText)) {
+                boolean tabstopMatch = false;
+                int[] tabStops = Preferences.getInstance().getTabStops();
+
+                indentColumn++;
+                for (int i = 0; i < tabStops.length; i++) {
+                    if (tabStops[i] >= indentColumn) {
+                        indentColumn = tabStops[i];
+                        tabstopMatch = true;
+                        break;
+                    }
+                }
+
+                if (!tabstopMatch) {
+                    int defaultTabStop = styledText.getTabs();
+                    while ((indentColumn % defaultTabStop) != 0) {
+                        indentColumn++;
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < indentColumn; i++) {
+            sb.append(" ");
+        }
+
+        caretOffset = lineStart + sb.length();
+        sb.append(rightText);
+
+        styledText.setRedraw(false);
+        try {
+            styledText.replaceTextRange(lineStart, lineText.length(), sb.toString());
+            styledText.setCaretOffset(caretOffset);
+        } finally {
+            styledText.setRedraw(true);
+        }
+    }
+
+    boolean startsWithBlock(String text) {
+        if (text.startsWith("CON") || text.startsWith("VAR") || text.startsWith("OBJ") || text.startsWith("PUB") || text.startsWith("PRI")) {
+            return true;
+        }
+        if (text.startsWith("IF") || text.startsWith("ELSE") || text.startsWith("REPEAT") || text.startsWith("CASE")) {
+            return true;
+        }
+        return false;
+    }
+
     void doTab() {
         int caretOffset = styledText.getCaretOffset();
         int lineNumber = styledText.getLineAtOffset(caretOffset);
         int lineStart = styledText.getOffsetAtLine(lineNumber);
-
         int currentColumn = caretOffset - lineStart;
 
-        int nextTabColumn = 0;
-        while (nextTabColumn <= currentColumn) {
-            nextTabColumn += styledText.getTabs();
+        String lineText = styledText.getLine(lineNumber);
+        if (lineText.substring(0, currentColumn).trim().equals("")) {
+            if (currentColumn < lineText.length() && Character.isWhitespace(lineText.charAt(currentColumn))) {
+                do {
+                    currentColumn++;
+                } while (currentColumn < lineText.length() && Character.isWhitespace(lineText.charAt(currentColumn)));
+                styledText.setCaretOffset(lineStart + currentColumn);
+                return;
+            }
+        }
+
+        boolean tabstopMatch = false;
+        int[] tabStops = Preferences.getInstance().getTabStops();
+
+        int nextTabColumn = currentColumn + 1;
+        for (int i = 0; i < tabStops.length; i++) {
+            if (tabStops[i] >= nextTabColumn) {
+                nextTabColumn = tabStops[i];
+                tabstopMatch = true;
+                break;
+            }
+        }
+
+        if (!tabstopMatch) {
+            int defaultTabStop = styledText.getTabs();
+            while ((nextTabColumn % defaultTabStop) != 0) {
+                nextTabColumn++;
+            }
         }
 
         StringBuilder sb = new StringBuilder();
@@ -915,9 +1101,13 @@ public class SourceEditor {
             return;
         }
 
+        int[] tabStops = Preferences.getInstance().getTabStops();
         int previousTabColumn = 0;
-        while (previousTabColumn + styledText.getTabs() < currentColumn) {
-            previousTabColumn += styledText.getTabs();
+        for (int i = 0; i < tabStops.length; i++) {
+            if (tabStops[i] >= currentColumn) {
+                break;
+            }
+            previousTabColumn = tabStops[i];
         }
 
         while (currentColumn > 0 && currentColumn > previousTabColumn) {
