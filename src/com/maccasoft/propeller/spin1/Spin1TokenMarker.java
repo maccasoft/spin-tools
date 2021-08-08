@@ -188,24 +188,14 @@ public class Spin1TokenMarker extends EditorTokenMarker {
 
         @Override
         public void visitConstantAssign(ConstantAssignNode node) {
-            if (symbols.containsKey(node.getIdentifier().getText())) {
-                tokens.add(new TokenMarker(node.getIdentifier(), TokenId.ERROR));
-            }
-            else {
-                symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
-                tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
-            }
+            symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
+            tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
         }
 
         @Override
         public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
-            if (symbols.containsKey(node.getIdentifier().getText())) {
-                tokens.add(new TokenMarker(node.getIdentifier(), TokenId.ERROR));
-            }
-            else {
-                symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
-                tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
-            }
+            symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
+            tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
         }
 
         @Override
@@ -219,13 +209,8 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                 tokens.add(new TokenMarker(node.getType(), TokenId.TYPE));
             }
 
-            String identifier = node.getIdentifier().getText();
-            if (symbols.containsKey(identifier)) {
-                TokenMarker marker = new TokenMarker(node.getIdentifier(), TokenId.ERROR);
-                marker.setError("Symbol already defined");
-                tokens.add(marker);
-            }
-            else {
+            if (node.getIdentifier() != null) {
+                String identifier = node.getIdentifier().getText();
                 symbols.put(identifier, TokenId.VARIABLE);
                 symbols.put("@" + identifier, TokenId.VARIABLE);
                 tokens.add(new TokenMarker(node.getIdentifier(), TokenId.VARIABLE));
@@ -258,15 +243,8 @@ public class Spin1TokenMarker extends EditorTokenMarker {
             tokens.add(new TokenMarker(node.getType(), id));
 
             if (node.getName() != null) {
-                if (symbols.containsKey(node.getName().getText())) {
-                    TokenMarker marker = new TokenMarker(node.getName(), TokenId.ERROR);
-                    marker.setError("Symbol already defined");
-                    tokens.add(marker);
-                }
-                else {
-                    symbols.put(node.getName().getText(), id);
-                    tokens.add(new TokenMarker(node.getName(), id));
-                }
+                symbols.put(node.getName().getText(), id);
+                tokens.add(new TokenMarker(node.getName(), id));
             }
 
             for (Node child : node.getParameters()) {
@@ -289,29 +267,14 @@ public class Spin1TokenMarker extends EditorTokenMarker {
             if (node.label != null) {
                 String s = node.label.getText();
                 if (s.startsWith(":")) {
-                    if (symbols.containsKey(lastLabel + s)) {
-                        TokenMarker marker = new TokenMarker(node.label, TokenId.ERROR);
-                        marker.setError("Symbol already defined");
-                        tokens.add(marker);
-                    }
-                    else {
-                        symbols.put(lastLabel + s, TokenId.PASM_LOCAL_LABEL);
-                        symbols.put(lastLabel + "@" + s, TokenId.PASM_LOCAL_LABEL);
-                        tokens.add(new TokenMarker(node.label, TokenId.PASM_LOCAL_LABEL));
-                    }
+                    symbols.put(lastLabel + s, TokenId.PASM_LOCAL_LABEL);
+                    symbols.put(lastLabel + "@" + s, TokenId.PASM_LOCAL_LABEL);
+                    tokens.add(new TokenMarker(node.label, TokenId.PASM_LOCAL_LABEL));
                 }
                 else {
-                    TokenId id = symbols.get(s);
-                    if (id != null) {
-                        TokenMarker marker = new TokenMarker(node.label, TokenId.ERROR);
-                        marker.setError("Symbol already defined");
-                        tokens.add(marker);
-                    }
-                    else {
-                        symbols.put(s, TokenId.PASM_LABEL);
-                        symbols.put("@" + s, TokenId.PASM_LABEL);
-                        tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
-                    }
+                    symbols.put(s, TokenId.PASM_LABEL);
+                    symbols.put("@" + s, TokenId.PASM_LABEL);
+                    tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
                     lastLabel = s;
                 }
             }
@@ -365,14 +328,9 @@ public class Spin1TokenMarker extends EditorTokenMarker {
                 if (child.type != null) {
                     tokens.add(new TokenMarker(child.type, TokenId.TYPE));
                 }
-                locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
-                locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
-                if (symbols.containsKey(child.identifier.getText())) {
-                    TokenMarker marker = new TokenMarker(child.identifier, TokenId.ERROR);
-                    marker.setError("Symbol already defined");
-                    tokens.add(marker);
-                }
-                else {
+                if (child.identifier != null) {
+                    locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
+                    locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
                     tokens.add(new TokenMarker(child.identifier, TokenId.METHOD_LOCAL));
                 }
             }
