@@ -644,6 +644,10 @@ public class MemoryDialog extends Dialog {
         return container;
     }
 
+    public Spin1Object getObject() {
+        return object;
+    }
+
     public void setObject(Spin1Object object) {
         this.object = object;
 

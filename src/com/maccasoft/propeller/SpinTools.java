@@ -1099,7 +1099,7 @@ public class SpinTools {
                 @Override
                 protected void doSaveBinary() {
                     try {
-                        handleBinaryExport(object);
+                        handleBinaryExport(getShell(), getObject());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -1108,7 +1108,7 @@ public class SpinTools {
                 @Override
                 protected void doSaveListing() {
                     try {
-                        handleListingExport(object);
+                        handleListingExport(getShell(), getObject());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -1124,7 +1124,7 @@ public class SpinTools {
                 @Override
                 protected void doSaveBinary() {
                     try {
-                        handleBinaryExport(object);
+                        handleBinaryExport(getShell(), getObject());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -1133,7 +1133,7 @@ public class SpinTools {
                 @Override
                 protected void doSaveListing() {
                     try {
-                        handleListingExport(object);
+                        handleListingExport(getShell(), getObject());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -1200,7 +1200,7 @@ public class SpinTools {
         return null;
     }
 
-    private void handleBinaryExport(SpinObject object) {
+    private void handleBinaryExport(Shell shell, SpinObject object) {
         FileDialog dlg = new FileDialog(shell, SWT.SAVE);
         dlg.setOverwrite(true);
         dlg.setText("Save Binary File");
@@ -1244,7 +1244,7 @@ public class SpinTools {
         }
     }
 
-    private void handleListingExport(SpinObject object) {
+    private void handleListingExport(Shell shell, SpinObject object) {
         FileDialog dlg = new FileDialog(shell, SWT.SAVE);
         dlg.setOverwrite(true);
         dlg.setText("Save Listing File");

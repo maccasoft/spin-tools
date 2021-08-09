@@ -639,6 +639,10 @@ public class MemoryDialog2 extends Dialog {
         return container;
     }
 
+    public Spin2Object getObject() {
+        return object;
+    }
+
     public void setObject(Spin2Object object) {
         this.object = object;
 
