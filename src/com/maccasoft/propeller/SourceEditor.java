@@ -605,10 +605,10 @@ public class SourceEditor {
 
                     gc.setAdvanced(true);
                     gc.setAntialias(SWT.OFF);
-                    gc.setLineWidth(0);
+                    gc.setLineWidth(1);
                     gc.setClipping(clientArea);
 
-                    gc.setForeground(event.display.getSystemColor(SWT.COLOR_DARK_GRAY));
+                    gc.setForeground(ColorRegistry.getColor(0xA0, 0xA0, 0xA0));
 
                     Node root = tokenMarker.getRoot();
                     if (root != null) {

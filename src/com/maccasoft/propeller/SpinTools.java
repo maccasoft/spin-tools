@@ -86,6 +86,7 @@ public class SpinTools {
     CTabFolder tabFolder;
     StatusLine statusLine;
 
+    SourcePool sourcePool;
     SerialPortList serialPortList;
 
     Preferences preferences;
@@ -176,6 +177,8 @@ public class SpinTools {
         statusLine.setLayoutData(layoutData);
 
         preferences = Preferences.getInstance();
+
+        sourcePool = new SourcePool();
 
         serialPortList = new SerialPortList();
 
@@ -488,7 +491,7 @@ public class SpinTools {
                             return;
                         }
 
-                        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName());
+                        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
                         tabFolder.setSelection(tabFolder.getItemCount() - 1);
                         editorTab.setFocus();
                         preferences.addToLru(fileToOpen);
@@ -533,7 +536,7 @@ public class SpinTools {
         }
 
         String name = getUniqueName("Untitled", suffix);
-        EditorTab editorTab = new EditorTab(tabFolder, name);
+        EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
         editorTab.addCaretListener(caretListener);
@@ -542,7 +545,7 @@ public class SpinTools {
 
     private void handleFileNewSpin1() {
         String name = getUniqueName("Untitled", ".spin");
-        EditorTab editorTab = new EditorTab(tabFolder, name);
+        EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
         editorTab.setEditorText(getResourceAsString("template.spin"));
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
@@ -552,7 +555,7 @@ public class SpinTools {
 
     private void handleFileNewSpin2() {
         String name = getUniqueName("Untitled", ".spin2");
-        EditorTab editorTab = new EditorTab(tabFolder, name);
+        EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
         editorTab.setEditorText(getResourceAsString("template.spin2"));
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
@@ -627,7 +630,7 @@ public class SpinTools {
         if (fileName != null) {
             File fileToOpen = new File(fileName);
 
-            EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName());
+            EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
 
             tabFolder.setSelection(tabFolder.getItemCount() - 1);
             editorTab.setFocus();
@@ -672,7 +675,7 @@ public class SpinTools {
         if (fileName != null) {
             File fileToOpen = new File(fileName);
 
-            EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName());
+            EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
 
             tabFolder.setSelection(tabFolder.getItemCount() - 1);
             editorTab.setFocus();
@@ -1156,7 +1159,7 @@ public class SpinTools {
                         return;
                     }
 
-                    tab = new EditorTab(tabFolder, fileToOpen.getName());
+                    tab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
 
                     tabFolder.setSelection(tabFolder.getItemCount() - 1);
                     tab.setFocus();

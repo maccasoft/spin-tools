@@ -19,10 +19,11 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -43,11 +44,11 @@ import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
 import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
-import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class EditorTab {
+
+    SourcePool sourcePool;
 
     File file;
     SourceEditor editor;
@@ -62,6 +63,8 @@ public class EditorTab {
 
     AtomicBoolean threadRunning = new AtomicBoolean(false);
     AtomicBoolean pendingCompile = new AtomicBoolean(false);
+
+    Set<String> dependencies = new HashSet<String>();
 
     boolean errors;
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
@@ -83,39 +86,55 @@ public class EditorTab {
         }
     };
 
+    final PropertyChangeListener sourcePoolChangeListener = new PropertyChangeListener() {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (evt.getPropertyName().equals(tabItemText)) {
+                return;
+            }
+            if (!dependencies.contains(evt.getPropertyName())) {
+                return;
+            }
+            if (tabItemText.toLowerCase().endsWith(".spin2")) {
+                Display.getDefault().timerExec(500, spin2CompilerRunnable);
+            }
+            else {
+                Display.getDefault().timerExec(500, spin1CompilerRunnable);
+            }
+            tabItem.setFont(busyFont);
+        }
+
+    };
+
     class Spin1TokenMarkerAdatper extends Spin1TokenMarker {
 
         @Override
         protected Node getObjectTree(String fileName) {
-            String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
-            AtomicReference<Node> result = new AtomicReference<Node>();
-            Display.getDefault().syncExec(new Runnable() {
+            File localFile = new File(file != null ? file.getParentFile() : new File(""), fileName + ".spin");
+            File libraryFile = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName + ".spin");
 
-                @Override
-                public void run() {
-                    File libraryPath = new File(Preferences.getInstance().getSpin1LibraryPath()).getAbsoluteFile();
-                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
-                    result.set(node);
-                }
-            });
-            Node root = result.get();
-            if (root == null) {
-                File fileParent = file != null ? file.getParentFile() : null;
-                File file = new File(fileParent, fileName + fileType);
+            Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
+            if (node == null) {
+                node = sourcePool.getParsedSource(libraryFile.getAbsolutePath());
+            }
+            if (node == null) {
+                File file = localFile;
                 if (!file.exists()) {
-                    file = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName + fileType);
+                    file = libraryFile;
                 }
                 if (file.exists()) {
                     try {
                         Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
                         Spin1Parser subject = new Spin1Parser(stream);
-                        root = subject.parse();
+                        node = subject.parse();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             }
-            return root;
+
+            return node;
         }
 
     }
@@ -124,34 +143,34 @@ public class EditorTab {
 
         @Override
         protected Node getParsedObject(String fileName) {
-            AtomicReference<Node> result = new AtomicReference<Node>();
-            Display.getDefault().syncExec(new Runnable() {
+            File localFile = new File(file != null ? file.getParentFile() : new File(""), fileName);
+            File libraryFile = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName);
 
-                @Override
-                public void run() {
-                    File libraryPath = new File(Preferences.getInstance().getSpin1LibraryPath()).getAbsoluteFile();
-                    Node node = getNodeRootFromTab(fileName, libraryPath);
-                    result.set(node);
-                }
-            });
-            Node root = result.get();
-            if (root == null) {
-                File fileParent = file != null ? file.getParentFile() : null;
-                File file = new File(fileParent, fileName);
+            File file = localFile;
+            Node node = sourcePool.getParsedSource(file.getAbsolutePath());
+            if (node == null) {
+                file = libraryFile;
+                node = sourcePool.getParsedSource(file.getAbsolutePath());
+            }
+            if (node == null) {
+                file = localFile;
                 if (!file.exists()) {
-                    file = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName);
+                    file = libraryFile;
                 }
                 if (file.exists()) {
                     try {
                         Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
                         Spin1Parser subject = new Spin1Parser(stream);
-                        root = subject.parse();
+                        node = subject.parse();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             }
-            return root;
+
+            dependencies.add(node != null ? file.getAbsolutePath() : fileName);
+
+            return node;
         }
 
     }
@@ -167,10 +186,16 @@ public class EditorTab {
                 pendingCompile.set(false);
 
                 Node root = tokenMarker.getRoot();
+
+                File localFile = file != null ? file : new File(tabItemText);
+                sourcePool.setParsedSource(localFile.getAbsolutePath(), root);
+
                 Thread thread = new Thread(new Runnable() {
 
                     @Override
                     public void run() {
+                        dependencies.clear();
+
                         Spin1Compiler compiler = new Spin1CompilerAdapter();
                         try {
                             object = compiler.compile(tabItemText, root);
@@ -223,35 +248,30 @@ public class EditorTab {
 
         @Override
         protected Node getObjectTree(String fileName) {
-            String fileType = tabItemText.substring(tabItemText.lastIndexOf('.'));
-            AtomicReference<Node> result = new AtomicReference<Node>();
-            Display.getDefault().syncExec(new Runnable() {
+            File localFile = new File(file != null ? file.getParentFile() : new File(""), fileName + ".spin2");
+            File libraryFile = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName + ".spin2");
 
-                @Override
-                public void run() {
-                    File libraryPath = new File(Preferences.getInstance().getSpin2LibraryPath()).getAbsoluteFile();
-                    Node node = getNodeRootFromTab(fileName + fileType, libraryPath);
-                    result.set(node);
-                }
-            });
-            Node root = result.get();
-            if (root == null) {
-                File fileParent = file != null ? file.getParentFile() : null;
-                File file = new File(fileParent, fileName + fileType);
+            Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
+            if (node == null) {
+                node = sourcePool.getParsedSource(libraryFile.getAbsolutePath());
+            }
+            if (node == null) {
+                File file = localFile;
                 if (!file.exists()) {
-                    file = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName + fileType);
+                    file = libraryFile;
                 }
                 if (file.exists()) {
                     try {
-                        Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(file));
-                        Spin2Parser subject = new Spin2Parser(stream);
-                        root = subject.parse();
+                        Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
+                        Spin1Parser subject = new Spin1Parser(stream);
+                        node = subject.parse();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             }
-            return root;
+
+            return node;
         }
 
     }
@@ -260,34 +280,34 @@ public class EditorTab {
 
         @Override
         protected Node getParsedObject(String fileName) {
-            AtomicReference<Node> result = new AtomicReference<Node>();
-            Display.getDefault().syncExec(new Runnable() {
+            File localFile = new File(file != null ? file.getParentFile() : new File(""), fileName);
+            File libraryFile = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName);
 
-                @Override
-                public void run() {
-                    File libraryPath = new File(Preferences.getInstance().getSpin2LibraryPath()).getAbsoluteFile();
-                    Node node = getNodeRootFromTab(fileName, libraryPath);
-                    result.set(node);
-                }
-            });
-            Node root = result.get();
-            if (root == null) {
-                File fileParent = file != null ? file.getParentFile() : null;
-                File file = new File(fileParent, fileName);
+            File file = localFile;
+            Node node = sourcePool.getParsedSource(file.getAbsolutePath());
+            if (node == null) {
+                file = libraryFile;
+                node = sourcePool.getParsedSource(file.getAbsolutePath());
+            }
+            if (node == null) {
+                file = localFile;
                 if (!file.exists()) {
-                    file = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
+                    file = libraryFile;
                 }
                 if (file.exists()) {
                     try {
-                        Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(file));
-                        Spin2Parser subject = new Spin2Parser(stream);
-                        root = subject.parse();
+                        Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
+                        Spin1Parser subject = new Spin1Parser(stream);
+                        node = subject.parse();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             }
-            return root;
+
+            dependencies.add(node != null ? file.getAbsolutePath() : fileName);
+
+            return node;
         }
 
         @Override
@@ -331,10 +351,16 @@ public class EditorTab {
                 pendingCompile.set(false);
 
                 Node root = tokenMarker.getRoot();
+
+                File localFile = file != null ? file : new File(tabItemText);
+                sourcePool.setParsedSource(localFile.getAbsolutePath(), root);
+
                 Thread thread = new Thread(new Runnable() {
 
                     @Override
                     public void run() {
+                        dependencies.clear();
+
                         Spin2Compiler compiler = new Spin2CompilerAdapter();
                         try {
                             object = compiler.compile(tabItemText, root);
@@ -383,10 +409,13 @@ public class EditorTab {
 
     };
 
-    public EditorTab(CTabFolder folder, String name) {
+    public EditorTab(CTabFolder folder, String name, SourcePool sourcePool) {
+        this.tabItemText = name;
+        this.sourcePool = sourcePool;
+
         tabItem = new CTabItem(folder, SWT.NONE);
         tabItem.setShowClose(true);
-        tabItem.setText(tabItemText = name);
+        tabItem.setText(tabItemText);
         tabItem.setData(this);
 
         FontData[] fontData = tabItem.getFont().getFontData();
@@ -421,10 +450,15 @@ public class EditorTab {
             }
         });
 
+        sourcePool.addPropertyChangeListener(sourcePoolChangeListener);
+
         tabItem.addDisposeListener(new DisposeListener() {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
+                sourcePool.removePropertyChangeListener(sourcePoolChangeListener);
+                File localFile = file != null ? file : new File(tabItemText);
+                sourcePool.removeParsedSource(localFile.getAbsolutePath(), dirty);
                 busyFont.dispose();
             }
 
@@ -465,6 +499,9 @@ public class EditorTab {
     }
 
     public void setFile(File file) {
+        File localFile = file != null ? file : new File(tabItemText);
+        sourcePool.removeParsedSource(localFile.getAbsolutePath(), dirty);
+
         this.file = file;
         if (file.getName().toLowerCase().endsWith(".spin2")) {
             editor.setTokenMarker(tokenMarker = new Spin2TokenMarkerAdatper());
@@ -615,23 +652,6 @@ public class EditorTab {
         }
 
         Display.getDefault().beep();
-    }
-
-    protected Node getNodeRootFromTab(String fileName, File libraryPath) {
-        File fileParent = file != null ? file.getParentFile().getAbsoluteFile() : null;
-
-        CTabFolder tabFolder = tabItem.getParent();
-        for (int i = 0; i < tabFolder.getItemCount(); i++) {
-            EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
-            File tabParent = editorTab.file != null ? editorTab.file.getParentFile().getAbsoluteFile() : new File("").getAbsoluteFile();
-            if (fileParent == null || tabParent.equals(fileParent) || tabParent.equals(libraryPath)) {
-                if (fileName.equals(editorTab.tabItemText)) {
-                    return editorTab.tokenMarker.getRoot();
-                }
-            }
-        }
-
-        return null;
     }
 
     String loadFromFile(File file) throws Exception {
