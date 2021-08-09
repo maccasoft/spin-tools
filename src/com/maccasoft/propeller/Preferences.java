@@ -16,6 +16,7 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -36,6 +37,10 @@ public class Preferences {
     public static final String PROP_SPIN2_LIBRARY_PATH = "spin2LibraryPath";
 
     public static final String PREFERENCES_NAME = ".spin-tools";
+
+    static final int[] defaultTabStops = new int[] {
+        4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80
+    };
 
     private static Preferences instance;
     private static File preferencesFile = new File(System.getProperty("user.home"), PREFERENCES_NAME);
@@ -71,9 +76,7 @@ public class Preferences {
     private String defaultSpin1LibraryPath = "library/spin1";
     private String defaultSpin2LibraryPath = "library/spin2";
 
-    private int[] tabStops = new int[] {
-        4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80
-    };
+    private int[] tabStops;
 
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
@@ -176,12 +179,19 @@ public class Preferences {
         }
     }
 
+    @JsonIgnore
     public int[] getTabStops() {
-        return tabStops;
+        return tabStops != null ? tabStops : defaultTabStops;
     }
 
+    @JsonSetter("tabStops")
     public void setTabStops(int[] tabStops) {
-        this.tabStops = tabStops;
+        this.tabStops = Arrays.equals(tabStops, defaultTabStops) ? null : tabStops;
+    }
+
+    @JsonGetter("tabStops")
+    public int[] getSerializableTabStops() {
+        return this.tabStops;
     }
 
     public void save() throws IOException {

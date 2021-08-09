@@ -36,7 +36,8 @@ class PreferencesTest {
         mapper.setSerializationInclusion(Include.NON_EMPTY);
         mapper.writeValue(os, subject);
 
-        Assertions.assertEquals("{\n"
+        Assertions.assertEquals(""
+            + "{\n"
             + "  \"showLineNumbers\" : false,\n"
             + "  \"spin1LibraryPath\" : \"spin1/path\"\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
@@ -46,7 +47,6 @@ class PreferencesTest {
     void testGetSpin1LibraryPath() throws Exception {
         StringReader is = new StringReader(""
             + "{\n"
-            + "  \"showLineNumbers\" : false,\n"
             + "  \"spin1LibraryPath\" : \"spin1/path\"\n"
             + "}"
             + "");
@@ -59,7 +59,7 @@ class PreferencesTest {
     }
 
     @Test
-    void testSe2Spin1LibraryPath() throws Exception {
+    void testSetSpin2LibraryPath() throws Exception {
         Preferences subject = new Preferences();
         subject.setSpin2LibraryPath("spin2/path");
 
@@ -71,7 +71,8 @@ class PreferencesTest {
         mapper.setSerializationInclusion(Include.NON_EMPTY);
         mapper.writeValue(os, subject);
 
-        Assertions.assertEquals("{\n"
+        Assertions.assertEquals(""
+            + "{\n"
             + "  \"showLineNumbers\" : false,\n"
             + "  \"spin2LibraryPath\" : \"spin2/path\"\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
@@ -81,7 +82,6 @@ class PreferencesTest {
     void testGetSpin2LibraryPath() throws Exception {
         StringReader is = new StringReader(""
             + "{\n"
-            + "  \"showLineNumbers\" : false,\n"
             + "  \"spin2LibraryPath\" : \"spin2/path\"\n"
             + "}"
             + "");
@@ -91,6 +91,51 @@ class PreferencesTest {
         Preferences subject = mapper.readValue(is, Preferences.class);
 
         Assertions.assertEquals("spin2/path", subject.getSpin2LibraryPath());
+    }
+
+    @Test
+    void testGetDefaultTabStops() throws Exception {
+        Preferences subject = new Preferences();
+        Assertions.assertArrayEquals(Preferences.defaultTabStops, subject.getTabStops());
+    }
+
+    @Test
+    void testSetTabStops() throws Exception {
+        Preferences subject = new Preferences();
+        subject.setTabStops(new int[] {
+            8, 16
+        });
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.writeValue(os, subject);
+
+        Assertions.assertEquals(""
+            + "{\n"
+            + "  \"showLineNumbers\" : false,\n"
+            + "  \"tabStops\" : [ 8, 16 ]\n"
+            + "}", os.toString().replaceAll("\\r\\n", "\n"));
+    }
+
+    @Test
+    void testGetTabStops() throws Exception {
+        StringReader is = new StringReader(""
+            + "{\n"
+            + "  \"tabStops\" : [ 8, 16 ]\n"
+            + "}"
+            + "");
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        Preferences subject = mapper.readValue(is, Preferences.class);
+
+        Assertions.assertArrayEquals(new int[] {
+            8, 16
+        }, subject.getTabStops());
     }
 
 }
