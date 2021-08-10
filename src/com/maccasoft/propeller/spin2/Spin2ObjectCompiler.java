@@ -1379,32 +1379,7 @@ public class Spin2ObjectCompiler {
 
             for (Spin2StatementNode arg : line.getArguments()) {
                 Spin2MethodLine target = (Spin2MethodLine) arg.getData("true");
-                if (",".equals(arg.getText())) {
-                    for (Spin2StatementNode child : arg.getChilds()) {
-                        if ("..".equals(child.getText())) {
-                            line.addSource(compileBytecodeExpression(line.getScope(), child.getChild(0), false));
-                            line.addSource(compileBytecodeExpression(line.getScope(), child.getChild(1), false));
-                            line.addSource(new CaseRangeJmp(line.getScope(), new ContextLiteral(target.getScope())));
-                        }
-                        else {
-                            line.addSource(compileBytecodeExpression(line.getScope(), child, false));
-                            line.addSource(new CaseJmp(line.getScope(), new ContextLiteral(target.getScope())));
-                        }
-                    }
-                }
-                else if ("..".equals(arg.getText())) {
-                    line.addSource(compileBytecodeExpression(line.getScope(), arg.getChild(0), false));
-                    line.addSource(compileBytecodeExpression(line.getScope(), arg.getChild(1), false));
-                    if (target != null) {
-                        line.addSource(new CaseRangeJmp(line.getScope(), new ContextLiteral(target.getScope())));
-                    }
-                }
-                else {
-                    line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
-                    if (target != null) {
-                        line.addSource(new CaseJmp(line.getScope(), new ContextLiteral(target.getScope())));
-                    }
-                }
+                compileCase(line, arg, target);
             }
         }
         else if ("CASE_DONE".equalsIgnoreCase(text)) {
@@ -1480,6 +1455,27 @@ public class Spin2ObjectCompiler {
 
         for (Spin2MethodLine child : line.getChilds()) {
             compileLine(child);
+        }
+    }
+
+    void compileCase(Spin2MethodLine line, Spin2StatementNode arg, Spin2MethodLine target) {
+        if (",".equals(arg.getText())) {
+            for (Spin2StatementNode child : arg.getChilds()) {
+                compileCase(line, child, target);
+            }
+        }
+        else if ("..".equals(arg.getText())) {
+            line.addSource(compileBytecodeExpression(line.getScope(), arg.getChild(0), false));
+            line.addSource(compileBytecodeExpression(line.getScope(), arg.getChild(1), false));
+            if (target != null) {
+                line.addSource(new CaseRangeJmp(line.getScope(), new ContextLiteral(target.getScope())));
+            }
+        }
+        else {
+            line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
+            if (target != null) {
+                line.addSource(new CaseJmp(line.getScope(), new ContextLiteral(target.getScope())));
+            }
         }
     }
 

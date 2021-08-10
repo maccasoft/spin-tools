@@ -2023,6 +2023,62 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testCaseList() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    case a\n"
+            + "        1, 2      : a := 14\n"
+            + "        3, 4, 5   : a := 15\n"
+            + "        6, 7, 8, 9: a := 16\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       34 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       04             (stack size)\n"
+            + "'     case a\n"
+            + "00009 00009       45 33          ADDRESS ($00033)\n"
+            + "0000B 0000B       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000C 0000C       A2             CONSTANT (1)\n"
+            + "0000D 0000D       1C 1A          CASE_JMP $00028 (26)\n"
+            + "0000F 0000F       A3             CONSTANT (2)\n"
+            + "00010 00010       1C 17          CASE_JMP $00028 (23)\n"
+            + "00012 00012       A4             CONSTANT (3)\n"
+            + "00013 00013       1C 17          CASE_JMP $0002B (23)\n"
+            + "00015 00015       A5             CONSTANT (4)\n"
+            + "00016 00016       1C 14          CASE_JMP $0002B (20)\n"
+            + "00018 00018       A6             CONSTANT (5)\n"
+            + "00019 00019       1C 11          CASE_JMP $0002B (17)\n"
+            + "0001B 0001B       A7             CONSTANT (6)\n"
+            + "0001C 0001C       1C 12          CASE_JMP $0002F (18)\n"
+            + "0001E 0001E       A8             CONSTANT (7)\n"
+            + "0001F 0001F       1C 0F          CASE_JMP $0002F (15)\n"
+            + "00021 00021       A9             CONSTANT (8)\n"
+            + "00022 00022       1C 0C          CASE_JMP $0002F (12)\n"
+            + "00024 00024       AA             CONSTANT (9)\n"
+            + "00025 00025       1C 09          CASE_JMP $0002F (9)\n"
+            + "00027 00027       1E             CASE_DONE\n"
+            + "'         1, 2      : a := 14\n"
+            + "00028 00028       AF             CONSTANT (14)\n"
+            + "00029 00029       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0002A 0002A       1E             CASE_DONE\n"
+            + "'         3, 4, 5   : a := 15\n"
+            + "0002B 0002B       45 0F          CONSTANT (15)\n"
+            + "0002D 0002D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0002E 0002E       1E             CASE_DONE\n"
+            + "'         6, 7, 8, 9: a := 16\n"
+            + "0002F 0002F       45 10          CONSTANT (16)\n"
+            + "00031 00031       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00032 00032       1E             CASE_DONE\n"
+            + "00033 00033       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testSendVariable() throws Exception {
         String text = ""
             + "PUB main() | a\n"
