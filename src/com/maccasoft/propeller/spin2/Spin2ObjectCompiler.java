@@ -1626,6 +1626,13 @@ public class Spin2ObjectCompiler {
                     source.addAll(compileBytecodeExpression(context, arg.getChild(1), true));
                     source.add(new Bytecode(context, code_range, node.getText().toUpperCase()));
                 }
+                else if (arg.getType() == Token.STRING) {
+                    String s = arg.getText().substring(1, arg.getText().length() - 1);
+                    for (int x = 0; x < s.length(); x++) {
+                        source.add(new Constant(context, new CharacterLiteral(s.substring(x, x + 1))));
+                        source.add(new Bytecode(context, code, node.getText().toUpperCase()));
+                    }
+                }
                 else {
                     source.addAll(compileBytecodeExpression(context, arg, true));
                     source.add(new Bytecode(context, code, node.getText().toUpperCase()));

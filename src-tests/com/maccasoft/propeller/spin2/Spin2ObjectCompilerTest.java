@@ -2984,6 +2984,46 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testLookdownString() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := lookdown(b : \"abcdefgh\")\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       28 00 00 00    End\n"
+            + "' PUB main | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     a := lookdown(b : \"abcdefgh\")\n"
+            + "00009 00009       45 26          ADDRESS ($00026)\n"
+            + "0000B 0000B       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000C 0000C       A2             CONSTANT (1)\n"
+            + "0000D 0000D       45 61          CONSTANT (\"a\")\n"
+            + "0000F 0000F       20             LOOKDOWN\n"
+            + "00010 00010       45 62          CONSTANT (\"b\")\n"
+            + "00012 00012       20             LOOKDOWN\n"
+            + "00013 00013       45 63          CONSTANT (\"c\")\n"
+            + "00015 00015       20             LOOKDOWN\n"
+            + "00016 00016       45 64          CONSTANT (\"d\")\n"
+            + "00018 00018       20             LOOKDOWN\n"
+            + "00019 00019       45 65          CONSTANT (\"e\")\n"
+            + "0001B 0001B       20             LOOKDOWN\n"
+            + "0001C 0001C       45 66          CONSTANT (\"f\")\n"
+            + "0001E 0001E       20             LOOKDOWN\n"
+            + "0001F 0001F       45 67          CONSTANT (\"g\")\n"
+            + "00021 00021       20             LOOKDOWN\n"
+            + "00022 00022       45 68          CONSTANT (\"h\")\n"
+            + "00024 00024       20             LOOKDOWN\n"
+            + "00025 00025       23             LOOKDONE\n"
+            + "00026 00026       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00027 00027       04             RETURN\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         Spin2Context scope = new Spin2GlobalContext();
         Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();

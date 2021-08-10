@@ -1181,6 +1181,48 @@ class Spin1ObjectCompilerTest {
     }
 
     @Test
+    void testLookdownString() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := lookdown(b : \"abcdefgh\")\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       28 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
+            + "' PUB main | a, b\n"
+            + "'     a := lookdown(b : \"abcdefgh\")\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       38 25          ADDRESS ($0025)\n"
+            + "0000B 0000B       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "0000C 0000C       38 61          CONSTANT (\"a\")\n"
+            + "0000E 0000E       11             LOOKDOWN\n"
+            + "0000F 0000F       38 62          CONSTANT (\"b\")\n"
+            + "00011 00011       11             LOOKDOWN\n"
+            + "00012 00012       38 63          CONSTANT (\"c\")\n"
+            + "00014 00014       11             LOOKDOWN\n"
+            + "00015 00015       38 64          CONSTANT (\"d\")\n"
+            + "00017 00017       11             LOOKDOWN\n"
+            + "00018 00018       38 65          CONSTANT (\"e\")\n"
+            + "0001A 0001A       11             LOOKDOWN\n"
+            + "0001B 0001B       38 66          CONSTANT (\"f\")\n"
+            + "0001D 0001D       11             LOOKDOWN\n"
+            + "0001E 0001E       38 67          CONSTANT (\"g\")\n"
+            + "00020 00020       11             LOOKDOWN\n"
+            + "00021 00021       38 68          CONSTANT (\"h\")\n"
+            + "00023 00023       11             LOOKDOWN\n"
+            + "00024 00024       0F             LOOKDONE\n"
+            + "00025 00025       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00026 00026       32             RETURN\n"
+            + "00027 00027       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testUnaryOperators() throws Exception {
         String text = ""
             + "PUB main | a\n"
