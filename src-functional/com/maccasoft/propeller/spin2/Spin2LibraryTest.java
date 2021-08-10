@@ -47,6 +47,11 @@ class Spin2LibraryTest {
     }
 
     @Test
+    void test_jm_ansi() throws Exception {
+        compileAndCompare(new File(path, "jm_ansi.spin2"), new File(path, "jm_ansi.binary"));
+    }
+
+    @Test
     void test_jm_apa102c() throws Exception {
         compileAndCompare(new File(path, "jm_apa102c.spin2"), new File(path, "jm_apa102c.binary"));
     }
@@ -252,7 +257,7 @@ class Spin2LibraryTest {
     @Test
     void test_Spin2_interpreter() throws Exception {
         String text = getResourceAsString("Spin2_interpreter.spin2");
-
+    
         new File(path, "Spin2_interpreter.binary");
         compileAndCompare(text, expected);
     }

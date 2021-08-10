@@ -40,6 +40,11 @@ class Spin2ExamplesTest {
     }
 
     @Test
+    void test_jm_at24c32_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_at24c32_demo.spin2"), new File(path, "jm_at24c32_demo.binary"));
+    }
+
+    @Test
     void test_jm_chauvet_led_splash() throws Exception {
         compileAndCompare(new File(path, "jm_chauvet_led-splash.spin2"), new File(path, "jm_chauvet_led-splash.binary"));
     }
@@ -75,6 +80,11 @@ class Spin2ExamplesTest {
     }
 
     @Test
+    void test_jm_ds3231_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_ds3231_demo.spin2"), new File(path, "jm_ds3231_demo.binary"));
+    }
+
+    @Test
     void test_jm_ez_analog_demo() throws Exception {
         compileAndCompare(new File(path, "jm_ez_analog_demo.spin2"), new File(path, "jm_ez_analog_demo.binary"));
     }
@@ -97,6 +107,11 @@ class Spin2ExamplesTest {
     @Test
     void test_jm_format_strings_demo() throws Exception {
         compileAndCompare(new File(path, "jm_format_strings_demo.spin2"), new File(path, "jm_format_strings_demo.binary"));
+    }
+
+    @Test
+    void test_jm_i2c_devices() throws Exception {
+        compileAndCompare(new File(path, "jm_i2c_devices.spin2"), new File(path, "jm_i2c_devices.binary"));
     }
 
     @Test

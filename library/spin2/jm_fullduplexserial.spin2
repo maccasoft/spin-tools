@@ -9,7 +9,9 @@
 ''               -- see below for terms of use
 ''   E-mail..... jon.mcphalen@gmail.com
 ''   Started....
-''   Updated.... 06 SEP 2020
+''   Updated.... 24 JUN 2021
+''
+''   {$P2}
 ''
 '' =================================================================================================
 
@@ -38,8 +40,8 @@
 
 con { fixed io pins }
 
-  RX1      = 63  { I }                                          ' programming / debug
-  TX1      = 62  { O }
+  PGM_RX   = 63  { I }                                          ' programming / debug
+  PGM_TX   = 62  { O }
 
   SF_CS    = 61  { O }                                          ' serial flash
   SF_SCK   = 60  { O }
@@ -47,7 +49,7 @@ con { fixed io pins }
   SF_SDI   = 58  { I }
 
 
-con { pst formatting }
+con { pst / formatting }
 
   HOME     =  1
   CRSR_XY  =  2
@@ -66,10 +68,12 @@ con { pst formatting }
   CRSR_Y   = 15
   CLS      = 16
 
+  EOF      = -1
+
 
 con
 
-  BUF_SIZE = 64
+  BUF_SIZE = 128
 
 
 obj
@@ -108,7 +112,7 @@ pub tstart(baud) : result
 
 '' Start FDS with default pins/mode for terminal (e.g., PST)
 
-  return start(RX1, TX1, %0000, baud)
+  return start(PGM_RX, PGM_TX, %0000, baud)
 
 
 pub start(rxpin, txpin, mode, baud) : result | baudcfg, spmode
@@ -188,7 +192,7 @@ pub rxcheck() : b
     if (++rxtail == BUF_SIZE)                                   ' update tail pointer
       rxtail := 0
   else
-    b := -1                                                     ' mark no byte available
+    b := EOF                                                    ' mark no byte available
 
 
 pub rxtime(ms) : b | mstix, t
@@ -274,14 +278,25 @@ pub substr(p_str, len) | b
       quit
 
 
-pub padstr(p_str, width, pad)
+pub padstr(p_str, width, padchar) | len, afw
 
 '' Emit p_str as padded field of width characters
 '' -- pad is character to use to fill out field
 '' -- positive width causes right alignment
 '' -- negative width causes left alignment
 
-  str(nstr.padstr(p_str, width, pad))
+  len := strsize(p_str)
+  afw := abs(width)
+
+  if (len >= afw)                                               ' string wider than field?
+    substr(p_str, afw)                                          '  yes, truncate
+  else
+    if (width > 0)                                              ' right alignment?
+      txn(padchar, width-len)
+      str(p_str)
+    else                                                        ' left alignment
+      str(p_str)
+      txn(padchar, afw-len)
 
 
 pub txflush()
@@ -418,13 +433,13 @@ pub format(p_str, p_args) | idx, c, asc, field, digits
 
     elseif (c == "%")
       p_str, field, digits := get_nargs(p_str)
-      c := byte[p_str++]
-      if (c == "s")
+      c := lower(byte[p_str++])
+      if (lookdown(c : "dufbqoxDUFBQOX"))
+        str(nstr.fmt_number(long[p_args][idx++], c, digits, field, " "))
+      elseif (c == "s")
         str(nstr.padstr(long[p_args][idx++], field, " "))
       elseif (c == "c")
-        txn(long[p_args][idx++], (abs field) #> 1)
-      else
-        str(nstr.fmt_number(long[p_args][idx++], c, digits, field, " "))
+        txn(long[p_args][idx++], (abs(field)) #> 1)
 
     else
       tx(c)

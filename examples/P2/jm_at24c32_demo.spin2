@@ -1,0 +1,185 @@
+'' =================================================================================================
+''
+''   File....... 06_jm_at24c32_demo.spin2
+''   Purpose.... Demonstrates writing and reading the AT24C32 4K EEPROM
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020-2021 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 06 JAN 2021
+''
+''   {$P2}
+''
+'' =================================================================================================
+
+
+con { timing }
+
+  CLK_FREQ = 200_000_000                                        ' system freq as a constant
+  MS_001   = CLK_FREQ / 1_000                                   ' ticks in 1ms
+  US_001   = CLK_FREQ / 1_000_000                               ' ticks in 1us
+
+  _clkfreq = CLK_FREQ                                           ' set system clock
+
+
+con { terminal }
+
+  BR_TERM  = 230_400                                            ' terminal baud rate
+
+  #0, T_PST, T_ANSI                                             ' terminal types
+
+  T_TYPE = T_PST
+
+
+con { fixed io pins }
+
+  RX1     = 63  { I }                                           ' programming / debug
+  TX1     = 62  { O }
+
+  SF_CS   = 61  { O }                                           ' serial flash
+  SF_SCK  = 60  { O }
+  SF_SDO  = 59  { O }
+  SF_SDI  = 58  { I }
+
+  SD_SCK  = 61  { O }                                           ' sd card
+  SD_CS   = 60  { O }
+  SD_SDI  = 59  { O }
+  SD_SDO  = 58  { I }
+
+  LED2    = 57  { O }                                           ' Eval and Edge LEDs
+  LED1    = 56  { O }
+
+
+con { app io pins }
+
+  SDA     = 41  { IO }                                          ' I2C bus
+  SCL     = 40  { O }
+
+
+con
+
+  #true,  ON, OFF
+  #false, NO, YES
+
+
+obj
+
+' main                                                          ' * master Spin cog
+  ee   : "jm_at24c32"                                           '   24c32 4K eeprom (i2c)
+  term : "jm_fullduplexserial"                                  ' * serial IO for terminal
+  ansi : "jm_ansi"                                              '   ANSI terminal control sequences
+
+' * uses cog when loaded
+
+
+dat { pre-initialized }
+
+
+var { globals }
+
+  byte  s[32]                                                   ' string buffer
+
+
+pub main()
+
+  setup()
+
+  wait_for_terminal(true)
+
+  ee.fill($00, ee.PG_SIZE, $FF)                                 ' restore ee
+  ee.fill($20, ee.PG_SIZE, $FF)
+  ee.fill($40, ee.PG_SIZE, $FF)
+  ee.fill($60, ee.PG_SIZE, $FF)
+
+  dump(0, 128)                                                  ' show blank
+
+  ee.wr_byte($00, $00)                                          ' write some values
+  ee.wr_word($10, $1234)
+  ee.wr_long($20, $AABBCCDD)
+  ee.wr_str($30, string("Propeller 2"))
+
+  dump(0, 128)                                                  ' show them
+
+  term.fstr1(string("B = $%0.2x\r"), ee.rd_byte($00))           ' read and display values
+  term.fstr1(string("W = $%.4x\r"), ee.rd_word($10))
+  term.fstr1(string("B = $%.8x\r"), ee.rd_long($20))
+  ee.rd_str($30, @s)
+  term.fstr1(string("S = %s\r"), @s)
+
+  repeat
+    waitct(0)
+
+
+pub dump(addr, count) | x, b, byte asc[17]
+
+'' Display count bytes for EE, starting at address
+'' -- display as hex and ASCII
+
+  addr &= $FFF0                                                 ' force to 16-byte boundary
+  count := (count + 15) >> 4                                    ' convert to display lines
+
+  asc[16] := 0                                                  ' string terminator
+
+  repeat count
+    term.fstr1(string("%.4x  "), addr)                          ' starting address for this line
+    repeat x from 0 to 15
+      b := ee.rd_byte(addr+x)                                   ' read from ee
+      term.fstr1(string("%.2x "), b)                            ' display as hex
+      asc[x] := ((b >= 32) && (b <= 127)) ? b : "."             ' build ASCII string
+    term.fstr1(string("   %s\r"), @asc)                         '  and display at tend of line
+    waitms(1)                                                   ' prevent PST buffer overrrun
+    addr += 16                                                  ' next line
+
+  term.tx(13)
+
+
+pub setup()
+
+  ee.start(SCL, SDA, %111, 100, ee.PU_NONE)                     ' connect to eeprom
+
+  term.start(RX1, TX1, %0000, BR_TERM)                          ' start terminal io
+
+
+pub wait_for_terminal(clear)
+
+  ' Download to RAM with F10
+  ' F12 to open PST
+  ' Click [Enable]
+  ' Press Enter
+
+  term.rxflush()
+  term.rx()
+  if (clear)
+    if (T_TYPE == T_PST)
+      term.tx(term.CLS)
+    else
+      term.str(ansi.hide_cursor())
+      term.str(ansi.home())
+      term.str(ansi.cls())
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}
