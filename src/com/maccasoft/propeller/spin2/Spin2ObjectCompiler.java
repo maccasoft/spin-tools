@@ -433,6 +433,7 @@ public class Spin2ObjectCompiler {
     }
 
     void compileVarBlock(Node parent) {
+        String type = "LONG";
 
         for (Node child : parent.getChilds()) {
             VariableNode node = (VariableNode) child;
@@ -440,7 +441,6 @@ public class Spin2ObjectCompiler {
                 continue;
             }
 
-            String type = "LONG";
             if (node.type != null) {
                 type = node.type.getText().toUpperCase();
             }
