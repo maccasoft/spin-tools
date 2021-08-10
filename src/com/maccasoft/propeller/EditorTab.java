@@ -44,7 +44,9 @@ import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
 import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
+import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
+import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class EditorTab {
 
@@ -249,7 +251,7 @@ public class EditorTab {
         @Override
         protected Node getObjectTree(String fileName) {
             File localFile = new File(file != null ? file.getParentFile() : new File(""), fileName + ".spin2");
-            File libraryFile = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName + ".spin2");
+            File libraryFile = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName + ".spin2");
 
             Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
             if (node == null) {
@@ -262,8 +264,8 @@ public class EditorTab {
                 }
                 if (file.exists()) {
                     try {
-                        Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
-                        Spin1Parser subject = new Spin1Parser(stream);
+                        Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(file));
+                        Spin2Parser subject = new Spin2Parser(stream);
                         node = subject.parse();
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -281,7 +283,7 @@ public class EditorTab {
         @Override
         protected Node getParsedObject(String fileName) {
             File localFile = new File(file != null ? file.getParentFile() : new File(""), fileName);
-            File libraryFile = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName);
+            File libraryFile = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
 
             File file = localFile;
             Node node = sourcePool.getParsedSource(file.getAbsolutePath());
@@ -296,8 +298,8 @@ public class EditorTab {
                 }
                 if (file.exists()) {
                     try {
-                        Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
-                        Spin1Parser subject = new Spin1Parser(stream);
+                        Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(file));
+                        Spin2Parser subject = new Spin2Parser(stream);
                         node = subject.parse();
                     } catch (Exception e) {
                         e.printStackTrace();
