@@ -1957,18 +1957,25 @@ public class Spin1ObjectCompiler {
                     }
                 }
 
+                MemoryOp.Base bb = MemoryOp.Base.PBase;
+                if (expression instanceof LocalVariable) {
+                    bb = MemoryOp.Base.DBase;
+                }
+                else if (expression instanceof Variable) {
+                    bb = MemoryOp.Base.VBase;
+                }
                 MemoryOp.Op op = push ? MemoryOp.Op.Read : MemoryOp.Op.Write;
                 if (postEffect != null) {
                     op = MemoryOp.Op.Assign;
                 }
                 if ("BYTE".equalsIgnoreCase(s[1])) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Byte, indexed, MemoryOp.Base.Pop, op, expression));
+                    source.add(new MemoryOp(context, MemoryOp.Size.Byte, indexed, bb, op, expression));
                 }
                 else if ("WORD".equalsIgnoreCase(s[1])) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Word, indexed, MemoryOp.Base.Pop, op, expression));
+                    source.add(new MemoryOp(context, MemoryOp.Size.Word, indexed, bb, op, expression));
                 }
                 else if ("LONG".equalsIgnoreCase(s[1])) {
-                    source.add(new MemoryOp(context, MemoryOp.Size.Long, indexed, MemoryOp.Base.Pop, op, expression));
+                    source.add(new MemoryOp(context, MemoryOp.Size.Long, indexed, bb, op, expression));
                 }
 
                 if (postEffect != null) {
@@ -2360,15 +2367,22 @@ public class Spin1ObjectCompiler {
                 }
             }
 
+            MemoryOp.Base bb = MemoryOp.Base.PBase;
+            if (expression instanceof LocalVariable) {
+                bb = MemoryOp.Base.DBase;
+            }
+            else if (expression instanceof Variable) {
+                bb = MemoryOp.Base.VBase;
+            }
             MemoryOp.Op op = push ? MemoryOp.Op.Assign : MemoryOp.Op.Write;
             if ("BYTE".equalsIgnoreCase(s[1])) {
-                source.add(new MemoryOp(context, MemoryOp.Size.Byte, indexed, MemoryOp.Base.Pop, op, expression));
+                source.add(new MemoryOp(context, MemoryOp.Size.Byte, indexed, bb, op, expression));
             }
             else if ("WORD".equalsIgnoreCase(s[1])) {
-                source.add(new MemoryOp(context, MemoryOp.Size.Word, indexed, MemoryOp.Base.Pop, op, expression));
+                source.add(new MemoryOp(context, MemoryOp.Size.Word, indexed, bb, op, expression));
             }
             else if ("LONG".equalsIgnoreCase(s[1])) {
-                source.add(new MemoryOp(context, MemoryOp.Size.Long, indexed, MemoryOp.Base.Pop, op, expression));
+                source.add(new MemoryOp(context, MemoryOp.Size.Long, indexed, bb, op, expression));
             }
 
             if (postEffect != null) {

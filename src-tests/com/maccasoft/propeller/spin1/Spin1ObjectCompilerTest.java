@@ -1967,6 +1967,36 @@ class Spin1ObjectCompilerTest {
     }
 
     @Test
+    void testDatVariableType() throws Exception {
+        String text = ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := b.byte\n"
+            + "    b.byte := a\n"
+            + "DAT\n"
+            + "b   long 0\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       0C 00 04 00    Function main @ $000C (local size 4)\n"
+            + "00008 00008   000 00 00 00 00    b                   long    0\n"
+            + "' PUB main | a\n"
+            + "'     a := b.byte\n"
+            + "0000C 0000C       84 08          MEM_READ BYTE PBASE+$0008\n"
+            + "0000E 0000E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     b.byte := a\n"
+            + "0000F 0000F       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00010 00010       85 08          MEM_WRITE BYTE PBASE+$0008\n"
+            + "00012 00012       32             RETURN\n"
+            + "00013 00013       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testVariableTypeIndex() throws Exception {
         String text = ""
             + "PUB main | a, b\n"

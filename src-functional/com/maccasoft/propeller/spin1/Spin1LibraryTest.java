@@ -121,6 +121,11 @@ class Spin1LibraryTest {
     }
 
     @Test
+    void test_display_vga_text_hires() throws Exception {
+        compileAndCompare(new File(path, "display.vga.text.hires.spin"), new File(path, "display.vga.text.hires.binary"));
+    }
+
+    @Test
     void test_display_vga_tile_1280x1024() throws Exception {
         compileAndCompare(new File(path, "display.vga.tile.1280x1024.spin"), new File(path, "display.vga.tile.1280x1024.binary"));
     }
