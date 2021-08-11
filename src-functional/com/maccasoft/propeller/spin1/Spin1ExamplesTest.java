@@ -42,6 +42,11 @@ class Spin1ExamplesTest {
     }
 
     @Test
+    void test_char_Types() throws Exception {
+        compileAndCompare(new File(path + "/char", "Types.spin"), new File(path + "/char", "Types.binary"));
+    }
+
+    @Test
     void test_com_serial_DataBlast() throws Exception {
         compileAndCompare(new File(path + "/com/serial", "DataBlast.spin"), new File(path, "com/serial/DataBlast.binary"));
     }
@@ -56,28 +61,47 @@ class Spin1ExamplesTest {
         compileAndCompare(new File(path + "/com/serial", "LoopBack.spin"), new File(path, "com/serial/LoopBack.binary"));
     }
 
-    //@Test
-    // Fails because of different sequence of same-priority operands
+    @Test
+    // Comparison with binary from OpenSpin fails
+    //  - different sequence of same-priority operands
     void test_com_serial_terminal_Demo() throws Exception {
         compileAndCompare(new File(path + "/com/serial/terminal", "Demo.spin"), new File(path, "com/serial/terminal/Demo.binary"));
     }
 
-    //@Test
-    // Fails because of different sequence of same-priority operands
+    @Test
+    // Comparison with binary from OpenSpin fails
+    //  - different sequence of same-priority operands
     void test_com_serial_terminal_HelloWorld() throws Exception {
         compileAndCompare(new File(path + "/com/serial/terminal", "HelloWorld.spin"), new File(path, "com/serial/terminal/HelloWorld.binary"));
     }
 
-    //@Test
-    // Fails because of different sequence of same-priority operands
+    @Test
+    // Comparison with binary from OpenSpin fails
+    //  - different sequence of same-priority operands
     void test_com_serial_terminal_InputNumbers() throws Exception {
         compileAndCompare(new File(path + "/com/serial/terminal", "InputNumbers.spin"), new File(path, "com/serial/terminal/InputNumbers.binary"));
     }
 
-    //@Test
-    // Fails because of different sequence of same-priority operands
+    @Test
+    // Comparison with binary from OpenSpin fails
+    //  - different sequence of same-priority operands
     void test_com_serial_terminal_ReadLine() throws Exception {
         compileAndCompare(new File(path + "/com/serial/terminal", "ReadLine.spin"), new File(path, "com/serial/terminal/ReadLine.binary"));
+    }
+
+    @Test
+    void test_input_Keyboard() throws Exception {
+        compileAndCompare(new File(path + "/input", "Keyboard.spin"), new File(path + "/input", "Keyboard.binary"));
+    }
+
+    @Test
+    void test_input_Keypad4x4() throws Exception {
+        compileAndCompare(new File(path + "/input", "Keypad4x4.spin"), new File(path + "/input", "Keypad4x4.binary"));
+    }
+
+    @Test
+    void test_input_TrimAD8803() throws Exception {
+        compileAndCompare(new File(path + "/input", "TrimAD8803.spin"), new File(path + "/input", "TrimAD8803.binary"));
     }
 
     class Spin1CompilerAdapter extends Spin1Compiler {

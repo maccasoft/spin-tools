@@ -31,7 +31,6 @@ class Spin2LibraryTest {
     @Test
     void test_ansi() throws Exception {
         // Comparison with binary from Propeller Tool fails
-        //  - different sequence of same-priority operators
         //  - dat variables readed as long instead of bytes
         compileAndCompare(new File(path, "ansi.spin2"), new File(path, "ansi.binary"));
     }
@@ -98,8 +97,6 @@ class Spin2LibraryTest {
 
     @Test
     void test_jm_ez_analog() throws Exception {
-        // Comparison with binary from Propeller Tool fails
-        //  - different sequence of same-priority operators
         compileAndCompare(new File(path, "jm_ez_analog.spin2"), new File(path, "jm_ez_analog.binary"));
     }
 
@@ -253,15 +250,6 @@ class Spin2LibraryTest {
         compileAndCompare(new File(path, "vga_tile_driver.spin2"), new File(path, "vga_tile_driver.binary"));
     }
 
-    /*
-    @Test
-    void test_Spin2_interpreter() throws Exception {
-        String text = getResourceAsString("Spin2_interpreter.spin2");
-    
-        new File(path, "Spin2_interpreter.binary");
-        compileAndCompare(text, expected);
-    }
-    */
     class Spin2CompilerAdapter extends Spin2Compiler {
 
         File parent;

@@ -51,8 +51,6 @@ class Spin1LibraryTest {
     }
 
     @Test
-    // Comparison with binary from OpenSpin fails
-    //  - different sequence of same-priority operators
     void test_com_serial_terminal() throws Exception {
         compileAndCompare(new File(path, "com.serial.terminal.spin"), new File(path, "com.serial.terminal.binary"));
     }
@@ -83,8 +81,6 @@ class Spin1LibraryTest {
     }
 
     @Test
-    // Comparison with binary from OpenSpin fails
-    //  - different sequence of same-priority operators
     void test_display_lcd_serial() throws Exception {
         compileAndCompare(new File(path, "display.lcd.serial.spin"), new File(path, "display.lcd.serial.binary"));
     }
@@ -102,6 +98,11 @@ class Spin1LibraryTest {
     @Test
     void test_display_tv_text() throws Exception {
         compileAndCompare(new File(path, "display.tv.text.spin"), new File(path, "display.tv.text.binary"));
+    }
+
+    @Test
+    void test_display_tv_terminal() throws Exception {
+        compileAndCompare(new File(path, "display.tv.terminal.spin"), new File(path, "display.tv.terminal.binary"));
     }
 
     @Test
@@ -140,15 +141,11 @@ class Spin1LibraryTest {
     }
 
     @Test
-    // Comparison with binary from OpenSpin fails
-    //  - different sequence of same-priority operators
     void test_input_mouse() throws Exception {
         compileAndCompare(new File(path, "input.mouse.spin"), new File(path, "input.mouse.binary"));
     }
 
     @Test
-    // Comparison with binary from OpenSpin fails
-    //  - different sequence of same-priority operators
     void test_input_quadrature() throws Exception {
         compileAndCompare(new File(path, "input.quadrature.spin"), new File(path, "input.quadrature.binary"));
     }
@@ -251,15 +248,11 @@ class Spin1LibraryTest {
     }
 
     @Test
-    // Comparison with binary from OpenSpin fails
-    //  - different sequence of same-priority operators
     void test_string_float() throws Exception {
         compileAndCompare(new File(path, "string.float.spin"), new File(path, "string.float.binary"));
     }
 
     @Test
-    // Comparison with binary from OpenSpin fails
-    //  - different sequence of same-priority operators
     void test_string_integer() throws Exception {
         compileAndCompare(new File(path, "string.integer.spin"), new File(path, "string.integer.binary"));
     }
@@ -295,8 +288,6 @@ class Spin1LibraryTest {
     }
 
     @Test
-    // Comparison with binary from OpenSpin fails
-    //  - different sequence of same-priority operators
     void test_tiny_math_float_spin() throws Exception {
         compileAndCompare(new File(path, "tiny.math.float.spin"), new File(path, "tiny.math.float.binary"));
     }

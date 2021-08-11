@@ -228,7 +228,7 @@ public class Spin2TreeBuilder {
                 if (",".equals(token.getText()) && !comma) {
                     break;
                 }
-                right = parseLevel(right, level + 1, comma);
+                right = parseLevel(right, p.intValue() + 1, comma);
             }
 
             Spin2StatementNode node = new Spin2StatementNode(token);

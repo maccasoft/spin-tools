@@ -162,7 +162,7 @@ public class Spin1ExpressionBuilder {
                 if (nextP == null || nextP.intValue() <= p.intValue()) {
                     break;
                 }
-                right = parseLevel(right, level + 1);
+                right = parseLevel(right, p.intValue() + 1);
             }
 
             switch (token.getText()) {

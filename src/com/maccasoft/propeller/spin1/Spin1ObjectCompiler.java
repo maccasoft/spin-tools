@@ -1145,8 +1145,14 @@ public class Spin1ObjectCompiler {
                 if (repeat.getArgumentsCount() == 4) {
                     line.addSource(compileConstantExpression(line.getScope(), repeat.getArgument(3)));
                 }
-                line.addSource(compileConstantExpression(line.getScope(), repeat.getArgument(1)));
-                line.addSource(compileConstantExpression(line.getScope(), repeat.getArgument(2)));
+                if (OPENSPIN_COMPATIBILITY) {
+                    line.addSource(compileBytecodeExpression(line.getScope(), repeat.getArgument(1), true));
+                    line.addSource(compileBytecodeExpression(line.getScope(), repeat.getArgument(2), true));
+                }
+                else {
+                    line.addSource(compileConstantExpression(line.getScope(), repeat.getArgument(1)));
+                    line.addSource(compileConstantExpression(line.getScope(), repeat.getArgument(2)));
+                }
 
                 String varText = repeat.getArgument(0).getText();
                 Expression expression = line.getScope().getLocalSymbol(varText);

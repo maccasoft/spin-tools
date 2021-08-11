@@ -183,7 +183,7 @@ public class Spin1TreeBuilder {
                 if (nextP == null || nextP.intValue() <= p.intValue()) {
                     break;
                 }
-                right = parseLevel(right, level + 1);
+                right = parseLevel(right, p.intValue() + 1);
             }
 
             Spin1StatementNode node = new Spin1StatementNode(token);

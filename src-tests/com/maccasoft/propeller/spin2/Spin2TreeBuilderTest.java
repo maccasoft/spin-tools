@@ -21,7 +21,7 @@ import com.maccasoft.propeller.model.Token;
 class Spin2TreeBuilderTest {
 
     @Test
-    void testOperatorPrecedence() {
+    void testOperatorPrecedence1() {
         String text = "1 + 2 * 3";
         Assertions.assertEquals(""
             + "[+]\n"
@@ -29,6 +29,20 @@ class Spin2TreeBuilderTest {
             + " +-- [*]\n"
             + "      +-- [2]\n"
             + "      +-- [3]\n"
+            + "", parseExpression(text));
+    }
+
+    @Test
+    void testOperatorPrecedence2() {
+        String text = "a * b << 1 + 2";
+        Assertions.assertEquals(""
+            + "[+]\n"
+            + " +-- [*]\n"
+            + "      +-- [a]\n"
+            + "      +-- [<<]\n"
+            + "           +-- [b]\n"
+            + "           +-- [1]\n"
+            + " +-- [2]\n"
             + "", parseExpression(text));
     }
 
