@@ -183,6 +183,11 @@ class Spin1LibraryTest {
     }
 
     @Test
+    void test_misc_loader() throws Exception {
+        compileAndCompare(new File(path, "misc.loader.spin"), new File(path, "misc.loader.binary"));
+    }
+
+    @Test
     void test_motor_servo() throws Exception {
         compileAndCompare(new File(path, "motor.servo.spin"), new File(path, "motor.servo.binary"));
     }
