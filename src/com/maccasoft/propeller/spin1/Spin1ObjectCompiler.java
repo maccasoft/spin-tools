@@ -84,7 +84,6 @@ import com.maccasoft.propeller.spin1.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
 import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
-import com.maccasoft.propeller.spin1.instructions.Fit;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
 
@@ -220,12 +219,10 @@ public class Spin1ObjectCompiler {
 
         hubAddress = object.getSize();
 
-        boolean cogMode = false;
         for (Spin1PAsmLine line : source) {
             line.getScope().setHubAddress(hubAddress);
             if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
                 hubAddress = (hubAddress + 3) & ~3;
-                cogMode = true;
             }
             try {
                 address = line.resolve(address);
@@ -237,12 +234,6 @@ public class Spin1ObjectCompiler {
                 logMessage(e);
             } catch (Exception e) {
                 logMessage(new CompilerMessage(e.getMessage(), (Node) line.getData()));
-            }
-            if (line.getInstructionFactory() instanceof Fit) {
-                cogMode = false;
-            }
-            if (cogMode && (address >> 2) > 0x1F0) {
-                logMessage(new CompilerMessage("cog code limit exceeded", (Node) line.getData()));
             }
         }
 

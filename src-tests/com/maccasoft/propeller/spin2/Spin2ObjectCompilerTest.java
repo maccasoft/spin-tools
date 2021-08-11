@@ -2881,7 +2881,7 @@ class Spin2ObjectCompilerTest {
             + "'         org\n"
             + "00009 00009       19 5C          INLINE-EXEC\n"
             + "0000B 0000B       00 00 03 00    ORG=$000, 4\n"
-            + "0000F 0000F   000                                    org\n"
+            + "0000F 0000F   00F                                    org\n"
             + "0000F 0000F   000 00 B0 07 F6                        mov     pr0, #0\n"
             + "00013 00013   001 E0 B1 03 F1    l1                  add     pr0, a\n"
             + "00017 00017   002 FE C1 6F FB                        djnz    a, #l1\n"
