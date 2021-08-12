@@ -87,6 +87,26 @@ class Spin1ExamplesTest {
     }
 
     @Test
+    void test_display_Graphics_Demo() throws Exception {
+        compileAndCompare(new File(path + "/display", "Graphics_Demo"));
+    }
+
+    @Test
+    void test_display_Graphics_Palette() throws Exception {
+        compileAndCompare(new File(path + "/display", "Graphics_Palette"));
+    }
+
+    @Test
+    void test_display_TV_Terminal_Demo() throws Exception {
+        compileAndCompare(new File(path + "/display", "TV_Terminal_Demo"));
+    }
+
+    @Test
+    void test_display_TV_Text_Demo() throws Exception {
+        compileAndCompare(new File(path + "/display", "TV_Text_Demo"));
+    }
+
+    @Test
     void test_input_Keyboard() throws Exception {
         compileAndCompare(new File(path + "/input", "Keyboard.spin"), new File(path + "/input", "Keyboard.binary"));
     }

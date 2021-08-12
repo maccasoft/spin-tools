@@ -1567,7 +1567,7 @@ public class Spin1ObjectCompiler {
             else {
                 Expression expression = context.getLocalSymbol(node.getChild(0).getText());
                 if (!push && (expression instanceof Variable)) {
-                    source.add(new VariableOp(context, VariableOp.Op.Assign, false, (Variable) expression));
+                    source.addAll(leftAssign(context, node.getChild(0), true));
                 }
                 else {
                     source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
@@ -1741,26 +1741,7 @@ public class Spin1ObjectCompiler {
             if (node.getChildCount() != 1) {
                 throw new RuntimeException("expression syntax error");
             }
-            Expression expression = context.getLocalSymbol(node.getChild(0).getText());
-            if (expression == null) {
-                throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
-            }
-            if (expression instanceof Register) {
-                if (node.getChild(0).getChildCount() == 1) {
-                    boolean range = "..".equals(node.getChild(0).getChild(0).getText());
-                    source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(0), true));
-                    source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, range, expression.getNumber().intValue()));
-                }
-                else {
-                    source.add(new RegisterOp(context, RegisterOp.Op.Assign, expression.getNumber().intValue()));
-                }
-            }
-            else if (expression instanceof Variable) {
-                source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
-            }
-            else {
-                throw new CompilerMessage("unsupported operation on " + node.getChild(0).getText(), node.getChild(0).getToken());
-            }
+            source.addAll(leftAssign(context, node.getChild(0), true));
             int code = 0b0_00100_00;
             if (push) {
                 code |= 0b10000000;
@@ -1771,26 +1752,7 @@ public class Spin1ObjectCompiler {
             if (node.getChildCount() != 1) {
                 throw new RuntimeException("expression syntax error");
             }
-            Expression expression = context.getLocalSymbol(node.getChild(0).getText());
-            if (expression == null) {
-                throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
-            }
-            if (expression instanceof Register) {
-                if (node.getChild(0).getChildCount() == 1) {
-                    boolean range = "..".equals(node.getChild(0).getChild(0).getText());
-                    source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(0), true));
-                    source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, range, expression.getNumber().intValue()));
-                }
-                else {
-                    source.add(new RegisterOp(context, RegisterOp.Op.Assign, expression.getNumber().intValue()));
-                }
-            }
-            else if (expression instanceof Variable) {
-                source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
-            }
-            else {
-                throw new CompilerMessage("unsupported operation on " + node.getChild(0).getText(), node.getChild(0).getToken());
-            }
+            source.addAll(leftAssign(context, node.getChild(0), true));
             int code = 0b0_00101_00;
             if (push) {
                 code |= 0b10000000;
