@@ -121,7 +121,7 @@ PUB width(w) | pixel_passes, r, i, p
 ''
 ''   w              - 0..15 for round pixels, 16..31 for square pixels
 
-  r := not w & $10                                      'determine pixel shape/width
+  r := not (w & $10)                                    'determine pixel shape/width
   w &= $F
   pixel_width := w
   pixel_passes := w >> 1 + 1

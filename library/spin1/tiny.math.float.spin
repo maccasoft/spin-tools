@@ -186,7 +186,7 @@ PRI Pack(pointer) : single | s, x, m
     x += 3 - result             'adjust exponent
 
     m += $00000100              'round up mantissa by 1/2 lsb
-    if not m & $FFFFFF00        'if rounding overflow,
+    if not (m & $FFFFFF00)      'if rounding overflow,
       x++                       '..increment exponent
 
     x := x + 127 #> -23 <# 255  'bias and limit exponent

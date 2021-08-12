@@ -29,7 +29,7 @@ class Spin1TreeBuilderTest {
             + " +-- [*]\n"
             + "      +-- [2]\n"
             + "      +-- [3]\n"
-            + "", parseExpression(text));
+            + "", parse(text));
     }
 
     @Test
@@ -43,7 +43,7 @@ class Spin1TreeBuilderTest {
             + "           +-- [b]\n"
             + "           +-- [1]\n"
             + " +-- [2]\n"
-            + "", parseExpression(text));
+            + "", parse(text));
     }
 
     @Test
@@ -55,7 +55,7 @@ class Spin1TreeBuilderTest {
             + "      +-- [1]\n"
             + "      +-- [2]\n"
             + " +-- [3]\n"
-            + "", parseExpression(text));
+            + "", parse(text));
     }
 
     @Test
@@ -69,7 +69,7 @@ class Spin1TreeBuilderTest {
             + "      +-- [*]\n"
             + "           +-- [2]\n"
             + "           +-- [3]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -77,7 +77,7 @@ class Spin1TreeBuilderTest {
         String text = "function()";
         Assertions.assertEquals(""
             + "[function]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -88,7 +88,7 @@ class Spin1TreeBuilderTest {
             + " +-- [1]\n"
             + " +-- [2]\n"
             + " +-- [3]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -107,7 +107,7 @@ class Spin1TreeBuilderTest {
             + "           +-- [5]\n"
             + "           +-- [6]\n"
             + "      +-- [7]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -117,7 +117,7 @@ class Spin1TreeBuilderTest {
             + "[:=]\n"
             + " +-- [a]\n"
             + " +-- [function]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -130,7 +130,7 @@ class Spin1TreeBuilderTest {
             + "      +-- [1]\n"
             + "      +-- [2]\n"
             + "      +-- [3]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -144,7 +144,7 @@ class Spin1TreeBuilderTest {
             + "      +-- [*]\n"
             + "           +-- [function2]\n"
             + "           +-- [function3]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -164,7 +164,7 @@ class Spin1TreeBuilderTest {
             + "                +-- [4]\n"
             + "                +-- [5]\n"
             + "                +-- [6]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -184,7 +184,7 @@ class Spin1TreeBuilderTest {
             + "           +-- [4]\n"
             + "           +-- [5]\n"
             + "           +-- [6]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -195,7 +195,7 @@ class Spin1TreeBuilderTest {
             + " +-- [a]\n"
             + " +-- [-]\n"
             + "      +-- [b]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -210,7 +210,7 @@ class Spin1TreeBuilderTest {
             + "           +-- [*]\n"
             + "                +-- [2]\n"
             + "                +-- [3]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -221,7 +221,7 @@ class Spin1TreeBuilderTest {
             + " +-- [a]\n"
             + " +-- [b]\n"
             + "      +-- [1]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -232,7 +232,7 @@ class Spin1TreeBuilderTest {
             + " +-- [a]\n"
             + "      +-- [1]\n"
             + " +-- [b]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -245,7 +245,7 @@ class Spin1TreeBuilderTest {
             + "      +-- [..]\n"
             + "           +-- [1]\n"
             + "           +-- [5]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -258,7 +258,7 @@ class Spin1TreeBuilderTest {
             + "           +-- [1]\n"
             + "           +-- [5]\n"
             + " +-- [b]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -272,7 +272,7 @@ class Spin1TreeBuilderTest {
             + "      +-- [:]\n"
             + "           +-- [c]\n"
             + "           +-- [d]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -294,7 +294,7 @@ class Spin1TreeBuilderTest {
             + "                +-- [*]\n"
             + "                     +-- [e]\n"
             + "                     +-- [4]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -303,7 +303,7 @@ class Spin1TreeBuilderTest {
         Assertions.assertEquals(""
             + "[\\]\n"
             + " +-- [function1]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -314,7 +314,7 @@ class Spin1TreeBuilderTest {
             + " +-- [a]\n"
             + " +-- [\\]\n"
             + "      +-- [function1]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -335,7 +335,7 @@ class Spin1TreeBuilderTest {
             + "           +-- [4]\n"
             + "           +-- [5]\n"
             + "           +-- [6]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -351,7 +351,7 @@ class Spin1TreeBuilderTest {
             + "           +-- [2]\n"
             + "           +-- [3]\n"
             + "           +-- [4]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -360,7 +360,7 @@ class Spin1TreeBuilderTest {
         Assertions.assertEquals(""
             + "[a]\n"
             + " +-- [++]\n"
-            + "", parseExpression(text));
+            + "", parse(text));
     }
 
     @Test
@@ -369,7 +369,7 @@ class Spin1TreeBuilderTest {
         Assertions.assertEquals(""
             + "[--]\n"
             + " +-- [a]\n"
-            + "", parseExpression(text));
+            + "", parse(text));
     }
 
     @Test
@@ -385,7 +385,7 @@ class Spin1TreeBuilderTest {
             + "                +-- [~~]\n"
             + "           +-- [--]\n"
             + "                +-- [d]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -395,7 +395,7 @@ class Spin1TreeBuilderTest {
             + "[a]\n"
             + " +-- [1]\n"
             + " +-- [~~]\n"
-            + "", parseExpression(text));
+            + "", parse(text));
     }
 
     @Test
@@ -405,7 +405,7 @@ class Spin1TreeBuilderTest {
             + "[~~]\n"
             + " +-- [a]\n"
             + "      +-- [1]\n"
-            + "", parseExpression(text));
+            + "", parse(text));
     }
 
     @Test
@@ -417,7 +417,7 @@ class Spin1TreeBuilderTest {
             + " +-- [b]\n"
             + "      +-- [c]\n"
             + "      +-- [0]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -430,7 +430,7 @@ class Spin1TreeBuilderTest {
             + "      +-- [c]\n"
             + "      +-- [0]\n"
             + "      +-- [~]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -442,7 +442,7 @@ class Spin1TreeBuilderTest {
             + "      +-- [c]\n"
             + "      +-- [0]\n"
             + " +-- [b]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
     @Test
@@ -457,18 +457,10 @@ class Spin1TreeBuilderTest {
             + "           +-- [20]\n"
             + "           +-- [30]\n"
             + "      +-- [40]\n"
-            + "", parseAssignment(text));
+            + "", parse(text));
     }
 
-    String parseAssignment(String text) {
-        return parse(0, text);
-    }
-
-    String parseExpression(String text) {
-        return parse(2, text);
-    }
-
-    String parse(int state, String text) {
+    String parse(String text) {
         Spin1TreeBuilder builder = new Spin1TreeBuilder();
 
         Spin1TokenStream stream = new Spin1TokenStream(text);

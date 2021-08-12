@@ -115,6 +115,7 @@ public class Spin1TreeBuilder {
         unary.add("|<");
         unary.add(">|");
         unary.add("@@");
+        unary.add("NOT");
     }
 
     static Set<String> postEffect = new HashSet<String>();
