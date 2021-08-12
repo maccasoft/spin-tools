@@ -612,9 +612,13 @@ public class SourceEditor {
 
                     Node root = tokenMarker.getRoot();
                     if (root != null) {
-                        for (Node child : root.getChilds()) {
-                            if (child instanceof MethodNode) {
-                                paintBlock(gc, child, 0, -1);
+                        for (Node node : root.getChilds()) {
+                            if (node instanceof MethodNode) {
+                                for (Node child : node.getChilds()) {
+                                    if ((child instanceof StatementNode) || (child instanceof DataLineNode)) {
+                                        paintBlock(gc, child, -1);
+                                    }
+                                }
                             }
                         }
                     }
@@ -635,7 +639,7 @@ public class SourceEditor {
                 }
             }
 
-            void paintBlock(GC gc, Node node, int level, int yref) {
+            void paintBlock(GC gc, Node node, int yref) {
                 List<Node> childs = node.getChilds();
 
                 Rectangle r = styledText.getTextBounds(node.getStartToken().start, node.getStartToken().start);
@@ -647,16 +651,13 @@ public class SourceEditor {
                 }
 
                 Rectangle r1 = styledText.getTextBounds(childs.get(childs.size() - 1).getStartToken().start, childs.get(childs.size() - 1).getStartToken().start);
-                if (r1.y < clientArea.y) {
+                if (r1.y + r1.height < clientArea.y) {
                     return;
                 }
 
                 for (Node child : childs) {
-                    if (!(child instanceof StatementNode) && !(child instanceof DataLineNode)) {
-                        continue;
-                    }
-                    int y1 = -1;
-                    if (level > 0) {
+                    if ((child instanceof StatementNode) || (child instanceof DataLineNode)) {
+                        int y1 = -1;
                         r = styledText.getTextBounds(child.getStartToken().start, child.getStartToken().start);
                         y1 = r.y + r.height / 2;
                         if (y1 != y0 && y1 >= 0 && y1 != yref) {
@@ -668,9 +669,9 @@ public class SourceEditor {
                         if (y0 >= clientArea.height) {
                             break;
                         }
-                    }
-                    if (child instanceof StatementNode) {
-                        paintBlock(gc, child, level + 1, y1);
+                        if (child instanceof StatementNode) {
+                            paintBlock(gc, child, y1);
+                        }
                     }
                 }
             }
