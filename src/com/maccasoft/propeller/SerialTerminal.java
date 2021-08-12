@@ -304,11 +304,9 @@ public class SerialTerminal {
                     cx = (int) (p0 * fontMetrics.getAverageCharacterWidth());
                     break;
 
+                case 10: // LF: Line Feed
                 case 13: // NL: New Line
                     cx = 0;
-                    // Fall through
-
-                case 10: // LF: Line Feed
                     cy += fontMetrics.getHeight();
                     if (cy >= imageBounds.height) {
                         gc.copyArea(0, fontMetrics.getHeight(), imageBounds.width, imageBounds.height - fontMetrics.getHeight(), 0, 0);

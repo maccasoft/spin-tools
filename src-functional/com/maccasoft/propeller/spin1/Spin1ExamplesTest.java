@@ -62,31 +62,28 @@ class Spin1ExamplesTest {
     }
 
     @Test
-    // Comparison with binary from OpenSpin fails
-    //  - different sequence of same-priority operands
     void test_com_serial_terminal_Demo() throws Exception {
         compileAndCompare(new File(path + "/com/serial/terminal", "Demo.spin"), new File(path, "com/serial/terminal/Demo.binary"));
     }
 
     @Test
-    // Comparison with binary from OpenSpin fails
-    //  - different sequence of same-priority operands
     void test_com_serial_terminal_HelloWorld() throws Exception {
         compileAndCompare(new File(path + "/com/serial/terminal", "HelloWorld.spin"), new File(path, "com/serial/terminal/HelloWorld.binary"));
     }
 
     @Test
-    // Comparison with binary from OpenSpin fails
-    //  - different sequence of same-priority operands
     void test_com_serial_terminal_InputNumbers() throws Exception {
         compileAndCompare(new File(path + "/com/serial/terminal", "InputNumbers.spin"), new File(path, "com/serial/terminal/InputNumbers.binary"));
     }
 
     @Test
-    // Comparison with binary from OpenSpin fails
-    //  - different sequence of same-priority operands
     void test_com_serial_terminal_ReadLine() throws Exception {
         compileAndCompare(new File(path + "/com/serial/terminal", "ReadLine.spin"), new File(path, "com/serial/terminal/ReadLine.binary"));
+    }
+
+    @Test
+    void test_com_spi_DS1620TemperatureSensing() throws Exception {
+        compileAndCompare(new File(path + "/com/spi", "DS1620TemperatureSensing"));
     }
 
     @Test
@@ -102,6 +99,76 @@ class Spin1ExamplesTest {
     @Test
     void test_input_TrimAD8803() throws Exception {
         compileAndCompare(new File(path + "/input", "TrimAD8803.spin"), new File(path + "/input", "TrimAD8803.binary"));
+    }
+
+    @Test
+    void test_math_float_FrequencyTable() throws Exception {
+        compileAndCompare(new File(path + "/math/float", "FrequencyTable"));
+    }
+
+    @Test
+    void test_math_float_LogTable() throws Exception {
+        compileAndCompare(new File(path + "/math/float", "LogTable"));
+    }
+
+    @Test
+    void test_math_random_RandomNumbers() throws Exception {
+        compileAndCompare(new File(path + "/math/random", "RandomNumbers"));
+    }
+
+    @Test
+    void test_math_random_WhiteNoise() throws Exception {
+        compileAndCompare(new File(path + "/math/random", "WhiteNoise"));
+    }
+
+    @Test
+    void test_string_Basics() throws Exception {
+        compileAndCompare(new File(path + "/string", "Basics.spin"), new File(path + "/string", "Basics.binary"));
+    }
+
+    @Test
+    void test_string_Calculator() throws Exception {
+        compileAndCompare(new File(path + "/string", "Calculator.spin"), new File(path + "/string", "Calculator.binary"));
+    }
+
+    @Test
+    void test_string_CommandLine() throws Exception {
+        compileAndCompare(new File(path + "/string", "CommandLine.spin"), new File(path + "/string", "CommandLine.binary"));
+    }
+
+    @Test
+    void test_string_CopyAppend() throws Exception {
+        compileAndCompare(new File(path + "/string", "CopyAppend.spin"), new File(path + "/string", "CopyAppend.binary"));
+    }
+
+    @Test
+    void test_string_LeftMidRight() throws Exception {
+        compileAndCompare(new File(path + "/string", "LeftMidRight.spin"), new File(path + "/string", "LeftMidRight.binary"));
+    }
+
+    @Test
+    void test_string_Replace() throws Exception {
+        compileAndCompare(new File(path + "/string", "Replace.spin"), new File(path + "/string", "Replace.binary"));
+    }
+
+    @Test
+    void test_string_Tokenize() throws Exception {
+        compileAndCompare(new File(path + "/string", "Tokenize.spin"), new File(path + "/string", "Tokenize.binary"));
+    }
+
+    @Test
+    void test_string_UpperLower() throws Exception {
+        compileAndCompare(new File(path + "/string", "UpperLower.spin"), new File(path + "/string", "UpperLower.binary"));
+    }
+
+    @Test
+    void test_string_integer_PrintNumbers() throws Exception {
+        compileAndCompare(new File(path + "/string/integer", "PrintNumbers.spin"), new File(path + "/string/integer", "PrintNumbers.binary"));
+    }
+
+    @Test
+    void test_system_Counters() throws Exception {
+        compileAndCompare(new File(path + "/system", "Counters.spin"), new File(path + "/system", "Counters.binary"));
     }
 
     class Spin1CompilerAdapter extends Spin1Compiler {
@@ -134,6 +201,10 @@ class Spin1ExamplesTest {
             return null;
         }
 
+    }
+
+    void compileAndCompare(File source) throws Exception {
+        compileAndCompare(new File(source.getAbsolutePath() + ".spin"), new File(source.getAbsolutePath() + ".binary"));
     }
 
     void compileAndCompare(File source, File binary) throws Exception {
