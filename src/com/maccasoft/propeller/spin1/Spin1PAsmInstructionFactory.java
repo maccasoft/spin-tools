@@ -35,8 +35,8 @@ import com.maccasoft.propeller.spin1.instructions.Cogid;
 import com.maccasoft.propeller.spin1.instructions.Coginit;
 import com.maccasoft.propeller.spin1.instructions.Cogstop;
 import com.maccasoft.propeller.spin1.instructions.Djnz;
+import com.maccasoft.propeller.spin1.instructions.Empty;
 import com.maccasoft.propeller.spin1.instructions.Enc;
-import com.maccasoft.propeller.spin1.instructions.FileInc;
 import com.maccasoft.propeller.spin1.instructions.Fit;
 import com.maccasoft.propeller.spin1.instructions.Hubop;
 import com.maccasoft.propeller.spin1.instructions.Jmp;
@@ -114,7 +114,8 @@ public abstract class Spin1PAsmInstructionFactory {
         symbols.put("BYTE", new com.maccasoft.propeller.spin1.instructions.Byte());
         symbols.put("WORD", new Word());
         symbols.put("LONG", new com.maccasoft.propeller.spin1.instructions.Long());
-        symbols.put("FILE", new FileInc());
+
+        symbols.put("FILE", Empty.instance);
 
         symbols.put("ABS", new Abs());
         symbols.put("ABSNEG", new Absneg());

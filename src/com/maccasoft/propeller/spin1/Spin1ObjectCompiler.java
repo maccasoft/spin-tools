@@ -84,6 +84,7 @@ import com.maccasoft.propeller.spin1.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
 import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
+import com.maccasoft.propeller.spin1.instructions.FileInc;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
 
@@ -220,6 +221,9 @@ public class Spin1ObjectCompiler {
         hubAddress = object.getSize();
 
         for (Spin1PAsmLine line : source) {
+            if (line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Long) {
+                hubAddress = (hubAddress + 3) & ~3;
+            }
             line.getScope().setHubAddress(hubAddress);
             if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
                 hubAddress = (hubAddress + 3) & ~3;
@@ -528,6 +532,20 @@ public class Spin1ObjectCompiler {
                     parameters.add(new Spin1PAsmExpression(prefix, expression, count));
                 }
 
+                try {
+                    if ("FILE".equalsIgnoreCase(mnemonic)) {
+                        String fileName = parameters.get(0).toString();
+                        fileName = fileName.substring(1, fileName.length() - 1);
+                        byte[] data = getBinaryFile(fileName);
+                        if (data == null) {
+                            throw new CompilerMessage("file \"" + fileName + "\" not found", node.parameters.get(0));
+                        }
+                        pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data));
+                    }
+                } catch (RuntimeException e) {
+                    throw new CompilerMessage(e.getMessage(), node);
+                }
+
                 if (pasmLine.getLabel() != null) {
                     try {
                         if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
@@ -596,6 +614,10 @@ public class Spin1ObjectCompiler {
                 logMessage(new CompilerMessage(e.getMessage(), node.instruction));
             }
         }
+    }
+
+    protected byte[] getBinaryFile(String fileName) {
+        return null;
     }
 
     Spin1Method compileMethod(MethodNode node) {
@@ -1970,6 +1992,9 @@ public class Spin1ObjectCompiler {
                 MemoryOp.Op op = push ? MemoryOp.Op.Read : MemoryOp.Op.Write;
                 if (postEffect != null) {
                     op = MemoryOp.Op.Assign;
+                }
+                if (s[0].startsWith("@")) {
+                    op = MemoryOp.Op.Address;
                 }
                 if ("BYTE".equalsIgnoreCase(s[1])) {
                     source.add(new MemoryOp(context, MemoryOp.Size.Byte, indexed, bb, op, expression));

@@ -157,6 +157,11 @@ public class Spin1Compiler {
         }
 
         @Override
+        protected byte[] getBinaryFile(String fileName) {
+            return Spin1Compiler.this.getBinaryFile(fileName);
+        }
+
+        @Override
         protected void logMessage(CompilerMessage message) {
             message.fileName = fileName;
             Spin1Compiler.this.logMessage(message);
@@ -213,6 +218,10 @@ public class Spin1Compiler {
     }
 
     protected Node getParsedObject(String fileName) {
+        return null;
+    }
+
+    protected byte[] getBinaryFile(String fileName) {
         return null;
     }
 

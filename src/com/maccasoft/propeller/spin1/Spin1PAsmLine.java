@@ -111,6 +111,10 @@ public class Spin1PAsmLine {
         return address;
     }
 
+    public void setInstructionObject(Spin1InstructionObject instructionObject) {
+        this.instructionObject = instructionObject;
+    }
+
     public Spin1InstructionObject getInstructionObject() {
         return instructionObject;
     }

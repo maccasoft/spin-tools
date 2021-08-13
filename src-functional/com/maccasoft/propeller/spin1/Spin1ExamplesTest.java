@@ -112,6 +112,36 @@ class Spin1ExamplesTest {
     }
 
     @Test
+    void test_display_vga_VGA_512x384_Bitmap_Demo() throws Exception {
+        compileAndCompare(new File(path + "/display/vga", "VGA_512x384_Bitmap_Demo"));
+    }
+
+    @Test
+    void test_display_vga_VGA_Demo() throws Exception {
+        compileAndCompare(new File(path + "/display/vga", "VGA_Demo"));
+    }
+
+    @Test
+    void test_display_vga_VGA_HiRes_Text_Demo() throws Exception {
+        compileAndCompare(new File(path + "/display/vga", "VGA_HiRes_Text_Demo"));
+    }
+
+    @Test
+    void test_display_vga_VGA_Text_Demo() throws Exception {
+        compileAndCompare(new File(path + "/display/vga", "VGA_Text_Demo"));
+    }
+
+    @Test
+    void test_display_vga_VGA_Tile_Driver_Demo2() throws Exception {
+        compileAndCompare(new File(path + "/display/vga", "VGA_Tile_Driver_Demo2"));
+    }
+
+    @Test
+    void test_display_vga_VGA_Tile_Driver_Demo3() throws Exception {
+        compileAndCompare(new File(path + "/display/vga", "VGA_Tile_Driver_Demo3"));
+    }
+
+    @Test
     void test_input_Keyboard() throws Exception {
         compileAndCompare(new File(path + "/input", "Keyboard.spin"), new File(path + "/input", "Keyboard.binary"));
     }
@@ -226,6 +256,18 @@ class Spin1ExamplesTest {
             return null;
         }
 
+        @Override
+        protected byte[] getBinaryFile(String fileName) {
+            File file = new File(parent, fileName);
+            if (!file.exists()) {
+                file = new File(libraryPath, fileName);
+            }
+            if (file.exists()) {
+                return loadBinaryFromFile(file);
+            }
+            return null;
+        }
+
     }
 
     void compileAndCompare(File source) throws Exception {
@@ -278,34 +320,29 @@ class Spin1ExamplesTest {
         String line;
         StringBuilder sb = new StringBuilder();
 
-        if (file.exists()) {
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(file));
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line);
-                    sb.append("\n");
-                }
-                reader.close();
-            } catch (Exception e) {
-                throw new RuntimeException("error reading file " + file, e);
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+                sb.append("\n");
             }
+            reader.close();
+        } catch (Exception e) {
+            throw new RuntimeException("error reading file " + file, e);
         }
 
         return sb.toString();
     }
 
-    byte[] loadBinaryFromFile(File file) throws Exception {
-        InputStream is = new FileInputStream(file);
+    byte[] loadBinaryFromFile(File file) {
         try {
+            InputStream is = new FileInputStream(file);
             byte[] b = new byte[is.available()];
             is.read(b);
+            is.close();
             return b;
-        } finally {
-            try {
-                is.close();
-            } catch (Exception e) {
-
-            }
+        } catch (Exception e) {
+            throw new RuntimeException("error reading file " + file, e);
         }
     }
 

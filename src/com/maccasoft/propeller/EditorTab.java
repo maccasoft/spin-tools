@@ -175,6 +175,34 @@ public class EditorTab {
             return node;
         }
 
+        @Override
+        protected byte[] getBinaryFile(String fileName) {
+            File fileParent = file != null ? file.getParentFile() : null;
+
+            try {
+                File fileToLoad = new File(fileParent, fileName);
+                if (!fileToLoad.exists()) {
+                    fileToLoad = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
+                }
+                InputStream is = new FileInputStream(fileToLoad);
+                try {
+                    byte[] b = new byte[is.available()];
+                    is.read(b);
+                    return b;
+                } finally {
+                    try {
+                        is.close();
+                    } catch (Exception e) {
+
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
     }
 
     final Runnable spin1CompilerRunnable = new Runnable() {

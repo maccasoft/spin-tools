@@ -36,9 +36,7 @@ public class Long extends Spin1PAsmInstructionFactory {
 
         @Override
         public int resolve(int address) {
-            while ((address % 4) != 0) {
-                address++;
-            }
+            address = (address + 3) & ~3;
             context.setAddress(address >> 2);
             return address + getSize();
         }
