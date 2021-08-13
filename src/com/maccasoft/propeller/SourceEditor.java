@@ -354,29 +354,6 @@ public class SourceEditor {
                 }
             }
         });
-        styledText.addVerifyKeyListener(new VerifyKeyListener() {
-
-            @Override
-            public void verifyKey(VerifyEvent e) {
-                if (e.keyCode == SWT.CR) {
-                    doAutoIndent();
-                    e.doit = false;
-                }
-                else if (e.keyCode == SWT.TAB) {
-                    e.doit = false;
-                    if ((e.stateMask & SWT.CTRL) != 0) {
-                        return;
-                    }
-                    if ((e.stateMask & SWT.SHIFT) != 0) {
-                        doBacktab();
-
-                    }
-                    else {
-                        doTab();
-                    }
-                }
-            }
-        });
 
         styledText.getContent().addTextChangeListener(new TextChangeListener() {
 
@@ -581,9 +558,24 @@ public class SourceEditor {
             @Override
             public void verifyKey(VerifyEvent e) {
                 try {
-                    KeyStroke k = KeyStroke.getInstance("Enter");
-                    if (k.getNaturalKey() == e.keyCode && adapter.isProposalPopupOpen()) {
+                    if (e.keyCode == SWT.CR) {
+                        if (!adapter.isProposalPopupOpen()) {
+                            doAutoIndent();
+                        }
                         e.doit = false;
+                    }
+                    else if (e.keyCode == SWT.TAB) {
+                        e.doit = false;
+                        if ((e.stateMask & SWT.CTRL) != 0) {
+                            return;
+                        }
+                        if ((e.stateMask & SWT.SHIFT) != 0) {
+                            doBacktab();
+
+                        }
+                        else {
+                            doTab();
+                        }
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
