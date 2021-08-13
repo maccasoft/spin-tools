@@ -2573,6 +2573,9 @@ public class Spin1ObjectCompiler {
         if (_xinfreq != null) {
             scope.addSymbol("CLKFREQ", new NumberLiteral(_xinfreq.getNumber().intValue() << freqshift));
         }
+        else {
+            scope.addSymbol("CLKFREQ", _clkfreq);
+        }
         scope.addSymbol("CLKMODE", new NumberLiteral(clkmode));
     }
 
