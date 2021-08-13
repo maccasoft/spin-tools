@@ -460,6 +460,33 @@ class Spin1TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void test1() {
+        String text = "not cc.IsDigit(look) and look <> term#NL";
+        Assertions.assertEquals(""
+            + "[and]\n"
+            + " +-- [not]\n"
+            + "      +-- [cc.IsDigit]\n"
+            + "           +-- [look]\n"
+            + " +-- [<>]\n"
+            + "      +-- [look]\n"
+            + "      +-- [term#NL]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void test2() {
+        String text = "r := not w & $10";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [r]\n"
+            + " +-- [not]\n"
+            + "      +-- [&]\n"
+            + "           +-- [w]\n"
+            + "           +-- [$10]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin1TreeBuilder builder = new Spin1TreeBuilder();
 

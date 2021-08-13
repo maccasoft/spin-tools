@@ -26,35 +26,37 @@ public class Spin1TreeBuilder {
 
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
-        precedence.put(">>", 13);
-        precedence.put("<<", 13);
-        precedence.put("~>", 13);
-        precedence.put("->", 13);
-        precedence.put("<-", 13);
-        precedence.put("><", 13);
+        precedence.put(">>", 14);
+        precedence.put("<<", 14);
+        precedence.put("~>", 14);
+        precedence.put("->", 14);
+        precedence.put("<-", 14);
+        precedence.put("><", 14);
 
-        precedence.put("&", 12);
+        precedence.put("&", 13);
 
-        precedence.put("^", 11);
-        precedence.put("|", 11);
+        precedence.put("^", 12);
+        precedence.put("|", 12);
 
-        precedence.put("*", 10);
-        precedence.put("**", 10);
-        precedence.put("/", 10);
-        precedence.put("//", 10);
+        precedence.put("*", 11);
+        precedence.put("**", 11);
+        precedence.put("/", 11);
+        precedence.put("//", 11);
 
-        precedence.put("+", 9);
-        precedence.put("-", 9);
+        precedence.put("+", 10);
+        precedence.put("-", 10);
 
-        precedence.put("#>", 8);
-        precedence.put("<#", 8);
+        precedence.put("#>", 9);
+        precedence.put("<#", 9);
 
-        precedence.put("<", 7);
-        precedence.put("=<", 7);
-        precedence.put("==", 7);
-        precedence.put("<>", 7);
-        precedence.put("=>", 7);
-        precedence.put(">", 7);
+        precedence.put("<", 8);
+        precedence.put("=<", 8);
+        precedence.put("==", 8);
+        precedence.put("<>", 8);
+        precedence.put("=>", 8);
+        precedence.put(">", 8);
+
+        precedence.put("NOT", 7);
 
         precedence.put("AND", 6);
 
@@ -67,37 +69,37 @@ public class Spin1TreeBuilder {
 
         precedence.put(":=", 1);
 
-        precedence.put(">>=", 1);
-        precedence.put("<<=", 1);
-        precedence.put("~>=", 1);
-        precedence.put("->=", 1);
-        precedence.put("<-=", 1);
-        precedence.put("><=", 1);
+        precedence.put(">>=", 0);
+        precedence.put("<<=", 0);
+        precedence.put("~>=", 0);
+        precedence.put("->=", 0);
+        precedence.put("<-=", 0);
+        precedence.put("><=", 0);
 
-        precedence.put("&=", 1);
-        precedence.put("^=", 1);
-        precedence.put("|=", 1);
+        precedence.put("&=", 0);
+        precedence.put("^=", 0);
+        precedence.put("|=", 0);
 
-        precedence.put("*=", 1);
-        precedence.put("**=", 1);
-        precedence.put("/=", 1);
-        precedence.put("//=", 1);
+        precedence.put("*=", 0);
+        precedence.put("**=", 0);
+        precedence.put("/=", 0);
+        precedence.put("//=", 0);
 
-        precedence.put("+=", 1);
-        precedence.put("-=", 1);
+        precedence.put("+=", 0);
+        precedence.put("-=", 0);
 
-        precedence.put("#>=", 1);
-        precedence.put("<#=", 1);
+        precedence.put("#>=", 0);
+        precedence.put("<#=", 0);
 
-        precedence.put("<=", 1);
-        precedence.put("=<=", 1);
-        precedence.put("===", 1);
-        precedence.put("<>=", 1);
-        precedence.put("=>=", 1);
-        precedence.put(">=", 1);
+        precedence.put("<=", 0);
+        precedence.put("=<=", 0);
+        precedence.put("===", 0);
+        precedence.put("<>=", 0);
+        precedence.put("=>=", 0);
+        precedence.put(">=", 0);
 
-        precedence.put("AND=", 1);
-        precedence.put("OR=", 1);
+        precedence.put("AND=", 0);
+        precedence.put("OR=", 0);
     }
 
     static Set<String> unary = new HashSet<String>();
@@ -115,7 +117,6 @@ public class Spin1TreeBuilder {
         unary.add("|<");
         unary.add(">|");
         unary.add("@@");
-        unary.add("NOT");
     }
 
     static Set<String> postEffect = new HashSet<String>();
@@ -188,7 +189,9 @@ public class Spin1TreeBuilder {
             }
 
             Spin1StatementNode node = new Spin1StatementNode(token);
-            node.addChild(left);
+            if (left != null) {
+                node.addChild(left);
+            }
             node.addChild(right);
             left = node;
         }
@@ -204,6 +207,9 @@ public class Spin1TreeBuilder {
             Spin1StatementNode node = new Spin1StatementNode(next());
             node.addChild(parseAtom());
             return node;
+        }
+        if (precedence.containsKey(token.getText().toUpperCase())) {
+            return null;
         }
 
         if ("(".equals(token.getText())) {
@@ -254,10 +260,6 @@ public class Spin1TreeBuilder {
                             throw new CompilerMessage("expecting )", token);
                         }
                     }
-                }
-                if ("NOT".equalsIgnoreCase(node.getText())) {
-                    node.addChild(parseLevel(parseAtom(), 0));
-                    return node;
                 }
                 if ("[".equals(peek().getText())) {
                     next();
@@ -313,7 +315,7 @@ public class Spin1TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "@colors[c & 3]";
+        text = "exponent += result := 13";
         System.out.println(text);
         System.out.println(parse(text));
     }

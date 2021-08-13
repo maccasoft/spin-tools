@@ -156,7 +156,7 @@ PUB start | i, j, k, kk, dx, dy, pp, pq, rr, numx, numchr
     gr.text(90,-72,@pchip)
 
     'draw incrementing digit
-    if not (++numx & 7)
+    if not ++numx & 7
       numchr++
     if numchr < "0" or numchr > "9"
       numchr := "0"

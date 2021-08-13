@@ -305,7 +305,7 @@ PRI Setup(single) : stringptr
     'if very small, bias up
     if exponent < -32
       single := math.FMul(single, 1e13)
-      exponent += (result := 13)
+      exponent += result := 13
 
     'determine exact exponent and integer
     repeat
@@ -358,7 +358,7 @@ PRI AddDigits(leading) | i
     'add any thousands separator between thousands
     if thousands_chr
       i--
-      if i and not (i // 3)
+      if i and not i // 3
         byte[p++] := thousands_chr
   'if trailing digits, add decimal character
   if digits
@@ -367,7 +367,7 @@ PRI AddDigits(leading) | i
     repeat while digits
       'add any thousandths separator between thousandths
       if thousandths_chr
-        if i and not (i // 3)
+        if i and not i // 3
           byte[p++] := thousandths_chr
       i++
       AddDigit

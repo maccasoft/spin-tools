@@ -81,10 +81,10 @@ PUB SetClock(xinfrequency, mode): newFreq
                                                                                 ' XINFreq * PLL multiplier) and update return value (new frequency)
 
 DAT
-ircFreq         long    12_000_000                                              ' Ideal RCFAST frequency
+    ircFreq     long    12_000_000                                              ' Ideal RCFAST frequency
                 long    20_000                                                  ' Ideal RCSLOW frequency
-xinFreq         long    0                                                       ' External source (XIN) frequency (updated by .Init); MUST reside immediately after ircFreq
-oscDelay        long    20_000_000 / 100                                        ' Sys Counter offset for 10 ms oscillator startup delay based on worst-case RCFAST frequency
+    xinFreq     long    0                                                       ' External source (XIN) frequency (updated by .Init); MUST reside immediately after ircFreq
+    oscDelay    long    20_000_000 / 100                                        ' Sys Counter offset for 10 ms oscillator startup delay based on worst-case RCFAST frequency
                 long    33_000 / 100 #> WMIN                                    ' <same as above> but based on worst-case RCSLOW frequency; limited to WMIN to prevent freeze
                 long    0 {xinFreq / 100 #> WMIN}                               ' <same as above> but based on external source (XIN) frequency; updated by .Init
 
