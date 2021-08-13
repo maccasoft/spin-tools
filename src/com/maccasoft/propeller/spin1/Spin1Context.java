@@ -51,6 +51,10 @@ public class Spin1Context implements Context {
         symbols.put(name, value);
     }
 
+    public void addOrUpdateSymbol(String name, Expression value) {
+        symbols.put(name, value);
+    }
+
     @Override
     public Expression getSymbol(String name) {
         Expression exp = getLocalSymbol(name);

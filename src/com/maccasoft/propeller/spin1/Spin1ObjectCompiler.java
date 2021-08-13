@@ -475,6 +475,7 @@ public class Spin1ObjectCompiler {
 
     void compileDatBlock(Spin1Context scope, Node parent) {
         Spin1Context savedContext = scope;
+        Map<Spin1PAsmLine, Spin1Context> pendingAlias = new HashMap<Spin1PAsmLine, Spin1Context>();
 
         for (Node child : parent.getChilds()) {
             DataLineNode node = (DataLineNode) child;
@@ -539,8 +540,27 @@ public class Spin1ObjectCompiler {
                         else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
                             type = "BYTE";
                         }
+                        else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                            type = "BYTE";
+                        }
                         scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
                         scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
+
+                        if (pasmLine.getMnemonic() == null) {
+                            if (!pasmLine.isLocalLabel()) {
+                                pendingAlias.put(pasmLine, scope);
+                            }
+                        }
+                        else if (pendingAlias.size() != 0) {
+                            for (Entry<Spin1PAsmLine, Spin1Context> entry : pendingAlias.entrySet()) {
+                                Spin1PAsmLine line = entry.getKey();
+                                Spin1Context context = entry.getValue();
+                                context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                                context.addOrUpdateSymbol("@" + line.getLabel(), new HubContextLiteral(line.getScope()));
+                            }
+                            pendingAlias.clear();
+                        }
+
                         if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
                             scope = pasmLine.getScope();
                         }
@@ -548,6 +568,27 @@ public class Spin1ObjectCompiler {
                         throw new CompilerMessage(e.getMessage(), node.label);
                     }
                 }
+                else if (pasmLine.getMnemonic() != null && pendingAlias.size() != 0) {
+                    String type = "LONG";
+                    if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Word) {
+                        type = "WORD";
+                    }
+                    else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
+                        type = "BYTE";
+                    }
+                    else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                        type = "BYTE";
+                    }
+
+                    for (Entry<Spin1PAsmLine, Spin1Context> entry : pendingAlias.entrySet()) {
+                        Spin1PAsmLine line = entry.getKey();
+                        Spin1Context context = entry.getValue();
+                        context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                        context.addOrUpdateSymbol("@" + line.getLabel(), new HubContextLiteral(line.getScope()));
+                    }
+                    pendingAlias.clear();
+                }
+
                 source.addAll(pasmLine.expand());
             } catch (CompilerMessage e) {
                 logMessage(e);

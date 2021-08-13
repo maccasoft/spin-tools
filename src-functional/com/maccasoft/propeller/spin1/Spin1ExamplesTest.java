@@ -107,6 +107,11 @@ class Spin1ExamplesTest {
     }
 
     @Test
+    void test_display_lcd_serial_Demo() throws Exception {
+        compileAndCompare(new File(path + "/display/lcd/serial", "Demo"));
+    }
+
+    @Test
     void test_input_Keyboard() throws Exception {
         compileAndCompare(new File(path + "/input", "Keyboard.spin"), new File(path + "/input", "Keyboard.binary"));
     }
