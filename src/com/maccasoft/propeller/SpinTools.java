@@ -1097,7 +1097,7 @@ public class SpinTools {
 
         Object object = editorTab.getObject();
         if (object instanceof Spin1Object) {
-            MemoryDialog dlg = new MemoryDialog(shell) {
+            P1MemoryDialog dlg = new P1MemoryDialog(shell) {
 
                 @Override
                 protected void doSaveBinary() {
@@ -1122,7 +1122,7 @@ public class SpinTools {
             dlg.open();
         }
         else if (object instanceof Spin2Object) {
-            MemoryDialog2 dlg = new MemoryDialog2(shell) {
+            P2MemoryDialog dlg = new P2MemoryDialog(shell) {
 
                 @Override
                 protected void doSaveBinary() {

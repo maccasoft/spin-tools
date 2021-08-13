@@ -51,7 +51,7 @@ import org.eclipse.swt.widgets.Shell;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.spin1.Spin1Object;
 
-public class MemoryDialog extends Dialog {
+public class P1MemoryDialog extends Dialog {
 
     public static final int BYTES_PER_ROW = 16;
 
@@ -78,7 +78,7 @@ public class MemoryDialog extends Dialog {
 
     NumberFormat format;
 
-    public MemoryDialog(Shell parentShell) {
+    public P1MemoryDialog(Shell parentShell) {
         super(parentShell);
     }
 
