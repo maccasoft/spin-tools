@@ -30,70 +30,64 @@ public class CompilerMessage extends RuntimeException {
     Token startToken;
     Token stopToken;
 
-    public CompilerMessage(String message) {
-        super(message);
-        this.type = ERROR;
+    public CompilerMessage(String message, Object data) {
+        this(ERROR, null, message, data);
     }
 
-    public CompilerMessage(String message, Node node) {
-        super(message);
-        this.type = ERROR;
-        this.line = node.getStartToken().line + 1;
-        this.column = node.getStartToken().column;
-        this.startToken = node.getStartToken();
-        this.stopToken = node.getStopToken();
+    public CompilerMessage(String fileName, String message, Object data) {
+        this(ERROR, fileName, message, data);
     }
 
-    public CompilerMessage(String fileName, String message) {
+    public CompilerMessage(int type, String message, Object data) {
+        this(type, null, message, data);
+    }
+
+    public CompilerMessage(int type, String fileName, String message, Object data) {
         super(message);
         this.fileName = fileName;
-        this.type = ERROR;
+        this.type = type;
+        if (data instanceof Node) {
+            Node node = (Node) data;
+            this.line = node.getStartToken().line + 1;
+            this.column = node.getStartToken().column;
+            this.startToken = node.getStartToken();
+            this.stopToken = node.getStopToken();
+        }
+        else if (data instanceof Token) {
+            Token token = (Token) data;
+            this.line = token.line + 1;
+            this.column = token.column;
+            this.startToken = token;
+            this.stopToken = token;
+        }
     }
 
-    public CompilerMessage(String fileName, String message, Node node) {
-        super(message);
+    public CompilerMessage(Exception cause, Object data) {
+        this(ERROR, null, cause, data);
+    }
+
+    public CompilerMessage(String fileName, Exception cause, Object data) {
+        this(ERROR, fileName, cause, data);
+    }
+
+    public CompilerMessage(int type, String fileName, Exception cause, Object data) {
+        super(cause.getMessage(), cause);
         this.fileName = fileName;
-        this.type = ERROR;
-        this.line = node.getStartToken().line + 1;
-        this.column = node.getStartToken().column;
-        this.startToken = node.getStartToken();
-        this.stopToken = node.getStopToken();
-    }
-
-    public CompilerMessage(String message, Token token) {
-        super(message);
-        this.type = ERROR;
-        this.line = token.line + 1;
-        this.column = token.column;
-        this.startToken = token;
-        this.stopToken = token;
-    }
-
-    public CompilerMessage(int type, String message, Node node) {
-        super(message);
         this.type = type;
-        this.line = node.getStartToken().line + 1;
-        this.column = node.getStartToken().column;
-        this.startToken = node.getStartToken();
-        this.stopToken = node.getStopToken();
-    }
-
-    public CompilerMessage(int type, String message, Token token) {
-        super(message);
-        this.type = type;
-        this.line = token.line + 1;
-        this.column = token.column;
-        this.startToken = token;
-        this.stopToken = token;
-    }
-
-    public CompilerMessage(Exception cause, Node node) {
-        super(cause);
-        this.type = ERROR;
-        this.line = node.getStartToken().line + 1;
-        this.column = node.getStartToken().column;
-        this.startToken = node.getStartToken();
-        this.stopToken = node.getStopToken();
+        if (data instanceof Node) {
+            Node node = (Node) data;
+            this.line = node.getStartToken().line + 1;
+            this.column = node.getStartToken().column;
+            this.startToken = node.getStartToken();
+            this.stopToken = node.getStopToken();
+        }
+        else if (data instanceof Token) {
+            Token token = (Token) data;
+            this.line = token.line + 1;
+            this.column = token.column;
+            this.startToken = token;
+            this.stopToken = token;
+        }
     }
 
     public String getFileName() {

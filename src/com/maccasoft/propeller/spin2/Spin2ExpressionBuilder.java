@@ -23,6 +23,7 @@ import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Encod;
@@ -59,6 +60,26 @@ import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.model.Token;
 
 public class Spin2ExpressionBuilder {
+
+    static class SpinIdentifier extends Identifier {
+
+        Token token;
+
+        public SpinIdentifier(Token token, Context context) {
+            super(token.getText(), context);
+            this.token = token;
+        }
+
+        @Override
+        public Expression resolve() {
+            try {
+                return super.resolve();
+            } catch (Exception e) {
+                throw new CompilerMessage(e, token);
+            }
+        }
+
+    }
 
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
@@ -368,7 +389,7 @@ public class Spin2ExpressionBuilder {
                 default:
                     if (token.type == Token.NUMBER) {
                         if ("$".equals(token.getText())) {
-                            return new Identifier(token.getText(), context);
+                            return new SpinIdentifier(token, context);
                         }
                         return new NumberLiteral(token.getText());
                     }
@@ -376,7 +397,7 @@ public class Spin2ExpressionBuilder {
                         String s = token.getText().substring(1);
                         return new CharacterLiteral(s.substring(0, s.length() - 1));
                     }
-                    return new Identifier(token.getText(), context);
+                    return new SpinIdentifier(token, context);
             }
         }
 

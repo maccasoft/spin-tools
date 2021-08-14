@@ -253,7 +253,7 @@ public class Spin2ObjectCompiler {
                 } catch (CompilerMessage e) {
                     logMessage(e);
                 } catch (Exception e) {
-                    logMessage(new CompilerMessage(e.getMessage(), (Node) line.getData()));
+                    logMessage(new CompilerMessage(e.getMessage(), line.getData()));
                 }
             }
         }
@@ -305,7 +305,7 @@ public class Spin2ObjectCompiler {
             } catch (CompilerMessage e) {
                 logMessage(e);
             } catch (Exception e) {
-                logMessage(new CompilerMessage(e.getMessage(), (Node) line.getData()));
+                logMessage(new CompilerMessage(e.getMessage(), line.getData()));
             }
 
             if (line.getInstructionFactory() instanceof Org) {
@@ -337,7 +337,7 @@ public class Spin2ObjectCompiler {
             try {
                 object.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());
             } catch (Exception e) {
-                logMessage(new CompilerMessage(e.getMessage(), (Node) line.getData()));
+                logMessage(new CompilerMessage(e.getMessage(), line.getData()));
             }
         }
 
@@ -1428,7 +1428,7 @@ public class Spin2ObjectCompiler {
             Descriptor desc = Spin2Bytecode.getDescriptor(text);
             if (desc != null) {
                 if (line.getArgumentsCount() != desc.parameters) {
-                    throw new CompilerMessage("expected " + desc.parameters + " argument(s), found " + line.getArgumentsCount(), (Node) line.getData());
+                    throw new CompilerMessage("expected " + desc.parameters + " argument(s), found " + line.getArgumentsCount(), line.getData());
                 }
                 for (Spin2StatementNode arg : line.getArguments()) {
                     List<Spin2Bytecode> list = compileBytecodeExpression(line.getScope(), arg, true);

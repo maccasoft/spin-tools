@@ -144,10 +144,13 @@ public class Spin1ObjectCompiler {
             }
         }
 
-        determineClock();
-
-        object.setClkFreq(scope.getLocalSymbol("CLKFREQ").getNumber().intValue());
-        object.setClkMode(scope.getLocalSymbol("CLKMODE").getNumber().intValue());
+        try {
+            determineClock();
+            object.setClkFreq(scope.getLocalSymbol("CLKFREQ").getNumber().intValue());
+            object.setClkMode(scope.getLocalSymbol("CLKMODE").getNumber().intValue());
+        } catch (CompilerMessage e) {
+            logMessage(e);
+        }
 
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
@@ -237,7 +240,7 @@ public class Spin1ObjectCompiler {
             } catch (CompilerMessage e) {
                 logMessage(e);
             } catch (Exception e) {
-                logMessage(new CompilerMessage(e.getMessage(), (Node) line.getData()));
+                logMessage(new CompilerMessage(e, line.getData()));
             }
         }
 
@@ -265,7 +268,7 @@ public class Spin1ObjectCompiler {
             } catch (CompilerMessage e) {
                 logMessage(e);
             } catch (Exception e) {
-                logMessage(new CompilerMessage(e, (Node) line.getData()));
+                logMessage(new CompilerMessage(e, line.getData()));
             }
         }
 
@@ -2567,19 +2570,19 @@ public class Spin1ObjectCompiler {
         }
 
         if (_clkmode == null && (_clkfreq != null || _xinfreq != null)) {
-            throw new RuntimeException("_CLKFREQ / _XINFREQ specified without _CLKMODE");
+            throw new CompilerMessage("_CLKFREQ / _XINFREQ specified without _CLKMODE", _clkfreq != null ? _clkfreq.getData() : _xinfreq.getData());
         }
         if (_clkfreq != null && _xinfreq != null) {
-            throw new RuntimeException("Either _CLKFREQ or _XINFREQ must be specified, but not both");
+            throw new CompilerMessage("either _CLKFREQ or _XINFREQ must be specified, but not both", _clkfreq != null ? _clkfreq.getData() : _xinfreq.getData());
         }
 
         int mode = _clkmode.getNumber().intValue();
         if (mode == 0 || (mode & 0xFFFFF800) != 0 || (((mode & 0x03) != 0) && ((mode & 0x7FC) != 0))) {
-            throw new RuntimeException("Invalid _CLKMODE specified");
+            throw new CompilerMessage("invalid _CLKMODE specified", _clkmode.getData());
         }
         if ((mode & 0x03) != 0) { // RCFAST or RCSLOW
             if (_clkfreq != null || _xinfreq != null) {
-                throw new RuntimeException("_CLKFREQ / _XINFREQ not allowed with RCFAST / RCSLOW");
+                throw new CompilerMessage("_CLKFREQ / _XINFREQ not allowed with RCFAST / RCSLOW", _clkfreq != null ? _clkfreq.getData() : _xinfreq.getData());
             }
 
             scope.addSymbol("CLKMODE", new NumberLiteral(mode == 2 ? 1 : 0));
@@ -2587,21 +2590,29 @@ public class Spin1ObjectCompiler {
             return;
         }
 
-        int bitPos = getBitPos((mode >> 2) & 0x0F);
-        int clkmode = (bitPos << 3) | 0x22;
+        if (_clkfreq == null && _xinfreq == null) {
+            throw new CompilerMessage("_CLKFREQ or _XINFREQ must be specified", _clkmode.getData());
+        }
 
-        int freqshift = 0;
-        if ((mode & 0x7C0) != 0) {
-            freqshift = getBitPos(mode >> 6);
-            clkmode += freqshift + 0x41;
+        try {
+            int bitPos = getBitPos((mode >> 2) & 0x0F);
+            int clkmode = (bitPos << 3) | 0x22;
+
+            int freqshift = 0;
+            if ((mode & 0x7C0) != 0) {
+                freqshift = getBitPos(mode >> 6);
+                clkmode += freqshift + 0x41;
+            }
+            if (_xinfreq != null) {
+                scope.addSymbol("CLKFREQ", new NumberLiteral(_xinfreq.getNumber().intValue() << freqshift));
+            }
+            else {
+                scope.addSymbol("CLKFREQ", _clkfreq);
+            }
+            scope.addSymbol("CLKMODE", new NumberLiteral(clkmode));
+        } catch (Exception e) {
+            throw new CompilerMessage(e, _clkmode.getData());
         }
-        if (_xinfreq != null) {
-            scope.addSymbol("CLKFREQ", new NumberLiteral(_xinfreq.getNumber().intValue() << freqshift));
-        }
-        else {
-            scope.addSymbol("CLKFREQ", _clkfreq);
-        }
-        scope.addSymbol("CLKMODE", new NumberLiteral(clkmode));
     }
 
     int getBitPos(int value) {
@@ -2617,7 +2628,7 @@ public class Spin1ObjectCompiler {
         }
 
         if (bitCount != 1) {
-            throw new RuntimeException("Invalid _CLKMODE specified");
+            throw new RuntimeException("invalid _CLKMODE specified");
         }
 
         return bitPos;
