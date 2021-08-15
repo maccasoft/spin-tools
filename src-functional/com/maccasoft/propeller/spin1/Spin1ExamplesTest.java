@@ -177,6 +177,76 @@ class Spin1ExamplesTest {
     }
 
     @Test
+    void test_motor_Servo() throws Exception {
+        compileAndCompare(new File(path + "/motor", "Servo"));
+    }
+
+    @Test
+    void test_sensor_H48C_TriAxis_Accelerometer_Demo() throws Exception {
+        compileAndCompare(new File(path + "/sensor", "H48C_Tri-Axis_Accelerometer_Demo"));
+    }
+
+    @Test
+    void test_sensor_Inductive_Proximity_Sensor_Part1() throws Exception {
+        compileAndCompare(new File(path + "/sensor", "Inductive_Proximity_Sensor_Part1"));
+    }
+
+    @Test
+    void test_sensor_Inductive_Proximity_Sensor_Part2() throws Exception {
+        compileAndCompare(new File(path + "/sensor", "Inductive_Proximity_Sensor_Part2"));
+    }
+
+    @Test
+    void test_sensor_MEMSIC2125v2_Graphics_Demo() throws Exception {
+        compileAndCompare(new File(path + "/sensor", "MEMSIC2125v2_Graphics_Demo"));
+    }
+
+    @Test
+    void test_sensor_MEMSIC2125v2_Serial_Demo() throws Exception {
+        compileAndCompare(new File(path + "/sensor", "MEMSIC2125v2_Serial_Demo"));
+    }
+
+    @Test
+    void test_sensor_MXD2125_Demo() throws Exception {
+        compileAndCompare(new File(path + "/sensor", "MXD2125_Demo"));
+    }
+
+    @Test
+    void test_sensor_MXD2125_Simple_Demo() throws Exception {
+        compileAndCompare(new File(path + "/sensor", "MXD2125_Simple_Demo"));
+    }
+
+    @Test
+    void test_sensor_Ping_Demo() throws Exception {
+        compileAndCompare(new File(path + "/sensor", "Ping_Demo"));
+    }
+
+    @Test
+    void test_sensor_TSL230_Demo() throws Exception {
+        compileAndCompare(new File(path + "/sensor", "TSL230_Demo"));
+    }
+
+    @Test
+    void test_sensor_TSL230_Simple_Demo() throws Exception {
+        compileAndCompare(new File(path + "/sensor", "TSL230_Simple_Demo"));
+    }
+
+    @Test
+    void test_sensor_compass_hm55b_Calibration() throws Exception {
+        compileAndCompare(new File(path + "/sensor/compass/hm55b", "Calibration"));
+    }
+
+    @Test
+    void test_sensor_compass_hm55b_SerialDemo() throws Exception {
+        compileAndCompare(new File(path + "/sensor/compass/hm55b", "SerialDemo"));
+    }
+
+    @Test
+    void test_sensor_compass_hm55b_TVDemo() throws Exception {
+        compileAndCompare(new File(path + "/sensor/compass/hm55b", "TVDemo"));
+    }
+
+    @Test
     void test_string_Basics() throws Exception {
         compileAndCompare(new File(path + "/string", "Basics.spin"), new File(path + "/string", "Basics.binary"));
     }
