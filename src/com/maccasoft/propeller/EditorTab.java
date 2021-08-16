@@ -638,13 +638,12 @@ public class EditorTab {
 
     public void goToNextError() {
         int offset = editor.getStyledText().getCaretOffset();
-        int line = editor.getStyledText().getLineAtOffset(offset);
 
         Iterator<TokenMarker> iter = tokenMarker.getCompilerTokens().iterator();
         while (iter.hasNext()) {
             TokenMarker marker = iter.next();
-            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
-            if (markerLine > line) {
+            if (marker.start > offset) {
+                int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
                 editor.gotToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
                 return;
             }
@@ -662,13 +661,12 @@ public class EditorTab {
 
     public void goToPreviousError() {
         int offset = editor.getStyledText().getCaretOffset();
-        int line = editor.getStyledText().getLineAtOffset(offset);
 
         Iterator<TokenMarker> iter = tokenMarker.getCompilerTokens().descendingIterator();
         while (iter.hasNext()) {
             TokenMarker marker = iter.next();
-            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
-            if (markerLine < line) {
+            if (marker.start < offset) {
+                int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
                 editor.gotToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
                 return;
             }
