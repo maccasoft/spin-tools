@@ -87,6 +87,21 @@ class Spin1ExamplesTest {
     }
 
     @Test
+    void test_debug_DebugShell() throws Exception {
+        compileAndCompare(new File(path + "/debug", "DebugShell"));
+    }
+
+    @Test
+    void test_debug_RealTimeClockEmulator() throws Exception {
+        compileAndCompare(new File(path + "/debug", "RealTimeClockEmulator"));
+    }
+
+    @Test
+    void test_debug_StackLength() throws Exception {
+        compileAndCompare(new File(path + "/debug", "StackLength"));
+    }
+
+    @Test
     void test_display_Graphics_Demo() throws Exception {
         compileAndCompare(new File(path + "/display", "Graphics_Demo"));
     }
@@ -244,6 +259,31 @@ class Spin1ExamplesTest {
     @Test
     void test_sensor_compass_hm55b_TVDemo() throws Exception {
         compileAndCompare(new File(path + "/sensor/compass/hm55b", "TVDemo"));
+    }
+
+    @Test
+    void test_signal_Microphone_to_Headphones() throws Exception {
+        compileAndCompare(new File(path + "/signal", "Microphone_to_Headphones"));
+    }
+
+    @Test
+    void test_signal_Microphone_to_VGA() throws Exception {
+        compileAndCompare(new File(path + "/signal", "Microphone_to_VGA"));
+    }
+
+    @Test
+    void test_signal_SpatialSoundDemo() throws Exception {
+        compileAndCompare(new File(path + "/signal", "SpatialSoundDemo"));
+    }
+
+    @Test
+    void test_signal_VocalTractDemo_mixer() throws Exception {
+        compileAndCompare(new File(path + "/signal", "VocalTractDemo_mixer"));
+    }
+
+    @Test
+    void test_signal_synth_VocalTractDemo_mixer() throws Exception {
+        compileAndCompare(new File(path + "/signal/synth", "FrequencySynth"));
     }
 
     @Test
