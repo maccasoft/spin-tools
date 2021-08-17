@@ -227,6 +227,7 @@ public class EditorTab {
                         dependencies.clear();
 
                         Spin1Compiler compiler = new Spin1CompilerAdapter();
+                        compiler.setRemoveUnusedMethods(true);
                         try {
                             object = compiler.compile(tabItemText, root);
                             errors = compiler.hasErrors();
@@ -392,6 +393,7 @@ public class EditorTab {
                         dependencies.clear();
 
                         Spin2Compiler compiler = new Spin2CompilerAdapter();
+                        compiler.setRemoveUnusedMethods(true);
                         try {
                             object = compiler.compile(tabItemText, root);
                             errors = compiler.hasErrors();

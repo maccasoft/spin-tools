@@ -35,8 +35,14 @@ public class Spin1Compiler {
     boolean errors;
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
 
+    boolean removeUnusedMethods;
+
     public Spin1Compiler() {
 
+    }
+
+    public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
+        this.removeUnusedMethods = removeUnusedMethods;
     }
 
     public Spin1Object compile(String rootFileName, Node root) {
@@ -173,6 +179,12 @@ public class Spin1Compiler {
         ListOrderedMap<String, Node> objects = ListOrderedMap.listOrderedMap(new HashMap<String, Node>());
 
         root.accept(new ObjectNodeVisitor(rootFileName, objects));
+
+        Spin1Preprocessor preprocessor = new Spin1Preprocessor(root, objects);
+        if (removeUnusedMethods) {
+            preprocessor.removeUnusedMethods();
+            preprocessor.removeUnusedMethods();
+        }
 
         for (Entry<String, Node> entry : objects.entrySet()) {
             Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey(), scope, childObjects);

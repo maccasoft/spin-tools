@@ -35,10 +35,16 @@ public class Spin2Compiler {
     boolean errors;
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
 
+    boolean removeUnusedMethods;
+
     Spin2Object object = new Spin2Object();
 
     public Spin2Compiler() {
 
+    }
+
+    public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
+        this.removeUnusedMethods = removeUnusedMethods;
     }
 
     public Spin2Object compile(String rootFileName, Node root) {
@@ -133,6 +139,12 @@ public class Spin2Compiler {
         ListOrderedMap<String, Node> objects = ListOrderedMap.listOrderedMap(new HashMap<String, Node>());
 
         root.accept(new ObjectNodeVisitor(rootFileName, objects));
+
+        Spin2Preprocessor preprocessor = new Spin2Preprocessor(root, objects);
+        if (removeUnusedMethods) {
+            preprocessor.removeUnusedMethods();
+            preprocessor.removeUnusedMethods();
+        }
 
         for (Entry<String, Node> entry : objects.entrySet()) {
             Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey(), scope, childObjects);
