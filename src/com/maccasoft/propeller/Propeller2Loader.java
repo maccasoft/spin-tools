@@ -24,6 +24,9 @@ import jssc.SerialPortTimeoutException;
 
 public class Propeller2Loader {
 
+    public static final int DOWNLOAD_RUN_RAM = 0;
+    public static final int DOWNLOAD_RUN_FLASH = 1;
+
     SerialPort serialPort;
     int portSpeed = 2000000;
 
@@ -226,6 +229,10 @@ public class Propeller2Loader {
 
     protected void notifyProgress(int sent, int total) {
         // Do nothing
+    }
+
+    protected void flashWrite() throws SerialPortException, IOException {
+
     }
 
     protected void verifyRam() throws SerialPortException, IOException {
