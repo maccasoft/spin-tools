@@ -10,7 +10,10 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -23,22 +26,33 @@ import com.maccasoft.propeller.model.Token;
 
 public class Spin1Preprocessor {
 
+    class MethodReference {
+        int count;
+        MethodNode node;
+        List<MethodNode> references = new ArrayList<MethodNode>();
+
+        public MethodReference(MethodNode node) {
+            this.node = node;
+        }
+
+    }
+
     final Node root;
     final Map<String, Node> childObjects;
 
-    Map<MethodNode, String> unusedMethods = new HashMap<MethodNode, String>();
+    Map<MethodNode, MethodReference> referencedMethods = new HashMap<MethodNode, MethodReference>();
 
     public Spin1Preprocessor(Node root, Map<String, Node> childObjects) {
         this.root = root;
         this.childObjects = childObjects;
     }
 
-    public void removeUnusedMethods() {
+    public void collectReferencedMethods() {
         root.accept(new NodeVisitor() {
 
             @Override
             public void visitMethod(MethodNode node) {
-                unusedMethods.put(node, "");
+                referencedMethods.put(node, new MethodReference(node));
             }
         });
         for (Entry<String, Node> entry : childObjects.entrySet()) {
@@ -46,47 +60,49 @@ public class Spin1Preprocessor {
 
                 @Override
                 public void visitMethod(MethodNode node) {
-                    unusedMethods.put(node, entry.getKey());
+                    referencedMethods.put(node, new MethodReference(node));
                 }
             });
         }
 
-        removeUnusedMethods(true, root);
+        countMethodReferences(true, root);
         for (Node node : childObjects.values()) {
-            removeUnusedMethods(false, node);
-        }
-
-        for (Entry<MethodNode, String> entry : unusedMethods.entrySet()) {
-            MethodNode node = entry.getKey();
-            node.getParent().getChilds().remove(node);
-            //System.out.println(entry.getValue() + ": " + node.getName());
+            countMethodReferences(false, node);
         }
     }
 
-    void removeUnusedMethods(boolean keepFirst, Node root) {
+    void countMethodReferences(boolean keepFirst, Node root) {
         Map<String, MethodNode> symbols = new HashMap<String, MethodNode>();
 
         root.accept(new NodeVisitor() {
 
-            String prefix = "";
-
             @Override
             public void visitObject(ObjectNode node) {
+                if (node.file == null) {
+                    return;
+                }
                 String fileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin";
                 Node objectRoot = childObjects.get(fileName);
                 if (objectRoot != null) {
-                    String oldPrefix = prefix;
+                    String prefix = node.name.getText() + ".";
+                    objectRoot.accept(new NodeVisitor() {
 
-                    prefix = node.name.getText() + ".";
-                    objectRoot.accept(this);
+                        @Override
+                        public void visitMethod(MethodNode node) {
+                            if (node.getName() != null) {
+                                symbols.put(prefix + node.getName().getText(), node);
+                            }
+                        }
 
-                    prefix = oldPrefix;
+                    });
                 }
             }
 
             @Override
             public void visitMethod(MethodNode node) {
-                symbols.put(prefix + node.getName().getText(), node);
+                if (node.getName() != null) {
+                    symbols.put(node.getName().getText(), node);
+                }
             }
 
         });
@@ -97,30 +113,59 @@ public class Spin1Preprocessor {
 
             @Override
             public void visitMethod(MethodNode node) {
+                MethodReference parent = referencedMethods.get(node);
                 if (first) {
-                    unusedMethods.remove(node);
+                    parent.count++;
                     first = false;
                 }
                 for (Node child : node.getChilds()) {
                     if (child instanceof StatementNode) {
-                        markTokens(child);
+                        markTokens(parent, child);
                     }
                 }
             }
 
-            void markTokens(Node node) {
+            void markTokens(MethodReference parent, Node node) {
                 for (Token token : node.getTokens()) {
                     MethodNode methodNode = symbols.get(token.getText());
-                    unusedMethods.remove(methodNode);
+                    if (methodNode != null && methodNode != parent.node) {
+                        MethodReference ref = referencedMethods.get(methodNode);
+                        ref.count++;
+                        parent.references.add(methodNode);
+                    }
                 }
                 for (Node child : node.getChilds()) {
                     if (child instanceof StatementNode) {
-                        markTokens(child);
+                        markTokens(parent, child);
                     }
                 }
             }
 
         });
+    }
+
+    public void removeUnusedMethods() {
+        boolean repeat;
+
+        do {
+            repeat = false;
+            Iterator<Entry<MethodNode, MethodReference>> iter = referencedMethods.entrySet().iterator();
+            while (iter.hasNext()) {
+                MethodReference ref = iter.next().getValue();
+                if (ref.count == 0) {
+                    for (MethodNode child : ref.references) {
+                        MethodReference childRef = referencedMethods.get(child);
+                        childRef.count--;
+                    }
+                    iter.remove();
+                    repeat = true;
+                }
+            }
+        } while (repeat);
+    }
+
+    public boolean isReferenced(Node node) {
+        return referencedMethods.containsKey(node);
     }
 
 }

@@ -21,6 +21,7 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
+import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
@@ -36,6 +37,7 @@ public class Spin2Compiler {
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
 
     boolean removeUnusedMethods;
+    Spin2Preprocessor preprocessor;
 
     Spin2Object object = new Spin2Object();
 
@@ -123,6 +125,19 @@ public class Spin2Compiler {
         }
 
         @Override
+        Spin2Method compileMethod(MethodNode node) {
+            if (!preprocessor.isReferenced(node)) {
+                if ("PRI".equalsIgnoreCase(node.type.getText())) {
+                    logMessage(new CompilerMessage(CompilerMessage.WARNING, "function \"" + node.name.getText() + "\" is not used", node));
+                }
+                if (removeUnusedMethods) {
+                    return null;
+                }
+            }
+            return super.compileMethod(node);
+        }
+
+        @Override
         protected byte[] getBinaryFile(String fileName) {
             return Spin2Compiler.this.getBinaryFile(fileName);
         }
@@ -140,11 +155,9 @@ public class Spin2Compiler {
 
         root.accept(new ObjectNodeVisitor(rootFileName, objects));
 
-        Spin2Preprocessor preprocessor = new Spin2Preprocessor(root, objects);
-        if (removeUnusedMethods) {
-            preprocessor.removeUnusedMethods();
-            preprocessor.removeUnusedMethods();
-        }
+        preprocessor = new Spin2Preprocessor(root, objects);
+        preprocessor.collectReferencedMethods();
+        preprocessor.removeUnusedMethods();
 
         for (Entry<String, Node> entry : objects.entrySet()) {
             Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey(), scope, childObjects);

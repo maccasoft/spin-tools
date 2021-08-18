@@ -8,7 +8,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller.spin1;
+package com.maccasoft.propeller.spin2;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.Node;
 
-class Spin1PreprocessorTest {
+class Spin2PreprocessorTest {
 
     @Test
     void testSingleMethod() {
@@ -29,7 +29,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -48,7 +48,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -75,7 +75,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -103,7 +103,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -132,7 +132,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -159,7 +159,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -184,17 +184,17 @@ class Spin1PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin", parseSource(""
+        objects.put("text1.spin2", parseSource(""
             + "PUB method1\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
             + ""));
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
 
-        Node text1 = objects.get("text1.spin");
+        Node text1 = objects.get("text1.spin2");
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(0, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -219,17 +219,17 @@ class Spin1PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin", parseSource(""
+        objects.put("text1.spin2", parseSource(""
             + "PUB method1\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
             + ""));
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
 
-        Node text1 = objects.get("text1.spin");
+        Node text1 = objects.get("text1.spin2");
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -254,7 +254,7 @@ class Spin1PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin", parseSource(""
+        objects.put("text1.spin2", parseSource(""
             + "PUB method1\n"
             + "    method2\n"
             + "\n"
@@ -262,10 +262,10 @@ class Spin1PreprocessorTest {
             + "\n"
             + ""));
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
 
-        Node text1 = objects.get("text1.spin");
+        Node text1 = objects.get("text1.spin2");
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -286,7 +286,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
         subject.removeUnusedMethods();
 
@@ -306,7 +306,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
         subject.removeUnusedMethods();
 
@@ -329,7 +329,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
         subject.removeUnusedMethods();
 
@@ -353,7 +353,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
         subject.removeUnusedMethods();
 
@@ -376,7 +376,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
         subject.removeUnusedMethods();
 
@@ -397,18 +397,18 @@ class Spin1PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin", parseSource(""
+        objects.put("text1.spin2", parseSource(""
             + "PUB method1\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
             + ""));
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
         subject.removeUnusedMethods();
 
-        Node text1 = objects.get("text1.spin");
+        Node text1 = objects.get("text1.spin2");
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
         Assertions.assertFalse(subject.isReferenced(text1.getChild(0)));
@@ -428,18 +428,18 @@ class Spin1PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin", parseSource(""
+        objects.put("text1.spin2", parseSource(""
             + "PUB method1\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
             + ""));
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
         subject.removeUnusedMethods();
 
-        Node text1 = objects.get("text1.spin");
+        Node text1 = objects.get("text1.spin2");
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
         Assertions.assertTrue(subject.isReferenced(text1.getChild(0)));
@@ -459,7 +459,7 @@ class Spin1PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin", parseSource(""
+        objects.put("text1.spin2", parseSource(""
             + "PUB method1\n"
             + "    method2\n"
             + "\n"
@@ -467,11 +467,11 @@ class Spin1PreprocessorTest {
             + "\n"
             + ""));
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
         subject.removeUnusedMethods();
 
-        Node text1 = objects.get("text1.spin");
+        Node text1 = objects.get("text1.spin2");
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
         Assertions.assertTrue(subject.isReferenced(text1.getChild(0)));
@@ -490,7 +490,7 @@ class Spin1PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin", parseSource(""
+        objects.put("text1.spin2", parseSource(""
             + "PUB method1\n"
             + "    method2\n"
             + "\n"
@@ -498,11 +498,11 @@ class Spin1PreprocessorTest {
             + "\n"
             + ""));
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
         subject.removeUnusedMethods();
 
-        Node text1 = objects.get("text1.spin");
+        Node text1 = objects.get("text1.spin2");
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
         Assertions.assertFalse(subject.isReferenced(text1.getChild(0)));
@@ -523,7 +523,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -550,7 +550,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
         subject.collectReferencedMethods();
         subject.removeUnusedMethods();
 
@@ -560,7 +560,7 @@ class Spin1PreprocessorTest {
     }
 
     Node parseSource(String text) {
-        Spin1TokenStream stream = new Spin1TokenStream(text);
-        return new Spin1Parser(stream).parse();
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+        return new Spin2Parser(stream).parse();
     }
 }

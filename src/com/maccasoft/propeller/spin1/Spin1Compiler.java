@@ -21,6 +21,7 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
+import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
@@ -36,6 +37,7 @@ public class Spin1Compiler {
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
 
     boolean removeUnusedMethods;
+    Spin1Preprocessor preprocessor;
 
     public Spin1Compiler() {
 
@@ -163,6 +165,19 @@ public class Spin1Compiler {
         }
 
         @Override
+        Spin1Method compileMethod(MethodNode node) {
+            if (!preprocessor.isReferenced(node)) {
+                if ("PRI".equalsIgnoreCase(node.type.getText())) {
+                    logMessage(new CompilerMessage(CompilerMessage.WARNING, "function \"" + node.name.getText() + "\" is not used", node));
+                }
+                if (removeUnusedMethods) {
+                    return null;
+                }
+            }
+            return super.compileMethod(node);
+        }
+
+        @Override
         protected byte[] getBinaryFile(String fileName) {
             return Spin1Compiler.this.getBinaryFile(fileName);
         }
@@ -180,11 +195,9 @@ public class Spin1Compiler {
 
         root.accept(new ObjectNodeVisitor(rootFileName, objects));
 
-        Spin1Preprocessor preprocessor = new Spin1Preprocessor(root, objects);
-        if (removeUnusedMethods) {
-            preprocessor.removeUnusedMethods();
-            preprocessor.removeUnusedMethods();
-        }
+        preprocessor = new Spin1Preprocessor(root, objects);
+        preprocessor.collectReferencedMethods();
+        preprocessor.removeUnusedMethods();
 
         for (Entry<String, Node> entry : objects.entrySet()) {
             Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey(), scope, childObjects);
