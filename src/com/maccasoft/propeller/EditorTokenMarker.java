@@ -189,9 +189,9 @@ public abstract class EditorTokenMarker {
             if (lastMarker == null) {
                 lastMarker = tokens.last();
             }
-            if (firstMarker == lastMarker) {
-                int start = firstMarker.getStart();
-                int stop = firstMarker.getStop();
+            for (TokenMarker entry : tokens.subSet(firstMarker, lastMarker)) {
+                int start = entry.getStart();
+                int stop = entry.getStop();
                 if (stop >= lineStart && start <= lineStop) {
                     if (start < lineStart) {
                         start = lineStart;
@@ -199,23 +199,19 @@ public abstract class EditorTokenMarker {
                     if (stop > lineStop) {
                         stop = lineStop;
                     }
-                    result.add(new TokenMarker(start, stop, firstMarker.getId()));
+                    result.add(new TokenMarker(start, stop, entry.getId()));
                 }
             }
-            else {
-                for (TokenMarker entry : tokens.subSet(firstMarker, lastMarker)) {
-                    int start = entry.getStart();
-                    int stop = entry.getStop();
-                    if (stop >= lineStart && start <= lineStop) {
-                        if (start < lineStart) {
-                            start = lineStart;
-                        }
-                        if (stop > lineStop) {
-                            stop = lineStop;
-                        }
-                        result.add(new TokenMarker(start, stop, entry.getId()));
-                    }
+            int start = lastMarker.getStart();
+            int stop = lastMarker.getStop();
+            if (stop >= lineStart && start <= lineStop) {
+                if (start < lineStart) {
+                    start = lineStart;
                 }
+                if (stop > lineStop) {
+                    stop = lineStop;
+                }
+                result.add(new TokenMarker(start, stop, lastMarker.getId()));
             }
         }
 
