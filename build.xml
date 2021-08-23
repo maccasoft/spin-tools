@@ -6,6 +6,7 @@
     <property name="version" value="0.0.1" />
     <property name="package" value="spin-tools" />
     <property name="folder" value="${package}-${version}" />
+    <property name="mac-folder" value="Spin Tools"/>
     <property name="main-class" value="com.maccasoft.propeller.SpinTools" />
     <property name="dependencies-folder" value="build" />
     <property name="work" value="build/work" />
@@ -15,9 +16,14 @@
         classname="net.sf.launch4j.ant.Launch4jTask" 
         classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar" />
 
+    <taskdef name="bundleapp"
+        classname="com.oracle.appbundler.AppBundlerTask"
+        classpath="build/macosx/appbundler-1.0.jar" />
+
     <target name="build">
         <antcall target="build-linux64" />
         <antcall target="build-windows64" />
+        <antcall target="build-macosx" />
     </target>
 
     <!-- Linux x86/64 -->
@@ -90,6 +96,54 @@
             <arg value="-r" />
             <arg value="../${package}-windows64-${version}.zip" />
             <arg value="${folder}" />
+        </exec>
+    </target>
+
+    <!-- MacOS/X -->
+    <target name="build-macosx">
+        <delete dir="${work}" includeemptydirs="true"/>
+        <mkdir dir="${work}/${folder}" />
+        
+        <mkdir dir="${work}/bin" />
+        <javac target="1.8" source="1.8" destdir="${work}/bin" srcdir="src" debug="true" includeantruntime="false">
+            <classpath refid="lib.path.ref"/>
+            <classpath>
+                <pathelement location="lib/org.eclipse.swt.cocoa.macosx.x86_64_3.114.100.v20200604-0951.jar"/>
+            </classpath>
+        </javac>
+        
+        <antcall target="copy-common-files" />
+        <copy todir="${work}/${folder}/lib" file="lib/org.eclipse.swt.cocoa.macosx.x86_64_3.114.100.v20200604-0951.jar"/>
+        
+        <bundleapp
+            outputdirectory="${work}"
+            name="${mac-folder}"
+            displayname="${mac-folder}"
+            identifier="com.maccasoft.propeller"
+            icon="build/macosx/app.icns"
+            shortversion="${version}"
+            signature="????"
+            copyright="Marco Maccaferri"
+            applicationCategory="public.app-category.developer-tools"
+            mainclassname="${main-class}">
+        
+            <classpath file="${work}/${folder}/lib/*.jar"/>
+        
+            <option value="-DAPP_DIR=$APP_ROOT/Contents/Java"/>
+            <option value="-Dcom.apple.macos.useScreenMenuBar=true"/>
+            <option value="-Xms128M"/>
+            <option value="-Xmx512M"/>
+            <option value="-XstartOnFirstThread"/>
+        </bundleapp>
+        
+        <copy todir="${work}/${mac-folder}.app/Contents/Java" includeemptydirs="false">
+            <fileset dir="${work}/${folder}" excludes="**/*.jar" />
+        </copy>
+        
+        <exec executable="tar" dir="${work}" failonerror="true">
+            <arg value="czf"/>
+            <arg value="../${package}-macosx-${version}.tar.gz"/>
+            <arg value="${mac-folder}.app"/>
         </exec>
     </target>
 
