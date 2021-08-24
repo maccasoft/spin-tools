@@ -51,6 +51,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
@@ -1710,6 +1711,12 @@ public class SpinTools {
                 try {
                     Shell shell = new Shell(display);
                     shell.setText("Spin Tools");
+                    shell.setImages(new Image[] {
+                        ImageRegistry.getImageFromResources("app64.png"),
+                        ImageRegistry.getImageFromResources("app48.png"),
+                        ImageRegistry.getImageFromResources("app32.png"),
+                        ImageRegistry.getImageFromResources("app16.png"),
+                    });
 
                     Rectangle screen = display.getClientArea();
 
