@@ -2319,7 +2319,7 @@ public class Spin2ObjectCompiler {
                         os.write(0xE0 + bitfield);
                     }
                     else if (bitfield >= 16 && bitfield <= 31) {
-                        os.write(0xF0 + bitfield);
+                        os.write(0xF0 + (bitfield - 16));
                     }
                     else {
                         os.write(0xDF);
@@ -2693,7 +2693,7 @@ public class Spin2ObjectCompiler {
                             os.write(0xE0 + bitfield);
                         }
                         else if (bitfield >= 16 && bitfield <= 31) {
-                            os.write(0xF0 + bitfield);
+                            os.write(0xF0 + (bitfield - 16));
                         }
                         else {
                             os.write(0xDF);
