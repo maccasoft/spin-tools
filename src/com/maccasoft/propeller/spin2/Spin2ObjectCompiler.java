@@ -1381,7 +1381,11 @@ public class Spin2ObjectCompiler {
             Spin2MethodLine end = (Spin2MethodLine) line.getData("end");
             line.addSource(new Address(line.getScope(), new ContextLiteral(end.getScope())));
 
-            for (Spin2StatementNode arg : line.getArguments()) {
+            Iterator<Spin2StatementNode> iter = line.getArguments().iterator();
+            line.addSource(compileBytecodeExpression(line.getScope(), iter.next(), true));
+
+            while (iter.hasNext()) {
+                Spin2StatementNode arg = iter.next();
                 Spin2MethodLine target = (Spin2MethodLine) arg.getData("true");
                 compileCase(line, arg, target);
             }

@@ -2079,6 +2079,58 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testCaseFunction() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    case peek()\n"
+            + "        1: a := 10 \n"
+            + "        2: a := 20\n"
+            + "        other: a:= 100 \n"
+            + "\n"
+            + "PRI peek() : rc\n"
+            + "\n"
+            + "    rc := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       24 00 10 80    Method peek @ $00024 (0 parameters, 1 returns)\n"
+            + "00008 00008       28 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "0000C 0000C       04             (stack size)\n"
+            + "'     case peek()\n"
+            + "0000D 0000D       45 23          ADDRESS ($00023)\n"
+            + "0000F 0000F       01             ANCHOR\n"
+            + "00010 00010       0A 01          CALL_SUB (1)\n"
+            + "00012 00012       A2             CONSTANT (1)\n"
+            + "00013 00013       1C 08          CASE_JMP $0001C (8)\n"
+            + "00015 00015       A3             CONSTANT (2)\n"
+            + "00016 00016       1C 08          CASE_JMP $0001F (8)\n"
+            + "'         other: a:= 100\n"
+            + "00018 00018       45 64          CONSTANT (100)\n"
+            + "0001A 0001A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0001B 0001B       1E             CASE_DONE\n"
+            + "'         1: a := 10\n"
+            + "0001C 0001C       AB             CONSTANT (10)\n"
+            + "0001D 0001D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0001E 0001E       1E             CASE_DONE\n"
+            + "'         2: a := 20\n"
+            + "0001F 0001F       45 14          CONSTANT (20)\n"
+            + "00021 00021       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00022 00022       1E             CASE_DONE\n"
+            + "00023 00023       04             RETURN\n"
+            + "' PRI peek() : rc\n"
+            + "00024 00024       00             (stack size)\n"
+            + "'     rc := 1\n"
+            + "00025 00025       A2             CONSTANT (1)\n"
+            + "00026 00026       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00027 00027       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testSendVariable() throws Exception {
         String text = ""
             + "PUB main() | a\n"
@@ -3167,7 +3219,6 @@ class Spin2ObjectCompilerTest {
     String compile(String text) throws Exception {
         Spin2Context scope = new Spin2GlobalContext();
         Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
-
         Spin2TokenStream stream = new Spin2TokenStream(text);
         Spin2Parser subject = new Spin2Parser(stream);
         Node root = subject.parse();
