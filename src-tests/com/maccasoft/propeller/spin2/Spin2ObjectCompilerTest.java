@@ -2627,10 +2627,11 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
-    void testChainedAssignments() throws Exception {
+    void testLocalVarChainedAssignments() throws Exception {
         String text = ""
-            + "PUB main | a, b, c\n"
+            + "PUB main() | a, b, c\n"
             + "\n"
+            + "    a := b := 1\n"
             + "    a := b := c := 1\n"
             + "\n"
             + "";
@@ -2638,17 +2639,61 @@ class Spin2ObjectCompilerTest {
         Assertions.assertEquals(""
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       10 00 00 00    End\n"
-            + "' PUB main | a, b, c\n"
+            + "00004 00004       14 00 00 00    End\n"
+            + "' PUB main() | a, b, c\n"
             + "00008 00008       0C             (stack size)\n"
-            + "'     a := b := c := 1\n"
+            + "'     a := b := 1\n"
             + "00009 00009       A2             CONSTANT (1)\n"
-            + "0000A 0000A       D2             VAR_SETUP LONG DBASE+$00002 (short)\n"
+            + "0000A 0000A       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
             + "0000B 0000B       82             WRITE\n"
-            + "0000C 0000C       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
-            + "0000D 0000D       82             WRITE\n"
-            + "0000E 0000E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "0000F 0000F       04             RETURN\n"
+            + "0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := b := c := 1\n"
+            + "0000D 0000D       A2             CONSTANT (1)\n"
+            + "0000E 0000E       D2             VAR_SETUP LONG DBASE+$00002 (short)\n"
+            + "0000F 0000F       82             WRITE\n"
+            + "00010 00010       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "00011 00011       82             WRITE\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00013 00013       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testGlobalVarChainedAssignments() throws Exception {
+        String text = ""
+            + "VAR\n"
+            + "\n"
+            + "    long a\n"
+            + "    byte b\n"
+            + "    word c\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "    a := b := 1\n"
+            + "    a := b := c := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       19 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'     a := b := 1\n"
+            + "00009 00009       A2             CONSTANT (1)\n"
+            + "0000A 0000A       51 08          VAR_SETUP BYTE VBASE+$00008\n"
+            + "0000C 0000C       82             WRITE\n"
+            + "0000D 0000D       C1 81          VAR_WRITE LONG VBASE+$00001 (short)\n"
+            + "'     a := b := c := 1\n"
+            + "0000F 0000F       A2             CONSTANT (1)\n"
+            + "00010 00010       57 09          VAR_SETUP WORD VBASE+$00009\n"
+            + "00012 00012       82             WRITE\n"
+            + "00013 00013       51 08          VAR_SETUP BYTE VBASE+$00008\n"
+            + "00015 00015       82             WRITE\n"
+            + "00016 00016       C1 81          VAR_WRITE LONG VBASE+$00001 (short)\n"
+            + "00018 00018       04             RETURN\n"
+            + "00019 00019       00 00 00       Padding\n"
             + "", compile(text));
     }
 
@@ -2727,6 +2772,41 @@ class Spin2ObjectCompilerTest {
             + "0001C 0001C       DE 80          BITFIELD_READ (pop)\n"
             + "0001E 0001E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "0001F 0001F       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testBitFieldChainedAssignment() throws Exception {
+        String text = ""
+            + "PUB main | a, b, c\n"
+            + "\n"
+            + "    a.[1] := b.[2] := 1\n"
+            + "    a.[1] := b.[2] := c.[3] := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       1B 00 00 00    End\n"
+            + "' PUB main | a, b, c\n"
+            + "00008 00008       0C             (stack size)\n"
+            + "'     a.[1] := b.[2] := 1\n"
+            + "00009 00009       A2             CONSTANT (1)\n"
+            + "0000A 0000A       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "0000B 0000B       E2 82          BITFIELD_WRITE (short) (push)\n"
+            + "0000D 0000D       D0             VAR_SETUP LONG DBASE+$00000 (short)\n"
+            + "0000E 0000E       E1 81          BITFIELD_WRITE (short)\n"
+            + "'     a.[1] := b.[2] := c.[3] := 1\n"
+            + "00010 00010       A2             CONSTANT (1)\n"
+            + "00011 00011       D2             VAR_SETUP LONG DBASE+$00002 (short)\n"
+            + "00012 00012       E3 82          BITFIELD_WRITE (short) (push)\n"
+            + "00014 00014       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "00015 00015       E2 82          BITFIELD_WRITE (short) (push)\n"
+            + "00017 00017       D0             VAR_SETUP LONG DBASE+$00000 (short)\n"
+            + "00018 00018       E1 81          BITFIELD_WRITE (short)\n"
+            + "0001A 0001A       04             RETURN\n"
+            + "0001B 0001B       00             Padding\n"
             + "", compile(text));
     }
 

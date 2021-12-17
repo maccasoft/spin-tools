@@ -1723,14 +1723,11 @@ public class Spin2ObjectCompiler {
                     throw new RuntimeException("expression syntax error " + node.getText());
                 }
                 source.addAll(compileConstantExpression(context, node.getChild(1)));
-                source.addAll(leftAssign(context, node.getChild(0), push));
-                if (push) {
-                    source.add(new Bytecode(context, 0x82, "WRITE"));
-                }
+                source.addAll(leftAssign(context, node.getChild(0), push, push));
             }
             else if (MathOp.isAssignMathOp(node.getText())) {
                 source.addAll(compileConstantExpression(context, node.getChild(1)));
-                source.addAll(leftAssign(context, node.getChild(0), true));
+                source.addAll(leftAssign(context, node.getChild(0), true, false));
                 source.add(new MathOp(context, node.getText(), push));
             }
             else if (MathOp.isUnaryMathOp(node.getText())) {
@@ -2445,7 +2442,7 @@ public class Spin2ObjectCompiler {
         return source;
     }
 
-    List<Spin2Bytecode> leftAssign(Spin2Context context, Spin2StatementNode node, boolean push) {
+    List<Spin2Bytecode> leftAssign(Spin2Context context, Spin2StatementNode node, boolean push, boolean write) {
         Spin2StatementNode indexNode = null;
         Spin2StatementNode bitfieldNode = null;
         int index = 0;
@@ -2502,13 +2499,12 @@ public class Spin2ObjectCompiler {
         }
         else if (",".equals(node.getText())) {
             for (int i = node.getChildCount() - 1; i >= 0; i--) {
-                source.addAll(leftAssign(context, node.getChild(i), push));
+                source.addAll(leftAssign(context, node.getChild(i), push, false));
             }
         }
         else if (node.getType() == Token.OPERATOR) {
-            source.addAll(leftAssign(context, node.getChild(1), true));
-            source.add(new Bytecode(context, 0x82, "WRITE"));
-            source.addAll(leftAssign(context, node.getChild(0), node.getChild(0).getType() == Token.OPERATOR));
+            source.addAll(leftAssign(context, node.getChild(1), true, true));
+            source.addAll(leftAssign(context, node.getChild(0), node.getChild(0).getType() == Token.OPERATOR, false));
         }
         else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
             boolean indexed = false;
@@ -2723,6 +2719,9 @@ public class Spin2ObjectCompiler {
                 }
 
                 source.add(new Bytecode(context, os.toByteArray(), sb.toString()));
+            }
+            else if (write) {
+                source.add(new Bytecode(context, 0x82, "WRITE"));
             }
         }
 
