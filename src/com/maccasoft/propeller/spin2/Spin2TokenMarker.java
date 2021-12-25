@@ -11,9 +11,11 @@
 package com.maccasoft.propeller.spin2;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.EditorTokenMarker;
@@ -440,40 +442,47 @@ public class Spin2TokenMarker extends EditorTokenMarker {
         spinKeywords.put("PR7", TokenId.PASM_INSTRUCTION);
     }
 
-    static Map<String, TokenId> pasmKeywords = new HashMap<String, TokenId>();
+    static Set<String> modcz = new HashSet<String>();
     static {
-        pasmKeywords.put("_CLR", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_NC_AND_Z", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_Z_AND_NC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_GT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_NC_AND_Z", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_Z_AND_NC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_NC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_GE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_C_AND_NZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_NZ_AND_C", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_NZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_NE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_C_NE_NZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_NZ_NE_C", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_C_OR_NZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_NZ_OR_C", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_C_AND_Z", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_Z_AND_C", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_C_EQ_Z", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_Z_EQ_C", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_Z", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_E", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_NC_OR_Z", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_Z_OR_NC", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_C", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_LT", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_C_OR_NZ", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_NZ_OR_C", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_C_OR_Z", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_Z_OR_C", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_LE", TokenId.PASM_INSTRUCTION);
-        pasmKeywords.put("_SET", TokenId.PASM_INSTRUCTION);
+        modcz.add("MODC");
+        modcz.add("MODZ");
+        modcz.add("MODCZ");
+    }
+
+    static Map<String, TokenId> modczOperands = new HashMap<String, TokenId>();
+    static {
+        modczOperands.put("_CLR", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NC_AND_Z", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_Z_AND_NC", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_GT", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NC_AND_Z", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_Z_AND_NC", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NC", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_GE", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_C_AND_NZ", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NZ_AND_C", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NZ", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NE", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_C_NE_NZ", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NZ_NE_C", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_C_OR_NZ", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NZ_OR_C", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_C_AND_Z", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_Z_AND_C", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_C_EQ_Z", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_Z_EQ_C", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_Z", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_E", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NC_OR_Z", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_Z_OR_NC", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_C", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_LT", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_C_OR_NZ", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NZ_OR_C", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_C_OR_Z", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_Z_OR_C", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_LE", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_SET", TokenId.PASM_INSTRUCTION);
     }
 
     final NodeVisitor collectKeywordsVisitor = new NodeVisitor() {
@@ -603,9 +612,6 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                 }
                 else {
                     TokenId id = symbols.get(s);
-                    if (id == null) {
-                        id = pasmKeywords.get(s);
-                    }
                     if (id == null) {
                         symbols.put(s, TokenId.PASM_LABEL);
                         symbols.put("@" + s, TokenId.PASM_LABEL);
@@ -737,6 +743,8 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                 }
             }
 
+            boolean isModcz = node.instruction != null && modcz.contains(node.instruction.getText().toUpperCase());
+
             for (ParameterNode parameter : node.parameters) {
                 for (Token token : parameter.getTokens()) {
                     TokenId id = null;
@@ -751,21 +759,25 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                     }
                     else {
                         String s = token.getText();
-                        if (s.startsWith(".") || s.startsWith("@.")) {
-                            s = lastLabel + s;
+                        if (isModcz) {
+                            id = modczOperands.get(token.getText().toUpperCase());
                         }
-                        id = symbols.get(s);
+                        if (id == null) {
+                            if (s.startsWith(".") || s.startsWith("@.")) {
+                                s = lastLabel + s;
+                            }
+                            id = symbols.get(s);
+                        }
                         if (id == null) {
                             id = compilerSymbols.get(token.getText());
-                        }
-                        if (id == null) {
-                            id = pasmKeywords.get(token.getText().toUpperCase());
                         }
                         if (id == null) {
                             id = keywords.get(token.getText().toUpperCase());
                         }
                         if (inline && id == null) {
-                            id = pasmKeywords.get(token.getText().toUpperCase());
+                            if (isModcz) {
+                                id = modczOperands.get(token.getText().toUpperCase());
+                            }
                             if (id == null) {
                                 id = spinKeywords.get(token.getText().toUpperCase());
                             }
