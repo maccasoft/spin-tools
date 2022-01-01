@@ -93,7 +93,7 @@ public class Spin2Compiler {
             ObjectNodeVisitor p = parent;
             while (p != null) {
                 if (p.fileName.equals(objectFileName)) {
-                    throw new CompilerMessage(fileName, "\"" + objectFileName + "\" illegal circular reference", node);
+                    throw new CompilerMessage(fileName, "\"" + objectFileName + "\" illegal circular reference", node.file);
                 }
                 p = p.parent;
             }
@@ -103,7 +103,7 @@ public class Spin2Compiler {
                 objectRoot = getParsedObject(objectFileName);
             }
             if (objectRoot == null) {
-                logMessage(new CompilerMessage(fileName, "object file \"" + objectFileName + "\" not found", node));
+                logMessage(new CompilerMessage(fileName, "object file \"" + objectFileName + "\" not found", node.file));
                 return;
             }
 
@@ -128,7 +128,7 @@ public class Spin2Compiler {
         Spin2Method compileMethod(MethodNode node) {
             if (!preprocessor.isReferenced(node)) {
                 if ("PRI".equalsIgnoreCase(node.type.getText())) {
-                    logMessage(new CompilerMessage(CompilerMessage.WARNING, "function \"" + node.name.getText() + "\" is not used", node));
+                    logMessage(new CompilerMessage(CompilerMessage.WARNING, "function \"" + node.name.getText() + "\" is not used", node.name));
                 }
                 if (removeUnusedMethods) {
                     return null;

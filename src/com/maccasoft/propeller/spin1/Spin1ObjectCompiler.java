@@ -492,7 +492,7 @@ public class Spin1ObjectCompiler {
 
                 ObjectInfo info = childObjects.get(fileName);
                 if (info == null) {
-                    logMessage(new CompilerMessage("object \"" + fileName + "\" not found", node));
+                    logMessage(new CompilerMessage("object \"" + fileName + "\" not found", node.file));
                     continue;
                 }
 

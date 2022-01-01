@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2022-21 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -73,11 +73,14 @@ import com.maccasoft.propeller.internal.ContentProposalAdapter;
 import com.maccasoft.propeller.internal.HTMLStyledTextParser;
 import com.maccasoft.propeller.internal.StyledTextContentAdapter;
 import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectNode;
+import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.VariablesNode;
 
 public class SourceEditor {
 
@@ -101,10 +104,11 @@ public class SourceEditor {
     Caret overwriteCaret;
     boolean modified;
 
+    int[] sectionCount = new int[6];
+
     EditorTokenMarker tokenMarker;
     Map<TokenId, TextStyle> styleMap = new HashMap<TokenId, TextStyle>();
 
-    SpinEditorBackgroundDecorator backgroundDecorator;
     EditorHelp helpProvider;
 
     boolean ignoreUndo;
@@ -382,7 +386,7 @@ public class SourceEditor {
                     if (modified) {
                         try {
                             tokenMarker.refreshTokens(styledText.getText());
-                            display.timerExec(500, refreshViewRunnable);
+                            //display.timerExec(500, refreshViewRunnable);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -410,12 +414,11 @@ public class SourceEditor {
             }
         });
 
-        backgroundDecorator = new SpinEditorBackgroundDecorator();
         styledText.addLineBackgroundListener(new LineBackgroundListener() {
 
             @Override
             public void lineGetBackground(LineBackgroundEvent event) {
-                event.lineBackground = backgroundDecorator.getLineBackground(tokenMarker.getRoot(), event.lineOffset);
+                event.lineBackground = getLineBackground(tokenMarker.getRoot(), event.lineOffset);
                 if (styledText.getLineAtOffset(event.lineOffset) == currentLine) {
                     if (event.lineBackground != null) {
                         event.lineBackground = ColorRegistry.getDimColor(event.lineBackground, -6);
@@ -820,10 +823,13 @@ public class SourceEditor {
                 styledText.setText(result);
                 styledText.setTopIndex(topindex);
 
+                tokenMarker.refreshTokens(result);
+
                 String ls = styledText.getLine(line);
                 styledText.setCaretOffset(styledText.getOffsetAtLine(line) + Math.min(column, ls.length()));
             } finally {
                 styledText.setRedraw(true);
+                styledText.redraw();
                 ignoreModify = false;
             }
         }
@@ -1220,6 +1226,77 @@ public class SourceEditor {
     public void redraw() {
         styledText.redraw();
         ruler.redraw();
+    }
+
+    public Color getLineBackground(Node root, int lineOffset) {
+        Color color = getSectionBackground(null);
+
+        if (root != null) {
+            for (Node child : root.getChilds()) {
+                if (lineOffset < child.getStartIndex()) {
+                    break;
+                }
+                color = getSectionBackground(child);
+            }
+        }
+
+        return color;
+    }
+
+    Color getSectionBackground(Node node) {
+        Color result = null;
+
+        if (node == null) {
+            sectionCount[0] = sectionCount[1] = sectionCount[2] = sectionCount[3] = sectionCount[4] = sectionCount[5] = 0;
+        }
+
+        if (node instanceof VariablesNode) {
+            result = getColor(255, 223, 191, sectionCount[1] == 0 ? 0 : -6);
+            if (node != null) {
+                sectionCount[1] = sectionCount[1] == 0 ? 1 : 0;
+            }
+        }
+        else if (node instanceof ObjectsNode) {
+            result = getColor(255, 191, 191, sectionCount[2] == 0 ? 0 : -6);
+            if (node != null) {
+                sectionCount[2] = sectionCount[2] == 0 ? 1 : 0;
+            }
+        }
+        else if (node instanceof MethodNode) {
+            if (((MethodNode) node).isPublic()) {
+                result = getColor(191, 223, 255, sectionCount[3] == 0 ? 0 : -6);
+                if (node != null) {
+                    sectionCount[3] = sectionCount[3] == 0 ? 1 : 0;
+                }
+            }
+            else {
+                result = getColor(191, 248, 255, sectionCount[4] == 0 ? 0 : -6);
+                if (node != null) {
+                    sectionCount[4] = sectionCount[4] == 0 ? 1 : 0;
+                }
+            }
+        }
+        else if (node instanceof DataNode) {
+            result = getColor(191, 255, 200, sectionCount[5] == 0 ? 0 : -6);
+            if (node != null) {
+                sectionCount[5] = sectionCount[5] == 0 ? 1 : 0;
+            }
+        }
+        else {
+            result = getColor(255, 248, 192, sectionCount[0] == 0 ? 0 : -6);
+            if (node != null) {
+                sectionCount[0] = sectionCount[0] == 0 ? 1 : 0;
+            }
+        }
+
+        return result;
+    }
+
+    Color getColor(int r, int g, int b, int percent) {
+        r += (int) (r / 100.0 * percent);
+        g += (int) (g / 100.0 * percent);
+        b += (int) (b / 100.0 * percent);
+        return ColorRegistry.getColor(r, g, b);
     }
 
 }

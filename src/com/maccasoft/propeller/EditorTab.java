@@ -215,7 +215,9 @@ public class EditorTab {
             if (!threadRunning.getAndSet(true)) {
                 pendingCompile.set(false);
 
-                Node root = tokenMarker.getRoot();
+                Spin1TokenStream stream = new Spin1TokenStream(editor.getStyledText().getText());
+                Spin1Parser parser = new Spin1Parser(stream);
+                Node root = parser.parse();
 
                 File localFile = file != null ? file : new File(tabItemText);
                 sourcePool.setParsedSource(localFile.getAbsolutePath(), root);
@@ -246,7 +248,6 @@ public class EditorTab {
                                     list.add(msg);
                                 }
                             }
-                            editor.setCompilerMessages(list);
 
                             Display.getDefault().asyncExec(new Runnable() {
 
@@ -255,6 +256,7 @@ public class EditorTab {
                                     if (editor == null || editor.getStyledText().isDisposed()) {
                                         return;
                                     }
+                                    editor.setCompilerMessages(list);
                                     editor.redraw();
                                     tabItem.setFont(null);
                                     updateTabItemText();
@@ -381,7 +383,9 @@ public class EditorTab {
             if (!threadRunning.getAndSet(true)) {
                 pendingCompile.set(false);
 
-                Node root = tokenMarker.getRoot();
+                Spin2TokenStream stream = new Spin2TokenStream(editor.getStyledText().getText());
+                Spin2Parser parser = new Spin2Parser(stream);
+                Node root = parser.parse();
 
                 File localFile = file != null ? file : new File(tabItemText);
                 sourcePool.setParsedSource(localFile.getAbsolutePath(), root);
@@ -412,7 +416,6 @@ public class EditorTab {
                                     list.add(msg);
                                 }
                             }
-                            editor.setCompilerMessages(list);
 
                             Display.getDefault().asyncExec(new Runnable() {
 
@@ -421,6 +424,7 @@ public class EditorTab {
                                     if (editor == null || editor.getStyledText().isDisposed()) {
                                         return;
                                     }
+                                    editor.setCompilerMessages(list);
                                     editor.redraw();
                                     tabItem.setFont(null);
                                     updateTabItemText();
