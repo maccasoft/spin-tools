@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -670,9 +670,11 @@ public class Spin2TokenMarker extends EditorTokenMarker {
                 if (child.type != null) {
                     tokens.add(new TokenMarker(child.type, TokenId.TYPE));
                 }
-                locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
-                locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
-                tokens.add(new TokenMarker(child.identifier, TokenId.METHOD_LOCAL));
+                if (child.identifier != null) {
+                    locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
+                    locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
+                    tokens.add(new TokenMarker(child.identifier, TokenId.METHOD_LOCAL));
+                }
             }
 
             for (Node child : node.getChilds()) {

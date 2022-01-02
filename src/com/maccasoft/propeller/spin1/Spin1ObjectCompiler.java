@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -1377,7 +1377,13 @@ public class Spin1ObjectCompiler {
         }
         else {
             for (Spin1StatementNode arg : line.getArguments()) {
-                line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
+                try {
+                    line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
+                } catch (CompilerMessage e) {
+                    logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerMessage(e, arg.getData()));
+                }
             }
         }
 

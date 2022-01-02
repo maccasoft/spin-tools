@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -19,6 +19,8 @@ import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
 
 public class Fit extends Spin2PAsmInstructionFactory {
 
+    int defaultLimit = 0x1F0;
+
     @Override
     public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         if (arguments.size() == 0) {
@@ -28,6 +30,10 @@ public class Fit extends Spin2PAsmInstructionFactory {
             return new Fit_(context, arguments.get(0));
         }
         throw new RuntimeException("Invalid arguments");
+    }
+
+    public void setDefaultLimit(int defaultLimit) {
+        this.defaultLimit = defaultLimit;
     }
 
     public class Fit_ extends Spin2InstructionObject {
@@ -46,6 +52,10 @@ public class Fit extends Spin2PAsmInstructionFactory {
         @Override
         public int resolve(int address) {
             context.setAddress(address);
+            int limit = arg0 != null ? arg0.getInteger() : defaultLimit;
+            if (address > limit) {
+                throw new RuntimeException("error: fit limit exceeded by " + (address - limit) + " long(s)");
+            }
             return address;
         }
 

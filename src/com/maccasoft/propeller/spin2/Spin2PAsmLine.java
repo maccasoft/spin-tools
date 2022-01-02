@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.maccasoft.propeller.spin2.instructions.Empty;
+
 public class Spin2PAsmLine {
 
     Spin2Context scope;
@@ -29,8 +31,6 @@ public class Spin2PAsmLine {
     Spin2PAsmInstructionFactory instructionFactory;
     Spin2InstructionObject instructionObject;
 
-    String originalText;
-
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
@@ -41,6 +41,16 @@ public class Spin2PAsmLine {
         this.mnemonic = mnemonic;
         this.arguments = arguments;
         this.effect = effect;
+
+        if (mnemonic != null) {
+            this.instructionFactory = Spin2PAsmInstructionFactory.get(mnemonic);
+            if (this.instructionFactory == null) {
+                throw new RuntimeException("invalid instruction " + mnemonic);
+            }
+        }
+        if (this.instructionFactory == null) {
+            this.instructionFactory = Empty.instance;
+        }
     }
 
     public Spin2Context getScope() {
@@ -72,9 +82,6 @@ public class Spin2PAsmLine {
     }
 
     public Spin2PAsmInstructionFactory getInstructionFactory() {
-        if (instructionFactory == null) {
-            instructionFactory = Spin2PAsmInstructionFactory.get(mnemonic);
-        }
         return instructionFactory;
     }
 
@@ -88,13 +95,7 @@ public class Spin2PAsmLine {
 
     public int resolve(int address) {
         scope.setAddress(address);
-        try {
-            return getInstructionObject().resolve(address);
-        } catch (Exception e) {
-            System.err.println(this);
-            e.printStackTrace();
-        }
-        return address;
+        return getInstructionObject().resolve(address);
     }
 
     public void setInstructionObject(Spin2InstructionObject instructionObject) {
@@ -102,28 +103,15 @@ public class Spin2PAsmLine {
     }
 
     public Spin2InstructionObject getInstructionObject() {
-        try {
-            if (instructionObject == null) {
-                instructionObject = getInstructionFactory().createObject(scope, condition, arguments, effect);
-            }
-        } catch (Exception e) {
-            System.err.println(this);
-            e.printStackTrace();
+        if (instructionObject == null) {
+            instructionObject = getInstructionFactory().createObject(scope, condition, arguments, effect);
         }
         return instructionObject;
     }
 
     public void generateObjectCode(OutputStream output) throws IOException {
-        try {
-            if (instructionObject == null) {
-                instructionObject = getInstructionFactory().createObject(scope, condition, arguments, effect);
-            }
-            if (instructionObject != null) {
-                instructionObject.generateObjectCode(output);
-            }
-        } catch (Exception e) {
-            System.err.println(this);
-            e.printStackTrace();
+        if (instructionObject != null) {
+            instructionObject.generateObjectCode(output);
         }
     }
 

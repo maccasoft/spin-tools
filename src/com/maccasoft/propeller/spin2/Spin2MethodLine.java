@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -110,6 +110,11 @@ public class Spin2MethodLine {
     public void addChild(Spin2MethodLine line) {
         line.parent = this;
         childs.add(line);
+    }
+
+    public void addChild(int index, Spin2MethodLine line) {
+        line.parent = this;
+        childs.add(index, line);
     }
 
     public void addChilds(Collection<Spin2MethodLine> lines) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -99,6 +99,7 @@ import com.maccasoft.propeller.spin2.bytecode.Tjz;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 import com.maccasoft.propeller.spin2.instructions.Empty;
 import com.maccasoft.propeller.spin2.instructions.FileInc;
+import com.maccasoft.propeller.spin2.instructions.Fit;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
 import com.maccasoft.propeller.spin2.instructions.Res;
@@ -302,6 +303,9 @@ public class Spin2ObjectCompiler {
                 hubAddress = (hubAddress + 3) & ~3;
             }
             boolean isCogCode = address < 0x200;
+            if (line.getInstructionFactory() instanceof Fit) {
+                ((Fit) line.getInstructionFactory()).setDefaultLimit(isCogCode ? 0x1F0 : 0x400);
+            }
 
             try {
                 address = line.resolve(hubMode ? hubAddress : address);
@@ -325,10 +329,10 @@ public class Spin2ObjectCompiler {
             }
             else {
                 if (isCogCode && address > 0x1F0) {
-                    throw new RuntimeException("cog code limit exceeded by " + (address - 0x1F0) + " long(s)");
+                    logMessage(new CompilerMessage("cog code limit exceeded by " + (address - 0x1F0) + " long(s)", line.getData()));
                 }
                 else if (!isCogCode && address > 0x400) {
-                    throw new RuntimeException("lut code limit exceeded by " + (address - 0x400) + " long(s)");
+                    logMessage(new CompilerMessage("lut code limit exceeded by " + (address - 0x400) + " long(s)", line.getData()));
                 }
             }
         }
@@ -346,7 +350,7 @@ public class Spin2ObjectCompiler {
         }
 
         if (methods.size() != 0) {
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 7; i++) {
                 address = object.getSize();
                 for (Spin2Method method : methods) {
                     address = method.resolve(address);
@@ -1046,7 +1050,7 @@ public class Spin2ObjectCompiler {
 
                                 Spin2StatementNode expression = builder.getRoot();
                                 if ("OTHER".equalsIgnoreCase(expression.getText())) {
-                                    line.childs.add(0, targetLine);
+                                    line.addChild(0, targetLine);
                                     hasOther = true;
                                 }
                                 else {
@@ -1450,7 +1454,13 @@ public class Spin2ObjectCompiler {
         }
         else {
             for (Spin2StatementNode arg : line.getArguments()) {
-                line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
+                try {
+                    line.addSource(compileBytecodeExpression(line.getScope(), arg, false));
+                } catch (CompilerMessage e) {
+                    logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerMessage(e, arg.getData()));
+                }
             }
         }
 

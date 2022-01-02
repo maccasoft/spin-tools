@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -31,7 +31,6 @@ public class Spin1PAsmLine {
     Spin1PAsmInstructionFactory instructionFactory;
     Spin1InstructionObject instructionObject;
 
-    //String originalText;
     List<CompilerMessage> annotations = new ArrayList<CompilerMessage>();
     Object data;
 
@@ -102,13 +101,8 @@ public class Spin1PAsmLine {
     }
 
     public int resolve(int address) {
-        if (instructionObject == null && instructionFactory != null) {
-            instructionObject = instructionFactory.createObject(this);
-        }
-        if (instructionObject != null) {
-            return instructionObject.resolve(address);
-        }
-        return address;
+        scope.setAddress(address);
+        return getInstructionObject().resolve(address);
     }
 
     public void setInstructionObject(Spin1InstructionObject instructionObject) {
@@ -116,6 +110,9 @@ public class Spin1PAsmLine {
     }
 
     public Spin1InstructionObject getInstructionObject() {
+        if (instructionObject == null) {
+            instructionObject = getInstructionFactory().createObject(this);
+        }
         return instructionObject;
     }
 
