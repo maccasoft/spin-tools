@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -22,6 +22,9 @@ public class Calld extends Spin2PAsmInstructionFactory {
 
     @Override
     public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+        if ("_ret_".equalsIgnoreCase(condition)) {
+            throw new RuntimeException("_ret_ has no effect for branching instructions");
+        }
         if (Calld_P_A_.check(arguments, effect)) {
             return new Calld_P_A_(context, condition, arguments.get(0), arguments.get(1));
         }
