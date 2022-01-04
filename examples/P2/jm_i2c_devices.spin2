@@ -105,7 +105,7 @@ pub main() | count, type, addr, devid, ok
   count := 0
 
   repeat type from %0001 to %1110                               ' %1111 not valid
-    term.fhex(type << 4, 2)
+    term.fxhex(type << 4, 2)
     term.txn(" ", 2)
     repeat addr from %000 to %111
       devid := (type << 4) | (addr << 1)                        ' build device id
@@ -113,7 +113,7 @@ pub main() | count, type, addr, devid, ok
         if (T_TYPE == T_ANSI)
           term.str(ansi.bold())
           term.str(ansi.fgnd(ansi.BR_GREEN))
-        term.fhex(devid, 2)                                     ' show 8-bit id as hex
+        term.fxhex(devid, 2)                                     ' show 8-bit id as hex
         if (T_TYPE == T_ANSI)
           term.str(ansi.normal())
         term.tx(" ")

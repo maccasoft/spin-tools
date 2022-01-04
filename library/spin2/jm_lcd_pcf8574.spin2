@@ -282,7 +282,7 @@ pub dec(value)
   str(nstr.itoa(value, 10, 0))
 
 
-pub fdec(value, digits)
+pub fxdec(value, digits)
 
 '' Emit value as decimal using fixed # of digits
 '' -- may add leading zeros
@@ -327,7 +327,7 @@ pub hex(value)
   str(nstr.itoa(value, 16, 0))
 
 
-pub fhex(value, digits)
+pub fxhex(value, digits)
 
 '' Emit value as hexadecimal using fixed # of digits
 
@@ -350,7 +350,7 @@ pub oct(value)
   str(nstr.itoa(value, 8, 0))
 
 
-pub foct(value, digits)
+pub fxoct(value, digits)
 
 '' Emit value as octal using fixed # of digits
 
@@ -373,7 +373,7 @@ pub qrt(value)
   str(nstr.itoa(value, 4, 0))
 
 
-pub fqrt(value, digits)
+pub fxqrt(value, digits)
 
 '' Emit value as quarternary using fixed # of digits
 
@@ -396,7 +396,7 @@ pub bin(value)
   str(nstr.itoa(value, 2, 0))
 
 
-pub fbin(value, digits)
+pub fxbin(value, digits)
 
 '' Emit value as binary using fixed # of digits
 

@@ -135,12 +135,12 @@ pub serial_number() | i, crc
   term.txn("-", 2)                                              ' display it
   repeat i from 7 to 0
     term.tx(" ")
-    term.fhex(SN0[i], 2)
+    term.fxhex(SN0[i], 2)
   term.tx(13)
   crc := tsns.crc8(@SN0, 7)                                     ' calculate crc of sn
   term.txn("-", 2) 
   term.tx(" ")
-  term.fhex(crc, 2)
+  term.fxhex(crc, 2)
   if (crc == SN0[7])                                            ' compare and report
     term.str(string(" (crc verified)", 13))
   else

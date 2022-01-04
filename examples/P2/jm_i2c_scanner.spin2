@@ -129,12 +129,12 @@ pub i2c_matrix() | count, type, addr, devid, ok
   count := 0
 
   repeat type from %0001 to %1110                               ' %0000 and %1111 not valid 
-    term.fhex(type << 4, 2)
+    term.fxhex(type << 4, 2)
     term.tx(" ")
     repeat addr from %000 to %111
       devid := (type << 4) | (addr << 1)                        ' build device id
       if (i2c.present(devid))                                   ' ping device
-        term.fhex(devid, 2)             
+        term.fxhex(devid, 2)             
         term.tx(" ")
         ++count                
       else                            
