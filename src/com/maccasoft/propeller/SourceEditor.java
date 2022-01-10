@@ -589,6 +589,7 @@ public class SourceEditor {
 
         styledText.addListener(SWT.Paint, new Listener() {
 
+            int rightOffset;
             Rectangle clientArea;
 
             @Override
@@ -596,8 +597,12 @@ public class SourceEditor {
                 GC gc = event.gc;
                 try {
                     clientArea = styledText.getClientArea();
+                    clientArea.x += styledText.getRightMargin();
                     clientArea.y += styledText.getTopMargin();
+                    clientArea.width -= styledText.getRightMargin() + styledText.getLeftMargin();
                     clientArea.height -= styledText.getTopMargin() + styledText.getBottomMargin();
+
+                    rightOffset = styledText.getHorizontalPixel();
 
                     gc.setAdvanced(true);
                     gc.setAntialias(SWT.OFF);
@@ -639,7 +644,7 @@ public class SourceEditor {
                 Token token = node.getStartToken();
 
                 int line0 = token.line;
-                int x0 = charSize.x * token.column + charSize.x;
+                int x0 = (charSize.x * token.column + charSize.x) - rightOffset;
                 int y0 = styledText.getLinePixel(token.line) + charSize.y;
                 int y1 = y0;
 
@@ -648,7 +653,7 @@ public class SourceEditor {
                         token = child.getStartToken();
                         y1 = styledText.getLinePixel(token.line) + charSize.y / 2 + 1;
                         if (token.line != line0) {
-                            int x1 = charSize.x * token.column;
+                            int x1 = (charSize.x * token.column) - rightOffset;
                             gc.drawLine(x0, y1, x1, y1);
                         }
                         paintBlock(gc, child);
