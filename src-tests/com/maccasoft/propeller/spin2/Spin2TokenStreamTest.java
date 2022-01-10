@@ -23,26 +23,26 @@ class Spin2TokenStreamTest {
             + "     DisableFlow = 4\n"
             + "     ColorBurstFreq = 3_579_545\n"
             + "");
-
+    
         assertEquals("CON", subject.nextToken().getText());
         assertEquals("EnableFlow", subject.nextToken().getText());
         assertEquals("=", subject.nextToken().getText());
         assertEquals("8", subject.nextToken().getText());
         assertEquals(Token.NL, subject.nextToken().type);
-
+    
         assertEquals("DisableFlow", subject.nextToken().getText());
         assertEquals("=", subject.nextToken().getText());
         assertEquals("4", subject.nextToken().getText());
         assertEquals(Token.NL, subject.nextToken().type);
-
+    
         assertEquals("ColorBurstFreq", subject.nextToken().getText());
         assertEquals("=", subject.nextToken().getText());
         assertEquals("3_579_545", subject.nextToken().getText());
         assertEquals(Token.NL, subject.nextToken().type);
-
+    
         assertEquals(Token.EOF, subject.nextToken().type);
     }
-
+    
     @Test
     void testLineCount() {
         Spin2TokenStream subject = new Spin2TokenStream(""
@@ -50,27 +50,27 @@ class Spin2TokenStreamTest {
             + "     DisableFlow = 4\n"
             + "     ColorBurstFreq = 3_579_545\n"
             + "");
-
+    
         assertEquals(0, subject.nextToken().line);
         assertEquals(0, subject.nextToken().line);
         assertEquals(0, subject.nextToken().line);
         assertEquals(0, subject.nextToken().line);
         //assertEquals(0, subject.nextToken().line);
         assertEquals(0, subject.nextToken().line);
-
+    
         assertEquals(1, subject.nextToken().line);
         assertEquals(1, subject.nextToken().line);
         assertEquals(1, subject.nextToken().line);
         assertEquals(1, subject.nextToken().line);
-
+    
         assertEquals(2, subject.nextToken().line);
         assertEquals(2, subject.nextToken().line);
         assertEquals(2, subject.nextToken().line);
         assertEquals(2, subject.nextToken().line);
-
+    
         assertEquals(Token.EOF, subject.nextToken().type);
     }
-
+    
     @Test
     void testEmptyLineCount() {
         Spin2TokenStream subject = new Spin2TokenStream(""
@@ -81,27 +81,27 @@ class Spin2TokenStreamTest {
             + "\n"
             + "     ColorBurstFreq = 3_579_545\n"
             + "");
-
+    
         assertEquals(0, subject.nextToken().line);
         assertEquals(0, subject.nextToken().line);
         assertEquals(0, subject.nextToken().line);
         assertEquals(0, subject.nextToken().line);
         //assertEquals(0, subject.nextToken().line);
         assertEquals(0, subject.nextToken().line);
-
+    
         assertEquals(3, subject.nextToken().line);
         assertEquals(3, subject.nextToken().line);
         assertEquals(3, subject.nextToken().line);
         assertEquals(3, subject.nextToken().line);
-
+    
         assertEquals(5, subject.nextToken().line);
         assertEquals(5, subject.nextToken().line);
         assertEquals(5, subject.nextToken().line);
         assertEquals(5, subject.nextToken().line);
-
+    
         assertEquals(Token.EOF, subject.nextToken().type);
     }
-
+    
     @Test
     void testBlockCommentsLineCount() {
         Spin2TokenStream subject = new Spin2TokenStream(""
@@ -118,30 +118,30 @@ class Spin2TokenStreamTest {
             + "}\n"
             + "     ColorBurstFreq = 3_579_545\n"
             + "");
-
+    
         assertEquals(2, subject.nextToken().line); // EOL after block comment
-
+    
         assertEquals(3, subject.nextToken().line);
         assertEquals(3, subject.nextToken().line);
         assertEquals(3, subject.nextToken().line);
         assertEquals(3, subject.nextToken().line);
         assertEquals(3, subject.nextToken().line);
-
+    
         assertEquals(6, subject.nextToken().line);
         assertEquals(6, subject.nextToken().line);
         assertEquals(6, subject.nextToken().line);
         assertEquals(6, subject.nextToken().line);
-
+    
         assertEquals(10, subject.nextToken().line); // EOL after block comment
-
+    
         assertEquals(11, subject.nextToken().line);
         assertEquals(11, subject.nextToken().line);
         assertEquals(11, subject.nextToken().line);
         assertEquals(11, subject.nextToken().line);
-
+    
         assertEquals(Token.EOF, subject.nextToken().type);
     }
-
+    
     @Test
     void testColumnCount() {
         Spin2TokenStream subject = new Spin2TokenStream(""
@@ -149,24 +149,24 @@ class Spin2TokenStreamTest {
             + "     DisableFlow = 4\n"
             + "     ColorBurstFreq = 3_579_545\n"
             + "");
-
+    
         assertEquals(0, subject.nextToken().column); // CON
         assertEquals(5, subject.nextToken().column); // EnableFlow
         assertEquals(16, subject.nextToken().column); // =
         assertEquals(18, subject.nextToken().column); // 8
         assertEquals(55, subject.nextToken().column); // NL
-
+    
         assertEquals(5, subject.nextToken().column); // DisableFlow
         assertEquals(17, subject.nextToken().column); // =
         assertEquals(19, subject.nextToken().column); // 4
         assertEquals(20, subject.nextToken().column); // NL
-
+    
         assertEquals(5, subject.nextToken().column); // ColorBurstFreq
         assertEquals(20, subject.nextToken().column); // =
         assertEquals(22, subject.nextToken().column); // 3_579_545
         assertEquals(31, subject.nextToken().column); // NL
     }
-
+    
     @Test
     void testGroupConsecutiveEndOfLine() {
         Spin2TokenStream subject = new Spin2TokenStream(""
@@ -175,35 +175,35 @@ class Spin2TokenStreamTest {
             + "\n"
             + "\n"
             + "");
-
+    
         assertEquals("\n\r\n\n\n", subject.nextToken().getText());
     }
-
+    
     @Test
     void testGroupCRLF() {
         Spin2TokenStream subject = new Spin2TokenStream(""
             + " \n"
             + " \r\n"
             + "");
-
+    
         assertEquals("\n", subject.nextToken().getText());
         assertEquals("\r\n", subject.nextToken().getText());
     }
-
+    
     @Test
     void testOneCharacterOperator() {
         Spin2TokenStream subject = new Spin2TokenStream("+-*");
-
+    
         assertEquals("+", subject.nextToken().getText());
         assertEquals("-", subject.nextToken().getText());
         assertEquals("*", subject.nextToken().getText());
         assertEquals("/", subject.nextToken().getText());
     }
-
+    
     @Test
     void testTwoCharactersOperator() {
         Spin2TokenStream subject = new Spin2TokenStream(":=+=-=*=/=//||&&^^+/+<<>");
-
+    
         assertEquals(":=", subject.nextToken().getText());
         assertEquals("+=", subject.nextToken().getText());
         assertEquals("-=", subject.nextToken().getText());
@@ -217,104 +217,104 @@ class Spin2TokenStreamTest {
         assertEquals("+<", subject.nextToken().getText());
         assertEquals("<>", subject.nextToken().getText());
     }
-
+    
     @Test
     void testThreeCharactersOperator() {
         Spin2TokenStream subject = new Spin2TokenStream("<<=>>=+//<=>");
-
+    
         assertEquals("<<=", subject.nextToken().getText());
         assertEquals(">>=", subject.nextToken().getText());
         assertEquals("+//", subject.nextToken().getText());
         assertEquals("<=>", subject.nextToken().getText());
     }
-
+    
     @Test
     void testPasmPrefix() {
         Spin2TokenStream subject = new Spin2TokenStream("##@label");
-
+    
         assertEquals("##", subject.nextToken().getText());
         assertEquals("@label", subject.nextToken().getText());
     }
-
+    
     @Test
     void testLocalLabel() {
         Spin2TokenStream subject = new Spin2TokenStream(".label @.label");
-
+    
         assertEquals(".label", subject.nextToken().getText());
         assertEquals("@.label", subject.nextToken().getText());
     }
-
+    
     @Test
     void testDebugStatement() {
         Spin2TokenStream subject = new Spin2TokenStream("    debug(`s `uhex_long_array_(@buff, 512) `dly(50))  'show data\n");
-
+    
         assertEquals("debug", subject.nextToken().getText());
         assertEquals("(", subject.nextToken().getText());
         assertEquals("`s `uhex_long_array_(@buff, 512) `dly(50)", subject.nextToken().getText());
         assertEquals(")", subject.nextToken().getText());
     }
-
+    
     @Test
     void testBlockComment() {
         Spin2TokenStream subject = new Spin2TokenStream("{ first line\n  second line }");
-
+    
         assertEquals("{ first line\n  second line }", subject.nextToken(true).getText());
     }
-
+    
     @Test
     void testLineComment() {
         Spin2TokenStream subject = new Spin2TokenStream("' first line\n' second line");
-
+    
         assertEquals("' first line", subject.nextToken(true).getText());
         assertEquals("\n", subject.nextToken(true).getText());
         assertEquals("' second line", subject.nextToken(true).getText());
     }
-
+    
     @Test
     void testBlockDocumentComment() {
         Spin2TokenStream subject = new Spin2TokenStream("{{ first line\n  second line }}");
-
+    
         assertEquals("{{ first line\n  second line }}", subject.nextToken(true).getText());
     }
-
+    
     @Test
     void testLineDocumentComment() {
         Spin2TokenStream subject = new Spin2TokenStream("'' first line\n'' second line");
-
+    
         assertEquals("'' first line", subject.nextToken(true).getText());
         assertEquals("\n", subject.nextToken(true).getText());
         assertEquals("'' second line", subject.nextToken(true).getText());
     }
-
+    
     @Test
     void testNestedBlockComment() {
         Spin2TokenStream subject = new Spin2TokenStream("{ first line\n{ second line }}");
-
+    
         assertEquals("{ first line\n{ second line }}", subject.nextToken(true).getText());
     }
-
+    
     @Test
     void testNumericRangeOperator() {
         Spin2TokenStream subject = new Spin2TokenStream("12..34");
-
+    
         assertEquals("12", subject.nextToken().getText());
         assertEquals("..", subject.nextToken().getText());
         assertEquals("34", subject.nextToken().getText());
     }
-
+    
     @Test
     void testKeywordRangeOperator() {
         Spin2TokenStream subject = new Spin2TokenStream("ab..cd");
-
+    
         assertEquals("ab", subject.nextToken().getText());
         assertEquals("..", subject.nextToken().getText());
         assertEquals("cd", subject.nextToken().getText());
     }
-
+    
     @Test
     void testDecimalNumber() {
         Spin2TokenStream subject = new Spin2TokenStream("1.234");
-
+    
         assertEquals("1.234", subject.nextToken().getText());
     }*/
 
@@ -856,6 +856,42 @@ class Spin2TokenStreamTest {
         Spin2TokenStream subject = new Spin2TokenStream("1e-2");
 
         assertEquals("1e-2", subject.nextToken().getText());
+    }
+
+    @Test
+    void testLFLineCount() {
+        Spin2TokenStream subject = new Spin2TokenStream("a\nb\n\nc\n");
+
+        assertEquals(0, subject.nextToken().line); // a
+        assertEquals(0, subject.nextToken().line); // NL
+        assertEquals(1, subject.nextToken().line); // b
+        assertEquals(1, subject.nextToken().line); // NL
+        assertEquals(3, subject.nextToken().line); // c
+        assertEquals(3, subject.nextToken().line); // NL
+    }
+
+    @Test
+    void testCRLFLineCount() {
+        Spin2TokenStream subject = new Spin2TokenStream("a\r\nb\r\n\r\nc\r\n");
+
+        assertEquals(0, subject.nextToken().line); // a
+        assertEquals(0, subject.nextToken().line); // NL
+        assertEquals(1, subject.nextToken().line); // b
+        assertEquals(1, subject.nextToken().line); // NL
+        assertEquals(3, subject.nextToken().line); // c
+        assertEquals(3, subject.nextToken().line); // NL
+    }
+
+    @Test
+    void testCRLineCount() {
+        Spin2TokenStream subject = new Spin2TokenStream("a\rb\r\rc\r");
+
+        assertEquals(0, subject.nextToken().line); // a
+        assertEquals(0, subject.nextToken().line); // NL
+        assertEquals(1, subject.nextToken().line); // b
+        assertEquals(1, subject.nextToken().line); // NL
+        assertEquals(3, subject.nextToken().line); // c
+        assertEquals(3, subject.nextToken().line); // NL
     }
 
 }

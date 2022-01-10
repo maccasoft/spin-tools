@@ -135,6 +135,9 @@ public class Spin2TokenStream extends TokenStream {
                         state = Token.START;
                         return token;
                     }
+                    if (ch == '\n' && text.charAt(index - 1) == '\r') {
+                        line--;
+                    }
                     token.stop++;
                     break;
                 case Token.COMMENT:

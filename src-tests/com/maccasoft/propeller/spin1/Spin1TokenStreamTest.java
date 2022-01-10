@@ -716,6 +716,42 @@ class Spin1TokenStreamTest {
     }
 
     @Test
+    void testLFLineCount() {
+        Spin1TokenStream subject = new Spin1TokenStream("a\nb\n\nc\n");
+
+        assertEquals(0, subject.nextToken().line); // a
+        assertEquals(0, subject.nextToken().line); // NL
+        assertEquals(1, subject.nextToken().line); // b
+        assertEquals(1, subject.nextToken().line); // NL
+        assertEquals(3, subject.nextToken().line); // c
+        assertEquals(3, subject.nextToken().line); // NL
+    }
+
+    @Test
+    void testCRLFLineCount() {
+        Spin1TokenStream subject = new Spin1TokenStream("a\r\nb\r\n\r\nc\r\n");
+
+        assertEquals(0, subject.nextToken().line); // a
+        assertEquals(0, subject.nextToken().line); // NL
+        assertEquals(1, subject.nextToken().line); // b
+        assertEquals(1, subject.nextToken().line); // NL
+        assertEquals(3, subject.nextToken().line); // c
+        assertEquals(3, subject.nextToken().line); // NL
+    }
+
+    @Test
+    void testCRLineCount() {
+        Spin1TokenStream subject = new Spin1TokenStream("a\rb\r\rc\r");
+
+        assertEquals(0, subject.nextToken().line); // a
+        assertEquals(0, subject.nextToken().line); // NL
+        assertEquals(1, subject.nextToken().line); // b
+        assertEquals(1, subject.nextToken().line); // NL
+        assertEquals(3, subject.nextToken().line); // c
+        assertEquals(3, subject.nextToken().line); // NL
+    }
+
+    @Test
     void testBlockCommentLineNumbers() {
         Spin1TokenStream subject = new Spin1TokenStream("{ \n }\nA\n");
 
