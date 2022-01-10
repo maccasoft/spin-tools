@@ -96,6 +96,7 @@ public class SourceEditor {
     Font fontBold;
     Font fontItalic;
     Font fontBoldItalic;
+    Point charSize;
 
     int currentLine;
     Color currentLineBackground;
@@ -264,7 +265,7 @@ public class SourceEditor {
         insertCaret.setFont(font);
 
         GC gc = new GC(styledText);
-        Point charSize = gc.stringExtent("A"); //$NON-NLS-1$
+        charSize = gc.stringExtent("A"); //$NON-NLS-1$
         gc.dispose();
 
         overwriteCaret = new Caret(styledText, SWT.NULL);
@@ -611,7 +612,7 @@ public class SourceEditor {
                             if (node instanceof MethodNode) {
                                 for (Node child : node.getChilds()) {
                                     if ((child instanceof StatementNode) || (child instanceof DataLineNode)) {
-                                        paintBlock(gc, child, -1);
+                                        paintBlock(gc, child);
                                     }
                                 }
                             }
@@ -634,40 +635,28 @@ public class SourceEditor {
                 }
             }
 
-            void paintBlock(GC gc, Node node, int yref) {
-                List<Node> childs = node.getChilds();
+            void paintBlock(GC gc, Node node) {
+                Token token = node.getStartToken();
 
-                Rectangle r = styledText.getTextBounds(node.getStartToken().start, node.getStartToken().start);
-                int x0 = r.x + r.width / 2;
-                int y0 = r.y + r.height;
+                int line0 = token.line;
+                int x0 = charSize.x * token.column + charSize.x;
+                int y0 = styledText.getLinePixel(token.line) + charSize.y;
+                int y1 = y0;
 
-                if (y0 >= clientArea.height || childs.size() == 0) {
-                    return;
-                }
-
-                Rectangle r1 = styledText.getTextBounds(childs.get(childs.size() - 1).getStartToken().start, childs.get(childs.size() - 1).getStartToken().start);
-                if (r1.y + r1.height < clientArea.y) {
-                    return;
-                }
-
-                for (Node child : childs) {
+                for (Node child : node.getChilds()) {
                     if ((child instanceof StatementNode) || (child instanceof DataLineNode)) {
-                        int y1 = -1;
-                        r = styledText.getTextBounds(child.getStartToken().start, child.getStartToken().start);
-                        y1 = r.y + r.height / 2;
-                        if (y1 != y0 && y1 >= 0 && y1 != yref) {
-                            int x1 = r.x - r.width / 2;
-                            gc.drawLine(x0, y0, x0, y1);
+                        token = child.getStartToken();
+                        y1 = styledText.getLinePixel(token.line) + charSize.y / 2 + 1;
+                        if (token.line != line0) {
+                            int x1 = charSize.x * token.column;
                             gc.drawLine(x0, y1, x1, y1);
-                            y0 = y1;
                         }
-                        if (y0 >= clientArea.height) {
-                            break;
-                        }
-                        if (child instanceof StatementNode) {
-                            paintBlock(gc, child, y1);
-                        }
+                        paintBlock(gc, child);
                     }
+                }
+
+                if (y1 > y0) {
+                    gc.drawLine(x0, y0, x0, y1);
                 }
             }
 
