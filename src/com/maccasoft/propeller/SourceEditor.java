@@ -20,6 +20,9 @@ import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalProvider;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CaretEvent;
@@ -29,6 +32,7 @@ import org.eclipse.swt.custom.LineBackgroundListener;
 import org.eclipse.swt.custom.LineStyleEvent;
 import org.eclipse.swt.custom.LineStyleListener;
 import org.eclipse.swt.custom.ST;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.TextChangeListener;
@@ -88,8 +92,10 @@ public class SourceEditor {
     private static final int CURRENT_CHANGE_TIMER_EXPIRE = 500;
 
     Display display;
+    SashForm sashForm;
     Composite container;
     LineNumbersRuler ruler;
+    OutlineView outline;
     StyledText styledText;
 
     Font font;
@@ -154,12 +160,49 @@ public class SourceEditor {
         public void caretMoved(CaretEvent event) {
             int line = styledText.getLineAtOffset(event.caretOffset);
             if (line != currentLine) {
-                Rectangle r = styledText.getClientArea();
-                if (currentLine != -1) {
-                    styledText.redraw(0, styledText.getLinePixel(currentLine), r.width, styledText.getLineHeight(), false);
-                }
                 currentLine = line;
-                styledText.redraw(0, styledText.getLinePixel(currentLine), r.width, styledText.getLineHeight(), false);
+
+                Node root = tokenMarker.getRoot();
+                if (root != null) {
+                    Node selection = null;
+                    for (Node node : root.getChilds()) {
+                        if (node instanceof MethodNode) {
+                            if (event.caretOffset < node.getStartIndex()) {
+                                break;
+                            }
+                            selection = node;
+                        }
+                        else {
+                            for (Node child : node.getChilds()) {
+                                if (event.caretOffset < child.getStartIndex()) {
+                                    break;
+                                }
+                                selection = child;
+                            }
+                        }
+                    }
+                    outline.removeSelectionChangedListener(outlineSelectionListener);
+                    try {
+                        outline.setSelection(selection != null ? new StructuredSelection(selection) : StructuredSelection.EMPTY);
+                    } finally {
+                        outline.addSelectionChangedListener(outlineSelectionListener);
+                    }
+                }
+            }
+        }
+    };
+
+    final ISelectionChangedListener outlineSelectionListener = new ISelectionChangedListener() {
+
+        @Override
+        public void selectionChanged(SelectionChangedEvent event) {
+            Node node = (Node) event.getStructuredSelection().getFirstElement();
+            if (node != null) {
+                int offset = node.getStartIndex();
+                int line = styledText.getLineAtOffset(offset);
+                styledText.setCaretOffset(offset);
+                styledText.setTopIndex(line > 10 ? line - 10 : 1);
+                styledText.setFocus();
             }
         }
     };
@@ -181,8 +224,10 @@ public class SourceEditor {
     public SourceEditor(Composite parent) {
         display = parent.getDisplay();
 
-        container = new Composite(parent, SWT.NO_FOCUS);
-        GridLayout containerLayout = new GridLayout(2, false);
+        sashForm = new SashForm(parent, SWT.HORIZONTAL);
+
+        container = new Composite(sashForm, SWT.NO_FOCUS);
+        GridLayout containerLayout = new GridLayout(3, false);
         containerLayout.horizontalSpacing = 1;
         containerLayout.marginWidth = containerLayout.marginHeight = 0;
         container.setLayout(containerLayout);
@@ -257,6 +302,13 @@ public class SourceEditor {
         styledText.setMargins(5, 5, 5, 5);
         styledText.setTabs(8);
         styledText.setFont(font);
+
+        outline = new OutlineView(sashForm);
+        outline.addSelectionChangedListener(outlineSelectionListener);
+
+        sashForm.setWeights(new int[] {
+            7800, 2200
+        });
 
         ruler.setText(styledText);
 
@@ -387,6 +439,7 @@ public class SourceEditor {
                     if (modified) {
                         try {
                             tokenMarker.refreshTokens(styledText.getText());
+                            outline.setInput(tokenMarker.getRoot());
                             //display.timerExec(500, refreshViewRunnable);
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -746,7 +799,7 @@ public class SourceEditor {
     }
 
     public Control getControl() {
-        return container;
+        return sashForm;
     }
 
     public StyledText getStyledText() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -1720,7 +1720,7 @@ public class SpinTools {
 
                     Rectangle screen = display.getClientArea();
 
-                    Rectangle rect = new Rectangle(0, 0, 800, 800);
+                    Rectangle rect = new Rectangle(0, 0, 1000, 800);
                     rect.x = (screen.width - rect.width) / 2;
                     rect.y = (screen.height - rect.height) / 2;
                     if (rect.y < 0) {
