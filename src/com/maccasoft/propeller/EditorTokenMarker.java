@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
@@ -246,56 +247,61 @@ public abstract class EditorTokenMarker {
             return null;
         }
 
-        List<Node> allNodes = new ArrayList<Node>();
+        AtomicReference<Node> result = new AtomicReference<Node>();
         root.accept(new NodeVisitor() {
 
             @Override
             public void visitConstants(ConstantsNode node) {
-                allNodes.add(node);
+                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                    result.set(node);
+                }
             }
 
             @Override
             public void visitVariables(VariablesNode node) {
-                allNodes.add(node);
+                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                    result.set(node);
+                }
             }
 
             @Override
             public void visitObjects(ObjectsNode node) {
-                allNodes.add(node);
+                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                    result.set(node);
+                }
             }
 
             @Override
             public void visitObject(ObjectNode node) {
-                allNodes.add(node);
+                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                    result.set(node);
+                }
             }
 
             @Override
             public void visitStatement(StatementNode node) {
-                allNodes.add(node);
+                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                    result.set(node);
+                }
             }
 
             @Override
             public void visitData(DataNode node) {
-                allNodes.add(node);
+                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                    result.set(node);
+                }
             }
 
             @Override
             public void visitDataLine(DataLineNode node) {
-                allNodes.add(node);
+                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                    result.set(node);
+                }
             }
 
         });
-        for (int i = 0; i < allNodes.size() - 1; i++) {
-            int nodeStart = allNodes.get(i).getStartIndex();
-            int nodeStop = allNodes.get(i + 1).getStartIndex();
-            if (index >= nodeStart && index < nodeStop) {
-                return allNodes.get(i);
-            }
-        }
-        if (allNodes.size() != 0) {
-            return allNodes.get(allNodes.size() - 1);
-        }
-        return null;
+
+        return result.get();
     }
 
     public String getMethod(String symbol) {
@@ -595,11 +601,12 @@ public abstract class EditorTokenMarker {
 
         iter = node.getDocument().iterator();
         if (iter.hasNext()) {
-            sb.append("<p>");
+            sb.append("<p/><code>");
             while (iter.hasNext()) {
                 Token token = iter.next();
                 if (token.type == Token.COMMENT) {
-                    sb.append(token.getText().substring(2));
+                    String s = token.getText().substring(2);
+                    sb.append(s.replaceAll(" ", "&nbsp;"));
                     sb.append("<br>");
                 }
                 else if (token.type == Token.BLOCK_COMMENT) {
@@ -608,7 +615,7 @@ public abstract class EditorTokenMarker {
                     sb.append(s.replaceAll("[\\r\\n|\\r|\\n]", "<br>"));
                 }
             }
-            sb.append("</p>");
+            sb.append("</code>");
         }
 
         return sb.toString();

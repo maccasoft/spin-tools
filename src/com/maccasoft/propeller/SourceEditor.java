@@ -162,33 +162,44 @@ public class SourceEditor {
             if (line != currentLine) {
                 currentLine = line;
 
-                Node root = tokenMarker.getRoot();
-                if (root != null) {
-                    Node selection = null;
-                    for (Node node : root.getChilds()) {
-                        if (node instanceof MethodNode) {
-                            if (event.caretOffset < node.getStartIndex()) {
-                                break;
-                            }
-                            selection = node;
+                Node selection = getCaretNode(event.caretOffset, line);
+                outline.removeSelectionChangedListener(outlineSelectionListener);
+                try {
+                    outline.setSelection(selection != null ? new StructuredSelection(selection) : StructuredSelection.EMPTY);
+                } finally {
+                    outline.addSelectionChangedListener(outlineSelectionListener);
+                }
+            }
+        }
+
+        Node getCaretNode(int offset, int line) {
+            Node selection = null;
+
+            Node root = tokenMarker.getRoot();
+            if (root != null) {
+                for (Node node : root.getChilds()) {
+                    int lineStart = node.getStartToken().start - node.getStartToken().column;
+                    if (node instanceof MethodNode) {
+                        if (offset < lineStart) {
+                            return selection;
                         }
-                        else {
-                            for (Node child : node.getChilds()) {
-                                if (event.caretOffset < child.getStartIndex()) {
-                                    break;
-                                }
-                                selection = child;
-                            }
-                        }
+                        selection = node;
                     }
-                    outline.removeSelectionChangedListener(outlineSelectionListener);
-                    try {
-                        outline.setSelection(selection != null ? new StructuredSelection(selection) : StructuredSelection.EMPTY);
-                    } finally {
-                        outline.addSelectionChangedListener(outlineSelectionListener);
+                    else {
+                        for (Node child : node.getChilds()) {
+                            if (line == child.getStartToken().line) {
+                                return child;
+                            }
+                        }
+                        if (offset < lineStart) {
+                            return selection;
+                        }
+                        selection = node;
                     }
                 }
             }
+
+            return selection;
         }
     };
 
@@ -307,7 +318,7 @@ public class SourceEditor {
         outline.addSelectionChangedListener(outlineSelectionListener);
 
         sashForm.setWeights(new int[] {
-            7800, 2200
+            8000, 2000
         });
 
         ruler.setText(styledText);
@@ -614,11 +625,22 @@ public class SourceEditor {
 
             @Override
             public void verifyKey(VerifyEvent e) {
+                if (adapter.isProposalPopupOpen()) {
+                    switch (e.keyCode) {
+                        case SWT.CR:
+                        case SWT.PAGE_DOWN:
+                        case SWT.PAGE_UP:
+                        case SWT.HOME:
+                        case SWT.END:
+                        case SWT.ARROW_LEFT:
+                        case SWT.ARROW_RIGHT:
+                            e.doit = false;
+                            return;
+                    }
+                }
                 try {
                     if (e.keyCode == SWT.CR) {
-                        if (!adapter.isProposalPopupOpen()) {
-                            doAutoIndent();
-                        }
+                        doAutoIndent();
                         e.doit = false;
                     }
                     else if (e.keyCode == SWT.TAB) {
