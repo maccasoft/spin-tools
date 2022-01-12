@@ -160,7 +160,12 @@ public class SourceEditor {
         public void caretMoved(CaretEvent event) {
             int line = styledText.getLineAtOffset(event.caretOffset);
             if (line != currentLine) {
+                Rectangle r = styledText.getClientArea();
+                if (currentLine != -1) {
+                    styledText.redraw(0, styledText.getLinePixel(currentLine), r.width, styledText.getLineHeight(), false);
+                }
                 currentLine = line;
+                styledText.redraw(0, styledText.getLinePixel(currentLine), r.width, styledText.getLineHeight(), false);
 
                 Node selection = getCaretNode(event.caretOffset, line);
                 outline.removeSelectionChangedListener(outlineSelectionListener);
