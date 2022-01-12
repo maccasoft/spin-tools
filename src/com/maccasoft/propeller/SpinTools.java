@@ -35,6 +35,9 @@ import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.viewers.IOpenListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabFolder2Adapter;
@@ -42,6 +45,7 @@ import org.eclipse.swt.custom.CTabFolderEvent;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.CaretEvent;
 import org.eclipse.swt.custom.CaretListener;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -81,9 +85,11 @@ import jssc.SerialPortException;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools";
-    public static final String APP_VERSION = "0.0.1";
+    public static final String APP_VERSION = "0.0.2";
 
     Shell shell;
+    SashForm sashForm;
+    FileBrowser browser;
     CTabFolder tabFolder;
     StatusLine statusLine;
 
@@ -118,8 +124,12 @@ public class SpinTools {
         layout.marginWidth = layout.marginHeight = 0;
         container.setLayout(layout);
 
-        tabFolder = new CTabFolder(container, SWT.BORDER);
-        tabFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        sashForm = new SashForm(container, SWT.HORIZONTAL);
+        sashForm.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        browser = new FileBrowser(sashForm);
+
+        tabFolder = new CTabFolder(sashForm, SWT.BORDER);
         tabFolder.setMaximizeVisible(false);
         tabFolder.setMinimizeVisible(false);
         tabFolder.addSelectionListener(new SelectionAdapter() {
@@ -132,6 +142,58 @@ public class SpinTools {
                 updateCaretPosition();
             }
         });
+
+        sashForm.setWeights(new int[] {
+            2000, 8000
+        });
+
+        browser.setRoots(new String[] {
+            new File(System.getProperty("user.home")).getAbsolutePath()
+        });
+        File file = new File("").getAbsoluteFile();
+        browser.setSelection(file);
+
+        browser.addOpenListener(new IOpenListener() {
+
+            @Override
+            public void open(OpenEvent event) {
+                try {
+                    IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+                    if (selection.getFirstElement() instanceof File) {
+                        File fileToOpen = (File) selection.getFirstElement();
+                        if (fileToOpen.isDirectory()) {
+                            return;
+                        }
+
+                        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
+
+                        tabFolder.setSelection(tabFolder.getItemCount() - 1);
+                        editorTab.setFocus();
+                        preferences.addToLru(fileToOpen);
+
+                        editorTab.addCaretListener(caretListener);
+
+                        tabFolder.getDisplay().asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                try {
+                                    editorTab.setEditorText(loadFromFile(fileToOpen));
+                                    editorTab.setFile(fileToOpen);
+                                    updateCaretPosition();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                        });
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         createTabFolderMenu();
 
         tabFolder.addTraverseListener(new TraverseListener() {
@@ -1720,7 +1782,7 @@ public class SpinTools {
 
                     Rectangle screen = display.getClientArea();
 
-                    Rectangle rect = new Rectangle(0, 0, 1000, 800);
+                    Rectangle rect = new Rectangle(0, 0, (int) ((float) screen.width / (float) screen.height * 800), 900);
                     rect.x = (screen.width - rect.width) / 2;
                     rect.y = (screen.height - rect.height) / 2;
                     if (rect.y < 0) {
