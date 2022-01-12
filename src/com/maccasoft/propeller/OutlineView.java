@@ -52,8 +52,10 @@ public class OutlineView {
         public Object[] getChildren(Object parentElement) {
             List<Object> list = new ArrayList<Object>();
 
-            for (Node child : ((Node) parentElement).getChilds()) {
-                list.add(child);
+            if (hasChildren(parentElement)) {
+                for (Node child : ((Node) parentElement).getChilds()) {
+                    list.add(child);
+                }
             }
 
             return list.toArray(new Object[list.size()]);
@@ -128,6 +130,18 @@ public class OutlineView {
                         sb.append(" ");
                     }
                     sb.append(node.getName().getText());
+                    sb.append("(");
+                    for (Node child : node.getParameters()) {
+                        sb.append(child.getText());
+                    }
+                    sb.append(")");
+                    if (node.getReturnVariables().size() != 0) {
+                        sb.append(" :");
+                        for (Node child : node.getReturnVariables()) {
+                            sb.append(" ");
+                            sb.append(child.getText());
+                        }
+                    }
                 }
             }
             else {
