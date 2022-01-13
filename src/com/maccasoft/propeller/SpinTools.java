@@ -73,6 +73,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
+import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.TempDirectory;
 import com.maccasoft.propeller.spin1.Spin1Object;
@@ -288,16 +289,82 @@ public class SpinTools {
             @Override
             public void widgetDisposed(DisposeEvent e) {
                 try {
+                    List<String> openTabs = new ArrayList<String>();
+                    for (int i = 0; i < tabFolder.getItemCount(); i++) {
+                        EditorTab tab = (EditorTab) tabFolder.getItem(i).getData();
+                        if (tab.getFile() != null) {
+                            openTabs.add(tab.getFile().getAbsolutePath());
+                        }
+                    }
+                    preferences.setOpenTabs(openTabs.toArray(new String[openTabs.size()]));
+
                     SerialTerminal serialTerminal = getSerialTerminal();
                     if (serialTerminal != null) {
                         serialTerminal.close();
                     }
+
                     preferences.save();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
             }
         });
+
+        BusyIndicator.showWhile(tabFolder.getDisplay(), new Runnable() {
+
+            @Override
+            public void run() {
+                final String[] openTabs = preferences.getOpenTabs();
+                if (openTabs == null || openTabs.length == 0 || !preferences.getReloadOpenTabs()) {
+                    return;
+                }
+
+                for (int i = 0; i < openTabs.length; i++) {
+                    File fileToOpen = new File(openTabs[i]);
+                    if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
+                        continue;
+                    }
+                    try {
+                        String text = loadFromFile(fileToOpen);
+                        tabFolder.getDisplay().asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
+                                editorTab.setEditorText(text);
+                                editorTab.setFile(fileToOpen);
+                                editorTab.addCaretListener(caretListener);
+                            }
+
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                tabFolder.getDisplay().asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (tabFolder.isDisposed()) {
+                            return;
+                        }
+                        try {
+                            if (tabFolder.getItemCount() != 0) {
+                                tabFolder.setSelection(0);
+
+                                EditorTab tab = (EditorTab) tabFolder.getItem(0).getData();
+                                tab.setFocus();
+                                updateCaretPosition();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                });
+            }
+        }, true);
     }
 
     void createFileMenu(Menu parent) {

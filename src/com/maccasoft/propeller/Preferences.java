@@ -76,12 +76,16 @@ public class Preferences {
     private String defaultSpin1LibraryPath = "library/spin1";
     private String defaultSpin2LibraryPath = "library/spin2";
 
+    private boolean reloadOpenTabs;
     private int[] tabStops;
+
+    String[] openTabs;
 
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     Preferences() {
-
+        showLineNumbers = true;
+        reloadOpenTabs = true;
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -100,7 +104,7 @@ public class Preferences {
         changeSupport.removePropertyChangeListener(propertyName, listener);
     }
 
-    public boolean isShowLineNumbers() {
+    public boolean getShowLineNumbers() {
         return showLineNumbers;
     }
 
@@ -192,6 +196,22 @@ public class Preferences {
     @JsonGetter("tabStops")
     public int[] getSerializableTabStops() {
         return this.tabStops;
+    }
+
+    public boolean getReloadOpenTabs() {
+        return reloadOpenTabs;
+    }
+
+    public void setReloadOpenTabs(boolean reloadOpenTabs) {
+        this.reloadOpenTabs = reloadOpenTabs;
+    }
+
+    public String[] getOpenTabs() {
+        return openTabs;
+    }
+
+    public void setOpenTabs(String[] openTabs) {
+        this.openTabs = openTabs;
     }
 
     public void save() throws IOException {
