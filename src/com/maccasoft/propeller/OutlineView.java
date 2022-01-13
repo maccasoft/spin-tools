@@ -24,6 +24,8 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 
 import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectNode;
@@ -54,7 +56,16 @@ public class OutlineView {
 
             if (hasChildren(parentElement)) {
                 for (Node child : ((Node) parentElement).getChilds()) {
-                    list.add(child);
+                    if (child instanceof DataLineNode) {
+                        if (((DataLineNode) child).label != null) {
+                            if (!((DataLineNode) child).label.getText().startsWith(".")) {
+                                list.add(child);
+                            }
+                        }
+                    }
+                    else {
+                        list.add(child);
+                    }
                 }
             }
 
@@ -68,7 +79,7 @@ public class OutlineView {
 
         @Override
         public boolean hasChildren(Object element) {
-            return (element instanceof ConstantsNode) || (element instanceof VariablesNode) || (element instanceof ObjectsNode);
+            return (element instanceof ConstantsNode) || (element instanceof VariablesNode) || (element instanceof ObjectsNode) || (element instanceof DataNode);
         }
 
     }
@@ -143,6 +154,9 @@ public class OutlineView {
                         }
                     }
                 }
+            }
+            else if (element instanceof DataLineNode) {
+                sb.append(((DataLineNode) element).label.getText());
             }
             else {
                 sb.append(((Node) element).getStartToken().getText().toUpperCase());

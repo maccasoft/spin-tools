@@ -166,14 +166,26 @@ public class SourceEditor {
                 }
                 currentLine = line;
                 styledText.redraw(0, styledText.getLinePixel(currentLine), r.width, styledText.getLineHeight(), false);
+            }
+            display.timerExec(250, outlineSyncRunnable);
+        }
+    };
 
-                Node selection = getCaretNode(event.caretOffset, line);
-                outline.removeSelectionChangedListener(outlineSelectionListener);
-                try {
-                    outline.setSelection(selection != null ? new StructuredSelection(selection) : StructuredSelection.EMPTY);
-                } finally {
-                    outline.addSelectionChangedListener(outlineSelectionListener);
-                }
+    final Runnable outlineSyncRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            if (styledText.isDisposed()) {
+                return;
+            }
+            int caretOffset = styledText.getCaretOffset();
+            int line = styledText.getLineAtOffset(caretOffset);
+            Node selection = getCaretNode(caretOffset, line);
+            outline.removeSelectionChangedListener(outlineSelectionListener);
+            try {
+                outline.setSelection(selection != null ? new StructuredSelection(selection) : StructuredSelection.EMPTY);
+            } finally {
+                outline.addSelectionChangedListener(outlineSelectionListener);
             }
         }
 
@@ -183,29 +195,60 @@ public class SourceEditor {
             Node root = tokenMarker.getRoot();
             if (root != null) {
                 for (Node node : root.getChilds()) {
-                    int lineStart = node.getStartToken().start - node.getStartToken().column;
+                    int start = node.getStartToken().start - node.getStartToken().column;
                     if (node instanceof MethodNode) {
-                        if (offset < lineStart) {
+                        if (offset < start) {
                             return selection;
                         }
                         selection = node;
                     }
-                    else {
-                        for (Node child : node.getChilds()) {
-                            if (line == child.getStartToken().line) {
-                                return child;
-                            }
-                        }
-                        if (offset < lineStart) {
+                    else if (node instanceof DataNode) {
+                        if (offset < start) {
                             return selection;
                         }
                         selection = node;
+                        for (Node child : node.getChilds()) {
+                            start = child.getStartToken().start - child.getStartToken().column;
+                            if (offset < start) {
+                                return selection;
+                            }
+                            DataLineNode dataLine = (DataLineNode) child;
+                            if (dataLine.label != null && !dataLine.label.getText().startsWith(".")) {
+                                selection = child;
+                            }
+                        }
+                    }
+                    else {
+                        if (offset < start) {
+                            return selection;
+                        }
+                        selection = node;
+
+                        int childLine = -1;
+                        Node childSelection = selection;
+                        for (Node child : node.getChilds()) {
+                            Token token = child.getStartToken();
+                            start = token.start;
+                            if (token.line != childLine) {
+                                start -= token.column;
+                                childLine = token.line;
+                            }
+                            if (offset < start) {
+                                return childSelection;
+                            }
+                            childSelection = child;
+                        }
+
+                        if (line == childSelection.getStartToken().line) {
+                            return childSelection;
+                        }
                     }
                 }
             }
 
             return selection;
         }
+
     };
 
     final ISelectionChangedListener outlineSelectionListener = new ISelectionChangedListener() {
