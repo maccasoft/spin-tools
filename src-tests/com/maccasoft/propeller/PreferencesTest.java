@@ -38,7 +38,8 @@ class PreferencesTest {
 
         Assertions.assertEquals(""
             + "{\n"
-            + "  \"showLineNumbers\" : false,\n"
+            + "  \"showLineNumbers\" : true,\n"
+            + "  \"reloadOpenTabs\" : true,\n"
             + "  \"spin1LibraryPath\" : \"spin1/path\"\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
@@ -73,7 +74,8 @@ class PreferencesTest {
 
         Assertions.assertEquals(""
             + "{\n"
-            + "  \"showLineNumbers\" : false,\n"
+            + "  \"showLineNumbers\" : true,\n"
+            + "  \"reloadOpenTabs\" : true,\n"
             + "  \"spin2LibraryPath\" : \"spin2/path\"\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
@@ -116,7 +118,8 @@ class PreferencesTest {
 
         Assertions.assertEquals(""
             + "{\n"
-            + "  \"showLineNumbers\" : false,\n"
+            + "  \"showLineNumbers\" : true,\n"
+            + "  \"reloadOpenTabs\" : true,\n"
             + "  \"tabStops\" : [ 8, 16 ]\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
