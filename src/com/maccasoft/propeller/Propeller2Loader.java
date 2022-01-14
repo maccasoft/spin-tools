@@ -1,12 +1,9 @@
 /*
- * Copyright (c) 2016 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- *
- * Based on the PLoadLib.c code written by John Steven Denson
- * with modifications by David Michael Betz
  *
  * Contributors:
  *     Marco Maccaferri - initial API and implementation
@@ -17,6 +14,7 @@ package com.maccasoft.propeller;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import jssc.SerialPort;
 import jssc.SerialPortException;
@@ -54,14 +52,14 @@ public class Propeller2Loader {
 
         if (!serialPort.isOpened()) {
             serialPort.openPort();
-            serialPort.setParams(
-                portSpeed,
-                SerialPort.DATABITS_8,
-                SerialPort.STOPBITS_1,
-                SerialPort.PARITY_NONE,
-                true,
-                true);
         }
+        serialPort.setParams(
+            portSpeed,
+            SerialPort.DATABITS_8,
+            SerialPort.STOPBITS_1,
+            SerialPort.PARITY_NONE,
+            false,
+            false);
 
         try {
             hwreset();
@@ -76,9 +74,9 @@ public class Propeller2Loader {
     }
 
     void hwreset() throws SerialPortException {
-        serialPort.setDTR(false);
-        msleep(25);
         serialPort.setDTR(true);
+        msleep(25);
+        serialPort.setDTR(false);
         msleep(25);
         skipIncomingBytes();
         serialPort.purgePort(SerialPort.PURGE_TXABORT |
@@ -148,14 +146,14 @@ public class Propeller2Loader {
 
         if (!serialPort.isOpened()) {
             serialPort.openPort();
-            serialPort.setParams(
-                portSpeed,
-                SerialPort.DATABITS_8,
-                SerialPort.STOPBITS_1,
-                SerialPort.PARITY_NONE,
-                true,
-                true);
         }
+        serialPort.setParams(
+            portSpeed,
+            SerialPort.DATABITS_8,
+            SerialPort.STOPBITS_1,
+            SerialPort.PARITY_NONE,
+            false,
+            false);
 
         try {
             hwreset();
@@ -172,14 +170,14 @@ public class Propeller2Loader {
     public void upload(byte[] binaryImage, int type) throws SerialPortException, IOException {
         if (!serialPort.isOpened()) {
             serialPort.openPort();
-            serialPort.setParams(
-                portSpeed,
-                SerialPort.DATABITS_8,
-                SerialPort.STOPBITS_1,
-                SerialPort.PARITY_NONE,
-                true,
-                true);
         }
+        serialPort.setParams(
+            portSpeed,
+            SerialPort.DATABITS_8,
+            SerialPort.STOPBITS_1,
+            SerialPort.PARITY_NONE,
+            false,
+            false);
 
         try {
             hwreset();
@@ -198,9 +196,51 @@ public class Propeller2Loader {
         //Encoder encoder = Base64.getEncoder();
         //byte[] encodedImage = encoder.encode(binaryImage);
 
+        if (type == DOWNLOAD_RUN_FLASH) {
+            InputStream is = getClass().getResourceAsStream("flash_loader.binary");
+            try {
+                byte[] loader = new byte[is.available()];
+                is.read(loader);
+
+                byte[] loaderImage = new byte[loader.length + ((binaryImage.length + 3) & ~3)];
+                System.arraycopy(loader, 0, loaderImage, 0, loader.length);
+                System.arraycopy(binaryImage, 0, loaderImage, loader.length, binaryImage.length);
+                binaryImage = loaderImage;
+
+                int sum = 0;
+                for (n = 0; n < binaryImage.length; n += 4) {
+                    int data = binaryImage[n] & 0xFF;
+                    if ((n + 1) < binaryImage.length) {
+                        data |= (binaryImage[n + 1] << 8) & 0xFF00;
+                        if ((n + 2) < binaryImage.length) {
+                            data |= (binaryImage[n + 2] << 16) & 0xFF0000;
+                            if ((n + 3) < binaryImage.length) {
+                                data |= (binaryImage[n + 3] << 24) & 0xFF000000;
+                            }
+                        }
+                    }
+                    sum -= data;
+                }
+
+                binaryImage[4] = (byte) sum;
+                binaryImage[5] = (byte) (sum >> 8);
+                binaryImage[6] = (byte) (sum >> 16);
+                binaryImage[7] = (byte) (sum >> 24);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    is.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
         serialPort.writeString("> Prop_Hex 0 0 0 0");
 
-        long sum = 0;
+        int sum = 0;
         for (n = 0; n < binaryImage.length; n += 4) {
             if (n > 0 && (n % 64) == 0) {
                 serialPort.writeString("\r>");
@@ -222,9 +262,14 @@ public class Propeller2Loader {
         notifyProgress(n, binaryImage.length);
 
         sum = 0x706F7250 - sum;
-        serialPort.writeString(String.format(" %x %x %x %x ?", sum & 0xFF, (sum >> 8) & 0xFF, (sum >> 16) & 0xFF, (sum >> 24) & 0xFF));
+        //serialPort.writeString(String.format(" %x %x %x %x ?", sum & 0xFF, (sum >> 8) & 0xFF, (sum >> 16) & 0xFF, (sum >> 24) & 0xFF));
+        serialPort.writeString(String.format(" ~", sum & 0xFF, (sum >> 8) & 0xFF, (sum >> 16) & 0xFF, (sum >> 24) & 0xFF));
 
-        verifyRam();
+        //verifyRam();
+
+        if (type == DOWNLOAD_RUN_FLASH) {
+            flashWrite();
+        }
     }
 
     protected void notifyProgress(int sent, int total) {

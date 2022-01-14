@@ -159,6 +159,11 @@ class Spin2ExamplesTest {
         compileAndCompare(new File("Spin2_interpreter.spin2"), new File("Spin2_interpreter.binary"));
     }
 
+    @Test
+    void test_flash_loader() throws Exception {
+        compileAndCompare(new File("flash_loader.spin2"), new File("flash_loader.binary"));
+    }
+
     class Spin2CompilerAdapter extends Spin2Compiler {
 
         File parent;

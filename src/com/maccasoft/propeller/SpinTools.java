@@ -1135,7 +1135,28 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    handleUpload(false);
+                    handleUpload(false, getSerialTerminal());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Upload to RAM with Terminal\tShift+F9");
+        item.setAccelerator(SWT.SHIFT | SWT.F9);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    SerialTerminal serialTerminal = getSerialTerminal();
+                    if (serialTerminal == null) {
+                        serialTerminal = new SerialTerminal(new SerialPort(serialPortList.getSelection()));
+                        serialTerminal.open();
+                    }
+                    serialTerminal.getControl().setFocus();
+                    handleUpload(false, serialTerminal);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1150,7 +1171,28 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    handleUpload(true);
+                    handleUpload(true, getSerialTerminal());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Upload to Flash with Terminal\tShift+F10");
+        item.setAccelerator(SWT.SHIFT | SWT.F10);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    SerialTerminal serialTerminal = getSerialTerminal();
+                    if (serialTerminal == null) {
+                        serialTerminal = new SerialTerminal(new SerialPort(serialPortList.getSelection()));
+                        serialTerminal.open();
+                    }
+                    serialTerminal.getControl().setFocus();
+                    handleUpload(true, serialTerminal);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1413,7 +1455,7 @@ public class SpinTools {
         }
     }
 
-    private void handleUpload(boolean flash) {
+    private void handleUpload(boolean flash, SerialTerminal serialTerminal) {
         IRunnableWithProgress thread;
 
         CTabItem tabItem = tabFolder.getSelection();
@@ -1425,8 +1467,6 @@ public class SpinTools {
             editorTab.goToFirstError();
             return;
         }
-
-        SerialTerminal serialTerminal = getSerialTerminal();
 
         Object obj = editorTab.getObject();
         if (obj instanceof Spin1Object) {
@@ -1586,6 +1626,12 @@ public class SpinTools {
                                 super.verifyRam();
                             }
 
+                            @Override
+                            protected void flashWrite() throws SerialPortException, IOException {
+                                monitor.setTaskName("Writing to flash ... ");
+                                super.flashWrite();
+                            }
+
                         };
                         loader.upload(os.toByteArray(), flash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM);
 
@@ -1611,7 +1657,12 @@ public class SpinTools {
             };
         }
 
-        ProgressMonitorDialog dlg = new ProgressMonitorDialog(shell);
+        Shell activeShell = Display.getDefault().getActiveShell();
+        if (activeShell == null) {
+            activeShell = shell;
+        }
+
+        ProgressMonitorDialog dlg = new ProgressMonitorDialog(activeShell);
         try {
             dlg.run(true, true, thread);
         } catch (Exception e) {

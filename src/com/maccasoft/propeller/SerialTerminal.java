@@ -388,7 +388,7 @@ public class SerialTerminal {
 
         this.serialPort = serialPort;
         this.serialBaudRate = 115200;
-        this.emulation = new ParallaxSerialTerminal();
+        this.emulation = new TTY();
     }
 
     protected Control createContents(Composite parent) {
@@ -524,14 +524,14 @@ public class SerialTerminal {
         try {
             if (!serialPort.isOpened()) {
                 serialPort.openPort();
-                serialPort.setDTR(true);
-                serialPort.setRTS(true);
             }
             serialPort.setParams(
                 serialBaudRate,
                 SerialPort.DATABITS_8,
                 SerialPort.STOPBITS_1,
-                SerialPort.PARITY_NONE);
+                SerialPort.PARITY_NONE,
+                false,
+                false);
             serialPort.addEventListener(serialEventListener);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -692,15 +692,15 @@ public class SerialTerminal {
             if (this.serialPort != null) {
                 if (!this.serialPort.isOpened()) {
                     this.serialPort.openPort();
-                    serialPort.setDTR(true);
-                    serialPort.setRTS(true);
                 }
                 this.serialPort.addEventListener(serialEventListener);
                 this.serialPort.setParams(
                     serialBaudRate,
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1,
-                    SerialPort.PARITY_NONE);
+                    SerialPort.PARITY_NONE,
+                    false,
+                    false);
                 window.getShell().setText("Serial Monitor on " + this.serialPort.getPortName());
             }
             terminalType.setEnabled(serialPort != null);
