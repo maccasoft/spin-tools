@@ -22,6 +22,7 @@ import com.maccasoft.propeller.spin2.bytecode.InlinePAsm;
 public class Spin2MethodLine {
 
     Spin2Context scope;
+
     String statement;
     List<Spin2StatementNode> arguments = new ArrayList<Spin2StatementNode>();
 
@@ -33,6 +34,10 @@ public class Spin2MethodLine {
 
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
+
+    int startAddress;
+    int endAddress;
+    boolean addressChanged;
 
     public Spin2MethodLine(Spin2Context scope) {
         this.scope = new Spin2Context(scope);
@@ -77,14 +82,26 @@ public class Spin2MethodLine {
     }
 
     public int resolve(int address) {
+        addressChanged = startAddress != address;
+        startAddress = address;
+
         scope.setAddress(address);
         for (Spin2Bytecode bc : source) {
             address = bc.resolve(address);
         }
         for (Spin2MethodLine line : childs) {
             address = line.resolve(address);
+            addressChanged |= line.isAddressChanged();
         }
+
+        addressChanged |= endAddress != address;
+        endAddress = address;
+
         return address;
+    }
+
+    public boolean isAddressChanged() {
+        return addressChanged;
     }
 
     public void addArgument(Spin2StatementNode node) {

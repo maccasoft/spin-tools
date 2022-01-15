@@ -350,12 +350,15 @@ public class Spin2ObjectCompiler {
         }
 
         if (methods.size() != 0) {
-            for (int i = 0; i < 7; i++) {
+            boolean loop;
+            do {
+                loop = false;
                 address = object.getSize();
                 for (Spin2Method method : methods) {
                     address = method.resolve(address);
+                    loop |= method.isAddressChanged();
                 }
-            }
+            } while (loop);
 
             int index = 0;
             for (Spin2Method method : methods) {

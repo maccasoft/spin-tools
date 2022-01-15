@@ -35,6 +35,10 @@ public class Spin2Method {
 
     String comment;
 
+    int startAddress;
+    int endAddress;
+    boolean addressChanged;
+
     public Spin2Method(Spin2Context scope, String label, List<LocalVariable> parameters, List<LocalVariable> returns, List<LocalVariable> localVariables) {
         this.scope = scope;
         this.label = label;
@@ -58,12 +62,24 @@ public class Spin2Method {
     }
 
     public int resolve(int address) {
+        addressChanged = startAddress != address;
+        startAddress = address;
+
         scope.setAddress(address);
         address++;
         for (Spin2MethodLine line : lines) {
             address = line.resolve(address);
+            addressChanged |= line.isAddressChanged();
         }
+
+        addressChanged |= endAddress != address;
+        endAddress = address;
+
         return address;
+    }
+
+    public boolean isAddressChanged() {
+        return addressChanged;
     }
 
     public int getReturnsCount() {

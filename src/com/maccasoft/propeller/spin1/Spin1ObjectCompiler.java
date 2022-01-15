@@ -273,12 +273,15 @@ public class Spin1ObjectCompiler {
         }
 
         if (methods.size() != 0) {
-            for (int i = 0; i < 10; i++) {
+            boolean loop;
+            do {
+                loop = false;
                 address = object.getSize();
                 for (Spin1Method method : methods) {
                     address = method.resolve(address);
+                    loop |= method.isAddressChanged();
                 }
-            }
+            } while (loop);
 
             int index = 0;
             for (Spin1Method method : methods) {

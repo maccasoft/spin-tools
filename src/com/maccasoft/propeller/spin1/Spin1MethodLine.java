@@ -21,6 +21,7 @@ import com.maccasoft.propeller.model.Node;
 public class Spin1MethodLine {
 
     Spin1Context scope;
+
     String statement;
     List<Spin1StatementNode> arguments = new ArrayList<Spin1StatementNode>();
 
@@ -32,6 +33,10 @@ public class Spin1MethodLine {
 
     protected Node data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
+
+    int startAddress;
+    int endAddress;
+    boolean addressChanged;
 
     public Spin1MethodLine(Spin1Context scope) {
         this.scope = new Spin1Context(scope);
@@ -76,6 +81,9 @@ public class Spin1MethodLine {
     }
 
     public int resolve(int address) {
+        addressChanged = startAddress != address;
+        startAddress = address;
+
         scope.setAddress(address);
         scope.setHubAddress(address);
         for (Spin1Bytecode bc : source) {
@@ -83,8 +91,17 @@ public class Spin1MethodLine {
         }
         for (Spin1MethodLine line : childs) {
             address = line.resolve(address);
+            addressChanged |= line.isAddressChanged();
         }
+
+        addressChanged |= endAddress != address;
+        endAddress = address;
+
         return address;
+    }
+
+    public boolean isAddressChanged() {
+        return addressChanged;
     }
 
     public void addArgument(Spin1StatementNode node) {
