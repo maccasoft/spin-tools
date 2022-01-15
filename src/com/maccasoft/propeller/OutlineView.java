@@ -13,11 +13,13 @@ package com.maccasoft.propeller;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
@@ -37,7 +39,7 @@ public class OutlineView {
 
     TreeViewer viewer;
 
-    class OutlineContentProvider implements ITreeContentProvider {
+    final ITreeContentProvider contentProvider = new ITreeContentProvider() {
 
         @Override
         public Object[] getElements(Object inputElement) {
@@ -82,9 +84,9 @@ public class OutlineView {
             return (element instanceof ConstantsNode) || (element instanceof VariablesNode) || (element instanceof ObjectsNode) || (element instanceof DataNode);
         }
 
-    }
+    };
 
-    class OutlineLabelProvider implements ILabelProvider {
+    final ILabelProvider labelProvider = new ILabelProvider() {
 
         @Override
         public void addListener(ILabelProviderListener listener) {
@@ -165,12 +167,53 @@ public class OutlineView {
             return sb.toString();
         }
 
-    }
+    };
+
+    final IElementComparer elementComparer = new IElementComparer() {
+
+        @Override
+        public int hashCode(Object element) {
+            return getPath(element).hashCode();
+        }
+
+        @Override
+        public boolean equals(Object a, Object b) {
+            return getPath(a).equals(getPath(b));
+        }
+
+        String getPath(Object element) {
+            StringBuilder sb = new StringBuilder();
+
+            if (element instanceof TreePath) {
+                TreePath path = (TreePath) element;
+                sb.append("/");
+                for (int i = 0; i < path.getSegmentCount(); i++) {
+                    sb.append(labelProvider.getText(path.getSegment(i)));
+                    sb.append("/");
+                }
+            }
+            else {
+                Node node = (Node) element;
+                if (node != null) {
+                    do {
+                        sb.insert(0, "/");
+                        sb.insert(0, labelProvider.getText(node));
+                        node = node.getParent();
+                    } while (node != null);
+                }
+                sb.insert(0, "/");
+            }
+
+            return sb.toString();
+        }
+
+    };
 
     public OutlineView(Composite parent) {
         viewer = new TreeViewer(parent, SWT.FULL_SELECTION | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-        viewer.setContentProvider(new OutlineContentProvider());
-        viewer.setLabelProvider(new OutlineLabelProvider());
+        viewer.setContentProvider(contentProvider);
+        viewer.setLabelProvider(labelProvider);
+        viewer.setComparer(elementComparer);
     }
 
     public void setLayoutData(Object layoutData) {
@@ -190,7 +233,14 @@ public class OutlineView {
     }
 
     public void setInput(Node node) {
-        viewer.setInput(node);
+        viewer.getTree().setRedraw(false);
+        try {
+            Object[] expandedElements = viewer.getExpandedElements();
+            viewer.setInput(node);
+            viewer.setExpandedElements(expandedElements);
+        } finally {
+            viewer.getTree().setRedraw(true);
+        }
     }
 
     public void setSelection(IStructuredSelection selection) {
