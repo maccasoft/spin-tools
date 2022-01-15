@@ -207,6 +207,11 @@ public class Propeller2Loader {
                 System.arraycopy(binaryImage, 0, loaderImage, loader.length, binaryImage.length);
                 binaryImage = loaderImage;
 
+                binaryImage[8] = (byte) binaryImage.length;
+                binaryImage[9] = (byte) (binaryImage.length >> 8);
+                binaryImage[10] = (byte) (binaryImage.length >> 16);
+                binaryImage[11] = (byte) (binaryImage.length >> 24);
+
                 int sum = 0;
                 for (n = 0; n < binaryImage.length; n += 4) {
                     int data = binaryImage[n] & 0xFF;
@@ -262,10 +267,9 @@ public class Propeller2Loader {
         notifyProgress(n, binaryImage.length);
 
         sum = 0x706F7250 - sum;
-        //serialPort.writeString(String.format(" %x %x %x %x ?", sum & 0xFF, (sum >> 8) & 0xFF, (sum >> 16) & 0xFF, (sum >> 24) & 0xFF));
-        serialPort.writeString(String.format(" ~", sum & 0xFF, (sum >> 8) & 0xFF, (sum >> 16) & 0xFF, (sum >> 24) & 0xFF));
+        serialPort.writeString(String.format(" %x %x %x %x ?", sum & 0xFF, (sum >> 8) & 0xFF, (sum >> 16) & 0xFF, (sum >> 24) & 0xFF));
 
-        //verifyRam();
+        verifyRam();
 
         if (type == DOWNLOAD_RUN_FLASH) {
             flashWrite();
