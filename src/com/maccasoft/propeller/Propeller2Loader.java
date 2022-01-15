@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Base64;
+import java.util.Base64.Encoder;
 
 import jssc.SerialPort;
 import jssc.SerialPortException;
@@ -193,8 +195,6 @@ public class Propeller2Loader {
 
     protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
         int n;
-        //Encoder encoder = Base64.getEncoder();
-        //byte[] encodedImage = encoder.encode(binaryImage);
 
         if (type == DOWNLOAD_RUN_FLASH) {
             InputStream is = getClass().getResourceAsStream("flash_loader.binary");
@@ -243,6 +243,17 @@ public class Propeller2Loader {
             }
         }
 
+        base64Upload(binaryImage);
+        verifyRam();
+
+        if (type == DOWNLOAD_RUN_FLASH) {
+            flashWrite();
+        }
+    }
+
+    void hexUpload(byte[] binaryImage) throws SerialPortException {
+        int n;
+
         serialPort.writeString("> Prop_Hex 0 0 0 0");
 
         int sum = 0;
@@ -268,12 +279,45 @@ public class Propeller2Loader {
 
         sum = 0x706F7250 - sum;
         serialPort.writeString(String.format(" %x %x %x %x ?", sum & 0xFF, (sum >> 8) & 0xFF, (sum >> 16) & 0xFF, (sum >> 24) & 0xFF));
+    }
 
-        verifyRam();
+    void base64Upload(byte[] binaryImage) throws SerialPortException {
+        int n;
+        Encoder encoder = Base64.getEncoder();
 
-        if (type == DOWNLOAD_RUN_FLASH) {
-            flashWrite();
+        int sum = 0;
+        for (n = 0; n < binaryImage.length; n += 4) {
+            int data = binaryImage[n] & 0xFF;
+            if ((n + 1) < binaryImage.length) {
+                data |= (binaryImage[n + 1] << 8) & 0xFF00;
+                if ((n + 2) < binaryImage.length) {
+                    data |= (binaryImage[n + 2] << 16) & 0xFF0000;
+                    if ((n + 3) < binaryImage.length) {
+                        data |= (binaryImage[n + 3] << 24) & 0xFF000000;
+                    }
+                }
+            }
+            sum += data;
         }
+        sum = 0x706F7250 - sum;
+
+        byte[] image = new byte[binaryImage.length + 4];
+        System.arraycopy(binaryImage, 0, image, 0, binaryImage.length);
+        image[image.length - 4] = (byte) sum;
+        image[image.length - 3] = (byte) (sum >> 8);
+        image[image.length - 2] = (byte) (sum >> 16);
+        image[image.length - 1] = (byte) (sum >> 24);
+        binaryImage = image;
+
+        serialPort.writeString("> Prop_Txt 0 0 0 0");
+
+        String encodedImage = encoder.encodeToString(binaryImage);
+        for (n = 0; n < encodedImage.length(); n += 64) {
+            serialPort.writeString("\r> ");
+            serialPort.writeString(encodedImage.substring(n, n + Math.min(64, encodedImage.length() - n)));
+        }
+
+        serialPort.writeString(" ?");
     }
 
     protected void notifyProgress(int sent, int total) {
