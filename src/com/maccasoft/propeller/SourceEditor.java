@@ -70,8 +70,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
-import com.maccasoft.propeller.EditorTokenMarker.TokenId;
-import com.maccasoft.propeller.EditorTokenMarker.TokenMarker;
+import com.maccasoft.propeller.SourceTokenMarker.TokenId;
+import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ContentProposalAdapter;
 import com.maccasoft.propeller.internal.HTMLStyledTextParser;
@@ -113,7 +113,7 @@ public class SourceEditor {
 
     int[] sectionCount = new int[6];
 
-    EditorTokenMarker tokenMarker;
+    SourceTokenMarker tokenMarker;
     Map<TokenId, TextStyle> styleMap = new HashMap<TokenId, TextStyle>();
 
     EditorHelp helpProvider;
@@ -850,7 +850,7 @@ public class SourceEditor {
         });
     }
 
-    public void setTokenMarker(EditorTokenMarker tokenMarker) {
+    public void setTokenMarker(SourceTokenMarker tokenMarker) {
         this.tokenMarker = tokenMarker;
         modified = true;
         styledText.redraw();

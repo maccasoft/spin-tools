@@ -36,7 +36,7 @@ import com.maccasoft.propeller.model.TokenStream;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
-public abstract class EditorTokenMarker {
+public abstract class SourceTokenMarker {
 
     public static enum TokenId {
         NULL,

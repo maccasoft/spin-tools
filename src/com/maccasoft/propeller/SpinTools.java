@@ -1501,7 +1501,7 @@ public class SpinTools {
                             serialPort = new SerialPort(serialPortList.getSelection());
                         }
 
-                        PropellerLoader loader = new PropellerLoader(serialPort, shared) {
+                        Propeller1Loader loader = new Propeller1Loader(serialPort, shared) {
 
                             @Override
                             protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
@@ -1547,7 +1547,7 @@ public class SpinTools {
                         }
                         image[5] = (byte) (0x14 - sum);
 
-                        loader.upload(image, flash ? PropellerLoader.DOWNLOAD_RUN_EEPROM : PropellerLoader.DOWNLOAD_RUN_BINARY);
+                        loader.upload(image, flash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY);
 
                         if (shared) {
                             SerialPort terminalPort = serialPort;

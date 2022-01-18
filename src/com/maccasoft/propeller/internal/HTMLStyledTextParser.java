@@ -42,8 +42,7 @@ public class HTMLStyledTextParser extends ParserCallback {
         B, U, I, CODE
     };
 
-    public HTMLStyledTextParser(final StyledText styledText) {
-        super();
+    public HTMLStyledTextParser(StyledText styledText) {
         this.parser = new ParserDelegator();
         this.styledText = styledText;
         this.listOfStyles = new ArrayList<StyleRange>();

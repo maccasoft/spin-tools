@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.maccasoft.propeller.CompilerMessage;
-import com.maccasoft.propeller.EditorTokenMarker;
+import com.maccasoft.propeller.SourceTokenMarker;
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
 import com.maccasoft.propeller.model.ConstantsNode;
@@ -37,7 +37,7 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
-public class Spin2TokenMarker extends EditorTokenMarker {
+public class Spin2TokenMarker extends SourceTokenMarker {
 
     static Map<String, TokenId> keywords = new HashMap<String, TokenId>();
     static {

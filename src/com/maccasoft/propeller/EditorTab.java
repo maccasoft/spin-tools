@@ -37,7 +37,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.widgets.Display;
 
-import com.maccasoft.propeller.EditorTokenMarker.TokenMarker;
+import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Parser;
@@ -58,7 +58,7 @@ public class EditorTab {
 
     Font busyFont;
 
-    EditorTokenMarker tokenMarker;
+    SourceTokenMarker tokenMarker;
 
     String tabItemText;
     boolean dirty;

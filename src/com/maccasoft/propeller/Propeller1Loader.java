@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,7 +22,7 @@ import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortTimeoutException;
 
-public class PropellerLoader {
+public class Propeller1Loader {
 
     public static final int SHUTDOWN = 0;
     public static final int DOWNLOAD_RUN_BINARY = 1;
@@ -38,11 +38,11 @@ public class PropellerLoader {
     private boolean shared;
     private int wv = 100;
 
-    public PropellerLoader(String port) {
+    public Propeller1Loader(String port) {
         this.serialPort = new SerialPort(port);
     }
 
-    public PropellerLoader(SerialPort serialPort, boolean shared) {
+    public Propeller1Loader(SerialPort serialPort, boolean shared) {
         this.serialPort = serialPort;
         this.shared = shared;
     }
@@ -61,16 +61,15 @@ public class PropellerLoader {
         if (!serialPort.isOpened()) {
             serialPort.openPort();
         }
+        serialPort.setParams(
+            portSpeed,
+            SerialPort.DATABITS_8,
+            SerialPort.STOPBITS_1,
+            SerialPort.PARITY_NONE,
+            false,
+            false);
 
         try {
-            serialPort.setParams(
-                portSpeed,
-                SerialPort.DATABITS_8,
-                SerialPort.STOPBITS_1,
-                SerialPort.PARITY_NONE,
-                false,
-                false);
-
             hwreset();
             version = hwfind();
         } finally {
@@ -225,18 +224,16 @@ public class PropellerLoader {
         if (!serialPort.isOpened()) {
             serialPort.openPort();
         }
+        serialPort.setParams(
+            portSpeed,
+            SerialPort.DATABITS_8,
+            SerialPort.STOPBITS_1,
+            SerialPort.PARITY_NONE,
+            false,
+            false);
 
         try {
-            serialPort.setParams(
-                portSpeed,
-                SerialPort.DATABITS_8,
-                SerialPort.STOPBITS_1,
-                SerialPort.PARITY_NONE,
-                false,
-                false);
-
             hwreset();
-
             if (hwfind() != 0) {
                 bufferUpload(type, imageBuffer, "binary image");
             }
@@ -251,18 +248,16 @@ public class PropellerLoader {
         if (!serialPort.isOpened()) {
             serialPort.openPort();
         }
+        serialPort.setParams(
+            portSpeed,
+            SerialPort.DATABITS_8,
+            SerialPort.STOPBITS_1,
+            SerialPort.PARITY_NONE,
+            false,
+            false);
 
         try {
-            serialPort.setParams(
-                portSpeed,
-                SerialPort.DATABITS_8,
-                SerialPort.STOPBITS_1,
-                SerialPort.PARITY_NONE,
-                false,
-                false);
-
             hwreset();
-
             if (hwfind() != 0) {
                 bufferUpload(type, binaryImage, "binary image");
             }
