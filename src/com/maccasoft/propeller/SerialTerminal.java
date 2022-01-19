@@ -13,6 +13,8 @@ package com.maccasoft.propeller;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.UnaryOperator;
 
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -109,6 +111,20 @@ public class SerialTerminal {
 
     Cell[][] screen = new Cell[0][0];
 
+    final AtomicReference<Rectangle> redrawRectangle = new AtomicReference<Rectangle>();
+
+    final Runnable redrawRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            Rectangle rect = redrawRectangle.getAndSet(null);
+            if (rect != null) {
+                canvas.redraw(rect.x, rect.y, rect.width, rect.height, false);
+            }
+        }
+
+    };
+
     final Runnable screenUpdateRunnable = new Runnable() {
 
         int counter;
@@ -122,7 +138,7 @@ public class SerialTerminal {
             if (counter >= 15) {
                 cursorState = !cursorState;
                 counter = 0;
-                canvas.redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight, false);
+                redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
             }
             Display.getDefault().timerExec(FRAME_TIMER, this);
         }
@@ -801,24 +817,34 @@ public class SerialTerminal {
     }
 
     void redraw() {
-        display.asyncExec(new Runnable() {
+        Rectangle rect = redrawRectangle.getAndUpdate(new UnaryOperator<Rectangle>() {
 
             @Override
-            public void run() {
-                canvas.redraw();
+            public Rectangle apply(Rectangle t) {
+                if (t == null) {
+                    return new Rectangle(0, 0, screenWidth * characterWidth, screenHeight * characterHeight);
+                }
+                return t.union(new Rectangle(0, 0, screenWidth * characterWidth, screenHeight * characterHeight));
             }
-
         });
+        if (rect == null) {
+            display.asyncExec(redrawRunnable);
+        }
     }
 
     void redraw(int x, int y, int width, int height) {
-        display.asyncExec(new Runnable() {
+        Rectangle rect = redrawRectangle.getAndUpdate(new UnaryOperator<Rectangle>() {
 
             @Override
-            public void run() {
-                canvas.redraw(x, y, width, height, false);
+            public Rectangle apply(Rectangle t) {
+                if (t == null) {
+                    return new Rectangle(x, y, width, height);
+                }
+                return t.union(new Rectangle(x, y, width, height));
             }
-
         });
+        if (rect == null) {
+            display.asyncExec(redrawRunnable);
+        }
     }
 }
