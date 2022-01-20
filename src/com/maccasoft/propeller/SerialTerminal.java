@@ -60,6 +60,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
 import com.maccasoft.propeller.internal.ColorRegistry;
+import com.maccasoft.propeller.internal.PngImageTransfer;
 
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
@@ -670,7 +671,7 @@ public class SerialTerminal {
                         for (int x = selectionRectangle.x; x <= selectionRectangle.x + selectionRectangle.width; x++) {
                             line.append(screen[y][x].character);
                         }
-                        text.append(line.toString().stripTrailing());
+                        text.append(line.toString().replaceFirst("\\s++$", ""));
                         text.append(System.lineSeparator());
                     }
 
@@ -700,9 +701,11 @@ public class SerialTerminal {
                     try {
                         clipboard.setContents(new Object[] {
                             text.toString(),
+                            image.getImageData(),
                             image.getImageData()
                         }, new Transfer[] {
                             TextTransfer.getInstance(),
+                            PngImageTransfer.getInstance(),
                             ImageTransfer.getInstance()
                         });
                     } finally {
