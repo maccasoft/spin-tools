@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-18 Marco Maccaferri and others.
+ * Copyright (c) 2022 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 
-import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
@@ -42,12 +41,13 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
+
+import com.maccasoft.propeller.internal.ColorRegistry;
 
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
@@ -60,8 +60,7 @@ public class SerialTerminal {
     public static final int FRAME_TIMER = 16;
 
     Display display;
-    Window window;
-    Composite container;
+    Shell shell;
     Canvas canvas;
 
     Combo terminalType;
@@ -120,6 +119,7 @@ public class SerialTerminal {
             Rectangle rect = redrawRectangle.getAndSet(null);
             if (rect != null) {
                 canvas.redraw(rect.x, rect.y, rect.width, rect.height, false);
+                canvas.update();
             }
         }
 
@@ -140,7 +140,7 @@ public class SerialTerminal {
                 counter = 0;
                 redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
             }
-            Display.getDefault().timerExec(FRAME_TIMER, this);
+            display.timerExec(FRAME_TIMER, this);
         }
     };
 
@@ -153,7 +153,9 @@ public class SerialTerminal {
                     try {
                         final byte[] rx = serialPort.readBytes();
                         if (rx != null) {
-                            drawString(new String(rx));
+                            for (int i = 0; i < rx.length; i++) {
+                                write((char) rx[i]);
+                            }
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -185,7 +187,7 @@ public class SerialTerminal {
 
     interface TerminalEmulation {
 
-        public void drawChar(char c);
+        public void write(char c);
     }
 
     public class TTY implements TerminalEmulation {
@@ -193,7 +195,7 @@ public class SerialTerminal {
         int p0;
 
         @Override
-        public void drawChar(char c) {
+        public void write(char c) {
             redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
 
             switch (c) {
@@ -289,30 +291,31 @@ public class SerialTerminal {
         int cmd, p0, p1;
 
         @Override
-        public void drawChar(char c) {
+        public void write(char c) {
             redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
 
             if (cmd == 2) { // PC: Position Cursor in x,y
                 if (state == 0) {
-                    p0 = Math.min(c, screenWidth);
+                    p0 = Math.min(c, screenWidth - 1);
                     state++;
                     return;
                 }
-                cy = Math.min(c, screenHeight);
+                cy = Math.min(c, screenHeight - 1);
                 cx = p0;
                 cmd = 0;
                 return;
             }
             else if (cmd == 14) { // PX: Position cursor in X
-                cx = Math.min(c, screenWidth);
+                cx = Math.min(c, screenWidth - 1);
                 cmd = 0;
                 return;
             }
             else if (cmd == 15) { // PY: Position cursor in Y
-                cy = Math.min(c, screenHeight);
+                cy = Math.min(c, screenHeight - 1);
                 cmd = 0;
                 return;
             }
+
             switch (c) {
                 case 1: // HM: HoMe cursor
                     cx = cy = 0;
@@ -433,74 +436,66 @@ public class SerialTerminal {
         }
     }
 
-    public SerialTerminal(SerialPort serialPort) {
-
-        display = Display.getDefault();
-
-        window = new Window((Shell) null) {
-
-            @Override
-            protected void configureShell(Shell newShell) {
-                super.configureShell(newShell);
-
-                newShell.setText(WINDOW_TITLE);
-
-                Rectangle screen = newShell.getDisplay().getClientArea();
-                Rectangle rect = new Rectangle(0, 0, 640, 480);
-                rect.x = (screen.width - rect.width) / 2;
-                rect.y = (screen.height - rect.height) / 2;
-                if (rect.y < 0) {
-                    rect.height += rect.y * 2;
-                    rect.y = 0;
-                }
-
-                newShell.setLocation(rect.x, rect.y);
-                newShell.setSize(rect.width, rect.height);
-
-                FillLayout layout = new FillLayout();
-                layout.marginWidth = layout.marginHeight = 0;
-                newShell.setLayout(layout);
-
-                newShell.addListener(SWT.Traverse, new Listener() {
-
-                    @Override
-                    public void handleEvent(Event e) {
-                        if (e.detail == SWT.TRAVERSE_ESCAPE) {
-                            e.doit = false;
-                        }
-                    }
-                });
-            }
-
-            @Override
-            protected Control createContents(Composite parent) {
-                return SerialTerminal.this.createContents(parent);
-            }
-        };
-
-        foreground = display.getSystemColor(SWT.COLOR_WHITE);
-        background = display.getSystemColor(SWT.COLOR_BLACK);
-
-        this.serialPort = serialPort;
+    public SerialTerminal() {
         this.serialBaudRate = 115200;
         this.emulation = new TTY();
     }
 
-    protected Control createContents(Composite parent) {
-        container = new Composite(parent, SWT.NONE);
+    public void open() {
+        display = Display.getDefault();
+
+        shell = new Shell(display);
+        shell.setText(WINDOW_TITLE);
+        shell.setData(this);
+
+        FillLayout layout = new FillLayout();
+        layout.marginWidth = layout.marginHeight = 0;
+        shell.setLayout(layout);
+
+        shell.addListener(SWT.Traverse, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                if (e.detail == SWT.TRAVERSE_ESCAPE) {
+                    e.doit = false;
+                }
+            }
+        });
+
+        createContents(shell);
+
+        shell.pack();
+
+        Rectangle screen = display.getClientArea();
+        Rectangle rect = shell.getBounds();
+        rect.x = (screen.width - rect.width) / 2;
+        rect.y = (screen.height - rect.height) / 2;
+        if (rect.y < 0) {
+            rect.height += rect.y * 2;
+            rect.y = 0;
+        }
+        shell.setLocation(rect.x, rect.y);
+        shell.setSize(rect.width, rect.height);
+
+        shell.open();
+
+        display.timerExec(FRAME_TIMER, screenUpdateRunnable);
+    }
+
+    protected void createContents(Composite parent) {
+        Composite container = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(1, false);
         layout.marginWidth = layout.marginHeight = 0;
         container.setLayout(layout);
 
         if ("win32".equals(SWT.getPlatform())) {
-            font = new Font(parent.getDisplay(), "Courier New", 10, SWT.NONE);
+            font = new Font(parent.getDisplay(), "Courier New", 12, SWT.NONE);
         }
         else {
-            font = new Font(parent.getDisplay(), "mono", 10, SWT.NONE);
+            font = new Font(parent.getDisplay(), "mono", 12, SWT.NONE);
         }
 
         canvas = new Canvas(container, SWT.DOUBLE_BUFFERED);
-        canvas.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         canvas.setFont(font);
 
         GC gc = new GC(canvas);
@@ -511,6 +506,11 @@ public class SerialTerminal {
         } finally {
             gc.dispose();
         }
+
+        GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+        gridData.widthHint = 80 * characterWidth;
+        gridData.heightHint = 30 * characterHeight;
+        canvas.setLayoutData(gridData);
 
         createBottomControls(container);
 
@@ -533,8 +533,8 @@ public class SerialTerminal {
             new RGB(255, 255, 255),
         });
 
-        foreground = new Color(display, paletteData.getRGB(7));
-        background = new Color(display, paletteData.getRGB(0));
+        foreground = ColorRegistry.getColor(paletteData.getRGB(7));
+        background = ColorRegistry.getColor(paletteData.getRGB(0));
         canvas.setBackground(background);
 
         canvas.addDisposeListener(new DisposeListener() {
@@ -553,12 +553,6 @@ public class SerialTerminal {
             }
         });
 
-        hookListeners();
-
-        return container;
-    }
-
-    void hookListeners() {
         canvas.addControlListener(new ControlAdapter() {
 
             @Override
@@ -604,6 +598,9 @@ public class SerialTerminal {
                         if (serialPort.isOpened()) {
                             serialPort.writeByte((byte) e.character);
                         }
+                        else {
+                            write(e.character);
+                        }
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
@@ -634,28 +631,6 @@ public class SerialTerminal {
                 }
             }
         });
-
-        window.getShell().setText(WINDOW_TITLE + " on " + serialPort.getPortName());
-
-        try {
-            if (!serialPort.isOpened()) {
-                serialPort.openPort();
-            }
-            serialPort.setParams(
-                serialBaudRate,
-                SerialPort.DATABITS_8,
-                SerialPort.STOPBITS_1,
-                SerialPort.PARITY_NONE,
-                false,
-                false);
-            serialPort.addEventListener(serialEventListener);
-            dsr.setSelection(serialPort.isDSR());
-            cts.setSelection(serialPort.isCTS());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        Display.getDefault().timerExec(FRAME_TIMER, screenUpdateRunnable);
     }
 
     void createBottomControls(Composite parent) {
@@ -760,27 +735,16 @@ public class SerialTerminal {
         });
     }
 
-    public Control getControl() {
-        return canvas;
-    }
-
-    public void open() {
-        window.open();
-        window.getShell().setData(this);
+    public void setFocus() {
+        canvas.setFocus();
     }
 
     public void close() {
-        window.close();
+        shell.dispose();
     }
 
-    public void drawString(String s) {
-        for (char c : s.toCharArray()) {
-            emulation.drawChar(c);
-        }
-    }
-
-    public void drawChar(char c) {
-        emulation.drawChar(c);
+    public void write(char c) {
+        emulation.write(c);
     }
 
     public SerialPort getSerialPort() {
@@ -807,7 +771,7 @@ public class SerialTerminal {
                     SerialPort.PARITY_NONE,
                     false,
                     false);
-                window.getShell().setText(WINDOW_TITLE + " on " + this.serialPort.getPortName());
+                shell.setText(WINDOW_TITLE + " on " + this.serialPort.getPortName());
             }
             terminalType.setEnabled(serialPort != null);
             baudRate.setEnabled(serialPort != null);

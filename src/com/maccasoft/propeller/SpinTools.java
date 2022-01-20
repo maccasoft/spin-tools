@@ -1152,10 +1152,11 @@ public class SpinTools {
                 try {
                     SerialTerminal serialTerminal = getSerialTerminal();
                     if (serialTerminal == null) {
-                        serialTerminal = new SerialTerminal(new SerialPort(serialPortList.getSelection()));
+                        serialTerminal = new SerialTerminal();
                         serialTerminal.open();
+                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
                     }
-                    serialTerminal.getControl().setFocus();
+                    serialTerminal.setFocus();
                     handleUpload(false, serialTerminal);
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -1188,10 +1189,11 @@ public class SpinTools {
                 try {
                     SerialTerminal serialTerminal = getSerialTerminal();
                     if (serialTerminal == null) {
-                        serialTerminal = new SerialTerminal(new SerialPort(serialPortList.getSelection()));
+                        serialTerminal = new SerialTerminal();
                         serialTerminal.open();
+                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
                     }
-                    serialTerminal.getControl().setFocus();
+                    serialTerminal.setFocus();
                     handleUpload(true, serialTerminal);
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -1211,10 +1213,11 @@ public class SpinTools {
                 try {
                     SerialTerminal serialTerminal = getSerialTerminal();
                     if (serialTerminal == null) {
-                        serialTerminal = new SerialTerminal(new SerialPort(serialPortList.getSelection()));
+                        serialTerminal = new SerialTerminal();
                         serialTerminal.open();
+                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
                     }
-                    serialTerminal.getControl().setFocus();
+                    serialTerminal.setFocus();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
