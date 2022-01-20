@@ -14,15 +14,25 @@ package com.maccasoft.propeller;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
+import org.eclipse.core.databinding.observable.Realm;
+import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.ImageTransfer;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -30,6 +40,8 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
@@ -109,6 +121,7 @@ public class SerialTerminal {
     }
 
     Cell[][] screen = new Cell[0][0];
+    Rectangle selectionRectangle;
 
     final AtomicReference<Rectangle> redrawRectangle = new AtomicReference<Rectangle>();
 
@@ -595,7 +608,7 @@ public class SerialTerminal {
             public void keyPressed(KeyEvent e) {
                 if (e.character != 0) {
                     try {
-                        if (serialPort.isOpened()) {
+                        if (serialPort != null && serialPort.isOpened()) {
                             serialPort.writeByte((byte) e.character);
                         }
                         else {
@@ -625,9 +638,113 @@ public class SerialTerminal {
                         e.gc.drawString(String.valueOf(cell.character), cx, cy, false);
                     }
                 }
+
                 if (cursorState) {
                     e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
                     e.gc.fillRectangle(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
+                }
+
+                if (selectionRectangle != null) {
+                    int x = selectionRectangle.x * characterWidth;
+                    int y = selectionRectangle.y * characterHeight;
+                    int width = selectionRectangle.width * characterWidth - 1;
+                    int height = selectionRectangle.height * characterHeight - 1;
+                    e.gc.setAlpha(128);
+                    e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                    e.gc.fillRectangle(x, y, width, height);
+                    e.gc.setAlpha(255);
+                    e.gc.setForeground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
+                    e.gc.drawRectangle(x, y, width, height);
+                }
+            }
+        });
+
+        canvas.addMouseListener(new MouseListener() {
+
+            @Override
+            public void mouseUp(MouseEvent e) {
+                if (selectionRectangle != null) {
+                    StringBuilder text = new StringBuilder();
+                    for (int y = selectionRectangle.y; y <= selectionRectangle.y + selectionRectangle.height; y++) {
+                        StringBuilder line = new StringBuilder();
+                        for (int x = selectionRectangle.x; x <= selectionRectangle.x + selectionRectangle.width; x++) {
+                            line.append(screen[y][x].character);
+                        }
+                        text.append(line.toString().stripTrailing());
+                        text.append(System.lineSeparator());
+                    }
+
+                    ImageData imageData = new ImageData(selectionRectangle.width * characterWidth, selectionRectangle.height * characterHeight, 24, new PaletteData(0xff0000, 0x00ff00, 0x0000ff));
+                    Image image = new Image(display, imageData);
+                    GC gc = new GC(image);
+                    try {
+                        int y0 = selectionRectangle.y;
+                        int y1 = selectionRectangle.y + selectionRectangle.height - 1;
+                        int x0 = selectionRectangle.x;
+                        int x1 = selectionRectangle.x + selectionRectangle.width - 1;
+
+                        gc.setFont(font);
+                        for (int y = y1, cy = (y - y0) * characterHeight; y >= y0; y--, cy -= characterHeight) {
+                            for (int x = x1, cx = (x - x0) * characterWidth; x >= x0; x--, cx -= characterWidth) {
+                                Cell cell = screen[y][x];
+                                gc.setForeground(cell.foreground);
+                                gc.setBackground(cell.background);
+                                gc.drawString(String.valueOf(cell.character), cx, cy, false);
+                            }
+                        }
+                    } finally {
+                        gc.dispose();
+                    }
+
+                    Clipboard clipboard = new Clipboard(display);
+                    try {
+                        clipboard.setContents(new Object[] {
+                            text.toString(),
+                            image.getImageData()
+                        }, new Transfer[] {
+                            TextTransfer.getInstance(),
+                            ImageTransfer.getInstance()
+                        });
+                    } finally {
+                        clipboard.dispose();
+                    }
+
+                    image.dispose();
+                }
+                selectionRectangle = null;
+                canvas.redraw();
+            }
+
+            @Override
+            public void mouseDown(MouseEvent e) {
+                int cx = Math.min(e.x / characterWidth, screenWidth - 1);
+                int cy = Math.min(e.y / characterHeight, screenHeight - 1);
+                selectionRectangle = new Rectangle(cx, cy, 1, 1);
+                canvas.redraw();
+            }
+
+            @Override
+            public void mouseDoubleClick(MouseEvent e) {
+
+            }
+        });
+
+        canvas.addMouseMoveListener(new MouseMoveListener() {
+
+            @Override
+            public void mouseMove(MouseEvent e) {
+                if (selectionRectangle != null) {
+                    int cx = Math.min(e.x / characterWidth, screenWidth - 1);
+                    if (cx < selectionRectangle.x) {
+                        return;
+                    }
+                    int cy = Math.min(e.y / characterHeight, screenHeight - 1);
+                    if (cy < selectionRectangle.y) {
+                        return;
+                    }
+                    selectionRectangle.width = cx - selectionRectangle.x + 1;
+                    selectionRectangle.height = cy - selectionRectangle.y + 1;
+                    canvas.redraw();
                 }
             }
         });
@@ -640,7 +757,8 @@ public class SerialTerminal {
         terminalType = new Combo(container, SWT.DROP_DOWN | SWT.READ_ONLY);
         terminalType.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
         terminalType.setItems(new String[] {
-            "TTY", "Parallax Serial Terminal"
+            "TTY",
+            "Parallax Serial Terminal"
         });
 
         baudRate = new Combo(container, SWT.DROP_DOWN | SWT.READ_ONLY);
@@ -811,4 +929,49 @@ public class SerialTerminal {
             display.asyncExec(redrawRunnable);
         }
     }
+
+    public static void main(String[] args) {
+        final Display display = new Display();
+
+        display.setErrorHandler(new Consumer<Error>() {
+
+            @Override
+            public void accept(Error t) {
+                t.printStackTrace();
+            }
+
+        });
+        display.setRuntimeExceptionHandler(new Consumer<RuntimeException>() {
+
+            @Override
+            public void accept(RuntimeException t) {
+                t.printStackTrace();
+            }
+
+        });
+
+        Realm.runWithDefault(DisplayRealm.getRealm(display), new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    SerialTerminal serialTerminal = new SerialTerminal();
+                    serialTerminal.open();
+
+                    while (display.getShells().length != 0) {
+                        if (!display.readAndDispatch()) {
+                            display.sleep();
+                        }
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+        });
+
+        display.dispose();
+    }
+
 }
