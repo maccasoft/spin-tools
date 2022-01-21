@@ -86,6 +86,10 @@ public class Node {
         return childs;
     }
 
+    public int getChildCount() {
+        return childs.size();
+    }
+
     public int getStartIndex() {
         return tokens.size() != 0 ? tokens.get(0).start : -1;
     }
