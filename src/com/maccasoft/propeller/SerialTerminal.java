@@ -26,6 +26,7 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
@@ -100,6 +101,8 @@ public class SerialTerminal {
 
     SerialPort serialPort;
     int serialBaudRate;
+
+    Preferences preferences;
 
     static List<Integer> baudRates = Arrays.asList(new Integer[] {
         300, 600, 1200, 2400, 4800, 9600, 19200, 31250, 38400, 57600, 115200,
@@ -480,18 +483,49 @@ public class SerialTerminal {
 
         shell.pack();
 
-        Rectangle screen = display.getClientArea();
-        Rectangle rect = shell.getBounds();
-        rect.x = (screen.width - rect.width) / 2;
-        rect.y = (screen.height - rect.height) / 2;
-        if (rect.y < 0) {
-            rect.height += rect.y * 2;
-            rect.y = 0;
+        preferences = Preferences.getInstance();
+
+        Rectangle rect = preferences.getTerminalWindow();
+        if (rect == null) {
+            rect = shell.getBounds();
+            Rectangle screen = display.getClientArea();
+            rect.x = (screen.width - rect.width) / 2;
+            rect.y = (screen.height - rect.height) / 2;
+            if (rect.y < 0) {
+                rect.height += rect.y * 2;
+                rect.y = 0;
+            }
         }
+
         shell.setLocation(rect.x, rect.y);
         shell.setSize(rect.width, rect.height);
 
         shell.open();
+
+        shell.addControlListener(new ControlListener() {
+
+            @Override
+            public void controlResized(ControlEvent e) {
+                Rectangle shellBounds = shell.getBounds();
+
+                Rectangle rect = canvas.getBounds();
+                int marginWidth = shellBounds.width - rect.width;
+                int marginHeight = shellBounds.height - rect.height;
+                shellBounds.width = (rect.width / characterWidth) * characterWidth + marginWidth;
+                shellBounds.height = (rect.height / characterHeight) * characterHeight + marginHeight;
+
+                shell.removeControlListener(this);
+                shell.setBounds(shellBounds);
+                shell.addControlListener(this);
+            }
+
+            @Override
+            public void controlMoved(ControlEvent e) {
+                Rectangle rect = shell.getBounds();
+                preferences.setTerminalWindow(rect);
+            }
+
+        });
 
         display.timerExec(FRAME_TIMER, screenUpdateRunnable);
     }
