@@ -741,14 +741,16 @@ public class SourceEditor {
                                 for (int i = 0; i < node.getChildCount(); i++) {
                                     Node child = node.getChild(i);
                                     if ((child instanceof StatementNode) || (child instanceof DataLineNode)) {
-                                        paintBlock(gc, child);
+                                        int y2 = paintBlock(gc, child);
                                         Token token = child.getStartToken();
                                         if ("REPEAT".equalsIgnoreCase(token.getText())) {
                                             if (i + 1 < node.getChildCount()) {
                                                 Node nextChild = node.getChild(i + 1);
                                                 Token nextToken = nextChild.getStartToken();
                                                 if ("WHILE".equalsIgnoreCase(nextToken.getText()) || "UNTIL".equalsIgnoreCase(nextToken.getText())) {
-                                                    drawVerticalLine(gc, token, nextToken);
+                                                    int x2 = (charSize.x * token.column + charSize.x) - rightOffset;
+                                                    int y3 = styledText.getLinePixel(nextToken.line);
+                                                    gc.drawLine(x2, y2, x2, y3);
                                                 }
                                             }
                                         }
@@ -774,7 +776,7 @@ public class SourceEditor {
                 }
             }
 
-            void paintBlock(GC gc, Node node) {
+            int paintBlock(GC gc, Node node) {
                 Token token = node.getStartToken();
 
                 int line0 = token.line;
@@ -794,13 +796,15 @@ public class SourceEditor {
                             int x1 = (charSize.x * token.column) - rightOffset;
                             gc.drawLine(x0, y1, x1, y1);
                         }
-                        paintBlock(gc, child);
+                        int y2 = paintBlock(gc, child);
                         if ("REPEAT".equalsIgnoreCase(token.getText())) {
                             if (i + 1 < node.getChildCount()) {
                                 Node nextChild = node.getChild(i + 1);
                                 Token nextToken = nextChild.getStartToken();
                                 if ("WHILE".equalsIgnoreCase(nextToken.getText()) || "UNTIL".equalsIgnoreCase(nextToken.getText())) {
-                                    drawVerticalLine(gc, token, nextToken);
+                                    int x2 = (charSize.x * token.column + charSize.x) - rightOffset;
+                                    int y3 = styledText.getLinePixel(nextToken.line);
+                                    gc.drawLine(x2, y2, x2, y3);
                                 }
                             }
                         }
@@ -810,13 +814,8 @@ public class SourceEditor {
                 if (y1 > y0) {
                     gc.drawLine(x0, y0, x0, y1);
                 }
-            }
 
-            void drawVerticalLine(GC gc, Token token, Token nextToken) {
-                int x0 = (charSize.x * token.column + charSize.x) - rightOffset;
-                int y0 = styledText.getLinePixel(token.line) + charSize.y;
-                int y1 = styledText.getLinePixel(nextToken.line);
-                gc.drawLine(x0, y0, x0, y1);
+                return y1;
             }
 
             private int[] computePolyline(Point left, Point right, int height) {
