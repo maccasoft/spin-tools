@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.maccasoft.propeller.Preferences.SerializedPreferences;
 
 class PreferencesTest {
 
@@ -34,18 +35,19 @@ class PreferencesTest {
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
         mapper.setSerializationInclusion(Include.NON_EMPTY);
-        mapper.writeValue(os, subject);
+        mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
             + "{\n"
             + "  \"showLineNumbers\" : true,\n"
-            + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"spin1LibraryPath\" : \"spin1/path\"\n"
+            + "  \"spin1LibraryPath\" : \"spin1/path\",\n"
+            + "  \"reloadOpenTabs\" : true\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
     @Test
     void testGetSpin1LibraryPath() throws Exception {
+        Preferences subject = new Preferences();
         StringReader is = new StringReader(""
             + "{\n"
             + "  \"spin1LibraryPath\" : \"spin1/path\"\n"
@@ -54,7 +56,7 @@ class PreferencesTest {
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        Preferences subject = mapper.readValue(is, Preferences.class);
+        subject.preferences = mapper.readValue(is, SerializedPreferences.class);
 
         Assertions.assertEquals("spin1/path", subject.getSpin1LibraryPath());
     }
@@ -70,18 +72,19 @@ class PreferencesTest {
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
         mapper.setSerializationInclusion(Include.NON_EMPTY);
-        mapper.writeValue(os, subject);
+        mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
             + "{\n"
             + "  \"showLineNumbers\" : true,\n"
-            + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"spin2LibraryPath\" : \"spin2/path\"\n"
+            + "  \"spin2LibraryPath\" : \"spin2/path\",\n"
+            + "  \"reloadOpenTabs\" : true\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
     @Test
     void testGetSpin2LibraryPath() throws Exception {
+        Preferences subject = new Preferences();
         StringReader is = new StringReader(""
             + "{\n"
             + "  \"spin2LibraryPath\" : \"spin2/path\"\n"
@@ -90,7 +93,7 @@ class PreferencesTest {
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        Preferences subject = mapper.readValue(is, Preferences.class);
+        subject.preferences = mapper.readValue(is, SerializedPreferences.class);
 
         Assertions.assertEquals("spin2/path", subject.getSpin2LibraryPath());
     }
@@ -114,7 +117,7 @@ class PreferencesTest {
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
         mapper.setSerializationInclusion(Include.NON_EMPTY);
-        mapper.writeValue(os, subject);
+        mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
             + "{\n"
@@ -126,6 +129,7 @@ class PreferencesTest {
 
     @Test
     void testGetTabStops() throws Exception {
+        Preferences subject = new Preferences();
         StringReader is = new StringReader(""
             + "{\n"
             + "  \"tabStops\" : [ 8, 16 ]\n"
@@ -134,7 +138,7 @@ class PreferencesTest {
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        Preferences subject = mapper.readValue(is, Preferences.class);
+        subject.preferences = mapper.readValue(is, SerializedPreferences.class);
 
         Assertions.assertArrayEquals(new int[] {
             8, 16
