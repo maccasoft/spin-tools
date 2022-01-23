@@ -504,25 +504,45 @@ public class SerialTerminal {
 
         shell.addControlListener(new ControlListener() {
 
+            final Runnable resizeRunnable = new Runnable() {
+
+                @Override
+                public void run() {
+                    doResize();
+                }
+
+            };
+
             @Override
             public void controlResized(ControlEvent e) {
-                Rectangle shellBounds = shell.getBounds();
-
-                Rectangle rect = canvas.getBounds();
-                int marginWidth = shellBounds.width - rect.width;
-                int marginHeight = shellBounds.height - rect.height;
-                shellBounds.width = (rect.width / characterWidth) * characterWidth + marginWidth;
-                shellBounds.height = (rect.height / characterHeight) * characterHeight + marginHeight;
-
-                shell.removeControlListener(this);
-                shell.setBounds(shellBounds);
-                shell.addControlListener(this);
+                display.timerExec(250, resizeRunnable);
             }
 
             @Override
             public void controlMoved(ControlEvent e) {
                 Rectangle rect = shell.getBounds();
                 preferences.setTerminalWindow(rect);
+            }
+
+            public void doResize() {
+                if (shell.isDisposed()) {
+                    return;
+                }
+                shell.removeControlListener(this);
+                try {
+                    Rectangle shellBounds = shell.getBounds();
+
+                    Rectangle rect = canvas.getBounds();
+                    int marginWidth = shellBounds.width - rect.width;
+                    int marginHeight = shellBounds.height - rect.height;
+                    shellBounds.width = (rect.width / characterWidth) * characterWidth + marginWidth;
+                    shellBounds.height = (rect.height / characterHeight) * characterHeight + marginHeight;
+
+                    shell.setBounds(shellBounds);
+                    preferences.setTerminalWindow(shellBounds);
+                } finally {
+                    shell.addControlListener(this);
+                }
             }
 
         });
