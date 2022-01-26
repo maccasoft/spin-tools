@@ -139,36 +139,8 @@ public class SpinTools {
                         file = new File(preferences.getSpin2LibraryPath(), name);
                     }
                 }
-                if (!file.exists() || file.isDirectory()) {
-                    return;
-                }
-                try {
-                    File fileToOpen = file;
-                    EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
-
-                    tabFolder.setSelection(tabFolder.getItemCount() - 1);
-                    editorTab.setFocus();
-                    preferences.addToLru(fileToOpen);
-
-                    editorTab.addCaretListener(caretListener);
-                    editorTab.getEditor().getOutline().addOpenListener(openListener);
-
-                    tabFolder.getDisplay().asyncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            try {
-                                editorTab.setEditorText(loadFromFile(fileToOpen));
-                                editorTab.setFile(fileToOpen);
-                                updateCaretPosition();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
+                if (file.exists() && !file.isDirectory()) {
+                    openNewTab(file, true);
                 }
             }
         }
@@ -232,30 +204,7 @@ public class SpinTools {
                         if (fileToOpen.isDirectory()) {
                             return;
                         }
-
-                        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
-
-                        tabFolder.setSelection(tabFolder.getItemCount() - 1);
-                        editorTab.setFocus();
-                        preferences.addToLru(fileToOpen);
-
-                        editorTab.addCaretListener(caretListener);
-                        editorTab.getEditor().getOutline().addOpenListener(openListener);
-
-                        tabFolder.getDisplay().asyncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                try {
-                                    editorTab.setEditorText(loadFromFile(fileToOpen));
-                                    editorTab.setFile(fileToOpen);
-                                    updateCaretPosition();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-
-                        });
+                        openNewTab(fileToOpen, true);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -679,39 +628,17 @@ public class SpinTools {
                             MessageDialog.openError(shell, APP_TITLE, "File " + fileToOpen + " not found");
                             Preferences.getInstance().getLru().remove(fileToOpen.toString());
 
-                            File parentFIle = fileToOpen.getParentFile();
-                            while (parentFIle != null) {
-                                if (parentFIle.exists()) {
+                            File parentFile = fileToOpen.getParentFile();
+                            while (parentFile != null) {
+                                if (parentFile.exists()) {
                                     break;
                                 }
-                                parentFIle = parentFIle.getParentFile();
+                                parentFile = parentFile.getParentFile();
                             }
-                            handleFileOpenFrom(parentFIle != null ? parentFIle.getAbsolutePath() : "");
+                            handleFileOpenFrom(parentFile != null ? parentFile.getAbsolutePath() : "");
                             return;
                         }
-
-                        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
-                        tabFolder.setSelection(tabFolder.getItemCount() - 1);
-                        editorTab.setFocus();
-                        preferences.addToLru(fileToOpen);
-
-                        editorTab.addCaretListener(caretListener);
-                        editorTab.getEditor().getOutline().addOpenListener(openListener);
-
-                        tabFolder.getDisplay().asyncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                try {
-                                    editorTab.setEditorText(loadFromFile(fileToOpen));
-                                    editorTab.setFile(fileToOpen);
-                                    updateCaretPosition();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-
-                        });
+                        openNewTab(fileToOpen, true);
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
@@ -736,34 +663,17 @@ public class SpinTools {
         }
 
         String name = getUniqueName("Untitled", suffix);
-        EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
-        tabFolder.setSelection(tabFolder.getItemCount() - 1);
-        editorTab.setFocus();
-        editorTab.addCaretListener(caretListener);
-        editorTab.getEditor().getOutline().addOpenListener(openListener);
-        updateCaretPosition();
+        openNewTab(name, "", true);
     }
 
     private void handleFileNewSpin1() {
         String name = getUniqueName("Untitled", ".spin");
-        EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
-        editorTab.setEditorText(getResourceAsString("template.spin"));
-        tabFolder.setSelection(tabFolder.getItemCount() - 1);
-        editorTab.setFocus();
-        editorTab.addCaretListener(caretListener);
-        editorTab.getEditor().getOutline().addOpenListener(openListener);
-        updateCaretPosition();
+        openNewTab(name, getResourceAsString("template.spin"), true);
     }
 
     private void handleFileNewSpin2() {
         String name = getUniqueName("Untitled", ".spin2");
-        EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
-        editorTab.setEditorText(getResourceAsString("template.spin2"));
-        tabFolder.setSelection(tabFolder.getItemCount() - 1);
-        editorTab.setFocus();
-        editorTab.addCaretListener(caretListener);
-        editorTab.getEditor().getOutline().addOpenListener(openListener);
-        updateCaretPosition();
+        openNewTab(name, getResourceAsString("template.spin2"), true);
     }
 
     String getUniqueName(String prefix, String suffix) {
@@ -831,31 +741,7 @@ public class SpinTools {
 
         String fileName = dlg.open();
         if (fileName != null) {
-            File fileToOpen = new File(fileName);
-
-            EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
-
-            tabFolder.setSelection(tabFolder.getItemCount() - 1);
-            editorTab.setFocus();
-            preferences.addToLru(fileToOpen);
-
-            editorTab.addCaretListener(caretListener);
-            editorTab.getEditor().getOutline().addOpenListener(openListener);
-
-            tabFolder.getDisplay().asyncExec(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        editorTab.setEditorText(loadFromFile(fileToOpen));
-                        editorTab.setFile(fileToOpen);
-                        updateCaretPosition();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-
-            });
+            openNewTab(new File(fileName), true);
         }
     }
 
@@ -877,32 +763,66 @@ public class SpinTools {
 
         String fileName = dlg.open();
         if (fileName != null) {
-            File fileToOpen = new File(fileName);
+            openNewTab(new File(fileName), true);
+        }
+    }
 
-            EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
+    EditorTab openNewTab(File fileToOpen, boolean select) {
+        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
 
+        if (select) {
             tabFolder.setSelection(tabFolder.getItemCount() - 1);
             editorTab.setFocus();
-            preferences.addToLru(fileToOpen);
-
-            editorTab.addCaretListener(caretListener);
-            editorTab.getEditor().getOutline().addOpenListener(openListener);
-
-            tabFolder.getDisplay().asyncExec(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        editorTab.setEditorText(loadFromFile(fileToOpen));
-                        editorTab.setFile(fileToOpen);
-                        updateCaretPosition();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-
-            });
         }
+        preferences.addToLru(fileToOpen);
+
+        editorTab.addCaretListener(caretListener);
+        editorTab.getEditor().getOutline().addOpenListener(openListener);
+
+        tabFolder.getDisplay().asyncExec(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    editorTab.setEditorText(loadFromFile(fileToOpen));
+                    editorTab.setFile(fileToOpen);
+                    updateCaretPosition();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+        });
+
+        return editorTab;
+    }
+
+    EditorTab openNewTab(String name, String text, boolean select) {
+        EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
+
+        if (select) {
+            tabFolder.setSelection(tabFolder.getItemCount() - 1);
+            editorTab.setFocus();
+        }
+
+        editorTab.addCaretListener(caretListener);
+        editorTab.getEditor().getOutline().addOpenListener(openListener);
+
+        tabFolder.getDisplay().asyncExec(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    editorTab.setEditorText(text);
+                    updateCaretPosition();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+        });
+
+        return editorTab;
     }
 
     String loadFromFile(File file) throws Exception {
@@ -1400,23 +1320,7 @@ public class SpinTools {
                     if (!fileToOpen.exists()) {
                         return;
                     }
-
-                    tab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
-
-                    tabFolder.setSelection(tabFolder.getItemCount() - 1);
-                    tab.setFocus();
-                    preferences.addToLru(fileToOpen);
-
-                    tab.addCaretListener(caretListener);
-                    tab.getEditor().getOutline().addOpenListener(openListener);
-
-                    try {
-                        tab.setEditorText(loadFromFile(fileToOpen));
-                        tab.setFile(fileToOpen);
-                        updateCaretPosition();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    tab = openNewTab(fileToOpen, true);
                 }
                 if (tab != editorTab) {
                     List<CompilerMessage> list = new ArrayList<CompilerMessage>();

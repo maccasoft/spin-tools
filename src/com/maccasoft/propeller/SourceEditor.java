@@ -925,6 +925,7 @@ public class SourceEditor {
 
             modified = true;
             ignoreModify = false;
+            styledText.redraw();
 
         } finally {
             styledText.setRedraw(true);
