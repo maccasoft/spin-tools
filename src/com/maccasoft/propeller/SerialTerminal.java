@@ -209,8 +209,6 @@ public class SerialTerminal {
 
     public class TTY implements TerminalEmulation {
 
-        int p0;
-
         @Override
         public void write(char c) {
             redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
@@ -460,6 +458,9 @@ public class SerialTerminal {
 
     public void open() {
         display = Display.getDefault();
+        preferences = Preferences.getInstance();
+
+        font = new Font(display, "win32".equals(SWT.getPlatform()) ? "Courier New" : "mono", 12, SWT.NONE);
 
         shell = new Shell(display);
         shell.setText(WINDOW_TITLE);
@@ -468,6 +469,23 @@ public class SerialTerminal {
         FillLayout layout = new FillLayout();
         layout.marginWidth = layout.marginHeight = 0;
         shell.setLayout(layout);
+
+        GC gc = new GC(shell);
+        try {
+            gc.setFont(font);
+            Point pt = gc.textExtent("M");
+            characterWidth = pt.x;
+            characterHeight = pt.y;
+        } finally {
+            gc.dispose();
+        }
+
+        createContents(shell);
+
+        Rectangle rect = preferences.getTerminalWindow();
+        if (rect != null) {
+            shell.setLocation(rect.x, rect.y);
+        }
 
         shell.addListener(SWT.Traverse, new Listener() {
 
@@ -479,70 +497,36 @@ public class SerialTerminal {
             }
         });
 
-        createContents(shell);
+        shell.addDisposeListener(new DisposeListener() {
+
+            @Override
+            public void widgetDisposed(DisposeEvent e) {
+                try {
+                    serialPort.removeEventListener();
+                    if (serialPort.isOpened()) {
+                        serialPort.closePort();
+                    }
+                } catch (Exception ex) {
+
+                }
+                font.dispose();
+            }
+        });
 
         shell.pack();
-
-        preferences = Preferences.getInstance();
-
-        Rectangle rect = preferences.getTerminalWindow();
-        if (rect == null) {
-            rect = shell.getBounds();
-            Rectangle screen = display.getClientArea();
-            rect.x = (screen.width - rect.width) / 2;
-            rect.y = (screen.height - rect.height) / 2;
-            if (rect.y < 0) {
-                rect.height += rect.y * 2;
-                rect.y = 0;
-            }
-        }
-
-        shell.setLocation(rect.x, rect.y);
-        shell.setSize(rect.width, rect.height);
-
         shell.open();
 
         shell.addControlListener(new ControlListener() {
 
-            final Runnable resizeRunnable = new Runnable() {
-
-                @Override
-                public void run() {
-                    doResize();
-                }
-
-            };
-
             @Override
             public void controlResized(ControlEvent e) {
-                display.timerExec(250, resizeRunnable);
+
             }
 
             @Override
             public void controlMoved(ControlEvent e) {
                 Rectangle rect = shell.getBounds();
                 preferences.setTerminalWindow(rect);
-            }
-
-            public void doResize() {
-                if (shell.isDisposed()) {
-                    return;
-                }
-                shell.removeControlListener(this);
-                try {
-                    Rectangle shellBounds = shell.getBounds();
-
-                    Rectangle rect = canvas.getBounds();
-                    int marginWidth = shellBounds.width - rect.width;
-                    int marginHeight = shellBounds.height - rect.height;
-                    shellBounds.width = (rect.width / characterWidth) * characterWidth + marginWidth;
-                    shellBounds.height = (rect.height / characterHeight) * characterHeight + marginHeight;
-
-                    shell.setBounds(shellBounds);
-                    preferences.setTerminalWindow(shellBounds);
-                } finally {
-                    shell.addControlListener(this);
-                }
             }
 
         });
@@ -556,28 +540,19 @@ public class SerialTerminal {
         layout.marginWidth = layout.marginHeight = 0;
         container.setLayout(layout);
 
-        if ("win32".equals(SWT.getPlatform())) {
-            font = new Font(parent.getDisplay(), "Courier New", 12, SWT.NONE);
-        }
-        else {
-            font = new Font(parent.getDisplay(), "mono", 12, SWT.NONE);
-        }
-
         canvas = new Canvas(container, SWT.DOUBLE_BUFFERED);
         canvas.setFont(font);
 
-        GC gc = new GC(canvas);
-        try {
-            Point pt = gc.textExtent("M");
-            characterWidth = pt.x;
-            characterHeight = pt.y;
-        } finally {
-            gc.dispose();
-        }
-
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-        gridData.widthHint = 80 * characterWidth;
-        gridData.heightHint = 30 * characterHeight;
+        Rectangle rect = preferences.getTerminalWindow();
+        if (rect != null) {
+            gridData.widthHint = rect.width * characterWidth;
+            gridData.heightHint = rect.height * characterHeight;
+        }
+        else {
+            gridData.widthHint = 80 * characterWidth;
+            gridData.heightHint = 30 * characterHeight;
+        }
         canvas.setLayoutData(gridData);
 
         createBottomControls(container);
@@ -604,22 +579,6 @@ public class SerialTerminal {
         foreground = ColorRegistry.getColor(paletteData.getRGB(7));
         background = ColorRegistry.getColor(paletteData.getRGB(0));
         canvas.setBackground(background);
-
-        canvas.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                try {
-                    serialPort.removeEventListener();
-                    if (serialPort.isOpened()) {
-                        serialPort.closePort();
-                    }
-                } catch (Exception ex) {
-
-                }
-                font.dispose();
-            }
-        });
 
         canvas.addControlListener(new ControlAdapter() {
 
@@ -649,6 +608,13 @@ public class SerialTerminal {
                         newScreen[y][x] = new Cell(foreground, background);
                     }
                     y++;
+                }
+
+                Rectangle rect = preferences.getTerminalWindow();
+                if (rect != null) {
+                    rect.width = width;
+                    rect.height = height;
+                    preferences.setTerminalWindow(rect);
                 }
 
                 screenWidth = width;
