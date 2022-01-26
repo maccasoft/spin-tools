@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
+import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -230,6 +231,14 @@ public class OutlineView {
 
     public void removeSelectionChangedListener(ISelectionChangedListener listener) {
         viewer.removeSelectionChangedListener(listener);
+    }
+
+    public void addOpenListener(IOpenListener listener) {
+        viewer.addOpenListener(listener);
+    }
+
+    public void removeOpenListener(IOpenListener listener) {
+        viewer.addOpenListener(listener);
     }
 
     public void setInput(Node node) {

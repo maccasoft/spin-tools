@@ -76,6 +76,7 @@ import org.eclipse.swt.widgets.ToolItem;
 import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.TempDirectory;
+import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler;
 import com.maccasoft.propeller.spin2.Spin2Object;
@@ -104,6 +105,72 @@ public class SpinTools {
         @Override
         public void caretMoved(CaretEvent event) {
             updateCaretPosition();
+        }
+
+    };
+
+    final IOpenListener openListener = new IOpenListener() {
+
+        @Override
+        public void open(OpenEvent event) {
+            Object element = ((IStructuredSelection) event.getSelection()).getFirstElement();
+            if (element instanceof ObjectNode) {
+                String suffix = ".spin";
+                File parent = new File("");
+
+                if (tabFolder.getSelection() != null) {
+                    EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
+                    if (currentTab.getFile() != null) {
+                        parent = currentTab.getFile().getParentFile();
+                    }
+                    String tabName = currentTab.getText();
+                    suffix = tabName.substring(tabName.lastIndexOf('.'));
+                }
+
+                ObjectNode node = (ObjectNode) element;
+                String name = node.file.getText().substring(1, node.file.getText().length() - 1) + suffix;
+
+                File file = new File(parent, name);
+                if (!file.exists() || file.isDirectory()) {
+                    if (suffix.equalsIgnoreCase(".spin")) {
+                        file = new File(preferences.getSpin1LibraryPath(), name);
+                    }
+                    else {
+                        file = new File(preferences.getSpin2LibraryPath(), name);
+                    }
+                }
+                if (!file.exists() || file.isDirectory()) {
+                    return;
+                }
+                try {
+                    File fileToOpen = file;
+                    EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
+
+                    tabFolder.setSelection(tabFolder.getItemCount() - 1);
+                    editorTab.setFocus();
+                    preferences.addToLru(fileToOpen);
+
+                    editorTab.addCaretListener(caretListener);
+                    editorTab.getEditor().getOutline().addOpenListener(openListener);
+
+                    tabFolder.getDisplay().asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            try {
+                                editorTab.setEditorText(loadFromFile(fileToOpen));
+                                editorTab.setFile(fileToOpen);
+                                updateCaretPosition();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
     };
@@ -173,6 +240,7 @@ public class SpinTools {
                         preferences.addToLru(fileToOpen);
 
                         editorTab.addCaretListener(caretListener);
+                        editorTab.getEditor().getOutline().addOpenListener(openListener);
 
                         tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -334,6 +402,7 @@ public class SpinTools {
                                 editorTab.setEditorText(text);
                                 editorTab.setFile(fileToOpen);
                                 editorTab.addCaretListener(caretListener);
+                                editorTab.getEditor().getOutline().addOpenListener(openListener);
                             }
 
                         });
@@ -627,6 +696,7 @@ public class SpinTools {
                         preferences.addToLru(fileToOpen);
 
                         editorTab.addCaretListener(caretListener);
+                        editorTab.getEditor().getOutline().addOpenListener(openListener);
 
                         tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -670,6 +740,7 @@ public class SpinTools {
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
         editorTab.addCaretListener(caretListener);
+        editorTab.getEditor().getOutline().addOpenListener(openListener);
         updateCaretPosition();
     }
 
@@ -680,6 +751,7 @@ public class SpinTools {
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
         editorTab.addCaretListener(caretListener);
+        editorTab.getEditor().getOutline().addOpenListener(openListener);
         updateCaretPosition();
     }
 
@@ -690,6 +762,7 @@ public class SpinTools {
         tabFolder.setSelection(tabFolder.getItemCount() - 1);
         editorTab.setFocus();
         editorTab.addCaretListener(caretListener);
+        editorTab.getEditor().getOutline().addOpenListener(openListener);
         updateCaretPosition();
     }
 
@@ -767,6 +840,7 @@ public class SpinTools {
             preferences.addToLru(fileToOpen);
 
             editorTab.addCaretListener(caretListener);
+            editorTab.getEditor().getOutline().addOpenListener(openListener);
 
             tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -812,6 +886,7 @@ public class SpinTools {
             preferences.addToLru(fileToOpen);
 
             editorTab.addCaretListener(caretListener);
+            editorTab.getEditor().getOutline().addOpenListener(openListener);
 
             tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -1333,6 +1408,7 @@ public class SpinTools {
                     preferences.addToLru(fileToOpen);
 
                     tab.addCaretListener(caretListener);
+                    tab.getEditor().getOutline().addOpenListener(openListener);
 
                     try {
                         tab.setEditorText(loadFromFile(fileToOpen));

@@ -1446,4 +1446,8 @@ public class SourceEditor {
         return ColorRegistry.getColor(r, g, b);
     }
 
+    public OutlineView getOutline() {
+        return outline;
+    }
+
 }
