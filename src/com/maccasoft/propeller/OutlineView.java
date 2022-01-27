@@ -255,4 +255,9 @@ public class OutlineView {
     public void setSelection(IStructuredSelection selection) {
         viewer.setSelection(selection, true);
     }
+
+    public TreeViewer getViewer() {
+        return viewer;
+    }
+
 }

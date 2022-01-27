@@ -87,7 +87,7 @@ import jssc.SerialPortException;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools";
-    public static final String APP_VERSION = "0.0.2";
+    public static final String APP_VERSION = "0.0.3";
 
     Shell shell;
     SashForm sashForm;
@@ -130,17 +130,32 @@ public class SpinTools {
                 ObjectNode node = (ObjectNode) element;
                 String name = node.file.getText().substring(1, node.file.getText().length() - 1) + suffix;
 
-                File file = new File(parent, name);
-                if (!file.exists() || file.isDirectory()) {
+                File fileToOpen = new File(parent, name);
+                if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
                     if (suffix.equalsIgnoreCase(".spin")) {
-                        file = new File(preferences.getSpin1LibraryPath(), name);
+                        fileToOpen = new File(preferences.getSpin1LibraryPath(), name);
                     }
                     else {
-                        file = new File(preferences.getSpin2LibraryPath(), name);
+                        fileToOpen = new File(preferences.getSpin2LibraryPath(), name);
                     }
                 }
-                if (file.exists() && !file.isDirectory()) {
-                    openNewTab(file, true);
+                if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
+                    EditorTab editorTab = findFileEditorTab(fileToOpen.getAbsolutePath());
+                    if (editorTab == null) {
+                        editorTab = openNewTab(fileToOpen, true);
+                    }
+                    if (event.getSelection() instanceof SourceSelection) {
+                        SourceEditor editor = editorTab.getEditor();
+                        SourceSelection selection = (SourceSelection) event.getSelection();
+                        shell.getDisplay().asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                editor.goToLineColumn(selection.line, selection.column);
+                            }
+
+                        });
+                    }
                 }
             }
         }
@@ -204,7 +219,10 @@ public class SpinTools {
                         if (fileToOpen.isDirectory()) {
                             return;
                         }
-                        openNewTab(fileToOpen, true);
+                        EditorTab editorTab = findFileEditorTab(file.getAbsolutePath());
+                        if (editorTab == null) {
+                            openNewTab(fileToOpen, true);
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -351,7 +369,7 @@ public class SpinTools {
                                 editorTab.setEditorText(text);
                                 editorTab.setFile(fileToOpen);
                                 editorTab.addCaretListener(caretListener);
-                                editorTab.getEditor().getOutline().addOpenListener(openListener);
+                                editorTab.addOpenListener(openListener);
                             }
 
                         });
@@ -777,7 +795,7 @@ public class SpinTools {
         preferences.addToLru(fileToOpen);
 
         editorTab.addCaretListener(caretListener);
-        editorTab.getEditor().getOutline().addOpenListener(openListener);
+        editorTab.addOpenListener(openListener);
 
         tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -806,7 +824,7 @@ public class SpinTools {
         }
 
         editorTab.addCaretListener(caretListener);
-        editorTab.getEditor().getOutline().addOpenListener(openListener);
+        editorTab.addOpenListener(openListener);
 
         tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -1340,6 +1358,16 @@ public class SpinTools {
     EditorTab findFileEditorTab(String fileName) {
         for (int i = 0; i < tabFolder.getItemCount(); i++) {
             EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
+            if (editorTab.getFile() != null && editorTab.getFile().getAbsolutePath().equals(fileName)) {
+                tabFolder.setSelection(i);
+                editorTab.setFocus();
+                updateCaretPosition();
+                return editorTab;
+            }
+        }
+
+        for (int i = 0; i < tabFolder.getItemCount(); i++) {
+            EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
             if (editorTab.getText().equals(fileName)) {
                 tabFolder.setSelection(i);
                 editorTab.setFocus();
@@ -1347,6 +1375,7 @@ public class SpinTools {
                 return editorTab;
             }
         }
+
         return null;
     }
 

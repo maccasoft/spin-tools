@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-21 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -14,13 +14,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalProvider;
+import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
@@ -46,13 +50,17 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackListener;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
@@ -67,7 +75,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
@@ -126,6 +133,8 @@ public class SourceEditor {
 
     boolean ignoreModify;
     ListenerList<ModifyListener> modifyListeners = new ListenerList<ModifyListener>();
+
+    private ListenerList<IOpenListener> openListeners = new ListenerList<>();
 
     class TextChange {
 
@@ -279,6 +288,10 @@ public class SourceEditor {
 
     Shell popupWindow;
     Rectangle popupMouseBounds;
+
+    boolean hoverHighlight;
+    Token hoverHighlightToken;
+    Token hoverToken;
 
     public SourceEditor(Composite parent) {
         display = parent.getDisplay();
@@ -468,6 +481,22 @@ public class SourceEditor {
                 if (e.keyCode == SWT.INSERT && e.stateMask == 0) {
                     styledText.setCaret(styledText.getCaret() == insertCaret ? overwriteCaret : insertCaret);
                 }
+                if (e.keyCode == SWT.CTRL) {
+                    if (hoverToken != null) {
+                        styledText.setCursor(display.getSystemCursor(SWT.CURSOR_HAND));
+                    }
+                    hoverHighlight = true;
+                    styledText.redraw();
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.keyCode == SWT.CTRL) {
+                    hoverHighlight = false;
+                    styledText.setCursor(null);
+                    styledText.redraw();
+                }
             }
         });
 
@@ -543,19 +572,208 @@ public class SourceEditor {
             }
         });
 
+        styledText.addMouseListener(new MouseListener() {
+
+            @Override
+            public void mouseUp(MouseEvent e) {
+                if (hoverToken == null) {
+                    return;
+                }
+
+                int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
+                Node context = tokenMarker.getContextAt(offset);
+                if (context instanceof ObjectNode) {
+                    if (((ObjectNode) context).file == tokenMarker.getTokenAt(offset)) {
+                        StructuredSelection selection = new StructuredSelection(context);
+                        display.asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                fireOpen(new OpenEvent(outline.getViewer(), selection));
+                            }
+
+                        });
+                        hoverToken = hoverHighlightToken = null;
+                        hoverHighlight = false;
+                        styledText.setCursor(null);
+                        styledText.redraw();
+                    }
+                }
+                else if (context instanceof StatementNode) {
+                    Node root = tokenMarker.getRoot();
+                    int dot = hoverToken.getText().indexOf('.');
+                    if (dot != -1) {
+                        int objstart = hoverToken.start;
+                        int objstop = hoverToken.start + dot - 1;
+                        int namestart = hoverToken.start + dot + 1;
+                        if (hoverHighlightToken.start == objstart) {
+                            for (Node node : root.getChilds()) {
+                                if (node instanceof ObjectsNode) {
+                                    for (Node child : node.getChilds()) {
+                                        ObjectNode obj = (ObjectNode) child;
+                                        if (obj.name.getText().equals(hoverHighlightToken.getText())) {
+                                            display.asyncExec(new Runnable() {
+
+                                                @Override
+                                                public void run() {
+                                                    goToLineColumn(obj.name.line, obj.name.column);
+                                                }
+
+                                            });
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else if (hoverHighlightToken.start == namestart) {
+                            String objname = hoverToken.getStream().getSource(objstart, objstop);
+                            for (Node node : root.getChilds()) {
+                                if (node instanceof ObjectsNode) {
+                                    for (Node child : node.getChilds()) {
+                                        ObjectNode obj = (ObjectNode) child;
+                                        if (obj.name.getText().equals(objname)) {
+                                            String fileName = obj.file.getText().substring(1, obj.file.getText().length() - 1);
+                                            Node objectRoot = tokenMarker.getObjectTree(fileName);
+                                            if (objectRoot != null) {
+                                                for (Node objectNode : objectRoot.getChilds()) {
+                                                    if (objectNode instanceof MethodNode) {
+                                                        MethodNode method = (MethodNode) objectNode;
+                                                        if (method.name.getText().equals(hoverHighlightToken.getText())) {
+                                                            StructuredSelection selection = new SourceSelection(obj, method.name.line, method.name.column);
+                                                            display.asyncExec(new Runnable() {
+
+                                                                @Override
+                                                                public void run() {
+                                                                    fireOpen(new OpenEvent(outline.getViewer(), selection));
+                                                                }
+
+                                                            });
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        for (Node node : root.getChilds()) {
+                            if (node instanceof MethodNode) {
+                                MethodNode method = (MethodNode) node;
+                                if (method.name.getText().equals(hoverToken.getText())) {
+                                    display.asyncExec(new Runnable() {
+
+                                        @Override
+                                        public void run() {
+                                            goToLineColumn(method.name.line, method.name.column);
+                                        }
+
+                                    });
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                hoverToken = hoverHighlightToken = null;
+                hoverHighlight = false;
+                styledText.setCursor(null);
+                styledText.redraw();
+            }
+
+            @Override
+            public void mouseDown(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseDoubleClick(MouseEvent e) {
+
+            }
+        });
+
         styledText.addMouseMoveListener(new MouseMoveListener() {
 
             @Override
             public void mouseMove(MouseEvent e) {
-                if (popupWindow == null) {
-                    return;
+                if (popupWindow != null) {
+                    if (popupMouseBounds != null && !popupMouseBounds.contains(e.x, e.y)) {
+                        popupWindow.dispose();
+                        popupWindow = null;
+                        popupMouseBounds = null;
+                    }
                 }
-                if (popupMouseBounds != null && !popupMouseBounds.contains(e.x, e.y)) {
-                    popupWindow.dispose();
-                    popupWindow = null;
-                    popupMouseBounds = null;
+
+                hoverToken = hoverHighlightToken = null;
+
+                int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
+                Node context = tokenMarker.getContextAt(offset);
+                if (context instanceof ObjectNode) {
+                    if (((ObjectNode) context).file == tokenMarker.getTokenAt(offset)) {
+                        hoverToken = ((ObjectNode) context).file;
+                        hoverHighlightToken = hoverToken;
+                    }
+                }
+                else if (context instanceof StatementNode) {
+                    Token token = tokenMarker.getTokenAt(offset);
+                    if (token != null) {
+                        Set<TokenMarker> markers = tokenMarker.getLineTokens(token.start, token.getText());
+
+                        int dot = token.getText().indexOf('.');
+                        if (dot != -1) {
+                            int objstart = token.start;
+                            int objstop = token.start + dot - 1;
+                            int namestart = token.start + dot + 1;
+                            int namestop = token.stop;
+                            for (TokenMarker entry : markers) {
+                                if (offset >= entry.getStart() && offset <= entry.getStop()) {
+                                    if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI) {
+                                        if (entry.getStart() == namestart && entry.getStop() == namestop) {
+                                            hoverToken = token;
+                                            hoverHighlightToken = new Token(token.getStream(), namestart);
+                                            hoverHighlightToken.stop = namestop;
+                                            break;
+                                        }
+                                    }
+                                    else if (entry.getId() == TokenId.OBJECT) {
+                                        if (entry.getStart() == objstart && entry.getStop() == objstop) {
+                                            hoverToken = token;
+                                            hoverHighlightToken = new Token(token.getStream(), objstart);
+                                            hoverHighlightToken.stop = objstop;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            for (TokenMarker entry : markers) {
+                                if (entry.getStart() == token.start && entry.getStop() == token.stop) {
+                                    if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI) {
+                                        hoverToken = token;
+                                        hoverHighlightToken = token;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (hoverHighlight) {
+                    Cursor cursor = hoverHighlightToken != null ? display.getSystemCursor(SWT.CURSOR_HAND) : null;
+                    if (cursor != styledText.getCursor()) {
+                        styledText.setCursor(cursor);
+                    }
+                    styledText.redraw();
                 }
             }
+
         });
 
         styledText.addMouseTrackListener(new MouseTrackListener() {
@@ -564,7 +782,7 @@ public class SourceEditor {
 
             @Override
             public void mouseHover(MouseEvent e) {
-                if (popupWindow != null) {
+                if (popupWindow != null || hoverHighlight) {
                     return;
                 }
 
@@ -710,14 +928,14 @@ public class SourceEditor {
             }
         });
 
-        styledText.addListener(SWT.Paint, new Listener() {
+        styledText.addPaintListener(new PaintListener() {
 
             int rightOffset;
             Rectangle clientArea;
 
             @Override
-            public void handleEvent(Event event) {
-                GC gc = event.gc;
+            public void paintControl(PaintEvent e) {
+                GC gc = e.gc;
                 try {
                     clientArea = styledText.getClientArea();
                     clientArea.x += styledText.getRightMargin();
@@ -771,8 +989,14 @@ public class SourceEditor {
                         }
                         gc.drawPolyline(polyline);
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+
+                    if (hoverHighlight && hoverHighlightToken != null) {
+                        Rectangle r = styledText.getTextBounds(hoverHighlightToken.start, hoverHighlightToken.stop);
+                        gc.setForeground(ColorRegistry.getColor(0x00, 0x00, 0x00));
+                        gc.drawLine(r.x, r.y + r.height, r.x + r.width, r.y + r.height);
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }
 
@@ -854,7 +1078,6 @@ public class SourceEditor {
 
                 return coordinates;
             }
-
         });
 
         styledText.addDisposeListener(new DisposeListener() {
@@ -1351,13 +1574,20 @@ public class SourceEditor {
         return proposals.toArray(new IContentProposal[proposals.size()]);
     }
 
-    public void gotToLineColumn(int line, int column) {
+    public void goToLineColumn(int line, int column) {
         if (line >= styledText.getLineCount()) {
             return;
         }
-        int offset = styledText.getOffsetAtLine(line);
-        styledText.setCaretOffset(offset + column);
-        styledText.setTopIndex(line > 10 ? line - 10 : 1);
+
+        Rectangle rect = styledText.getClientArea();
+        int topLine = styledText.getLineIndex(0);
+        int bottomLine = styledText.getLineIndex(rect.height);
+
+        styledText.setCaretOffset(styledText.getOffsetAtLine(line) + column);
+        if (line < topLine || line >= bottomLine) {
+            int middleLine = (bottomLine - topLine) / 2;
+            styledText.setTopIndex(line - middleLine);
+        }
     }
 
     public void setCompilerMessages(List<CompilerMessage> messages) {
@@ -1449,6 +1679,25 @@ public class SourceEditor {
 
     public OutlineView getOutline() {
         return outline;
+    }
+
+    public void addOpenListener(IOpenListener listener) {
+        openListeners.add(listener);
+    }
+
+    public void removeOpenListener(IOpenListener listener) {
+        openListeners.remove(listener);
+    }
+
+    protected void fireOpen(final OpenEvent event) {
+        for (IOpenListener l : openListeners) {
+            SafeRunnable.run(new SafeRunnable() {
+                @Override
+                public void run() {
+                    l.open(event);
+                }
+            });
+        }
     }
 
 }

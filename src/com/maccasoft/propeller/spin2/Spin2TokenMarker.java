@@ -713,10 +713,15 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         id = compilerSymbols.get(token.getText());
                     }
                     if (id != null) {
-                        if ((id == TokenId.METHOD_PUB || id == TokenId.CONSTANT) && token.getText().contains(".")) {
+                        if ((id == TokenId.METHOD_PUB || id == TokenId.CONSTANT)) {
                             int dot = token.getText().indexOf('.');
-                            tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
-                            tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
+                            if (dot != -1) {
+                                tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
+                                tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
+                            }
+                            else {
+                                tokens.add(new TokenMarker(token, id));
+                            }
                         }
                         else {
                             tokens.add(new TokenMarker(token, id));
