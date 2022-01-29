@@ -6,14 +6,14 @@ public class SourceLocation {
 
     public String name;
     public int offset;
-    public int topIndex;
+    public int topPixel;
     public File file;
 
-    public SourceLocation(String name, File file, int offset, int topIndex) {
+    public SourceLocation(String name, File file, int offset, int topPixel) {
         this.name = name;
         this.file = file;
         this.offset = offset;
-        this.topIndex = topIndex;
+        this.topPixel = topPixel;
     }
 
 }

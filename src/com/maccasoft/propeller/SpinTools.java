@@ -210,8 +210,8 @@ public class SpinTools {
         EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
         StyledText styledText = currentTab.getEditor().getStyledText();
         int offset = styledText.getCaretOffset();
-        int topIndex = styledText.getTopIndex();
-        return new SourceLocation(currentTab.getText(), currentTab.getFile(), offset, topIndex);
+        int topPixel = styledText.getTopPixel();
+        return new SourceLocation(currentTab.getText(), currentTab.getFile(), offset, topPixel);
     }
 
     public SpinTools(Shell shell) {
@@ -1786,7 +1786,7 @@ public class SpinTools {
                             public void run() {
                                 StyledText styledText = editor.getStyledText();
                                 styledText.setCaretOffset(location.offset);
-                                styledText.setTopIndex(location.topIndex);
+                                styledText.setTopPixel(location.topPixel);
                             }
 
                         });
@@ -1827,7 +1827,7 @@ public class SpinTools {
                             public void run() {
                                 StyledText styledText = editor.getStyledText();
                                 styledText.setCaretOffset(location.offset);
-                                styledText.setTopIndex(location.topIndex);
+                                styledText.setTopPixel(location.topPixel);
                             }
 
                         });
