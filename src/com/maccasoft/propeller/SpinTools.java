@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Stack;
 import java.util.function.Consumer;
 
 import org.eclipse.core.databinding.observable.Realm;
@@ -87,7 +88,7 @@ import jssc.SerialPortException;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools";
-    public static final String APP_VERSION = "0.0.3";
+    public static final String APP_VERSION = "0.0.4";
 
     Shell shell;
     SashForm sashForm;
@@ -99,6 +100,9 @@ public class SpinTools {
     SerialPortList serialPortList;
 
     Preferences preferences;
+
+    Stack<SourceLocation> backStack = new Stack<SourceLocation>();
+    Stack<SourceLocation> forwardStack = new Stack<SourceLocation>();
 
     final CaretListener caretListener = new CaretListener() {
 
@@ -113,20 +117,20 @@ public class SpinTools {
 
         @Override
         public void open(OpenEvent event) {
+            String suffix = ".spin";
+            File parent = new File("");
+
+            if (tabFolder.getSelection() != null) {
+                EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
+                if (currentTab.getFile() != null) {
+                    parent = currentTab.getFile().getParentFile();
+                }
+                String tabName = currentTab.getText();
+                suffix = tabName.substring(tabName.lastIndexOf('.'));
+            }
+
             Object element = ((IStructuredSelection) event.getSelection()).getFirstElement();
             if (element instanceof ObjectNode) {
-                String suffix = ".spin";
-                File parent = new File("");
-
-                if (tabFolder.getSelection() != null) {
-                    EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
-                    if (currentTab.getFile() != null) {
-                        parent = currentTab.getFile().getParentFile();
-                    }
-                    String tabName = currentTab.getText();
-                    suffix = tabName.substring(tabName.lastIndexOf('.'));
-                }
-
                 ObjectNode node = (ObjectNode) element;
                 String name = node.file.getText().substring(1, node.file.getText().length() - 1) + suffix;
 
@@ -140,18 +144,55 @@ public class SpinTools {
                     }
                 }
                 if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
+                    SourceLocation sourceLocation = getCurrentSourceLocation();
+                    if (sourceLocation != null) {
+                        backStack.push(sourceLocation);
+                        forwardStack.clear();
+                    }
+                    EditorTab editorTab = findFileEditorTab(fileToOpen.getAbsolutePath());
+                    if (editorTab == null) {
+                        openNewTab(fileToOpen, true);
+                    }
+                }
+            }
+            else if (element instanceof SourceElement) {
+                SourceElement sourceElement = (SourceElement) element;
+                String name = sourceElement.object;
+                if (name != null) {
+                    name = name.substring(1, name.length() - 1) + suffix;
+                }
+                else {
+                    EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
+                    name = currentTab.getText();
+                }
+
+                File fileToOpen = new File(parent, name);
+                if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
+                    if (suffix.equalsIgnoreCase(".spin")) {
+                        fileToOpen = new File(preferences.getSpin1LibraryPath(), name);
+                    }
+                    else {
+                        fileToOpen = new File(preferences.getSpin2LibraryPath(), name);
+                    }
+                }
+                if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
+                    SourceLocation sourceLocation = getCurrentSourceLocation();
+                    if (sourceLocation != null) {
+                        backStack.push(sourceLocation);
+                        forwardStack.clear();
+                    }
+
                     EditorTab editorTab = findFileEditorTab(fileToOpen.getAbsolutePath());
                     if (editorTab == null) {
                         editorTab = openNewTab(fileToOpen, true);
                     }
-                    if (event.getSelection() instanceof SourceSelection) {
+                    if (sourceElement.method != null) {
                         SourceEditor editor = editorTab.getEditor();
-                        SourceSelection selection = (SourceSelection) event.getSelection();
                         shell.getDisplay().asyncExec(new Runnable() {
 
                             @Override
                             public void run() {
-                                editor.goToLineColumn(selection.line, selection.column);
+                                editor.goToMethod(sourceElement.method);
                             }
 
                         });
@@ -161,6 +202,17 @@ public class SpinTools {
         }
 
     };
+
+    SourceLocation getCurrentSourceLocation() {
+        if (tabFolder.getSelection() == null) {
+            return null;
+        }
+        EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
+        StyledText styledText = currentTab.getEditor().getStyledText();
+        int offset = styledText.getCaretOffset();
+        int topIndex = styledText.getTopIndex();
+        return new SourceLocation(currentTab.getText(), currentTab.getFile(), offset, topIndex);
+    }
 
     public SpinTools(Shell shell) {
         this.shell = shell;
@@ -1704,6 +1756,88 @@ public class SpinTools {
     void createTabFolderMenu() {
         final ToolBar toolBar = new ToolBar(tabFolder, SWT.FLAT);
 
+        ToolItem toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("arrow_left.png"));
+        toolItem.setToolTipText("Back");
+        toolItem.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    if (backStack.isEmpty()) {
+                        return;
+                    }
+
+                    SourceLocation currentLocation = getCurrentSourceLocation();
+
+                    SourceLocation location = backStack.pop();
+                    EditorTab editorTab = findFileEditorTab(location.name);
+                    if (editorTab == null && location.file != null) {
+                        editorTab = openNewTab(location.file, true);
+                    }
+                    if (editorTab != null) {
+                        if (currentLocation != null) {
+                            forwardStack.push(currentLocation);
+                        }
+                        SourceEditor editor = editorTab.getEditor();
+                        shell.getDisplay().asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                StyledText styledText = editor.getStyledText();
+                                styledText.setCaretOffset(location.offset);
+                                styledText.setTopIndex(location.topIndex);
+                            }
+
+                        });
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("arrow_right.png"));
+        toolItem.setToolTipText("Forward");
+        toolItem.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    if (forwardStack.isEmpty()) {
+                        return;
+                    }
+
+                    SourceLocation currentLocation = getCurrentSourceLocation();
+
+                    SourceLocation location = forwardStack.pop();
+                    EditorTab editorTab = findFileEditorTab(location.name);
+                    if (editorTab == null && location.file != null) {
+                        editorTab = openNewTab(location.file, true);
+                    }
+                    if (editorTab != null) {
+                        if (currentLocation != null) {
+                            backStack.push(currentLocation);
+                        }
+                        SourceEditor editor = editorTab.getEditor();
+                        shell.getDisplay().asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                StyledText styledText = editor.getStyledText();
+                                styledText.setCaretOffset(location.offset);
+                                styledText.setTopIndex(location.topIndex);
+                            }
+
+                        });
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
         final Menu menu = new Menu(toolBar);
 
         MenuItem item = new MenuItem(menu, SWT.PUSH);
@@ -1738,9 +1872,9 @@ public class SpinTools {
 
         final int entriesTokeep = menu.getItemCount();
 
-        final ToolItem toolItem = new ToolItem(toolBar, SWT.PUSH);
-        toolItem.setImage(ImageRegistry.getImageFromResources("vertical-dots.png"));
-        toolItem.addListener(SWT.Selection, new Listener() {
+        final ToolItem menuToolItem = new ToolItem(toolBar, SWT.PUSH);
+        menuToolItem.setImage(ImageRegistry.getImageFromResources("vertical-dots.png"));
+        menuToolItem.addListener(SWT.Selection, new Listener() {
 
             @Override
             public void handleEvent(Event event) {
@@ -1764,7 +1898,7 @@ public class SpinTools {
                     });
                 }
 
-                Rectangle rect = toolItem.getBounds();
+                Rectangle rect = menuToolItem.getBounds();
                 Point pt = new Point(rect.x, rect.y + rect.height);
                 pt = toolBar.toDisplay(pt);
                 menu.setLocation(pt.x, pt.y);

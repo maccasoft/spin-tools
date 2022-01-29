@@ -584,12 +584,12 @@ public class SourceEditor {
                 Node context = tokenMarker.getContextAt(offset);
                 if (context instanceof ObjectNode) {
                     if (((ObjectNode) context).file == tokenMarker.getTokenAt(offset)) {
-                        StructuredSelection selection = new StructuredSelection(context);
+                        SourceElement element = new SourceElement(((ObjectNode) context).file.getText(), null);
                         display.asyncExec(new Runnable() {
 
                             @Override
                             public void run() {
-                                fireOpen(new OpenEvent(outline.getViewer(), selection));
+                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
                             }
 
                         });
@@ -612,11 +612,12 @@ public class SourceEditor {
                                     for (Node child : node.getChilds()) {
                                         ObjectNode obj = (ObjectNode) child;
                                         if (obj.name.getText().equals(hoverHighlightToken.getText())) {
+                                            SourceElement element = new SourceElement(obj.file.getText(), null);
                                             display.asyncExec(new Runnable() {
 
                                                 @Override
                                                 public void run() {
-                                                    goToLineColumn(obj.name.line, obj.name.column);
+                                                    fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
                                                 }
 
                                             });
@@ -640,12 +641,12 @@ public class SourceEditor {
                                                     if (objectNode instanceof MethodNode) {
                                                         MethodNode method = (MethodNode) objectNode;
                                                         if (method.name.getText().equals(hoverHighlightToken.getText())) {
-                                                            StructuredSelection selection = new SourceSelection(obj, method.name.line, method.name.column);
+                                                            SourceElement element = new SourceElement(obj.file.getText(), method.name.getText());
                                                             display.asyncExec(new Runnable() {
 
                                                                 @Override
                                                                 public void run() {
-                                                                    fireOpen(new OpenEvent(outline.getViewer(), selection));
+                                                                    fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
                                                                 }
 
                                                             });
@@ -666,11 +667,12 @@ public class SourceEditor {
                             if (node instanceof MethodNode) {
                                 MethodNode method = (MethodNode) node;
                                 if (method.name.getText().equals(hoverToken.getText())) {
+                                    SourceElement element = new SourceElement(null, method.name.getText());
                                     display.asyncExec(new Runnable() {
 
                                         @Override
                                         public void run() {
-                                            goToLineColumn(method.name.line, method.name.column);
+                                            fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
                                         }
 
                                     });
@@ -1578,16 +1580,8 @@ public class SourceEditor {
         if (line >= styledText.getLineCount()) {
             return;
         }
-
-        Rectangle rect = styledText.getClientArea();
-        int topLine = styledText.getLineIndex(0);
-        int bottomLine = styledText.getLineIndex(rect.height);
-
         styledText.setCaretOffset(styledText.getOffsetAtLine(line) + column);
-        if (line < topLine || line >= bottomLine) {
-            int middleLine = (bottomLine - topLine) / 2;
-            styledText.setTopIndex(line - middleLine);
-        }
+        styledText.setTopIndex(line - 5);
     }
 
     public void setCompilerMessages(List<CompilerMessage> messages) {
@@ -1697,6 +1691,26 @@ public class SourceEditor {
                     l.open(event);
                 }
             });
+        }
+    }
+
+    public void goToMethod(String name) {
+        Node root = tokenMarker.getRoot();
+        for (Node node : root.getChilds()) {
+            if (node instanceof MethodNode) {
+                MethodNode method = (MethodNode) node;
+                if (method.name.getText().equals(name)) {
+                    display.asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            goToLineColumn(method.getName().line, method.getName().column);
+                        }
+
+                    });
+                    break;
+                }
+            }
         }
     }
 
