@@ -198,7 +198,7 @@ public class EditorTab {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                // Do nothing
             }
 
             return null;
@@ -366,7 +366,7 @@ public class EditorTab {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                // Do nothing
             }
 
             return null;

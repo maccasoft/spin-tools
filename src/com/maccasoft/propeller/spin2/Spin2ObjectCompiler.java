@@ -153,11 +153,7 @@ public class Spin2ObjectCompiler {
             }
         }
 
-        for (Node node : root.getChilds()) {
-            if (node instanceof VariablesNode) {
-                compileVarBlock(node);
-            }
-        }
+        compileVarBlocks(root);
 
         while ((varOffset % 4) != 0) {
             varOffset++;
@@ -443,41 +439,49 @@ public class Spin2ObjectCompiler {
         });
     }
 
-    void compileVarBlock(Node parent) {
-        String type = "LONG";
+    void compileVarBlocks(Node root) {
+        root.accept(new NodeVisitor() {
 
-        for (Node child : parent.getChilds()) {
-            VariableNode node = (VariableNode) child;
-            if (node.identifier == null) {
-                continue;
-            }
+            String type = "LONG";
 
-            if (node.type != null) {
-                type = node.type.getText().toUpperCase();
+            @Override
+            public void visitVariables(VariablesNode node) {
+                type = "LONG";
             }
 
-            Expression size = new NumberLiteral(1);
-            if (node.size != null) {
-                size = buildExpression(node.size.getTokens(), scope);
+            @Override
+            public void visitVariable(VariableNode node) {
+                if (node.identifier == null) {
+                    return;
+                }
+
+                if (node.type != null) {
+                    type = node.type.getText().toUpperCase();
+                }
+
+                Expression size = new NumberLiteral(1);
+                if (node.size != null) {
+                    size = buildExpression(node.size.getTokens(), scope);
+                }
+
+                try {
+                    scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+                    scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
+
+                    int varSize = size.getNumber().intValue();
+                    if ("WORD".equalsIgnoreCase(type)) {
+                        varSize = varSize * 2;
+                    }
+                    else if (!"BYTE".equalsIgnoreCase(type)) {
+                        varSize = varSize * 4;
+                    }
+                    varOffset += varSize;
+                } catch (Exception e) {
+                    logMessage(new CompilerMessage(e, node.identifier));
+                }
             }
 
-            try {
-                scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-            } catch (Exception e) {
-                logMessage(new CompilerMessage(e, node.identifier));
-                continue;
-            }
-
-            int varSize = size.getNumber().intValue();
-            if ("WORD".equalsIgnoreCase(type)) {
-                varSize = varSize * 2;
-            }
-            else if (!"BYTE".equalsIgnoreCase(type)) {
-                varSize = varSize * 4;
-            }
-            varOffset += varSize;
-        }
+        });
     }
 
     void compileObjBlock(Node parent) {

@@ -598,6 +598,28 @@ public class SourceEditor {
                         styledText.redraw();
                     }
                 }
+                else if (context instanceof DataLineNode) {
+                    Node root = tokenMarker.getRoot();
+                    for (Node node : root.getChilds()) {
+                        if (node instanceof DataNode) {
+                            for (Node child : node.getChilds()) {
+                                DataLineNode obj = (DataLineNode) child;
+                                if (obj.label != null && obj.label.getText().equals(hoverHighlightToken.getText())) {
+                                    Token target = obj.label.getStartToken();
+                                    display.asyncExec(new Runnable() {
+
+                                        @Override
+                                        public void run() {
+                                            goToLineColumn(target.line, target.column);
+                                        }
+
+                                    });
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
                 else if (context instanceof StatementNode) {
                     Node root = tokenMarker.getRoot();
                     int dot = hoverToken.getText().indexOf('.');
@@ -712,61 +734,65 @@ public class SourceEditor {
 
                 hoverToken = hoverHighlightToken = null;
 
-                int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
-                Node context = tokenMarker.getContextAt(offset);
-                if (context instanceof ObjectNode) {
-                    if (((ObjectNode) context).file == tokenMarker.getTokenAt(offset)) {
-                        hoverToken = ((ObjectNode) context).file;
+                if (hoverHighlight) {
+                    int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
+                    Node context = tokenMarker.getContextAt(offset);
+                    if (context instanceof ObjectNode) {
+                        if (((ObjectNode) context).file == tokenMarker.getTokenAt(offset)) {
+                            hoverToken = ((ObjectNode) context).file;
+                            hoverHighlightToken = hoverToken;
+                        }
+                    }
+                    else if (context instanceof DataLineNode) {
+                        hoverToken = tokenMarker.getTokenAt(offset);
                         hoverHighlightToken = hoverToken;
                     }
-                }
-                else if (context instanceof StatementNode) {
-                    Token token = tokenMarker.getTokenAt(offset);
-                    if (token != null) {
-                        Set<TokenMarker> markers = tokenMarker.getLineTokens(token.start, token.getText());
+                    else if (context instanceof StatementNode) {
+                        Token token = tokenMarker.getTokenAt(offset);
+                        if (token != null) {
+                            Set<TokenMarker> markers = tokenMarker.getLineTokens(token.start, token.getText());
 
-                        int dot = token.getText().indexOf('.');
-                        if (dot != -1) {
-                            int objstart = token.start;
-                            int objstop = token.start + dot - 1;
-                            int namestart = token.start + dot + 1;
-                            int namestop = token.stop;
-                            for (TokenMarker entry : markers) {
-                                if (offset >= entry.getStart() && offset <= entry.getStop()) {
-                                    if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI) {
-                                        if (entry.getStart() == namestart && entry.getStop() == namestop) {
-                                            hoverToken = token;
-                                            hoverHighlightToken = new Token(token.getStream(), namestart);
-                                            hoverHighlightToken.stop = namestop;
-                                            break;
+                            int dot = token.getText().indexOf('.');
+                            if (dot != -1) {
+                                int objstart = token.start;
+                                int objstop = token.start + dot - 1;
+                                int namestart = token.start + dot + 1;
+                                int namestop = token.stop;
+                                for (TokenMarker entry : markers) {
+                                    if (offset >= entry.getStart() && offset <= entry.getStop()) {
+                                        if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI) {
+                                            if (entry.getStart() == namestart && entry.getStop() == namestop) {
+                                                hoverToken = token;
+                                                hoverHighlightToken = new Token(token.getStream(), namestart);
+                                                hoverHighlightToken.stop = namestop;
+                                                break;
+                                            }
                                         }
-                                    }
-                                    else if (entry.getId() == TokenId.OBJECT) {
-                                        if (entry.getStart() == objstart && entry.getStop() == objstop) {
-                                            hoverToken = token;
-                                            hoverHighlightToken = new Token(token.getStream(), objstart);
-                                            hoverHighlightToken.stop = objstop;
-                                            break;
+                                        else if (entry.getId() == TokenId.OBJECT) {
+                                            if (entry.getStart() == objstart && entry.getStop() == objstop) {
+                                                hoverToken = token;
+                                                hoverHighlightToken = new Token(token.getStream(), objstart);
+                                                hoverHighlightToken.stop = objstop;
+                                                break;
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                        else {
-                            for (TokenMarker entry : markers) {
-                                if (entry.getStart() == token.start && entry.getStop() == token.stop) {
-                                    if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI) {
-                                        hoverToken = token;
-                                        hoverHighlightToken = token;
-                                        break;
+                            else {
+                                for (TokenMarker entry : markers) {
+                                    if (entry.getStart() == token.start && entry.getStop() == token.stop) {
+                                        if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI) {
+                                            hoverToken = token;
+                                            hoverHighlightToken = token;
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                if (hoverHighlight) {
                     Cursor cursor = hoverHighlightToken != null ? display.getSystemCursor(SWT.CURSOR_HAND) : null;
                     if (cursor != styledText.getCursor()) {
                         styledText.setCursor(cursor);
