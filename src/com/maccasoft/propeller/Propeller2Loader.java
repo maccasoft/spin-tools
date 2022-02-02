@@ -301,7 +301,7 @@ public class Propeller2Loader {
         }
         sum = 0x706F7250 - sum;
 
-        byte[] image = new byte[binaryImage.length + 4];
+        byte[] image = new byte[(binaryImage.length + 7) & ~3];
         System.arraycopy(binaryImage, 0, image, 0, binaryImage.length);
         image[image.length - 4] = (byte) sum;
         image[image.length - 3] = (byte) (sum >> 8);
