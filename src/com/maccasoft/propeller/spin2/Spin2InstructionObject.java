@@ -194,6 +194,7 @@ public abstract class Spin2InstructionObject {
         mod.put("_le", 0b1110);
         mod.put("_be", 0b1110);
         mod.put("_not_00", 0b1110);
+        mod.put("_set", 0b1111);
     }
 
     protected final Spin2Context context;
