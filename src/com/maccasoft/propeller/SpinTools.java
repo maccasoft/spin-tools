@@ -1125,48 +1125,6 @@ public class SpinTools {
             }
         });
 
-        new MenuItem(menu, SWT.SEPARATOR);
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Previous Annotation\tCtrl+,");
-        item.setAccelerator(SWT.MOD1 + ',');
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    if (tabItem == null) {
-                        return;
-                    }
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.goToPreviousError();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Next Annotation\tCtrl+.");
-        item.setAccelerator(SWT.MOD1 + '.');
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    if (tabItem == null) {
-                        return;
-                    }
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.goToNextError();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-
         return menu;
     }
 
@@ -1757,6 +1715,46 @@ public class SpinTools {
         final ToolBar toolBar = new ToolBar(tabFolder, SWT.FLAT);
 
         ToolItem toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("arrow_down.png"));
+        toolItem.setToolTipText("Next Annotation");
+        toolItem.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem == null) {
+                        return;
+                    }
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.goToNextError();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("arrow_up.png"));
+        toolItem.setToolTipText("Previous Annotation");
+        toolItem.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem == null) {
+                        return;
+                    }
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.goToPreviousError();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
         toolItem.setImage(ImageRegistry.getImageFromResources("arrow_left.png"));
         toolItem.setToolTipText("Back");
         toolItem.addListener(SWT.Selection, new Listener() {
