@@ -1213,13 +1213,13 @@ public class SourceEditor {
             int offset = styledText.getCaretOffset();
             int line = styledText.getLineAtOffset(offset);
             int column = offset - styledText.getOffsetAtLine(line);
-            int topindex = styledText.getTopIndex();
+            int topPixel = styledText.getTopPixel();
 
             styledText.setRedraw(false);
             ignoreModify = true;
             try {
                 styledText.setText(result);
-                styledText.setTopIndex(topindex);
+                styledText.setTopPixel(topPixel);
 
                 tokenMarker.refreshTokens(result);
 
