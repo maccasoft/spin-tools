@@ -182,32 +182,6 @@ public class OutlineView {
             return getPath(a).equals(getPath(b));
         }
 
-        String getPath(Object element) {
-            StringBuilder sb = new StringBuilder();
-
-            if (element instanceof TreePath) {
-                TreePath path = (TreePath) element;
-                sb.append("/");
-                for (int i = 0; i < path.getSegmentCount(); i++) {
-                    sb.append(labelProvider.getText(path.getSegment(i)));
-                    sb.append("/");
-                }
-            }
-            else {
-                Node node = (Node) element;
-                if (node != null) {
-                    do {
-                        sb.insert(0, "/");
-                        sb.insert(0, labelProvider.getText(node));
-                        node = node.getParent();
-                    } while (node != null);
-                }
-                sb.insert(0, "/");
-            }
-
-            return sb.toString();
-        }
-
     };
 
     public OutlineView(Composite parent) {
@@ -258,6 +232,30 @@ public class OutlineView {
 
     public TreeViewer getViewer() {
         return viewer;
+    }
+
+    String getPath(Object element) {
+        StringBuilder sb = new StringBuilder();
+
+        if (element instanceof TreePath) {
+            TreePath path = (TreePath) element;
+            for (int i = 0; i < path.getSegmentCount(); i++) {
+                sb.append("/");
+                sb.append(labelProvider.getText(path.getSegment(i)));
+            }
+        }
+        else {
+            Node node = (Node) element;
+            if (node != null) {
+                do {
+                    sb.insert(0, labelProvider.getText(node));
+                    sb.insert(0, "/");
+                    node = node.getParent();
+                } while (node != null && node.getParent() != null);
+            }
+        }
+
+        return sb.toString();
     }
 
 }
