@@ -94,8 +94,30 @@ class OutlineViewTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Assertions.assertEquals("/DAT", view.getPath(root.getChild(0)));
-        Assertions.assertEquals("/DAT/driver", view.getPath(root.getChild(0).getChild(1)));
+        Assertions.assertEquals("/DAT0", view.getPath(root.getChild(0)));
+        Assertions.assertEquals("/DAT0/driver", view.getPath(root.getChild(0).getChild(1)));
+    }
+
+    @Test
+    void testMultipleDatComparer() {
+        String text = ""
+            + "DAT         org     $000\n"
+            + "'\n"
+            + "driver1\n"
+            + "'\n"
+            + "DAT         org     $000\n"
+            + "'\n"
+            + "driver2\n"
+            + "";
+
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+        Spin2Parser parser = new Spin2Parser(stream);
+        Node root = parser.parse();
+
+        Assertions.assertEquals("/DAT0", view.getPath(root.getChild(0)));
+        Assertions.assertEquals("/DAT0/driver1", view.getPath(root.getChild(0).getChild(1)));
+        Assertions.assertEquals("/DAT1", view.getPath(root.getChild(1)));
+        Assertions.assertEquals("/DAT1/driver2", view.getPath(root.getChild(1).getChild(1)));
     }
 
     @Test
@@ -117,8 +139,8 @@ class OutlineViewTest {
             root.getChild(0), root.getChild(0).getChild(1)
         });
 
-        Assertions.assertEquals("/DAT", view.getPath(path0));
-        Assertions.assertEquals("/DAT/driver", view.getPath(path1));
+        Assertions.assertEquals("/DAT0", view.getPath(path0));
+        Assertions.assertEquals("/DAT0/driver", view.getPath(path1));
     }
 
 }

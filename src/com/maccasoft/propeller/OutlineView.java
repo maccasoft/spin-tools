@@ -241,14 +241,14 @@ public class OutlineView {
             TreePath path = (TreePath) element;
             for (int i = 0; i < path.getSegmentCount(); i++) {
                 sb.append("/");
-                sb.append(labelProvider.getText(path.getSegment(i)));
+                sb.append(getPathText(path.getSegment(i)));
             }
         }
         else {
             Node node = (Node) element;
             if (node != null) {
                 do {
-                    sb.insert(0, labelProvider.getText(node));
+                    sb.insert(0, getPathText(node));
                     sb.insert(0, "/");
                     node = node.getParent();
                 } while (node != null && node.getParent() != null);
@@ -256,6 +256,17 @@ public class OutlineView {
         }
 
         return sb.toString();
+    }
+
+    String getPathText(Object element) {
+        Node node = (Node) element;
+        String text = labelProvider.getText(element);
+        if (!(node instanceof MethodNode)) {
+            if (node.getParent() != null && node.getParent().getParent() == null) {
+                text += String.valueOf(node.getParent().getChilds().indexOf(node));
+            }
+        }
+        return text;
     }
 
 }
