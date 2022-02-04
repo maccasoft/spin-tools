@@ -10,14 +10,18 @@
 
 package com.maccasoft.propeller;
 
+import com.maccasoft.propeller.model.ObjectNode;
+
 public class SourceElement {
 
-    public String object;
-    public String method;
+    public ObjectNode object;
+    public int line;
+    public int column;
 
-    public SourceElement(String object, String method) {
+    public SourceElement(ObjectNode object, int line, int column) {
         this.object = object;
-        this.method = method;
+        this.line = line;
+        this.column = column;
     }
 
 }

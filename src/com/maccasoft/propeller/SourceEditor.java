@@ -268,7 +268,16 @@ public class SourceEditor {
             if (node != null) {
                 int offset = node.getStartIndex();
                 int line = styledText.getLineAtOffset(offset);
-                goToLineColumn(line, offset - styledText.getOffsetAtLine(line));
+                int column = offset - styledText.getOffsetAtLine(line);
+                SourceElement element = new SourceElement(null, line, column);
+                display.asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                    }
+
+                });
                 styledText.setFocus();
             }
         }
@@ -473,6 +482,7 @@ public class SourceEditor {
                 }
             }
         });
+
         styledText.addKeyListener(new KeyAdapter() {
 
             @Override
@@ -582,13 +592,13 @@ public class SourceEditor {
                 int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
                 Node context = tokenMarker.getContextAt(offset);
                 if (context instanceof ObjectNode) {
-                    if (((ObjectNode) context).file == tokenMarker.getTokenAt(offset)) {
-                        SourceElement element = new SourceElement(((ObjectNode) context).file.getText(), null);
+                    ObjectNode obj = (ObjectNode) context;
+                    if (obj.file == tokenMarker.getTokenAt(offset)) {
                         display.asyncExec(new Runnable() {
 
                             @Override
                             public void run() {
-                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(obj)));
                             }
 
                         });
@@ -606,11 +616,12 @@ public class SourceEditor {
                                 DataLineNode obj = (DataLineNode) child;
                                 if (obj.label != null && obj.label.getText().equals(hoverHighlightToken.getText())) {
                                     Token target = obj.label.getStartToken();
+                                    SourceElement element = new SourceElement(null, target.line, target.column);
                                     display.asyncExec(new Runnable() {
 
                                         @Override
                                         public void run() {
-                                            goToLineColumn(target.line, target.column);
+                                            fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
                                         }
 
                                     });
@@ -633,7 +644,7 @@ public class SourceEditor {
                                     for (Node child : node.getChilds()) {
                                         ObjectNode obj = (ObjectNode) child;
                                         if (obj.name.getText().equals(hoverHighlightToken.getText())) {
-                                            SourceElement element = new SourceElement(obj.file.getText(), null);
+                                            SourceElement element = new SourceElement(null, obj.name.line, obj.name.column);
                                             display.asyncExec(new Runnable() {
 
                                                 @Override
@@ -662,7 +673,7 @@ public class SourceEditor {
                                                     if (objectNode instanceof MethodNode) {
                                                         MethodNode method = (MethodNode) objectNode;
                                                         if (method.name.getText().equals(hoverHighlightToken.getText())) {
-                                                            SourceElement element = new SourceElement(obj.file.getText(), method.name.getText());
+                                                            SourceElement element = new SourceElement(obj, method.name.line, method.name.column);
                                                             display.asyncExec(new Runnable() {
 
                                                                 @Override
@@ -688,7 +699,7 @@ public class SourceEditor {
                             if (node instanceof MethodNode) {
                                 MethodNode method = (MethodNode) node;
                                 if (method.name.getText().equals(hoverToken.getText())) {
-                                    SourceElement element = new SourceElement(null, method.name.getText());
+                                    SourceElement element = new SourceElement(null, method.name.line, method.name.column);
                                     display.asyncExec(new Runnable() {
 
                                         @Override
@@ -1730,26 +1741,6 @@ public class SourceEditor {
                     l.open(event);
                 }
             });
-        }
-    }
-
-    public void goToMethod(String name) {
-        Node root = tokenMarker.getRoot();
-        for (Node node : root.getChilds()) {
-            if (node instanceof MethodNode) {
-                MethodNode method = (MethodNode) node;
-                if (method.name.getText().equals(name)) {
-                    display.asyncExec(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            goToLineColumn(method.getName().line, method.getName().column);
-                        }
-
-                    });
-                    break;
-                }
-            }
         }
     }
 

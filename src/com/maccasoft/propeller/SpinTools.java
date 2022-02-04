@@ -117,6 +117,39 @@ public class SpinTools {
 
         @Override
         public void open(OpenEvent event) {
+            SourceLocation sourceLocation = getCurrentSourceLocation();
+
+            Object element = ((IStructuredSelection) event.getSelection()).getFirstElement();
+            if (element instanceof ObjectNode) {
+                if (openOrSwitchToTab((ObjectNode) element) == null) {
+                    return;
+                }
+            }
+            else if (element instanceof SourceElement) {
+                SourceElement sourceElement = (SourceElement) element;
+
+                EditorTab editorTab = sourceElement.object != null ? openOrSwitchToTab(sourceElement.object) : (EditorTab) tabFolder.getSelection().getData();
+                if (editorTab == null) {
+                    return;
+                }
+                SourceEditor editor = editorTab.getEditor();
+                shell.getDisplay().asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        editor.goToLineColumn(sourceElement.line, sourceElement.column);
+                    }
+
+                });
+            }
+
+            if (sourceLocation != null) {
+                backStack.push(sourceLocation);
+                forwardStack.clear();
+            }
+        }
+
+        EditorTab openOrSwitchToTab(ObjectNode node) {
             String suffix = ".spin";
             File parent = new File("");
 
@@ -129,76 +162,26 @@ public class SpinTools {
                 suffix = tabName.substring(tabName.lastIndexOf('.'));
             }
 
-            Object element = ((IStructuredSelection) event.getSelection()).getFirstElement();
-            if (element instanceof ObjectNode) {
-                ObjectNode node = (ObjectNode) element;
-                String name = node.file.getText().substring(1, node.file.getText().length() - 1) + suffix;
+            String name = node.file.getText().substring(1, node.file.getText().length() - 1) + suffix;
 
-                File fileToOpen = new File(parent, name);
-                if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
-                    if (suffix.equalsIgnoreCase(".spin")) {
-                        fileToOpen = new File(preferences.getSpin1LibraryPath(), name);
-                    }
-                    else {
-                        fileToOpen = new File(preferences.getSpin2LibraryPath(), name);
-                    }
-                }
-                if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
-                    SourceLocation sourceLocation = getCurrentSourceLocation();
-                    if (sourceLocation != null) {
-                        backStack.push(sourceLocation);
-                        forwardStack.clear();
-                    }
-                    EditorTab editorTab = findFileEditorTab(fileToOpen.getAbsolutePath());
-                    if (editorTab == null) {
-                        openNewTab(fileToOpen, true);
-                    }
-                }
-            }
-            else if (element instanceof SourceElement) {
-                SourceElement sourceElement = (SourceElement) element;
-                String name = sourceElement.object;
-                if (name != null) {
-                    name = name.substring(1, name.length() - 1) + suffix;
+            File fileToOpen = new File(parent, name);
+            if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
+                if (suffix.equalsIgnoreCase(".spin")) {
+                    fileToOpen = new File(preferences.getSpin1LibraryPath(), name);
                 }
                 else {
-                    EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
-                    name = currentTab.getText();
-                }
-
-                File fileToOpen = new File(parent, name);
-                if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
-                    if (suffix.equalsIgnoreCase(".spin")) {
-                        fileToOpen = new File(preferences.getSpin1LibraryPath(), name);
-                    }
-                    else {
-                        fileToOpen = new File(preferences.getSpin2LibraryPath(), name);
-                    }
-                }
-                if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
-                    SourceLocation sourceLocation = getCurrentSourceLocation();
-                    if (sourceLocation != null) {
-                        backStack.push(sourceLocation);
-                        forwardStack.clear();
-                    }
-
-                    EditorTab editorTab = findFileEditorTab(fileToOpen.getAbsolutePath());
-                    if (editorTab == null) {
-                        editorTab = openNewTab(fileToOpen, true);
-                    }
-                    if (sourceElement.method != null) {
-                        SourceEditor editor = editorTab.getEditor();
-                        shell.getDisplay().asyncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                editor.goToMethod(sourceElement.method);
-                            }
-
-                        });
-                    }
+                    fileToOpen = new File(preferences.getSpin2LibraryPath(), name);
                 }
             }
+            if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
+                EditorTab editorTab = findFileEditorTab(fileToOpen.getAbsolutePath());
+                if (editorTab == null) {
+                    editorTab = openNewTab(fileToOpen, true);
+                }
+                return editorTab;
+            }
+
+            return null;
         }
 
     };
