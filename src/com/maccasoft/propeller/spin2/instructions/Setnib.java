@@ -25,8 +25,8 @@ public class Setnib extends Spin2PAsmInstructionFactory {
         if (Spin2PAsmSchema.D_S_N.check(arguments, effect)) {
             return new Setnib_(context, condition, arguments.get(0), arguments.get(1), arguments.get(2));
         }
-        if (Spin2PAsmSchema.D_WC_WZ_WCZ.check(arguments, effect)) {
-            return new Setnib_D_(context, condition, arguments.get(0));
+        if (Spin2PAsmSchema.S.check(arguments, effect)) {
+            return new Setnib_S_(context, condition, arguments.get(0));
         }
         throw new RuntimeException("Invalid arguments");
     }
@@ -72,12 +72,12 @@ public class Setnib extends Spin2PAsmInstructionFactory {
     /*
      * SETNIB  {#}S
      */
-    public class Setnib_D_ extends Spin2InstructionObject {
+    public class Setnib_S_ extends Spin2InstructionObject {
 
         String condition;
         Spin2PAsmExpression src;
 
-        public Setnib_D_(Spin2Context context, String condition, Spin2PAsmExpression dst) {
+        public Setnib_S_(Spin2Context context, String condition, Spin2PAsmExpression dst) {
             super(context);
             this.condition = condition;
             this.src = dst;

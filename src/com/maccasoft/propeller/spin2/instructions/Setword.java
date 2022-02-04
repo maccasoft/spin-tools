@@ -26,7 +26,7 @@ public class Setword extends Spin2PAsmInstructionFactory {
             return new Setword_(context, condition, arguments.get(0), arguments.get(1), arguments.get(2));
         }
         if (Spin2PAsmSchema.S.check(arguments, effect)) {
-            return new Setword_D_(context, condition, arguments.get(0));
+            return new Setword_S_(context, condition, arguments.get(0));
         }
         throw new RuntimeException("Invalid arguments");
     }
@@ -73,12 +73,12 @@ public class Setword extends Spin2PAsmInstructionFactory {
     /*
      * SETWORD {#}S
      */
-    public class Setword_D_ extends Spin2InstructionObject {
+    public class Setword_S_ extends Spin2InstructionObject {
 
         String condition;
         Spin2PAsmExpression src;
 
-        public Setword_D_(Spin2Context context, String condition, Spin2PAsmExpression src) {
+        public Setword_S_(Spin2Context context, String condition, Spin2PAsmExpression src) {
             super(context);
             this.condition = condition;
             this.src = src;

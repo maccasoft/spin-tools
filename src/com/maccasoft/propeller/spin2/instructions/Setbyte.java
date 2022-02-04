@@ -25,8 +25,8 @@ public class Setbyte extends Spin2PAsmInstructionFactory {
         if (Spin2PAsmSchema.D_S_N.check(arguments, effect)) {
             return new Setbyte_(context, condition, arguments.get(0), arguments.get(1), arguments.get(2));
         }
-        if (Spin2PAsmSchema.D.check(arguments, effect)) {
-            return new Setbyte_D_(context, condition, arguments.get(0));
+        if (Spin2PAsmSchema.S.check(arguments, effect)) {
+            return new Setbyte_S_(context, condition, arguments.get(0));
         }
         throw new RuntimeException("Invalid arguments");
     }
@@ -72,13 +72,13 @@ public class Setbyte extends Spin2PAsmInstructionFactory {
     /*
      * SETBYTE {#}S
      */
-    public class Setbyte_D_ extends Spin2InstructionObject {
+    public class Setbyte_S_ extends Spin2InstructionObject {
 
         String condition;
         Spin2PAsmExpression src;
         String effect;
 
-        public Setbyte_D_(Spin2Context context, String condition, Spin2PAsmExpression dst) {
+        public Setbyte_S_(Spin2Context context, String condition, Spin2PAsmExpression dst) {
             super(context);
             this.condition = condition;
             this.src = dst;
