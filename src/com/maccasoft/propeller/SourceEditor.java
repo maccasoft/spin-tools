@@ -104,6 +104,7 @@ public class SourceEditor {
     LineNumbersRuler ruler;
     OutlineView outline;
     StyledText styledText;
+    OverviewRuler overview;
 
     Font font;
     Font fontBold;
@@ -382,6 +383,9 @@ public class SourceEditor {
         styledText.setMargins(5, 5, 5, 5);
         styledText.setTabs(8);
         styledText.setFont(font);
+
+        overview = new OverviewRuler(container);
+        overview.setStyledText(styledText);
 
         outline = new OutlineView(sashForm);
         outline.addSelectionChangedListener(outlineSelectionListener);
@@ -1638,9 +1642,14 @@ public class SourceEditor {
         tokenMarker.refreshCompilerTokens(messages);
 
         ruler.clearHighlights();
+        overview.clearHighlights();
         for (CompilerMessage msg : messages) {
             if (msg.type == CompilerMessage.ERROR) {
                 ruler.setHighlight(msg.line);
+                overview.setErrorHighlight(msg.line);
+            }
+            else if (msg.type == CompilerMessage.WARNING) {
+                overview.setWarningHighlight(msg.line);
             }
         }
     }
@@ -1648,6 +1657,7 @@ public class SourceEditor {
     public void redraw() {
         styledText.redraw();
         ruler.redraw();
+        overview.redraw();
     }
 
     public Color getLineBackground(Node root, int lineOffset) {
