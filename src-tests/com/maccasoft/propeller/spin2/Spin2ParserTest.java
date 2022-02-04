@@ -324,4 +324,23 @@ class Spin2ParserTest {
         Assertions.assertEquals("a := (b == 1) ? 2 : 3", root.getText());
     }
 
+    @Test
+    void testDatDebugLines() {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "DAT    org $000\n"
+            + "       debug(`STARTING)\n"
+            + ""));
+
+        Node root = subject.parse();
+        DataNode data0 = (DataNode) root.getChild(0);
+
+        DataLineNode line0 = (DataLineNode) data0.getChild(0);
+        Assertions.assertEquals("org", line0.instruction.getText());
+        DataLineNode line1 = (DataLineNode) data0.getChild(1);
+        Assertions.assertEquals("debug", line1.instruction.getText());
+        Assertions.assertEquals("(", line1.getToken(1).getText());
+        Assertions.assertEquals("`STARTING", line1.getToken(2).getText());
+        Assertions.assertEquals(")", line1.getToken(3).getText());
+    }
+
 }

@@ -628,7 +628,24 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 if (id == null || id != TokenId.TYPE) {
                     id = TokenId.PASM_INSTRUCTION;
                 }
+                if ("debug".equalsIgnoreCase(node.instruction.getText())) {
+                    id = TokenId.KEYWORD;
+                }
                 tokens.add(new TokenMarker(node.instruction, id));
+                if ("debug".equalsIgnoreCase(node.instruction.getText())) {
+                    for (int i = 1; i < node.getTokens().size(); i++) {
+                        Token token = node.getToken(i);
+                        if (token.type == Token.NUMBER) {
+                            tokens.add(new TokenMarker(token, TokenId.NUMBER));
+                        }
+                        else if (token.type == Token.OPERATOR) {
+                            tokens.add(new TokenMarker(token, TokenId.OPERATOR));
+                        }
+                        else if (token.type == Token.STRING) {
+                            tokens.add(new TokenMarker(token, TokenId.STRING));
+                        }
+                    }
+                }
             }
             if (node.modifier != null) {
                 tokens.add(new TokenMarker(node.modifier, TokenId.PASM_MODIFIER));

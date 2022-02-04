@@ -622,6 +622,13 @@ public class Spin2Parser {
                     state = 1;
                     // fall-through
                 case 1:
+                    if ("debug".equalsIgnoreCase(token.getText())) {
+                        parent.instruction = new Node(parent);
+                        parent.instruction.addToken(token);
+                        child = parent;
+                        state = 9;
+                        break;
+                    }
                     if (Spin2Model.isCondition(token.getText())) {
                         parent.condition = new Node(parent);
                         parent.condition.addToken(token);
