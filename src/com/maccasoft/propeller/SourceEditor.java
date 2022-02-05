@@ -858,6 +858,7 @@ public class SourceEditor {
                     popupWindow.setLocation(bounds.x, bounds.y - size.y - 3);
 
                     popupWindow.open();
+                    styledText.setFocus();
                     return;
                 }
 
@@ -888,6 +889,7 @@ public class SourceEditor {
 
                         popupWindow.setBounds(bounds);
                         popupWindow.open();
+                        styledText.setFocus();
                     }
                 }
 
@@ -1027,7 +1029,7 @@ public class SourceEditor {
                             gc.setForeground(ColorRegistry.getColor(0xC0, 0x00, 0x00));
                         }
                         else {
-                            gc.setForeground(ColorRegistry.getColor(0xFC, 0xAF, 0x3E));
+                            gc.setForeground(ColorRegistry.getColor(0xF6, 0xD4, 0x56));
                         }
                         gc.drawPolyline(polyline);
                     }
