@@ -36,6 +36,8 @@ import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.IfElse;
 import com.maccasoft.propeller.expressions.LessOrEquals;
 import com.maccasoft.propeller.expressions.LessThan;
+import com.maccasoft.propeller.expressions.LimitMax;
+import com.maccasoft.propeller.expressions.LimitMin;
 import com.maccasoft.propeller.expressions.LogicalAnd;
 import com.maccasoft.propeller.expressions.LogicalNot;
 import com.maccasoft.propeller.expressions.LogicalOr;
@@ -264,6 +266,13 @@ public class Spin2ExpressionBuilder {
                     left = new Subtract(left, right);
                     break;
 
+                case "#>":
+                    left = new LimitMin(left, right);
+                    break;
+                case "<#":
+                    left = new LimitMax(left, right);
+                    break;
+
                 case "ADDBITS":
                     left = new Addbits(left, right);
                     break;
@@ -325,9 +334,9 @@ public class Spin2ExpressionBuilder {
             throw new CompilerMessage("expecting operand", tokens.get(tokens.size() - 1));
         }
 
-        if (unary.contains(token.getText())) {
+        if (unary.contains(token.getText().toUpperCase())) {
             token = next();
-            switch (token.getText()) {
+            switch (token.getText().toUpperCase()) {
                 case "!":
                     return new Not(parseAtom());
                 case "!!":
@@ -424,17 +433,7 @@ public class Spin2ExpressionBuilder {
         String text;
         Expression expression;
 
-        text = "16 / 2 / 2";
-        System.out.println(text);
-        expression = parse(text);
-        System.out.println(expression + " = " + expression.getNumber());
-
-        text = "160 * 25 - 1";
-        System.out.println(text);
-        expression = parse(text);
-        System.out.println(expression + " = " + expression.getNumber());
-
-        text = "48 addpins 1";
+        text = "decod 12";
         System.out.println(text);
         expression = parse(text);
         System.out.println(expression + " = " + expression.getNumber());
