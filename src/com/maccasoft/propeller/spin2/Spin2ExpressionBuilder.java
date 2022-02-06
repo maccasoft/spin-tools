@@ -49,9 +49,14 @@ import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NotEquals;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Or;
+import com.maccasoft.propeller.expressions.Rev;
+import com.maccasoft.propeller.expressions.Rol;
+import com.maccasoft.propeller.expressions.Ror;
 import com.maccasoft.propeller.expressions.Round;
+import com.maccasoft.propeller.expressions.Sar;
 import com.maccasoft.propeller.expressions.Sca;
 import com.maccasoft.propeller.expressions.Scas;
+import com.maccasoft.propeller.expressions.Scl;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
 import com.maccasoft.propeller.expressions.Subtract;
@@ -216,14 +221,18 @@ public class Spin2ExpressionBuilder {
                 case "<<":
                     left = new ShiftLeft(left, right);
                     break;
-                case "~>":
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
-                case "->":
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
-                case "<-":
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
-                case "><":
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
+                case "SAR":
+                    left = new Sar(left, right);
+                    break;
+                case "ROR":
+                    left = new Ror(left, right);
+                    break;
+                case "ROL":
+                    left = new Rol(left, right);
+                    break;
+                case "REV":
+                    left = new Rev(left, right);
+                    break;
 
                 case "&":
                     left = new And(left, right);
@@ -239,7 +248,8 @@ public class Spin2ExpressionBuilder {
                     left = new Multiply(left, right);
                     break;
                 case "**":
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
+                    left = new Scl(left, right);
+                    break;
                 case "/":
                     left = new Divide(left, right);
                     break;

@@ -89,4 +89,10 @@ class ExpressionTest {
         Assertions.assertFalse(exp.isConstant());
     }
 
+    @Test
+    void testRev() {
+        Expression exp = new Rev(new NumberLiteral(0b1_00000001), new NumberLiteral(8));
+        Assertions.assertEquals(0b0_10000000, exp.getNumber().intValue());
+    }
+
 }

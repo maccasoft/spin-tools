@@ -44,6 +44,11 @@ import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NotEquals;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Or;
+import com.maccasoft.propeller.expressions.Rev;
+import com.maccasoft.propeller.expressions.Rol;
+import com.maccasoft.propeller.expressions.Ror;
+import com.maccasoft.propeller.expressions.Sar;
+import com.maccasoft.propeller.expressions.Scl;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
 import com.maccasoft.propeller.expressions.Subtract;
@@ -194,13 +199,17 @@ public class Spin1ExpressionBuilder {
                     left = new ShiftLeft(left, right);
                     break;
                 case "~>":
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
+                    left = new Sar(left, right);
+                    break;
                 case "->":
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
+                    left = new Ror(left, right);
+                    break;
                 case "<-":
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
+                    left = new Rol(left, right);
+                    break;
                 case "><":
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
+                    left = new Rev(left, right);
+                    break;
 
                 case "&":
                     left = new And(left, right);
@@ -216,7 +225,8 @@ public class Spin1ExpressionBuilder {
                     left = new Multiply(left, right);
                     break;
                 case "**":
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
+                    left = new Scl(left, right);
+                    break;
                 case "/":
                     left = new Divide(left, right);
                     break;

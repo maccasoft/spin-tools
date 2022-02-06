@@ -510,6 +510,19 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void test3() {
+        String text = "word[0].[1] := a";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [word]\n"
+            + "      +-- [0]\n"
+            + "      +-- [.]\n"
+            + "      +-- [1]\n"
+            + " +-- [a]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder();
 
