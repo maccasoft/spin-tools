@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -44,7 +45,7 @@ class Spin2ObjectCompilerTest {
         Node root = parser.parse();
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
-        Spin2Object obj = compiler.compileObject(root);
+        compiler.compileObject(root);
 
         Assertions.assertEquals(0x000L, compiler.source.get(0).getScope().getSymbol("$").getNumber());
         Assertions.assertEquals(0x000L, compiler.source.get(1).getScope().getSymbol("$").getNumber());
@@ -53,8 +54,6 @@ class Spin2ObjectCompilerTest {
         Assertions.assertEquals(0x004L, compiler.source.get(4).getScope().getSymbol("$").getNumber());
         Assertions.assertEquals(0x006L, compiler.source.get(5).getScope().getSymbol("$").getNumber());
         Assertions.assertEquals(0x007L, compiler.source.get(6).getScope().getSymbol("$").getNumber());
-
-        obj.generateBinary(new ByteArrayOutputStream());
     }
 
     @Test
@@ -3073,7 +3072,7 @@ class Spin2ObjectCompilerTest {
             + "'         org\n"
             + "00009 00009       19 5C          INLINE-EXEC\n"
             + "0000B 0000B       00 00 03 00    ORG=$000, 4\n"
-            + "0000F 0000F   00F                                    org\n"
+            + "0000F 0000F   003                                    org\n"
             + "0000F 0000F   000 00 B0 07 F6                        mov     pr0, #0\n"
             + "00013 00013   001 E0 B1 03 F1    l1                  add     pr0, a\n"
             + "00017 00017   002 FE C1 6F FB                        djnz    a, #l1\n"
@@ -3213,6 +3212,159 @@ class Spin2ObjectCompilerTest {
             + "00025 00025       23             LOOKDONE\n"
             + "00026 00026       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "00027 00027       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testOrg() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                long    0\n"
+            + "                long    1\n"
+            + "                org   $100\n"
+            + "                long    2\n"
+            + "                long    3\n"
+            + "                long    4\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 00 00 00 00                        long    0\n"
+            + "00004 00004   001 01 00 00 00                        long    1\n"
+            + "00008 00008   002                                    org     $100\n"
+            + "00008 00008   100 02 00 00 00                        long    2\n"
+            + "0000C 0000C   101 03 00 00 00                        long    3\n"
+            + "00010 00010   102 04 00 00 00                        long    4\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRes() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                long    0\n"
+            + "                res    1\n"
+            + "                res    2\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 00 00 00 00                        long    0\n"
+            + "00004 00004   001                                    res     1\n"
+            + "00004 00004   002                                    res     2\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testFit() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                long    0[$10]\n"
+            + "                fit   $10\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 00 00 00 00                        long    0[$10]\n"
+            + "00004 00004   001 00 00 00 00   \n"
+            + "00008 00008   002 00 00 00 00   \n"
+            + "0000C 0000C   003 00 00 00 00   \n"
+            + "00010 00010   004 00 00 00 00   \n"
+            + "00014 00014   005 00 00 00 00   \n"
+            + "00018 00018   006 00 00 00 00   \n"
+            + "0001C 0001C   007 00 00 00 00   \n"
+            + "00020 00020   008 00 00 00 00   \n"
+            + "00024 00024   009 00 00 00 00   \n"
+            + "00028 00028   00A 00 00 00 00   \n"
+            + "0002C 0002C   00B 00 00 00 00   \n"
+            + "00030 00030   00C 00 00 00 00   \n"
+            + "00034 00034   00D 00 00 00 00   \n"
+            + "00038 00038   00E 00 00 00 00   \n"
+            + "0003C 0003C   00F 00 00 00 00\n"
+            + "00040 00040   010                                    fit     $10\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testCogFitLimit() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                long    0[$10]\n"
+            + "                long    1\n"
+            + "                fit   $10\n"
+            + "";
+
+        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(text);
+            }
+        });
+    }
+
+    @Test
+    void testLutFitLimit() throws Exception {
+        String text = ""
+            + "DAT             org   $200\n"
+            + "                long    0[$10]\n"
+            + "                long    1\n"
+            + "                fit   $210\n"
+            + "";
+
+        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(text);
+            }
+        });
+    }
+
+    @Test
+    void testByte() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                byte    0\n"
+            + "                byte    1\n"
+            + "                byte    2\n"
+            + "                byte    3\n"
+            + "                byte    4\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 00                                 byte    0\n"
+            + "00001 00001   000 01                                 byte    1\n"
+            + "00002 00002   000 02                                 byte    2\n"
+            + "00003 00003   000 03                                 byte    3\n"
+            + "00004 00004   001 04                                 byte    4\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testWord() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                word    0\n"
+            + "                word    1\n"
+            + "                word    2\n"
+            + "                word    3\n"
+            + "                word    4\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 00 00                              word    0\n"
+            + "00002 00002   000 01 00                              word    1\n"
+            + "00004 00004   001 02 00                              word    2\n"
+            + "00006 00006   001 03 00                              word    3\n"
+            + "00008 00008   002 04 00                              word    4\n"
             + "", compile(text));
     }
 

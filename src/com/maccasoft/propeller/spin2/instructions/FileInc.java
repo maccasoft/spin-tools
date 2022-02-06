@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -20,12 +20,6 @@ public class FileInc extends Spin2InstructionObject {
     public FileInc(Spin2Context context, byte[] data) {
         super(context);
         this.data = data;
-    }
-
-    @Override
-    public int resolve(int address) {
-        context.setAddress(address);
-        return address + data.length;
     }
 
     @Override

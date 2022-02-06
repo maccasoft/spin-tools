@@ -137,8 +137,6 @@ public class Spin2ObjectCompiler {
     }
 
     public Spin2Object compileObject(Node root) {
-        boolean hubMode = false;
-        int address = 0, hubAddress = 0;
         Spin2Object object = new Spin2Object();
 
         for (Node node : root.getChilds()) {
@@ -286,8 +284,9 @@ public class Spin2ObjectCompiler {
             ld[index] = object.writeLong(0, "End");
         }
 
-        hubMode = true;
-        hubAddress = object.getSize();
+        int address = 0;
+        int hubAddress = object.getSize();
+        boolean hubMode = true;
 
         for (Spin2PAsmLine line : source) {
             line.getScope().setHubAddress(hubAddress);
@@ -298,13 +297,13 @@ public class Spin2ObjectCompiler {
                 hubMode = false;
                 hubAddress = (hubAddress + 3) & ~3;
             }
-            boolean isCogCode = address < 0x200;
+            boolean isCogCode = address < 0x200 * 4;
             if (line.getInstructionFactory() instanceof Fit) {
                 ((Fit) line.getInstructionFactory()).setDefaultLimit(isCogCode ? 0x1F0 : 0x400);
             }
 
             try {
-                address = line.resolve(hubMode ? hubAddress : address);
+                address = line.resolve(hubMode ? hubAddress : address, hubMode);
                 hubAddress += line.getInstructionObject().getSize();
             } catch (CompilerMessage e) {
                 logMessage(e);
@@ -313,7 +312,7 @@ public class Spin2ObjectCompiler {
             }
 
             if (line.getInstructionFactory() instanceof Org) {
-                isCogCode = address < 0x200;
+                isCogCode = address < 0x200 * 4;
             }
             if (hubMode) {
                 if (address > hubAddress) {
@@ -324,11 +323,11 @@ public class Spin2ObjectCompiler {
                 }
             }
             else {
-                if (isCogCode && address > 0x1F0) {
-                    logMessage(new CompilerMessage("cog code limit exceeded by " + (address - 0x1F0) + " long(s)", line.getData()));
+                if (isCogCode && address > 0x200 * 4) {
+                    logMessage(new CompilerMessage("cog code limit exceeded by " + ((address - 0x200) >> 2) + " long(s)", line.getData()));
                 }
-                else if (!isCogCode && address > 0x400) {
-                    logMessage(new CompilerMessage("lut code limit exceeded by " + (address - 0x400) + " long(s)", line.getData()));
+                else if (!isCogCode && address > 0x400 * 4) {
+                    logMessage(new CompilerMessage("lut code limit exceeded by " + ((address - 0x400) >> 2) + " long(s)", line.getData()));
                 }
             }
         }

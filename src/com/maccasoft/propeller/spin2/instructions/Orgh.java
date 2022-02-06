@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -45,8 +45,8 @@ public class Orgh extends Spin2PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address) {
-            context.setAddress(address);
+        public int resolve(int address, boolean hubMode) {
+            context.setAddress(hubMode ? address : address >> 2);
             return arg0 != null ? arg0.getInteger() : address;
         }
 

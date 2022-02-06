@@ -88,7 +88,7 @@ import jssc.SerialPortException;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools";
-    public static final String APP_VERSION = "0.0.4";
+    public static final String APP_VERSION = "0.0.5";
 
     Shell shell;
     SashForm sashForm;

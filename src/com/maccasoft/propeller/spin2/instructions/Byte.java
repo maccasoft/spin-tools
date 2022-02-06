@@ -36,12 +36,6 @@ public class Byte extends Spin2PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address) {
-            context.setAddress(address);
-            return address + (getSize() + 3) / 4;
-        }
-
-        @Override
         public int getSize() {
             int size = 0;
             for (Spin2PAsmExpression exp : arguments) {

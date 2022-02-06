@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -29,7 +29,7 @@ public class InlinePAsm extends Spin2Bytecode {
 
     @Override
     public int resolve(int address) {
-        return line.resolve(address);
+        return line.resolve(address, false);
     }
 
     @Override
