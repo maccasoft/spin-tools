@@ -1908,35 +1908,152 @@ public class Spin2ObjectCompiler {
                 source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
             }
             else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
-                boolean indexed = false;
+                boolean hasIndex = false;
+                Spin2StatementNode bitfieldNode = null;
 
                 source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                 if (node.getChildCount() > 1) {
-                    source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-                    indexed = true;
-                    if (node.getChildCount() > 2) {
+                    int n = 1;
+                    if (".".equals(node.getChild(n).getText())) {
+                        n++;
+                        if (n >= node.getChildCount()) {
+                            throw new CompilerMessage("expected bitfield expression", node.getToken());
+                        }
+                        bitfieldNode = node.getChild(n++);
+                    }
+                    if (n < node.getChildCount()) {
+                        source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
+                        hasIndex = true;
+                    }
+                    if (n < node.getChildCount()) {
                         throw new RuntimeException("expression syntax error " + node.getText());
                     }
                 }
 
-                StringBuilder sb = new StringBuilder(node.getText().toUpperCase());
-                sb.append(push ? "_READ" : "_WRITE");
-                sb.append(indexed ? "_INDEXED" : "");
+                int bitfield = -1;
+                if (bitfieldNode != null) {
+                    if ("..".equals(bitfieldNode.getText())) {
+                        try {
+                            Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
+                            Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
+                            if (exp1.isConstant() && exp2.isConstant()) {
+                                int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
+                                int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
+                                Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
+                                bitfield = exp.getNumber().intValue();
+                            }
+                        } catch (Exception e) {
+                            // Do nothing
+                        }
 
-                if ("BYTE".equalsIgnoreCase(node.getText())) {
-                    source.add(new Bytecode(context, new byte[] {
-                        indexed ? (byte) 0x62 : (byte) 0x65, push ? (byte) 0x80 : (byte) 0x81
-                    }, node.getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
+                        if (bitfield == -1) {
+                            source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
+                            source.add(new Bytecode(context, new byte[] {
+                                (byte) 0x9F, (byte) 0x94
+                            }, "ADDBITS"));
+                        }
+                    }
+                    else {
+                        try {
+                            Expression exp = buildConstantExpression(context, bitfieldNode);
+                            if (exp.isConstant()) {
+                                bitfield = exp.getNumber().intValue();
+                            }
+                        } catch (Exception e) {
+                            // Do nothing
+                        }
+
+                        if (bitfield == -1) {
+                            source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
+                        }
+                    }
                 }
-                else if ("WORD".equalsIgnoreCase(node.getText())) {
-                    source.add(new Bytecode(context, new byte[] {
-                        indexed ? (byte) 0x63 : (byte) 0x66, push ? (byte) 0x80 : (byte) 0x81
-                    }, node.getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
+
+                StringBuilder sb = new StringBuilder(node.getText().toUpperCase());
+
+                if (bitfieldNode == null) {
+                    sb.append(push || bitfieldNode != null ? "_READ" : "_WRITE");
+                    sb.append(hasIndex ? "_INDEXED" : "");
+                    if ("BYTE".equalsIgnoreCase(node.getText())) {
+                        source.add(new Bytecode(context, new byte[] {
+                            hasIndex ? (byte) 0x62 : (byte) 0x65, push ? (byte) 0x80 : (byte) 0x81
+                        }, sb.toString()));
+                    }
+                    else if ("WORD".equalsIgnoreCase(node.getText())) {
+                        source.add(new Bytecode(context, new byte[] {
+                            hasIndex ? (byte) 0x63 : (byte) 0x66, push ? (byte) 0x80 : (byte) 0x81
+                        }, sb.toString()));
+                    }
+                    else if ("LONG".equalsIgnoreCase(node.getText())) {
+                        source.add(new Bytecode(context, new byte[] {
+                            hasIndex ? (byte) 0x64 : (byte) 0x67, push ? (byte) 0x80 : (byte) 0x81
+                        }, sb.toString()));
+                    }
                 }
-                else if ("LONG".equalsIgnoreCase(node.getText())) {
-                    source.add(new Bytecode(context, new byte[] {
-                        indexed ? (byte) 0x64 : (byte) 0x67, push ? (byte) 0x80 : (byte) 0x81
-                    }, node.getText().toUpperCase() + (push ? "_READ" : "_WRITE")));
+                else {
+                    sb.append("_SETUP");
+                    sb.append(hasIndex ? "_INDEXED" : "");
+                    if ("BYTE".equalsIgnoreCase(node.getText())) {
+                        source.add(new Bytecode(context, new byte[] {
+                            hasIndex ? (byte) 0x62 : (byte) 0x65
+                        }, sb.toString()));
+                    }
+                    else if ("WORD".equalsIgnoreCase(node.getText())) {
+                        source.add(new Bytecode(context, new byte[] {
+                            hasIndex ? (byte) 0x63 : (byte) 0x66
+                        }, sb.toString()));
+                    }
+                    else if ("LONG".equalsIgnoreCase(node.getText())) {
+                        source.add(new Bytecode(context, new byte[] {
+                            hasIndex ? (byte) 0x64 : (byte) 0x67
+                        }, sb.toString()));
+                    }
+                }
+
+                if (bitfieldNode != null) {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+                    sb = new StringBuilder();
+                    sb.append("BITFIELD_");
+
+                    try {
+                        if (bitfield == -1) {
+                            os.write(0xDE); // Read (pop)
+                        }
+                        else {
+                            if (bitfield >= 0 && bitfield <= 15) {
+                                os.write(0xE0 + bitfield);
+                            }
+                            else if (bitfield >= 16 && bitfield <= 31) {
+                                os.write(0xF0 + (bitfield - 16));
+                            }
+                            else {
+                                os.write(0xDF);
+                                os.write(Constant.wrVar(bitfield));
+                            }
+                        }
+                        os.write(0x80);
+                        sb.append("READ");
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+
+                    if (bitfield == -1) {
+                        sb.append(" (pop)");
+                    }
+                    else {
+                        if (bitfield >= 0 && bitfield <= 15) {
+                            sb.append(" (short)");
+                        }
+                        else if (bitfield >= 16 && bitfield <= 31) {
+                            sb.append(" (short)");
+                        }
+                    }
+                    if (push) {
+                        sb.append(" (push)");
+                    }
+
+                    source.add(new Bytecode(context, os.toByteArray(), sb.toString()));
                 }
             }
             else {
@@ -2527,54 +2644,150 @@ public class Spin2ObjectCompiler {
             source.addAll(leftAssign(context, node.getChild(0), node.getChild(0).getType() == Token.OPERATOR, false));
         }
         else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
-            boolean indexed = false;
+            boolean hasIndex = false;
 
             source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
             if (node.getChildCount() > 1) {
-                source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
-                indexed = true;
-                if (node.getChildCount() > 2) {
+                int n = 1;
+                if (".".equals(node.getChild(n).getText())) {
+                    n++;
+                    if (n >= node.getChildCount()) {
+                        throw new CompilerMessage("expected bitfield expression", node.getToken());
+                    }
+                    bitfieldNode = node.getChild(n++);
+                }
+                if (n < node.getChildCount()) {
+                    source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
+                    hasIndex = true;
+                }
+                if (n < node.getChildCount()) {
                     throw new RuntimeException("expression syntax error " + node.getText());
                 }
             }
 
-            StringBuilder sb = new StringBuilder(node.getText().toUpperCase());
-            sb.append(push ? "_MODIFY" : "_WRITE");
-            sb.append(indexed ? "_INDEXED" : "");
+            int bitfield = -1;
+            if (bitfieldNode != null) {
+                if ("..".equals(bitfieldNode.getText())) {
+                    try {
+                        Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
+                        Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
+                        if (exp1.isConstant() && exp2.isConstant()) {
+                            int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
+                            int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
+                            Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
+                            bitfield = exp.getNumber().intValue();
+                        }
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
 
-            if (push) {
+                    if (bitfield == -1) {
+                        source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
+                        source.add(new Bytecode(context, new byte[] {
+                            (byte) 0x9F, (byte) 0x94
+                        }, "ADDBITS"));
+                    }
+                }
+                else {
+                    try {
+                        Expression exp = buildConstantExpression(context, bitfieldNode);
+                        if (exp.isConstant()) {
+                            bitfield = exp.getNumber().intValue();
+                        }
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+
+                    if (bitfield == -1) {
+                        source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
+                    }
+                }
+            }
+
+            StringBuilder sb = new StringBuilder(node.getText().toUpperCase());
+            sb.append(push || bitfieldNode != null ? "_SETUP" : "_WRITE");
+            sb.append(hasIndex ? "_INDEXED" : "");
+
+            if (push || bitfieldNode != null) {
                 if ("BYTE".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        indexed ? (byte) 0x62 : (byte) 0x65
+                        hasIndex ? (byte) 0x62 : (byte) 0x65
                     }, sb.toString()));
                 }
                 else if ("WORD".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        indexed ? (byte) 0x63 : (byte) 0x66
+                        hasIndex ? (byte) 0x63 : (byte) 0x66
                     }, sb.toString()));
                 }
                 else if ("LONG".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        indexed ? (byte) 0x64 : (byte) 0x67
+                        hasIndex ? (byte) 0x64 : (byte) 0x67
                     }, sb.toString()));
                 }
             }
             else {
                 if ("BYTE".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        indexed ? (byte) 0x62 : (byte) 0x65, (byte) 0x81
+                        hasIndex ? (byte) 0x62 : (byte) 0x65, (byte) 0x81
                     }, sb.toString()));
                 }
                 else if ("WORD".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        indexed ? (byte) 0x63 : (byte) 0x66, (byte) 0x81
+                        hasIndex ? (byte) 0x63 : (byte) 0x66, (byte) 0x81
                     }, sb.toString()));
                 }
                 else if ("LONG".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        indexed ? (byte) 0x64 : (byte) 0x67, (byte) 0x81
+                        hasIndex ? (byte) 0x64 : (byte) 0x67, (byte) 0x81
                     }, sb.toString()));
                 }
+            }
+
+            if (bitfieldNode != null) {
+                sb = new StringBuilder();
+                sb.append("BITFIELD_");
+
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+                try {
+                    if (bitfield == -1) {
+                        os.write(0xDE); // Read (pop)
+                    }
+                    else {
+                        if (bitfield >= 0 && bitfield <= 15) {
+                            os.write(0xE0 + bitfield);
+                        }
+                        else if (bitfield >= 16 && bitfield <= 31) {
+                            os.write(0xF0 + (bitfield - 16));
+                        }
+                        else {
+                            os.write(0xDF);
+                            os.write(Constant.wrVar(bitfield));
+                        }
+                    }
+                } catch (Exception e) {
+                    // Do nothing
+                }
+
+                os.write(push ? 0x82 : 0x81);
+                sb.append("WRITE");
+
+                if (bitfield == -1) {
+                    sb.append(" (pop)");
+                }
+                else {
+                    if (bitfield >= 0 && bitfield <= 15) {
+                        sb.append(" (short)");
+                    }
+                    else if (bitfield >= 16 && bitfield <= 31) {
+                        sb.append(" (short)");
+                    }
+                }
+                if (push) {
+                    sb.append(" (push)");
+                }
+
+                source.add(new Bytecode(context, os.toByteArray(), sb.toString()));
             }
         }
         else {

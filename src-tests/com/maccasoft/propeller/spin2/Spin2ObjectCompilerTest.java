@@ -2302,7 +2302,7 @@ class Spin2ObjectCompilerTest {
             + "'     a := BYTE[@b][1]\n"
             + "0000E 0000E       D1 7F          VAR_ADDRESS DBASE+$00001 (short)\n"
             + "00010 00010       A2             CONSTANT (1)\n"
-            + "00011 00011       62 80          BYTE_READ\n"
+            + "00011 00011       62 80          BYTE_READ_INDEXED\n"
             + "00013 00013       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "00014 00014       04             RETURN\n"
             + "00015 00015       00 00 00       Padding\n"
@@ -3047,6 +3047,80 @@ class Spin2ObjectCompilerTest {
             + "00024 00024       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "00025 00025       04             RETURN\n"
             + "00026 00026       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMemoryBitFieldWrite() throws Exception {
+        String text = ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    byte[0].[3] := a\n"
+            + "    word[1].[3] := a\n"
+            + "    long[2].[3] := a\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       19 00 00 00    End\n"
+            + "' PUB main | a\n"
+            + "00008 00008       04             (stack size)\n"
+            + "'     byte[0].[3] := a\n"
+            + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A 0000A       A1             CONSTANT (0)\n"
+            + "0000B 0000B       65             BYTE_SETUP\n"
+            + "0000C 0000C       E3 81          BITFIELD_WRITE (short)\n"
+            + "'     word[1].[3] := a\n"
+            + "0000E 0000E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000F 0000F       A2             CONSTANT (1)\n"
+            + "00010 00010       66             WORD_SETUP\n"
+            + "00011 00011       E3 81          BITFIELD_WRITE (short)\n"
+            + "'     long[2].[3] := a\n"
+            + "00013 00013       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00014 00014       A3             CONSTANT (2)\n"
+            + "00015 00015       67             LONG_SETUP\n"
+            + "00016 00016       E3 81          BITFIELD_WRITE (short)\n"
+            + "00018 00018       04             RETURN\n"
+            + "00019 00019       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMemoryBitFieldRead() throws Exception {
+        String text = ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := byte[0].[3]\n"
+            + "    a := word[1].[3]\n"
+            + "    a := long[2].[3]\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       19 00 00 00    End\n"
+            + "' PUB main | a\n"
+            + "00008 00008       04             (stack size)\n"
+            + "'     a := byte[0].[3]\n"
+            + "00009 00009       A1             CONSTANT (0)\n"
+            + "0000A 0000A       65             BYTE_SETUP\n"
+            + "0000B 0000B       E3 80          BITFIELD_READ (short) (push)\n"
+            + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := word[1].[3]\n"
+            + "0000E 0000E       A2             CONSTANT (1)\n"
+            + "0000F 0000F       66             WORD_SETUP\n"
+            + "00010 00010       E3 80          BITFIELD_READ (short) (push)\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := long[2].[3]\n"
+            + "00013 00013       A3             CONSTANT (2)\n"
+            + "00014 00014       67             LONG_SETUP\n"
+            + "00015 00015       E3 80          BITFIELD_READ (short) (push)\n"
+            + "00017 00017       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00018 00018       04             RETURN\n"
+            + "00019 00019       00 00 00       Padding\n"
             + "", compile(text));
     }
 
