@@ -76,6 +76,7 @@ public class Preferences {
         public int[] tabStops;
 
         public String[] openTabs;
+        public String lastPath;
 
         public Bounds terminalWindow;
 
@@ -159,6 +160,17 @@ public class Preferences {
             preferences.lru.remove(preferences.lru.size() - 1);
         }
         changeSupport.firePropertyChange(PROP_LRU, null, preferences.lru);
+    }
+
+    public File getLastPath() {
+        if (preferences.lastPath == null) {
+            return new File("");
+        }
+        return new File(preferences.lastPath);
+    }
+
+    public void setLastPath(File lastPath) {
+        preferences.lastPath = lastPath.getAbsolutePath();
     }
 
     public String getPort() {

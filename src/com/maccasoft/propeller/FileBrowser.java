@@ -108,7 +108,7 @@ public class FileBrowser {
             if (!((File) e1).isDirectory() && ((File) e2).isDirectory()) {
                 return 1;
             }
-            return super.compare(viewer, e1, e2);
+            return ((File) e1).getName().compareToIgnoreCase(((File) e2).getName());
         }
 
         boolean isRootObject(Object o) {

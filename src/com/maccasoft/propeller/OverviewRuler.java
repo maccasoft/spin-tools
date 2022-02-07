@@ -129,6 +129,7 @@ public class OverviewRuler {
                 if (popupWindow != null) {
                     popupWindow.dispose();
                     popupWindow = null;
+                    styledText.setFocus();
                 }
                 canvas.setCursor(isOnAnnotation(e.y) ? handCursor : null);
             }
@@ -191,7 +192,7 @@ public class OverviewRuler {
                     popupWindow.setBounds(display.map(canvas, null, popupRect));
 
                     popupWindow.open();
-                    canvas.setFocus();
+                    styledText.setFocus();
                 }
             }
         });

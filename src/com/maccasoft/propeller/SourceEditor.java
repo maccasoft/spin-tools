@@ -744,7 +744,9 @@ public class SourceEditor {
                         popupWindow.dispose();
                         popupWindow = null;
                         popupMouseBounds = null;
+                        styledText.setFocus();
                     }
+                    return;
                 }
 
                 hoverToken = hoverHighlightToken = null;

@@ -37,8 +37,10 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.IOpenListener;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.OpenEvent;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabFolder2Adapter;
@@ -201,6 +203,8 @@ public class SpinTools {
         this.shell = shell;
         this.shell.setData(this);
 
+        preferences = Preferences.getInstance();
+
         Menu menu = new Menu(shell, SWT.BAR);
         createFileMenu(menu);
         createEditMenu(menu);
@@ -240,9 +244,24 @@ public class SpinTools {
         browser.setRoots(new String[] {
             new File(System.getProperty("user.home")).getAbsolutePath()
         });
-        File file = new File("").getAbsoluteFile();
-        browser.setSelection(file);
 
+        browser.addSelectionChangedListener(new ISelectionChangedListener() {
+
+            @Override
+            public void selectionChanged(SelectionChangedEvent event) {
+                if (event.getSelection().isEmpty()) {
+                    preferences.setLastPath(null);
+                    return;
+                }
+                File file = (File) ((IStructuredSelection) event.getSelection()).getFirstElement();
+                if (!file.isDirectory()) {
+                    file = file.getParentFile();
+                }
+                if (file != null) {
+                    preferences.setLastPath(file);
+                }
+            }
+        });
         browser.addOpenListener(new IOpenListener() {
 
             @Override
@@ -254,7 +273,7 @@ public class SpinTools {
                         if (fileToOpen.isDirectory()) {
                             return;
                         }
-                        EditorTab editorTab = findFileEditorTab(file.getAbsolutePath());
+                        EditorTab editorTab = findFileEditorTab(fileToOpen.getAbsolutePath());
                         if (editorTab == null) {
                             openNewTab(fileToOpen, true);
                         }
@@ -309,8 +328,6 @@ public class SpinTools {
         GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
         layoutData.heightHint = 24;
         statusLine.setLayoutData(layoutData);
-
-        preferences = Preferences.getInstance();
 
         sourcePool = new SourcePool();
 
@@ -385,31 +402,29 @@ public class SpinTools {
             @Override
             public void run() {
                 final String[] openTabs = preferences.getOpenTabs();
-                if (openTabs == null || openTabs.length == 0 || !preferences.getReloadOpenTabs()) {
-                    return;
-                }
+                if (openTabs != null && preferences.getReloadOpenTabs()) {
+                    for (int i = 0; i < openTabs.length; i++) {
+                        File fileToOpen = new File(openTabs[i]);
+                        if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
+                            continue;
+                        }
+                        try {
+                            String text = loadFromFile(fileToOpen);
+                            tabFolder.getDisplay().asyncExec(new Runnable() {
 
-                for (int i = 0; i < openTabs.length; i++) {
-                    File fileToOpen = new File(openTabs[i]);
-                    if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
-                        continue;
-                    }
-                    try {
-                        String text = loadFromFile(fileToOpen);
-                        tabFolder.getDisplay().asyncExec(new Runnable() {
+                                @Override
+                                public void run() {
+                                    EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
+                                    editorTab.setEditorText(text);
+                                    editorTab.setFile(fileToOpen);
+                                    editorTab.addCaretListener(caretListener);
+                                    editorTab.addOpenListener(openListener);
+                                }
 
-                            @Override
-                            public void run() {
-                                EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
-                                editorTab.setEditorText(text);
-                                editorTab.setFile(fileToOpen);
-                                editorTab.addCaretListener(caretListener);
-                                editorTab.addOpenListener(openListener);
-                            }
-
-                        });
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
 
@@ -427,10 +442,12 @@ public class SpinTools {
                                 EditorTab tab = (EditorTab) tabFolder.getItem(0).getData();
                                 tab.setFocus();
                                 updateCaretPosition();
+                                //selection = tab.getFile();
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+                        browser.setSelection(preferences.getLastPath());
                     }
 
                 });
