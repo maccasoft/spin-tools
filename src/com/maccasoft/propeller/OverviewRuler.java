@@ -11,8 +11,8 @@
 
 package com.maccasoft.propeller;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
@@ -23,6 +23,7 @@ import org.eclipse.swt.events.MouseTrackAdapter;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -42,18 +43,21 @@ public class OverviewRuler {
     Canvas canvas;
 
     StyledText styledText;
+    Cursor handCursor;
 
     private Color errorColor;
     private Color errorBackgroundColor;
     private Color warningColor;
     private Color warningBackgroundColor;
-    private Set<Integer> errorHighlight = new HashSet<Integer>();
-    private Set<Integer> warningHighlight = new HashSet<Integer>();
+    private Map<Integer, String> errorHighlight = new TreeMap<Integer, String>();
+    private Map<Integer, String> warningHighlight = new TreeMap<Integer, String>();
 
     Shell popupWindow;
 
     public OverviewRuler(Composite parent) {
         display = parent.getDisplay();
+
+        handCursor = display.getSystemCursor(SWT.CURSOR_HAND);
 
         canvas = new Canvas(parent, SWT.DOUBLE_BUFFERED | SWT.NO_FOCUS);
         canvas.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_LIGHT_SHADOW));
@@ -65,20 +69,22 @@ public class OverviewRuler {
                 if (styledText == null) {
                     return;
                 }
+
                 Rectangle rect = canvas.getClientArea();
                 int lineCount = styledText.getLineCount();
-                float lineStep = (float) (rect.height - HEIGHT) / lineCount;
+                float lineStep = Math.min((float) (rect.height - HEIGHT) / lineCount, styledText.getLineHeight());
+                int offset = Math.max((int) ((lineStep - HEIGHT) / 2), 0);
 
-                for (int line : warningHighlight) {
-                    int y = (int) (line * lineStep);
+                for (int line : warningHighlight.keySet()) {
+                    int y = (int) (line * lineStep) + offset;
                     e.gc.setForeground(warningColor);
                     e.gc.setBackground(warningBackgroundColor);
                     e.gc.fillRectangle(0, y, rect.width, HEIGHT);
                     e.gc.drawRectangle(0, y, rect.width - 1, HEIGHT);
                 }
 
-                for (int line : errorHighlight) {
-                    int y = (int) (line * lineStep);
+                for (int line : errorHighlight.keySet()) {
+                    int y = (int) (line * lineStep) + offset;
                     e.gc.setForeground(errorColor);
                     e.gc.setBackground(errorBackgroundColor);
                     e.gc.fillRectangle(0, y, rect.width, HEIGHT);
@@ -92,25 +98,28 @@ public class OverviewRuler {
             public void mouseDown(MouseEvent e) {
                 Rectangle rect = canvas.getClientArea();
                 int lineCount = styledText.getLineCount();
+                float lineStep = Math.min((float) (rect.height - HEIGHT) / lineCount, styledText.getLineHeight());
+                int offset = Math.max((int) ((lineStep - HEIGHT) / 2), 0);
 
-                float lineStep = (float) (rect.height - HEIGHT) / lineCount;
-                for (int line : errorHighlight) {
-                    int y = (int) (line * lineStep);
-                    if (e.y >= y && e.y < y + HEIGHT) {
+                for (int line : errorHighlight.keySet()) {
+                    int y = (int) (line * lineStep) + offset;
+                    if (e.y >= y && e.y <= y + HEIGHT) {
                         goToLine(line);
                         return;
                     }
                 }
-                for (int line : warningHighlight) {
-                    int y = (int) (line * lineStep);
-                    if (e.y >= y && e.y < y + HEIGHT) {
+                for (int line : warningHighlight.keySet()) {
+                    int y = (int) (line * lineStep) + offset;
+                    if (e.y >= y && e.y <= y + HEIGHT) {
                         goToLine(line);
                         return;
                     }
                 }
 
-                lineStep = (float) lineCount / (rect.height - HEIGHT);
-                goToLine((int) (e.y * lineStep) + 1);
+                int line = (int) (e.y / lineStep);
+                if (line < lineCount) {
+                    goToLine(line);
+                }
             }
         });
         canvas.addMouseMoveListener(new MouseMoveListener() {
@@ -121,9 +130,15 @@ public class OverviewRuler {
                     popupWindow.dispose();
                     popupWindow = null;
                 }
+                canvas.setCursor(isOnAnnotation(e.y) ? handCursor : null);
             }
         });
         canvas.addMouseTrackListener(new MouseTrackAdapter() {
+
+            @Override
+            public void mouseExit(MouseEvent e) {
+                canvas.setCursor(null);
+            }
 
             @Override
             public void mouseHover(MouseEvent e) {
@@ -131,26 +146,53 @@ public class OverviewRuler {
                     return;
                 }
 
+                String message = null;
                 Rectangle rect = canvas.getClientArea();
                 int lineCount = styledText.getLineCount();
-                float lineStep = (float) lineCount / (rect.height - HEIGHT);
-                int line = (int) (e.y * lineStep) + 1;
+                float lineStep = Math.min((float) (rect.height - HEIGHT) / lineCount, styledText.getLineHeight());
+                int offset = Math.max((int) ((lineStep - HEIGHT) / 2), 0);
 
-                popupWindow = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
-                FillLayout layout = new FillLayout();
-                layout.marginHeight = layout.marginWidth = 5;
-                popupWindow.setLayout(layout);
-                Label content = new Label(popupWindow, SWT.NONE);
-                content.setText("Line: " + line);
-                popupWindow.pack();
+                for (int line : errorHighlight.keySet()) {
+                    int y = (int) (line * lineStep) + offset;
+                    if (e.y >= y && e.y <= y + HEIGHT) {
+                        message = "Line: " + (line + 1) + " (" + errorHighlight.get(line) + ")";
+                        break;
+                    }
+                }
+                if (message == null) {
+                    for (int line : warningHighlight.keySet()) {
+                        int y = (int) (line * lineStep) + offset;
+                        if (e.y >= y && e.y <= y + HEIGHT) {
+                            message = "Line: " + (line + 1) + " (" + warningHighlight.get(line) + ")";
+                            break;
+                        }
+                    }
+                }
 
-                Rectangle popupRect = popupWindow.getBounds();
-                popupRect.x = rect.x - popupRect.width;
-                popupRect.y = e.y - popupRect.height / 2;
-                popupWindow.setBounds(display.map(canvas, null, popupRect));
+                if (message == null) {
+                    int line = (int) (e.y / lineStep) + 1;
+                    if (line <= lineCount) {
+                        message = "Line: " + line;
+                    }
+                }
 
-                popupWindow.open();
-                canvas.setFocus();
+                if (message != null) {
+                    popupWindow = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
+                    FillLayout layout = new FillLayout();
+                    layout.marginHeight = layout.marginWidth = 5;
+                    popupWindow.setLayout(layout);
+                    Label content = new Label(popupWindow, SWT.NONE);
+                    content.setText(message);
+                    popupWindow.pack();
+
+                    Rectangle popupRect = popupWindow.getBounds();
+                    popupRect.x = rect.x - popupRect.width;
+                    popupRect.y = e.y - popupRect.height / 2;
+                    popupWindow.setBounds(display.map(canvas, null, popupRect));
+
+                    popupWindow.open();
+                    canvas.setFocus();
+                }
             }
         });
 
@@ -168,12 +210,12 @@ public class OverviewRuler {
         this.styledText = styledText;
     }
 
-    public void setErrorHighlight(int line) {
-        errorHighlight.add(line - 1);
+    public void setErrorHighlight(int line, String message) {
+        errorHighlight.put(line - 1, message);
     }
 
-    public void setWarningHighlight(int line) {
-        warningHighlight.add(line - 1);
+    public void setWarningHighlight(int line, String message) {
+        warningHighlight.put(line - 1, message);
     }
 
     public void clearHighlights() {
@@ -205,6 +247,27 @@ public class OverviewRuler {
 
         styledText.setCaretOffset(styledText.getOffsetAtLine(line));
         styledText.setTopIndex(topLine);
+    }
+
+    boolean isOnAnnotation(int ey) {
+        Rectangle rect = canvas.getClientArea();
+        int lineCount = styledText.getLineCount();
+        float lineStep = Math.min((float) (rect.height - HEIGHT) / lineCount, styledText.getLineHeight());
+        int offset = Math.max((int) ((lineStep - HEIGHT) / 2), 0);
+
+        for (int line : errorHighlight.keySet()) {
+            int y = (int) (line * lineStep) + offset;
+            if (ey >= y && ey <= y + HEIGHT) {
+                return true;
+            }
+        }
+        for (int line : warningHighlight.keySet()) {
+            int y = (int) (line * lineStep) + offset;
+            if (ey >= y && ey <= y + HEIGHT) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

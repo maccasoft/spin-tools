@@ -1648,10 +1648,10 @@ public class SourceEditor {
         for (CompilerMessage msg : messages) {
             if (msg.type == CompilerMessage.ERROR) {
                 ruler.setHighlight(msg.line);
-                overview.setErrorHighlight(msg.line);
+                overview.setErrorHighlight(msg.line, msg.getMessage());
             }
             else if (msg.type == CompilerMessage.WARNING) {
-                overview.setWarningHighlight(msg.line);
+                overview.setWarningHighlight(msg.line, msg.getMessage());
             }
         }
     }
