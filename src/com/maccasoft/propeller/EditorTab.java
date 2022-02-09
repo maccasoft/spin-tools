@@ -30,12 +30,15 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.custom.CaretListener;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
@@ -49,7 +52,7 @@ import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
-public class EditorTab {
+public class EditorTab implements FindReplaceTarget {
 
     SourcePool sourcePool;
 
@@ -717,6 +720,59 @@ public class EditorTab {
     public void removeOpenListener(IOpenListener listener) {
         editor.removeOpenListener(listener);
         editor.getOutline().removeOpenListener(listener);
+    }
+
+    @Override
+    public int findAndSelect(int widgetOffset, String findString, boolean searchForward, boolean caseSensitive, boolean wholeWord) {
+        StyledText styledText = editor.getStyledText();
+        String text = styledText.getText();
+        int index = text.indexOf(findString, widgetOffset);
+        if (index != -1) {
+            styledText.setSelectionRange(index, findString.length());
+            revealCaret(styledText);
+        }
+        return index;
+    }
+
+    @Override
+    public Point getSelection() {
+        StyledText styledText = editor.getStyledText();
+        return styledText.getSelectionRange();
+    }
+
+    @Override
+    public String getSelectionText() {
+        StyledText styledText = editor.getStyledText();
+        return styledText.getSelectionText();
+    }
+
+    @Override
+    public void replaceSelection(String text) {
+        StyledText styledText = editor.getStyledText();
+        Point selection = styledText.getSelectionRange();
+        if (selection.y != 0) {
+            styledText.replaceTextRange(selection.x, selection.y, text);
+        }
+    }
+
+    void revealCaret(StyledText styledText) {
+        Rectangle rect = styledText.getClientArea();
+        int offset = styledText.getCaretOffset();
+        int topLine = styledText.getLineIndex(0);
+        int bottomLine = styledText.getLineIndex(rect.height);
+        int pageSize = bottomLine - topLine;
+        while (offset < styledText.getOffsetAtLine(topLine)) {
+            topLine -= pageSize;
+            bottomLine -= pageSize;
+        }
+        while (offset > styledText.getOffsetAtLine(bottomLine)) {
+            topLine += pageSize;
+            bottomLine += pageSize;
+        }
+
+        if (styledText.getLineIndex(0) != topLine) {
+            styledText.setTopIndex(topLine);
+        }
     }
 
 }

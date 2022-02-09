@@ -45,6 +45,8 @@ import org.eclipse.swt.custom.TextChangingEvent;
 import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.FocusAdapter;
+import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
@@ -510,6 +512,16 @@ public class SourceEditor {
                     styledText.setCursor(null);
                     styledText.redraw();
                 }
+            }
+        });
+
+        styledText.addFocusListener(new FocusAdapter() {
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                hoverHighlight = false;
+                styledText.setCursor(null);
+                styledText.redraw();
             }
         });
 

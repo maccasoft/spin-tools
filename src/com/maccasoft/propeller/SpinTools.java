@@ -188,17 +188,6 @@ public class SpinTools {
 
     };
 
-    SourceLocation getCurrentSourceLocation() {
-        if (tabFolder.getSelection() == null) {
-            return null;
-        }
-        EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
-        StyledText styledText = currentTab.getEditor().getStyledText();
-        int offset = styledText.getCaretOffset();
-        int topPixel = styledText.getTopPixel();
-        return new SourceLocation(currentTab.getText(), currentTab.getFile(), offset, topPixel);
-    }
-
     public SpinTools(Shell shell) {
         this.shell = shell;
         this.shell.setData(this);
@@ -1102,12 +1091,16 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem == null) {
+                    return;
                 }
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                FindReplaceDialog dlg = new FindReplaceDialog(shell);
+                dlg.setTarget(editorTab);
+                dlg.open();
             }
+
         });
 
         item = new MenuItem(menu, SWT.PUSH);
@@ -2000,6 +1993,17 @@ public class SpinTools {
         else {
             statusLine.setCaretPositionText("");
         }
+    }
+
+    SourceLocation getCurrentSourceLocation() {
+        if (tabFolder.getSelection() == null) {
+            return null;
+        }
+        EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
+        StyledText styledText = currentTab.getEditor().getStyledText();
+        int offset = styledText.getCaretOffset();
+        int topPixel = styledText.getTopPixel();
+        return new SourceLocation(currentTab.getText(), currentTab.getFile(), offset, topPixel);
     }
 
     static {
