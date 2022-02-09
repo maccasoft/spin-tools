@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.swt.SWT;
@@ -723,15 +725,57 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     @Override
-    public int findAndSelect(int widgetOffset, String findString, boolean searchForward, boolean caseSensitive, boolean wholeWord) {
+    public int findAndSelect(int widgetOffset, String findString, boolean searchForward, boolean caseSensitive, boolean wholeWord, boolean regExSearch) {
+        int patternFlags = 0;
         StyledText styledText = editor.getStyledText();
         String text = styledText.getText();
-        int index = text.indexOf(findString, widgetOffset);
-        if (index != -1) {
-            styledText.setSelectionRange(index, findString.length());
-            revealCaret(styledText);
+
+        if (searchForward && widgetOffset == -1) {
+            widgetOffset = 0;
         }
-        return index;
+        if (!searchForward && widgetOffset == -1) {
+            widgetOffset = text.length();
+        }
+
+        if (!regExSearch) {
+            findString = asRegPattern(findString);
+            if (wholeWord) {
+                findString = "\\b" + findString + "\\b"; //$NON-NLS-1$ //$NON-NLS-2$
+            }
+        }
+
+        if (!caseSensitive) {
+            patternFlags |= Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
+        }
+
+        Pattern pattern = Pattern.compile(findString, patternFlags);
+        Matcher matcher = pattern.matcher(text);
+
+        //int index = searchForward ? text.indexOf(findString, widgetOffset) : text.lastIndexOf(findString, widgetOffset);
+        if (searchForward) {
+            if (matcher.find(widgetOffset)) {
+                styledText.setSelectionRange(matcher.start(), matcher.group().length());
+                revealCaret(styledText);
+                return matcher.start();
+            }
+        }
+        else {
+            boolean found = matcher.find(0);
+            int index = -1;
+            while (found && matcher.start() + matcher.group().length() <= widgetOffset) {
+                index = matcher.start();
+                found = matcher.find(index + 1);
+            }
+            if (index > -1) {
+                matcher.find(index);
+                styledText.setSelectionRange(matcher.start(), matcher.group().length());
+                revealCaret(styledText);
+                return index;
+            }
+
+        }
+
+        return -1;
     }
 
     @Override
@@ -773,6 +817,33 @@ public class EditorTab implements FindReplaceTarget {
         if (styledText.getLineIndex(0) != topLine) {
             styledText.setTopIndex(topLine);
         }
+    }
+
+    private String asRegPattern(String string) {
+        StringBuilder out = new StringBuilder(string.length());
+        boolean quoting = false;
+
+        for (int i = 0, length = string.length(); i < length; i++) {
+            char ch = string.charAt(i);
+            if (ch == '\\') {
+                if (quoting) {
+                    out.append("\\E"); //$NON-NLS-1$
+                    quoting = false;
+                }
+                out.append("\\\\"); //$NON-NLS-1$
+                continue;
+            }
+            if (!quoting) {
+                out.append("\\Q"); //$NON-NLS-1$
+                quoting = true;
+            }
+            out.append(ch);
+        }
+        if (quoting) {
+            out.append("\\E"); //$NON-NLS-1$
+        }
+
+        return out.toString();
     }
 
 }

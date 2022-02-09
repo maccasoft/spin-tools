@@ -80,9 +80,14 @@ public class Preferences {
 
         public Bounds terminalWindow;
 
-        public SerializedPreferences() {
+        public SearchPreferences search = new SearchPreferences();
 
-        }
+    }
+
+    public static class SearchPreferences {
+        public Bounds window;
+        public List<String> findHistory;
+        public List<String> replaceHistory;
 
     }
 
@@ -240,6 +245,10 @@ public class Preferences {
 
     public void setTerminalWindow(Rectangle rect) {
         preferences.terminalWindow = new Bounds(rect.x, rect.y, rect.width, rect.height);
+    }
+
+    public SearchPreferences getSearchPreferences() {
+        return preferences.search;
     }
 
     public void save() throws IOException {

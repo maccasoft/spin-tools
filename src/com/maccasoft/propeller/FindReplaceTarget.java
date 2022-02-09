@@ -14,7 +14,7 @@ import org.eclipse.swt.graphics.Point;
 
 public interface FindReplaceTarget {
 
-    public int findAndSelect(int widgetOffset, String findString, boolean searchForward, boolean caseSensitive, boolean wholeWord);
+    public int findAndSelect(int widgetOffset, String findString, boolean searchForward, boolean caseSensitive, boolean wholeWord, boolean regExSearch);
 
     public Point getSelection();
 

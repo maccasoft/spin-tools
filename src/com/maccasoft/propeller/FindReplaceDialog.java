@@ -17,23 +17,32 @@ import org.eclipse.jface.fieldassist.FieldDecorationRegistry;
 import org.eclipse.jface.layout.PixelConverter;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+
+import com.maccasoft.propeller.Preferences.Bounds;
+import com.maccasoft.propeller.Preferences.SearchPreferences;
 
 public class FindReplaceDialog extends Dialog {
 
     private Combo fFindField, fReplaceField;
+    private Button fForwardRadioButton, fGlobalRadioButton, fSelectedRangeRadioButton;
+    private Button fCaseCheckBox, fWrapCheckBox, fWholeWordCheckBox, fIncrementalCheckBox;
+    private Button fIsRegExCheckBox;
     private Label fStatusLabel;
 
     private FindReplaceTarget fTarget;
@@ -54,11 +63,33 @@ public class FindReplaceDialog extends Dialog {
     protected void configureShell(Shell newShell) {
         super.configureShell(newShell);
         newShell.setText("Find / Replace");
+        newShell.addDisposeListener(new DisposeListener() {
+
+            @Override
+            public void widgetDisposed(DisposeEvent e) {
+                Rectangle rect = getShell().getBounds();
+                SearchPreferences prefs = Preferences.getInstance().getSearchPreferences();
+                prefs.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
+            }
+        });
     }
 
     @Override
     protected boolean isResizable() {
         return true;
+    }
+
+    @Override
+    protected Rectangle getConstrainedShellBounds(Rectangle preferredSize) {
+        Rectangle rect = super.getConstrainedShellBounds(preferredSize);
+
+        SearchPreferences prefs = Preferences.getInstance().getSearchPreferences();
+        if (prefs.window != null) {
+            rect.x = prefs.window.x;
+            rect.y = prefs.window.y;
+        }
+
+        return rect;
     }
 
     @Override
@@ -72,6 +103,9 @@ public class FindReplaceDialog extends Dialog {
 
         Composite inputPanel = createInputPanel(panel);
         setGridData(inputPanel, SWT.FILL, true, SWT.TOP, false);
+
+        Composite configPanel = createConfigPanel(panel);
+        setGridData(configPanel, SWT.FILL, true, SWT.TOP, true);
 
         Composite buttonPanel = createButtonSection(panel);
         setGridData(buttonPanel, SWT.RIGHT, true, SWT.BOTTOM, false);
@@ -114,6 +148,196 @@ public class FindReplaceDialog extends Dialog {
         return panel;
     }
 
+    private Composite createConfigPanel(Composite parent) {
+
+        Composite panel = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        layout.numColumns = 2;
+        layout.makeColumnsEqualWidth = true;
+        panel.setLayout(layout);
+
+        Composite directionGroup = createDirectionGroup(panel);
+        setGridData(directionGroup, SWT.FILL, true, SWT.FILL, false);
+
+        Composite scopeGroup = createScopeGroup(panel);
+        setGridData(scopeGroup, SWT.FILL, true, SWT.FILL, false);
+
+        Composite optionsGroup = createOptionsGroup(panel);
+        setGridData(optionsGroup, SWT.FILL, true, SWT.FILL, true);
+        ((GridData) optionsGroup.getLayoutData()).horizontalSpan = 2;
+
+        return panel;
+    }
+
+    private Composite createDirectionGroup(Composite parent) {
+
+        Composite panel = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        layout.marginWidth = 0;
+        layout.marginHeight = 0;
+        panel.setLayout(layout);
+
+        Group group = new Group(panel, SWT.SHADOW_ETCHED_IN);
+        group.setText("Direction");
+        GridLayout groupLayout = new GridLayout();
+        group.setLayout(groupLayout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        SelectionListener selectionListener = new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+
+            }
+
+        };
+
+        fForwardRadioButton = new Button(group, SWT.RADIO | SWT.LEFT);
+        fForwardRadioButton.setText("Forward");
+        setGridData(fForwardRadioButton, SWT.LEFT, false, SWT.CENTER, false);
+        fForwardRadioButton.addSelectionListener(selectionListener);
+
+        Button backwardRadioButton = new Button(group, SWT.RADIO | SWT.LEFT);
+        backwardRadioButton.setText("Backward");
+        setGridData(backwardRadioButton, SWT.LEFT, false, SWT.CENTER, false);
+        backwardRadioButton.addSelectionListener(selectionListener);
+
+        backwardRadioButton.setSelection(false);
+        fForwardRadioButton.setSelection(true);
+
+        return panel;
+    }
+
+    private Composite createScopeGroup(Composite parent) {
+
+        Composite panel = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        layout.marginWidth = 0;
+        layout.marginHeight = 0;
+        panel.setLayout(layout);
+
+        Group group = new Group(panel, SWT.SHADOW_ETCHED_IN);
+        group.setText("Scope");
+        GridLayout groupLayout = new GridLayout();
+        group.setLayout(groupLayout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        fGlobalRadioButton = new Button(group, SWT.RADIO | SWT.LEFT);
+        fGlobalRadioButton.setText("All");
+        setGridData(fGlobalRadioButton, SWT.LEFT, false, SWT.CENTER, false);
+        fGlobalRadioButton.setSelection(true);
+        fGlobalRadioButton.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+
+            }
+
+        });
+
+        fSelectedRangeRadioButton = new Button(group, SWT.RADIO | SWT.LEFT);
+        fSelectedRangeRadioButton.setText("Selected lines");
+        setGridData(fSelectedRangeRadioButton, SWT.LEFT, false, SWT.CENTER, false);
+        fSelectedRangeRadioButton.setSelection(false);
+        fSelectedRangeRadioButton.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+
+            }
+
+        });
+        fSelectedRangeRadioButton.setEnabled(false);
+
+        return panel;
+    }
+
+    private Composite createOptionsGroup(Composite parent) {
+
+        Composite panel = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout();
+        layout.marginWidth = 0;
+        layout.marginHeight = 0;
+        panel.setLayout(layout);
+
+        Group group = new Group(panel, SWT.SHADOW_NONE);
+        group.setText("Options");
+        GridLayout groupLayout = new GridLayout();
+        groupLayout.numColumns = 2;
+        groupLayout.makeColumnsEqualWidth = true;
+        group.setLayout(groupLayout);
+        group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        SelectionListener selectionListener = new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+
+            }
+
+        };
+
+        fCaseCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
+        fCaseCheckBox.setText("Case sensitive");
+        setGridData(fCaseCheckBox, SWT.LEFT, false, SWT.CENTER, false);
+        fCaseCheckBox.setSelection(false);
+        fCaseCheckBox.addSelectionListener(selectionListener);
+        //storeButtonWithMnemonicInMap(fCaseCheckBox);
+
+        fWrapCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
+        fWrapCheckBox.setText("Wrap search");
+        setGridData(fWrapCheckBox, SWT.LEFT, false, SWT.CENTER, false);
+        fWrapCheckBox.setSelection(true);
+        fWrapCheckBox.addSelectionListener(selectionListener);
+        //storeButtonWithMnemonicInMap(fWrapCheckBox);
+
+        fWholeWordCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
+        fWholeWordCheckBox.setText("Whole word");
+        setGridData(fWholeWordCheckBox, SWT.LEFT, false, SWT.CENTER, false);
+        fWholeWordCheckBox.setSelection(false);
+        fWholeWordCheckBox.addSelectionListener(selectionListener);
+        //storeButtonWithMnemonicInMap(fWholeWordCheckBox);
+
+        fIncrementalCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
+        fIncrementalCheckBox.setText("Incremental");
+        setGridData(fIncrementalCheckBox, SWT.LEFT, false, SWT.CENTER, false);
+        fIncrementalCheckBox.setSelection(false);
+        fIncrementalCheckBox.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+
+            }
+
+        });
+        fIncrementalCheckBox.setEnabled(false);
+        //storeButtonWithMnemonicInMap(fIncrementalCheckBox);
+
+        fIsRegExCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
+        fIsRegExCheckBox.setText("Regular expressions");
+        setGridData(fIsRegExCheckBox, SWT.LEFT, false, SWT.CENTER, false);
+        ((GridData) fIsRegExCheckBox.getLayoutData()).horizontalSpan = 2;
+        fIsRegExCheckBox.setSelection(false);
+        fIsRegExCheckBox.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+
+            }
+
+        });
+        //storeButtonWithMnemonicInMap(fIsRegExCheckBox);
+        fWholeWordCheckBox.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+
+            }
+
+        });
+        return panel;
+    }
+
     private Composite createButtonSection(Composite parent) {
 
         Composite panel = new Composite(parent, SWT.NONE);
@@ -133,12 +357,12 @@ public class FindReplaceDialog extends Dialog {
         setGridData(fFindNextButton, SWT.FILL, true, SWT.FILL, false);
 
         /*Button fSelectAllButton = makeButton(panel, "Select All", 106, false, new SelectionAdapter() {
-
+        
             @Override
             public void widgetSelected(SelectionEvent e) {
-
+        
             }
-
+        
         });
         setGridData(fSelectAllButton, SWT.FILL, true, SWT.FILL, false);*/
 
@@ -263,22 +487,46 @@ public class FindReplaceDialog extends Dialog {
     }
 
     void performSearch() {
+        String findString = fFindField.getText();
+
+        boolean forwardSearch = fForwardRadioButton.getSelection();
+        boolean caseSensitiveSearch = fCaseCheckBox.getSelection();
+        boolean wrapSearch = fWrapCheckBox.getSelection();
+        boolean wholeWordSearch = fWholeWordCheckBox.getSelection();
+        boolean regexSearch = fIsRegExCheckBox.getSelection();
+
         Point r = fTarget.getSelection();
         int findReplacePosition = r.x;
-        if (!fNeedsInitialFindBeforeReplace) {
+        if (forwardSearch && !fNeedsInitialFindBeforeReplace || !forwardSearch && fNeedsInitialFindBeforeReplace) {
             findReplacePosition += r.y;
         }
         fNeedsInitialFindBeforeReplace = false;
-        int index = fTarget.findAndSelect(findReplacePosition, fFindField.getText(), true, true, false);
-        if (index == -1) {
-            index = fTarget.findAndSelect(0, fFindField.getText(), true, true, false);
+
+        int index;
+        if (forwardSearch) {
+            index = fTarget.findAndSelect(findReplacePosition, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
             if (index == -1) {
-                fStatusLabel.setText("String not found");
+                getShell().getDisplay().beep();
+                if (wrapSearch) {
+                    fStatusLabel.setText("Wrapped search");
+                    index = fTarget.findAndSelect(-1, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
+                }
             }
-            else {
-                fStatusLabel.setText("Wrapped search");
+        }
+        else {
+            // backward
+            index = findReplacePosition == 0 ? -1 : fTarget.findAndSelect(findReplacePosition - 1, findString, false, caseSensitiveSearch, wholeWordSearch, regexSearch);
+            if (index == -1) {
+                getShell().getDisplay().beep();
+                if (wrapSearch) {
+                    fStatusLabel.setText("Wrapped search");
+                    index = fTarget.findAndSelect(-1, findString, false, caseSensitiveSearch, wholeWordSearch, regexSearch);
+                }
             }
-            Display.getDefault().beep();
+        }
+
+        if (index == -1) {
+            fStatusLabel.setText("String not found");
         }
     }
 
@@ -286,13 +534,17 @@ public class FindReplaceDialog extends Dialog {
         String findString = fFindField.getText();
         String replaceString = fReplaceField.getText();
 
+        boolean caseSensitiveSearch = fCaseCheckBox.getSelection();
+        boolean wholeWordSearch = fWholeWordCheckBox.getSelection();
+        boolean regexSearch = fIsRegExCheckBox.getSelection();
+
         if (findString != null && !findString.isEmpty()) {
             int replaceCount = 0;
             int findReplacePosition = 0;
             int index = 0;
 
             while (index != -1) {
-                index = fTarget.findAndSelect(findReplacePosition, findString, true, true, false);
+                index = fTarget.findAndSelect(findReplacePosition, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
                 if (index != -1) {
                     fTarget.replaceSelection(replaceString);
                     replaceCount++;
