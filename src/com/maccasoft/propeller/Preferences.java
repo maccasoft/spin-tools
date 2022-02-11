@@ -86,8 +86,13 @@ public class Preferences {
 
     public static class SearchPreferences {
         public Bounds window;
-        public List<String> findHistory;
-        public List<String> replaceHistory;
+        public List<String> findHistory = new ArrayList<String>();
+        public List<String> replaceHistory = new ArrayList<String>();
+        public boolean forwardSearch = true;
+        public boolean caseSensitiveSearch;
+        public boolean wrapSearch = true;
+        public boolean wholeWordSearch;
+        public boolean regexSearch;
 
     }
 

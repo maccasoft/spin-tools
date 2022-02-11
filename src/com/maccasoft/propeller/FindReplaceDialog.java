@@ -10,6 +10,8 @@
 
 package com.maccasoft.propeller;
 
+import java.util.List;
+
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.fieldassist.FieldDecoration;
@@ -48,10 +50,14 @@ public class FindReplaceDialog extends Dialog {
     private FindReplaceTarget fTarget;
     private boolean fNeedsInitialFindBeforeReplace;
 
+    SearchPreferences preferences;
+
     public FindReplaceDialog(Shell parentShell) {
         super(parentShell);
         setShellStyle(getShellStyle() ^ SWT.APPLICATION_MODAL | SWT.MODELESS);
         setBlockOnOpen(false);
+
+        preferences = Preferences.getInstance().getSearchPreferences();
     }
 
     public void setTarget(FindReplaceTarget target) {
@@ -68,8 +74,7 @@ public class FindReplaceDialog extends Dialog {
             @Override
             public void widgetDisposed(DisposeEvent e) {
                 Rectangle rect = getShell().getBounds();
-                SearchPreferences prefs = Preferences.getInstance().getSearchPreferences();
-                prefs.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
+                preferences.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
             }
         });
     }
@@ -133,6 +138,7 @@ public class FindReplaceDialog extends Dialog {
         setGridData(findLabel, SWT.LEFT, false, SWT.CENTER, false);
 
         fFindField = new Combo(panel, SWT.DROP_DOWN | SWT.BORDER);
+        fFindField.setItems(preferences.findHistory.toArray(new String[0]));
         setGridData(fFindField, SWT.FILL, true, SWT.CENTER, false);
         addDecorationMargin(fFindField);
 
@@ -142,6 +148,7 @@ public class FindReplaceDialog extends Dialog {
 
         // Create the replace content assist field
         fReplaceField = new Combo(panel, SWT.DROP_DOWN | SWT.BORDER);
+        fReplaceField.setItems(preferences.replaceHistory.toArray(new String[0]));
         setGridData(fReplaceField, SWT.FILL, true, SWT.CENTER, false);
         addDecorationMargin(fReplaceField);
 
@@ -187,7 +194,7 @@ public class FindReplaceDialog extends Dialog {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-
+                preferences.forwardSearch = fForwardRadioButton.getSelection();
             }
 
         };
@@ -202,8 +209,8 @@ public class FindReplaceDialog extends Dialog {
         setGridData(backwardRadioButton, SWT.LEFT, false, SWT.CENTER, false);
         backwardRadioButton.addSelectionListener(selectionListener);
 
-        backwardRadioButton.setSelection(false);
-        fForwardRadioButton.setSelection(true);
+        fForwardRadioButton.setSelection(preferences.forwardSearch);
+        backwardRadioButton.setSelection(!preferences.forwardSearch);
 
         return panel;
     }
@@ -272,7 +279,8 @@ public class FindReplaceDialog extends Dialog {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-
+                preferences.caseSensitiveSearch = fCaseCheckBox.getSelection();
+                preferences.wrapSearch = fWrapCheckBox.getSelection();
             }
 
         };
@@ -280,21 +288,21 @@ public class FindReplaceDialog extends Dialog {
         fCaseCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
         fCaseCheckBox.setText("Case sensitive");
         setGridData(fCaseCheckBox, SWT.LEFT, false, SWT.CENTER, false);
-        fCaseCheckBox.setSelection(false);
+        fCaseCheckBox.setSelection(preferences.caseSensitiveSearch);
         fCaseCheckBox.addSelectionListener(selectionListener);
         //storeButtonWithMnemonicInMap(fCaseCheckBox);
 
         fWrapCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
         fWrapCheckBox.setText("Wrap search");
         setGridData(fWrapCheckBox, SWT.LEFT, false, SWT.CENTER, false);
-        fWrapCheckBox.setSelection(true);
+        fWrapCheckBox.setSelection(preferences.wrapSearch);
         fWrapCheckBox.addSelectionListener(selectionListener);
         //storeButtonWithMnemonicInMap(fWrapCheckBox);
 
         fWholeWordCheckBox = new Button(group, SWT.CHECK | SWT.LEFT);
         fWholeWordCheckBox.setText("Whole word");
         setGridData(fWholeWordCheckBox, SWT.LEFT, false, SWT.CENTER, false);
-        fWholeWordCheckBox.setSelection(false);
+        fWholeWordCheckBox.setSelection(preferences.wholeWordSearch);
         fWholeWordCheckBox.addSelectionListener(selectionListener);
         //storeButtonWithMnemonicInMap(fWholeWordCheckBox);
 
@@ -317,12 +325,12 @@ public class FindReplaceDialog extends Dialog {
         fIsRegExCheckBox.setText("Regular expressions");
         setGridData(fIsRegExCheckBox, SWT.LEFT, false, SWT.CENTER, false);
         ((GridData) fIsRegExCheckBox.getLayoutData()).horizontalSpan = 2;
-        fIsRegExCheckBox.setSelection(false);
+        fIsRegExCheckBox.setSelection(preferences.regexSearch);
         fIsRegExCheckBox.addSelectionListener(new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-
+                preferences.regexSearch = fIsRegExCheckBox.getSelection();
             }
 
         });
@@ -331,7 +339,7 @@ public class FindReplaceDialog extends Dialog {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-
+                preferences.wholeWordSearch = fWholeWordCheckBox.getSelection();
             }
 
         });
@@ -351,6 +359,7 @@ public class FindReplaceDialog extends Dialog {
             public void widgetSelected(SelectionEvent e) {
                 fStatusLabel.setText("");
                 performSearch();
+                updateHistory(fFindField, preferences.findHistory);
             }
 
         });
@@ -377,8 +386,15 @@ public class FindReplaceDialog extends Dialog {
                 if (fNeedsInitialFindBeforeReplace) {
                     performSearch();
                 }
-                fTarget.replaceSelection(fReplaceField.getText());
-                performSearch();
+
+                String replaceString = fReplaceField.getText();
+                if (fTarget.getSelection().y != 0) {
+                    fTarget.replaceSelection(replaceString);
+                    performSearch();
+                }
+
+                updateHistory(fFindField, preferences.findHistory);
+                updateHistory(fReplaceField, preferences.replaceHistory);
             }
 
         });
@@ -392,7 +408,14 @@ public class FindReplaceDialog extends Dialog {
                 if (fNeedsInitialFindBeforeReplace) {
                     performSearch();
                 }
-                fTarget.replaceSelection(fReplaceField.getText());
+
+                String replaceString = fReplaceField.getText();
+                if (fTarget.getSelection().y != 0) {
+                    fTarget.replaceSelection(replaceString);
+                }
+
+                updateHistory(fFindField, preferences.findHistory);
+                updateHistory(fReplaceField, preferences.replaceHistory);
             }
 
         });
@@ -404,6 +427,8 @@ public class FindReplaceDialog extends Dialog {
             public void widgetSelected(SelectionEvent e) {
                 fStatusLabel.setText("");
                 performReplaceAll();
+                updateHistory(fFindField, preferences.findHistory);
+                updateHistory(fReplaceField, preferences.replaceHistory);
             }
 
         });
@@ -553,6 +578,21 @@ public class FindReplaceDialog extends Dialog {
             }
 
             fStatusLabel.setText(replaceCount + ((replaceCount == 1) ? " match replaced" : " matches replaced"));
+        }
+    }
+
+    void updateHistory(Combo combo, List<String> history) {
+        String findString = combo.getText();
+        int index = history.indexOf(findString);
+        if (index != 0) {
+            if (index != -1) {
+                history.remove(index);
+            }
+            history.add(0, findString);
+            Point selection = combo.getSelection();
+            combo.setItems(history.toArray(new String[0]));
+            combo.setText(findString);
+            combo.setSelection(selection);
         }
     }
 

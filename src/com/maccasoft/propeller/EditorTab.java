@@ -730,17 +730,10 @@ public class EditorTab implements FindReplaceTarget {
         StyledText styledText = editor.getStyledText();
         String text = styledText.getText();
 
-        if (searchForward && widgetOffset == -1) {
-            widgetOffset = 0;
-        }
-        if (!searchForward && widgetOffset == -1) {
-            widgetOffset = text.length();
-        }
-
         if (!regExSearch) {
             findString = asRegPattern(findString);
             if (wholeWord) {
-                findString = "\\b" + findString + "\\b"; //$NON-NLS-1$ //$NON-NLS-2$
+                findString = "\\b" + findString + "\\b";
             }
         }
 
@@ -751,8 +744,10 @@ public class EditorTab implements FindReplaceTarget {
         Pattern pattern = Pattern.compile(findString, patternFlags);
         Matcher matcher = pattern.matcher(text);
 
-        //int index = searchForward ? text.indexOf(findString, widgetOffset) : text.lastIndexOf(findString, widgetOffset);
         if (searchForward) {
+            if (widgetOffset == -1) {
+                widgetOffset = 0;
+            }
             if (matcher.find(widgetOffset)) {
                 styledText.setSelectionRange(matcher.start(), matcher.group().length());
                 revealCaret(styledText);
@@ -760,6 +755,9 @@ public class EditorTab implements FindReplaceTarget {
             }
         }
         else {
+            if (widgetOffset == -1) {
+                widgetOffset = text.length();
+            }
             boolean found = matcher.find(0);
             int index = -1;
             while (found && matcher.start() + matcher.group().length() <= widgetOffset) {
@@ -827,20 +825,20 @@ public class EditorTab implements FindReplaceTarget {
             char ch = string.charAt(i);
             if (ch == '\\') {
                 if (quoting) {
-                    out.append("\\E"); //$NON-NLS-1$
+                    out.append("\\E");
                     quoting = false;
                 }
-                out.append("\\\\"); //$NON-NLS-1$
+                out.append("\\\\");
                 continue;
             }
             if (!quoting) {
-                out.append("\\Q"); //$NON-NLS-1$
+                out.append("\\Q");
                 quoting = true;
             }
             out.append(ch);
         }
         if (quoting) {
-            out.append("\\E"); //$NON-NLS-1$
+            out.append("\\E");
         }
 
         return out.toString();
