@@ -235,12 +235,18 @@ public abstract class Spin2InstructionObject {
 
     protected int encodeAugs(String condition, int number) {
         int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+        if (e.getValue(value) == 0b0000) {
+            value = e.setValue(value, 0b1111);
+        }
         value = o.setValue(value, 0b1111000);
         return x.setValue(value, number >> 9);
     }
 
     protected int encodeAugd(String condition, int number) {
         int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+        if (e.getValue(value) == 0b0000) {
+            value = e.setValue(value, 0b1111);
+        }
         value = o.setValue(value, 0b1111100);
         return x.setValue(value, number >> 9);
     }

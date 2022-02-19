@@ -3442,6 +3442,24 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testLongLiteralRet() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                mov   1, ##0\n"
+            + "        _ret_   mov   1, ##0\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 00 00 00 FF                        mov     1, ##0\n"
+            + "00004 00004   001 00 02 04 F6\n"
+            + "00008 00008   002 00 00 00 FF            _ret_       mov     1, ##0\n"
+            + "0000C 0000C   003 00 02 04 06\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         Spin2Context scope = new Spin2GlobalContext();
         Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();

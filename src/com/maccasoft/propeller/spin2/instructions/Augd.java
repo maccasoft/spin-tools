@@ -45,7 +45,9 @@ public class Augd extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            return getBytes(encodeAugd(condition, argument.getInteger()));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            value = o.setValue(value, 0b1111100);
+            return getBytes(x.setValue(value, argument.getInteger() >> 9));
         }
 
     }
