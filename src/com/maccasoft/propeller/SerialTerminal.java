@@ -26,7 +26,6 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
-import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
@@ -516,16 +515,14 @@ public class SerialTerminal {
         shell.pack();
         shell.open();
 
-        shell.addControlListener(new ControlListener() {
-
-            @Override
-            public void controlResized(ControlEvent e) {
-
-            }
+        shell.addControlListener(new ControlAdapter() {
 
             @Override
             public void controlMoved(ControlEvent e) {
+                Point size = canvas.getSize();
                 Rectangle rect = shell.getBounds();
+                rect.width = size.x / characterWidth;
+                rect.height = size.y / characterHeight;
                 preferences.setTerminalWindow(rect);
             }
 
@@ -610,12 +607,10 @@ public class SerialTerminal {
                     y++;
                 }
 
-                Rectangle rect = preferences.getTerminalWindow();
-                if (rect != null) {
-                    rect.width = width;
-                    rect.height = height;
-                    preferences.setTerminalWindow(rect);
-                }
+                Rectangle rect = shell.getBounds();
+                rect.width = width;
+                rect.height = height;
+                preferences.setTerminalWindow(rect);
 
                 screenWidth = width;
                 screenHeight = height;
