@@ -54,8 +54,8 @@ public class Byte extends Spin2PAsmInstructionFactory {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
                 for (Spin2PAsmExpression exp : arguments) {
-                    if (exp.getExpression() instanceof CharacterLiteral) {
-                        os.write(((CharacterLiteral) exp.getExpression()).getString().getBytes());
+                    if (exp.getExpression().isString()) {
+                        os.write(exp.getExpression().getString().getBytes());
                     }
                     else {
                         int value = exp.getInteger();

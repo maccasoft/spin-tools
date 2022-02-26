@@ -86,6 +86,10 @@ public class Spin2PAsmExpression {
         };
     }
 
+    public String getString() {
+        return expression.getString();
+    }
+
     @Override
     public String toString() {
         return (prefix != null ? prefix : "") + expression.toString() + (count != null ? "[" + count.toString() + "]" : "");

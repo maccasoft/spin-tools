@@ -587,8 +587,7 @@ public class Spin2ObjectCompiler {
 
         try {
             if ("FILE".equalsIgnoreCase(mnemonic)) {
-                String fileName = parameters.get(0).toString().substring(1);
-                fileName = fileName.substring(0, fileName.length() - 1);
+                String fileName = parameters.get(0).getString();
                 byte[] data = getBinaryFile(fileName);
                 if (data == null) {
                     throw new CompilerMessage("file \"" + fileName + "\" not found", node.parameters.get(0));
