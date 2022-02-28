@@ -9,6 +9,11 @@ public class CharacterLiteral extends Literal {
     }
 
     @Override
+    public boolean isString() {
+        return str.length() > 1;
+    }
+
+    @Override
     public String getString() {
         return str;
     }
