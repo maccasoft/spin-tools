@@ -25,6 +25,8 @@ public class Node {
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
+    public List<Token> document = new ArrayList<Token>();
+
     public Node() {
         this.parent = null;
     }
@@ -117,6 +119,14 @@ public class Node {
 
     public void setData(String key, Object data) {
         this.keyedData.put(key, data);
+    }
+
+    public void addDocument(Token token) {
+        document.add(token);
+    }
+
+    public List<Token> getDocument() {
+        return document;
     }
 
     @Override

@@ -20,7 +20,6 @@ public class MethodNode extends Node {
     public List<Node> parameters = new ArrayList<Node>();
     public List<Node> returnVariables = new ArrayList<Node>();
     public List<LocalVariableNode> localVariables = new ArrayList<LocalVariableNode>();
-    public List<Token> document = new ArrayList<Token>();
 
     public MethodNode(Node parent, Token type) {
         super(parent);
@@ -68,14 +67,6 @@ public class MethodNode extends Node {
 
     public LocalVariableNode getLocalVariable(int index) {
         return localVariables.get(index);
-    }
-
-    public void addDocument(Token token) {
-        document.add(token);
-    }
-
-    public List<Token> getDocument() {
-        return document;
     }
 
 }

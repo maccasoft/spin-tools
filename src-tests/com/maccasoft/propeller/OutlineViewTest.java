@@ -61,7 +61,7 @@ class OutlineViewTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Assertions.assertEquals("/PUB main()", view.getPath(root.getChild(0)));
+        Assertions.assertEquals("/PUB main", view.getPath(root.getChild(0)));
     }
 
     @Test
@@ -79,7 +79,7 @@ class OutlineViewTest {
             root.getChild(0)
         });
 
-        Assertions.assertEquals("/PUB main()", view.getPath(path0));
+        Assertions.assertEquals("/PUB main", view.getPath(path0));
     }
 
     @Test

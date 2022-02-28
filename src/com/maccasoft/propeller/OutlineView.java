@@ -14,18 +14,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jface.viewers.IElementComparer;
-import org.eclipse.jface.viewers.ILabelProvider;
-import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.OwnerDrawLabelProvider;
+import org.eclipse.jface.viewers.StyledCellLabelProvider;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Composite;
 
+import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -33,7 +38,6 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
-import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
 public class OutlineView {
@@ -87,76 +91,26 @@ public class OutlineView {
 
     };
 
-    final ILabelProvider labelProvider = new ILabelProvider() {
+    final OwnerDrawLabelProvider labelProvider = new StyledCellLabelProvider() {
+
+        StringBuilder sb;
+        List<StyleRange> styles;
 
         @Override
-        public void addListener(ILabelProviderListener listener) {
-        }
+        public void update(ViewerCell cell) {
+            sb = new StringBuilder();
+            styles = new ArrayList<StyleRange>();
 
-        @Override
-        public void dispose() {
-        }
-
-        @Override
-        public boolean isLabelProperty(Object element, String property) {
-            return false;
-        }
-
-        @Override
-        public void removeListener(ILabelProviderListener listener) {
-        }
-
-        @Override
-        public Image getImage(Object element) {
-            return null;
-        }
-
-        @Override
-        public String getText(Object element) {
-            StringBuilder sb = new StringBuilder();
-
-            if (element instanceof VariableNode) {
-                VariableNode node = (VariableNode) element;
-                if (node.getIdentifier() != null) {
-                    sb.append(node.getIdentifier().getText());
-                    if (node.getSize() != null) {
-                        sb.append("[");
-                        sb.append(node.getSize().getText());
-                        sb.append("]");
-                    }
-                }
-                if (node.getType() != null) {
-                    sb.append(": ");
-                    sb.append(node.getType().getText().toLowerCase());
-                }
+            Object element = cell.getElement();
+            if (element instanceof ConstantsNode || element instanceof VariablesNode || element instanceof ObjectsNode || element instanceof DataNode) {
+                decorateSectionStart((Node) element, cell);
             }
             else if (element instanceof ObjectNode) {
                 ObjectNode node = (ObjectNode) element;
                 sb.append(node.getText());
             }
             else if (element instanceof MethodNode) {
-                MethodNode node = (MethodNode) element;
-                if (node.getType() != null) {
-                    sb.append(node.getType().getText().toUpperCase());
-                }
-                if (node.getName() != null) {
-                    if (sb.length() != 0) {
-                        sb.append(" ");
-                    }
-                    sb.append(node.getName().getText());
-                    sb.append("(");
-                    for (Node child : node.getParameters()) {
-                        sb.append(child.getText());
-                    }
-                    sb.append(")");
-                    if (node.getReturnVariables().size() != 0) {
-                        sb.append(" :");
-                        for (Node child : node.getReturnVariables()) {
-                            sb.append(" ");
-                            sb.append(child.getText());
-                        }
-                    }
-                }
+                decorateMethod((MethodNode) element, cell);
             }
             else if (element instanceof DataLineNode) {
                 sb.append(((DataLineNode) element).label.getText());
@@ -165,9 +119,70 @@ public class OutlineView {
                 sb.append(((Node) element).getStartToken().getText().toUpperCase());
             }
 
-            return sb.toString();
+            cell.setText(sb.toString());
+            cell.setStyleRanges(styles.toArray(new StyleRange[0]));
+
+            super.update(cell);
         }
 
+        void decorateMethod(MethodNode node, ViewerCell cell) {
+            if (node.getType() != null) {
+                appendText(node.getType().getText().toUpperCase(), sectionStyle);
+            }
+            if (node.getName() != null) {
+                if (sb.length() != 0) {
+                    sb.append(" ");
+                }
+                sb.append(node.getName().getText());
+
+                sb.append("(");
+                boolean first = true;
+                for (Node child : node.getParameters()) {
+                    if (!first) {
+                        sb.append(", ");
+                    }
+                    appendText(child.getText(), methodLocalStyle);
+                    first = false;
+                }
+                sb.append(")");
+
+                if (node.getReturnVariables().size() != 0) {
+                    sb.append(" : ");
+                    first = true;
+                    for (Node child : node.getReturnVariables()) {
+                        if (!first) {
+                            sb.append(", ");
+                        }
+                        appendText(child.getText(), methodReturnStyle);
+                        first = false;
+                    }
+                }
+            }
+        }
+
+        void decorateSectionStart(Node node, ViewerCell cell) {
+            String text = node.getStartToken().getText().toUpperCase();
+            appendText(text, sectionStyle);
+
+            if (node.getDocument().size() != 0) {
+                sb.append(" ");
+
+                text = node.getDocument().get(0).getText();
+                while (text.startsWith("'")) {
+                    text = text.substring(1);
+                }
+                appendText(text.trim(), commentStyle);
+            }
+        }
+
+        void appendText(String text, TextStyle style) {
+            StyleRange range = new StyleRange(style);
+            range.start = sb.length();
+            range.length = text.length();
+
+            sb.append(text);
+            styles.add(range);
+        }
     };
 
     final IElementComparer elementComparer = new IElementComparer() {
@@ -184,11 +199,26 @@ public class OutlineView {
 
     };
 
+    TextStyle commentStyle;
+    TextStyle sectionStyle;
+    TextStyle methodLocalStyle;
+    TextStyle methodReturnStyle;
+    Font fontBold;
+
     public OutlineView(Composite parent) {
         viewer = new TreeViewer(parent, SWT.FULL_SELECTION | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
         viewer.setContentProvider(contentProvider);
         viewer.setLabelProvider(labelProvider);
         viewer.setComparer(elementComparer);
+
+        FontData[] fd = viewer.getControl().getFont().getFontData();
+        fd[0].setStyle(SWT.BOLD);
+        fontBold = new Font(viewer.getControl().getDisplay(), fd[0]);
+
+        commentStyle = new TextStyle(null, ColorRegistry.getColor(0x7E, 0x7E, 0x7E), null);
+        sectionStyle = new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null);
+        methodLocalStyle = new TextStyle(null, ColorRegistry.getColor(0x80, 0x80, 0x00), null);
+        methodReturnStyle = new TextStyle(null, ColorRegistry.getColor(0x90, 0x00, 0x00), null);
     }
 
     public void setLayoutData(Object layoutData) {
@@ -260,7 +290,11 @@ public class OutlineView {
 
     String getPathText(Object element) {
         Node node = (Node) element;
-        String text = labelProvider.getText(element);
+        String text = node.getStartToken().getText();
+        if (node instanceof MethodNode && ((MethodNode) node).name != null) {
+            text += " " + ((MethodNode) node).name.getText();
+        }
+
         if (!(node instanceof MethodNode)) {
             if (node.getParent() != null && node.getParent().getParent() == null) {
                 text += String.valueOf(node.getParent().getChilds().indexOf(node));

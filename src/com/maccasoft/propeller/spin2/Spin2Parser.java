@@ -90,7 +90,15 @@ public class Spin2Parser {
         if ("CON".equalsIgnoreCase(token.getText())) {
             ConstantsNode node = new ConstantsNode(root, token);
             node.addToken(token);
-            parseConstants(node, stream.nextToken());
+            token = stream.nextToken(true);
+            if (token.type == Token.COMMENT) {
+                node.addDocument(token);
+                token = stream.nextToken();
+            }
+            if (token.type == Token.BLOCK_COMMENT) {
+                token = stream.nextToken();
+            }
+            parseConstants(node, token);
             return true;
         }
         return false;
@@ -588,19 +596,27 @@ public class Spin2Parser {
         Node node = new DataNode(root);
         node.addToken(start);
 
-        Node parent = node;
+        boolean acceptComments = true;
         while (true) {
-            Token token = stream.nextToken();
+            Token token = stream.nextToken(acceptComments);
             if (token.type == Token.EOF) {
                 return;
             }
             if (token.type == Token.NL) {
                 continue;
             }
+            if (token.type == Token.COMMENT) {
+                node.addDocument(token);
+                continue;
+            }
+            if (token.type == Token.BLOCK_COMMENT) {
+                continue;
+            }
             if (parseSection(token)) {
                 return;
             }
-            parseDatLine(parent, token);
+            parseDatLine(node, token);
+            acceptComments = false;
         }
     }
 
