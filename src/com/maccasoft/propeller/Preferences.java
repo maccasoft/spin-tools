@@ -80,7 +80,7 @@ public class Preferences {
 
         public Bounds terminalWindow;
 
-        public SearchPreferences search = new SearchPreferences();
+        public SearchPreferences search;
 
     }
 
@@ -253,6 +253,9 @@ public class Preferences {
     }
 
     public SearchPreferences getSearchPreferences() {
+        if (preferences.search == null) {
+            preferences.search = new SearchPreferences();
+        }
         return preferences.search;
     }
 
