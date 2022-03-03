@@ -116,7 +116,7 @@ public class OutlineView {
                 sb.append(((DataLineNode) element).label.getText());
             }
             else {
-                sb.append(((Node) element).getStartToken().getText().toUpperCase());
+                sb.append(((Node) element).getStartToken().getText());
             }
 
             cell.setText(sb.toString());
