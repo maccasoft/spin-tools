@@ -138,6 +138,23 @@ public class Spin1ObjectCompiler {
             }
         }
 
+        Iterator<Entry<String, Expression>> iter = scope.symbols.entrySet().iterator();
+        while (iter.hasNext()) {
+            Entry<String, Expression> entry = iter.next();
+            try {
+                entry.getValue().resolve();
+            } catch (Exception e) {
+                if (e instanceof CompilerMessage) {
+                    logMessage((CompilerMessage) e);
+                }
+                else {
+                    logMessage(new CompilerMessage(e, entry.getValue().toString()));
+                }
+                scope.symbols.remove(entry.getKey());
+                iter = scope.symbols.entrySet().iterator();
+            }
+        }
+
         compileVarBlocks(root);
 
         try {

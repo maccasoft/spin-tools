@@ -13,6 +13,7 @@ package com.maccasoft.propeller.spin2.instructions;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
@@ -64,6 +65,8 @@ public class Byte extends Spin2PAsmInstructionFactory {
                         }
                     }
                 }
+            } catch (CompilerMessage e) {
+                throw e;
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

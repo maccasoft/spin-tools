@@ -151,6 +151,23 @@ public class Spin2ObjectCompiler {
             }
         }
 
+        Iterator<Entry<String, Expression>> iter = scope.symbols.entrySet().iterator();
+        while (iter.hasNext()) {
+            Entry<String, Expression> entry = iter.next();
+            try {
+                entry.getValue().resolve();
+            } catch (Exception e) {
+                if (e instanceof CompilerMessage) {
+                    logMessage((CompilerMessage) e);
+                }
+                else {
+                    logMessage(new CompilerMessage(e, entry.getValue().toString()));
+                }
+                scope.symbols.remove(entry.getKey());
+                iter = scope.symbols.entrySet().iterator();
+            }
+        }
+
         compileVarBlocks(root);
 
         while ((varOffset % 4) != 0) {
@@ -339,6 +356,8 @@ public class Spin2ObjectCompiler {
             }
             try {
                 object.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());
+            } catch (CompilerMessage e) {
+                logMessage(e);
             } catch (Exception e) {
                 logMessage(new CompilerMessage(e, line.getData()));
             }
