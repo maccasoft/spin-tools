@@ -8,7 +8,8 @@ public class ShiftRight extends BinaryOperator {
 
     @Override
     public Number getNumber() {
-        return term1.getNumber().longValue() >> term2.getNumber().longValue();
+        long value = term1.getNumber().longValue() & 0xFFFFFFFFL;
+        return value >> (term2.getNumber().longValue() & 0x1F);
     }
 
     @Override

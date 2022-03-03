@@ -92,7 +92,31 @@ class ExpressionTest {
     @Test
     void testRev() {
         Expression exp = new Rev(new NumberLiteral(0b1_00000001), new NumberLiteral(8));
-        Assertions.assertEquals(0b0_10000000, exp.getNumber().intValue());
+        Assertions.assertEquals(0b0_10000000, exp.getNumber().longValue());
+    }
+
+    @Test
+    void testSar() {
+        Expression exp = new Sar(new NumberLiteral(0b10000000000000000000000000000000), new NumberLiteral(8));
+        Assertions.assertEquals(0b11111111100000000000000000000000, exp.getNumber().longValue());
+    }
+
+    @Test
+    void testShiftRight() {
+        Expression exp = new ShiftRight(new NumberLiteral(0b10000000000000000000000000000000), new NumberLiteral(8));
+        Assertions.assertEquals(0b00000000100000000000000000000000, exp.getNumber().longValue());
+    }
+
+    @Test
+    void testSignx() {
+        Expression exp = new Signx(new NumberLiteral(0b00000000101110000000000000000001), new NumberLiteral(23));
+        Assertions.assertEquals(0b11111111101110000000000000000001, exp.getNumber().longValue());
+    }
+
+    @Test
+    void testZerox() {
+        Expression exp = new Zerox(new NumberLiteral(0b11111111111100000000000000000001), new NumberLiteral(23));
+        Assertions.assertEquals(0b00000000111100000000000000000001, exp.getNumber().longValue());
     }
 
 }

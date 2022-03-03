@@ -1,20 +1,22 @@
 package com.maccasoft.propeller.expressions;
 
-public class Sar extends BinaryOperator {
+public class Signx extends BinaryOperator {
 
-    public Sar(Expression term1, Expression term2) {
+    public Signx(Expression term1, Expression term2) {
         super(term1, term2);
     }
 
     @Override
     public Number getNumber() {
+        long cl = ~term2.getNumber().longValue() & 0x3F;
         long value = term1.getNumber().longValue();
-        return value >> (term2.getNumber().longValue() & 0xFF);
+        value = value << cl;
+        return value >> cl;
     }
 
     @Override
     public String getLexeme() {
-        return "sar";
+        return "signx";
     }
 
 }

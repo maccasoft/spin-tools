@@ -29,6 +29,7 @@ import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Encod;
 import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.Frac;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
 import com.maccasoft.propeller.expressions.GreaterThan;
 import com.maccasoft.propeller.expressions.Group;
@@ -267,6 +268,9 @@ public class Spin2ExpressionBuilder {
                     break;
                 case "SCAS":
                     left = new Scas(left, right);
+                    break;
+                case "FRAC":
+                    left = new Frac(left, right);
                     break;
 
                 case "+":

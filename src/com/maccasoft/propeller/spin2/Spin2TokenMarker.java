@@ -156,9 +156,30 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         keywords.put("DEBUG", TokenId.KEYWORD);
 
-        keywords.put("ROUND", TokenId.KEYWORD);
+        keywords.put("ABS", TokenId.KEYWORD);
+        keywords.put("ENCOD", TokenId.KEYWORD);
+        keywords.put("DECOD", TokenId.KEYWORD);
+        keywords.put("BMASK", TokenId.KEYWORD);
+        keywords.put("ONES", TokenId.KEYWORD);
+        keywords.put("SQRT", TokenId.KEYWORD);
+        keywords.put("QLOG", TokenId.KEYWORD);
+        keywords.put("QEXP", TokenId.KEYWORD);
+
+        keywords.put("SAR", TokenId.KEYWORD);
+        keywords.put("ROR", TokenId.KEYWORD);
+        keywords.put("ROL", TokenId.KEYWORD);
+        keywords.put("REV", TokenId.KEYWORD);
+        keywords.put("ZEROX", TokenId.KEYWORD);
+        keywords.put("SIGNX", TokenId.KEYWORD);
+        keywords.put("SCA", TokenId.KEYWORD);
+        keywords.put("SCAS", TokenId.KEYWORD);
+        keywords.put("FRAC", TokenId.KEYWORD);
         keywords.put("ADDPINS", TokenId.KEYWORD);
         keywords.put("ADDBITS", TokenId.KEYWORD);
+
+        keywords.put("FLOAT", TokenId.KEYWORD);
+        keywords.put("TRUNC", TokenId.KEYWORD);
+        keywords.put("ROUND", TokenId.KEYWORD);
 
         keywords.put("_CLKFREQ", TokenId.CONSTANT);
         keywords.put("_CLKMODE", TokenId.CONSTANT);
