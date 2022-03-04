@@ -50,6 +50,8 @@ import org.eclipse.swt.custom.CaretEvent;
 import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.MenuEvent;
@@ -197,6 +199,11 @@ public class SpinTools {
 
         preferences = Preferences.getInstance();
 
+        Rectangle bounds = preferences.getWindowBounds();
+        if (bounds != null) {
+            shell.setBounds(bounds);
+        }
+
         Menu menu = new Menu(shell, SWT.BAR);
         createFileMenu(menu);
         createEditMenu(menu);
@@ -219,9 +226,13 @@ public class SpinTools {
         tabFolder.setMaximizeVisible(false);
         tabFolder.setMinimizeVisible(false);
 
-        sashForm.setWeights(new int[] {
-            2000, 8000
-        });
+        int[] weights = preferences.getWeights();
+        if (weights == null) {
+            weights = new int[] {
+                2000, 8000
+            };
+        }
+        sashForm.setWeights(weights);
 
         browser.setRoots(new String[] {
             new File(System.getProperty("user.home")).getAbsolutePath()
@@ -376,6 +387,8 @@ public class SpinTools {
             @Override
             public void widgetDisposed(DisposeEvent e) {
                 try {
+                    preferences.setWeights(sashForm.getWeights());
+
                     List<String> openTabs = new ArrayList<String>();
                     for (int i = 0; i < tabFolder.getItemCount(); i++) {
                         EditorTab tab = (EditorTab) tabFolder.getItem(i).getData();
@@ -394,6 +407,38 @@ public class SpinTools {
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
+            }
+        });
+        shell.addControlListener(new ControlListener() {
+
+            @Override
+            public void controlMoved(ControlEvent e) {
+                Rectangle rect = shell.getBounds();
+
+                Rectangle prefs = preferences.getWindowBounds();
+                if (prefs == null) {
+                    prefs = rect;
+                }
+                else {
+                    prefs.x = rect.x;
+                    prefs.y = rect.y;
+                }
+                preferences.setWindowBounds(prefs);
+            }
+
+            @Override
+            public void controlResized(ControlEvent e) {
+                Rectangle rect = shell.getBounds();
+
+                Rectangle prefs = preferences.getWindowBounds();
+                if (prefs == null) {
+                    prefs = rect;
+                }
+                else {
+                    prefs.width = rect.width;
+                    prefs.height = rect.height;
+                }
+                preferences.setWindowBounds(prefs);
             }
         });
 

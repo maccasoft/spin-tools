@@ -65,6 +65,9 @@ public class Preferences {
 
     public static class SerializedPreferences {
 
+        public Bounds window;
+        public int[] weights;
+
         public boolean showLineNumbers;
         public String editorFont;
         public String port;
@@ -139,6 +142,25 @@ public class Preferences {
 
     public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         changeSupport.removePropertyChangeListener(propertyName, listener);
+    }
+
+    public Rectangle getWindowBounds() {
+        if (preferences.window == null) {
+            return null;
+        }
+        return new Rectangle(preferences.window.x, preferences.window.y, preferences.window.width, preferences.window.height);
+    }
+
+    public void setWindowBounds(Rectangle rect) {
+        preferences.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
+    }
+
+    public int[] getWeights() {
+        return preferences.weights;
+    }
+
+    public void setWeights(int[] weights) {
+        preferences.weights = weights;
     }
 
     public boolean getShowLineNumbers() {
