@@ -1254,8 +1254,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to RAM\tF9");
-        item.setAccelerator(SWT.F9);
+        item.setText("Upload to RAM\tF10");
+        item.setAccelerator(SWT.F10);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1269,8 +1269,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to RAM with Terminal\tShift+F9");
-        item.setAccelerator(SWT.SHIFT | SWT.F9);
+        item.setText("Upload to RAM with Terminal\tShift+F10");
+        item.setAccelerator(SWT.SHIFT | SWT.F10);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1291,8 +1291,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to Flash\tF10");
-        item.setAccelerator(SWT.F10);
+        item.setText("Upload to Flash\tF11");
+        item.setAccelerator(SWT.F11);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1306,8 +1306,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to Flash with Terminal\tShift+F10");
-        item.setAccelerator(SWT.SHIFT | SWT.F10);
+        item.setText("Upload to Flash with Terminal\tShift+F11");
+        item.setAccelerator(SWT.SHIFT | SWT.F11);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
