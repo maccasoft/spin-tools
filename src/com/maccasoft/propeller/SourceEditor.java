@@ -881,7 +881,7 @@ public class SourceEditor {
                     if (text == null) {
                         text = tokenMarker.getMethod(token.getText());
                     }
-                    if (text != null) {
+                    if (text != null && !"".equals(text)) {
                         popupWindow = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
                         FillLayout layout = new FillLayout();
                         layout.marginHeight = layout.marginWidth = 5;
@@ -1620,6 +1620,7 @@ public class SourceEditor {
                         proposals.addAll(helpProvider.fillProposals("Condition", token));
                     }
                 }
+                proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), token));
             }
             else if (node != null) {
                 if (node instanceof StatementNode) {
