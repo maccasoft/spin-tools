@@ -195,13 +195,16 @@ public class Preferences {
     }
 
     public File getLastPath() {
-        if (preferences.lastPath == null) {
-            return new File("");
+        if (preferences.lastPath == null || preferences.lastPath.isEmpty()) {
+            return null;
         }
         return new File(preferences.lastPath);
     }
 
     public void setLastPath(File lastPath) {
+        if (lastPath == null) {
+            preferences.lastPath = null;
+        }
         preferences.lastPath = lastPath.getAbsolutePath();
     }
 

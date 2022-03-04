@@ -492,7 +492,16 @@ public class SpinTools {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                        browser.setSelection(preferences.getLastPath());
+                        File lastPath = preferences.getLastPath();
+                        if (lastPath == null) {
+                            File[] roots = browser.getRoots();
+                            if (roots.length != 0) {
+                                lastPath = roots[0];
+                            }
+                        }
+                        if (lastPath != null) {
+                            browser.setSelection(lastPath);
+                        }
                     }
 
                 });
