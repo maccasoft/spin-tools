@@ -3,7 +3,7 @@
     <tstamp>
         <format property="timestamp" pattern="yyyyMMdd-HHmm" />
     </tstamp>
-    <property name="version" value="0.0.1" />
+    <property name="version" value="0.6" />
     <property name="package" value="spin-tools" />
     <property name="folder" value="${package}-${version}" />
     <property name="mac-folder" value="Spin Tools"/>
@@ -86,10 +86,10 @@
         <launch4j 
             configFile="build/windows/config64.xml" 
             outfile="${work}/${folder}/propeller.exe" 
-            fileVersion="${version}.0" 
-            txtFileVersion="${version}.0" 
-            productVersion="${version}.0" 
-            txtProductVersion="${version}.0" />
+            fileVersion="${version}.0.0" 
+            txtFileVersion="${version}.0.0" 
+            productVersion="${version}.0.0" 
+            txtProductVersion="${version}.0.0" />
 
         <exec executable="zip" dir="${work}" failonerror="true">
             <arg value="-q" />
@@ -165,7 +165,7 @@
     </path>
 
     <target name="copy-common-files">
-        <jar destfile="${work}/${folder}/lib/com.maccasoft.propeller.tools_${version}.v${timestamp}.jar">
+        <jar destfile="${work}/${folder}/lib/com.maccasoft.propeller.tools_${version}.0.v${timestamp}.jar">
             <fileset dir="${work}/bin" />
             <fileset dir="src">
                 <exclude name="**/*.java" />
