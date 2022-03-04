@@ -553,6 +553,8 @@ public class EditorTab implements FindReplaceTarget {
             editor.setTokenMarker(tokenMarker = new Spin1TokenMarkerAdatper());
             editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", file.getParentFile(), ".spin"));
         }
+
+        tabItem.setToolTipText(file != null ? file.getAbsolutePath() : "");
     }
 
     public void setFocus() {
@@ -842,6 +844,32 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         return out.toString();
+    }
+
+    void searchNext(String findString, boolean caseSensitiveSearch, boolean wrapSearch, boolean wholeWordSearch, boolean regexSearch) {
+        Point r = getSelection();
+        int findReplacePosition = r.x + r.y;
+
+        int index = findAndSelect(findReplacePosition, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
+        if (index == -1) {
+            editor.getControl().getDisplay().beep();
+            if (wrapSearch) {
+                index = findAndSelect(-1, findString, true, caseSensitiveSearch, wholeWordSearch, regexSearch);
+            }
+        }
+    }
+
+    void searchPrevious(String findString, boolean caseSensitiveSearch, boolean wrapSearch, boolean wholeWordSearch, boolean regexSearch) {
+        Point r = getSelection();
+        int findReplacePosition = r.x + r.y;
+
+        int index = findReplacePosition == 0 ? -1 : findAndSelect(findReplacePosition - 1, findString, false, caseSensitiveSearch, wholeWordSearch, regexSearch);
+        if (index == -1) {
+            editor.getControl().getDisplay().beep();
+            if (wrapSearch) {
+                index = findAndSelect(-1, findString, false, caseSensitiveSearch, wholeWordSearch, regexSearch);
+            }
+        }
     }
 
 }

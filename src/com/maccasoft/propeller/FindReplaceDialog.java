@@ -51,6 +51,7 @@ public class FindReplaceDialog extends Dialog {
     private boolean fNeedsInitialFindBeforeReplace;
 
     SearchPreferences preferences;
+    String findString;
 
     public FindReplaceDialog(Shell parentShell) {
         super(parentShell);
@@ -357,6 +358,9 @@ public class FindReplaceDialog extends Dialog {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
+                if (fTarget == null) {
+                    return;
+                }
                 fStatusLabel.setText("");
                 performSearch();
                 updateHistory(fFindField, preferences.findHistory);
@@ -382,6 +386,10 @@ public class FindReplaceDialog extends Dialog {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
+                if (fTarget == null) {
+                    return;
+                }
+
                 fStatusLabel.setText("");
                 if (fNeedsInitialFindBeforeReplace) {
                     performSearch();
@@ -404,6 +412,10 @@ public class FindReplaceDialog extends Dialog {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
+                if (fTarget == null) {
+                    return;
+                }
+
                 fStatusLabel.setText("");
                 if (fNeedsInitialFindBeforeReplace) {
                     performSearch();
@@ -425,6 +437,9 @@ public class FindReplaceDialog extends Dialog {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
+                if (fTarget == null) {
+                    return;
+                }
                 fStatusLabel.setText("");
                 performReplaceAll();
                 updateHistory(fFindField, preferences.findHistory);
@@ -512,13 +527,13 @@ public class FindReplaceDialog extends Dialog {
     }
 
     void performSearch() {
-        String findString = fFindField.getText();
-
         boolean forwardSearch = fForwardRadioButton.getSelection();
         boolean caseSensitiveSearch = fCaseCheckBox.getSelection();
         boolean wrapSearch = fWrapCheckBox.getSelection();
         boolean wholeWordSearch = fWholeWordCheckBox.getSelection();
         boolean regexSearch = fIsRegExCheckBox.getSelection();
+
+        findString = fFindField.getText();
 
         Point r = fTarget.getSelection();
         int findReplacePosition = r.x;
@@ -556,12 +571,12 @@ public class FindReplaceDialog extends Dialog {
     }
 
     void performReplaceAll() {
-        String findString = fFindField.getText();
-        String replaceString = fReplaceField.getText();
-
         boolean caseSensitiveSearch = fCaseCheckBox.getSelection();
         boolean wholeWordSearch = fWholeWordCheckBox.getSelection();
         boolean regexSearch = fIsRegExCheckBox.getSelection();
+
+        findString = fFindField.getText();
+        String replaceString = fReplaceField.getText();
 
         if (findString != null && !findString.isEmpty()) {
             int replaceCount = 0;
@@ -589,11 +604,23 @@ public class FindReplaceDialog extends Dialog {
                 history.remove(index);
             }
             history.add(0, findString);
+            while (history.size() > 15) {
+                history.remove(history.size() - 1);
+            }
             Point selection = combo.getSelection();
             combo.setItems(history.toArray(new String[0]));
             combo.setText(findString);
             combo.setSelection(selection);
         }
+    }
+
+    public boolean isDisposed() {
+        Shell shell = getShell();
+        return shell == null || shell.isDisposed();
+    }
+
+    public String getFindString() {
+        return findString;
     }
 
 }

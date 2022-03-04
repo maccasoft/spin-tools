@@ -76,6 +76,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
+import com.maccasoft.propeller.Preferences.SearchPreferences;
 import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.TempDirectory;
@@ -105,6 +106,8 @@ public class SpinTools {
 
     Stack<SourceLocation> backStack = new Stack<SourceLocation>();
     Stack<SourceLocation> forwardStack = new Stack<SourceLocation>();
+
+    FindReplaceDialog findReplaceDialog;
 
     final CaretListener caretListener = new CaretListener() {
 
@@ -215,16 +218,6 @@ public class SpinTools {
         tabFolder = new CTabFolder(sashForm, SWT.BORDER);
         tabFolder.setMaximizeVisible(false);
         tabFolder.setMinimizeVisible(false);
-        tabFolder.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                if (e.item != null && e.item.getData() != null) {
-                    ((CTabItem) e.item).getControl().setFocus();
-                }
-                updateCaretPosition();
-            }
-        });
 
         sashForm.setWeights(new int[] {
             2000, 8000
@@ -282,6 +275,10 @@ public class SpinTools {
                 if (e.character != SWT.TAB || (e.stateMask & SWT.MODIFIER_MASK) == 0) {
                     return;
                 }
+                if (tabFolder.getItemCount() <= 1) {
+                    return;
+                }
+
                 int index = tabFolder.getSelectionIndex();
                 if ((e.stateMask & SWT.SHIFT) != 0) {
                     index--;
@@ -297,9 +294,9 @@ public class SpinTools {
                 }
                 tabFolder.setSelection(index);
 
-                EditorTab tab = (EditorTab) tabFolder.getItem(index).getData();
-                tab.setFocus();
-                updateCaretPosition();
+                Event event = new Event();
+                event.item = tabFolder.getItem(index);
+                tabFolder.notifyListeners(SWT.Selection, event);
 
                 e.doit = false;
             }
@@ -310,6 +307,20 @@ public class SpinTools {
             public void close(CTabFolderEvent event) {
                 EditorTab tab = (EditorTab) event.item.getData();
                 event.doit = canCloseEditorTab(tab);
+            }
+        });
+        tabFolder.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                if (e.item != null && e.item.getData() != null) {
+                    CTabItem tabItem = (CTabItem) e.item;
+                    tabItem.getControl().setFocus();
+                    if (findReplaceDialog != null) {
+                        findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                    }
+                }
+                updateCaretPosition();
             }
         });
 
@@ -1095,10 +1106,15 @@ public class SpinTools {
                 if (tabItem == null) {
                     return;
                 }
-                EditorTab editorTab = (EditorTab) tabItem.getData();
-                FindReplaceDialog dlg = new FindReplaceDialog(shell);
-                dlg.setTarget(editorTab);
-                dlg.open();
+
+                if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
+                    findReplaceDialog.getShell().setFocus();
+                    return;
+                }
+
+                findReplaceDialog = new FindReplaceDialog(shell);
+                findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                findReplaceDialog.open();
             }
 
         });
@@ -1111,7 +1127,56 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem == null) {
+                        return;
+                    }
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    if (findReplaceDialog == null || findReplaceDialog.getFindString() == null) {
+                        if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
+                            findReplaceDialog.getShell().setFocus();
+                            return;
+                        }
 
+                        findReplaceDialog = new FindReplaceDialog(shell);
+                        findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                        findReplaceDialog.open();
+                        return;
+                    }
+                    SearchPreferences prefs = preferences.getSearchPreferences();
+                    editorTab.searchNext(findReplaceDialog.getFindString(), prefs.caseSensitiveSearch, prefs.wrapSearch, prefs.wholeWordSearch, prefs.regexSearch);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Find Previous\tShift+Ctrl+K");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'K');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem == null) {
+                        return;
+                    }
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    if (findReplaceDialog == null || findReplaceDialog.getFindString() == null) {
+                        if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
+                            findReplaceDialog.getShell().setFocus();
+                            return;
+                        }
+
+                        findReplaceDialog = new FindReplaceDialog(shell);
+                        findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                        findReplaceDialog.open();
+                        return;
+                    }
+                    SearchPreferences prefs = preferences.getSearchPreferences();
+                    editorTab.searchPrevious(findReplaceDialog.getFindString(), prefs.caseSensitiveSearch, prefs.wrapSearch, prefs.wholeWordSearch, prefs.regexSearch);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1479,6 +1544,7 @@ public class SpinTools {
         }
         EditorTab editorTab = (EditorTab) tabItem.getData();
         if (editorTab.hasErrors()) {
+            MessageDialog.openError(shell, APP_TITLE, "Program has errors.");
             editorTab.goToFirstError();
             return;
         }
@@ -1578,6 +1644,18 @@ public class SpinTools {
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
+                        Display.getDefault().syncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                String msg = e.getMessage();
+                                if (e instanceof SerialPortException) {
+                                    SerialPortException serialException = (SerialPortException) e;
+                                    msg = serialException.getPortName() + " " + serialException.getExceptionType();
+                                }
+                                MessageDialog.openError(shell, APP_TITLE, "Error uploading program:\r\n" + msg);
+                            }
+                        });
                     }
 
                     monitor.done();
@@ -1664,6 +1742,18 @@ public class SpinTools {
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
+                        Display.getDefault().syncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                String msg = e.getMessage();
+                                if (e instanceof SerialPortException) {
+                                    SerialPortException serialException = (SerialPortException) e;
+                                    msg = serialException.getPortName() + " " + serialException.getExceptionType();
+                                }
+                                MessageDialog.openError(shell, APP_TITLE, "Error uploading program:\r\n" + msg);
+                            }
+                        });
                     }
 
                     monitor.done();
@@ -1979,31 +2069,27 @@ public class SpinTools {
     void updateCaretPosition() {
         CTabItem tabItem = tabFolder.getSelection();
         if (tabItem == null) {
+            statusLine.setCaretPositionText("");
             return;
         }
         EditorTab editorTab = (EditorTab) tabItem.getData();
-
         StyledText styledText = editorTab.getEditor().getStyledText();
-        if (styledText != null) {
-            int offset = styledText.getCaretOffset();
-            int y = styledText.getLineAtOffset(offset);
-            int x = offset - styledText.getOffsetAtLine(y);
-            statusLine.setCaretPositionText(String.format("%d : %d : %d", y + 1, x + 1, offset));
-        }
-        else {
-            statusLine.setCaretPositionText("");
-        }
+        int offset = styledText.getCaretOffset();
+        int y = styledText.getLineAtOffset(offset);
+        int x = offset - styledText.getOffsetAtLine(y);
+        statusLine.setCaretPositionText(String.format("%d : %d : %d", y + 1, x + 1, offset));
     }
 
     SourceLocation getCurrentSourceLocation() {
-        if (tabFolder.getSelection() == null) {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem == null) {
             return null;
         }
-        EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
-        StyledText styledText = currentTab.getEditor().getStyledText();
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+        StyledText styledText = editorTab.getEditor().getStyledText();
         int offset = styledText.getCaretOffset();
         int topPixel = styledText.getTopPixel();
-        return new SourceLocation(currentTab.getText(), currentTab.getFile(), offset, topPixel);
+        return new SourceLocation(editorTab.getText(), editorTab.getFile(), offset, topPixel);
     }
 
     static {
