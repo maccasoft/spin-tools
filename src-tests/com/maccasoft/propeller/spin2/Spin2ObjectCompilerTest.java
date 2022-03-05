@@ -3192,19 +3192,20 @@ class Spin2ObjectCompilerTest {
     @Test
     void testString() throws Exception {
         String text = ""
-            + "PUB main | a, b\n"
+            + "PUB main | a, b, c\n"
             + "\n"
             + "    a := string(\"1234\", 13, 10)\n"
             + "    b := \"1234\"\n"
+            + "    c := @\"1234\"\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       1C 00 00 00    End\n"
-            + "' PUB main | a, b\n"
-            + "00008 00008       08             (stack size)\n"
+            + "00004 00004       24 00 00 00    End\n"
+            + "' PUB main | a, b, c\n"
+            + "00008 00008       0C             (stack size)\n"
             + "'     a := string(\"1234\", 13, 10)\n"
             + "00009 00009       9E 07 31 32 33 STRING\n"
             + "0000E 0000E       34 0D 0A 00\n"
@@ -3213,7 +3214,11 @@ class Spin2ObjectCompilerTest {
             + "00013 00013       9E 05 31 32 33 STRING\n"
             + "00018 00018       34 00\n"
             + "0001A 0001A       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
-            + "0001B 0001B       04             RETURN\n"
+            + "'     c := @\"1234\"\n"
+            + "0001B 0001B       9E 05 31 32 33 STRING\n"
+            + "00020 00020       34 00\n"
+            + "00022 00022       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "00023 00023       04             RETURN\n"
             + "", compile(text));
     }
 

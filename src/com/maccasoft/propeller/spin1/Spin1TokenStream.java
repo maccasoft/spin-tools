@@ -117,6 +117,13 @@ public class Spin1TokenStream extends TokenStream {
                                 state = Token.KEYWORD;
                                 break;
                             }
+                            if (ch1 == '\"') {
+                                token.stop++;
+                                index++;
+                                column++;
+                                state = token.type = Token.STRING;
+                                break;
+                            }
                         }
                         token.type = Token.OPERATOR;
                         if (ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';') {

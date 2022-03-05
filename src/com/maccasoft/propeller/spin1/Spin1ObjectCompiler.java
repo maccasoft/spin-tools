@@ -1682,17 +1682,26 @@ public class Spin1ObjectCompiler {
                 source.add(new Constant(context, expression));
             }
             else if (node.getType() == Token.STRING) {
-                String s = node.getText().substring(1);
-                s = s.substring(0, s.length() - 1);
-                if (s.length() == 1) {
-                    Expression expression = new CharacterLiteral(s);
-                    source.add(new Constant(context, expression));
-                }
-                else {
+                String s = node.getText();
+                if (s.startsWith("@")) {
+                    s = s.substring(2, s.length() - 1);
                     s += (char) 0x00;
                     Spin1Bytecode target = new Bytecode(context, s.getBytes(), "STRING".toUpperCase());
                     source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, new ContextLiteral(target.getContext())));
                     dataLine.addSource(target);
+                }
+                else {
+                    s = s.substring(1, s.length() - 1);
+                    if (s.length() == 1) {
+                        Expression expression = new CharacterLiteral(s);
+                        source.add(new Constant(context, expression));
+                    }
+                    else {
+                        s += (char) 0x00;
+                        Spin1Bytecode target = new Bytecode(context, s.getBytes(), "STRING".toUpperCase());
+                        source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, new ContextLiteral(target.getContext())));
+                        dataLine.addSource(target);
+                    }
                 }
             }
             else if ("-".equals(node.getText()) && node.getChildCount() == 1) {

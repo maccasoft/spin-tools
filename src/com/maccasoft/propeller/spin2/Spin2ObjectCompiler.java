@@ -1730,13 +1730,9 @@ public class Spin2ObjectCompiler {
                 source.add(new Constant(context, expression));
             }
             else if (node.getType() == Token.STRING) {
-                String s = node.getText().substring(1);
-                s = s.substring(0, s.length() - 1);
-                if (s.length() == 1) {
-                    Expression expression = new CharacterLiteral(s);
-                    source.add(new Constant(context, expression));
-                }
-                else {
+                String s = node.getText();
+                if (s.startsWith("@")) {
+                    s = s.substring(2, s.length() - 1);
                     byte[] code = new byte[s.length() + 3];
                     int index = 0;
                     code[index++] = (byte) 0x9E;
@@ -1746,6 +1742,24 @@ public class Spin2ObjectCompiler {
                     }
                     code[index++] = (byte) 0x00;
                     source.add(new Bytecode(context, code, "STRING"));
+                }
+                else {
+                    s = s.substring(1, s.length() - 1);
+                    if (s.length() == 1) {
+                        Expression expression = new CharacterLiteral(s);
+                        source.add(new Constant(context, expression));
+                    }
+                    else {
+                        byte[] code = new byte[s.length() + 3];
+                        int index = 0;
+                        code[index++] = (byte) 0x9E;
+                        code[index++] = (byte) (s.length() + 1);
+                        for (int i = 0; i < s.length(); i++) {
+                            code[index++] = (byte) s.charAt(i);
+                        }
+                        code[index++] = (byte) 0x00;
+                        source.add(new Bytecode(context, code, "STRING"));
+                    }
                 }
             }
             else if ("-".equalsIgnoreCase(node.getText()) && node.getChildCount() == 1) {

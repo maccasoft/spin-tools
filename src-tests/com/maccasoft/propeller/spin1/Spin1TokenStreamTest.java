@@ -840,4 +840,11 @@ class Spin1TokenStreamTest {
         assertEquals("1e-2", subject.nextToken().getText());
     }
 
+    @Test
+    void testAtString() {
+        Spin1TokenStream subject = new Spin1TokenStream("@\"text\"");
+
+        assertEquals("@\"text\"", subject.nextToken().getText());
+    }
+
 }
