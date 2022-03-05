@@ -131,6 +131,9 @@ public class Node {
 
     @Override
     public String toString() {
+        if (tokens.size() == 1 && tokens.get(0).type == Token.EOF) {
+            return "<EOF>";
+        }
         return getText();
     }
 

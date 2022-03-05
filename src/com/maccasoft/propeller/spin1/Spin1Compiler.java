@@ -74,6 +74,10 @@ public class Spin1Compiler {
         int offset = obj.getVarSize() + 8;
         dbase.setValue(object.getSize() + offset);
 
+        if (!(obj.getObject(4) instanceof LongDataObject)) {
+            logMessage(new CompilerMessage(CompilerMessage.ERROR, rootFileName, "No PUB routines found", null));
+            return null;
+        }
         pcurr.setValue((int) (pbase.getValue() + (((LongDataObject) obj.getObject(4)).getValue() & 0xFFFF)));
 
         offset = 4 + obj.getDcurr();

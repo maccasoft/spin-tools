@@ -845,7 +845,7 @@ public class SourceEditor {
                 int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
 
                 token = tokenMarker.getTokenAt(offset);
-                if (token == null) {
+                if (token == null || token.type == Token.EOF) {
                     return;
                 }
 
@@ -1037,15 +1037,19 @@ public class SourceEditor {
                     }
 
                     for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
-                        Rectangle r = styledText.getTextBounds(entry.getStart(), entry.getStop());
-                        int[] polyline = computePolyline(new Point(r.x, r.y), new Point(r.x + r.width, r.y), styledText.getLineHeight());
-                        if (entry.id == TokenId.ERROR) {
-                            gc.setForeground(ColorRegistry.getColor(0xC0, 0x00, 0x00));
+                        try {
+                            Rectangle r = styledText.getTextBounds(entry.getStart(), entry.getStop());
+                            int[] polyline = computePolyline(new Point(r.x, r.y), new Point(r.x + r.width, r.y), styledText.getLineHeight());
+                            if (entry.id == TokenId.ERROR) {
+                                gc.setForeground(ColorRegistry.getColor(0xC0, 0x00, 0x00));
+                            }
+                            else {
+                                gc.setForeground(ColorRegistry.getColor(0xF6, 0xD4, 0x56));
+                            }
+                            gc.drawPolyline(polyline);
+                        } catch (Exception ex) {
+                            // Ignore
                         }
-                        else {
-                            gc.setForeground(ColorRegistry.getColor(0xF6, 0xD4, 0x56));
-                        }
-                        gc.drawPolyline(polyline);
                     }
 
                     if (hoverHighlight && hoverHighlightToken != null) {

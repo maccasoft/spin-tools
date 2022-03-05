@@ -46,7 +46,10 @@ public class CompilerMessage extends RuntimeException {
         super(message);
         this.fileName = fileName;
         this.type = type;
-        if (data instanceof Node) {
+        if (data == null) {
+            this.line = 1;
+        }
+        else if (data instanceof Node) {
             Node node = (Node) data;
             this.line = node.getStartToken().line + 1;
             this.column = node.getStartToken().column;

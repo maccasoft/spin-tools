@@ -291,6 +291,9 @@ public abstract class SpinObject {
     }
 
     public DataObject getObject(int index) {
+        if (index < 0 || index >= data.size()) {
+            return null;
+        }
         return data.get(index);
     }
 
