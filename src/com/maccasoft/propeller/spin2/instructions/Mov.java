@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -29,10 +30,10 @@ public class Mov extends Spin2PAsmInstructionFactory {
             throw new RuntimeException("Expected 2 operands, found " + arguments.size());
         }
         if (arguments.get(0).isLiteral()) {
-            throw new RuntimeException("Bad use of immediate for first operand");
+            throw new CompilerMessage("Bad use of immediate for first operand", arguments.get(0).getExpression().getData());
         }
         if (effect != null && !Spin2PAsmSchema.E_WC_WZ_WCZ.contains(effect.toLowerCase())) {
-            throw new RuntimeException("Bad instruction modified");
+            throw new RuntimeException("Bad instruction modifier");
         }
         throw new RuntimeException("Syntax error");
     }
@@ -64,12 +65,7 @@ public class Mov extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
-            value = o.setValue(value, 0b0110000);
-            value = cz.setValue(value, encodeEffect(effect));
-            value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
+            int value = o.setValue(encodeInstructionParameters(condition, dst, src, effect), 0b0110000);
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 

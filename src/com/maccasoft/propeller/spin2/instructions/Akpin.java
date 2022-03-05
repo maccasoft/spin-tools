@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -51,6 +52,9 @@ public class Akpin extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, 0b01);
             value = i.setBoolean(value, src.isLiteral());
             value = d.setValue(value, 0b000000001);
+            if (src.getInteger() > 0x1FF) {
+                throw new CompilerMessage("Source register/constant cannot exceed $1FF", src.getExpression().getData());
+            }
             value = s.setValue(value, src.getInteger());
             return getBytes(value);
         }

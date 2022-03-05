@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -43,11 +44,6 @@ public class Drvnc extends Spin2PAsmInstructionFactory {
             this.dst = dst;
         }
 
-        @Override
-        public int getSize() {
-            return dst.isLongLiteral() ? 8 : 4;
-        }
-
         // EEEE 1101011 CZL DDDDDDDDD 001011011
 
         @Override
@@ -56,9 +52,12 @@ public class Drvnc extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1101011);
             value = cz.setValue(value, encodeEffect(effect));
             value = i.setBoolean(value, dst.isLiteral());
+            if (dst.getInteger() > 0x1FF) {
+                throw new CompilerMessage("Destination register/constant cannot exceed $1FF", dst.getExpression().getData());
+            }
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0b001011011);
-            return dst.isLongLiteral() ? getBytes(encodeAugd(condition, dst.getInteger()), value) : getBytes(value);
+            return getBytes(value);
         }
 
     }

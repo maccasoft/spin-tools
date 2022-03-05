@@ -28,15 +28,15 @@ public class Addct3 extends Spin2PAsmInstructionFactory {
         throw new RuntimeException("Invalid arguments");
     }
 
+    /*
+     * ADDCT3  D,{#}S
+     */
     public class Addct3_ extends Spin2InstructionObject {
 
         String condition;
         Spin2PAsmExpression dst;
         Spin2PAsmExpression src;
 
-        /*
-         * ADDCT3  D,{#}S
-         */
         public Addct3_(Spin2Context context, String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src) {
             super(context);
             this.condition = condition;
@@ -53,12 +53,8 @@ public class Addct3 extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
-            value = o.setValue(value, 0b1010011);
+            int value = o.setValue(encodeInstructionParameters(condition, dst, src, null), 0b1010011);
             value = cz.setValue(value, 0b10);
-            value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 

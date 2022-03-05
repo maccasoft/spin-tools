@@ -56,12 +56,8 @@ public class Decod extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
-            value = o.setValue(value, 0b1001110);
+            int value = o.setValue(encodeInstructionParameters(condition, dst, src, null), 0b1001110);
             value = cz.setValue(value, 0b00);
-            value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 
@@ -85,12 +81,8 @@ public class Decod extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
-            value = o.setValue(value, 0b1001110);
+            int value = o.setValue(encodeInstructionParameters(condition, dst, dst, null), 0b1001110);
             value = cz.setValue(value, 0b00);
-            value = i.setBoolean(value, false);
-            value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, dst.getInteger());
             return getBytes(value);
         }
 

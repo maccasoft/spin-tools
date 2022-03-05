@@ -587,6 +587,7 @@ public class Spin2ObjectCompiler {
                 if (index < param.getTokens().size()) {
                     try {
                         expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), localScope);
+                        expression.setData(param);
                     } catch (Exception e) {
                         throw new CompilerMessage(e, param);
                     }

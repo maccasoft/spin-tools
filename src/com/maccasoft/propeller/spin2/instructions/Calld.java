@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -143,6 +144,9 @@ public class Calld extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1011001);
             value = cz.setValue(value, encodeEffect(effect));
             value = i.setBoolean(value, src.isLiteral());
+            if (dst.getInteger() > 0x1FF) {
+                throw new CompilerMessage("Destination register cannot exceed $1FF", dst.getExpression().getData());
+            }
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, src.isLiteral() ? (src.getInteger() - context.getSymbol("$").getNumber().intValue() - 1) : src.getInteger());
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
