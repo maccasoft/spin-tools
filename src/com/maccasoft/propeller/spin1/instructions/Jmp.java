@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin1.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
@@ -52,6 +53,9 @@ public class Jmp extends Spin1PAsmInstructionFactory {
             value = con.setValue(value, encodeCondition(condition));
             value = zcr.setValue(value, encodeEffect(0b000, effect));
             value = i.setBoolean(value, src.isLiteral());
+            if (src.getInteger() > 0x1FF) {
+                throw new CompilerMessage("Source register/constant cannot exceed $1FF", src.getExpression().getData());
+            }
             value = s.setValue(value, src.getInteger());
             return getBytes(value);
         }

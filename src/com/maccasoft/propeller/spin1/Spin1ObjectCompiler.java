@@ -569,6 +569,7 @@ public class Spin1ObjectCompiler {
                     if (index < param.getTokens().size()) {
                         try {
                             expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), pasmLine.getScope());
+                            expression.setData(param);
                         } catch (Exception e) {
                             throw new CompilerMessage(e, param);
                         }

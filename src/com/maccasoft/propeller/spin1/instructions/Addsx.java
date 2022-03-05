@@ -50,12 +50,7 @@ public class Addsx extends Spin1PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = instr.setValue(0, 0b110110);
-            value = con.setValue(value, encodeCondition(condition));
-            value = zcr.setValue(value, encodeEffect(effect));
-            value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
+            int value = instr.setValue(encodeInstructionParameters(condition, dst, src, effect), 0b110110);
             return getBytes(value);
         }
 

@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin1.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
@@ -52,7 +53,19 @@ public class Call extends Spin1PAsmInstructionFactory {
             value = con.setValue(value, encodeCondition(condition));
             value = zcr.setValue(value, encodeEffect(effect));
             value = i.setBoolean(value, true);
-            value = d.setValue(value, context.getInteger(src.getExpression().toString() + "_ret"));
+            int dst;
+            try {
+                dst = context.getInteger(src.getExpression().toString() + "_ret");
+            } catch (Exception e) {
+                throw new CompilerMessage(e.getMessage(), src.getExpression().getData());
+            }
+            if (dst > 0b111111111) {
+                throw new CompilerMessage("Value out of range (" + dst + ")", src.getExpression().getData());
+            }
+            value = d.setValue(value, dst);
+            if (src.getInteger() > 0b111111111) {
+                throw new CompilerMessage("Value out of range (" + src.getInteger() + ")", src.getExpression().getData());
+            }
             value = s.setValue(value, src.getInteger());
             return getBytes(value);
         }

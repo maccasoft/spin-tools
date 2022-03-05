@@ -50,12 +50,8 @@ public class Tjnz extends Spin1PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = instr.setValue(0, 0b111010);
-            value = con.setValue(value, encodeCondition(condition));
+            int value = instr.setValue(encodeInstructionParameters(condition, dst, src, null), 0b111010);
             value = zcr.setValue(value, encodeEffect(0b000, effect));
-            value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
             return getBytes(value);
         }
 

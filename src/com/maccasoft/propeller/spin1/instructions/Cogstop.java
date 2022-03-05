@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin1.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
@@ -50,6 +51,9 @@ public class Cogstop extends Spin1PAsmInstructionFactory {
             value = con.setValue(value, encodeCondition(condition));
             value = zcr.setValue(value, 0b000);
             value = i.setBoolean(value, true);
+            if (dst.getInteger() > 0x1FF) {
+                throw new CompilerMessage("Destination register cannot exceed $1FF", dst.getExpression().getData());
+            }
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0b011);
             return getBytes(value);

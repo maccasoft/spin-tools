@@ -13,7 +13,6 @@ package com.maccasoft.propeller.spin1.instructions;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerMessage;
-import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
@@ -27,7 +26,7 @@ public class Cmp extends Spin1PAsmInstructionFactory {
     public Spin1InstructionObject createObject(Spin1PAsmLine line) {
         if (Spin1PAsmSchema.D_S_WC_WZ.check(line.getArguments(), line.getEffect())) {
             if (line.getEffect() == null) {
-                line.addAnnotation(new CompilerMessage(CompilerMessage.WARNING, "instruction " + line.getMnemonic() + " used without flags being set", (Node) line.getData()));
+                line.addAnnotation(new CompilerMessage(CompilerMessage.WARNING, "instruction " + line.getMnemonic() + " used without flags being set", line.getData()));
             }
             return new Cmp_(line);
         }
@@ -72,12 +71,8 @@ public class Cmp extends Spin1PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = instr.setValue(0, 0b100001);
-            value = con.setValue(value, encodeCondition(condition));
+            int value = instr.setValue(encodeInstructionParameters(condition, dst, src, null), 0b100001);
             value = zcr.setValue(value, encodeEffect(0b000, effect));
-            value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
-            value = s.setValue(value, src.getInteger());
             return getBytes(value);
         }
 

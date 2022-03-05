@@ -17,6 +17,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.BitField;
 
+import com.maccasoft.propeller.CompilerMessage;
+
 public abstract class Spin1InstructionObject {
 
     public static final BitField instr = new BitField(0b111111_0_0_0_0_0000_000000000_000000000); // instruction
@@ -145,6 +147,21 @@ public abstract class Spin1InstructionObject {
     public void generateObjectCode(OutputStream output) throws IOException {
         byte[] object = getBytes();
         output.write(object, 0, object.length);
+    }
+
+    protected int encodeInstructionParameters(String condition, Spin1PAsmExpression dst, Spin1PAsmExpression src, String effect) {
+        int value = con.setValue(0, encodeCondition(condition));
+        value = zcr.setValue(value, encodeEffect(effect));
+        value = i.setBoolean(value, src.isLiteral());
+        if (dst.getInteger() < 0 || dst.getInteger() > 0x1FF) {
+            throw new CompilerMessage("Destination register cannot exceed $1FF", dst.getExpression().getData());
+        }
+        value = d.setValue(value, dst.getInteger());
+        if (src.getInteger() < 0 || src.getInteger() > 0x1FF) {
+            throw new CompilerMessage("Source register/constant cannot exceed $1FF", src.getExpression().getData());
+        }
+        value = s.setValue(value, src.getInteger());
+        return value;
     }
 
     public abstract byte[] getBytes();
