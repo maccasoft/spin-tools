@@ -8,12 +8,236 @@
         <entry name="DAT"><![CDATA[<b>DAT</b><p>Data declarations, including PASM code</p>]]></entry>
     </section>
 
-    <section class="ConstantsNode,ExpressionNode">
-        <entry name="addpins"><![CDATA[<b>x ADDPINS y</b><p>Make pinfield, (x & $3F) | (y & $1F) &lt;&lt; 6</p>]]></entry>
+    <section class="ConstantsNode,ExpressionNode,DataLineNode">
         <entry name="CLKFREQ"><![CDATA[<b>CLKFREQ | _CLKFREQ</b><p>Clock frequency value</p>]]></entry>
         <entry name="_CLKFREQ"><![CDATA[<b>CLKFREQ | _CLKFREQ</b><p>Clock frequency value</p>]]></entry>
         <entry name="CLKMODE"><![CDATA[<b>CLKMODE | _CLKMODE</b><p>Clock mode value</p>]]></entry>
         <entry name="_CLKMODE"><![CDATA[<b>CLKMODE | _CLKMODE</b><p>Clock mode value</p>]]></entry>
+
+        <entry name="P_TRUE_A"><![CDATA[<b>P_TRUE_A</b><p>True A input</p>]]></entry>
+        <entry name="P_INVERT_A"><![CDATA[<b>P_INVERT_A</b><p>Invert A input</p>]]></entry>
+
+        <entry name="P_LOCAL_A"><![CDATA[<b>P_LOCAL_A</b><p>Select local pin for A input</p>]]></entry>
+        <entry name="P_PLUS1_A"><![CDATA[<b>P_PLUS1_A</b><p>Select pin+1 for A input</p>]]></entry>
+        <entry name="P_PLUS2_A"><![CDATA[<b>P_PLUS2_A</b><p>Select pin+2 for A input</p>]]></entry>
+        <entry name="P_PLUS3_A"><![CDATA[<b>P_PLUS3_A</b><p>Select pin+3 for A input</p>]]></entry>
+        <entry name="P_OUTBIT_A"><![CDATA[<b>P_OUTBIT_A</b><p>Select OUT bit for A input</p>]]></entry>
+        <entry name="P_MINUS3_A"><![CDATA[<b>P_MINUS3_A</b><p>Select pin-3 for A input</p>]]></entry>
+        <entry name="P_MINUS2_A"><![CDATA[<b>P_MINUS2_A</b><p>Select pin-2 for A input</p>]]></entry>
+        <entry name="P_MINUS1_A"><![CDATA[<b>P_MINUS1_A</b><p>Select pin-1 for A input</p>]]></entry>
+
+        <entry name="P_TRUE_B"><![CDATA[<b>P_TRUE_B</b><p>True B input</p>]]></entry>
+        <entry name="P_INVERT_B"><![CDATA[<b>P_INVERT_B</b><p>Invert B input</p>]]></entry>
+
+        <entry name="P_LOCAL_B"><![CDATA[<b>P_LOCAL_B</b><p>Select local pin for B input</p>]]></entry>
+        <entry name="P_PLUS1_B"><![CDATA[<b>P_PLUS1_B</b><p>Select pin+1 for B input</p>]]></entry>
+        <entry name="P_PLUS2_B"><![CDATA[<b>P_PLUS2_B</b><p>Select pin+2 for B input</p>]]></entry>
+        <entry name="P_PLUS3_B"><![CDATA[<b>P_PLUS3_B</b><p>Select pin+3 for B input</p>]]></entry>
+        <entry name="P_OUTBIT_B"><![CDATA[<b>P_OUTBIT_B</b><p>Select OUT bit for B input</p>]]></entry>
+        <entry name="P_MINUS3_B"><![CDATA[<b>P_MINUS3_B</b><p>Select pin-3 for B input</p>]]></entry>
+        <entry name="P_MINUS2_B"><![CDATA[<b>P_MINUS2_B</b><p>Select pin-2 for B input</p>]]></entry>
+        <entry name="P_MINUS1_B"><![CDATA[<b>P_MINUS1_B</b><p>Select pin-1 for B input</p>]]></entry>
+
+        <entry name="P_PASS_AB"><![CDATA[<b>P_PASS_AB</b><p>Select A, B</p>]]></entry>
+        <entry name="P_AND_AB"><![CDATA[<b>P_AND_AB</b><p>Select A & B, B</p>]]></entry>
+        <entry name="P_OR_AB"><![CDATA[<b>P_OR_AB</b><p>Select A | B, B</p>]]></entry>
+        <entry name="P_XOR_AB"><![CDATA[<b>P_XOR_AB</b><p>Select A ^ B, B</p>]]></entry>
+        <entry name="P_FILT0_AB"><![CDATA[<b>P_FILT0_AB</b><p>Select FILT0 settings for A, B</p>]]></entry>
+        <entry name="P_FILT1_AB"><![CDATA[<b>P_FILT1_AB</b><p>Select FILT1 settings for A, B</p>]]></entry>
+        <entry name="P_FILT2_AB"><![CDATA[<b>P_FILT2_AB</b><p>Select FILT2 settings for A, B</p>]]></entry>
+        <entry name="P_FILT3_AB"><![CDATA[<b>P_FILT3_AB</b><p>Select FILT3 settings for A, B</p>]]></entry>
+
+        <entry name="P_LOGIC_A"><![CDATA[<b>P_LOGIC_A</b><p>Logic level A → IN, output OUT</p>]]></entry>
+        <entry name="P_LOGIC_A_FB"><![CDATA[<b>P_LOGIC_A_FB</b><p>Logic level A → IN, output feedback</p>]]></entry>
+        <entry name="P_LOGIC_B_FB"><![CDATA[<b>P_LOGIC_B_FB</b><p>Logic level B → IN, output feedback</p>]]></entry>
+        <entry name="P_SCHMITT_A"><![CDATA[<b>P_SCHMITT_A</b><p>Schmitt trigger A → IN, output OUT</p>]]></entry>
+        <entry name="P_SCHMITT_A_FB"><![CDATA[<b>P_SCHMITT_A_FB</b><p>Schmitt trigger A → IN, output feedback</p>]]></entry>
+        <entry name="P_SCHMITT_B_FB"><![CDATA[<b>P_SCHMITT_B_FB</b><p>Schmitt trigger B → IN, output feedback</p>]]></entry>
+        <entry name="P_COMPARE_AB"><![CDATA[<b>P_COMPARE_AB</b><p>A > B → IN, output OUT</p>]]></entry>
+        <entry name="P_COMPARE_AB_FB"><![CDATA[<b>P_COMPARE_AB_FB</b><p>A > B → IN, output feedback</p>]]></entry>
+
+        <entry name="P_ADC_GIO"><![CDATA[<b>P_ADC_GIO</b><p>ADC GIO → IN, output OUT</p>]]></entry>
+        <entry name="P_ADC_VIO"><![CDATA[<b>P_ADC_VIO</b><p>ADC VIO → IN, output OUT</p>]]></entry>
+        <entry name="P_ADC_FLOAT"><![CDATA[<b>P_ADC_FLOAT</b><p>ADC FLOAT → IN, output OUT</p>]]></entry>
+        <entry name="P_ADC_1X"><![CDATA[<b>P_ADC_1X</b><p>ADC 1x → IN, output OUT</p>]]></entry>
+        <entry name="P_ADC_3X"><![CDATA[<b>P_ADC_3X</b><p>ADC 3.16x → IN, output OUT</p>]]></entry>
+        <entry name="P_ADC_10X"><![CDATA[<b>P_ADC_10X</b><p>ADC 10x → IN, output OUT</p>]]></entry>
+        <entry name="P_ADC_30X"><![CDATA[<b>P_ADC_30X</b><p>ADC 31.6x → IN, output OUT</p>]]></entry>
+        <entry name="P_ADC_100X"><![CDATA[<b>P_ADC_100X</b><p>ADC 100x → IN, output OUT</p>]]></entry>
+
+        <entry name="P_DAC_990R_3V"><![CDATA[<b>P_DAC_990R_3V</b><p>DAC 990Ω, 3.3V peak, ADC 1x → IN</p>]]></entry>
+        <entry name="P_DAC_600R_2V"><![CDATA[<b>P_DAC_600R_2V</b><p>DAC 600Ω, 2.0V peak, ADC 1x → IN</p>]]></entry>
+        <entry name="P_DAC_124R_3V"><![CDATA[<b>P_DAC_124R_3V</b><p>DAC 123.75Ω, 3.3V peak, ADC 1x → IN</p>]]></entry>
+        <entry name="P_DAC_75R_2V"><![CDATA[<b>P_DAC_75R_2V</b><p>DAC 75Ω, 2.0V peak, ADC 1x → IN</p>]]></entry>
+
+        <entry name="P_LEVEL_A"><![CDATA[<bP_LEVEL_A></b><p>A > Level → IN, output OUT</p>]]></entry>
+        <entry name="P_LEVEL_A_FBN"><![CDATA[<b>P_LEVEL_A_FBN</b><p>A > Level → IN, output negative feedback</p>]]></entry>
+        <entry name="P_LEVEL_B_FBP"><![CDATA[<b>P_LEVEL_B_FBP</b><p>B > Level → IN, output positive feedback</p>]]></entry>
+        <entry name="P_LEVEL_B_FBN"><![CDATA[<b>P_LEVEL_B_FBN</b><p>B > Level → IN, output negative feedback</p>]]></entry>
+
+        <entry name="P_ASYNC_IO"><![CDATA[<b>P_ASYNC_IO</b><p>Select asynchronous I/O</p>]]></entry>
+        <entry name="P_SYNC_IO"><![CDATA[<b>P_SYNC_IO</b><p>Select synchronous I/O</p>]]></entry>
+
+        <entry name="P_TRUE_IN"><![CDATA[<b>P_TRUE_IN</b><p>True IN bit</p>]]></entry>
+        <entry name="P_INVERT_IN"><![CDATA[<b>P_INVERT_IN</b><p>Invert IN bit</p>]]></entry>
+
+        <entry name="P_TRUE_OUTPUT"><![CDATA[<b>P_TRUE_OUTPUT</b><p>Select true output</p>]]></entry>
+        <entry name="P_INVERT_OUTPUT"><![CDATA[<b>P_INVERT_OUTPUT</b><p>Select inverted output</p>]]></entry>
+
+        <entry name="P_HIGH_FAST"><![CDATA[<b>P_HIGH_FAST</b><p>Drive high fast (30mA)</p>]]></entry>
+        <entry name="P_HIGH_1K5"><![CDATA[<bP_HIGH_1K5></b><p>Drive high 1.5kΩ</p>]]></entry>
+        <entry name="P_HIGH_15K"><![CDATA[<b>P_HIGH_15K</b><p>Drive high 15kΩ</p>]]></entry>
+        <entry name="P_HIGH_150K"><![CDATA[<b>P_HIGH_150K</b><p>Drive high 150kΩ</p>]]></entry>
+        <entry name="P_HIGH_1MA"><![CDATA[<b>P_HIGH_1MA</b><p>Drive high 1mA</p>]]></entry>
+        <entry name="P_HIGH_100UA"><![CDATA[<b>P_HIGH_100UA</b><p>Drive high 100μA</p>]]></entry>
+        <entry name="P_HIGH_10UA"><![CDATA[<b>P_HIGH_10UA</b><p>Drive high 10μA</p>]]></entry>
+        <entry name="P_HIGH_FLOAT"><![CDATA[<b>P_HIGH_FLOAT</b><p>Float high</p>]]></entry>
+
+        <entry name="P_LOW_FAST"><![CDATA[<b>P_LOW_FAST</b><p>Drive low fast (30mA)</p>]]></entry>
+        <entry name="P_LOW_1K5"><![CDATA[<b>P_LOW_1K5</b><p>Drive low 1.5kΩ</p>]]></entry>
+        <entry name="P_LOW_15K"><![CDATA[<b>P_LOW_15K</b><p>Drive low 15kΩ</p>]]></entry>
+        <entry name="P_LOW_150K"><![CDATA[<b>P_LOW_150K</b><p>Drive low 150kΩ</p>]]></entry>
+        <entry name="P_LOW_1MA"><![CDATA[<b>P_LOW_1MA</b><p>Drive low 1mA</p>]]></entry>
+        <entry name="P_LOW_100UA"><![CDATA[<b>P_LOW_100UA</b><p>Drive low 100μA</p>]]></entry>
+        <entry name="P_LOW_10UA"><![CDATA[<b>P_LOW_10UA</b><p>Drive low 10μA</p>]]></entry>
+
+        <entry name="P_TT_00"><![CDATA[<b>P_TT_00</b><p>TT = %00</p>]]></entry>
+        <entry name="P_TT_01"><![CDATA[<b>P_TT_01</b><p>TT = %01</p>]]></entry>
+        <entry name="P_TT_10"><![CDATA[<b>P_TT_10</b><p>TT = %10</p>]]></entry>
+        <entry name="P_TT_11"><![CDATA[<b>P_TT_11</b><p>TT = %11</p>]]></entry>
+        <entry name="P_OE"><![CDATA[<b>P_OE</b><p>Enable output in smart pin mode</p>]]></entry>
+        <entry name="P_CHANNEL"><![CDATA[<b>P_CHANNEL</b><p>Enable DAC channel in non-smart pin DAC mode</p>]]></entry>
+        <entry name="P_BITDAC"><![CDATA[<b>P_BITDAC</b><p>Enable BITDAC for non-smart pin DAC mode</p>]]></entry>
+
+        <entry name="P_NORMAL"><![CDATA[<b>P_NORMAL</b><p>Normal mode (not smart pin mode)</p>]]></entry>
+        <entry name="P_REPOSITORY"><![CDATA[<b>P_REPOSITORY</b><p>Long repository (non-DAC mode)</p>]]></entry>
+        <entry name="P_DAC_NOISE"><![CDATA[<b>P_DAC_NOISE</b><p>DAC Noise (DAC mode)</p>]]></entry>
+        <entry name="P_DAC_DITHER_RND"><![CDATA[<b>P_DAC_DITHER_RND</b><p>DAC 16-bit random dither (DAC mode)</p>]]></entry>
+        <entry name="P_DAC_DITHER_PWM"><![CDATA[<b>P_DAC_DITHER_PWM</b><p>DAC 16-bit PWM dither (DAC mode)</p>]]></entry>
+        <entry name="P_PULSE"><![CDATA[<b>P_PULSE</b><p>Pulse/cycle output</p>]]></entry>
+        <entry name="P_TRANSITION"><![CDATA[<b>P_TRANSITION</b><p>Transition output</p>]]></entry>
+        <entry name="P_NCO_FREQ"><![CDATA[<b>P_NCO_FREQ</b><p>NCO frequency output</p>]]></entry>
+        <entry name="P_NCO_DUTY"><![CDATA[<b>P_NCO_DUTY</b><p>NCO duty output</p>]]></entry>
+        <entry name="P_PWM_TRIANGLE"><![CDATA[<b>P_PWM_TRIANGLE</b><p>PWM triangle output</p>]]></entry>
+        <entry name="P_PWM_SAWTOOTH"><![CDATA[<b>P_PWM_SAWTOOTH</b><p>PWM sawtooth output</p>]]></entry>
+        <entry name="P_PWM_SMPS"><![CDATA[<b>P_PWM_SMPS</b><p>PWM switch-mode power supply I/O</p>]]></entry>
+        <entry name="P_QUADRATURE"><![CDATA[<b>P_QUADRATURE</b><p>A-B quadrature encoder input</p>]]></entry>
+        <entry name="P_REG_UP"><![CDATA[<b>P_REG_UP</b><p>Inc on A-rise when B-high</p>]]></entry>
+        <entry name="P_REG_UP_DOWN"><![CDATA[<b>P_REG_UP_DOWN</b><p>Inc on A-rise when B-high, dec on A-rise when B-low</p>]]></entry>
+        <entry name="P_COUNT_RISES"><![CDATA[<b>P_COUNT_RISES</b><p>Inc on A-rise, optionally dec on B-rise</p>]]></entry>
+        <entry name="P_COUNT_HIGHS"><![CDATA[<b>P_COUNT_HIGHS</b><p>Inc on A-high, optionally dec on B-high</p>]]></entry>
+        <entry name="P_STATE_TICKS"><![CDATA[<b>P_STATE_TICKS</b><p>For A-low and A-high states, count ticks</p>]]></entry>
+        <entry name="P_HIGH_TICKS"><![CDATA[<b>P_HIGH_TICKS</b><p>For A-high states, count ticks</p>]]></entry>
+        <entry name="P_EVENTS_TICKS"><![CDATA[<b>P_EVENTS_TICKS</b><p>For X A-highs/rises/edges, count ticks / Timeout on X ticks of no A-high/rise/edge</p>]]></entry>
+        <entry name="P_PERIODS_TICKS"><![CDATA[<b>P_PERIODS_TICKS</b><p>For X periods of A, count ticks</p>]]></entry>
+        <entry name="P_PERIODS_HIGHS"><![CDATA[<b>P_PERIODS_HIGHS</b><p>For X periods of A, count highs</p>]]></entry>
+        <entry name="P_COUNTER_TICKS"><![CDATA[<b>P_COUNTER_TICKS</b><p>For periods of A in X+ ticks, count ticks</p>]]></entry>
+        <entry name="P_COUNTER_HIGHS"><![CDATA[<b>P_COUNTER_HIGHS</b><p>For periods of A in X+ ticks, count highs</p>]]></entry>
+        <entry name="P_COUNTER_PERIODS"><![CDATA[<b>P_COUNTER_PERIODS</b><p>For periods of A in X+ ticks, count periods</p>]]></entry>
+        <entry name="P_ADC"><![CDATA[<b>P_ADC</b><p>ADC sample/filter/capture, internally clocked</p>]]></entry>
+        <entry name="P_ADC_EXT"><![CDATA[<b>P_ADC_EXT</b><p>ADC sample/filter/capture, externally clocked</p>]]></entry>
+        <entry name="P_ADC_SCOPE"><![CDATA[<bP_ADC_SCOPE></b><p>ADC scope with trigger</p>]]></entry>
+        <entry name="P_USB_PAIR"><![CDATA[<b>P_USB_PAIR</b><p>USB pin pair</p>]]></entry>
+        <entry name="P_SYNC_TX"><![CDATA[<b>P_SYNC_TX</b><p>Synchronous serial transmit</p>]]></entry>
+        <entry name="P_SYNC_RX"><![CDATA[<b>P_SYNC_RX</b><p>Synchronous serial receive</p>]]></entry>
+        <entry name="P_ASYNC_TX"><![CDATA[<b>P_ASYNC_TX</b><p>Asynchronous serial transmit</p>]]></entry>
+        <entry name="P_ASYNC_RX"><![CDATA[<b>P_ASYNC_RX</b><p>Asynchronous serial receive</p>]]></entry>
+
+        <entry name="X_IMM_32X1_LUT"></entry>
+        <entry name="X_IMM_16X2_LUT"></entry>
+        <entry name="X_IMM_8X4_LUT"></entry>
+        <entry name="X_IMM_4X8_LUT"></entry>
+
+        <entry name="X_IMM_32X1_1DAC1"></entry>
+        <entry name="X_IMM_16X2_2DAC1"></entry>
+        <entry name="X_IMM_16X2_1DAC2"></entry>
+        <entry name="X_IMM_8X4_4DAC1"></entry>
+        <entry name="X_IMM_8X4_2DAC2"></entry>
+        <entry name="X_IMM_8X4_1DAC4"></entry>
+
+        <entry name="X_IMM_4X8_4DAC2"></entry>
+        <entry name="X_IMM_4X8_2DAC4"></entry>
+        <entry name="X_IMM_4X8_1DAC8"></entry>
+        <entry name="X_IMM_2X16_4DAC4"></entry>
+
+        <entry name="X_IMM_2X16_2DAC8"></entry>
+        <entry name="X_IMM_1X32_4DAC8"></entry>
+
+        <entry name="X_RFLONG_32X1_LUT"></entry>
+        <entry name="X_RFLONG_16X2_LUT"></entry>
+        <entry name="X_RFLONG_8X4_LUT"></entry>
+        <entry name="X_RFLONG_4X8_LUT"></entry>
+
+        <entry name="X_RFBYTE_1P_1DAC1"></entry>
+        <entry name="X_RFBYTE_2P_2DAC1"></entry>
+        <entry name="X_RFBYTE_2P_1DAC2"></entry>
+        <entry name="X_RFBYTE_4P_4DAC1"></entry>
+        <entry name="X_RFBYTE_4P_2DAC2"></entry>
+        <entry name="X_RFBYTE_4P_1DAC4"></entry>
+        <entry name="X_RFBYTE_8P_4DAC2"></entry>
+        <entry name="X_RFBYTE_8P_2DAC4"></entry>
+        <entry name="X_RFBYTE_8P_1DAC8"></entry>
+        <entry name="X_RFWORD_16P_4DAC4"></entry>
+        <entry name="X_RFWORD_16P_2DAC8"></entry>
+        <entry name="X_RFLONG_32P_4DAC8"></entry>
+
+        <entry name="X_RFBYTE_LUMA8"></entry>
+        <entry name="X_RFBYTE_RGBI8"></entry>
+        <entry name="X_RFBYTE_RGB8"></entry>
+        <entry name="X_RFWORD_RGB16"></entry>
+        <entry name="X_RFLONG_RGB24"></entry>
+
+        <entry name="X_1P_1DAC1_WFBYTE"></entry>
+        <entry name="X_2P_2DAC1_WFBYTE"></entry>
+        <entry name="X_2P_1DAC2_WFBYTE"></entry>
+
+        <entry name="X_4P_4DAC1_WFBYTE"></entry>
+        <entry name="X_4P_2DAC2_WFBYTE"></entry>
+        <entry name="X_4P_1DAC4_WFBYTE"></entry>
+
+        <entry name="X_8P_4DAC2_WFBYTE"></entry>
+        <entry name="X_8P_2DAC4_WFBYTE"></entry>
+        <entry name="X_8P_1DAC8_WFBYTE"></entry>
+
+        <entry name="X_16P_4DAC4_WFWORD"></entry>
+        <entry name="X_16P_2DAC8_WFWORD"></entry>
+        <entry name="X_32P_4DAC8_WFLONG"></entry>
+
+        <entry name="X_1ADC8_0P_1DAC8_WFBYTE"></entry>
+        <entry name="X_1ADC8_8P_2DAC8_WFWORD"></entry>
+        <entry name="X_2ADC8_0P_2DAC8_WFWORD"></entry>
+        <entry name="X_2ADC8_16P_4DAC8_WFLONG"></entry>
+        <entry name="X_4ADC8_0P_4DAC8_WFLONG"></entry>
+
+        <entry name="X_DDS_GOERTZEL_SINC1"></entry>
+        <entry name="X_DDS_GOERTZEL_SINC2"></entry>
+
+        <entry name="X_DACS_OFF"></entry>
+        <entry name="X_DACS_0_0_0_0"></entry>
+        <entry name="X_DACS_X_X_0_0"></entry>
+        <entry name="X_DACS_0_0_X_X"></entry>
+        <entry name="X_DACS_X_X_X_0"></entry>
+        <entry name="X_DACS_X_X_0_X"></entry>
+        <entry name="X_DACS_X_0_X_X"></entry>
+        <entry name="X_DACS_0_X_X_X"></entry>
+
+        <entry name="X_DACS_0N0_0N0"></entry>
+        <entry name="X_DACS_X_X_0N0"></entry>
+        <entry name="X_DACS_0N0_X_X"></entry>
+        <entry name="X_DACS_1_0_1_0"></entry>
+        <entry name="X_DACS_X_X_1_0"></entry>
+        <entry name="X_DACS_1_0_X_X"></entry>
+        <entry name="X_DACS_1N1_0N0"></entry>
+        <entry name="X_DACS_3_2_1_0"></entry>
+
+        <entry name="X_PINS_OFF"></entry>
+        <entry name="X_PINS_ON"></entry>
+        <entry name="X_WRITE_OFF"></entry>
+        <entry name="X_WRITE_ON"></entry>
+        <entry name="X_ALT_OFF"></entry>
+        <entry name="X_ALT_ON"></entry>
+
+        <entry name="addpins"><![CDATA[<b>x ADDPINS y</b><p>Make pinfield, (x & $3F) | (y & $1F) &lt;&lt; 6</p>]]></entry>
     </section>
 
     <section class="StatementNode">
