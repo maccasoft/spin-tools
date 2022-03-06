@@ -88,7 +88,8 @@ public class Spin2Compiler {
             if (node.name == null || node.file == null) {
                 return;
             }
-            String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin2";
+            String objectName = node.file.getText().substring(1, node.file.getText().length() - 1);
+            String objectFileName = objectName + ".spin2";
 
             ObjectNodeVisitor p = parent;
             while (p != null) {
@@ -103,7 +104,7 @@ public class Spin2Compiler {
                 objectRoot = getParsedObject(objectFileName);
             }
             if (objectRoot == null) {
-                logMessage(new CompilerMessage(fileName, "object file \"" + objectFileName + "\" not found", node.file));
+                //logMessage(new CompilerMessage(fileName, "object \"" + objectName + "\" not found", node.file));
                 return;
             }
 

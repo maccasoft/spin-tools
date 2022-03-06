@@ -27,5 +27,5 @@ fi
 # Collect options to java in an array, to properly handle whitespace in options
 JAVA_OPTIONS=("-DAPP_DIR=$APPDIR")
 
-"$JAVA" "${JAVA_OPTIONS[@]}" com.maccasoft.propeller.SpinTools "$@"
+"$JAVA" "${JAVA_OPTIONS[@]}" com.maccasoft.propeller.SpinCompiler "$@"
 

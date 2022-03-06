@@ -1,12 +1,11 @@
 <launch4jConfig>
   <dontWrapJar>true</dontWrapJar>
-  <headerType>gui</headerType>
-  <outfile>propeller.exe</outfile>
-  <errTitle>Propeller</errTitle>
+  <headerType>console</headerType>
+  <outfile>spinc.exe</outfile>
+  <errTitle>Spin Tools Compiler</errTitle>
   <downloadUrl>http://www.oracle.com/technetwork/java/javase/downloads/index.html</downloadUrl>
-  <icon>propeller.ico</icon>
   <classPath>
-    <mainClass>com.maccasoft.propeller.SpinTools</mainClass>
+    <mainClass>com.maccasoft.propeller.SpinCompiler</mainClass>
     <cp>%EXEDIR%/lib/*.jar</cp>
   </classPath>
   <jre>
@@ -16,12 +15,12 @@
     <opt>-DAPP_DIR="%EXEDIR%"</opt>
   </jre>
   <versionInfo>
-    <fileDescription>Spin Tools</fileDescription>
+    <fileDescription>Spin Tools Compiler</fileDescription>
     <copyright>Marco Maccaferri</copyright>
-    <productName>Spin Tools</productName>
+    <productName>Spin Tools Compiler</productName>
     <companyName>Marco Maccaferri</companyName>
-    <internalName>propeller</internalName>
-    <originalFilename>propeller.exe</originalFilename>
+    <internalName>spinc</internalName>
+    <originalFilename>spinc.exe</originalFilename>
   </versionInfo>
   <messages>
     <startupErr>An error occurred while starting the application.</startupErr>

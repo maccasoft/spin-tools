@@ -3,7 +3,7 @@
     <tstamp>
         <format property="timestamp" pattern="yyyyMMdd-HHmm" />
     </tstamp>
-    <property name="version" value="0.8" />
+    <property name="version" value="0.9" />
     <property name="package" value="spin-tools" />
     <property name="folder" value="${package}-${version}" />
     <property name="mac-folder" value="Spin Tools"/>
@@ -53,10 +53,12 @@
             <fileset file="build/linux/install.sh" />
             <fileset file="build/linux/uninstall.sh" />
             <fileset file="build/linux/propeller.png" />
+            <fileset file="build/linux/spinc" />
         </copy>
         <chmod file="${work}/${folder}/propeller" perm="755" />
         <chmod file="${work}/${folder}/install.sh" perm="755" />
         <chmod file="${work}/${folder}/uninstall.sh" perm="755" />
+        <chmod file="${work}/${folder}/spinc" perm="755" />
 
         <exec executable="tar" dir="${work}" failonerror="true">
             <arg value="czf" />
@@ -84,8 +86,16 @@
         </copy>
 
         <launch4j 
-            configFile="build/windows/config64.xml" 
+            configFile="build/windows/config.xml" 
             outfile="${work}/${folder}/propeller.exe" 
+            fileVersion="${version}.0.0" 
+            txtFileVersion="${version}.0.0" 
+            productVersion="${version}.0.0" 
+            txtProductVersion="${version}.0.0" />
+
+        <launch4j 
+            configFile="build/windows/config-cli.xml" 
+            outfile="${work}/${folder}/spinc.exe" 
             fileVersion="${version}.0.0" 
             txtFileVersion="${version}.0.0" 
             productVersion="${version}.0.0" 
@@ -162,6 +172,7 @@
         <pathelement location="lib/jackson-databind-2.7.0.jar" />
         <pathelement location="lib/commons-lang3-3.12.0.jar" />
         <pathelement location="lib/commons-collections4-4.4.jar" />
+        <pathelement location="lib/commons-cli-1.4.jar" />
     </path>
 
     <target name="copy-common-files">
@@ -207,6 +218,8 @@
             <fileset dir="lib" includes="jackson-databind-2.7.0.jar" />
             <fileset dir="lib" includes="commons-lang3-3.12.0.jar" />
             <fileset dir="lib" includes="commons-collections4-4.4.jar" />
+            <fileset dir="lib" includes="commons-cli-1.4.jar" />
+            <fileset dir="lib" includes="slf4j-nop-1.7.36.jar" />
         </copy>
 
         <copy todir="${work}/${folder}">

@@ -28,5 +28,7 @@
 	<classpathentry kind="lib" path="lib/jackson-core-2.7.0.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-databind-2.7.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-collections4-4.4.jar" sourcepath="lib/commons-collections4-4.4-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.5.0.jar" sourcepath="lib/commons-cli-1.5.0-sources.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-nop-1.7.36.jar" sourcepath="lib/slf4j-nop-1.7.36-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

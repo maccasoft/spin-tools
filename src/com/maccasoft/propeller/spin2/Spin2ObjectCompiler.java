@@ -507,11 +507,12 @@ public class Spin2ObjectCompiler {
         for (Node child : parent.getChilds()) {
             ObjectNode node = (ObjectNode) child;
             if (node.name != null && node.file != null) {
-                String fileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin2";
+                String objectName = node.file.getText().substring(1, node.file.getText().length() - 1);
+                String objectFileName = objectName + ".spin2";
 
-                ObjectInfo info = childObjects.get(fileName);
+                ObjectInfo info = childObjects.get(objectFileName);
                 if (info == null) {
-                    logMessage(new CompilerMessage("object \"" + fileName + "\" not found", node.file));
+                    logMessage(new CompilerMessage("object \"" + objectName + "\" not found", node.file));
                     continue;
                 }
 
