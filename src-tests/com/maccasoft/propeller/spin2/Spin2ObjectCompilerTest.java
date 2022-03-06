@@ -3448,6 +3448,94 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testBytefit() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                bytefit $00\n"
+            + "                bytefit $01\n"
+            + "                bytefit $02\n"
+            + "                bytefit -$80\n"
+            + "                bytefit $FF\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 00                                 bytefit $00\n"
+            + "00001 00001   000 01                                 bytefit $01\n"
+            + "00002 00002   000 02                                 bytefit $02\n"
+            + "00003 00003   000 80                                 bytefit -$80\n"
+            + "00004 00004   001 FF                                 bytefit $FF\n"
+            + "", compile(text));
+
+        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                bytefit -$81\n"
+                    + "");
+            }
+        });
+
+        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                bytefit $100\n"
+                    + "");
+            }
+        });
+    }
+
+    @Test
+    void testWordfit() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                wordfit $0000\n"
+            + "                wordfit $0001\n"
+            + "                wordfit $0002\n"
+            + "                wordfit -$8000\n"
+            + "                wordfit $FFFF\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 00 00                              wordfit $0000\n"
+            + "00002 00002   000 01 00                              wordfit $0001\n"
+            + "00004 00004   001 02 00                              wordfit $0002\n"
+            + "00006 00006   001 00 80                              wordfit -$8000\n"
+            + "00008 00008   002 FF FF                              wordfit $FFFF\n"
+            + "", compile(text));
+
+        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                wordfit -$8001\n"
+                    + "");
+            }
+        });
+
+        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                wordfit $10000\n"
+                    + "");
+            }
+        });
+    }
+
+    @Test
     void testLongLiteralRet() throws Exception {
         String text = ""
             + "DAT             org   $000\n"

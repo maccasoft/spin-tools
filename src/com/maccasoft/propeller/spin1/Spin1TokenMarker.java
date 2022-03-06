@@ -49,6 +49,8 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("BYTE", TokenId.TYPE);
         keywords.put("WORD", TokenId.TYPE);
         keywords.put("LONG", TokenId.TYPE);
+        keywords.put("BYTEFIT", TokenId.TYPE);
+        keywords.put("WORDFIT", TokenId.TYPE);
 
         keywords.put("ABORT", TokenId.KEYWORD);
         keywords.put("BYTEFILL", TokenId.FUNCTION);

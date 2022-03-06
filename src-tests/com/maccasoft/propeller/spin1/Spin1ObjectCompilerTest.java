@@ -2308,6 +2308,100 @@ class Spin1ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testBytefit() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                bytefit $00\n"
+            + "                bytefit $01\n"
+            + "                bytefit $02\n"
+            + "                bytefit -$80\n"
+            + "                bytefit $FF\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       09 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                                    org     $000\n"
+            + "00004 00004   000 00                                 bytefit $00\n"
+            + "00005 00005   000 01                                 bytefit $01\n"
+            + "00006 00006   000 02                                 bytefit $02\n"
+            + "00007 00007   000 80                                 bytefit -$80\n"
+            + "00008 00008   001 FF                                 bytefit $FF\n"
+            + "", compile(text));
+
+        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                bytefit -$81\n"
+                    + "");
+            }
+        });
+
+        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                bytefit $100\n"
+                    + "");
+            }
+        });
+    }
+
+    @Test
+    void testWordfit() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                wordfit $0000\n"
+            + "                wordfit $0001\n"
+            + "                wordfit $0002\n"
+            + "                wordfit -$8000\n"
+            + "                wordfit $FFFF\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0E 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                                    org     $000\n"
+            + "00004 00004   000 00 00                              wordfit $0000\n"
+            + "00006 00006   000 01 00                              wordfit $0001\n"
+            + "00008 00008   001 02 00                              wordfit $0002\n"
+            + "0000A 0000A   001 00 80                              wordfit -$8000\n"
+            + "0000C 0000C   002 FF FF                              wordfit $FFFF\n"
+            + "", compile(text));
+
+        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                wordfit -$8001\n"
+                    + "");
+            }
+        });
+
+        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                wordfit $10000\n"
+                    + "");
+            }
+        });
+    }
+
     String compile(String text) throws Exception {
         Spin1Context scope = new Spin1GlobalContext();
         Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();

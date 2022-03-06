@@ -651,7 +651,7 @@ public class Spin2Parser {
                         state = 3;
                         break;
                     }
-                    if (Spin2Model.isInstruction(token.getText()) || Spin2Model.isType(token.getText())) {
+                    if (Spin2Model.isInstruction(token.getText()) || Spin2Model.isPAsmType(token.getText())) {
                         parent.instruction = new Node(parent);
                         parent.instruction.addToken(token);
                         state = 4;
@@ -670,7 +670,7 @@ public class Spin2Parser {
                     }
                     // fall-through
                 case 3:
-                    if (Spin2Model.isInstruction(token.getText()) || Spin2Model.isType(token.getText())) {
+                    if (Spin2Model.isInstruction(token.getText()) || Spin2Model.isPAsmType(token.getText())) {
                         parent.instruction = new Node(parent);
                         parent.instruction.addToken(token);
                         state = 4;

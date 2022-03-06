@@ -24,6 +24,7 @@ import com.maccasoft.propeller.spin1.instructions.Addsx;
 import com.maccasoft.propeller.spin1.instructions.Addx;
 import com.maccasoft.propeller.spin1.instructions.And;
 import com.maccasoft.propeller.spin1.instructions.Andn;
+import com.maccasoft.propeller.spin1.instructions.Bytefit;
 import com.maccasoft.propeller.spin1.instructions.Call;
 import com.maccasoft.propeller.spin1.instructions.Clkset;
 import com.maccasoft.propeller.spin1.instructions.Cmp;
@@ -99,6 +100,7 @@ import com.maccasoft.propeller.spin1.instructions.Waitpeq;
 import com.maccasoft.propeller.spin1.instructions.Waitpne;
 import com.maccasoft.propeller.spin1.instructions.Waitvid;
 import com.maccasoft.propeller.spin1.instructions.Word;
+import com.maccasoft.propeller.spin1.instructions.Wordfit;
 import com.maccasoft.propeller.spin1.instructions.Wrbyte;
 import com.maccasoft.propeller.spin1.instructions.Wrlong;
 import com.maccasoft.propeller.spin1.instructions.Wrword;
@@ -114,6 +116,8 @@ public abstract class Spin1PAsmInstructionFactory {
         symbols.put("BYTE", new com.maccasoft.propeller.spin1.instructions.Byte());
         symbols.put("WORD", new Word());
         symbols.put("LONG", new com.maccasoft.propeller.spin1.instructions.Long());
+        symbols.put("BYTEFIT", new Bytefit());
+        symbols.put("WORDFIT", new Wordfit());
 
         symbols.put("FILE", Empty.instance);
 

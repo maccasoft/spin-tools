@@ -69,6 +69,10 @@ public class Spin2Model extends SpinModel {
         "LONG", "WORD", "BYTE",
     }));
 
+    public static Set<String> pasmTypes = new HashSet<String>(Arrays.asList(new String[] {
+        "LONG", "WORD", "BYTE", "WORDFIT", "BYTEFIT",
+    }));
+
     static Set<String> blockStart = new HashSet<String>(Arrays.asList(new String[] {
         "IF", "IFNOT", "ELSEIF", "ELSEIFNOT", "ELSE", "CASE", "CASE_FAST", "OTHER", "REPEAT",
     }));
@@ -87,6 +91,10 @@ public class Spin2Model extends SpinModel {
 
     public static boolean isType(String token) {
         return types.contains(token.toUpperCase());
+    }
+
+    public static boolean isPAsmType(String token) {
+        return pasmTypes.contains(token.toUpperCase());
     }
 
     public static boolean isBlockStart(String token) {

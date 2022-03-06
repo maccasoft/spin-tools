@@ -51,6 +51,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("BYTE", TokenId.TYPE);
         keywords.put("WORD", TokenId.TYPE);
         keywords.put("LONG", TokenId.TYPE);
+        keywords.put("BYTEFIT", TokenId.TYPE);
+        keywords.put("WORDFIT", TokenId.TYPE);
 
         keywords.put("HUBSET", TokenId.FUNCTION);
         keywords.put("CLKSET", TokenId.FUNCTION);

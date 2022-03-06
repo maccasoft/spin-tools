@@ -36,6 +36,8 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
         symbols.put("LONG", new Long());
         symbols.put("ALIGNW", new Alignw());
         symbols.put("ALIGNL", new Alignl());
+        symbols.put("BYTEFIT", new Bytefit());
+        symbols.put("WORDFIT", new Wordfit());
 
         symbols.put("FILE", Empty.instance);
         symbols.put("DEBUG", Empty.instance);
