@@ -1,5 +1,5 @@
 '************************************
-'*  Spin2 Interpreter - 2021.02.15  *
+'*  Spin2 Interpreter - 2022.01.14  *
 '************************************
 '
 CON	bc_setup_reg_1D8_1F8	= $B0
@@ -42,26 +42,27 @@ clkfreq_hub	long	320_000_000				'$44 - compiler supplies initial clkfreq value
 '
 		orgh
 
-stopcog		byte	bc_cogid, bc_cogstop	'cogstop(cogid)
+stopcog		byte	bc_cogid		& $FF	'cogstop(cogid)
+		byte	bc_cogstop		& $FF
 
-pri_sendb	byte	2*4			'2 parameters		PRI sendb(count,addr)
-		byte	bc_read_local_0_15+0	'read count		  repeat count
-.loop		byte	bc_setup_local_0_15+1	'setup addr		    send(byte[addr++])
-		byte	bc_var_postinc_push	'addr++
-		byte	bc_setup_byte_pa	'setup byte
-		byte	bc_read			'read
-		byte	bc_call_send		'call send
-		byte	bc_djnz			'djnz
-		byte	(.loop-$) & $7F		'loop address
-		byte	bc_return_results	'return
+pri_sendb	byte	2*4				'2 parameters		PRI sendb(count,addr)
+		byte	bc_read_local_0_15+0		'read count		  repeat count
+.loop		byte	bc_setup_local_0_15+1		'setup addr		    send(byte[addr++])
+		byte	bc_var_postinc_push	& $FF	'addr++
+		byte	bc_setup_byte_pa	& $FF	'setup byte
+		byte	bc_read			& $FF	'read
+		byte	bc_call_send		& $FF	'call send
+		byte	bc_djnz			& $FF	'djnz
+		byte	(.loop-$) & $7F			'loop address
+		byte	bc_return_results	& $FF	'return
 '
 '
 ' Hub bytecode vectors (up to $FE possible)
 '
 		alignw			'word-align for vectors
 
-bc_hubset	word	@hubset_	'HUBSET(val)				$54	(use ctrl-l to determine address)
-bc_clkset	word	@clkset_	'CLKSET(clkmode,clkfreq)		$56
+bc_hubset	word	@hubset_	'HUBSET(val)				$54	miscellaneous routines
+bc_clkset	word	@clkset_	'CLKSET(clkmode,clkfreq)		$56	(use ctrl-l to determine address)
 bc_read_clkfreq	word	@read_clkfreq	'CLKFREQ			(push)	$58
 bc_cogspin	word	@cogspin_	'COGSPIN(cog,method(params),stackadr)	$5A
 bc_inline	word	@inline		'inline pasm code			$5C
@@ -85,6 +86,24 @@ bc_getsec	word	@getms_		'GETSEC()			(push)	$7E
 bc_muldiv64	word	@muldiv64_	'MULDIV64(m1,m2,d)		(push)	$80
 bc_qsin		word	@qsin_		'QSIN(rho,theta,twopi)		(push)	$82
 bc_qcos		word	@qsin_		'QCOS(rho,theta,twopi)		(push)	$84
+
+bc_float	word	@float_		'FLOAT(integer)			(push)	$86	floating-point routines
+bc_trunc	word	@round_		'TRUNC(float)			(push)	$88	(bit1=0)
+bc_round	word	@round_		'ROUND(float)			(push)	$8A	(bit1=1)
+bc_nan		word	@nan_		'NAN(float)			(push)	$8C
+bc_fneg		word	@fneg_		'-. float			(push)	$8E
+bc_fabs		word	@fabs_		'FABS(float)			(push)	$90
+bc_flt		word	@frel_		'float <.  float		(push)	$92	(bit3..1=001)
+bc_fgt		word	@frel_		'float >.  float		(push)	$94	(bit3..1=010)
+bc_fne		word	@frel_		'float <>. float		(push)	$96	(bit3..1=011)
+bc_fe		word	@frel_		'float ==. float		(push)	$98	(bit3..1=100)
+bc_flte		word	@frel_		'float <=. float		(push)	$9A	(bit3..1=101)
+bc_fgte		word	@frel_		'float >=. float		(push)	$9C	(bit3..1=110)
+bc_fsqrt	word	@fsqrt_		'FSQRT(float)			(push)	$9E
+bc_fadd		word	@fadd_		'float +. float			(push)	$A0
+bc_fsub		word	@fsub_		'float -. float			(push)	$A2
+bc_fmul		word	@fmul_		'float *. float			(push)	$A4
+bc_fdiv		word	@fdiv_		'float /. float			(push)	$A6
 
 		alignl			'long-align for rest of interpreter
 '
@@ -270,23 +289,24 @@ repvarl		setq	#3-1		'pop address/terminal/delta into a/b/c
 
 		add	x,c		'add delta into current
 
-		alti	wr		'write variable
-dcall		long	0		'(pipeline spacer)
-
 		testb	c,#31	wz	'check for out-of-bounds
 	if_nz	cmps	b,x	wc
 	if_z	cmps	x,b	wc
 
-	if_nc	add	ptra,#3*4	'if not out-of-bounds, unpop data and loop
-	if_nc	jmp	#absjmp
+	if_c	jmp	#pop1		'if out-of-bounds, pop stack, continue
 
-	_ret_	popa	x		'out-of-bounds, pop stack, continue
+		alti	wr		'not out-of-bounds, write variable
+dcall		long	0		'(pipeline spacer)
+
+		add	ptra,#3*4	'unpop data
+
+		jmp	#absjmp		'loop
 '
 '
 ' PINW(pins,val)			(9 longs, must be in regs)
 '
 pinw_		ror	y,#6	wc	'y=pins, w=val (begins at pop2 in LUT)
-		bitc	.reg,#9		'select outa/outb for writing
+		bitc	pinw_reg,#9	'select outa/outb for writing
 
 		bmask	v,y		'make mask
 		rol	y,#6
@@ -295,7 +315,7 @@ pinw_		ror	y,#6	wc	'y=pins, w=val (begins at pop2 in LUT)
 		rol	w,y		'justify val
 
 		setq	v		'mux val into outa/outb using mask
-.reg		muxq	outa,w
+pinw_reg	muxq	outa,w
 
 	_ret_	dirh	y		'enable outputs
 '
@@ -353,7 +373,8 @@ dbase		res	1
 mrecv		res	1
 msend		res	1
 w		res	1
-x		res	1
+x		res	0
+ma		res	1		'(x alias for float)
 y		res	1
 z		res	1
 '
@@ -384,13 +405,20 @@ fb		res	1
 fm		res	1
 fx		res	1
 
-a		res	1		'a/b/c/d/e/f/g/h must remain in order
-b		res	1
-c		res	1
-d		res	1
-e		res	1
-f		res	1
-g		res	1
+a		res	0		'a/b/c/d/e/f/g/h must remain in order
+na		res	1		'(a alias for float)
+b		res	0
+sa		res	1		'(b alias for float)
+c		res	0
+xa		res	1		'(c alias for float)
+d		res	0
+mb		res	1		'(d alias for float)
+e		res	0
+nb		res	1		'(e alias for float)
+f		res	0
+sb		res	1		'(f alias for float)
+g		res	0
+xb		res	1		'(g alias for float)
 h		res	1
 
 		fit	$1F0		'buff occupies $1E0..$1EF, adjust user area size to fit
@@ -996,7 +1024,7 @@ bc_write_local_0_15_	long  var_wr_im	|               %0111000 << 10	'Fx	write lo
 '
 ' Constants				(13 longs)
 '
-const		pusha	x		'a b c d e f g h i j	a: constant -1..16
+const		pusha	x		'a b c d e f g h i j	a: constant -1..14
 		mov	x,pa		'a | | | | | | | | |	b: byte
 	_ret_	sub	x,#bc_con_n-$2FF'a | | | | | | | | |	c: byte!
 	_ret_	rfbyte	x		'  b | | | | | | | |	d: word
@@ -1557,9 +1585,9 @@ casefdh		mov	a,x		'| b	get 'done' address
 	_ret_	rdfast	#0,a		'a b	branch to case code
 '
 '
-'*********************************
-'*  Interpreter - hub bytecodes  *
-'*********************************
+'***********************************************
+'*  Interpreter - miscellaneous hub bytecodes  *
+'***********************************************
 '
 '
 ' HUBSET(val)
@@ -1991,6 +2019,252 @@ qsin_		setq	#2-1			'pop rho and theta, open top of stack
 	if_nz	getqx	x
 .stall3
 		ret
+'
+'
+'************************************************
+'*  Interpreter - floating-point hub bytecodes  *
+'************************************************
+'
+'
+' FLOAT(integer)	integer ma --> float ma
+'
+float_		mov	na,#0			'clear NaN
+		abs	ma		wc	'get sign, make integer absolute
+		wrc	sa			'set sign
+		encod	xa,ma			'get exponent
+		ror	ma,xa			'bit29-justify mantissa
+		ror	ma,#1
+		shr	ma,#2
+
+		jmp	#packf			'pack result
+'
+'
+' TRUNC(float)		float ma --> integer ma
+' ROUND(float)		float ma --> integer ma
+'
+round_		call	#unpackf		'unpack float
+
+		add	xa,#1			'if exponent < -1 or exponent > 30 then return zero
+		cmp	xa,#32		wc
+	if_nc	mov	ma,#0
+
+		shl	ma,#31-29
+		subr	xa,#31
+		shr	ma,xa
+		testb	pa,#1		wc	'TRUNC or ROUND?
+	if_c	add	ma,#1
+		shr	ma,#1
+		testb	sa,#0		wc
+	_ret_	negc	ma
+'
+'
+' NAN(float)		float ma --> boolean x
+'
+nan_		call	#unpackf		'unpack float
+
+	_ret_	neg	x,na			'return NaN status
+'
+'
+' -.float		float ma --> float ma
+'
+fneg_	_ret_	bitnot	ma,#31			'negate float
+'
+'
+' FABS(float)		float ma --> float ma
+'
+fabs_	_ret_	bitl	ma,#31			'absolutize float
+'
+'
+' 001: float <.  float		 --> boolean x
+' 010: float >.  float		 --> boolean x
+' 011: float <>. float		 --> boolean x
+' 100: float ==. float		 --> boolean x
+' 101: float <=. float		 --> boolean x
+' 110: float >=. float		 --> boolean x
+'
+frel_		popa	w			'pop left-side float
+
+		bitl	w,#31		wcz	'make left-side comparable
+		cmp	w,##$7F800001	wc	'if NaN, return false
+	if_nc	jmp	#.nan
+	if_z	neg	w			'+/- %0_xxxxxxxx_mmmmmmmmmmmmmmmmmmmmmmm
+
+		bitl	x,#31		wcz	'make right-side comparable
+		cmp	x,##$7F800001	wc	'if NaN, return false
+	if_nc	jmp	#.nan
+	if_z	neg	x			'+/- %0_xxxxxxxx_mmmmmmmmmmmmmmmmmmmmmmm
+
+		cmps	w,x		wcz	'do comparison
+	if_z	mov	y,#%1000		'equal?
+	if_nz	mov	y,#%0100		'above?
+	if_c	mov	y,#%0010		'below?
+		test	y,pa		wc	'test mask
+.nan	_ret_	muxc	x,_FFFFFFFF		'return boolean
+'
+'
+' FSQRT(float)		float ma --> float ma
+'
+fsqrt_		call	#unpackf		'unpack float
+
+		tjz	ma,#fabs_		'if mantissa zero, got result, use _ret_ in FABS
+
+		or	na,sa			'if negative, result = NaN
+
+		sar	xa,#1		wc	'halve root exponent
+	if_nc	shr	ma,#1			'if exponent was even, shift mantissa down
+		sub	xa,#1			'decrement to account for bit29 justification
+
+		rep	@.stall,#1		'use REP to stall interrupts to protect cordic operation
+		qsqrt	#0,ma			'compute square root of mantissa
+		getqx	ma
+.stall
+		jmp	#packf			'pack result
+'
+'
+' float -. float
+' float +. float
+'
+fsub_		bitnot	ma,#31			'negate right-hand float
+
+fadd_		call	#unpackf2		'unpack two floats
+
+		or	na,nb			'if either NaN, result NaN
+
+		test	sa		wz	'negate ma?
+		negnz	ma
+
+		test	sb		wz	'negate mb?
+		negnz	mb
+
+		mov	y,xa			'determine greater exponent
+		subs	y,xb		wcz	'xa > xb ?
+
+		abs	y			'absolutize and clamp exponent difference
+		fle	y,#31
+
+	if_a	sar	mb,y			'shift lower-exponent mantissa down
+	if_be	sar	ma,y
+	if_be	mov	xa,xb
+
+		add	ma,mb			'add mantissas
+		abs	ma		wc	'absolutize result
+		wrc	sa			'set sign
+
+		jmp	#packf			'pack result
+'
+'
+' float *. float
+'
+fmul_		call	#unpackf2		'unpack two floats
+
+		or	na,nb			'if either NaN, result NaN
+
+		xor	sa,sb			'xor signs
+		add	xa,xb			'add exponents
+
+		rep	@.stall,#1		'use REP to stall interrupts to protect cordic operation
+		qmul	ma,mb			'compute upper product of ma * mb
+		getqy	ma
+.stall
+		shl	ma,#3			'justify product
+
+		jmp	#packf			'pack result
+'
+'
+' float /. float
+'
+fdiv_		call	#unpackf2		'unpack two floats
+
+		or	na,nb			'if either Nan, result NaN
+
+		test	mb		wz	'if denominator zero, result NaN
+	if_z	mov	na,#1
+
+		xor	sa,sb			'xor signs
+		sub	xa,xb			'subtract exponents
+
+		shr	ma,#1			'make ma < mb
+
+		rep	@.stall,#1		'use REP to stall interrupts to protect cordic operation
+		qfrac	ma,mb			'compute quotient of (ma << 32) / mb
+		getqx	ma
+.stall
+		shr	ma,#2			'justify quotient
+
+		jmp	#packf			'pack result
+
+'
+'
+' Unpack two floats
+'
+unpackf2	call	#unpackf		'unpack ma
+
+		mov	nb,na			'copy na/sa/xa/ma to nb/sb/xb/mb
+		mov	sb,sa
+		mov	xb,xa
+		mov	mb,ma
+
+		popa	ma			'pop new ma (followed by fp_unpack)
+'
+'
+' Unpack float		float ma --> na,sa,xa,ma
+'
+unpackf		bitl	ma,#31		wcz	'read and clear sign
+		wrc	sa
+
+		cmpr	ma,##$7F800000	wc	'check for NaN
+		wrc	na
+
+		mov	xa,ma			'get exponent
+		shr	xa,#32-1-8	wz
+
+		zerox	ma,#22			'get mantissa
+
+	if_nz	bith	ma,#23			'if exponent <> 0 then insert leading one
+	if_nz	shl	ma,#29-23		'...bit29-justify mantissa
+
+	if_z	encod	xa,ma			'if exponent = 0 then get magnitude of mantissa
+	if_z	ror	ma,xa			'...bit29-justify mantissa
+	if_z	ror	ma,#32-29
+	if_z	sub	xa,#22			'...adjust exponent to -22..0
+
+	_ret_	sub	xa,#127			'unbias exponent
+'
+'
+' Pack float		na,sa,xa,ma --> float ma
+'
+packf		testbn	na,#0		wc	'if NaN, result $FFFFFFFF
+	if_nc	not	ma,#0
+
+	if_c	encod	y,ma		wc	'determine magnitude of mantissa
+	if_nc	ret				'if NaN or mantissa=0 (result 0), done
+
+		ror	ma,y			'msb-justify mantissa without leading 1
+		bitl	ma,#0			'clear leading 1 now in lsb
+
+		mov	mb,ma			'check if mantissa is even with 0.500 fraction
+		zerox	mb,#9		wc	'clear msb's, c=0 for addx in case no rounding
+		cmp	mb,#%0100000000	wz	'even with 0.500 fraction?
+	if_nz	add	ma,#%0100000000	wc	'if not, round up mantissa by 0.500
+
+		addx	xa,y			'adjust exponent and account for rounding overflow
+		add	xa,#127-29		'bias exponent
+
+		fges	xa,##-23		'limit exponent to -23..255
+		fles	xa,#255		wc	'if 255 and mantissa not 0, NaN
+	if_c	not	ma,#0			'if >255, force Nan by making mantissa not 0
+
+		cmps	xa,#1		wc	'exponent < 1?
+
+	if_c	rcr	ma,#1			'if so, replace leading 1
+	if_c	neg	xa			'shift mantissa down by exponent
+	if_c	shr	ma,xa			'if exponent is -23, mantissa becomes 0
+
+		shr	ma,#8			'make room for exponent
+	if_nc	setbyte	ma,xa,#3		'if exponent < 1 then leave at 0, else install
+
+		testb	sa,#0		wc	'install sign bit
+	_ret_	rcr	ma,#1
 '
 '
 '*********
