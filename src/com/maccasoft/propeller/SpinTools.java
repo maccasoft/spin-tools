@@ -86,6 +86,7 @@ import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler;
 import com.maccasoft.propeller.spin2.Spin2Object;
+import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
 
 import jssc.SerialPort;
 import jssc.SerialPortException;
@@ -100,6 +101,8 @@ public class SpinTools {
     FileBrowser browser;
     CTabFolder tabFolder;
     StatusLine statusLine;
+
+    MenuItem enableDebug;
 
     SourcePool sourcePool;
     SerialPortList serialPortList;
@@ -1330,6 +1333,27 @@ public class SpinTools {
                     }
                     serialTerminal.setFocus();
                     handleUpload(true, serialTerminal);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.CHECK);
+        item.setText("Enable DEBUG\tCtrl+D");
+        item.setAccelerator(SWT.MOD1 + 'D');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    Spin2ObjectCompiler.ENABLE_DEBUG = ((MenuItem) e.widget).getSelection();
+                    for (CTabItem tabItem : tabFolder.getItems()) {
+                        EditorTab editorTab = (EditorTab) tabItem.getData();
+                        editorTab.scheduleCompile();
+                    }
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }

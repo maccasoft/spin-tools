@@ -57,7 +57,10 @@ public class Spin2Object extends SpinObject {
     }
 
     Spin2Interpreter interpreter;
+    Spin2Debugger debugger;
     List<LinkDataObject> links = new ArrayList<LinkDataObject>();
+
+    Spin2Object debugData;
 
     public Spin2Object() {
 
@@ -89,17 +92,48 @@ public class Spin2Object extends SpinObject {
         this.interpreter.setClkMode(getClkMode());
     }
 
+    public Spin2Debugger getDebugger() {
+        return debugger;
+    }
+
+    public void setDebugger(Spin2Debugger debugger) {
+        this.debugger = debugger;
+        this.debugger.setClkMode1(getClkMode() & ~3);
+        this.debugger.setClkMode2(getClkMode());
+        this.debugger.setAppSize(getSize());
+        this.debugger.setDelay(200);
+    }
+
+    public Spin2Object getDebugData() {
+        return debugData;
+    }
+
     @Override
     public void generateBinary(OutputStream os) throws IOException {
         if (interpreter != null) {
-            os.write(interpreter.code);
+            os.write(interpreter.getCode());
+        }
+        if (debugger != null) {
+            os.write(debugger.getCode());
+        }
+        if (debugData != null) {
+            debugData.generateBinary(os);
         }
         super.generateBinary(os);
     }
 
     @Override
     public void generateListing(PrintStream ps) {
-        int offset = interpreter != null ? interpreter.getPBase() : 0;
+        int offset = 0;
+        if (interpreter != null) {
+            offset = interpreter.getPBase();
+        }
+        else if (debugger != null) {
+            offset = debugger.getSize();
+        }
+        if (debugData != null) {
+            debugData.generateListing(ps);
+        }
         generateListing(offset, ps);
     }
 

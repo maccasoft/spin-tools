@@ -63,6 +63,10 @@ public class Spin2Compiler {
             }
         }
 
+        if (Spin2ObjectCompiler.ENABLE_DEBUG) {
+            obj.setDebugger(new Spin2Debugger());
+        }
+
         return obj;
     }
 

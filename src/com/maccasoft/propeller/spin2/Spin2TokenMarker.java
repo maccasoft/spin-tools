@@ -451,6 +451,31 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("OUTB", TokenId.PASM_INSTRUCTION);
         keywords.put("INA", TokenId.PASM_INSTRUCTION);
         keywords.put("INB", TokenId.PASM_INSTRUCTION);
+
+        keywords.put("UDEC", TokenId.FUNCTION);
+        keywords.put("UDEC_BYTE", TokenId.FUNCTION);
+        keywords.put("UDEC_WORD", TokenId.FUNCTION);
+        keywords.put("UDEC_LONG", TokenId.FUNCTION);
+        keywords.put("SDEC", TokenId.FUNCTION);
+        keywords.put("SDEC_BYTE", TokenId.FUNCTION);
+        keywords.put("SDEC_WORD", TokenId.FUNCTION);
+        keywords.put("SDEC_LONG", TokenId.FUNCTION);
+        keywords.put("UHEX", TokenId.FUNCTION);
+        keywords.put("UHEX_BYTE", TokenId.FUNCTION);
+        keywords.put("UHEX_WORD", TokenId.FUNCTION);
+        keywords.put("UHEX_LONG", TokenId.FUNCTION);
+        keywords.put("SHEX", TokenId.FUNCTION);
+        keywords.put("SHEX_BYTE", TokenId.FUNCTION);
+        keywords.put("SHEX_WORD", TokenId.FUNCTION);
+        keywords.put("SHEX_LONG", TokenId.FUNCTION);
+        keywords.put("UBIN", TokenId.FUNCTION);
+        keywords.put("UBIN_BYTE", TokenId.FUNCTION);
+        keywords.put("UBIN_WORD", TokenId.FUNCTION);
+        keywords.put("UBIN_LONG", TokenId.FUNCTION);
+        keywords.put("SBIN", TokenId.FUNCTION);
+        keywords.put("SBIN_BYTE", TokenId.FUNCTION);
+        keywords.put("SBIN_WORD", TokenId.FUNCTION);
+        keywords.put("SBIN_LONG", TokenId.FUNCTION);
     }
 
     static Map<String, TokenId> spinKeywords = new HashMap<String, TokenId>();
@@ -666,6 +691,12 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         }
                         else if (token.type == Token.STRING) {
                             tokens.add(new TokenMarker(token, TokenId.STRING));
+                        }
+                        else {
+                            id = keywords.get(token.getText().toUpperCase());
+                            if (id != null) {
+                                tokens.add(new TokenMarker(token, id));
+                            }
                         }
                     }
                 }

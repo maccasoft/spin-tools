@@ -406,6 +406,10 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
         return symbols.get(mnemonic.toUpperCase());
     }
 
+    public static void setDebug(boolean enable) {
+        symbols.put("DEBUG", enable ? new Debug() : Empty.instance);
+    }
+
     public Spin2PAsmInstructionFactory() {
     }
 

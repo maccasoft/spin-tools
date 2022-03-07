@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin2;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import java.util.Map.Entry;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addbits;
@@ -107,6 +109,8 @@ import com.maccasoft.propeller.spin2.instructions.Word;
 
 public class Spin2ObjectCompiler {
 
+    public static boolean ENABLE_DEBUG = false;
+
     public static class ObjectInfo {
         String fileName;
         Spin2Object object;
@@ -129,12 +133,15 @@ public class Spin2ObjectCompiler {
     int varOffset = 4;
     int nested;
 
+    int debugIndex = 1;
+
     boolean errors;
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
 
     public Spin2ObjectCompiler(Spin2Context scope, Map<String, ObjectInfo> childObjects) {
         this.scope = new Spin2Context(scope);
         this.childObjects = childObjects;
+        Spin2PAsmInstructionFactory.setDebug(ENABLE_DEBUG);
     }
 
     public Spin2Object compileObject(Node root) {
@@ -399,6 +406,30 @@ public class Spin2ObjectCompiler {
 
         object.setVarSize(varOffset);
 
+        if (Spin2ObjectCompiler.ENABLE_DEBUG) {
+            Spin2Object debug = new Spin2Object();
+
+            int pos = debugIndex * 2;
+            List<DataObject> l = new ArrayList<DataObject>();
+            for (Spin2PAsmLine line : source) {
+                Spin2StatementNode node = (Spin2StatementNode) line.getData("_debug");
+                if (node != null) {
+                    byte[] data = compileDebugStatement(line.getScope(), node);
+                    l.add(new DataObject(data));
+                    debug.writeWord(pos);
+                    pos += data.length;
+                }
+            }
+            for (DataObject data : l) {
+                debug.write(data);
+            }
+
+            object.debugData = new Spin2Object();
+            object.debugData.writeComment("Debug data");
+            object.debugData.writeWord(debug.getSize() + 2);
+            object.debugData.writeObject(debug);
+        }
+
         return object;
     }
 
@@ -634,6 +665,17 @@ public class Spin2ObjectCompiler {
                 }
                 pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data));
             }
+            if ("DEBUG".equalsIgnoreCase(mnemonic)) {
+                parameters.add(new Spin2PAsmExpression("#", new NumberLiteral(debugIndex++), null));
+
+                Spin2TreeBuilder builder = new Spin2TreeBuilder();
+                for (Token token : node.getTokens()) {
+                    builder.addToken(token);
+                }
+                pasmLine.setData("_debug", builder.getRoot());
+            }
+        } catch (CompilerMessage e) {
+            throw e;
         } catch (RuntimeException e) {
             throw new CompilerMessage(e, node);
         }
@@ -3023,6 +3065,111 @@ public class Spin2ObjectCompiler {
 
         }
         return compileBytecodeExpression(context, node, true);
+    }
+
+    private static final int DBC_DONE = 0;
+    private static final int DBC_ASMMODE = 1; // Switches into PASM mode...
+    private static final int DBC_IF = 2;
+    private static final int DBC_IFNOT = 3;
+    private static final int DBC_COGN = 4;
+    private static final int DBC_CHAR = 5;
+    private static final int DBC_STRING = 6;
+    private static final int DBC_DELAY = 7;
+
+    // Flags
+    private static final int DBC_FLAG_NOCOMMA = 0x01;
+    private static final int DBC_FLAG_NOEXPR = 0x02;
+    private static final int DBC_FLAG_ARRAY = 0x10;
+    private static final int DBC_FLAG_SIGNED = 0x20;
+    // Numeric sizes
+    private static final int DBC_SIZE_BYTE = 0x04;
+    private static final int DBC_SIZE_WORD = 0x08;
+    private static final int DBC_SIZE_LONG = 0x0C;
+    // Output type
+    private static final int DBC_TYPE_STR = 0x20 | DBC_SIZE_BYTE;
+    private static final int DBC_TYPE_FLP = 0x20; // Note the overlap with the signed flag and the string type
+    private static final int DBC_TYPE_DEC = 0x40;
+    private static final int DBC_TYPE_HEX = 0x80;
+    private static final int DBC_TYPE_BIN = 0xC0;
+
+    byte[] compileDebugStatement(Spin2Context context, Spin2StatementNode root) {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        os.write(DBC_ASMMODE);
+        os.write(DBC_COGN);
+
+        for (Spin2StatementNode node : root.getChilds()) {
+            int op = 0x00;
+
+            switch (node.getText().toUpperCase()) {
+                case "UDEC":
+                    op = DBC_TYPE_DEC;
+                    break;
+                case "UDEC_BYTE":
+                    op = DBC_TYPE_DEC | DBC_SIZE_BYTE;
+                    break;
+                case "UDEC_WORD":
+                    op = DBC_TYPE_DEC | DBC_SIZE_WORD;
+                    break;
+                case "UDEC_LONG":
+                    op = DBC_TYPE_DEC | DBC_SIZE_LONG;
+                    break;
+                case "UHEX":
+                    op = DBC_TYPE_HEX;
+                    break;
+                case "UHEX_BYTE":
+                    op = DBC_TYPE_HEX | DBC_SIZE_BYTE;
+                    break;
+                case "UHEX_WORD":
+                    op = DBC_TYPE_HEX | DBC_SIZE_WORD;
+                    break;
+                case "UHEX_LONG":
+                    op = DBC_TYPE_HEX | DBC_SIZE_LONG;
+                    break;
+                case "UBIN":
+                    op = DBC_TYPE_BIN;
+                    break;
+                case "UBIN_BYTE":
+                    op = DBC_TYPE_BIN | DBC_SIZE_BYTE;
+                    break;
+                case "UBIN_WORD":
+                    op = DBC_TYPE_BIN | DBC_SIZE_WORD;
+                    break;
+                case "UBIN_LONG":
+                    op = DBC_TYPE_BIN | DBC_SIZE_LONG;
+                    break;
+            }
+
+            try {
+                boolean first = true;
+                for (Spin2StatementNode child : node.getChilds()) {
+                    if (first) {
+                        os.write(op | DBC_FLAG_NOCOMMA);
+                        first = false;
+                    }
+                    else {
+                        os.write(op);
+                    }
+
+                    String arg = child.getText();
+                    os.write(arg.getBytes());
+                    os.write(0x00);
+
+                    Expression expression = context.getLocalSymbol(arg);
+                    if (expression != null) {
+                        int value = expression.getNumber().intValue();
+                        os.write(0x80 | (value >> 8));
+                        os.write(value);
+                    }
+                }
+            } catch (IOException e) {
+
+            }
+        }
+
+        os.write(DBC_DONE);
+
+        return os.toByteArray();
     }
 
     Expression buildConstantExpression(Spin2Context context, Spin2StatementNode node) {

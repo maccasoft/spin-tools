@@ -482,13 +482,7 @@ public class EditorTab implements FindReplaceTarget {
                     dirty = true;
                     updateTabItemText();
                 }
-                if (tabItemText.toLowerCase().endsWith(".spin2")) {
-                    Display.getDefault().timerExec(500, spin2CompilerRunnable);
-                }
-                else {
-                    Display.getDefault().timerExec(500, spin1CompilerRunnable);
-                }
-                tabItem.setFont(busyFont);
+                scheduleCompile();
             }
         });
 
@@ -507,6 +501,16 @@ public class EditorTab implements FindReplaceTarget {
         });
 
         tabItem.setControl(editor.getControl());
+    }
+
+    public void scheduleCompile() {
+        if (tabItemText.toLowerCase().endsWith(".spin2")) {
+            Display.getDefault().timerExec(500, spin2CompilerRunnable);
+        }
+        else {
+            Display.getDefault().timerExec(500, spin1CompilerRunnable);
+        }
+        tabItem.setFont(busyFont);
     }
 
     public void addCaretListener(CaretListener listener) {

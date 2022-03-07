@@ -662,8 +662,13 @@ public class P2MemoryDialog extends Dialog {
                 dbase = readLong(0x38);
             }
             else {
-                pbase = 0;
-                vbase = dbase = object.getSize();
+                if (object.getDebugger() != null) {
+                    pbase = object.getDebugger().getSize();
+                }
+                else {
+                    pbase = 0;
+                }
+                vbase = dbase = pbase + object.getSize();
             }
         } catch (IOException e) {
             e.printStackTrace();
