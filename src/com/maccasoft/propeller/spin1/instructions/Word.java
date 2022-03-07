@@ -58,10 +58,9 @@ public class Word extends Spin1PAsmInstructionFactory {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
                 for (Spin1PAsmExpression exp : arguments) {
-                    byte[] value = getBytes(exp.getInteger());
+                    byte[] value = exp.getWord();
                     for (int i = 0; i < exp.getCount(); i++) {
-                        os.write(value[0]);
-                        os.write(value[1]);
+                        os.write(value);
                     }
                 }
             } catch (CompilerMessage e) {

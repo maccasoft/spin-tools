@@ -49,7 +49,7 @@ public class Long extends Spin2PAsmInstructionFactory {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
                 for (Spin2PAsmExpression exp : arguments) {
-                    byte[] value = getBytes(exp.getInteger());
+                    byte[] value = exp.getLong();
                     for (int i = 0; i < exp.getCount(); i++) {
                         os.write(value);
                     }

@@ -23,7 +23,7 @@ public class DataVariable extends ContextLiteral {
         return type;
     }
 
-    public int getAddress() {
+    public long getAddress() {
         return context.getHubAddress();
     }
 }

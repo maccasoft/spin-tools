@@ -15,7 +15,7 @@ public class HubContextLiteral extends Literal {
 
     @Override
     public Number getNumber() {
-        return context.getHubAddress();
+        return new Long(context.getHubAddress());
     }
 
     @Override

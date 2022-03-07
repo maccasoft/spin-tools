@@ -59,7 +59,7 @@ public class Byte extends Spin2PAsmInstructionFactory {
                         os.write(exp.getExpression().getString().getBytes());
                     }
                     else {
-                        int value = exp.getInteger();
+                        byte[] value = exp.getByte();
                         for (int i = 0; i < exp.getCount(); i++) {
                             os.write(value);
                         }

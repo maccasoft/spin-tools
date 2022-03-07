@@ -103,6 +103,7 @@ import com.maccasoft.propeller.spin2.instructions.Fit;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
 import com.maccasoft.propeller.spin2.instructions.Res;
+import com.maccasoft.propeller.spin2.instructions.Word;
 
 public class Spin2ObjectCompiler {
 
@@ -306,6 +307,10 @@ public class Spin2ObjectCompiler {
         boolean hubMode = true;
 
         for (Spin2PAsmLine line : source) {
+            if (!(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) && !(line.getInstructionFactory() instanceof Word)) {
+                hubAddress = (hubAddress + 3) & ~3;
+                address = (address + 3) & ~3;
+            }
             line.getScope().setHubAddress(hubAddress);
             if (line.getInstructionFactory() instanceof Orgh) {
                 hubMode = true;
@@ -559,6 +564,16 @@ public class Spin2ObjectCompiler {
         String modifier = node.modifier != null ? node.modifier.getText() : null;
         List<Spin2PAsmExpression> parameters = new ArrayList<Spin2PAsmExpression>();
 
+        Spin2Context rootScope = scope;
+        if (label != null && !label.startsWith(".")) {
+            if (nested > 0) {
+                scope = rootScope = scope.getParent();
+                nested--;
+            }
+            scope = new Spin2Context(scope);
+            nested++;
+        }
+
         Spin2Context localScope = new Spin2Context(scope);
 
         for (ParameterNode param : node.parameters) {
@@ -566,32 +581,36 @@ public class Spin2ObjectCompiler {
             String prefix = null;
             Expression expression = null, count = null;
 
-            if (param.getText().toUpperCase().contains("PTRA") || param.getText().toUpperCase().contains("PTRB")) {
-                expression = new Identifier(param.getText(), scope);
+            for (Token token : param.getTokens()) {
+                if ("ptra".equalsIgnoreCase(token.getText()) || "ptrb".equalsIgnoreCase(token.getText())) {
+                    expression = new Identifier(param.getText(), scope);
+                    expression.setData(param);
+                    index = param.getTokens().size();
+                    break;
+                }
             }
-            else {
-                Token token;
-                if (index < param.getTokens().size()) {
-                    token = param.getToken(index);
-                    if (token.getText().startsWith("#")) {
-                        prefix = (prefix == null ? "" : prefix) + token.getText();
-                        index++;
-                    }
+
+            Token token;
+            if (index < param.getTokens().size()) {
+                token = param.getToken(index);
+                if (token.getText().startsWith("#")) {
+                    prefix = (prefix == null ? "" : prefix) + token.getText();
+                    index++;
                 }
-                if (index < param.getTokens().size()) {
-                    token = param.getToken(index);
-                    if ("\\".equals(token.getText())) {
-                        prefix = (prefix == null ? "" : prefix) + token.getText();
-                        index++;
-                    }
+            }
+            if (index < param.getTokens().size()) {
+                token = param.getToken(index);
+                if ("\\".equals(token.getText())) {
+                    prefix = (prefix == null ? "" : prefix) + token.getText();
+                    index++;
                 }
-                if (index < param.getTokens().size()) {
-                    try {
-                        expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), localScope);
-                        expression.setData(param);
-                    } catch (Exception e) {
-                        throw new CompilerMessage(e, param);
-                    }
+            }
+            if (index < param.getTokens().size()) {
+                try {
+                    expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), localScope);
+                    expression.setData(param);
+                } catch (Exception e) {
+                    throw new CompilerMessage(e, param);
                 }
             }
             if (param.count != null) {
@@ -621,10 +640,6 @@ public class Spin2ObjectCompiler {
 
         if (pasmLine.getLabel() != null) {
             try {
-                if (!pasmLine.isLocalLabel() && nested > 0) {
-                    scope = scope.getParent();
-                    nested--;
-                }
                 String type = "LONG";
                 if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Word) {
                     type = "WORD";
@@ -635,12 +650,12 @@ public class Spin2ObjectCompiler {
                 else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
                     type = "BYTE";
                 }
-                scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
-                scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
+                rootScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
+                rootScope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
 
                 if (pasmLine.getMnemonic() == null) {
                     if (!pasmLine.isLocalLabel()) {
-                        pendingAlias.put(pasmLine, scope);
+                        pendingAlias.put(pasmLine, rootScope);
                     }
                 }
                 else if (pendingAlias.size() != 0) {
@@ -651,11 +666,6 @@ public class Spin2ObjectCompiler {
                         context.addOrUpdateSymbol("@" + line.getLabel(), new HubContextLiteral(line.getScope()));
                     }
                     pendingAlias.clear();
-                }
-
-                if (!pasmLine.isLocalLabel()) {
-                    scope = new Spin2Context(scope);
-                    nested++;
                 }
             } catch (RuntimeException e) {
                 throw new CompilerMessage(e, node.label);

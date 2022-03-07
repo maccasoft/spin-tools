@@ -52,7 +52,7 @@ public class Loc extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1110100 | encodeDst(dst.getExpression().toString()));
             int addr = src.getInteger();
             int ours = context.getSymbol("$").getNumber().intValue();
-            if (ours < 0x400 && addr >= 0x400) {
+            if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
                 value = r.setBoolean(value, false);
                 value = a.setValue(value, addr);
             }
@@ -62,7 +62,7 @@ public class Loc extends Spin2PAsmInstructionFactory {
                     value = a.setValue(value, addr);
                 }
                 else {
-                    value = a.setValue(value, addr < 0x400 ? (addr - ours - 1) * 4 : addr - ours - 4);
+                    value = a.setValue(value, addr < 0x400 ? (addr - ours - 1) : addr - ours - 4);
                 }
             }
             return getBytes(value);

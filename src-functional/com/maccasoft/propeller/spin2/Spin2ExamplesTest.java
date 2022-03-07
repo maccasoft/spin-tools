@@ -160,6 +160,11 @@ class Spin2ExamplesTest {
     }
 
     @Test
+    void test_Spin2_debugger() throws Exception {
+        compileAndCompare(new File("Spin2_debugger.spin2"), new File("Spin2_debugger.binary"));
+    }
+
+    @Test
     void test_flash_loader() throws Exception {
         compileAndCompare(new File("flash_loader.spin2"), new File("flash_loader.binary"));
     }

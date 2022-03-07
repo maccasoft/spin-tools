@@ -49,7 +49,7 @@ public class Word extends Spin2PAsmInstructionFactory {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
                 for (Spin2PAsmExpression exp : arguments) {
-                    byte[] value = getBytes(exp.getInteger());
+                    byte[] value = exp.getWord();
                     for (int i = 0; i < exp.getCount(); i++) {
                         os.write(value[0]);
                         os.write(value[1]);
