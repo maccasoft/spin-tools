@@ -523,6 +523,31 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void testDebug() {
+        String text = "debug(udec_reg_array(rega,#2))";
+        Assertions.assertEquals(""
+            + "[debug]\n"
+            + " +-- [udec_reg_array]\n"
+            + "      +-- [rega]\n"
+            + "      +-- [#]\n"
+            + "           +-- [2]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testDebug2() {
+        String text = "debug(udec_reg_array(#rega,#2))";
+        Assertions.assertEquals(""
+            + "[debug]\n"
+            + " +-- [udec_reg_array]\n"
+            + "      +-- [#]\n"
+            + "           +-- [rega]\n"
+            + "      +-- [#]\n"
+            + "           +-- [2]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder();
 

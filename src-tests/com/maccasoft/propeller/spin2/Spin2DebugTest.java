@@ -35,11 +35,11 @@ class Spin2DebugTest {
         Spin2Context context = new Spin2Context();
         context.addSymbol("reg", new NumberLiteral(10));
 
-        String text = "debug(udec_reg_array(reg,2))";
+        String text = "debug(udec_reg_array(#reg,#2))";
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
-        Assertions.assertEquals("01 04 51 72 65 67 00 80 0A 00 02 00", actual);
+        Assertions.assertEquals("01 04 51 72 65 67 00 00 0A 00 02 00", actual);
     }
 
     @Test
@@ -133,7 +133,7 @@ class Spin2DebugTest {
         Spin2Context context = new Spin2Context();
         context.addSymbol("ptr", new NumberLiteral(10));
 
-        String text = "debug(lstr(ptr,12))";
+        String text = "debug(lstr(ptr,#12))";
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));

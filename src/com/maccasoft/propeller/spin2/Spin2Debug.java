@@ -285,7 +285,12 @@ public class Spin2Debug {
                 os.write(op);
             }
 
+            boolean immediate = false;
             String arg = child.getText();
+            if ("#".equals(arg)) {
+                immediate = true;
+                arg = child.getChild(0).getText();
+            }
 
             if ((op & DBC_FLAG_NOEXPR) == 0) {
                 os.write(arg.getBytes());
@@ -295,8 +300,13 @@ public class Spin2Debug {
             Expression expression = context.getLocalSymbol(arg);
             if (expression != null) {
                 int value = expression.getNumber().intValue();
-                os.write(0x80 | (value >> 8));
-                os.write(value);
+                if (immediate) {
+                    compileConstant(os, value);
+                }
+                else {
+                    os.write(0x80 | (value >> 8));
+                    os.write(value);
+                }
             }
         }
     }
@@ -311,32 +321,52 @@ public class Spin2Debug {
         }
 
         Spin2StatementNode child = node.getChild(0);
+
+        boolean immediate = false;
         String arg = child.getText();
-        os.write(arg.getBytes());
-        os.write(0x00);
+        if ("#".equals(arg)) {
+            immediate = true;
+            child = child.getChild(0);
+            arg = child.getText();
+        }
+
+        if ((op & DBC_FLAG_NOEXPR) == 0) {
+            os.write(arg.getBytes());
+            os.write(0x00);
+        }
 
         Expression expression = context.getLocalSymbol(arg);
         if (expression != null) {
             int value = expression.getNumber().intValue();
-            os.write(0x80 | (value >> 8));
-            os.write(value);
+            if (immediate) {
+                compileConstant(os, value);
+            }
+            else {
+                os.write(0x80 | (value >> 8));
+                os.write(value);
+            }
         }
 
         child = node.getChild(1);
-        int index = 1;
-        if ("#".equals(node.getChild(index).getText())) {
-            os.write('#');
-            index++;
+
+        immediate = false;
+        arg = child.getText();
+        if ("#".equals(arg)) {
+            immediate = true;
+            child = child.getChild(0);
+            arg = child.getText();
         }
-        if (child.getType() == Token.NUMBER) {
-            expression = new NumberLiteral(child.getText());
-            compileConstant(os, expression.getNumber().intValue());
-        }
-        else {
-            expression = context.getLocalSymbol(arg);
+
+        expression = child.getType() == Token.NUMBER ? new NumberLiteral(arg) : context.getLocalSymbol(arg);
+        if (expression != null) {
             int value = expression.getNumber().intValue();
-            os.write(0x80 | (value >> 8));
-            os.write(value);
+            if (immediate) {
+                compileConstant(os, value);
+            }
+            else {
+                os.write(0x80 | (value >> 8));
+                os.write(value);
+            }
         }
     }
 
