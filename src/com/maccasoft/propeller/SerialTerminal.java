@@ -459,7 +459,7 @@ public class SerialTerminal {
         display = Display.getDefault();
         preferences = Preferences.getInstance();
 
-        font = new Font(display, "win32".equals(SWT.getPlatform()) ? "Courier New" : "mono", 12, SWT.NONE);
+        font = new Font(display, "win32".equals(SWT.getPlatform()) ? "Courier New" : "mono", 11, SWT.NONE);
 
         shell = new Shell(display);
         shell.setText(WINDOW_TITLE);
@@ -881,6 +881,14 @@ public class SerialTerminal {
 
     public void write(char c) {
         emulation.write(c);
+    }
+
+    public int getSerialBaudRate() {
+        return serialBaudRate;
+    }
+
+    public void setSerialBaudRate(int serialBaudRate) {
+        this.serialBaudRate = serialBaudRate;
     }
 
     public SerialPort getSerialPort() {

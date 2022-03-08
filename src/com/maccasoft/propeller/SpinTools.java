@@ -1270,7 +1270,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    handleUpload(false, getSerialTerminal());
+                    doUpload(false, false);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1285,14 +1285,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    SerialTerminal serialTerminal = getSerialTerminal();
-                    if (serialTerminal == null) {
-                        serialTerminal = new SerialTerminal();
-                        serialTerminal.open();
-                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
-                    }
-                    serialTerminal.setFocus();
-                    handleUpload(false, serialTerminal);
+                    doUpload(false, true);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1307,7 +1300,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    handleUpload(true, getSerialTerminal());
+                    doUpload(true, false);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1322,14 +1315,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    SerialTerminal serialTerminal = getSerialTerminal();
-                    if (serialTerminal == null) {
-                        serialTerminal = new SerialTerminal();
-                        serialTerminal.open();
-                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
-                    }
-                    serialTerminal.setFocus();
-                    handleUpload(true, serialTerminal);
+                    doUpload(true, true);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1367,6 +1353,9 @@ public class SpinTools {
                     SerialTerminal serialTerminal = getSerialTerminal();
                     if (serialTerminal == null) {
                         serialTerminal = new SerialTerminal();
+                        if (sourcePool.isDebugEnabled()) {
+                            serialTerminal.setSerialBaudRate(2000000);
+                        }
                         serialTerminal.open();
                         serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
                     }
@@ -1605,6 +1594,24 @@ public class SpinTools {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void doUpload(boolean flash, boolean terminal) {
+        SerialTerminal serialTerminal = getSerialTerminal();
+
+        if (serialTerminal == null && (terminal || sourcePool.isDebugEnabled())) {
+            serialTerminal = new SerialTerminal();
+            if (sourcePool.isDebugEnabled()) {
+                serialTerminal.setSerialBaudRate(2000000);
+            }
+            serialTerminal.open();
+            serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
+        }
+        if (serialTerminal != null) {
+            serialTerminal.setFocus();
+        }
+
+        handleUpload(flash, serialTerminal);
     }
 
     private void handleUpload(boolean flash, SerialTerminal serialTerminal) {
