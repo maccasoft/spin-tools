@@ -36,6 +36,8 @@ public class Spin2Compiler {
     boolean errors;
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
 
+    boolean debugEnabled;
+
     boolean removeUnusedMethods;
     Spin2Preprocessor preprocessor;
 
@@ -47,6 +49,10 @@ public class Spin2Compiler {
 
     public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
         this.removeUnusedMethods = removeUnusedMethods;
+    }
+
+    public void setDebugEnabled(boolean enabled) {
+        this.debugEnabled = enabled;
     }
 
     public Spin2Object compile(String rootFileName, Node root) {
@@ -63,7 +69,7 @@ public class Spin2Compiler {
             }
         }
 
-        if (Spin2ObjectCompiler.ENABLE_DEBUG) {
+        if (debugEnabled) {
             obj.setDebugger(new Spin2Debugger());
         }
 
@@ -124,8 +130,8 @@ public class Spin2Compiler {
 
         String fileName;
 
-        public Spin2ObjectCompilerProxy(String fileName, Spin2Context scope, Map<String, ObjectInfo> childObjects) {
-            super(scope, childObjects);
+        public Spin2ObjectCompilerProxy(String fileName, Spin2Context scope, Map<String, ObjectInfo> childObjects, boolean debugEnabled) {
+            super(scope, childObjects, debugEnabled);
             this.fileName = fileName;
         }
 
@@ -165,12 +171,12 @@ public class Spin2Compiler {
         preprocessor.removeUnusedMethods();
 
         for (Entry<String, Node> entry : objects.entrySet()) {
-            Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey(), scope, childObjects);
+            Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey(), scope, childObjects, debugEnabled);
             Spin2Object object = objectCompiler.compileObject(entry.getValue());
             childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object));
         }
 
-        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFileName, scope, childObjects);
+        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFileName, scope, childObjects, debugEnabled);
         Spin2Object object = objectCompiler.compileObject(root);
 
         for (int i = objects.size() - 1; i >= 0; i--) {

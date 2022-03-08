@@ -19,7 +19,10 @@ import com.maccasoft.propeller.model.Node;
 
 public class SourcePool {
 
+    public static final String PROP_DEBUG_ENABLED = "__debugEnabled__";
+
     Map<String, Node> sources = new HashMap<String, Node>();
+    boolean debugEnabled;
 
     final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
@@ -55,6 +58,14 @@ public class SourcePool {
 
     public void removeParsedSource(String key) {
         sources.remove(key);
+    }
+
+    public boolean isDebugEnabled() {
+        return debugEnabled;
+    }
+
+    public void setDebugEnabled(boolean enabled) {
+        changeSupport.firePropertyChange(PROP_DEBUG_ENABLED, this.debugEnabled, this.debugEnabled = enabled);
     }
 
 }

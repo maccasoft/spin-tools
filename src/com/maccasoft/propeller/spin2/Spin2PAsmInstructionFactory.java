@@ -40,7 +40,7 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
         symbols.put("WORDFIT", new Wordfit());
 
         symbols.put("FILE", Empty.instance);
-        symbols.put("DEBUG", Empty.instance);
+        symbols.put("DEBUG", new Debug());
 
         // Instructions
         symbols.put("NOP", new Nop());
@@ -404,10 +404,6 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
 
     public static Spin2PAsmInstructionFactory get(String mnemonic) {
         return symbols.get(mnemonic.toUpperCase());
-    }
-
-    public static void setDebug(boolean enable) {
-        symbols.put("DEBUG", enable ? new Debug() : Empty.instance);
     }
 
     public Spin2PAsmInstructionFactory() {

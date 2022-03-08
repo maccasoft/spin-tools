@@ -109,8 +109,6 @@ import com.maccasoft.propeller.spin2.instructions.Word;
 
 public class Spin2ObjectCompiler {
 
-    public static boolean ENABLE_DEBUG = false;
-
     public static class ObjectInfo {
         String fileName;
         Spin2Object object;
@@ -133,15 +131,24 @@ public class Spin2ObjectCompiler {
     int varOffset = 4;
     int nested;
 
+    boolean debugEnabled;
     int debugIndex = 1;
 
     boolean errors;
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
 
     public Spin2ObjectCompiler(Spin2Context scope, Map<String, ObjectInfo> childObjects) {
+        this(scope, childObjects, false);
+    }
+
+    public Spin2ObjectCompiler(Spin2Context scope, Map<String, ObjectInfo> childObjects, boolean debugEnabled) {
         this.scope = new Spin2Context(scope);
         this.childObjects = childObjects;
-        Spin2PAsmInstructionFactory.setDebug(ENABLE_DEBUG);
+        this.debugEnabled = debugEnabled;
+    }
+
+    public void setDebugEnabled(boolean enabled) {
+        this.debugEnabled = enabled;
     }
 
     public Spin2Object compileObject(Node root) {
@@ -406,7 +413,7 @@ public class Spin2ObjectCompiler {
 
         object.setVarSize(varOffset);
 
-        if (Spin2ObjectCompiler.ENABLE_DEBUG) {
+        if (debugEnabled) {
             Spin2Object debug = new Spin2Object();
 
             int pos = debugIndex * 2;
@@ -573,6 +580,9 @@ public class Spin2ObjectCompiler {
 
         for (Node child : parent.getChilds()) {
             DataLineNode node = (DataLineNode) child;
+            if (!debugEnabled && node.instruction != null && "DEBUG".equalsIgnoreCase(node.instruction.getText())) {
+                continue;
+            }
             try {
                 Spin2PAsmLine pasmLine = compileDataLine(node);
                 pasmLine.setData(node);

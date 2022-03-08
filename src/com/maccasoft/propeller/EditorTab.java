@@ -78,14 +78,6 @@ public class EditorTab implements FindReplaceTarget {
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
     Object object;
 
-    final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-
-        }
-    };
-
     final PropertyChangeListener settingsChangeListener = new PropertyChangeListener() {
 
         @Override
@@ -98,6 +90,10 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            if (evt.getPropertyName().equals(SourcePool.PROP_DEBUG_ENABLED)) {
+                scheduleCompile();
+                return;
+            }
             if (evt.getPropertyName().equals(tabItemText)) {
                 return;
             }
@@ -404,6 +400,7 @@ public class EditorTab implements FindReplaceTarget {
 
                         Spin2Compiler compiler = new Spin2CompilerAdapter();
                         compiler.setRemoveUnusedMethods(true);
+                        compiler.setDebugEnabled(sourcePool.isDebugEnabled());
                         try {
                             object = compiler.compile(tabItemText, root);
                             errors = compiler.hasErrors();
@@ -501,16 +498,6 @@ public class EditorTab implements FindReplaceTarget {
         });
 
         tabItem.setControl(editor.getControl());
-    }
-
-    public void scheduleCompile() {
-        if (tabItemText.toLowerCase().endsWith(".spin2")) {
-            Display.getDefault().timerExec(500, spin2CompilerRunnable);
-        }
-        else {
-            Display.getDefault().timerExec(500, spin1CompilerRunnable);
-        }
-        tabItem.setFont(busyFont);
     }
 
     public void addCaretListener(CaretListener listener) {
@@ -874,6 +861,16 @@ public class EditorTab implements FindReplaceTarget {
                 index = findAndSelect(-1, findString, false, caseSensitiveSearch, wholeWordSearch, regexSearch);
             }
         }
+    }
+
+    void scheduleCompile() {
+        if (tabItemText.toLowerCase().endsWith(".spin2")) {
+            Display.getDefault().timerExec(500, spin2CompilerRunnable);
+        }
+        else {
+            Display.getDefault().timerExec(500, spin1CompilerRunnable);
+        }
+        tabItem.setFont(busyFont);
     }
 
 }

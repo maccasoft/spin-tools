@@ -110,14 +110,14 @@ public class Spin2Object extends SpinObject {
 
     @Override
     public void generateBinary(OutputStream os) throws IOException {
-        if (interpreter != null) {
-            os.write(interpreter.getCode());
-        }
         if (debugger != null) {
             os.write(debugger.getCode());
         }
         if (debugData != null) {
             debugData.generateBinary(os);
+        }
+        if (interpreter != null) {
+            os.write(interpreter.getCode());
         }
         super.generateBinary(os);
     }
@@ -128,8 +128,8 @@ public class Spin2Object extends SpinObject {
         if (interpreter != null) {
             offset = interpreter.getPBase();
         }
-        else if (debugger != null) {
-            offset = debugger.getSize();
+        if (debugger != null) {
+            offset += debugger.getSize();
         }
         if (debugData != null) {
             debugData.generateListing(ps);

@@ -3555,42 +3555,60 @@ class Spin2ObjectCompilerTest {
 
     @Test
     void testDebug() throws Exception {
-        Spin2ObjectCompiler.ENABLE_DEBUG = true;
-        try {
-            String text = ""
-                + "DAT             org   $000\n"
-                + "                mov   a, #1\n"
-                + "                debug(udec(a))\n"
-                + "                ret\n"
-                + "a               res   1\n"
-                + "";
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                mov   a, #1\n"
+            + "                debug(udec(a))\n"
+            + "                ret\n"
+            + "a               res   1\n"
+            + "";
 
-            Assertions.assertEquals(""
-                + "' Debug data\n"
-                + "00000 00000       0C 00         \n"
-                + "00002 00000       04 00         \n"
-                + "00004 00002       01 04 41 61 00\n"
-                + "00009 00007       80 03 00\n"
-                + "' Object header\n"
-                + "00000 00000   000                                    org     $000\n"
-                + "00000 00000   000 01 06 04 F6                        mov     a, #1\n"
-                + "00004 00004   001 36 02 64 FD                        debug   #1\n"
-                + "00008 00008   002 2D 00 64 FD                        ret\n"
-                + "0000C 0000C   003                a                   res     1\n"
-                + "", compile(text));
-        } finally {
-            Spin2ObjectCompiler.ENABLE_DEBUG = false;
-        }
+        Assertions.assertEquals(""
+            + "' Debug data\n"
+            + "00000 00000       0C 00         \n"
+            + "00002 00000       04 00         \n"
+            + "00004 00002       01 04 41 61 00\n"
+            + "00009 00007       80 03 00\n"
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 01 06 04 F6                        mov     a, #1\n"
+            + "00004 00004   001 36 02 64 FD                        debug   #1\n"
+            + "00008 00008   002 2D 00 64 FD                        ret\n"
+            + "0000C 0000C   003                a                   res     1\n"
+            + "", compile(text, true));
+    }
+
+    @Test
+    void testIgnorePAsmDebug() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                mov   a, #1\n"
+            + "                debug(udec(a))\n"
+            + "                ret\n"
+            + "a               res   1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 01 04 04 F6                        mov     a, #1\n"
+            + "00004 00004   001 2D 00 64 FD                        ret\n"
+            + "00008 00008   002                a                   res     1\n"
+            + "", compile(text, false));
     }
 
     String compile(String text) throws Exception {
+        return compile(text, false);
+    }
+
+    String compile(String text, boolean debugEnabled) throws Exception {
         Spin2Context scope = new Spin2GlobalContext();
         Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
         Spin2TokenStream stream = new Spin2TokenStream(text);
         Spin2Parser subject = new Spin2Parser(stream);
         Node root = subject.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(scope, childObjects);
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(scope, childObjects, debugEnabled);
         Spin2Object obj = compiler.compileObject(root);
 
         for (CompilerMessage msg : compiler.getMessages()) {
