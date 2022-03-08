@@ -108,6 +108,10 @@ public class Spin2Object extends SpinObject {
         return debugData;
     }
 
+    public void setDebugData(Spin2Object debugData) {
+        this.debugData = debugData;
+    }
+
     @Override
     public void generateBinary(OutputStream os) throws IOException {
         if (debugger != null) {

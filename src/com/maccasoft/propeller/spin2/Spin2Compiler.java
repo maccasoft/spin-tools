@@ -173,7 +173,7 @@ public class Spin2Compiler {
         for (Entry<String, Node> entry : objects.entrySet()) {
             Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey(), scope, childObjects, debugEnabled);
             Spin2Object object = objectCompiler.compileObject(entry.getValue());
-            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object));
+            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object, objectCompiler.getDebugIndex()));
         }
 
         Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFileName, scope, childObjects, debugEnabled);
