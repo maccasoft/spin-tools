@@ -91,7 +91,9 @@ public class EditorTab implements FindReplaceTarget {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             if (evt.getPropertyName().equals(SourcePool.PROP_DEBUG_ENABLED)) {
-                scheduleCompile();
+                if (tabItemText.toLowerCase().endsWith(".spin2")) {
+                    scheduleCompile();
+                }
                 return;
             }
             if (evt.getPropertyName().equals(tabItemText)) {
