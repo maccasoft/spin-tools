@@ -3,7 +3,7 @@
     <tstamp>
         <format property="timestamp" pattern="yyyyMMdd-HHmm" />
     </tstamp>
-    <property name="version" value="0.10" />
+    <property name="version" value="0.11" />
     <property name="package" value="spin-tools" />
     <property name="folder" value="${package}-${version}" />
     <property name="mac-folder" value="Spin Tools"/>

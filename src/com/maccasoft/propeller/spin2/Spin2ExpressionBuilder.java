@@ -113,8 +113,14 @@ public class Spin2ExpressionBuilder {
         precedence.put("SCAS", 10);
         precedence.put("FRAC", 10);
 
+        precedence.put("*.", 10);
+        precedence.put("/.", 10);
+
         precedence.put("+", 9);
         precedence.put("-", 9);
+
+        precedence.put("+.", 9);
+        precedence.put("-.", 9);
 
         precedence.put("#>", 8);
         precedence.put("<#", 8);
@@ -133,6 +139,13 @@ public class Spin2ExpressionBuilder {
         precedence.put(">", 6);
         precedence.put("+>", 6);
         precedence.put("<=>", 6);
+
+        precedence.put("<.", 6);
+        precedence.put("<=.", 6);
+        precedence.put("<>.", 6);
+        precedence.put("==.", 6);
+        precedence.put(">=.", 6);
+        precedence.put(">.", 6);
 
         precedence.put("&&", 5);
         precedence.put("AND", 5);
@@ -274,9 +287,11 @@ public class Spin2ExpressionBuilder {
                     break;
 
                 case "+":
+                case "+.":
                     left = new Add(left, right);
                     break;
                 case "-":
+                case "-.":
                     left = new Subtract(left, right);
                     break;
 

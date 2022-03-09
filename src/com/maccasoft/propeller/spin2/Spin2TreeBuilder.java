@@ -48,8 +48,14 @@ public class Spin2TreeBuilder {
         precedence.put("SCAS", 12);
         precedence.put("FRAC", 12);
 
+        precedence.put("*.", 12);
+        precedence.put("/.", 12);
+
         precedence.put("+", 11);
         precedence.put("-", 11);
+
+        precedence.put("+.", 11);
+        precedence.put("-.", 11);
 
         precedence.put("#>", 10);
         precedence.put("<#", 10);
@@ -68,6 +74,13 @@ public class Spin2TreeBuilder {
         precedence.put(">", 8);
         precedence.put("+>", 8);
         precedence.put("<=>", 8);
+
+        precedence.put("<.", 8);
+        precedence.put("<=.", 8);
+        precedence.put("<>.", 8);
+        precedence.put("==.", 8);
+        precedence.put(">=.", 8);
+        precedence.put(">.", 8);
 
         precedence.put("NOT", 7);
 
@@ -390,11 +403,11 @@ public class Spin2TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "1 + 2 * 3";
+        text = "1 +. 2 * 3";
         System.out.println(text);
         System.out.println(parse(text));
 
-        text = "digit >= 0 and digit <= 9";
+        text = "digit >=. 0 and digit <=. 9";
         System.out.println(text);
         System.out.println(parse(text));
     }

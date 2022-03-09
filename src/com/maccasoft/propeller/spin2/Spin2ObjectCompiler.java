@@ -55,10 +55,12 @@ import com.maccasoft.propeller.expressions.NotEquals;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
+import com.maccasoft.propeller.expressions.Round;
 import com.maccasoft.propeller.expressions.Sca;
 import com.maccasoft.propeller.expressions.Scas;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
+import com.maccasoft.propeller.expressions.Sqrt;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.UnsignedDivide;
@@ -3191,6 +3193,17 @@ public class Spin2ObjectCompiler {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
                 return new Trunc(buildConstantExpression(context, node.getChild(0)));
+            case "FSQRT":
+            case "SQRT":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Sqrt(buildConstantExpression(context, node.getChild(0)));
+            case "ROUND":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Round(buildConstantExpression(context, node.getChild(0)));
         }
 
         throw new RuntimeException("unknown " + node.getText());

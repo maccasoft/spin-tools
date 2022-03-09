@@ -80,6 +80,18 @@ public class MathOp extends Spin2Bytecode {
         operations.put("SCA", new Descriptor(0x9B, "SCA"));
         operations.put("SCAS", new Descriptor(0x9C, "SCAS"));
         operations.put("FRAC", new Descriptor(0x9D, "FRAC"));
+
+        operations.put("<.", new Descriptor(0x92, "FLOAT_LESS_THAN"));
+        operations.put(">.", new Descriptor(0x94, "FLOAT_GREATER_THAN"));
+        operations.put("<>.", new Descriptor(0x96, "FLOAT_NOT_EQUAL"));
+        operations.put("==.", new Descriptor(0x98, "FLOAT_EQUAL"));
+        operations.put("<=.", new Descriptor(0x9A, "FLOAT_LESS_THAN_OR_EQUAL"));
+        operations.put(">=.", new Descriptor(0x9C, "FLOAT_GREATER_THAN_OR_EQUAL"));
+
+        operations.put("+.", new Descriptor(0xA0, "FLOAT_ADD"));
+        operations.put("-.", new Descriptor(0xA2, "FLOAT_SUBTRACT"));
+        operations.put("*.", new Descriptor(0xA4, "FLOAT_MULTIPLY"));
+        operations.put("/.", new Descriptor(0xA6, "FLOAT_DIVIDE"));
     }
 
     public static boolean isMathOp(String s) {

@@ -524,6 +524,17 @@ class Spin2TreeBuilderTest {
     }
 
     @Test
+    void testSqrt() {
+        String text = "a := sqrt(1.0)";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [sqrt]\n"
+            + "      +-- [1.0]\n"
+            + "", parse(text));
+    }
+
+    @Test
     void testDebug() {
         String text = "debug(udec_reg_array(rega,#2))";
         Assertions.assertEquals(""
