@@ -215,19 +215,23 @@ public abstract class Spin2InstructionObject {
     }
 
     protected int encodeEffect(String effect) {
-        if (effect == null) {
-            return 0b00;
+        int result = 0b00;
+
+        if (effect != null) {
+            if ("wcz".equals(effect)) {
+                result |= 0b11;
+            }
+            else {
+                if (effect.contains("wc") || "andc".equals(effect) || "orc".equals(effect) || "xorc".equals(effect)) {
+                    result |= 0b10;
+                }
+                if (effect.contains("wz") || "andz".equals(effect) || "orz".equals(effect) || "xorz".equals(effect)) {
+                    result |= 0b01;
+                }
+            }
         }
-        else if ("wcz".equals(effect)) {
-            return 0b11;
-        }
-        else if (effect.contains("wc") || "andc".equals(effect) || "orc".equals(effect) || "xor".equals(effect)) {
-            return 0b10;
-        }
-        else if (effect.contains("wz") || "andz".equals(effect) || "orz".equals(effect) || "xorz".equals(effect)) {
-            return 0b01;
-        }
-        return 0;
+
+        return result;
     }
 
     public void generateObjectCode(OutputStream output) throws IOException {
