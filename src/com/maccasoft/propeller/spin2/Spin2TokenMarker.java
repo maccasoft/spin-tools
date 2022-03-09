@@ -455,6 +455,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("INA", TokenId.PASM_INSTRUCTION);
         keywords.put("INB", TokenId.PASM_INSTRUCTION);
 
+        keywords.put("FDEC", TokenId.FUNCTION);
+        keywords.put("FDEC_REG_ARRAY", TokenId.FUNCTION);
+        keywords.put("FDEC_ARRAY", TokenId.FUNCTION);
+
         keywords.put("UDEC", TokenId.FUNCTION);
         keywords.put("UDEC_BYTE", TokenId.FUNCTION);
         keywords.put("UDEC_WORD", TokenId.FUNCTION);

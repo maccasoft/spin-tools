@@ -8,7 +8,7 @@
         <entry name="DAT"><![CDATA[<b>DAT</b><p>Data declarations, including PASM code</p>]]></entry>
     </section>
 
-    <section class="ConstantsNode,ExpressionNode,DataLineNode">
+    <section class="ConstantsNode,ExpressionNode,StatementNode,DataLineNode">
         <entry name="CLKFREQ"><![CDATA[<b>CLKFREQ | _CLKFREQ</b><p>Clock frequency value</p>]]></entry>
         <entry name="_CLKFREQ"><![CDATA[<b>CLKFREQ | _CLKFREQ</b><p>Clock frequency value</p>]]></entry>
         <entry name="CLKMODE"><![CDATA[<b>CLKMODE | _CLKMODE</b><p>Clock mode value</p>]]></entry>
@@ -237,6 +237,30 @@
         <entry name="X_ALT_OFF"></entry>
         <entry name="X_ALT_ON"></entry>
 
+        <entry name="EVENT_INT"></entry>
+        <entry name="INT_OFF"></entry>
+        <entry name="1EVENT_CT1"></entry>
+        <entry name="2EVENT_CT2"></entry>
+        <entry name="3EVENT_CT3"></entry>
+        <entry name="4EVENT_SE1"></entry>
+        <entry name="5EVENT_SE2"></entry>
+        <entry name="6EVENT_SE3"></entry>
+        <entry name="7EVENT_SE4"></entry>
+        <entry name="8EVENT_PAT"></entry>
+        <entry name="9EVENT_FBW"></entry>
+        <entry name="10EVENT_XMT"></entry>
+        <entry name="11EVENT_XFI"></entry>
+        <entry name="12EVENT_XRO"></entry>
+        <entry name="13EVENT_XRL"></entry>
+        <entry name="14EVENT_ATN"></entry>
+        <entry name="15EVENT_QMT"></entry>
+
+        <entry name="FALSE"><![CDATA[<b>FALSE</b><p>Same as 0</p>]]></entry>
+        <entry name="TRUE"><![CDATA[<b>TRUE</b><p>Same as -1</p>]]></entry>
+        <entry name="NEGX"><![CDATA[<b>NEGX</b><p>Negative-extreme integer, -2_147_483_648 ($8000_0000)</p>]]></entry>
+        <entry name="POSX"><![CDATA[<b>POSX</b><p>Positive-extreme integer, +2_147_483_647 ($7FFF_FFFF)</p>]]></entry>
+        <entry name="PI"><![CDATA[<b>PI</b><p>Single-precision floating-point value of Pi, 3.14159265</p>]]></entry>
+
         <entry name="addpins"><![CDATA[<b>x ADDPINS y</b><p>Make pinfield, (x & $3F) | (y & $1F) &lt;&lt; 6</p>]]></entry>
     </section>
 
@@ -363,6 +387,14 @@
         <entry name="lookupz" insert="lookupz(index: v1, v2..v3, etc)"><![CDATA[<b>LOOKUPZ(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 0-based index, return value (0 if index out of range)]]></entry>
         <entry name="lookdown" insert="lookdown(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWN(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 1-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
         <entry name="lookdownz" insert="lookdownz(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWNZ(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 0-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
+
+        <entry name="COGEXEC"><![CDATA[<b>COGEXEC</b><p>Use "COGEXEC + CogNumber" to start a cog in cogexec mode</p>]]></entry>
+        <entry name="HUBEXEC"><![CDATA[<b>HUBEXEC</b><p>Use "HUBEXEC + CogNumber" to start a cog in hubexec mode</p>]]></entry>
+        <entry name="COGEXEC_NEW"><![CDATA[<b>COGEXEC_NEW</b><p>Starts an available cog in cogexec mode</p>]]></entry>
+        <entry name="HUBEXEC_NEW"><![CDATA[<b>HUBEXEC_NEW</b><p>Starts an available cog in hubexec mode</p>]]></entry>
+        <entry name="COGEXEC_NEW_PAIR"><![CDATA[<b>COGEXEC_NEW_PAIR</b><p>Starts an available eve/odd pair of cogs in cogexec mode, useful for LUT sharing</p>]]></entry>
+        <entry name="HUBEXEC_NEW_PAIR"><![CDATA[<b>HUBEXEC_NEW_PAIR</b><p>Starts an available eve/odd pair of cogs in hubexec mode, useful for LUT sharing</p>]]></entry>
+        <entry name="NEWCOG"><![CDATA[<b>NEWCOG</b><p>Starts an available cog</p>]]></entry>
     </section>
 
     <section class="DatNode,DataLineNode,Instruction">
