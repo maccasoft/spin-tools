@@ -84,6 +84,8 @@ public class P2MemoryDialog extends Dialog {
     int vbase;
     int dbase;
 
+    int dbgsize;
+
     NumberFormat format;
 
     public P2MemoryDialog(Shell parentShell) {
@@ -237,6 +239,19 @@ public class P2MemoryDialog extends Dialog {
         group = new Composite(container, SWT.NONE);
         group.setLayout(new GridLayout(3, false));
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
+        if (dbgsize != 0) {
+            label = new Label(group, SWT.NONE);
+            label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+            label.setText("Debugger");
+            label.setLayoutData(new GridData(convertWidthInCharsToPixels(30), SWT.DEFAULT));
+            label = new Label(group, SWT.NONE);
+            label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
+            label.setText(String.format("%d bytes", dbgsize));
+            label = new Label(group, SWT.BORDER);
+            label.setBackground(display.getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
+            label.setLayoutData(new GridData(convertWidthInCharsToPixels(5), SWT.DEFAULT));
+        }
 
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -408,14 +423,20 @@ public class P2MemoryDialog extends Dialog {
 
                     int addr1 = addr;
                     for (int i = 0; i < BYTES_PER_ROW && addr1 < data.length; i++) {
-                        if (addr1 >= dbase) {
+                        if (addr1 >= dbase + dbgsize) {
                             e.gc.setBackground(stackFreeBackground);
                         }
-                        else if (addr1 >= vbase) {
+                        else if (addr1 >= vbase + dbgsize) {
                             e.gc.setBackground(variablesBackground);
                         }
-                        else if (addr1 >= pbase) {
+                        else if (addr1 >= pbase + dbgsize) {
                             e.gc.setBackground(codeBackground);
+                        }
+                        else if (addr1 >= dbgsize) {
+                            e.gc.setBackground(display.getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+                        }
+                        else {
+                            e.gc.setBackground(display.getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
                         }
                         e.gc.fillRectangle(x1, y, byteWidth, fontMetrics.getHeight());
                         e.gc.fillRectangle(x2, y, characterWidth, fontMetrics.getHeight());
@@ -542,7 +563,7 @@ public class P2MemoryDialog extends Dialog {
         });
 
         int rows = canvas.getClientArea().height / fontMetrics.getHeight();
-        int selection = (pbase / BYTES_PER_ROW) * BYTES_PER_ROW;
+        int selection = ((pbase + dbgsize) / BYTES_PER_ROW) * BYTES_PER_ROW;
         verticalBar.setValues(selection, 0, data.length, rows * BYTES_PER_ROW, BYTES_PER_ROW, rows * BYTES_PER_ROW);
 
         display.asyncExec(new Runnable() {
@@ -656,19 +677,17 @@ public class P2MemoryDialog extends Dialog {
             clkfreq = object.getClkFreq();
             clkmode = object.getClkMode();
 
+            if (object.getDebugger() != null) {
+                dbgsize = object.getDebugger().getSize() + object.getDebugData().getSize();
+            }
+
             if (object.getInterpreter() != null) {
-                pbase = readLong(0x30);
-                vbase = readLong(0x34) & 0xFFFFF;
-                dbase = readLong(0x38);
+                pbase = readLong(dbgsize + 0x30) & 0xFFFFF;
+                vbase = readLong(dbgsize + 0x34) & 0xFFFFF;
+                dbase = readLong(dbgsize + 0x38) & 0xFFFFF;
             }
             else {
-                if (object.getDebugger() != null) {
-                    pbase = object.getDebugger().getSize();
-                }
-                else {
-                    pbase = 0;
-                }
-                vbase = dbase = pbase + object.getSize();
+                vbase = dbase = object.getSize();
             }
         } catch (IOException e) {
             e.printStackTrace();

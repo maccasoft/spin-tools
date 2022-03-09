@@ -3564,17 +3564,17 @@ class Spin2ObjectCompilerTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Debug data\n"
-            + "00000 00000       0C 00         \n"
-            + "00002 00002       04 00         \n"
-            + "00004 00004       01 04 41 61 00\n"
-            + "00009 00009       80 03 00\n"
             + "' Object header\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 01 06 04 F6                        mov     a, #1\n"
             + "00004 00004   001 36 02 64 FD                        debug   #1\n"
             + "00008 00008   002 2D 00 64 FD                        ret\n"
             + "0000C 0000C   003                a                   res     1\n"
+            + "' Debug data\n"
+            + "009C8 00000       0C 00         \n"
+            + "009CA 00002       04 00         \n"
+            + "009CC 00004       01 04 41 61 00\n"
+            + "009D1 00009       80 03 00\n"
             + "", compile(text, true));
     }
 
@@ -3610,6 +3610,9 @@ class Spin2ObjectCompilerTest {
 
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(scope, childObjects, debugEnabled);
         Spin2Object obj = compiler.compileObject(root);
+        if (debugEnabled) {
+            obj.setDebugger(new Spin2Debugger());
+        }
 
         for (CompilerMessage msg : compiler.getMessages()) {
             if (msg.type == CompilerMessage.ERROR) {

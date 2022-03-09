@@ -132,13 +132,10 @@ public class Spin2Object extends SpinObject {
         if (interpreter != null) {
             offset = interpreter.getPBase();
         }
-        if (debugger != null) {
-            offset += debugger.getSize();
-        }
-        if (debugData != null) {
-            debugData.generateListing(ps);
-        }
         generateListing(offset, ps);
+        if (debugData != null) {
+            debugData.generateListing(debugger.getSize(), ps);
+        }
     }
 
 }
