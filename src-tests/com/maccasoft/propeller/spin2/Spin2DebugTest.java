@@ -58,7 +58,7 @@ class Spin2DebugTest {
     void testDly() {
         Spin2Context context = new Spin2Context();
 
-        String text = "debug(dly(100))";
+        String text = "debug(dly(#100))";
 
         Spin2Debug subject = new Spin2Debug();
         String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));

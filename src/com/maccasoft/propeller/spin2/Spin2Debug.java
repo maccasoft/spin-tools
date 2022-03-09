@@ -249,17 +249,10 @@ public class Spin2Debug {
                             compileArrayStatement(context, node, os, DBC_TYPE_STR | DBC_FLAG_ARRAY | flags);
                             break;
 
-                        case "DLY": {
+                        case "DLY":
                             os.write(DBC_DELAY);
-                            int index = 0;
-                            if ("#".equals(node.getChild(index).getText())) {
-                                os.write('#');
-                                index++;
-                            }
-                            Expression exp = new NumberLiteral(node.getChild(index).getText());
-                            compileConstant(os, exp.getNumber().intValue());
+                            compileArgument(context, node.getChild(0), os);
                             break;
-                        }
 
                         default:
                             throw new CompilerMessage("Unknown debug statement '" + node.getText() + "'", node.getData());
@@ -285,79 +278,56 @@ public class Spin2Debug {
                 os.write(op);
             }
 
-            boolean immediate = false;
-            String arg = child.getText();
-            if ("#".equals(arg)) {
-                immediate = true;
-                arg = child.getChild(0).getText();
-            }
-
             if ((op & DBC_FLAG_NOEXPR) == 0) {
+                String arg = child.getText();
+                if ("#".equals(arg)) {
+                    arg = child.getChild(0).getText();
+                }
                 os.write(arg.getBytes());
                 os.write(0x00);
             }
 
-            Expression expression = context.getLocalSymbol(arg);
-            if (expression != null) {
-                int value = expression.getNumber().intValue();
-                if (immediate) {
-                    compileConstant(os, value);
-                }
-                else {
-                    os.write(0x80 | (value >> 8));
-                    os.write(value);
-                }
-            }
+            compileArgument(context, child, os);
         }
     }
 
     void compileArrayStatement(Spin2Context context, Spin2StatementNode node, OutputStream os, int op) throws IOException {
-        if (first) {
-            os.write(op | DBC_FLAG_NOCOMMA);
-            first = false;
-        }
-        else {
-            os.write(op);
-        }
-
-        Spin2StatementNode child = node.getChild(0);
-
-        boolean immediate = false;
-        String arg = child.getText();
-        if ("#".equals(arg)) {
-            immediate = true;
-            child = child.getChild(0);
-            arg = child.getText();
-        }
-
-        if ((op & DBC_FLAG_NOEXPR) == 0) {
-            os.write(arg.getBytes());
-            os.write(0x00);
-        }
-
-        Expression expression = context.getLocalSymbol(arg);
-        if (expression != null) {
-            int value = expression.getNumber().intValue();
-            if (immediate) {
-                compileConstant(os, value);
+        for (int index = 0; index < node.getChildCount(); index += 2) {
+            if (first) {
+                os.write(op | DBC_FLAG_NOCOMMA);
+                first = false;
             }
             else {
-                os.write(0x80 | (value >> 8));
-                os.write(value);
+                os.write(op);
             }
+
+            if ((op & DBC_FLAG_NOEXPR) == 0) {
+                String arg = node.getChild(index).getText();
+                if ("#".equals(arg)) {
+                    arg = node.getChild(index).getChild(0).getText();
+                }
+                os.write(arg.getBytes());
+                os.write(0x00);
+            }
+
+            compileArgument(context, node.getChild(index), os);
+            compileArgument(context, node.getChild(index + 1), os);
         }
+    }
 
-        child = node.getChild(1);
+    void compileArgument(Spin2Context context, Spin2StatementNode node, OutputStream os) throws IOException {
+        boolean immediate = false;
 
-        immediate = false;
-        arg = child.getText();
+        String arg = node.getText();
+        int type = node.getType();
+
         if ("#".equals(arg)) {
             immediate = true;
-            child = child.getChild(0);
-            arg = child.getText();
+            arg = node.getChild(0).getText();
+            type = node.getChild(0).getType();
         }
 
-        expression = child.getType() == Token.NUMBER ? new NumberLiteral(arg) : context.getLocalSymbol(arg);
+        Expression expression = type == Token.NUMBER ? new NumberLiteral(arg) : context.getLocalSymbol(arg);
         if (expression != null) {
             int value = expression.getNumber().intValue();
             if (immediate) {
