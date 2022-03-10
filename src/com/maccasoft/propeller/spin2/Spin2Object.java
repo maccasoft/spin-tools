@@ -100,7 +100,13 @@ public class Spin2Object extends SpinObject {
         this.debugger = debugger;
         this.debugger.setClkMode1(getClkMode() & ~3);
         this.debugger.setClkMode2(getClkMode());
-        this.debugger.setAppSize(getSize());
+
+        int appSize = getSize();
+        if (this.interpreter != null) {
+            appSize += this.interpreter.getSize();
+        }
+        this.debugger.setAppSize(appSize);
+
         this.debugger.setDelay(200);
     }
 

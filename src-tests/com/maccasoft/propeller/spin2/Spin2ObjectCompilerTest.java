@@ -1848,6 +1848,32 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testDebug() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    debug()\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       0D 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'     debug()\n"
+            + "00009 00009       44 00 01       DEBUG #1\n"
+            + "0000C 0000C       04             RETURN\n"
+            + "0000D 0000D       00 00 00       Padding\n"
+            + "' Debug data\n"
+            + "009C8 00000       06 00         \n"
+            + "009CA 00002       04 00         \n"
+            + "009CC 00004       04 00         \n"
+            + "", compile(text, true));
+    }
+
+    @Test
     void testIgnoreDebug() throws Exception {
         String text = ""
             + "PUB main()\n"
@@ -1862,7 +1888,6 @@ class Spin2ObjectCompilerTest {
             + "00004 00004       0A 00 00 00    End\n"
             + "' PUB main()\n"
             + "00008 00008       00             (stack size)\n"
-            + "'     debug()\n"
             + "00009 00009       04             RETURN\n"
             + "0000A 0000A       00 00          Padding\n"
             + "", compile(text));
@@ -3586,7 +3611,7 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
-    void testDebug() throws Exception {
+    void testPAsmDebug() throws Exception {
         String text = ""
             + "DAT             org   $000\n"
             + "                mov   a, #1\n"

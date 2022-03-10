@@ -162,6 +162,30 @@ class Spin2DebugTest {
         Assertions.assertEquals("01 04 06 60 31 32 33 34 35 00 00", actual);
     }
 
+    @Test
+    void testSpin() {
+        Spin2Context context = new Spin2Context();
+        context.addSymbol("reg", new NumberLiteral(10));
+
+        String text = "debug(udec(reg))";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(context, parse(text)));
+        Assertions.assertEquals("04 41 72 65 67 00 00", actual);
+    }
+
+    @Test
+    void testSpinArray() {
+        Spin2Context context = new Spin2Context();
+        context.addSymbol("reg", new NumberLiteral(10));
+
+        String text = "debug(udec_long_array(reg,2))";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(context, parse(text)));
+        Assertions.assertEquals("04 5D 72 65 67 00 00", actual);
+    }
+
     Spin2StatementNode parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder();
 

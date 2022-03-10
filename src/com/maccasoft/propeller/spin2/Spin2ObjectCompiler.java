@@ -138,6 +138,7 @@ public class Spin2ObjectCompiler {
     boolean debugEnabled;
     int debugIndex = 1;
     Spin2Debug debug = new Spin2Debug();
+    List<Spin2StatementNode> debugStatements = new ArrayList<Spin2StatementNode>();
 
     boolean errors;
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
@@ -425,10 +426,17 @@ public class Spin2ObjectCompiler {
 
             int pos = debugIndex * 2;
             List<DataObject> l = new ArrayList<DataObject>();
-            for (Spin2PAsmLine line : source) {
-                Spin2StatementNode node = (Spin2StatementNode) line.getData("_debug");
-                if (node != null) {
-                    byte[] data = debug.compilePAsmDebugStatement(line.getScope(), node);
+            for (Spin2StatementNode node : debugStatements) {
+                if (node.getData() instanceof Spin2PAsmLine) {
+                    Spin2Context context = ((Spin2PAsmLine) node.getData()).getScope();
+                    byte[] data = debug.compilePAsmDebugStatement(context, node);
+                    l.add(new DataObject(data));
+                    debugObject.writeWord(pos);
+                    pos += data.length;
+                }
+                else {
+                    Spin2Context context = (Spin2Context) node.getData("context");
+                    byte[] data = debug.compileDebugStatement(context, node);
                     l.add(new DataObject(data));
                     debugObject.writeWord(pos);
                     pos += data.length;
@@ -689,7 +697,9 @@ public class Spin2ObjectCompiler {
                 for (Token token : node.getTokens()) {
                     builder.addToken(token);
                 }
-                pasmLine.setData("_debug", builder.getRoot());
+                Spin2StatementNode debugStatement = builder.getRoot();
+                debugStatement.setData(pasmLine);
+                debugStatements.add(debugStatement);
             }
         } catch (CompilerMessage e) {
             throw e;
@@ -1165,6 +1175,10 @@ public class Spin2ObjectCompiler {
                         lines.add(line);
                     }
                     else {
+                        if (!debugEnabled && "DEBUG".equalsIgnoreCase(token.getText())) {
+                            continue;
+                        }
+
                         Spin2MethodLine line = new Spin2MethodLine(context, null, node);
 
                         Spin2TreeBuilder builder = new Spin2TreeBuilder();
@@ -1710,7 +1724,19 @@ public class Spin2ObjectCompiler {
                 }
             }
             else if ("DEBUG".equalsIgnoreCase(node.getText())) {
-                // Ignored
+                int pop = 0;
+                for (Spin2StatementNode child : node.getChilds()) {
+                    for (Spin2StatementNode param : child.getChilds()) {
+                        source.addAll(compileBytecodeExpression(context, param, true));
+                        pop += 4;
+                    }
+                }
+                node.setData("context", context);
+                debugStatements.add(node);
+                source.add(new Bytecode(context, new byte[] {
+                    0x44, (byte) pop, (byte) debugIndex
+                }, node.getText().toUpperCase() + " #" + debugIndex));
+                debugIndex++;
             }
             else if ("END".equalsIgnoreCase(node.getText())) {
                 // Ignored
