@@ -3119,8 +3119,10 @@ public class Spin2ObjectCompiler {
                 return new Or(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
 
             case "*":
+            case "*.":
                 return new Multiply(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
             case "/":
+            case "/.":
                 return new Divide(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
             case "//":
                 return new Modulo(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
@@ -3134,11 +3136,13 @@ public class Spin2ObjectCompiler {
                 return new Scas(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
 
             case "+":
+            case "+.":
                 if (node.getChildCount() == 1) {
                     return buildConstantExpression(context, node.getChild(0));
                 }
                 return new Add(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
             case "-":
+            case "-.":
                 if (node.getChildCount() == 1) {
                     return new Negative(buildConstantExpression(context, node.getChild(0)));
                 }
@@ -3204,6 +3208,11 @@ public class Spin2ObjectCompiler {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
                 return new Round(buildConstantExpression(context, node.getChild(0)));
+            case "FLOAT":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new NumberLiteral(buildConstantExpression(context, node.getChild(0)).getNumber().doubleValue());
         }
 
         throw new RuntimeException("unknown " + node.getText());

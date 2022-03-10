@@ -19,19 +19,33 @@ import com.maccasoft.propeller.spin2.Spin2Context;
 public class MathOp extends Spin2Bytecode {
 
     static class Descriptor {
-        int value;
-        int push_value;
+        byte[] value;
+        byte[] push_value;
         String text;
 
         public Descriptor(int value, String text) {
+            this.value = new byte[] {
+                (byte) value
+            };
+            this.push_value = new byte[] {
+                (byte) value
+            };
+            this.text = text;
+        }
+
+        public Descriptor(byte[] value, String text) {
             this.value = value;
             this.push_value = value;
             this.text = text;
         }
 
         public Descriptor(int value, int push_value, String text) {
-            this.value = value;
-            this.push_value = push_value;
+            this.value = new byte[] {
+                (byte) value
+            };
+            this.push_value = new byte[] {
+                (byte) push_value
+            };
             this.text = text;
         }
     }
@@ -81,17 +95,37 @@ public class MathOp extends Spin2Bytecode {
         operations.put("SCAS", new Descriptor(0x9C, "SCAS"));
         operations.put("FRAC", new Descriptor(0x9D, "FRAC"));
 
-        operations.put("<.", new Descriptor(0x92, "FLOAT_LESS_THAN"));
-        operations.put(">.", new Descriptor(0x94, "FLOAT_GREATER_THAN"));
-        operations.put("<>.", new Descriptor(0x96, "FLOAT_NOT_EQUAL"));
-        operations.put("==.", new Descriptor(0x98, "FLOAT_EQUAL"));
-        operations.put("<=.", new Descriptor(0x9A, "FLOAT_LESS_THAN_OR_EQUAL"));
-        operations.put(">=.", new Descriptor(0x9C, "FLOAT_GREATER_THAN_OR_EQUAL"));
+        operations.put("<.", new Descriptor(new byte[] {
+            0x19, (byte) 0x92
+        }, "FLOAT_LESS_THAN"));
+        operations.put(">.", new Descriptor(new byte[] {
+            0x19, (byte) 0x94
+        }, "FLOAT_GREATER_THAN"));
+        operations.put("<>.", new Descriptor(new byte[] {
+            0x19, (byte) 0x96
+        }, "FLOAT_NOT_EQUAL"));
+        operations.put("==.", new Descriptor(new byte[] {
+            0x19, (byte) 0x98
+        }, "FLOAT_EQUAL"));
+        operations.put("<=.", new Descriptor(new byte[] {
+            0x19, (byte) 0x9A
+        }, "FLOAT_LESS_THAN_OR_EQUAL"));
+        operations.put(">=.", new Descriptor(new byte[] {
+            0x19, (byte) 0x9C
+        }, "FLOAT_GREATER_THAN_OR_EQUAL"));
 
-        operations.put("+.", new Descriptor(0xA0, "FLOAT_ADD"));
-        operations.put("-.", new Descriptor(0xA2, "FLOAT_SUBTRACT"));
-        operations.put("*.", new Descriptor(0xA4, "FLOAT_MULTIPLY"));
-        operations.put("/.", new Descriptor(0xA6, "FLOAT_DIVIDE"));
+        operations.put("+.", new Descriptor(new byte[] {
+            0x19, (byte) 0xA0
+        }, "FLOAT_ADD"));
+        operations.put("-.", new Descriptor(new byte[] {
+            0x19, (byte) 0xA2
+        }, "FLOAT_SUBTRACT"));
+        operations.put("*.", new Descriptor(new byte[] {
+            0x19, (byte) 0xA4
+        }, "FLOAT_MULTIPLY"));
+        operations.put("/.", new Descriptor(new byte[] {
+            0x19, (byte) 0xA6
+        }, "FLOAT_DIVIDE"));
     }
 
     public static boolean isMathOp(String s) {
@@ -191,9 +225,7 @@ public class MathOp extends Spin2Bytecode {
 
     @Override
     public byte[] getBytes() {
-        return new byte[] {
-            (byte) (push ? op.push_value : op.value)
-        };
+        return push ? op.push_value : op.value;
     }
 
     @Override

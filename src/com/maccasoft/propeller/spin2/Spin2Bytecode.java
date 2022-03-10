@@ -107,12 +107,12 @@ public class Spin2Bytecode {
         descriptors.put("POLXY", new Descriptor(0x69, 2));
         descriptors.put("XYPOL", new Descriptor(0x6A, 2));
 
-        descriptors.put("FLOAT", new Descriptor(0x86, 1));
-        descriptors.put("TRUNC", new Descriptor(0x88, 1));
-        descriptors.put("ROUND", new Descriptor(0x8A, 1));
-        descriptors.put("NAN", new Descriptor(0x8C, 1));
-        descriptors.put("FABS", new Descriptor(0x90, 1));
-        descriptors.put("FSQRT", new Descriptor(0x9E, 1));
+        descriptors.put("FLOAT", new Descriptor(0x19, 0x86, 1));
+        descriptors.put("TRUNC", new Descriptor(0x19, 0x88, 1));
+        descriptors.put("ROUND", new Descriptor(0x19, 0x8A, 1));
+        descriptors.put("NAN", new Descriptor(0x19, 0x8C, 1));
+        descriptors.put("FABS", new Descriptor(0x19, 0x90, 1));
+        descriptors.put("FSQRT", new Descriptor(0x19, 0x9E, 1));
     }
 
     public static Descriptor getDescriptor(String s) {

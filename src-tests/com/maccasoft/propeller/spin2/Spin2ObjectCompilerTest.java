@@ -3295,6 +3295,38 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testFloatOp() throws Exception {
+        String text = ""
+            + "PUB main() | a, b, c\n"
+            + "\n"
+            + "        a := b *. c\n"
+            + "        a := round(b +. c)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       16 00 00 00    End\n"
+            + "' PUB main() | a, b, c\n"
+            + "00008 00008       0C             (stack size)\n"
+            + "'         a := b *. c\n"
+            + "00009 00009       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000A 0000A       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "0000B 0000B       19 A4          FLOAT_MULTIPLY\n"
+            + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'         a := round(b +. c)\n"
+            + "0000E 0000E       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000F 0000F       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00010 00010       19 A0          FLOAT_ADD\n"
+            + "00012 00012       19 8A          ROUND\n"
+            + "00014 00014       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00015 00015       04             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testOrg() throws Exception {
         String text = ""
             + "DAT             org   $000\n"
