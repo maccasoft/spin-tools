@@ -3,7 +3,7 @@
     <tstamp>
         <format property="timestamp" pattern="yyyyMMdd-HHmm" />
     </tstamp>
-    <property name="version" value="0.11" />
+    <property name="version" value="0.12" />
     <property name="package" value="spin-tools" />
     <property name="folder" value="${package}-${version}" />
     <property name="mac-folder" value="Spin Tools"/>
@@ -49,13 +49,13 @@
             <fileset file="build/linux/desktop.template" />
         </copy>
         <copy todir="${work}/${folder}">
-            <fileset file="build/linux/propeller" />
+            <fileset file="build/linux/spinide" />
             <fileset file="build/linux/install.sh" />
             <fileset file="build/linux/uninstall.sh" />
-            <fileset file="build/linux/propeller.png" />
+            <fileset file="build/linux/spinide.png" />
             <fileset file="build/linux/spinc" />
         </copy>
-        <chmod file="${work}/${folder}/propeller" perm="755" />
+        <chmod file="${work}/${folder}/spinide" perm="755" />
         <chmod file="${work}/${folder}/install.sh" perm="755" />
         <chmod file="${work}/${folder}/uninstall.sh" perm="755" />
         <chmod file="${work}/${folder}/spinc" perm="755" />
@@ -87,7 +87,7 @@
 
         <launch4j 
             configFile="build/windows/config.xml" 
-            outfile="${work}/${folder}/propeller.exe" 
+            outfile="${work}/${folder}/spinide.exe" 
             fileVersion="${version}.0.0" 
             txtFileVersion="${version}.0.0" 
             productVersion="${version}.0.0" 

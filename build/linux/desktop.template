@@ -1,9 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=Propeller Sketch Tools
-GenericName=Propeller Sketch Tools
+Name=Spin Tools IDE
+GenericName=Spin Tools IDE
 Comment=Development tools for Parallax Propeller microcontrollers
-Exec=<BINARY_LOCATION>
+Path=<BINARY_LOCATION>
+Exec=<BINARY_NAME>
 Icon=<ICON_NAME>
 Terminal=false
 Categories=Development;IDE;Electronics;

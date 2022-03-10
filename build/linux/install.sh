@@ -6,7 +6,7 @@
 # If called with the "-u" option, it will undo the changes.
 
 # Resource name to use (including vendor prefix)
-RESOURCE_NAME=maccasoft-propsketchtools
+RESOURCE_NAME=maccasoft-spintoolside
 
 # Get absolute path from which this script file was executed
 # (Could be changed to "pwd -P" to resolve symlinks to their target)
@@ -29,7 +29,8 @@ xdg_install_f() {
   TMP_DIR=`mktemp --directory`
 
   # Create *.desktop file using the existing template file
-  sed -e "s,<BINARY_LOCATION>,${SCRIPT_PATH}/propeller,g" \
+  sed -e "s,<BINARY_LOCATION>,${SCRIPT_PATH},g" \
+      -e "s,<BINARY_NAME>,${SCRIPT_PATH}/spinide,g" \
       -e "s,<ICON_NAME>,${RESOURCE_NAME},g" "${SCRIPT_PATH}/lib/desktop.template" > "${TMP_DIR}/${RESOURCE_NAME}.desktop"
 
   # Install the icon files using name and resolutions
@@ -54,8 +55,9 @@ simple_install_f() {
   TMP_DIR=`mktemp --directory`
 
   # Create *.desktop file using the existing template file
-  sed -e "s,<BINARY_LOCATION>,${SCRIPT_PATH}/propeller,g" \
-      -e "s,<ICON_NAME>,${SCRIPT_PATH}/sketch-tools.png,g" "${SCRIPT_PATH}/lib/desktop.template" > "${TMP_DIR}/${RESOURCE_NAME}.desktop"
+  sed -e "s,<BINARY_LOCATION>,${SCRIPT_PATH},g" \
+      -e "s,<BINARY_NAME>,${SCRIPT_PATH}/spinide,g" \
+      -e "s,<ICON_NAME>,${SCRIPT_PATH}/spinide.png,g" "${SCRIPT_PATH}/lib/desktop.template" > "${TMP_DIR}/${RESOURCE_NAME}.desktop"
 
   mkdir -p "${HOME}/.local/share/applications"
   cp "${TMP_DIR}/${RESOURCE_NAME}.desktop" "${HOME}/.local/share/applications/"
@@ -119,7 +121,7 @@ xdg_exists_f() {
 
 # Shows a description of the available options
 display_help_f() {
-  printf "\nThis script will add a Sketch Tools desktop shortcut, menu item,\n"
+  printf "\nThis script will add a Spin Tools desktop shortcut, menu item,\n"
   printf "icons and file associations for the current user.\n"
   if ! xdg_exists_f; then
     printf "\nxdg-utils are recommended to be installed, so this script can use them.\n"
@@ -152,21 +154,21 @@ done
 # If possible, use xdg-utils, if not, use a more basic approach
 if xdg_exists_f; then
   if [ ${UNINSTALL} = true ]; then
-    printf "Removing desktop shortcut and menu item for Propeller Sketch Tools..."
+    printf "Removing desktop shortcut and menu item for Spin Tools..."
     xdg_uninstall_f
     simple_uninstall_f
   else
-    printf "Adding desktop shortcut, menu item and file associations for Propeller Sketch Tools..."
+    printf "Adding desktop shortcut, menu item and file associations for Spin Tools..."
     xdg_uninstall_f
     simple_uninstall_f
     xdg_install_f
   fi
 else
   if [ ${UNINSTALL} = true ]; then
-    printf "Removing desktop shortcut and menu item for Propeller Sketch Tools..."
+    printf "Removing desktop shortcut and menu item for Spin Tools..."
     simple_uninstall_f
   else
-    printf "Adding desktop shortcut and menu item for Propeller Sketch Tools..."
+    printf "Adding desktop shortcut and menu item for Spin Tools..."
     simple_uninstall_f
     simple_install_f
   fi

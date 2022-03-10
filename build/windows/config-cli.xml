@@ -15,7 +15,7 @@
     <opt>-DAPP_DIR="%EXEDIR%"</opt>
   </jre>
   <versionInfo>
-    <fileDescription>Spin Tools Compiler</fileDescription>
+    <fileDescription>Spin Tools Command-line Compiler</fileDescription>
     <copyright>Marco Maccaferri</copyright>
     <productName>Spin Tools Compiler</productName>
     <companyName>Marco Maccaferri</companyName>
