@@ -164,26 +164,64 @@ class Spin2DebugTest {
 
     @Test
     void testSpin() {
-        Spin2Context context = new Spin2Context();
-        context.addSymbol("reg", new NumberLiteral(10));
-
         String text = "debug(udec(reg))";
 
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compileDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
         Assertions.assertEquals("04 41 72 65 67 00 00", actual);
     }
 
     @Test
     void testSpinArray() {
-        Spin2Context context = new Spin2Context();
-        context.addSymbol("reg", new NumberLiteral(10));
-
         String text = "debug(udec_long_array(reg,2))";
 
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compileDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
         Assertions.assertEquals("04 5D 72 65 67 00 00", actual);
+    }
+
+    @Test
+    void testSpinCondition() {
+        String text = "debug(if(a > 1), udec(reg))";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
+        Assertions.assertEquals("02 04 41 72 65 67 00 00", actual);
+    }
+
+    @Test
+    void testSpinConditionMiddle() {
+        String text = "debug(udec(reg), if(a > 1), udec(a))";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compileDebugStatement(parse(text)));
+        Assertions.assertEquals("04 41 72 65 67 00 02 40 61 00 00", actual);
+    }
+
+    @Test
+    void testPAsmCondition() {
+        Spin2Context context = new Spin2Context();
+        context.addSymbol("a", new NumberLiteral(1));
+        context.addSymbol("reg", new NumberLiteral(10));
+
+        String text = "debug(if(a), udec(reg))";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        Assertions.assertEquals("01 02 80 01 04 41 72 65 67 00 80 0A 00", actual);
+    }
+
+    @Test
+    void testPAsmConditionMiddle() {
+        Spin2Context context = new Spin2Context();
+        context.addSymbol("a", new NumberLiteral(1));
+        context.addSymbol("reg", new NumberLiteral(10));
+
+        String text = "debug(udec(reg), if(a), udec(a))";
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        Assertions.assertEquals("01 04 41 72 65 67 00 80 0A 02 80 01 40 61 00 80 01 00", actual);
     }
 
     Spin2StatementNode parse(String text) {

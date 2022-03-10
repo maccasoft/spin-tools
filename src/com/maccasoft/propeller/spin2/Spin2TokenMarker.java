@@ -562,6 +562,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("DLY", TokenId.FUNCTION);
         keywords.put("ZSTR", TokenId.FUNCTION);
         keywords.put("LSTR", TokenId.FUNCTION);
+
+        keywords.put("IF", TokenId.FUNCTION);
+        keywords.put("IFNOT", TokenId.FUNCTION);
     }
 
     static Map<String, TokenId> spinKeywords = new HashMap<String, TokenId>();

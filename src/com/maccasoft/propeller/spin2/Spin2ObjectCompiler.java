@@ -427,19 +427,24 @@ public class Spin2ObjectCompiler {
             int pos = debugIndex * 2;
             List<DataObject> l = new ArrayList<DataObject>();
             for (Spin2StatementNode node : debugStatements) {
-                if (node.getData() instanceof Spin2PAsmLine) {
-                    Spin2Context context = ((Spin2PAsmLine) node.getData()).getScope();
-                    byte[] data = debug.compilePAsmDebugStatement(context, node);
-                    l.add(new DataObject(data));
-                    debugObject.writeWord(pos);
-                    pos += data.length;
-                }
-                else {
-                    Spin2Context context = (Spin2Context) node.getData("context");
-                    byte[] data = debug.compileDebugStatement(context, node);
-                    l.add(new DataObject(data));
-                    debugObject.writeWord(pos);
-                    pos += data.length;
+                try {
+                    if (node.getData() instanceof Spin2PAsmLine) {
+                        Spin2Context context = ((Spin2PAsmLine) node.getData()).getScope();
+                        byte[] data = debug.compilePAsmDebugStatement(context, node);
+                        l.add(new DataObject(data));
+                        debugObject.writeWord(pos);
+                        pos += data.length;
+                    }
+                    else {
+                        byte[] data = debug.compileDebugStatement(node);
+                        l.add(new DataObject(data));
+                        debugObject.writeWord(pos);
+                        pos += data.length;
+                    }
+                } catch (CompilerMessage e) {
+                    logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerMessage(e, node));
                 }
             }
             for (DataObject data : l) {
