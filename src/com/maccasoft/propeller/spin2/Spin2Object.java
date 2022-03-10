@@ -71,6 +71,9 @@ public class Spin2Object extends SpinObject {
         if (interpreter != null) {
             interpreter.setClkFreq(clkfreq);
         }
+        if (debugger != null) {
+            debugger.setClkFreq(clkfreq);
+        }
         super.setClkFreq(clkfreq);
     }
 
@@ -78,6 +81,10 @@ public class Spin2Object extends SpinObject {
     public void setClkMode(int _clkmode) {
         if (interpreter != null) {
             interpreter.setClkMode(_clkmode);
+        }
+        if (debugger != null) {
+            debugger.setClkMode1(_clkmode & ~3);
+            debugger.setClkMode2(_clkmode);
         }
         super.setClkMode(_clkmode);
     }
@@ -98,6 +105,7 @@ public class Spin2Object extends SpinObject {
 
     public void setDebugger(Spin2Debugger debugger) {
         this.debugger = debugger;
+        this.debugger.setClkFreq(getClkFreq());
         this.debugger.setClkMode1(getClkMode() & ~3);
         this.debugger.setClkMode2(getClkMode());
 

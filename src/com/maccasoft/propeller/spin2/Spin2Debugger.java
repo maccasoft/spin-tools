@@ -30,8 +30,12 @@ public class Spin2Debugger {
                 e.printStackTrace();
             }
         }
-        writeLong(0x108, 0x00500007);
-        writeLong(0x10C, 0x000270FA);
+    }
+
+    public void setClkFreq(int freq) {
+        long bitmode = (freq * 0x10000L) / 2000000L;
+        writeLong(0x108, (int) ((bitmode & 0xFFFFFC00L) | 7));
+        writeLong(0x10C, freq / 1000);
     }
 
     public void setClkMode1(int mode) {

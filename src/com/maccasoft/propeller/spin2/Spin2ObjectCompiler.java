@@ -3280,7 +3280,7 @@ public class Spin2ObjectCompiler {
             }
         }
         if (error > 100000.0) {
-            throw new RuntimeException(String.format("Unable to find clock settings for freq %f Hz with input freq %f Hz", clkfreq, xinfreq));
+            throw new RuntimeException(String.format("Unable to find clock settings for freq %d Hz with input freq %d Hz", clkfreq, xinfreq));
         }
 
         int D = result_divd - 1;
