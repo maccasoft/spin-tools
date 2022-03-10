@@ -172,7 +172,7 @@
         <pathelement location="lib/jackson-databind-2.7.0.jar" />
         <pathelement location="lib/commons-lang3-3.12.0.jar" />
         <pathelement location="lib/commons-collections4-4.4.jar" />
-        <pathelement location="lib/commons-cli-1.4.jar" />
+        <pathelement location="lib/commons-cli-1.5.0.jar" />
     </path>
 
     <target name="copy-common-files">
@@ -218,7 +218,7 @@
             <fileset dir="lib" includes="jackson-databind-2.7.0.jar" />
             <fileset dir="lib" includes="commons-lang3-3.12.0.jar" />
             <fileset dir="lib" includes="commons-collections4-4.4.jar" />
-            <fileset dir="lib" includes="commons-cli-1.4.jar" />
+            <fileset dir="lib" includes="commons-cli-1.5.0.jar" />
             <fileset dir="lib" includes="slf4j-nop-1.7.36.jar" />
         </copy>
 
