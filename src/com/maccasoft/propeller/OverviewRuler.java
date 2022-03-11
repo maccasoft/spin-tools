@@ -156,7 +156,7 @@ public class OverviewRuler {
                 for (int line : errorHighlight.keySet()) {
                     int y = (int) (line * lineStep) + offset;
                     if (e.y >= y && e.y <= y + HEIGHT) {
-                        message = "Line: " + (line + 1) + " (" + errorHighlight.get(line) + ")";
+                        message = errorHighlight.get(line);
                         break;
                     }
                 }
@@ -164,7 +164,7 @@ public class OverviewRuler {
                     for (int line : warningHighlight.keySet()) {
                         int y = (int) (line * lineStep) + offset;
                         if (e.y >= y && e.y <= y + HEIGHT) {
-                            message = "Line: " + (line + 1) + " (" + warningHighlight.get(line) + ")";
+                            message = warningHighlight.get(line);
                             break;
                         }
                     }

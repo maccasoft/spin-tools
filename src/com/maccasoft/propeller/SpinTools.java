@@ -1353,11 +1353,8 @@ public class SpinTools {
                     SerialTerminal serialTerminal = getSerialTerminal();
                     if (serialTerminal == null) {
                         serialTerminal = new SerialTerminal();
-                        if (sourcePool.isDebugEnabled()) {
-                            serialTerminal.setSerialBaudRate(2000000);
-                        }
                         serialTerminal.open();
-                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
+                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()), 2000000);
                     }
                     serialTerminal.setFocus();
                 } catch (Exception ex) {
@@ -1601,14 +1598,20 @@ public class SpinTools {
 
         if (serialTerminal == null && (terminal || sourcePool.isDebugEnabled())) {
             serialTerminal = new SerialTerminal();
-            if (sourcePool.isDebugEnabled()) {
-                serialTerminal.setSerialBaudRate(2000000);
-            }
             serialTerminal.open();
-            serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
         }
         if (serialTerminal != null) {
-            serialTerminal.setFocus();
+            SerialPort serialPort = serialTerminal.getSerialPort();
+            if (serialPort == null) {
+                serialPort = new SerialPort(serialPortList.getSelection());
+            }
+            serialTerminal.setSerialPort(serialPort, sourcePool.isDebugEnabled() ? 2000000 : 115200);
+            if (terminal) {
+                serialTerminal.setFocus();
+            }
+            if (sourcePool.isDebugEnabled()) {
+                serialTerminal.clear();
+            }
         }
 
         handleUpload(flash, serialTerminal);

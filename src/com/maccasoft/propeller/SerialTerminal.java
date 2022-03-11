@@ -450,6 +450,24 @@ public class SerialTerminal {
         }
     }
 
+    SelectionAdapter baudRateSelectionListener = new SelectionAdapter() {
+
+        @Override
+        public void widgetSelected(SelectionEvent e) {
+            try {
+                serialBaudRate = baudRates.get(baudRate.getSelectionIndex());
+                serialPort.setParams(
+                    serialBaudRate,
+                    SerialPort.DATABITS_8,
+                    SerialPort.STOPBITS_1,
+                    SerialPort.PARITY_NONE);
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+            canvas.setFocus();
+        }
+    };
+
     public SerialTerminal() {
         this.serialBaudRate = 115200;
         this.emulation = new TTY();
@@ -830,23 +848,7 @@ public class SerialTerminal {
         container.setLayout(layout);
 
         baudRate.select(baudRates.indexOf(serialBaudRate));
-        baudRate.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                try {
-                    serialBaudRate = baudRates.get(baudRate.getSelectionIndex());
-                    serialPort.setParams(
-                        serialBaudRate,
-                        SerialPort.DATABITS_8,
-                        SerialPort.STOPBITS_1,
-                        SerialPort.PARITY_NONE);
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
-                canvas.setFocus();
-            }
-        });
+        baudRate.addSelectionListener(baudRateSelectionListener);
 
         if (emulation instanceof ParallaxSerialTerminal) {
             terminalType.select(1);
@@ -883,26 +885,32 @@ public class SerialTerminal {
         emulation.write(c);
     }
 
-    public int getSerialBaudRate() {
-        return serialBaudRate;
-    }
-
-    public void setSerialBaudRate(int serialBaudRate) {
-        this.serialBaudRate = serialBaudRate;
-    }
-
     public SerialPort getSerialPort() {
         return serialPort;
     }
 
     public void setSerialPort(SerialPort serialPort) {
+        setSerialPort(serialPort, serialBaudRate);
+    }
+
+    public void setSerialPort(SerialPort serialPort, int serialBaudRate) {
         try {
             if (this.serialPort != null) {
                 if (this.serialPort.isOpened()) {
                     this.serialPort.removeEventListener();
                 }
             }
+
             this.serialPort = serialPort;
+            this.serialBaudRate = serialBaudRate;
+
+            baudRate.removeSelectionListener(baudRateSelectionListener);
+            try {
+                baudRate.select(baudRates.indexOf(serialBaudRate));
+            } finally {
+                baudRate.addSelectionListener(baudRateSelectionListener);
+            }
+
             if (this.serialPort != null) {
                 if (!this.serialPort.isOpened()) {
                     this.serialPort.openPort();
@@ -954,6 +962,18 @@ public class SerialTerminal {
         if (rect == null) {
             display.asyncExec(redrawRunnable);
         }
+    }
+
+    public void clear() {
+        for (int y = 0; y < screenHeight; y++) {
+            for (int x = 0; x < screenWidth; x++) {
+                screen[y][x].foreground = foreground;
+                screen[y][x].background = background;
+                screen[y][x].character = ' ';
+            }
+        }
+        cx = cy = 0;
+        redraw();
     }
 
     public static void main(String[] args) {
