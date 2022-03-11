@@ -762,6 +762,131 @@ class Spin2CompilerTest {
         });
     }
 
+    @Test
+    void testDebug() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    debug(udec(a))\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "    debug(udec(a,b,c))\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       18 00 00 00    Object \"text2.spin2\" @ $00018\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "0000C 0000C       16 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00010 00010       04             (stack size)\n"
+            + "'     debug(udec(a))\n"
+            + "00011 00011       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00012 00012       44 04 02       DEBUG #2\n"
+            + "00015 00015       04             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "00018 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
+            + "0001C 00004       14 00 00 00    End\n"
+            + "' PUB start(a, b) | c\n"
+            + "00020 00008       04             (stack size)\n"
+            + "'     c := a + b\n"
+            + "00021 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00022 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00023 0000B       8A             ADD\n"
+            + "00024 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "'     debug(udec(a,b,c))\n"
+            + "00025 0000D       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00026 0000E       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00027 0000F       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00028 00010       44 0C 01       DEBUG #1\n"
+            + "0002B 00013       04             RETURN\n"
+            + "' Debug data\n"
+            + "00000 00000       16 00         \n"
+            + "00002 00002       06 00         \n"
+            + "00004 00004       11 00         \n"
+            + "00006 00006       04 41 61 00 40\n"
+            + "0000B 0000B       62 00 40 63 00\n"
+            + "00010 00010       00\n"
+            + "00011 00011       04 41 61 00 00\n"
+            + "", compile("main.spin2", sources, true));
+    }
+
+    @Test
+    void testDuplicatedObjectsDebug() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o1 : \"text2\"\n"
+            + "    o2 : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    debug(udec(a))\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "    debug(udec(a,b,c))\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       20 00 00 00    Object \"text2.spin2\" @ $00020\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       20 00 00 00    Object \"text2.spin2\" @ $00020\n"
+            + "0000C 0000C       08 00 00 00    Variables @ $00008\n"
+            + "00010 00010       18 00 00 80    Method main @ $00018 (0 parameters, 0 returns)\n"
+            + "00014 00014       1E 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00018 00018       04             (stack size)\n"
+            + "'     debug(udec(a))\n"
+            + "00019 00019       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0001A 0001A       44 04 02       DEBUG #2\n"
+            + "0001D 0001D       04             RETURN\n"
+            + "0001E 0001E       00 00          Padding\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "00020 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
+            + "00024 00004       14 00 00 00    End\n"
+            + "' PUB start(a, b) | c\n"
+            + "00028 00008       04             (stack size)\n"
+            + "'     c := a + b\n"
+            + "00029 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0002A 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0002B 0000B       8A             ADD\n"
+            + "0002C 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "'     debug(udec(a,b,c))\n"
+            + "0002D 0000D       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0002E 0000E       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0002F 0000F       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00030 00010       44 0C 01       DEBUG #1\n"
+            + "00033 00013       04             RETURN\n"
+            + "' Debug data\n"
+            + "00000 00000       16 00         \n"
+            + "00002 00002       06 00         \n"
+            + "00004 00004       11 00         \n"
+            + "00006 00006       04 41 61 00 40\n"
+            + "0000B 0000B       62 00 40 63 00\n"
+            + "00010 00010       00\n"
+            + "00011 00011       04 41 61 00 00\n"
+            + "", compile("main.spin2", sources, true));
+    }
+
     class Spin2CompilerAdapter extends Spin2Compiler {
 
         Map<String, String> sources;
@@ -784,11 +909,16 @@ class Spin2CompilerTest {
     }
 
     String compile(String rootFile, Map<String, String> sources) throws Exception {
+        return compile(rootFile, sources, false);
+    }
+
+    String compile(String rootFile, Map<String, String> sources, boolean debugEnabled) throws Exception {
         Spin2TokenStream stream = new Spin2TokenStream(sources.get(rootFile));
         Spin2Parser subject = new Spin2Parser(stream);
         Node root = subject.parse();
 
         Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
+        compiler.setDebugEnabled(debugEnabled);
         Spin2Object obj = compiler.compileObject(rootFile, root);
 
         for (CompilerMessage msg : compiler.getMessages()) {

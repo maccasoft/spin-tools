@@ -116,12 +116,10 @@ public class Spin2ObjectCompiler {
         Spin2Object object;
 
         long offset;
-        int debugOffset;
 
-        public ObjectInfo(String fileName, Spin2Object object, int debugOffset) {
+        public ObjectInfo(String fileName, Spin2Object object) {
             this.fileName = fileName;
             this.object = object;
-            this.debugOffset = debugOffset;
         }
     }
 
@@ -136,9 +134,8 @@ public class Spin2ObjectCompiler {
     int nested;
 
     boolean debugEnabled;
-    int debugIndex = 1;
     Spin2Debug debug = new Spin2Debug();
-    List<Object> debugStatements = new ArrayList<Object>();
+    List<Object> debugStatements;
 
     boolean errors;
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
@@ -151,6 +148,14 @@ public class Spin2ObjectCompiler {
         this.scope = new Spin2Context(scope);
         this.childObjects = childObjects;
         this.debugEnabled = debugEnabled;
+        this.debugStatements = new ArrayList<Object>();
+    }
+
+    protected Spin2ObjectCompiler(Spin2Context scope, Map<String, ObjectInfo> childObjects, boolean debugEnabled, List<Object> debugStatements) {
+        this.scope = new Spin2Context(scope);
+        this.childObjects = childObjects;
+        this.debugEnabled = debugEnabled;
+        this.debugStatements = debugStatements;
     }
 
     public void setDebugEnabled(boolean enabled) {
@@ -424,7 +429,7 @@ public class Spin2ObjectCompiler {
             debugObject.writeComment("Debug data");
             WordDataObject sizeWord = debugObject.writeWord(2);
 
-            int pos = debugIndex * 2;
+            int pos = (debugStatements.size() + 1) * 2;
             List<DataObject> l = new ArrayList<DataObject>();
             for (Object node : debugStatements) {
                 try {
@@ -588,8 +593,6 @@ public class Spin2ObjectCompiler {
                         scope.addSymbol(qualifiedName, entry.getValue());
                     }
                 }
-
-                debugIndex = Math.max(debugIndex, info.debugOffset);
             }
 
         }
@@ -699,10 +702,11 @@ public class Spin2ObjectCompiler {
                 pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data));
             }
             if ("DEBUG".equalsIgnoreCase(mnemonic)) {
+                int debugIndex = debugStatements.size() + 1;
                 if (debugIndex >= 255) {
                     throw new CompilerMessage("too much debug statements", node);
                 }
-                parameters.add(new Spin2PAsmExpression("#", new NumberLiteral(debugIndex++), null));
+                parameters.add(new Spin2PAsmExpression("#", new NumberLiteral(debugIndex), null));
 
                 Spin2PAsmDebugLine debugLine = Spin2PAsmDebugLine.buildFrom(pasmLine.getScope(), node.getTokens());
                 debugStatements.add(debugLine);
@@ -1730,6 +1734,7 @@ public class Spin2ObjectCompiler {
                 }
             }
             else if ("DEBUG".equalsIgnoreCase(node.getText())) {
+                int debugIndex = debugStatements.size() + 1;
                 if (debugIndex >= 255) {
                     throw new RuntimeException("too much debug statements");
                 }
@@ -1746,7 +1751,6 @@ public class Spin2ObjectCompiler {
                 source.add(new Bytecode(context, new byte[] {
                     0x44, (byte) pop, (byte) debugIndex
                 }, node.getText().toUpperCase() + " #" + debugIndex));
-                debugIndex++;
             }
             else if ("END".equalsIgnoreCase(node.getText())) {
                 // Ignored
@@ -3328,10 +3332,6 @@ public class Spin2ObjectCompiler {
     Expression buildExpression(List<Token> tokens, Spin2Context scope) {
         Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(scope, tokens);
         return expressionBuilder.getExpression();
-    }
-
-    public int getDebugIndex() {
-        return debugIndex;
     }
 
 }

@@ -37,6 +37,7 @@ public class Spin2Compiler {
     List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
 
     boolean debugEnabled;
+    List<Object> debugStatements = new ArrayList<Object>();
 
     boolean removeUnusedMethods;
     Spin2Preprocessor preprocessor;
@@ -130,8 +131,8 @@ public class Spin2Compiler {
 
         String fileName;
 
-        public Spin2ObjectCompilerProxy(String fileName, Spin2Context scope, Map<String, ObjectInfo> childObjects, boolean debugEnabled) {
-            super(scope, childObjects, debugEnabled);
+        public Spin2ObjectCompilerProxy(String fileName, Spin2Context scope, Map<String, ObjectInfo> childObjects, boolean debugEnabled, List<Object> debugStatements) {
+            super(scope, childObjects, debugEnabled, debugStatements);
             this.fileName = fileName;
         }
 
@@ -171,12 +172,12 @@ public class Spin2Compiler {
         preprocessor.removeUnusedMethods();
 
         for (Entry<String, Node> entry : objects.entrySet()) {
-            Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey(), scope, childObjects, debugEnabled);
+            Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey(), scope, childObjects, debugEnabled, debugStatements);
             Spin2Object object = objectCompiler.compileObject(entry.getValue());
-            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object, objectCompiler.getDebugIndex()));
+            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object));
         }
 
-        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFileName, scope, childObjects, debugEnabled);
+        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFileName, scope, childObjects, debugEnabled, debugStatements);
         Spin2Object object = objectCompiler.compileObject(root);
 
         for (int i = objects.size() - 1; i >= 0; i--) {

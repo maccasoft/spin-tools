@@ -148,7 +148,8 @@ public class Spin2Object extends SpinObject {
         }
         generateListing(offset, ps);
         if (debugData != null) {
-            debugData.generateListing(debugger.getSize(), ps);
+            int size = debugger != null ? debugger.getSize() : 0;
+            debugData.generateListing(size, ps);
         }
     }
 
