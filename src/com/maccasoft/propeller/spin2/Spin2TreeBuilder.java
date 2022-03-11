@@ -289,23 +289,8 @@ public class Spin2TreeBuilder {
             return node;
         }
 
-        Spin2StatementNode prefix = null;
-        if ("#".equals(token.getText())) {
-            prefix = new Spin2StatementNode(next());
-            if ((token = peek()) == null) {
-                throw new CompilerMessage("expecting expression", token == null ? tokens.get(tokens.size() - 1) : token);
-            }
-        }
-
         if (token.type == 0) {
-            Spin2StatementNode node;
-            if (prefix != null) {
-                prefix.addChild(new Spin2StatementNode(next()));
-                node = prefix;
-            }
-            else {
-                node = new Spin2StatementNode(next());
-            }
+            Spin2StatementNode node = new Spin2StatementNode(next());
             if (peek() != null) {
                 if ("(".equals(peek().getText())) {
                     next();
@@ -376,10 +361,6 @@ public class Spin2TreeBuilder {
         }
 
         if (token.type != Token.OPERATOR) {
-            if (prefix != null) {
-                prefix.addChild(new Spin2StatementNode(next()));
-                return prefix;
-            }
             return new Spin2StatementNode(next());
         }
 

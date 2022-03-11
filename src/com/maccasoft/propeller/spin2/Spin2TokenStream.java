@@ -74,7 +74,7 @@ public class Spin2TokenStream extends TokenStream {
                     }
                     else if (ch == '`') { // Debug command
                         token.type = Token.STRING;
-                        nested = 1;
+                        //nested = 1;
                         state = Token.DEBUG;
                     }
                     else if (ch == '$') { // Hex number
@@ -270,13 +270,17 @@ public class Spin2TokenStream extends TokenStream {
                         nested++;
                     }
                     else if (ch == ')') {
-                        if (nested > 0) {
-                            nested--;
-                        }
                         if (nested == 0) {
                             state = Token.START;
                             return token;
                         }
+                        if (nested > 0) {
+                            nested--;
+                        }
+                    }
+                    if (nested == 0 && ch == '`') {
+                        state = Token.START;
+                        return token;
                     }
                     token.stop++;
                     break;

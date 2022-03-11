@@ -10,6 +10,9 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -21,25 +24,91 @@ class Spin2DebugTest {
     @Test
     void testRegister() {
         Spin2Context context = new Spin2Context();
-        context.addSymbol("reg", new NumberLiteral(10));
+        context.addSymbol("rega", new NumberLiteral(1));
+        context.addSymbol("@rega", new NumberLiteral(4));
 
-        String text = "debug(udec(reg))";
+        String text = "debug(udec(rega))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
 
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
-        Assertions.assertEquals("01 04 41 72 65 67 00 80 0A 00", actual);
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals("01 04 41 72 65 67 61 00 80 01 00", actual);
+    }
+
+    @Test
+    void testRegisterImmediate() {
+        Spin2Context context = new Spin2Context();
+        context.addSymbol("rega", new NumberLiteral(1));
+        context.addSymbol("@rega", new NumberLiteral(4));
+
+        String text = "debug(udec(#rega))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals("01 04 41 23 72 65 67 61 00 00 01 00", actual);
+    }
+
+    @Test
+    void testRegisterPointer() {
+        Spin2Context context = new Spin2Context();
+        context.addSymbol("rega", new NumberLiteral(1));
+        context.addSymbol("@rega", new NumberLiteral(4));
+
+        String text = "debug(udec(@rega))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals("01 04 41 40 72 65 67 61 00 80 04 00", actual);
+    }
+
+    @Test
+    void testRegisterPointerImmediate() {
+        Spin2Context context = new Spin2Context();
+        context.addSymbol("rega", new NumberLiteral(1));
+        context.addSymbol("@rega", new NumberLiteral(4));
+
+        String text = "debug(udec(#@rega))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals("01 04 41 23 40 72 65 67 61 00 00 04 00", actual);
     }
 
     @Test
     void testRegisterArray() {
         Spin2Context context = new Spin2Context();
-        context.addSymbol("reg", new NumberLiteral(10));
+        context.addSymbol("rega", new NumberLiteral(1));
+        context.addSymbol("@rega", new NumberLiteral(4));
 
-        String text = "debug(udec_reg_array(#reg,#2))";
+        String text = "debug(udec_reg_array(rega,4))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
 
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
-        Assertions.assertEquals("01 04 51 72 65 67 00 00 0A 00 02 00", actual);
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals("01 04 51 72 65 67 61 00 80 01 80 04 00", actual);
+    }
+
+    @Test
+    void testRegisterArrayImmediateCount() {
+        Spin2Context context = new Spin2Context();
+        context.addSymbol("rega", new NumberLiteral(1));
+        context.addSymbol("@rega", new NumberLiteral(4));
+
+        String text = "debug(udec_reg_array(rega,#4))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals("01 04 51 72 65 67 61 00 80 01 00 04 00", actual);
     }
 
     @Test
@@ -49,8 +118,10 @@ class Spin2DebugTest {
 
         String text = "debug(udec_(reg))";
 
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
         Assertions.assertEquals("01 04 43 80 0A 00", actual);
     }
 
@@ -60,8 +131,10 @@ class Spin2DebugTest {
 
         String text = "debug(dly(#100))";
 
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
         Assertions.assertEquals("01 04 07 00 64 00", actual);
     }
 
@@ -74,8 +147,10 @@ class Spin2DebugTest {
 
         String text = "debug(udec(reg1,reg2,reg3))";
 
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
         Assertions.assertEquals("01 04 41 72 65 67 31 00 80 0A 40 72 65 67 32 00 80 0B 40 72 65 67 33 00 80 0C 00", actual);
     }
 
@@ -88,8 +163,10 @@ class Spin2DebugTest {
 
         String text = "debug(udec(reg1), udec(reg2), udec(reg3))";
 
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
         Assertions.assertEquals("01 04 41 72 65 67 31 00 80 0A 40 72 65 67 32 00 80 0B 40 72 65 67 33 00 80 0C 00", actual);
     }
 
@@ -99,33 +176,56 @@ class Spin2DebugTest {
 
         String text = "debug(\"start\")";
 
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
         Assertions.assertEquals("01 04 06 73 74 61 72 74 00 00", actual);
     }
 
     @Test
-    void testZString1() {
+    void testZStr() {
         Spin2Context context = new Spin2Context();
-        context.addSymbol("ptr", new NumberLiteral(10));
+        context.addSymbol("rega", new NumberLiteral(1));
+        context.addSymbol("@rega", new NumberLiteral(4));
 
-        String text = "debug(zstr(ptr))";
+        String text = "debug(zstr(rega))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
 
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
-        Assertions.assertEquals("01 04 25 70 74 72 00 80 0A 00", actual);
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals("01 04 25 72 65 67 61 00 80 01 00", actual);
     }
 
     @Test
-    void testZString2() {
+    void testZStrPointer() {
         Spin2Context context = new Spin2Context();
-        context.addSymbol("@ptr", new NumberLiteral(10));
+        context.addSymbol("rega", new NumberLiteral(1));
+        context.addSymbol("@rega", new NumberLiteral(4));
 
-        String text = "debug(zstr(@ptr))";
+        String text = "debug(zstr(@rega))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
 
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
-        Assertions.assertEquals("01 04 25 40 70 74 72 00 80 0A 00", actual);
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals("01 04 25 40 72 65 67 61 00 80 04 00", actual);
+    }
+
+    @Test
+    void testZStrImmediate() {
+        Spin2Context context = new Spin2Context();
+        context.addSymbol("rega", new NumberLiteral(1));
+        context.addSymbol("@rega", new NumberLiteral(4));
+
+        String text = "debug(zstr(#rega))";
+
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
+        Spin2Debug subject = new Spin2Debug();
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
+        Assertions.assertEquals("01 04 25 23 72 65 67 61 00 00 01 00", actual);
     }
 
     @Test
@@ -135,8 +235,10 @@ class Spin2DebugTest {
 
         String text = "debug(lstr(ptr,#12))";
 
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
         Assertions.assertEquals("01 04 35 70 74 72 00 80 0A 00 0C 00", actual);
     }
 
@@ -146,8 +248,10 @@ class Spin2DebugTest {
 
         String text = "debug(`12345)";
 
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
         Assertions.assertEquals("01 04 06 60 31 32 33 34 35 00 00", actual);
     }
 
@@ -157,8 +261,10 @@ class Spin2DebugTest {
 
         String text = "debug(\"`12345\")";
 
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
         Assertions.assertEquals("01 04 06 60 31 32 33 34 35 00 00", actual);
     }
 
@@ -206,8 +312,10 @@ class Spin2DebugTest {
 
         String text = "debug(if(a), udec(reg))";
 
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
         Assertions.assertEquals("01 02 80 01 04 41 72 65 67 00 80 0A 00", actual);
     }
 
@@ -219,9 +327,26 @@ class Spin2DebugTest {
 
         String text = "debug(udec(reg), if(a), udec(a))";
 
+        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(context, parseTokens(text));
+
         Spin2Debug subject = new Spin2Debug();
-        String actual = dumpDebugData(subject.compilePAsmDebugStatement(context, parse(text)));
+        String actual = dumpDebugData(subject.compilePAsmDebugStatement(root));
         Assertions.assertEquals("01 04 41 72 65 67 00 80 0A 02 80 01 40 61 00 80 01 00", actual);
+    }
+
+    List<Token> parseTokens(String text) {
+        List<Token> tokens = new ArrayList<Token>();
+
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+        while (true) {
+            Token token = stream.nextToken();
+            if (token.type == Token.EOF) {
+                break;
+            }
+            tokens.add(token);
+        }
+
+        return tokens;
     }
 
     Spin2StatementNode parse(String text) {
