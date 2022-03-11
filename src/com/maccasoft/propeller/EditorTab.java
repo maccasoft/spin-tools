@@ -96,7 +96,8 @@ public class EditorTab implements FindReplaceTarget {
                 }
                 return;
             }
-            if (evt.getPropertyName().equals(tabItemText)) {
+            File localFile = file != null ? file : new File(tabItemText);
+            if (evt.getPropertyName().equals(localFile.getAbsolutePath())) {
                 return;
             }
             if (!dependencies.contains(evt.getPropertyName())) {
@@ -117,8 +118,8 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected Node getObjectTree(String fileName) {
-            File localFile = new File(file != null ? file.getParentFile() : new File(""), fileName + ".spin");
-            File libraryFile = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName + ".spin");
+            File localFile = file != null ? new File(file.getParentFile(), fileName + ".spin") : new File(fileName + ".spin");
+            File libraryFile = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName + ".spin");
 
             Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
             if (node == null) {
@@ -149,8 +150,8 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected Node getParsedObject(String fileName) {
-            File localFile = new File(file != null ? file.getParentFile() : new File(""), fileName);
-            File libraryFile = new File(Preferences.getInstance().getSpin1LibraryPath(), fileName);
+            File localFile = file != null ? new File(file.getParentFile(), fileName) : new File(fileName);
+            File libraryFile = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
 
             File file = localFile;
             Node node = sourcePool.getParsedSource(file.getAbsolutePath());
@@ -285,7 +286,7 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected Node getObjectTree(String fileName) {
-            File localFile = new File(file != null ? file.getParentFile() : new File(""), fileName + ".spin2");
+            File localFile = file != null ? new File(file.getParentFile(), fileName + ".spin2") : new File(fileName + ".spin2");
             File libraryFile = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName + ".spin2");
 
             Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
@@ -317,7 +318,7 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected Node getParsedObject(String fileName) {
-            File localFile = new File(file != null ? file.getParentFile() : new File(""), fileName);
+            File localFile = file != null ? new File(file.getParentFile(), fileName) : new File(fileName);
             File libraryFile = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
 
             File file = localFile;
@@ -342,7 +343,7 @@ public class EditorTab implements FindReplaceTarget {
                 }
             }
 
-            dependencies.add(node != null ? file.getAbsolutePath() : fileName);
+            dependencies.add(file.getAbsolutePath());
 
             return node;
         }
