@@ -84,6 +84,7 @@ import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ContentProposalAdapter;
 import com.maccasoft.propeller.internal.HTMLStyledTextParser;
+import com.maccasoft.propeller.internal.IContentProposalListener2;
 import com.maccasoft.propeller.internal.StyledTextContentAdapter;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -944,6 +945,20 @@ public class SourceEditor {
         adapter.setPopupSize(new Point(200, 300));
         adapter.setPropagateKeys(true);
         adapter.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);
+        adapter.addContentProposalListener(new IContentProposalListener2() {
+
+            @Override
+            public void proposalPopupOpened(ContentProposalAdapter adapter) {
+                adapter.setAutoActivationCharacters(null);
+            }
+
+            @Override
+            public void proposalPopupClosed(ContentProposalAdapter adapter) {
+                adapter.setAutoActivationCharacters(new char[] {
+                    '.', '#', '@'
+                });
+            }
+        });
 
         styledText.addVerifyKeyListener(new VerifyKeyListener() {
 
@@ -1571,7 +1586,8 @@ public class SourceEditor {
                     break;
                 }
             }
-            if (contents.charAt(start - 1) != '.' && contents.charAt(start - 1) != '#' && contents.charAt(start - 1) != '_' && !Character.isAlphabetic(contents.charAt(start - 1))) {
+            char ch = contents.charAt(start - 1);
+            if (!Character.isLetterOrDigit(ch) && ch != '.' && ch != '#' && ch != '_') {
                 break;
             }
             start--;
@@ -1584,7 +1600,7 @@ public class SourceEditor {
         }
         else {
             if (node instanceof ObjectNode) {
-                proposals.addAll(helpProvider.fillSourceProposals());
+                proposals.addAll(helpProvider.fillSourceProposals(token));
             }
             else if (node instanceof DataLineNode) {
                 DataLineNode line = (DataLineNode) node;

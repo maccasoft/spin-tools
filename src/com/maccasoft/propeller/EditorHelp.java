@@ -16,7 +16,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -153,18 +155,22 @@ public class EditorHelp {
         return proposals;
     }
 
-    public List<IContentProposal> fillSourceProposals() {
+    public List<IContentProposal> fillSourceProposals(String prefix) {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
-        proposals.addAll(getSourceProposals(sourceFolder));
+        proposals.addAll(getSourceProposals(sourceFolder, prefix));
 
         File file = new File(".spin2".equals(sourceFilter) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath());
-        proposals.addAll(getSourceProposals(file));
+        proposals.addAll(getSourceProposals(file, prefix));
 
         return proposals;
     }
 
-    List<IContentProposal> getSourceProposals(File folder) {
+    List<IContentProposal> getSourceProposals(File folder, String prefix) {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+        List<IContentProposal> prefixProposals = new ArrayList<IContentProposal>();
+        List<IContentProposal> containsProposal = new ArrayList<IContentProposal>();
+        Set<File> included = new HashSet<File>();
+
         File[] list = folder.listFiles(new FilenameFilter() {
 
             @Override
@@ -177,14 +183,25 @@ public class EditorHelp {
             for (int i = 0; i < list.length; i++) {
                 String name = list[i].getName();
                 name = name.substring(0, name.indexOf(sourceFilter));
-                proposals.add(new ContentProposal(name, name, null));
+                if (name.toUpperCase().startsWith(prefix)) {
+                    prefixProposals.add(new ContentProposal(name, name, null));
+                    included.add(list[i]);
+                }
+            }
+            for (int i = 0; i < list.length; i++) {
+                String name = list[i].getName();
+                name = name.substring(0, name.indexOf(sourceFilter));
+                if (name.toUpperCase().contains(prefix) && !included.contains(list[i])) {
+                    containsProposal.add(new ContentProposal(name, name, null));
+                    included.add(list[i]);
+                }
             }
         }
         else {
             System.err.println(folder);
         }
 
-        Collections.sort(proposals, new Comparator<IContentProposal>() {
+        Collections.sort(prefixProposals, new Comparator<IContentProposal>() {
 
             @Override
             public int compare(IContentProposal o1, IContentProposal o2) {
@@ -192,6 +209,17 @@ public class EditorHelp {
             }
 
         });
+        Collections.sort(containsProposal, new Comparator<IContentProposal>() {
+
+            @Override
+            public int compare(IContentProposal o1, IContentProposal o2) {
+                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+            }
+
+        });
+
+        proposals.addAll(prefixProposals);
+        proposals.addAll(containsProposal);
 
         return proposals;
     }
