@@ -2052,11 +2052,12 @@ public class Spin2ObjectCompiler {
             }
             else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
                 boolean hasIndex = false;
+                Spin2StatementNode indexNode = null;
                 Spin2StatementNode bitfieldNode = null;
+                Spin2StatementNode postEffectNode = null;
 
-                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-                if (node.getChildCount() > 1) {
-                    int n = 1;
+                int n = 1;
+                if (n < node.getChildCount()) {
                     if (".".equals(node.getChild(n).getText())) {
                         n++;
                         if (n >= node.getChildCount()) {
@@ -2064,13 +2065,35 @@ public class Spin2ObjectCompiler {
                         }
                         bitfieldNode = node.getChild(n++);
                     }
-                    if (n < node.getChildCount()) {
-                        source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
+                }
+                if (n < node.getChildCount()) {
+                    if (!isPostEffect(node.getChild(n))) {
+                        indexNode = node.getChild(n++);
                         hasIndex = true;
                     }
-                    if (n < node.getChildCount()) {
-                        throw new RuntimeException("expression syntax error " + node.getText());
+                }
+                if (n < node.getChildCount()) {
+                    if (isPostEffect(node.getChild(n))) {
+                        postEffectNode = node.getChild(n++);
                     }
+                }
+                if (n < node.getChildCount()) {
+                    throw new RuntimeException("expression syntax error " + node.getText());
+                }
+
+                if (postEffectNode != null) {
+                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Constant(context, new NumberLiteral(0)));
+                    }
+                    else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Constant(context, new NumberLiteral(-1)));
+                    }
+                }
+
+                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+
+                if (indexNode != null) {
+                    source.addAll(compileBytecodeExpression(context, indexNode, true));
                 }
 
                 int bitfield = -1;
@@ -2114,7 +2137,7 @@ public class Spin2ObjectCompiler {
 
                 StringBuilder sb = new StringBuilder(node.getText().toUpperCase());
 
-                if (bitfieldNode == null) {
+                if (bitfieldNode == null && postEffectNode == null) {
                     sb.append(push || bitfieldNode != null ? "_READ" : "_WRITE");
                     sb.append(hasIndex ? "_INDEXED" : "");
                     if ("BYTE".equalsIgnoreCase(node.getText())) {
@@ -2175,8 +2198,10 @@ public class Spin2ObjectCompiler {
                                 os.write(Constant.wrVar(bitfield));
                             }
                         }
-                        os.write(0x80);
-                        sb.append("READ");
+                        if (postEffectNode == null) {
+                            os.write(0x80);
+                        }
+                        sb.append(postEffectNode == null ? "READ" : "SETUP");
                     } catch (Exception e) {
                         // Do nothing
                     }
@@ -2197,6 +2222,30 @@ public class Spin2ObjectCompiler {
                     }
 
                     source.add(new Bytecode(context, os.toByteArray(), sb.toString()));
+                }
+
+                if (postEffectNode != null) {
+                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
+                    }
+                    else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
+                    }
+                    else if ("++".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                    }
+                    else if ("--".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
+                    }
+                    else if ("!!".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
+                    }
+                    else if ("!".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
+                    }
+                    else {
+                        throw new CompilerMessage("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
+                    }
                 }
             }
             else {
@@ -2609,8 +2658,8 @@ public class Spin2ObjectCompiler {
 
             if (postEffectNode != null) {
                 if ("~".equalsIgnoreCase(postEffectNode.getText()) || "~~".equalsIgnoreCase(postEffectNode.getText())) {
-                    os.write(0x8D);
-                    sb.append("SWAP");
+                    os.write(push ? 0x8D : 0x81);
+                    sb.append(push ? "SWAP" : "WRITE");
                 }
                 else if ("++".equalsIgnoreCase(postEffectNode.getText())) {
                     os.write(push ? 0x87 : 0x83);
