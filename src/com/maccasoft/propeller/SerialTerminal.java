@@ -19,6 +19,8 @@ import java.util.function.UnaryOperator;
 
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
+import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.ImageTransfer;
@@ -39,6 +41,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
@@ -66,6 +69,7 @@ import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
+import jssc.SerialPortTimeoutException;
 
 public class SerialTerminal {
 
@@ -841,6 +845,50 @@ public class SerialTerminal {
         Label label = new Label(container, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
+        GC gc = new GC(container);
+        FontMetrics fontMetrics = gc.getFontMetrics();
+        gc.dispose();
+
+        Button button = new Button(container, SWT.PUSH);
+        button.setText("Monitor");
+        GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics,
+            IDialogConstants.BUTTON_WIDTH),
+            button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        button.setLayoutData(data);
+        button.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    startMonitor();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                canvas.setFocus();
+            }
+        });
+
+        button = new Button(container, SWT.PUSH);
+        button.setText("TAQOZ");
+        data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics,
+            IDialogConstants.BUTTON_WIDTH),
+            button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        button.setLayoutData(data);
+        button.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    startTAQOZ();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                canvas.setFocus();
+            }
+        });
+
         GridLayout layout = new GridLayout(container.getChildren().length, false);
         layout.marginBottom = layout.marginHeight;
         layout.marginLeft = layout.marginRight = layout.marginWidth;
@@ -974,6 +1022,67 @@ public class SerialTerminal {
         }
         cx = cy = 0;
         redraw();
+    }
+
+    public void startMonitor() {
+        try {
+            hwreset();
+            serialPort.writeBytes(new byte[] {
+                '>', ' ', 0x04
+            });
+        } catch (Exception e) {
+
+        }
+    }
+
+    public void startTAQOZ() {
+        try {
+            hwreset();
+            serialPort.writeBytes(new byte[] {
+                '>', ' ', 0x1B
+            });
+        } catch (Exception e) {
+
+        }
+    }
+
+    void hwreset() throws SerialPortException {
+        serialPort.setDTR(true);
+        msleep(25);
+        serialPort.setDTR(false);
+        msleep(25);
+        skipIncomingBytes();
+        serialPort.purgePort(SerialPort.PURGE_TXABORT |
+            SerialPort.PURGE_RXABORT |
+            SerialPort.PURGE_TXCLEAR |
+            SerialPort.PURGE_RXCLEAR);
+    }
+
+    private void msleep(int msec) {
+        try {
+            Thread.sleep(msec);
+        } catch (Exception e) {
+
+        }
+    }
+
+    protected int skipIncomingBytes() throws SerialPortException {
+        int n = 0;
+        while (readByteWithTimeout(50) != -1) {
+            n++;
+        }
+        return n;
+    }
+
+    private int readByteWithTimeout(int timeout) throws SerialPortException {
+        int[] rx;
+        try {
+            rx = serialPort.readIntArray(1, timeout);
+            return rx[0];
+        } catch (SerialPortTimeoutException e) {
+
+        }
+        return -1;
     }
 
     public static void main(String[] args) {
