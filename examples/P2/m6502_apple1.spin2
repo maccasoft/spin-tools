@@ -1,38 +1,22 @@
 {
     MOS6502 CPU / Apple-1 Emulator
 
-    Copyright (c) 2021 by Marco Maccaferri <macca@maccasoft.com>
+    Copyright (c) 2021-22 by Marco Maccaferri <macca@maccasoft.com>
 }
 
 CON
 
     _CLKFREQ      = 160_000_000
 
+    VIDEO         = VGA ' video mode VGA, NTSC or PAL
     VGA_PIN       = 8
-    VGA_FPIX      = 12_500_000
-    VGA_INTENSITY = 80    '0..128
+    CVBS_PIN      = 32+7*3 addpins 1 ' 53+54
 
     PS2_DATA      = 25
     PS2_CLOCK     = 24
 
-    LEFT_CTRL   = %0000_0001
-    LEFT_SHIFT  = %0000_0010
-    LEFT_ALT    = %0000_0100
-    LEFT_GUI    = %0000_1000
-    RIGHT_CTRL  = %0001_0000
-    RIGHT_SHIFT = %0010_0000
-    RIGHT_ALT   = %0100_0000
-    RIGHT_GUI   = %1000_0000
-
-    REGP_N = 7
-    REGP_V = 6
-    REGP_B = 4
-    REGP_D = 3
-    REGP_I = 2
-    REGP_Z = 1
-    REGP_C = 0
-
-DAT             org     $000, $1F0
+DAT             ' 6502 COG resident code
+                org     $000
 
 cog_6502
                 asmclk
@@ -41,7 +25,7 @@ cog_6502
                 setq2   #$200-1
                 rdlong  0, ptrb
 
-                coginit #1, ##@vga_driver   ' start video driver on cog #1
+                coginit #1, ##@video_driver ' start video driver on cog #1
                 waitatn                     ' wait for init complete
                 setluts #1                  ' enable lut sharing
 
@@ -597,7 +581,10 @@ t5              res     1
 
 ts              res     1
 
-DAT             org     $200, $3F0
+                fit     $1F0
+
+DAT             ' 6502 LUT resident code
+                org     $200, $3F0
 
 lut_6502
 '
@@ -917,54 +904,33 @@ _write
 
 i_halt          ret
 
+                fit     $3FF
 
-'
-'
-' VGA + PS/2 Driver
-'
-DAT             org     $000, $1F0
+CON             ' 6502 constants
 
-vga_driver
-                fltl    #PS2_CLOCK
-                fltl    #PS2_DATA
+    REGP_N = 7
+    REGP_V = 6
+    REGP_B = 4
+    REGP_D = 3
+    REGP_I = 2
+    REGP_Z = 1
+    REGP_C = 0
 
-                add     ptrb, ##@vga_lut - @vga_driver
-                setq2   #(@vga_lut_end - @vga_lut) / 4 -1   ' load chr rom and palette into lut
-                rdlong  0, ptrb
+DAT             ' Video + PS/2 COG resident code
+                org     $000
+
+video_driver
+                add     ptrb, ##@video_driver_lut - @video_driver
+                setq2   #(@video_driver_lut_end - @video_driver_lut) / 4 -1
+                rdlong  0, ptrb             ' load palette into lut
 
                 setluts #1                  ' enable lut sharing with cog #0
                 cogatn  #%0000000_1         ' signal we are ready
 
-                mov     pa, ##_CLKFREQ      ' calculate streamer frequency
-                qfrac   ##VGA_FPIX, pa
-                getqx   pa
-                shr     pa, #1
-                setxfrq pa
+                call    #\(VIDEO == VGA ? vga_init : cvbs_init) ' start video driver
 
-                setcy   ##VGA_INTENSITY << 24   ' r set colorspace for rgb
-                setci   ##VGA_INTENSITY << 16   ' g
-                setcq   ##VGA_INTENSITY << 08   ' b
-
-                setcmod #%01_0_000_0        ' enable colorspace conversion
-
-                cogid   _vx                 ' insert cogid into dac modes
-                setnib  dacmode_s, _vx, #2
-                setnib  dacmode_c, _vx, #2
-
-                wrpin   dacmode_s, _pn      ' enable 123-ohm 3.3V dac mode in pin +0
-
-                xor     _pn, #2 << 6 | 1    ' enable 75-ohm 2.0V dac mode in pins +1..3
-                wrpin   dacmode_c,_pn
-
-                xor     _pn,#3<<6 ^(2<<6|1) ' make pins +0..3 outputs
-                drvl    _pn
-
-                xor     _pn,#4|(3<<6)       ' leave av_base pointing to pin +4 (vertical sync)
-
-                mov     ijmp1, #field       ' set up streamer-empty interrupt
                 setint1 #10
-                xcont   #10, #0             ' do streamer instruction to start interrupt sequence
-
+                xcont   #10,#0              ' do streamer instruction to start interrupt sequence
 '
 '
 ' PS/2 Keyboard loop
@@ -1062,107 +1028,6 @@ bits            long    0
 data            long    0
 tout            long    0
 
-'
-'
-' VGA Driver loop
-'
-field           callpa  #24, #border
-
-                mov     _sl, #0
-                mov     _vy, #192           ' visible lines
-                mov     _lb, _fifo_head
-
-.line           call    #line
-                call    #line
-                incmod  _sl, #7         wc
-        if_c    add     _lb, #40
-                cmpsub  _lb, ##24 * 40
-
-                djnz    _vy, #.line
-
-                callpa  #24, #border
-
-                incmod  _fc, #30            ' cursor blink timer
-                cmp     _fc, #20        wc  ' 2/3 on 1/3 off
-        if_c    mov     _ch, #$00           ' |
-        if_nc   mov     _ch, #$40           ' |
-                altsb   _fifo_tail, #_fifo  ' |
-                setbyte 0-0, _ch, #0        ' |
-
-                rdlut   _ch, pia_dsp        ' get character to display from shared lut
-                test    _ch, #$80       wz  ' test if valid
-        if_nz   and     _ch, #$7F           ' mask bit 7
-        if_nz   wrlut   _ch, pia_dsp        ' ack character received
-        if_nz   call    #fifo_write         ' insert into fifo
-
-                callpa  #10, #blank         ' back porch
-
-                drvnot  _pn                 ' vertical sync on
-                callpa  #2, #blank
-                drvnot  _pn                 ' vertical sync off
-
-                callpa  #33, #blank         ' front porch
-
-                jmp     #field              ' loop
-
-line            xcont   _bs, #0             ' do before-sync part of scan line
-                resi1
-                xzero   _ds, #1             ' do sync part of scan line
-                resi1
-                xcont   _as, #0             ' do before-visible part of scan line
-                resi1
-                xcont   _bv, #0             ' do left border
-                resi1
-
-                mov     _vx, #40
-                mov     _cp, _lb
-.l1             altgb   _cp, #_fifo
-                getbyte _ch, _fifo, #0
-                add     _cp, #1
-
-                rdlut   _cb+0, _ch          ' get bitmap from lut
-                add     _ch, #1             ' |
-                rdlut   _cb+1, _ch          ' |
-                altgb   _sl, #_cb           ' |
-                getbyte _ch, _cb, #0        ' |
-
-                xcont   _dv, _ch
-                resi1
-                djnz    _vx, #.l1
-
-                xcont   _av, #0             ' do right border
-                resi1
-                ret
-
-border          xcont   _bs, #0             ' do before-sync part of scan line
-                resi1
-                xzero   _ds, #1             ' do sync part of scan line
-                resi1
-                xcont   _as, #0             ' do before-visible part of scan line
-                resi1
-                xcont   _vi, #0             ' do visible part of scan line (blank)
-                resi1
-
-                xcont   _bs, #0             ' do before-sync part of scan line
-                resi1
-                xzero   _ds, #1             ' do sync part of scan line
-                resi1
-                xcont   _as, #0             ' do before-visible part of scan line
-                resi1
-                xcont   _vi, #0             ' do visible part of scan line (blank)
-                resi1
-        _ret_   djnz    pa, #border
-
-blank           xcont   _bs, #0             ' do before-sync part of scan line
-                resi1
-                xzero   _ds, #1             ' do sync part of scan line
-                resi1
-                xcont   _as, #0             ' do before-visible part of scan line
-                resi1
-                xcont   _vi, #0             ' do visible part of scan line (blank)
-                resi1
-        _ret_   djnz    pa, #blank          ' loop if more blanks needed
-
 fifo_write      cmp     _ch, #$20       wc
         if_c    mov     _ch, #$20
                 test    _ch, #%01000000 wz
@@ -1195,30 +1060,55 @@ fifo_write      cmp     _ch, #$20       wc
 '
 ' Data
 '
-dacmode_s       long    %0000_0000_000_1011000000000_01_00000_0 ' hsync is 123-ohm, 3.3V
-dacmode_c       long    %0000_0000_000_1011100000000_01_00000_0 ' R/G/B are 75-ohm, 2.0V
+dacmode_s       long    P_DAC_124R_3V + P_CHANNEL ' %0000_0000_000_1011000000000_01_00000_0         'hsync is 123-ohm, 3.3V
+dacmode_c       long    P_DAC_75R_2V + P_CHANNEL  ' %0000_0000_000_1011100000000_01_00000_0         'R/G/B are 75-ohm, 2.0V
+
+vga_xf          long   (VGA_FPIX frac _CLKFREQ) >> 1             ' streamer frequency setting
+vga_bs          long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 +   8    ' streamer command: before-sync
+vga_ds          long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 +  48    ' streamer command: during-sync
+vga_as          long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 +  24    ' streamer command: after sync
+vga_vi          long    X_IMM_32X1_LUT|X_DACS_3_2_1_0| $4 << 16 +  + 320    ' streamer command: visible
+vga_bv          long    X_IMM_32X1_LUT|X_DACS_3_2_1_0| $4 << 16 +  +  40    ' streamer command: before visible
+vga_dv          long    X_IMM_32X1_LUT|X_DACS_3_2_1_0| $4 << 16 +  +   6    ' streamer command: during visible
+vga_av          long    X_IMM_32X1_LUT|X_DACS_3_2_1_0| $4 << 16 +  +  40    ' streamer command: after visible
+vga_pn          long    VGA_PIN & $38       ' base pin
+
+cvbs_cb         long    VIDEO == PAL ? PAL_CB : NTSC_CB             ' colorburst reference color
+cvbs_cy         long    VIDEO == PAL ? PAL_CY : NTSC_CY             ' colorspace y coefficients
+cvbs_ci         long    VIDEO == PAL ? PAL_CI : NTSC_CI             ' colorspace i coefficients
+cvbs_cq         long    VIDEO == PAL ? PAL_CQ : NTSC_CQ             ' colorspace q coefficients
+cvbs_ca         long    VIDEO == PAL ? PAL_CA : NTSC_CQ             ' colorspace q coefficients, alt for pal
+cvbs_cf         long   (VIDEO == PAL ? PAL_CF : NTSC_CF) frac _CLKFREQ ' colorspace frequency setting
+cvbs_xf         long    VIDEO == PAL ? PAL_XF : NTSC_XF             ' streamer frequency setting
+
+cvbs_bs         long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 + (VIDEO == PAL ?  10 :  10)    ' streamer command: before-sync
+cvbs_ds         long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 + (VIDEO == PAL ?  30 :  27)    ' streamer command: during-sync
+cvbs_bc         long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 + (VIDEO == PAL ?   6 :   4)    ' streamer command: before-colorburst
+cvbs_dc         long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 + (VIDEO == PAL ?  15 :  15)    ' streamer command: during-colorburst
+cvbs_ac         long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 + (VIDEO == PAL ?  17 :   9)    ' streamer command: after-colorburst
+cvbs_bv         long    X_IMM_32X1_LUT|X_DACS_3_2_1_0| $4 << 16 + (VIDEO == PAL ?  49 :  36)    ' streamer command: before-visible
+cvbs_dv         long    X_IMM_32X1_LUT|X_DACS_3_2_1_0| $4 << 16 +                     6         ' streamer command: during-visible
+cvbs_av         long    X_IMM_32X1_LUT|X_DACS_3_2_1_0| $4 << 16 + (VIDEO == PAL ?  49 :  37)    ' streamer command: after-visible
+cvbs_db         long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 + (VIDEO == PAL ? 338 : 313)    ' streamer command: during-blank
+cvbs_hf         long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 + (VIDEO == PAL ? 208 : 189)    ' streamer command: half-line
+cvbs_hl         long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 + (VIDEO == PAL ?  15 :  14)    ' streamer command: high-vsync-low
+cvbs_hh         long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 + (VIDEO == PAL ? 183 : 165)    ' streamer command: high-vsync-high
+cvbs_ll         long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 + (VIDEO == PAL ? 177 : 161)    ' streamer command: low-vsync-low
+cvbs_lh         long    X_IMM_1X32_4DAC8|X_DACS_3_2_1_0 + (VIDEO == PAL ?  21 :  18)    ' streamer command: low-vsync-high
+cvbs_pn         long    CVBS_PIN            ' pin(s)
 
 _vx             long    0
 _vy             long    0
 
-_bs             long    $7F010000+8         ' streamer command: before-sync
-_ds             long    $7F010000+48        ' streamer command: during-sync
-_as             long    $7F010000+24        ' streamer command: after sync
-_vi             long    $0F040000+320       ' streamer command: visible
-_bv             long    $0F040000+40        ' streamer command: before visible
-_dv             long    $0F040000+6         ' streamer command: during visible
-_av             long    $0F040000+40        ' streamer command: after visible
-_pn             long    VGA_PIN & $38       ' base pin
-
 _sl             long    0                   ' scanline counter
 _lb             long    0                   ' line buffer pointer
 _cp             long    0                   ' character pointer
-_cb             long    0[2]                ' character bitmap
+_bm             long    0[2]                ' character bitmap
 
 _ch             long    0
 _fc             long    0
 
-pia_kbd         long    $D010 - $CE14
+pia_kbd         long    $D010 - $CE14       ' $1FC LUT
 pia_kbdcr       long    $D011 - $CE14
 pia_dsp         long    $D012 - $CE14
 pia_dspcr       long    $D013 - $CE14
@@ -1229,87 +1119,323 @@ _fifo_tail      long    0
 
 _fifo           byte    $40[24 * 40]
 
-DAT             org     $200, $3F0
+                fit     $1F0
 
-vga_lut         ' chr rom
-                byte    $1C, $22, $2C, $2A, $2A, $2A, $1C, $00  ' 40
-                byte    $08, $14, $22, $22, $3E, $22, $22, $00  ' 41
-                byte    $1E, $22, $22, $1E, $22, $22, $1E, $00  ' 42
-                byte    $1C, $22, $02, $02, $02, $22, $1C, $00  ' 43
-                byte    $1E, $22, $22, $22, $22, $22, $1E, $00  ' 44
-                byte    $3E, $02, $02, $1E, $02, $02, $3E, $00  ' 45
-                byte    $3E, $02, $02, $1E, $02, $02, $02, $00  ' 46
-                byte    $1C, $22, $02, $3A, $22, $22, $1C, $00  ' 47
-                byte    $22, $22, $22, $3E, $22, $22, $22, $00  ' 48
-                byte    $1C, $08, $08, $08, $08, $08, $1C, $00  ' 49
-                byte    $38, $10, $10, $10, $10, $12, $0C, $00  ' 4A
-                byte    $22, $12, $0A, $06, $0A, $12, $22, $00  ' 4B
-                byte    $02, $02, $02, $02, $02, $02, $3E, $00  ' 4C
-                byte    $22, $36, $2A, $2A, $22, $22, $22, $00  ' 4D
-                byte    $22, $22, $26, $2A, $32, $22, $22, $00  ' 4E
-                byte    $1C, $22, $22, $22, $22, $22, $1C, $00  ' 4F
-                byte    $1E, $22, $22, $1E, $02, $02, $02, $00  ' 50
-                byte    $1C, $22, $22, $22, $2A, $12, $2C, $00  ' 51
-                byte    $1E, $22, $22, $1E, $22, $22, $22, $00  ' 52
-                byte    $1C, $22, $02, $1C, $20, $22, $1C, $00  ' 53
-                byte    $3E, $08, $08, $08, $08, $08, $08, $00  ' 54
-                byte    $22, $22, $22, $22, $22, $22, $1C, $00  ' 55
-                byte    $22, $22, $22, $22, $22, $14, $08, $00  ' 56
-                byte    $22, $22, $22, $2A, $2A, $2A, $14, $00  ' 57
-                byte    $22, $22, $14, $08, $14, $22, $22, $00  ' 58
-                byte    $22, $22, $22, $14, $08, $08, $08, $00  ' 59
-                byte    $3E, $20, $10, $08, $04, $02, $3E, $00  ' 5A
-                byte    $3E, $06, $06, $06, $06, $06, $3E, $00  ' 5B
-                byte    $00, $02, $04, $08, $10, $20, $00, $00  ' 5C
-                byte    $3E, $30, $30, $30, $30, $30, $3E, $00  ' 5D
-                byte    $00, $00, $08, $14, $22, $00, $00, $00  ' 5E
-                byte    $00, $00, $00, $00, $00, $00, $3E, $00  ' 5F
-                byte    $00, $00, $00, $00, $00, $00, $00, $00  ' 20
-                byte    $08, $08, $08, $08, $08, $00, $08, $00  ' 21
-                byte    $14, $14, $14, $00, $00, $00, $00, $00  ' 22
-                byte    $14, $14, $3E, $14, $3E, $14, $14, $00  ' 23
-                byte    $08, $3C, $0A, $1C, $28, $1E, $08, $00  ' 24
-                byte    $06, $26, $10, $08, $04, $32, $30, $00  ' 25
-                byte    $04, $0A, $0A, $04, $2A, $12, $2C, $00  ' 26
-                byte    $08, $08, $08, $00, $00, $00, $00, $00  ' 27
-                byte    $08, $04, $02, $02, $02, $04, $08, $00  ' 28
-                byte    $08, $10, $20, $20, $20, $10, $08, $00  ' 29
-                byte    $08, $2A, $1C, $08, $1C, $2A, $08, $00  ' 2A
-                byte    $00, $08, $08, $3E, $08, $08, $00, $00  ' 2B
-                byte    $00, $00, $00, $00, $08, $08, $04, $00  ' 2C
-                byte    $00, $00, $00, $3E, $00, $00, $00, $00  ' 2D
-                byte    $00, $00, $00, $00, $00, $00, $08, $00  ' 2E
-                byte    $00, $20, $10, $08, $04, $02, $00, $00  ' 2F
-                byte    $1C, $22, $32, $2A, $26, $22, $1C, $00  ' 30
-                byte    $08, $0C, $08, $08, $08, $08, $1C, $00  ' 31
-                byte    $1C, $22, $20, $18, $04, $02, $3E, $00  ' 32
-                byte    $3E, $20, $10, $18, $20, $22, $1C, $00  ' 33
-                byte    $10, $18, $14, $12, $3E, $10, $10, $00  ' 34
-                byte    $3E, $02, $1E, $20, $20, $22, $1C, $00  ' 35
-                byte    $38, $04, $02, $1E, $22, $22, $1C, $00  ' 36
-                byte    $3E, $20, $10, $08, $04, $04, $04, $00  ' 37
-                byte    $1C, $22, $22, $1C, $22, $22, $1C, $00  ' 38
-                byte    $1C, $22, $22, $3C, $20, $10, $0E, $00  ' 39
-                byte    $00, $08, $08, $00, $00, $08, $08, $00  ' 3A
-                byte    $00, $00, $08, $00, $08, $08, $04, $00  ' 3B
-                byte    $10, $08, $04, $02, $04, $08, $10, $00  ' 3C
-                byte    $00, $00, $3E, $00, $3E, $00, $00, $00  ' 3D
-                byte    $04, $08, $10, $20, $10, $08, $04, $00  ' 3E
-                byte    $1C, $22, $10, $08, $08, $00, $08, $00  ' 3F
+DAT             ' Apple 1 character ROM
+                org     $200
 
-                ' palette
+video_driver_lut
+                byte    $1C, $22, $2C, $2A, $2A, $2A, $1C, $00  ' 40 = 00
+                byte    $08, $14, $22, $22, $3E, $22, $22, $00  ' 41 = 02
+                byte    $1E, $22, $22, $1E, $22, $22, $1E, $00  ' 42 = 04
+                byte    $1C, $22, $02, $02, $02, $22, $1C, $00  ' 43 = 06
+                byte    $1E, $22, $22, $22, $22, $22, $1E, $00  ' 44 = 08
+                byte    $3E, $02, $02, $1E, $02, $02, $3E, $00  ' 45 = 0A
+                byte    $3E, $02, $02, $1E, $02, $02, $02, $00  ' 46 = 0C
+                byte    $1C, $22, $02, $3A, $22, $22, $1C, $00  ' 47 = 0E
+                byte    $22, $22, $22, $3E, $22, $22, $22, $00  ' 48 = 10
+                byte    $1C, $08, $08, $08, $08, $08, $1C, $00  ' 49 = 12
+                byte    $38, $10, $10, $10, $10, $12, $0C, $00  ' 4A = 14
+                byte    $22, $12, $0A, $06, $0A, $12, $22, $00  ' 4B = 16
+                byte    $02, $02, $02, $02, $02, $02, $3E, $00  ' 4C = 18
+                byte    $22, $36, $2A, $2A, $22, $22, $22, $00  ' 4D = 1A
+                byte    $22, $22, $26, $2A, $32, $22, $22, $00  ' 4E = 1C
+                byte    $1C, $22, $22, $22, $22, $22, $1C, $00  ' 4F = 1E
+                byte    $1E, $22, $22, $1E, $02, $02, $02, $00  ' 50 = 20
+                byte    $1C, $22, $22, $22, $2A, $12, $2C, $00  ' 51 = 22
+                byte    $1E, $22, $22, $1E, $22, $22, $22, $00  ' 52 = 24
+                byte    $1C, $22, $02, $1C, $20, $22, $1C, $00  ' 53 = 26
+                byte    $3E, $08, $08, $08, $08, $08, $08, $00  ' 54 = 28
+                byte    $22, $22, $22, $22, $22, $22, $1C, $00  ' 55 = 2A
+                byte    $22, $22, $22, $22, $22, $14, $08, $00  ' 56 = 2C
+                byte    $22, $22, $22, $2A, $2A, $2A, $14, $00  ' 57 = 2E
+                byte    $22, $22, $14, $08, $14, $22, $22, $00  ' 58 = 30
+                byte    $22, $22, $22, $14, $08, $08, $08, $00  ' 59 = 32
+                byte    $3E, $20, $10, $08, $04, $02, $3E, $00  ' 5A = 34
+                byte    $3E, $06, $06, $06, $06, $06, $3E, $00  ' 5B = 36
+                byte    $00, $02, $04, $08, $10, $20, $00, $00  ' 5C = 38
+                byte    $3E, $30, $30, $30, $30, $30, $3E, $00  ' 5D = 3A
+                byte    $00, $00, $08, $14, $22, $00, $00, $00  ' 5E = 3C
+                byte    $00, $00, $00, $00, $00, $00, $3E, $00  ' 5F = 3E
+                byte    $00, $00, $00, $00, $00, $00, $00, $00  ' 20 = 40
+                byte    $08, $08, $08, $08, $08, $00, $08, $00  ' 21 = 42
+                byte    $14, $14, $14, $00, $00, $00, $00, $00  ' 22 = 44
+                byte    $14, $14, $3E, $14, $3E, $14, $14, $00  ' 23 = 46
+                byte    $08, $3C, $0A, $1C, $28, $1E, $08, $00  ' 24 = 48
+                byte    $06, $26, $10, $08, $04, $32, $30, $00  ' 25 = 4A
+                byte    $04, $0A, $0A, $04, $2A, $12, $2C, $00  ' 26 = 4C
+                byte    $08, $08, $08, $00, $00, $00, $00, $00  ' 27 = 4E
+                byte    $08, $04, $02, $02, $02, $04, $08, $00  ' 28 = 50
+                byte    $08, $10, $20, $20, $20, $10, $08, $00  ' 29 = 52
+                byte    $08, $2A, $1C, $08, $1C, $2A, $08, $00  ' 2A = 54
+                byte    $00, $08, $08, $3E, $08, $08, $00, $00  ' 2B = 56
+                byte    $00, $00, $00, $00, $08, $08, $04, $00  ' 2C = 58
+                byte    $00, $00, $00, $3E, $00, $00, $00, $00  ' 2D = 5A
+                byte    $00, $00, $00, $00, $00, $00, $08, $00  ' 2E = 5C
+                byte    $00, $20, $10, $08, $04, $02, $00, $00  ' 2F = 5E
+                byte    $1C, $22, $32, $2A, $26, $22, $1C, $00  ' 30 = 60
+                byte    $08, $0C, $08, $08, $08, $08, $1C, $00  ' 31 = 62
+                byte    $1C, $22, $20, $18, $04, $02, $3E, $00  ' 32 = 64
+                byte    $3E, $20, $10, $18, $20, $22, $1C, $00  ' 33 = 66
+                byte    $10, $18, $14, $12, $3E, $10, $10, $00  ' 34 = 68
+                byte    $3E, $02, $1E, $20, $20, $22, $1C, $00  ' 35 = 6A
+                byte    $38, $04, $02, $1E, $22, $22, $1C, $00  ' 36 = 6C
+                byte    $3E, $20, $10, $08, $04, $04, $04, $00  ' 37 = 6E
+                byte    $1C, $22, $22, $1C, $22, $22, $1C, $00  ' 38 = 70
+                byte    $1C, $22, $22, $3C, $20, $10, $0E, $00  ' 39 = 72
+                byte    $00, $08, $08, $00, $00, $08, $08, $00  ' 3A = 74
+                byte    $00, $00, $08, $00, $08, $08, $04, $00  ' 3B = 76
+                byte    $10, $08, $04, $02, $04, $08, $10, $00  ' 3C = 78
+                byte    $00, $00, $3E, $00, $3E, $00, $00, $00  ' 3D = 7A
+                byte    $04, $08, $10, $20, $10, $08, $04, $00  ' 3E = 7C
+                byte    $1C, $22, $10, $08, $08, $00, $08, $00  ' 3F = 7E
+
+DAT             ' palette
                 long    $00_00_00_00        ' background
-                long    $00_F0_00_00        ' foreground
+                long    $F0_F0_F0_00        ' foreground
 
-vga_lut_end
+DAT             ' VGA Driver LUT resident code
 
+vga_init
+                setcmod #%01_0_000_0            ' enable colorspace conversion
+                setcy   ##VGA_INTENSITY << 24   ' r      set colorspace for rgb
+                setci   ##VGA_INTENSITY << 16   ' g
+                setcq   ##VGA_INTENSITY << 08   ' b
+                setxfrq vga_xf                  ' set transfer frequency
 
-DAT             orgh
+                cogid   _vx                     ' insert cogid into dac modes
+                setnib  dacmode_s,_vx,#2
+                setnib  dacmode_c,_vx,#2
 
-'
-'
-' PS/2 Lookup table
-'
+                wrpin   dacmode_s,vga_pn        ' enable 123-ohm 3.3V dac mode in pin +0
+
+                xor     vga_pn,#2<<6|1          ' enable 75-ohm 2.0V dac mode in pins +1..3
+                wrpin   dacmode_c,vga_pn
+
+                xor     vga_pn,#3<<6 ^(2<<6|1)  ' make pins +0..3 outputs
+                drvl    vga_pn
+
+                xor     vga_pn,#4|(3<<6)        ' leave av_base pointing to pin +4 (vertical sync)
+
+        _ret_   mov     ijmp1,##vga_field       ' set up streamer-empty interrupt
+
+vga_field       callpa  #24, #.border
+
+                mov     _sl, #0
+                mov     _vy, #192           ' visible lines
+                mov     _lb, _fifo_head
+
+.loop           call    #.line
+                call    #.line
+                incmod  _sl, #7         wc
+        if_c    add     _lb, #40
+                cmpsub  _lb, ##24 * 40
+
+                djnz    _vy, #.loop
+
+                callpa  #24, #.border
+
+                incmod  _fc, #30            ' cursor blink timer
+                cmp     _fc, #20        wc  ' 2/3 on 1/3 off
+        if_c    mov     _ch, #$00           ' |
+        if_nc   mov     _ch, #$40           ' |
+                altsb   _fifo_tail, #_fifo  ' |
+                setbyte 0-0, _ch, #0        ' |
+
+                rdlut   _ch, pia_dsp        ' get character to display from shared lut
+                test    _ch, #$80       wz  ' test if valid
+        if_nz   and     _ch, #$7F           ' mask bit 7
+        if_nz   wrlut   _ch, pia_dsp        ' ack character received
+        if_nz   call    #fifo_write         ' insert into fifo
+
+                callpa  #10, #.blank         ' back porch
+
+                drvnot  vga_pn                 ' vertical sync on
+                callpa  #2, #.blank
+                drvnot  vga_pn                 ' vertical sync off
+
+                callpa  #33, #.blank         ' front porch
+
+                jmp     #vga_field              ' loop
+
+.line           xcont   vga_bs, #0             ' do before-sync part of scan line
+                resi1
+                xzero   vga_ds, #1             ' do sync part of scan line
+                resi1
+                xcont   vga_as, #0             ' do before-visible part of scan line
+                resi1
+                xcont   vga_bv, #0             ' do left border
+                resi1
+
+                mov     _vx, #40
+                mov     _cp, _lb
+.l1             altgb   _cp, #_fifo
+                getbyte _ch, _fifo, #0
+                add     _cp, #1
+
+                rdlut   _bm+0, _ch          ' get bitmap from lut
+                add     _ch, #1             ' |
+                rdlut   _bm+1, _ch          ' |
+                altgb   _sl, #_bm           ' |
+                getbyte _ch, _bm, #0        ' |
+
+                xcont   vga_dv, _ch
+                resi1
+                djnz    _vx, #.l1
+
+                xcont   vga_av, #0             ' do right border
+                resi1
+                ret
+
+.border         xcont   vga_bs, #0             ' do before-sync part of scan line
+                resi1
+                xzero   vga_ds, #1             ' do sync part of scan line
+                resi1
+                xcont   vga_as, #0             ' do before-visible part of scan line
+                resi1
+                xcont   vga_vi, #0             ' do visible part of scan line (blank)
+                resi1
+
+                xcont   vga_bs, #0             ' do before-sync part of scan line
+                resi1
+                xzero   vga_ds, #1             ' do sync part of scan line
+                resi1
+                xcont   vga_as, #0             ' do before-visible part of scan line
+                resi1
+                xcont   vga_vi, #0             ' do visible part of scan line (blank)
+                resi1
+        _ret_   djnz    pa, #.border
+
+.blank          xcont   vga_bs, #0             ' do before-sync part of scan line
+                resi1
+                xzero   vga_ds, #1             ' do sync part of scan line
+                resi1
+                xcont   vga_as, #0             ' do before-visible part of scan line
+                resi1
+                xcont   vga_vi, #0             ' do visible part of scan line (blank)
+                resi1
+        _ret_   djnz    pa, #.blank         ' loop if more blanks needed
+
+DAT             ' PAL/NTSC driver LUT resident code
+
+cvbs_init
+                setcmod #%11_1_0000         ' set colorspace converter to YIQ mode (composite)
+                setcy   cvbs_cy             ' set colorspace converter y coefficients
+                setci   cvbs_ci             ' set colorspace converter i coefficients
+                setcq   cvbs_cq             ' set colorspace converter q coefficients
+                setcfrq cvbs_cf             ' set colorspace converter frequency
+                setxfrq cvbs_xf             ' set transfer frequency
+
+                cogid   _vx                 ' install cogid into dacmode
+                setnib  dacmode_c,_vx,#2
+                wrpin   dacmode_c,cvbs_pn   ' enable dac mode in pin(s)
+                drvl    cvbs_pn             ' enable dac output(s)
+
+        _ret_   mov     ijmp1,##cvbs_field   ' set up streamer-empty interrupt
+
+cvbs_field
+                callpa  #(VIDEO == PAL ? 56 : 35), #.blank ' before-visible blank lines
+
+                mov     _sl, #0
+                mov     _vy, #192           ' visible lines
+                mov     _lb, _fifo_head
+
+.line           xcont   cvbs_bs, #1         ' horizontal sync
+                resi1                       ' |
+                xcont   cvbs_ds, #2         ' |
+                resi1                       ' |
+                xcont   cvbs_bc, #1         ' |
+                resi1                       ' |
+                xcont   cvbs_dc, #0         ' |
+                resi1                       ' |
+                xcont   cvbs_ac, #1         ' |
+                resi1                       ' |
+
+                xcont   cvbs_bv, #0         ' left border
+                resi1                       ' |
+
+                mov     _vx, #40
+                mov     _cp, _lb
+.l1             altgb   _cp, #_fifo
+                getbyte _ch, _fifo, #0
+                add     _cp, #1
+
+                rdlut   _bm+0, _ch          ' get bitmap from lut
+                add     _ch, #1             ' |
+                rdlut   _bm+1, _ch          ' |
+                altgb   _sl, #_bm           ' |
+                getbyte _ch, _bm, #0        ' |
+
+                xcont   cvbs_dv, _ch
+                resi1
+                djnz    _vx, #.l1
+
+                xcont   cvbs_av, #0         ' right border
+                resi1                       ' |
+
+                incmod  _sl, #7         wc
+        if_c    add     _lb, #40
+                cmpsub  _lb, ##24 * 40
+                djnz    _vy, #.line         ' another line?
+
+                callpa  #(VIDEO == PAL ? 56 : 26), #.blank ' after-visible blank lines
+
+                incmod  _fc, #30            ' cursor blink timer
+                cmp     _fc, #20        wc  ' 2/3 on 1/3 off
+        if_c    mov     _ch, #$00           ' |
+        if_nc   mov     _ch, #$40           ' |
+                altsb   _fifo_tail, #_fifo  ' |
+                setbyte 0-0, _ch, #0        ' |
+
+                rdlut   _ch, pia_dsp        ' get character to display from shared lut
+                test    _ch, #$80       wz  ' test if valid
+        if_nz   and     _ch, #$7F           ' mask bit 7
+        if_nz   wrlut   _ch, pia_dsp        ' ack character received
+        if_nz   call    #fifo_write         ' insert into fifo
+
+                callpa  #6, #.vhigh                      ' initial high vertical syncs
+                callpa  #(VIDEO == PAL ? 5 : 6), #.vlow  ' low vertical syncs
+                callpa  #(VIDEO == PAL ? 5 : 6), #.vhigh ' final high vertical syncs
+
+                jmp     #cvbs_field         ' loop
+
+.blank          xcont   cvbs_bs, #1         ' horizontal sync
+                resi1                       ' |
+                xcont   cvbs_ds, #2         ' |
+                resi1                       ' |
+                xcont   cvbs_bc, #1         ' |
+                resi1                       ' |
+                xcont   cvbs_dc, #0         ' |
+                resi1                       ' |
+                xcont   cvbs_ac, #1         ' |
+                resi1                       ' |
+                xcont   cvbs_db, #1         ' blank line
+                resi1                       ' |
+        _ret_   djnz    pa, #.blank
+
+.vhigh          xcont   cvbs_bs, #1         ' |
+                resi1                       ' |
+                xcont   cvbs_hl, #2         ' |
+                resi1                       ' |
+                xcont   cvbs_hh, #1         ' |
+                resi1                       ' |
+        _ret_   djnz    pa, #.vhigh
+
+.vlow           xcont   cvbs_bs, #1         ' |
+                resi1                       ' |
+                xcont   cvbs_ll, #2         ' |
+                resi1                       ' |
+                xcont   cvbs_lh, #1         ' |
+                resi1                       ' |
+        _ret_   djnz    pa, #.vlow
+
+                fit     $3FC                ' ensure space for shared lut
+
+video_driver_lut_end
+
+DAT             ' PS/2 Lookup table
+                orgh
+
 ps2_table       ' normal
                 byte    $00, $00, $00, $00, $00, $00, $00, $00 ' 00-07
                 byte    $00, $00, $00, $00, $00, $09, "`", $00 ' 08-0F
@@ -1347,11 +1473,98 @@ ps2_table       ' normal
                 byte    $00, "+", "3", "-", "*", "9", $00, $00 ' 78-7F
                 byte    $00,     $00,  $00,  $00                                         ' 80-83
 
-'
-'
-' 6502 Memory Space
-'
-DAT             orgh
+CON             ' PS/2 constants
+
+    LEFT_CTRL   = %0000_0001
+    LEFT_SHIFT  = %0000_0010
+    LEFT_ALT    = %0000_0100
+    LEFT_GUI    = %0000_1000
+    RIGHT_CTRL  = %0001_0000
+    RIGHT_SHIFT = %0010_0000
+    RIGHT_ALT   = %0100_0000
+    RIGHT_GUI   = %1000_0000
+
+CON ' VGA constants
+
+    VGA           = 0
+    VGA_FPIX      = 12_500_000
+    VGA_INTENSITY = 80    '0..128
+
+CON ' CVBS constants
+
+    NTSC            = 1
+    NTSC_BLANK_LEV  = 40.0                                  'levels
+    NTSC_BLACK_LEV  = NTSC_BLANK_LEV + 7.5
+    NTSC_PEAK_LEV   = NTSC_BLANK_LEV + 140.0
+    NTSC_SCALE      = 127.0 / NTSC_PEAK_LEV * 128.0
+    NTSC_SCALE_COR  = NTSC_SCALE / 1.646                    'CORDIC prescale for IQ modulator
+
+    NTSC_BLANK      = round(NTSC_SCALE * 2.0 * NTSC_BLANK_LEV / NTSC_PEAK_LEV)
+    NTSC_BLACK      = round(NTSC_SCALE * 2.0 * NTSC_BLACK_LEV / NTSC_PEAK_LEV)
+
+    NTSC_YR         = round(NTSC_SCALE     *  0.299)        'Y sums to 1
+    NTSC_YG         = round(NTSC_SCALE     *  0.587)
+    NTSC_YB         = round(NTSC_SCALE     *  0.114)
+
+    NTSC_IR         = round(NTSC_SCALE_COR *  0.596)        'I sums to 0
+    NTSC_IG         = round(NTSC_SCALE_COR * -0.274)
+    NTSC_IB         = round(NTSC_SCALE_COR * -0.322)
+
+    NTSC_QR         = round(NTSC_SCALE_COR *  0.212)        'Q sums to 0
+    NTSC_QG         = round(NTSC_SCALE_COR * -0.523)
+    NTSC_QB         = round(NTSC_SCALE_COR *  0.311)
+
+    NTSC_CY         = (NTSC_YR & $FF) << 24 + (NTSC_YG & $FF) << 16 + (NTSC_YB & $FF) << 8 + NTSC_BLACK
+    NTSC_CI         = (NTSC_IR & $FF) << 24 + (NTSC_IG & $FF) << 16 + (NTSC_IB & $FF) << 8 + NTSC_BLANK
+    NTSC_CQ         = (NTSC_QR & $FF) << 24 + (NTSC_QG & $FF) << 16 + (NTSC_QB & $FF) << 8 + 128
+
+    NTSC_CB         = $809000_01                            'colorburst reference color
+    NTSC_CF         = 3_579_545                             'colorburst frequency
+    NTSC_CC         = round(227.5 * 4.0)                    'color cycles per line * 4 to preserve fraction
+    NTSC_X_TOTAL    = 378
+
+    NTSC_DOTF       = (NTSC_X_TOTAL * (NTSC_CF * 4 * 128)) / NTSC_CC
+    NTSC_I          = 31 - encod _CLKFREQ
+    NTSC_XF         = ((NTSC_DOTF >> (7 - NTSC_I)) frac (_CLKFREQ << NTSC_I) + 1) >> 1
+
+    PAL             = 2
+    PAL_BLANK_LEV   = 43.0                                  'levels
+    PAL_BLACK_LEV   = PAL_BLANK_LEV + 0.0
+    PAL_PEAK_LEV    = PAL_BLANK_LEV + 140.0
+    PAL_SCALE       = 127.0 / PAL_PEAK_LEV * 128.0
+    PAL_SCALE_COR   = PAL_SCALE / 1.646                     'CORDIC prescale for IQ modulator
+
+    PAL_BLANK       = round(PAL_SCALE * 2.0 * PAL_BLANK_LEV / PAL_PEAK_LEV)
+    PAL_BLACK       = round(PAL_SCALE * 2.0 * PAL_BLACK_LEV / PAL_PEAK_LEV)
+
+    PAL_YR          = round(PAL_SCALE     *  0.299)         'Y sums to 1
+    PAL_YG          = round(PAL_SCALE     *  0.587)
+    PAL_YB          = round(PAL_SCALE     *  0.114)
+
+    PAL_UR          = round(PAL_SCALE_COR * -0.147)         'I sums to 0
+    PAL_UG          = round(PAL_SCALE_COR * -0.289)
+    PAL_UB          = round(PAL_SCALE_COR *  0.436)
+
+    PAL_VR          = round(PAL_SCALE_COR *  0.615)         'Q sums to 0
+    PAL_VG          = round(PAL_SCALE_COR * -0.515)
+    PAL_VB          = round(PAL_SCALE_COR * -0.100)
+
+    PAL_CY          = ( PAL_YR & $FF) << 24 + ( PAL_YG & $FF) << 16 + ( PAL_YB & $FF) << 8 + PAL_BLACK
+    PAL_CI          = ( PAL_UR & $FF) << 24 + ( PAL_UG & $FF) << 16 + ( PAL_UB & $FF) << 8 + PAL_BLANK
+    PAL_CQ          = ( PAL_VR & $FF) << 24 + ( PAL_VG & $FF) << 16 + ( PAL_VB & $FF) << 8 + 128
+    PAL_CA          = (-PAL_VR & $FF) << 24 + (-PAL_VG & $FF) << 16 + (-PAL_VB & $FF) << 8 + 128
+
+    PAL_CB          = $FFC060_01                            'colorburst reference color
+    PAL_CF          = 4_433_618                             'colorburst frequency
+    PAL_CC          = round(283.75 * 4.0)                   'color cycles per line * 4 to preserve fraction
+    PAL_X_TOTAL     = 416
+
+    PAL_DOTF        = (PAL_X_TOTAL * (PAL_CF * 4 * 128)) / PAL_CC
+    PAL_I           = 31 - encod _CLKFREQ
+    PAL_XF          = ((PAL_DOTF >> (7 - PAL_I)) frac (_CLKFREQ << PAL_I) + 1) >> 1
+
+DAT             ' 6502 Memory Space
+                orgh
 
 ram_6502
 
@@ -1359,9 +1572,9 @@ ram_6502
 
 ram_top_6502
 
+DAT             ' BASIC ROM
                 orgh    ram_6502 + $E000
 
-                ' BASIC $E000
                 byte    $4C, $B0, $E2, $AD, $11, $D0, $10, $FB
                 byte    $AD, $10, $D0, $60, $8A, $29, $20, $F0
                 byte    $23, $A9, $A0, $85, $E4, $4C, $C9, $E3
@@ -1875,9 +2088,9 @@ ram_top_6502
                 byte    $36, $E8, $20, $B7, $E5, $4C, $5B, $E8
                 byte    $E0, $80, $D0, $01, $88, $4C, $0C, $E0
 
+DAT             ' MONITOR ROM
                 orgh    ram_6502 + $FF00
 
-                ' MONITOR $FF00
                 byte    $D8, $58, $A0, $7F, $8C, $12, $D0, $A9
                 byte    $A7, $8D, $11, $D0, $8D, $13, $D0, $C9
                 byte    $DF, $F0, $13, $C9, $9B, $F0, $03, $C8

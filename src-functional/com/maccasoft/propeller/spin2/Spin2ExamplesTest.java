@@ -145,13 +145,8 @@ class Spin2ExamplesTest {
     }
 
     @Test
-    void test_m6502_apple1_cvbs() throws Exception {
-        compileAndCompare(new File(path, "m6502_apple1_cvbs.spin2"), new File(path, "m6502_apple1_cvbs.binary"));
-    }
-
-    @Test
-    void test_m6502_apple1_vga() throws Exception {
-        compileAndCompare(new File(path, "m6502_apple1_vga.spin2"), new File(path, "m6502_apple1_vga.binary"));
+    void test_m6502_apple1() throws Exception {
+        compileAndCompare(new File(path, "m6502_apple1.spin2"), new File(path, "m6502_apple1.binary"));
     }
 
     @Test
