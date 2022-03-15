@@ -119,24 +119,34 @@ public class EditorTab implements FindReplaceTarget {
         @Override
         protected Node getObjectTree(String fileName) {
             File localFile = file != null ? new File(file.getParentFile(), fileName + ".spin") : new File(fileName + ".spin");
-            File libraryFile = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName + ".spin");
 
             Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
-            if (node == null) {
-                node = sourcePool.getParsedSource(libraryFile.getAbsolutePath());
-            }
-            if (node == null) {
-                File file = localFile;
-                if (!file.exists()) {
-                    file = libraryFile;
+            if (node == null && localFile.exists()) {
+                try {
+                    Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(localFile));
+                    Spin1Parser subject = new Spin1Parser(stream);
+                    node = subject.parse();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                if (file.exists()) {
-                    try {
-                        Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
-                        Spin1Parser subject = new Spin1Parser(stream);
-                        node = subject.parse();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+            }
+
+            if (node == null) {
+                String[] paths = Preferences.getInstance().getSpin2LibraryPath();
+                for (int i = 0; i < paths.length; i++) {
+                    localFile = new File(paths[i], fileName + ".spin");
+                    if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
+                        break;
+                    }
+                    if (localFile.exists()) {
+                        try {
+                            Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(localFile));
+                            Spin1Parser subject = new Spin1Parser(stream);
+                            node = subject.parse();
+                            break;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
@@ -151,58 +161,74 @@ public class EditorTab implements FindReplaceTarget {
         @Override
         protected Node getParsedObject(String fileName) {
             File localFile = file != null ? new File(file.getParentFile(), fileName) : new File(fileName);
-            File libraryFile = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
 
-            File file = localFile;
-            Node node = sourcePool.getParsedSource(file.getAbsolutePath());
-            if (node == null) {
-                file = libraryFile;
-                node = sourcePool.getParsedSource(file.getAbsolutePath());
-            }
-            if (node == null) {
-                file = localFile;
-                if (!file.exists()) {
-                    file = libraryFile;
+            Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
+            if (node == null && localFile.exists()) {
+                try {
+                    Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(localFile));
+                    Spin1Parser subject = new Spin1Parser(stream);
+                    node = subject.parse();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                if (file.exists()) {
-                    try {
-                        Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(file));
-                        Spin1Parser subject = new Spin1Parser(stream);
-                        node = subject.parse();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+            }
+
+            if (node == null) {
+                String[] searchPaths = Preferences.getInstance().getSpin1LibraryPath();
+                for (int i = 0; i < searchPaths.length; i++) {
+                    localFile = new File(searchPaths[i], fileName);
+                    if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
+                        break;
+                    }
+                    if (localFile.exists()) {
+                        try {
+                            Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(localFile));
+                            Spin1Parser subject = new Spin1Parser(stream);
+                            node = subject.parse();
+                            break;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
 
-            dependencies.add(node != null ? file.getAbsolutePath() : fileName);
+            dependencies.add(node != null ? localFile.getAbsolutePath() : fileName);
 
             return node;
         }
 
         @Override
         protected byte[] getBinaryFile(String fileName) {
-            File fileParent = file != null ? file.getParentFile() : null;
+            File localFile = file != null ? new File(file.getParentFile(), fileName) : new File(fileName);
 
-            try {
-                File fileToLoad = new File(fileParent, fileName);
-                if (!fileToLoad.exists()) {
-                    fileToLoad = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
-                }
-                InputStream is = new FileInputStream(fileToLoad);
-                try {
-                    byte[] b = new byte[is.available()];
-                    is.read(b);
-                    return b;
-                } finally {
-                    try {
-                        is.close();
-                    } catch (Exception e) {
-
+            if (!localFile.exists()) {
+                String[] searchPaths = Preferences.getInstance().getSpin1LibraryPath();
+                for (int i = 0; i < searchPaths.length; i++) {
+                    localFile = new File(searchPaths[i], fileName);
+                    if (localFile.exists()) {
+                        break;
                     }
                 }
-            } catch (Exception e) {
-                // Do nothing
+            }
+
+            if (localFile.exists()) {
+                try {
+                    InputStream is = new FileInputStream(localFile);
+                    try {
+                        byte[] b = new byte[is.available()];
+                        is.read(b);
+                        return b;
+                    } finally {
+                        try {
+                            is.close();
+                        } catch (Exception e) {
+
+                        }
+                    }
+                } catch (Exception e) {
+                    // Do nothing
+                }
             }
 
             return null;
@@ -287,24 +313,34 @@ public class EditorTab implements FindReplaceTarget {
         @Override
         protected Node getObjectTree(String fileName) {
             File localFile = file != null ? new File(file.getParentFile(), fileName + ".spin2") : new File(fileName + ".spin2");
-            File libraryFile = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName + ".spin2");
 
             Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
-            if (node == null) {
-                node = sourcePool.getParsedSource(libraryFile.getAbsolutePath());
-            }
-            if (node == null) {
-                File file = localFile;
-                if (!file.exists()) {
-                    file = libraryFile;
+            if (node == null && localFile.exists()) {
+                try {
+                    Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(localFile));
+                    Spin2Parser subject = new Spin2Parser(stream);
+                    node = subject.parse();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                if (file.exists()) {
-                    try {
-                        Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(file));
-                        Spin2Parser subject = new Spin2Parser(stream);
-                        node = subject.parse();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+            }
+
+            if (node == null) {
+                String[] searchPaths = Preferences.getInstance().getSpin2LibraryPath();
+                for (int i = 0; i < searchPaths.length; i++) {
+                    localFile = new File(searchPaths[i], fileName + ".spin2");
+                    if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
+                        break;
+                    }
+                    if (localFile.exists()) {
+                        try {
+                            Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(localFile));
+                            Spin2Parser subject = new Spin2Parser(stream);
+                            node = subject.parse();
+                            break;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
@@ -319,58 +355,74 @@ public class EditorTab implements FindReplaceTarget {
         @Override
         protected Node getParsedObject(String fileName) {
             File localFile = file != null ? new File(file.getParentFile(), fileName) : new File(fileName);
-            File libraryFile = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
 
-            File file = localFile;
-            Node node = sourcePool.getParsedSource(file.getAbsolutePath());
-            if (node == null) {
-                file = libraryFile;
-                node = sourcePool.getParsedSource(file.getAbsolutePath());
-            }
-            if (node == null) {
-                file = localFile;
-                if (!file.exists()) {
-                    file = libraryFile;
+            Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
+            if (node == null && localFile.exists()) {
+                try {
+                    Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(localFile));
+                    Spin2Parser subject = new Spin2Parser(stream);
+                    node = subject.parse();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                if (file.exists()) {
-                    try {
-                        Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(file));
-                        Spin2Parser subject = new Spin2Parser(stream);
-                        node = subject.parse();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+            }
+
+            if (node == null) {
+                String[] searchPaths = Preferences.getInstance().getSpin2LibraryPath();
+                for (int i = 0; i < searchPaths.length; i++) {
+                    localFile = new File(searchPaths[i], fileName);
+                    if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
+                        break;
+                    }
+                    if (localFile.exists()) {
+                        try {
+                            Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(localFile));
+                            Spin2Parser subject = new Spin2Parser(stream);
+                            node = subject.parse();
+                            break;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
 
-            dependencies.add(file.getAbsolutePath());
+            dependencies.add(node != null ? localFile.getAbsolutePath() : fileName);
 
             return node;
         }
 
         @Override
         protected byte[] getBinaryFile(String fileName) {
-            File fileParent = file != null ? file.getParentFile() : null;
+            File localFile = file != null ? new File(file.getParentFile(), fileName) : new File(fileName);
 
-            try {
-                File fileToLoad = new File(fileParent, fileName);
-                if (!fileToLoad.exists()) {
-                    fileToLoad = new File(Preferences.getInstance().getSpin2LibraryPath(), fileName);
-                }
-                InputStream is = new FileInputStream(fileToLoad);
-                try {
-                    byte[] b = new byte[is.available()];
-                    is.read(b);
-                    return b;
-                } finally {
-                    try {
-                        is.close();
-                    } catch (Exception e) {
-
+            if (!localFile.exists()) {
+                String[] searchPaths = Preferences.getInstance().getSpin2LibraryPath();
+                for (int i = 0; i < searchPaths.length; i++) {
+                    localFile = new File(searchPaths[i], fileName);
+                    if (localFile.exists()) {
+                        break;
                     }
                 }
-            } catch (Exception e) {
-                // Do nothing
+            }
+
+            if (localFile.exists()) {
+                try {
+                    InputStream is = new FileInputStream(localFile);
+                    try {
+                        byte[] b = new byte[is.available()];
+                        is.read(b);
+                        return b;
+                    } finally {
+                        try {
+                            is.close();
+                        } catch (Exception e) {
+
+                        }
+                    }
+                } catch (Exception e) {
+                    // Do nothing
+                }
             }
 
             return null;

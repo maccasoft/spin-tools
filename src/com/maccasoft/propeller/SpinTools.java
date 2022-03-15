@@ -173,11 +173,12 @@ public class SpinTools {
 
             File fileToOpen = new File(parent, name);
             if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
-                if (suffix.equalsIgnoreCase(".spin")) {
-                    fileToOpen = new File(preferences.getSpin1LibraryPath(), name);
-                }
-                else {
-                    fileToOpen = new File(preferences.getSpin2LibraryPath(), name);
+                String[] searchPaths = ".spin2".equals(suffix) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath();
+                for (int i = 0; i < searchPaths.length; i++) {
+                    fileToOpen = new File(searchPaths[i], name);
+                    if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
+                        break;
+                    }
                 }
             }
             if (fileToOpen.exists() && !fileToOpen.isDirectory()) {

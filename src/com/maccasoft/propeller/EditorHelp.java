@@ -159,8 +159,11 @@ public class EditorHelp {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
         proposals.addAll(getSourceProposals(sourceFolder, prefix));
 
-        File file = new File(".spin2".equals(sourceFilter) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath());
-        proposals.addAll(getSourceProposals(file, prefix));
+        String[] searchPaths = ".spin2".equals(sourceFilter) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath();
+        for (int i = 0; i < searchPaths.length; i++) {
+            File file = new File(searchPaths[i]);
+            proposals.addAll(getSourceProposals(file, prefix));
+        }
 
         return proposals;
     }

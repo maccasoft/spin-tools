@@ -27,7 +27,9 @@ class PreferencesTest {
     @Test
     void testSetSpin1LibraryPath() throws Exception {
         Preferences subject = new Preferences();
-        subject.setSpin1LibraryPath("spin1/path");
+        subject.setSpin1LibraryPath(new String[] {
+            "spin1/path"
+        });
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
@@ -40,7 +42,7 @@ class PreferencesTest {
         Assertions.assertEquals(""
             + "{\n"
             + "  \"showLineNumbers\" : true,\n"
-            + "  \"spin1LibraryPath\" : \"spin1/path\",\n"
+            + "  \"spin1LibraryPath\" : [ \"spin1/path\" ],\n"
             + "  \"reloadOpenTabs\" : true\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
@@ -50,7 +52,7 @@ class PreferencesTest {
         Preferences subject = new Preferences();
         StringReader is = new StringReader(""
             + "{\n"
-            + "  \"spin1LibraryPath\" : \"spin1/path\"\n"
+            + "  \"spin1LibraryPath\" : [ \"spin1/path\" ]\n"
             + "}"
             + "");
 
@@ -58,13 +60,17 @@ class PreferencesTest {
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         subject.preferences = mapper.readValue(is, SerializedPreferences.class);
 
-        Assertions.assertEquals("spin1/path", subject.getSpin1LibraryPath());
+        Assertions.assertArrayEquals(new String[] {
+            "spin1/path"
+        }, subject.getSpin1LibraryPath());
     }
 
     @Test
     void testSetSpin2LibraryPath() throws Exception {
         Preferences subject = new Preferences();
-        subject.setSpin2LibraryPath("spin2/path");
+        subject.setSpin2LibraryPath(new String[] {
+            "spin2/path"
+        });
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
@@ -77,7 +83,7 @@ class PreferencesTest {
         Assertions.assertEquals(""
             + "{\n"
             + "  \"showLineNumbers\" : true,\n"
-            + "  \"spin2LibraryPath\" : \"spin2/path\",\n"
+            + "  \"spin2LibraryPath\" : [ \"spin2/path\" ],\n"
             + "  \"reloadOpenTabs\" : true\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
@@ -87,7 +93,7 @@ class PreferencesTest {
         Preferences subject = new Preferences();
         StringReader is = new StringReader(""
             + "{\n"
-            + "  \"spin2LibraryPath\" : \"spin2/path\"\n"
+            + "  \"spin2LibraryPath\" : [ \"spin2/path\" ]\n"
             + "}"
             + "");
 
@@ -95,7 +101,9 @@ class PreferencesTest {
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         subject.preferences = mapper.readValue(is, SerializedPreferences.class);
 
-        Assertions.assertEquals("spin2/path", subject.getSpin2LibraryPath());
+        Assertions.assertArrayEquals(new String[] {
+            "spin2/path"
+        }, subject.getSpin2LibraryPath());
     }
 
     @Test

@@ -71,8 +71,8 @@ public class Preferences {
         public boolean showLineNumbers;
         public String editorFont;
         public String port;
-        public String spin1LibraryPath;
-        public String spin2LibraryPath;
+        public String[] spin1LibraryPath;
+        public String[] spin2LibraryPath;
         public List<String> lru = new ArrayList<String>();
 
         public boolean reloadOpenTabs;
@@ -216,30 +216,48 @@ public class Preferences {
         changeSupport.firePropertyChange(PROP_PORT, preferences.port, preferences.port = port);
     }
 
-    public String getSpin1LibraryPath() {
-        return preferences.spin1LibraryPath != null ? preferences.spin1LibraryPath : defaultSpin1LibraryPath;
+    public String[] getSpin1LibraryPath() {
+        if (preferences.spin1LibraryPath != null) {
+            if (preferences.spin1LibraryPath != null) {
+                List<String> l = new ArrayList<String>();
+                for (int i = 0; i < preferences.spin1LibraryPath.length; i++) {
+                    l.add(preferences.spin1LibraryPath[i] != null ? preferences.spin1LibraryPath[i] : defaultSpin1LibraryPath);
+                }
+                return l.toArray(new String[l.size()]);
+            }
+        }
+        return new String[] {
+            defaultSpin1LibraryPath
+        };
     }
 
-    public void setSpin1LibraryPath(String path) {
-        if (defaultSpin1LibraryPath.equals(path)) {
-            preferences.spin1LibraryPath = null;
+    public void setSpin1LibraryPath(String[] path) {
+        List<String> l = new ArrayList<String>();
+        for (int i = 0; i < path.length; i++) {
+            l.add(defaultSpin1LibraryPath.equals(path[i]) ? null : path[i]);
         }
-        else {
-            preferences.spin1LibraryPath = path;
-        }
+        preferences.spin1LibraryPath = l.toArray(new String[l.size()]);
     }
 
-    public String getSpin2LibraryPath() {
-        return preferences.spin2LibraryPath != null ? preferences.spin2LibraryPath : defaultSpin2LibraryPath;
+    public String[] getSpin2LibraryPath() {
+        if (preferences.spin2LibraryPath != null) {
+            List<String> l = new ArrayList<String>();
+            for (int i = 0; i < preferences.spin2LibraryPath.length; i++) {
+                l.add(preferences.spin2LibraryPath[i] != null ? preferences.spin2LibraryPath[i] : defaultSpin2LibraryPath);
+            }
+            return l.toArray(new String[l.size()]);
+        }
+        return new String[] {
+            defaultSpin2LibraryPath
+        };
     }
 
-    public void setSpin2LibraryPath(String path) {
-        if (defaultSpin2LibraryPath.equals(path)) {
-            preferences.spin2LibraryPath = null;
+    public void setSpin2LibraryPath(String[] path) {
+        List<String> l = new ArrayList<String>();
+        for (int i = 0; i < path.length; i++) {
+            l.add(defaultSpin2LibraryPath.equals(path[i]) ? null : path[i]);
         }
-        else {
-            preferences.spin2LibraryPath = path;
-        }
+        preferences.spin2LibraryPath = l.toArray(new String[l.size()]);
     }
 
     public int[] getTabStops() {
