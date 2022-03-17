@@ -606,6 +606,11 @@ public class SourceEditor {
                     return;
                 }
 
+                String hoverText = hoverHighlightToken.getText();
+                if (hoverText.startsWith("@")) {
+                    hoverText = hoverText.substring(1);
+                }
+
                 int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
                 Node context = tokenMarker.getContextAt(offset);
                 if (context instanceof ObjectNode) {
@@ -631,7 +636,7 @@ public class SourceEditor {
                         if (node instanceof DataNode) {
                             for (Node child : node.getChilds()) {
                                 DataLineNode obj = (DataLineNode) child;
-                                if (obj.label != null && obj.label.getText().equals(hoverHighlightToken.getText())) {
+                                if (obj.label != null && obj.label.getText().equals(hoverText)) {
                                     Token target = obj.label.getStartToken();
                                     SourceElement element = new SourceElement(null, target.line, target.column);
                                     display.asyncExec(new Runnable() {
@@ -660,7 +665,7 @@ public class SourceEditor {
                                 if (node instanceof ObjectsNode) {
                                     for (Node child : node.getChilds()) {
                                         ObjectNode obj = (ObjectNode) child;
-                                        if (obj.name.getText().equals(hoverHighlightToken.getText())) {
+                                        if (obj.name.getText().equals(hoverText)) {
                                             SourceElement element = new SourceElement(null, obj.name.line, obj.name.column);
                                             display.asyncExec(new Runnable() {
 
@@ -689,7 +694,7 @@ public class SourceEditor {
                                                 for (Node objectNode : objectRoot.getChilds()) {
                                                     if (objectNode instanceof MethodNode) {
                                                         MethodNode method = (MethodNode) objectNode;
-                                                        if (method.name.getText().equals(hoverHighlightToken.getText())) {
+                                                        if (method.name.getText().equals(hoverText)) {
                                                             SourceElement element = new SourceElement(obj, method.name.line, method.name.column);
                                                             display.asyncExec(new Runnable() {
 
@@ -873,7 +878,7 @@ public class SourceEditor {
                     popupWindow.setLocation(bounds.x, bounds.y - size.y - 3);
 
                     popupWindow.open();
-                    styledText.setFocus();
+                    styledText.forceFocus();
                     return;
                 }
 
@@ -904,7 +909,7 @@ public class SourceEditor {
 
                         popupWindow.setBounds(bounds);
                         popupWindow.open();
-                        styledText.setFocus();
+                        styledText.forceFocus();
                     }
                 }
 
