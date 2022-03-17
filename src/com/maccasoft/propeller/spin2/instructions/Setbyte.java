@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerMessage;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -62,8 +63,17 @@ public class Setbyte extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1000110);
             value = cz.setValue(value, n.getInteger());
             value = i.setBoolean(value, src.isLiteral());
+            if (dst.getInteger() > 0x1FF) {
+                throw new CompilerMessage("Destination register cannot exceed $1FF", dst.getExpression().getData());
+            }
             value = d.setValue(value, dst.getInteger());
+            if (src.isLongLiteral() && src.getInteger() > 0x1FF) {
+                throw new CompilerMessage("Source register cannot exceed $1FF", dst.getExpression().getData());
+            }
             value = s.setValue(value, src.getInteger());
+            if (n.getInteger() < 0 || n.getInteger() > 3) {
+                throw new CompilerMessage("Byte number can be 0-3", n.getExpression().getData());
+            }
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 
