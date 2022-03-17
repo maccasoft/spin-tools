@@ -350,6 +350,11 @@ public class Spin2ObjectCompiler {
             }
 
             try {
+                if (!hubMode && line.getLabel() != null) {
+                    if ((address & 0x03) != 0) {
+                        throw new CompilerMessage("cog symbols must be long-aligned", line.getData());
+                    }
+                }
                 address = line.resolve(hubMode ? hubAddress : address, hubMode);
                 hubAddress += line.getInstructionObject().getSize();
                 if ((line.getInstructionFactory() instanceof Org)) {
@@ -687,7 +692,9 @@ public class Spin2ObjectCompiler {
                     throw new CompilerMessage(e, param.count);
                 }
             }
-            parameters.add(new Spin2PAsmExpression(prefix, expression, count));
+            if (expression != null) {
+                parameters.add(new Spin2PAsmExpression(prefix, expression, count));
+            }
         }
 
         Spin2PAsmLine pasmLine = new Spin2PAsmLine(localScope, label, condition, mnemonic, parameters, modifier);
