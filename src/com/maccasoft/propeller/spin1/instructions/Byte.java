@@ -13,7 +13,7 @@ package com.maccasoft.propeller.spin1.instructions;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
@@ -65,7 +65,7 @@ public class Byte extends Spin1PAsmInstructionFactory {
                         }
                     }
                 }
-            } catch (CompilerMessage e) {
+            } catch (CompilerException e) {
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException(e);

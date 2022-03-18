@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
@@ -72,7 +72,7 @@ public class Spin1ExpressionBuilder {
             try {
                 return super.resolve();
             } catch (Exception e) {
-                throw new CompilerMessage(e, token);
+                throw new CompilerException(e, token);
             }
         }
 
@@ -159,7 +159,7 @@ public class Spin1ExpressionBuilder {
 
         Token token = peek();
         if (token != null) {
-            throw new CompilerMessage("unexpected " + token.getText(), token);
+            throw new CompilerException("unexpected " + token.getText(), token);
         }
 
         return node;
@@ -276,7 +276,7 @@ public class Spin1ExpressionBuilder {
 
                 case "?":
                     if (!(right instanceof IfElse)) {
-                        throw new CompilerMessage("invalid operator " + token.getText(), token);
+                        throw new CompilerException("invalid operator " + token.getText(), token);
                     }
                     left = new IfElse(left, ((IfElse) right).getTrueTerm(), ((IfElse) right).getFalseTerm());
                     break;
@@ -285,7 +285,7 @@ public class Spin1ExpressionBuilder {
                     break;
 
                 default:
-                    throw new CompilerMessage("unsupported operator " + token.getText(), token);
+                    throw new CompilerException("unsupported operator " + token.getText(), token);
             }
         }
     }
@@ -293,7 +293,7 @@ public class Spin1ExpressionBuilder {
     Expression parseAtom() {
         Token token = peek();
         if (token == null) {
-            throw new CompilerMessage("expecting operand", tokens.get(tokens.size() - 1));
+            throw new CompilerException("expecting operand", tokens.get(tokens.size() - 1));
         }
 
         if (unary.contains(token.getText())) {
@@ -308,7 +308,7 @@ public class Spin1ExpressionBuilder {
                 case "|<":
                     return new Decod(parseAtom());
                 default:
-                    throw new CompilerMessage("invalid unary operator " + token.getText(), token);
+                    throw new CompilerException("invalid unary operator " + token.getText(), token);
             }
         }
 
@@ -317,7 +317,7 @@ public class Spin1ExpressionBuilder {
             Group expression = new Group(parseLevel(parseAtom(), 0));
             token = next();
             if (token == null || !")".equals(token.getText())) {
-                throw new CompilerMessage("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
             }
             return expression;
         }
@@ -328,24 +328,24 @@ public class Spin1ExpressionBuilder {
                 case "FLOAT": {
                     token = next();
                     if (token == null || !"(".equals(token.getText())) {
-                        throw new CompilerMessage("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
+                        throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
                     Expression expression = new com.maccasoft.propeller.expressions.Float(parseLevel(parseAtom(), 0));
                     token = next();
                     if (token == null || !")".equals(token.getText())) {
-                        throw new CompilerMessage("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
                     return expression;
                 }
                 case "TRUNC": {
                     token = next();
                     if (token == null || !"(".equals(token.getText())) {
-                        throw new CompilerMessage("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
+                        throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
                     Expression expression = new Trunc(parseLevel(parseAtom(), 0));
                     token = next();
                     if (token == null || !")".equals(token.getText())) {
-                        throw new CompilerMessage("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
                     return expression;
                 }
@@ -364,7 +364,7 @@ public class Spin1ExpressionBuilder {
             }
         }
 
-        throw new CompilerMessage("unexpected " + token.getText(), token);
+        throw new CompilerException("unexpected " + token.getText(), token);
     }
 
     Token peek() {

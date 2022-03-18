@@ -18,7 +18,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
 
 class Spin2CompilerTest {
@@ -730,7 +730,7 @@ class Spin2CompilerTest {
             + "\n"
             + "");
 
-        Assertions.assertThrows(CompilerMessage.class, () -> {
+        Assertions.assertThrows(CompilerException.class, () -> {
             compile("main.spin2", sources);
         });
     }
@@ -757,7 +757,7 @@ class Spin2CompilerTest {
             + "\n"
             + "");
 
-        Assertions.assertThrows(CompilerMessage.class, () -> {
+        Assertions.assertThrows(CompilerException.class, () -> {
             compile("main.spin2", sources);
         });
     }
@@ -921,8 +921,8 @@ class Spin2CompilerTest {
         compiler.setDebugEnabled(debugEnabled);
         Spin2Object obj = compiler.compileObject(rootFile, root);
 
-        for (CompilerMessage msg : compiler.getMessages()) {
-            if (msg.type == CompilerMessage.ERROR) {
+        for (CompilerException msg : compiler.getMessages()) {
+            if (msg.type == CompilerException.ERROR) {
                 throw msg;
             }
         }

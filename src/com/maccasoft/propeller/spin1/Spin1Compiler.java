@@ -18,7 +18,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.model.MethodNode;
@@ -34,7 +34,7 @@ public class Spin1Compiler {
     Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
 
     boolean errors;
-    List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
+    List<CompilerException> messages = new ArrayList<CompilerException>();
 
     boolean removeUnusedMethods;
     Spin1Preprocessor preprocessor;
@@ -75,7 +75,7 @@ public class Spin1Compiler {
         dbase.setValue(object.getSize() + offset);
 
         if (!(obj.getObject(4) instanceof LongDataObject)) {
-            logMessage(new CompilerMessage(CompilerMessage.ERROR, rootFileName, "No PUB routines found", null));
+            logMessage(new CompilerException(CompilerException.ERROR, rootFileName, "No PUB routines found", null));
             return null;
         }
         pcurr.setValue((int) (pbase.getValue() + (((LongDataObject) obj.getObject(4)).getValue() & 0xFFFF)));
@@ -98,12 +98,12 @@ public class Spin1Compiler {
         }
 
         if (stackRequired > 0x2000) {
-            logMessage(new CompilerMessage(rootFileName, "_STACK and _FREE must sum to under 8k longs."));
+            logMessage(new CompilerException(rootFileName, "_STACK and _FREE must sum to under 8k longs."));
         }
         else {
             int requiredSize = object.getSize() + obj.getVarSize() + (stackRequired << 2);
             if (requiredSize >= 0x8000) {
-                logMessage(new CompilerMessage(rootFileName, "object exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs."));
+                logMessage(new CompilerException(rootFileName, "object exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs."));
             }
         }
 
@@ -138,7 +138,7 @@ public class Spin1Compiler {
             ObjectNodeVisitor p = parent;
             while (p != null) {
                 if (p.fileName.equals(objectFileName)) {
-                    throw new CompilerMessage(fileName, "\"" + objectFileName + "\" illegal circular reference", node.file);
+                    throw new CompilerException(fileName, "\"" + objectFileName + "\" illegal circular reference", node.file);
                 }
                 p = p.parent;
             }
@@ -173,7 +173,7 @@ public class Spin1Compiler {
         Spin1Method compileMethod(MethodNode node) {
             if (!preprocessor.isReferenced(node)) {
                 if ("PRI".equalsIgnoreCase(node.type.getText())) {
-                    logMessage(new CompilerMessage(CompilerMessage.WARNING, "function \"" + node.name.getText() + "\" is not used", node.name));
+                    logMessage(new CompilerException(CompilerException.WARNING, "function \"" + node.name.getText() + "\" is not used", node.name));
                 }
                 if (removeUnusedMethods) {
                     return null;
@@ -188,7 +188,7 @@ public class Spin1Compiler {
         }
 
         @Override
-        protected void logMessage(CompilerMessage message) {
+        protected void logMessage(CompilerException message) {
             message.fileName = fileName;
             Spin1Compiler.this.logMessage(message);
         }
@@ -255,8 +255,8 @@ public class Spin1Compiler {
         return null;
     }
 
-    protected void logMessage(CompilerMessage message) {
-        if (message.type == CompilerMessage.ERROR) {
+    protected void logMessage(CompilerException message) {
+        if (message.type == CompilerException.ERROR) {
             errors = true;
         }
         messages.add(message);
@@ -266,7 +266,7 @@ public class Spin1Compiler {
         return errors;
     }
 
-    public List<CompilerMessage> getMessages() {
+    public List<CompilerException> getMessages() {
         return messages;
     }
 

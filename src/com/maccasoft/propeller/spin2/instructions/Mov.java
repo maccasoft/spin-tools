@@ -12,7 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -30,7 +30,7 @@ public class Mov extends Spin2PAsmInstructionFactory {
             throw new RuntimeException("Expected 2 operands, found " + arguments.size());
         }
         if (arguments.get(0).isLiteral()) {
-            throw new CompilerMessage("Bad use of immediate for first operand", arguments.get(0).getExpression().getData());
+            throw new CompilerException("Bad use of immediate for first operand", arguments.get(0).getExpression().getData());
         }
         if (effect != null && !Spin2PAsmSchema.E_WC_WZ_WCZ.contains(effect.toLowerCase())) {
             throw new RuntimeException("Bad instruction modifier");

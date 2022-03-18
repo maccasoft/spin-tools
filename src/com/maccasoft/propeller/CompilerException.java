@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,10 +10,13 @@
 
 package com.maccasoft.propeller;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
 
-public class CompilerMessage extends RuntimeException {
+public class CompilerException extends RuntimeException {
 
     private static final long serialVersionUID = -5865769905704184825L;
 
@@ -30,19 +33,25 @@ public class CompilerMessage extends RuntimeException {
     Token startToken;
     Token stopToken;
 
-    public CompilerMessage(String message, Object data) {
+    List<CompilerException> childs = new ArrayList<CompilerException>();
+
+    public CompilerException() {
+
+    }
+
+    public CompilerException(String message, Object data) {
         this(ERROR, null, message, data);
     }
 
-    public CompilerMessage(String fileName, String message, Object data) {
+    public CompilerException(String fileName, String message, Object data) {
         this(ERROR, fileName, message, data);
     }
 
-    public CompilerMessage(int type, String message, Object data) {
+    public CompilerException(int type, String message, Object data) {
         this(type, null, message, data);
     }
 
-    public CompilerMessage(int type, String fileName, String message, Object data) {
+    public CompilerException(int type, String fileName, String message, Object data) {
         super(message);
         this.fileName = fileName;
         this.type = type;
@@ -65,15 +74,15 @@ public class CompilerMessage extends RuntimeException {
         }
     }
 
-    public CompilerMessage(Exception cause, Object data) {
+    public CompilerException(Exception cause, Object data) {
         this(ERROR, null, cause, data);
     }
 
-    public CompilerMessage(String fileName, Exception cause, Object data) {
+    public CompilerException(String fileName, Exception cause, Object data) {
         this(ERROR, fileName, cause, data);
     }
 
-    public CompilerMessage(int type, String fileName, Exception cause, Object data) {
+    public CompilerException(int type, String fileName, Exception cause, Object data) {
         super(cause.getMessage(), cause);
         this.fileName = fileName;
         this.type = type;
@@ -117,28 +126,50 @@ public class CompilerMessage extends RuntimeException {
         return stopToken;
     }
 
+    public void addMessage(CompilerException msg) {
+        childs.add(msg);
+    }
+
+    public boolean hasChilds() {
+        return childs.size() != 0;
+    }
+
+    public CompilerException[] getChilds() {
+        return childs.toArray(new CompilerException[0]);
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if (fileName != null) {
-            sb.append(fileName);
-            sb.append(": ");
-        }
-        sb.append(line);
-        sb.append(":");
-        sb.append(column);
-        sb.append(" : ");
-        if (type == WARNING) {
-            sb.append("warning");
-        }
-        else if (type == ERROR) {
-            sb.append("error");
+        if (childs.size() != 0) {
+            for (CompilerException e : childs) {
+                if (sb.length() != 0) {
+                    sb.append(System.lineSeparator());
+                }
+                sb.append(e.toString());
+            }
         }
         else {
-            sb.append("note");
+            if (fileName != null) {
+                sb.append(fileName);
+                sb.append(": ");
+            }
+            sb.append(line);
+            sb.append(":");
+            sb.append(column);
+            sb.append(" : ");
+            if (type == WARNING) {
+                sb.append("warning");
+            }
+            else if (type == ERROR) {
+                sb.append("error");
+            }
+            else {
+                sb.append("note");
+            }
+            sb.append(" : ");
+            sb.append(getMessage());
         }
-        sb.append(" : ");
-        sb.append(getMessage());
         return sb.toString();
     }
 

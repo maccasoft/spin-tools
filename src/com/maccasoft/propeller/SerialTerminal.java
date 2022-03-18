@@ -87,6 +87,9 @@ public class SerialTerminal {
     Button rts;
     Button cts;
 
+    Button monitor;
+    Button taqoz;
+
     Font font;
     int characterWidth;
     int characterHeight;
@@ -644,6 +647,10 @@ public class SerialTerminal {
 
             @Override
             public void keyPressed(KeyEvent e) {
+                if (e.keyCode == SWT.INSERT && (e.stateMask & SWT.MOD2) != 0) {
+                    pasteFromClipboard();
+                    return;
+                }
                 if (e.character != 0) {
                     try {
                         if (serialPort != null && serialPort.isOpened()) {
@@ -849,14 +856,14 @@ public class SerialTerminal {
         FontMetrics fontMetrics = gc.getFontMetrics();
         gc.dispose();
 
-        Button button = new Button(container, SWT.PUSH);
-        button.setText("Monitor");
+        monitor = new Button(container, SWT.PUSH);
+        monitor.setText("Monitor");
         GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
         data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics,
             IDialogConstants.BUTTON_WIDTH),
-            button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-        button.setLayoutData(data);
-        button.addSelectionListener(new SelectionAdapter() {
+            monitor.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        monitor.setLayoutData(data);
+        monitor.addSelectionListener(new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -869,14 +876,14 @@ public class SerialTerminal {
             }
         });
 
-        button = new Button(container, SWT.PUSH);
-        button.setText("TAQOZ");
+        taqoz = new Button(container, SWT.PUSH);
+        taqoz.setText("TAQOZ");
         data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
         data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics,
             IDialogConstants.BUTTON_WIDTH),
-            button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-        button.setLayoutData(data);
-        button.addSelectionListener(new SelectionAdapter() {
+            taqoz.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        taqoz.setLayoutData(data);
+        taqoz.addSelectionListener(new SelectionAdapter() {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -949,35 +956,52 @@ public class SerialTerminal {
                 }
             }
 
-            this.serialPort = serialPort;
-            this.serialBaudRate = serialBaudRate;
-
             baudRate.removeSelectionListener(baudRateSelectionListener);
             try {
                 baudRate.select(baudRates.indexOf(serialBaudRate));
             } finally {
                 baudRate.addSelectionListener(baudRateSelectionListener);
             }
+            this.serialBaudRate = serialBaudRate;
 
-            if (this.serialPort != null) {
-                if (!this.serialPort.isOpened()) {
-                    this.serialPort.openPort();
+            if (serialPort != null) {
+                shell.setText(WINDOW_TITLE + " on " + serialPort.getPortName());
+                if (!serialPort.isOpened()) {
+                    serialPort.openPort();
                 }
-                this.serialPort.addEventListener(serialEventListener);
-                this.serialPort.setParams(
+                serialPort.setParams(
                     serialBaudRate,
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_1,
                     SerialPort.PARITY_NONE,
                     false,
                     false);
-                shell.setText(WINDOW_TITLE + " on " + this.serialPort.getPortName());
+                serialPort.addEventListener(serialEventListener);
             }
-            terminalType.setEnabled(serialPort != null);
-            baudRate.setEnabled(serialPort != null);
+
+            this.serialPort = serialPort;
         } catch (Exception e) {
             e.printStackTrace();
         }
+        updateButtonsEnablement();
+    }
+
+    void updateButtonsEnablement() {
+        terminalType.setEnabled(serialPort != null);
+        baudRate.setEnabled(serialPort != null);
+
+        dtr.setEnabled(serialPort != null);
+        dsr.setEnabled(serialPort != null);
+        rts.setEnabled(serialPort != null);
+        cts.setEnabled(serialPort != null);
+
+        monitor.setEnabled(serialPort != null);
+        taqoz.setEnabled(serialPort != null);
+    }
+
+    public int getBaudRate() {
+        int i = baudRate.getSelectionIndex();
+        return i != -1 ? baudRates.get(i) : 115200;
     }
 
     void redraw() {
@@ -1083,6 +1107,30 @@ public class SerialTerminal {
 
         }
         return -1;
+    }
+
+    public void pasteFromClipboard() {
+        Clipboard clipboard = new Clipboard(display);
+        try {
+            String s = (String) clipboard.getContents(TextTransfer.getInstance());
+            if (s != null) {
+                final byte[] b = s.replaceAll("(\r\n|\n|\r)", "\r").getBytes();
+                new Thread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        try {
+                            serialPort.writeBytes(b);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                }).start();
+            }
+        } finally {
+            clipboard.dispose();
+        }
     }
 
     public static void main(String[] args) {

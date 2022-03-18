@@ -13,7 +13,7 @@ package com.maccasoft.propeller.spin2.instructions;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -46,19 +46,26 @@ public class Long extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
+            CompilerException msgs = new CompilerException();
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try {
-                for (Spin2PAsmExpression exp : arguments) {
+
+            for (Spin2PAsmExpression exp : arguments) {
+                try {
                     byte[] value = exp.getLong();
                     for (int i = 0; i < exp.getCount(); i++) {
                         os.write(value);
                     }
+                } catch (CompilerException e) {
+                    msgs.addMessage(e);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (CompilerMessage e) {
-                throw e;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
+
+            if (msgs.hasChilds()) {
+                throw msgs;
+            }
+
             return os.toByteArray();
         }
 

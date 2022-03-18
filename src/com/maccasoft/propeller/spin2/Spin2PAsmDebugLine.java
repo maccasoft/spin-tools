@@ -15,7 +15,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Token;
 
@@ -106,13 +106,13 @@ public class Spin2PAsmDebugLine {
 
         Token token = tokens.get(index++);
         if (!"DEBUG".equalsIgnoreCase(token.getText())) {
-            throw new CompilerMessage("invalid statement '" + token.getText() + "'", token);
+            throw new CompilerException("invalid statement '" + token.getText() + "'", token);
         }
         Spin2PAsmDebugLine root = new Spin2PAsmDebugLine(context);
 
         token = tokens.get(index++);
         if (!"(".equals(token.getText())) {
-            throw new CompilerMessage("expected '(' got '" + token.getText() + "'", token);
+            throw new CompilerException("expected '(' got '" + token.getText() + "'", token);
         }
 
         while (index < tokens.size() - 1) {
@@ -120,7 +120,7 @@ public class Spin2PAsmDebugLine {
             switch (state) {
                 case 0:
                     if (token.type == Token.OPERATOR) {
-                        throw new CompilerMessage("unexpected operator '" + token.getText() + "'", token);
+                        throw new CompilerException("unexpected operator '" + token.getText() + "'", token);
                     }
                     if (token.type != 0) {
                         root.addStatement(new Spin2DebugCommand(token));
@@ -131,7 +131,7 @@ public class Spin2PAsmDebugLine {
                     break;
                 case 1:
                     if (!"(".equals(token.getText())) {
-                        throw new CompilerMessage("expected '(' got '" + token.getText() + "'", token);
+                        throw new CompilerException("expected '(' got '" + token.getText() + "'", token);
                     }
                     list = new ArrayList<Token>();
                     state = 2;
@@ -139,7 +139,7 @@ public class Spin2PAsmDebugLine {
                 case 2:
                     if (",".equals(token.getText()) || ")".equals(token.getText())) {
                         if (list.size() == 0) {
-                            throw new CompilerMessage("expecting argument", token);
+                            throw new CompilerException("expecting argument", token);
                         }
 
                         String prefix = null;
@@ -164,16 +164,16 @@ public class Spin2PAsmDebugLine {
                         state = 0;
                         break;
                     }
-                    throw new CompilerMessage("unexpected '" + token.getText() + "'", token);
+                    throw new CompilerException("unexpected '" + token.getText() + "'", token);
             }
         }
 
         if (index >= tokens.size()) {
-            throw new CompilerMessage("expected ')'", token);
+            throw new CompilerException("expected ')'", token);
         }
         token = tokens.get(index++);
         if (!")".equals(token.getText())) {
-            throw new CompilerMessage("expected ')' got '" + token.getText() + "'", token);
+            throw new CompilerException("expected ')' got '" + token.getText() + "'", token);
         }
 
         return root;

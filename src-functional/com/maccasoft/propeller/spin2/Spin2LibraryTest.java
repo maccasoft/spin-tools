@@ -21,7 +21,7 @@ import java.io.PrintStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
 
 class Spin2LibraryTest {
@@ -298,8 +298,8 @@ class Spin2LibraryTest {
 
         Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(source.getParentFile());
         Spin2Object obj = compiler.compile(source.getName(), root);
-        for (CompilerMessage msg : compiler.getMessages()) {
-            if (msg.type == CompilerMessage.ERROR) {
+        for (CompilerException msg : compiler.getMessages()) {
+            if (msg.type == CompilerException.ERROR) {
                 throw msg;
             }
         }

@@ -1456,8 +1456,8 @@ public class SpinTools {
     }
 
     void highlightError(EditorTab editorTab) {
-        for (CompilerMessage msg : editorTab.getMessages()) {
-            if (msg.type == CompilerMessage.ERROR) {
+        for (CompilerException msg : editorTab.getMessages()) {
+            if (msg.type == CompilerException.ERROR) {
                 EditorTab tab = findFileEditorTab(msg.fileName);
                 if (tab == null) {
                     File parentFile = editorTab.getFile() != null ? editorTab.getFile().getParentFile() : new File("");
@@ -1468,8 +1468,8 @@ public class SpinTools {
                     tab = openNewTab(fileToOpen, true);
                 }
                 if (tab != editorTab) {
-                    List<CompilerMessage> list = new ArrayList<CompilerMessage>();
-                    for (CompilerMessage m : editorTab.getMessages()) {
+                    List<CompilerException> list = new ArrayList<CompilerException>();
+                    for (CompilerException m : editorTab.getMessages()) {
                         if (tab.getText().equals(m.fileName)) {
                             list.add(m);
                         }
@@ -1606,7 +1606,7 @@ public class SpinTools {
             if (serialPort == null) {
                 serialPort = new SerialPort(serialPortList.getSelection());
             }
-            serialTerminal.setSerialPort(serialPort, sourcePool.isDebugEnabled() ? 2000000 : 115200);
+            serialTerminal.setSerialPort(serialPort, sourcePool.isDebugEnabled() ? 2000000 : serialTerminal.getBaudRate());
             if (terminal) {
                 serialTerminal.setFocus();
             }
@@ -1649,7 +1649,7 @@ public class SpinTools {
 
                         if (serialTerminal != null) {
                             SerialPort terminalPort = serialTerminal.getSerialPort();
-                            if (terminalPort.getPortName().equals(serialPortList.getSelection())) {
+                            if (terminalPort != null && terminalPort.getPortName().equals(serialPortList.getSelection())) {
                                 Display.getDefault().syncExec(new Runnable() {
 
                                     @Override
@@ -1666,6 +1666,15 @@ public class SpinTools {
                         }
 
                         Propeller1Loader loader = new Propeller1Loader(serialPort, shared) {
+
+                            @Override
+                            protected int hwfind() throws SerialPortException, IOException {
+                                int rc = super.hwfind();
+                                if (rc == 0) {
+                                    throw new RuntimeException("Propeller 1 not found on " + serialPort.getPortName());
+                                }
+                                return rc;
+                            }
 
                             @Override
                             protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
@@ -1762,7 +1771,7 @@ public class SpinTools {
 
                         if (serialTerminal != null) {
                             SerialPort terminalPort = serialTerminal.getSerialPort();
-                            if (terminalPort.getPortName().equals(serialPortList.getSelection())) {
+                            if (terminalPort != null && terminalPort.getPortName().equals(serialPortList.getSelection())) {
                                 Display.getDefault().syncExec(new Runnable() {
 
                                     @Override
@@ -1779,6 +1788,15 @@ public class SpinTools {
                         }
 
                         Propeller2Loader loader = new Propeller2Loader(serialPort, shared) {
+
+                            @Override
+                            protected int hwfind() throws SerialPortException, IOException {
+                                int rc = super.hwfind();
+                                if (rc == 0) {
+                                    throw new RuntimeException("Propeller 2 not found on " + serialPort.getPortName());
+                                }
+                                return rc;
+                            }
 
                             @Override
                             protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {

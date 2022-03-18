@@ -1680,17 +1680,17 @@ public class SourceEditor {
         styledText.setTopIndex(topLine);
     }
 
-    public void setCompilerMessages(List<CompilerMessage> messages) {
+    public void setCompilerMessages(List<CompilerException> messages) {
         tokenMarker.refreshCompilerTokens(messages);
 
         ruler.clearHighlights();
         overview.clearHighlights();
-        for (CompilerMessage msg : messages) {
-            if (msg.type == CompilerMessage.ERROR) {
+        for (CompilerException msg : messages) {
+            if (msg.type == CompilerException.ERROR) {
                 ruler.setHighlight(msg.line);
                 overview.setErrorHighlight(msg.line, msg.getMessage());
             }
-            else if (msg.type == CompilerMessage.WARNING) {
+            else if (msg.type == CompilerException.WARNING) {
                 overview.setWarningHighlight(msg.line, msg.getMessage());
             }
         }

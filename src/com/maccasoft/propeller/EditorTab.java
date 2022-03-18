@@ -75,7 +75,7 @@ public class EditorTab implements FindReplaceTarget {
     Set<String> dependencies = new HashSet<String>();
 
     boolean errors;
-    List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
+    List<CompilerException> messages = new ArrayList<CompilerException>();
     Object object;
 
     final PropertyChangeListener settingsChangeListener = new PropertyChangeListener() {
@@ -273,8 +273,8 @@ public class EditorTab implements FindReplaceTarget {
                             messages.clear();
                             messages.addAll(compiler.getMessages());
 
-                            List<CompilerMessage> list = new ArrayList<CompilerMessage>();
-                            for (CompilerMessage msg : messages) {
+                            List<CompilerException> list = new ArrayList<CompilerException>();
+                            for (CompilerException msg : messages) {
                                 if (tabItemText.equals(msg.fileName)) {
                                     list.add(msg);
                                 }
@@ -468,8 +468,8 @@ public class EditorTab implements FindReplaceTarget {
                             messages.clear();
                             messages.addAll(compiler.getMessages());
 
-                            List<CompilerMessage> list = new ArrayList<CompilerMessage>();
-                            for (CompilerMessage msg : messages) {
+                            List<CompilerException> list = new ArrayList<CompilerException>();
+                            for (CompilerException msg : messages) {
                                 if (tabItemText.equals(msg.fileName)) {
                                     list.add(msg);
                                 }
@@ -679,7 +679,7 @@ public class EditorTab implements FindReplaceTarget {
         return errors;
     }
 
-    public List<CompilerMessage> getMessages() {
+    public List<CompilerException> getMessages() {
         return messages;
     }
 

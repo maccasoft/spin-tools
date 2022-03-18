@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Token;
 
 public class Spin1TreeBuilder {
@@ -156,7 +156,7 @@ public class Spin1TreeBuilder {
                 token = peek();
             }
             else {
-                throw new CompilerMessage("unexpected " + token.getText(), token);
+                throw new CompilerException("unexpected " + token.getText(), token);
             }
         }
 
@@ -201,7 +201,7 @@ public class Spin1TreeBuilder {
     Spin1StatementNode parseAtom() {
         Token token = peek();
         if (token == null) {
-            throw new CompilerMessage("expecting operand", tokens.get(tokens.size() - 1));
+            throw new CompilerException("expecting operand", tokens.get(tokens.size() - 1));
         }
 
         if (unary.contains(token.getText().toUpperCase())) {
@@ -218,7 +218,7 @@ public class Spin1TreeBuilder {
             Spin1StatementNode node = parseLevel(parseAtom(), 0);
             token = next();
             if (token == null || !")".equals(token.getText())) {
-                throw new CompilerMessage("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
             }
             return node;
         }
@@ -228,7 +228,7 @@ public class Spin1TreeBuilder {
             Spin1StatementNode node = parseLevel(parseAtom(), 0);
             token = next();
             if (token == null || !"]".equals(token.getText())) {
-                throw new CompilerMessage("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
+                throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
             }
             return node;
         }
@@ -252,13 +252,13 @@ public class Spin1TreeBuilder {
                         }
                         token = next();
                         if (token == null) {
-                            throw new CompilerMessage("expecting )", tokens.get(tokens.size() - 1));
+                            throw new CompilerException("expecting )", tokens.get(tokens.size() - 1));
                         }
                         if (")".equals(token.getText())) {
                             return node;
                         }
                         if (!",".equals(token.getText()) && !":".equals(token.getText())) {
-                            throw new CompilerMessage("expecting )", token);
+                            throw new CompilerException("expecting )", token);
                         }
                     }
                 }
@@ -267,7 +267,7 @@ public class Spin1TreeBuilder {
                     node.addChild(parseLevel(parseAtom(), 0));
                     token = next();
                     if (token == null || !"]".equals(token.getText())) {
-                        throw new CompilerMessage("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
+                        throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
 
                     if (peek() == null) {
@@ -278,7 +278,7 @@ public class Spin1TreeBuilder {
                         node.addChild(parseLevel(parseAtom(), 0));
                         token = next();
                         if (token == null || !"]".equals(token.getText())) {
-                            throw new CompilerMessage("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
+                            throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                         }
                     }
                 }
@@ -296,7 +296,7 @@ public class Spin1TreeBuilder {
             return new Spin1StatementNode(next());
         }
 
-        throw new CompilerMessage("unexpected " + token.getText(), token);
+        throw new CompilerException("unexpected " + token.getText(), token);
     }
 
     Token peek() {

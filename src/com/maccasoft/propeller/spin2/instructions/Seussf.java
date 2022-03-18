@@ -12,7 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -51,7 +51,7 @@ public class Seussf extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1101011);
             value = czi.setValue(value, 0b000);
             if (dst.getInteger() > 0x1FF) {
-                throw new CompilerMessage("Destination register cannot exceed $1FF", dst.getExpression().getData());
+                throw new CompilerException("Destination register cannot exceed $1FF", dst.getExpression().getData());
             }
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0b001100100);

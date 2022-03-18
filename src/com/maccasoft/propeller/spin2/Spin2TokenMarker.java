@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SourceTokenMarker;
 import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
@@ -1033,7 +1033,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
     }
 
     @Override
-    public void refreshCompilerTokens(List<CompilerMessage> messages) {
+    public void refreshCompilerTokens(List<CompilerException> messages) {
         symbols.clear();
         compilerTokens.clear();
 

@@ -13,7 +13,7 @@ package com.maccasoft.propeller.spin2.instructions;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
@@ -60,14 +60,14 @@ public class Bytefit extends Byte {
                     else {
                         int value = exp.getInteger();
                         if (value < -0x80 || value > 0xFF) {
-                            throw new CompilerMessage("Byte value must range from -$80 to $FF", exp.getExpression().getData());
+                            throw new CompilerException("Byte value must range from -$80 to $FF", exp.getExpression().getData());
                         }
                         for (int i = 0; i < exp.getCount(); i++) {
                             os.write(value);
                         }
                     }
                 }
-            } catch (CompilerMessage e) {
+            } catch (CompilerException e) {
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException(e);

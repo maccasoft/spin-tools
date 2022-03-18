@@ -229,7 +229,7 @@ public class SpinCompiler {
                 compiler.setRemoveUnusedMethods(true);
 
                 Spin1Object object = compiler.compile(name, root);
-                for (CompilerMessage msg : compiler.getMessages()) {
+                for (CompilerException msg : compiler.getMessages()) {
                     System.out.println(msg);
                 }
 
@@ -262,7 +262,7 @@ public class SpinCompiler {
                 compiler.setRemoveUnusedMethods(true);
 
                 Spin2Object object = compiler.compile(name, root);
-                for (CompilerMessage msg : compiler.getMessages()) {
+                for (CompilerException msg : compiler.getMessages()) {
                     System.out.println(msg);
                 }
 

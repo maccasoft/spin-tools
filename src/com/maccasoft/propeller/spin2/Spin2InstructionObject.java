@@ -17,7 +17,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.BitField;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 
 public abstract class Spin2InstructionObject {
 
@@ -258,17 +258,24 @@ public abstract class Spin2InstructionObject {
     }
 
     protected int encodeInstructionParameters(String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src, String effect) {
+        CompilerException msgs = new CompilerException();
+
         int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
         value = cz.setValue(value, encodeEffect(effect));
         value = i.setBoolean(value, src.isLiteral());
         if (dst.getInteger() > 0x1FF) {
-            throw new CompilerMessage("Destination register cannot exceed $1FF", dst.getExpression().getData());
+            msgs.addMessage(new CompilerException("Destination register cannot exceed $1FF", dst.getExpression().getData()));
         }
         value = d.setValue(value, dst.getInteger());
         if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-            throw new CompilerMessage("Source register/constant cannot exceed $1FF", src.getExpression().getData());
+            msgs.addMessage(new CompilerException("Source register/constant cannot exceed $1FF", src.getExpression().getData()));
         }
         value = s.setValue(value, src.getInteger());
+
+        if (msgs.hasChilds()) {
+            throw msgs;
+        }
+
         return value;
     }
 

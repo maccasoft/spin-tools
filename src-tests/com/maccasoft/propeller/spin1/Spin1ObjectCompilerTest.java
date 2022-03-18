@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
 
@@ -2249,7 +2249,7 @@ class Spin1ObjectCompilerTest {
             + "                fit   $10\n"
             + "";
 
-        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+        Assertions.assertThrows(CompilerException.class, new Executable() {
 
             @Override
             public void execute() throws Throwable {
@@ -2332,7 +2332,7 @@ class Spin1ObjectCompilerTest {
             + "00008 00008   001 FF                                 bytefit $FF\n"
             + "", compile(text));
 
-        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+        Assertions.assertThrows(CompilerException.class, new Executable() {
 
             @Override
             public void execute() throws Throwable {
@@ -2343,7 +2343,7 @@ class Spin1ObjectCompilerTest {
             }
         });
 
-        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+        Assertions.assertThrows(CompilerException.class, new Executable() {
 
             @Override
             public void execute() throws Throwable {
@@ -2379,7 +2379,7 @@ class Spin1ObjectCompilerTest {
             + "0000C 0000C   002 FF FF                              wordfit $FFFF\n"
             + "", compile(text));
 
-        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+        Assertions.assertThrows(CompilerException.class, new Executable() {
 
             @Override
             public void execute() throws Throwable {
@@ -2390,7 +2390,7 @@ class Spin1ObjectCompilerTest {
             }
         });
 
-        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+        Assertions.assertThrows(CompilerException.class, new Executable() {
 
             @Override
             public void execute() throws Throwable {
@@ -2413,8 +2413,8 @@ class Spin1ObjectCompilerTest {
         Spin1ObjectCompiler compiler = new Spin1ObjectCompiler(scope, childObjects);
         Spin1Object obj = compiler.compileObject(root);
 
-        for (CompilerMessage msg : compiler.getMessages()) {
-            if (msg.type == CompilerMessage.ERROR) {
+        for (CompilerException msg : compiler.getMessages()) {
+            if (msg.type == CompilerException.ERROR) {
                 throw msg;
             }
         }

@@ -18,7 +18,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.MethodNode;
@@ -34,7 +34,7 @@ public class Spin2Compiler {
     Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
 
     boolean errors;
-    List<CompilerMessage> messages = new ArrayList<CompilerMessage>();
+    List<CompilerException> messages = new ArrayList<CompilerException>();
 
     boolean debugEnabled;
     List<Object> debugStatements = new ArrayList<Object>();
@@ -105,7 +105,7 @@ public class Spin2Compiler {
             ObjectNodeVisitor p = parent;
             while (p != null) {
                 if (p.fileName.equals(objectFileName)) {
-                    throw new CompilerMessage(fileName, "\"" + objectFileName + "\" illegal circular reference", node.file);
+                    throw new CompilerException(fileName, "\"" + objectFileName + "\" illegal circular reference", node.file);
                 }
                 p = p.parent;
             }
@@ -140,7 +140,7 @@ public class Spin2Compiler {
         Spin2Method compileMethod(MethodNode node) {
             if (!preprocessor.isReferenced(node)) {
                 if ("PRI".equalsIgnoreCase(node.type.getText())) {
-                    logMessage(new CompilerMessage(CompilerMessage.WARNING, "function \"" + node.name.getText() + "\" is not used", node.name));
+                    logMessage(new CompilerException(CompilerException.WARNING, "function \"" + node.name.getText() + "\" is not used", node.name));
                 }
                 if (removeUnusedMethods) {
                     return null;
@@ -155,9 +155,17 @@ public class Spin2Compiler {
         }
 
         @Override
-        protected void logMessage(CompilerMessage message) {
-            message.fileName = fileName;
-            Spin2Compiler.this.logMessage(message);
+        protected void logMessage(CompilerException message) {
+            if (message.hasChilds()) {
+                for (CompilerException msg : message.getChilds()) {
+                    msg.fileName = fileName;
+                    Spin2Compiler.this.logMessage(msg);
+                }
+            }
+            else {
+                message.fileName = fileName;
+                Spin2Compiler.this.logMessage(message);
+            }
         }
 
     }
@@ -222,18 +230,28 @@ public class Spin2Compiler {
         return null;
     }
 
-    protected void logMessage(CompilerMessage message) {
-        if (message.type == CompilerMessage.ERROR) {
-            errors = true;
+    protected void logMessage(CompilerException message) {
+        if (message.hasChilds()) {
+            for (CompilerException msg : message.getChilds()) {
+                if (msg.type == CompilerException.ERROR) {
+                    errors = true;
+                }
+                messages.add(msg);
+            }
         }
-        messages.add(message);
+        else {
+            if (message.type == CompilerException.ERROR) {
+                errors = true;
+            }
+            messages.add(message);
+        }
     }
 
     public boolean hasErrors() {
         return errors;
     }
 
-    public List<CompilerMessage> getMessages() {
+    public List<CompilerException> getMessages() {
         return messages;
     }
 

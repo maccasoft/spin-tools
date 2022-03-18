@@ -13,7 +13,7 @@ package com.maccasoft.propeller.spin1.instructions;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
@@ -58,7 +58,7 @@ public class Wordfit extends Word {
             try {
                 for (Spin1PAsmExpression exp : arguments) {
                     if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
-                        throw new CompilerMessage("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
+                        throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
                     }
                     byte[] value = getBytes(exp.getInteger());
                     for (int i = 0; i < exp.getCount(); i++) {
@@ -66,7 +66,7 @@ public class Wordfit extends Word {
                         os.write(value[1]);
                     }
                 }
-            } catch (CompilerMessage e) {
+            } catch (CompilerException e) {
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException(e);

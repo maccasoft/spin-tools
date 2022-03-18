@@ -13,7 +13,7 @@ package com.maccasoft.propeller.spin1.instructions;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
@@ -61,7 +61,7 @@ public class Long extends Spin1PAsmInstructionFactory {
                         os.write(value);
                     }
                 }
-            } catch (CompilerMessage e) {
+            } catch (CompilerException e) {
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException(e);

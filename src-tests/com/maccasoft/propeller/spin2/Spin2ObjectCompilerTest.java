@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
@@ -3620,7 +3620,7 @@ class Spin2ObjectCompilerTest {
             + "                fit   $10\n"
             + "";
 
-        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+        Assertions.assertThrows(CompilerException.class, new Executable() {
 
             @Override
             public void execute() throws Throwable {
@@ -3638,7 +3638,7 @@ class Spin2ObjectCompilerTest {
             + "                fit   $210\n"
             + "";
 
-        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+        Assertions.assertThrows(CompilerException.class, new Executable() {
 
             @Override
             public void execute() throws Throwable {
@@ -3712,7 +3712,7 @@ class Spin2ObjectCompilerTest {
             + "00004 00004   001 FF                                 bytefit $FF\n"
             + "", compile(text));
 
-        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+        Assertions.assertThrows(CompilerException.class, new Executable() {
 
             @Override
             public void execute() throws Throwable {
@@ -3723,7 +3723,7 @@ class Spin2ObjectCompilerTest {
             }
         });
 
-        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+        Assertions.assertThrows(CompilerException.class, new Executable() {
 
             @Override
             public void execute() throws Throwable {
@@ -3756,7 +3756,7 @@ class Spin2ObjectCompilerTest {
             + "00008 00008   002 FF FF                              wordfit $FFFF\n"
             + "", compile(text));
 
-        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+        Assertions.assertThrows(CompilerException.class, new Executable() {
 
             @Override
             public void execute() throws Throwable {
@@ -3767,7 +3767,7 @@ class Spin2ObjectCompilerTest {
             }
         });
 
-        Assertions.assertThrows(CompilerMessage.class, new Executable() {
+        Assertions.assertThrows(CompilerException.class, new Executable() {
 
             @Override
             public void execute() throws Throwable {
@@ -3858,8 +3858,8 @@ class Spin2ObjectCompilerTest {
             obj.setDebugger(new Spin2Debugger());
         }
 
-        for (CompilerMessage msg : compiler.getMessages()) {
-            if (msg.type == CompilerMessage.ERROR) {
+        for (CompilerException msg : compiler.getMessages()) {
+            if (msg.type == CompilerException.ERROR) {
                 throw msg;
             }
         }

@@ -12,7 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -67,11 +67,11 @@ public class Wrfast extends Spin2PAsmInstructionFactory {
             value = l.setBoolean(value, dst.isLiteral());
             value = i.setBoolean(value, src.isLiteral());
             if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                throw new CompilerMessage("Destination register/constant cannot exceed $1FF", dst.getExpression().getData());
+                throw new CompilerException("Destination register/constant cannot exceed $1FF", dst.getExpression().getData());
             }
             value = d.setValue(value, dst.getInteger());
             if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                throw new CompilerMessage("Source register/constant cannot exceed $1FF", src.getExpression().getData());
+                throw new CompilerException("Source register/constant cannot exceed $1FF", src.getExpression().getData());
             }
             value = s.setValue(value, src.getInteger());
             if (dst.isLongLiteral() && src.isLongLiteral()) {

@@ -14,7 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import com.maccasoft.propeller.CompilerMessage;
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine.Spin2DebugCommand;
 import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine.Spin2DebugExpression;
@@ -258,7 +258,7 @@ public class Spin2Debug {
                             break;
 
                         default:
-                            throw new CompilerMessage("Unknown debug statement '" + node.getText() + "'", node.getToken());
+                            throw new CompilerException("Unknown debug statement '" + node.getText() + "'", node.getToken());
                     }
                 }
             } catch (IOException e) {
@@ -521,7 +521,7 @@ public class Spin2Debug {
                         case "DLY":
                             os.write(DBC_DELAY);
                             if (node.getArgumentsCount() != 1) {
-                                throw new CompilerMessage("expecting one argument", node.getToken());
+                                throw new CompilerException("expecting one argument", node.getToken());
                             }
                             compileArgument(node.getArgument(0), os);
                             break;
@@ -529,7 +529,7 @@ public class Spin2Debug {
                         case "IF":
                             os.write(DBC_IF);
                             if (node.getArgumentsCount() != 1) {
-                                throw new CompilerMessage("expecting one argument", node.getToken());
+                                throw new CompilerException("expecting one argument", node.getToken());
                             }
                             compileArgument(node.getArgument(0), os);
                             if (conditionFirst) {
@@ -540,7 +540,7 @@ public class Spin2Debug {
                         case "IFNOT":
                             os.write(DBC_IFNOT);
                             if (node.getArgumentsCount() != 1) {
-                                throw new CompilerMessage("expecting one argument", node.getToken());
+                                throw new CompilerException("expecting one argument", node.getToken());
                             }
                             compileArgument(node.getArgument(0), os);
                             if (conditionFirst) {
@@ -550,7 +550,7 @@ public class Spin2Debug {
                             break;
 
                         default:
-                            throw new CompilerMessage("unknown debug statement '" + node.getText() + "'", node.getToken());
+                            throw new CompilerException("unknown debug statement '" + node.getText() + "'", node.getToken());
                     }
                 }
             } catch (IOException e) {
@@ -584,7 +584,7 @@ public class Spin2Debug {
 
     void compileArrayStatement(Spin2DebugCommand node, OutputStream os, int op) throws IOException {
         if ((node.getArgumentsCount() % 2) != 0) {
-            throw new CompilerMessage("expecting argument pairs", node.getToken());
+            throw new CompilerException("expecting argument pairs", node.getToken());
         }
         for (int index = 0; index < node.getArgumentsCount(); index += 2) {
             if (first) {

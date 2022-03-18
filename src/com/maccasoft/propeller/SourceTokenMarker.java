@@ -145,10 +145,10 @@ public abstract class SourceTokenMarker {
         return root;
     }
 
-    public void refreshCompilerTokens(List<CompilerMessage> messages) {
+    public void refreshCompilerTokens(List<CompilerException> messages) {
         TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
-        for (CompilerMessage message : messages) {
-            TokenId id = message.type == CompilerMessage.ERROR ? TokenId.ERROR : TokenId.WARNING;
+        for (CompilerException message : messages) {
+            TokenId id = message.type == CompilerException.ERROR ? TokenId.ERROR : TokenId.WARNING;
             TokenMarker marker = message.getStartToken() != null ? new TokenMarker(message.getStartToken(), message.getStopToken(), id) : new TokenMarker(0, 0, id);
             marker.setError(message.getMessage());
             tokens.add(marker);
