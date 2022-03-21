@@ -1355,7 +1355,7 @@ public class SpinTools {
                     if (serialTerminal == null) {
                         serialTerminal = new SerialTerminal();
                         serialTerminal.open();
-                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()), 2000000);
+                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()), 115200);
                     }
                     serialTerminal.setFocus();
                 } catch (Exception ex) {
@@ -1620,6 +1620,7 @@ public class SpinTools {
 
     private void handleUpload(boolean flash, SerialTerminal serialTerminal) {
         IRunnableWithProgress thread;
+        Shell activeShell = Display.getDefault().getActiveShell();
 
         CTabItem tabItem = tabFolder.getSelection();
         if (tabItem == null) {
@@ -1631,6 +1632,8 @@ public class SpinTools {
             editorTab.goToFirstError();
             return;
         }
+
+        ProgressMonitorDialog dlg = new ProgressMonitorDialog(activeShell);
 
         Object obj = editorTab.getObject();
         if (obj instanceof Spin1Object) {
@@ -1673,6 +1676,13 @@ public class SpinTools {
                                 if (rc == 0) {
                                     throw new RuntimeException("Propeller 1 not found on " + serialPort.getPortName());
                                 }
+                                Display.getDefault().syncExec(new Runnable() {
+
+                                    @Override
+                                    public void run() {
+                                        dlg.open();
+                                    }
+                                });
                                 return rc;
                             }
 
@@ -1745,7 +1755,7 @@ public class SpinTools {
                                     SerialPortException serialException = (SerialPortException) e;
                                     msg = serialException.getPortName() + " " + serialException.getExceptionType();
                                 }
-                                MessageDialog.openError(shell, APP_TITLE, "Error uploading program:\r\n" + msg);
+                                MessageDialog.openError(activeShell, APP_TITLE, "Error uploading program:\r\n" + msg);
                             }
                         });
                     }
@@ -1795,6 +1805,13 @@ public class SpinTools {
                                 if (rc == 0) {
                                     throw new RuntimeException("Propeller 2 not found on " + serialPort.getPortName());
                                 }
+                                Display.getDefault().syncExec(new Runnable() {
+
+                                    @Override
+                                    public void run() {
+                                        dlg.open();
+                                    }
+                                });
                                 return rc;
                             }
 
@@ -1836,7 +1853,7 @@ public class SpinTools {
                                 @Override
                                 public void run() {
                                     if (serialTerminal != null) {
-                                        serialTerminal.setSerialPort(terminalPort);
+                                        serialTerminal.setSerialPort(terminalPort, sourcePool.isDebugEnabled() ? 2000000 : serialTerminal.getBaudRate());
                                     }
                                 }
                             });
@@ -1852,7 +1869,7 @@ public class SpinTools {
                                     SerialPortException serialException = (SerialPortException) e;
                                     msg = serialException.getPortName() + " " + serialException.getExceptionType();
                                 }
-                                MessageDialog.openError(shell, APP_TITLE, "Error uploading program:\r\n" + msg);
+                                MessageDialog.openError(activeShell, APP_TITLE, "Error uploading program:\r\n" + msg);
                             }
                         });
                     }
@@ -1863,13 +1880,8 @@ public class SpinTools {
             };
         }
 
-        Shell activeShell = Display.getDefault().getActiveShell();
-        if (activeShell == null) {
-            activeShell = shell;
-        }
-
-        ProgressMonitorDialog dlg = new ProgressMonitorDialog(activeShell);
         try {
+            dlg.setOpenOnRun(false);
             dlg.run(true, true, thread);
         } catch (Exception e) {
             e.printStackTrace();

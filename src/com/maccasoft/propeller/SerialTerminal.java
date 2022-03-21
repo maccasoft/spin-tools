@@ -868,6 +868,7 @@ public class SerialTerminal {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 try {
+                    clear();
                     startMonitor();
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -888,6 +889,7 @@ public class SerialTerminal {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 try {
+                    clear();
                     startTAQOZ();
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -956,15 +958,14 @@ public class SerialTerminal {
                 }
             }
 
-            baudRate.removeSelectionListener(baudRateSelectionListener);
-            try {
-                baudRate.select(baudRates.indexOf(serialBaudRate));
-            } finally {
-                baudRate.addSelectionListener(baudRateSelectionListener);
-            }
-            this.serialBaudRate = serialBaudRate;
-
             if (serialPort != null) {
+                baudRate.removeSelectionListener(baudRateSelectionListener);
+                try {
+                    baudRate.select(baudRates.indexOf(serialBaudRate));
+                } finally {
+                    baudRate.addSelectionListener(baudRateSelectionListener);
+                }
+
                 shell.setText(WINDOW_TITLE + " on " + serialPort.getPortName());
                 if (!serialPort.isOpened()) {
                     serialPort.openPort();
@@ -1000,8 +1001,7 @@ public class SerialTerminal {
     }
 
     public int getBaudRate() {
-        int i = baudRate.getSelectionIndex();
-        return i != -1 ? baudRates.get(i) : 115200;
+        return serialBaudRate;
     }
 
     void redraw() {
