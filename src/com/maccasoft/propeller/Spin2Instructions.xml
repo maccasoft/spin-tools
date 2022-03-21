@@ -239,21 +239,21 @@
 
         <entry name="EVENT_INT"></entry>
         <entry name="INT_OFF"></entry>
-        <entry name="1EVENT_CT1"></entry>
-        <entry name="2EVENT_CT2"></entry>
-        <entry name="3EVENT_CT3"></entry>
-        <entry name="4EVENT_SE1"></entry>
-        <entry name="5EVENT_SE2"></entry>
-        <entry name="6EVENT_SE3"></entry>
-        <entry name="7EVENT_SE4"></entry>
-        <entry name="8EVENT_PAT"></entry>
-        <entry name="9EVENT_FBW"></entry>
-        <entry name="10EVENT_XMT"></entry>
-        <entry name="11EVENT_XFI"></entry>
-        <entry name="12EVENT_XRO"></entry>
-        <entry name="13EVENT_XRL"></entry>
-        <entry name="14EVENT_ATN"></entry>
-        <entry name="15EVENT_QMT"></entry>
+        <entry name="EVENT_CT1"></entry>
+        <entry name="EVENT_CT2"></entry>
+        <entry name="EVENT_CT3"></entry>
+        <entry name="EVENT_SE1"></entry>
+        <entry name="EVENT_SE2"></entry>
+        <entry name="EVENT_SE3"></entry>
+        <entry name="EVENT_SE4"></entry>
+        <entry name="EVENT_PAT"></entry>
+        <entry name="EVENT_FBW"></entry>
+        <entry name="EVENT_XMT"></entry>
+        <entry name="EVENT_XFI"></entry>
+        <entry name="EVENT_XRO"></entry>
+        <entry name="EVENT_XRL"></entry>
+        <entry name="EVENT_ATN"></entry>
+        <entry name="EVENT_QMT"></entry>
 
         <entry name="FALSE"><![CDATA[<b>FALSE</b><p>Same as 0</p>]]></entry>
         <entry name="TRUE"><![CDATA[<b>TRUE</b><p>Same as -1</p>]]></entry>
@@ -757,6 +757,7 @@
         <entry name="loc"><![CDATA[<b>LOC     PA/PB/PTRA/PTRB,#{\}A</b><p>Get {12'b0, address[19:0]} into PA/PB/PTRA/PTRB (per W).          If R = 1, address = PC + A, else address = A. "\" forces R = 0.</p>]]></entry>
         <entry name="augs"><![CDATA[<b>AUGS    #n</b><p>Queue #n to be used as upper 23 bits for next #S occurrence, so that the next 9-bit #S will be augmented to 32 bits.</p>]]></entry>
         <entry name="augd"><![CDATA[<b>AUGD    #n</b><p>Queue #n to be used as upper 23 bits for next #D occurrence, so that the next 9-bit #D will be augmented to 32 bits.</p>]]></entry>
+        <entry name="asmclk"><![CDATA[<b>ASMCLK</b><p>For PASM-only programs, set the clock mode specified by the clock setup symbols.</p>]]></entry>
     </section>
     <section class="DatNode,DataLineNode,Condition">
         <entry name="_ret_"><![CDATA[<b>_RET_         <inst>  <ops></b><p>Execute <inst> always and return if no branch. If <inst> is not branching then return by popping stack[19:0] into PC.</p>]]></entry>
