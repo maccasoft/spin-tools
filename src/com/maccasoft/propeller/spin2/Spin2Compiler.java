@@ -10,6 +10,10 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +22,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
+import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
@@ -28,7 +33,7 @@ import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.spin2.Spin2Object.LinkDataObject;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler.ObjectInfo;
 
-public class Spin2Compiler {
+public class Spin2Compiler extends Compiler {
 
     Spin2Context scope = new Spin2GlobalContext();
     Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
@@ -54,6 +59,28 @@ public class Spin2Compiler {
 
     public void setDebugEnabled(boolean enabled) {
         this.debugEnabled = enabled;
+    }
+
+    @Override
+    public void compile(File file, OutputStream binary, PrintStream listing) throws Exception {
+        String text = getSource(file.getAbsolutePath());
+        if (text == null) {
+            throw new FileNotFoundException();
+        }
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+        Spin2Parser parser = new Spin2Parser(stream);
+        Spin2Object object = compile(file.getName(), parser.parse());
+
+        if (hasErrors()) {
+            throw new CompilerException(messages);
+        }
+
+        if (listing != null) {
+            object.generateListing(listing);
+        }
+        if (binary != null) {
+            object.generateBinary(binary);
+        }
     }
 
     public Spin2Object compile(String rootFileName, Node root) {
@@ -223,11 +250,17 @@ public class Spin2Compiler {
     }
 
     protected Node getParsedObject(String fileName) {
+        String text = getSource(fileName);
+        if (text != null) {
+            Spin2TokenStream stream = new Spin2TokenStream(text);
+            Spin2Parser parser = new Spin2Parser(stream);
+            return parser.parse();
+        }
         return null;
     }
 
     protected byte[] getBinaryFile(String fileName) {
-        return null;
+        return getResource(fileName);
     }
 
     protected void logMessage(CompilerException message) {

@@ -10,6 +10,10 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +22,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
+import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
@@ -27,8 +32,10 @@ import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.spin1.Spin1Object.LinkDataObject;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
+import com.maccasoft.propeller.spin2.Spin2Parser;
+import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
-public class Spin1Compiler {
+public class Spin1Compiler extends Compiler {
 
     Spin1Context scope = new Spin1GlobalContext();
     Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
@@ -45,6 +52,28 @@ public class Spin1Compiler {
 
     public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
         this.removeUnusedMethods = removeUnusedMethods;
+    }
+
+    @Override
+    public void compile(File file, OutputStream binary, PrintStream listing) throws Exception {
+        String text = getSource(file.getAbsolutePath());
+        if (text == null) {
+            throw new FileNotFoundException();
+        }
+        Spin1TokenStream stream = new Spin1TokenStream(text);
+        Spin1Parser parser = new Spin1Parser(stream);
+        Spin1Object object = compile(file.getName(), parser.parse());
+
+        if (hasErrors()) {
+            throw new CompilerException(messages);
+        }
+
+        if (listing != null) {
+            object.generateListing(listing);
+        }
+        if (binary != null) {
+            object.generateBinary(binary);
+        }
     }
 
     public Spin1Object compile(String rootFileName, Node root) {
@@ -148,7 +177,7 @@ public class Spin1Compiler {
                 objectRoot = getParsedObject(objectFileName);
             }
             if (objectRoot == null) {
-                //logMessage(new CompilerMessage(fileName, "object \"" + objectName + "\" not found", node.file));
+                //logMessage(new CompilerException(fileName, "object \"" + objectName + "\" not found", node.file));
                 return;
             }
 
@@ -248,11 +277,17 @@ public class Spin1Compiler {
     }
 
     protected Node getParsedObject(String fileName) {
+        String text = getSource(fileName);
+        if (text != null) {
+            Spin2TokenStream stream = new Spin2TokenStream(text);
+            Spin2Parser parser = new Spin2Parser(stream);
+            return parser.parse();
+        }
         return null;
     }
 
     protected byte[] getBinaryFile(String fileName) {
-        return null;
+        return getResource(fileName);
     }
 
     protected void logMessage(CompilerException message) {

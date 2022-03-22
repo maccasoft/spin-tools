@@ -39,6 +39,10 @@ public class CompilerException extends RuntimeException {
 
     }
 
+    public CompilerException(List<CompilerException> childs) {
+        this.childs.addAll(childs);
+    }
+
     public CompilerException(String message, Object data) {
         this(ERROR, null, message, data);
     }
