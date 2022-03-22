@@ -76,7 +76,7 @@ public class EditorTab implements FindReplaceTarget {
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
-    Object object;
+    SpinObject object;
 
     final PropertyChangeListener settingsChangeListener = new PropertyChangeListener() {
 
@@ -98,23 +98,115 @@ public class EditorTab implements FindReplaceTarget {
             }
             File localFile = file != null ? file : new File(tabItemText);
             if (evt.getPropertyName().equals(localFile.getAbsolutePath())) {
+                scheduleCompile();
                 return;
             }
-            if (!dependencies.contains(evt.getPropertyName())) {
+            if (dependencies.contains(evt.getPropertyName())) {
+                scheduleCompile();
                 return;
             }
-            if (tabItemText.toLowerCase().endsWith(".spin2")) {
-                Display.getDefault().timerExec(500, spin2CompilerRunnable);
-            }
-            else {
-                Display.getDefault().timerExec(500, spin1CompilerRunnable);
-            }
-            tabItem.setFont(busyFont);
         }
 
     };
 
+    class EditorTabSourceProvider extends Compiler.SourceProvider {
+
+        File[] searchPaths;
+
+        public EditorTabSourceProvider(String[] searchPaths) {
+            this.searchPaths = new File[searchPaths.length];
+            for (int i = 0; i < searchPaths.length; i++) {
+                this.searchPaths[i] = new File(searchPaths[i]);
+            }
+        }
+
+        @Override
+        public Node getParsedSource(String name) {
+            File localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
+
+            Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
+            if (node == null) {
+                for (int i = 0; i < searchPaths.length; i++) {
+                    localFile = new File(searchPaths[i], name);
+                    if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
+                        break;
+                    }
+                }
+            }
+
+            if (node != null) {
+                dependencies.add(localFile.getAbsolutePath());
+            }
+
+            return node;
+        }
+
+        @Override
+        public String getSource(String name) {
+            File localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
+            if (localFile.exists()) {
+                try {
+                    dependencies.add(localFile.getAbsolutePath());
+                    return loadFromFile(localFile);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+
+            for (int i = 0; i < searchPaths.length; i++) {
+                localFile = new File(searchPaths[i], name);
+                if (localFile.exists()) {
+                    try {
+                        dependencies.add(localFile.getAbsolutePath());
+                        return loadFromFile(localFile);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        public byte[] getResource(String name) {
+            File localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
+            if (localFile.exists()) {
+                try {
+                    return loadBinaryFromFile(localFile);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+
+            for (int i = 0; i < searchPaths.length; i++) {
+                localFile = new File(searchPaths[i], name);
+                if (localFile.exists()) {
+                    try {
+                        return loadBinaryFromFile(localFile);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+            }
+
+            return null;
+        }
+    }
+
     class Spin1TokenMarkerAdatper extends Spin1TokenMarker {
+
+        @Override
+        public void refreshTokens(String text) {
+            super.refreshTokens(text);
+
+            File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
+            sourcePool.setParsedSource(localFile.getAbsolutePath(), getRoot());
+        }
 
         @Override
         protected Node getObjectTree(String fileName) {
@@ -132,7 +224,7 @@ public class EditorTab implements FindReplaceTarget {
             }
 
             if (node == null) {
-                String[] paths = Preferences.getInstance().getSpin2LibraryPath();
+                String[] paths = Preferences.getInstance().getSpin1LibraryPath();
                 for (int i = 0; i < paths.length; i++) {
                     localFile = new File(paths[i], fileName + ".spin");
                     if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
@@ -156,159 +248,15 @@ public class EditorTab implements FindReplaceTarget {
 
     }
 
-    class Spin1CompilerAdapter extends Spin1Compiler {
-
-        @Override
-        protected Node getParsedObject(String fileName) {
-            File localFile = file != null ? new File(file.getParentFile(), fileName) : new File(fileName);
-
-            Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
-            if (node == null && localFile.exists()) {
-                try {
-                    Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(localFile));
-                    Spin1Parser subject = new Spin1Parser(stream);
-                    node = subject.parse();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            if (node == null) {
-                String[] searchPaths = Preferences.getInstance().getSpin1LibraryPath();
-                for (int i = 0; i < searchPaths.length; i++) {
-                    localFile = new File(searchPaths[i], fileName);
-                    if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
-                        break;
-                    }
-                    if (localFile.exists()) {
-                        try {
-                            Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(localFile));
-                            Spin1Parser subject = new Spin1Parser(stream);
-                            node = subject.parse();
-                            break;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-
-            dependencies.add(node != null ? localFile.getAbsolutePath() : fileName);
-
-            return node;
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            File localFile = file != null ? new File(file.getParentFile(), fileName) : new File(fileName);
-
-            if (!localFile.exists()) {
-                String[] searchPaths = Preferences.getInstance().getSpin1LibraryPath();
-                for (int i = 0; i < searchPaths.length; i++) {
-                    localFile = new File(searchPaths[i], fileName);
-                    if (localFile.exists()) {
-                        break;
-                    }
-                }
-            }
-
-            if (localFile.exists()) {
-                try {
-                    InputStream is = new FileInputStream(localFile);
-                    try {
-                        byte[] b = new byte[is.available()];
-                        is.read(b);
-                        return b;
-                    } finally {
-                        try {
-                            is.close();
-                        } catch (Exception e) {
-
-                        }
-                    }
-                } catch (Exception e) {
-                    // Do nothing
-                }
-            }
-
-            return null;
-        }
-
-    }
-
-    final Runnable spin1CompilerRunnable = new Runnable() {
-
-        @Override
-        public void run() {
-            if (editor.getControl().isDisposed()) {
-                return;
-            }
-            if (!threadRunning.getAndSet(true)) {
-                pendingCompile.set(false);
-
-                Spin1TokenStream stream = new Spin1TokenStream(editor.getStyledText().getText());
-                Spin1Parser parser = new Spin1Parser(stream);
-                Node root = parser.parse();
-
-                File localFile = file != null ? file : new File(tabItemText);
-                sourcePool.setParsedSource(localFile.getAbsolutePath(), root);
-
-                Thread thread = new Thread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        dependencies.clear();
-
-                        Spin1Compiler compiler = new Spin1CompilerAdapter();
-                        compiler.setRemoveUnusedMethods(true);
-                        try {
-                            object = compiler.compile(tabItemText, root);
-                            errors = compiler.hasErrors();
-                        } catch (Exception e) {
-                            errors = true;
-                            e.printStackTrace();
-                        }
-
-                        if (!pendingCompile.get()) {
-                            messages.clear();
-                            messages.addAll(compiler.getMessages());
-
-                            List<CompilerException> list = new ArrayList<CompilerException>();
-                            for (CompilerException msg : messages) {
-                                if (tabItemText.equals(msg.fileName)) {
-                                    list.add(msg);
-                                }
-                            }
-
-                            Display.getDefault().asyncExec(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    if (editor == null || editor.getStyledText().isDisposed()) {
-                                        return;
-                                    }
-                                    editor.setCompilerMessages(list);
-                                    editor.redraw();
-                                    tabItem.setFont(null);
-                                    updateTabItemText();
-                                }
-                            });
-                        }
-                        threadRunning.set(false);
-                    }
-
-                });
-                thread.start();
-            }
-            else {
-                pendingCompile.set(true);
-                Display.getDefault().timerExec(250, spin1CompilerRunnable);
-            }
-        }
-
-    };
-
     class Spin2TokenMarkerAdatper extends Spin2TokenMarker {
+
+        @Override
+        public void refreshTokens(String text) {
+            super.refreshTokens(text);
+
+            File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
+            sourcePool.setParsedSource(localFile.getAbsolutePath(), getRoot());
+        }
 
         @Override
         protected Node getObjectTree(String fileName) {
@@ -350,87 +298,7 @@ public class EditorTab implements FindReplaceTarget {
 
     }
 
-    class Spin2CompilerAdapter extends Spin2Compiler {
-
-        @Override
-        protected Node getParsedObject(String fileName) {
-            File localFile = file != null ? new File(file.getParentFile(), fileName) : new File(fileName);
-
-            Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
-            if (node == null && localFile.exists()) {
-                try {
-                    Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(localFile));
-                    Spin2Parser subject = new Spin2Parser(stream);
-                    node = subject.parse();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            if (node == null) {
-                String[] searchPaths = Preferences.getInstance().getSpin2LibraryPath();
-                for (int i = 0; i < searchPaths.length; i++) {
-                    localFile = new File(searchPaths[i], fileName);
-                    if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
-                        break;
-                    }
-                    if (localFile.exists()) {
-                        try {
-                            Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(localFile));
-                            Spin2Parser subject = new Spin2Parser(stream);
-                            node = subject.parse();
-                            break;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-
-            dependencies.add(node != null ? localFile.getAbsolutePath() : fileName);
-
-            return node;
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            File localFile = file != null ? new File(file.getParentFile(), fileName) : new File(fileName);
-
-            if (!localFile.exists()) {
-                String[] searchPaths = Preferences.getInstance().getSpin2LibraryPath();
-                for (int i = 0; i < searchPaths.length; i++) {
-                    localFile = new File(searchPaths[i], fileName);
-                    if (localFile.exists()) {
-                        break;
-                    }
-                }
-            }
-
-            if (localFile.exists()) {
-                try {
-                    InputStream is = new FileInputStream(localFile);
-                    try {
-                        byte[] b = new byte[is.available()];
-                        is.read(b);
-                        return b;
-                    } finally {
-                        try {
-                            is.close();
-                        } catch (Exception e) {
-
-                        }
-                    }
-                } catch (Exception e) {
-                    // Do nothing
-                }
-            }
-
-            return null;
-        }
-
-    }
-
-    final Runnable spin2CompilerRunnable = new Runnable() {
+    final Runnable compilerRunnable = new Runnable() {
 
         @Override
         public void run() {
@@ -440,12 +308,8 @@ public class EditorTab implements FindReplaceTarget {
             if (!threadRunning.getAndSet(true)) {
                 pendingCompile.set(false);
 
-                Spin2TokenStream stream = new Spin2TokenStream(editor.getStyledText().getText());
-                Spin2Parser parser = new Spin2Parser(stream);
-                Node root = parser.parse();
-
                 File localFile = file != null ? file : new File(tabItemText);
-                sourcePool.setParsedSource(localFile.getAbsolutePath(), root);
+                Node root = sourcePool.getParsedSource(localFile.getAbsolutePath());
 
                 Thread thread = new Thread(new Runnable() {
 
@@ -453,9 +317,16 @@ public class EditorTab implements FindReplaceTarget {
                     public void run() {
                         dependencies.clear();
 
-                        Spin2Compiler compiler = new Spin2CompilerAdapter();
+                        Compiler compiler = tabItemText.toLowerCase().endsWith(".spin2") ? new Spin2Compiler() : new Spin1Compiler();
                         compiler.setRemoveUnusedMethods(true);
-                        compiler.setDebugEnabled(sourcePool.isDebugEnabled());
+                        if (compiler instanceof Spin2Compiler) {
+                            compiler.setDebugEnabled(sourcePool.isDebugEnabled());
+                            compiler.addSourceProvider(new EditorTabSourceProvider(Preferences.getInstance().getSpin2LibraryPath()));
+                        }
+                        if (compiler instanceof Spin1Compiler) {
+                            compiler.addSourceProvider(new EditorTabSourceProvider(Preferences.getInstance().getSpin1LibraryPath()));
+                        }
+
                         try {
                             object = compiler.compile(tabItemText, root);
                             errors = compiler.hasErrors();
@@ -497,7 +368,7 @@ public class EditorTab implements FindReplaceTarget {
             }
             else {
                 pendingCompile.set(true);
-                Display.getDefault().timerExec(250, spin2CompilerRunnable);
+                Display.getDefault().timerExec(250, this);
             }
         }
 
@@ -534,7 +405,6 @@ public class EditorTab implements FindReplaceTarget {
                     dirty = true;
                     updateTabItemText();
                 }
-                scheduleCompile();
             }
         });
 
@@ -651,13 +521,6 @@ public class EditorTab implements FindReplaceTarget {
 
     public void setEditorText(String text) {
         editor.setText(text);
-        if (tabItemText.toLowerCase().endsWith(".spin2")) {
-            Display.getDefault().timerExec(1000, spin2CompilerRunnable);
-        }
-        else {
-            Display.getDefault().timerExec(1000, spin1CompilerRunnable);
-        }
-        tabItem.setFont(busyFont);
     }
 
     public String getEditorText() {
@@ -683,7 +546,7 @@ public class EditorTab implements FindReplaceTarget {
         return messages;
     }
 
-    public Object getObject() {
+    public SpinObject getObject() {
         return object;
     }
 
@@ -756,6 +619,26 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         return sb.toString();
+    }
+
+    byte[] loadBinaryFromFile(File file) throws Exception {
+        try {
+            InputStream is = new FileInputStream(file);
+            try {
+                byte[] b = new byte[is.available()];
+                is.read(b);
+                return b;
+            } finally {
+                try {
+                    is.close();
+                } catch (Exception e) {
+
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public SourceEditor getEditor() {
@@ -919,12 +802,7 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     void scheduleCompile() {
-        if (tabItemText.toLowerCase().endsWith(".spin2")) {
-            Display.getDefault().timerExec(500, spin2CompilerRunnable);
-        }
-        else {
-            Display.getDefault().timerExec(500, spin1CompilerRunnable);
-        }
+        Display.getDefault().timerExec(500, compilerRunnable);
         tabItem.setFont(busyFont);
     }
 

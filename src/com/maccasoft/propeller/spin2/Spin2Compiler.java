@@ -53,10 +53,12 @@ public class Spin2Compiler extends Compiler {
 
     }
 
+    @Override
     public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
         this.removeUnusedMethods = removeUnusedMethods;
     }
 
+    @Override
     public void setDebugEnabled(boolean enabled) {
         this.debugEnabled = enabled;
     }
@@ -83,6 +85,7 @@ public class Spin2Compiler extends Compiler {
         }
     }
 
+    @Override
     public Spin2Object compile(String rootFileName, Node root) {
         Spin2Object obj = compileObject(rootFileName, root);
 
@@ -250,13 +253,16 @@ public class Spin2Compiler extends Compiler {
     }
 
     protected Node getParsedObject(String fileName) {
-        String text = getSource(fileName);
-        if (text != null) {
-            Spin2TokenStream stream = new Spin2TokenStream(text);
-            Spin2Parser parser = new Spin2Parser(stream);
-            return parser.parse();
+        Node node = getParsedSource(fileName);
+        if (node == null) {
+            String text = getSource(fileName);
+            if (text != null) {
+                Spin2TokenStream stream = new Spin2TokenStream(text);
+                Spin2Parser parser = new Spin2Parser(stream);
+                node = parser.parse();
+            }
         }
-        return null;
+        return node;
     }
 
     protected byte[] getBinaryFile(String fileName) {

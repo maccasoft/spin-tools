@@ -71,7 +71,7 @@ public class SpinCompiler {
 
             String name = fileToCompile.getName();
             if (!name.toLowerCase().endsWith(".spin") && !name.toLowerCase().endsWith(".spin2")) {
-                name += ".spin2";
+                name += ".spin";
                 fileToCompile = new File(fileToCompile.getParentFile(), name);
             }
 
@@ -88,15 +88,17 @@ public class SpinCompiler {
 
             System.out.println("Compiling...");
 
-            Compiler compiler = name.toLowerCase().endsWith(".spin") ? new Spin1Compiler() : new Spin2Compiler();
+            Compiler compiler = name.toLowerCase().endsWith(".spin2") ? new Spin2Compiler() : new Spin1Compiler();
             compiler.addSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[0])));
-            compiler.compile(fileToCompile, binaryData, listingStream);
+            try {
+                compiler.compile(fileToCompile, binaryData, listingStream);
+            } finally {
+                listingStream.close();
+            }
 
             FileOutputStream os = new FileOutputStream(binaryFile);
             os.write(binaryData.toByteArray());
             os.close();
-
-            listingStream.close();
 
             System.out.println("Done.");
             System.out.println("Program size is " + binaryData.size() + " bytes");

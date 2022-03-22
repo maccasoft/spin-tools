@@ -32,8 +32,6 @@ import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.spin1.Spin1Object.LinkDataObject;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
-import com.maccasoft.propeller.spin2.Spin2Parser;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class Spin1Compiler extends Compiler {
 
@@ -50,6 +48,7 @@ public class Spin1Compiler extends Compiler {
 
     }
 
+    @Override
     public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
         this.removeUnusedMethods = removeUnusedMethods;
     }
@@ -76,6 +75,7 @@ public class Spin1Compiler extends Compiler {
         }
     }
 
+    @Override
     public Spin1Object compile(String rootFileName, Node root) {
         Spin1Object obj = compileObject(rootFileName, root);
 
@@ -277,13 +277,16 @@ public class Spin1Compiler extends Compiler {
     }
 
     protected Node getParsedObject(String fileName) {
-        String text = getSource(fileName);
-        if (text != null) {
-            Spin2TokenStream stream = new Spin2TokenStream(text);
-            Spin2Parser parser = new Spin2Parser(stream);
-            return parser.parse();
+        Node node = getParsedSource(fileName);
+        if (node == null) {
+            String text = getSource(fileName);
+            if (text != null) {
+                Spin1TokenStream stream = new Spin1TokenStream(text);
+                Spin1Parser parser = new Spin1Parser(stream);
+                node = parser.parse();
+            }
         }
-        return null;
+        return node;
     }
 
     protected byte[] getBinaryFile(String fileName) {

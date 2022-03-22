@@ -139,6 +139,14 @@ public abstract class SourceTokenMarker {
     protected TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
     protected TreeSet<TokenMarker> compilerTokens = new TreeSet<TokenMarker>();
 
+    public SourceTokenMarker() {
+
+    }
+
+    public void setSourceRoot(Node root) {
+        this.root = root;
+    }
+
     public abstract void refreshTokens(String text);
 
     public Node getRoot() {

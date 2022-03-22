@@ -1402,7 +1402,7 @@ public class SpinTools {
             return;
         }
 
-        Object object = editorTab.getObject();
+        SpinObject object = editorTab.getObject();
         if (object instanceof Spin1Object) {
             P1MemoryDialog dlg = new P1MemoryDialog(shell) {
 
@@ -1635,7 +1635,7 @@ public class SpinTools {
 
         ProgressMonitorDialog dlg = new ProgressMonitorDialog(activeShell);
 
-        Object obj = editorTab.getObject();
+        SpinObject obj = editorTab.getObject();
         if (obj instanceof Spin1Object) {
             thread = new IRunnableWithProgress() {
 

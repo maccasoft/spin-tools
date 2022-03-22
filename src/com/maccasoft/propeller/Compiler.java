@@ -18,11 +18,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import com.maccasoft.propeller.model.Node;
 
 public abstract class Compiler {
 
     public static abstract class SourceProvider {
+
+        public Node getParsedSource(String name) {
+            return null;
+        }
 
         public abstract String getSource(String name);
 
@@ -140,8 +147,36 @@ public abstract class Compiler {
         sourceProviders.add(provider);
     }
 
+    public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
+
+    }
+
+    public void setDebugEnabled(boolean enabled) {
+
+    }
+
     public void compile(File file, OutputStream binary, PrintStream listing) throws Exception {
 
+    }
+
+    public abstract SpinObject compile(String rootFileName, Node root);
+
+    public boolean hasErrors() {
+        return false;
+    }
+
+    public List<CompilerException> getMessages() {
+        return Collections.emptyList();
+    }
+
+    protected Node getParsedSource(String name) {
+        for (SourceProvider p : sourceProviders) {
+            Node node = p.getParsedSource(name);
+            if (node != null) {
+                return node;
+            }
+        }
+        return null;
     }
 
     protected String getSource(String name) {
