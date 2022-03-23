@@ -282,7 +282,7 @@ public class Propeller2Loader {
     }
 
     void base64Upload(byte[] binaryImage) throws SerialPortException {
-        int n;
+        int n, sent;
         Encoder encoder = Base64.getEncoder();
 
         int sum = 0;
@@ -312,10 +312,12 @@ public class Propeller2Loader {
         serialPort.writeString("> Prop_Txt 0 0 0 0");
 
         String encodedImage = encoder.encodeToString(binaryImage);
-        for (n = 0; n < encodedImage.length(); n += 64) {
+        for (n = 0, sent = 0; n < encodedImage.length(); n += 64, sent += 48) {
             serialPort.writeString("\r> ");
             serialPort.writeString(encodedImage.substring(n, n + Math.min(64, encodedImage.length() - n)));
+            notifyProgress(sent, binaryImage.length);
         }
+        notifyProgress(sent, binaryImage.length);
 
         serialPort.writeString(" ?");
     }
