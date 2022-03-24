@@ -95,12 +95,14 @@ public class Spin1ObjectCompiler {
     public static class ObjectInfo {
         String fileName;
         Spin1Object object;
+        boolean errors;
 
         long offset;
 
-        public ObjectInfo(String fileName, Spin1Object object) {
+        public ObjectInfo(String fileName, Spin1Object object, boolean errors) {
             this.fileName = fileName;
             this.object = object;
+            this.errors = errors;
         }
     }
 
@@ -514,6 +516,10 @@ public class Spin1ObjectCompiler {
                 ObjectInfo info = childObjects.get(objectFileName);
                 if (info == null) {
                     logMessage(new CompilerException("object \"" + objectName + "\" not found", node.file));
+                    continue;
+                }
+                if (info.errors) {
+                    logMessage(new CompilerException("object \"" + objectName + "\" has errors", node.file));
                     continue;
                 }
 
@@ -2728,10 +2734,20 @@ public class Spin1ObjectCompiler {
     }
 
     protected void logMessage(CompilerException message) {
-        if (message.type == CompilerException.ERROR) {
-            errors = true;
+        if (message.hasChilds()) {
+            for (CompilerException msg : message.getChilds()) {
+                if (msg.type == CompilerException.ERROR) {
+                    errors = true;
+                }
+                messages.add(msg);
+            }
         }
-        messages.add(message);
+        else {
+            if (message.type == CompilerException.ERROR) {
+                errors = true;
+            }
+            messages.add(message);
+        }
     }
 
     public boolean hasErrors() {

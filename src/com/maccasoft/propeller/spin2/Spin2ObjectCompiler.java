@@ -114,12 +114,14 @@ public class Spin2ObjectCompiler {
     public static class ObjectInfo {
         String fileName;
         Spin2Object object;
+        boolean errors;
 
         long offset;
 
-        public ObjectInfo(String fileName, Spin2Object object) {
+        public ObjectInfo(String fileName, Spin2Object object, boolean errors) {
             this.fileName = fileName;
             this.object = object;
+            this.errors = errors;
         }
     }
 
@@ -587,6 +589,10 @@ public class Spin2ObjectCompiler {
                 ObjectInfo info = childObjects.get(objectFileName);
                 if (info == null) {
                     logMessage(new CompilerException("object \"" + objectName + "\" not found", node.file));
+                    continue;
+                }
+                if (info.errors) {
+                    logMessage(new CompilerException("object \"" + objectName + "\" has errors", node.file));
                     continue;
                 }
 

@@ -196,6 +196,7 @@ public class Spin2Compiler extends Compiler {
                 message.fileName = fileName;
                 Spin2Compiler.this.logMessage(message);
             }
+            super.logMessage(message);
         }
 
     }
@@ -212,7 +213,7 @@ public class Spin2Compiler extends Compiler {
         for (Entry<String, Node> entry : objects.entrySet()) {
             Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey(), scope, childObjects, debugEnabled, debugStatements);
             Spin2Object object = objectCompiler.compileObject(entry.getValue());
-            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object));
+            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object, objectCompiler.hasErrors()));
         }
 
         Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFileName, scope, childObjects, debugEnabled, debugStatements);
@@ -286,10 +287,12 @@ public class Spin2Compiler extends Compiler {
         }
     }
 
+    @Override
     public boolean hasErrors() {
         return errors;
     }
 
+    @Override
     public List<CompilerException> getMessages() {
         return messages;
     }

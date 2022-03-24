@@ -145,23 +145,17 @@ public class CompilerException extends RuntimeException {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if (childs.size() != 0) {
-            for (CompilerException e : childs) {
-                if (sb.length() != 0) {
-                    sb.append(System.lineSeparator());
-                }
-                sb.append(e.toString());
-            }
-        }
-        else {
+
+        String msg = getMessage();
+        if (msg != null) {
             if (fileName != null) {
                 sb.append(fileName);
                 sb.append(": ");
+                sb.append(line);
+                sb.append(":");
+                sb.append(column);
+                sb.append(" : ");
             }
-            sb.append(line);
-            sb.append(":");
-            sb.append(column);
-            sb.append(" : ");
             if (type == WARNING) {
                 sb.append("warning");
             }
@@ -172,8 +166,18 @@ public class CompilerException extends RuntimeException {
                 sb.append("note");
             }
             sb.append(" : ");
-            sb.append(getMessage());
+            sb.append(msg);
         }
+
+        if (childs.size() != 0) {
+            for (CompilerException e : childs) {
+                if (sb.length() != 0) {
+                    sb.append(System.lineSeparator());
+                }
+                sb.append(e.toString());
+            }
+        }
+
         return sb.toString();
     }
 

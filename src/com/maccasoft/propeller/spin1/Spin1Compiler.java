@@ -218,8 +218,17 @@ public class Spin1Compiler extends Compiler {
 
         @Override
         protected void logMessage(CompilerException message) {
-            message.fileName = fileName;
-            Spin1Compiler.this.logMessage(message);
+            if (message.hasChilds()) {
+                for (CompilerException msg : message.getChilds()) {
+                    msg.fileName = fileName;
+                    Spin1Compiler.this.logMessage(msg);
+                }
+            }
+            else {
+                message.fileName = fileName;
+                Spin1Compiler.this.logMessage(message);
+            }
+            super.logMessage(message);
         }
 
     }
@@ -236,7 +245,7 @@ public class Spin1Compiler extends Compiler {
         for (Entry<String, Node> entry : objects.entrySet()) {
             Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey(), scope, childObjects);
             Spin1Object object = objectCompiler.compileObject(entry.getValue());
-            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object));
+            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object, objectCompiler.hasErrors()));
         }
 
         Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFileName, scope, childObjects);
@@ -300,10 +309,12 @@ public class Spin1Compiler extends Compiler {
         messages.add(message);
     }
 
+    @Override
     public boolean hasErrors() {
         return errors;
     }
 
+    @Override
     public List<CompilerException> getMessages() {
         return messages;
     }
