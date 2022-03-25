@@ -10,12 +10,10 @@
 
 package com.maccasoft.propeller;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -42,11 +40,10 @@ public class SpinCompiler {
     public static final String APP_TITLE = "Spin Tools Compiler";
     public static final String APP_VERSION = SpinTools.APP_VERSION;
 
+    static boolean quiet;
+
     public static void main(String[] args) {
         List<File> libraryPaths = new ArrayList<File>();
-
-        System.out.println(APP_TITLE + " - Version " + APP_VERSION);
-        System.out.println("Copyright (c) 2021-22 Marco Maccaferri and others. All rights reserved.");
 
         try {
             Options options = new Options();
@@ -64,7 +61,14 @@ public class SpinCompiler {
             options.addOption("p", true, "serial port");
             options.addOption("t", false, "enter terminal mode after upload");
 
+            options.addOption("q", false, "quiet mode");
+
             CommandLine cmd = new DefaultParser().parse(options, args);
+            quiet = cmd.hasOption('q') && cmd.getArgList().size() == 1;
+
+            println(APP_TITLE + " - Version " + APP_VERSION);
+            println("Copyright (c) 2021-22 Marco Maccaferri and others. All rights reserved.");
+
             if (cmd.getArgList().size() != 1) {
                 HelpFormatter help = new HelpFormatter();
                 help.setOptionComparator(null);
@@ -99,7 +103,7 @@ public class SpinCompiler {
             ByteArrayOutputStream binaryData = new ByteArrayOutputStream();
             PrintStream listingStream = cmd.hasOption('l') ? new PrintStream(new FileOutputStream(listingFile)) : null;
 
-            System.out.println("Compiling...");
+            println("Compiling...");
 
             Compiler compiler = name.toLowerCase().endsWith(".spin2") ? new Spin2Compiler() : new Spin1Compiler();
             compiler.addSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
@@ -120,13 +124,13 @@ public class SpinCompiler {
                 os.close();
             }
 
-            System.out.println("Program size is " + binaryData.size() + " bytes");
+            println("Program size is " + binaryData.size() + " bytes");
 
             if (cmd.hasOption('r') || cmd.hasOption('f')) {
                 String port = cmd.getOptionValue('p');
                 SerialPort serialPort = new SerialPort(port);
 
-                System.out.println("Uploading...");
+                println("Uploading...");
 
                 AtomicBoolean error = new AtomicBoolean();
                 if (compiler instanceof Spin1Compiler) {
@@ -137,10 +141,10 @@ public class SpinCompiler {
                             int version = super.hwfind();
 
                             if (version != 0) {
-                                System.out.println(String.format("Propeller %d on port %s", version, getPortName()));
+                                println(String.format("Propeller %d on port %s", version, getPortName()));
                             }
                             else {
-                                System.out.println(String.format("No propeller chip on port %s", getPortName()));
+                                println(String.format("No propeller chip on port %s", getPortName()));
                                 error.set(true);
                             }
 
@@ -149,14 +153,14 @@ public class SpinCompiler {
 
                         @Override
                         protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
-                            System.out.print("Loading " + text + " to ");
+                            print("Loading " + text + " to ");
                             switch (type) {
                                 case DOWNLOAD_EEPROM:
                                 case DOWNLOAD_RUN_EEPROM:
-                                    System.out.print("EEPROM via ");
+                                    print("EEPROM via ");
                                     // fall through
                                 case DOWNLOAD_RUN_BINARY:
-                                    System.out.println("hub memory");
+                                    println("hub memory");
                                     break;
                             }
                             super.bufferUpload(type, binaryImage, text);
@@ -165,46 +169,42 @@ public class SpinCompiler {
                         @Override
                         protected void notifyProgress(int sent, int total) {
                             if (sent == total) {
-                                System.out.print(String.format("                               \r"));
-                                System.out.println(String.format("%d bytes sent", total));
+                                print(String.format("                               \r"));
+                                println(String.format("%d bytes sent", total));
                             }
                             else {
-                                System.out.print(String.format("%d bytes remaining             \r", total - sent));
+                                print(String.format("%d bytes remaining             \r", total - sent));
                             }
-                            System.out.flush();
                         }
 
                         @Override
                         protected int skipIncomingBytes() throws SerialPortException {
                             int n = super.skipIncomingBytes();
                             if (n != 0) {
-                                System.out.println(String.format("Ignoring %d bytes", n));
+                                println(String.format("Ignoring %d bytes", n));
                             }
                             return n;
                         }
 
                         @Override
                         protected void verifyRam() throws SerialPortException, IOException {
-                            System.out.print("Verifying RAM ... ");
-                            System.out.flush();
+                            print("Verifying RAM ... ");
                             super.verifyRam();
-                            System.out.println("OK");
+                            println("OK");
                         }
 
                         @Override
                         protected void eepromWrite() throws SerialPortException, IOException {
-                            System.out.print("Programming EEPROM ... ");
-                            System.out.flush();
+                            print("Programming EEPROM ... ");
                             super.eepromWrite();
-                            System.out.println("OK");
+                            println("OK");
                         }
 
                         @Override
                         protected void eepromVerify() throws SerialPortException, IOException {
-                            System.out.print("Verifying EEPROM ... ");
-                            System.out.flush();
+                            print("Verifying EEPROM ... ");
                             super.eepromVerify();
-                            System.out.println("OK");
+                            println("OK");
                         }
 
                     };
@@ -218,10 +218,10 @@ public class SpinCompiler {
                             int version = super.hwfind();
 
                             if (version != 0) {
-                                System.out.println(String.format("Propeller %d on port %s", version, getPortName()));
+                                println(String.format("Propeller %d on port %s", version, getPortName()));
                             }
                             else {
-                                System.out.println(String.format("No propeller chip on port %s", getPortName()));
+                                println(String.format("No propeller chip on port %s", getPortName()));
                                 error.set(true);
                             }
 
@@ -232,7 +232,7 @@ public class SpinCompiler {
                         protected int skipIncomingBytes() throws SerialPortException {
                             int n = super.skipIncomingBytes();
                             if (n != 0) {
-                                System.out.println(String.format("Ignoring %d bytes", n));
+                                println(String.format("Ignoring %d bytes", n));
                             }
                             return n;
                         }
@@ -240,31 +240,29 @@ public class SpinCompiler {
                         @Override
                         protected void notifyProgress(int sent, int total) {
                             if (sent >= total) {
-                                System.out.print(String.format("                               \r"));
-                                System.out.println(String.format("%d bytes sent", total));
+                                print(String.format("                               \r"));
+                                println(String.format("%d bytes sent", total));
                             }
                             else {
-                                System.out.print(String.format("%d bytes remaining             \r", total - sent));
+                                print(String.format("%d bytes remaining             \r", total - sent));
                             }
-                            System.out.flush();
                         }
 
                         @Override
                         protected void verifyRam() throws SerialPortException, IOException {
-                            System.out.print("Verifying checksum ... ");
-                            System.out.flush();
+                            print("Verifying checksum ... ");
                             super.verifyRam();
-                            System.out.println("OK");
+                            println("OK");
                         }
 
                     };
                     loader.upload(binaryData.toByteArray(), cmd.hasOption("f") ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM);
                 }
 
-                System.out.println("Done.");
+                println("Done.");
 
                 if (!error.get() && cmd.hasOption('t')) {
-                    System.out.println("Entering terminal mode. CTRL-C to exit.");
+                    println("Entering terminal mode. CTRL-C to exit.");
                     serialPort.addEventListener(new SerialPortEventListener() {
 
                         @Override
@@ -294,30 +292,42 @@ public class SpinCompiler {
                 serialPort.closePort();
             }
             else {
-                System.out.println("Done.");
+                println("Done.");
             }
 
         } catch (CompilerException e) {
-            System.out.println(e);
+            println(e);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    static String loadFromFile(File file) throws Exception {
-        String line;
-        StringBuilder sb = new StringBuilder();
-
-        if (file.exists()) {
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-                sb.append("\n");
-            }
-            reader.close();
+    static void println(String obj) {
+        if (!quiet) {
+            System.out.println(obj);
+            System.out.flush();
         }
+    }
 
-        return sb.toString();
+    static void print(String obj) {
+        if (!quiet) {
+            System.out.print(obj);
+            System.out.flush();
+        }
+    }
+
+    static void println(Object obj) {
+        if (!quiet) {
+            System.out.println(obj);
+            System.out.flush();
+        }
+    }
+
+    static void print(Object obj) {
+        if (!quiet) {
+            System.out.print(obj);
+            System.out.flush();
+        }
     }
 
 }
