@@ -12,12 +12,10 @@ package com.maccasoft.propeller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -80,6 +78,7 @@ import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.Preferences.SearchPreferences;
 import com.maccasoft.propeller.internal.BusyIndicator;
+import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.TempDirectory;
 import com.maccasoft.propeller.model.ObjectNode;
@@ -455,7 +454,7 @@ public class SpinTools {
                             continue;
                         }
                         try {
-                            String text = loadFromFile(fileToOpen);
+                            String text = FileUtils.loadFromFile(fileToOpen);
                             tabFolder.getDisplay().asyncExec(new Runnable() {
 
                                 @Override
@@ -909,7 +908,7 @@ public class SpinTools {
             @Override
             public void run() {
                 try {
-                    editorTab.setEditorText(loadFromFile(fileToOpen));
+                    editorTab.setEditorText(FileUtils.loadFromFile(fileToOpen));
                     editorTab.setFile(fileToOpen);
                     updateCaretPosition();
                 } catch (Exception e) {
@@ -948,22 +947,6 @@ public class SpinTools {
         });
 
         return editorTab;
-    }
-
-    String loadFromFile(File file) throws Exception {
-        String line;
-        StringBuilder sb = new StringBuilder();
-
-        if (file.exists()) {
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-                sb.append("\n");
-            }
-            reader.close();
-        }
-
-        return sb.toString();
     }
 
     private void handleFileSave() {
@@ -1024,11 +1007,13 @@ public class SpinTools {
         if (fileName != null) {
             File fileToSave = new File(fileName);
             try {
+                editorTab.setFile(fileToSave);
+                editorTab.setText(fileToSave.getName());
+
                 BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave));
                 writer.write(editorTab.getEditorText());
                 writer.close();
-                editorTab.setFile(fileToSave);
-                editorTab.setText(fileToSave.getName());
+
                 editorTab.clearDirty();
                 preferences.addToLru(fileToSave);
             } catch (Exception e) {

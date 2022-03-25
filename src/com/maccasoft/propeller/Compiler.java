@@ -10,10 +10,8 @@
 
 package com.maccasoft.propeller;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -21,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
 
 public abstract class Compiler {
@@ -49,7 +48,7 @@ public abstract class Compiler {
             File localFile = new File(name);
             if (localFile.exists()) {
                 try {
-                    return loadFromFile(localFile);
+                    return FileUtils.loadFromFile(localFile);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return null;
@@ -60,7 +59,7 @@ public abstract class Compiler {
                 localFile = new File(searchPaths[i], name);
                 if (localFile.exists()) {
                     try {
-                        return loadFromFile(localFile);
+                        return FileUtils.loadFromFile(localFile);
                     } catch (Exception e) {
                         e.printStackTrace();
                         return null;
@@ -69,22 +68,6 @@ public abstract class Compiler {
             }
 
             return null;
-        }
-
-        String loadFromFile(File file) throws Exception {
-            String line;
-            StringBuilder sb = new StringBuilder();
-
-            if (file.exists()) {
-                BufferedReader reader = new BufferedReader(new FileReader(file));
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line);
-                    sb.append("\n");
-                }
-                reader.close();
-            }
-
-            return sb.toString();
         }
 
         @Override
@@ -155,9 +138,7 @@ public abstract class Compiler {
 
     }
 
-    public void compile(File file, OutputStream binary, PrintStream listing) throws Exception {
-
-    }
+    public abstract void compile(File file, OutputStream binary, PrintStream listing) throws Exception;
 
     public abstract SpinObject compile(String rootFileName, Node root);
 

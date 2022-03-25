@@ -13,10 +13,8 @@ package com.maccasoft.propeller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -44,6 +42,7 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
+import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Parser;
@@ -98,7 +97,9 @@ public class EditorTab implements FindReplaceTarget {
             }
             File localFile = file != null ? file : new File(tabItemText);
             if (evt.getPropertyName().equals(localFile.getAbsolutePath())) {
-                scheduleCompile();
+                if (evt.getNewValue() != null) {
+                    scheduleCompile();
+                }
                 return;
             }
             if (dependencies.contains(evt.getPropertyName())) {
@@ -147,7 +148,7 @@ public class EditorTab implements FindReplaceTarget {
             if (localFile.exists()) {
                 try {
                     dependencies.add(localFile.getAbsolutePath());
-                    return loadFromFile(localFile);
+                    return FileUtils.loadFromFile(localFile);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return null;
@@ -159,7 +160,7 @@ public class EditorTab implements FindReplaceTarget {
                 if (localFile.exists()) {
                     try {
                         dependencies.add(localFile.getAbsolutePath());
-                        return loadFromFile(localFile);
+                        return FileUtils.loadFromFile(localFile);
                     } catch (Exception e) {
                         e.printStackTrace();
                         return null;
@@ -215,7 +216,7 @@ public class EditorTab implements FindReplaceTarget {
             Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
             if (node == null && localFile.exists()) {
                 try {
-                    Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(localFile));
+                    Spin1TokenStream stream = new Spin1TokenStream(FileUtils.loadFromFile(localFile));
                     Spin1Parser subject = new Spin1Parser(stream);
                     node = subject.parse();
                 } catch (Exception e) {
@@ -232,7 +233,7 @@ public class EditorTab implements FindReplaceTarget {
                     }
                     if (localFile.exists()) {
                         try {
-                            Spin1TokenStream stream = new Spin1TokenStream(loadFromFile(localFile));
+                            Spin1TokenStream stream = new Spin1TokenStream(FileUtils.loadFromFile(localFile));
                             Spin1Parser subject = new Spin1Parser(stream);
                             node = subject.parse();
                             break;
@@ -265,7 +266,7 @@ public class EditorTab implements FindReplaceTarget {
             Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
             if (node == null && localFile.exists()) {
                 try {
-                    Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(localFile));
+                    Spin2TokenStream stream = new Spin2TokenStream(FileUtils.loadFromFile(localFile));
                     Spin2Parser subject = new Spin2Parser(stream);
                     node = subject.parse();
                 } catch (Exception e) {
@@ -282,7 +283,7 @@ public class EditorTab implements FindReplaceTarget {
                     }
                     if (localFile.exists()) {
                         try {
-                            Spin2TokenStream stream = new Spin2TokenStream(loadFromFile(localFile));
+                            Spin2TokenStream stream = new Spin2TokenStream(FileUtils.loadFromFile(localFile));
                             Spin2Parser subject = new Spin2Parser(stream);
                             node = subject.parse();
                             break;
@@ -461,6 +462,7 @@ public class EditorTab implements FindReplaceTarget {
         sourcePool.removeParsedSource(localFile.getAbsolutePath(), dirty);
 
         this.file = file;
+
         if (file.getName().toLowerCase().endsWith(".spin2")) {
             editor.setTokenMarker(tokenMarker = new Spin2TokenMarkerAdatper());
             editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", file.getParentFile(), ".spin2"));
@@ -603,22 +605,6 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         Display.getDefault().beep();
-    }
-
-    String loadFromFile(File file) throws Exception {
-        String line;
-        StringBuilder sb = new StringBuilder();
-
-        if (file.exists()) {
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-                sb.append("\n");
-            }
-            reader.close();
-        }
-
-        return sb.toString();
     }
 
     byte[] loadBinaryFromFile(File file) throws Exception {
