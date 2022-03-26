@@ -2075,7 +2075,6 @@ public class Spin2ObjectCompiler {
                 source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
             }
             else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
-                boolean hasIndex = false;
                 Spin2StatementNode indexNode = null;
                 Spin2StatementNode bitfieldNode = null;
                 Spin2StatementNode postEffectNode = null;
@@ -2089,11 +2088,28 @@ public class Spin2ObjectCompiler {
                         }
                         bitfieldNode = node.getChild(n++);
                     }
+                    else if (!isPostEffect(node.getChild(n))) {
+                        indexNode = node.getChild(n++);
+                    }
+                }
+                if (n < node.getChildCount()) {
+                    if (".".equals(node.getChild(n).getText())) {
+                        if (bitfieldNode != null) {
+                            throw new CompilerException("syntax error", node.getToken());
+                        }
+                        n++;
+                        if (n >= node.getChildCount()) {
+                            throw new CompilerException("expected bitfield expression", node.getToken());
+                        }
+                        bitfieldNode = node.getChild(n++);
+                    }
                 }
                 if (n < node.getChildCount()) {
                     if (!isPostEffect(node.getChild(n))) {
+                        if (indexNode != null) {
+                            throw new CompilerException("syntax error", node.getToken());
+                        }
                         indexNode = node.getChild(n++);
-                        hasIndex = true;
                     }
                 }
                 if (n < node.getChildCount()) {
@@ -2102,7 +2118,7 @@ public class Spin2ObjectCompiler {
                     }
                 }
                 if (n < node.getChildCount()) {
-                    throw new RuntimeException("expression syntax error " + node.getText());
+                    throw new RuntimeException("syntax error " + node.getText());
                 }
 
                 if (postEffectNode != null) {
@@ -2163,39 +2179,39 @@ public class Spin2ObjectCompiler {
 
                 if (bitfieldNode == null && postEffectNode == null) {
                     sb.append(push || bitfieldNode != null ? "_READ" : "_WRITE");
-                    sb.append(hasIndex ? "_INDEXED" : "");
+                    sb.append(indexNode != null ? "_INDEXED" : "");
                     if ("BYTE".equalsIgnoreCase(node.getText())) {
                         source.add(new Bytecode(context, new byte[] {
-                            hasIndex ? (byte) 0x62 : (byte) 0x65, push ? (byte) 0x80 : (byte) 0x81
+                            indexNode != null ? (byte) 0x62 : (byte) 0x65, push ? (byte) 0x80 : (byte) 0x81
                         }, sb.toString()));
                     }
                     else if ("WORD".equalsIgnoreCase(node.getText())) {
                         source.add(new Bytecode(context, new byte[] {
-                            hasIndex ? (byte) 0x63 : (byte) 0x66, push ? (byte) 0x80 : (byte) 0x81
+                            indexNode != null ? (byte) 0x63 : (byte) 0x66, push ? (byte) 0x80 : (byte) 0x81
                         }, sb.toString()));
                     }
                     else if ("LONG".equalsIgnoreCase(node.getText())) {
                         source.add(new Bytecode(context, new byte[] {
-                            hasIndex ? (byte) 0x64 : (byte) 0x67, push ? (byte) 0x80 : (byte) 0x81
+                            indexNode != null ? (byte) 0x64 : (byte) 0x67, push ? (byte) 0x80 : (byte) 0x81
                         }, sb.toString()));
                     }
                 }
                 else {
                     sb.append("_SETUP");
-                    sb.append(hasIndex ? "_INDEXED" : "");
+                    sb.append(indexNode != null ? "_INDEXED" : "");
                     if ("BYTE".equalsIgnoreCase(node.getText())) {
                         source.add(new Bytecode(context, new byte[] {
-                            hasIndex ? (byte) 0x62 : (byte) 0x65
+                            indexNode != null ? (byte) 0x62 : (byte) 0x65
                         }, sb.toString()));
                     }
                     else if ("WORD".equalsIgnoreCase(node.getText())) {
                         source.add(new Bytecode(context, new byte[] {
-                            hasIndex ? (byte) 0x63 : (byte) 0x66
+                            indexNode != null ? (byte) 0x63 : (byte) 0x66
                         }, sb.toString()));
                     }
                     else if ("LONG".equalsIgnoreCase(node.getText())) {
                         source.add(new Bytecode(context, new byte[] {
-                            hasIndex ? (byte) 0x64 : (byte) 0x67
+                            indexNode != null ? (byte) 0x64 : (byte) 0x67
                         }, sb.toString()));
                     }
                 }
@@ -2860,11 +2876,13 @@ public class Spin2ObjectCompiler {
             source.addAll(leftAssign(context, node.getChild(0), node.getChild(0).getType() == Token.OPERATOR, false));
         }
         else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
-            boolean hasIndex = false;
+            indexNode = null;
+            bitfieldNode = null;
 
             source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-            if (node.getChildCount() > 1) {
-                int n = 1;
+
+            int n = 1;
+            if (n < node.getChildCount()) {
                 if (".".equals(node.getChild(n).getText())) {
                     n++;
                     if (n >= node.getChildCount()) {
@@ -2872,13 +2890,36 @@ public class Spin2ObjectCompiler {
                     }
                     bitfieldNode = node.getChild(n++);
                 }
-                if (n < node.getChildCount()) {
-                    source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
-                    hasIndex = true;
+                else if (!isPostEffect(node.getChild(n))) {
+                    indexNode = node.getChild(n++);
                 }
-                if (n < node.getChildCount()) {
-                    throw new RuntimeException("expression syntax error " + node.getText());
+            }
+            if (n < node.getChildCount()) {
+                if (".".equals(node.getChild(n).getText())) {
+                    if (bitfieldNode != null) {
+                        throw new CompilerException("syntax error", node.getToken());
+                    }
+                    n++;
+                    if (n >= node.getChildCount()) {
+                        throw new CompilerException("expected bitfield expression", node.getToken());
+                    }
+                    bitfieldNode = node.getChild(n++);
                 }
+            }
+            if (n < node.getChildCount()) {
+                if (!isPostEffect(node.getChild(n))) {
+                    if (indexNode != null) {
+                        throw new CompilerException("syntax error", node.getToken());
+                    }
+                    indexNode = node.getChild(n++);
+                }
+            }
+            if (n < node.getChildCount()) {
+                throw new RuntimeException("syntax error " + node.getText());
+            }
+
+            if (indexNode != null) {
+                source.addAll(compileBytecodeExpression(context, indexNode, true));
             }
 
             int bitfield = -1;
@@ -2922,39 +2963,39 @@ public class Spin2ObjectCompiler {
 
             StringBuilder sb = new StringBuilder(node.getText().toUpperCase());
             sb.append(push || bitfieldNode != null ? "_SETUP" : "_WRITE");
-            sb.append(hasIndex ? "_INDEXED" : "");
+            sb.append(indexNode != null ? "_INDEXED" : "");
 
             if (push || bitfieldNode != null) {
                 if ("BYTE".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        hasIndex ? (byte) 0x62 : (byte) 0x65
+                        indexNode != null ? (byte) 0x62 : (byte) 0x65
                     }, sb.toString()));
                 }
                 else if ("WORD".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        hasIndex ? (byte) 0x63 : (byte) 0x66
+                        indexNode != null ? (byte) 0x63 : (byte) 0x66
                     }, sb.toString()));
                 }
                 else if ("LONG".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        hasIndex ? (byte) 0x64 : (byte) 0x67
+                        indexNode != null ? (byte) 0x64 : (byte) 0x67
                     }, sb.toString()));
                 }
             }
             else {
                 if ("BYTE".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        hasIndex ? (byte) 0x62 : (byte) 0x65, (byte) 0x81
+                        indexNode != null ? (byte) 0x62 : (byte) 0x65, (byte) 0x81
                     }, sb.toString()));
                 }
                 else if ("WORD".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        hasIndex ? (byte) 0x63 : (byte) 0x66, (byte) 0x81
+                        indexNode != null ? (byte) 0x63 : (byte) 0x66, (byte) 0x81
                     }, sb.toString()));
                 }
                 else if ("LONG".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, new byte[] {
-                        hasIndex ? (byte) 0x64 : (byte) 0x67, (byte) 0x81
+                        indexNode != null ? (byte) 0x64 : (byte) 0x67, (byte) 0x81
                     }, sb.toString()));
                 }
             }

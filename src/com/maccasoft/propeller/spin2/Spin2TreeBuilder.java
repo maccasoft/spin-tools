@@ -336,6 +336,17 @@ public class Spin2TreeBuilder {
                     if (peek() == null) {
                         return node;
                     }
+                    if ("[".equals(peek().getText())) {
+                        next();
+                        node.addChild(parseLevel(parseAtom(), 0, false));
+                        token = next();
+                        if (token == null || !"]".equals(token.getText())) {
+                            throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
+                        }
+                    }
+                    if (peek() == null) {
+                        return node;
+                    }
                     if (".".equals(peek().getText())) {
                         node.addChild(new Spin2StatementNode(next()));
                         if (peek() == null) {
