@@ -159,15 +159,25 @@ public class Spin2TreeBuilder {
         unary.add("??");
         unary.add("\\");
         unary.add("!!");
+        unary.add("!!=");
         unary.add("!");
+        unary.add("!=");
         unary.add("ABS");
+        unary.add("ABS=");
         unary.add("ENCOD");
+        unary.add("ENCOD=");
         unary.add("DECOD");
+        unary.add("DECOD=");
         unary.add("BMASK");
+        unary.add("BMASK=");
         unary.add("ONES");
+        unary.add("ONES=");
         unary.add("SQRT");
+        unary.add("SQRT=");
         unary.add("QLOG");
+        unary.add("QLOG=");
         unary.add("QEXP");
+        unary.add("QEXP=");
     }
 
     static Set<String> postEffect = new HashSet<String>();
@@ -396,11 +406,7 @@ public class Spin2TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "1 +. 2 * 3";
-        System.out.println(text);
-        System.out.println(parse(text));
-
-        text = "digit >=. 0 and digit <=. 9";
+        text = "    ABS= a";
         System.out.println(text);
         System.out.println(parse(text));
     }

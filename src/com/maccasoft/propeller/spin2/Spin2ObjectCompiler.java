@@ -1901,6 +1901,14 @@ public class Spin2ObjectCompiler {
                 source.addAll(compileConstantExpression(context, node.getChild(1)));
                 source.addAll(leftAssign(context, node.getChild(0), push, push));
             }
+            else if ("-=".equalsIgnoreCase(node.getText()) && node.getChildCount() == 1) {
+                source.addAll(leftAssign(context, node.getChild(0), true, false));
+                source.add(new Bytecode(context, 0x92, "NEGATE_ASSIGN"));
+            }
+            else if (MathOp.isAssignMathOp(node.getText()) && node.getChildCount() == 1) {
+                source.addAll(leftAssign(context, node.getChild(0), true, false));
+                source.add(new MathOp(context, node.getText(), push));
+            }
             else if (MathOp.isAssignMathOp(node.getText())) {
                 source.addAll(compileConstantExpression(context, node.getChild(1)));
                 source.addAll(leftAssign(context, node.getChild(0), true, false));
