@@ -3539,6 +3539,34 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testPostAssign() throws Exception {
+        String text = ""
+            + "PUB start() : a, b\n"
+            + "\n"
+            + "    if a\\true\n"
+            + "        b := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 20 80    Method start @ $00008 (0 parameters, 2 returns)\n"
+            + "00004 00004       11 00 00 00    End\n"
+            + "' PUB start() : a, b\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'     if a\\true\n"
+            + "00009 00009       A0             CONSTANT (-1)\n"
+            + "0000A 0000A       D0             VAR_SETUP LONG DBASE+$00000 (short)\n"
+            + "0000B 0000B       8D             SWAP\n"
+            + "0000C 0000C       13 03          JZ $00010 (3)\n"
+            + "'         b := 1\n"
+            + "0000E 0000E       A2             CONSTANT (1)\n"
+            + "0000F 0000F       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "00010 00010       04             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testOrg() throws Exception {
         String text = ""
             + "DAT             org   $000\n"

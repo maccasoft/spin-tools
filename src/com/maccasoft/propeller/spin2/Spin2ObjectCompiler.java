@@ -1945,31 +1945,42 @@ public class Spin2ObjectCompiler {
                 }
             }
             else if ("\\".equalsIgnoreCase(node.getText())) {
-                Expression expression = context.getLocalSymbol(node.getChild(0).getText());
-                if (!(expression instanceof Method)) {
-                    throw new CompilerException("symbol " + node.getChild(0).getText() + " is not a method", node.getChild(0).getToken());
-                }
-                int parameters = ((Method) expression).getArgumentsCount();
-                if (node.getChild(0).getChildCount() != parameters) {
-                    throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChild(0).getChildCount());
-                }
-                source.add(new Bytecode(context, push ? 0x03 : 0x02, "ANCHOR_TRAP"));
-                for (int i = 0; i < parameters; i++) {
-                    source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(i), true));
-                }
-                Method method = (Method) expression;
-                if (method.getObject() != 0) {
-                    source.add(new Bytecode(context, new byte[] {
-                        (byte) 0x08,
-                        (byte) (method.getObject() - 1),
-                        (byte) method.getOffset()
-                    }, "CALL_OBJ_SUB (" + (method.getObject() - 1) + "." + method.getOffset() + ")"));
+                if (node.getChildCount() == 2) {
+                    source.addAll(compileConstantExpression(context, node.getChild(1)));
+                    source.addAll(leftAssign(context, node.getChild(0), push, false));
+                    source.add(new Bytecode(context, 0x8D, "SWAP"));
                 }
                 else {
-                    source.add(new Bytecode(context, new byte[] {
-                        (byte) 0x0A,
-                        (byte) method.getOffset()
-                    }, "CALL_SUB (" + method.getOffset() + ")"));
+                    if (node.getChildCount() != 1) {
+                        throw new RuntimeException("expression syntax error " + node.getText());
+                    }
+
+                    Expression expression = context.getLocalSymbol(node.getChild(0).getText());
+                    if (!(expression instanceof Method)) {
+                        throw new CompilerException("symbol " + node.getChild(0).getText() + " is not a method", node.getChild(0).getToken());
+                    }
+                    int parameters = ((Method) expression).getArgumentsCount();
+                    if (node.getChild(0).getChildCount() != parameters) {
+                        throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChild(0).getChildCount());
+                    }
+                    source.add(new Bytecode(context, push ? 0x03 : 0x02, "ANCHOR_TRAP"));
+                    for (int i = 0; i < parameters; i++) {
+                        source.addAll(compileBytecodeExpression(context, node.getChild(0).getChild(i), true));
+                    }
+                    Method method = (Method) expression;
+                    if (method.getObject() != 0) {
+                        source.add(new Bytecode(context, new byte[] {
+                            (byte) 0x08,
+                            (byte) (method.getObject() - 1),
+                            (byte) method.getOffset()
+                        }, "CALL_OBJ_SUB (" + (method.getObject() - 1) + "." + method.getOffset() + ")"));
+                    }
+                    else {
+                        source.add(new Bytecode(context, new byte[] {
+                            (byte) 0x0A,
+                            (byte) method.getOffset()
+                        }, "CALL_SUB (" + method.getOffset() + ")"));
+                    }
                 }
             }
             else if ("++".equalsIgnoreCase(node.getText())) {

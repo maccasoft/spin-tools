@@ -99,6 +99,7 @@ public class Spin2TreeBuilder {
         precedence.put(",", 2);
 
         precedence.put(":=", 1);
+        precedence.put("\\", 1);
 
         precedence.put(">>=", 0);
         precedence.put("<<=", 0);
