@@ -32,6 +32,7 @@ public class Spin1Method {
     List<Spin1MethodLine> lines = new ArrayList<Spin1MethodLine>();
 
     String comment;
+    Object data;
 
     int startAddress;
     int endAddress;
@@ -135,6 +136,14 @@ public class Spin1Method {
         for (Spin1MethodLine line : lines) {
             line.writeTo(obj);
         }
+    }
+
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
     }
 
 }

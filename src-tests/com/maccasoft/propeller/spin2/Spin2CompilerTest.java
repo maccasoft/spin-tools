@@ -17,6 +17,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
@@ -820,7 +821,7 @@ class Spin2CompilerTest {
             + "0000B 0000B       62 00 40 63 00\n"
             + "00010 00010       00\n"
             + "00011 00011       04 41 61 00 00\n"
-            + "", compile("main.spin2", sources, true));
+            + "", compile("main.spin2", sources, false, true));
     }
 
     @Test
@@ -884,7 +885,103 @@ class Spin2CompilerTest {
             + "0000B 0000B       62 00 40 63 00\n"
             + "00010 00010       00\n"
             + "00011 00011       04 41 61 00 00\n"
-            + "", compile("main.spin2", sources, true));
+            + "", compile("main.spin2", sources, false, true));
+    }
+
+    @Test
+    void testRemoveUnusedMethods() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       0C 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       04             (stack size)\n"
+            + "'     a := 1\n"
+            + "00009 00009       A2             CONSTANT (1)\n"
+            + "0000A 0000A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000B 0000B       04             RETURN\n"
+            + "", compile("main.spin2", sources, true, false));
+    }
+
+    @Test
+    void testRemoveMiddleUnusedMethods() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := 1\n"
+            + "    start(1, 2)\n"
+            + "\n"
+            + "PUB stop() | c\n"
+            + "\n"
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       15 00 00 82    Method start @ $00015 (2 parameters, 0 returns)\n"
+            + "00008 00008       1B 00 00 00    End\n"
+            + "' PUB main | a\n"
+            + "0000C 0000C       04             (stack size)\n"
+            + "'     a := 1\n"
+            + "0000D 0000D       A2             CONSTANT (1)\n"
+            + "0000E 0000E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     start(1, 2)\n"
+            + "0000F 0000F       00             ANCHOR\n"
+            + "00010 00010       A2             CONSTANT (1)\n"
+            + "00011 00011       A3             CONSTANT (2)\n"
+            + "00012 00012       0A 02          CALL_SUB (2)\n"
+            + "00014 00014       04             RETURN\n"
+            + "' PUB start(a, b) | c\n"
+            + "00015 00015       04             (stack size)\n"
+            + "'     c := a + b\n"
+            + "00016 00016       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00017 00017       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00018 00018       8A             ADD\n"
+            + "00019 00019       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "0001A 0001A       04             RETURN\n"
+            + "0001B 0001B       00             Padding\n"
+            + "", compile("main.spin2", sources, true, false));
+    }
+
+    @Test
+    void testUnusedMethodsCauseErrors() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "PUB start(a, b)\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile("main.spin2", sources, true, false);
+            }
+
+        });
     }
 
     class Spin2CompilerAdapter extends Spin2Compiler {
@@ -909,15 +1006,16 @@ class Spin2CompilerTest {
     }
 
     String compile(String rootFile, Map<String, String> sources) throws Exception {
-        return compile(rootFile, sources, false);
+        return compile(rootFile, sources, false, false);
     }
 
-    String compile(String rootFile, Map<String, String> sources, boolean debugEnabled) throws Exception {
+    String compile(String rootFile, Map<String, String> sources, boolean removeUnused, boolean debugEnabled) throws Exception {
         Spin2TokenStream stream = new Spin2TokenStream(sources.get(rootFile));
         Spin2Parser subject = new Spin2Parser(stream);
         Node root = subject.parse();
 
         Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
+        compiler.setRemoveUnusedMethods(removeUnused);
         compiler.setDebugEnabled(debugEnabled);
         Spin2Object obj = compiler.compileObject(rootFile, root);
 

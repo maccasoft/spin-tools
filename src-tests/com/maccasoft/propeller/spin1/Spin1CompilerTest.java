@@ -18,6 +18,7 @@ import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
@@ -663,6 +664,104 @@ class Spin1CompilerTest {
         });
     }
 
+    @Test
+    void testRemoveUnusedMethods() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin", ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main | a\n"
+            + "'     a := 1\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000A 0000A       32             RETURN\n"
+            + "0000B 0000B       00             Padding\n"
+            + "", compile("main.spin", sources, true));
+    }
+
+    @Test
+    void testRemoveMiddleUnusedMethods() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin", ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := 1\n"
+            + "    start(1, 2)\n"
+            + "\n"
+            + "PUB stop | c\n"
+            + "\n"
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       1C 00          Object size\n"
+            + "00002 00002       03             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       0C 00 04 00    Function main @ $000C (local size 4)\n"
+            + "00008 00008       15 00 04 00    Function start @ $0015 (local size 4)\n"
+            + "' PUB main | a\n"
+            + "'     a := 1\n"
+            + "0000C 0000C       36             CONSTANT (1)\n"
+            + "0000D 0000D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     start(1, 2)\n"
+            + "0000E 0000E       01             ANCHOR\n"
+            + "0000F 0000F       36             CONSTANT (1)\n"
+            + "00010 00010       38 02          CONSTANT (2)\n"
+            + "00012 00012       05 03          CALL_SUB\n"
+            + "00014 00014       32             RETURN\n"
+            + "' PUB start(a, b) | c\n"
+            + "'     c := a + b\n"
+            + "00015 00015       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00016 00016       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "00017 00017       EC             ADD\n"
+            + "00018 00018       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
+            + "00019 00019       32             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
+            + "", compile("main.spin", sources, true));
+    }
+
+    @Test
+    void testUnusedMethodsCauseErrors() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin", ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "PUB start(a, b)\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile("main.spin", sources, true);
+            }
+
+        });
+    }
+
     class Spin1CompilerAdapter extends Spin1Compiler {
 
         Map<String, String> sources;
@@ -685,11 +784,16 @@ class Spin1CompilerTest {
     }
 
     String compile(String rootFile, Map<String, String> sources) throws Exception {
+        return compile(rootFile, sources, false);
+    }
+
+    String compile(String rootFile, Map<String, String> sources, boolean removeUnused) throws Exception {
         Spin1TokenStream stream = new Spin1TokenStream(sources.get(rootFile));
         Spin1Parser subject = new Spin1Parser(stream);
         Node root = subject.parse();
 
         Spin1Compiler compiler = new Spin1CompilerAdapter(sources);
+        compiler.setRemoveUnusedMethods(removeUnused);
         Spin1Object obj = compiler.compileObject(rootFile, root);
 
         for (CompilerException msg : compiler.getMessages()) {

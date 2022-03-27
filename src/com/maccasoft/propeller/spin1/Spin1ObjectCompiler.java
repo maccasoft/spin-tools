@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.SpinObject.ByteDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Add;
@@ -176,23 +177,27 @@ public class Spin1ObjectCompiler {
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PUB".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin1Method method = compileMethod((MethodNode) node);
-                if (method != null) {
+                try {
                     methods.add(method);
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                     object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                     method.register();
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e.getMessage(), node));
                 }
             }
         }
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PRI".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin1Method method = compileMethod((MethodNode) node);
-                if (method != null) {
+                try {
                     methods.add(method);
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
                     method.register();
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e.getMessage(), node));
                 }
             }
         }
@@ -223,13 +228,19 @@ public class Spin1ObjectCompiler {
         }
 
         WordDataObject objectSize = object.writeWord(0, "Object size");
-        object.writeByte(methods.size() + 1, "Method count + 1");
+        ByteDataObject methodCount = object.writeByte(1, "Method count + 1");
         object.writeByte(objects.size(), "Object count");
 
-        LongDataObject[] ld = new LongDataObject[methods.size()];
-        for (int i = 0; i < ld.length; i++) {
-            ld[i] = object.writeLong(0, "Function " + methods.get(i).getLabel());
+        List<LongDataObject> ld = new ArrayList<LongDataObject>();
+        for (Spin1Method method : methods) {
+            MethodNode node = (MethodNode) method.getData();
+            if (!isReferenced(node)) {
+                logMessage(new CompilerException(CompilerException.WARNING, "method \"" + node.name.getText() + "\" is not used", node.name));
+                continue;
+            }
+            ld.add(object.writeLong(0, "Function " + method.getLabel()));
         }
+        methodCount.setValue(ld.size() + 1);
 
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
             ObjectInfo info = infoEntry.getValue();
@@ -297,6 +308,9 @@ public class Spin1ObjectCompiler {
                 loop = false;
                 address = object.getSize();
                 for (Spin1Method method : methods) {
+                    if (!isReferenced((MethodNode) method.getData())) {
+                        continue;
+                    }
                     address = method.resolve(address);
                     loop |= method.isAddressChanged();
                 }
@@ -304,8 +318,11 @@ public class Spin1ObjectCompiler {
 
             int index = 0;
             for (Spin1Method method : methods) {
-                ld[index].setValue((method.getLocalsSize() << 16) | object.getSize());
-                ld[index].setText(String.format("Function %s @ $%04X (local size %d)", method.getLabel(), object.getSize(), method.getLocalsSize()));
+                if (!isReferenced((MethodNode) method.getData())) {
+                    continue;
+                }
+                ld.get(index).setValue((method.getLocalsSize() << 16) | object.getSize());
+                ld.get(index).setText(String.format("Function %s @ $%04X (local size %d)", method.getLabel(), object.getSize(), method.getLocalsSize()));
                 method.writeTo(object);
                 index++;
             }
@@ -680,6 +697,10 @@ public class Spin1ObjectCompiler {
         return null;
     }
 
+    protected boolean isReferenced(MethodNode node) {
+        return true;
+    }
+
     Spin1Method compileMethod(MethodNode node) {
         Spin1Context localScope = new Spin1Context(scope);
         List<LocalVariable> parameters = new ArrayList<LocalVariable>();
@@ -775,6 +796,7 @@ public class Spin1ObjectCompiler {
 
         Spin1Method method = new Spin1Method(localScope, node.name.getText(), parameters, returns, localVariables);
         method.setComment(node.getText());
+        method.setData(node);
 
         List<Spin1MethodLine> childs = compileStatements(localScope, node.getChilds());
         childs.add(new Spin1MethodLine(localScope, "RETURN"));
@@ -2739,15 +2761,14 @@ public class Spin1ObjectCompiler {
                 if (msg.type == CompilerException.ERROR) {
                     errors = true;
                 }
-                messages.add(msg);
             }
         }
         else {
             if (message.type == CompilerException.ERROR) {
                 errors = true;
             }
-            messages.add(message);
         }
+        messages.add(message);
     }
 
     public boolean hasErrors() {

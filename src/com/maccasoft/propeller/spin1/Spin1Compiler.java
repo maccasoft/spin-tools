@@ -199,16 +199,13 @@ public class Spin1Compiler extends Compiler {
         }
 
         @Override
-        Spin1Method compileMethod(MethodNode node) {
+        protected boolean isReferenced(MethodNode node) {
             if (!preprocessor.isReferenced(node)) {
-                if ("PRI".equalsIgnoreCase(node.type.getText())) {
-                    logMessage(new CompilerException(CompilerException.WARNING, "function \"" + node.name.getText() + "\" is not used", node.name));
-                }
                 if (removeUnusedMethods) {
-                    return null;
+                    return false;
                 }
             }
-            return super.compileMethod(node);
+            return true;
         }
 
         @Override
@@ -218,6 +215,7 @@ public class Spin1Compiler extends Compiler {
 
         @Override
         protected void logMessage(CompilerException message) {
+            message.fileName = fileName;
             if (message.hasChilds()) {
                 for (CompilerException msg : message.getChilds()) {
                     msg.fileName = fileName;
@@ -225,7 +223,6 @@ public class Spin1Compiler extends Compiler {
                 }
             }
             else {
-                message.fileName = fileName;
                 Spin1Compiler.this.logMessage(message);
             }
             super.logMessage(message);

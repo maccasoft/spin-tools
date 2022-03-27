@@ -110,8 +110,12 @@ public class SpinCompiler {
             if (cmd.hasOption('d')) {
                 compiler.setDebugEnabled(true);
             }
+            compiler.setRemoveUnusedMethods(true);
             try {
                 compiler.compile(fileToCompile, binaryData, listingStream);
+                for (CompilerException e : compiler.getMessages()) {
+                    println(e);
+                }
             } finally {
                 if (listingStream != null) {
                     listingStream.close();

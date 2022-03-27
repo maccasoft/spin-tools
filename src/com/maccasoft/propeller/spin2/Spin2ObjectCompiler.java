@@ -252,25 +252,29 @@ public class Spin2ObjectCompiler {
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PUB".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin2Method method = compileMethod((MethodNode) node);
-                if (method != null) {
+                try {
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     method.register();
                     offset++;
                     methods.add(method);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e.getMessage(), node));
                 }
             }
         }
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PRI".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin2Method method = compileMethod((MethodNode) node);
-                if (method != null) {
+                try {
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     method.register();
                     offset++;
                     methods.add(method);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e.getMessage(), node));
                 }
             }
         }
@@ -313,20 +317,24 @@ public class Spin2ObjectCompiler {
             varOffset += info.object.getVarSize();
         }
 
-        LongDataObject[] ld = new LongDataObject[methods.size() + 1];
-
+        List<LongDataObject> ld = new ArrayList<LongDataObject>();
         if (methods.size() != 0) {
             scope.addSymbol("@CLKMODE", new NumberLiteral(0x40));
             scope.addSymbol("@clkmode", new NumberLiteral(0x40));
             scope.addSymbol("@CLKFREQ", new NumberLiteral(0x44));
             scope.addSymbol("@clkfreq", new NumberLiteral(0x44));
 
-            int index = 0;
             for (Spin2Method method : methods) {
-                ld[index] = object.writeLong(0, "Method " + method.getLabel());
-                index++;
+                MethodNode node = (MethodNode) method.getData();
+                if (!isReferenced(node)) {
+                    logMessage(new CompilerException(CompilerException.WARNING, "method \"" + node.name.getText() + "\" is not used", node.name));
+                    continue;
+                }
+                ld.add(object.writeLong(0, "Method " + method.getLabel()));
             }
-            ld[index] = object.writeLong(0, "End");
+            if (ld.size() != 0) {
+                ld.add(object.writeLong(0, "End"));
+            }
         }
 
         int address = 0;
@@ -406,6 +414,9 @@ public class Spin2ObjectCompiler {
                 loop = false;
                 address = object.getSize();
                 for (Spin2Method method : methods) {
+                    if (!isReferenced((MethodNode) method.getData())) {
+                        continue;
+                    }
                     address = method.resolve(address);
                     loop |= method.isAddressChanged();
                 }
@@ -413,18 +424,24 @@ public class Spin2ObjectCompiler {
 
             int index = 0;
             for (Spin2Method method : methods) {
+                if (!isReferenced((MethodNode) method.getData())) {
+                    continue;
+                }
+
                 int value = 0;
 
                 value = Spin2Method.address_bit.setValue(value, object.getSize());
                 value = Spin2Method.returns_bit.setValue(value, method.getReturnsCount());
                 value = Spin2Method.parameters_bit.setValue(value, method.getParametersCount());
 
-                ld[index].setValue(value | 0x80000000L);
-                ld[index].setText(String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnsCount()));
+                ld.get(index).setValue(value | 0x80000000L);
+                ld.get(index).setText(String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnsCount()));
                 method.writeTo(object);
                 index++;
             }
-            ld[index].setValue(object.getSize());
+            if (index > 0) {
+                ld.get(index).setValue(object.getSize());
+            }
 
             object.alignToLong();
         }
@@ -791,6 +808,10 @@ public class Spin2ObjectCompiler {
         return null;
     }
 
+    protected boolean isReferenced(MethodNode node) {
+        return true;
+    }
+
     Spin2Method compileMethod(MethodNode node) {
         Spin2Context localScope = new Spin2Context(scope);
         List<LocalVariable> parameters = new ArrayList<LocalVariable>();
@@ -906,6 +927,7 @@ public class Spin2ObjectCompiler {
 
         Spin2Method method = new Spin2Method(localScope, node.name.getText(), parameters, returns, localVariables);
         method.setComment(node.getText());
+        method.setData(node);
 
         List<Spin2MethodLine> childs = compileStatements(method, node.getChilds());
         childs.add(new Spin2MethodLine(localScope, "RETURN"));
@@ -2499,15 +2521,18 @@ public class Spin2ObjectCompiler {
                         }
                     }
                     else if (expression instanceof Method) {
-                        int parameters = ((Method) expression).getArgumentsCount();
+                        Method method = (Method) expression;
+                        int parameters = method.getArgumentsCount();
                         if (node.getChildCount() != parameters) {
                             throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChildCount());
+                        }
+                        if (push && method.getReturnsCount() == 0) {
+                            throw new RuntimeException("method doesn't return any value");
                         }
                         source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
                         for (int i = 0; i < parameters; i++) {
                             source.addAll(compileConstantExpression(context, node.getChild(i)));
                         }
-                        Method method = (Method) expression;
                         if (method.getObject() != 0) {
                             source.add(new Bytecode(context, new byte[] {
                                 (byte) 0x08,
@@ -2519,7 +2544,7 @@ public class Spin2ObjectCompiler {
                             source.add(new Bytecode(context, new byte[] {
                                 (byte) 0x0A,
                                 (byte) method.getOffset()
-                            }, "CALL_SUB (" + ((Method) expression).getOffset() + ")"));
+                            }, "CALL_SUB (" + method.getOffset() + ")"));
                         }
                     }
                     else if (expression instanceof Register) {
@@ -3438,15 +3463,14 @@ public class Spin2ObjectCompiler {
                 if (msg.type == CompilerException.ERROR) {
                     errors = true;
                 }
-                messages.add(msg);
             }
         }
         else {
             if (message.type == CompilerException.ERROR) {
                 errors = true;
             }
-            messages.add(message);
         }
+        messages.add(message);
     }
 
     public boolean hasErrors() {
