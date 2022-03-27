@@ -454,117 +454,122 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("OUTB", TokenId.PASM_INSTRUCTION);
         keywords.put("INA", TokenId.PASM_INSTRUCTION);
         keywords.put("INB", TokenId.PASM_INSTRUCTION);
+    }
 
-        keywords.put("FDEC", TokenId.FUNCTION);
-        keywords.put("FDEC_REG_ARRAY", TokenId.FUNCTION);
-        keywords.put("FDEC_ARRAY", TokenId.FUNCTION);
+    static Map<String, TokenId> debugKeywords = new HashMap<String, TokenId>();
+    static {
+        debugKeywords.put("DEBUG", TokenId.KEYWORD);
 
-        keywords.put("UDEC", TokenId.FUNCTION);
-        keywords.put("UDEC_BYTE", TokenId.FUNCTION);
-        keywords.put("UDEC_WORD", TokenId.FUNCTION);
-        keywords.put("UDEC_LONG", TokenId.FUNCTION);
-        keywords.put("SDEC", TokenId.FUNCTION);
-        keywords.put("SDEC_BYTE", TokenId.FUNCTION);
-        keywords.put("SDEC_WORD", TokenId.FUNCTION);
-        keywords.put("SDEC_LONG", TokenId.FUNCTION);
-        keywords.put("UHEX", TokenId.FUNCTION);
-        keywords.put("UHEX_BYTE", TokenId.FUNCTION);
-        keywords.put("UHEX_WORD", TokenId.FUNCTION);
-        keywords.put("UHEX_LONG", TokenId.FUNCTION);
-        keywords.put("SHEX", TokenId.FUNCTION);
-        keywords.put("SHEX_BYTE", TokenId.FUNCTION);
-        keywords.put("SHEX_WORD", TokenId.FUNCTION);
-        keywords.put("SHEX_LONG", TokenId.FUNCTION);
-        keywords.put("UBIN", TokenId.FUNCTION);
-        keywords.put("UBIN_BYTE", TokenId.FUNCTION);
-        keywords.put("UBIN_WORD", TokenId.FUNCTION);
-        keywords.put("UBIN_LONG", TokenId.FUNCTION);
-        keywords.put("SBIN", TokenId.FUNCTION);
-        keywords.put("SBIN_BYTE", TokenId.FUNCTION);
-        keywords.put("SBIN_WORD", TokenId.FUNCTION);
-        keywords.put("SBIN_LONG", TokenId.FUNCTION);
+        debugKeywords.put("FDEC", TokenId.FUNCTION);
+        debugKeywords.put("FDEC_REG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("FDEC_ARRAY", TokenId.FUNCTION);
 
-        keywords.put("UDEC_", TokenId.FUNCTION);
-        keywords.put("UDEC_BYTE_", TokenId.FUNCTION);
-        keywords.put("UDEC_WORD_", TokenId.FUNCTION);
-        keywords.put("UDEC_LONG_", TokenId.FUNCTION);
-        keywords.put("SDEC_", TokenId.FUNCTION);
-        keywords.put("SDEC_BYTE_", TokenId.FUNCTION);
-        keywords.put("SDEC_WORD_", TokenId.FUNCTION);
-        keywords.put("SDEC_LONG_", TokenId.FUNCTION);
-        keywords.put("UHEX_", TokenId.FUNCTION);
-        keywords.put("UHEX_BYTE_", TokenId.FUNCTION);
-        keywords.put("UHEX_WORD_", TokenId.FUNCTION);
-        keywords.put("UHEX_LONG_", TokenId.FUNCTION);
-        keywords.put("SHEX_", TokenId.FUNCTION);
-        keywords.put("SHEX_BYTE_", TokenId.FUNCTION);
-        keywords.put("SHEX_WORD_", TokenId.FUNCTION);
-        keywords.put("SHEX_LONG_", TokenId.FUNCTION);
-        keywords.put("UBIN_", TokenId.FUNCTION);
-        keywords.put("UBIN_BYTE_", TokenId.FUNCTION);
-        keywords.put("UBIN_WORD_", TokenId.FUNCTION);
-        keywords.put("UBIN_LONG_", TokenId.FUNCTION);
-        keywords.put("SBIN_", TokenId.FUNCTION);
-        keywords.put("SBIN_BYTE_", TokenId.FUNCTION);
-        keywords.put("SBIN_WORD_", TokenId.FUNCTION);
-        keywords.put("SBIN_LONG_", TokenId.FUNCTION);
+        debugKeywords.put("UDEC", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_BYTE", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_WORD", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_LONG", TokenId.FUNCTION);
+        debugKeywords.put("SDEC", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_BYTE", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_WORD", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_LONG", TokenId.FUNCTION);
+        debugKeywords.put("UHEX", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_BYTE", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_WORD", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_LONG", TokenId.FUNCTION);
+        debugKeywords.put("SHEX", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_BYTE", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_WORD", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_LONG", TokenId.FUNCTION);
+        debugKeywords.put("UBIN", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_BYTE", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_WORD", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_LONG", TokenId.FUNCTION);
+        debugKeywords.put("SBIN", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_BYTE", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_WORD", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_LONG", TokenId.FUNCTION);
 
-        keywords.put("UDEC_REG_ARRAY", TokenId.FUNCTION);
-        keywords.put("UDEC_BYTE_ARRAY", TokenId.FUNCTION);
-        keywords.put("UDEC_WORD_ARRAY", TokenId.FUNCTION);
-        keywords.put("UDEC_LONG_ARRAY", TokenId.FUNCTION);
-        keywords.put("SDEC_REG_ARRAY", TokenId.FUNCTION);
-        keywords.put("SDEC_BYTE_ARRAY", TokenId.FUNCTION);
-        keywords.put("SDEC_WORD_ARRAY", TokenId.FUNCTION);
-        keywords.put("SDEC_LONG_ARRAY", TokenId.FUNCTION);
-        keywords.put("UHEX_REG_ARRAY", TokenId.FUNCTION);
-        keywords.put("UHEX_BYTE_ARRAY", TokenId.FUNCTION);
-        keywords.put("UHEX_WORD_ARRAY", TokenId.FUNCTION);
-        keywords.put("UHEX_LONG_ARRAY", TokenId.FUNCTION);
-        keywords.put("SHEX_REG_ARRAY", TokenId.FUNCTION);
-        keywords.put("SHEX_BYTE_ARRAY", TokenId.FUNCTION);
-        keywords.put("SHEX_WORD_ARRAY", TokenId.FUNCTION);
-        keywords.put("SHEX_LONG_ARRAY", TokenId.FUNCTION);
-        keywords.put("UBIN_REG_ARRAY", TokenId.FUNCTION);
-        keywords.put("UBIN_BYTE_ARRAY", TokenId.FUNCTION);
-        keywords.put("UBIN_WORD_ARRAY", TokenId.FUNCTION);
-        keywords.put("UBIN_LONG_ARRAY", TokenId.FUNCTION);
-        keywords.put("SBIN_REG_ARRAY", TokenId.FUNCTION);
-        keywords.put("SBIN_BYTE_ARRAY", TokenId.FUNCTION);
-        keywords.put("SBIN_WORD_ARRAY", TokenId.FUNCTION);
-        keywords.put("SBIN_LONG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_BYTE_", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_WORD_", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_LONG_", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_BYTE_", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_WORD_", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_LONG_", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_BYTE_", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_WORD_", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_LONG_", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_BYTE_", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_WORD_", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_LONG_", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_BYTE_", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_WORD_", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_LONG_", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_BYTE_", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_WORD_", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_LONG_", TokenId.FUNCTION);
 
-        keywords.put("UDEC_REG_ARRAY_", TokenId.FUNCTION);
-        keywords.put("UDEC_BYTE_ARRAY_", TokenId.FUNCTION);
-        keywords.put("UDEC_WORD_ARRAY_", TokenId.FUNCTION);
-        keywords.put("UDEC_LONG_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SDEC_REG_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SDEC_BYTE_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SDEC_WORD_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SDEC_LONG_ARRAY_", TokenId.FUNCTION);
-        keywords.put("UHEX_REG_ARRAY_", TokenId.FUNCTION);
-        keywords.put("UHEX_BYTE_ARRAY_", TokenId.FUNCTION);
-        keywords.put("UHEX_WORD_ARRAY_", TokenId.FUNCTION);
-        keywords.put("UHEX_LONG_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SHEX_REG_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SHEX_BYTE_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SHEX_WORD_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SHEX_LONG_ARRAY_", TokenId.FUNCTION);
-        keywords.put("UBIN_REG_ARRAY_", TokenId.FUNCTION);
-        keywords.put("UBIN_BYTE_ARRAY_", TokenId.FUNCTION);
-        keywords.put("UBIN_WORD_ARRAY_", TokenId.FUNCTION);
-        keywords.put("UBIN_LONG_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SBIN_REG_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SBIN_BYTE_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SBIN_WORD_ARRAY_", TokenId.FUNCTION);
-        keywords.put("SBIN_LONG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_REG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_BYTE_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_WORD_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_LONG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_REG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_BYTE_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_WORD_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_LONG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_REG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_BYTE_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_WORD_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_LONG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_REG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_BYTE_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_WORD_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_LONG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_REG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_BYTE_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_WORD_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_LONG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_REG_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_BYTE_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_WORD_ARRAY", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_LONG_ARRAY", TokenId.FUNCTION);
 
-        keywords.put("DLY", TokenId.FUNCTION);
-        keywords.put("ZSTR", TokenId.FUNCTION);
-        keywords.put("LSTR", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_REG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_BYTE_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_WORD_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UDEC_LONG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_REG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_BYTE_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_WORD_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SDEC_LONG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_REG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_BYTE_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_WORD_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UHEX_LONG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_REG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_BYTE_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_WORD_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SHEX_LONG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_REG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_BYTE_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_WORD_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("UBIN_LONG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_REG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_BYTE_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_WORD_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("SBIN_LONG_ARRAY_", TokenId.FUNCTION);
 
-        keywords.put("IF", TokenId.FUNCTION);
-        keywords.put("IFNOT", TokenId.FUNCTION);
+        debugKeywords.put("DLY", TokenId.FUNCTION);
+        debugKeywords.put("ZSTR", TokenId.FUNCTION);
+        debugKeywords.put("LSTR", TokenId.FUNCTION);
+
+        debugKeywords.put("IF", TokenId.FUNCTION);
+        debugKeywords.put("IFNOT", TokenId.FUNCTION);
     }
 
     static Map<String, TokenId> spinKeywords = new HashMap<String, TokenId>();
@@ -848,7 +853,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         }
 
         void markTokens(Node node) {
-            for (Token token : node.getTokens()) {
+            List<Token> list = node.getTokens();
+            boolean debug = list.size() != 0 && "debug".equalsIgnoreCase(list.get(0).getText());
+
+            for (Token token : list) {
                 if (token.type == Token.NUMBER) {
                     tokens.add(new TokenMarker(token, TokenId.NUMBER));
                 }
@@ -859,7 +867,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     tokens.add(new TokenMarker(token, TokenId.STRING));
                 }
                 else {
-                    TokenId id = keywords.get(token.getText().toUpperCase());
+                    TokenId id = debug ? debugKeywords.get(token.getText().toUpperCase()) : keywords.get(token.getText().toUpperCase());
                     if (id == null) {
                         id = spinKeywords.get(token.getText().toUpperCase());
                     }
