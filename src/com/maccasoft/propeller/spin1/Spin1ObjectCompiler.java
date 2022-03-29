@@ -168,21 +168,38 @@ public class Spin1ObjectCompiler {
             logMessage(e);
         }
 
+        if (objects.size() != 0) {
+            object.writeComment("Object header (var size " + varOffset + ")");
+        }
+        else {
+            object.writeComment("Object header");
+        }
+
+        WordDataObject objectSize = object.writeWord(0, "Object size");
+        ByteDataObject methodCount = object.writeByte(1, "Method count + 1");
+        object.writeByte(objects.size(), "Object count");
+
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
                 compileDatBlock(scope, node);
             }
         }
 
+        List<LongDataObject> ld = new ArrayList<LongDataObject>();
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PUB".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin1Method method = compileMethod((MethodNode) node);
                 try {
-                    methods.add(method);
-                    scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
-                    scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
-                    object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
+                    int index = -1;
+                    if (isReferenced((MethodNode) node)) {
+                        ld.add(object.writeLong(0, "Function " + method.getLabel()));
+                        index = ld.size();
+                        object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
+                    }
+                    scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
+                    scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
                     method.register();
+                    methods.add(method);
                 } catch (Exception e) {
                     logMessage(new CompilerException(e.getMessage(), node));
                 }
@@ -192,10 +209,15 @@ public class Spin1ObjectCompiler {
             if ((node instanceof MethodNode) && "PRI".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin1Method method = compileMethod((MethodNode) node);
                 try {
-                    methods.add(method);
-                    scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
-                    scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), methods.size()));
+                    int index = -1;
+                    if (isReferenced((MethodNode) node)) {
+                        ld.add(object.writeLong(0, "Function " + method.getLabel()));
+                        index = ld.size();
+                    }
+                    scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
+                    scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
                     method.register();
+                    methods.add(method);
                 } catch (Exception e) {
                     logMessage(new CompilerException(e.getMessage(), node));
                 }
@@ -204,6 +226,7 @@ public class Spin1ObjectCompiler {
         if (methods.size() != 0) {
             object.setDcurr(methods.get(0).getStackSize());
         }
+        methodCount.setValue(ld.size() + 1);
 
         int objectIndex = methods.size() + 1;
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
@@ -219,28 +242,6 @@ public class Spin1ObjectCompiler {
             }
             objectIndex++;
         }
-
-        if (objects.size() != 0) {
-            object.writeComment("Object header (var size " + varOffset + ")");
-        }
-        else {
-            object.writeComment("Object header");
-        }
-
-        WordDataObject objectSize = object.writeWord(0, "Object size");
-        ByteDataObject methodCount = object.writeByte(1, "Method count + 1");
-        object.writeByte(objects.size(), "Object count");
-
-        List<LongDataObject> ld = new ArrayList<LongDataObject>();
-        for (Spin1Method method : methods) {
-            MethodNode node = (MethodNode) method.getData();
-            if (!isReferenced(node)) {
-                logMessage(new CompilerException(CompilerException.WARNING, "method \"" + node.name.getText() + "\" is not used", node.name));
-                continue;
-            }
-            ld.add(object.writeLong(0, "Function " + method.getLabel()));
-        }
-        methodCount.setValue(ld.size() + 1);
 
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
             ObjectInfo info = infoEntry.getValue();

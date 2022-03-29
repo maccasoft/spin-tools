@@ -946,7 +946,7 @@ class Spin2CompilerTest {
             + "0000F 0000F       00             ANCHOR\n"
             + "00010 00010       A2             CONSTANT (1)\n"
             + "00011 00011       A3             CONSTANT (2)\n"
-            + "00012 00012       0A 02          CALL_SUB (2)\n"
+            + "00012 00012       0A 01          CALL_SUB (1)\n"
             + "00014 00014       04             RETURN\n"
             + "' PUB start(a, b) | c\n"
             + "00015 00015       04             (stack size)\n"
@@ -982,6 +982,59 @@ class Spin2CompilerTest {
             }
 
         });
+    }
+
+    @Test
+    void testObjectUnusedMethodCall() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    o.start(1, 2)\n"
+            + "    o.method2()\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "PUB start(a, b)\n"
+            + "\n"
+            + "PUB method1()\n"
+            + "\n"
+            + "PUB method2()\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       1C 00 00 00    Object \"text2.spin2\" @ $0001C\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "0000C 0000C       1C 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00010 00010       04             (stack size)\n"
+            + "'     o.start(1, 2)\n"
+            + "00011 00011       00             ANCHOR\n"
+            + "00012 00012       A2             CONSTANT (1)\n"
+            + "00013 00013       A3             CONSTANT (2)\n"
+            + "00014 00014       08 00 00       CALL_OBJ_SUB (0.0)\n"
+            + "'     o.method2()\n"
+            + "00017 00017       00             ANCHOR\n"
+            + "00018 00018       08 00 01       CALL_OBJ_SUB (0.1)\n"
+            + "0001B 0001B       04             RETURN\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "0001C 00000       0C 00 00 82    Method start @ $0000C (2 parameters, 0 returns)\n"
+            + "00020 00004       0E 00 00 80    Method method2 @ $0000E (0 parameters, 0 returns)\n"
+            + "00024 00008       10 00 00 00    End\n"
+            + "' PUB start(a, b)\n"
+            + "00028 0000C       00             (stack size)\n"
+            + "00029 0000D       04             RETURN\n"
+            + "' PUB method2()\n"
+            + "0002A 0000E       00             (stack size)\n"
+            + "0002B 0000F       04             RETURN\n"
+            + "", compile("main.spin2", sources, true, false));
     }
 
     class Spin2CompilerAdapter extends Spin2Compiler {

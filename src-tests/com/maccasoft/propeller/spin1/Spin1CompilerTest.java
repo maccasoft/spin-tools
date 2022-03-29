@@ -725,7 +725,7 @@ class Spin1CompilerTest {
             + "0000E 0000E       01             ANCHOR\n"
             + "0000F 0000F       36             CONSTANT (1)\n"
             + "00010 00010       38 02          CONSTANT (2)\n"
-            + "00012 00012       05 03          CALL_SUB\n"
+            + "00012 00012       05 02          CALL_SUB\n"
             + "00014 00014       32             RETURN\n"
             + "' PUB start(a, b) | c\n"
             + "'     c := a + b\n"
@@ -760,6 +760,60 @@ class Spin1CompilerTest {
             }
 
         });
+    }
+
+    @Test
+    void testObjectUnusedMethodCall() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    o.start(1, 2)\n"
+            + "    o.method2()\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin", ""
+            + "PUB start(a, b)\n"
+            + "\n"
+            + "PUB method1()\n"
+            + "\n"
+            + "PUB method2()\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       18 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       01             Object count\n"
+            + "00004 00004       0C 00 04 00    Function main @ $000C (local size 4)\n"
+            + "00008 00008       18 00 00 00    Object \"text2.spin\" @ $0018 (variables @ $0000)\n"
+            + "' PUB main() | a\n"
+            + "'     o.start(1, 2)\n"
+            + "0000C 0000C       01             ANCHOR\n"
+            + "0000D 0000D       36             CONSTANT (1)\n"
+            + "0000E 0000E       38 02          CONSTANT (2)\n"
+            + "00010 00010       06 02 01       CALL_OBJ_SUB\n"
+            + "'     o.method2()\n"
+            + "00013 00013       01             ANCHOR\n"
+            + "00014 00014       06 02 02       CALL_OBJ_SUB\n"
+            + "00017 00017       32             RETURN\n"
+            + "' Object \"text2.spin\" header (var size 0)\n"
+            + "00018 00000       10 00          Object size\n"
+            + "0001A 00002       03             Method count + 1\n"
+            + "0001B 00003       00             Object count\n"
+            + "0001C 00004       0C 00 00 00    Function start @ $000C (local size 0)\n"
+            + "00020 00008       0D 00 00 00    Function method2 @ $000D (local size 0)\n"
+            + "' PUB start(a, b)\n"
+            + "00024 0000C       32             RETURN\n"
+            + "' PUB method2()\n"
+            + "00025 0000D       32             RETURN\n"
+            + "00026 0000E       00 00          Padding\n"
+            + "", compile("main.spin", sources, true));
     }
 
     class Spin1CompilerAdapter extends Spin1Compiler {

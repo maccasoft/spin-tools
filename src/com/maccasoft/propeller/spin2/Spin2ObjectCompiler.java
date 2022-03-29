@@ -248,16 +248,45 @@ public class Spin2ObjectCompiler {
             }
         }
 
-        int offset = objects.size() * 2;
+        object.writeComment("Object header");
+
+        int objectIndex = 1;
+        for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
+            ObjectInfo info = infoEntry.getValue();
+            String name = infoEntry.getKey();
+            for (Entry<String, Expression> objEntry : info.object.getSymbols().entrySet()) {
+                if (objEntry.getValue() instanceof Method) {
+                    String qualifiedName = name + "." + objEntry.getKey();
+                    Method method = ((Method) objEntry.getValue()).copy();
+                    method.setObject(objectIndex);
+                    scope.addSymbol(qualifiedName, method);
+                }
+            }
+            LinkDataObject linkData = new LinkDataObject(info.object, 0);
+            object.links.add(linkData);
+            object.write(linkData);
+            object.writeLong(varOffset, String.format("Variables @ $%05X", varOffset));
+            varOffset += info.object.getVarSize();
+            objectIndex++;
+        }
+
+        List<LongDataObject> ld = new ArrayList<LongDataObject>();
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PUB".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin2Method method = compileMethod((MethodNode) node);
                 try {
+                    int offset = -1;
+                    if (isReferenced((MethodNode) node)) {
+                        offset = objects.size() * 2 + ld.size();
+                        object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
+                        ld.add(object.writeLong(0, "Method " + method.getLabel()));
+                    }
+                    else {
+                        logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", method.label));
+                    }
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
-                    object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     method.register();
-                    offset++;
                     methods.add(method);
                 } catch (Exception e) {
                     logMessage(new CompilerException(e.getMessage(), node));
@@ -268,30 +297,29 @@ public class Spin2ObjectCompiler {
             if ((node instanceof MethodNode) && "PRI".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin2Method method = compileMethod((MethodNode) node);
                 try {
+                    int offset = -1;
+                    if (isReferenced((MethodNode) node)) {
+                        offset = objects.size() * 2 + ld.size();
+                        ld.add(object.writeLong(0, "Method " + method.getLabel()));
+                    }
+                    else {
+                        logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", method.label));
+                    }
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     method.register();
-                    offset++;
                     methods.add(method);
                 } catch (Exception e) {
                     logMessage(new CompilerException(e.getMessage(), node));
                 }
             }
         }
-
-        int objectIndex = 1;
-        for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
-            String name = infoEntry.getKey();
-            Spin2Object obj = infoEntry.getValue().object;
-            for (Entry<String, Expression> objEntry : obj.getSymbols().entrySet()) {
-                if (objEntry.getValue() instanceof Method) {
-                    String qualifiedName = name + "." + objEntry.getKey();
-                    Method method = ((Method) objEntry.getValue()).copy();
-                    method.setObject(objectIndex);
-                    scope.addSymbol(qualifiedName, method);
-                }
-            }
-            objectIndex++;
+        if (ld.size() != 0) {
+            ld.add(object.writeLong(0, "End"));
+            scope.addSymbol("@CLKMODE", new NumberLiteral(0x40));
+            scope.addSymbol("@clkmode", new NumberLiteral(0x40));
+            scope.addSymbol("@CLKFREQ", new NumberLiteral(0x44));
+            scope.addSymbol("@clkfreq", new NumberLiteral(0x44));
         }
 
         for (Spin2Method method : methods) {
@@ -303,37 +331,6 @@ public class Spin2ObjectCompiler {
                 } catch (Exception e) {
                     logMessage(new CompilerException(e, line.getData()));
                 }
-            }
-        }
-
-        object.writeComment("Object header");
-
-        for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
-            ObjectInfo info = infoEntry.getValue();
-            LinkDataObject linkData = new LinkDataObject(info.object, 0);
-            object.links.add(linkData);
-            object.write(linkData);
-            object.writeLong(varOffset, String.format("Variables @ $%05X", varOffset));
-            varOffset += info.object.getVarSize();
-        }
-
-        List<LongDataObject> ld = new ArrayList<LongDataObject>();
-        if (methods.size() != 0) {
-            scope.addSymbol("@CLKMODE", new NumberLiteral(0x40));
-            scope.addSymbol("@clkmode", new NumberLiteral(0x40));
-            scope.addSymbol("@CLKFREQ", new NumberLiteral(0x44));
-            scope.addSymbol("@clkfreq", new NumberLiteral(0x44));
-
-            for (Spin2Method method : methods) {
-                MethodNode node = (MethodNode) method.getData();
-                if (!isReferenced(node)) {
-                    logMessage(new CompilerException(CompilerException.WARNING, "method \"" + node.name.getText() + "\" is not used", node.name));
-                    continue;
-                }
-                ld.add(object.writeLong(0, "Method " + method.getLabel()));
-            }
-            if (ld.size() != 0) {
-                ld.add(object.writeLong(0, "End"));
             }
         }
 
