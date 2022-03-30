@@ -416,8 +416,8 @@ public class EditorTab implements FindReplaceTarget {
             @Override
             public void widgetDisposed(DisposeEvent e) {
                 sourcePool.removePropertyChangeListener(sourcePoolChangeListener);
-                File localFile = file != null ? file : new File(tabItemText);
-                sourcePool.removeParsedSource(localFile.getAbsolutePath(), dirty);
+                File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
+                sourcePool.removeParsedSource(localFile.getAbsolutePath());
                 busyFont.dispose();
             }
 
@@ -458,8 +458,8 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     public void setFile(File file) {
-        File localFile = file != null ? file : new File(tabItemText);
-        sourcePool.removeParsedSource(localFile.getAbsolutePath(), dirty);
+        File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
+        sourcePool.removeParsedSource(localFile.getAbsolutePath());
 
         this.file = file;
 

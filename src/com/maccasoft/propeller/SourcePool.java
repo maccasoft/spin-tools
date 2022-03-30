@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -44,20 +44,12 @@ public class SourcePool {
 
     public void setParsedSource(String key, Node node) {
         Node oldNode = sources.put(key, node);
-        if (oldNode != null) {
-            changeSupport.firePropertyChange(key, oldNode, node);
-        }
-    }
-
-    public void removeParsedSource(String key, boolean notify) {
-        Node oldNode = sources.remove(key);
-        if (notify) {
-            changeSupport.firePropertyChange(key, oldNode, null);
-        }
+        changeSupport.firePropertyChange(key, oldNode, node);
     }
 
     public void removeParsedSource(String key) {
-        sources.remove(key);
+        Node oldNode = sources.remove(key);
+        changeSupport.firePropertyChange(key, oldNode, null);
     }
 
     public boolean isDebugEnabled() {
