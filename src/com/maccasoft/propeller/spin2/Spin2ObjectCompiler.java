@@ -2202,51 +2202,20 @@ public class Spin2ObjectCompiler {
                     }
                 }
 
-                StringBuilder sb = new StringBuilder(node.getText().toUpperCase());
-
-                if (bitfieldNode == null && postEffectNode == null) {
-                    sb.append(push || bitfieldNode != null ? "_READ" : "_WRITE");
-                    sb.append(indexNode != null ? "_INDEXED" : "");
-                    if ("BYTE".equalsIgnoreCase(node.getText())) {
-                        source.add(new Bytecode(context, new byte[] {
-                            indexNode != null ? (byte) 0x62 : (byte) 0x65, push ? (byte) 0x80 : (byte) 0x81
-                        }, sb.toString()));
-                    }
-                    else if ("WORD".equalsIgnoreCase(node.getText())) {
-                        source.add(new Bytecode(context, new byte[] {
-                            indexNode != null ? (byte) 0x63 : (byte) 0x66, push ? (byte) 0x80 : (byte) 0x81
-                        }, sb.toString()));
-                    }
-                    else if ("LONG".equalsIgnoreCase(node.getText())) {
-                        source.add(new Bytecode(context, new byte[] {
-                            indexNode != null ? (byte) 0x64 : (byte) 0x67, push ? (byte) 0x80 : (byte) 0x81
-                        }, sb.toString()));
-                    }
+                MemoryOp.Size ss = MemoryOp.Size.Long;
+                if ("BYTE".equalsIgnoreCase(node.getText())) {
+                    ss = MemoryOp.Size.Byte;
                 }
-                else {
-                    sb.append("_SETUP");
-                    sb.append(indexNode != null ? "_INDEXED" : "");
-                    if ("BYTE".equalsIgnoreCase(node.getText())) {
-                        source.add(new Bytecode(context, new byte[] {
-                            indexNode != null ? (byte) 0x62 : (byte) 0x65
-                        }, sb.toString()));
-                    }
-                    else if ("WORD".equalsIgnoreCase(node.getText())) {
-                        source.add(new Bytecode(context, new byte[] {
-                            indexNode != null ? (byte) 0x63 : (byte) 0x66
-                        }, sb.toString()));
-                    }
-                    else if ("LONG".equalsIgnoreCase(node.getText())) {
-                        source.add(new Bytecode(context, new byte[] {
-                            indexNode != null ? (byte) 0x64 : (byte) 0x67
-                        }, sb.toString()));
-                    }
+                else if ("WORD".equalsIgnoreCase(node.getText())) {
+                    ss = MemoryOp.Size.Word;
                 }
+                MemoryOp.Op op = bitfieldNode == null && postEffectNode == null ? (push ? MemoryOp.Op.Read : MemoryOp.Op.Write) : MemoryOp.Op.Setup;
+                source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
 
                 if (bitfieldNode != null) {
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-                    sb = new StringBuilder();
+                    StringBuilder sb = new StringBuilder();
                     sb.append("BITFIELD_");
 
                     try {
@@ -2991,47 +2960,18 @@ public class Spin2ObjectCompiler {
                 }
             }
 
-            StringBuilder sb = new StringBuilder(node.getText().toUpperCase());
-            sb.append(push || bitfieldNode != null ? "_SETUP" : "_WRITE");
-            sb.append(indexNode != null ? "_INDEXED" : "");
-
-            if (push || bitfieldNode != null) {
-                if ("BYTE".equalsIgnoreCase(node.getText())) {
-                    source.add(new Bytecode(context, new byte[] {
-                        indexNode != null ? (byte) 0x62 : (byte) 0x65
-                    }, sb.toString()));
-                }
-                else if ("WORD".equalsIgnoreCase(node.getText())) {
-                    source.add(new Bytecode(context, new byte[] {
-                        indexNode != null ? (byte) 0x63 : (byte) 0x66
-                    }, sb.toString()));
-                }
-                else if ("LONG".equalsIgnoreCase(node.getText())) {
-                    source.add(new Bytecode(context, new byte[] {
-                        indexNode != null ? (byte) 0x64 : (byte) 0x67
-                    }, sb.toString()));
-                }
+            MemoryOp.Size ss = MemoryOp.Size.Long;
+            if ("BYTE".equalsIgnoreCase(node.getText())) {
+                ss = MemoryOp.Size.Byte;
             }
-            else {
-                if ("BYTE".equalsIgnoreCase(node.getText())) {
-                    source.add(new Bytecode(context, new byte[] {
-                        indexNode != null ? (byte) 0x62 : (byte) 0x65, (byte) 0x81
-                    }, sb.toString()));
-                }
-                else if ("WORD".equalsIgnoreCase(node.getText())) {
-                    source.add(new Bytecode(context, new byte[] {
-                        indexNode != null ? (byte) 0x63 : (byte) 0x66, (byte) 0x81
-                    }, sb.toString()));
-                }
-                else if ("LONG".equalsIgnoreCase(node.getText())) {
-                    source.add(new Bytecode(context, new byte[] {
-                        indexNode != null ? (byte) 0x64 : (byte) 0x67, (byte) 0x81
-                    }, sb.toString()));
-                }
+            else if ("WORD".equalsIgnoreCase(node.getText())) {
+                ss = MemoryOp.Size.Word;
             }
+            MemoryOp.Op op = push || bitfieldNode != null ? MemoryOp.Op.Setup : MemoryOp.Op.Write;
+            source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
 
             if (bitfieldNode != null) {
-                sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder();
                 sb.append("BITFIELD_");
 
                 ByteArrayOutputStream os = new ByteArrayOutputStream();

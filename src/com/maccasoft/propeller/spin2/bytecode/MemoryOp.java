@@ -26,7 +26,7 @@ public class MemoryOp extends Spin2Bytecode {
     };
 
     public static enum Base {
-        PBase, VBase, DBase
+        PBase, VBase, DBase, Pop
     }
 
     public static enum Op {
@@ -46,6 +46,14 @@ public class MemoryOp extends Spin2Bytecode {
         this.base = bb;
         this.op = op;
         this.expression = expression;
+    }
+
+    public MemoryOp(Spin2Context context, Size ss, Base bb, Op op, boolean pop) {
+        super(context);
+        this.ss = ss;
+        this.base = bb;
+        this.op = op;
+        this.pop = pop;
     }
 
     public MemoryOp(Spin2Context context, Size ss, Base bb, Op op, boolean pop, Expression expression) {
@@ -104,17 +112,6 @@ public class MemoryOp extends Spin2Bytecode {
 
     @Override
     public byte[] getBytes() {
-        int offset;
-        if (expression instanceof ContextLiteral) {
-            offset = ((ContextLiteral) expression).getContext().getHubAddress();
-        }
-        else if (expression instanceof Variable) {
-            offset = ((Variable) expression).getOffset();
-        }
-        else {
-            offset = expression.getNumber().intValue();
-        }
-
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
             switch (base) {
@@ -151,9 +148,32 @@ public class MemoryOp extends Spin2Bytecode {
                         os.write(pop ? 0x61 : 0x5E);
                     }
                     break;
+                case Pop:
+                    if (ss == Size.Byte) {
+                        os.write(pop ? 0x62 : 0x65);
+                    }
+                    else if (ss == Size.Word) {
+                        os.write(pop ? 0x63 : 0x66);
+                    }
+                    else {
+                        os.write(pop ? 0x64 : 0x67);
+                    }
+                    break;
             }
 
-            os.write(Constant.wrVar(offset + index));
+            if (base != Base.Pop) {
+                int offset;
+                if (expression instanceof ContextLiteral) {
+                    offset = ((ContextLiteral) expression).getContext().getHubAddress();
+                }
+                else if (expression instanceof Variable) {
+                    offset = ((Variable) expression).getOffset();
+                }
+                else {
+                    offset = expression.getNumber().intValue();
+                }
+                os.write(Constant.wrVar(offset + index));
+            }
 
             if (op == Op.Address) {
                 os.write(0x7F);
@@ -216,19 +236,23 @@ public class MemoryOp extends Spin2Bytecode {
             case DBase:
                 sb.append(" DBASE");
                 break;
+            case Pop:
+                break;
         }
 
-        int offset;
-        if (expression instanceof ContextLiteral) {
-            offset = ((ContextLiteral) expression).getContext().getHubAddress();
+        if (base != Base.Pop) {
+            int offset;
+            if (expression instanceof ContextLiteral) {
+                offset = ((ContextLiteral) expression).getContext().getHubAddress();
+            }
+            else if (expression instanceof Variable) {
+                offset = ((Variable) expression).getOffset();
+            }
+            else {
+                offset = expression.getNumber().intValue();
+            }
+            sb.append(String.format("+$%05X", offset + index));
         }
-        else if (expression instanceof Variable) {
-            offset = ((Variable) expression).getOffset();
-        }
-        else {
-            offset = expression.getNumber().intValue();
-        }
-        sb.append(String.format("+$%05X", offset + index));
 
         return sb.toString();
     }
