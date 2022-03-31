@@ -87,6 +87,7 @@ import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
 import com.maccasoft.propeller.spin2.Spin2Object.LinkDataObject;
 import com.maccasoft.propeller.spin2.bytecode.Address;
+import com.maccasoft.propeller.spin2.bytecode.BitField;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
 import com.maccasoft.propeller.spin2.bytecode.CaseJmp;
 import com.maccasoft.propeller.spin2.bytecode.CaseRangeJmp;
@@ -2213,51 +2214,7 @@ public class Spin2ObjectCompiler {
                 source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
 
                 if (bitfieldNode != null) {
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("BITFIELD_");
-
-                    try {
-                        if (bitfield == -1) {
-                            os.write(0xDE); // Read (pop)
-                        }
-                        else {
-                            if (bitfield >= 0 && bitfield <= 15) {
-                                os.write(0xE0 + bitfield);
-                            }
-                            else if (bitfield >= 16 && bitfield <= 31) {
-                                os.write(0xF0 + (bitfield - 16));
-                            }
-                            else {
-                                os.write(0xDF);
-                                os.write(Constant.wrVar(bitfield));
-                            }
-                        }
-                        if (postEffectNode == null) {
-                            os.write(0x80);
-                        }
-                        sb.append(postEffectNode == null ? "READ" : "SETUP");
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-
-                    if (bitfield == -1) {
-                        sb.append(" (pop)");
-                    }
-                    else {
-                        if (bitfield >= 0 && bitfield <= 15) {
-                            sb.append(" (short)");
-                        }
-                        else if (bitfield >= 16 && bitfield <= 31) {
-                            sb.append(" (short)");
-                        }
-                    }
-                    if (push) {
-                        sb.append(" (push)");
-                    }
-
-                    source.add(new Bytecode(context, os.toByteArray(), sb.toString()));
+                    source.add(new BitField(context, postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup, bitfield));
                 }
 
                 if (postEffectNode != null) {
@@ -2670,32 +2627,11 @@ public class Spin2ObjectCompiler {
                 source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
             }
 
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-            StringBuilder sb = new StringBuilder();
-            sb.append("BITFIELD_");
-
-            try {
-                if (bitfield == -1) {
-                    os.write(0xDE); // Read (pop)
-                }
-                else {
-                    if (bitfield >= 0 && bitfield <= 15) {
-                        os.write(0xE0 + bitfield);
-                    }
-                    else if (bitfield >= 16 && bitfield <= 31) {
-                        os.write(0xF0 + (bitfield - 16));
-                    }
-                    else {
-                        os.write(0xDF);
-                        os.write(Constant.wrVar(bitfield));
-                    }
-                }
-            } catch (Exception e) {
-                // Do nothing
-            }
+            source.add(new BitField(context, postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup, bitfield));
 
             if (postEffectNode != null) {
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                StringBuilder sb = new StringBuilder();
                 if ("~".equalsIgnoreCase(postEffectNode.getText()) || "~~".equalsIgnoreCase(postEffectNode.getText())) {
                     os.write(push ? 0x8D : 0x81);
                     sb.append(push ? "SWAP" : "WRITE");
@@ -2719,28 +2655,8 @@ public class Spin2ObjectCompiler {
                 else {
                     throw new CompilerException("unsupported post effect " + postEffectNode.getText(), postEffectNode.getToken());
                 }
+                source.add(new Bytecode(context, os.toByteArray(), sb.toString()));
             }
-            else {
-                os.write(0x80);
-                sb.append("READ");
-            }
-
-            if (bitfield == -1) {
-                sb.append(" (pop)");
-            }
-            else {
-                if (bitfield >= 0 && bitfield <= 15) {
-                    sb.append(" (short)");
-                }
-                else if (bitfield >= 16 && bitfield <= 31) {
-                    sb.append(" (short)");
-                }
-            }
-            if (postEffectNode != null && push) {
-                sb.append(" (push)");
-            }
-
-            source.add(new Bytecode(context, os.toByteArray(), sb.toString()));
         }
         else {
             if (popIndex) {
@@ -2971,50 +2887,7 @@ public class Spin2ObjectCompiler {
             source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
 
             if (bitfieldNode != null) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("BITFIELD_");
-
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-                try {
-                    if (bitfield == -1) {
-                        os.write(0xDE); // Read (pop)
-                    }
-                    else {
-                        if (bitfield >= 0 && bitfield <= 15) {
-                            os.write(0xE0 + bitfield);
-                        }
-                        else if (bitfield >= 16 && bitfield <= 31) {
-                            os.write(0xF0 + (bitfield - 16));
-                        }
-                        else {
-                            os.write(0xDF);
-                            os.write(Constant.wrVar(bitfield));
-                        }
-                    }
-                } catch (Exception e) {
-                    // Do nothing
-                }
-
-                os.write(push ? 0x82 : 0x81);
-                sb.append("WRITE");
-
-                if (bitfield == -1) {
-                    sb.append(" (pop)");
-                }
-                else {
-                    if (bitfield >= 0 && bitfield <= 15) {
-                        sb.append(" (short)");
-                    }
-                    else if (bitfield >= 16 && bitfield <= 31) {
-                        sb.append(" (short)");
-                    }
-                }
-                if (push) {
-                    sb.append(" (push)");
-                }
-
-                source.add(new Bytecode(context, os.toByteArray(), sb.toString()));
+                source.add(new BitField(context, BitField.Op.Write, push, bitfield));
             }
         }
         else {
@@ -3135,50 +3008,7 @@ public class Spin2ObjectCompiler {
             }
 
             if (bitfieldNode != null) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("BITFIELD_");
-
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-                try {
-                    if (bitfield == -1) {
-                        os.write(0xDE); // Read (pop)
-                    }
-                    else {
-                        if (bitfield >= 0 && bitfield <= 15) {
-                            os.write(0xE0 + bitfield);
-                        }
-                        else if (bitfield >= 16 && bitfield <= 31) {
-                            os.write(0xF0 + (bitfield - 16));
-                        }
-                        else {
-                            os.write(0xDF);
-                            os.write(Constant.wrVar(bitfield));
-                        }
-                    }
-                } catch (Exception e) {
-                    // Do nothing
-                }
-
-                os.write(push ? 0x82 : 0x81);
-                sb.append("WRITE");
-
-                if (bitfield == -1) {
-                    sb.append(" (pop)");
-                }
-                else {
-                    if (bitfield >= 0 && bitfield <= 15) {
-                        sb.append(" (short)");
-                    }
-                    else if (bitfield >= 16 && bitfield <= 31) {
-                        sb.append(" (short)");
-                    }
-                }
-                if (push) {
-                    sb.append(" (push)");
-                }
-
-                source.add(new Bytecode(context, os.toByteArray(), sb.toString()));
+                source.add(new BitField(context, BitField.Op.Write, push, bitfield));
             }
             else if (write) {
                 source.add(new Bytecode(context, 0x82, "WRITE"));
