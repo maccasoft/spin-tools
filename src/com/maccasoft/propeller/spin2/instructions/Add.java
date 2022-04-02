@@ -18,9 +18,6 @@ import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
 import com.maccasoft.propeller.spin2.Spin2PAsmSchema;
 
-/*
- * ADD     D,{#}S   {WC/WZ/WCZ}
- */
 public class Add extends Spin2PAsmInstructionFactory {
 
     @Override
@@ -31,6 +28,9 @@ public class Add extends Spin2PAsmInstructionFactory {
         throw new RuntimeException("Invalid arguments");
     }
 
+    /*
+     * ADD     D,{#}S   {WC/WZ/WCZ}
+     */
     public class Add_ extends Spin2InstructionObject {
 
         String condition;

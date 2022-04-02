@@ -67,8 +67,8 @@ public class Setbyte extends Spin2PAsmInstructionFactory {
                 throw new CompilerException("Destination register cannot exceed $1FF", dst.getExpression().getData());
             }
             value = d.setValue(value, dst.getInteger());
-            if (src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                throw new CompilerException("Source register cannot exceed $1FF", dst.getExpression().getData());
+            if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
+                throw new CompilerException("Source register cannot exceed $1FF", src.getExpression().getData());
             }
             value = s.setValue(value, src.getInteger());
             if (n.getInteger() < 0 || n.getInteger() > 3) {
