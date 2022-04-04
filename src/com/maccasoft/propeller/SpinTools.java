@@ -994,6 +994,7 @@ public class SpinTools {
         dlg.setFilterExtensions(filterExtensions);
 
         dlg.setFileName(editorTab.getText());
+        dlg.setOverwrite(true);
 
         File filterPath = editorTab.getFile();
         if (filterPath == null && preferences.getLru().size() != 0) {
