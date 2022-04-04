@@ -1256,7 +1256,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    doUpload(false, false);
+                    handleUpload(false, false);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1271,7 +1271,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    doUpload(false, true);
+                    handleUpload(false, true);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1286,7 +1286,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    doUpload(true, false);
+                    handleUpload(true, false);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1301,7 +1301,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-                    doUpload(true, true);
+                    handleUpload(true, true);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1579,34 +1579,7 @@ public class SpinTools {
         }
     }
 
-    private void doUpload(boolean flash, boolean terminal) {
-        SerialTerminal serialTerminal = getSerialTerminal();
-
-        if (serialTerminal == null && (terminal || sourcePool.isDebugEnabled())) {
-            serialTerminal = new SerialTerminal();
-            serialTerminal.open();
-        }
-        if (serialTerminal != null) {
-            SerialPort serialPort = serialTerminal.getSerialPort();
-            if (serialPort == null) {
-                serialPort = new SerialPort(serialPortList.getSelection());
-            }
-            serialTerminal.setSerialPort(serialPort, sourcePool.isDebugEnabled() ? 2000000 : serialTerminal.getBaudRate());
-            if (terminal) {
-                serialTerminal.setFocus();
-            }
-            if (sourcePool.isDebugEnabled()) {
-                serialTerminal.clear();
-            }
-        }
-
-        handleUpload(flash, serialTerminal);
-    }
-
-    private void handleUpload(boolean flash, SerialTerminal serialTerminal) {
-        IRunnableWithProgress thread;
-        Shell activeShell = Display.getDefault().getActiveShell();
-
+    private void handleUpload(boolean writeToFlash, boolean openTerminal) {
         CTabItem tabItem = tabFolder.getSelection();
         if (tabItem == null) {
             return;
@@ -1617,10 +1590,52 @@ public class SpinTools {
             editorTab.goToFirstError();
             return;
         }
+        SpinObject obj = editorTab.getObject();
+
+        SerialPort serialPort = null;
+        boolean serialPortShared = false;
+
+        SerialTerminal serialTerminal = getSerialTerminal();
+        if (serialTerminal == null && (openTerminal || sourcePool.isDebugEnabled())) {
+            serialTerminal = new SerialTerminal();
+            serialTerminal.open();
+        }
+        if (serialTerminal != null) {
+            serialPort = serialTerminal.getSerialPort();
+            if (serialPort == null) {
+                serialPort = new SerialPort(serialPortList.getSelection());
+            }
+            serialTerminal.setSerialPort(serialPort, sourcePool.isDebugEnabled() ? 2000000 : serialTerminal.getBaudRate());
+            if (openTerminal) {
+                serialTerminal.setFocus();
+            }
+            if (sourcePool.isDebugEnabled()) {
+                serialTerminal.clear();
+            }
+            serialPortShared = true;
+        }
+
+        if (serialPort == null) {
+            serialPort = new SerialPort(serialPortList.getSelection());
+        }
+
+        if (serialTerminal != null) {
+            serialTerminal.setSerialPort(null);
+        }
+        doUpload(obj, writeToFlash, serialPort, serialPortShared);
+
+        if (serialTerminal != null) {
+            boolean isDebug = (obj instanceof Spin2Object) && sourcePool.isDebugEnabled();
+            serialTerminal.setSerialPort(serialPort, isDebug ? 2000000 : serialTerminal.getBaudRate());
+        }
+    }
+
+    private void doUpload(SpinObject obj, boolean writeToFlash, SerialPort serialPort, boolean serialPortShared) {
+        IRunnableWithProgress thread;
+        Shell activeShell = Display.getDefault().getActiveShell();
 
         ProgressMonitorDialog dlg = new ProgressMonitorDialog(activeShell);
 
-        SpinObject obj = editorTab.getObject();
         if (obj instanceof Spin1Object) {
             thread = new IRunnableWithProgress() {
 
@@ -1630,30 +1645,9 @@ public class SpinTools {
 
                     try {
                         ByteArrayOutputStream os = new ByteArrayOutputStream();
-                        ((Spin1Object) obj).generateBinary(os);
+                        obj.generateBinary(os);
 
-                        SerialPort serialPort = null;
-                        boolean shared = false;
-
-                        if (serialTerminal != null) {
-                            SerialPort terminalPort = serialTerminal.getSerialPort();
-                            if (terminalPort != null && terminalPort.getPortName().equals(serialPortList.getSelection())) {
-                                Display.getDefault().syncExec(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        serialTerminal.setSerialPort(null);
-                                    }
-                                });
-                                serialPort = terminalPort;
-                                shared = true;
-                            }
-                        }
-                        if (serialPort == null) {
-                            serialPort = new SerialPort(serialPortList.getSelection());
-                        }
-
-                        Propeller1Loader loader = new Propeller1Loader(serialPort, shared) {
+                        Propeller1Loader loader = new Propeller1Loader(serialPort, serialPortShared) {
 
                             @Override
                             protected int hwfind() throws SerialPortException, IOException {
@@ -1675,16 +1669,6 @@ public class SpinTools {
                             protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
                                 monitor.setTaskName("Loading " + text + " to RAM");
                                 super.bufferUpload(type, binaryImage, text);
-                            }
-
-                            @Override
-                            protected void notifyProgress(int sent, int total) {
-                                if (sent == total) {
-                                    monitor.subTask(String.format("%d bytes sent", total));
-                                }
-                                else {
-                                    monitor.subTask(String.format("%d bytes remaining", total - sent));
-                                }
                             }
 
                             @Override
@@ -1715,20 +1699,8 @@ public class SpinTools {
                         }
                         image[5] = (byte) (0x14 - sum);
 
-                        loader.upload(image, flash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY);
+                        loader.upload(image, writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY);
 
-                        if (shared) {
-                            SerialPort terminalPort = serialPort;
-                            Display.getDefault().syncExec(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    if (serialTerminal != null) {
-                                        serialTerminal.setSerialPort(terminalPort);
-                                    }
-                                }
-                            });
-                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                         Display.getDefault().syncExec(new Runnable() {
@@ -1759,30 +1731,9 @@ public class SpinTools {
 
                     try {
                         ByteArrayOutputStream os = new ByteArrayOutputStream();
-                        ((Spin2Object) obj).generateBinary(os);
+                        obj.generateBinary(os);
 
-                        SerialPort serialPort = null;
-                        boolean shared = false;
-
-                        if (serialTerminal != null) {
-                            SerialPort terminalPort = serialTerminal.getSerialPort();
-                            if (terminalPort != null && terminalPort.getPortName().equals(serialPortList.getSelection())) {
-                                Display.getDefault().syncExec(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        serialTerminal.setSerialPort(null);
-                                    }
-                                });
-                                serialPort = terminalPort;
-                                shared = true;
-                            }
-                        }
-                        if (serialPort == null) {
-                            serialPort = new SerialPort(serialPortList.getSelection());
-                        }
-
-                        Propeller2Loader loader = new Propeller2Loader(serialPort, shared) {
+                        Propeller2Loader loader = new Propeller2Loader(serialPort, serialPortShared) {
 
                             @Override
                             protected int hwfind() throws SerialPortException, IOException {
@@ -1807,16 +1758,6 @@ public class SpinTools {
                             }
 
                             @Override
-                            protected void notifyProgress(int sent, int total) {
-                                if (sent == total) {
-                                    monitor.subTask(String.format("%d bytes sent", total));
-                                }
-                                else {
-                                    monitor.subTask(String.format("%d bytes remaining", total - sent));
-                                }
-                            }
-
-                            @Override
                             protected void verifyRam() throws SerialPortException, IOException {
                                 monitor.setTaskName("Verifying RAM ... ");
                                 super.verifyRam();
@@ -1829,20 +1770,8 @@ public class SpinTools {
                             }
 
                         };
-                        loader.upload(os.toByteArray(), flash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM);
+                        loader.upload(os.toByteArray(), writeToFlash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM);
 
-                        if (shared) {
-                            SerialPort terminalPort = serialPort;
-                            Display.getDefault().syncExec(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    if (serialTerminal != null) {
-                                        serialTerminal.setSerialPort(terminalPort, sourcePool.isDebugEnabled() ? 2000000 : serialTerminal.getBaudRate());
-                                    }
-                                }
-                            });
-                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                         Display.getDefault().syncExec(new Runnable() {
