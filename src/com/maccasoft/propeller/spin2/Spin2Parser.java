@@ -662,6 +662,13 @@ public class Spin2Parser {
                     state = 2;
                     break;
                 case 2:
+                    if ("debug".equalsIgnoreCase(token.getText())) {
+                        parent.instruction = new Node(parent);
+                        parent.instruction.addToken(token);
+                        child = parent;
+                        state = 9;
+                        break;
+                    }
                     if (Spin2Model.isCondition(token.getText())) {
                         parent.condition = new Node(parent);
                         parent.condition.addToken(token);
@@ -670,6 +677,13 @@ public class Spin2Parser {
                     }
                     // fall-through
                 case 3:
+                    if ("debug".equalsIgnoreCase(token.getText())) {
+                        parent.instruction = new Node(parent);
+                        parent.instruction.addToken(token);
+                        child = parent;
+                        state = 9;
+                        break;
+                    }
                     if (Spin2Model.isInstruction(token.getText()) || Spin2Model.isPAsmType(token.getText())) {
                         parent.instruction = new Node(parent);
                         parent.instruction.addToken(token);

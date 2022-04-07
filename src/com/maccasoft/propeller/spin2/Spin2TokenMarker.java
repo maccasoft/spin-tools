@@ -787,7 +787,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                             tokens.add(new TokenMarker(token, TokenId.STRING));
                         }
                         else {
-                            id = keywords.get(token.getText().toUpperCase());
+                            id = debugKeywords.get(token.getText().toUpperCase());
                             if (id != null) {
                                 tokens.add(new TokenMarker(token, id));
                             }
