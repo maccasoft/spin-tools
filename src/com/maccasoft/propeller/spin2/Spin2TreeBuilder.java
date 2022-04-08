@@ -363,6 +363,12 @@ public class Spin2TreeBuilder {
                             return node;
                         }
                     }
+                    else if (peek().getText().startsWith(".")) {
+                        node.addChild(parseLevel(parseAtom(), 0, false));
+                        if (peek() == null) {
+                            return node;
+                        }
+                    }
                     if ("[".equals(peek().getText())) {
                         next();
                         node.addChild(parseLevel(parseAtom(), 0, false));
@@ -406,7 +412,7 @@ public class Spin2TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "    ABS= a";
+        text = "    o[0].start(a, b)";
         System.out.println(text);
         System.out.println(parse(text));
     }

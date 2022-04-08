@@ -118,12 +118,21 @@ public class Spin2ObjectCompiler {
         boolean errors;
 
         long offset;
+        int count;
 
         public ObjectInfo(String fileName, Spin2Object object, boolean errors) {
             this.fileName = fileName;
             this.object = object;
             this.errors = errors;
         }
+
+        public ObjectInfo(String fileName, Spin2Object object, boolean errors, int count) {
+            this.fileName = fileName;
+            this.object = object;
+            this.errors = errors;
+            this.count = count;
+        }
+
     }
 
     Spin2Context scope;
@@ -263,12 +272,14 @@ public class Spin2ObjectCompiler {
                     scope.addSymbol(qualifiedName, method);
                 }
             }
-            LinkDataObject linkData = new LinkDataObject(info.object, 0);
-            object.links.add(linkData);
-            object.write(linkData);
-            object.writeLong(varOffset, String.format("Variables @ $%05X", varOffset));
-            varOffset += info.object.getVarSize();
-            objectIndex++;
+            for (int i = 0; i < info.count; i++) {
+                LinkDataObject linkData = new LinkDataObject(info.object, 0);
+                object.links.add(linkData);
+                object.write(linkData);
+                object.writeLong(varOffset, String.format("Variables @ $%05X", varOffset));
+                varOffset += info.object.getVarSize();
+                objectIndex++;
+            }
         }
 
         List<LongDataObject> ld = new ArrayList<LongDataObject>();
@@ -341,7 +352,7 @@ public class Spin2ObjectCompiler {
         boolean cogCode = false;
 
         for (Spin2PAsmLine line : source) {
-            if (!(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) && !(line.getInstructionFactory() instanceof Word)) {
+            if (!hubMode && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) && !(line.getInstructionFactory() instanceof Word)) {
                 hubAddress = (hubAddress + 3) & ~3;
                 address = (address + 3) & ~3;
             }
@@ -610,6 +621,26 @@ public class Spin2ObjectCompiler {
                     logMessage(new CompilerException("object \"" + objectName + "\" has errors", node.file));
                     continue;
                 }
+
+                int count = 1;
+                if (node.count != null) {
+                    try {
+                        Expression expression = buildExpression(node.count, scope);
+                        expression.setData(node.count);
+                        try {
+                            count = expression.getNumber().intValue();
+                        } catch (CompilerException e) {
+                            logMessage(e);
+                        } catch (Exception e) {
+                            logMessage(new CompilerException(e, node.count));
+                        }
+                    } catch (CompilerException e) {
+                        logMessage(e);
+                    } catch (Exception e) {
+                        logMessage(new CompilerException(e, node.count));
+                    }
+                }
+                info = new ObjectInfo(info.fileName, info.object, info.errors, count);
 
                 objects.put(node.name.getText(), info);
 
@@ -2332,6 +2363,37 @@ public class Spin2ObjectCompiler {
                     Expression expression = context.getLocalSymbol(node.getText());
                     if (expression instanceof HubContextLiteral) {
                         expression = context.getLocalSymbol(node.getText().substring(1));
+                    }
+                    if (expression == null) {
+                        ObjectInfo info = objects.get(node.getText());
+                        if (info != null) {
+                            if (node.getChildCount() != 2) {
+                                throw new RuntimeException("syntax error" + node);
+                            }
+                            String qualifiedName = node.getText() + node.getChild(1).getText();
+                            expression = context.getLocalSymbol(qualifiedName);
+                            if (expression != null) {
+                                Method method = (Method) expression;
+                                int parameters = method.getArgumentsCount();
+                                if (node.getChild(1).getChildCount() != parameters) {
+                                    throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChild(1).getChildCount());
+                                }
+                                if (push && method.getReturnsCount() == 0) {
+                                    throw new RuntimeException("method doesn't return any value");
+                                }
+                                source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
+                                for (int i = 0; i < parameters; i++) {
+                                    source.addAll(compileConstantExpression(context, node.getChild(1).getChild(i)));
+                                }
+                                source.addAll(compileConstantExpression(context, node.getChild(0)));
+                                source.add(new Bytecode(context, new byte[] {
+                                    (byte) 0x09,
+                                    (byte) (method.getObject() - 1),
+                                    (byte) method.getOffset()
+                                }, "CALL_OBJ_SUB (" + (method.getObject() - 1) + "." + method.getOffset() + ")"));
+                                return source;
+                            }
+                        }
                     }
                     if (expression == null) {
                         throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
