@@ -91,8 +91,8 @@ class ExpressionTest {
 
     @Test
     void testRev() {
-        Expression exp = new Rev(new NumberLiteral(0b1_00000001), new NumberLiteral(8));
-        Assertions.assertEquals(0b0_10000000, exp.getNumber().longValue());
+        Expression exp = new Rev(new NumberLiteral("$8005"), new Subtract(new NumberLiteral(16), new NumberLiteral(1)));
+        Assertions.assertEquals(0xA001, exp.getNumber().longValue());
     }
 
     @Test

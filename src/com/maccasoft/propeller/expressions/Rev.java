@@ -11,7 +11,7 @@ public class Rev extends BinaryOperator {
         long result = 0;
         long value1 = term1.getNumber().longValue();
 
-        for (int i = 0; i < term2.getNumber().longValue(); i++) {
+        for (int i = 0; i <= term2.getNumber().longValue(); i++) {
             result <<= 1;
             result |= (value1 & 0x01);
             value1 >>= 1;
