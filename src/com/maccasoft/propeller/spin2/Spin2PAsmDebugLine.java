@@ -122,6 +122,11 @@ public class Spin2PAsmDebugLine {
                     if (token.type == Token.OPERATOR) {
                         throw new CompilerException("unexpected operator '" + token.getText() + "'", token);
                     }
+                    if (token.type == Token.STRING) {
+                        root.addStatement(new Spin2DebugCommand(token));
+                        state = 3;
+                        break;
+                    }
                     if (token.type != 0) {
                         root.addStatement(new Spin2DebugCommand(token));
                         break;
@@ -202,7 +207,7 @@ public class Spin2PAsmDebugLine {
     public static void main(String[] args) {
         String text;
 
-        text = "debug(if(a>0), zstr(\"text\"), udec(a,b,#c), udec_reg_array(@a,b))";
+        text = "debug(if(a>0), \"text\", udec(a,b,#c), udec_reg_array(@a,b), \"text\")";
         System.out.println(text);
         System.out.println(parse(text));
     }
