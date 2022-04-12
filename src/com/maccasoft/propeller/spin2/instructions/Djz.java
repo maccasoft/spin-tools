@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -58,8 +58,17 @@ public class Djz extends Spin2PAsmInstructionFactory {
             value = cz.setValue(value, 0b00);
             value = i.setBoolean(value, src.isLiteral());
             value = d.setValue(value, dst.getInteger());
-            int offset = src.isLiteral() ? (src.getInteger() - context.getInteger("$") - 1) : src.getInteger();
-            value = s.setValue(value, (src.isLiteral() && src.getInteger() > 0x400) ? offset / 4 : offset);
+
+            int offset = src.getInteger();
+            if (src.isLiteral()) {
+                offset -= context.getInteger("$");
+                if (src.getInteger() >= 0x400) {
+                    offset /= 4;
+                }
+                offset--;
+            }
+            value = s.setValue(value, offset);
+
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, offset), value) : getBytes(value);
         }
 
