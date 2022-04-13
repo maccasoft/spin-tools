@@ -290,12 +290,12 @@ public class Spin2ObjectCompiler {
                     int offset = -1;
                     if (isReferenced((MethodNode) node)) {
                         offset = objects.size() * 2 + ld.size();
-                        object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                         ld.add(object.writeLong(0, "Method " + method.getLabel()));
                     }
                     else {
-                        logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", method.label));
+                        logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", node));
                     }
+                    object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     method.register();
@@ -315,7 +315,7 @@ public class Spin2ObjectCompiler {
                         ld.add(object.writeLong(0, "Method " + method.getLabel()));
                     }
                     else {
-                        logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", method.label));
+                        logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", node));
                     }
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));

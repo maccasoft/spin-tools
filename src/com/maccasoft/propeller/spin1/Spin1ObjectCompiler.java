@@ -194,8 +194,11 @@ public class Spin1ObjectCompiler {
                     if (isReferenced((MethodNode) node)) {
                         ld.add(object.writeLong(0, "Function " + method.getLabel()));
                         index = ld.size();
-                        object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
                     }
+                    else {
+                        logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", node));
+                    }
+                    object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
                     method.register();
@@ -213,6 +216,9 @@ public class Spin1ObjectCompiler {
                     if (isReferenced((MethodNode) node)) {
                         ld.add(object.writeLong(0, "Function " + method.getLabel()));
                         index = ld.size();
+                    }
+                    else {
+                        logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", node));
                     }
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
