@@ -710,9 +710,9 @@ public class SerialTerminal {
             public void mouseUp(MouseEvent e) {
                 if (selectionRectangle != null) {
                     StringBuilder text = new StringBuilder();
-                    for (int y = selectionRectangle.y; y <= selectionRectangle.y + selectionRectangle.height; y++) {
+                    for (int y = selectionRectangle.y; y < selectionRectangle.y + selectionRectangle.height; y++) {
                         StringBuilder line = new StringBuilder();
-                        for (int x = selectionRectangle.x; x <= selectionRectangle.x + selectionRectangle.width; x++) {
+                        for (int x = selectionRectangle.x; x < selectionRectangle.x + selectionRectangle.width; x++) {
                             line.append(screen[y][x].character);
                         }
                         text.append(line.toString().replaceFirst("\\s++$", ""));
