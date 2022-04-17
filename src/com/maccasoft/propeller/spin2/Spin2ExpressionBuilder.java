@@ -60,11 +60,13 @@ import com.maccasoft.propeller.expressions.Scas;
 import com.maccasoft.propeller.expressions.Scl;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
+import com.maccasoft.propeller.expressions.Signx;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.UnsignedDivide;
 import com.maccasoft.propeller.expressions.UnsignedModulo;
 import com.maccasoft.propeller.expressions.Xor;
+import com.maccasoft.propeller.expressions.Zerox;
 import com.maccasoft.propeller.model.Token;
 
 public class Spin2ExpressionBuilder {
@@ -246,6 +248,12 @@ public class Spin2ExpressionBuilder {
                     break;
                 case "REV":
                     left = new Rev(left, right);
+                    break;
+                case "SIGNX":
+                    left = new Signx(left, right);
+                    break;
+                case "ZEROX":
+                    left = new Zerox(left, right);
                     break;
 
                 case "&":
