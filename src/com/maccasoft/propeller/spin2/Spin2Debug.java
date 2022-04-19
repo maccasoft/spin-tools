@@ -81,6 +81,7 @@ public class Spin2Debug {
                     } catch (IOException e) {
 
                     }
+                    first = true;
                 }
                 else {
                     int flags = 0;
@@ -340,6 +341,7 @@ public class Spin2Debug {
                     } catch (IOException e) {
 
                     }
+                    first = true;
                 }
                 else {
                     int flags = 0;
