@@ -506,11 +506,15 @@ public class Spin2ObjectCompiler {
 
             @Override
             public void visitConstantAssign(ConstantAssignNode node) {
-                String name = node.identifier.getText();
                 try {
+                    if (node.identifier.getStartToken().type != 0) {
+                        logMessage(new CompilerException("invalid identifier", node.identifier));
+                        return;
+                    }
                     Expression expression = buildExpression(node.expression, scope);
                     expression.setData(node);
                     try {
+                        String name = node.identifier.getText();
                         scope.addSymbol(name, expression);
                         object.addSymbol(name, expression);
                     } catch (CompilerException e) {
@@ -530,8 +534,12 @@ public class Spin2ObjectCompiler {
                 Expression expression = buildExpression(node.start, scope);
                 enumValue = expression.getNumber().intValue();
                 if (node.step != null) {
-                    expression = buildExpression(node.step, scope);
-                    enumIncrement = expression.getNumber().intValue();
+                    try {
+                        expression = buildExpression(node.step, scope);
+                        enumIncrement = expression.getNumber().intValue();
+                    } catch (Exception e) {
+                        logMessage(new CompilerException("expression syntax error", node.start));
+                    }
                 }
                 else {
                     enumIncrement = 1;
@@ -541,15 +549,26 @@ public class Spin2ObjectCompiler {
             @Override
             public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
                 try {
-                    scope.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
-                    object.addSymbol(node.identifier.getText(), new NumberLiteral(enumValue));
+                    if (node.identifier.getStartToken().type != 0) {
+                        logMessage(new CompilerException("invalid identifier", node.identifier));
+                        return;
+                    }
+                    String name = node.identifier.getText();
+                    scope.addSymbol(name, new NumberLiteral(enumValue));
+                    object.addSymbol(name, new NumberLiteral(enumValue));
                 } catch (Exception e) {
                     logMessage(new CompilerException(e, node.identifier));
                     return;
                 }
                 if (node.multiplier != null) {
-                    Expression expression = buildExpression(node.multiplier, scope);
-                    enumValue += enumIncrement * expression.getNumber().intValue();
+                    try {
+                        Expression expression = buildExpression(node.multiplier, scope);
+                        enumValue += enumIncrement * expression.getNumber().intValue();
+                    } catch (CompilerException e) {
+                        logMessage(e);
+                    } catch (Exception e) {
+                        logMessage(new CompilerException("expression syntax error", node.multiplier));
+                    }
                 }
                 else {
                     enumValue += enumIncrement;

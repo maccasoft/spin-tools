@@ -101,26 +101,30 @@ public class OutlineView {
             sb = new StringBuilder();
             styles = new ArrayList<StyleRange>();
 
-            Object element = cell.getElement();
-            if (element instanceof ConstantsNode || element instanceof VariablesNode || element instanceof ObjectsNode || element instanceof DataNode) {
-                decorateSectionStart((Node) element, cell);
-            }
-            else if (element instanceof ObjectNode) {
-                ObjectNode node = (ObjectNode) element;
-                sb.append(node.getText());
-            }
-            else if (element instanceof MethodNode) {
-                decorateMethod((MethodNode) element, cell);
-            }
-            else if (element instanceof DataLineNode) {
-                sb.append(((DataLineNode) element).label.getText());
-            }
-            else {
-                sb.append(((Node) element).getStartToken().getText());
-            }
+            try {
+                Object element = cell.getElement();
+                if (element instanceof ConstantsNode || element instanceof VariablesNode || element instanceof ObjectsNode || element instanceof DataNode) {
+                    decorateSectionStart((Node) element, cell);
+                }
+                else if (element instanceof ObjectNode) {
+                    ObjectNode node = (ObjectNode) element;
+                    sb.append(node.getText());
+                }
+                else if (element instanceof MethodNode) {
+                    decorateMethod((MethodNode) element, cell);
+                }
+                else if (element instanceof DataLineNode) {
+                    sb.append(((DataLineNode) element).label.getText());
+                }
+                else {
+                    sb.append(((Node) element).getStartToken().getText());
+                }
 
-            cell.setText(sb.toString());
-            cell.setStyleRanges(styles.toArray(new StyleRange[0]));
+                cell.setText(sb.toString());
+                cell.setStyleRanges(styles.toArray(new StyleRange[0]));
+            } catch (Exception e) {
+                // Do nothing
+            }
 
             super.update(cell);
         }

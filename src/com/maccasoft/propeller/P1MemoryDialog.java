@@ -112,6 +112,11 @@ public class P1MemoryDialog extends Dialog {
             font = new Font(display, "mono", fontData[0].getHeight(), SWT.NONE);
         }
 
+        GC gc = new GC(content);
+        gc.setFont(font);
+        fontMetrics = gc.getFontMetrics();
+        gc.dispose();
+
         format = NumberFormat.getInstance();
         format.setGroupingUsed(true);
 
@@ -384,10 +389,6 @@ public class P1MemoryDialog extends Dialog {
                 canvas.redraw();
             }
         });
-
-        GC gc = new GC(canvas);
-        fontMetrics = gc.getFontMetrics();
-        gc.dispose();
 
         canvas.addListener(SWT.Paint, new Listener() {
 
