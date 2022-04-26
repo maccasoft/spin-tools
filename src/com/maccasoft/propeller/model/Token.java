@@ -57,6 +57,9 @@ public class Token {
         if (type == EOF) {
             return "<EOF>";
         }
+        if (type == NL) {
+            return "<NL>";
+        }
         if (text == null) {
             text = stream.getSource(start, stop);
         }
