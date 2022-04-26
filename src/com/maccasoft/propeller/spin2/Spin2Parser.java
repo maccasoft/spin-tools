@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,12 +10,9 @@
 
 package com.maccasoft.propeller.spin2;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.maccasoft.propeller.model.ConstantAssignEnumNode;
 import com.maccasoft.propeller.model.ConstantAssignNode;
 import com.maccasoft.propeller.model.ConstantSetEnumNode;
+import com.maccasoft.propeller.model.ConstantStatement;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -105,10 +102,19 @@ public class Spin2Parser {
     }
 
     void parseConstants(ConstantsNode parent, Token token) {
-        List<Token> list = new ArrayList<Token>();
-
         int state = 1;
+        ConstantStatement child = null;
+
         while (true) {
+            if (token.type == Token.EOF) {
+                return;
+            }
+            if (token.type == Token.NL) {
+                child = null;
+                state = 0;
+                token = stream.nextToken();
+                continue;
+            }
             switch (state) {
                 case 0:
                     if (parseSection(token)) {
@@ -117,46 +123,84 @@ public class Spin2Parser {
                     state = 1;
                     // fall-through
                 case 1:
-                    if (token.type == Token.NL || token.type == Token.EOF || ",".equals(token.getText())) {
-                        Node child = null;
-
-                        if (list.size() == 1) {
-                            new ConstantAssignEnumNode(parent, list);
-                        }
-                        else if (list.size() >= 2) {
-                            if ("#".equals(list.get(0).getText())) {
-                                new ConstantSetEnumNode(parent, list);
-                            }
-                            else if (list.size() >= 3) {
-                                if ("=".equals(list.get(1).getText())) {
-                                    new ConstantAssignNode(parent, list);
-                                }
-                                else if ("[".equals(list.get(1).getText())) {
-                                    new ConstantAssignEnumNode(parent, list);
-                                }
-                                else {
-                                    child = new ErrorNode(parent, "Syntax error");
-                                }
-                            }
-                            else {
-                                child = new ErrorNode(parent, "Syntax error");
-                            }
-                        }
-
-                        if (child != null) {
-                            child.addAllTokens(list);
-                        }
-                        list.clear();
-
-                        if (token.type == Token.EOF) {
-                            return;
-                        }
-                        if (token.type == Token.NL) {
-                            state = 0;
-                        }
+                    if (",".equals(token.getText())) {
+                        child = null;
                         break;
                     }
-                    list.add(token);
+                    if ("#".equals(token.getText())) {
+                        child = new ConstantSetEnumNode(parent);
+                        child.start = new ExpressionNode(child);
+                        state = 2;
+                    }
+                    if (child == null) {
+                        child = new ConstantAssignNode(parent, token);
+                        state = 4;
+                    }
+                    child.addToken(token);
+                    break;
+                case 2:
+                    if (",".equals(token.getText())) {
+                        child = null;
+                        state = 1;
+                        break;
+                    }
+                    if ("[".equals(token.getText())) {
+                        child.addToken(token);
+                        child.step = new ExpressionNode(child);
+                        state = 3;
+                        break;
+                    }
+                    ((ConstantSetEnumNode) child).start.addToken(token);
+                    break;
+                case 3:
+                    if ("]".equals(token.getText()) || ",".equals(token.getText())) {
+                        if ("]".equals(token.getText())) {
+                            child.addToken(token);
+                        }
+                        child = null;
+                        state = 1;
+                        break;
+                    }
+                    child.step.addToken(token);
+                    break;
+                case 4:
+                    if (",".equals(token.getText())) {
+                        child = null;
+                        state = 1;
+                        break;
+                    }
+                    child.addToken(token);
+                    if ("=".equals(token.getText())) {
+                        child.expression = new ExpressionNode(child);
+                        state = 5;
+                    }
+                    if ("[".equals(token.getText())) {
+                        child.multiplier = new ExpressionNode(child);
+                        state = 6;
+                        break;
+                    }
+                    break;
+                case 5:
+                    if (",".equals(token.getText())) {
+                        child = null;
+                        state = 1;
+                        break;
+                    }
+                    child.expression.addToken(token);
+                    break;
+                case 6:
+                    if (",".equals(token.getText())) {
+                        child = null;
+                        state = 1;
+                        break;
+                    }
+                    if ("]".equals(token.getText())) {
+                        child.addToken(token);
+                        child = null;
+                        state = 1;
+                        break;
+                    }
+                    child.multiplier.addToken(token);
                     break;
             }
             token = stream.nextToken();

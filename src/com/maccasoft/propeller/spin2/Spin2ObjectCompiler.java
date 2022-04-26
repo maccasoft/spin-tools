@@ -67,9 +67,6 @@ import com.maccasoft.propeller.expressions.UnsignedDivide;
 import com.maccasoft.propeller.expressions.UnsignedModulo;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.expressions.Xor;
-import com.maccasoft.propeller.model.ConstantAssignEnumNode;
-import com.maccasoft.propeller.model.ConstantAssignNode;
-import com.maccasoft.propeller.model.ConstantSetEnumNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -500,82 +497,130 @@ public class Spin2ObjectCompiler {
     }
 
     void compileConBlock(Node parent, Spin2Object object) {
+        int enumValue = 0, enumIncrement = 1;
 
-        parent.accept(new NodeVisitor() {
-            int enumValue = 0, enumIncrement = 1;
-
-            @Override
-            public void visitConstantAssign(ConstantAssignNode node) {
-                try {
-                    if (node.identifier.getStartToken().type != 0) {
-                        logMessage(new CompilerException("invalid identifier", node.identifier));
-                        return;
+        for (Node child : parent.getChilds()) {
+            Iterator<Token> iter = child.getTokens().iterator();
+            Token token = iter.next();
+            do {
+                if ("#".equals(token.getText())) {
+                    Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                    while (iter.hasNext()) {
+                        token = iter.next();
+                        if ("[".equals(token.getText())) {
+                            break;
+                        }
+                        builder.addToken(token);
                     }
-                    Expression expression = buildExpression(node.expression, scope);
-                    expression.setData(node);
                     try {
-                        String name = node.identifier.getText();
-                        scope.addSymbol(name, expression);
-                        object.addSymbol(name, expression);
+                        Expression expression = builder.getExpression();
+                        enumValue = expression.getNumber().intValue();
                     } catch (CompilerException e) {
                         logMessage(e);
                     } catch (Exception e) {
-                        logMessage(new CompilerException(e, node.identifier));
+                        logMessage(new CompilerException("expression syntax error", builder.tokens));
                     }
-                } catch (CompilerException e) {
-                    logMessage(e);
-                } catch (Exception e) {
-                    logMessage(new CompilerException(e, node.expression));
-                }
-            }
-
-            @Override
-            public void visitConstantSetEnum(ConstantSetEnumNode node) {
-                Expression expression = buildExpression(node.start, scope);
-                enumValue = expression.getNumber().intValue();
-                if (node.step != null) {
-                    try {
-                        expression = buildExpression(node.step, scope);
-                        enumIncrement = expression.getNumber().intValue();
-                    } catch (Exception e) {
-                        logMessage(new CompilerException("expression syntax error", node.start));
-                    }
-                }
-                else {
-                    enumIncrement = 1;
-                }
-            }
-
-            @Override
-            public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
-                try {
-                    if (node.identifier.getStartToken().type != 0) {
-                        logMessage(new CompilerException("invalid identifier", node.identifier));
-                        return;
-                    }
-                    String name = node.identifier.getText();
-                    scope.addSymbol(name, new NumberLiteral(enumValue));
-                    object.addSymbol(name, new NumberLiteral(enumValue));
-                } catch (Exception e) {
-                    logMessage(new CompilerException(e, node.identifier));
-                    return;
-                }
-                if (node.multiplier != null) {
-                    try {
-                        Expression expression = buildExpression(node.multiplier, scope);
-                        enumValue += enumIncrement * expression.getNumber().intValue();
-                    } catch (CompilerException e) {
-                        logMessage(e);
-                    } catch (Exception e) {
-                        logMessage(new CompilerException("expression syntax error", node.multiplier));
+                    if ("[".equals(token.getText())) {
+                        builder = new Spin2ExpressionBuilder(scope);
+                        while (iter.hasNext()) {
+                            token = iter.next();
+                            if ("]".equals(token.getText())) {
+                                try {
+                                    Expression expression = builder.getExpression();
+                                    enumIncrement = expression.getNumber().intValue();
+                                } catch (CompilerException e) {
+                                    logMessage(e);
+                                } catch (Exception e) {
+                                    logMessage(new CompilerException(e, builder.tokens));
+                                }
+                                break;
+                            }
+                            builder.addToken(token);
+                        }
+                        if (!"]".equals(token.getText())) {
+                            logMessage(new CompilerException("expecting '['", token));
+                        }
                     }
                 }
                 else {
-                    enumValue += enumIncrement;
-                }
-            }
+                    if (token.type != 0) {
+                        logMessage(new CompilerException("expecting identifier", token));
+                        break;
+                    }
+                    String identifier = token.getText();
+                    if (!iter.hasNext()) {
+                        try {
+                            scope.addSymbol(identifier, new NumberLiteral(enumValue));
+                            object.addSymbol(identifier, new NumberLiteral(enumValue));
+                        } catch (CompilerException e) {
+                            logMessage(e);
+                        } catch (Exception e) {
+                            logMessage(new CompilerException(e, token));
+                        }
+                        enumValue += enumIncrement;
+                    }
+                    else {
+                        token = iter.next();
+                        if ("[".equals(token.getText())) {
+                            try {
+                                scope.addSymbol(identifier, new NumberLiteral(enumValue));
+                                object.addSymbol(identifier, new NumberLiteral(enumValue));
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException(e, token));
+                            }
 
-        });
+                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                            while (iter.hasNext()) {
+                                token = iter.next();
+                                if ("]".equals(token.getText())) {
+                                    break;
+                                }
+                                builder.addToken(token);
+                            }
+                            try {
+                                Expression expression = builder.getExpression();
+                                enumValue += enumIncrement * expression.getNumber().intValue();
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException(e, builder.tokens));
+                            }
+                        }
+                        else if ("=".equals(token.getText())) {
+                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                            while (iter.hasNext()) {
+                                token = iter.next();
+                                if ("]".equals(token.getText())) {
+                                    break;
+                                }
+                                builder.addToken(token);
+                            }
+                            try {
+                                Expression expression = builder.getExpression();
+                                try {
+                                    scope.addSymbol(identifier, expression);
+                                    object.addSymbol(identifier, expression);
+                                } catch (CompilerException e) {
+                                    logMessage(e);
+                                } catch (Exception e) {
+                                    logMessage(new CompilerException(e, child));
+                                }
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException("expression syntax error", builder.tokens));
+                            }
+                        }
+                        else {
+                            logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
+                            break;
+                        }
+                    }
+                }
+            } while (iter.hasNext());
+        }
     }
 
     void compileVarBlocks(Node root) {

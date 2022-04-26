@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,15 +12,16 @@ package com.maccasoft.propeller.model;
 
 import java.util.List;
 
-public class ConstantAssignNode extends Node {
+public class ConstantAssignNode extends ConstantStatement {
 
-    public Node identifier;
-    public ExpressionNode expression;
+    public ConstantAssignNode(Node parent, Token identifier) {
+        super(parent);
+        this.identifier = identifier;
+    }
 
     public ConstantAssignNode(Node parent, List<Token> childs) {
         super(parent);
-        this.identifier = new Node(this);
-        this.identifier.addToken(childs.get(0));
+        this.identifier = childs.get(0);
         if (this.parent != null) {
             this.parent.addToken(childs.get(1));
         }
@@ -32,14 +33,6 @@ public class ConstantAssignNode extends Node {
     public void accept(NodeVisitor visitor) {
         visitor.visitConstantAssign(this);
         super.accept(visitor);
-    }
-
-    public Node getIdentifier() {
-        return identifier;
-    }
-
-    public ExpressionNode getExpression() {
-        return expression;
     }
 
 }

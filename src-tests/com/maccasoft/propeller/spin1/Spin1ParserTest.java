@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,13 +10,12 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.lang.reflect.Field;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.model.ConstantAssignEnumNode;
-import com.maccasoft.propeller.model.ConstantAssignNode;
-import com.maccasoft.propeller.model.ConstantSetEnumNode;
-import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.ConstantStatement;
 import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
@@ -29,64 +28,143 @@ import com.maccasoft.propeller.model.VariablesNode;
 class Spin1ParserTest {
 
     @Test
-    void testParseDefaultAsConstants() {
+    void testParseDefaultAsConstants() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "    con0 = 1\n"
             + "    con1 = 2\n"
             + ""));
 
         Node root = subject.parse();
-        Assertions.assertEquals(1, root.getChilds().size());
-        Assertions.assertEquals(ConstantsNode.class, root.getChild(0).getClass());
-
-        Assertions.assertEquals(2, root.getChild(0).getChilds().size());
-        Assertions.assertEquals("con0 = 1", root.getChild(0).getChild(0).getText());
-        Assertions.assertEquals("con1 = 2", root.getChild(0).getChild(1).getText());
-
-        Assertions.assertEquals(ConstantAssignNode.class, root.getChild(0).getChild(0).getClass());
-        Assertions.assertEquals(ConstantAssignNode.class, root.getChild(0).getChild(1).getClass());
+        Assertions.assertEquals(""
+            + "Node [con0 = 1\\n    con1 = 2\\n]\n"
+            + "+-- ConstantsNode [con0 = 1\\n    con1 = 2]\n"
+            + "    +-- ConstantAssignNode [con0]\n"
+            + "        +-- expression = ExpressionNode [1]\n"
+            + "    +-- ConstantAssignNode [con1]\n"
+            + "        +-- expression = ExpressionNode [2]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testParseConstants() {
+    void testParseConstants() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "CON con0 = 1\n"
             + "    con1 = 2\n"
             + ""));
 
         Node root = subject.parse();
-        Assertions.assertEquals(1, root.getChilds().size());
-        Assertions.assertEquals(ConstantsNode.class, root.getChild(0).getClass());
-
-        Assertions.assertEquals(2, root.getChild(0).getChilds().size());
-        Assertions.assertEquals("con0 = 1", root.getChild(0).getChild(0).getText());
-        Assertions.assertEquals("con1 = 2", root.getChild(0).getChild(1).getText());
-
-        Assertions.assertEquals(ConstantAssignNode.class, root.getChild(0).getChild(0).getClass());
-        Assertions.assertEquals(ConstantAssignNode.class, root.getChild(0).getChild(1).getClass());
+        Assertions.assertEquals(""
+            + "Node [CON con0 = 1\\n    con1 = 2\\n]\n"
+            + "+-- ConstantsNode [CON con0 = 1\\n    con1 = 2]\n"
+            + "    +-- ConstantAssignNode [con0]\n"
+            + "        +-- expression = ExpressionNode [1]\n"
+            + "    +-- ConstantAssignNode [con1]\n"
+            + "        +-- expression = ExpressionNode [2]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testParseConstantsList() {
+    void testParseConstantsList() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "CON con0 = 1\n"
             + "    con1 = 2, con2 = 3, con3 = 4\n"
             + ""));
 
         Node root = subject.parse();
-        Assertions.assertEquals(1, root.getChilds().size());
-        Assertions.assertEquals(ConstantsNode.class, root.getChild(0).getClass());
+        Assertions.assertEquals(""
+            + "Node [CON con0 = 1\\n    con1 = 2, con2 = 3, con3 = 4\\n]\n"
+            + "+-- ConstantsNode [CON con0 = 1\\n    con1 = 2, con2 = 3, con3 = 4]\n"
+            + "    +-- ConstantAssignNode [con0]\n"
+            + "        +-- expression = ExpressionNode [1]\n"
+            + "    +-- ConstantAssignNode [con1]\n"
+            + "        +-- expression = ExpressionNode [2]\n"
+            + "    +-- ConstantAssignNode [con2]\n"
+            + "        +-- expression = ExpressionNode [3]\n"
+            + "    +-- ConstantAssignNode [con3]\n"
+            + "        +-- expression = ExpressionNode [4]\n"
+            + "", tree(root));
+    }
 
-        Assertions.assertEquals(4, root.getChild(0).getChilds().size());
-        Assertions.assertEquals("con0 = 1", root.getChild(0).getChild(0).getText());
-        Assertions.assertEquals("con1 = 2", root.getChild(0).getChild(1).getText());
-        Assertions.assertEquals("con2 = 3", root.getChild(0).getChild(2).getText());
-        Assertions.assertEquals("con3 = 4", root.getChild(0).getChild(3).getText());
+    @Test
+    void testParseEnumConstants() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "CON #0\n"
+            + "    con0\n"
+            + "    con1\n"
+            + ""));
 
-        Assertions.assertEquals(ConstantAssignNode.class, root.getChild(0).getChild(0).getClass());
-        Assertions.assertEquals(ConstantAssignNode.class, root.getChild(0).getChild(1).getClass());
-        Assertions.assertEquals(ConstantAssignNode.class, root.getChild(0).getChild(2).getClass());
-        Assertions.assertEquals(ConstantAssignNode.class, root.getChild(0).getChild(3).getClass());
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [CON #0\\n    con0\\n    con1\\n]\n"
+            + "+-- ConstantsNode [CON #0\\n    con0\\n    con1]\n"
+            + "    +-- ConstantSetEnumNode\n"
+            + "        +-- start = ExpressionNode [0]\n"
+            + "    +-- ConstantAssignNode [con0]\n"
+            + "    +-- ConstantAssignNode [con1]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testParseEnumConstantsList() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "CON #0\n"
+            + "    con0\n"
+            + "    con1, con2, con3\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [CON #0\\n    con0\\n    con1, con2, con3\\n]\n"
+            + "+-- ConstantsNode [CON #0\\n    con0\\n    con1, con2, con3]\n"
+            + "    +-- ConstantSetEnumNode\n"
+            + "        +-- start = ExpressionNode [0]\n"
+            + "    +-- ConstantAssignNode [con0]\n"
+            + "    +-- ConstantAssignNode [con1]\n"
+            + "    +-- ConstantAssignNode [con2]\n"
+            + "    +-- ConstantAssignNode [con3]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testParseEnumStepConstants() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "CON #0[2]\n"
+            + "    con0\n"
+            + "    con1, con2, con3\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [CON #0[2]\\n    con0\\n    con1, con2, con3\\n]\n"
+            + "+-- ConstantsNode [CON #0[2]\\n    con0\\n    con1, con2, con3]\n"
+            + "    +-- ConstantSetEnumNode\n"
+            + "        +-- start = ExpressionNode [0]\n"
+            + "        +-- step = ExpressionNode [2]\n"
+            + "    +-- ConstantAssignNode [con0]\n"
+            + "    +-- ConstantAssignNode [con1]\n"
+            + "    +-- ConstantAssignNode [con2]\n"
+            + "    +-- ConstantAssignNode [con3]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testParseEnumMultiplierConstants() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "CON #0\n"
+            + "    con0\n"
+            + "    con1[2]\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [CON #0\\n    con0\\n    con1[2]\\n]\n"
+            + "+-- ConstantsNode [CON #0\\n    con0\\n    con1[2]]\n"
+            + "    +-- ConstantSetEnumNode\n"
+            + "        +-- start = ExpressionNode [0]\n"
+            + "    +-- ConstantAssignNode [con0]\n"
+            + "    +-- ConstantAssignNode [con1]\n"
+            + "        +-- multiplier = ExpressionNode [2]\n"
+            + "", tree(root));
     }
 
     @Test
@@ -194,53 +272,6 @@ class Spin1ParserTest {
 
         ObjectNode node = (ObjectNode) root.getChild(0).getChild(0);
         Assertions.assertEquals(ErrorNode.class, node.getChild(node.getChilds().size() - 1).getClass());
-    }
-
-    @Test
-    void testParseEnumConstants() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "CON #0\n"
-            + "    con0\n"
-            + "    con1\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(1, root.getChilds().size());
-        Assertions.assertEquals(ConstantsNode.class, root.getChild(0).getClass());
-
-        Assertions.assertEquals(3, root.getChild(0).getChilds().size());
-        Assertions.assertEquals("0", root.getChild(0).getChild(0).getText());
-        Assertions.assertEquals("con0", root.getChild(0).getChild(1).getText());
-        Assertions.assertEquals("con1", root.getChild(0).getChild(2).getText());
-
-        Assertions.assertEquals(ConstantSetEnumNode.class, root.getChild(0).getChild(0).getClass());
-        Assertions.assertEquals(ConstantAssignEnumNode.class, root.getChild(0).getChild(1).getClass());
-        Assertions.assertEquals(ConstantAssignEnumNode.class, root.getChild(0).getChild(2).getClass());
-    }
-
-    @Test
-    void testParseEnumConstantsList() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "CON #0\n"
-            + "    con0\n"
-            + "    con1, con2, con3\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(1, root.getChilds().size());
-
-        Assertions.assertEquals(5, root.getChild(0).getChilds().size());
-        Assertions.assertEquals("0", root.getChild(0).getChild(0).getText());
-        Assertions.assertEquals("con0", root.getChild(0).getChild(1).getText());
-        Assertions.assertEquals("con1", root.getChild(0).getChild(2).getText());
-        Assertions.assertEquals("con2", root.getChild(0).getChild(3).getText());
-        Assertions.assertEquals("con3", root.getChild(0).getChild(4).getText());
-
-        Assertions.assertEquals(ConstantSetEnumNode.class, root.getChild(0).getChild(0).getClass());
-        Assertions.assertEquals(ConstantAssignEnumNode.class, root.getChild(0).getChild(1).getClass());
-        Assertions.assertEquals(ConstantAssignEnumNode.class, root.getChild(0).getChild(2).getClass());
-        Assertions.assertEquals(ConstantAssignEnumNode.class, root.getChild(0).getChild(3).getClass());
-        Assertions.assertEquals(ConstantAssignEnumNode.class, root.getChild(0).getChild(4).getClass());
     }
 
     @Test
@@ -383,6 +414,55 @@ class Spin1ParserTest {
 
         Node root = subject.parseStatement(new Node(), subject.stream.nextToken());
         Assertions.assertEquals("a := (b == 1) ? 2 : 3", root.getText());
+    }
+
+    String tree(Node root) throws Exception {
+        return tree(root, 0);
+    }
+
+    String tree(Node node, int indent) throws Exception {
+        StringBuilder sb = new StringBuilder();
+
+        if (indent != 0) {
+            for (int i = 1; i < indent; i++) {
+                sb.append("    ");
+            }
+            sb.append("+-- ");
+        }
+
+        sb.append(node.getClass().getSimpleName());
+        if (node instanceof ConstantStatement) {
+            ConstantStatement constant = (ConstantStatement) node;
+            if (constant.identifier != null) {
+                sb.append(" [" + constant.identifier + "]");
+            }
+            sb.append(System.lineSeparator());
+            for (Node child : node.getChilds()) {
+                for (int i = 1; i < indent + 1; i++) {
+                    sb.append("    ");
+                }
+                sb.append("+-- ");
+
+                Field[] field = node.getClass().getFields();
+                for (int i = 0; i < field.length; i++) {
+                    if (field[i].get(node) == child) {
+                        sb.append(field[i].getName());
+                        sb.append(" = ");
+                    }
+                }
+                sb.append(tree(child, 0));
+            }
+        }
+        else {
+            sb.append(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
+            sb.append(System.lineSeparator());
+
+            for (Node child : node.getChilds()) {
+                sb.append(tree(child, indent + 1));
+            }
+        }
+
+        return sb.toString();
     }
 
 }

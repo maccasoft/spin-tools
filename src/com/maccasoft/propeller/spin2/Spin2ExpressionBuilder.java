@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -188,9 +188,17 @@ public class Spin2ExpressionBuilder {
 
     int index;
 
+    public Spin2ExpressionBuilder(Spin2Context context) {
+        this.context = context;
+    }
+
     public Spin2ExpressionBuilder(Spin2Context context, List<Token> tokens) {
         this.context = context;
         this.tokens = tokens;
+    }
+
+    public void addToken(Token token) {
+        tokens.add(token);
     }
 
     public Expression getExpression() {

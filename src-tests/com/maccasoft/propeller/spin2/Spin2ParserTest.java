@@ -10,13 +10,12 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.lang.reflect.Field;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.model.ConstantAssignEnumNode;
-import com.maccasoft.propeller.model.ConstantAssignNode;
-import com.maccasoft.propeller.model.ConstantSetEnumNode;
-import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.ConstantStatement;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.MethodNode;
@@ -27,104 +26,94 @@ import com.maccasoft.propeller.model.VariablesNode;
 class Spin2ParserTest {
 
     @Test
-    void testSingleAssigments() {
+    void testSingleAssigments() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "CON  EnableFlow = 8\n"
             + "     DisableFlow = 4\n"
             + ""));
 
         Node root = subject.parse();
-        ConstantsNode con0 = (ConstantsNode) root.getChild(0);
-
-        Assertions.assertEquals(2, con0.getChilds().size());
-
-        ConstantAssignNode node0 = (ConstantAssignNode) con0.getChild(0);
-        Assertions.assertEquals("EnableFlow", node0.identifier.getText());
-        Assertions.assertEquals("8", node0.expression.getText());
-
-        ConstantAssignNode node1 = (ConstantAssignNode) con0.getChild(1);
-        Assertions.assertEquals("DisableFlow", node1.identifier.getText());
-        Assertions.assertEquals("4", node1.expression.getText());
+        Assertions.assertEquals(""
+            + "Node [CON  EnableFlow = 8\\n     DisableFlow = 4\\n]\n"
+            + "+-- ConstantsNode [CON  EnableFlow = 8\\n     DisableFlow = 4]\n"
+            + "    +-- ConstantAssignNode [EnableFlow]\n"
+            + "        +-- expression = ExpressionNode [8]\n"
+            + "    +-- ConstantAssignNode [DisableFlow]\n"
+            + "        +-- expression = ExpressionNode [4]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testCommaSeparatedAssignments() {
+    void testCommaSeparatedAssignments() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "CON\n"
             + "     x = 5, y = -5, z = 1\n"
             + ""));
 
         Node root = subject.parse();
-        ConstantsNode con0 = (ConstantsNode) root.getChild(0);
-
-        Assertions.assertEquals(3, con0.getChilds().size());
-
-        ConstantAssignNode node0 = (ConstantAssignNode) con0.getChild(0);
-        Assertions.assertEquals("x", node0.identifier.getText());
-        Assertions.assertEquals("5", node0.expression.getText());
-
-        ConstantAssignNode node1 = (ConstantAssignNode) con0.getChild(1);
-        Assertions.assertEquals("y", node1.identifier.getText());
-        Assertions.assertEquals("-5", node1.expression.getText());
-
-        ConstantAssignNode node2 = (ConstantAssignNode) con0.getChild(2);
-        Assertions.assertEquals("z", node2.identifier.getText());
-        Assertions.assertEquals("1", node2.expression.getText());
+        Assertions.assertEquals(""
+            + "Node [CON\\n     x = 5, y = -5, z = 1\\n]\n"
+            + "+-- ConstantsNode [CON\\n     x = 5, y = -5, z = 1]\n"
+            + "    +-- ConstantAssignNode [x]\n"
+            + "        +-- expression = ExpressionNode [5]\n"
+            + "    +-- ConstantAssignNode [y]\n"
+            + "        +-- expression = ExpressionNode [-5]\n"
+            + "    +-- ConstantAssignNode [z]\n"
+            + "        +-- expression = ExpressionNode [1]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testEnumAssignments() {
+    void testEnumAssignments() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "CON  #0,a,b,c,d\n"
             + ""));
 
         Node root = subject.parse();
-        ConstantsNode con0 = (ConstantsNode) root.getChild(0);
-
-        ConstantSetEnumNode node0 = (ConstantSetEnumNode) con0.getChild(0);
-        Assertions.assertEquals("0", node0.start.getText());
-        Assertions.assertNull(node0.step);
-
-        Assertions.assertEquals("a", ((ConstantAssignEnumNode) con0.getChild(1)).identifier.getText());
-        Assertions.assertEquals("b", ((ConstantAssignEnumNode) con0.getChild(2)).identifier.getText());
-        Assertions.assertEquals("c", ((ConstantAssignEnumNode) con0.getChild(3)).identifier.getText());
-        Assertions.assertEquals("d", ((ConstantAssignEnumNode) con0.getChild(4)).identifier.getText());
+        Assertions.assertEquals(""
+            + "Node [CON  #0,a,b,c,d\\n]\n"
+            + "+-- ConstantsNode [CON  #0,a,b,c,d]\n"
+            + "    +-- ConstantSetEnumNode\n"
+            + "        +-- start = ExpressionNode [0]\n"
+            + "    +-- ConstantAssignNode [a]\n"
+            + "    +-- ConstantAssignNode [b]\n"
+            + "    +-- ConstantAssignNode [c]\n"
+            + "    +-- ConstantAssignNode [d]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testEnumAssigmentStepMultiplier() {
+    void testEnumAssigmentStepMultiplier() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "CON\n"
             + "     u[2]\n"
             + ""));
 
         Node root = subject.parse();
-        ConstantsNode con0 = (ConstantsNode) root.getChild(0);
-
-        ConstantAssignEnumNode node0 = (ConstantAssignEnumNode) con0.getChild(0);
-        Assertions.assertEquals("u", node0.identifier.getText());
-        Assertions.assertEquals("2", node0.multiplier.getText());
+        Assertions.assertEquals(""
+            + "Node [CON\\n     u[2]\\n]\n"
+            + "+-- ConstantsNode [CON\\n     u[2]]\n"
+            + "    +-- ConstantAssignNode [u]\n"
+            + "        +-- multiplier = ExpressionNode [2]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testDefaultSection() {
+    void testDefaultSection() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "     EnableFlow = 8\n"
             + "     DisableFlow = 4\n"
             + ""));
 
         Node root = subject.parse();
-        ConstantsNode con0 = (ConstantsNode) root.getChild(0);
-
-        Assertions.assertEquals(2, con0.getChilds().size());
-
-        ConstantAssignNode node0 = (ConstantAssignNode) con0.getChild(0);
-        Assertions.assertEquals("EnableFlow", node0.identifier.getText());
-        Assertions.assertEquals("8", node0.expression.getText());
-
-        ConstantAssignNode node1 = (ConstantAssignNode) con0.getChild(1);
-        Assertions.assertEquals("DisableFlow", node1.identifier.getText());
-        Assertions.assertEquals("4", node1.expression.getText());
+        Assertions.assertEquals(""
+            + "Node [EnableFlow = 8\\n     DisableFlow = 4\\n]\n"
+            + "+-- ConstantsNode [EnableFlow = 8\\n     DisableFlow = 4]\n"
+            + "    +-- ConstantAssignNode [EnableFlow]\n"
+            + "        +-- expression = ExpressionNode [8]\n"
+            + "    +-- ConstantAssignNode [DisableFlow]\n"
+            + "        +-- expression = ExpressionNode [4]\n"
+            + "", tree(root));
     }
 
     @Test
@@ -341,6 +330,55 @@ class Spin2ParserTest {
         Assertions.assertEquals("(", line1.getToken(1).getText());
         Assertions.assertEquals("`STARTING", line1.getToken(2).getText());
         Assertions.assertEquals(")", line1.getToken(3).getText());
+    }
+
+    String tree(Node root) throws Exception {
+        return tree(root, 0);
+    }
+
+    String tree(Node node, int indent) throws Exception {
+        StringBuilder sb = new StringBuilder();
+
+        if (indent != 0) {
+            for (int i = 1; i < indent; i++) {
+                sb.append("    ");
+            }
+            sb.append("+-- ");
+        }
+
+        sb.append(node.getClass().getSimpleName());
+        if (node instanceof ConstantStatement) {
+            ConstantStatement constant = (ConstantStatement) node;
+            if (constant.identifier != null) {
+                sb.append(" [" + constant.identifier + "]");
+            }
+            sb.append(System.lineSeparator());
+            for (Node child : node.getChilds()) {
+                for (int i = 1; i < indent + 1; i++) {
+                    sb.append("    ");
+                }
+                sb.append("+-- ");
+
+                Field[] field = node.getClass().getFields();
+                for (int i = 0; i < field.length; i++) {
+                    if (field[i].get(node) == child) {
+                        sb.append(field[i].getName());
+                        sb.append(" = ");
+                    }
+                }
+                sb.append(tree(child, 0));
+            }
+        }
+        else {
+            sb.append(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
+            sb.append(System.lineSeparator());
+
+            for (Node child : node.getChilds()) {
+                sb.append(tree(child, indent + 1));
+            }
+        }
+
+        return sb.toString();
     }
 
 }

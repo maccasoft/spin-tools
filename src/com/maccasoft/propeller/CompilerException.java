@@ -78,6 +78,21 @@ public class CompilerException extends RuntimeException {
         }
     }
 
+    public CompilerException(String message, List<Token> list) {
+        this(ERROR, null, message, list);
+    }
+
+    public CompilerException(int type, String fileName, String message, List<Token> list) {
+        super(message);
+        this.fileName = fileName;
+        this.type = type;
+
+        this.line = list.get(0).line + 1;
+        this.column = list.get(0).column;
+        this.startToken = list.get(0);
+        this.stopToken = list.get(list.size() - 1);
+    }
+
     public CompilerException(Exception cause, Object data) {
         this(ERROR, null, cause, data);
     }
