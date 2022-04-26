@@ -478,31 +478,11 @@ public class Spin1ObjectCompiler {
 
             @Override
             public void visitVariable(VariableNode node) {
-                if (node.identifier == null) {
-                    return;
-                }
-
                 if (node.type != null) {
                     type = node.type.getText().toUpperCase();
                 }
-
                 if ("LONG".equalsIgnoreCase(type)) {
-                    Expression size = new NumberLiteral(1);
-                    if (node.size != null) {
-                        size = buildExpression(node.size.getTokens(), scope);
-                    }
-
-                    try {
-                        scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                        scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                        try {
-                            varOffset += size.getNumber().intValue() * 4;
-                        } catch (Exception e) {
-                            logMessage(new CompilerException(e, node.size));
-                        }
-                    } catch (Exception e) {
-                        logMessage(new CompilerException(e, node.identifier));
-                    }
+                    compileVariable(type, node);
                 }
             }
 
@@ -519,31 +499,11 @@ public class Spin1ObjectCompiler {
 
             @Override
             public void visitVariable(VariableNode node) {
-                if (node.identifier == null) {
-                    return;
-                }
-
                 if (node.type != null) {
                     type = node.type.getText().toUpperCase();
                 }
-
                 if ("WORD".equalsIgnoreCase(type)) {
-                    Expression size = new NumberLiteral(1);
-                    if (node.size != null) {
-                        size = buildExpression(node.size.getTokens(), scope);
-                    }
-
-                    try {
-                        scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                        scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                        try {
-                            varOffset += size.getNumber().intValue() * 2;
-                        } catch (Exception e) {
-                            logMessage(new CompilerException(e, node.size));
-                        }
-                    } catch (Exception e) {
-                        logMessage(new CompilerException(e, node.identifier));
-                    }
+                    compileVariable(type, node);
                 }
             }
 
@@ -560,37 +520,87 @@ public class Spin1ObjectCompiler {
 
             @Override
             public void visitVariable(VariableNode node) {
-                if (node.identifier == null) {
-                    return;
-                }
-
                 if (node.type != null) {
                     type = node.type.getText().toUpperCase();
                 }
-
                 if ("BYTE".equalsIgnoreCase(type)) {
-                    Expression size = new NumberLiteral(1);
-                    if (node.size != null) {
-                        size = buildExpression(node.size.getTokens(), scope);
-                    }
-
-                    try {
-                        scope.addSymbol(node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                        scope.addSymbol("@" + node.identifier.getText(), new Variable(type, node.identifier.getText(), size, varOffset));
-                        try {
-                            varOffset += size.getNumber().intValue() * 1;
-                        } catch (Exception e) {
-                            logMessage(new CompilerException(e, node.size));
-                        }
-                    } catch (Exception e) {
-                        logMessage(new CompilerException(e, node.identifier));
-                    }
+                    compileVariable(type, node);
                 }
             }
 
         });
 
         varOffset = (varOffset + 3) & ~3;
+    }
+
+    void compileVariable(String type, VariableNode node) {
+        Iterator<Token> iter = node.getTokens().iterator();
+
+        Token token = iter.next();
+        if (Spin1Model.isType(token.getText())) {
+            type = token.getText().toUpperCase();
+            if (!iter.hasNext()) {
+                logMessage(new CompilerException("expecting variable name", token));
+                return;
+            }
+            token = iter.next();
+        }
+
+        String identifier = token.getText();
+        Expression size = new NumberLiteral(1);
+
+        if (iter.hasNext()) {
+            token = iter.next();
+            if (!"[".equals(token.getText())) {
+                logMessage(new CompilerException("unexpected '" + token + "'", token));
+                return;
+            }
+            if (!iter.hasNext()) {
+                logMessage(new CompilerException("expecting expression", token));
+                return;
+            }
+            Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+            while (iter.hasNext()) {
+                token = iter.next();
+                if ("]".equals(token.getText())) {
+                    try {
+                        size = builder.getExpression();
+                    } catch (CompilerException e) {
+                        logMessage(e);
+                    } catch (Exception e) {
+                        logMessage(new CompilerException(e, builder.tokens));
+                    }
+                    break;
+                }
+                builder.addToken(token);
+            }
+            if (!"]".equals(token.getText())) {
+                logMessage(new CompilerException("expecting '['", token));
+                return;
+            }
+        }
+
+        try {
+            scope.addSymbol(identifier, new Variable(type, identifier, size, varOffset));
+            scope.addSymbol("@" + identifier, new Variable(type, identifier, size, varOffset));
+
+            int varSize = size.getNumber().intValue();
+            if ("WORD".equalsIgnoreCase(type)) {
+                varSize = varSize * 2;
+            }
+            else if (!"BYTE".equalsIgnoreCase(type)) {
+                varSize = varSize * 4;
+            }
+            varOffset += varSize;
+        } catch (Exception e) {
+            logMessage(new CompilerException(e, node.identifier));
+        }
+
+        if (iter.hasNext()) {
+            Node error = new Node();
+            iter.forEachRemaining(t -> error.addToken(t));
+            logMessage(new CompilerException("unexpected '" + error + "'", error));
+        }
     }
 
     void compileObjBlock(Node parent) {

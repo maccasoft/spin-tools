@@ -211,9 +211,9 @@ public class Spin2Parser {
         Node parent = new VariablesNode(root);
         parent.addToken(start);
 
-        ErrorNode error = null;
-        VariableNode node = null;
         int state = 1;
+        VariableNode node = null;
+
         while (true) {
             Token token = stream.nextToken();
             if (token.type == Token.EOF) {
@@ -241,46 +241,32 @@ public class Spin2Parser {
                     }
                     // fall-through
                 case 2:
-                    if (token.type == 0) {
-                        if (node == null) {
-                            node = new VariableNode(parent);
-                        }
-                        node.addToken(token);
-                        node.identifier = token;
-                        state = 3;
-                        break;
-                    }
-                    error = new ErrorNode(parent);
-                    state = 9;
-                    break;
-
-                case 3:
-                    if ("[".equals(token.getText())) {
-                        node.size = new ExpressionNode(node);
-                        state = 5;
-                        break;
-                    }
-                    // fall-through
-                case 4:
                     if (",".equals(token.getText())) {
                         node = null;
                         state = 1;
                         break;
                     }
-                    error = new ErrorNode(parent);
-                    state = 9;
+                    if (node == null) {
+                        node = new VariableNode(parent);
+                    }
+                    if (node.identifier == null) {
+                        node.identifier = token;
+                    }
+                    node.addToken(token);
+                    if ("[".equals(token.getText())) {
+                        node.size = new ExpressionNode(node);
+                        state = 3;
+                        break;
+                    }
                     break;
 
-                case 5:
+                case 3:
                     if ("]".equals(token.getText())) {
-                        state = 4;
+                        node.addToken(token);
+                        state = 2;
                         break;
                     }
                     node.size.addToken(token);
-                    break;
-
-                case 9:
-                    error.addToken(token);
                     break;
             }
         }
