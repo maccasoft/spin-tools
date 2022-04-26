@@ -115,6 +115,84 @@ class Spin2ParserTest {
     }
 
     @Test
+    void testParseObject() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0 : \"file0\"\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [OBJ\\n    obj0 : \"file0\"\\n]\n"
+            + "+-- ObjectsNode [OBJ\\n    obj0 : \"file0\"]\n"
+            + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\"]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testParseObjects() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0 : \"file0\"\n"
+            + "    obj1 : \"file1\"\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [OBJ\\n    obj0 : \"file0\"\\n    obj1 : \"file1\"\\n]\n"
+            + "+-- ObjectsNode [OBJ\\n    obj0 : \"file0\"\\n    obj1 : \"file1\"]\n"
+            + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\"]\n"
+            + "    +-- ObjectNode name=obj1 file=\"file1\" [obj1 : \"file1\"]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testParseObjectArray() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0[10] : \"file0\"\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [OBJ\\n    obj0[10] : \"file0\"\\n]\n"
+            + "+-- ObjectsNode [OBJ\\n    obj0[10] : \"file0\"]\n"
+            + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0[10] : \"file0\"]\n"
+            + "        +-- count = Node [10]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testParseObjectSyntaxError1() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0 = \n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [OBJ\\n    obj0 = \\n]\n"
+            + "+-- ObjectsNode [OBJ\\n    obj0 =]\n"
+            + "    +-- ObjectNode name=obj0 [obj0 =]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testParseObjectSyntaxError2() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0 : \"file0\" a0\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [OBJ\\n    obj0 : \"file0\" a0\\n]\n"
+            + "+-- ObjectsNode [OBJ\\n    obj0 : \"file0\" a0]\n"
+            + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\" a0]\n"
+            + "", tree(root));
+    }
+
+    @Test
     void testMethod() {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "PUB go()\n"

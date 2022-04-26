@@ -268,9 +268,9 @@ public class Spin1Parser {
         Node parent = new ObjectsNode(root);
         parent.addToken(start);
 
-        ErrorNode error = null;
         ObjectNode object = null;
         int state = 1;
+
         while (true) {
             Token token = stream.nextToken();
             if (token.type == Token.EOF) {
@@ -295,19 +295,18 @@ public class Spin1Parser {
                     break;
                 case 2:
                     if ("[".equals(token.getText())) {
+                        object.addToken(token);
                         object.count = new Node(object);
                         state = 5;
                         break;
                     }
                     // fall-through
                 case 3:
+                    object.addToken(token);
                     if (":".equals(token.getText())) {
                         state = 4;
                         break;
                     }
-                    error = new ErrorNode(object, "Syntax error");
-                    error.addToken(token);
-                    state = 9;
                     break;
                 case 4:
                     object.addToken(token);
@@ -317,6 +316,7 @@ public class Spin1Parser {
 
                 case 5:
                     if ("]".equals(token.getText())) {
+                        object.addToken(token);
                         state = 3;
                         break;
                     }
@@ -324,11 +324,7 @@ public class Spin1Parser {
                     break;
 
                 case 8:
-                    error = new ErrorNode(object, "Syntax error");
-                    state = 9;
-                    // fall-through
-                case 9:
-                    error.addToken(token);
+                    object.addToken(token);
                     break;
             }
         }

@@ -56,7 +56,6 @@ import com.maccasoft.propeller.model.LocalVariableNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
-import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.model.StatementNode;
@@ -96,11 +95,19 @@ public class Spin1ObjectCompiler {
         boolean errors;
 
         long offset;
+        int count;
 
         public ObjectInfo(String fileName, Spin1Object object, boolean errors) {
             this.fileName = fileName;
             this.object = object;
             this.errors = errors;
+        }
+
+        public ObjectInfo(String fileName, Spin1Object object, boolean errors, int count) {
+            this.fileName = fileName;
+            this.object = object;
+            this.errors = errors;
+            this.count = count;
         }
     }
 
@@ -605,32 +612,90 @@ public class Spin1ObjectCompiler {
 
     void compileObjBlock(Node parent) {
 
-        for (Node child : parent.getChilds()) {
-            ObjectNode node = (ObjectNode) child;
-            if (node.name != null && node.file != null) {
-                String objectName = node.file.getText().substring(1, node.file.getText().length() - 1);
-                String objectFileName = objectName + ".spin";
+        for (Node node : parent.getChilds()) {
+            Iterator<Token> iter = node.getTokens().iterator();
 
-                ObjectInfo info = childObjects.get(objectFileName);
-                if (info == null) {
-                    logMessage(new CompilerException("object \"" + objectName + "\" not found", node.file));
-                    continue;
+            Token token = iter.next();
+            String name = token.getText();
+            int count = 1;
+
+            if (!iter.hasNext()) {
+                logMessage(new CompilerException("syntax error", node));
+                return;
+            }
+            token = iter.next();
+
+            if ("[".equals(token.getText())) {
+                if (!iter.hasNext()) {
+                    logMessage(new CompilerException("syntax error", node));
+                    return;
                 }
-                if (info.errors) {
-                    logMessage(new CompilerException("object \"" + objectName + "\" has errors", node.file));
-                    continue;
-                }
-
-                objects.put(node.name.getText(), info);
-
-                for (Entry<String, Expression> entry : info.object.getSymbols().entrySet()) {
-                    if (!(entry.getValue() instanceof Method)) {
-                        String qualifiedName = node.name.getText() + "#" + entry.getKey();
-                        scope.addSymbol(qualifiedName, entry.getValue());
+                Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                while (iter.hasNext()) {
+                    token = iter.next();
+                    if ("]".equals(token.getText())) {
+                        try {
+                            Expression expression = builder.getExpression();
+                            count = expression.getNumber().intValue();
+                        } catch (CompilerException e) {
+                            logMessage(e);
+                        } catch (Exception e) {
+                            logMessage(new CompilerException(e, builder.tokens));
+                        }
+                        break;
                     }
+                    builder.addToken(token);
+                }
+                if (!"]".equals(token.getText())) {
+                    logMessage(new CompilerException("expecting '['", token));
+                    return;
+                }
+                if (!iter.hasNext()) {
+                    logMessage(new CompilerException("expecting object file", token));
+                    return;
+                }
+                token = iter.next();
+            }
+
+            if (!":".equals(token.getText())) {
+                logMessage(new CompilerException("expecting ':'", token));
+                return;
+            }
+            if (!iter.hasNext()) {
+                logMessage(new CompilerException("syntax error", node));
+                return;
+            }
+            token = iter.next();
+            if (token.type != Token.STRING) {
+                logMessage(new CompilerException("expecting file name", token));
+                return;
+            }
+            String fileName = token.getText().substring(1, token.getText().length() - 1) + ".spin";
+
+            ObjectInfo info = childObjects.get(fileName);
+            if (info == null) {
+                logMessage(new CompilerException("object " + token + " not found", token));
+                continue;
+            }
+            if (info.errors) {
+                logMessage(new CompilerException("object " + token + " has errors", token));
+                continue;
+            }
+
+            objects.put(name, new ObjectInfo(info.fileName, info.object, info.errors, count));
+
+            for (Entry<String, Expression> entry : info.object.getSymbols().entrySet()) {
+                if (!(entry.getValue() instanceof Method)) {
+                    String qualifiedName = name + "#" + entry.getKey();
+                    scope.addSymbol(qualifiedName, entry.getValue());
                 }
             }
 
+            if (iter.hasNext()) {
+                Node error = new Node();
+                iter.forEachRemaining(t -> error.addToken(t));
+                logMessage(new CompilerException("unexpected '" + error + "'", error));
+            }
         }
     }
 
