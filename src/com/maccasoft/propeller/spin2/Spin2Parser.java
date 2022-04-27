@@ -341,12 +341,13 @@ public class Spin2Parser {
     void parseMethod(Token start) {
         MethodNode node = new MethodNode(root, start);
 
-        int state = 2;
+        int state = 1;
         Node parent = node;
         Node child = node;
         Node param = null;
         Node ret = null;
         LocalVariableNode local = null;
+        ErrorNode error = null;
 
         while (true) {
             Token token = stream.nextToken();
@@ -358,63 +359,36 @@ public class Spin2Parser {
             }
             switch (state) {
                 case 1:
-                    child.addToken(token);
+                    node.name = token;
+                    node.addToken(token);
+                    state = 2;
                     break;
-
                 case 2:
-                    if (token.type == 0) {
-                        node.name = token;
-                        node.addToken(token);
-                        state = 3;
-                        break;
-                    }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
-                    break;
-
-                case 3:
                     if ("(".equals(token.getText())) {
                         node.addToken(token);
                         state = 4;
                         break;
                     }
-                    else if (":".equals(token.getText())) {
+                    if (":".equals(token.getText())) {
                         node.addToken(token);
                         state = 7;
                         break;
                     }
-                    else if ("|".equals(token.getText())) {
+                    if ("|".equals(token.getText())) {
                         node.addToken(token);
                         state = 9;
                         break;
                     }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
+                    if (error == null) {
+                        error = new ErrorNode(node);
+                    }
+                    error.addToken(token);
                     break;
 
                 case 4:
-                    if (")".equals(token.getText())) {
-                        node.addToken(token);
-                        state = 6;
-                        break;
-                    }
-                    if (Spin2Model.isType(token.getText())) {
-                        child = new ErrorNode(parent);
-                        child.addToken(token);
-                        state = 1;
-                        break;
-                    }
-                    param = new Node(node);
-                    param.addToken(token);
-                    node.parameters.add(param);
-                    state = 5;
-                    break;
-                case 5:
                     if (",".equals(token.getText())) {
                         node.addToken(token);
-                        state = 4;
+                        param = null;
                         break;
                     }
                     if (")".equals(token.getText())) {
@@ -422,9 +396,11 @@ public class Spin2Parser {
                         state = 6;
                         break;
                     }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
+                    if (param == null) {
+                        param = new Node(node);
+                        node.parameters.add(param);
+                    }
+                    param.addToken(token);
                     break;
 
                 case 6:
@@ -438,18 +414,13 @@ public class Spin2Parser {
                         state = 9;
                         break;
                     }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
+                    if (error == null) {
+                        error = new ErrorNode(node);
+                    }
+                    error.addToken(token);
                     break;
 
                 case 7:
-                    if (Spin2Model.isType(token.getText())) {
-                        child = new ErrorNode(parent);
-                        child.addToken(token);
-                        state = 1;
-                        break;
-                    }
                     ret = new Node(node);
                     ret.addToken(token);
                     node.returnVariables.add(ret);
@@ -466,31 +437,23 @@ public class Spin2Parser {
                         state = 9;
                         break;
                     }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
+                    ret.addToken(token);
                     break;
 
                 case 9:
                     local = new LocalVariableNode(node);
                     node.localVariables.add(local);
                     if (Spin2Model.isType(token.getText())) {
-                        local.type = new Node(local);
-                        local.type.addToken(token);
+                        local.type = token;
+                        local.addToken(token);
                         state = 10;
                         break;
                     }
                     // fall-through
                 case 10:
-                    if (token.type == 0) {
-                        local.identifier = new Node(local);
-                        local.identifier.addToken(token);
-                        state = 11;
-                        break;
-                    }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
+                    local.identifier = token;
+                    local.addToken(token);
+                    state = 11;
                     break;
                 case 11:
                     if (",".equals(token.getText())) {
@@ -499,7 +462,7 @@ public class Spin2Parser {
                         break;
                     }
                     if ("[".equals(token.getText())) {
-                        node.addToken(token);
+                        local.addToken(token);
                         local.size = new ExpressionNode(local);
                         state = 12;
                         break;
@@ -509,13 +472,11 @@ public class Spin2Parser {
                         state = 7;
                         break;
                     }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
+                    local.addToken(token);
                     break;
                 case 12:
                     if ("]".equals(token.getText())) {
-                        node.addToken(token);
+                        local.addToken(token);
                         state = 11;
                         break;
                     }

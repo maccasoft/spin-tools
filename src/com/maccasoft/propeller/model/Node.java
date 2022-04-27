@@ -36,6 +36,11 @@ public class Node {
         this.parent.childs.add(this);
     }
 
+    public Node(Collection<Token> list) {
+        this.parent = null;
+        tokens.addAll(list);
+    }
+
     public void accept(NodeVisitor visitor) {
         for (Node child : childs) {
             child.accept(visitor);
@@ -66,6 +71,10 @@ public class Node {
 
     public List<Token> getTokens() {
         return tokens;
+    }
+
+    public int getTokenCount() {
+        return tokens.size();
     }
 
     public Token getToken(int index) {

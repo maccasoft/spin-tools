@@ -28,6 +28,7 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class Spin1Parser {
 
@@ -333,12 +334,13 @@ public class Spin1Parser {
     void parseMethod(Token start) {
         MethodNode node = new MethodNode(root, start);
 
-        int state = 2;
+        int state = 1;
         Node parent = node;
         Node child = node;
         Node param = null;
         Node ret = null;
         LocalVariableNode local = null;
+        ErrorNode error = null;
 
         while (true) {
             Token token = stream.nextToken();
@@ -350,28 +352,75 @@ public class Spin1Parser {
             }
             switch (state) {
                 case 1:
-                    child.addToken(token);
+                    node.name = token;
+                    node.addToken(token);
+                    state = 2;
                     break;
-
                 case 2:
-                    if (token.type == 0) {
-                        node.name = token;
-                        node.addToken(token);
-                        state = 3;
-                        break;
-                    }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
-                    break;
-
-                case 3:
                     if ("(".equals(token.getText())) {
                         node.addToken(token);
                         state = 4;
                         break;
                     }
-                    else if (":".equals(token.getText())) {
+                    if (":".equals(token.getText())) {
+                        node.addToken(token);
+                        state = 7;
+                        break;
+                    }
+                    if ("|".equals(token.getText())) {
+                        node.addToken(token);
+                        state = 9;
+                        break;
+                    }
+                    if (error == null) {
+                        error = new ErrorNode(node);
+                    }
+                    error.addToken(token);
+                    break;
+
+                case 4:
+                    if (",".equals(token.getText())) {
+                        node.addToken(token);
+                        param = null;
+                        break;
+                    }
+                    if (")".equals(token.getText())) {
+                        node.addToken(token);
+                        state = 6;
+                        break;
+                    }
+                    if (param == null) {
+                        param = new Node(node);
+                        node.parameters.add(param);
+                    }
+                    param.addToken(token);
+                    break;
+
+                case 6:
+                    if (":".equals(token.getText())) {
+                        node.addToken(token);
+                        state = 7;
+                        break;
+                    }
+                    if ("|".equals(token.getText())) {
+                        node.addToken(token);
+                        state = 9;
+                        break;
+                    }
+                    if (error == null) {
+                        error = new ErrorNode(node);
+                    }
+                    error.addToken(token);
+                    break;
+
+                case 7:
+                    ret = new Node(node);
+                    ret.addToken(token);
+                    node.returnVariables.add(ret);
+                    state = 8;
+                    break;
+                case 8:
+                    if (",".equals(token.getText())) {
                         node.addToken(token);
                         state = 7;
                         break;
@@ -381,103 +430,23 @@ public class Spin1Parser {
                         state = 9;
                         break;
                     }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
-                    break;
-
-                case 4:
-                    if (")".equals(token.getText())) {
-                        node.addToken(token);
-                        state = 6;
-                        break;
-                    }
-                    if (Spin1Model.isType(token.getText())) {
-                        child = new ErrorNode(parent);
-                        child.addToken(token);
-                        state = 1;
-                        break;
-                    }
-                    param = new Node(node);
-                    param.addToken(token);
-                    node.parameters.add(param);
-                    state = 5;
-                    break;
-                case 5:
-                    if (",".equals(token.getText())) {
-                        node.addToken(token);
-                        state = 4;
-                        break;
-                    }
-                    if (")".equals(token.getText())) {
-                        node.addToken(token);
-                        state = 6;
-                        break;
-                    }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
-                    break;
-
-                case 6:
-                    if ("|".equals(token.getText())) {
-                        node.addToken(token);
-                        state = 9;
-                        break;
-                    }
-                    else if (":".equals(token.getText())) {
-                        node.addToken(token);
-                        state = 7;
-                        break;
-                    }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
-                    break;
-
-                case 7:
-                    if (Spin1Model.isType(token.getText())) {
-                        child = new ErrorNode(parent);
-                        child.addToken(token);
-                        state = 1;
-                        break;
-                    }
-                    ret = new Node(node);
                     ret.addToken(token);
-                    node.returnVariables.add(ret);
-                    state = 8;
-                    break;
-                case 8:
-                    if ("|".equals(token.getText())) {
-                        node.addToken(token);
-                        state = 9;
-                        break;
-                    }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
                     break;
 
                 case 9:
                     local = new LocalVariableNode(node);
                     node.localVariables.add(local);
-                    if (Spin1Model.isType(token.getText())) {
-                        local.type = new Node(local);
-                        local.type.addToken(token);
+                    if (Spin2Model.isType(token.getText())) {
+                        local.type = token;
+                        local.addToken(token);
                         state = 10;
                         break;
                     }
                     // fall-through
                 case 10:
-                    if (token.type == 0) {
-                        local.identifier = new Node(local);
-                        local.identifier.addToken(token);
-                        state = 11;
-                        break;
-                    }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
+                    local.identifier = token;
+                    local.addToken(token);
+                    state = 11;
                     break;
                 case 11:
                     if (",".equals(token.getText())) {
@@ -486,7 +455,7 @@ public class Spin1Parser {
                         break;
                     }
                     if ("[".equals(token.getText())) {
-                        node.addToken(token);
+                        local.addToken(token);
                         local.size = new ExpressionNode(local);
                         state = 12;
                         break;
@@ -496,13 +465,11 @@ public class Spin1Parser {
                         state = 7;
                         break;
                     }
-                    child = new ErrorNode(parent);
-                    child.addToken(token);
-                    state = 1;
+                    local.addToken(token);
                     break;
                 case 12:
                     if ("]".equals(token.getText())) {
-                        node.addToken(token);
+                        local.addToken(token);
                         state = 11;
                         break;
                     }

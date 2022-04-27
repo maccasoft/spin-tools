@@ -12,19 +12,19 @@ package com.maccasoft.propeller.model;
 
 public class LocalVariableNode extends Node {
 
-    public Node type;
-    public Node identifier;
+    public Token type;
+    public Token identifier;
     public ExpressionNode size;
 
     public LocalVariableNode(Node parent) {
         super(parent);
     }
 
-    public Node getType() {
+    public Token getType() {
         return type;
     }
 
-    public Node getIdentifier() {
+    public Token getIdentifier() {
         return identifier;
     }
 

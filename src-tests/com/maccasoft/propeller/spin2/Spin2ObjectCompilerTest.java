@@ -1896,7 +1896,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testModifyExpressions() throws Exception {
         String text = ""
-            + "PUB main | a\n"
+            + "PUB main() | a\n"
             + "\n"
             + "    a += 1\n"
             + "\n"
@@ -1906,7 +1906,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0D 00 00 00    End\n"
-            + "' PUB main | a\n"
+            + "' PUB main() | a\n"
             + "00008 00008       04             (stack size)\n"
             + "'     a += 1\n"
             + "00009 00009       A2             CONSTANT (1)\n"
@@ -2660,7 +2660,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testVariableTypeConstantIndex() throws Exception {
         String text = ""
-            + "PUB main | a, b\n"
+            + "PUB main() | a, b\n"
             + "\n"
             + "    a := b.byte[1]\n"
             + "    b.byte[1] := a\n"
@@ -2671,7 +2671,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       12 00 00 00    End\n"
-            + "' PUB main | a, b\n"
+            + "' PUB main() | a, b\n"
             + "00008 00008       08             (stack size)\n"
             + "'     a := b.byte[1]\n"
             + "00009 00009       52 05 80       MEM_READ BYTE DBASE+$00005\n"
@@ -2687,7 +2687,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testVariableTypeIndex() throws Exception {
         String text = ""
-            + "PUB main | a, b, c\n"
+            + "PUB main() | a, b, c\n"
             + "\n"
             + "    a := b.byte[c]\n"
             + "    b.byte[c] := a\n"
@@ -2698,7 +2698,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       14 00 00 00    End\n"
-            + "' PUB main | a, b, c\n"
+            + "' PUB main() | a, b, c\n"
             + "00008 00008       0C             (stack size)\n"
             + "'     a := b.byte[c]\n"
             + "00009 00009       E2             VAR_READ LONG DBASE+$00002 (short)\n"
@@ -2786,7 +2786,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testVariableIndex() throws Exception {
         String text = ""
-            + "PUB main | a, b, c\n"
+            + "PUB main() | a, b, c\n"
             + "\n"
             + "    a := b[c]\n"
             + "    a := b[1]\n"
@@ -2799,7 +2799,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       1C 00 00 00    End\n"
-            + "' PUB main | a, b, c\n"
+            + "' PUB main() | a, b, c\n"
             + "00008 00008       0C             (stack size)\n"
             + "'     a := b[c]\n"
             + "00009 00009       E2             VAR_READ LONG DBASE+$00002 (short)\n"
@@ -2822,7 +2822,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testBitField() throws Exception {
         String text = ""
-            + "PUB main | a, b, c, d\n"
+            + "PUB main() | a, b, c, d\n"
             + "\n"
             + "    a := b.[1]\n"
             + "    a := b.[2..1]\n"
@@ -2835,7 +2835,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       20 00 00 00    End\n"
-            + "' PUB main | a, b, c, d\n"
+            + "' PUB main() | a, b, c, d\n"
             + "00008 00008       10             (stack size)\n"
             + "'     a := b.[1]\n"
             + "00009 00009       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
@@ -2864,7 +2864,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testBitFieldChainedAssignment() throws Exception {
         String text = ""
-            + "PUB main | a, b, c\n"
+            + "PUB main() | a, b, c\n"
             + "\n"
             + "    a.[1] := b.[2] := 1\n"
             + "    a.[1] := b.[2] := c.[3] := 1\n"
@@ -2875,7 +2875,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       1B 00 00 00    End\n"
-            + "' PUB main | a, b, c\n"
+            + "' PUB main() | a, b, c\n"
             + "00008 00008       0C             (stack size)\n"
             + "'     a.[1] := b.[2] := 1\n"
             + "00009 00009       A2             CONSTANT (1)\n"
@@ -2899,7 +2899,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testBitFieldConstants() throws Exception {
         String text = ""
-            + "PUB main | a, b, c, d\n"
+            + "PUB main() | a, b, c, d\n"
             + "\n"
             + "    a.[0] := 1\n"
             + "    a.[1] := 1\n"
@@ -2916,7 +2916,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       2A 00 00 00    End\n"
-            + "' PUB main | a, b, c, d\n"
+            + "' PUB main() | a, b, c, d\n"
             + "00008 00008       10             (stack size)\n"
             + "'     a.[0] := 1\n"
             + "00009 00009       A2             CONSTANT (1)\n"
@@ -2959,7 +2959,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testBitFieldPostEffects() throws Exception {
         String text = ""
-            + "PUB main | a, b, c, d\n"
+            + "PUB main() | a, b, c, d\n"
             + "\n"
             + "    a := b[3].[1]++\n"
             + "    a := b[3].[2..1]--\n"
@@ -2976,7 +2976,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       42 00 00 00    End\n"
-            + "' PUB main | a, b, c, d\n"
+            + "' PUB main() | a, b, c, d\n"
             + "00008 00008       10             (stack size)\n"
             + "'     a := b[3].[1]++\n"
             + "00009 00009       5E 10          VAR_SETUP LONG DBASE+$00001 (short)\n"
@@ -3038,7 +3038,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testTypedBitField() throws Exception {
         String text = ""
-            + "PUB main | a, b, c, d\n"
+            + "PUB main() | a, b, c, d\n"
             + "\n"
             + "    a := b.byte[1]\n"
             + "    a := b.byte[2..1]\n"
@@ -3051,7 +3051,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       1F 00 00 00    End\n"
-            + "' PUB main | a, b, c, d\n"
+            + "' PUB main() | a, b, c, d\n"
             + "00008 00008       10             (stack size)\n"
             + "'     a := b.byte[1]\n"
             + "00009 00009       52 05 80       MEM_READ BYTE DBASE+$00005\n"
@@ -3078,7 +3078,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testIndexedBitField() throws Exception {
         String text = ""
-            + "PUB main | a, b, c, d\n"
+            + "PUB main() | a, b, c, d\n"
             + "\n"
             + "    a := b[3].[1]\n"
             + "    a := b[3].[2..1]\n"
@@ -3091,7 +3091,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       26 00 00 00    End\n"
-            + "' PUB main | a, b, c, d\n"
+            + "' PUB main() | a, b, c, d\n"
             + "00008 00008       10             (stack size)\n"
             + "'     a := b[3].[1]\n"
             + "00009 00009       5E 10          VAR_SETUP LONG DBASE+$00001 (short)\n"
@@ -3123,7 +3123,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testMemoryBitFieldWrite() throws Exception {
         String text = ""
-            + "PUB main | a\n"
+            + "PUB main() | a\n"
             + "\n"
             + "    byte[0].[3] := a\n"
             + "    word[1].[3] := a\n"
@@ -3138,7 +3138,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       2B 00 00 00    End\n"
-            + "' PUB main | a\n"
+            + "' PUB main() | a\n"
             + "00008 00008       04             (stack size)\n"
             + "'     byte[0].[3] := a\n"
             + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
@@ -3181,7 +3181,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testMemoryBitFieldRead() throws Exception {
         String text = ""
-            + "PUB main | a\n"
+            + "PUB main() | a\n"
             + "\n"
             + "    a := byte[0].[3]\n"
             + "    a := word[1].[3]\n"
@@ -3196,7 +3196,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       2B 00 00 00    End\n"
-            + "' PUB main | a\n"
+            + "' PUB main() | a\n"
             + "00008 00008       04             (stack size)\n"
             + "'     a := byte[0].[3]\n"
             + "00009 00009       A1             CONSTANT (0)\n"
@@ -3239,7 +3239,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testMemoryPostEffects() throws Exception {
         String text = ""
-            + "PUB main | a\n"
+            + "PUB main() | a\n"
             + "\n"
             + "    a := byte[3]++\n"
             + "    a := word[3]--\n"
@@ -3256,7 +3256,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       2A 00 00 00    End\n"
-            + "' PUB main | a\n"
+            + "' PUB main() | a\n"
             + "00008 00008       04             (stack size)\n"
             + "'     a := byte[3]++\n"
             + "00009 00009       A4             CONSTANT (3)\n"
@@ -3306,7 +3306,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testMemoryBitFieldPostEffects() throws Exception {
         String text = ""
-            + "PUB main | a, b, c, d\n"
+            + "PUB main() | a, b, c, d\n"
             + "\n"
             + "    a := byte[3].[1]++\n"
             + "    a := word[3].[2..1]--\n"
@@ -3323,7 +3323,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       3E 00 00 00    End\n"
-            + "' PUB main | a, b, c, d\n"
+            + "' PUB main() | a, b, c, d\n"
             + "00008 00008       10             (stack size)\n"
             + "'     a := byte[3].[1]++\n"
             + "00009 00009       A4             CONSTANT (3)\n"
@@ -3454,7 +3454,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testString() throws Exception {
         String text = ""
-            + "PUB main | a, b, c\n"
+            + "PUB main() | a, b, c\n"
             + "\n"
             + "    a := string(\"1234\", 13, 10)\n"
             + "    b := \"1234\"\n"
@@ -3466,7 +3466,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       24 00 00 00    End\n"
-            + "' PUB main | a, b, c\n"
+            + "' PUB main() | a, b, c\n"
             + "00008 00008       0C             (stack size)\n"
             + "'     a := string(\"1234\", 13, 10)\n"
             + "00009 00009       9E 07 31 32 33 STRING\n"
@@ -3487,7 +3487,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testLookup() throws Exception {
         String text = ""
-            + "PUB main | a, b\n"
+            + "PUB main() | a, b\n"
             + "\n"
             + "    a := lookup(b : 10, 20..30, 40)\n"
             + "";
@@ -3496,7 +3496,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       1A 00 00 00    End\n"
-            + "' PUB main | a, b\n"
+            + "' PUB main() | a, b\n"
             + "00008 00008       08             (stack size)\n"
             + "'     a := lookup(b : 10, 20..30, 40)\n"
             + "00009 00009       45 18          ADDRESS ($00018)\n"
@@ -3519,7 +3519,7 @@ class Spin2ObjectCompilerTest {
     @Test
     void testLookdownString() throws Exception {
         String text = ""
-            + "PUB main | a, b\n"
+            + "PUB main() | a, b\n"
             + "\n"
             + "    a := lookdown(b : \"abcdefgh\")\n"
             + "";
@@ -3528,7 +3528,7 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       28 00 00 00    End\n"
-            + "' PUB main | a, b\n"
+            + "' PUB main() | a, b\n"
             + "00008 00008       08             (stack size)\n"
             + "'     a := lookdown(b : \"abcdefgh\")\n"
             + "00009 00009       45 26          ADDRESS ($00026)\n"

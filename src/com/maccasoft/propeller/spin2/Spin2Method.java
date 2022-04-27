@@ -111,7 +111,11 @@ public class Spin2Method {
                 size = 1;
             }
             if (var.getSize() != null) {
-                size = size * var.getSize().getNumber().intValue();
+                try {
+                    size = size * var.getSize().getNumber().intValue();
+                } catch (Exception e) {
+                    // Do nothing
+                }
             }
             count += size;
         }

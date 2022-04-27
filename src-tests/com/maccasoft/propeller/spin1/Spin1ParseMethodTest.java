@@ -13,7 +13,6 @@ package com.maccasoft.propeller.spin1;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 
@@ -199,69 +198,6 @@ class Spin1ParseMethodTest {
         Assertions.assertEquals(0, pub0.getLocalVariables().size());
 
         Assertions.assertEquals("PUB start : result", pub0.getText());
-    }
-
-    @Test
-    void testAllowOneResultOnly() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "PUB start : result0, result1\n"
-            + ""));
-
-        Node root = subject.parse();
-        MethodNode pub0 = (MethodNode) root.getChild(0);
-
-        Assertions.assertEquals("PUB", pub0.getType().getText());
-        Assertions.assertEquals("start", pub0.getName().getText());
-        Assertions.assertEquals(0, pub0.getParameters().size());
-        Assertions.assertEquals(1, pub0.getReturnVariables().size());
-        Assertions.assertEquals("result0", pub0.getReturnVariable(0).getText());
-        Assertions.assertEquals(0, pub0.getLocalVariables().size());
-
-        Assertions.assertEquals(ErrorNode.class, pub0.getChild(pub0.getChilds().size() - 1).getClass());
-
-        Assertions.assertEquals("PUB start : result0, result1", pub0.getText());
-    }
-
-    @Test
-    void testDontAllowTypedParameters() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "PUB start(word arg0)\n"
-            + ""));
-
-        Node root = subject.parse();
-        MethodNode pub0 = (MethodNode) root.getChild(0);
-
-        Assertions.assertEquals("PUB", pub0.getType().getText());
-        Assertions.assertEquals("start", pub0.getName().getText());
-        Assertions.assertEquals(0, pub0.getParameters().size());
-        Assertions.assertEquals(0, pub0.getReturnVariables().size());
-        Assertions.assertEquals(0, pub0.getLocalVariables().size());
-
-        Assertions.assertEquals(ErrorNode.class, pub0.getChild(pub0.getChilds().size() - 1).getClass());
-
-        Assertions.assertEquals("PUB start(word arg0)", pub0.getText());
-    }
-
-    @Test
-    void testParseUnknowTypeLocal() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "PUB start | byte var0, word var1 var2\n"
-            + ""));
-
-        Node root = subject.parse();
-        MethodNode pub0 = (MethodNode) root.getChild(0);
-
-        Assertions.assertEquals("PUB", pub0.getType().getText());
-        Assertions.assertEquals("start", pub0.getName().getText());
-        Assertions.assertEquals(0, pub0.getParameters().size());
-        Assertions.assertEquals(0, pub0.getReturnVariables().size());
-        Assertions.assertEquals(2, pub0.getLocalVariables().size());
-        Assertions.assertEquals("byte var0", pub0.getLocalVariable(0).getText());
-        Assertions.assertEquals("word var1", pub0.getLocalVariable(1).getText());
-
-        Assertions.assertEquals(ErrorNode.class, pub0.getChild(pub0.getChilds().size() - 1).getClass());
-
-        Assertions.assertEquals("PUB start | byte var0, word var1 var2", pub0.getText());
     }
 
     @Test

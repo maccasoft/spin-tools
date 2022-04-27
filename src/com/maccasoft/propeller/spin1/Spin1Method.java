@@ -29,7 +29,7 @@ public class Spin1Method {
     List<LocalVariable> returns;
     List<LocalVariable> localVariables;
 
-    List<Spin1MethodLine> lines = new ArrayList<Spin1MethodLine>();
+    List<Spin1MethodLine> lines = new ArrayList<>();
 
     String comment;
     Object data;
@@ -37,6 +37,14 @@ public class Spin1Method {
     int startAddress;
     int endAddress;
     boolean addressChanged;
+
+    public Spin1Method(Spin1Context scope, String label) {
+        this.scope = scope;
+        this.label = label;
+        this.parameters = new ArrayList<>();
+        this.returns = new ArrayList<>();
+        this.localVariables = new ArrayList<>();
+    }
 
     public Spin1Method(Spin1Context scope, String label, List<LocalVariable> parameters, List<LocalVariable> returns, List<LocalVariable> localVariables) {
         this.scope = scope;

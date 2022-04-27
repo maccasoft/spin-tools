@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
-import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
 
@@ -193,72 +192,223 @@ class Spin2ParserTest {
     }
 
     @Test
-    void testMethod() {
+    void testMethod() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "PUB go()\n"
             + ""));
 
         Node root = subject.parse();
-        MethodNode method0 = (MethodNode) root.getChild(0);
-
-        Assertions.assertEquals("PUB", method0.type.getText());
-        Assertions.assertEquals("go", method0.name.getText());
+        Assertions.assertEquals(""
+            + "Node [PUB go()\\n]\n"
+            + "+-- MethodNode type=PUB name=go [PUB go()]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testMethodParameters() {
+    void testMethodInvalidDeclarations() throws Exception {
+        Node root = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB go to()\n"
+            + "")).parse();
+        Assertions.assertEquals(""
+            + "Node [PUB go to()\\n]\n"
+            + "+-- MethodNode type=PUB name=go [PUB go to()]\n"
+            + "    +-- ErrorNode [to]\n"
+            + "", tree(root));
+
+        root = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB go() to\n"
+            + "")).parse();
+        Assertions.assertEquals(""
+            + "Node [PUB go() to\\n]\n"
+            + "+-- MethodNode type=PUB name=go [PUB go() to]\n"
+            + "    +-- ErrorNode [to]\n"
+            + "", tree(root));
+
+        root = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB go(a,b) to\n"
+            + "")).parse();
+        Assertions.assertEquals(""
+            + "Node [PUB go(a,b) to\\n]\n"
+            + "+-- MethodNode type=PUB name=go [PUB go(a,b) to]\n"
+            + "    +-- Node [a]\n"
+            + "    +-- Node [b]\n"
+            + "    +-- ErrorNode [to]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodParameters() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "PUB StartTx(pin, baud)\n"
             + ""));
 
         Node root = subject.parse();
-        MethodNode method0 = (MethodNode) root.getChild(0);
-
-        Assertions.assertEquals("pin", method0.parameters.get(0).getText());
-        Assertions.assertEquals("baud", method0.parameters.get(1).getText());
+        Assertions.assertEquals(""
+            + "Node [PUB StartTx(pin, baud)\\n]\n"
+            + "+-- MethodNode type=PUB name=StartTx [PUB StartTx(pin, baud)]\n"
+            + "    +-- Node [pin]\n"
+            + "    +-- Node [baud]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testMethodLocalVariables() {
+    void testMethodInvalidParameters() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB StartTx(pin baud)\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [PUB StartTx(pin baud)\\n]\n"
+            + "+-- MethodNode type=PUB name=StartTx [PUB StartTx(pin baud)]\n"
+            + "    +-- Node [pin baud]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodLocalVariables() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "PRI FFT1024() | a, b\n"
             + ""));
 
         Node root = subject.parse();
-        MethodNode method0 = (MethodNode) root.getChild(0);
-
-        Assertions.assertEquals("a", method0.localVariables.get(0).identifier.getText());
-        Assertions.assertEquals("b", method0.localVariables.get(1).identifier.getText());
+        Assertions.assertEquals(""
+            + "Node [PRI FFT1024() | a, b\\n]\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() | a, b]\n"
+            + "    +-- LocalVariableNode identifier=a [a]\n"
+            + "    +-- LocalVariableNode identifier=b [b]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testMethodLocalVariableType() {
+    void testMethodInvalidLocalVariables() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PRI FFT1024() | a b\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [PRI FFT1024() | a b\\n]\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() | a b]\n"
+            + "    +-- LocalVariableNode identifier=a [a b]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodLocalVariableType() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "PRI FFT1024() | LONG a, WORD b\n"
             + ""));
 
         Node root = subject.parse();
-        MethodNode method0 = (MethodNode) root.getChild(0);
-
-        Assertions.assertEquals("LONG", method0.localVariables.get(0).type.getText());
-        Assertions.assertEquals("WORD", method0.localVariables.get(1).type.getText());
+        Assertions.assertEquals(""
+            + "Node [PRI FFT1024() | LONG a, WORD b\\n]\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() | LONG a, WORD b]\n"
+            + "    +-- LocalVariableNode type=LONG identifier=a [LONG a]\n"
+            + "    +-- LocalVariableNode type=WORD identifier=b [WORD b]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testMethodLocalVariableSize() {
+    void testMethodLocalVariableSize() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "PRI FFT1024(DataPtr) | x[1024], y[512]\n"
             + ""));
 
         Node root = subject.parse();
-        MethodNode method0 = (MethodNode) root.getChild(0);
-
-        Assertions.assertEquals("1024", method0.localVariables.get(0).size.getText());
-        Assertions.assertEquals("512", method0.localVariables.get(1).size.getText());
+        Assertions.assertEquals(""
+            + "Node [PRI FFT1024(DataPtr) | x[1024], y[512]\\n]\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024(DataPtr) | x[1024], y[512]]\n"
+            + "    +-- Node [DataPtr]\n"
+            + "    +-- LocalVariableNode identifier=x [x[1024]]\n"
+            + "        +-- size = ExpressionNode [1024]\n"
+            + "    +-- LocalVariableNode identifier=y [y[512]]\n"
+            + "        +-- size = ExpressionNode [512]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testParsePtr() {
+    void testMethodReturnVariables() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PRI FFT1024() : a, b\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [PRI FFT1024() : a, b\\n]\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() : a, b]\n"
+            + "    +-- Node [a]\n"
+            + "    +-- Node [b]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodInvalidReturnVariables() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PRI FFT1024() : a b\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [PRI FFT1024() : a b\\n]\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() : a b]\n"
+            + "    +-- Node [a b]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodUnexpectedTokens2() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB go(a,b) : c to\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [PUB go(a,b) : c to\\n]\n"
+            + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c to]\n"
+            + "    +-- Node [a]\n"
+            + "    +-- Node [b]\n"
+            + "    +-- Node [c to]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodUnexpectedTokens3() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB go(a,b) | d, e to\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [PUB go(a,b) | d, e to\\n]\n"
+            + "+-- MethodNode type=PUB name=go [PUB go(a,b) | d, e to]\n"
+            + "    +-- Node [a]\n"
+            + "    +-- Node [b]\n"
+            + "    +-- LocalVariableNode identifier=d [d]\n"
+            + "    +-- LocalVariableNode identifier=e [e to]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodUnexpectedTokens4() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB go(a,b) : c | d, e to\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node [PUB go(a,b) : c | d, e to\\n]\n"
+            + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c | d, e to]\n"
+            + "    +-- Node [a]\n"
+            + "    +-- Node [b]\n"
+            + "    +-- Node [c]\n"
+            + "    +-- LocalVariableNode identifier=d [d]\n"
+            + "    +-- LocalVariableNode identifier=e [e to]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testParsePtr() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "DAT    wrlong a,ptra\n"
             + "       wrlong a,ptra++\n"
@@ -269,31 +419,37 @@ class Spin2ParserTest {
             + ""));
 
         Node root = subject.parse();
-        DataNode data0 = (DataNode) root.getChild(0);
-
-        DataLineNode line = (DataLineNode) data0.getChild(0);
-        Assertions.assertEquals("ptra", line.parameters.get(1).getText());
-        Assertions.assertEquals(0, line.parameters.get(1).getChilds().size());
-
-        line = (DataLineNode) data0.getChild(1);
-        Assertions.assertEquals("ptra++", line.parameters.get(1).getText());
-        Assertions.assertEquals(0, line.parameters.get(1).getChilds().size());
-
-        line = (DataLineNode) data0.getChild(2);
-        Assertions.assertEquals("++ptra", line.parameters.get(1).getText());
-        Assertions.assertEquals(0, line.parameters.get(1).getChilds().size());
-
-        line = (DataLineNode) data0.getChild(3);
-        Assertions.assertEquals("ptra", line.parameters.get(1).getText());
-        Assertions.assertEquals("3", line.parameters.get(1).getChild(0).getText());
-
-        line = (DataLineNode) data0.getChild(4);
-        Assertions.assertEquals("ptra--", line.parameters.get(1).getText());
-        Assertions.assertEquals("3", line.parameters.get(1).getChild(0).getText());
-
-        line = (DataLineNode) data0.getChild(5);
-        Assertions.assertEquals("--ptra", line.parameters.get(1).getText());
-        Assertions.assertEquals("3", line.parameters.get(1).getChild(0).getText());
+        Assertions.assertEquals(""
+            + "Node [DAT    wrlong a,ptra\\n       wrlong a,ptra++\\n       wrlong a,++ptra\\n       wrlong a,ptra[3]\\n       wrlong a,ptra--[3]\\n       wrlong a,--ptra[3]\\n]\n"
+            + "+-- DataNode [DAT]\n"
+            + "    +-- DataLineNode [DAT    wrlong a,ptra]\n"
+            + "        +-- instruction = Node [wrlong]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "        +-- ParameterNode [ptra]\n"
+            + "    +-- DataLineNode [       wrlong a,ptra++]\n"
+            + "        +-- instruction = Node [wrlong]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "        +-- ParameterNode [ptra++]\n"
+            + "    +-- DataLineNode [       wrlong a,++ptra]\n"
+            + "        +-- instruction = Node [wrlong]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "        +-- ParameterNode [++ptra]\n"
+            + "    +-- DataLineNode [       wrlong a,ptra[3]]\n"
+            + "        +-- instruction = Node [wrlong]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "        +-- ParameterNode [ptra]\n"
+            + "            +-- count = ExpressionNode [3]\n"
+            + "    +-- DataLineNode [       wrlong a,ptra--[3]]\n"
+            + "        +-- instruction = Node [wrlong]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "        +-- ParameterNode [ptra--]\n"
+            + "            +-- count = ExpressionNode [3]\n"
+            + "    +-- DataLineNode [       wrlong a,--ptra[3]]\n"
+            + "        +-- instruction = Node [wrlong]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "        +-- ParameterNode [--ptra]\n"
+            + "            +-- count = ExpressionNode [3]\n"
+            + "", tree(root));
     }
 
     @Test
