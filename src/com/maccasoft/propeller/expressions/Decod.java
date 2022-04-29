@@ -7,11 +7,6 @@ public class Decod extends UnaryOperator {
     }
 
     @Override
-    public boolean isConstant() {
-        return true;
-    }
-
-    @Override
     public boolean isNumber() {
         return true;
     }

@@ -188,16 +188,21 @@ public class Spin2ObjectCompiler {
         while (iter.hasNext()) {
             Entry<String, Expression> entry = iter.next();
             try {
-                entry.getValue().resolve();
+                if ("$".equals(entry.getKey()) || "@$".equals(entry.getKey())) {
+                    continue;
+                }
+                Expression expression = entry.getValue().resolve();
+                if (!expression.isConstant()) {
+                    logMessage(new CompilerException("expression is not constant", expression.getData()));
+                }
             } catch (Exception e) {
                 if (e instanceof CompilerException) {
                     logMessage((CompilerException) e);
                 }
                 else {
-                    logMessage(new CompilerException(e, entry.getValue().toString()));
+                    logMessage(new CompilerException(e, entry.getValue().getData()));
                 }
-                scope.symbols.remove(entry.getKey());
-                iter = scope.symbols.entrySet().iterator();
+                iter.remove();
             }
         }
 
@@ -608,7 +613,12 @@ public class Spin2ObjectCompiler {
                             } catch (CompilerException e) {
                                 logMessage(e);
                             } catch (Exception e) {
-                                logMessage(new CompilerException("expression syntax error", builder.tokens));
+                                if (builder.tokens.size() == 0) {
+                                    logMessage(new CompilerException("expecting expression", token));
+                                }
+                                else {
+                                    logMessage(new CompilerException("expression syntax error", builder.tokens));
+                                }
                             }
                         }
                         else {
