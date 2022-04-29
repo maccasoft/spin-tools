@@ -23,6 +23,66 @@ import com.maccasoft.propeller.model.Token;
 class Spin1ParserTest {
 
     @Test
+    void testAddress() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "@label\n"
+            + ""));
+
+        Assertions.assertEquals("@label", subject.nextToken().getText());
+    }
+
+    @Test
+    void testPAsmLocalLabel() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + ":label\n"
+            + ""));
+
+        Assertions.assertEquals(":label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
+    void testPAsmLocalLabelAddress() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "@:label\n"
+            + ""));
+
+        Assertions.assertEquals("@:label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
+    void testRangeValue() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "a..b\n"
+            + ""));
+
+        Assertions.assertEquals("a", subject.nextToken().getText());
+        Assertions.assertEquals("..", subject.nextToken().getText());
+        Assertions.assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testObjectMethod() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "obj.method\n"
+            + ""));
+
+        Assertions.assertEquals("obj.method", subject.nextToken().getText());
+    }
+
+    @Test
+    void testObjectArrayMethod() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "obj[0].method\n"
+            + ""));
+
+        Assertions.assertEquals("obj", subject.nextToken().getText());
+        Assertions.assertEquals("[", subject.nextToken().getText());
+        Assertions.assertEquals("0", subject.nextToken().getText());
+        Assertions.assertEquals("]", subject.nextToken().getText());
+        Assertions.assertEquals(".method", subject.nextToken().getText());
+    }
+
+    @Test
     void testParseDefaultAsConstants() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "    con0 = 1\n"

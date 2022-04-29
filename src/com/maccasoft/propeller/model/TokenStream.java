@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -13,6 +13,8 @@ package com.maccasoft.propeller.model;
 import java.util.List;
 
 public abstract class TokenStream {
+
+    public abstract Token peekNext();
 
     public abstract Token nextToken();
 

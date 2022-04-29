@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -25,9 +25,6 @@ public class Spin1TokenStream extends TokenStream {
     int index = 0;
     int line = 0;
     int column = 0;
-    int state = Token.START;
-    int nested = 0;
-    boolean escape = false;
 
     List<Token> hiddenTokens = new ArrayList<Token>();
 
@@ -39,11 +36,33 @@ public class Spin1TokenStream extends TokenStream {
     }
 
     @Override
+    public Token peekNext() {
+        return peekNext(false);
+    }
+
+    public Token peekNext(boolean comments) {
+        int saveIndex = index;
+        int saveLine = line;
+        int saveColumn = column;
+
+        Token token = nextToken();
+
+        index = saveIndex;
+        line = saveLine;
+        column = saveColumn;
+
+        return token;
+    }
+
+    @Override
     public Token nextToken() {
         return nextToken(false);
     }
 
     public Token nextToken(boolean comments) {
+        int nested = 0;
+        int state = Token.START;
+        boolean escape = false;
         Token token = EOF_TOKEN;
 
         for (; index < text.length(); index++, column++) {
@@ -97,7 +116,7 @@ public class Spin1TokenStream extends TokenStream {
                         state = Token.KEYWORD;
                     }
                     else { // operator
-                        if ((ch == '.' || ch == ':') && index + 1 < text.length()) {
+                        /*if ((ch == '.' || ch == ':') && index + 1 < text.length()) {
                             char ch1 = text.charAt(index + 1);
                             if ((ch1 >= 'a' && ch1 <= 'z') || (ch1 >= 'A' && ch1 <= 'Z') || ch1 == '_') { // Local label
                                 state = Token.KEYWORD;
@@ -124,9 +143,9 @@ public class Spin1TokenStream extends TokenStream {
                                 state = token.type = Token.STRING;
                                 break;
                             }
-                        }
+                        }*/
                         token.type = Token.OPERATOR;
-                        if (ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';') {
+                        if (ch == '@' || ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';') {
                             index++;
                             column++;
                             state = Token.START;

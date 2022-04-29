@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -21,6 +21,76 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
 
 class Spin2ParserTest {
+
+    @Test
+    void testLocalLabel() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + ".label\n"
+            + ""));
+
+        Assertions.assertEquals(".label", subject.nextToken().getText());
+    }
+
+    @Test
+    void testAddress() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "@label\n"
+            + ""));
+
+        Assertions.assertEquals("@label", subject.nextToken().getText());
+    }
+
+    @Test
+    void testLocalLabelAddress() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "@.label\n"
+            + ""));
+
+        Assertions.assertEquals("@.label", subject.nextToken().getText());
+    }
+
+    @Test
+    void testRangeValue() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "a..b\n"
+            + ""));
+
+        Assertions.assertEquals("a", subject.nextToken().getText());
+        Assertions.assertEquals("..", subject.nextToken().getText());
+        Assertions.assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testSpin1LocalLabel() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + ":label\n"
+            + ""));
+
+        Assertions.assertEquals(":", subject.nextToken().getText());
+        Assertions.assertEquals("label", subject.nextToken().getText());
+    }
+
+    @Test
+    void testObjectMethod() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "obj.method\n"
+            + ""));
+
+        Assertions.assertEquals("obj.method", subject.nextToken().getText());
+    }
+
+    @Test
+    void testObjectArrayMethod() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "obj[0].method\n"
+            + ""));
+
+        Assertions.assertEquals("obj", subject.nextToken().getText());
+        Assertions.assertEquals("[", subject.nextToken().getText());
+        Assertions.assertEquals("0", subject.nextToken().getText());
+        Assertions.assertEquals("]", subject.nextToken().getText());
+        Assertions.assertEquals(".method", subject.nextToken().getText());
+    }
 
     @Test
     void testSingleAssigments() throws Exception {

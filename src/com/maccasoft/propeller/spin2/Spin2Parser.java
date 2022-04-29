@@ -43,7 +43,7 @@ public class Spin2Parser {
         root = new Node();
 
         while (true) {
-            Token token = stream.nextToken();
+            Token token = nextToken();
             if (token.type == Token.EOF) {
                 root.addToken(token);
                 break;
@@ -87,13 +87,13 @@ public class Spin2Parser {
         if ("CON".equalsIgnoreCase(token.getText())) {
             ConstantsNode node = new ConstantsNode(root, token);
             node.addToken(token);
-            token = stream.nextToken(true);
+            token = nextToken(true);
             if (token.type == Token.COMMENT) {
                 node.addDocument(token);
-                token = stream.nextToken();
+                token = nextToken();
             }
             if (token.type == Token.BLOCK_COMMENT) {
-                token = stream.nextToken();
+                token = nextToken();
             }
             parseConstants(node, token);
             return true;
@@ -112,7 +112,7 @@ public class Spin2Parser {
             if (token.type == Token.NL) {
                 child = null;
                 state = 0;
-                token = stream.nextToken();
+                token = nextToken();
                 continue;
             }
             switch (state) {
@@ -203,7 +203,7 @@ public class Spin2Parser {
                     child.multiplier.addToken(token);
                     break;
             }
-            token = stream.nextToken();
+            token = nextToken();
         }
     }
 
@@ -215,7 +215,7 @@ public class Spin2Parser {
         VariableNode node = null;
 
         while (true) {
-            Token token = stream.nextToken();
+            Token token = nextToken();
             if (token.type == Token.EOF) {
                 return;
             }
@@ -280,7 +280,7 @@ public class Spin2Parser {
         int state = 1;
 
         while (true) {
-            Token token = stream.nextToken();
+            Token token = nextToken();
             if (token.type == Token.EOF) {
                 return;
             }
@@ -350,7 +350,7 @@ public class Spin2Parser {
         ErrorNode error = null;
 
         while (true) {
-            Token token = stream.nextToken();
+            Token token = nextToken();
             if (token.type == Token.EOF) {
                 return;
             }
@@ -487,7 +487,7 @@ public class Spin2Parser {
 
         boolean acceptComments = true;
         while (true) {
-            Token token = stream.nextToken(acceptComments);
+            Token token = nextToken(acceptComments);
             if (token.type == Token.EOF) {
                 return;
             }
@@ -553,7 +553,7 @@ public class Spin2Parser {
             if (isCase && ":".equals(token.getText())) {
                 break;
             }
-            token = stream.nextToken();
+            token = nextToken();
             if (token.type == Token.NL || token.type == Token.EOF) {
                 break;
             }
@@ -567,7 +567,7 @@ public class Spin2Parser {
         while (true) {
             parseDatLine(parent, token);
 
-            token = stream.nextToken();
+            token = nextToken();
             if (token.type == Token.EOF) {
                 return;
             }
@@ -585,7 +585,7 @@ public class Spin2Parser {
 
         boolean acceptComments = true;
         while (true) {
-            Token token = stream.nextToken(acceptComments);
+            Token token = nextToken(acceptComments);
             if (token.type == Token.EOF) {
                 return;
             }
@@ -615,7 +615,7 @@ public class Spin2Parser {
 
         while (true) {
             if (state != 0) {
-                token = stream.nextToken();
+                token = nextToken();
             }
             if (token.type == Token.EOF || token.type == Token.NL) {
                 return;
@@ -747,6 +747,33 @@ public class Spin2Parser {
                     break;
             }
         }
+    }
+
+    Token nextToken() {
+        return nextToken(false);
+    }
+
+    Token nextToken(boolean comments) {
+        Token token = stream.nextToken(comments);
+        if ("@".equals(token.getText())) {
+            Token nextToken = stream.peekNext(comments);
+            if (token.isAdjacent(nextToken)) {
+                token = token.merge(stream.nextToken());
+                if (".".equals(nextToken.getText())) {
+                    nextToken = stream.peekNext(comments);
+                    if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                        token = token.merge(stream.nextToken());
+                    }
+                }
+            }
+        }
+        else if (".".equals(token.getText())) {
+            Token nextToken = stream.peekNext(comments);
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
+            }
+        }
+        return token;
     }
 
     public static void main(String[] args) {

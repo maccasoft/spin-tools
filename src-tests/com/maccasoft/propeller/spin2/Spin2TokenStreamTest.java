@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -294,6 +294,13 @@ class Spin2TokenStreamTest {
     }
 
     @Test
+    void testDecimalNumber() {
+        Spin2TokenStream subject = new Spin2TokenStream("1.234");
+
+        assertEquals("1.234", subject.nextToken().getText());
+    }*/
+
+    @Test
     void testNumericRangeOperator() {
         Spin2TokenStream subject = new Spin2TokenStream("12..34");
 
@@ -310,13 +317,6 @@ class Spin2TokenStreamTest {
         assertEquals("..", subject.nextToken().getText());
         assertEquals("cd", subject.nextToken().getText());
     }
-
-    @Test
-    void testDecimalNumber() {
-        Spin2TokenStream subject = new Spin2TokenStream("1.234");
-
-        assertEquals("1.234", subject.nextToken().getText());
-    }*/
 
     @Test
     void testShiftRightOperator() {
@@ -761,14 +761,16 @@ class Spin2TokenStreamTest {
     void testLocalLabel() {
         Spin2TokenStream subject = new Spin2TokenStream(".a");
 
-        assertEquals(".a", subject.nextToken().getText());
+        assertEquals(".", subject.nextToken().getText());
+        assertEquals("a", subject.nextToken().getText());
     }
 
     @Test
     void testAddress() {
         Spin2TokenStream subject = new Spin2TokenStream("@a");
 
-        assertEquals("@a", subject.nextToken().getText());
+        assertEquals("@", subject.nextToken().getText());
+        assertEquals("a", subject.nextToken().getText());
     }
 
     @Test
@@ -786,7 +788,8 @@ class Spin2TokenStreamTest {
 
         assertEquals("#", subject.nextToken().getText());
         assertEquals("\\", subject.nextToken().getText());
-        assertEquals(".a", subject.nextToken().getText());
+        assertEquals(".", subject.nextToken().getText());
+        assertEquals("a", subject.nextToken().getText());
     }
 
     @Test
@@ -898,7 +901,8 @@ class Spin2TokenStreamTest {
     void testAtString() {
         Spin2TokenStream subject = new Spin2TokenStream("@\"text\"");
 
-        assertEquals("@\"text\"", subject.nextToken().getText());
+        assertEquals("@", subject.nextToken().getText());
+        assertEquals("\"text\"", subject.nextToken().getText());
     }
 
     @Test

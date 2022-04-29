@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -35,6 +35,10 @@ public class Token {
     private TokenStream stream;
     private String text;
 
+    private Token() {
+
+    }
+
     public Token(int type, String text) {
         this.type = type;
         this.text = text;
@@ -54,11 +58,8 @@ public class Token {
     }
 
     public String getText() {
-        if (type == EOF) {
-            return "<EOF>";
-        }
-        if (type == NL) {
-            return "<NL>";
+        if (type == EOF || type == NL) {
+            return "";
         }
         if (text == null) {
             text = stream.getSource(start, stop);
@@ -68,6 +69,21 @@ public class Token {
 
     public TokenStream getStream() {
         return stream;
+    }
+
+    public boolean isAdjacent(Token token) {
+        return (stop + 1) == token.start;
+    }
+
+    public Token merge(Token token) {
+        Token result = new Token();
+        result.stream = stream;
+        result.line = line;
+        result.start = start < token.start ? start : token.start;
+        result.stop = stop > token.stop ? stop : token.stop;
+        result.type = token.type;
+        result.text = getText() + token.getText();
+        return result;
     }
 
     @Override
@@ -89,6 +105,12 @@ public class Token {
 
     @Override
     public String toString() {
+        if (type == EOF) {
+            return "<EOF>";
+        }
+        if (type == NL) {
+            return "<NL>";
+        }
         return getText();
     }
 

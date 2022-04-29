@@ -374,6 +374,24 @@ class Spin2DebugTest {
         Spin2TokenStream stream = new Spin2TokenStream(text);
         while (true) {
             Token token = stream.nextToken();
+            if ("@".equals(token.getText())) {
+                Token nextToken = stream.peekNext();
+                if (token.isAdjacent(nextToken)) {
+                    token = token.merge(stream.nextToken());
+                    if (".".equals(nextToken.getText())) {
+                        nextToken = stream.peekNext();
+                        if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                            token = token.merge(stream.nextToken());
+                        }
+                    }
+                }
+            }
+            else if (".".equals(token.getText())) {
+                Token nextToken = stream.peekNext();
+                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    token = token.merge(stream.nextToken());
+                }
+            }
             if (token.type == Token.EOF) {
                 break;
             }
