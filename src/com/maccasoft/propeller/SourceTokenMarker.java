@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -260,7 +260,7 @@ public abstract class SourceTokenMarker {
         return null;
     }
 
-    public Node getContextAt(int index) {
+    public Node getContextAt(int lineIndex) {
         if (root == null) {
             return null;
         }
@@ -270,49 +270,49 @@ public abstract class SourceTokenMarker {
 
             @Override
             public void visitConstants(ConstantsNode node) {
-                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
                 }
             }
 
             @Override
             public void visitVariables(VariablesNode node) {
-                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
                 }
             }
 
             @Override
             public void visitObjects(ObjectsNode node) {
-                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
                 }
             }
 
             @Override
             public void visitObject(ObjectNode node) {
-                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
                 }
             }
 
             @Override
             public void visitStatement(StatementNode node) {
-                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
                 }
             }
 
             @Override
             public void visitData(DataNode node) {
-                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
                 }
             }
 
             @Override
             public void visitDataLine(DataLineNode node) {
-                if (index >= node.getStartIndex() && index <= node.getStopIndex() + 1) {
+                if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
                 }
             }
@@ -643,7 +643,8 @@ public abstract class SourceTokenMarker {
         return null;
     }
 
-    public List<IContentProposal> getPAsmProposals(String token) {
+    public List<IContentProposal> getPAsmProposals(Node ref, String token) {
+        List<String> pasmLabels = new ArrayList<String>();
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
 
         if (root != null) {
@@ -671,18 +672,50 @@ public abstract class SourceTokenMarker {
 
                 @Override
                 public void visitData(DataNode node) {
+                    String lastLabel = "";
+
                     for (Node child : node.getChilds()) {
                         DataLineNode lineNode = (DataLineNode) child;
                         if (lineNode.label != null) {
                             String text = lineNode.label.getText();
-                            if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
-                                proposals.add(new ContentProposal(text, text, null));
+                            if (text.startsWith(".")) {
+                                pasmLabels.add(lastLabel + text);
+                            }
+                            else {
+                                lastLabel = text;
                             }
                         }
                     }
                 }
 
             });
+        }
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof DataNode) {
+                String lastLabel = "";
+                for (Node child : node.getChilds()) {
+                    DataLineNode lineNode = (DataLineNode) child;
+                    if (lineNode.label != null) {
+                        String text = lineNode.label.getText();
+                        if (!text.startsWith(".")) {
+                            lastLabel = text;
+                        }
+                    }
+                    if (lineNode == ref) {
+                        String s1 = lastLabel + ".";
+                        for (String s : pasmLabels) {
+                            if (s.startsWith(s1)) {
+                                if (s.substring(s1.length() - 1).toUpperCase().contains(token)) {
+                                    String text = s.substring(s1.length() - 1);
+                                    proposals.add(new ContentProposal(text, text, null));
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
         }
 
         return proposals;
