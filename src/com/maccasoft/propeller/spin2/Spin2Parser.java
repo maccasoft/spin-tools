@@ -545,7 +545,7 @@ public class Spin2Parser {
     }
 
     Node parseStatement(Node parent, Token token) {
-        boolean isCase = parent.getTokens().size() != 0 && "CASE".equalsIgnoreCase(parent.getStartToken().getText());
+        boolean isCase = parent.getTokens().size() != 0 && ("CASE".equalsIgnoreCase(parent.getStartToken().getText()) || "CASE_FAST".equalsIgnoreCase(parent.getStartToken().getText()));
         Node statement = new StatementNode(parent);
 
         while (true) {

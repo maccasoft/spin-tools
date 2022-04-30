@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -85,6 +86,7 @@ import com.maccasoft.propeller.spin2.Spin2Object.LinkDataObject;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.BitField;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
+import com.maccasoft.propeller.spin2.bytecode.CaseFastJmp;
 import com.maccasoft.propeller.spin2.bytecode.CaseJmp;
 import com.maccasoft.propeller.spin2.bytecode.CaseRangeJmp;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
@@ -1494,6 +1496,59 @@ public class Spin2ObjectCompiler {
                         line.setData("end", doneLine);
                         lines.add(line);
                     }
+                    else if ("CASE_FAST".equalsIgnoreCase(token.getText())) {
+                        Spin2MethodLine line = new Spin2MethodLine(context, token.getText(), node);
+
+                        if (!iter.hasNext()) {
+                            throw new RuntimeException("expected expression");
+                        }
+                        Spin2TreeBuilder builder = new Spin2TreeBuilder();
+                        while (iter.hasNext()) {
+                            builder.addToken(iter.next());
+                        }
+                        line.addArgument(builder.getRoot());
+
+                        Spin2MethodLine doneLine = null;
+                        for (Node child : node.getChilds()) {
+                            if (child instanceof StatementNode) {
+                                Iterator<Token> childIter = child.getTokens().iterator();
+                                if (!childIter.hasNext()) {
+                                    throw new RuntimeException("expected expression");
+                                }
+
+                                while (childIter.hasNext()) {
+                                    token = childIter.next();
+                                    if (":".equals(token.getText())) {
+                                        break;
+                                    }
+                                    builder.addToken(token);
+                                }
+                                if (childIter.hasNext()) {
+                                    throw new RuntimeException("syntax error");
+                                }
+
+                                Spin2MethodLine targetLine = new Spin2MethodLine(context);
+                                targetLine.addChilds(compileStatements(method, child.getChilds()));
+                                targetLine.addChild(doneLine = new Spin2MethodLine(context, "CASE_FAST_DONE"));
+                                targetLine.setData(child);
+                                line.addChild(targetLine);
+
+                                Spin2StatementNode expression = builder.getRoot();
+                                if ("OTHER".equalsIgnoreCase(expression.getText())) {
+                                    line.setData("other", doneLine = targetLine);
+                                }
+                                else {
+                                    expression.setData("true", targetLine);
+                                    line.addArgument(expression);
+                                }
+                            }
+                        }
+                        Spin2MethodLine endLine = new Spin2MethodLine(context);
+                        line.addChild(endLine);
+                        line.setData("end", endLine);
+                        line.setData("done", doneLine);
+                        lines.add(line);
+                    }
                     else {
                         if (!debugEnabled && "DEBUG".equalsIgnoreCase(token.getText())) {
                             continue;
@@ -1635,8 +1690,7 @@ public class Spin2ObjectCompiler {
                     line.addSource(compileConstantExpression(line.getScope(), line.getArgument(3)));
                 }
                 line.addSource(compileConstantExpression(line.getScope(), line.getArgument(1)));
-
-                line.setData("pop", Integer.valueOf(12));
+                line.setData("pop", Integer.valueOf(16));
 
                 String varText = line.getArgument(0).getText();
                 Expression expression = line.getScope().getLocalSymbol(varText);
@@ -1755,9 +1809,10 @@ public class Spin2ObjectCompiler {
             Spin2MethodLine repeat = line.getParent();
             while (repeat != null) {
                 if ("CASE".equalsIgnoreCase(repeat.getStatement())) {
-                    if (pop != 0) {
-                        pop += 4;
-                    }
+                    pop += 8;
+                    hasCase = true;
+                }
+                if ("CASE_FAST".equalsIgnoreCase(repeat.getStatement())) {
                     pop += 4;
                     hasCase = true;
                 }
@@ -1774,9 +1829,6 @@ public class Spin2ObjectCompiler {
             }
 
             if (repeat.getData("pop") != null) {
-                if (pop != 0) {
-                    pop += 4;
-                }
                 pop += (Integer) repeat.getData("pop");
             }
 
@@ -1788,8 +1840,13 @@ public class Spin2ObjectCompiler {
                 if (pop != 0) {
                     try {
                         ByteArrayOutputStream os = new ByteArrayOutputStream();
-                        os.write(0x18);
-                        os.write(Constant.wrVars(pop));
+                        if (pop == 4) {
+                            os.write(0x17);
+                        }
+                        else {
+                            os.write(0x18);
+                            os.write(Constant.wrVars(pop - 4));
+                        }
                         line.addSource(new Bytecode(line.getScope(), os.toByteArray(), "POP"));
                     } catch (Exception e) {
                         // Do nothing
@@ -1823,8 +1880,69 @@ public class Spin2ObjectCompiler {
                 compileCase(line, arg, target);
             }
         }
+        else if ("CASE_FAST".equalsIgnoreCase(text)) {
+            Spin2MethodLine end = (Spin2MethodLine) line.getData("end");
+            line.addSource(new Address(line.getScope(), new ContextLiteral(end.getScope())));
+
+            Iterator<Spin2StatementNode> iter = line.getArguments().iterator();
+            line.addSource(compileBytecodeExpression(line.getScope(), iter.next(), true));
+            line.addSource(new Bytecode(line.getScope(), 0x1A, "CASE_FAST"));
+
+            Map<Integer, Spin2MethodLine> map = new TreeMap<Integer, Spin2MethodLine>();
+
+            while (iter.hasNext()) {
+                Spin2StatementNode arg = iter.next();
+                Spin2MethodLine target = (Spin2MethodLine) arg.getData("true");
+                for (Entry<Integer, Spin2MethodLine> entry : compileCaseFast(line, arg, target).entrySet()) {
+                    if (map.containsKey(entry.getKey())) {
+                        throw new CompilerException("index is not unique", target.getData());
+                    }
+                    map.put(entry.getKey(), entry.getValue());
+                }
+            }
+            if (map.size() == 0) {
+                throw new CompilerException("no cases", line.getData());
+            }
+
+            Spin2MethodLine done = (Spin2MethodLine) line.getData("done");
+
+            int min = Integer.MAX_VALUE;
+            int max = Integer.MIN_VALUE;
+            for (Entry<Integer, Spin2MethodLine> entry : map.entrySet()) {
+                min = Math.min(min, entry.getKey().intValue());
+                max = Math.max(max, entry.getKey().intValue());
+                if ((max - min) > 255) {
+                    throw new CompilerException("values must be within 255 of each other", entry.getValue().getData());
+                }
+            }
+
+            line.addSource(new Bytecode(line.getScope(), Constant.wrLong(min), String.format("FROM %d", min)));
+            line.addSource(new Bytecode(line.getScope(), Constant.wrWord(max - min + 1), String.format("TO %d", max)));
+            Spin2Context ref = line.getSource().get(line.getSource().size() - 1).getContext();
+
+            int index = min;
+            for (Entry<Integer, Spin2MethodLine> entry : map.entrySet()) {
+                int target = entry.getKey().intValue();
+                while (index < target) {
+                    line.addSource(new CaseFastJmp(ref, new ContextLiteral(done.getScope())));
+                    index++;
+                }
+                line.addSource(new CaseFastJmp(ref, new ContextLiteral(entry.getValue().getScope())));
+                index++;
+            }
+            Spin2MethodLine other = (Spin2MethodLine) line.getData("other");
+            if (other != null) {
+                line.addSource(new CaseFastJmp(ref, new ContextLiteral(other.getScope())));
+            }
+            else {
+                line.addSource(new CaseFastJmp(ref, new ContextLiteral(done.getScope())));
+            }
+        }
         else if ("CASE_DONE".equalsIgnoreCase(text)) {
             line.addSource(new Bytecode(line.getScope(), 0x1E, text));
+        }
+        else if ("CASE_FAST_DONE".equalsIgnoreCase(text)) {
+            line.addSource(new Bytecode(line.getScope(), 0x1B, text));
         }
         else if ("ORG".equalsIgnoreCase(text)) {
             int org = 0;
@@ -1930,6 +2048,50 @@ public class Spin2ObjectCompiler {
                 line.addSource(new CaseJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
         }
+    }
+
+    Map<Integer, Spin2MethodLine> compileCaseFast(Spin2MethodLine line, Spin2StatementNode arg, Spin2MethodLine target) {
+        Map<Integer, Spin2MethodLine> map = new TreeMap<Integer, Spin2MethodLine>();
+        if (",".equals(arg.getText())) {
+            for (Spin2StatementNode child : arg.getChilds()) {
+                map.putAll(compileCaseFast(line, child, target));
+            }
+        }
+        else if ("..".equals(arg.getText())) {
+            try {
+                Expression expression = buildConstantExpression(line.getScope(), arg.getChild(0));
+                if (!expression.isConstant()) {
+                    throw new CompilerException("expression is not constant", arg.getChild(0));
+                }
+                int value = expression.getNumber().intValue();
+                map.put(value, target);
+            } catch (Exception e) {
+                throw new CompilerException(e, arg);
+            }
+            try {
+                Expression expression = buildConstantExpression(line.getScope(), arg.getChild(1));
+                if (!expression.isConstant()) {
+                    throw new CompilerException("expression is not constant", arg.getChild(1));
+                }
+                int value = expression.getNumber().intValue();
+                map.put(value, target);
+            } catch (Exception e) {
+                throw new CompilerException(e, arg);
+            }
+        }
+        else {
+            try {
+                Expression expression = buildConstantExpression(line.getScope(), arg);
+                if (!expression.isConstant()) {
+                    throw new CompilerException("expression is not constant", arg);
+                }
+                int value = expression.getNumber().intValue();
+                map.put(value, target);
+            } catch (Exception e) {
+                throw new CompilerException(e, arg);
+            }
+        }
+        return map;
     }
 
     List<Spin2Bytecode> compileBytecodeExpression(Spin2Context context, Spin2StatementNode node, boolean push) {

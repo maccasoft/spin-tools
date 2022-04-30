@@ -18,6 +18,22 @@ import com.maccasoft.propeller.spin2.Spin2Context;
 
 public class Constant extends Spin2Bytecode {
 
+    public static byte[] wrLong(long value) {
+        return new byte[] {
+            (byte) (value & 0xFF),
+            (byte) ((value >> 8) & 0xFF),
+            (byte) ((value >> 16) & 0xFF),
+            (byte) ((value >> 24) & 0xFF)
+        };
+    }
+
+    public static byte[] wrWord(long value) {
+        return new byte[] {
+            (byte) (value & 0xFF),
+            (byte) ((value >> 8) & 0xFF)
+        };
+    }
+
     public static byte[] wrVar(long value) {
         value = Math.abs(value);
         if (value < 0x80) {
