@@ -565,7 +565,7 @@ public class Spin1ObjectCompiler {
         if (Spin1Model.isType(token.getText())) {
             type = token.getText().toUpperCase();
             if (!iter.hasNext()) {
-                logMessage(new CompilerException("expecting variable name", token));
+                logMessage(new CompilerException("expecting identifier", token));
                 return;
             }
             token = iter.next();
@@ -1020,19 +1020,28 @@ public class Spin1ObjectCompiler {
                     }
                 }
 
-                LocalVariable var = new LocalVariable(type, identifier, size, offset);
-                localScope.addSymbol(identifier, var);
-                localScope.addSymbol("@" + identifier, var);
-                localVariables.add(var);
+                Expression expression = localScope.getLocalSymbol(identifier);
+                if (expression instanceof LocalVariable) {
+                    logMessage(new CompilerException("symbol '" + identifier + "' already defined", child));
+                }
+                else {
+                    if (expression != null) {
+                        logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier + "' hides global variable", child));
+                    }
+                    LocalVariable var = new LocalVariable(type, identifier, size, offset);
+                    localScope.addSymbol(identifier, var);
+                    localScope.addSymbol("@" + identifier, var);
+                    localVariables.add(var);
 
-                int count = 4;
-                if ("BYTE".equalsIgnoreCase(type)) {
-                    count = 1;
+                    int count = 4;
+                    if ("BYTE".equalsIgnoreCase(type)) {
+                        count = 1;
+                    }
+                    if ("WORD".equalsIgnoreCase(type)) {
+                        count = 2;
+                    }
+                    offset += ((count * varSize + 3) / 4) * 4;
                 }
-                if ("WORD".equalsIgnoreCase(type)) {
-                    count = 2;
-                }
-                offset += ((count * varSize + 3) / 4) * 4;
 
                 if (iter.hasNext()) {
                     Node error = new Node();
