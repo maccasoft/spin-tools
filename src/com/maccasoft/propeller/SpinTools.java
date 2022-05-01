@@ -23,6 +23,7 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
@@ -706,10 +707,12 @@ public class SpinTools {
             });
         }
 
-        Iterator<String> iter = Preferences.getInstance().getLru().iterator();
-        while (iter.hasNext()) {
-            boolean addSeparator = true;
+        List<String> lru = new ArrayList<String>(Preferences.getInstance().getLru());
+        Collections.sort(lru, (o1, o2) -> o1.compareToIgnoreCase(o2));
 
+        boolean addSeparator = true;
+        Iterator<String> iter = lru.iterator();
+        while (iter.hasNext()) {
             String folder = new File(iter.next()).getParent();
             if (!list.contains(folder) && !defaultList.contains(folder)) {
                 if (addSeparator) {
