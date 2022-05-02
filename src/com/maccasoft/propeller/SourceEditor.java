@@ -95,6 +95,7 @@ import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class SourceEditor {
 
@@ -1785,6 +1786,36 @@ public class SourceEditor {
                 }
             });
         }
+    }
+
+    public void format() {
+        Formatter formatter = new Formatter();
+
+        formatter.setIsolateLargeLabels(true);
+        formatter.setAlignCommentsToTab(true);
+        formatter.setKeepBlankLines(true);
+
+        int topPixel = styledText.getTopPixel();
+        int caretOffset = styledText.getCaretOffset();
+        int caretLine = styledText.getLineAtOffset(caretOffset);
+        int caretColumn = caretOffset - styledText.getOffsetAtLine(caretLine);
+
+        String text = styledText.getSelectionText();
+        if (!text.isEmpty()) {
+            text = formatter.format(new Spin2TokenStream(text));
+            Point selection = styledText.getSelection();
+            styledText.replaceTextRange(selection.x, selection.y - selection.x + 1, text);
+        }
+        else {
+            text = formatter.format(new Spin2TokenStream(styledText.getText()));
+            styledText.setText(text);
+        }
+
+        styledText.setTopPixel(topPixel);
+        styledText.setCaretOffset(styledText.getOffsetAtLine(caretLine) + caretColumn);
+
+        modified = true;
+        styledText.redraw();
     }
 
 }

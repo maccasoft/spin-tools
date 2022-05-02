@@ -26,6 +26,8 @@ public class Spin2TokenStream extends TokenStream {
     int line = 0;
     int column = 0;
 
+    boolean comments;
+
     List<Token> hiddenTokens = new ArrayList<Token>();
 
     public Spin2TokenStream(String text) {
@@ -35,9 +37,13 @@ public class Spin2TokenStream extends TokenStream {
         }
     }
 
+    public void setComments(boolean comments) {
+        this.comments = comments;
+    }
+
     @Override
     public Token peekNext() {
-        return peekNext(false);
+        return peekNext(comments);
     }
 
     public Token peekNext(boolean comments) {
@@ -45,7 +51,7 @@ public class Spin2TokenStream extends TokenStream {
         int saveLine = line;
         int saveColumn = column;
 
-        Token token = nextToken();
+        Token token = nextToken(comments);
 
         index = saveIndex;
         line = saveLine;
@@ -56,7 +62,7 @@ public class Spin2TokenStream extends TokenStream {
 
     @Override
     public Token nextToken() {
-        return nextToken(false);
+        return nextToken(comments);
     }
 
     public Token nextToken(boolean comments) {
@@ -78,8 +84,24 @@ public class Spin2TokenStream extends TokenStream {
                     token = new Token(this, index);
                     token.column = column;
                     token.line = line;
-                    if (ch == '\r' || ch == '\n') {
-                        state = token.type = Token.NL;
+                    if (ch == '\r') {
+                        column = 0;
+                        line++;
+                        index++;
+                        if (index < text.length()) {
+                            if (text.charAt(index) == '\n') {
+                                index++;
+                            }
+                        }
+                        token.type = Token.NL;
+                        return token;
+                    }
+                    if (ch == '\n') {
+                        column = 0;
+                        line++;
+                        index++;
+                        token.type = Token.NL;
+                        return token;
                     }
                     else if (ch == '\'') { // Comment
                         state = token.type = Token.COMMENT;
@@ -116,34 +138,6 @@ public class Spin2TokenStream extends TokenStream {
                         state = Token.KEYWORD;
                     }
                     else { // operator
-                        /*if ((ch == '.' || ch == ':') && index + 1 < text.length()) {
-                            char ch1 = text.charAt(index + 1);
-                            if ((ch1 >= 'a' && ch1 <= 'z') || (ch1 >= 'A' && ch1 <= 'Z') || ch1 == '_') { // Local label
-                                state = Token.KEYWORD;
-                                break;
-                            }
-                        }
-                        if (ch == '@' && index + 1 < text.length()) {
-                            char ch1 = text.charAt(index + 1);
-                            if ((ch1 >= 'a' && ch1 <= 'z') || (ch1 >= 'A' && ch1 <= 'Z') || ch1 == '_') { // Keyword
-                                state = Token.KEYWORD;
-                                break;
-                            }
-                            if (ch1 == '.') {
-                                token.stop++;
-                                index++;
-                                column++;
-                                state = Token.KEYWORD;
-                                break;
-                            }
-                            if (ch1 == '\"') {
-                                token.stop++;
-                                index++;
-                                column++;
-                                state = token.type = Token.STRING;
-                                break;
-                            }
-                        }*/
                         token.type = Token.OPERATOR;
                         if (ch == '@' || ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';' || ch == '\\') {
                             index++;
@@ -153,18 +147,6 @@ public class Spin2TokenStream extends TokenStream {
                         }
                         state = Token.OPERATOR;
                     }
-                    break;
-                case Token.NL:
-                    column = 0;
-                    line++;
-                    if (ch != '\r' && ch != '\n') {
-                        state = Token.START;
-                        return token;
-                    }
-                    if (ch == '\n' && text.charAt(index - 1) == '\r') {
-                        line--;
-                    }
-                    token.stop++;
                     break;
                 case Token.COMMENT:
                     if (ch == '\r' || ch == '\n') {
@@ -316,6 +298,11 @@ public class Spin2TokenStream extends TokenStream {
         }
 
         return token;
+    }
+
+    public void reset() {
+        index = column = line = 0;
+        hiddenTokens.clear();
     }
 
     @Override
