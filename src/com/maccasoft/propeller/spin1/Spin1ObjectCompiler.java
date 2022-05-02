@@ -206,6 +206,9 @@ public class Spin1ObjectCompiler {
                 try {
                     int index = -1;
                     if (isReferenced((MethodNode) node)) {
+                        if (ld.size() == 0) {
+                            object.setDcurr(method.getStackSize());
+                        }
                         ld.add(object.writeLong(0, "Function " + method.getLabel()));
                         index = ld.size();
                     }
@@ -231,6 +234,9 @@ public class Spin1ObjectCompiler {
                 try {
                     int index = -1;
                     if (isReferenced((MethodNode) node)) {
+                        if (ld.size() == 0) {
+                            object.setDcurr(method.getStackSize());
+                        }
                         ld.add(object.writeLong(0, "Function " + method.getLabel()));
                         index = ld.size();
                     }
@@ -246,12 +252,9 @@ public class Spin1ObjectCompiler {
                 }
             }
         }
-        if (methods.size() != 0) {
-            object.setDcurr(methods.get(0).getStackSize());
-        }
         methodCount.setValue(ld.size() + 1);
 
-        int objectIndex = methods.size() + 1;
+        int objectIndex = ld.size() + 1;
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
             String name = infoEntry.getKey();
             Spin1Object obj = infoEntry.getValue().object;
