@@ -2162,6 +2162,22 @@ public class Spin1ObjectCompiler {
                     source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
                     source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "PRE_INC"));
                 }
+                else if (expression instanceof ContextLiteral) {
+                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    if (expression instanceof DataVariable) {
+                        switch (((DataVariable) expression).getType()) {
+                            case "BYTE":
+                                ss = MemoryOp.Size.Byte;
+                                break;
+                            case "WORD":
+                                ss = MemoryOp.Size.Word;
+                                break;
+                        }
+                    }
+                    source.add(new MemoryOp(context, ss, false, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
+                    int code = Spin1Bytecode.op_ss.setValue(0b0_0100_000, ss.ordinal() + 1);
+                    source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "PRE_INC"));
+                }
                 else {
                     throw new CompilerException("unsupported operation on " + node.getChild(0).getText(), node.getChild(0).getToken());
                 }
@@ -2178,6 +2194,22 @@ public class Spin1ObjectCompiler {
                     Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
                     int code = Spin1Bytecode.op_ss.setValue(0b0_0110_000, type.ordinal() + 1);
                     source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
+                    source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "PRE_DEC"));
+                }
+                else if (expression instanceof ContextLiteral) {
+                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    if (expression instanceof DataVariable) {
+                        switch (((DataVariable) expression).getType()) {
+                            case "BYTE":
+                                ss = MemoryOp.Size.Byte;
+                                break;
+                            case "WORD":
+                                ss = MemoryOp.Size.Word;
+                                break;
+                        }
+                    }
+                    source.add(new MemoryOp(context, ss, false, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
+                    int code = Spin1Bytecode.op_ss.setValue(0b0_0110_000, ss.ordinal() + 1);
                     source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "PRE_DEC"));
                 }
                 else {
@@ -2526,13 +2558,11 @@ public class Spin1ObjectCompiler {
                             if (postEffectNode != null) {
                                 source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
                                 if ("++".equals(postEffectNode.getText())) {
-                                    Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
-                                    int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, type.ordinal() + 1);
+                                    int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, ss.ordinal() + 1);
                                     source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_INC"));
                                 }
                                 else if ("--".equals(postEffectNode.getText())) {
-                                    Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
-                                    int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, type.ordinal() + 1);
+                                    int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, ss.ordinal() + 1);
                                     source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_DEC"));
                                 }
                                 else if ("~".equals(postEffectNode.getText())) {
@@ -2682,13 +2712,11 @@ public class Spin1ObjectCompiler {
                         if (postEffectNode != null) {
                             source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
                             if ("++".equals(postEffectNode.getText())) {
-                                Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
-                                int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, type.ordinal() + 1);
+                                int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, ss.ordinal() + 1);
                                 source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_INC"));
                             }
                             else if ("--".equals(postEffectNode.getText())) {
-                                Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
-                                int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, type.ordinal() + 1);
+                                int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, ss.ordinal() + 1);
                                 source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_DEC"));
                             }
                             else if ("~".equals(postEffectNode.getText())) {
