@@ -613,7 +613,7 @@ public class SourceEditor {
                 }
 
                 int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
-                Node context = tokenMarker.getContextAt(offset);
+                Node context = offset != -1 ? tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset)) : null;
                 if (context instanceof ObjectNode) {
                     ObjectNode obj = (ObjectNode) context;
                     if (obj.file == tokenMarker.getTokenAt(offset)) {
@@ -772,7 +772,7 @@ public class SourceEditor {
 
                 if (hoverHighlight) {
                     int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
-                    Node context = tokenMarker.getContextAt(offset);
+                    Node context = offset != -1 ? tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset)) : null;
                     if (context instanceof ObjectNode) {
                         if (((ObjectNode) context).file == tokenMarker.getTokenAt(offset)) {
                             hoverToken = ((ObjectNode) context).file;
@@ -862,7 +862,7 @@ public class SourceEditor {
                 popupMouseBounds.width += 10;
                 popupMouseBounds.height += 10;
 
-                Node context = tokenMarker.getContextAt(offset);
+                Node context = tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset));
                 TokenMarker marker = tokenMarker.getMarkerAtOffset(offset);
                 Rectangle bounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
 
@@ -1584,7 +1584,7 @@ public class SourceEditor {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
 
         int lineIndex = styledText.getLineAtOffset(styledText.getCaretOffset());
-        Node node = tokenMarker.getContextAt(lineIndex);
+        Node node = tokenMarker.getContextAtLine(lineIndex);
 
         int start = position;
         while (start > 0) {

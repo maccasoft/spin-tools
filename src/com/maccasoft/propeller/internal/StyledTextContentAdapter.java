@@ -33,6 +33,7 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
         int caretOffset = styledText.getCaretOffset();
         int line = styledText.getLineAtOffset(caretOffset);
         int lineOffset = styledText.getOffsetAtLine(line);
+        int e;
 
         String contents = styledText.getLine(line);
 
@@ -50,12 +51,27 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
             }
             position++;
         }
+
+        if (position < contents.length() && contents.charAt(position) != '(') {
+            e = position + 1;
+            while (e < contents.length() && contents.charAt(e) == ' ') {
+                e++;
+            }
+            if (e < contents.length() && contents.charAt(e) == '(') {
+                position = e;
+            }
+        }
+
         if (position < contents.length() && contents.charAt(position) == '(') {
-            int e = text.indexOf('(');
-            if (e != -1) {
+            if ((e = text.indexOf('(')) != -1) {
                 text = text.substring(0, e + 1);
                 position++;
             }
+        }
+
+        contents = styledText.getText(start + lineOffset, position + lineOffset);
+        if (!contents.startsWith(".") && (e = contents.indexOf('.')) != -1) {
+            start += e + 1;
         }
 
         styledText.setSelection(new Point(start + lineOffset, position + lineOffset));

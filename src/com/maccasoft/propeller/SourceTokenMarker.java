@@ -260,7 +260,7 @@ public abstract class SourceTokenMarker {
         return null;
     }
 
-    public Node getContextAt(int lineIndex) {
+    public Node getContextAtLine(int lineIndex) {
         if (root == null) {
             return null;
         }
@@ -588,8 +588,12 @@ public abstract class SourceTokenMarker {
             Token start = iter.next();
             Token stop = start;
             while (iter.hasNext()) {
-                stop = iter.next();
-                if (")".equals(stop.getText())) {
+                Token next = iter.next();
+                if (")".equals(next.getText())) {
+                    stop = next;
+                    break;
+                }
+                if (":".equals(next.getText()) || "|".equals(next.getText())) {
                     break;
                 }
             }
@@ -708,11 +712,27 @@ public abstract class SourceTokenMarker {
                             if (s.startsWith(s1)) {
                                 if (s.substring(s1.length() - 1).toUpperCase().contains(token)) {
                                     String text = s.substring(s1.length() - 1);
-                                    proposals.add(new ContentProposal(text, text, null));
+                                    if (text.toUpperCase().contains(token)) {
+                                        proposals.add(new ContentProposal(text, text, null));
+                                    }
                                 }
                             }
                         }
                         break;
+                    }
+                }
+            }
+        }
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof DataNode) {
+                for (Node child : node.getChilds()) {
+                    DataLineNode lineNode = (DataLineNode) child;
+                    if (lineNode.label != null) {
+                        String text = lineNode.label.getText();
+                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, null));
+                        }
                     }
                 }
             }
