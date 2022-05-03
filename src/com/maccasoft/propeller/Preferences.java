@@ -82,6 +82,7 @@ public class Preferences {
         public String lastPath;
 
         public Bounds terminalWindow;
+        public int terminalType;
 
         public SearchPreferences search;
 
@@ -293,6 +294,14 @@ public class Preferences {
 
     public void setTerminalWindow(Rectangle rect) {
         preferences.terminalWindow = new Bounds(rect.x, rect.y, rect.width, rect.height);
+    }
+
+    public void setTerminalType(int n) {
+        preferences.terminalType = n;
+    }
+
+    public int getTerminalType() {
+        return preferences.terminalType;
     }
 
     public SearchPreferences getSearchPreferences() {

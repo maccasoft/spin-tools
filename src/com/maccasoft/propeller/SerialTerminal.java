@@ -74,6 +74,14 @@ import jssc.SerialPortTimeoutException;
 public class SerialTerminal {
 
     public static final String WINDOW_TITLE = "Serial Terminal";
+
+    public static final int CURSOR_OFF = 0x00;
+    public static final int CURSOR_ON = 0x04;
+    public static final int CURSOR_ULINE = 0x02;
+    public static final int CURSOR_BLOCK = 0x00;
+    public static final int CURSOR_FLASH = 0x01;
+    public static final int CURSOR_SOLID = 0x00;
+
     public static final int FRAME_TIMER = 16;
 
     Display display;
@@ -103,7 +111,7 @@ public class SerialTerminal {
 
     Color foreground;
     Color background;
-    boolean cursorState;
+    int cursorState;
 
     SerialPort serialPort;
     int serialBaudRate;
@@ -159,9 +167,12 @@ public class SerialTerminal {
             }
             counter++;
             if (counter >= 15) {
-                cursorState = !cursorState;
+                if ((cursorState & CURSOR_FLASH) != 0) {
+                    if ((cursorState ^= CURSOR_ON) != 0) {
+                        redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
+                    }
+                }
                 counter = 0;
-                redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
             }
             display.timerExec(FRAME_TIMER, this);
         }
@@ -304,6 +315,259 @@ public class SerialTerminal {
 
             redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
         }
+    }
+
+    class ANSI extends TTY {
+
+        int state = 0;
+        int argc, fg = 7, bg = 0;
+        int[] args = new int[16];
+        char prefix;
+        int savedCx, savedCy;
+
+        RGB[] colors = new RGB[] {
+            new RGB(0, 0, 0),
+            new RGB(170, 0, 0),
+            new RGB(0, 170, 0),
+            new RGB(170, 170, 0),
+            new RGB(0, 0, 170),
+            new RGB(170, 0, 170),
+            new RGB(0, 170, 170),
+            new RGB(170, 170, 170),
+            new RGB(85, 85, 85),
+            new RGB(255, 0, 0),
+            new RGB(0, 255, 0),
+            new RGB(255, 255, 0),
+            new RGB(0, 0, 255),
+            new RGB(255, 0, 255),
+            new RGB(0, 255, 255),
+            new RGB(255, 255, 255),
+        };
+
+        @Override
+        public void write(char c) {
+            switch (state) {
+                case 0:
+                    if (c == 0x1B) {
+                        argc = -1;
+                        args[0] = 0;
+                        prefix = 0;
+                        state = 1;
+                        break;
+                    }
+                    super.write(c);
+                    break;
+
+                case 1:
+                    switch (c) {
+                        case '[':
+                            state = 2;
+                            break;
+                        case 'A':
+                            if (cy > 0) {
+                                cy--;
+                            }
+                            state = 0;
+                            break;
+                        case 'B':
+                            if (cy < screenHeight) {
+                                cy++;
+                            }
+                            state = 0;
+                            break;
+                        case 'C':
+                            if (cx < screenWidth) {
+                                cy++;
+                            }
+                            state = 0;
+                            break;
+                        case 'D':
+                            if (cx > 0) {
+                                cx--;
+                            }
+                            state = 0;
+                            break;
+                        default:
+                            super.write(c);
+                            break;
+                    }
+                    break;
+
+                case 2:
+                    switch (c) {
+                        case '0':
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        case '8':
+                        case '9':
+                            if (argc == -1) {
+                                argc++;
+                                args[argc] = 0;
+                            }
+                            args[argc] = args[argc] * 10 + (c - '0');
+                            break;
+                        case ';':
+                            argc++;
+                            args[argc] = 0;
+                            break;
+                        case '?':
+                            prefix = c;
+                            break;
+
+                        case 'A':
+                            cy = Math.max(cy - (argc == 0 || args[0] == 0 ? 1 : args[0]), 0);
+                            state = 0;
+                            break;
+                        case 'B':
+                            cy = Math.min(cy + (argc == 0 || args[0] == 0 ? 1 : args[0]), screenHeight - 1);
+                            state = 0;
+                            break;
+                        case 'C':
+                            cx = Math.min(cx + (argc == 0 || args[0] == 0 ? 1 : args[0]), screenWidth - 1);
+                            state = 0;
+                            break;
+                        case 'D':
+                            cx = Math.max(cx - (argc == 0 || args[0] == 0 ? 1 : args[0]), 0);
+                            state = 0;
+                            break;
+
+                        case 'H':
+                        case 'f':
+                            if (argc == 0) {
+                                cx = cy = 0;
+                            }
+                            else if (argc >= 2) {
+                                cy = Math.min(args[0] > 0 ? (args[0] - 1) : 0, screenHeight - 1);
+                                cx = Math.min(args[1] > 0 ? (args[1] - 1) : 0, screenWidth - 1);
+                            }
+                            state = 0;
+                            break;
+
+                        case 'J': {
+                            if (argc == 0 || args[0] == 0) {
+                                for (int y = cy; y < screenHeight; y++) {
+                                    for (int x = cx; x < screenWidth; x++) {
+                                        screen[y][x].foreground = foreground;
+                                        screen[y][x].background = background;
+                                        screen[y][x].character = ' ';
+                                    }
+                                }
+                            }
+                            else if (args[0] == 1) {
+                                for (int y = 0; y <= cy; y++) {
+                                    for (int x = 0; x <= cx; x++) {
+                                        screen[y][x].foreground = foreground;
+                                        screen[y][x].background = background;
+                                        screen[y][x].character = ' ';
+                                    }
+                                }
+                            }
+                            else if (args[0] == 2) {
+                                for (int y = 0; y < screenHeight; y++) {
+                                    for (int x = 0; x < screenWidth; x++) {
+                                        screen[y][x].foreground = foreground;
+                                        screen[y][x].background = background;
+                                        screen[y][x].character = ' ';
+                                    }
+                                }
+                                cx = cy = 0;
+                            }
+                            redraw();
+                            state = 0;
+                            break;
+                        }
+
+                        case 'K': {
+                            if (argc == 0 || args[0] == 0) {
+                                for (int x = cx; x < screenWidth; x++) {
+                                    screen[cy][x].foreground = foreground;
+                                    screen[cy][x].background = background;
+                                    screen[cy][x].character = ' ';
+                                }
+                            }
+                            else if (args[0] == 1) {
+                                for (int x = 0; x <= cx; x++) {
+                                    screen[cy][x].foreground = foreground;
+                                    screen[cy][x].background = background;
+                                    screen[cy][x].character = ' ';
+                                }
+                            }
+                            else if (args[0] == 2) {
+                                for (int x = 0; x < screenWidth; x++) {
+                                    screen[cy][x].foreground = foreground;
+                                    screen[cy][x].background = background;
+                                    screen[cy][x].character = ' ';
+                                }
+                                cx = cy = 0;
+                            }
+                            redraw(0 * characterWidth, cy * characterHeight, screenWidth * characterWidth, characterHeight);
+                            state = 0;
+                            break;
+                        }
+
+                        case 'm':
+                            for (int i = 0; i < argc; i++) {
+                                if (args[i] == 0) {
+                                    bg = 0;
+                                    fg = 7;
+                                }
+                                else if (args[i] == 1) {
+                                    fg |= 8;
+                                }
+                                else if (args[i] == 2) {
+                                    fg &= 7;
+                                }
+                                else if (args[i] == 5) {
+                                    cursorState |= CURSOR_FLASH;
+                                }
+                                else if (args[i] == 7) {
+                                    int t = fg;
+                                    fg = bg;
+                                    bg = t & 0x07;
+                                }
+                                else if (args[i] == 25) {
+                                    cursorState &= ~CURSOR_FLASH;
+                                }
+                                else if (args[i] >= 30 && args[i] <= 37) {
+                                    fg = (fg & 0x08) | (args[i] - 30);
+                                }
+                                else if (args[i] >= 40 && args[i] <= 47) {
+                                    bg = args[i] - 40;
+                                }
+                            }
+                            if (argc == 0) {
+                                bg = 0;
+                                fg = 7;
+                            }
+                            foreground = ColorRegistry.getColor(colors[fg]);
+                            background = ColorRegistry.getColor(colors[bg]);
+                            state = 0;
+                            break;
+
+                        case 's':
+                            savedCx = cx;
+                            savedCy = cy;
+                            state = 0;
+                            break;
+                        case 'u':
+                            cx = savedCx;
+                            cy = savedCy;
+                            state = 0;
+                            break;
+
+                        default:
+                            state = 0;
+                            break;
+                    }
+                    break;
+            }
+        }
+
     }
 
     class ParallaxSerialTerminal implements TerminalEmulation {
@@ -477,7 +741,7 @@ public class SerialTerminal {
 
     public SerialTerminal() {
         this.serialBaudRate = 115200;
-        this.emulation = new TTY();
+        this.cursorState = CURSOR_ON | CURSOR_FLASH | CURSOR_BLOCK;
     }
 
     public void open() {
@@ -485,6 +749,8 @@ public class SerialTerminal {
         preferences = Preferences.getInstance();
 
         font = new Font(display, "win32".equals(SWT.getPlatform()) ? "Courier New" : "mono", 11, SWT.NONE);
+
+        setTerminalType(preferences.getTerminalType());
 
         shell = new Shell(display);
         shell.setText(WINDOW_TITLE);
@@ -684,9 +950,14 @@ public class SerialTerminal {
                     }
                 }
 
-                if (cursorState) {
+                if ((cursorState & CURSOR_ON) != 0) {
+                    int h = characterHeight;
+                    if ((cursorState & CURSOR_ULINE) != 0) {
+                        h = characterHeight / 4;
+                    }
+                    int y = (cy * characterHeight) + (characterHeight - h);
                     e.gc.setBackground(e.gc.getDevice().getSystemColor(SWT.COLOR_WHITE));
-                    e.gc.fillRectangle(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
+                    e.gc.fillRectangle(Math.min(cx, screenWidth - 1) * characterWidth, y, characterWidth, h);
                 }
 
                 if (selectionRectangle != null) {
@@ -805,6 +1076,7 @@ public class SerialTerminal {
         terminalType.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
         terminalType.setItems(new String[] {
             "TTY",
+            "ANSI / VT100",
             "Parallax Serial Terminal"
         });
 
@@ -908,6 +1180,9 @@ public class SerialTerminal {
         baudRate.addSelectionListener(baudRateSelectionListener);
 
         if (emulation instanceof ParallaxSerialTerminal) {
+            terminalType.select(2);
+        }
+        else if (emulation instanceof ANSI) {
             terminalType.select(1);
         }
         else {
@@ -917,17 +1192,25 @@ public class SerialTerminal {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                switch (terminalType.getSelectionIndex()) {
-                    case 0:
-                        emulation = new TTY();
-                        break;
-                    case 1:
-                        emulation = new ParallaxSerialTerminal();
-                        break;
-                }
+                setTerminalType(terminalType.getSelectionIndex());
+                preferences.setTerminalType(terminalType.getSelectionIndex());
                 canvas.setFocus();
             }
         });
+    }
+
+    void setTerminalType(int type) {
+        switch (type) {
+            case 1:
+                emulation = new ANSI();
+                break;
+            case 2:
+                emulation = new ParallaxSerialTerminal();
+                break;
+            default:
+                emulation = new TTY();
+                break;
+        }
     }
 
     public void setFocus() {
