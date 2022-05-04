@@ -41,6 +41,7 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 
+import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
@@ -554,57 +555,86 @@ public class EditorTab implements FindReplaceTarget {
 
     public void goToFirstError() {
         Iterator<TokenMarker> iter = tokenMarker.getCompilerTokens().iterator();
-        if (iter.hasNext()) {
+        while (iter.hasNext()) {
             TokenMarker marker = iter.next();
-            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
-            editor.goToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+            if (marker.id == TokenId.ERROR) {
+                int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
+                editor.goToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+                break;
+            }
         }
     }
 
-    public void goToNextError() {
+    public void goToNextAnnotation() {
+        TokenMarker marker = getNextMarker(TokenId.ERROR);
+        if (marker == null) {
+            marker = getNextMarker(null);
+        }
+        if (marker != null) {
+            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
+            editor.goToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+        }
+        else {
+            Display.getDefault().beep();
+        }
+    }
+
+    TokenMarker getNextMarker(TokenId id) {
         int offset = editor.getStyledText().getCaretOffset();
 
         Iterator<TokenMarker> iter = tokenMarker.getCompilerTokens().iterator();
         while (iter.hasNext()) {
             TokenMarker marker = iter.next();
-            if (marker.start > offset) {
-                int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
-                editor.goToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
-                return;
+            if ((id == null || marker.id == id) && marker.start > offset) {
+                return marker;
             }
         }
 
         iter = tokenMarker.getCompilerTokens().iterator();
-        if (iter.hasNext()) {
+        while (iter.hasNext()) {
             TokenMarker marker = iter.next();
+            if (id == null || marker.id == id) {
+                return marker;
+            }
+        }
+
+        return null;
+    }
+
+    public void goToPreviousAnnotation() {
+        TokenMarker marker = getPreviousMarker(TokenId.ERROR);
+        if (marker == null) {
+            marker = getPreviousMarker(null);
+        }
+        if (marker != null) {
             int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
             editor.goToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
         }
-
-        Display.getDefault().beep();
+        else {
+            Display.getDefault().beep();
+        }
     }
 
-    public void goToPreviousError() {
+    TokenMarker getPreviousMarker(TokenId id) {
         int offset = editor.getStyledText().getCaretOffset();
 
         Iterator<TokenMarker> iter = tokenMarker.getCompilerTokens().descendingIterator();
         while (iter.hasNext()) {
             TokenMarker marker = iter.next();
-            if (marker.start < offset) {
-                int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
-                editor.goToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
-                return;
+            if ((id == null || marker.id == id) && marker.start < offset) {
+                return marker;
             }
         }
 
         iter = tokenMarker.getCompilerTokens().descendingIterator();
-        if (iter.hasNext()) {
+        while (iter.hasNext()) {
             TokenMarker marker = iter.next();
-            int markerLine = editor.getStyledText().getLineAtOffset(marker.start);
-            editor.goToLineColumn(markerLine, marker.start - editor.getStyledText().getOffsetAtLine(markerLine));
+            if (id == null || marker.id == id) {
+                return marker;
+            }
         }
 
-        Display.getDefault().beep();
+        return null;
     }
 
     byte[] loadBinaryFromFile(File file) throws Exception {

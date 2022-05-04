@@ -1863,7 +1863,7 @@ public class SpinTools {
                         return;
                     }
                     EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.goToNextError();
+                    editorTab.goToNextAnnotation();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1883,7 +1883,7 @@ public class SpinTools {
                         return;
                     }
                     EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.goToPreviousError();
+                    editorTab.goToPreviousAnnotation();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
