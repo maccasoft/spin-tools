@@ -188,7 +188,13 @@ public class Spin1ObjectCompiler {
 
         WordDataObject objectSize = object.writeWord(0, "Object size");
         ByteDataObject methodCount = object.writeByte(1, "Method count + 1");
-        object.writeByte(objects.size(), "Object count");
+
+        int count = 0;
+        for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
+            ObjectInfo info = infoEntry.getValue();
+            count += info.count;
+        }
+        object.writeByte(count, "Object count");
 
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
@@ -256,26 +262,25 @@ public class Spin1ObjectCompiler {
 
         int objectIndex = ld.size() + 1;
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
-            String name = infoEntry.getKey();
+            ObjectInfo info = infoEntry.getValue();
             Spin1Object obj = infoEntry.getValue().object;
             for (Entry<String, Expression> objEntry : obj.getSymbols().entrySet()) {
                 if (objEntry.getValue() instanceof Method) {
-                    String qualifiedName = name + "." + objEntry.getKey();
+                    String qualifiedName = infoEntry.getKey() + "." + objEntry.getKey();
                     Method method = ((Method) objEntry.getValue()).copy();
                     method.setObject(objectIndex);
                     scope.addSymbol(qualifiedName, method);
                 }
             }
-            objectIndex++;
+            for (int i = 0; i < info.count; i++) {
+                LinkDataObject linkData = new LinkDataObject(info.object, 0, varOffset);
+                object.links.add(linkData);
+                object.write(linkData);
+                varOffset += info.object.getVarSize();
+                objectIndex++;
+            }
         }
 
-        for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
-            ObjectInfo info = infoEntry.getValue();
-            LinkDataObject linkData = new LinkDataObject(info.object, 0, varOffset);
-            object.links.add(linkData);
-            object.write(linkData);
-            varOffset += info.object.getVarSize();
-        }
         object.setVarSize(varOffset);
 
         hubAddress = object.getSize();
@@ -2470,6 +2475,36 @@ public class Spin1ObjectCompiler {
                     }
                     Expression expression = context.getLocalSymbol(symbol);
                     if (expression == null) {
+                        ObjectInfo info = objects.get(node.getText());
+                        if (info != null) {
+                            if (node.getChildCount() != 2) {
+                                throw new RuntimeException("syntax error" + node);
+                            }
+                            String qualifiedName = node.getText() + node.getChild(1).getText();
+                            expression = context.getLocalSymbol(qualifiedName);
+                            if (expression != null) {
+                                Method method = (Method) expression;
+                                int parameters = method.getArgumentsCount();
+                                if (node.getChild(1).getChildCount() != parameters) {
+                                    throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChild(1).getChildCount());
+                                }
+                                source.add(new Bytecode(context, new byte[] {
+                                    (byte) (push ? 0b00000000 : 0b00000001),
+                                }, "ANCHOR"));
+                                for (int i = 0; i < parameters; i++) {
+                                    source.addAll(compileBytecodeExpression(context, node.getChild(1).getChild(i), true));
+                                }
+                                source.addAll(compileConstantExpression(context, node.getChild(0)));
+                                source.add(new Bytecode(context, new byte[] {
+                                    (byte) 0b00000111,
+                                    (byte) method.getObject(),
+                                    (byte) method.getOffset()
+                                }, "CALL_OBJ_SUB"));
+                                return source;
+                            }
+                        }
+                    }
+                    if (expression == null) {
                         throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                     }
 
@@ -2746,7 +2781,8 @@ public class Spin1ObjectCompiler {
                         }
                     }
                     else if (expression instanceof Method) {
-                        int parameters = ((Method) expression).getArgumentsCount();
+                        Method method = (Method) expression;
+                        int parameters = method.getArgumentsCount();
                         if (node.getChildCount() != parameters) {
                             throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChildCount());
                         }
@@ -2756,19 +2792,18 @@ public class Spin1ObjectCompiler {
                         for (int i = 0; i < parameters; i++) {
                             source.addAll(compileBytecodeExpression(context, node.getChild(i), true));
                         }
-                        int objectIndex = ((Method) expression).getObject();
-                        int objectOffset = ((Method) expression).getOffset();
+                        int objectIndex = method.getObject();
                         if (objectIndex == 0) {
                             source.add(new Bytecode(context, new byte[] {
                                 (byte) 0b00000101,
-                                (byte) objectOffset
+                                (byte) method.getOffset()
                             }, "CALL_SUB"));
                         }
                         else {
                             source.add(new Bytecode(context, new byte[] {
                                 (byte) 0b00000110,
                                 (byte) objectIndex,
-                                (byte) objectOffset
+                                (byte) method.getOffset()
                             }, "CALL_OBJ_SUB"));
                         }
                     }

@@ -262,6 +262,12 @@ public class Spin1TreeBuilder {
                         }
                     }
                 }
+                if (".".equals(peek().getText())) {
+                    node.addChild(new Spin1StatementNode(next()));
+                    if (peek() == null) {
+                        return node;
+                    }
+                }
                 if ("[".equals(peek().getText())) {
                     next();
                     node.addChild(parseLevel(parseAtom(), 0));
@@ -272,6 +278,18 @@ public class Spin1TreeBuilder {
 
                     if (peek() == null) {
                         return node;
+                    }
+                    if (".".equals(peek().getText())) {
+                        node.addChild(new Spin1StatementNode(next()));
+                        if (peek() == null) {
+                            return node;
+                        }
+                    }
+                    else if (peek().getText().startsWith(".")) {
+                        node.addChild(parseLevel(parseAtom(), 0));
+                        if (peek() == null) {
+                            return node;
+                        }
                     }
                     if ("[".equals(peek().getText())) {
                         next();
@@ -316,7 +334,7 @@ public class Spin1TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "exponent += result := 13";
+        text = "    o[0].start(a, b)";
         System.out.println(text);
         System.out.println(parse(text));
     }

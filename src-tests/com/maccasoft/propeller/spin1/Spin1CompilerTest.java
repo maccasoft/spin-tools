@@ -816,6 +816,116 @@ class Spin1CompilerTest {
             + "", compile("main.spin", sources, true));
     }
 
+    @Test
+    void testObjectArrayLink() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o[2] : \"text2\"\n"
+            + "\n"
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin", ""
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       02             Object count\n"
+            + "00004 00004       10 00 04 00    Function main @ $0010 (local size 4)\n"
+            + "00008 00008       14 00 00 00    Object \"text2.spin\" @ $0014 (variables @ $0000)\n"
+            + "0000C 0000C       14 00 00 00    Object \"text2.spin\" @ $0014 (variables @ $0000)\n"
+            + "' PUB main | a\n"
+            + "'     a := 1\n"
+            + "00010 00010       36             CONSTANT (1)\n"
+            + "00011 00011       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00012 00012       32             RETURN\n"
+            + "00013 00013       00             Padding\n"
+            + "' Object \"text2.spin\" header (var size 0)\n"
+            + "00014 00000       10 00          Object size\n"
+            + "00016 00002       02             Method count + 1\n"
+            + "00017 00003       00             Object count\n"
+            + "00018 00004       08 00 04 00    Function start @ $0008 (local size 4)\n"
+            + "' PUB start(a, b) | c\n"
+            + "'     c := a + b\n"
+            + "0001C 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0001D 00009       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "0001E 0000A       EC             ADD\n"
+            + "0001F 0000B       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
+            + "00020 0000C       32             RETURN\n"
+            + "00021 0000D       00 00 00       Padding\n"
+            + "", compile("main.spin", sources));
+    }
+
+    @Test
+    void testObjectArrayMethodCall() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o[2] : \"text2\"\n"
+            + "\n"
+            + "PUB main\n"
+            + "\n"
+            + "    o[0].start(1, 2)\n"
+            + "    o[1].start(3, 4)\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin", ""
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       24 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       02             Object count\n"
+            + "00004 00004       10 00 00 00    Function main @ $0010 (local size 0)\n"
+            + "00008 00008       24 00 00 00    Object \"text2.spin\" @ $0024 (variables @ $0000)\n"
+            + "0000C 0000C       24 00 00 00    Object \"text2.spin\" @ $0024 (variables @ $0000)\n"
+            + "' PUB main\n"
+            + "'     o[0].start(1, 2)\n"
+            + "00010 00010       01             ANCHOR\n"
+            + "00011 00011       36             CONSTANT (1)\n"
+            + "00012 00012       38 02          CONSTANT (2)\n"
+            + "00014 00014       35             CONSTANT (0)\n"
+            + "00015 00015       07 02 01       CALL_OBJ_SUB\n"
+            + "'     o[1].start(3, 4)\n"
+            + "00018 00018       01             ANCHOR\n"
+            + "00019 00019       38 03          CONSTANT (3)\n"
+            + "0001B 0001B       38 04          CONSTANT (4)\n"
+            + "0001D 0001D       36             CONSTANT (1)\n"
+            + "0001E 0001E       07 02 01       CALL_OBJ_SUB\n"
+            + "00021 00021       32             RETURN\n"
+            + "00022 00022       00 00          Padding\n"
+            + "' Object \"text2.spin\" header (var size 0)\n"
+            + "00024 00000       10 00          Object size\n"
+            + "00026 00002       02             Method count + 1\n"
+            + "00027 00003       00             Object count\n"
+            + "00028 00004       08 00 04 00    Function start @ $0008 (local size 4)\n"
+            + "' PUB start(a, b) | c\n"
+            + "'     c := a + b\n"
+            + "0002C 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "0002D 00009       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "0002E 0000A       EC             ADD\n"
+            + "0002F 0000B       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
+            + "00030 0000C       32             RETURN\n"
+            + "00031 0000D       00 00 00       Padding\n"
+            + "", compile("main.spin", sources));
+    }
+
     class Spin1CompilerAdapter extends Spin1Compiler {
 
         Map<String, String> sources;
