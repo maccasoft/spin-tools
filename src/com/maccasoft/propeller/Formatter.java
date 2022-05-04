@@ -20,27 +20,20 @@ import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class Formatter {
 
-    Set<String> sections = new HashSet<String>(Arrays.asList(new String[] {
-        "CON", "VAR", "OBJ", "PUB", "PRI", "DAT"
-    }));
-    Set<String> blockStart = new HashSet<String>(Arrays.asList(new String[] {
-        "REPEAT", "IF", "IFNOT", "ELSE", "ELSEIF", "ELSEIFNOT", "CASE", "CASE_FAST"
-    }));
-    Set<String> blockEnd = new HashSet<String>(Arrays.asList(new String[] {
-        "WHILE", "UNTIL"
-    }));
-
     int conditionColumn;
     int instructionColumn;
     int argumentsColumn;
+    int effectsColumn;
 
     int inlineConditionColumn;
     int inlineInstructionColumn;
     int inlineArgumentsColumn;
+    int inlineEffectsColumn;
 
     boolean isolateLargeLabels;
     boolean alignCommentsToTab;
     boolean keepBlankLines;
+    boolean adjustPAsmColumns;
 
     class FormatterStringBuilder {
         int line = 0;
@@ -86,8 +79,26 @@ public class Formatter {
 
     FormatterStringBuilder sb = new FormatterStringBuilder();
 
-    public Formatter() {
+    private static final Set<String> sections = new HashSet<String>(Arrays.asList(new String[] {
+        "CON", "VAR", "OBJ", "PUB", "PRI", "DAT"
+    }));
+    private static final Set<String> blockStart = new HashSet<String>(Arrays.asList(new String[] {
+        "REPEAT", "IF", "IFNOT", "ELSE", "ELSEIF", "ELSEIFNOT", "CASE", "CASE_FAST"
+    }));
+    private static final Set<String> blockEnd = new HashSet<String>(Arrays.asList(new String[] {
+        "WHILE", "UNTIL"
+    }));
 
+    public Formatter() {
+        conditionColumn = 8;
+        instructionColumn = 16;
+        argumentsColumn = 24;
+        effectsColumn = 36;
+
+        inlineConditionColumn = 8;
+        inlineInstructionColumn = 16;
+        inlineArgumentsColumn = 24;
+        inlineEffectsColumn = 36;
     }
 
     public void setIsolateLargeLabels(boolean isolateLargeLabels) {
@@ -102,20 +113,25 @@ public class Formatter {
         this.keepBlankLines = keepBlankLines;
     }
 
+    public void setPAsmColumns(int condition, int instruction, int arguments, int effects) {
+        conditionColumn = condition;
+        instructionColumn = instruction;
+        argumentsColumn = arguments;
+        effectsColumn = effects;
+    }
+
+    public void setAdjustPAsmColumns(boolean adjustPAsmColumns) {
+        this.adjustPAsmColumns = adjustPAsmColumns;
+    }
+
     public String format(Spin2TokenStream stream) {
         boolean blockSeparator = false;
 
-        conditionColumn = 8;
-        instructionColumn = 16;
-        argumentsColumn = 24;
-
-        inlineConditionColumn = 8;
-        inlineInstructionColumn = 16;
-        inlineArgumentsColumn = 24;
-
         stream.setComments(true);
 
-        computeDatColumns(stream);
+        if (adjustPAsmColumns) {
+            computeDatColumns(stream);
+        }
 
         while (true) {
             Token token = stream.peekNext();
@@ -254,7 +270,7 @@ public class Formatter {
                                     if (!"debug".equalsIgnoreCase(instruction.getText())) {
                                         sb.alignToColumn(argumentsColumn);
                                     }
-                                    formatPAsmTokens(stream);
+                                    formatPAsmTokens(stream, effectsColumn);
                                 }
                             }
                             sb.append(System.lineSeparator());
@@ -369,8 +385,10 @@ public class Formatter {
     }
 
     void computeDatColumns(Spin2TokenStream stream) {
-        int labelWidth = 8, inlineLabelWidth = 8;
-        int conditionWidth = 8, inlineConditionWidth = 8;
+        int labelWidth = conditionColumn;
+        int inlineLabelWidth = inlineConditionColumn;
+        int conditionWidth = instructionColumn - conditionColumn;
+        int inlineConditionWidth = inlineInstructionColumn - inlineConditionColumn;
 
         while (true) {
             Token token = stream.nextToken();
@@ -450,7 +468,9 @@ public class Formatter {
                                     }
                                     else {
                                         if (!Spin2Model.isCondition(token.getText()) && !Spin2Model.isInstruction(token.getText())) {
-                                            inlineLabelWidth = Math.max(inlineLabelWidth, token.getText().length() + 1);
+                                            if (!isolateLargeLabels) {
+                                                inlineLabelWidth = Math.max(inlineLabelWidth, token.getText().length() + 1);
+                                            }
                                             token = stream.nextToken();
                                             if (token.type == Token.NL || token.type == Token.EOF) {
                                                 break;
@@ -491,13 +511,19 @@ public class Formatter {
 
         stream.reset();
 
+        int diff = instructionColumn;
         conditionColumn = ((labelWidth + 3) / 4) * 4;
         instructionColumn = ((conditionColumn + conditionWidth + 3) / 4) * 4;
         argumentsColumn = instructionColumn + 8;
+        diff = instructionColumn > diff ? instructionColumn - diff : 0;
+        effectsColumn = ((effectsColumn + diff + 3) / 4) * 4;
 
+        //diff = inlineInstructionColumn;
         inlineConditionColumn = ((inlineLabelWidth + 3) / 4) * 4;
         inlineInstructionColumn = ((inlineConditionColumn + inlineConditionWidth + 3) / 4) * 4;
         inlineArgumentsColumn = inlineInstructionColumn + 8;
+        diff = inlineInstructionColumn > diff ? inlineInstructionColumn - diff : 0;
+        inlineEffectsColumn = ((inlineEffectsColumn + diff + 3) / 4) * 4;
     }
 
     void formatStatement(int indent, Spin2TokenStream stream, int column) {
@@ -636,7 +662,7 @@ public class Formatter {
                         if (!"debug".equalsIgnoreCase(instruction.getText())) {
                             sb.alignToColumn(argumentsColumn);
                         }
-                        formatPAsmTokens(stream);
+                        formatPAsmTokens(stream, inlineEffectsColumn);
                     }
                 }
                 sb.append(System.lineSeparator());
@@ -644,7 +670,7 @@ public class Formatter {
         }
     }
 
-    void formatPAsmTokens(Spin2TokenStream stream) {
+    void formatPAsmTokens(Spin2TokenStream stream, int effectsColumn) {
         Token token;
         int stop = 0;
         boolean addSpace = false;
@@ -654,8 +680,12 @@ public class Formatter {
                 break;
             }
             if (Spin2Model.isModifier(token.getText())) {
-                sb.append(" ");
-                sb.alignToTabStop();
+                if (sb.column >= effectsColumn) {
+                    sb.append(" ");
+                }
+                else {
+                    sb.alignToColumn(effectsColumn);
+                }
                 while ((token = stream.peekNext()).type != Token.NL) {
                     sb.append(stream.nextToken());
                     if (",".equals(token.getText())) {

@@ -20,7 +20,8 @@ class FormatterTest {
     @Test
     void testFormatDatLine() {
         Spin2TokenStream stream = new Spin2TokenStream(""
-            + "DAT\nlabel if_c mov a,#12\n"
+            + "DAT\n"
+            + "label if_c mov a,#12\n"
             + "");
         Formatter subject = new Formatter();
         Assertions.assertEquals(""
@@ -31,7 +32,8 @@ class FormatterTest {
     @Test
     void testFormatDatLabelOnly() {
         Spin2TokenStream stream = new Spin2TokenStream(""
-            + "DAT\nlabel\n"
+            + "DAT\n"
+            + "label\n"
             + "");
         Formatter subject = new Formatter();
         Assertions.assertEquals(""
@@ -42,7 +44,8 @@ class FormatterTest {
     @Test
     void testFormatDatInstructionOnly() {
         Spin2TokenStream stream = new Spin2TokenStream(""
-            + "DAT\n asmclk\n"
+            + "DAT\n"
+            + " asmclk\n"
             + "");
         Formatter subject = new Formatter();
         Assertions.assertEquals(""
@@ -77,6 +80,7 @@ class FormatterTest {
             + "");
         Formatter subject = new Formatter();
         subject.isolateLargeLabels = true;
+        subject.adjustPAsmColumns = true;
         Assertions.assertEquals(""
             + "DAT\n"
             + "        if_z_and_nc mov     a, #12\n"
@@ -102,12 +106,44 @@ class FormatterTest {
     @Test
     void testFormatDatLargeImmediate() {
         Spin2TokenStream stream = new Spin2TokenStream(""
-            + "DAT\n mov a,##12\n"
+            + "DAT\n"
+            + " mov a,##12\n"
             + "");
         Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "DAT\n"
             + "                mov     a, ##12\n", subject.format(stream));
+    }
+
+    @Test
+    void testFormatDatEffect() {
+        Spin2TokenStream stream = new Spin2TokenStream(""
+            + "DAT\n"
+            + "label if_c mov a,#12 wc\n"
+            + " if_c mov a,#12 wc\n"
+            + "");
+        Formatter subject = new Formatter();
+        Assertions.assertEquals(""
+            + "DAT\n"
+            + "label   if_c    mov     a, #12      wc\n"
+            + "        if_c    mov     a, #12      wc\n"
+            + "", subject.format(stream));
+    }
+
+    @Test
+    void testFormatAdjustDatEffect() {
+        Spin2TokenStream stream = new Spin2TokenStream(""
+            + "DAT\n"
+            + "label if_c mov a,#12 wc\n"
+            + "large_label if_c mov a,#12 wc\n"
+            + "");
+        Formatter subject = new Formatter();
+        subject.adjustPAsmColumns = true;
+        Assertions.assertEquals(""
+            + "DAT\n"
+            + "label       if_c    mov     a, #12      wc\n"
+            + "large_label if_c    mov     a, #12      wc\n"
+            + "", subject.format(stream));
     }
 
     @Test

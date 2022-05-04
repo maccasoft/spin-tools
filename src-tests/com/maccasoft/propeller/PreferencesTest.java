@@ -43,7 +43,8 @@ class PreferencesTest {
             + "{\n"
             + "  \"showLineNumbers\" : true,\n"
             + "  \"spin1LibraryPath\" : [ \"spin1/path\" ],\n"
-            + "  \"reloadOpenTabs\" : true\n"
+            + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalType\" : 0\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -84,7 +85,8 @@ class PreferencesTest {
             + "{\n"
             + "  \"showLineNumbers\" : true,\n"
             + "  \"spin2LibraryPath\" : [ \"spin2/path\" ],\n"
-            + "  \"reloadOpenTabs\" : true\n"
+            + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalType\" : 0\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -131,7 +133,8 @@ class PreferencesTest {
             + "{\n"
             + "  \"showLineNumbers\" : true,\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"tabStops\" : [ 8, 16 ]\n"
+            + "  \"tabStops\" : [ 8, 16 ],\n"
+            + "  \"terminalType\" : 0\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 

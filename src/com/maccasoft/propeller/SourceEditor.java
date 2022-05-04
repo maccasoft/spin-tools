@@ -1794,6 +1794,8 @@ public class SourceEditor {
         formatter.setIsolateLargeLabels(true);
         formatter.setAlignCommentsToTab(true);
         formatter.setKeepBlankLines(true);
+        formatter.setPAsmColumns(8, 16, 24, 44);
+        formatter.setAdjustPAsmColumns(true);
 
         int topPixel = styledText.getTopPixel();
         int caretOffset = styledText.getCaretOffset();
