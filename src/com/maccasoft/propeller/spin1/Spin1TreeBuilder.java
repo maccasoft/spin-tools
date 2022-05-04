@@ -286,7 +286,7 @@ public class Spin1TreeBuilder {
                         }
                     }
                     else if (peek().getText().startsWith(".")) {
-                        node.addChild(parseLevel(parseAtom(), 0));
+                        node.addChild(parseAtom());
                         if (peek() == null) {
                             return node;
                         }
@@ -334,7 +334,7 @@ public class Spin1TreeBuilder {
     public static void main(String[] args) {
         String text;
 
-        text = "    o[0].start(a, b)";
+        text = "o[0].start(a, b) > 1";
         System.out.println(text);
         System.out.println(parse(text));
     }
@@ -347,6 +347,12 @@ public class Spin1TreeBuilder {
             Token token = stream.nextToken();
             if (token.type == Token.EOF) {
                 break;
+            }
+            if (".".equals(token.getText())) {
+                Token nextToken = stream.peekNext();
+                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    token = token.merge(stream.nextToken());
+                }
             }
             builder.tokens.add(token);
         }

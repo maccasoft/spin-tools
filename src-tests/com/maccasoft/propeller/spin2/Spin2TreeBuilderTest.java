@@ -534,6 +534,32 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void testFunctionExpression() {
+        String text = "start(a, b) > 1";
+        Assertions.assertEquals(""
+            + "[>]\n"
+            + " +-- [start]\n"
+            + "      +-- [a]\n"
+            + "      +-- [b]\n"
+            + " +-- [1]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testObjectArrayExpression() {
+        String text = "o[0].start(a, b) > 1";
+        Assertions.assertEquals(""
+            + "[>]\n"
+            + " +-- [o]\n"
+            + "      +-- [0]\n"
+            + "      +-- [.start]\n"
+            + "           +-- [a]\n"
+            + "           +-- [b]\n"
+            + " +-- [1]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder();
 
@@ -542,6 +568,12 @@ class Spin2TreeBuilderTest {
             Token token = stream.nextToken();
             if (token.type == Token.EOF) {
                 break;
+            }
+            if (".".equals(token.getText())) {
+                Token nextToken = stream.peekNext();
+                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    token = token.merge(stream.nextToken());
+                }
             }
             builder.addToken(token);
         }

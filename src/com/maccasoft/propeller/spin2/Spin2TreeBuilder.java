@@ -364,7 +364,7 @@ public class Spin2TreeBuilder {
                         }
                     }
                     else if (peek().getText().startsWith(".")) {
-                        node.addChild(parseLevel(parseAtom(), 0, false));
+                        node.addChild(parseAtom());
                         if (peek() == null) {
                             return node;
                         }
@@ -425,6 +425,12 @@ public class Spin2TreeBuilder {
             Token token = stream.nextToken();
             if (token.type == Token.EOF) {
                 break;
+            }
+            if (".".equals(token.getText())) {
+                Token nextToken = stream.peekNext();
+                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                    token = token.merge(stream.nextToken());
+                }
             }
             builder.tokens.add(token);
         }
