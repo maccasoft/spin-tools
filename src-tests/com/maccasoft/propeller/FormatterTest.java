@@ -438,4 +438,64 @@ class FormatterTest {
             + "", subject.format(stream));
     }
 
+    @Test
+    void testFormatStatementComments() {
+        Spin2TokenStream stream = new Spin2TokenStream(""
+            + "PUB start()\n"
+            + " ' comment\n"
+            + " a:=1\n"
+            + "");
+        Formatter subject = new Formatter();
+        Assertions.assertEquals(""
+            + "PUB start()\n"
+            + "    ' comment\n"
+            + "    a := 1\n"
+            + "", subject.format(stream));
+    }
+
+    @Test
+    void testFormatIndentedStatementComments() {
+        Spin2TokenStream stream = new Spin2TokenStream(""
+            + "PUB start()\n"
+            + " repeat\n"
+            + "   ' comment\n"
+            + "   a:=1\n"
+            + "");
+        Formatter subject = new Formatter();
+        Assertions.assertEquals(""
+            + "PUB start()\n"
+            + "    repeat\n"
+            + "        ' comment\n"
+            + "        a := 1\n"
+            + "", subject.format(stream));
+    }
+
+    @Test
+    void testFormatStatementLineComments() {
+        Spin2TokenStream stream = new Spin2TokenStream(""
+            + "PUB start()\n"
+            + " a:=1 ' comment\n"
+            + " a:=2 { comment }\n"
+            + "");
+        Formatter subject = new Formatter();
+        Assertions.assertEquals(""
+            + "PUB start()\n"
+            + "    a := 1  ' comment\n"
+            + "    a := 2  { comment }\n"
+            + "", subject.format(stream));
+    }
+
+    @Test
+    void testFormatStatementInlineComments() {
+        Spin2TokenStream stream = new Spin2TokenStream(""
+            + "PUB start()\n"
+            + " a:=2{a}*3{b}+c\n"
+            + "");
+        Formatter subject = new Formatter();
+        Assertions.assertEquals(""
+            + "PUB start()\n"
+            + "    a := 2{a} * 3{b} + c\n"
+            + "", subject.format(stream));
+    }
+
 }

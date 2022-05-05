@@ -95,6 +95,8 @@ import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.spin1.Spin1TokenStream;
+import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class SourceEditor {
@@ -1791,11 +1793,10 @@ public class SourceEditor {
     public void format() {
         Formatter formatter = new Formatter();
 
-        formatter.setIsolateLargeLabels(true);
-        formatter.setAlignCommentsToTab(true);
         formatter.setKeepBlankLines(true);
-        formatter.setPAsmColumns(8, 16, 24, 44);
+        formatter.setPAsmColumns(8, 16, 24, 44, 52);
         formatter.setAdjustPAsmColumns(true);
+        formatter.setIsolateLargeLabels(true);
 
         int topPixel = styledText.getTopPixel();
         int caretOffset = styledText.getCaretOffset();
@@ -1804,12 +1805,22 @@ public class SourceEditor {
 
         String text = styledText.getSelectionText();
         if (!text.isEmpty()) {
-            text = formatter.format(new Spin2TokenStream(text));
+            if (tokenMarker instanceof Spin2TokenMarker) {
+                text = formatter.format(new Spin2TokenStream(text));
+            }
+            else {
+                text = formatter.format(new Spin1TokenStream(text));
+            }
             Point selection = styledText.getSelection();
             styledText.replaceTextRange(selection.x, selection.y - selection.x + 1, text);
         }
         else {
-            text = formatter.format(new Spin2TokenStream(styledText.getText()));
+            if (tokenMarker instanceof Spin2TokenMarker) {
+                text = formatter.format(new Spin2TokenStream(styledText.getText()));
+            }
+            else {
+                text = formatter.format(new Spin1TokenStream(styledText.getText()));
+            }
             styledText.setText(text);
         }
 

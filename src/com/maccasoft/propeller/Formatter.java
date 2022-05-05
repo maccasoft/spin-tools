@@ -15,8 +15,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Model;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class Formatter {
 
@@ -24,6 +24,7 @@ public class Formatter {
     int instructionColumn;
     int argumentsColumn;
     int effectsColumn;
+    int commentsColumn;
 
     int inlineConditionColumn;
     int inlineInstructionColumn;
@@ -31,7 +32,6 @@ public class Formatter {
     int inlineEffectsColumn;
 
     boolean isolateLargeLabels;
-    boolean alignCommentsToTab;
     boolean keepBlankLines;
     boolean adjustPAsmColumns;
 
@@ -94,6 +94,7 @@ public class Formatter {
         instructionColumn = 16;
         argumentsColumn = 24;
         effectsColumn = 36;
+        commentsColumn = 52;
 
         inlineConditionColumn = 8;
         inlineInstructionColumn = 16;
@@ -105,26 +106,23 @@ public class Formatter {
         this.isolateLargeLabels = isolateLargeLabels;
     }
 
-    public void setAlignCommentsToTab(boolean alignCommentsToTab) {
-        this.alignCommentsToTab = alignCommentsToTab;
-    }
-
     public void setKeepBlankLines(boolean keepBlankLines) {
         this.keepBlankLines = keepBlankLines;
     }
 
-    public void setPAsmColumns(int condition, int instruction, int arguments, int effects) {
+    public void setPAsmColumns(int condition, int instruction, int arguments, int effects, int comments) {
         conditionColumn = condition;
         instructionColumn = instruction;
         argumentsColumn = arguments;
         effectsColumn = effects;
+        commentsColumn = comments;
     }
 
     public void setAdjustPAsmColumns(boolean adjustPAsmColumns) {
         this.adjustPAsmColumns = adjustPAsmColumns;
     }
 
-    public String format(Spin2TokenStream stream) {
+    public String format(TokenStream stream) {
         boolean blockSeparator = false;
 
         stream.skipComments(false);
@@ -145,13 +143,15 @@ public class Formatter {
                 stream.nextToken();
             }
             else if (token.type == Token.COMMENT) {
-                appendLineComment(stream.nextToken());
+                sb.alignToColumn(token.column);
+                sb.append(stream.nextToken());
                 sb.append(System.lineSeparator());
                 if (keepBlankLines && stream.peekNext().type == Token.NL) {
                     stream.nextToken();
                 }
             }
             else if (token.type == Token.BLOCK_COMMENT) {
+                sb.alignToColumn(token.column);
                 sb.append(stream.nextToken());
                 if (stream.peekNext().type == Token.NL) {
                     sb.append(System.lineSeparator());
@@ -194,6 +194,17 @@ public class Formatter {
                 }
                 else if ("DAT".equalsIgnoreCase(token.getText())) {
                     sb.append(stream.nextToken().getText().toUpperCase());
+
+                    token = stream.peekNext();
+                    while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                        sb.append(" ");
+                        if (token.type == Token.COMMENT) {
+                            sb.append(stream.nextToken());
+                            break;
+                        }
+                        sb.append(stream.nextToken());
+                        token = stream.peekNext();
+                    }
                     formatTokens(stream);
                     sb.append(System.lineSeparator());
                     if (keepBlankLines && stream.peekNext().type == Token.NL) {
@@ -213,6 +224,10 @@ public class Formatter {
                             if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                                 break;
                             }
+                        }
+                        else if (token.type == Token.COMMENT) {
+                            sb.alignToColumn(token.column);
+                            sb.append(stream.nextToken());
                         }
                         else {
                             Token label = null;
@@ -235,7 +250,7 @@ public class Formatter {
                                 token = stream.peekNext();
                             }
 
-                            if (token.type != Token.NL && token.type != Token.EOF) {
+                            if (token.type == 0) {
                                 instruction = stream.nextToken();
                                 token = stream.peekNext();
                             }
@@ -243,6 +258,19 @@ public class Formatter {
                             if (instruction == null) {
                                 if (label != null) {
                                     sb.append(label);
+                                    while ((token = stream.peekNext()).type != Token.EOF) {
+                                        if (token.type == Token.NL) {
+                                            break;
+                                        }
+                                        if (token.type == Token.COMMENT) {
+                                            sb.alignToColumn(commentsColumn);
+                                            sb.append(stream.nextToken());
+                                            break;
+                                        }
+                                        else {
+                                            sb.append(stream.nextToken());
+                                        }
+                                    }
                                 }
                             }
                             else {
@@ -260,11 +288,11 @@ public class Formatter {
 
                                 if (condition != null) {
                                     sb.alignToColumn(conditionColumn);
-                                    sb.append(condition);
+                                    sb.append(condition.getText().toLowerCase());
                                 }
 
                                 sb.alignToColumn(instructionColumn);
-                                sb.append(instruction);
+                                sb.append(instruction.getText().toLowerCase());
 
                                 if (token.type != Token.NL && token.type != Token.EOF) {
                                     if (!"debug".equalsIgnoreCase(instruction.getText())) {
@@ -285,11 +313,11 @@ public class Formatter {
                         sb.append(stream.nextToken().getText().toUpperCase());
                         token = stream.peekNext();
                         while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                            sb.append(" ");
                             if (token.type == Token.COMMENT) {
-                                appendLineComment(stream.nextToken());
+                                sb.append(stream.nextToken());
                                 break;
                             }
-                            sb.append(" ");
                             sb.append(stream.nextToken());
                             token = stream.peekNext();
                         }
@@ -313,10 +341,14 @@ public class Formatter {
                             }
                         }
                         else if (token.type == Token.COMMENT) {
-                            appendLineComment(stream.nextToken());
+                            sb.alignToColumn(token.column);
+                            sb.append(stream.nextToken());
                             sb.append(System.lineSeparator());
                             if (keepBlankLines && stream.peekNext().type == Token.NL) {
                                 stream.nextToken();
+                                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                                    break;
+                                }
                             }
                         }
                         else if (token.type == Token.BLOCK_COMMENT) {
@@ -331,10 +363,13 @@ public class Formatter {
                         else {
                             sb.append("    ");
                             formatTokens(stream);
+                            sb.append(System.lineSeparator());
                             if (keepBlankLines && stream.peekNext().type == Token.NL) {
                                 stream.nextToken();
+                                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                                    break;
+                                }
                             }
-                            sb.append(System.lineSeparator());
                         }
                     }
                 }
@@ -374,17 +409,7 @@ public class Formatter {
         return false;
     }
 
-    void appendLineComment(Token token) {
-        if (token.column != 0) {
-            sb.append(" ");
-        }
-        if (alignCommentsToTab) {
-            sb.alignToTabStop();
-        }
-        sb.append(token);
-    }
-
-    void computeDatColumns(Spin2TokenStream stream) {
+    void computeDatColumns(TokenStream stream) {
         int labelWidth = conditionColumn;
         int inlineLabelWidth = inlineConditionColumn;
         int conditionWidth = instructionColumn - conditionColumn;
@@ -517,6 +542,7 @@ public class Formatter {
         argumentsColumn = instructionColumn + 8;
         diff = instructionColumn > diff ? instructionColumn - diff : 0;
         effectsColumn = ((effectsColumn + diff + 3) / 4) * 4;
+        commentsColumn = ((commentsColumn + diff + 3) / 4) * 4;
 
         //diff = inlineInstructionColumn;
         inlineConditionColumn = ((inlineLabelWidth + 3) / 4) * 4;
@@ -526,7 +552,7 @@ public class Formatter {
         inlineEffectsColumn = ((inlineEffectsColumn + diff + 3) / 4) * 4;
     }
 
-    void formatStatement(int indent, Spin2TokenStream stream, int column) {
+    void formatStatement(int indent, TokenStream stream, int column) {
         Token token;
         boolean indentNext = false;
 
@@ -538,13 +564,19 @@ public class Formatter {
                 stream.nextToken();
             }
             else if (token.type == Token.COMMENT) {
-                appendLineComment(stream.nextToken());
+                if (token.column != 0) {
+                    sb.alignToColumn((indentNext ? (indent + 1) : indent) * 4);
+                }
+                sb.append(stream.nextToken());
                 sb.append(System.lineSeparator());
                 if (keepBlankLines && stream.peekNext().type == Token.NL) {
                     stream.nextToken();
                 }
             }
             else if (token.type == Token.BLOCK_COMMENT) {
+                if (token.column != 0) {
+                    sb.alignToColumn(indent * 4);
+                }
                 sb.append(stream.nextToken());
                 if (stream.peekNext().type == Token.NL) {
                     sb.append(System.lineSeparator());
@@ -594,7 +626,7 @@ public class Formatter {
         }
     }
 
-    void formatInlinePAsm(Spin2TokenStream stream) {
+    void formatInlinePAsm(TokenStream stream) {
         Token token;
 
         while (true) {
@@ -670,7 +702,7 @@ public class Formatter {
         }
     }
 
-    void formatPAsmTokens(Spin2TokenStream stream, int effectsColumn) {
+    void formatPAsmTokens(TokenStream stream, int effectsColumn) {
         Token token;
         int stop = 0;
         boolean addSpace = false;
@@ -687,29 +719,43 @@ public class Formatter {
                     sb.alignToColumn(effectsColumn);
                 }
                 while ((token = stream.peekNext()).type != Token.NL) {
-                    sb.append(stream.nextToken());
-                    if (",".equals(token.getText())) {
-                        sb.append(" ");
-                    }
                     if (token.type == Token.EOF) {
                         break;
+                    }
+                    if (token.type == Token.COMMENT) {
+                        sb.alignToColumn(commentsColumn);
+                        sb.append(stream.nextToken());
+                    }
+                    else {
+                        sb.append(stream.nextToken().getText().toLowerCase());
+                        if (",".equals(token.getText())) {
+                            sb.append(" ");
+                        }
                     }
                 }
                 break;
             }
             else if (token.type == Token.BLOCK_COMMENT) {
-                if (token.start > stop + 1) {
-                    sb.append(" ");
+                token = stream.nextToken();
+                if (stream.peekNext().type == Token.NL) {
+                    sb.alignToTabStop();
+                    sb.append(token);
                 }
-                sb.append(stream.nextToken());
-                stop = token.stop;
-                if (stream.peekNext().start > stop + 1) {
-                    sb.append(" ");
+                else {
+                    if (token.start > stop + 1) {
+                        sb.append(" ");
+                    }
+                    sb.append(stream.nextToken());
+                    stop = token.stop;
+                    if (stream.peekNext().start > stop + 1) {
+                        sb.append(" ");
+                    }
                 }
             }
             else {
                 if (token.type == Token.COMMENT) {
-                    appendLineComment(token);
+                    sb.alignToColumn(commentsColumn);
+                    sb.append(token);
                 }
                 else if (token.type == Token.OPERATOR) {
                     addSpace = ")".equals(token.getText()) || "]".equals(token.getText());
@@ -723,6 +769,7 @@ public class Formatter {
                         case ".":
                         case "@":
                         case "\\":
+                        case ":":
                             sb.append(token);
                             break;
                         case ",":
@@ -754,7 +801,7 @@ public class Formatter {
         }
     }
 
-    void formatTokens(Spin2TokenStream stream) {
+    void formatTokens(TokenStream stream) {
         Token token;
         int stop = 0;
         boolean addSpace = false;
@@ -764,18 +811,26 @@ public class Formatter {
                 break;
             }
             if (token.type == Token.BLOCK_COMMENT) {
-                if (token.start > stop + 1) {
-                    sb.append(" ");
+                token = stream.nextToken();
+                if (stream.peekNext().type == Token.NL) {
+                    sb.alignToTabStop();
+                    sb.append(token);
                 }
-                sb.append(stream.nextToken());
-                stop = token.stop;
-                if (stream.peekNext().start > stop + 1) {
-                    sb.append(" ");
+                else {
+                    if (token.start > stop + 1) {
+                        sb.append(" ");
+                    }
+                    sb.append(token);
+                    stop = token.stop;
+                    if (stream.peekNext().start > stop + 1) {
+                        sb.append(" ");
+                    }
                 }
             }
             else {
                 if (token.type == Token.COMMENT) {
-                    appendLineComment(token);
+                    sb.alignToTabStop();
+                    sb.append(token);
                 }
                 else if (token.type == Token.OPERATOR) {
                     addSpace = ")".equals(token.getText()) || "]".equals(token.getText());
