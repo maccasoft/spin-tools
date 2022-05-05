@@ -1242,7 +1242,7 @@ public class SpinTools {
                         return;
                     }
                     EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.getEditor().format();
+                    editorTab.formatSource();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }

@@ -16,9 +16,8 @@ import java.util.Set;
 
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
-import com.maccasoft.propeller.spin2.Spin2Model;
 
-public class Formatter {
+public abstract class Formatter {
 
     int conditionColumn;
     int instructionColumn;
@@ -122,7 +121,9 @@ public class Formatter {
         this.adjustPAsmColumns = adjustPAsmColumns;
     }
 
-    public String format(TokenStream stream) {
+    public abstract String format(String text);
+
+    protected String format(TokenStream stream) {
         boolean blockSeparator = false;
 
         stream.skipComments(false);
@@ -245,7 +246,7 @@ public class Formatter {
                                 token = stream.peekNext();
                             }
 
-                            if (Spin2Model.isCondition(token.getText())) {
+                            if (pasmCondition(token)) {
                                 condition = stream.nextToken();
                                 token = stream.peekNext();
                             }
@@ -380,34 +381,13 @@ public class Formatter {
         return sb.toString();
     }
 
-    boolean pasmLabel(Token token) {
-        if (Spin2Model.isCondition(token.getText())) {
-            return false;
-        }
-        if (Spin2Model.isInstruction(token.getText())) {
-            return false;
-        }
-        if (Spin2Model.isPAsmType(token.getText())) {
-            return false;
-        }
-        if ("debug".equalsIgnoreCase(token.getText())) {
-            return false;
-        }
-        return true;
-    }
+    protected abstract boolean pasmLabel(Token token);
 
-    boolean pasmInstruction(Token token) {
-        if (Spin2Model.isInstruction(token.getText())) {
-            return true;
-        }
-        if (Spin2Model.isPAsmType(token.getText())) {
-            return true;
-        }
-        if ("debug".equalsIgnoreCase(token.getText())) {
-            return true;
-        }
-        return false;
-    }
+    protected abstract boolean pasmCondition(Token token);
+
+    protected abstract boolean pasmInstruction(Token token);
+
+    protected abstract boolean pasmModifier(Token token);
 
     void computeDatColumns(TokenStream stream) {
         int labelWidth = conditionColumn;
@@ -451,7 +431,7 @@ public class Formatter {
                                 }
                             }
 
-                            if (Spin2Model.isCondition(token.getText())) {
+                            if (pasmCondition(token)) {
                                 conditionWidth = Math.max(conditionWidth, token.getText().length() + 1);
                                 token = stream.nextToken();
                                 if (token.type == Token.NL || token.type == Token.EOF) {
@@ -492,7 +472,7 @@ public class Formatter {
                                         }
                                     }
                                     else {
-                                        if (!Spin2Model.isCondition(token.getText()) && !Spin2Model.isInstruction(token.getText())) {
+                                        if (pasmLabel(token)) {
                                             if (!isolateLargeLabels) {
                                                 inlineLabelWidth = Math.max(inlineLabelWidth, token.getText().length() + 1);
                                             }
@@ -502,7 +482,7 @@ public class Formatter {
                                             }
                                         }
 
-                                        if (Spin2Model.isCondition(token.getText())) {
+                                        if (pasmCondition(token)) {
                                             inlineConditionWidth = Math.max(inlineConditionWidth, token.getText().length() + 1);
                                             token = stream.nextToken();
                                             if (token.type == Token.NL || token.type == Token.EOF) {
@@ -646,7 +626,7 @@ public class Formatter {
                 Token instruction = null;
 
                 token = stream.nextToken();
-                if (!Spin2Model.isCondition(token.getText()) && !Spin2Model.isInstruction(token.getText())) {
+                if (pasmLabel(token)) {
                     label = token;
                     if (":".equals(token.getText()) || ".".equals(token.getText())) {
                         label.merge(stream.nextToken());
@@ -654,7 +634,7 @@ public class Formatter {
                     token = stream.nextToken();
                 }
 
-                if (Spin2Model.isCondition(token.getText())) {
+                if (pasmCondition(token)) {
                     condition = token;
                     token = stream.nextToken();
                 }
@@ -711,7 +691,7 @@ public class Formatter {
             if (token.type == Token.EOF) {
                 break;
             }
-            if (Spin2Model.isModifier(token.getText())) {
+            if (pasmModifier(token)) {
                 if (sb.column >= effectsColumn) {
                     sb.append(" ");
                 }

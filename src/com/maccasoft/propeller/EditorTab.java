@@ -46,10 +46,12 @@ import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
+import com.maccasoft.propeller.spin1.Spin1Formatter;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
 import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
+import com.maccasoft.propeller.spin2.Spin2Formatter;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
@@ -820,6 +822,17 @@ public class EditorTab implements FindReplaceTarget {
     void scheduleCompile() {
         Display.getDefault().timerExec(500, compilerRunnable);
         tabItem.setFont(busyFont);
+    }
+
+    public void formatSource() {
+        Formatter formatter = tabItemText.toLowerCase().endsWith(".spin2") ? new Spin2Formatter() : new Spin1Formatter();
+
+        formatter.setKeepBlankLines(true);
+        formatter.setPAsmColumns(8, 16, 24, 44, 52);
+        formatter.setAdjustPAsmColumns(true);
+        formatter.setIsolateLargeLabels(true);
+
+        editor.format(formatter);
     }
 
 }

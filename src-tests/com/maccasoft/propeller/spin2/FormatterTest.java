@@ -8,324 +8,325 @@
  * http://www.eclipse.org/legal/epl-v10.html
  */
 
-package com.maccasoft.propeller;
+package com.maccasoft.propeller.spin2;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
+import com.maccasoft.propeller.Formatter;
 
 class FormatterTest {
 
     @Test
     void testFormatDatLine() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "DAT\n"
             + "label if_c mov a,#12\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "DAT\n"
-            + "label   if_c    mov     a, #12\n", subject.format(stream));
+            + "label   if_c    mov     a, #12\n", text);
     }
 
     @Test
     void testFormatDatLabelOnly() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "DAT\n"
             + "label\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "DAT\n"
-            + "label\n", subject.format(stream));
+            + "label\n", text);
     }
 
     @Test
     void testFormatDatInstructionOnly() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "DAT\n"
             + " asmclk\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "DAT\n"
-            + "                asmclk\n", subject.format(stream));
+            + "                asmclk\n", text);
     }
 
     @Test
     void testFormatDatLargeLabels() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        subject.setIsolateLargeLabels(true);
+        String text = subject.format(""
             + "DAT\n"
             + "label if_c mov a,#12\n"
             + "large_label mov b,#34\n"
             + "very_large_label_1 mov b,#34\n"
             + "");
-        Formatter subject = new Formatter();
-        subject.isolateLargeLabels = true;
         Assertions.assertEquals(""
             + "DAT\n"
             + "label   if_c    mov     a, #12\n"
             + "large_label     mov     b, #34\n"
             + "very_large_label_1\n"
             + "                mov     b, #34\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatDatLargeCondition() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        subject.setIsolateLargeLabels(true);
+        subject.setAdjustPAsmColumns(true);
+        String text = subject.format(""
             + "DAT\n"
             + " if_z_and_nc mov a,#12\n"
             + "");
-        Formatter subject = new Formatter();
-        subject.isolateLargeLabels = true;
-        subject.adjustPAsmColumns = true;
         Assertions.assertEquals(""
             + "DAT\n"
             + "        if_z_and_nc mov     a, #12\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatDatLocalLabels() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        subject.setIsolateLargeLabels(true);
+        String text = subject.format(""
             + "DAT\n"
             + "label if_c mov a,#12\n"
             + ".local mov b,#34\n"
             + "");
-        Formatter subject = new Formatter();
-        subject.isolateLargeLabels = true;
         Assertions.assertEquals(""
             + "DAT\n"
             + "label   if_c    mov     a, #12\n"
             + ".local          mov     b, #34\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatDatLargeImmediate() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "DAT\n"
             + " mov a,##12\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "DAT\n"
-            + "                mov     a, ##12\n", subject.format(stream));
+            + "                mov     a, ##12\n", text);
     }
 
     @Test
     void testFormatDatEffect() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "DAT\n"
             + "label if_c mov a,#12 wc\n"
             + " if_c mov a,#12 wc\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "DAT\n"
             + "label   if_c    mov     a, #12      wc\n"
             + "        if_c    mov     a, #12      wc\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatAdjustDatEffect() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        subject.setAdjustPAsmColumns(true);
+        String text = subject.format(""
             + "DAT\n"
             + "label if_c mov a,#12 wc\n"
             + "large_label if_c mov a,#12 wc\n"
             + "");
-        Formatter subject = new Formatter();
-        subject.adjustPAsmColumns = true;
         Assertions.assertEquals(""
             + "DAT\n"
             + "label       if_c    mov     a, #12      wc\n"
             + "large_label if_c    mov     a, #12      wc\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatConstant() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "CON\n"
             + "A=1*2+3\n"
             + "F=1*(2+3)\n"
             + "#0,a,b[2],c,d\n"
             + "#10[5],e,f\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "CON\n"
             + "    A = 1 * 2 + 3\n"
             + "    F = 1 * (2 + 3)\n"
             + "    #0, a, b[2], c, d\n"
             + "    #10[5], e, f\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testDefaultFormatConstant() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "A=1*2+3\n"
             + "F=1*(2+3)\n"
             + "#0,a,b[2],c,d\n"
             + "#10[5],e,f\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "    A = 1 * 2 + 3\n"
             + "    F = 1 * (2 + 3)\n"
             + "    #0, a, b[2], c, d\n"
             + "    #10[5], e, f\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatVariables() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "VAR\n"
             + "long A\n"
             + " word b,c\n"
             + "byte d[12], e[100], f[1*5]\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "VAR\n"
             + "    long A\n"
             + "    word b, c\n"
             + "    byte d[12], e[100], f[1 * 5]\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatMethod() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatMethodParameters() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start(a,b,c)\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start(a, b, c)\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatMethodReturns() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start():a\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start() : a\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatMethodVariables() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()|a,b\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start() | a, b\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatMethodFull() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start(a,b):c|d,e\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start(a, b) : c | d, e\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatFunctionCall() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " function(a,b,c)\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    function(a, b, c)\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatObjectFunctionCall() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " obj.function(a,b,c)\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    obj.function(a, b, c)\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatObjectConstant() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " function(a,obj#b,obj.c)\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    function(a, obj#b, obj.c)\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatStatements() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " a:=1\n"
             + " b:=b*(c+d)\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    a := 1\n"
             + "    b := b * (c + d)\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatIndentedStatements() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " a:=1\n"
             + "  b:=b*(c+d)\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    a := 1\n"
             + "    b := b * (c + d)\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatIndentedBlocks() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " a:=1\n"
             + " if z==1\n"
@@ -333,7 +334,6 @@ class FormatterTest {
             + "  e:=$12\n"
             + " f:=2\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    a := 1\n"
@@ -341,49 +341,49 @@ class FormatterTest {
             + "        b := b * (c + d)\n"
             + "        e := $12\n"
             + "    f := 2\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatMultipleMethods() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " a:=1\n"
             + "PRI init()\n"
             + "  b:=b*(c+d)\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    a := 1\n"
             + "\n"
             + "PRI init()\n"
             + "    b := b * (c + d)\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatComments() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "' line comment\n"
             + "{ block comment }\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "' line comment\n"
             + "{ block comment }\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatSectionComments() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "CON ' line comment\n"
             + "VAR { block comment }\n"
             + "PUB start({no args})\n"
             + "DAT ' section\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "CON ' line comment\n"
             + "\n"
@@ -392,12 +392,13 @@ class FormatterTest {
             + "PUB start({no args})\n"
             + "\n"
             + "DAT ' section\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatInlinePAsm() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " a:=1\n"
             + " org\n"
@@ -405,7 +406,6 @@ class FormatterTest {
             + " if_c drvnot #1\n"
             + " end\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    a := 1\n"
@@ -413,12 +413,14 @@ class FormatterTest {
             + "                mov     a, #12\n"
             + "        if_c    drvnot  #1\n"
             + "    end\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testKeepBlankLines() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        subject.setKeepBlankLines(true);
+        String text = subject.format(""
             + "CON\n"
             + "A=1*2+3\n"
             + "F=1*(2+3)\n"
@@ -426,8 +428,6 @@ class FormatterTest {
             + "#0,a,b[2],c,d\n"
             + "#10[5],e,f\n"
             + "");
-        Formatter subject = new Formatter();
-        subject.keepBlankLines = true;
         Assertions.assertEquals(""
             + "CON\n"
             + "    A = 1 * 2 + 3\n"
@@ -435,67 +435,67 @@ class FormatterTest {
             + "\n"
             + "    #0, a, b[2], c, d\n"
             + "    #10[5], e, f\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatStatementComments() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " ' comment\n"
             + " a:=1\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    ' comment\n"
             + "    a := 1\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatIndentedStatementComments() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " repeat\n"
             + "   ' comment\n"
             + "   a:=1\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    repeat\n"
             + "        ' comment\n"
             + "        a := 1\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatStatementLineComments() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " a:=1 ' comment\n"
             + " a:=2 { comment }\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    a := 1  ' comment\n"
             + "    a := 2  { comment }\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
     @Test
     void testFormatStatementInlineComments() {
-        Spin2TokenStream stream = new Spin2TokenStream(""
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
             + "PUB start()\n"
             + " a:=2{a}*3{b}+c\n"
             + "");
-        Formatter subject = new Formatter();
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    a := 2{a} * 3{b} + c\n"
-            + "", subject.format(stream));
+            + "", text);
     }
 
 }
