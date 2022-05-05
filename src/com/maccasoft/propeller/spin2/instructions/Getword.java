@@ -59,7 +59,7 @@ public class Getword extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1001001);
             value = c.setValue(value, 1);
             value = z.setValue(value, n.getInteger());
@@ -89,7 +89,7 @@ public class Getword extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1001001);
             value = czi.setValue(value, 0b100);
             value = d.setValue(value, dst.getInteger());

@@ -61,7 +61,7 @@ public class Coginit extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1100111);
             value = c.setBoolean(value, "wc".equalsIgnoreCase(effect));
             value = l.setBoolean(value, dst.isLiteral());

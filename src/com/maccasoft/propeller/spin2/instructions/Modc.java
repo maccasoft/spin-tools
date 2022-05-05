@@ -53,7 +53,7 @@ public class Modc extends Spin2PAsmInstructionFactory {
                 cval = dst.getInteger() & 0b1111;
             }
 
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1101011);
             value = c.setBoolean(value, "wc".equalsIgnoreCase(effect));
             value = i.setValue(value, 1);

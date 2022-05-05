@@ -71,7 +71,7 @@ public class Getbyte extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1000111);
             value = cz.setValue(value, n.getInteger());
             value = i.setBoolean(value, src.isLiteral());
@@ -100,7 +100,7 @@ public class Getbyte extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1000111);
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0);

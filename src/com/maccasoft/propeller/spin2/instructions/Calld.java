@@ -75,7 +75,7 @@ public class Calld extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1110000 | encodeDst(dst.getExpression().toString()));
             int addr = src.getInteger();
             int ours = context.getSymbol("$").getNumber().intValue();
@@ -140,7 +140,7 @@ public class Calld extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1011001);
             value = cz.setValue(value, encodeEffect(effect));
             value = i.setBoolean(value, src.isLiteral());

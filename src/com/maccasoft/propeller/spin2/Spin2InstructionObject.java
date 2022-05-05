@@ -240,7 +240,7 @@ public abstract class Spin2InstructionObject {
     }
 
     protected int encodeAugs(String condition, int number) {
-        int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+        int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
         if (e.getValue(value) == 0b0000) {
             value = e.setValue(value, 0b1111);
         }
@@ -249,7 +249,7 @@ public abstract class Spin2InstructionObject {
     }
 
     protected int encodeAugd(String condition, int number) {
-        int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+        int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
         if (e.getValue(value) == 0b0000) {
             value = e.setValue(value, 0b1111);
         }
@@ -260,7 +260,7 @@ public abstract class Spin2InstructionObject {
     protected int encodeInstructionParameters(String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src, String effect) {
         CompilerException msgs = new CompilerException();
 
-        int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+        int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
         value = cz.setValue(value, encodeEffect(effect));
         value = i.setBoolean(value, src.isLiteral());
         if (dst.getInteger() > 0x1FF) {

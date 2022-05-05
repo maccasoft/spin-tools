@@ -82,7 +82,7 @@ public class Altgw extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1001011);
             value = cz.setValue(value, 0b11);
             value = i.setBoolean(value, true);

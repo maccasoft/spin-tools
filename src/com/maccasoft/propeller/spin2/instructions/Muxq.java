@@ -53,7 +53,7 @@ public class Muxq extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
-            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition));
+            int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1001111);
             value = cz.setValue(value, 0b10);
             value = i.setBoolean(value, src.isLiteral());
