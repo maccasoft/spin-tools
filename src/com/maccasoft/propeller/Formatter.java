@@ -127,7 +127,7 @@ public class Formatter {
     public String format(Spin2TokenStream stream) {
         boolean blockSeparator = false;
 
-        stream.setComments(true);
+        stream.skipComments(false);
 
         if (adjustPAsmColumns) {
             computeDatColumns(stream);

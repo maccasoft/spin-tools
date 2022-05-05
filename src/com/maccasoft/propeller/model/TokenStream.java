@@ -10,16 +10,69 @@
 
 package com.maccasoft.propeller.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class TokenStream {
 
-    public abstract Token peekNext();
+    protected final Token EOF_TOKEN = new Token(null, 0, Token.EOF);
 
-    public abstract Token nextToken();
+    protected final String text;
 
-    public abstract String getSource(int start, int stop);
+    protected int index = 0;
+    protected int line = 0;
+    protected int column = 0;
 
-    public abstract List<Token> getHiddenTokens();
+    protected boolean skipComments = true;
+
+    protected List<Token> hiddenTokens = new ArrayList<Token>();
+
+    public TokenStream(String text) {
+        this.text = text;
+        if (text == null) {
+            throw new NullPointerException();
+        }
+    }
+
+    public void skipComments(boolean skip) {
+        this.skipComments = skip;
+    }
+
+    public Token peekNext() {
+        return peekNext(skipComments);
+    }
+
+    public Token peekNext(boolean skipComments) {
+        int saveIndex = index;
+        int saveLine = line;
+        int saveColumn = column;
+
+        Token token = nextToken(skipComments);
+
+        index = saveIndex;
+        line = saveLine;
+        column = saveColumn;
+
+        return token;
+    }
+
+    public Token nextToken() {
+        return nextToken(skipComments);
+    }
+
+    public abstract Token nextToken(boolean skipComments);
+
+    public String getSource(int start, int stop) {
+        return text.substring(start, stop + 1);
+    }
+
+    public List<Token> getHiddenTokens() {
+        return hiddenTokens;
+    }
+
+    public void reset() {
+        index = column = line = 0;
+        hiddenTokens.clear();
+    }
 
 }

@@ -10,56 +10,17 @@
 
 package com.maccasoft.propeller.spin1;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
 
 public class Spin1TokenStream extends TokenStream {
 
-    private final Token EOF_TOKEN = new Token(null, 0, Token.EOF);
-
-    final String text;
-
-    int index = 0;
-    int line = 0;
-    int column = 0;
-
-    List<Token> hiddenTokens = new ArrayList<Token>();
-
     public Spin1TokenStream(String text) {
-        this.text = text;
-        if (text == null) {
-            throw new NullPointerException();
-        }
+        super(text);
     }
 
     @Override
-    public Token peekNext() {
-        return peekNext(false);
-    }
-
-    public Token peekNext(boolean comments) {
-        int saveIndex = index;
-        int saveLine = line;
-        int saveColumn = column;
-
-        Token token = nextToken();
-
-        index = saveIndex;
-        line = saveLine;
-        column = saveColumn;
-
-        return token;
-    }
-
-    @Override
-    public Token nextToken() {
-        return nextToken(false);
-    }
-
-    public Token nextToken(boolean comments) {
+    public Token nextToken(boolean skipComments) {
         int nested = 0;
         int state = Token.START;
         boolean escape = false;
@@ -116,34 +77,6 @@ public class Spin1TokenStream extends TokenStream {
                         state = Token.KEYWORD;
                     }
                     else { // operator
-                        /*if ((ch == '.' || ch == ':') && index + 1 < text.length()) {
-                            char ch1 = text.charAt(index + 1);
-                            if ((ch1 >= 'a' && ch1 <= 'z') || (ch1 >= 'A' && ch1 <= 'Z') || ch1 == '_') { // Local label
-                                state = Token.KEYWORD;
-                                break;
-                            }
-                        }
-                        if (ch == '@' && index + 1 < text.length()) {
-                            char ch1 = text.charAt(index + 1);
-                            if ((ch1 >= 'a' && ch1 <= 'z') || (ch1 >= 'A' && ch1 <= 'Z') || ch1 == '_') { // Keyword
-                                state = Token.KEYWORD;
-                                break;
-                            }
-                            if (ch1 == '.' || ch1 == '@') {
-                                token.stop++;
-                                index++;
-                                column++;
-                                state = Token.KEYWORD;
-                                break;
-                            }
-                            if (ch1 == '\"') {
-                                token.stop++;
-                                index++;
-                                column++;
-                                state = token.type = Token.STRING;
-                                break;
-                            }
-                        }*/
                         token.type = Token.OPERATOR;
                         if (ch == '@' || ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';') {
                             index++;
@@ -170,7 +103,7 @@ public class Spin1TokenStream extends TokenStream {
                     if (ch == '\r' || ch == '\n') {
                         state = Token.START;
                         hiddenTokens.add(token);
-                        if (comments) {
+                        if (!skipComments) {
                             return token;
                         }
                         index--;
@@ -192,7 +125,7 @@ public class Spin1TokenStream extends TokenStream {
                         if (nested == 0) {
                             state = Token.START;
                             hiddenTokens.add(token);
-                            if (comments) {
+                            if (!skipComments) {
                                 index++;
                                 column++;
                                 return token;
@@ -310,7 +243,7 @@ public class Spin1TokenStream extends TokenStream {
 
         if (state == Token.COMMENT || state == Token.BLOCK_COMMENT) {
             hiddenTokens.add(token);
-            return comments ? token : EOF_TOKEN;
+            return !skipComments ? token : EOF_TOKEN;
         }
 
         if (token == EOF_TOKEN) {
@@ -318,16 +251,6 @@ public class Spin1TokenStream extends TokenStream {
         }
 
         return token;
-    }
-
-    @Override
-    public String getSource(int start, int stop) {
-        return text.substring(start, stop + 1);
-    }
-
-    @Override
-    public List<Token> getHiddenTokens() {
-        return hiddenTokens;
     }
 
 }

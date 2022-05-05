@@ -81,7 +81,7 @@ public class Token {
         result.line = line;
         result.start = start < token.start ? start : token.start;
         result.stop = stop > token.stop ? stop : token.stop;
-        result.type = token.type;
+        result.type = type == token.type ? type : 0;
         result.text = getText() + token.getText();
         return result;
     }

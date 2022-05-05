@@ -87,7 +87,7 @@ public class Spin2Parser {
         if ("CON".equalsIgnoreCase(token.getText())) {
             ConstantsNode node = new ConstantsNode(root, token);
             node.addToken(token);
-            token = nextToken(true);
+            token = nextToken(false);
             if (token.type == Token.COMMENT) {
                 node.addDocument(token);
                 token = nextToken();
@@ -485,9 +485,9 @@ public class Spin2Parser {
             }
         }
 
-        boolean acceptComments = true;
+        boolean skipComments = false;
         while (true) {
-            Token token = nextToken(acceptComments);
+            Token token = nextToken(skipComments);
             if (token.type == Token.EOF) {
                 return;
             }
@@ -500,7 +500,7 @@ public class Spin2Parser {
                     node.addDocument(token);
                     continue;
                 }
-                acceptComments = false;
+                skipComments = true;
                 continue;
             }
             else if (token.type == Token.BLOCK_COMMENT) {
@@ -508,11 +508,11 @@ public class Spin2Parser {
                     node.addDocument(token);
                     continue;
                 }
-                acceptComments = false;
+                skipComments = true;
                 continue;
             }
             else {
-                acceptComments = false;
+                skipComments = true;
             }
 
             if (parseSection(token)) {
@@ -567,7 +567,7 @@ public class Spin2Parser {
         while (true) {
             parseDatLine(parent, token);
 
-            token = nextToken();
+            token = nextPAsmToken();
             if (token.type == Token.EOF) {
                 return;
             }
@@ -583,9 +583,9 @@ public class Spin2Parser {
         Node node = new DataNode(root);
         node.addToken(start);
 
-        boolean acceptComments = true;
+        boolean skipComments = false;
         while (true) {
-            Token token = nextToken(acceptComments);
+            Token token = nextPAsmToken(skipComments);
             if (token.type == Token.EOF) {
                 return;
             }
@@ -603,7 +603,7 @@ public class Spin2Parser {
                 return;
             }
             parseDatLine(node, token);
-            acceptComments = false;
+            skipComments = true;
         }
     }
 
@@ -615,7 +615,7 @@ public class Spin2Parser {
 
         while (true) {
             if (state != 0) {
-                token = nextToken();
+                token = nextPAsmToken();
             }
             if (token.type == Token.EOF || token.type == Token.NL) {
                 return;
@@ -750,27 +750,57 @@ public class Spin2Parser {
     }
 
     Token nextToken() {
-        return nextToken(false);
+        return nextToken(true);
     }
 
-    Token nextToken(boolean comments) {
-        Token token = stream.nextToken(comments);
+    Token nextToken(boolean skipComments) {
+        Token token = stream.nextToken(skipComments);
         if ("@".equals(token.getText())) {
-            Token nextToken = stream.peekNext(comments);
+            Token nextToken = stream.peekNext(true);
             if (token.isAdjacent(nextToken)) {
-                token = token.merge(stream.nextToken());
+                token = token.merge(stream.nextToken(true));
+                if (nextToken.type == Token.STRING) {
+                    token.type = Token.STRING;
+                }
                 if (".".equals(nextToken.getText())) {
-                    nextToken = stream.peekNext(comments);
+                    nextToken = stream.peekNext(true);
                     if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                        token = token.merge(stream.nextToken());
+                        token = token.merge(stream.nextToken(true));
                     }
                 }
             }
         }
         else if (".".equals(token.getText())) {
-            Token nextToken = stream.peekNext(comments);
+            Token nextToken = stream.peekNext(true);
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
+                token = token.merge(stream.nextToken(true));
+            }
+        }
+        return token;
+    }
+
+    Token nextPAsmToken() {
+        return nextPAsmToken(true);
+    }
+
+    Token nextPAsmToken(boolean skipComments) {
+        Token token = stream.nextToken(skipComments);
+        if ("@".equals(token.getText())) {
+            Token nextToken = stream.peekNext(true);
+            if (token.isAdjacent(nextToken)) {
+                token = token.merge(stream.nextToken(true));
+                if (".".equals(nextToken.getText())) {
+                    nextToken = stream.peekNext(true);
+                    if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                        token = token.merge(stream.nextToken(true));
+                    }
+                }
+            }
+        }
+        else if (".".equals(token.getText())) {
+            Token nextToken = stream.peekNext(true);
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken(true));
             }
         }
         return token;

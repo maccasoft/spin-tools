@@ -10,62 +10,17 @@
 
 package com.maccasoft.propeller.spin2;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
 
 public class Spin2TokenStream extends TokenStream {
 
-    private final Token EOF_TOKEN = new Token(null, 0, Token.EOF);
-
-    final String text;
-
-    int index = 0;
-    int line = 0;
-    int column = 0;
-
-    boolean comments;
-
-    List<Token> hiddenTokens = new ArrayList<Token>();
-
     public Spin2TokenStream(String text) {
-        this.text = text;
-        if (text == null) {
-            throw new NullPointerException();
-        }
-    }
-
-    public void setComments(boolean comments) {
-        this.comments = comments;
+        super(text);
     }
 
     @Override
-    public Token peekNext() {
-        return peekNext(comments);
-    }
-
-    public Token peekNext(boolean comments) {
-        int saveIndex = index;
-        int saveLine = line;
-        int saveColumn = column;
-
-        Token token = nextToken(comments);
-
-        index = saveIndex;
-        line = saveLine;
-        column = saveColumn;
-
-        return token;
-    }
-
-    @Override
-    public Token nextToken() {
-        return nextToken(comments);
-    }
-
-    public Token nextToken(boolean comments) {
+    public Token nextToken(boolean skipComments) {
         int nested = 0;
         int state = Token.START;
         boolean escape = false;
@@ -152,7 +107,7 @@ public class Spin2TokenStream extends TokenStream {
                     if (ch == '\r' || ch == '\n') {
                         state = Token.START;
                         hiddenTokens.add(token);
-                        if (comments) {
+                        if (!skipComments) {
                             return token;
                         }
                         index--;
@@ -174,7 +129,7 @@ public class Spin2TokenStream extends TokenStream {
                         if (nested == 0) {
                             state = Token.START;
                             hiddenTokens.add(token);
-                            if (comments) {
+                            if (!skipComments) {
                                 index++;
                                 column++;
                                 return token;
@@ -290,7 +245,7 @@ public class Spin2TokenStream extends TokenStream {
 
         if (state == Token.COMMENT || state == Token.BLOCK_COMMENT) {
             hiddenTokens.add(token);
-            return comments ? token : EOF_TOKEN;
+            return !skipComments ? token : EOF_TOKEN;
         }
 
         if (token == EOF_TOKEN) {
@@ -298,21 +253,6 @@ public class Spin2TokenStream extends TokenStream {
         }
 
         return token;
-    }
-
-    public void reset() {
-        index = column = line = 0;
-        hiddenTokens.clear();
-    }
-
-    @Override
-    public String getSource(int start, int stop) {
-        return text.substring(start, stop + 1);
-    }
-
-    @Override
-    public List<Token> getHiddenTokens() {
-        return hiddenTokens;
     }
 
 }

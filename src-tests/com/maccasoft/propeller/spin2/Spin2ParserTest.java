@@ -28,7 +28,7 @@ class Spin2ParserTest {
             + ".label\n"
             + ""));
 
-        Assertions.assertEquals(".label", subject.nextToken().getText());
+        Assertions.assertEquals(".label", subject.nextPAsmToken().getText());
     }
 
     @Test
@@ -37,7 +37,7 @@ class Spin2ParserTest {
             + "@label\n"
             + ""));
 
-        Assertions.assertEquals("@label", subject.nextToken().getText());
+        Assertions.assertEquals("@label", subject.nextPAsmToken().getText());
     }
 
     @Test
@@ -46,7 +46,47 @@ class Spin2ParserTest {
             + "@.label\n"
             + ""));
 
-        Assertions.assertEquals("@.label", subject.nextToken().getText());
+        Assertions.assertEquals("@.label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
+    void testImmediateLabel() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "#label\n"
+            + ""));
+
+        Assertions.assertEquals("#", subject.nextPAsmToken().getText());
+        Assertions.assertEquals("label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
+    void testImmediateLocalLabel() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "#.label\n"
+            + ""));
+
+        Assertions.assertEquals("#", subject.nextPAsmToken().getText());
+        Assertions.assertEquals(".label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
+    void testAugmentedImmediateLabel() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "##label\n"
+            + ""));
+
+        Assertions.assertEquals("##", subject.nextPAsmToken().getText());
+        Assertions.assertEquals("label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
+    void testAugmentedImmediateLocalLabel() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "##.label\n"
+            + ""));
+
+        Assertions.assertEquals("##", subject.nextPAsmToken().getText());
+        Assertions.assertEquals(".label", subject.nextPAsmToken().getText());
     }
 
     @Test

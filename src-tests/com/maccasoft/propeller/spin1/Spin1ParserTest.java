@@ -50,6 +50,26 @@ class Spin1ParserTest {
     }
 
     @Test
+    void testImmediateLabel() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "#label\n"
+            + ""));
+
+        Assertions.assertEquals("#", subject.nextPAsmToken().getText());
+        Assertions.assertEquals("label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
+    void testImmediateLocalLabel() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "#:label\n"
+            + ""));
+
+        Assertions.assertEquals("#", subject.nextPAsmToken().getText());
+        Assertions.assertEquals(":label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
     void testRangeValue() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "a..b\n"
