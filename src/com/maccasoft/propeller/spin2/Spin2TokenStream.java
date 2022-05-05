@@ -51,7 +51,7 @@ public class Spin2TokenStream extends TokenStream {
                         token.type = Token.NL;
                         return token;
                     }
-                    if (ch == '\n') {
+                    else if (ch == '\n') {
                         column = 0;
                         line++;
                         index++;

@@ -39,8 +39,24 @@ public class Spin1TokenStream extends TokenStream {
                     token = new Token(this, index);
                     token.column = column;
                     token.line = line;
-                    if (ch == '\r' || ch == '\n') {
-                        state = token.type = Token.NL;
+                    if (ch == '\r') {
+                        column = 0;
+                        line++;
+                        index++;
+                        if (index < text.length()) {
+                            if (text.charAt(index) == '\n') {
+                                index++;
+                            }
+                        }
+                        token.type = Token.NL;
+                        return token;
+                    }
+                    else if (ch == '\n') {
+                        column = 0;
+                        line++;
+                        index++;
+                        token.type = Token.NL;
+                        return token;
                     }
                     else if (ch == '\'') { // Comment
                         state = token.type = Token.COMMENT;
@@ -51,11 +67,6 @@ public class Spin1TokenStream extends TokenStream {
                     }
                     else if (ch == '"') { // String
                         state = token.type = Token.STRING;
-                    }
-                    else if (ch == '`') { // Debug command
-                        token.type = Token.STRING;
-                        nested = 1;
-                        state = Token.DEBUG;
                     }
                     else if (ch == '$') { // Hex number
                         state = token.type = Token.NUMBER;
@@ -86,18 +97,6 @@ public class Spin1TokenStream extends TokenStream {
                         }
                         state = Token.OPERATOR;
                     }
-                    break;
-                case Token.NL:
-                    column = 0;
-                    line++;
-                    if (ch != '\r' && ch != '\n') {
-                        state = Token.START;
-                        return token;
-                    }
-                    if (ch == '\n' && text.charAt(index - 1) == '\r') {
-                        line--;
-                    }
-                    token.stop++;
                     break;
                 case Token.COMMENT:
                     if (ch == '\r' || ch == '\n') {
@@ -223,21 +222,6 @@ public class Spin1TokenStream extends TokenStream {
                     }
                     state = Token.START;
                     return token;
-                case Token.DEBUG:
-                    if (ch == '(') {
-                        nested++;
-                    }
-                    else if (ch == ')') {
-                        if (nested > 0) {
-                            nested--;
-                        }
-                        if (nested == 0) {
-                            state = Token.START;
-                            return token;
-                        }
-                    }
-                    token.stop++;
-                    break;
             }
         }
 

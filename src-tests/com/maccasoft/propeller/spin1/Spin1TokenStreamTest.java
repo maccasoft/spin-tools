@@ -694,6 +694,7 @@ class Spin1TokenStreamTest {
         assertEquals(0, subject.nextToken().line); // NL
         assertEquals(1, subject.nextToken().line); // b
         assertEquals(1, subject.nextToken().line); // NL
+        assertEquals(2, subject.nextToken().line); // NL
         assertEquals(3, subject.nextToken().line); // c
         assertEquals(3, subject.nextToken().line); // NL
     }
@@ -706,6 +707,7 @@ class Spin1TokenStreamTest {
         assertEquals(0, subject.nextToken().line); // NL
         assertEquals(1, subject.nextToken().line); // b
         assertEquals(1, subject.nextToken().line); // NL
+        assertEquals(2, subject.nextToken().line); // NL
         assertEquals(3, subject.nextToken().line); // c
         assertEquals(3, subject.nextToken().line); // NL
     }
@@ -718,6 +720,7 @@ class Spin1TokenStreamTest {
         assertEquals(0, subject.nextToken().line); // NL
         assertEquals(1, subject.nextToken().line); // b
         assertEquals(1, subject.nextToken().line); // NL
+        assertEquals(2, subject.nextToken().line); // NL
         assertEquals(3, subject.nextToken().line); // c
         assertEquals(3, subject.nextToken().line); // NL
     }
