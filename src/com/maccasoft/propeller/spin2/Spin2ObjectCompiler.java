@@ -367,7 +367,7 @@ public class Spin2ObjectCompiler {
                 hubAddress = (hubAddress + 3) & ~3;
             }
             if (line.getInstructionFactory() instanceof Fit) {
-                ((Fit) line.getInstructionFactory()).setDefaultLimit(hubMode ? 0x80000 : (cogCode ? 0x1F0 : 0x400));
+                ((Fit) line.getInstructionFactory()).setDefaultLimit(hubMode ? 0x80000 : (cogCode ? 0x1F8 : 0x400));
             }
 
             try {
@@ -396,8 +396,8 @@ public class Spin2ObjectCompiler {
                 }
             }
             else {
-                if (cogCode && address > 0x1F0 * 4) {
-                    logMessage(new CompilerException("cog code limit exceeded by " + ((address - 0x1F0 * 4 + 3) >> 2) + " long(s)", line.getData()));
+                if (cogCode && address > 0x1F8 * 4) {
+                    logMessage(new CompilerException("cog code limit exceeded by " + ((address - 0x1F8 * 4 + 3) >> 2) + " long(s)", line.getData()));
                 }
                 else if (!cogCode && address > 0x400 * 4) {
                     logMessage(new CompilerException("lut code limit exceeded by " + ((address - 0x400 * 4 + 3) >> 2) + " long(s)", line.getData()));
