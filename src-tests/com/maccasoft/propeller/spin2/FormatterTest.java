@@ -88,6 +88,23 @@ class FormatterTest {
     }
 
     @Test
+    void testFormatDatLargeLabelAndCondition() {
+        Formatter subject = new Spin2Formatter();
+        subject.setIsolateLargeLabels(true);
+        subject.setAdjustPAsmColumns(true);
+        String text = subject.format(""
+            + "DAT\n"
+            + "very_large_label_1\n"
+            + " if_z_and_nc mov a,#12\n"
+            + "");
+        Assertions.assertEquals(""
+            + "DAT\n"
+            + "very_large_label_1\n"
+            + "        if_z_and_nc mov     a, #12\n"
+            + "", text);
+    }
+
+    @Test
     void testFormatDatLocalLabels() {
         Formatter subject = new Spin2Formatter();
         subject.setIsolateLargeLabels(true);
@@ -435,6 +452,36 @@ class FormatterTest {
             + "\n"
             + "    #0, a, b[2], c, d\n"
             + "    #10[5], e, f\n"
+            + "", text);
+    }
+
+    @Test
+    void testKeepInlinePAsmBlankLines() {
+        Formatter subject = new Spin2Formatter();
+        subject.setKeepBlankLines(true);
+        String text = subject.format(""
+            + "PUB start()\n"
+            + "\n"
+            + " a:=1\n"
+            + "\n"
+            + " org\n"
+            + "\n"
+            + "      mov a,#12\n"
+            + " if_c drvnot #1\n"
+            + "\n"
+            + " end\n"
+            + "");
+        Assertions.assertEquals(""
+            + "PUB start()\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "    org\n"
+            + "\n"
+            + "                mov     a, #12\n"
+            + "        if_c    drvnot  #1\n"
+            + "\n"
+            + "    end\n"
             + "", text);
     }
 

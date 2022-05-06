@@ -829,6 +829,7 @@ public class EditorTab implements FindReplaceTarget {
 
         formatter.setKeepBlankLines(true);
         formatter.setPAsmColumns(8, 16, 24, 44, 52);
+        formatter.setInlinePAsmColumns(8, 16, 24, 44, 52);
         formatter.setAdjustPAsmColumns(true);
         formatter.setIsolateLargeLabels(true);
 

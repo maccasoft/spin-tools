@@ -29,6 +29,7 @@ public abstract class Formatter {
     int inlineInstructionColumn;
     int inlineArgumentsColumn;
     int inlineEffectsColumn;
+    int inlineCommentsColumn;
 
     boolean isolateLargeLabels;
     boolean keepBlankLines;
@@ -99,6 +100,7 @@ public abstract class Formatter {
         inlineInstructionColumn = 16;
         inlineArgumentsColumn = 24;
         inlineEffectsColumn = 36;
+        inlineCommentsColumn = 52;
     }
 
     public void setIsolateLargeLabels(boolean isolateLargeLabels) {
@@ -117,6 +119,14 @@ public abstract class Formatter {
         commentsColumn = comments;
     }
 
+    public void setInlinePAsmColumns(int condition, int instruction, int arguments, int effects, int comments) {
+        inlineConditionColumn = condition;
+        inlineInstructionColumn = instruction;
+        inlineArgumentsColumn = arguments;
+        inlineEffectsColumn = effects;
+        inlineCommentsColumn = comments;
+    }
+
     public void setAdjustPAsmColumns(boolean adjustPAsmColumns) {
         this.adjustPAsmColumns = adjustPAsmColumns;
     }
@@ -126,11 +136,12 @@ public abstract class Formatter {
     protected String format(TokenStream stream) {
         boolean blockSeparator = false;
 
-        stream.skipComments(false);
-
         if (adjustPAsmColumns) {
             computeDatColumns(stream);
         }
+
+        stream.reset();
+        stream.skipComments(false);
 
         while (true) {
             Token token = stream.peekNext();
@@ -278,10 +289,10 @@ public abstract class Formatter {
                                 if (label != null) {
                                     sb.append(label);
                                     if (isolateLargeLabels) {
-                                        if (condition == null && label.getText().length() > instructionColumn) {
+                                        if (condition == null && label.getText().length() >= instructionColumn) {
                                             sb.append(System.lineSeparator());
                                         }
-                                        else if (condition != null && label.getText().length() > conditionColumn) {
+                                        else if (condition != null && label.getText().length() >= conditionColumn) {
                                             sb.append(System.lineSeparator());
                                         }
                                     }
@@ -395,6 +406,9 @@ public abstract class Formatter {
         int conditionWidth = instructionColumn - conditionColumn;
         int inlineConditionWidth = inlineInstructionColumn - inlineConditionColumn;
 
+        stream.reset();
+        stream.skipComments(true);
+
         while (true) {
             Token token = stream.nextToken();
             if (token.type == Token.EOF) {
@@ -402,12 +416,13 @@ public abstract class Formatter {
             }
             if (token.type != Token.NL) {
                 if ("DAT".equalsIgnoreCase(token.getText())) {
-
-                    while (true) {
-                        token = stream.nextToken();
-                        if (token.type == Token.EOF) {
+                    while ((token = stream.nextToken()).type != Token.EOF) {
+                        if (token.type == Token.NL) {
                             break;
                         }
+                    }
+
+                    while ((token = stream.nextToken()).type != Token.EOF) {
                         if (token.type == Token.NL) {
                             token = stream.peekNext();
                             if (sections.contains(token.getText().toUpperCase())) {
@@ -418,16 +433,17 @@ public abstract class Formatter {
                             if (pasmLabel(token)) {
                                 Token label = token;
                                 if (":".equals(token.getText()) || ".".equals(token.getText())) {
-                                    token = stream.peekNext();
-                                    if (token.type != Token.NL && token.type != Token.EOF) {
+                                    token = stream.nextToken();
+                                    if (token.type == 0 && label.isAdjacent(token)) {
                                         label = label.merge(stream.nextToken());
+                                        token = stream.nextToken();
                                     }
-                                }
-                                if (!isolateLargeLabels) {
-                                    labelWidth = Math.max(labelWidth, label.getText().length() + 1);
                                 }
                                 if (token.type == Token.NL || token.type == Token.EOF) {
                                     break;
+                                }
+                                if (!isolateLargeLabels) {
+                                    labelWidth = Math.max(labelWidth, label.getText().length() + 1);
                                 }
                             }
 
@@ -439,11 +455,11 @@ public abstract class Formatter {
                                 }
                             }
 
-                            while ((token = stream.peekNext()).type != Token.NL) {
-                                if (token.type == Token.EOF) {
+                            while (token.type != Token.EOF) {
+                                if (token.type == Token.NL) {
                                     break;
                                 }
-                                stream.nextToken();
+                                token = stream.nextToken();
                             }
                         }
                     }
@@ -524,12 +540,13 @@ public abstract class Formatter {
         effectsColumn = ((effectsColumn + diff + 3) / 4) * 4;
         commentsColumn = ((commentsColumn + diff + 3) / 4) * 4;
 
-        //diff = inlineInstructionColumn;
+        diff = inlineInstructionColumn;
         inlineConditionColumn = ((inlineLabelWidth + 3) / 4) * 4;
         inlineInstructionColumn = ((inlineConditionColumn + inlineConditionWidth + 3) / 4) * 4;
         inlineArgumentsColumn = inlineInstructionColumn + 8;
         diff = inlineInstructionColumn > diff ? inlineInstructionColumn - diff : 0;
         inlineEffectsColumn = ((inlineEffectsColumn + diff + 3) / 4) * 4;
+        inlineCommentsColumn = ((inlineCommentsColumn + diff + 3) / 4) * 4;
     }
 
     void formatStatement(int indent, TokenStream stream, int column) {
@@ -576,6 +593,10 @@ public abstract class Formatter {
                     }
                     formatTokens(stream);
                     sb.append(System.lineSeparator());
+                    if (keepBlankLines && stream.peekNext().type == Token.NL) {
+                        stream.nextToken();
+                    }
+
                     formatInlinePAsm(stream);
                 }
                 else {
@@ -614,10 +635,33 @@ public abstract class Formatter {
             if (token.type == Token.EOF) {
                 break;
             }
+            if ("END".equalsIgnoreCase(stream.peekNext().getText())) {
+                break;
+            }
             if (token.type == Token.NL) {
+                if (keepBlankLines) {
+                    sb.append(System.lineSeparator());
+                }
                 stream.nextToken();
-                if ("END".equalsIgnoreCase(stream.peekNext().getText())) {
-                    break;
+            }
+            else if (token.type == Token.COMMENT) {
+                sb.alignToColumn(token.column);
+                sb.append(stream.nextToken());
+                sb.append(System.lineSeparator());
+                if (keepBlankLines && stream.peekNext().type == Token.NL) {
+                    stream.nextToken();
+                    if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                        break;
+                    }
+                }
+            }
+            else if (token.type == Token.BLOCK_COMMENT) {
+                sb.append(stream.nextToken());
+                if (stream.peekNext().type == Token.NL) {
+                    sb.append(System.lineSeparator());
+                    if (keepBlankLines) {
+                        stream.nextToken();
+                    }
                 }
             }
             else {
@@ -652,10 +696,10 @@ public abstract class Formatter {
                     if (label != null) {
                         sb.append(label);
                         if (isolateLargeLabels) {
-                            if (condition == null && label.getText().length() > instructionColumn) {
+                            if (condition == null && label.getText().length() >= instructionColumn) {
                                 sb.append(System.lineSeparator());
                             }
-                            else if (condition != null && label.getText().length() > conditionColumn) {
+                            else if (condition != null && label.getText().length() >= conditionColumn) {
                                 sb.append(System.lineSeparator());
                             }
                         }
@@ -678,6 +722,9 @@ public abstract class Formatter {
                     }
                 }
                 sb.append(System.lineSeparator());
+                if (keepBlankLines && stream.peekNext().type == Token.NL) {
+                    stream.nextToken();
+                }
             }
         }
     }
@@ -687,10 +734,11 @@ public abstract class Formatter {
         int stop = 0;
         boolean addSpace = false;
 
-        while ((token = stream.peekNext()).type != Token.NL) {
-            if (token.type == Token.EOF) {
+        while ((token = stream.peekNext()).type != Token.EOF) {
+            if (token.type == Token.NL) {
                 break;
             }
+            token = stream.nextToken();
             if (pasmModifier(token)) {
                 if (sb.column >= effectsColumn) {
                     sb.append(" ");
@@ -698,8 +746,9 @@ public abstract class Formatter {
                 else {
                     sb.alignToColumn(effectsColumn);
                 }
-                while ((token = stream.peekNext()).type != Token.NL) {
-                    if (token.type == Token.EOF) {
+                sb.append(token);
+                while ((token = stream.peekNext()).type != Token.EOF) {
+                    if (token.type == Token.NL) {
                         break;
                     }
                     if (token.type == Token.COMMENT) {
@@ -708,15 +757,11 @@ public abstract class Formatter {
                     }
                     else {
                         sb.append(stream.nextToken().getText().toLowerCase());
-                        if (",".equals(token.getText())) {
-                            sb.append(" ");
-                        }
                     }
                 }
                 break;
             }
             else if (token.type == Token.BLOCK_COMMENT) {
-                token = stream.nextToken();
                 if (stream.peekNext().type == Token.NL) {
                     sb.alignToTabStop();
                     sb.append(token);
@@ -732,52 +777,56 @@ public abstract class Formatter {
                     }
                 }
             }
-            else {
-                if (token.type == Token.COMMENT) {
-                    sb.alignToColumn(commentsColumn);
-                    sb.append(token);
-                }
-                else if (token.type == Token.OPERATOR) {
-                    addSpace = ")".equals(token.getText()) || "]".equals(token.getText());
-                    switch (token.getText()) {
-                        case "(":
-                        case "[":
-                        case ")":
-                        case "]":
-                        case "#":
-                        case "##":
-                        case ".":
-                        case "@":
-                        case "\\":
-                        case ":":
-                            sb.append(token);
-                            break;
-                        case ",":
-                            sb.append(token);
-                            sb.append(" ");
-                            break;
-                        default:
-                            sb.append(" ");
-                            sb.append(token);
-                            sb.append(" ");
-                            break;
-                    }
-                }
-                else {
-                    if (addSpace) {
-                        sb.append(" ");
-                    }
-                    if (token.type == Token.NUMBER) {
-                        sb.append(token.getText().toUpperCase());
-                    }
-                    else {
+            else if (token.type == Token.COMMENT) {
+                sb.alignToColumn(commentsColumn);
+                sb.append(token);
+            }
+            else if (token.type == Token.OPERATOR) {
+                addSpace = ")".equals(token.getText()) || "]".equals(token.getText());
+                switch (token.getText()) {
+                    case "(":
+                    case "[":
+                    case ")":
+                    case "]":
+                    case "#":
+                    case "##":
+                    case ".":
+                    case "@":
+                    case "\\":
+                    case ":":
                         sb.append(token);
-                    }
+                        break;
+                    case ",":
+                        sb.append(token);
+                        sb.append(" ");
+                        break;
+                    default:
+                        sb.append(" ");
+                        sb.append(token);
+                        sb.append(" ");
+                        break;
+                }
+            }
+            else {
+                if (addSpace) {
+                    sb.append(" ");
+                }
+                if (token.type == Token.NUMBER) {
+                    sb.append(token.getText().toUpperCase());
                     addSpace = true;
                 }
-                stop = token.stop;
-                stream.nextToken();
+                else {
+                    sb.append(token);
+                    if ("and".equalsIgnoreCase(token.getText()) || "or".equalsIgnoreCase(token.getText()) || "not".equalsIgnoreCase(token.getText())) {
+                        sb.append(" ");
+                        addSpace = false;
+                    }
+                    else {
+                        addSpace = true;
+                    }
+                }
             }
+            stop = token.stop;
         }
     }
 
@@ -786,12 +835,12 @@ public abstract class Formatter {
         int stop = 0;
         boolean addSpace = false;
 
-        while ((token = stream.peekNext()).type != Token.NL) {
-            if (token.type == Token.EOF) {
+        while ((token = stream.peekNext()).type != Token.EOF) {
+            if (token.type == Token.NL) {
                 break;
             }
+            token = stream.nextToken();
             if (token.type == Token.BLOCK_COMMENT) {
-                token = stream.nextToken();
                 if (stream.peekNext().type == Token.NL) {
                     sb.alignToTabStop();
                     sb.append(token);
@@ -807,51 +856,64 @@ public abstract class Formatter {
                     }
                 }
             }
-            else {
-                if (token.type == Token.COMMENT) {
-                    sb.alignToTabStop();
-                    sb.append(token);
-                }
-                else if (token.type == Token.OPERATOR) {
-                    addSpace = ")".equals(token.getText()) || "]".equals(token.getText());
-                    switch (token.getText()) {
-                        case "(":
-                        case "[":
-                        case ")":
-                        case "]":
-                        case "#":
-                        case "##":
-                        case ".":
-                        case "@":
-                        case "\\":
-                            sb.append(token);
-                            break;
-                        case ",":
-                            sb.append(token);
-                            sb.append(" ");
-                            break;
-                        default:
-                            sb.append(" ");
-                            sb.append(token);
-                            sb.append(" ");
-                            break;
-                    }
-                }
-                else {
-                    if (addSpace) {
+            else if (token.type == Token.COMMENT) {
+                sb.alignToTabStop();
+                sb.append(token);
+            }
+            else if (token.type == Token.OPERATOR) {
+                if (addSpace) {
+                    if ("@".equals(token.getText())) {
                         sb.append(" ");
                     }
-                    if (token.type == Token.NUMBER) {
-                        sb.append(token.getText().toUpperCase());
-                    }
-                    else {
+                }
+                addSpace = ")".equals(token.getText()) || "]".equals(token.getText());
+                switch (token.getText()) {
+                    case "(":
+                    case "[":
+                    case ")":
+                    case "]":
+                    case "#":
+                    case "##":
+                    case ".":
+                    case "@":
+                    case "\\":
+                    case "--":
+                    case "++":
+                    case "~":
+                    case "~~":
                         sb.append(token);
-                    }
+                        break;
+                    case ",":
+                        sb.append(token);
+                        sb.append(" ");
+                        break;
+                    default:
+                        sb.append(" ");
+                        sb.append(token);
+                        sb.append(" ");
+                        break;
+                }
+            }
+            else {
+                if (addSpace) {
+                    sb.append(" ");
+                }
+                if (token.type == Token.NUMBER) {
+                    sb.append(token.getText().toUpperCase());
                     addSpace = true;
                 }
-                stop = token.stop;
-                stream.nextToken();
+                else {
+                    sb.append(token);
+                    if ("and".equalsIgnoreCase(token.getText()) || "or".equalsIgnoreCase(token.getText()) || "not".equalsIgnoreCase(token.getText())) {
+                        sb.append(" ");
+                        addSpace = false;
+                    }
+                    else {
+                        addSpace = true;
+                    }
+                }
             }
+            stop = token.stop;
         }
     }
 

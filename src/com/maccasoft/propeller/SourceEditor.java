@@ -1804,6 +1804,10 @@ public class SourceEditor {
             styledText.setText(text);
         }
 
+        if (caretLine > styledText.getLineCount()) {
+            caretLine = styledText.getLineCount() - 1;
+        }
+
         styledText.setTopPixel(topPixel);
         styledText.setCaretOffset(styledText.getOffsetAtLine(caretLine) + caretColumn);
 
