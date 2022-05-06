@@ -611,7 +611,6 @@ public class Spin2Parser {
         int state = 0;
         DataLineNode parent = new DataLineNode(node);
         ParameterNode parameter = null;
-        Node child = null;
 
         while (true) {
             if (state != 0) {
@@ -628,7 +627,6 @@ public class Spin2Parser {
                     if ("debug".equalsIgnoreCase(token.getText())) {
                         parent.instruction = new Node(parent);
                         parent.instruction.addToken(token);
-                        child = parent;
                         state = 9;
                         break;
                     }
@@ -649,13 +647,6 @@ public class Spin2Parser {
                     state = 2;
                     break;
                 case 2:
-                    if ("debug".equalsIgnoreCase(token.getText())) {
-                        parent.instruction = new Node(parent);
-                        parent.instruction.addToken(token);
-                        child = parent;
-                        state = 9;
-                        break;
-                    }
                     if (Spin2Model.isCondition(token.getText())) {
                         parent.condition = new Node(parent);
                         parent.condition.addToken(token);
@@ -664,86 +655,57 @@ public class Spin2Parser {
                     }
                     // fall-through
                 case 3:
-                    if ("debug".equalsIgnoreCase(token.getText())) {
-                        parent.instruction = new Node(parent);
-                        parent.instruction.addToken(token);
-                        child = parent;
-                        state = 9;
-                        break;
-                    }
-                    if (Spin2Model.isInstruction(token.getText()) || Spin2Model.isPAsmType(token.getText())) {
-                        parent.instruction = new Node(parent);
-                        parent.instruction.addToken(token);
-                        state = 4;
-                        break;
-                    }
-                    child = new ErrorNode(parent, parent.condition == null ? "invalid condition or instruction" : "invalid instruction");
-                    child.addToken(token);
-                    child = parent;
-                    state = 9;
+                    parent.instruction = new Node(parent);
+                    parent.instruction.addToken(token);
+                    state = "debug".equalsIgnoreCase(token.getText()) ? 9 : 4;
                     break;
                 case 4:
                     if (Spin2Model.isModifier(token.getText())) {
                         parent.modifier = new Node(parent);
                         parent.modifier.addToken(token);
-                        state = 5;
+                        state = 6;
                         break;
                     }
                     parameter = new ParameterNode(parent);
                     parameter.addToken(token);
                     parent.parameters.add(parameter);
-                    state = 7;
+                    state = 5;
                     break;
                 case 5:
                     if (",".equals(token.getText())) {
-                        parent.modifier.addToken(token);
-                        state = 6;
-                        break;
-                    }
-                    child = new ErrorNode(parent, "Syntax error");
-                    child.addToken(token);
-                    state = 9;
-                    break;
-                case 6:
-                    if (Spin2Model.isModifier(token.getText())) {
-                        parent.modifier.addToken(token);
-                        state = 5;
-                        break;
-                    }
-                    child = new ErrorNode(parent, "Invalid modifier");
-                    child.addToken(token);
-                    state = 9;
-                    break;
-                case 7:
-                    if (",".equals(token.getText())) {
                         parameter = new ParameterNode(parent);
                         parent.parameters.add(parameter);
+                        parent.addToken(token);
                         break;
                     }
                     if (Spin2Model.isModifier(token.getText())) {
                         parent.modifier = new Node(parent);
                         parent.modifier.addToken(token);
-                        state = 5;
+                        state = 6;
                         break;
                     }
                     if ("[".equals(token.getText())) {
                         parameter.count = new ExpressionNode();
                         parameter.addChild(parameter.count);
-                        state = 10;
-                        break;
-                    }
-                    parameter.addToken(token);
-                    break;
-                case 9:
-                    child.addToken(token);
-                    break;
-                case 10:
-                    if ("]".equals(token.getText())) {
                         parent.addToken(token);
                         state = 7;
                         break;
                     }
+                    parameter.addToken(token);
+                    break;
+                case 6:
+                    parent.modifier.addToken(token);
+                    break;
+                case 7:
+                    if ("]".equals(token.getText())) {
+                        parent.addToken(token);
+                        state = 5;
+                        break;
+                    }
                     parameter.count.addToken(token);
+                    break;
+                case 9:
+                    parent.addToken(token);
                     break;
             }
         }

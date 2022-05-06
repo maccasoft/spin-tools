@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.DataLineNode;
-import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.Node;
 
 class Spin1ParseDatLineTest {
@@ -140,48 +139,6 @@ class Spin1ParseDatLineTest {
     }
 
     @Test
-    void testUnknownCondition() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "DAT\n"
-            + "label   if_c1   mov     a, b    wz\n"
-            + ""));
-
-        Node root = subject.parse();
-        DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
-
-        Assertions.assertEquals("label", line0.label.getText());
-        Assertions.assertNull(line0.condition);
-        Assertions.assertNull(line0.instruction);
-        Assertions.assertEquals(0, line0.parameters.size());
-        Assertions.assertNull(line0.modifier);
-
-        Assertions.assertEquals(ErrorNode.class, line0.getChild(line0.getChilds().size() - 1).getClass());
-
-        Assertions.assertEquals("label   if_c1   mov     a, b    wz", line0.getText());
-    }
-
-    @Test
-    void testUnknownInstruction() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "DAT\n"
-            + "label   if_c    mov1    a, b    wz\n"
-            + ""));
-
-        Node root = subject.parse();
-        DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
-
-        Assertions.assertEquals("label", line0.label.getText());
-        Assertions.assertEquals("if_c", line0.condition.getText());
-        Assertions.assertNull(line0.instruction);
-        Assertions.assertEquals(0, line0.parameters.size());
-        Assertions.assertNull(line0.modifier);
-
-        Assertions.assertEquals(ErrorNode.class, line0.getChild(line0.getChilds().size() - 1).getClass());
-
-        Assertions.assertEquals("label   if_c    mov1    a, b    wz", line0.getText());
-    }
-
-    @Test
     void testUnknownModifierParsedAsParameter() {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "DAT\n"
@@ -200,29 +157,6 @@ class Spin1ParseDatLineTest {
         Assertions.assertNull(line0.modifier);
 
         Assertions.assertEquals("label   if_c    mov     a, b    wz1", line0.getText());
-    }
-
-    @Test
-    void testUnknownModifier() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "DAT\n"
-            + "label   if_c    mov     a, b    wz,wc1\n"
-            + ""));
-
-        Node root = subject.parse();
-        DataLineNode line0 = (DataLineNode) root.getChild(0).getChild(0);
-
-        Assertions.assertEquals("label", line0.label.getText());
-        Assertions.assertEquals("if_c", line0.condition.getText());
-        Assertions.assertEquals("mov", line0.instruction.getText());
-        Assertions.assertEquals(2, line0.parameters.size());
-        Assertions.assertEquals("a", line0.parameters.get(0).getText());
-        Assertions.assertEquals("b", line0.parameters.get(1).getText());
-        Assertions.assertEquals("wz,", line0.modifier.getText());
-
-        Assertions.assertEquals(ErrorNode.class, line0.getChild(line0.getChilds().size() - 1).getClass());
-
-        Assertions.assertEquals("label   if_c    mov     a, b    wz,wc1", line0.getText());
     }
 
     @Test
