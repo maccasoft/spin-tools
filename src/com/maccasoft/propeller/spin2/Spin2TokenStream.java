@@ -191,20 +191,172 @@ public class Spin2TokenStream extends TokenStream {
                         state = Token.START;
                         return token;
                     }
-
                     if (ch == '=') {
-                        if (index + 1 < text.length()) {
-                            char ch1 = text.charAt(index + 1);
-                            if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '=') {
-                                state = Token.START;
-                                return token;
+                        if ((token.stop - token.start) == 6) {
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'A') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'D') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'D') {
+                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'B') {
+                                            if (Character.toUpperCase(text.charAt(token.start + 4)) == 'I') {
+                                                if (Character.toUpperCase(text.charAt(token.start + 5)) == 'T') {
+                                                    if (Character.toUpperCase(text.charAt(token.start + 6)) == 'S') {
+                                                        token.stop++;
+                                                        token.type = Token.OPERATOR;
+                                                        index++;
+                                                        column++;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'P') {
+                                            if (Character.toUpperCase(text.charAt(token.start + 4)) == 'I') {
+                                                if (Character.toUpperCase(text.charAt(token.start + 5)) == 'N') {
+                                                    if (Character.toUpperCase(text.charAt(token.start + 6)) == 'S') {
+                                                        token.stop++;
+                                                        token.type = Token.OPERATOR;
+                                                        index++;
+                                                        column++;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
-                        token.stop++;
-                        index++;
-                        column++;
+                        else if ((token.stop - token.start) == 4) {
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'Z') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'E') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'R') {
+                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'O') {
+                                            if (Character.toUpperCase(text.charAt(token.start + 4)) == 'X') {
+                                                token.stop++;
+                                                token.type = Token.OPERATOR;
+                                                index++;
+                                                column++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'S') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'I') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'G') {
+                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'N') {
+                                            if (Character.toUpperCase(text.charAt(token.start + 4)) == 'X') {
+                                                token.stop++;
+                                                token.type = Token.OPERATOR;
+                                                index++;
+                                                column++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'T') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'R') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'U') {
+                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'N') {
+                                            if (Character.toUpperCase(text.charAt(token.start + 4)) == 'C') {
+                                                token.stop++;
+                                                token.type = Token.OPERATOR;
+                                                index++;
+                                                column++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else if ((token.stop - token.start) == 3) {
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'S') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'C') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'A') {
+                                        if (Character.toUpperCase(text.charAt(token.start + 3)) == 'S') {
+                                            token.stop++;
+                                            token.type = Token.OPERATOR;
+                                            index++;
+                                            column++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else if ((token.stop - token.start) == 2) {
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'A') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'N') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'D') {
+                                        token.stop++;
+                                        token.type = Token.OPERATOR;
+                                        index++;
+                                        column++;
+                                    }
+                                }
+                            }
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'X') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'O') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'R') {
+                                        token.stop++;
+                                        token.type = Token.OPERATOR;
+                                        index++;
+                                        column++;
+                                    }
+                                }
+                            }
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'S') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'A') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'R') {
+                                        token.stop++;
+                                        token.type = Token.OPERATOR;
+                                        index++;
+                                        column++;
+                                    }
+                                }
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'C') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'A') {
+                                        token.stop++;
+                                        token.type = Token.OPERATOR;
+                                        index++;
+                                        column++;
+                                    }
+                                }
+                            }
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'R') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'O') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'R') {
+                                        token.stop++;
+                                        token.type = Token.OPERATOR;
+                                        index++;
+                                        column++;
+                                    }
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'L') {
+                                        token.stop++;
+                                        token.type = Token.OPERATOR;
+                                        index++;
+                                        column++;
+                                    }
+                                }
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'E') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'V') {
+                                        token.stop++;
+                                        token.type = Token.OPERATOR;
+                                        index++;
+                                        column++;
+                                    }
+                                }
+                            }
+                        }
+                        else if ((token.stop - token.start) == 1) {
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'O') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'R') {
+                                    token.stop++;
+                                    token.type = Token.OPERATOR;
+                                    index++;
+                                    column++;
+                                }
+                            }
+                        }
                     }
-
                     state = Token.START;
                     return token;
                 case Token.OPERATOR:

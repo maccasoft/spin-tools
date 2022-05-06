@@ -379,6 +379,24 @@ class Spin1TokenStreamTest {
     }
 
     @Test
+    void testNotOperator() {
+        Spin1TokenStream subject = new Spin1TokenStream("a NOT b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("NOT", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testNotAssignmentOperator() {
+        Spin1TokenStream subject = new Spin1TokenStream("a NOT= b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("NOT=", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
     void testEqualOperator() {
         Spin1TokenStream subject = new Spin1TokenStream("a == b");
 

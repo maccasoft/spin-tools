@@ -420,7 +420,7 @@ class Spin2TokenStreamTest {
     }
 
     @Test
-    void testAndAssignmentOperator2() {
+    void testAndOperator2Assignment() {
         Spin2TokenStream subject = new Spin2TokenStream("a &&= b");
 
         assertEquals("a", subject.nextToken().getText());
@@ -461,6 +461,42 @@ class Spin2TokenStreamTest {
 
         assertEquals("a", subject.nextToken().getText());
         assertEquals("OR=", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testScasOperator() {
+        Spin2TokenStream subject = new Spin2TokenStream("a SCAS b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("SCAS", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testScasOperatorAssignment() {
+        Spin2TokenStream subject = new Spin2TokenStream("a SCAS= b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("SCAS=", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testAddbitsOperator() {
+        Spin2TokenStream subject = new Spin2TokenStream("a ADDBITS b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("ADDBITS", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testAddbitsOperatorAssignment() {
+        Spin2TokenStream subject = new Spin2TokenStream("a ADDBITS= b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("ADDBITS=", subject.nextToken().getText());
         assertEquals("b", subject.nextToken().getText());
     }
 

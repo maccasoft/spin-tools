@@ -189,6 +189,17 @@ public class Spin1TokenStream extends TokenStream {
                                 if (Character.toUpperCase(text.charAt(token.start + 1)) == 'N') {
                                     if (Character.toUpperCase(text.charAt(token.start + 2)) == 'D') {
                                         token.stop++;
+                                        token.type = Token.OPERATOR;
+                                        index++;
+                                        column++;
+                                    }
+                                }
+                            }
+                            if (Character.toUpperCase(text.charAt(token.start)) == 'N') {
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'O') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'T') {
+                                        token.stop++;
+                                        token.type = Token.OPERATOR;
                                         index++;
                                         column++;
                                     }
@@ -199,6 +210,7 @@ public class Spin1TokenStream extends TokenStream {
                             if (Character.toUpperCase(text.charAt(token.start)) == 'O') {
                                 if (Character.toUpperCase(text.charAt(token.start + 1)) == 'R') {
                                     token.stop++;
+                                    token.type = Token.OPERATOR;
                                     index++;
                                     column++;
                                 }
