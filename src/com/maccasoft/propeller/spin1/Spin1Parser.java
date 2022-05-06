@@ -705,7 +705,12 @@ public class Spin1Parser {
 
     Token nextToken(boolean skipComments) {
         Token token = stream.nextToken(skipComments);
-        if ("@".equals(token.getText())) {
+        if (token.type == Token.NL) {
+            while (stream.peekNext().type == Token.NL) {
+                stream.nextToken();
+            }
+        }
+        else if ("@".equals(token.getText())) {
             Token nextToken = stream.peekNext(true);
             if (token.isAdjacent(nextToken)) {
                 token = token.merge(stream.nextToken(true));
@@ -735,7 +740,12 @@ public class Spin1Parser {
 
     Token nextPAsmToken(boolean skipComments) {
         Token token = stream.nextToken(skipComments);
-        if ("@".equals(token.getText())) {
+        if (token.type == Token.NL) {
+            while (stream.peekNext().type == Token.NL) {
+                stream.nextToken();
+            }
+        }
+        else if ("@".equals(token.getText())) {
             Token nextToken = stream.peekNext(true);
             if (token.isAdjacent(nextToken)) {
                 token = token.merge(stream.nextToken(true));
