@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -142,6 +142,7 @@ public abstract class Spin2InstructionObject {
         conditions.put("if_le", 0b1110);
         conditions.put("if_be", 0b1110);
         conditions.put("if_not_00", 0b1110);
+        conditions.put("if_always", 0b1111);
     }
 
     // Mod
