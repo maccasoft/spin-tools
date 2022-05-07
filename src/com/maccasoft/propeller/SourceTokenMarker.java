@@ -543,7 +543,7 @@ public abstract class SourceTokenMarker {
                         if (node.identifier != null) {
                             String text = objectNode.name.getText() + "." + node.identifier.getText();
                             if (text.toUpperCase().contains(token)) {
-                                proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                                proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
                             }
                         }
                     }
@@ -553,7 +553,7 @@ public abstract class SourceTokenMarker {
                         if (node.identifier != null) {
                             String text = objectNode.name.getText() + "." + node.identifier.getText();
                             if (text.toUpperCase().contains(token)) {
-                                proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                                proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
                             }
                         }
                     }
