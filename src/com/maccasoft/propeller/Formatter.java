@@ -40,6 +40,9 @@ public abstract class Formatter {
         int column = 0;
         StringBuilder sb = new StringBuilder();
 
+        int[] tabstops;
+        int tabspaces = 4;
+
         public void append(String s) {
             sb.append(s);
             if (s.equals(System.lineSeparator())) {
@@ -56,11 +59,26 @@ public abstract class Formatter {
         }
 
         public void alignToTabStop() {
-            int next = ((column + 3) / 4) * 4;
+            int next = getNextTabStop(column);
             while (column < next) {
                 sb.append(" ");
                 column++;
             }
+        }
+
+        public int getNextTabStop(int column) {
+            int next = ((column + tabspaces - 1) / tabspaces) * tabspaces;
+            if (tabstops != null) {
+                int i = 0;
+                while (i < tabstops.length) {
+                    if (tabstops[i] >= column) {
+                        next = tabstops[i];
+                        break;
+                    }
+                    i++;
+                }
+            }
+            return next;
         }
 
         public void alignToColumn(int c) {
@@ -101,6 +119,10 @@ public abstract class Formatter {
         inlineArgumentsColumn = 24;
         inlineEffectsColumn = 36;
         inlineCommentsColumn = 52;
+    }
+
+    public void setTabSpaces(int n) {
+        sb.tabspaces = n;
     }
 
     public void setIsolateLargeLabels(boolean isolateLargeLabels) {
@@ -200,7 +222,7 @@ public abstract class Formatter {
                             if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                                 break;
                             }
-                            formatStatement(4, stream, token.column);
+                            formatStatement(sb.tabspaces, stream, token.column);
                         }
                     }
                 }
@@ -215,6 +237,10 @@ public abstract class Formatter {
                     }
                     if (token.type == Token.NL) {
                         sb.append(System.lineSeparator());
+                        stream.nextToken();
+                        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                            continue;
+                        }
                     }
 
                     while (true) {
@@ -541,20 +567,20 @@ public abstract class Formatter {
         stream.reset();
 
         int diff = instructionColumn;
-        conditionColumn = ((labelWidth + 3) / 4) * 4;
-        instructionColumn = ((conditionColumn + conditionWidth + 3) / 4) * 4;
-        argumentsColumn = instructionColumn + 8;
+        conditionColumn = sb.getNextTabStop(labelWidth);
+        instructionColumn = sb.getNextTabStop(conditionColumn + conditionWidth);
+        argumentsColumn = sb.getNextTabStop(instructionColumn + 8);
         diff = instructionColumn > diff ? instructionColumn - diff : 0;
-        effectsColumn = ((effectsColumn + diff + 3) / 4) * 4;
-        commentsColumn = ((commentsColumn + diff + 3) / 4) * 4;
+        effectsColumn = sb.getNextTabStop(effectsColumn + diff);
+        commentsColumn = sb.getNextTabStop(commentsColumn + diff);
 
         diff = inlineInstructionColumn;
-        inlineConditionColumn = ((inlineLabelWidth + 3) / 4) * 4;
-        inlineInstructionColumn = ((inlineConditionColumn + inlineConditionWidth + 3) / 4) * 4;
-        inlineArgumentsColumn = inlineInstructionColumn + 8;
+        inlineConditionColumn = sb.getNextTabStop(inlineLabelWidth);
+        inlineInstructionColumn = sb.getNextTabStop(inlineConditionColumn + inlineConditionWidth);
+        inlineArgumentsColumn = sb.getNextTabStop(inlineInstructionColumn + 8);
         diff = inlineInstructionColumn > diff ? inlineInstructionColumn - diff : 0;
-        inlineEffectsColumn = ((inlineEffectsColumn + diff + 3) / 4) * 4;
-        inlineCommentsColumn = ((inlineCommentsColumn + diff + 3) / 4) * 4;
+        inlineEffectsColumn = sb.getNextTabStop(inlineEffectsColumn + diff);
+        inlineCommentsColumn = sb.getNextTabStop(inlineCommentsColumn + diff);
     }
 
     void formatStatement(int indent, TokenStream stream, int column) {
@@ -571,7 +597,7 @@ public abstract class Formatter {
             }
             else if (token.type == Token.COMMENT) {
                 if (token.column != 0) {
-                    sb.alignToColumn(indentNext ? (indent + 4) : indent);
+                    sb.alignToColumn(indentNext ? (indent + sb.tabspaces) : indent);
                 }
                 sb.append(stream.nextToken());
                 sb.append(System.lineSeparator());
@@ -612,10 +638,10 @@ public abstract class Formatter {
                     }
                     if (token.column > column && indentNext) {
                         if (caseNext) {
-                            formatCaseStatement(indent + 4, stream, token.column);
+                            formatCaseStatement(indent + sb.tabspaces, stream, token.column);
                         }
                         else {
-                            formatStatement(indent + 4, stream, token.column);
+                            formatStatement(indent + sb.tabspaces, stream, token.column);
                         }
                         indentNext = false;
                     }
@@ -648,7 +674,7 @@ public abstract class Formatter {
                 if (keepBlankLines && stream.peekNext().type == Token.NL) {
                     stream.nextToken();
                 }
-                formatStatement(indent + 4, stream, column + 1);
+                formatStatement(indent + sb.tabspaces, stream, column + 1);
             }
             else if (token.type == Token.COMMENT) {
                 sb.alignToColumn(indent);
@@ -676,7 +702,7 @@ public abstract class Formatter {
                 }
 
                 sb.alignToColumn(indent);
-                formatTokens(stream, true);
+                formatCaseTokens(stream);
 
                 token = stream.peekNext();
                 while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
@@ -796,7 +822,19 @@ public abstract class Formatter {
         }
     }
 
+    void formatTokens(TokenStream stream) {
+        formatTokens(stream, 0, 0);
+    }
+
+    void formatCaseTokens(TokenStream stream) {
+        formatTokens(stream, 0, 1);
+    }
+
     void formatPAsmTokens(TokenStream stream, int effectsColumn) {
+        formatTokens(stream, effectsColumn, 2);
+    }
+
+    private void formatTokens(TokenStream stream, int effectsColumn, int type) {
         Token token;
         int stop = 0;
         boolean addSpace = false;
@@ -806,7 +844,7 @@ public abstract class Formatter {
                 break;
             }
             token = stream.nextToken();
-            if (pasmModifier(token)) {
+            if (type == 2 && pasmModifier(token)) {
                 if (sb.column >= effectsColumn) {
                     sb.append(" ");
                     sb.alignToTabStop();
@@ -829,89 +867,6 @@ public abstract class Formatter {
                 }
                 break;
             }
-            else if (token.type == Token.BLOCK_COMMENT) {
-                if (stream.peekNext().type == Token.NL) {
-                    sb.alignToTabStop();
-                    sb.append(token);
-                }
-                else {
-                    if (token.start > stop + 1) {
-                        sb.append(" ");
-                    }
-                    sb.append(stream.nextToken());
-                    stop = token.stop;
-                    if (stream.peekNext().start > stop + 1) {
-                        sb.append(" ");
-                    }
-                }
-            }
-            else if (token.type == Token.COMMENT) {
-                sb.alignToColumn(commentsColumn);
-                sb.append(token);
-            }
-            else if (token.type == Token.OPERATOR) {
-                addSpace = ")".equals(token.getText()) || "]".equals(token.getText());
-                switch (token.getText()) {
-                    case "(":
-                    case "[":
-                    case ")":
-                    case "]":
-                    case "#":
-                    case "##":
-                    case ".":
-                    case "@":
-                    case "\\":
-                    case ":":
-                        sb.append(token);
-                        break;
-                    case ",":
-                        sb.append(token);
-                        sb.append(" ");
-                        break;
-                    default:
-                        sb.append(" ");
-                        sb.append(token);
-                        sb.append(" ");
-                        break;
-                }
-            }
-            else {
-                if (addSpace) {
-                    sb.append(" ");
-                }
-                if (token.type == Token.NUMBER) {
-                    sb.append(token.getText().toUpperCase());
-                    addSpace = true;
-                }
-                else {
-                    sb.append(token);
-                    if ("and".equalsIgnoreCase(token.getText()) || "or".equalsIgnoreCase(token.getText()) || "not".equalsIgnoreCase(token.getText())) {
-                        sb.append(" ");
-                        addSpace = false;
-                    }
-                    else {
-                        addSpace = true;
-                    }
-                }
-            }
-            stop = token.stop;
-        }
-    }
-
-    void formatTokens(TokenStream stream) {
-        formatTokens(stream, false);
-    }
-
-    void formatTokens(TokenStream stream, boolean isCase) {
-        Token token;
-        int stop = 0;
-        boolean addSpace = false;
-
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.NL) {
-                break;
-            }
-            token = stream.nextToken();
             if (token.type == Token.BLOCK_COMMENT) {
                 if (stream.peekNext().type == Token.NL) {
                     sb.alignToTabStop();
@@ -961,7 +916,7 @@ public abstract class Formatter {
                         sb.append(" ");
                         break;
                     case ":":
-                        if (isCase) {
+                        if (type == 1) {
                             sb.append(token);
                             return;
                         }
