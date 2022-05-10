@@ -210,17 +210,11 @@ public abstract class Formatter {
                     token = stream.peekNext();
                     while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
                         sb.append(" ");
-                        if (token.type == Token.COMMENT) {
-                            sb.append(stream.nextToken());
-                            break;
-                        }
                         sb.append(stream.nextToken());
                         token = stream.peekNext();
                     }
-                    formatTokens(stream);
-                    sb.append(System.lineSeparator());
-                    if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                        stream.nextToken();
+                    if (token.type == Token.NL) {
+                        sb.append(System.lineSeparator());
                     }
 
                     while (true) {
@@ -240,6 +234,13 @@ public abstract class Formatter {
                         else if (token.type == Token.COMMENT) {
                             sb.alignToColumn(token.column);
                             sb.append(stream.nextToken());
+                            if (stream.peekNext().type == Token.NL) {
+                                sb.append(System.lineSeparator());
+                                stream.nextToken();
+                                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                                    break;
+                                }
+                            }
                         }
                         else {
                             Token label = null;
@@ -299,11 +300,21 @@ public abstract class Formatter {
                                 }
 
                                 if (condition != null) {
-                                    sb.alignToColumn(conditionColumn);
+                                    if (sb.column >= conditionColumn) {
+                                        sb.append(" ");
+                                    }
+                                    else {
+                                        sb.alignToColumn(conditionColumn);
+                                    }
                                     sb.append(condition.getText().toLowerCase());
                                 }
 
-                                sb.alignToColumn(instructionColumn);
+                                if (sb.column >= instructionColumn) {
+                                    sb.append(" ");
+                                }
+                                else {
+                                    sb.alignToColumn(instructionColumn);
+                                }
                                 sb.append(instruction.getText().toLowerCase());
 
                                 if (token.type != Token.NL && token.type != Token.EOF) {
@@ -416,50 +427,46 @@ public abstract class Formatter {
             }
             if (token.type != Token.NL) {
                 if ("DAT".equalsIgnoreCase(token.getText())) {
-                    while ((token = stream.nextToken()).type != Token.EOF) {
+                    while ((token = stream.peekNext()).type != Token.EOF) {
                         if (token.type == Token.NL) {
                             break;
                         }
+                        stream.nextToken();
                     }
-
-                    while ((token = stream.nextToken()).type != Token.EOF) {
+                    while ((token = stream.peekNext()).type != Token.EOF) {
                         if (token.type == Token.NL) {
-                            token = stream.peekNext();
-                            if (sections.contains(token.getText().toUpperCase())) {
+                            stream.nextToken();
+                            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                                 break;
                             }
                         }
                         else {
                             if (pasmLabel(token)) {
-                                Token label = token;
-                                if (":".equals(token.getText()) || ".".equals(token.getText())) {
-                                    token = stream.nextToken();
+                                Token label = stream.nextToken();
+                                if (":".equals(label.getText()) || ".".equals(label.getText())) {
+                                    token = stream.peekNext();
                                     if (token.type == 0 && label.isAdjacent(token)) {
                                         label = label.merge(stream.nextToken());
-                                        token = stream.nextToken();
                                     }
                                 }
-                                if (token.type == Token.NL || token.type == Token.EOF) {
-                                    break;
-                                }
-                                if (!isolateLargeLabels) {
-                                    labelWidth = Math.max(labelWidth, label.getText().length() + 1);
+                                token = stream.peekNext();
+                                if (token.type != Token.NL && token.type != Token.EOF) {
+                                    if (!isolateLargeLabels) {
+                                        labelWidth = Math.max(labelWidth, label.getText().length() + 1);
+                                    }
                                 }
                             }
 
                             if (pasmCondition(token)) {
+                                stream.nextToken();
                                 conditionWidth = Math.max(conditionWidth, token.getText().length() + 1);
-                                token = stream.nextToken();
-                                if (token.type == Token.NL || token.type == Token.EOF) {
-                                    break;
-                                }
                             }
 
-                            while (token.type != Token.EOF) {
+                            while ((token = stream.peekNext()).type != Token.EOF) {
                                 if (token.type == Token.NL) {
                                     break;
                                 }
-                                token = stream.nextToken();
+                                stream.nextToken();
                             }
                         }
                     }
@@ -518,10 +525,11 @@ public abstract class Formatter {
                         }
 
                     }
+
                 }
                 else {
-                    while ((token = stream.peekNext()).type != Token.NL) {
-                        if (token.type == Token.EOF) {
+                    while ((token = stream.peekNext()).type != Token.EOF) {
+                        if (token.type == Token.NL) {
                             break;
                         }
                         stream.nextToken();
@@ -742,6 +750,7 @@ public abstract class Formatter {
             if (pasmModifier(token)) {
                 if (sb.column >= effectsColumn) {
                     sb.append(" ");
+                    sb.alignToTabStop();
                 }
                 else {
                     sb.alignToColumn(effectsColumn);

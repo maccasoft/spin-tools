@@ -26,7 +26,8 @@ class FormatterTest {
             + "");
         Assertions.assertEquals(""
             + "DAT\n"
-            + "label   if_c    mov     a, #12\n", text);
+            + "label   if_c    mov     a, #12\n"
+            + "", text);
     }
 
     @Test
@@ -38,7 +39,8 @@ class FormatterTest {
             + "");
         Assertions.assertEquals(""
             + "DAT\n"
-            + "label\n", text);
+            + "label\n"
+            + "", text);
     }
 
     @Test
@@ -50,7 +52,8 @@ class FormatterTest {
             + "");
         Assertions.assertEquals(""
             + "DAT\n"
-            + "                asmclk\n", text);
+            + "                asmclk\n"
+            + "", text);
     }
 
     @Test
@@ -129,7 +132,8 @@ class FormatterTest {
             + "");
         Assertions.assertEquals(""
             + "DAT\n"
-            + "                mov     a, ##12\n", text);
+            + "                mov     a, ##12\n"
+            + "", text);
     }
 
     @Test
@@ -160,6 +164,17 @@ class FormatterTest {
             + "DAT\n"
             + "label       if_c    mov     a, #12      wc\n"
             + "large_label if_c    mov     a, #12      wc\n"
+            + "", text);
+    }
+
+    @Test
+    void testFormatDatOrgLine() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "DAT org $000,$1F0\n"
+            + "");
+        Assertions.assertEquals(""
+            + "DAT             org     $000, $1F0\n"
             + "", text);
     }
 
