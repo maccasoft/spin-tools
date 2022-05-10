@@ -46,12 +46,16 @@ public abstract class TokenStream {
         int saveIndex = index;
         int saveLine = line;
         int saveColumn = column;
+        int hiddentTokensSize = hiddenTokens.size();
 
         Token token = nextToken(skipComments);
 
         index = saveIndex;
         line = saveLine;
         column = saveColumn;
+        while (hiddenTokens.size() > hiddentTokensSize) {
+            hiddenTokens.remove(hiddenTokens.size() - 1);
+        }
 
         return token;
     }

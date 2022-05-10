@@ -680,7 +680,7 @@ public class Spin1Parser {
     Token nextToken(boolean skipComments) {
         Token token = stream.nextToken(skipComments);
         if (token.type == Token.NL) {
-            while (stream.peekNext().type == Token.NL) {
+            while (stream.peekNext(false).type == Token.NL) {
                 stream.nextToken();
             }
         }
