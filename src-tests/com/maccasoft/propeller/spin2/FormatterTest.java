@@ -560,4 +560,110 @@ class FormatterTest {
             + "", text);
     }
 
+    @Test
+    void testFormatCaseStatements() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "PUB start()\n"
+            + " case a\n"
+            + "  1:\n"
+            + "   b:=1\n"
+            + "  2:\n"
+            + "   b:=2\n"
+            + "  other:\n"
+            + "   b:=3\n"
+            + "");
+        Assertions.assertEquals(""
+            + "PUB start()\n"
+            + "    case a\n"
+            + "        1:\n"
+            + "            b := 1\n"
+            + "        2:\n"
+            + "            b := 2\n"
+            + "        other:\n"
+            + "            b := 3\n"
+            + "", text);
+    }
+
+    @Test
+    void testFormatCaseRangeStatements() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "PUB start()\n"
+            + " case a\n"
+            + "  1,2,3:\n"
+            + "   b:=1\n"
+            + "  4..7:\n"
+            + "   b:=2\n"
+            + "  other:\n"
+            + "   b:=3\n"
+            + "");
+        Assertions.assertEquals(""
+            + "PUB start()\n"
+            + "    case a\n"
+            + "        1, 2, 3:\n"
+            + "            b := 1\n"
+            + "        4..7:\n"
+            + "            b := 2\n"
+            + "        other:\n"
+            + "            b := 3\n"
+            + "", text);
+    }
+
+    @Test
+    void testFormatInlineCaseStatements() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "PUB start()\n"
+            + " case a\n"
+            + "  1:b:=1\n"
+            + "  2: b:=2\n"
+            + "   c:=4\n"
+            + "  other:\n"
+            + "   b:=3\n"
+            + "");
+        Assertions.assertEquals(""
+            + "PUB start()\n"
+            + "    case a\n"
+            + "        1:  b := 1\n"
+            + "        2:  b := 2\n"
+            + "            c := 4\n"
+            + "        other:\n"
+            + "            b := 3\n"
+            + "", text);
+    }
+
+    @Test
+    void testFormatNestedCaseBlocks() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "PUB start()\n"
+            + " case a\n"
+            + "  1:\n"
+            + "   if c == 2\n"
+            + "     b:=1\n"
+            + "   else\n"
+            + "     b:=5\n"
+            + "  2:\n"
+            + "   case b\n"
+            + "    1: b:=2\n"
+            + "  other:\n"
+            + "   b:=3\n"
+            + "");
+        Assertions.assertEquals(""
+            + "PUB start()\n"
+            + "    case a\n"
+            + "        1:\n"
+            + "            if c == 2\n"
+            + "                b := 1\n"
+            + "            else\n"
+            + "                b := 5\n"
+            + "        2:\n"
+            + "            case b\n"
+            + "                1:  b := 2\n"
+            + "        other:\n"
+            + "            b := 3\n"
+            + "", text);
+    }
+
 }

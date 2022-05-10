@@ -200,7 +200,7 @@ public abstract class Formatter {
                             if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                                 break;
                             }
-                            formatStatement(1, stream, token.column);
+                            formatStatement(4, stream, token.column);
                         }
                     }
                 }
@@ -560,6 +560,7 @@ public abstract class Formatter {
     void formatStatement(int indent, TokenStream stream, int column) {
         Token token;
         boolean indentNext = false;
+        boolean caseNext = false;
 
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type == Token.NL) {
@@ -570,7 +571,7 @@ public abstract class Formatter {
             }
             else if (token.type == Token.COMMENT) {
                 if (token.column != 0) {
-                    sb.alignToColumn((indentNext ? (indent + 1) : indent) * 4);
+                    sb.alignToColumn(indentNext ? (indent + 4) : indent);
                 }
                 sb.append(stream.nextToken());
                 sb.append(System.lineSeparator());
@@ -580,7 +581,7 @@ public abstract class Formatter {
             }
             else if (token.type == Token.BLOCK_COMMENT) {
                 if (token.column != 0) {
-                    sb.alignToColumn(indent * 4);
+                    sb.alignToColumn(indent);
                 }
                 sb.append(stream.nextToken());
                 if (stream.peekNext().type == Token.NL) {
@@ -596,9 +597,7 @@ public abstract class Formatter {
                 }
                 if ("ORG".equalsIgnoreCase(token.getText().toUpperCase())) {
 
-                    for (int i = 0; i < indent; i++) {
-                        sb.append("    ");
-                    }
+                    sb.alignToColumn(indent);
                     formatTokens(stream);
                     sb.append(System.lineSeparator());
                     if (keepBlankLines && stream.peekNext().type == Token.NL) {
@@ -612,7 +611,12 @@ public abstract class Formatter {
                         indentNext = false;
                     }
                     if (token.column > column && indentNext) {
-                        formatStatement(indent + 1, stream, token.column);
+                        if (caseNext) {
+                            formatCaseStatement(indent + 4, stream, token.column);
+                        }
+                        else {
+                            formatStatement(indent + 4, stream, token.column);
+                        }
                         indentNext = false;
                     }
                     else if (token.column < column) {
@@ -620,16 +624,71 @@ public abstract class Formatter {
                     }
                     else {
                         indentNext = blockStart.contains(token.getText().toUpperCase());
+                        caseNext = "CASE".equalsIgnoreCase(token.getText()) || "CASE_FAST".equalsIgnoreCase(token.getText());
 
-                        for (int i = 0; i < indent; i++) {
-                            sb.append("    ");
-                        }
+                        sb.alignToColumn(indent);
                         formatTokens(stream);
                         sb.append(System.lineSeparator());
                         if (keepBlankLines && stream.peekNext().type == Token.NL) {
                             stream.nextToken();
                         }
                     }
+                }
+            }
+        }
+    }
+
+    void formatCaseStatement(int indent, TokenStream stream, int column) {
+        Token token;
+
+        while ((token = stream.peekNext()).type != Token.EOF) {
+            if (token.type == Token.NL) {
+                stream.nextToken();
+                sb.append(System.lineSeparator());
+                if (keepBlankLines && stream.peekNext().type == Token.NL) {
+                    stream.nextToken();
+                }
+                formatStatement(indent + 4, stream, column + 1);
+            }
+            else if (token.type == Token.COMMENT) {
+                sb.alignToColumn(indent);
+                sb.append(stream.nextToken());
+                sb.append(System.lineSeparator());
+                if (keepBlankLines && stream.peekNext().type == Token.NL) {
+                    stream.nextToken();
+                }
+            }
+            else if (token.type == Token.BLOCK_COMMENT) {
+                if (token.column != 0) {
+                    sb.alignToColumn(indent);
+                }
+                sb.append(stream.nextToken());
+                if (stream.peekNext().type == Token.NL) {
+                    sb.append(System.lineSeparator());
+                    if (keepBlankLines) {
+                        stream.nextToken();
+                    }
+                }
+            }
+            else {
+                if (token.column < column) {
+                    break;
+                }
+
+                sb.alignToColumn(indent);
+                formatTokens(stream, true);
+
+                token = stream.peekNext();
+                while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                    sb.append(" ");
+                    sb.append(stream.nextToken());
+                    token = stream.peekNext();
+                }
+
+                if (token.type != Token.NL && token.type != Token.EOF) {
+                    sb.append(" ");
+                    sb.alignToTabStop();
+                    formatStatement(sb.column, stream, column + 1);
                 }
             }
         }
@@ -840,6 +899,10 @@ public abstract class Formatter {
     }
 
     void formatTokens(TokenStream stream) {
+        formatTokens(stream, false);
+    }
+
+    void formatTokens(TokenStream stream, boolean isCase) {
         Token token;
         int stop = 0;
         boolean addSpace = false;
@@ -890,12 +953,19 @@ public abstract class Formatter {
                     case "++":
                     case "~":
                     case "~~":
+                    case "..":
                         sb.append(token);
                         break;
                     case ",":
                         sb.append(token);
                         sb.append(" ");
                         break;
+                    case ":":
+                        if (isCase) {
+                            sb.append(token);
+                            return;
+                        }
+                        // Fall-through
                     default:
                         sb.append(" ");
                         sb.append(token);
