@@ -10,7 +10,7 @@
 
 package com.maccasoft.propeller.model;
 
-public class ConstantStatement extends Node {
+public class ConstantNode extends Node {
 
     public Token identifier;
     public ExpressionNode start;
@@ -18,8 +18,19 @@ public class ConstantStatement extends Node {
     public ExpressionNode expression;
     public ExpressionNode multiplier;
 
-    public ConstantStatement(Node parent) {
+    public ConstantNode(Node parent) {
         super(parent);
+    }
+
+    public ConstantNode(Node parent, Token token) {
+        super(parent);
+        this.identifier = token;
+    }
+
+    @Override
+    public void accept(NodeVisitor visitor) {
+        visitor.visitConstant(this);
+        super.accept(visitor);
     }
 
     public Token getIdentifier() {

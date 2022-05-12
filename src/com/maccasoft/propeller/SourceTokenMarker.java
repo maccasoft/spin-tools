@@ -20,8 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
 
-import com.maccasoft.propeller.model.ConstantAssignEnumNode;
-import com.maccasoft.propeller.model.ConstantAssignNode;
+import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -346,7 +345,7 @@ public abstract class SourceTokenMarker {
                         objectRoot.accept(new NodeVisitor() {
 
                             @Override
-                            public void visitConstantAssign(ConstantAssignNode node) {
+                            public void visitConstant(ConstantNode node) {
                                 if (node.getIdentifier() == null) {
                                     return;
                                 }
@@ -379,7 +378,7 @@ public abstract class SourceTokenMarker {
             root.accept(new NodeVisitor() {
 
                 @Override
-                public void visitConstantAssign(ConstantAssignNode node) {
+                public void visitConstant(ConstantNode node) {
                     if (node.getIdentifier() == null) {
                         return;
                     }
@@ -494,17 +493,7 @@ public abstract class SourceTokenMarker {
         root.accept(new NodeVisitor() {
 
             @Override
-            public void visitConstantAssign(ConstantAssignNode node) {
-                if (node.identifier != null) {
-                    String text = node.identifier.getText();
-                    if (text.toUpperCase().contains(token)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
-                    }
-                }
-            }
-
-            @Override
-            public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
+            public void visitConstant(ConstantNode node) {
                 if (node.identifier != null) {
                     String text = node.identifier.getText();
                     if (text.toUpperCase().contains(token)) {
@@ -539,17 +528,7 @@ public abstract class SourceTokenMarker {
                 objectRoot.accept(new NodeVisitor() {
 
                     @Override
-                    public void visitConstantAssign(ConstantAssignNode node) {
-                        if (node.identifier != null) {
-                            String text = objectNode.name.getText() + "." + node.identifier.getText();
-                            if (text.toUpperCase().contains(token)) {
-                                proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
+                    public void visitConstant(ConstantNode node) {
                         if (node.identifier != null) {
                             String text = objectNode.name.getText() + "." + node.identifier.getText();
                             if (text.toUpperCase().contains(token)) {
@@ -655,17 +634,7 @@ public abstract class SourceTokenMarker {
             root.accept(new NodeVisitor() {
 
                 @Override
-                public void visitConstantAssign(ConstantAssignNode node) {
-                    if (node.identifier != null) {
-                        String text = node.identifier.getText();
-                        if (text.toUpperCase().contains(token)) {
-                            proposals.add(new ContentProposal(text, text, null));
-                        }
-                    }
-                }
-
-                @Override
-                public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
+                public void visitConstant(ConstantNode node) {
                     if (node.identifier != null) {
                         String text = node.identifier.getText();
                         if (text.toUpperCase().contains(token)) {

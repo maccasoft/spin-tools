@@ -294,7 +294,7 @@ public class OutlineView {
 
     String getPathText(Object element) {
         Node node = (Node) element;
-        String text = node.getStartToken().getText();
+        String text = node.getTokenCount() != 0 ? node.getStartToken().getText() : "";
         if (node instanceof MethodNode && ((MethodNode) node).name != null) {
             text += " " + ((MethodNode) node).name.getText();
         }

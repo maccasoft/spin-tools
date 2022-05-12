@@ -111,11 +111,11 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [con0 = 1\\n    con1 = 2\\n]\n"
-            + "+-- ConstantsNode [con0 = 1\\n    con1 = 2]\n"
-            + "    +-- ConstantAssignNode identifier=con0 [con0 = 1]\n"
+            + "Node []\n"
+            + "+-- ConstantsNode []\n"
+            + "    +-- ConstantNode identifier=con0 [con0 = 1]\n"
             + "        +-- expression = ExpressionNode [1]\n"
-            + "    +-- ConstantAssignNode identifier=con1 [con1 = 2]\n"
+            + "    +-- ConstantNode identifier=con1 [con1 = 2]\n"
             + "        +-- expression = ExpressionNode [2]\n"
             + "", tree(root));
     }
@@ -129,11 +129,11 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [CON con0 = 1\\n    con1 = 2\\n]\n"
-            + "+-- ConstantsNode [CON con0 = 1\\n    con1 = 2]\n"
-            + "    +-- ConstantAssignNode identifier=con0 [con0 = 1]\n"
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode identifier=con0 [con0 = 1]\n"
             + "        +-- expression = ExpressionNode [1]\n"
-            + "    +-- ConstantAssignNode identifier=con1 [con1 = 2]\n"
+            + "    +-- ConstantNode identifier=con1 [con1 = 2]\n"
             + "        +-- expression = ExpressionNode [2]\n"
             + "", tree(root));
     }
@@ -147,15 +147,15 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [CON con0 = 1\\n    con1 = 2, con2 = 3, con3 = 4\\n]\n"
-            + "+-- ConstantsNode [CON con0 = 1\\n    con1 = 2, con2 = 3, con3 = 4]\n"
-            + "    +-- ConstantAssignNode identifier=con0 [con0 = 1]\n"
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode identifier=con0 [con0 = 1]\n"
             + "        +-- expression = ExpressionNode [1]\n"
-            + "    +-- ConstantAssignNode identifier=con1 [con1 = 2]\n"
+            + "    +-- ConstantNode identifier=con1 [con1 = 2]\n"
             + "        +-- expression = ExpressionNode [2]\n"
-            + "    +-- ConstantAssignNode identifier=con2 [con2 = 3]\n"
+            + "    +-- ConstantNode identifier=con2 [con2 = 3]\n"
             + "        +-- expression = ExpressionNode [3]\n"
-            + "    +-- ConstantAssignNode identifier=con3 [con3 = 4]\n"
+            + "    +-- ConstantNode identifier=con3 [con3 = 4]\n"
             + "        +-- expression = ExpressionNode [4]\n"
             + "", tree(root));
     }
@@ -170,12 +170,12 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [CON #0\\n    con0\\n    con1\\n]\n"
-            + "+-- ConstantsNode [CON #0\\n    con0\\n    con1]\n"
-            + "    +-- ConstantSetEnumNode [#0]\n"
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode [#0]\n"
             + "        +-- start = ExpressionNode [0]\n"
-            + "    +-- ConstantAssignNode identifier=con0 [con0]\n"
-            + "    +-- ConstantAssignNode identifier=con1 [con1]\n"
+            + "    +-- ConstantNode identifier=con0 [con0]\n"
+            + "    +-- ConstantNode identifier=con1 [con1]\n"
             + "", tree(root));
     }
 
@@ -189,14 +189,14 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [CON #0\\n    con0\\n    con1, con2, con3\\n]\n"
-            + "+-- ConstantsNode [CON #0\\n    con0\\n    con1, con2, con3]\n"
-            + "    +-- ConstantSetEnumNode [#0]\n"
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode [#0]\n"
             + "        +-- start = ExpressionNode [0]\n"
-            + "    +-- ConstantAssignNode identifier=con0 [con0]\n"
-            + "    +-- ConstantAssignNode identifier=con1 [con1]\n"
-            + "    +-- ConstantAssignNode identifier=con2 [con2]\n"
-            + "    +-- ConstantAssignNode identifier=con3 [con3]\n"
+            + "    +-- ConstantNode identifier=con0 [con0]\n"
+            + "    +-- ConstantNode identifier=con1 [con1]\n"
+            + "    +-- ConstantNode identifier=con2 [con2]\n"
+            + "    +-- ConstantNode identifier=con3 [con3]\n"
             + "", tree(root));
     }
 
@@ -210,15 +210,15 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [CON #0[2]\\n    con0\\n    con1, con2, con3\\n]\n"
-            + "+-- ConstantsNode [CON #0[2]\\n    con0\\n    con1, con2, con3]\n"
-            + "    +-- ConstantSetEnumNode [#0[2]]\n"
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode [#0[2]]\n"
             + "        +-- start = ExpressionNode [0]\n"
             + "        +-- step = ExpressionNode [2]\n"
-            + "    +-- ConstantAssignNode identifier=con0 [con0]\n"
-            + "    +-- ConstantAssignNode identifier=con1 [con1]\n"
-            + "    +-- ConstantAssignNode identifier=con2 [con2]\n"
-            + "    +-- ConstantAssignNode identifier=con3 [con3]\n"
+            + "    +-- ConstantNode identifier=con0 [con0]\n"
+            + "    +-- ConstantNode identifier=con1 [con1]\n"
+            + "    +-- ConstantNode identifier=con2 [con2]\n"
+            + "    +-- ConstantNode identifier=con3 [con3]\n"
             + "", tree(root));
     }
 
@@ -232,12 +232,12 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [CON #0\\n    con0\\n    con1[2]\\n]\n"
-            + "+-- ConstantsNode [CON #0\\n    con0\\n    con1[2]]\n"
-            + "    +-- ConstantSetEnumNode [#0]\n"
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode [#0]\n"
             + "        +-- start = ExpressionNode [0]\n"
-            + "    +-- ConstantAssignNode identifier=con0 [con0]\n"
-            + "    +-- ConstantAssignNode identifier=con1 [con1[2]]\n"
+            + "    +-- ConstantNode identifier=con0 [con0]\n"
+            + "    +-- ConstantNode identifier=con1 [con1[2]]\n"
             + "        +-- multiplier = ExpressionNode [2]\n"
             + "", tree(root));
     }
@@ -251,8 +251,8 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [OBJ\\n    obj0 : \"file0\"\\n]\n"
-            + "+-- ObjectsNode [OBJ\\n    obj0 : \"file0\"]\n"
+            + "Node []\n"
+            + "+-- ObjectsNode [OBJ]\n"
             + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\"]\n"
             + "", tree(root));
     }
@@ -267,8 +267,8 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [OBJ\\n    obj0 : \"file0\"\\n    obj1 : \"file1\"\\n]\n"
-            + "+-- ObjectsNode [OBJ\\n    obj0 : \"file0\"\\n    obj1 : \"file1\"]\n"
+            + "Node []\n"
+            + "+-- ObjectsNode [OBJ]\n"
             + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\"]\n"
             + "    +-- ObjectNode name=obj1 file=\"file1\" [obj1 : \"file1\"]\n"
             + "", tree(root));
@@ -283,10 +283,10 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [OBJ\\n    obj0[10] : \"file0\"\\n]\n"
-            + "+-- ObjectsNode [OBJ\\n    obj0[10] : \"file0\"]\n"
+            + "Node []\n"
+            + "+-- ObjectsNode [OBJ]\n"
             + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0[10] : \"file0\"]\n"
-            + "        +-- count = Node [10]\n"
+            + "        +-- count = ExpressionNode [10]\n"
             + "", tree(root));
     }
 
@@ -299,8 +299,8 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [OBJ\\n    obj0 = \\n]\n"
-            + "+-- ObjectsNode [OBJ\\n    obj0 =]\n"
+            + "Node []\n"
+            + "+-- ObjectsNode [OBJ]\n"
             + "    +-- ObjectNode name=obj0 [obj0 =]\n"
             + "", tree(root));
     }
@@ -314,8 +314,8 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [OBJ\\n    obj0 : \"file0\" a0\\n]\n"
-            + "+-- ObjectsNode [OBJ\\n    obj0 : \"file0\" a0]\n"
+            + "Node []\n"
+            + "+-- ObjectsNode [OBJ]\n"
             + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\" a0]\n"
             + "", tree(root));
     }
@@ -378,8 +378,8 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [VAR a\\n    b\\n]\n"
-            + "+-- VariablesNode [VAR a\\n    b]\n"
+            + "Node []\n"
+            + "+-- VariablesNode [VAR]\n"
             + "    +-- VariableNode identifier=a [a]\n"
             + "    +-- VariableNode identifier=b [b]\n"
             + "", tree(root));
@@ -394,8 +394,8 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [VAR long a\\n    word b\\n]\n"
-            + "+-- VariablesNode [VAR long a\\n    word b]\n"
+            + "Node []\n"
+            + "+-- VariablesNode [VAR]\n"
             + "    +-- VariableNode type=long identifier=a [long a]\n"
             + "    +-- VariableNode type=word identifier=b [word b]\n"
             + "", tree(root));
@@ -410,8 +410,8 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [VAR long a, b, c\\n    word d, e\\n]\n"
-            + "+-- VariablesNode [VAR long a, b, c\\n    word d, e]\n"
+            + "Node []\n"
+            + "+-- VariablesNode [VAR]\n"
             + "    +-- VariableNode type=long identifier=a [long a]\n"
             + "    +-- VariableNode identifier=b [b]\n"
             + "    +-- VariableNode identifier=c [c]\n"
@@ -428,8 +428,8 @@ class Spin1ParserTest {
 
         Node root = subject.parse();
         Assertions.assertEquals(""
-            + "Node [VAR a[10]\\n]\n"
-            + "+-- VariablesNode [VAR a[10]]\n"
+            + "Node []\n"
+            + "+-- VariablesNode [VAR]\n"
             + "    +-- VariableNode identifier=a [a[10]]\n"
             + "        +-- size = ExpressionNode [10]\n"
             + "", tree(root));

@@ -17,8 +17,7 @@ import java.util.Map;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SourceTokenMarker;
-import com.maccasoft.propeller.model.ConstantAssignEnumNode;
-import com.maccasoft.propeller.model.ConstantAssignNode;
+import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -189,15 +188,11 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         }
 
         @Override
-        public void visitConstantAssign(ConstantAssignNode node) {
-            symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
-            tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
-        }
-
-        @Override
-        public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
-            symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
-            tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
+        public void visitConstant(ConstantNode node) {
+            if (node.getIdentifier() != null) {
+                symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
+                tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
+            }
         }
 
         @Override
@@ -533,13 +528,10 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     objectRoot.accept(new NodeVisitor() {
 
                         @Override
-                        public void visitConstantAssign(ConstantAssignNode node) {
-                            compilerSymbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
-                        }
-
-                        @Override
-                        public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
-                            compilerSymbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
+                        public void visitConstant(ConstantNode node) {
+                            if (node.getIdentifier() != null) {
+                                compilerSymbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
+                            }
                         }
 
                         @Override

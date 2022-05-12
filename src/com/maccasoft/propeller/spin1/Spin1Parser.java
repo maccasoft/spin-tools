@@ -10,9 +10,7 @@
 
 package com.maccasoft.propeller.spin1;
 
-import com.maccasoft.propeller.model.ConstantAssignNode;
-import com.maccasoft.propeller.model.ConstantSetEnumNode;
-import com.maccasoft.propeller.model.ConstantStatement;
+import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -46,7 +44,6 @@ public class Spin1Parser {
         while (true) {
             Token token = nextToken();
             if (token.type == Token.EOF) {
-                root.addToken(token);
                 break;
             }
             if (token.type == Token.NL) {
@@ -88,7 +85,15 @@ public class Spin1Parser {
         if ("CON".equalsIgnoreCase(token.getText())) {
             ConstantsNode node = new ConstantsNode(root, token);
             node.addToken(token);
-            parseConstants(node, nextToken());
+            token = nextToken(false);
+            if (token.type == Token.COMMENT) {
+                node.addDocument(token);
+                token = nextToken();
+            }
+            if (token.type == Token.BLOCK_COMMENT) {
+                token = nextToken();
+            }
+            parseConstants(node, token);
             return true;
         }
         return false;
@@ -96,7 +101,7 @@ public class Spin1Parser {
 
     void parseConstants(ConstantsNode parent, Token token) {
         int state = 1;
-        ConstantStatement child = null;
+        ConstantNode child = null;
 
         while (true) {
             if (token.type == Token.EOF) {
@@ -121,12 +126,12 @@ public class Spin1Parser {
                         break;
                     }
                     if ("#".equals(token.getText())) {
-                        child = new ConstantSetEnumNode(parent);
-                        ((ConstantSetEnumNode) child).start = new ExpressionNode(child);
+                        child = new ConstantNode(parent);
+                        child.start = new ExpressionNode(child);
                         state = 2;
                     }
                     if (child == null) {
-                        child = new ConstantAssignNode(parent, token);
+                        child = new ConstantNode(parent, token);
                         state = 4;
                     }
                     child.addToken(token);
@@ -137,24 +142,27 @@ public class Spin1Parser {
                         state = 1;
                         break;
                     }
+                    child.addToken(token);
                     if ("[".equals(token.getText())) {
-                        child.addToken(token);
-                        ((ConstantSetEnumNode) child).step = new ExpressionNode(child);
+                        child.step = new ExpressionNode(child);
                         state = 3;
                         break;
                     }
-                    ((ConstantSetEnumNode) child).start.addToken(token);
+                    child.start.addToken(token);
                     break;
                 case 3:
-                    if ("]".equals(token.getText()) || ",".equals(token.getText())) {
-                        if ("]".equals(token.getText())) {
-                            child.addToken(token);
-                        }
+                    if (",".equals(token.getText())) {
                         child = null;
                         state = 1;
                         break;
                     }
-                    ((ConstantSetEnumNode) child).step.addToken(token);
+                    child.addToken(token);
+                    if ("]".equals(token.getText())) {
+                        child = null;
+                        state = 1;
+                        break;
+                    }
+                    child.step.addToken(token);
                     break;
                 case 4:
                     if (",".equals(token.getText())) {
@@ -164,7 +172,7 @@ public class Spin1Parser {
                     }
                     child.addToken(token);
                     if ("=".equals(token.getText())) {
-                        ((ConstantAssignNode) child).expression = new ExpressionNode(child);
+                        child.expression = new ExpressionNode(child);
                         state = 5;
                     }
                     if ("[".equals(token.getText())) {
@@ -179,7 +187,8 @@ public class Spin1Parser {
                         state = 1;
                         break;
                     }
-                    ((ConstantAssignNode) child).expression.addToken(token);
+                    child.addToken(token);
+                    child.expression.addToken(token);
                     break;
                 case 6:
                     if (",".equals(token.getText())) {
@@ -187,8 +196,8 @@ public class Spin1Parser {
                         state = 1;
                         break;
                     }
+                    child.addToken(token);
                     if ("]".equals(token.getText())) {
-                        child.addToken(token);
                         child = null;
                         state = 1;
                         break;
@@ -254,8 +263,8 @@ public class Spin1Parser {
                     break;
 
                 case 3:
+                    node.addToken(token);
                     if ("]".equals(token.getText())) {
-                        node.addToken(token);
                         state = 2;
                         break;
                     }
@@ -297,7 +306,7 @@ public class Spin1Parser {
                 case 2:
                     if ("[".equals(token.getText())) {
                         object.addToken(token);
-                        object.count = new Node(object);
+                        object.count = new ExpressionNode(object);
                         state = 5;
                         break;
                     }
@@ -316,8 +325,8 @@ public class Spin1Parser {
                     break;
 
                 case 5:
+                    object.addToken(token);
                     if ("]".equals(token.getText())) {
-                        object.addToken(token);
                         state = 3;
                         break;
                     }
@@ -350,25 +359,22 @@ public class Spin1Parser {
             if (token.type == Token.NL) {
                 break;
             }
+            node.addToken(token);
             switch (state) {
                 case 1:
                     node.name = token;
-                    node.addToken(token);
                     state = 2;
                     break;
                 case 2:
                     if ("(".equals(token.getText())) {
-                        node.addToken(token);
                         state = 4;
                         break;
                     }
                     if (":".equals(token.getText())) {
-                        node.addToken(token);
                         state = 7;
                         break;
                     }
                     if ("|".equals(token.getText())) {
-                        node.addToken(token);
                         state = 9;
                         break;
                     }
@@ -380,12 +386,10 @@ public class Spin1Parser {
 
                 case 4:
                     if (",".equals(token.getText())) {
-                        node.addToken(token);
                         param = null;
                         break;
                     }
                     if (")".equals(token.getText())) {
-                        node.addToken(token);
                         state = 6;
                         break;
                     }
@@ -398,12 +402,10 @@ public class Spin1Parser {
 
                 case 6:
                     if (":".equals(token.getText())) {
-                        node.addToken(token);
                         state = 7;
                         break;
                     }
                     if ("|".equals(token.getText())) {
-                        node.addToken(token);
                         state = 9;
                         break;
                     }
@@ -421,12 +423,10 @@ public class Spin1Parser {
                     break;
                 case 8:
                     if (",".equals(token.getText())) {
-                        node.addToken(token);
                         state = 7;
                         break;
                     }
                     else if ("|".equals(token.getText())) {
-                        node.addToken(token);
                         state = 9;
                         break;
                     }
@@ -450,26 +450,23 @@ public class Spin1Parser {
                     break;
                 case 11:
                     if (",".equals(token.getText())) {
-                        node.addToken(token);
                         state = 9;
                         break;
                     }
-                    if ("[".equals(token.getText())) {
-                        local.addToken(token);
-                        local.size = new ExpressionNode(local);
-                        state = 12;
-                        break;
-                    }
                     if (":".equals(token.getText())) {
-                        node.addToken(token);
                         state = 7;
                         break;
                     }
                     local.addToken(token);
+                    if ("[".equals(token.getText())) {
+                        local.size = new ExpressionNode(local);
+                        state = 12;
+                        break;
+                    }
                     break;
                 case 12:
+                    local.addToken(token);
                     if ("]".equals(token.getText())) {
-                        local.addToken(token);
                         state = 11;
                         break;
                     }
@@ -590,38 +587,35 @@ public class Spin1Parser {
             if (token.type == Token.EOF || token.type == Token.NL) {
                 return;
             }
+            parent.addToken(token);
             switch (state) {
                 case 0:
                     state = 1;
                     // fall-through
                 case 1:
                     if (Spin1Model.isCondition(token.getText())) {
-                        parent.condition = new Node(parent);
-                        parent.condition.addToken(token);
+                        parent.condition = token;
                         state = 3;
                         break;
                     }
                     if (Spin1Model.isInstruction(token.getText()) || Spin1Model.isPAsmType(token.getText())) {
-                        parent.instruction = new Node(parent);
-                        parent.instruction.addToken(token);
+                        parent.instruction = token;
                         state = 4;
                         break;
                     }
-                    parent.label = new Node(parent);
-                    parent.label.addToken(token);
+                    parent.label = token;
                     state = 2;
                     break;
                 case 2:
                     if (Spin1Model.isCondition(token.getText())) {
-                        parent.condition = new Node(parent);
-                        parent.condition.addToken(token);
+                        parent.condition = token;
                         state = 3;
                         break;
                     }
                     // fall-through
                 case 3:
-                    parent.instruction = new Node(parent);
-                    parent.instruction.addToken(token);
+                    parent.instruction = token;
+                    parent.addToken(token);
                     state = 4;
                     break;
                 case 4:
@@ -640,7 +634,6 @@ public class Spin1Parser {
                     if (",".equals(token.getText())) {
                         parameter = new ParameterNode(parent);
                         parent.parameters.add(parameter);
-                        parent.addToken(token);
                         break;
                     }
                     if (Spin1Model.isModifier(token.getText())) {
@@ -652,7 +645,6 @@ public class Spin1Parser {
                     if ("[".equals(token.getText())) {
                         parameter.count = new ExpressionNode();
                         parameter.addChild(parameter.count);
-                        parent.addToken(token);
                         state = 7;
                         break;
                     }
@@ -663,7 +655,6 @@ public class Spin1Parser {
                     break;
                 case 7:
                     if ("]".equals(token.getText())) {
-                        parent.addToken(token);
                         state = 5;
                         break;
                     }

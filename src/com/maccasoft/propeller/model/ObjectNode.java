@@ -13,7 +13,7 @@ package com.maccasoft.propeller.model;
 public class ObjectNode extends Node {
 
     public Token name;
-    public Node count;
+    public ExpressionNode count;
     public Token file;
 
     public ObjectNode(Node parent) {

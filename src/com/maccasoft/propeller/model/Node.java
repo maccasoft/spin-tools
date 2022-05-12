@@ -49,16 +49,10 @@ public class Node {
 
     public void addToken(Token token) {
         tokens.add(token);
-        if (parent != null) {
-            parent.addToken(token);
-        }
     }
 
     public void addAllTokens(Collection<Token> list) {
         tokens.addAll(list);
-        if (parent != null) {
-            parent.addAllTokens(list);
-        }
     }
 
     public Token getStartToken() {
@@ -110,6 +104,9 @@ public class Node {
     }
 
     public String getText() {
+        if (getTokenCount() == 0) {
+            return "";
+        }
         TokenStream stream = getStartToken().getStream();
         return stream.getSource(getStartIndex(), getStopIndex());
     }
@@ -140,6 +137,9 @@ public class Node {
 
     @Override
     public String toString() {
+        if (tokens.size() == 0) {
+            return "";
+        }
         if (tokens.size() == 1 && tokens.get(0).type == Token.EOF) {
             return "<EOF>";
         }

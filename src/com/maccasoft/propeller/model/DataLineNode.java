@@ -15,9 +15,9 @@ import java.util.List;
 
 public class DataLineNode extends Node {
 
-    public Node label;
-    public Node condition;
-    public Node instruction;
+    public Token label;
+    public Token condition;
+    public Token instruction;
     public List<ParameterNode> parameters = new ArrayList<ParameterNode>();
     public Node modifier;
 

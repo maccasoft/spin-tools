@@ -16,15 +16,7 @@ public class NodeVisitor {
 
     }
 
-    public void visitConstantAssign(ConstantAssignNode node) {
-
-    }
-
-    public void visitConstantSetEnum(ConstantSetEnumNode node) {
-
-    }
-
-    public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
+    public void visitConstant(ConstantNode node) {
 
     }
 

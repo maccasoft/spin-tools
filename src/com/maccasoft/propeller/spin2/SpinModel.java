@@ -19,8 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
 
-import com.maccasoft.propeller.model.ConstantAssignEnumNode;
-import com.maccasoft.propeller.model.ConstantAssignNode;
+import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -155,19 +154,9 @@ public class SpinModel {
             root.accept(new NodeVisitor() {
 
                 @Override
-                public void visitConstantAssign(ConstantAssignNode node) {
-                    if (node.identifier != null) {
-                        String text = node.identifier.getText();
-                        if (StringUtils.containsIgnoreCase(text, token)) {
-                            proposals.add(new ContentProposal(text, text, null));
-                        }
-                    }
-                }
-
-                @Override
-                public void visitConstantAssignEnum(ConstantAssignEnumNode node) {
-                    if (node.identifier != null) {
-                        String text = node.identifier.getText();
+                public void visitConstant(ConstantNode node) {
+                    if (node.getIdentifier() != null) {
+                        String text = node.getIdentifier().getText();
                         if (StringUtils.containsIgnoreCase(text, token)) {
                             proposals.add(new ContentProposal(text, text, null));
                         }

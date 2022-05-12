@@ -637,8 +637,7 @@ public class SourceEditor {
                             for (Node child : node.getChilds()) {
                                 DataLineNode obj = (DataLineNode) child;
                                 if (obj.label != null && obj.label.getText().equals(hoverText)) {
-                                    Token target = obj.label.getStartToken();
-                                    SourceElement element = new SourceElement(null, target.line, target.column);
+                                    SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
                                     display.asyncExec(new Runnable() {
 
                                         @Override
@@ -1616,19 +1615,19 @@ public class SourceEditor {
                     proposals.addAll(helpProvider.fillProposals("Condition", token));
                     proposals.addAll(helpProvider.fillProposals("Instruction", token));
                 }
-                else if (line.condition != null && position >= line.condition.getStartIndex() && position <= line.condition.getStopIndex() + 1) {
+                else if (line.condition != null && position >= line.condition.start && position <= line.condition.stop + 1) {
                     proposals.addAll(helpProvider.fillProposals("Condition", token));
                 }
-                else if (line.condition != null && line.instruction == null && position > line.condition.getStopIndex()) {
+                else if (line.condition != null && line.instruction == null && position > line.condition.stop) {
                     proposals.addAll(helpProvider.fillProposals("Instruction", token));
                 }
-                else if (line.instruction != null && position >= line.instruction.getStartIndex() && position <= line.instruction.getStopIndex() + 1) {
+                else if (line.instruction != null && position >= line.instruction.start && position <= line.instruction.stop + 1) {
                     proposals.addAll(helpProvider.fillProposals("Instruction", token));
                 }
-                else if (line.instruction != null && line.condition == null && position < line.instruction.getStartIndex()) {
+                else if (line.instruction != null && line.condition == null && position < line.instruction.start) {
                     proposals.addAll(helpProvider.fillProposals("Condition", token));
                 }
-                else if (line.instruction != null && position > line.instruction.getStopIndex() + 1) {
+                else if (line.instruction != null && position > line.instruction.stop + 1) {
                     proposals.addAll(helpProvider.fillProposals(line.instruction.getText().toUpperCase(), token));
                     if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
                         proposals.addAll(tokenMarker.getMethodProposals(node.getParent(), token));
