@@ -231,6 +231,7 @@ public class Spin1Compiler extends Compiler {
     }
 
     Spin1Object compileObject(String rootFileName, Node root) {
+        int memoryOffset = 16;
         ListOrderedMap<String, Node> objects = ListOrderedMap.listOrderedMap(new HashMap<String, Node>());
 
         root.accept(new ObjectNodeVisitor(rootFileName, objects));
@@ -241,25 +242,30 @@ public class Spin1Compiler extends Compiler {
 
         for (Entry<String, Node> entry : objects.entrySet()) {
             Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey(), scope, childObjects);
-            Spin1Object object = objectCompiler.compileObject(entry.getValue());
-            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object, objectCompiler.hasErrors()));
+            objectCompiler.compile(entry.getValue());
+            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), objectCompiler));
         }
 
         Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFileName, scope, childObjects);
-        Spin1Object object = objectCompiler.compileObject(root);
+        objectCompiler.compile(root);
+
+        Spin1Object object = objectCompiler.generateObject(memoryOffset);
+        memoryOffset += object.getSize();
 
         for (int i = objects.size() - 1; i >= 0; i--) {
             String fileName = objects.get(i);
             ObjectInfo info = childObjects.get(fileName);
             info.offset = object.getSize();
-            info.object.getObject(0).setText("Object \"" + fileName + "\" header (var size " + info.object.getVarSize() + ")");
-            object.writeObject(info.object);
+            Spin1Object linkedObject = info.compiler.generateObject(memoryOffset);
+            memoryOffset += linkedObject.getSize();
+            linkedObject.getObject(0).setText("Object \"" + fileName + "\" header (var size " + linkedObject.getVarSize() + ")");
+            object.writeObject(linkedObject);
         }
 
         for (ObjectInfo info : childObjects.values()) {
-            for (LinkDataObject linkData : info.object.links) {
+            for (LinkDataObject linkData : info.compiler.getObjectLinks()) {
                 for (ObjectInfo info2 : childObjects.values()) {
-                    if (info2.object == linkData.object) {
+                    if (info2.compiler == linkData.object.compiler) {
                         linkData.setOffset(info2.offset - info.offset);
                         linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", info2.fileName, linkData.getOffset(), linkData.getVarOffset()));
                         break;
@@ -270,7 +276,7 @@ public class Spin1Compiler extends Compiler {
 
         for (LinkDataObject linkData : object.links) {
             for (ObjectInfo info : childObjects.values()) {
-                if (info.object == linkData.object) {
+                if (info.compiler == linkData.object.compiler) {
                     linkData.setOffset(info.offset);
                     linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", info.fileName, linkData.getOffset(), linkData.getVarOffset()));
                     break;

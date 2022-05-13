@@ -34,8 +34,9 @@ public class Alignw extends Spin2PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address, boolean hubMode) {
+        public int resolve(int address, boolean hubMode, int memoryAddress) {
             context.setAddress(hubMode ? address : address >> 2);
+            context.setMemoryAddress(memoryAddress);
             return (address + 1) & ~1;
         }
 

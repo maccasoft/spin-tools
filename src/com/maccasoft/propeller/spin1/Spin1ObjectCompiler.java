@@ -33,6 +33,7 @@ import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
+import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
@@ -90,24 +91,26 @@ public class Spin1ObjectCompiler {
 
     public static class ObjectInfo {
         String fileName;
-        Spin1Object object;
-        boolean errors;
+        Spin1ObjectCompiler compiler;
 
         long offset;
         int count;
 
-        public ObjectInfo(String fileName, Spin1Object object, boolean errors) {
+        public ObjectInfo(String fileName, Spin1ObjectCompiler compiler) {
             this.fileName = fileName;
-            this.object = object;
-            this.errors = errors;
+            this.compiler = compiler;
         }
 
-        public ObjectInfo(String fileName, Spin1Object object, boolean errors, int count) {
+        public ObjectInfo(String fileName, Spin1ObjectCompiler compiler, int count) {
             this.fileName = fileName;
-            this.object = object;
-            this.errors = errors;
+            this.compiler = compiler;
             this.count = count;
         }
+
+        public boolean hasErrors() {
+            return compiler.hasErrors();
+        }
+
     }
 
     final Spin1Context scope;
@@ -248,8 +251,7 @@ public class Spin1ObjectCompiler {
         int objectIndex = methodData.size() + 1;
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
             ObjectInfo info = infoEntry.getValue();
-            Spin1Object obj = infoEntry.getValue().object;
-            for (Entry<String, Expression> objEntry : obj.getSymbols().entrySet()) {
+            for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                 if (objEntry.getValue() instanceof Method) {
                     String qualifiedName = infoEntry.getKey() + "." + objEntry.getKey();
                     Method method = ((Method) objEntry.getValue()).copy();
@@ -258,8 +260,8 @@ public class Spin1ObjectCompiler {
                 }
             }
             for (int i = 0; i < info.count; i++) {
-                objectLinks.add(new LinkDataObject(info.object, 0, varOffset));
-                varOffset += info.object.getVarSize();
+                objectLinks.add(new LinkDataObject(info, 0, varOffset));
+                varOffset += info.compiler.getVarSize();
                 objectIndex++;
             }
         }
@@ -279,7 +281,23 @@ public class Spin1ObjectCompiler {
         }
     }
 
+    public Map<String, Expression> getPublicSymbols() {
+        return publicSymbols;
+    }
+
+    public int getVarSize() {
+        return varOffset;
+    }
+
+    public List<LinkDataObject> getObjectLinks() {
+        return objectLinks;
+    }
+
     public Spin1Object generateObject() {
+        return generateObject(0);
+    }
+
+    public Spin1Object generateObject(int memoryOffset) {
         int address = 0, hubAddress = 0;
         Spin1Object object = new Spin1Object();
 
@@ -327,7 +345,7 @@ public class Spin1ObjectCompiler {
                 hubAddress = (hubAddress + 3) & ~3;
             }
             try {
-                address = line.resolve(address);
+                address = line.resolve(address, memoryOffset + hubAddress);
                 hubAddress += line.getInstructionObject().getSize();
                 for (CompilerException msg : line.getAnnotations()) {
                     logMessage(msg);
@@ -723,14 +741,14 @@ public class Spin1ObjectCompiler {
                 logMessage(new CompilerException("object " + token + " not found", token));
                 continue;
             }
-            if (info.errors) {
+            if (info.hasErrors()) {
                 logMessage(new CompilerException("object " + token + " has errors", token));
                 continue;
             }
 
-            objects.put(name, new ObjectInfo(info.fileName, info.object, info.errors, count));
+            objects.put(name, new ObjectInfo(info.fileName, info.compiler, count));
 
-            for (Entry<String, Expression> entry : info.object.getSymbols().entrySet()) {
+            for (Entry<String, Expression> entry : info.compiler.getPublicSymbols().entrySet()) {
                 if (!(entry.getValue() instanceof Method)) {
                     String qualifiedName = name + "#" + entry.getKey();
                     scope.addSymbol(qualifiedName, entry.getValue());
@@ -832,6 +850,7 @@ public class Spin1ObjectCompiler {
                         }
                         scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
                         scope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope()));
+                        scope.addSymbol("@@" + pasmLine.getLabel(), new MemoryContextLiteral(pasmLine.getScope()));
 
                         if (pasmLine.getMnemonic() == null) {
                             if (!pasmLine.isLocalLabel()) {
@@ -844,6 +863,7 @@ public class Spin1ObjectCompiler {
                                 Spin1Context context = entry.getValue();
                                 context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
                                 context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
+                                context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope()));
                             }
                             pendingAlias.clear();
                         }
@@ -872,6 +892,7 @@ public class Spin1ObjectCompiler {
                         Spin1Context context = entry.getValue();
                         context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
                         context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
+                        context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope()));
                     }
                     pendingAlias.clear();
                 }

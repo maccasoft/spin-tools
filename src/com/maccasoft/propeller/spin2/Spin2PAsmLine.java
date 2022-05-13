@@ -93,9 +93,10 @@ public class Spin2PAsmLine {
         }
     }
 
-    public int resolve(int address, boolean hubMode) {
+    public int resolve(int address, boolean hubMode, int memoryAddress) {
         scope.setAddress(hubMode ? address : address >> 2);
-        return getInstructionObject().resolve(address, hubMode);
+        scope.setMemoryAddress(memoryAddress);
+        return getInstructionObject().resolve(address, hubMode, memoryAddress);
     }
 
     public void setInstructionObject(Spin2InstructionObject instructionObject) {

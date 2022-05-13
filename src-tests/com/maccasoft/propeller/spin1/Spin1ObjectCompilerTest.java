@@ -2435,6 +2435,27 @@ class Spin1ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testAbsoluteAddress() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                mov   a, #@@a\n"
+            + "                ret\n"
+            + "a               res   1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0C 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                                    org     $000\n"
+            + "00004 00004   000 0C 04 FC A0                        mov     a, #@@a\n"
+            + "00008 00008   001 00 00 7C 5C                        ret\n"
+            + "0000C 0000C   002                a                   res     1\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         Spin1Context scope = new Spin1GlobalContext();
         Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();

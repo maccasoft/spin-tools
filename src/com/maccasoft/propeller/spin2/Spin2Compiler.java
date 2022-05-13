@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -47,7 +47,7 @@ public class Spin2Compiler extends Compiler {
     boolean removeUnusedMethods;
     Spin2Preprocessor preprocessor;
 
-    Spin2Object object = new Spin2Object();
+    Spin2Interpreter interpreter = new Spin2Interpreter();
 
     public Spin2Compiler() {
 
@@ -91,7 +91,6 @@ public class Spin2Compiler extends Compiler {
 
         for (Entry<String, Expression> entry : obj.getSymbols().entrySet()) {
             if (entry.getValue() instanceof Method) {
-                Spin2Interpreter interpreter = new Spin2Interpreter();
                 interpreter.setVBase((interpreter.getPBase() + obj.getSize()) | (obj.links.size() << 21));
                 interpreter.setDBase(interpreter.getPBase() + obj.getSize() + obj.getVarSize());
                 interpreter.setClearLongs(255 + ((obj.getVarSize() + 3) / 4));
@@ -209,25 +208,38 @@ public class Spin2Compiler extends Compiler {
 
         for (Entry<String, Node> entry : objects.entrySet()) {
             Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey(), scope, childObjects, debugEnabled, debugStatements);
-            Spin2Object object = objectCompiler.compileObject(entry.getValue());
-            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), object, objectCompiler.hasErrors()));
+            objectCompiler.compile(entry.getValue());
+            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), objectCompiler));
         }
 
         Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFileName, scope, childObjects, debugEnabled, debugStatements);
-        Spin2Object object = objectCompiler.compileObject(root);
+        objectCompiler.compile(root);
+
+        int memoryOffset = 0;
+        for (Entry<String, Expression> entry : objectCompiler.getPublicSymbols().entrySet()) {
+            if (entry.getValue() instanceof Method) {
+                memoryOffset = interpreter.getSize();
+                break;
+            }
+        }
+
+        Spin2Object object = objectCompiler.generateObject(memoryOffset);
+        memoryOffset += object.getSize();
 
         for (int i = objects.size() - 1; i >= 0; i--) {
             String fileName = objects.get(i);
             ObjectInfo info = childObjects.get(fileName);
             info.offset = object.getSize();
-            info.object.getObject(0).setText("Object \"" + fileName + "\" header (var size " + info.object.getVarSize() + ")");
-            object.writeObject(info.object);
+            Spin2Object linkedObject = info.compiler.generateObject(memoryOffset);
+            memoryOffset += linkedObject.getSize();
+            linkedObject.getObject(0).setText("Object \"" + fileName + "\" header (var size " + linkedObject.getVarSize() + ")");
+            object.writeObject(linkedObject);
         }
 
         for (ObjectInfo info : childObjects.values()) {
-            for (LinkDataObject linkData : info.object.links) {
+            for (LinkDataObject linkData : info.compiler.getObjectLinks()) {
                 for (ObjectInfo info2 : childObjects.values()) {
-                    if (info2.object == linkData.object) {
+                    if (info2.compiler == linkData.object.compiler) {
                         linkData.setOffset(info2.offset - info.offset);
                         linkData.setText(String.format("Object \"%s\" @ $%05X", info2.fileName, linkData.getOffset()));
                         break;
@@ -238,7 +250,7 @@ public class Spin2Compiler extends Compiler {
 
         for (LinkDataObject linkData : object.links) {
             for (ObjectInfo info : childObjects.values()) {
-                if (info.object == linkData.object) {
+                if (info.compiler == linkData.object.compiler) {
                     linkData.setOffset(info.offset);
                     linkData.setText(String.format("Object \"%s\" @ $%05X", info.fileName, linkData.getOffset()));
                     break;

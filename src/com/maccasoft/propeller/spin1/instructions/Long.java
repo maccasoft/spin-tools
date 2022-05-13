@@ -36,9 +36,10 @@ public class Long extends Spin1PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address) {
+        public int resolve(int address, int memoryAddress) {
             address = (address + 3) & ~3;
             context.setAddress(address >> 2);
+            context.setMemoryAddress(memoryAddress);
             return address + getSize();
         }
 

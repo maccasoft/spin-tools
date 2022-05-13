@@ -206,8 +206,9 @@ public abstract class Spin2InstructionObject {
         this.context = context;
     }
 
-    public int resolve(int address, boolean hubMode) {
+    public int resolve(int address, boolean hubMode, int memoryAddress) {
         context.setAddress(hubMode ? address : address >> 2);
+        context.setMemoryAddress(memoryAddress);
         return address + getSize();
     }
 

@@ -36,11 +36,12 @@ public class Word extends Spin1PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address) {
+        public int resolve(int address, int memoryAddress) {
             while ((address % 2) != 0) {
                 address++;
             }
             context.setAddress(address >> 2);
+            context.setMemoryAddress(memoryAddress);
             return address + getSize();
         }
 

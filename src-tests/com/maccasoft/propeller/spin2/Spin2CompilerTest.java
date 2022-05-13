@@ -1214,6 +1214,34 @@ class Spin2CompilerTest {
             + "", compile("main.spin2", sources));
     }
 
+    @Test
+    void testAbsoluteAddress() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "PUB main()\n"
+            + "\n"
+            + "DAT             org   $000\n"
+            + "                mov   a, ##@@a\n"
+            + "                ret\n"
+            + "a               long  0\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       18 00 00 80    Method main @ $00018 (0 parameters, 0 returns)\n"
+            + "00004 00004       1A 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 09 00 00 FF                        mov     a, ##@@a\n"
+            + "0000C 0000C   001 D8 06 04 F6\n"
+            + "00010 00010   002 2D 00 64 FD                        ret\n"
+            + "00014 00014   003 00 00 00 00    a                   long    0\n"
+            + "' PUB main()\n"
+            + "00018 00018       00             (stack size)\n"
+            + "00019 00019       04             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
+            + "", compile("main.spin2", sources));
+    }
+
     class Spin2CompilerAdapter extends Spin2Compiler {
 
         Map<String, String> sources;

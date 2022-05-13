@@ -100,9 +100,10 @@ public class Spin1PAsmLine {
         return Collections.singletonList(this);
     }
 
-    public int resolve(int address) {
+    public int resolve(int address, int memoryAddress) {
         scope.setAddress(address);
-        return getInstructionObject().resolve(address);
+        scope.setMemoryAddress(memoryAddress);
+        return getInstructionObject().resolve(address, memoryAddress);
     }
 
     public void setInstructionObject(Spin1InstructionObject instructionObject) {

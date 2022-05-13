@@ -23,8 +23,9 @@ public class FileInc extends Spin1InstructionObject {
     }
 
     @Override
-    public int resolve(int address) {
+    public int resolve(int address, int memoryAddress) {
         context.setAddress(address);
+        context.setMemoryAddress(memoryAddress);
         return address + data.length;
     }
 

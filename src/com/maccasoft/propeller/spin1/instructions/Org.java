@@ -43,8 +43,9 @@ public class Org extends Spin1PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address) {
+        public int resolve(int address, int memoryAddress) {
             context.setAddress(address >> 2);
+            context.setMemoryAddress(memoryAddress);
             return arg0 != null ? (arg0.getInteger() << 2) : 0x000;
         }
 

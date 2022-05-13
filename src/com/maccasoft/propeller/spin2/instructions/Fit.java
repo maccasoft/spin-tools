@@ -50,8 +50,9 @@ public class Fit extends Spin2PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address, boolean hubMode) {
+        public int resolve(int address, boolean hubMode, int memoryAddress) {
             context.setAddress(hubMode ? address : address >> 2);
+            context.setMemoryAddress(memoryAddress);
             int limit = (arg0 != null ? arg0.getInteger() : defaultLimit) << 2;
             if (address > limit) {
                 throw new RuntimeException("error: fit limit exceeded by " + ((address - limit) >> 2) + " long(s)");

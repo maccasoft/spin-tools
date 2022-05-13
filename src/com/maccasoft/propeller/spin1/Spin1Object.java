@@ -14,16 +14,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.maccasoft.propeller.SpinObject;
+import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
 
 public class Spin1Object extends SpinObject {
 
     public static class LinkDataObject extends DataObject {
 
-        Spin1Object object;
+        ObjectInfo object;
         long offset;
         long varOffset;
 
-        public LinkDataObject(Spin1Object object, long offset, long varOffset) {
+        public LinkDataObject(ObjectInfo object, long offset, long varOffset) {
             super(new byte[] {
                 (byte) offset,
                 (byte) (offset >> 8),
@@ -63,7 +64,7 @@ public class Spin1Object extends SpinObject {
             this.varOffset = varOffset;
         }
 
-        public Spin1Object getObject() {
+        public ObjectInfo getObject() {
             return object;
         }
 

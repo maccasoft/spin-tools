@@ -104,8 +104,9 @@ public abstract class Spin1InstructionObject {
         this.context = context;
     }
 
-    public int resolve(int address) {
+    public int resolve(int address, int memoryAddress) {
         context.setAddress(address >> 2);
+        context.setMemoryAddress(memoryAddress);
         return address + getSize();
     }
 

@@ -43,8 +43,9 @@ public class Fit extends Spin1PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address) {
+        public int resolve(int address, int memoryAddress) {
             context.setAddress(address >> 2);
+            context.setMemoryAddress(memoryAddress);
             int limit = arg0 != null ? arg0.getInteger() : 0x1F0;
             if ((address >> 2) > limit) {
                 throw new RuntimeException("error: fit limit exceeded by " + ((address >> 2) - limit) + " long(s)");
