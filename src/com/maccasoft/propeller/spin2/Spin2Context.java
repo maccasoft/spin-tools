@@ -16,7 +16,8 @@ import java.util.Map;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.HubContextLiteral;
+import com.maccasoft.propeller.expressions.MemoryContextLiteral;
+import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 
 public class Spin2Context implements Context {
 
@@ -24,11 +25,9 @@ public class Spin2Context implements Context {
 
     Map<String, Expression> symbols = new HashMap<String, Expression>();
 
-    int address;
-    boolean set;
-
-    int hubAddress;
-    int objectOffset;
+    Integer address;
+    Integer objectAddress;
+    Integer memoryAddress;
 
     public Spin2Context() {
     }
@@ -36,7 +35,8 @@ public class Spin2Context implements Context {
     public Spin2Context(Spin2Context parent) {
         this.parent = parent;
         symbols.put("$", new ContextLiteral(this));
-        symbols.put("@$", new HubContextLiteral(this));
+        symbols.put("@$", new ObjectContextLiteral(this));
+        symbols.put("@@$", new MemoryContextLiteral(this));
     }
 
     public Spin2Context getParent() {
@@ -87,38 +87,43 @@ public class Spin2Context implements Context {
 
     public void setAddress(int address) {
         this.address = address;
-        this.set = true;
     }
 
     @Override
     public boolean isAddressSet() {
-        return set;
+        return address != null;
     }
 
     @Override
     public int getAddress() {
-        if (!set) {
+        if (address == null) {
             throw new RuntimeException("address not set");
         }
         return address;
     }
 
     @Override
-    public int getHubAddress() {
-        return hubAddress;
+    public int getObjectAddress() {
+        if (objectAddress == null) {
+            throw new RuntimeException("object address not set");
+        }
+        return objectAddress;
     }
 
-    public void setHubAddress(int hubAddress) {
-        this.hubAddress = hubAddress;
+    public void setObjectAddress(int address) {
+        this.objectAddress = address;
     }
 
     @Override
-    public int getObjectOffset() {
-        return objectOffset;
+    public int getMemoryAddress() {
+        if (memoryAddress == null) {
+            throw new RuntimeException("memory address not set");
+        }
+        return memoryAddress;
     }
 
-    public void setObjectOffset(int objectOffset) {
-        this.objectOffset = objectOffset;
+    public void setMemoryAddress(int address) {
+        this.memoryAddress = address;
     }
 
 }

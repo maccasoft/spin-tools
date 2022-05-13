@@ -164,7 +164,7 @@ public class MemoryOp extends Spin2Bytecode {
             if (base != Base.Pop) {
                 int offset;
                 if (expression instanceof ContextLiteral) {
-                    offset = ((ContextLiteral) expression).getContext().getHubAddress();
+                    offset = ((ContextLiteral) expression).getContext().getObjectAddress();
                 }
                 else if (expression instanceof Variable) {
                     offset = ((Variable) expression).getOffset();
@@ -243,7 +243,7 @@ public class MemoryOp extends Spin2Bytecode {
         if (base != Base.Pop) {
             int offset;
             if (expression instanceof ContextLiteral) {
-                offset = ((ContextLiteral) expression).getContext().getHubAddress();
+                offset = ((ContextLiteral) expression).getContext().getObjectAddress();
             }
             else if (expression instanceof Variable) {
                 offset = ((Variable) expression).getOffset();

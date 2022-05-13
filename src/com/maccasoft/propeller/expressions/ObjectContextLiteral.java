@@ -9,8 +9,13 @@ public class ObjectContextLiteral extends Literal {
     }
 
     @Override
+    public boolean isConstant() {
+        return false;
+    }
+
+    @Override
     public Number getNumber() {
-        return context.getObjectOffset();
+        return new Long(context.getObjectAddress());
     }
 
     @Override

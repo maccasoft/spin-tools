@@ -96,7 +96,7 @@ public class MemoryRef extends Spin1Bytecode {
         int value = 0;
         if (expression != null) {
             if (expression instanceof ContextLiteral) {
-                value = ((ContextLiteral) expression).getContext().getHubAddress();
+                value = ((ContextLiteral) expression).getContext().getObjectAddress();
             }
             else if (expression instanceof Variable) {
                 value = ((Variable) expression).getOffset();
@@ -119,7 +119,7 @@ public class MemoryRef extends Spin1Bytecode {
         }
 
         if (bb == Base.PBase && (expression instanceof ContextLiteral)) {
-            value = ((ContextLiteral) expression).getContext().getHubAddress();
+            value = ((ContextLiteral) expression).getContext().getObjectAddress();
         }
 
         return new byte[] {
@@ -181,7 +181,7 @@ public class MemoryRef extends Spin1Bytecode {
             int value = 0;
             if (expression != null) {
                 if (expression instanceof ContextLiteral) {
-                    value = ((ContextLiteral) expression).getContext().getHubAddress();
+                    value = ((ContextLiteral) expression).getContext().getObjectAddress();
                 }
                 else if (expression instanceof Variable) {
                     value = ((Variable) expression).getOffset();
@@ -191,7 +191,7 @@ public class MemoryRef extends Spin1Bytecode {
                 }
             }
             if (bb == Base.PBase && (expression instanceof ContextLiteral)) {
-                value = ((ContextLiteral) expression).getContext().getHubAddress();
+                value = ((ContextLiteral) expression).getContext().getObjectAddress();
             }
             sb.append(String.format("$%04X", value));
         }

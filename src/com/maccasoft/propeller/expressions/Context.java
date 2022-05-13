@@ -10,8 +10,8 @@ public interface Context {
 
     public int getAddress();
 
-    public int getHubAddress();
+    public int getObjectAddress();
 
-    public int getObjectOffset();
+    public int getMemoryAddress();
 
 }

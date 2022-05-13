@@ -349,6 +349,10 @@ public abstract class SpinObject {
         return symbols.get(name);
     }
 
+    public void addAllSymbols(Map<String, Expression> map) {
+        symbols.putAll(map);
+    }
+
     public Map<String, Expression> getSymbols() {
         return symbols;
     }

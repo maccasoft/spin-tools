@@ -42,12 +42,12 @@ class ExpressionTest {
         }
 
         @Override
-        public int getHubAddress() {
+        public int getObjectAddress() {
             return 0;
         }
 
         @Override
-        public int getObjectOffset() {
+        public int getMemoryAddress() {
             return 0;
         }
 

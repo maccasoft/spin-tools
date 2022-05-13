@@ -22,7 +22,6 @@ import java.util.Map.Entry;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.SpinObject.ByteDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Add;
@@ -33,7 +32,6 @@ import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Modulo;
@@ -41,6 +39,7 @@ import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.Negative;
 import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.ShiftLeft;
@@ -118,11 +117,17 @@ public class Spin1ObjectCompiler {
     List<Spin1Method> methods = new ArrayList<Spin1Method>();
     Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<String, ObjectInfo>());
 
+    int dcurr = 0;
     int varOffset = 0;
+    int objectVarSize = 0;
     Spin1MethodLine dataLine;
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
+
+    Map<String, Expression> publicSymbols = new HashMap<String, Expression>();
+    List<LinkDataObject> objectLinks = new ArrayList<LinkDataObject>();
+    List<LongDataObject> methodData = new ArrayList<LongDataObject>();
 
     public Spin1ObjectCompiler(Spin1Context scope, Map<String, ObjectInfo> childObjects) {
         this.scope = new Spin1Context(scope);
@@ -130,8 +135,11 @@ public class Spin1ObjectCompiler {
     }
 
     public Spin1Object compileObject(Node root) {
-        int address = 0, hubAddress = 0;
-        Spin1Object object = new Spin1Object();
+        compile(root);
+        return generateObject();
+    }
+
+    public void compile(Node root) {
 
         for (Node node : root.getChilds()) {
             if (node instanceof ObjectsNode) {
@@ -141,8 +149,14 @@ public class Spin1ObjectCompiler {
 
         for (Node node : root.getChilds()) {
             if (node instanceof ConstantsNode) {
-                compileConBlock(node, object);
+                compileConBlock(node);
             }
+        }
+
+        try {
+            determineClock();
+        } catch (CompilerException e) {
+            logMessage(e);
         }
 
         Iterator<Entry<String, Expression>> iter = scope.symbols.entrySet().iterator();
@@ -169,38 +183,12 @@ public class Spin1ObjectCompiler {
 
         compileVarBlocks(root);
 
-        try {
-            determineClock();
-            object.setClkFreq(scope.getLocalSymbol("CLKFREQ").getNumber().intValue());
-            object.setClkMode(scope.getLocalSymbol("CLKMODE").getNumber().intValue());
-        } catch (CompilerException e) {
-            logMessage(e);
-        }
-
-        if (objects.size() != 0) {
-            object.writeComment("Object header (var size " + varOffset + ")");
-        }
-        else {
-            object.writeComment("Object header");
-        }
-
-        WordDataObject objectSize = object.writeWord(0, "Object size");
-        ByteDataObject methodCount = object.writeByte(1, "Method count + 1");
-
-        int count = 0;
-        for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
-            ObjectInfo info = infoEntry.getValue();
-            count += info.count;
-        }
-        object.writeByte(count, "Object count");
-
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
                 compileDatBlock(scope, node);
             }
         }
 
-        List<LongDataObject> ld = new ArrayList<LongDataObject>();
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PUB".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin1Method method = compileMethod((MethodNode) node);
@@ -210,16 +198,16 @@ public class Spin1ObjectCompiler {
                 try {
                     int index = -1;
                     if (isReferenced((MethodNode) node)) {
-                        if (ld.size() == 0) {
-                            object.setDcurr(method.getStackSize());
+                        if (methodData.size() == 0) {
+                            dcurr = method.getStackSize();
                         }
-                        ld.add(object.writeLong(0, "Function " + method.getLabel()));
-                        index = ld.size();
+                        methodData.add(new LongDataObject(0, "Function " + method.getLabel()));
+                        index = methodData.size();
                     }
                     else {
                         logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", node));
                     }
-                    object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
+                    publicSymbols.put(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), index));
                     method.register();
@@ -238,11 +226,11 @@ public class Spin1ObjectCompiler {
                 try {
                     int index = -1;
                     if (isReferenced((MethodNode) node)) {
-                        if (ld.size() == 0) {
-                            object.setDcurr(method.getStackSize());
+                        if (methodData.size() == 0) {
+                            dcurr = method.getStackSize();
                         }
-                        ld.add(object.writeLong(0, "Function " + method.getLabel()));
-                        index = ld.size();
+                        methodData.add(new LongDataObject(0, "Function " + method.getLabel()));
+                        index = methodData.size();
                     }
                     else {
                         logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", node));
@@ -256,9 +244,8 @@ public class Spin1ObjectCompiler {
                 }
             }
         }
-        methodCount.setValue(ld.size() + 1);
 
-        int objectIndex = ld.size() + 1;
+        int objectIndex = methodData.size() + 1;
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
             ObjectInfo info = infoEntry.getValue();
             Spin1Object obj = infoEntry.getValue().object;
@@ -271,36 +258,9 @@ public class Spin1ObjectCompiler {
                 }
             }
             for (int i = 0; i < info.count; i++) {
-                LinkDataObject linkData = new LinkDataObject(info.object, 0, varOffset);
-                object.links.add(linkData);
-                object.write(linkData);
+                objectLinks.add(new LinkDataObject(info.object, 0, varOffset));
                 varOffset += info.object.getVarSize();
                 objectIndex++;
-            }
-        }
-
-        object.setVarSize(varOffset);
-
-        hubAddress = object.getSize();
-
-        for (Spin1PAsmLine line : source) {
-            if (line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Long) {
-                hubAddress = (hubAddress + 3) & ~3;
-            }
-            line.getScope().setHubAddress(hubAddress);
-            if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
-                hubAddress = (hubAddress + 3) & ~3;
-            }
-            try {
-                address = line.resolve(address);
-                hubAddress += line.getInstructionObject().getSize();
-                for (CompilerException msg : line.getAnnotations()) {
-                    logMessage(msg);
-                }
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, line.getData()));
             }
         }
 
@@ -317,9 +277,70 @@ public class Spin1ObjectCompiler {
                 }
             }
         }
+    }
+
+    public Spin1Object generateObject() {
+        int address = 0, hubAddress = 0;
+        Spin1Object object = new Spin1Object();
+
+        object.setClkFreq(scope.getLocalSymbol("CLKFREQ").getNumber().intValue());
+        object.setClkMode(scope.getLocalSymbol("CLKMODE").getNumber().intValue());
+
+        if (objects.size() != 0) {
+            object.writeComment("Object header (var size " + objectVarSize + ")");
+        }
+        else {
+            object.writeComment("Object header");
+        }
+
+        WordDataObject objectSize = object.writeWord(0, "Object size");
+        object.writeByte(methodData.size() + 1, "Method count + 1");
+
+        int count = 0;
+        for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
+            ObjectInfo info = infoEntry.getValue();
+            count += info.count;
+        }
+        object.writeByte(count, "Object count");
+
+        for (LongDataObject linkData : methodData) {
+            object.write(linkData);
+        }
+
+        for (LinkDataObject linkData : objectLinks) {
+            object.write(linkData);
+        }
+        object.links.addAll(objectLinks);
+
+        object.setDcurr(dcurr);
+        object.addAllSymbols(publicSymbols);
+        object.setVarSize(varOffset);
+
+        hubAddress = object.getSize();
 
         for (Spin1PAsmLine line : source) {
-            hubAddress = line.getScope().getHubAddress();
+            if (line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Long) {
+                hubAddress = (hubAddress + 3) & ~3;
+            }
+            line.getScope().setObjectAddress(hubAddress);
+            if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
+                hubAddress = (hubAddress + 3) & ~3;
+            }
+            try {
+                address = line.resolve(address);
+                hubAddress += line.getInstructionObject().getSize();
+                for (CompilerException msg : line.getAnnotations()) {
+                    logMessage(msg);
+                }
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, line.getData()));
+            }
+        }
+
+        for (Spin1PAsmLine line : source) {
+            hubAddress = line.getScope().getObjectAddress();
             if (object.getSize() < hubAddress) {
                 object.writeBytes(new byte[hubAddress - object.getSize()], "(filler)");
             }
@@ -351,8 +372,8 @@ public class Spin1ObjectCompiler {
                 if (!isReferenced((MethodNode) method.getData())) {
                     continue;
                 }
-                ld.get(index).setValue((method.getLocalsSize() << 16) | object.getSize());
-                ld.get(index).setText(String.format("Function %s @ $%04X (local size %d)", method.getLabel(), object.getSize(), method.getLocalsSize()));
+                methodData.get(index).setValue((method.getLocalsSize() << 16) | object.getSize());
+                methodData.get(index).setText(String.format("Function %s @ $%04X (local size %d)", method.getLabel(), object.getSize(), method.getLocalsSize()));
                 method.writeTo(object);
                 index++;
             }
@@ -365,7 +386,7 @@ public class Spin1ObjectCompiler {
         return object;
     }
 
-    void compileConBlock(Node parent, Spin1Object object) {
+    void compileConBlock(Node parent) {
         int enumValue = 0, enumIncrement = 1;
 
         for (Node child : parent.getChilds()) {
@@ -420,7 +441,7 @@ public class Spin1ObjectCompiler {
                     if (!iter.hasNext()) {
                         try {
                             scope.addSymbol(identifier, new NumberLiteral(enumValue));
-                            object.addSymbol(identifier, new NumberLiteral(enumValue));
+                            publicSymbols.put(identifier, new NumberLiteral(enumValue));
                         } catch (CompilerException e) {
                             logMessage(e);
                         } catch (Exception e) {
@@ -433,7 +454,7 @@ public class Spin1ObjectCompiler {
                         if ("[".equals(token.getText())) {
                             try {
                                 scope.addSymbol(identifier, new NumberLiteral(enumValue));
-                                object.addSymbol(identifier, new NumberLiteral(enumValue));
+                                publicSymbols.put(identifier, new NumberLiteral(enumValue));
                             } catch (CompilerException e) {
                                 logMessage(e);
                             } catch (Exception e) {
@@ -470,7 +491,7 @@ public class Spin1ObjectCompiler {
                                 Expression expression = builder.getExpression();
                                 try {
                                     scope.addSymbol(identifier, expression);
-                                    object.addSymbol(identifier, expression);
+                                    publicSymbols.put(identifier, expression);
                                 } catch (CompilerException e) {
                                     logMessage(e);
                                 } catch (Exception e) {
@@ -561,7 +582,8 @@ public class Spin1ObjectCompiler {
 
         });
 
-        varOffset = (varOffset + 3) & ~3;
+        objectVarSize = (objectVarSize + 3) & ~3;
+        varOffset = objectVarSize;
     }
 
     void compileVariable(String type, VariableNode node) {
@@ -612,8 +634,8 @@ public class Spin1ObjectCompiler {
         }
 
         try {
-            scope.addSymbol(identifier, new Variable(type, identifier, size, varOffset));
-            scope.addSymbol("@" + identifier, new Variable(type, identifier, size, varOffset));
+            scope.addSymbol(identifier, new Variable(type, identifier, size, objectVarSize));
+            scope.addSymbol("@" + identifier, new Variable(type, identifier, size, objectVarSize));
 
             int varSize = size.getNumber().intValue();
             if ("WORD".equalsIgnoreCase(type)) {
@@ -622,7 +644,7 @@ public class Spin1ObjectCompiler {
             else if (!"BYTE".equalsIgnoreCase(type)) {
                 varSize = varSize * 4;
             }
-            varOffset += varSize;
+            objectVarSize += varSize;
         } catch (Exception e) {
             logMessage(new CompilerException(e, node.identifier));
         }
@@ -809,7 +831,7 @@ public class Spin1ObjectCompiler {
                             type = "BYTE";
                         }
                         scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
-                        scope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
+                        scope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope()));
 
                         if (pasmLine.getMnemonic() == null) {
                             if (!pasmLine.isLocalLabel()) {
@@ -821,7 +843,7 @@ public class Spin1ObjectCompiler {
                                 Spin1PAsmLine line = entry.getKey();
                                 Spin1Context context = entry.getValue();
                                 context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                                context.addOrUpdateSymbol("@" + line.getLabel(), new HubContextLiteral(line.getScope()));
+                                context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
                             }
                             pendingAlias.clear();
                         }
@@ -849,7 +871,7 @@ public class Spin1ObjectCompiler {
                         Spin1PAsmLine line = entry.getKey();
                         Spin1Context context = entry.getValue();
                         context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                        context.addOrUpdateSymbol("@" + line.getLabel(), new HubContextLiteral(line.getScope()));
+                        context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
                     }
                     pendingAlias.clear();
                 }

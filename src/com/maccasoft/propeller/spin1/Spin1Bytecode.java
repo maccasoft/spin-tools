@@ -107,7 +107,7 @@ public class Spin1Bytecode {
 
     public int resolve(int address) {
         context.setAddress(address);
-        context.setHubAddress(address);
+        context.setObjectAddress(address);
         return address + getSize();
     }
 

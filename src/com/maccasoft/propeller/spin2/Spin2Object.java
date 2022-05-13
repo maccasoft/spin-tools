@@ -24,8 +24,9 @@ public class Spin2Object extends SpinObject {
 
         Spin2Object object;
         long offset;
+        long varOffset;
 
-        public LinkDataObject(Spin2Object object, long offset) {
+        public LinkDataObject(Spin2Object object, long offset, long varOffset) {
             super(new byte[] {
                 (byte) offset,
                 (byte) (offset >> 8),
@@ -34,6 +35,7 @@ public class Spin2Object extends SpinObject {
             });
             this.object = object;
             this.offset = offset;
+            this.varOffset = varOffset;
         }
 
         public long getOffset() {
@@ -48,6 +50,10 @@ public class Spin2Object extends SpinObject {
                 (byte) (offset >> 24)
             };
             this.offset = offset;
+        }
+
+        public long getVarOffset() {
+            return varOffset;
         }
 
         public Spin2Object getObject() {

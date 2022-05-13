@@ -38,7 +38,6 @@ import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
 import com.maccasoft.propeller.expressions.GreaterThan;
-import com.maccasoft.propeller.expressions.HubContextLiteral;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.IfElse;
 import com.maccasoft.propeller.expressions.LessOrEquals;
@@ -54,6 +53,7 @@ import com.maccasoft.propeller.expressions.Negative;
 import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NotEquals;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.Round;
@@ -148,6 +148,10 @@ public class Spin2ObjectCompiler {
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
 
+    Map<String, Expression> publicSymbols = new HashMap<String, Expression>();
+    List<LinkDataObject> objectLinks = new ArrayList<LinkDataObject>();
+    List<LongDataObject> methodData = new ArrayList<LongDataObject>();
+
     public Spin2ObjectCompiler(Spin2Context scope, Map<String, ObjectInfo> childObjects) {
         this(scope, childObjects, false);
     }
@@ -171,7 +175,11 @@ public class Spin2ObjectCompiler {
     }
 
     public Spin2Object compileObject(Node root) {
-        Spin2Object object = new Spin2Object();
+        compile(root);
+        return generateObject();
+    }
+
+    public void compile(Node root) {
 
         for (Node node : root.getChilds()) {
             if (node instanceof ObjectsNode) {
@@ -181,7 +189,7 @@ public class Spin2ObjectCompiler {
 
         for (Node node : root.getChilds()) {
             if (node instanceof ConstantsNode) {
-                compileConBlock(node, object);
+                compileConBlock(node);
             }
         }
 
@@ -250,16 +258,11 @@ public class Spin2ObjectCompiler {
             scope.addSymbol("CLKMODE_", new NumberLiteral(_clkmode));
         }
 
-        object.setClkFreq(_clkfreq);
-        object.setClkMode(_clkmode);
-
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
                 compileDatBlock(node);
             }
         }
-
-        object.writeComment("Object header");
 
         int objectIndex = 1;
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
@@ -274,29 +277,25 @@ public class Spin2ObjectCompiler {
                 }
             }
             for (int i = 0; i < info.count; i++) {
-                LinkDataObject linkData = new LinkDataObject(info.object, 0);
-                object.links.add(linkData);
-                object.write(linkData);
-                object.writeLong(varOffset, String.format("Variables @ $%05X", varOffset));
+                objectLinks.add(new LinkDataObject(info.object, 0, varOffset));
                 varOffset += info.object.getVarSize();
                 objectIndex++;
             }
         }
 
-        List<LongDataObject> ld = new ArrayList<LongDataObject>();
         for (Node node : root.getChilds()) {
             if ((node instanceof MethodNode) && "PUB".equalsIgnoreCase(((MethodNode) node).getType().getText())) {
                 Spin2Method method = compileMethod((MethodNode) node);
                 try {
                     int offset = -1;
                     if (isReferenced((MethodNode) node)) {
-                        offset = objects.size() * 2 + ld.size();
-                        ld.add(object.writeLong(0, "Method " + method.getLabel()));
+                        offset = objects.size() * 2 + methodData.size();
+                        methodData.add(new LongDataObject(0, "Method " + method.getLabel()));
                     }
                     else {
                         logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", node));
                     }
-                    object.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
+                    publicSymbols.put(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     scope.addSymbol(method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     scope.addSymbol("@" + method.getLabel(), new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount(), offset));
                     method.register();
@@ -312,8 +311,8 @@ public class Spin2ObjectCompiler {
                 try {
                     int offset = -1;
                     if (isReferenced((MethodNode) node)) {
-                        offset = objects.size() * 2 + ld.size();
-                        ld.add(object.writeLong(0, "Method " + method.getLabel()));
+                        offset = objects.size() * 2 + methodData.size();
+                        methodData.add(new LongDataObject(0, "Method " + method.getLabel()));
                     }
                     else {
                         logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.label + "\" is not used", node));
@@ -327,8 +326,8 @@ public class Spin2ObjectCompiler {
                 }
             }
         }
-        if (ld.size() != 0) {
-            ld.add(object.writeLong(0, "End"));
+        if (methodData.size() != 0) {
+            methodData.add(new LongDataObject(0, "End"));
             scope.addSymbol("@CLKMODE", new NumberLiteral(0x40));
             scope.addSymbol("@clkmode", new NumberLiteral(0x40));
             scope.addSymbol("@CLKFREQ", new NumberLiteral(0x44));
@@ -346,6 +345,26 @@ public class Spin2ObjectCompiler {
                 }
             }
         }
+    }
+
+    public Spin2Object generateObject() {
+        Spin2Object object = new Spin2Object();
+
+        object.setClkFreq(scope.getSymbol("_CLKFREQ").getNumber().intValue());
+        object.setClkMode(scope.getSymbol("CLKMODE_").getNumber().intValue());
+
+        object.writeComment("Object header");
+
+        object.links.addAll(objectLinks);
+        for (LinkDataObject linkData : objectLinks) {
+            object.write(linkData);
+            object.writeLong(linkData.getVarOffset(), String.format("Variables @ $%05X", linkData.getVarOffset()));
+        }
+        for (LongDataObject data : methodData) {
+            object.write(data);
+        }
+
+        object.addAllSymbols(publicSymbols);
 
         int address = 0;
         int hubAddress = object.getSize();
@@ -357,7 +376,7 @@ public class Spin2ObjectCompiler {
                 hubAddress = (hubAddress + 3) & ~3;
                 address = (address + 3) & ~3;
             }
-            line.getScope().setHubAddress(hubAddress);
+            line.getScope().setObjectAddress(hubAddress);
             if (line.getInstructionFactory() instanceof Orgh) {
                 hubMode = true;
             }
@@ -405,7 +424,7 @@ public class Spin2ObjectCompiler {
         }
 
         for (Spin2PAsmLine line : source) {
-            hubAddress = line.getScope().getHubAddress();
+            hubAddress = line.getScope().getObjectAddress();
             if (object.getSize() < hubAddress) {
                 object.writeBytes(new byte[hubAddress - object.getSize()], "(filler)");
             }
@@ -444,13 +463,14 @@ public class Spin2ObjectCompiler {
                 value = Spin2Method.returns_bit.setValue(value, method.getReturnsCount());
                 value = Spin2Method.parameters_bit.setValue(value, method.getParametersCount());
 
-                ld.get(index).setValue(value | 0x80000000L);
-                ld.get(index).setText(String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnsCount()));
+                methodData.get(index).setValue(value | 0x80000000L);
+                methodData.get(index).setText(
+                    String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnsCount()));
                 method.writeTo(object);
                 index++;
             }
             if (index > 0) {
-                ld.get(index).setValue(object.getSize());
+                methodData.get(index).setValue(object.getSize());
             }
 
             object.alignToLong();
@@ -500,7 +520,7 @@ public class Spin2ObjectCompiler {
         return object;
     }
 
-    void compileConBlock(Node parent, Spin2Object object) {
+    void compileConBlock(Node parent) {
         int enumValue = 0, enumIncrement = 1;
 
         for (Node child : parent.getChilds()) {
@@ -555,7 +575,7 @@ public class Spin2ObjectCompiler {
                     if (!iter.hasNext()) {
                         try {
                             scope.addSymbol(identifier, new NumberLiteral(enumValue));
-                            object.addSymbol(identifier, new NumberLiteral(enumValue));
+                            publicSymbols.put(identifier, new NumberLiteral(enumValue));
                         } catch (CompilerException e) {
                             logMessage(e);
                         } catch (Exception e) {
@@ -568,7 +588,7 @@ public class Spin2ObjectCompiler {
                         if ("[".equals(token.getText())) {
                             try {
                                 scope.addSymbol(identifier, new NumberLiteral(enumValue));
-                                object.addSymbol(identifier, new NumberLiteral(enumValue));
+                                publicSymbols.put(identifier, new NumberLiteral(enumValue));
                             } catch (CompilerException e) {
                                 logMessage(e);
                             } catch (Exception e) {
@@ -605,7 +625,7 @@ public class Spin2ObjectCompiler {
                                 Expression expression = builder.getExpression();
                                 try {
                                     scope.addSymbol(identifier, expression);
-                                    object.addSymbol(identifier, expression);
+                                    publicSymbols.put(identifier, expression);
                                 } catch (CompilerException e) {
                                     logMessage(e);
                                 } catch (Exception e) {
@@ -942,7 +962,7 @@ public class Spin2ObjectCompiler {
                     type = "BYTE";
                 }
                 rootScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
-                rootScope.addSymbol("@" + pasmLine.getLabel(), new HubContextLiteral(pasmLine.getScope()));
+                rootScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope()));
 
                 if (pasmLine.getMnemonic() == null) {
                     if (!pasmLine.isLocalLabel()) {
@@ -954,7 +974,7 @@ public class Spin2ObjectCompiler {
                         Spin2PAsmLine line = entry.getKey();
                         Spin2Context context = entry.getValue();
                         context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                        context.addOrUpdateSymbol("@" + line.getLabel(), new HubContextLiteral(line.getScope()));
+                        context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
                     }
                     pendingAlias.clear();
                 }
@@ -978,7 +998,7 @@ public class Spin2ObjectCompiler {
                 Spin2PAsmLine line = entry.getKey();
                 Spin2Context context = entry.getValue();
                 context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                context.addOrUpdateSymbol("@" + line.getLabel(), new HubContextLiteral(line.getScope()));
+                context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
             }
             pendingAlias.clear();
         }
@@ -2697,7 +2717,7 @@ public class Spin2ObjectCompiler {
                     Spin2StatementNode postEffectNode = null;
 
                     Expression expression = context.getLocalSymbol(s[0]);
-                    if (expression instanceof HubContextLiteral) {
+                    if (expression instanceof ObjectContextLiteral) {
                         expression = context.getLocalSymbol(s[0].substring(1));
                     }
                     if (expression == null) {
@@ -2777,7 +2797,7 @@ public class Spin2ObjectCompiler {
                 }
                 else {
                     Expression expression = context.getLocalSymbol(node.getText());
-                    if (expression instanceof HubContextLiteral) {
+                    if (expression instanceof ObjectContextLiteral) {
                         expression = context.getLocalSymbol(node.getText().substring(1));
                     }
                     if (expression == null) {

@@ -85,7 +85,7 @@ public class Spin1MethodLine {
         startAddress = address;
 
         scope.setAddress(address);
-        scope.setHubAddress(address);
+        scope.setObjectAddress(address);
         for (Spin1Bytecode bc : source) {
             address = bc.resolve(address);
         }

@@ -24,6 +24,6 @@ public class DataVariable extends ContextLiteral {
     }
 
     public long getAddress() {
-        return context.getHubAddress();
+        return context.getObjectAddress();
     }
 }
