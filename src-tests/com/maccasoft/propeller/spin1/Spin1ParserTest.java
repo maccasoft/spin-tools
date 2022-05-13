@@ -15,24 +15,13 @@ import java.lang.reflect.Field;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 
 class Spin1ParserTest {
 
     @Test
-    void testAddress() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "@label\n"
-            + ""));
-
-        Assertions.assertEquals("@label", subject.nextToken().getText());
-    }
-
-    @Test
-    void testPAsmLocalLabel() throws Exception {
+    void testLocalLabel() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + ":label\n"
             + ""));
@@ -41,7 +30,16 @@ class Spin1ParserTest {
     }
 
     @Test
-    void testPAsmLocalLabelAddress() throws Exception {
+    void testAddress() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "@label\n"
+            + ""));
+
+        Assertions.assertEquals("@label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
+    void testLocalLabelAddress() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "@:label\n"
             + ""));
@@ -81,6 +79,16 @@ class Spin1ParserTest {
     }
 
     @Test
+    void testSpin1LocalLabel() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + ":label\n"
+            + ""));
+
+        Assertions.assertEquals(":", subject.nextToken().getText());
+        Assertions.assertEquals("label", subject.nextToken().getText());
+    }
+
+    @Test
     void testObjectMethod() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "obj.method\n"
@@ -103,142 +111,93 @@ class Spin1ParserTest {
     }
 
     @Test
-    void testParseDefaultAsConstants() throws Exception {
+    void testSingleAssigments() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "    con0 = 1\n"
-            + "    con1 = 2\n"
+            + "CON  EnableFlow = 8\n"
+            + "     DisableFlow = 4\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode identifier=EnableFlow [EnableFlow = 8]\n"
+            + "        +-- expression = ExpressionNode [8]\n"
+            + "    +-- ConstantNode identifier=DisableFlow [DisableFlow = 4]\n"
+            + "        +-- expression = ExpressionNode [4]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testCommaSeparatedAssignments() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "CON\n"
+            + "     x = 5, y = -5, z = 1\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode identifier=x [x = 5]\n"
+            + "        +-- expression = ExpressionNode [5]\n"
+            + "    +-- ConstantNode identifier=y [y = -5]\n"
+            + "        +-- expression = ExpressionNode [-5]\n"
+            + "    +-- ConstantNode identifier=z [z = 1]\n"
+            + "        +-- expression = ExpressionNode [1]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testEnumAssignments() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "CON  #0,a,b,c,d\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode [#0]\n"
+            + "        +-- start = ExpressionNode [0]\n"
+            + "    +-- ConstantNode identifier=a [a]\n"
+            + "    +-- ConstantNode identifier=b [b]\n"
+            + "    +-- ConstantNode identifier=c [c]\n"
+            + "    +-- ConstantNode identifier=d [d]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testEnumAssigmentStepMultiplier() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "CON\n"
+            + "     u[2]\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode identifier=u [u[2]]\n"
+            + "        +-- multiplier = ExpressionNode [2]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testDefaultSection() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "     EnableFlow = 8\n"
+            + "     DisableFlow = 4\n"
             + ""));
 
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- ConstantsNode []\n"
-            + "    +-- ConstantNode identifier=con0 [con0 = 1]\n"
-            + "        +-- expression = ExpressionNode [1]\n"
-            + "    +-- ConstantNode identifier=con1 [con1 = 2]\n"
-            + "        +-- expression = ExpressionNode [2]\n"
-            + "", tree(root));
-    }
-
-    @Test
-    void testParseConstants() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "CON con0 = 1\n"
-            + "    con1 = 2\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- ConstantsNode [CON]\n"
-            + "    +-- ConstantNode identifier=con0 [con0 = 1]\n"
-            + "        +-- expression = ExpressionNode [1]\n"
-            + "    +-- ConstantNode identifier=con1 [con1 = 2]\n"
-            + "        +-- expression = ExpressionNode [2]\n"
-            + "", tree(root));
-    }
-
-    @Test
-    void testParseConstantsList() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "CON con0 = 1\n"
-            + "    con1 = 2, con2 = 3, con3 = 4\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- ConstantsNode [CON]\n"
-            + "    +-- ConstantNode identifier=con0 [con0 = 1]\n"
-            + "        +-- expression = ExpressionNode [1]\n"
-            + "    +-- ConstantNode identifier=con1 [con1 = 2]\n"
-            + "        +-- expression = ExpressionNode [2]\n"
-            + "    +-- ConstantNode identifier=con2 [con2 = 3]\n"
-            + "        +-- expression = ExpressionNode [3]\n"
-            + "    +-- ConstantNode identifier=con3 [con3 = 4]\n"
+            + "    +-- ConstantNode identifier=EnableFlow [EnableFlow = 8]\n"
+            + "        +-- expression = ExpressionNode [8]\n"
+            + "    +-- ConstantNode identifier=DisableFlow [DisableFlow = 4]\n"
             + "        +-- expression = ExpressionNode [4]\n"
-            + "", tree(root));
-    }
-
-    @Test
-    void testParseEnumConstants() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "CON #0\n"
-            + "    con0\n"
-            + "    con1\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- ConstantsNode [CON]\n"
-            + "    +-- ConstantNode [#0]\n"
-            + "        +-- start = ExpressionNode [0]\n"
-            + "    +-- ConstantNode identifier=con0 [con0]\n"
-            + "    +-- ConstantNode identifier=con1 [con1]\n"
-            + "", tree(root));
-    }
-
-    @Test
-    void testParseEnumConstantsList() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "CON #0\n"
-            + "    con0\n"
-            + "    con1, con2, con3\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- ConstantsNode [CON]\n"
-            + "    +-- ConstantNode [#0]\n"
-            + "        +-- start = ExpressionNode [0]\n"
-            + "    +-- ConstantNode identifier=con0 [con0]\n"
-            + "    +-- ConstantNode identifier=con1 [con1]\n"
-            + "    +-- ConstantNode identifier=con2 [con2]\n"
-            + "    +-- ConstantNode identifier=con3 [con3]\n"
-            + "", tree(root));
-    }
-
-    @Test
-    void testParseEnumStepConstants() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "CON #0[2]\n"
-            + "    con0\n"
-            + "    con1, con2, con3\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- ConstantsNode [CON]\n"
-            + "    +-- ConstantNode [#0[2]]\n"
-            + "        +-- start = ExpressionNode [0]\n"
-            + "        +-- step = ExpressionNode [2]\n"
-            + "    +-- ConstantNode identifier=con0 [con0]\n"
-            + "    +-- ConstantNode identifier=con1 [con1]\n"
-            + "    +-- ConstantNode identifier=con2 [con2]\n"
-            + "    +-- ConstantNode identifier=con3 [con3]\n"
-            + "", tree(root));
-    }
-
-    @Test
-    void testParseEnumMultiplierConstants() throws Exception {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "CON #0\n"
-            + "    con0\n"
-            + "    con1[2]\n"
-            + ""));
-
-        Node root = subject.parse();
-        Assertions.assertEquals(""
-            + "Node []\n"
-            + "+-- ConstantsNode [CON]\n"
-            + "    +-- ConstantNode [#0]\n"
-            + "        +-- start = ExpressionNode [0]\n"
-            + "    +-- ConstantNode identifier=con0 [con0]\n"
-            + "    +-- ConstantNode identifier=con1 [con1[2]]\n"
-            + "        +-- multiplier = ExpressionNode [2]\n"
             + "", tree(root));
     }
 
@@ -321,52 +280,219 @@ class Spin1ParserTest {
     }
 
     @Test
-    void testParseMethods() {
+    void testMethod() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "PUB start\n"
-            + "\n"
-            + "PUB method1\n"
-            + "\n"
-            + "PUB method2\n"
+            + "PUB go\n"
             + ""));
 
         Node root = subject.parse();
-
-        Assertions.assertEquals(3, root.getChilds().size());
-        Assertions.assertEquals(MethodNode.class, root.getChild(0).getClass());
-        Assertions.assertEquals(MethodNode.class, root.getChild(1).getClass());
-        Assertions.assertEquals(MethodNode.class, root.getChild(2).getClass());
-
-        Assertions.assertEquals("PUB start", root.getChild(0).getText());
-        Assertions.assertEquals("PUB method1", root.getChild(1).getText());
-        Assertions.assertEquals("PUB method2", root.getChild(2).getText());
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=go [PUB go]\n"
+            + "", tree(root));
     }
 
     @Test
-    void testParseStatements() {
+    void testMethodInvalidDeclarations() throws Exception {
+        Node root = new Spin1Parser(new Spin1TokenStream(""
+            + "PUB go to\n"
+            + "")).parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=go [PUB go to]\n"
+            + "    +-- ErrorNode [to]\n"
+            + "", tree(root));
+
+        root = new Spin1Parser(new Spin1TokenStream(""
+            + "PUB go to\n"
+            + "")).parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=go [PUB go to]\n"
+            + "    +-- ErrorNode [to]\n"
+            + "", tree(root));
+
+        root = new Spin1Parser(new Spin1TokenStream(""
+            + "PUB go(a,b) to\n"
+            + "")).parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=go [PUB go(a,b) to]\n"
+            + "    +-- ParameterNode identifier=a [a]\n"
+            + "    +-- ParameterNode identifier=b [b]\n"
+            + "    +-- ErrorNode [to]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodParameters() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "PUB start\n"
-            + "\n"
-            + "    method1\n"
-            + "    repeat\n"
-            + "        method2\n"
-            + "\n"
-            + "PUB method1\n"
-            + "\n"
-            + "PUB method2\n"
+            + "PUB StartTx(pin, baud)\n"
             + ""));
 
         Node root = subject.parse();
-        Assertions.assertEquals(3, root.getChilds().size());
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=StartTx [PUB StartTx(pin, baud)]\n"
+            + "    +-- ParameterNode identifier=pin [pin]\n"
+            + "    +-- ParameterNode identifier=baud [baud]\n"
+            + "", tree(root));
+    }
 
-        MethodNode pub0 = (MethodNode) root.getChild(0);
-        Assertions.assertEquals(2, pub0.getChilds().size());
+    @Test
+    void testMethodInvalidParameters() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PUB StartTx(pin baud)\n"
+            + ""));
 
-        Assertions.assertEquals("    method1", pub0.getChild(0).getText());
-        Assertions.assertEquals("    repeat", pub0.getChild(1).getText());
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=StartTx [PUB StartTx(pin baud)]\n"
+            + "    +-- ParameterNode identifier=pin [pin baud]\n"
+            + "", tree(root));
+    }
 
-        Assertions.assertEquals(StatementNode.class, pub0.getChild(0).getClass());
-        Assertions.assertEquals(StatementNode.class, pub0.getChild(1).getClass());
+    @Test
+    void testMethodLocalVariables() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PRI FFT1024 | a, b\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024 | a, b]\n"
+            + "    +-- LocalVariableNode identifier=a [a]\n"
+            + "    +-- LocalVariableNode identifier=b [b]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodInvalidLocalVariables() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PRI FFT1024 | a b\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024 | a b]\n"
+            + "    +-- LocalVariableNode identifier=a [a b]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodLocalVariableType() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PRI FFT1024 | LONG a, WORD b\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024 | LONG a, WORD b]\n"
+            + "    +-- LocalVariableNode type=LONG identifier=a [LONG a]\n"
+            + "    +-- LocalVariableNode type=WORD identifier=b [WORD b]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodLocalVariableSize() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PRI FFT1024(DataPtr) | x[1024], y[512]\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024(DataPtr) | x[1024], y[512]]\n"
+            + "    +-- ParameterNode identifier=DataPtr [DataPtr]\n"
+            + "    +-- LocalVariableNode identifier=x [x[1024]]\n"
+            + "        +-- size = ExpressionNode [1024]\n"
+            + "    +-- LocalVariableNode identifier=y [y[512]]\n"
+            + "        +-- size = ExpressionNode [512]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodReturnVariables() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PRI FFT1024 : a, b\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024 : a, b]\n"
+            + "    +-- ReturnNode identifier=a [a]\n"
+            + "    +-- ReturnNode identifier=b [b]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodInvalidReturnVariables() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PRI FFT1024 : a b\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024 : a b]\n"
+            + "    +-- ReturnNode identifier=a [a b]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodUnexpectedTokens2() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PUB go(a,b) : c to\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c to]\n"
+            + "    +-- ParameterNode identifier=a [a]\n"
+            + "    +-- ParameterNode identifier=b [b]\n"
+            + "    +-- ReturnNode identifier=c [c to]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodUnexpectedTokens3() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PUB go(a,b) | d, e to\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=go [PUB go(a,b) | d, e to]\n"
+            + "    +-- ParameterNode identifier=a [a]\n"
+            + "    +-- ParameterNode identifier=b [b]\n"
+            + "    +-- LocalVariableNode identifier=d [d]\n"
+            + "    +-- LocalVariableNode identifier=e [e to]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodUnexpectedTokens4() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PUB go(a,b) : c | d, e to\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c | d, e to]\n"
+            + "    +-- ParameterNode identifier=a [a]\n"
+            + "    +-- ParameterNode identifier=b [b]\n"
+            + "    +-- ReturnNode identifier=c [c]\n"
+            + "    +-- LocalVariableNode identifier=d [d]\n"
+            + "    +-- LocalVariableNode identifier=e [e to]\n"
+            + "", tree(root));
     }
 
     @Test

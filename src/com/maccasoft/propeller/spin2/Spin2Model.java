@@ -49,6 +49,7 @@ public class Spin2Model extends SpinModel {
         "DRVC", "DRVNC", "DRVZ", "DRVNZ", "DRVRND", "DRVNOT", "SPLITB", "MERGEB", "SPLITW", "MERGEW", "SEUSSF", "SEUSSR", "RGBSQZ",
         "RGBEXP", "XORO32", "REV", "RCZR", "RCZL", "WRC", "WRNC", "WRZ", "WRNZ", "MODCZ", "MODC", "MODZ", "SETSCP", "GETSCP",
         "JMP", "CALL", "CALLA", "CALLB", "CALLD", "LOC", "AUGS", "AUGD",
+        "LONG", "WORD", "BYTE", "WORDFIT", "BYTEFIT",
     }));
 
     public static Set<String> conditions = new HashSet<String>(Arrays.asList(new String[] {
@@ -69,32 +70,24 @@ public class Spin2Model extends SpinModel {
         "LONG", "WORD", "BYTE",
     }));
 
-    public static Set<String> pasmTypes = new HashSet<String>(Arrays.asList(new String[] {
-        "LONG", "WORD", "BYTE", "WORDFIT", "BYTEFIT",
-    }));
-
     static Set<String> blockStart = new HashSet<String>(Arrays.asList(new String[] {
         "IF", "IFNOT", "ELSEIF", "ELSEIFNOT", "ELSE", "CASE", "CASE_FAST", "OTHER", "REPEAT",
     }));
 
-    public static boolean isInstruction(String token) {
+    public static boolean isPAsmInstruction(String token) {
         return instructions.contains(token.toUpperCase());
     }
 
-    public static boolean isCondition(String token) {
+    public static boolean isPAsmCondition(String token) {
         return conditions.contains(token.toUpperCase());
     }
 
-    public static boolean isModifier(String token) {
+    public static boolean isPAsmModifier(String token) {
         return modifiers.contains(token.toUpperCase());
     }
 
     public static boolean isType(String token) {
         return types.contains(token.toUpperCase());
-    }
-
-    public static boolean isPAsmType(String token) {
-        return pasmTypes.contains(token.toUpperCase());
     }
 
     public static boolean isBlockStart(String token) {

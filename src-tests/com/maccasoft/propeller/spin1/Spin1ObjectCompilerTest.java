@@ -160,7 +160,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testIfConditionExpression() throws Exception {
         String text = ""
-            + "PUB main() | a, b\n"
+            + "PUB main | a, b\n"
             + "\n"
             + "    if (a := b) == 0\n"
             + "        a := 1\n"
@@ -173,7 +173,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
-            + "' PUB main() | a, b\n"
+            + "' PUB main | a, b\n"
             + "'     if (a := b) == 0\n"
             + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
             + "00009 00009       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
@@ -218,7 +218,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatCount() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat 10\n"
             + "        a := 1\n"
@@ -230,7 +230,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat 10\n"
             + "00008 00008       38 0A          CONSTANT (10)\n"
             + "0000A 0000A       08 04          TJZ $00010 (4)\n"
@@ -246,7 +246,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatVarCounter() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat a\n"
             + "        a := 1\n"
@@ -258,7 +258,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat a\n"
             + "00008 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
             + "00009 00009       08 04          TJZ $0000F (4)\n"
@@ -273,7 +273,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatQuit() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat\n"
             + "        if a == 1\n"
@@ -287,7 +287,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat\n"
             + "'         if a == 1\n"
             + "00008 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
@@ -307,7 +307,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatCaseQuit() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat\n"
             + "        case a\n"
@@ -321,7 +321,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat\n"
             + "'         case a\n"
             + "00008 00008       38 15          ADDRESS ($0015)\n"
@@ -345,7 +345,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatNext() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat\n"
             + "        if a == 1\n"
@@ -359,7 +359,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat\n"
             + "'         if a == 1\n"
             + "00008 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
@@ -379,7 +379,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatWhile() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat while a < 1\n"
             + "        a := 1\n"
@@ -391,7 +391,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat while a < 1\n"
             + "00008 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
             + "00009 00009       36             CONSTANT (1)\n"
@@ -409,7 +409,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatUntil() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat until a < 1\n"
             + "        a := 1\n"
@@ -421,7 +421,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat until a < 1\n"
             + "00008 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
             + "00009 00009       36             CONSTANT (1)\n"
@@ -439,7 +439,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatWhileQuit() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat while a < 1\n"
             + "        if a == 1\n"
@@ -453,7 +453,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat while a < 1\n"
             + "00008 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
             + "00009 00009       36             CONSTANT (1)\n"
@@ -478,7 +478,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatPostWhile() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat\n"
             + "        a := 1\n"
@@ -491,7 +491,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat\n"
             + "'         a := 1\n"
             + "00008 00008       36             CONSTANT (1)\n"
@@ -508,7 +508,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatPostUntil() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat\n"
             + "        a := 1\n"
@@ -521,7 +521,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat\n"
             + "'         a := 1\n"
             + "00008 00008       36             CONSTANT (1)\n"
@@ -538,7 +538,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatPostConditionQuit() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat\n"
             + "        if a == 1\n"
@@ -553,7 +553,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat\n"
             + "'         if a == 1\n"
             + "00008 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
@@ -578,7 +578,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatPostConditionNext() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    repeat\n"
             + "        if a == 1\n"
@@ -593,7 +593,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     repeat\n"
             + "'         if a == 1\n"
             + "00008 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
@@ -618,7 +618,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testRepeatRange() throws Exception {
         String text = ""
-            + "PUB main() | a, b\n"
+            + "PUB main | a, b\n"
             + "\n"
             + "    repeat a from 1 to 10\n"
             + "        b := a + 1\n"
@@ -630,7 +630,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
-            + "' PUB main() | a, b\n"
+            + "' PUB main | a, b\n"
             + "'     repeat a from 1 to 10\n"
             + "00008 00008       36             CONSTANT (1)\n"
             + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
@@ -654,7 +654,7 @@ class Spin1ObjectCompilerTest {
             + "VAR\n"
             + "    long a, b\n"
             + "\n"
-            + "PUB main() | c, d\n"
+            + "PUB main | c, d\n"
             + "\n"
             + "    repeat a from b to c\n"
             + "        d := a + 1\n"
@@ -666,7 +666,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
-            + "' PUB main() | c, d\n"
+            + "' PUB main | c, d\n"
             + "'     repeat a from b to c\n"
             + "00008 00008       44             VAR_READ LONG VBASE+$0004 (short)\n"
             + "00009 00009       41             VAR_WRITE LONG VBASE+$0000 (short)\n"
@@ -689,7 +689,7 @@ class Spin1ObjectCompilerTest {
             + "VAR\n"
             + "    long a, b\n"
             + "\n"
-            + "PUB main() | c, d\n"
+            + "PUB main | c, d\n"
             + "\n"
             + "    repeat a from b to c step 5\n"
             + "        d := a + 1\n"
@@ -701,7 +701,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
-            + "' PUB main() | c, d\n"
+            + "' PUB main | c, d\n"
             + "'     repeat a from b to c step 5\n"
             + "00008 00008       44             VAR_READ LONG VBASE+$0004 (short)\n"
             + "00009 00009       41             VAR_WRITE LONG VBASE+$0000 (short)\n"
@@ -726,7 +726,7 @@ class Spin1ObjectCompilerTest {
             + "VAR\n"
             + "    long a, b\n"
             + "\n"
-            + "PUB main() | c, d\n"
+            + "PUB main | c, d\n"
             + "\n"
             + "    repeat a from b to c step 5\n"
             + "        if c == 2\n"
@@ -740,7 +740,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
-            + "' PUB main() | c, d\n"
+            + "' PUB main | c, d\n"
             + "'     repeat a from b to c step 5\n"
             + "00008 00008       44             VAR_READ LONG VBASE+$0004 (short)\n"
             + "00009 00009       41             VAR_WRITE LONG VBASE+$0000 (short)\n"
@@ -793,7 +793,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testCase() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    case a\n"
             + "        1: a := 4\n"
@@ -810,7 +810,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     case a\n"
             + "00008 00008       38 26          ADDRESS ($0026)\n"
             + "0000A 0000A       64             VAR_READ LONG DBASE+$0004 (short)\n"
@@ -844,7 +844,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testCaseRange() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    case a\n"
             + "        1..5: a := 6\n"
@@ -858,7 +858,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     case a\n"
             + "00008 00008       38 18          ADDRESS ($0018)\n"
             + "0000A 0000A       64             VAR_READ LONG DBASE+$0004 (short)\n"
@@ -881,7 +881,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testCaseList() throws Exception {
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    case a\n"
             + "        1, 2      : a := 14\n"
@@ -896,7 +896,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     case a\n"
             + "00008 00008       38 3B          ADDRESS ($003B)\n"
             + "0000A 0000A       64             VAR_READ LONG DBASE+$0004 (short)\n"
@@ -938,7 +938,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testTernaryExpression() throws Exception {
         String text = ""
-            + "PUB main() | a, b\n"
+            + "PUB main | a, b\n"
             + "\n"
             + "    a := (b == 1) ? 2 : 3\n"
             + "\n"
@@ -950,7 +950,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 08 00    Function main @ $0008 (local size 8)\n"
-            + "' PUB main() | a, b\n"
+            + "' PUB main | a, b\n"
             + "'     a := (b == 1) ? 2 : 3\n"
             + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
             + "00009 00009       36             CONSTANT (1)\n"
@@ -968,7 +968,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testMethodCall() throws Exception {
         String text = ""
-            + "PUB main()\n"
+            + "PUB main\n"
             + "\n"
             + "    function1(1, 2, 3)\n"
             + "    \\function2\n"
@@ -987,7 +987,7 @@ class Spin1ObjectCompilerTest {
             + "00004 00004       10 00 00 00    Function main @ $0010 (local size 0)\n"
             + "00008 00008       1C 00 00 00    Function function1 @ $001C (local size 0)\n"
             + "0000C 0000C       1D 00 00 00    Function function2 @ $001D (local size 0)\n"
-            + "' PUB main()\n"
+            + "' PUB main\n"
             + "'     function1(1, 2, 3)\n"
             + "00010 00010       01             ANCHOR\n"
             + "00011 00011       36             CONSTANT (1)\n"
@@ -1009,7 +1009,7 @@ class Spin1ObjectCompilerTest {
     @Test
     void testMethodReturn() throws Exception {
         String text = ""
-            + "PUB main()\n"
+            + "PUB main\n"
             + "\n"
             + "    return 1\n"
             + "\n"
@@ -1032,7 +1032,7 @@ class Spin1ObjectCompilerTest {
             + "00004 00004       10 00 00 00    Function main @ $0010 (local size 0)\n"
             + "00008 00008       13 00 04 00    Function function1 @ $0013 (local size 4)\n"
             + "0000C 0000C       16 00 00 00    Function function2 @ $0016 (local size 0)\n"
-            + "' PUB main()\n"
+            + "' PUB main\n"
             + "'     return 1\n"
             + "00010 00010       36             CONSTANT (1)\n"
             + "00011 00011       33             RETURN\n"
@@ -1599,7 +1599,7 @@ class Spin1ObjectCompilerTest {
         Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = true;
 
         String text = ""
-            + "PUB main() | a\n"
+            + "PUB main | a\n"
             + "\n"
             + "    if a >= 1\n"
             + "        case a\n"
@@ -1617,7 +1617,7 @@ class Spin1ObjectCompilerTest {
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
-            + "' PUB main() | a\n"
+            + "' PUB main | a\n"
             + "'     if a >= 1\n"
             + "00008 00008       36             CONSTANT (1)\n"
             + "00009 00009       66             VAR_MODIFY LONG DBASE+$0004 (short)\n"
@@ -2433,100 +2433,6 @@ class Spin1ObjectCompilerTest {
             + "0000A 0000A   001 03 00                              word    3\n"
             + "0000C 0000C   002 04 00                              word    4\n"
             + "", compile(text));
-    }
-
-    @Test
-    void testBytefit() throws Exception {
-        String text = ""
-            + "DAT             org   $000\n"
-            + "                bytefit $00\n"
-            + "                bytefit $01\n"
-            + "                bytefit $02\n"
-            + "                bytefit -$80\n"
-            + "                bytefit $FF\n"
-            + "";
-
-        Assertions.assertEquals(""
-            + "' Object header\n"
-            + "00000 00000       09 00          Object size\n"
-            + "00002 00002       01             Method count + 1\n"
-            + "00003 00003       00             Object count\n"
-            + "00004 00004   000                                    org     $000\n"
-            + "00004 00004   000 00                                 bytefit $00\n"
-            + "00005 00005   000 01                                 bytefit $01\n"
-            + "00006 00006   000 02                                 bytefit $02\n"
-            + "00007 00007   000 80                                 bytefit -$80\n"
-            + "00008 00008   001 FF                                 bytefit $FF\n"
-            + "", compile(text));
-
-        Assertions.assertThrows(CompilerException.class, new Executable() {
-
-            @Override
-            public void execute() throws Throwable {
-                compile(""
-                    + "DAT             org   $000\n"
-                    + "                bytefit -$81\n"
-                    + "");
-            }
-        });
-
-        Assertions.assertThrows(CompilerException.class, new Executable() {
-
-            @Override
-            public void execute() throws Throwable {
-                compile(""
-                    + "DAT             org   $000\n"
-                    + "                bytefit $100\n"
-                    + "");
-            }
-        });
-    }
-
-    @Test
-    void testWordfit() throws Exception {
-        String text = ""
-            + "DAT             org   $000\n"
-            + "                wordfit $0000\n"
-            + "                wordfit $0001\n"
-            + "                wordfit $0002\n"
-            + "                wordfit -$8000\n"
-            + "                wordfit $FFFF\n"
-            + "";
-
-        Assertions.assertEquals(""
-            + "' Object header\n"
-            + "00000 00000       0E 00          Object size\n"
-            + "00002 00002       01             Method count + 1\n"
-            + "00003 00003       00             Object count\n"
-            + "00004 00004   000                                    org     $000\n"
-            + "00004 00004   000 00 00                              wordfit $0000\n"
-            + "00006 00006   000 01 00                              wordfit $0001\n"
-            + "00008 00008   001 02 00                              wordfit $0002\n"
-            + "0000A 0000A   001 00 80                              wordfit -$8000\n"
-            + "0000C 0000C   002 FF FF                              wordfit $FFFF\n"
-            + "", compile(text));
-
-        Assertions.assertThrows(CompilerException.class, new Executable() {
-
-            @Override
-            public void execute() throws Throwable {
-                compile(""
-                    + "DAT             org   $000\n"
-                    + "                wordfit -$8001\n"
-                    + "");
-            }
-        });
-
-        Assertions.assertThrows(CompilerException.class, new Executable() {
-
-            @Override
-            public void execute() throws Throwable {
-                compile(""
-                    + "DAT             org   $000\n"
-                    + "                wordfit $10000\n"
-                    + "");
-            }
-        });
     }
 
     String compile(String text) throws Exception {

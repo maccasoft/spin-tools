@@ -76,7 +76,6 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectsNode;
-import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
@@ -854,7 +853,7 @@ public class Spin2ObjectCompiler {
 
         Spin2Context localScope = new Spin2Context(scope);
 
-        for (ParameterNode param : node.parameters) {
+        for (DataLineNode.ParameterNode param : node.parameters) {
             int index = 0;
             String prefix = null;
             Expression expression = null, count = null;
@@ -1045,9 +1044,9 @@ public class Spin2ObjectCompiler {
         method.setData(node);
 
         int offset = 0;
-        for (Node child : node.getParameters()) {
+        for (MethodNode.ParameterNode child : node.getParameters()) {
             if (token.type == 0) {
-                String identifier = child.getText();
+                String identifier = child.getIdentifier().getText();
                 Expression expression = localScope.getLocalSymbol(identifier);
                 if (expression instanceof LocalVariable) {
                     logMessage(new CompilerException("symbol '" + identifier + "' already defined", child));
@@ -1082,7 +1081,7 @@ public class Spin2ObjectCompiler {
                     }
                 }
                 if (!")".equals(token.getText())) {
-                    logMessage(new CompilerException("expecting ')'", token));
+                    logMessage(new CompilerException("expecting ',' or ')'", token));
                 }
             }
             else {

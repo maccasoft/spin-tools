@@ -53,12 +53,10 @@ import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.ErrorNode;
-import com.maccasoft.propeller.model.LocalVariableNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectsNode;
-import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
@@ -742,7 +740,7 @@ public class Spin1ObjectCompiler {
                 Spin1PAsmLine pasmLine = new Spin1PAsmLine(scope, label, condition, mnemonic, parameters, modifier);
                 pasmLine.setData(node);
 
-                for (ParameterNode param : node.parameters) {
+                for (DataLineNode.ParameterNode param : node.parameters) {
                     int index = 0;
                     String prefix = null;
                     Expression expression = null, count = null;
@@ -935,14 +933,19 @@ public class Spin1ObjectCompiler {
         if (iter.hasNext()) {
             token = iter.next();
             if ("(".equals(token.getText())) {
-                while (iter.hasNext()) {
-                    token = iter.next();
-                    if (")".equals(token.getText())) {
-                        break;
-                    }
+                if (parameters.size() == 0) {
+                    logMessage(new CompilerException("expecting parameter name", token));
                 }
-                if (!")".equals(token.getText())) {
-                    logMessage(new CompilerException("expecting ')'", token));
+                else {
+                    while (iter.hasNext()) {
+                        token = iter.next();
+                        if (")".equals(token.getText())) {
+                            break;
+                        }
+                    }
+                    if (!")".equals(token.getText())) {
+                        logMessage(new CompilerException("expecting ',' or ')'", token));
+                    }
                 }
             }
         }
@@ -974,7 +977,7 @@ public class Spin1ObjectCompiler {
             }
         }
 
-        for (LocalVariableNode child : node.getLocalVariables()) {
+        for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
             String type = "LONG";
             iter = child.getTokens().iterator();
 

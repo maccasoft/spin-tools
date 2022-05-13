@@ -75,6 +75,10 @@ public class Node {
         return tokens.get(index);
     }
 
+    public boolean contains(Token token) {
+        return tokens.contains(token);
+    }
+
     public Node getParent() {
         return parent;
     }

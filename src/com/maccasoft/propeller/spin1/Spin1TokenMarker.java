@@ -22,13 +22,11 @@ import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.ExpressionNode;
-import com.maccasoft.propeller.model.LocalVariableNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
-import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
@@ -321,7 +319,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 locals.put("@" + child.getText(), TokenId.METHOD_RETURN);
             }
 
-            for (LocalVariableNode child : node.getLocalVariables()) {
+            for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
                 if (child.type != null) {
                     tokens.add(new TokenMarker(child.type, TokenId.TYPE));
                 }
@@ -397,7 +395,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 }
             }
 
-            for (ParameterNode parameter : node.parameters) {
+            for (DataLineNode.ParameterNode parameter : node.parameters) {
                 for (Token token : parameter.getTokens()) {
                     TokenId id = null;
                     if (token.type == Token.NUMBER) {

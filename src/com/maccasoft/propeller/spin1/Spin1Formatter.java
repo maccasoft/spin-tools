@@ -25,13 +25,10 @@ public class Spin1Formatter extends Formatter {
 
     @Override
     protected boolean pasmLabel(Token token) {
-        if (Spin1Model.isCondition(token.getText())) {
+        if (Spin1Model.isPAsmCondition(token.getText())) {
             return false;
         }
-        if (Spin1Model.isInstruction(token.getText())) {
-            return false;
-        }
-        if (Spin1Model.isPAsmType(token.getText())) {
+        if (Spin1Model.isPAsmInstruction(token.getText())) {
             return false;
         }
         return true;
@@ -39,15 +36,12 @@ public class Spin1Formatter extends Formatter {
 
     @Override
     protected boolean pasmCondition(Token token) {
-        return Spin1Model.isCondition(token.getText());
+        return Spin1Model.isPAsmCondition(token.getText());
     }
 
     @Override
     protected boolean pasmInstruction(Token token) {
-        if (Spin1Model.isInstruction(token.getText())) {
-            return true;
-        }
-        if (Spin1Model.isPAsmType(token.getText())) {
+        if (Spin1Model.isPAsmInstruction(token.getText())) {
             return true;
         }
         return false;
@@ -55,7 +49,7 @@ public class Spin1Formatter extends Formatter {
 
     @Override
     protected boolean pasmModifier(Token token) {
-        return Spin1Model.isModifier(token.getText());
+        return Spin1Model.isPAsmModifier(token.getText());
     }
 
 }

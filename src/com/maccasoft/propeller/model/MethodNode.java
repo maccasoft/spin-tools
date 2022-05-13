@@ -17,9 +17,79 @@ public class MethodNode extends Node {
 
     public Token type;
     public Token name;
-    public List<Node> parameters = new ArrayList<Node>();
-    public List<Node> returnVariables = new ArrayList<Node>();
+    public List<ParameterNode> parameters = new ArrayList<ParameterNode>();
+    public List<ReturnNode> returnVariables = new ArrayList<ReturnNode>();
     public List<LocalVariableNode> localVariables = new ArrayList<LocalVariableNode>();
+
+    public static class ParameterNode extends Node {
+
+        public Token identifier;
+
+        public ParameterNode(MethodNode parent) {
+            super(parent);
+            parent.parameters.add(this);
+        }
+
+        @Override
+        public void addToken(Token token) {
+            tokens.add(token);
+            parent.addToken(token);
+        }
+
+        public Token getIdentifier() {
+            return identifier;
+        }
+    }
+
+    public static class ReturnNode extends Node {
+
+        public Token identifier;
+
+        public ReturnNode(MethodNode parent) {
+            super(parent);
+            parent.returnVariables.add(this);
+        }
+
+        @Override
+        public void addToken(Token token) {
+            tokens.add(token);
+            parent.addToken(token);
+        }
+
+        public Token getIdentifier() {
+            return identifier;
+        }
+    }
+
+    public static class LocalVariableNode extends Node {
+
+        public Token type;
+        public Token identifier;
+        public ExpressionNode size;
+
+        public LocalVariableNode(MethodNode parent) {
+            super(parent);
+            parent.localVariables.add(this);
+        }
+
+        @Override
+        public void addToken(Token token) {
+            tokens.add(token);
+            parent.addToken(token);
+        }
+
+        public Token getType() {
+            return type;
+        }
+
+        public Token getIdentifier() {
+            return identifier;
+        }
+
+        public ExpressionNode getSize() {
+            return size;
+        }
+    }
 
     public MethodNode(Node parent, Token type) {
         super(parent);
@@ -45,7 +115,7 @@ public class MethodNode extends Node {
         return name;
     }
 
-    public List<Node> getParameters() {
+    public List<ParameterNode> getParameters() {
         return parameters;
     }
 
@@ -53,7 +123,7 @@ public class MethodNode extends Node {
         return parameters.get(index);
     }
 
-    public List<Node> getReturnVariables() {
+    public List<ReturnNode> getReturnVariables() {
         return returnVariables;
     }
 

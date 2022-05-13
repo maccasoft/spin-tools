@@ -25,13 +25,10 @@ public class Spin2Formatter extends Formatter {
 
     @Override
     protected boolean pasmLabel(Token token) {
-        if (Spin2Model.isCondition(token.getText())) {
+        if (Spin2Model.isPAsmCondition(token.getText())) {
             return false;
         }
-        if (Spin2Model.isInstruction(token.getText())) {
-            return false;
-        }
-        if (Spin2Model.isPAsmType(token.getText())) {
+        if (Spin2Model.isPAsmInstruction(token.getText())) {
             return false;
         }
         if ("debug".equalsIgnoreCase(token.getText())) {
@@ -42,15 +39,12 @@ public class Spin2Formatter extends Formatter {
 
     @Override
     protected boolean pasmCondition(Token token) {
-        return Spin2Model.isCondition(token.getText());
+        return Spin2Model.isPAsmCondition(token.getText());
     }
 
     @Override
     protected boolean pasmInstruction(Token token) {
-        if (Spin2Model.isInstruction(token.getText())) {
-            return true;
-        }
-        if (Spin2Model.isPAsmType(token.getText())) {
+        if (Spin2Model.isPAsmInstruction(token.getText())) {
             return true;
         }
         if ("debug".equalsIgnoreCase(token.getText())) {
@@ -61,7 +55,7 @@ public class Spin2Formatter extends Formatter {
 
     @Override
     protected boolean pasmModifier(Token token) {
-        return Spin2Model.isModifier(token.getText());
+        return Spin2Model.isPAsmModifier(token.getText());
     }
 
 }

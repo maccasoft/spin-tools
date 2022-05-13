@@ -340,8 +340,8 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PUB name=go [PUB go(a,b) to]\n"
-            + "    +-- Node [a]\n"
-            + "    +-- Node [b]\n"
+            + "    +-- ParameterNode identifier=a [a]\n"
+            + "    +-- ParameterNode identifier=b [b]\n"
             + "    +-- ErrorNode [to]\n"
             + "", tree(root));
     }
@@ -356,8 +356,8 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PUB name=StartTx [PUB StartTx(pin, baud)]\n"
-            + "    +-- Node [pin]\n"
-            + "    +-- Node [baud]\n"
+            + "    +-- ParameterNode identifier=pin [pin]\n"
+            + "    +-- ParameterNode identifier=baud [baud]\n"
             + "", tree(root));
     }
 
@@ -371,7 +371,7 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PUB name=StartTx [PUB StartTx(pin baud)]\n"
-            + "    +-- Node [pin baud]\n"
+            + "    +-- ParameterNode identifier=pin [pin baud]\n"
             + "", tree(root));
     }
 
@@ -429,7 +429,7 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024(DataPtr) | x[1024], y[512]]\n"
-            + "    +-- Node [DataPtr]\n"
+            + "    +-- ParameterNode identifier=DataPtr [DataPtr]\n"
             + "    +-- LocalVariableNode identifier=x [x[1024]]\n"
             + "        +-- size = ExpressionNode [1024]\n"
             + "    +-- LocalVariableNode identifier=y [y[512]]\n"
@@ -447,8 +447,8 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() : a, b]\n"
-            + "    +-- Node [a]\n"
-            + "    +-- Node [b]\n"
+            + "    +-- ReturnNode identifier=a [a]\n"
+            + "    +-- ReturnNode identifier=b [b]\n"
             + "", tree(root));
     }
 
@@ -462,7 +462,7 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PRI name=FFT1024 [PRI FFT1024() : a b]\n"
-            + "    +-- Node [a b]\n"
+            + "    +-- ReturnNode identifier=a [a b]\n"
             + "", tree(root));
     }
 
@@ -476,9 +476,9 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c to]\n"
-            + "    +-- Node [a]\n"
-            + "    +-- Node [b]\n"
-            + "    +-- Node [c to]\n"
+            + "    +-- ParameterNode identifier=a [a]\n"
+            + "    +-- ParameterNode identifier=b [b]\n"
+            + "    +-- ReturnNode identifier=c [c to]\n"
             + "", tree(root));
     }
 
@@ -492,8 +492,8 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PUB name=go [PUB go(a,b) | d, e to]\n"
-            + "    +-- Node [a]\n"
-            + "    +-- Node [b]\n"
+            + "    +-- ParameterNode identifier=a [a]\n"
+            + "    +-- ParameterNode identifier=b [b]\n"
             + "    +-- LocalVariableNode identifier=d [d]\n"
             + "    +-- LocalVariableNode identifier=e [e to]\n"
             + "", tree(root));
@@ -509,11 +509,42 @@ class Spin2ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c | d, e to]\n"
-            + "    +-- Node [a]\n"
-            + "    +-- Node [b]\n"
-            + "    +-- Node [c]\n"
+            + "    +-- ParameterNode identifier=a [a]\n"
+            + "    +-- ParameterNode identifier=b [b]\n"
+            + "    +-- ReturnNode identifier=c [c]\n"
             + "    +-- LocalVariableNode identifier=d [d]\n"
             + "    +-- LocalVariableNode identifier=e [e to]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodInlinePAsm() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB go(a,b) : c | d, e to\n"
+            + "  org\n"
+            + "      mov d, a\n"
+            + "      and d, e wz\n"
+            + "  end\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=go [PUB go(a,b) : c | d, e to]\n"
+            + "    +-- ParameterNode identifier=a [a]\n"
+            + "    +-- ParameterNode identifier=b [b]\n"
+            + "    +-- ReturnNode identifier=c [c]\n"
+            + "    +-- LocalVariableNode identifier=d [d]\n"
+            + "    +-- LocalVariableNode identifier=e [e to]\n"
+            + "    +-- DataLineNode instruction=org [  org]\n"
+            + "    +-- DataLineNode instruction=mov [      mov d, a]\n"
+            + "        +-- ParameterNode [d]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "    +-- DataLineNode instruction=and [      and d, e wz]\n"
+            + "        +-- ParameterNode [d]\n"
+            + "        +-- ParameterNode [e]\n"
+            + "        +-- modifier = Node [wz]\n"
+            + "    +-- StatementNode [  end]\n"
             + "", tree(root));
     }
 

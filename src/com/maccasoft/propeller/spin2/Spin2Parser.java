@@ -16,12 +16,10 @@ import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.ExpressionNode;
-import com.maccasoft.propeller.model.LocalVariableNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
-import com.maccasoft.propeller.model.ParameterNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
@@ -345,9 +343,9 @@ public class Spin2Parser {
         int state = 1;
         Node parent = node;
         Node child = node;
-        Node param = null;
-        Node ret = null;
-        LocalVariableNode local = null;
+        MethodNode.ParameterNode param = null;
+        MethodNode.ReturnNode ret = null;
+        MethodNode.LocalVariableNode local = null;
         ErrorNode error = null;
 
         while (true) {
@@ -393,8 +391,8 @@ public class Spin2Parser {
                         break;
                     }
                     if (param == null) {
-                        param = new Node(node);
-                        node.parameters.add(param);
+                        param = new MethodNode.ParameterNode(node);
+                        param.identifier = token;
                     }
                     param.addToken(token);
                     break;
@@ -415,9 +413,9 @@ public class Spin2Parser {
                     break;
 
                 case 7:
-                    ret = new Node(node);
+                    ret = new MethodNode.ReturnNode(node);
+                    ret.identifier = token;
                     ret.addToken(token);
-                    node.returnVariables.add(ret);
                     state = 8;
                     break;
                 case 8:
@@ -433,8 +431,7 @@ public class Spin2Parser {
                     break;
 
                 case 9:
-                    local = new LocalVariableNode(node);
-                    node.localVariables.add(local);
+                    local = new MethodNode.LocalVariableNode(node);
                     if (Spin2Model.isType(token.getText())) {
                         local.type = token;
                         local.addToken(token);
@@ -599,7 +596,7 @@ public class Spin2Parser {
     void parseDatLine(Node node, Token token) {
         int state = 0;
         DataLineNode parent = new DataLineNode(node);
-        ParameterNode parameter = null;
+        DataLineNode.ParameterNode parameter = null;
 
         while (true) {
             if (state != 0) {
@@ -619,12 +616,12 @@ public class Spin2Parser {
                         state = 9;
                         break;
                     }
-                    if (Spin2Model.isCondition(token.getText())) {
+                    if (Spin2Model.isPAsmCondition(token.getText())) {
                         parent.condition = token;
                         state = 3;
                         break;
                     }
-                    if (Spin2Model.isInstruction(token.getText()) || Spin2Model.isPAsmType(token.getText())) {
+                    if (Spin2Model.isPAsmInstruction(token.getText())) {
                         parent.instruction = token;
                         state = 4;
                         break;
@@ -633,7 +630,7 @@ public class Spin2Parser {
                     state = 2;
                     break;
                 case 2:
-                    if (Spin2Model.isCondition(token.getText())) {
+                    if (Spin2Model.isPAsmCondition(token.getText())) {
                         parent.condition = token;
                         state = 3;
                         break;
@@ -644,24 +641,24 @@ public class Spin2Parser {
                     state = "debug".equalsIgnoreCase(token.getText()) ? 9 : 4;
                     break;
                 case 4:
-                    if (Spin2Model.isModifier(token.getText())) {
+                    if (Spin2Model.isPAsmModifier(token.getText())) {
                         parent.modifier = new Node(parent);
                         parent.modifier.addToken(token);
                         state = 6;
                         break;
                     }
-                    parameter = new ParameterNode(parent);
+                    parameter = new DataLineNode.ParameterNode(parent);
                     parameter.addToken(token);
                     parent.parameters.add(parameter);
                     state = 5;
                     break;
                 case 5:
                     if (",".equals(token.getText())) {
-                        parameter = new ParameterNode(parent);
+                        parameter = new DataLineNode.ParameterNode(parent);
                         parent.parameters.add(parameter);
                         break;
                     }
-                    if (Spin2Model.isModifier(token.getText())) {
+                    if (Spin2Model.isPAsmModifier(token.getText())) {
                         parent.modifier = new Node(parent);
                         parent.modifier.addToken(token);
                         state = 6;

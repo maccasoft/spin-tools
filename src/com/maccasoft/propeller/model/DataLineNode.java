@@ -21,6 +21,20 @@ public class DataLineNode extends Node {
     public List<ParameterNode> parameters = new ArrayList<ParameterNode>();
     public Node modifier;
 
+    public static class ParameterNode extends Node {
+
+        public ExpressionNode count;
+
+        public ParameterNode(Node parent) {
+            super(parent);
+        }
+
+        public ExpressionNode getCount() {
+            return count;
+        }
+
+    }
+
     public DataLineNode(Node parent) {
         super(parent);
     }
