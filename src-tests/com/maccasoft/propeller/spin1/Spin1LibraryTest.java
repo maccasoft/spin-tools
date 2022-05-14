@@ -307,6 +307,36 @@ class Spin1LibraryTest {
         compileAndCompare(new File(path, "tiny.sensor.accel.dual.mxd2125.spin"), new File(path, "tiny.sensor.accel.dual.mxd2125.binary"));
     }
 
+    @Test
+    void test_jm_ansi() throws Exception {
+        compileAndCompare(new File(path, "jm_ansi.spin"), new File(path, "jm_ansi.binary"));
+    }
+
+    @Test
+    void test_jm_fullduplexserial() throws Exception {
+        compileAndCompare(new File(path, "jm_fullduplexserial.spin"), new File(path, "jm_fullduplexserial.binary"));
+    }
+
+    @Test
+    void test_jm_io() throws Exception {
+        compileAndCompare(new File(path, "jm_io.spin"), new File(path, "jm_io.binary"));
+    }
+
+    @Test
+    void test_jm_nstr() throws Exception {
+        compileAndCompare(new File(path, "jm_nstr.spin"), new File(path, "jm_nstr.binary"));
+    }
+
+    @Test
+    void test_jm_prng() throws Exception {
+        compileAndCompare(new File(path, "jm_prng.spin"), new File(path, "jm_prng.binary"));
+    }
+
+    @Test
+    void test_jm_time_80() throws Exception {
+        compileAndCompare(new File(path, "jm_time_80.spin"), new File(path, "jm_time_80.binary"));
+    }
+
     class Spin1CompilerAdapter extends Spin1Compiler {
 
         File parent;
