@@ -1714,13 +1714,7 @@ public class Spin1ObjectCompiler {
                     }
                 }
                 else {
-                    target = (Spin1MethodLine) arg.getData("other");
-                    if (target != null) {
-                        line.addSource(new Jmp(line.getScope(), new ContextLiteral(target.getScope())));
-                    }
-                    else {
-                        line.addSource(compileBytecodeExpression(line.getScope(), arg, true));
-                    }
+                    line.addSource(compileBytecodeExpression(line.getScope(), arg, true));
                 }
             }
 
@@ -2069,13 +2063,18 @@ public class Spin1ObjectCompiler {
                 }
                 else {
                     Expression expression = context.getLocalSymbol(node.getChild(0).getText());
-                    if (!push && (expression instanceof Variable)) {
-                        source.addAll(leftAssign(context, node.getChild(0), true));
+                    if (expression != null && expression.isConstant() && push) {
+                        source.add(new Constant(context, new Negative(expression)));
                     }
                     else {
-                        source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                        if (!push && (expression instanceof Variable)) {
+                            source.addAll(leftAssign(context, node.getChild(0), true));
+                        }
+                        else {
+                            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                        }
+                        source.add(new Bytecode(context, push ? 0b111_00110 : 0b010_00110, "NEGATE"));
                     }
-                    source.add(new Bytecode(context, push ? 0b111_00110 : 0b010_00110, "NEGATE"));
                 }
             }
             else if (":=".equals(node.getText())) {
