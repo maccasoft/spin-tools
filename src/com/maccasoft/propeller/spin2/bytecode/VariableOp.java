@@ -25,7 +25,7 @@ public class VariableOp extends Spin2Bytecode {
     };
 
     public static enum Op {
-        Read, Write, Setup, Address
+        Read, Write, Setup, Address, PBaseAddress
     }
 
     public Size ss;
@@ -95,7 +95,7 @@ public class VariableOp extends Spin2Bytecode {
                 offset >>= 2;
 
                 if (variable instanceof LocalVariable) {
-                    if (op == Op.Read) {
+                    if (op == Op.Read || op == Op.PBaseAddress) {
                         os.write(0xE0 + offset);
                     }
                     else if (op == Op.Write) {
@@ -110,7 +110,7 @@ public class VariableOp extends Spin2Bytecode {
                 }
                 else {
                     os.write(0xC0 + offset);
-                    if (op == Op.Read) {
+                    if (op == Op.Read || op == Op.PBaseAddress) {
                         os.write(0x80);
                     }
                     else if (op == Op.Write) {
@@ -154,12 +154,15 @@ public class VariableOp extends Spin2Bytecode {
                 if (op == Op.Address) {
                     os.write(0x7F);
                 }
-                else if (op == Op.Read) {
+                else if (op == Op.Read || op == Op.PBaseAddress) {
                     os.write(0x80);
                 }
                 else if (op == Op.Write) {
                     os.write(0x81);
                 }
+            }
+            if (op == Op.PBaseAddress) {
+                os.write(0x24);
             }
         } catch (IOException e) {
             // Do nothing
@@ -181,7 +184,7 @@ public class VariableOp extends Spin2Bytecode {
         else if (op == Op.Setup) {
             sb.append("SETUP");
         }
-        else if (op == Op.Address) {
+        else if (op == Op.Address || op == Op.PBaseAddress) {
             sb.append("ADDRESS");
         }
 
@@ -189,16 +192,21 @@ public class VariableOp extends Spin2Bytecode {
             sb.append("_INDEXED");
         }
 
-        if (op != Op.Address) {
+        if (op != Op.Address && op != Op.PBaseAddress) {
             sb.append(" ");
             sb.append(variable.getType());
         }
+        sb.append(" ");
+
+        if (op == Op.PBaseAddress) {
+            sb.append("PBASE+");
+        }
 
         if (variable instanceof LocalVariable) {
-            sb.append(" DBASE");
+            sb.append("DBASE");
         }
         else if (variable instanceof Variable) {
-            sb.append(" VBASE");
+            sb.append("VBASE");
         }
 
         int offset = variable.getOffset();

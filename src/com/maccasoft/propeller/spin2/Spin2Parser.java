@@ -704,6 +704,12 @@ public class Spin2Parser {
                 if (nextToken.type == Token.STRING) {
                     token.type = Token.STRING;
                 }
+                if ("@".equals(nextToken.getText())) {
+                    nextToken = stream.peekNext(true);
+                    if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                        token = token.merge(stream.nextToken(true));
+                    }
+                }
                 if (".".equals(nextToken.getText())) {
                     nextToken = stream.peekNext(true);
                     if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {

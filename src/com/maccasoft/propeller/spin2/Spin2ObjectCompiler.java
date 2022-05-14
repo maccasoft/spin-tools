@@ -735,6 +735,7 @@ public class Spin2ObjectCompiler {
                 try {
                     scope.addSymbol(identifier, new Variable(type, identifier, size, varOffset));
                     scope.addSymbol("@" + identifier, new Variable(type, identifier, size, varOffset));
+                    scope.addSymbol("@@" + identifier, new Variable(type, identifier, size, varOffset));
 
                     int varSize = size.getNumber().intValue();
                     if ("WORD".equalsIgnoreCase(type)) {
@@ -1100,6 +1101,7 @@ public class Spin2ObjectCompiler {
                     LocalVariable var = new LocalVariable("LONG", identifier, new NumberLiteral(1), offset);
                     localScope.addSymbol(identifier, var);
                     localScope.addSymbol("@" + identifier, var);
+                    localScope.addSymbol("@@" + identifier, var);
                     parameters.add(var);
                     offset += 4;
                 }
@@ -1149,6 +1151,7 @@ public class Spin2ObjectCompiler {
                     LocalVariable var = new LocalVariable("LONG", identifier, new NumberLiteral(1), offset);
                     localScope.addSymbol(identifier, var);
                     localScope.addSymbol("@" + identifier, var);
+                    localScope.addSymbol("@@" + identifier, var);
                     returns.add(var);
                     offset += 4;
                 }
@@ -1227,6 +1230,7 @@ public class Spin2ObjectCompiler {
                     LocalVariable var = new LocalVariable(type, identifier, size, offset);
                     localScope.addSymbol(identifier, var);
                     localScope.addSymbol("@" + identifier, var);
+                    localScope.addSymbol("@@" + identifier, var);
                     localVariables.add(var);
 
                     int count = 4;
@@ -2891,7 +2895,15 @@ public class Spin2ObjectCompiler {
                                 }
                             }
 
-                            source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression, hasIndex, index));
+                            VariableOp.Op op = VariableOp.Op.Address;
+                            if (node.getText().startsWith("@@")) {
+                                op = VariableOp.Op.PBaseAddress;
+                            }
+
+                            source.add(new VariableOp(context, op, popIndex, (Variable) expression, hasIndex, index));
+                        }
+                        else if (expression instanceof MemoryContextLiteral) {
+                            source.add(new Constant(context, expression));
                         }
                         else {
                             int index = 0;

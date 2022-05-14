@@ -1914,50 +1914,112 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
-    void testVarPointer() throws Exception {
+    void testVarAddress() throws Exception {
         String text = ""
-            + "VAR b[10]\n"
+            + "VAR b[20], c\n"
             + "\n"
             + "PUB main() | a\n"
             + "\n"
             + "        a := @b\n"
-            + "\n"
+            + "        a := @c\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       0D 00 00 00    End\n"
+            + "00004 00004       11 00 00 00    End\n"
             + "' PUB main() | a\n"
             + "00008 00008       04             (stack size)\n"
             + "'         a := @b\n"
             + "00009 00009       C1 7F          VAR_ADDRESS VBASE+$00001 (short)\n"
             + "0000B 0000B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "0000C 0000C       04             RETURN\n"
-            + "0000D 0000D       00 00 00       Padding\n"
+            + "'         a := @c\n"
+            + "0000C 0000C       5D 54 7F       VAR_ADDRESS VBASE+$00054\n"
+            + "0000F 0000F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00010 00010       04             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
             + "", compile(text));
     }
 
     @Test
-    void testLocalVarPointer() throws Exception {
+    void testVarAbsoluteAddress() throws Exception {
         String text = ""
-            + "PUB main() | a, b[10]\n"
+            + "VAR b[20], c\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "        a := @@b\n"
+            + "        a := @@c\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       13 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       04             (stack size)\n"
+            + "'         a := @@b\n"
+            + "00009 00009       C1 80 24       VAR_ADDRESS PBASE+VBASE+$00001 (short)\n"
+            + "0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'         a := @@c\n"
+            + "0000D 0000D       5D 54 80 24    VAR_ADDRESS PBASE+VBASE+$00054\n"
+            + "00011 00011       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00012 00012       04             RETURN\n"
+            + "00013 00013       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testLocalVarAddress() throws Exception {
+        String text = ""
+            + "PUB main() | a, b[20], c\n"
             + "\n"
             + "        a := @b\n"
+            + "        a := @c\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       0D 00 00 00    End\n"
-            + "' PUB main() | a, b[10]\n"
-            + "00008 00008       2C             (stack size)\n"
+            + "00004 00004       11 00 00 00    End\n"
+            + "' PUB main() | a, b[20], c\n"
+            + "00008 00008       58             (stack size)\n"
             + "'         a := @b\n"
             + "00009 00009       D1 7F          VAR_ADDRESS DBASE+$00001 (short)\n"
             + "0000B 0000B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "0000C 0000C       04             RETURN\n"
-            + "0000D 0000D       00 00 00       Padding\n"
+            + "'         a := @c\n"
+            + "0000C 0000C       5E 54 7F       VAR_ADDRESS DBASE+$00054\n"
+            + "0000F 0000F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00010 00010       04             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testLocalVarAbsoluteAddress() throws Exception {
+        String text = ""
+            + "PUB main() | a, b[20], c\n"
+            + "\n"
+            + "        a := @@b\n"
+            + "        a := @@c\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       12 00 00 00    End\n"
+            + "' PUB main() | a, b[20], c\n"
+            + "00008 00008       58             (stack size)\n"
+            + "'         a := @@b\n"
+            + "00009 00009       E1 24          VAR_ADDRESS PBASE+DBASE+$00001 (short)\n"
+            + "0000B 0000B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'         a := @@c\n"
+            + "0000C 0000C       5E 54 80 24    VAR_ADDRESS PBASE+DBASE+$00054\n"
+            + "00010 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00011 00011       04             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
             + "", compile(text));
     }
 

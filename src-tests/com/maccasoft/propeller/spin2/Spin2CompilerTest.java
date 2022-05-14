@@ -1242,6 +1242,65 @@ class Spin2CompilerTest {
             + "", compile("main.spin2", sources));
     }
 
+    @Test
+    void testSpinAbsoluteAddress() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := @@driver\n"
+            + "\n"
+            + "DAT\n"
+            + "                org   $000\n"
+            + "driver          jmp   #$\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       12 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 FC FF 9F FD    driver              jmp     #$\n"
+            + "' PUB main() | a\n"
+            + "0000C 0000C       04             (stack size)\n"
+            + "'     a := @@driver\n"
+            + "0000D 0000D       47 CC 12       CONSTANT (4812)\n"
+            + "00010 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00011 00011       04             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
+            + "", compile("main.spin2", sources));
+    }
+
+    @Test
+    void testSpinAbsoluteAddressExpression() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    a := @@driver + b\n"
+            + "\n"
+            + "DAT\n"
+            + "                org   $000\n"
+            + "driver          jmp   #$\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       14 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 FC FF 9F FD    driver              jmp     #$\n"
+            + "' PUB main() | a, b\n"
+            + "0000C 0000C       08             (stack size)\n"
+            + "'     a := @@driver + b\n"
+            + "0000D 0000D       47 CC 12       CONSTANT (4812)\n"
+            + "00010 00010       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00011 00011       8A             ADD\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00013 00013       04             RETURN\n"
+            + "", compile("main.spin2", sources));
+    }
+
     class Spin2CompilerAdapter extends Spin2Compiler {
 
         Map<String, String> sources;

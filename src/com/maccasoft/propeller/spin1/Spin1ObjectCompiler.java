@@ -654,6 +654,7 @@ public class Spin1ObjectCompiler {
         try {
             scope.addSymbol(identifier, new Variable(type, identifier, size, objectVarSize));
             scope.addSymbol("@" + identifier, new Variable(type, identifier, size, objectVarSize));
+            scope.addSymbol("@@" + identifier, new Variable(type, identifier, size, objectVarSize));
 
             int varSize = size.getNumber().intValue();
             if ("WORD".equalsIgnoreCase(type)) {
@@ -923,8 +924,10 @@ public class Spin1ObjectCompiler {
         LocalVariable defaultReturn = new LocalVariable("LONG", "RESULT", new NumberLiteral(1), 0);
         localScope.addSymbol(defaultReturn.getName(), defaultReturn);
         localScope.addSymbol("@" + defaultReturn.getName(), defaultReturn);
+        localScope.addSymbol("@@" + defaultReturn.getName(), defaultReturn);
         localScope.addSymbol(defaultReturn.getName().toLowerCase(), defaultReturn);
         localScope.addSymbol("@" + defaultReturn.getName().toLowerCase(), defaultReturn);
+        localScope.addSymbol("@@" + defaultReturn.getName().toLowerCase(), defaultReturn);
         returns.add(defaultReturn);
 
         Iterator<Token> iter = node.getTokens().iterator();
@@ -960,6 +963,7 @@ public class Spin1ObjectCompiler {
                     LocalVariable var = new LocalVariable("LONG", identifier, new NumberLiteral(1), offset);
                     localScope.addSymbol(identifier, var);
                     localScope.addSymbol("@" + identifier, var);
+                    localScope.addSymbol("@@" + identifier, var);
                     parameters.add(var);
                     offset += 4;
                 }
@@ -1008,6 +1012,7 @@ public class Spin1ObjectCompiler {
                     LocalVariable var = new LocalVariable("LONG", identifier, new NumberLiteral(1), 0);
                     localScope.addSymbol(identifier, var);
                     localScope.addSymbol("@" + identifier, var);
+                    localScope.addSymbol("@@" + identifier, var);
                     returns.add(var);
                 }
             }
@@ -1085,6 +1090,7 @@ public class Spin1ObjectCompiler {
                     LocalVariable var = new LocalVariable(type, identifier, size, offset);
                     localScope.addSymbol(identifier, var);
                     localScope.addSymbol("@" + identifier, var);
+                    localScope.addSymbol("@@" + identifier, var);
                     localVariables.add(var);
 
                     int count = 4;
@@ -2512,14 +2518,20 @@ public class Spin1ObjectCompiler {
                     }
                 }
                 else {
-                    String symbol = node.getText();
-                    if (symbol.startsWith("@@")) {
-                        symbol = symbol.substring(2);
-                    }
-                    else if (symbol.startsWith("@")) {
-                        symbol = symbol.substring(1);
-                    }
+                    /*String symbol = node.getText();
                     Expression expression = context.getLocalSymbol(symbol);
+                    if (expression == null && symbol.startsWith("@@")) {
+                        symbol = symbol.substring(2);
+                        expression = context.getLocalSymbol(symbol);
+                    }
+                    if (expression == null && symbol.startsWith("@")) {
+                        symbol = symbol.substring(1);
+                        expression = context.getLocalSymbol(symbol);
+                    }*/
+                    Expression expression = context.getLocalSymbol(node.getText());
+                    if (expression instanceof ObjectContextLiteral) {
+                        expression = context.getLocalSymbol(node.getText().substring(1));
+                    }
                     if (expression == null) {
                         ObjectInfo info = objects.get(node.getText());
                         if (info != null) {
@@ -2561,6 +2573,9 @@ public class Spin1ObjectCompiler {
                         if (expression instanceof Variable) {
                             source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression));
                             source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
+                        }
+                        else if (expression instanceof MemoryContextLiteral) {
+                            source.add(new Constant(context, expression));
                         }
                         else {
                             throw new CompilerException("syntax error", node.getToken());

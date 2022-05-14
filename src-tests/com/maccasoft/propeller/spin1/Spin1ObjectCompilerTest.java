@@ -2191,15 +2191,12 @@ class Spin1ObjectCompilerTest {
     @Test
     void testVarAddress() throws Exception {
         String text = ""
-            + "VAR\n"
-            + "\n"
-            + "    long b\n"
+            + "VAR b[20], c\n"
             + "\n"
             + "PUB main | a\n"
             + "\n"
-            + "    a := @b\n"
-            + "    a := @@b\n"
-            + "\n"
+            + "        a := @b\n"
+            + "        a := @c\n"
             + "";
 
         Assertions.assertEquals(""
@@ -2209,15 +2206,101 @@ class Spin1ObjectCompilerTest {
             + "00003 00003       00             Object count\n"
             + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
             + "' PUB main | a\n"
-            + "'     a := @b\n"
+            + "'         a := @b\n"
             + "00008 00008       43             VAR_ADDRESS LONG VBASE+$0000 (short)\n"
             + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
-            + "'     a := @@b\n"
-            + "0000A 0000A       40             VAR_READ LONG VBASE+$0000 (short)\n"
-            + "0000B 0000B       97 00          MEM_ADDRESS_INDEXED BYTE PBASE+$0000\n"
-            + "0000D 0000D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
-            + "0000E 0000E       32             RETURN\n"
-            + "0000F 0000F       00             Padding\n"
+            + "'         a := @c\n"
+            + "0000A 0000A       CB 50          VAR_ADDRESS LONG VBASE+$0050\n"
+            + "0000C 0000C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000D 0000D       32             RETURN\n"
+            + "0000E 0000E       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testVarAbsoluteAddress() throws Exception {
+        String text = ""
+            + "VAR b[20], c\n"
+            + "\n"
+            + "PUB main | a\n"
+            + "\n"
+            + "        a := @@b\n"
+            + "        a := @@c\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main | a\n"
+            + "'         a := @@b\n"
+            + "00008 00008       40             VAR_READ LONG VBASE+$0000 (short)\n"
+            + "00009 00009       97 00          MEM_ADDRESS_INDEXED BYTE PBASE+$0000\n"
+            + "0000B 0000B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'         a := @@c\n"
+            + "0000C 0000C       C8 50          VAR_READ LONG VBASE+$0050\n"
+            + "0000E 0000E       97 00          MEM_ADDRESS_INDEXED BYTE PBASE+$0000\n"
+            + "00010 00010       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00011 00011       32             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testLocalVarAddress() throws Exception {
+        String text = ""
+            + "PUB main | a, b[20], c\n"
+            + "\n"
+            + "        a := @b\n"
+            + "        a := @c\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 58 00    Function main @ $0008 (local size 88)\n"
+            + "' PUB main | a, b[20], c\n"
+            + "'         a := @b\n"
+            + "00008 00008       6B             VAR_ADDRESS LONG DBASE+$0008 (short)\n"
+            + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'         a := @c\n"
+            + "0000A 0000A       CF 58          VAR_ADDRESS LONG DBASE+$0058\n"
+            + "0000C 0000C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000D 0000D       32             RETURN\n"
+            + "0000E 0000E       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testLocalVarAbsoluteAddress() throws Exception {
+        String text = ""
+            + "PUB main | a, b[20], c\n"
+            + "\n"
+            + "        a := @@b\n"
+            + "        a := @@c\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 58 00    Function main @ $0008 (local size 88)\n"
+            + "' PUB main | a, b[20], c\n"
+            + "'         a := @@b\n"
+            + "00008 00008       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "00009 00009       97 00          MEM_ADDRESS_INDEXED BYTE PBASE+$0000\n"
+            + "0000B 0000B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'         a := @@c\n"
+            + "0000C 0000C       CC 58          VAR_READ LONG DBASE+$0058\n"
+            + "0000E 0000E       97 00          MEM_ADDRESS_INDEXED BYTE PBASE+$0000\n"
+            + "00010 00010       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00011 00011       32             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
             + "", compile(text));
     }
 
@@ -2453,6 +2536,65 @@ class Spin1ObjectCompilerTest {
             + "00004 00004   000 0C 04 FC A0                        mov     a, #@@a\n"
             + "00008 00008   001 00 00 7C 5C                        ret\n"
             + "0000C 0000C   002                a                   res     1\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testSpinAbsoluteAddress() throws Exception {
+        String text = ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := @@driver\n"
+            + "\n"
+            + "DAT\n"
+            + "                org   $000\n"
+            + "driver          jmp   #$\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       0C 00 04 00    Function main @ $000C (local size 4)\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 00 00 7C 5C    driver              jmp     #$\n"
+            + "' PUB main | a\n"
+            + "'     a := @@driver\n"
+            + "0000C 0000C       38 08          CONSTANT (8)\n"
+            + "0000E 0000E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000F 0000F       32             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testSpinAbsoluteAddressExpression() throws Exception {
+        String text = ""
+            + "PUB main | a, b\n"
+            + "\n"
+            + "    a := @@driver + b\n"
+            + "\n"
+            + "DAT\n"
+            + "                org   $000\n"
+            + "driver          jmp   #$\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       0C 00 08 00    Function main @ $000C (local size 8)\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 00 00 7C 5C    driver              jmp     #$\n"
+            + "' PUB main | a, b\n"
+            + "'     a := @@driver + b\n"
+            + "0000C 0000C       38 08          CONSTANT (8)\n"
+            + "0000E 0000E       68             VAR_READ LONG DBASE+$0008 (short)\n"
+            + "0000F 0000F       EC             ADD\n"
+            + "00010 00010       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00011 00011       32             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
             + "", compile(text));
     }
 
