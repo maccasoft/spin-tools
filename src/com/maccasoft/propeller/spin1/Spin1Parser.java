@@ -10,6 +10,10 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -24,9 +28,12 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
-import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class Spin1Parser {
+
+    private static final Set<String> sections = new HashSet<String>(Arrays.asList(new String[] {
+        "CON", "VAR", "OBJ", "PUB", "PRI", "DAT"
+    }));
 
     final Spin1TokenStream stream;
 
@@ -37,85 +44,63 @@ public class Spin1Parser {
     }
 
     public Node parse() {
+        Token token;
+        ConstantsNode defaultNode = null;
+
         root = new Node();
 
-        while (true) {
-            Token token = nextToken();
+        while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type == Token.EOF) {
                 break;
             }
             if (token.type == Token.NL) {
-                continue;
+                stream.nextToken();
             }
-            if (!parseSection(token)) {
-                ConstantsNode node = new ConstantsNode(root);
-                parseConstants(node, token);
+            else {
+                if ("VAR".equalsIgnoreCase(token.getText())) {
+                    parseVar();
+                }
+                else if ("OBJ".equalsIgnoreCase(token.getText())) {
+                    parseObj();
+                }
+                else if ("PUB".equalsIgnoreCase(token.getText()) || "PRI".equalsIgnoreCase(token.getText())) {
+                    parseMethod();
+                }
+                else if ("DAT".equalsIgnoreCase(token.getText())) {
+                    parseDat();
+                }
+                else if ("CON".equalsIgnoreCase(token.getText())) {
+                    ConstantsNode node = new ConstantsNode(root, stream.nextToken());
+                    parseConstants(node);
+                }
+                else {
+                    if (defaultNode == null) {
+                        defaultNode = new ConstantsNode(root);
+                    }
+                    parseConstants(defaultNode);
+                }
             }
         }
 
         return root;
     }
 
-    boolean parseSection(Token token) {
-        if (token.type == Token.EOF) {
-            return false;
-        }
-        if ("VAR".equalsIgnoreCase(token.getText())) {
-            parseVar(token);
-            return true;
-        }
-        if ("OBJ".equalsIgnoreCase(token.getText())) {
-            parseObj(token);
-            return true;
-        }
-        if ("PUB".equalsIgnoreCase(token.getText())) {
-            parseMethod(token);
-            return true;
-        }
-        if ("PRI".equalsIgnoreCase(token.getText())) {
-            parseMethod(token);
-            return true;
-        }
-        if ("DAT".equalsIgnoreCase(token.getText())) {
-            parseDat(token);
-            return true;
-        }
-        if ("CON".equalsIgnoreCase(token.getText())) {
-            ConstantsNode node = new ConstantsNode(root, token);
-            node.addToken(token);
-            token = nextToken(false);
-            if (token.type == Token.COMMENT) {
-                node.addDocument(token);
-                token = nextToken();
-            }
-            if (token.type == Token.BLOCK_COMMENT) {
-                token = nextToken();
-            }
-            parseConstants(node, token);
-            return true;
-        }
-        return false;
-    }
-
-    void parseConstants(ConstantsNode parent, Token token) {
+    void parseConstants(ConstantsNode parent) {
         int state = 1;
         ConstantNode child = null;
 
-        while (true) {
-            if (token.type == Token.EOF) {
-                return;
-            }
+        Token token;
+        while ((token = nextToken()).type != Token.EOF) {
             if (token.type == Token.NL) {
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
                 child = null;
                 state = 0;
-                token = nextToken();
                 continue;
             }
             switch (state) {
                 case 0:
-                    if (parseSection(token)) {
-                        return;
-                    }
                     state = 1;
                     // fall-through
                 case 1:
@@ -203,32 +188,28 @@ public class Spin1Parser {
                     child.multiplier.addToken(token);
                     break;
             }
-            token = nextToken();
         }
     }
 
-    void parseVar(Token start) {
+    void parseVar() {
         Node parent = new VariablesNode(root);
-        parent.addToken(start);
+        parent.addToken(stream.nextToken());
 
         int state = 1;
         VariableNode node = null;
 
-        while (true) {
-            Token token = nextToken();
-            if (token.type == Token.EOF) {
-                return;
-            }
+        Token token;
+        while ((token = nextToken()).type != Token.EOF) {
             if (token.type == Token.NL) {
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
                 node = null;
                 state = 0;
                 continue;
             }
             switch (state) {
                 case 0:
-                    if (parseSection(token)) {
-                        return;
-                    }
                     state = 1;
                     // fall-through
                 case 1:
@@ -272,27 +253,24 @@ public class Spin1Parser {
         }
     }
 
-    void parseObj(Token start) {
+    void parseObj() {
         Node parent = new ObjectsNode(root);
-        parent.addToken(start);
+        parent.addToken(stream.nextToken());
 
         ObjectNode object = null;
         int state = 1;
 
-        while (true) {
-            Token token = nextToken();
-            if (token.type == Token.EOF) {
-                return;
-            }
+        Token token;
+        while ((token = nextToken()).type != Token.EOF) {
             if (token.type == Token.NL) {
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
                 state = 0;
                 continue;
             }
             switch (state) {
                 case 0:
-                    if (parseSection(token)) {
-                        return;
-                    }
                     state = 1;
                     // fall-through
                 case 1:
@@ -338,8 +316,8 @@ public class Spin1Parser {
         }
     }
 
-    void parseMethod(Token start) {
-        MethodNode node = new MethodNode(root, start);
+    void parseMethod() {
+        MethodNode node = new MethodNode(root, stream.nextToken());
 
         int state = 1;
         Node parent = node;
@@ -349,12 +327,12 @@ public class Spin1Parser {
         MethodNode.LocalVariableNode local = null;
         ErrorNode error = null;
 
-        while (true) {
-            Token token = nextToken();
-            if (token.type == Token.EOF) {
-                return;
-            }
+        Token token;
+        while ((token = nextToken()).type != Token.EOF) {
             if (token.type == Token.NL) {
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
                 break;
             }
             node.addToken(token);
@@ -433,7 +411,7 @@ public class Spin1Parser {
 
                 case 9:
                     local = new MethodNode.LocalVariableNode(node);
-                    if (Spin2Model.isType(token.getText())) {
+                    if (Spin1Model.isType(token.getText())) {
                         local.type = token;
                         local.addToken(token);
                         state = 10;
@@ -473,12 +451,12 @@ public class Spin1Parser {
         }
 
         boolean skipComments = false;
-        while (true) {
-            Token token = nextToken(skipComments);
-            if (token.type == Token.EOF) {
-                return;
-            }
+
+        while ((token = nextToken(skipComments)).type != Token.EOF) {
             if (token.type == Token.NL) {
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
                 continue;
             }
 
@@ -502,10 +480,6 @@ public class Spin1Parser {
                 skipComments = true;
             }
 
-            if (parseSection(token)) {
-                return;
-            }
-
             if (child.getTokens().size() != 0) {
                 while (token.column < child.getToken(0).column && child.getParent() != node) {
                     child = child.getParent();
@@ -523,11 +497,14 @@ public class Spin1Parser {
             }
 
             child = parseStatement(parent, token);
+            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                return;
+            }
         }
     }
 
     Node parseStatement(Node parent, Token token) {
-        boolean isCase = parent.getTokens().size() != 0 && "CASE".equalsIgnoreCase(parent.getStartToken().getText());
+        boolean isCase = parent.getTokens().size() != 0 && ("CASE".equalsIgnoreCase(parent.getStartToken().getText()) || "CASE_FAST".equalsIgnoreCase(parent.getStartToken().getText()));
         Node statement = new StatementNode(parent);
 
         while (true) {
@@ -544,17 +521,18 @@ public class Spin1Parser {
         return statement;
     }
 
-    void parseDat(Token start) {
+    void parseDat() {
         Node node = new DataNode(root);
-        node.addToken(start);
+        node.addToken(stream.nextToken());
 
         boolean skipComments = false;
-        while (true) {
-            Token token = nextPAsmToken(skipComments);
-            if (token.type == Token.EOF) {
-                return;
-            }
+
+        Token token;
+        while ((token = nextPAsmToken(skipComments)).type != Token.EOF) {
             if (token.type == Token.NL) {
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
                 continue;
             }
             if (token.type == Token.COMMENT) {
@@ -564,10 +542,10 @@ public class Spin1Parser {
             if (token.type == Token.BLOCK_COMMENT) {
                 continue;
             }
-            if (parseSection(token)) {
+            parseDatLine(node, token);
+            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                 return;
             }
-            parseDatLine(node, token);
             skipComments = true;
         }
     }
@@ -612,7 +590,6 @@ public class Spin1Parser {
                     // fall-through
                 case 3:
                     parent.instruction = token;
-                    parent.addToken(token);
                     state = 4;
                     break;
                 case 4:
@@ -732,55 +709,6 @@ public class Spin1Parser {
             }
         }
         return token;
-    }
-
-    public static void main(String[] args) {
-        String text = ""
-            + "CON\n"
-            + "\n"
-            + "    _XINFREQ = 5_000_000\n"
-            + "    _CLKMODE = XTAL1 + PLL16X\n"
-            + "\n"
-            + "VAR\n"
-            + "\n"
-            + "OBJ\n"
-            + "\n"
-            + "PUB start | a\n"
-            + "\n"
-            + "    ' initialization\n"
-            + "    a := 1 + 2 * 3\n"
-            + "\n"
-            + "    repeat\n"
-            + "        ' loop\n"
-            + "";
-
-        try {
-            Spin1TokenStream stream = new Spin1TokenStream(text);
-            Spin1Parser subject = new Spin1Parser(stream);
-            Node root = subject.parse();
-            print(root, 0);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    static void print(Node node, int indent) {
-        if (indent != 0) {
-            for (int i = 1; i < indent; i++) {
-                System.out.print("|    ");
-            }
-            System.out.print("+--- ");
-        }
-
-        System.out.print(node.getClass().getSimpleName());
-        //for (Token token : node.tokens) {
-        //    System.out.print(" [" + token.getText().replaceAll("\n", "\\n") + "]");
-        //}
-        System.out.println(" [" + node.getText().replaceAll("\n", "\\\\n") + "]");
-
-        for (Node child : node.getChilds()) {
-            print(child, indent + 1);
-        }
     }
 
 }
