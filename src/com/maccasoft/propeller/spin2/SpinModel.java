@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -61,28 +61,33 @@ public class SpinModel {
         root.accept(new NodeVisitor() {
 
             @Override
-            public void visitConstants(ConstantsNode node) {
+            public boolean visitConstants(ConstantsNode node) {
                 allNodes.add(node);
+                return false;
             }
 
             @Override
-            public void visitVariables(VariablesNode node) {
+            public boolean visitVariables(VariablesNode node) {
                 allNodes.add(node);
+                return false;
             }
 
             @Override
-            public void visitObjects(ObjectsNode node) {
+            public boolean visitObjects(ObjectsNode node) {
                 allNodes.add(node);
+                return false;
             }
 
             @Override
-            public void visitStatement(StatementNode node) {
+            public boolean visitStatement(StatementNode node) {
                 allNodes.add(node);
+                return true;
             }
 
             @Override
-            public void visitData(DataNode node) {
+            public boolean visitData(DataNode node) {
                 allNodes.add(node);
+                return true;
             }
 
             @Override
@@ -154,13 +159,14 @@ public class SpinModel {
             root.accept(new NodeVisitor() {
 
                 @Override
-                public void visitConstant(ConstantNode node) {
+                public boolean visitConstant(ConstantNode node) {
                     if (node.getIdentifier() != null) {
                         String text = node.getIdentifier().getText();
                         if (StringUtils.containsIgnoreCase(text, token)) {
                             proposals.add(new ContentProposal(text, text, null));
                         }
                     }
+                    return false;
                 }
 
                 @Override
@@ -174,17 +180,18 @@ public class SpinModel {
                 }
 
                 @Override
-                public void visitMethod(MethodNode node) {
+                public boolean visitMethod(MethodNode node) {
                     if (node != currentMethod && node.getName() != null) {
                         String text = node.getName().getText();
                         if (StringUtils.containsIgnoreCase(text, token)) {
                             proposals.add(new ContentProposal(text, text, null));
                         }
                     }
+                    return false;
                 }
 
                 @Override
-                public void visitData(DataNode node) {
+                public boolean visitData(DataNode node) {
                     for (Node child : node.getChilds()) {
                         DataLineNode lineNode = (DataLineNode) child;
                         if (lineNode.label != null) {
@@ -194,6 +201,7 @@ public class SpinModel {
                             }
                         }
                     }
+                    return false;
                 }
 
             });

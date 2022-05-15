@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -51,16 +51,18 @@ public class Spin2Preprocessor {
         root.accept(new NodeVisitor() {
 
             @Override
-            public void visitMethod(MethodNode node) {
+            public boolean visitMethod(MethodNode node) {
                 referencedMethods.put(node, new MethodReference(node));
+                return false;
             }
         });
         for (Entry<String, Node> entry : childObjects.entrySet()) {
             entry.getValue().accept(new NodeVisitor() {
 
                 @Override
-                public void visitMethod(MethodNode node) {
+                public boolean visitMethod(MethodNode node) {
                     referencedMethods.put(node, new MethodReference(node));
+                    return false;
                 }
             });
         }
@@ -88,10 +90,11 @@ public class Spin2Preprocessor {
                     objectRoot.accept(new NodeVisitor() {
 
                         @Override
-                        public void visitMethod(MethodNode node) {
+                        public boolean visitMethod(MethodNode node) {
                             if (node.getName() != null) {
                                 symbols.put(prefix + node.getName().getText(), node);
                             }
+                            return false;
                         }
 
                     });
@@ -99,10 +102,11 @@ public class Spin2Preprocessor {
             }
 
             @Override
-            public void visitMethod(MethodNode node) {
+            public boolean visitMethod(MethodNode node) {
                 if (node.getName() != null) {
                     symbols.put(node.getName().getText(), node);
                 }
+                return false;
             }
 
         });
@@ -112,7 +116,7 @@ public class Spin2Preprocessor {
             boolean first = keepFirst;
 
             @Override
-            public void visitMethod(MethodNode node) {
+            public boolean visitMethod(MethodNode node) {
                 MethodReference parent = referencedMethods.get(node);
                 if (first) {
                     parent.count++;
@@ -123,6 +127,7 @@ public class Spin2Preprocessor {
                         markTokens(parent, child);
                     }
                 }
+                return false;
             }
 
             void markTokens(MethodReference parent, Node node) {

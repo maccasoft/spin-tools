@@ -179,23 +179,26 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         String lastLabel = "";
 
         @Override
-        public void visitConstants(ConstantsNode node) {
+        public boolean visitConstants(ConstantsNode node) {
             if (node.getTextToken() != null) {
                 tokens.add(new TokenMarker(node.getTextToken(), TokenId.SECTION));
             }
+            return true;
         }
 
         @Override
-        public void visitConstant(ConstantNode node) {
+        public boolean visitConstant(ConstantNode node) {
             if (node.getIdentifier() != null) {
                 symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
                 tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
             }
+            return true;
         }
 
         @Override
-        public void visitVariables(VariablesNode node) {
+        public boolean visitVariables(VariablesNode node) {
             tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
+            return true;
         }
 
         @Override
@@ -213,8 +216,9 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         }
 
         @Override
-        public void visitObjects(ObjectsNode node) {
+        public boolean visitObjects(ObjectsNode node) {
             tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
+            return true;
         }
 
         @Override
@@ -230,7 +234,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         }
 
         @Override
-        public void visitMethod(MethodNode node) {
+        public boolean visitMethod(MethodNode node) {
             TokenId id = TokenId.METHOD_PUB;
             if ("PRI".equalsIgnoreCase(node.getType().getText())) {
                 id = TokenId.METHOD_PRI;
@@ -249,12 +253,15 @@ public class Spin1TokenMarker extends SourceTokenMarker {
             for (Node child : node.getReturnVariables()) {
                 tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
             }
+
+            return false;
         }
 
         @Override
-        public void visitData(DataNode node) {
+        public boolean visitData(DataNode node) {
             lastLabel = "";
             tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
+            return true;
         }
 
         @Override
@@ -296,18 +303,14 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         Map<String, TokenId> locals = new HashMap<String, TokenId>();
 
         @Override
-        public void visitObjects(ObjectsNode node) {
-            tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
-            for (Node child : node.getChilds()) {
-                ObjectNode obj = (ObjectNode) child;
-                if (obj.count != null) {
-                    markTokens(obj.count);
-                }
+        public void visitObject(ObjectNode node) {
+            if (node.count != null) {
+                markTokens(node.count);
             }
         }
 
         @Override
-        public void visitMethod(MethodNode node) {
+        public boolean visitMethod(MethodNode node) {
             locals.clear();
 
             for (Node child : node.getParameters()) {
@@ -335,6 +338,8 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     markTokens(child);
                 }
             }
+
+            return false;
         }
 
         void markTokens(Node node) {
@@ -382,8 +387,9 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         }
 
         @Override
-        public void visitData(DataNode node) {
+        public boolean visitData(DataNode node) {
             lastLabel = "";
+            return true;
         }
 
         @Override
@@ -526,20 +532,21 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     objectRoot.accept(new NodeVisitor() {
 
                         @Override
-                        public void visitConstant(ConstantNode node) {
+                        public boolean visitConstant(ConstantNode node) {
                             if (node.getIdentifier() != null) {
                                 compilerSymbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
                             }
+                            return false;
                         }
 
                         @Override
-                        public void visitMethod(MethodNode node) {
-                            if (node.name == null) {
-                                return;
-                            }
+                        public boolean visitMethod(MethodNode node) {
                             if ("PUB".equalsIgnoreCase(node.type.getText())) {
-                                compilerSymbols.put(objectNode.name.getText() + "." + node.name.getText(), TokenId.METHOD_PUB);
+                                if (node.name != null) {
+                                    compilerSymbols.put(objectNode.name.getText() + "." + node.name.getText(), TokenId.METHOD_PUB);
+                                }
                             }
+                            return false;
                         }
 
                     });

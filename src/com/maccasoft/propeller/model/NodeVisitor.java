@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,40 +12,40 @@ package com.maccasoft.propeller.model;
 
 public class NodeVisitor {
 
-    public void visitConstants(ConstantsNode node) {
-
+    public boolean visitConstants(ConstantsNode node) {
+        return true;
     }
 
-    public void visitConstant(ConstantNode node) {
-
+    public boolean visitConstant(ConstantNode node) {
+        return true;
     }
 
-    public void visitVariables(VariablesNode node) {
-
+    public boolean visitVariables(VariablesNode node) {
+        return true;
     }
 
     public void visitVariable(VariableNode node) {
 
     }
 
-    public void visitObjects(ObjectsNode node) {
-
+    public boolean visitObjects(ObjectsNode node) {
+        return true;
     }
 
     public void visitObject(ObjectNode node) {
 
     }
 
-    public void visitMethod(MethodNode node) {
-
+    public boolean visitMethod(MethodNode node) {
+        return true;
     }
 
-    public void visitStatement(StatementNode node) {
-
+    public boolean visitStatement(StatementNode node) {
+        return true;
     }
 
-    public void visitData(DataNode node) {
-
+    public boolean visitData(DataNode node) {
+        return true;
     }
 
     public void visitDataLine(DataLineNode node) {
@@ -53,10 +53,6 @@ public class NodeVisitor {
     }
 
     public void visitExpression(ExpressionNode node) {
-
-    }
-
-    public void visitError(ErrorNode node) {
 
     }
 

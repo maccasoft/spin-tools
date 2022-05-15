@@ -677,8 +677,9 @@ public class Spin2ObjectCompiler {
             String type = "LONG";
 
             @Override
-            public void visitVariables(VariablesNode node) {
+            public boolean visitVariables(VariablesNode node) {
                 type = "LONG";
+                return true;
             }
 
             @Override

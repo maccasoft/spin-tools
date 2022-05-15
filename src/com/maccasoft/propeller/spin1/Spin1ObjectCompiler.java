@@ -542,8 +542,9 @@ public class Spin1ObjectCompiler {
             String type = "LONG";
 
             @Override
-            public void visitVariables(VariablesNode node) {
+            public boolean visitVariables(VariablesNode node) {
                 type = "LONG";
+                return true;
             }
 
             @Override
@@ -563,8 +564,9 @@ public class Spin1ObjectCompiler {
             String type = "LONG";
 
             @Override
-            public void visitVariables(VariablesNode node) {
+            public boolean visitVariables(VariablesNode node) {
                 type = "LONG";
+                return true;
             }
 
             @Override
@@ -584,8 +586,9 @@ public class Spin1ObjectCompiler {
             String type = "LONG";
 
             @Override
-            public void visitVariables(VariablesNode node) {
+            public boolean visitVariables(VariablesNode node) {
                 type = "LONG";
+                return true;
             }
 
             @Override
