@@ -2520,16 +2520,6 @@ public class Spin1ObjectCompiler {
                     }
                 }
                 else {
-                    /*String symbol = node.getText();
-                    Expression expression = context.getLocalSymbol(symbol);
-                    if (expression == null && symbol.startsWith("@@")) {
-                        symbol = symbol.substring(2);
-                        expression = context.getLocalSymbol(symbol);
-                    }
-                    if (expression == null && symbol.startsWith("@")) {
-                        symbol = symbol.substring(1);
-                        expression = context.getLocalSymbol(symbol);
-                    }*/
                     Expression expression = context.getLocalSymbol(node.getText());
                     if (expression instanceof ObjectContextLiteral) {
                         expression = context.getLocalSymbol(node.getText().substring(1));

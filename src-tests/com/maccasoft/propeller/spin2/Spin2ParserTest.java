@@ -41,12 +41,30 @@ class Spin2ParserTest {
     }
 
     @Test
+    void testAbsoluteAddress() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "@@label\n"
+            + ""));
+
+        Assertions.assertEquals("@@label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
     void testLocalLabelAddress() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "@.label\n"
             + ""));
 
         Assertions.assertEquals("@.label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
+    void testAbsoluteLocalLabelAddress() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "@@.label\n"
+            + ""));
+
+        Assertions.assertEquals("@@.label", subject.nextPAsmToken().getText());
     }
 
     @Test

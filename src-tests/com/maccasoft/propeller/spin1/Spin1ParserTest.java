@@ -39,12 +39,30 @@ class Spin1ParserTest {
     }
 
     @Test
+    void testAbsoluteAddress() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "@@label\n"
+            + ""));
+
+        Assertions.assertEquals("@@label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
     void testLocalLabelAddress() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "@:label\n"
             + ""));
 
         Assertions.assertEquals("@:label", subject.nextPAsmToken().getText());
+    }
+
+    @Test
+    void testAbsoluteLocalLabelAddress() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "@@:label\n"
+            + ""));
+
+        Assertions.assertEquals("@@:label", subject.nextPAsmToken().getText());
     }
 
     @Test

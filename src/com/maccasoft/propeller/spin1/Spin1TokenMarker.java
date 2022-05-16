@@ -211,6 +211,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 String identifier = node.getIdentifier().getText();
                 symbols.put(identifier, TokenId.VARIABLE);
                 symbols.put("@" + identifier, TokenId.VARIABLE);
+                symbols.put("@@" + identifier, TokenId.VARIABLE);
                 tokens.add(new TokenMarker(node.getIdentifier(), TokenId.VARIABLE));
             }
         }
@@ -271,11 +272,13 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 if (s.startsWith(":")) {
                     symbols.put(lastLabel + s, TokenId.PASM_LOCAL_LABEL);
                     symbols.put(lastLabel + "@" + s, TokenId.PASM_LOCAL_LABEL);
+                    symbols.put(lastLabel + "@@" + s, TokenId.PASM_LOCAL_LABEL);
                     tokens.add(new TokenMarker(node.label, TokenId.PASM_LOCAL_LABEL));
                 }
                 else {
                     symbols.put(s, TokenId.PASM_LABEL);
                     symbols.put("@" + s, TokenId.PASM_LABEL);
+                    symbols.put("@@" + s, TokenId.PASM_LABEL);
                     tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
                     lastLabel = s;
                 }
@@ -316,10 +319,12 @@ public class Spin1TokenMarker extends SourceTokenMarker {
             for (Node child : node.getParameters()) {
                 locals.put(child.getText(), TokenId.METHOD_LOCAL);
                 locals.put("@" + child.getText(), TokenId.METHOD_LOCAL);
+                locals.put("@@" + child.getText(), TokenId.METHOD_LOCAL);
             }
             for (Node child : node.getReturnVariables()) {
                 locals.put(child.getText(), TokenId.METHOD_RETURN);
                 locals.put("@" + child.getText(), TokenId.METHOD_RETURN);
+                locals.put("#@" + child.getText(), TokenId.METHOD_RETURN);
             }
 
             for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
@@ -329,6 +334,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 if (child.identifier != null) {
                     locals.put(child.identifier.getText(), TokenId.METHOD_LOCAL);
                     locals.put("@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
+                    locals.put("@@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
                     tokens.add(new TokenMarker(child.identifier, TokenId.METHOD_LOCAL));
                 }
             }
@@ -415,7 +421,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     }
                     else {
                         String s = token.getText();
-                        if (s.startsWith(":") || s.startsWith("@:")) {
+                        if (s.startsWith(":") || s.startsWith("@:") || s.startsWith("@@:")) {
                             s = lastLabel + s;
                         }
                         id = pasmKeywords.get(token.getText().toUpperCase());

@@ -1301,6 +1301,62 @@ class Spin2CompilerTest {
             + "", compile("main.spin2", sources));
     }
 
+    @Test
+    void testMixedSpinAndHubExecCode() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "CON\n"
+            + "    _CLKFREQ = 160_000_000\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "    coginit(HUBEXEC_NEW, @blink, 0)\n"
+            + "    repeat\n"
+            + "\n"
+            + "DAT\n"
+            + "                org\n"
+            + "\n"
+            + "delay           long    _CLKFREQ / 2\n"
+            + "ct              res     1\n"
+            + "\n"
+            + "                orgh\n"
+            + "'\n"
+            + "blink\n"
+            + "                getct   ct\n"
+            + ".loop           drvnot  #56\n"
+            + "                addct1  ct, delay\n"
+            + "                waitct1\n"
+            + "                jmp     #\\@@.loop\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       20 00 00 80    Method main @ $00020 (0 parameters, 0 returns)\n"
+            + "00004 00004       2B 00 00 00    End\n"
+            + "00008 00008   000                                    org\n"
+            + "00008 00008   000 00 B4 C4 04    delay               long    _CLKFREQ / 2\n"
+            + "0000C 0000C   001                ct                  res     1\n"
+            + "0000C 0000C   00C                                    orgh\n"
+            + "0000C 0000C   00C                blink               \n"
+            + "0000C 0000C   00C 1A 02 60 FD                        getct   ct\n"
+            + "00010 00010   010 5F 70 64 FD    .loop               drvnot  #56\n"
+            + "00014 00014   014 00 02 60 FA                        addct1  ct, delay\n"
+            + "00018 00018   018 24 22 60 FD                        waitct1\n"
+            + "0001C 0001C   01C D4 12 80 FD                        jmp     #\\@@.loop\n"
+            + "' PUB main()\n"
+            + "00020 00020       00             (stack size)\n"
+            + "'     coginit(HUBEXEC_NEW, @blink, 0)\n"
+            + "00021 00021       45 30          CONSTANT (48)\n"
+            + "00023 00023       5C 0C 7F       MEM_ADDRESS PBASE+$0000C\n"
+            + "00026 00026       A1             CONSTANT (0)\n"
+            + "00027 00027       25             COGINIT\n"
+            + "'     repeat\n"
+            + "00028 00028       12 7F          JMP $00028 (-1)\n"
+            + "0002A 0002A       04             RETURN\n"
+            + "0002B 0002B       00             Padding\n"
+            + "", compile("main.spin2", sources));
+    }
+
     class Spin2CompilerAdapter extends Spin2Compiler {
 
         Map<String, String> sources;
