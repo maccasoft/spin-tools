@@ -241,15 +241,17 @@ public class SourceEditor {
                         Node childSelection = selection;
                         for (Node child : node.getChilds()) {
                             Token token = child.getStartToken();
-                            start = token.start;
-                            if (token.line != childLine) {
-                                start -= token.column;
-                                childLine = token.line;
+                            if (token != null) {
+                                start = token.start;
+                                if (token.line != childLine) {
+                                    start -= token.column;
+                                    childLine = token.line;
+                                }
+                                if (offset < start) {
+                                    return childSelection;
+                                }
+                                childSelection = child;
                             }
-                            if (offset < start) {
-                                return childSelection;
-                            }
-                            childSelection = child;
                         }
 
                         if (line == childSelection.getStartToken().line) {
@@ -662,21 +664,7 @@ public class SourceEditor {
                         if (hoverHighlightToken.start == objstart) {
                             for (Node node : root.getChilds()) {
                                 if (node instanceof ObjectsNode) {
-                                    for (Node child : node.getChilds()) {
-                                        ObjectNode obj = (ObjectNode) child;
-                                        if (obj.name.getText().equals(hoverText)) {
-                                            SourceElement element = new SourceElement(null, obj.name.line, obj.name.column);
-                                            display.asyncExec(new Runnable() {
-
-                                                @Override
-                                                public void run() {
-                                                    fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
-                                                }
-
-                                            });
-                                            break;
-                                        }
-                                    }
+                                    openLinkedObject(node, hoverText);
                                 }
                             }
                         }
@@ -684,33 +672,7 @@ public class SourceEditor {
                             String objname = hoverToken.getStream().getSource(objstart, objstop);
                             for (Node node : root.getChilds()) {
                                 if (node instanceof ObjectsNode) {
-                                    for (Node child : node.getChilds()) {
-                                        ObjectNode obj = (ObjectNode) child;
-                                        if (obj.name.getText().equals(objname)) {
-                                            String fileName = obj.file.getText().substring(1, obj.file.getText().length() - 1);
-                                            Node objectRoot = tokenMarker.getObjectTree(fileName);
-                                            if (objectRoot != null) {
-                                                for (Node objectNode : objectRoot.getChilds()) {
-                                                    if (objectNode instanceof MethodNode) {
-                                                        MethodNode method = (MethodNode) objectNode;
-                                                        if (method.name.getText().equals(hoverText)) {
-                                                            SourceElement element = new SourceElement(obj, method.name.line, method.name.column);
-                                                            display.asyncExec(new Runnable() {
-
-                                                                @Override
-                                                                public void run() {
-                                                                    fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
-                                                                }
-
-                                                            });
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        }
-                                    }
+                                    openLinkedObjectMethod(node, objname, hoverText);
                                 }
                             }
                         }
@@ -739,6 +701,67 @@ public class SourceEditor {
                 hoverHighlight = false;
                 styledText.setCursor(null);
                 styledText.redraw();
+            }
+
+            boolean openLinkedObject(Node node, String hoverText) {
+                for (Node child : node.getChilds()) {
+                    if (child instanceof ObjectNode) {
+                        ObjectNode obj = (ObjectNode) child;
+                        if (obj.name.getText().equals(hoverText)) {
+                            SourceElement element = new SourceElement(null, obj.name.line, obj.name.column);
+                            display.asyncExec(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                }
+
+                            });
+                            return true;
+                        }
+                    }
+                    else if (openLinkedObject(child, hoverText)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            boolean openLinkedObjectMethod(Node node, String objname, String hoverText) {
+                for (Node child : node.getChilds()) {
+                    if (child instanceof ObjectNode) {
+                        ObjectNode obj = (ObjectNode) child;
+                        if (obj.name.getText().equals(objname)) {
+
+                            String fileName = obj.file.getText().substring(1, obj.file.getText().length() - 1);
+                            Node objectRoot = tokenMarker.getObjectTree(fileName);
+                            if (objectRoot != null) {
+                                for (Node objectNode : objectRoot.getChilds()) {
+                                    if (objectNode instanceof MethodNode) {
+                                        MethodNode method = (MethodNode) objectNode;
+                                        if (method.name.getText().equals(hoverText)) {
+                                            SourceElement element = new SourceElement(obj, method.name.line, method.name.column);
+                                            display.asyncExec(new Runnable() {
+
+                                                @Override
+                                                public void run() {
+                                                    fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                                }
+
+                                            });
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            return true;
+                        }
+                    }
+                    else if (openLinkedObjectMethod(child, objname, hoverText)) {
+                        return true;
+                    }
+                }
+                return false;
             }
 
             @Override

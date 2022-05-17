@@ -10,11 +10,14 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.lang.reflect.Field;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.Token;
 
 class Spin1ParseMethodTest {
 
@@ -334,7 +337,7 @@ class Spin1ParseMethodTest {
     }
 
     @Test
-    void testParseCaseBlockWithMultipleStatements() {
+    void testParseCaseBlockWithMultipleStatements() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB start()\n"
             + "\n"
@@ -345,11 +348,60 @@ class Spin1ParseMethodTest {
             + ""));
 
         Node root = subject.parse();
-        MethodNode pub0 = (MethodNode) root.getChild(0);
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=start [PUB start()]\n"
+            + "    +-- StatementNode [    case a]\n"
+            + "        +-- StatementNode [        0:]\n"
+            + "            +-- StatementNode [        0: a := b]\n"
+            + "        +-- StatementNode [        1:]\n"
+            + "            +-- StatementNode [        1: c := d]\n"
+            + "            +-- StatementNode [           e := f]\n"
+            + "", tree(root));
+    }
 
-        Assertions.assertEquals(1, pub0.getChilds().size());
-        Assertions.assertEquals(2, pub0.getChild(0).getChilds().size());
-        Assertions.assertEquals(1, pub0.getChild(0).getChild(0).getChilds().size());
-        Assertions.assertEquals(2, pub0.getChild(0).getChild(1).getChilds().size());
+    String tree(Node root) throws Exception {
+        return tree(root, 0);
+    }
+
+    String tree(Node root, int indent) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        Field[] field = root.getClass().getFields();
+
+        sb.append(root.getClass().getSimpleName());
+
+        for (Token token : root.getTokens()) {
+            for (int i = 0; i < field.length; i++) {
+                if (field[i].get(root) == token) {
+                    sb.append(" ");
+                    sb.append(field[i].getName());
+                    sb.append("=");
+                    sb.append(token);
+                    break;
+                }
+            }
+        }
+
+        sb.append(" [");
+        sb.append(root.getText().replaceAll("\n", "\\\\n"));
+        sb.append("]");
+        sb.append(System.lineSeparator());
+
+        for (Node child : root.getChilds()) {
+            for (int i = 0; i < indent; i++) {
+                sb.append("    ");
+            }
+            sb.append("+-- ");
+            for (int i = 0; i < field.length; i++) {
+                if (field[i].get(root) == child) {
+                    sb.append(field[i].getName());
+                    sb.append(" = ");
+                    break;
+                }
+            }
+            sb.append(tree(child, indent + 1));
+        }
+
+        return sb.toString();
     }
 }

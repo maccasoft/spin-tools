@@ -56,10 +56,16 @@ public class Node {
     }
 
     public Token getStartToken() {
+        if (tokens.size() == 0) {
+            return null;
+        }
         return tokens.get(0);
     }
 
     public Token getStopToken() {
+        if (tokens.size() == 0) {
+            return null;
+        }
         return tokens.get(tokens.size() - 1);
     }
 

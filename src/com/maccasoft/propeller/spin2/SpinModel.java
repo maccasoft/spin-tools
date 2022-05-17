@@ -79,6 +79,12 @@ public class SpinModel {
             }
 
             @Override
+            public boolean visitMethod(MethodNode node) {
+                allNodes.add(node);
+                return true;
+            }
+
+            @Override
             public boolean visitStatement(StatementNode node) {
                 allNodes.add(node);
                 return true;

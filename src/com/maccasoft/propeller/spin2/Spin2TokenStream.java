@@ -397,7 +397,9 @@ public class Spin2TokenStream extends TokenStream {
 
         if (state == Token.COMMENT || state == Token.BLOCK_COMMENT) {
             hiddenTokens.add(token);
-            return !skipComments ? token : EOF_TOKEN;
+            if (skipComments) {
+                token = EOF_TOKEN;
+            }
         }
 
         if (token == EOF_TOKEN) {
