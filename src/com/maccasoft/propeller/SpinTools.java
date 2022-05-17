@@ -1736,7 +1736,8 @@ public class SpinTools {
                                 String msg = e.getMessage();
                                 if (e instanceof SerialPortException) {
                                     SerialPortException serialException = (SerialPortException) e;
-                                    msg = serialException.getPortName() + " " + serialException.getExceptionType();
+                                    SerialPort port = serialException.getPort();
+                                    msg = port.getPortName() + " " + serialException.getExceptionType();
                                 }
                                 MessageDialog.openError(activeShell, APP_TITLE, "Error uploading program:\r\n" + msg);
                             }
@@ -1807,7 +1808,8 @@ public class SpinTools {
                                 String msg = e.getMessage();
                                 if (e instanceof SerialPortException) {
                                     SerialPortException serialException = (SerialPortException) e;
-                                    msg = serialException.getPortName() + " " + serialException.getExceptionType();
+                                    SerialPort port = serialException.getPort();
+                                    msg = port.getPortName() + " " + serialException.getExceptionType();
                                 }
                                 MessageDialog.openError(activeShell, APP_TITLE, "Error uploading program:\r\n" + msg);
                             }

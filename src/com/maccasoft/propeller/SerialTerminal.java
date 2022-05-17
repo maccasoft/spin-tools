@@ -183,7 +183,7 @@ public class SerialTerminal {
         @Override
         public void serialEvent(SerialPortEvent serialPortEvent) {
             switch (serialPortEvent.getEventType()) {
-                case SerialPortEvent.RXCHAR:
+                case SerialPort.MASK_RXCHAR:
                     try {
                         final byte[] rx = serialPort.readBytes();
                         if (rx != null) {
@@ -195,22 +195,22 @@ public class SerialTerminal {
                         e.printStackTrace();
                     }
                     break;
-                case SerialPortEvent.DSR:
+                case SerialPort.MASK_DSR:
                     display.syncExec(new Runnable() {
 
                         @Override
                         public void run() {
-                            dsr.setSelection((serialPortEvent.getEventValue() & SerialPortEvent.DSR) != 0);
+                            dsr.setSelection((serialPortEvent.getEventValue() & SerialPort.MASK_DSR) != 0);
                         }
 
                     });
                     break;
-                case SerialPortEvent.CTS:
+                case SerialPort.MASK_CTS:
                     display.syncExec(new Runnable() {
 
                         @Override
                         public void run() {
-                            cts.setSelection((serialPortEvent.getEventValue() & SerialPortEvent.CTS) != 0);
+                            cts.setSelection((serialPortEvent.getEventValue() & SerialPort.MASK_CTS) != 0);
                         }
 
                     });

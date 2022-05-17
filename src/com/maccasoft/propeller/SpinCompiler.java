@@ -271,7 +271,7 @@ public class SpinCompiler {
 
                         @Override
                         public void serialEvent(SerialPortEvent serialPortEvent) {
-                            if (serialPortEvent.getEventType() == SerialPortEvent.RXCHAR) {
+                            if (serialPortEvent.getEventType() == SerialPort.MASK_RXCHAR) {
                                 try {
                                     final byte[] rx = serialPort.readBytes();
                                     if (rx != null) {
