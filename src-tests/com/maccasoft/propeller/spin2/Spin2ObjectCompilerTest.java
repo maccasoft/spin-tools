@@ -4253,6 +4253,40 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testCogOrgFitLimit() throws Exception {
+        String text = ""
+            + "DAT             org   $000, $010\n"
+            + "                long    0[$10]\n"
+            + "                long    1\n"
+            + "";
+
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(text);
+            }
+        });
+    }
+
+    @Test
+    void testLutOrgFitLimit() throws Exception {
+        String text = ""
+            + "DAT             org   $200, $210\n"
+            + "                long    0[$10]\n"
+            + "                long    1\n"
+            + "";
+
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(text);
+            }
+        });
+    }
+
+    @Test
     void testByte() throws Exception {
         String text = ""
             + "DAT             org   $000\n"

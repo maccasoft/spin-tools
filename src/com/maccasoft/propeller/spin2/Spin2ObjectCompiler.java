@@ -387,6 +387,7 @@ public class Spin2ObjectCompiler {
 
         int address = 0;
         int objectAddress = object.getSize();
+        int fitAddress = 0x1F8 << 2;
         boolean hubMode = true;
         boolean cogCode = false;
         boolean spinMode = methods.size() != 0;
@@ -421,6 +422,10 @@ public class Spin2ObjectCompiler {
                 objectAddress += line.getInstructionObject().getSize();
                 if ((line.getInstructionFactory() instanceof Org)) {
                     cogCode = address < 0x200 * 4;
+                    fitAddress = cogCode ? 0x1F8 * 4 : 0x400 * 4;
+                    if (line.getArguments().size() > 1) {
+                        fitAddress = line.getArguments().get(1).getInteger() * 4;
+                    }
                 }
             } catch (CompilerException e) {
                 logMessage(e);
@@ -433,12 +438,12 @@ public class Spin2ObjectCompiler {
                     objectAddress = address;
                 }
             }
-            else {
-                if (cogCode && address > 0x1F8 * 4) {
-                    logMessage(new CompilerException("cog code limit exceeded by " + ((address - 0x1F8 * 4 + 3) >> 2) + " long(s)", line.getData()));
+            else if (address > fitAddress) {
+                if (cogCode) {
+                    logMessage(new CompilerException("cog code limit exceeded by " + ((address - fitAddress + 3) >> 2) + " long(s)", line.getData()));
                 }
-                else if (!cogCode && address > 0x400 * 4) {
-                    logMessage(new CompilerException("lut code limit exceeded by " + ((address - 0x400 * 4 + 3) >> 2) + " long(s)", line.getData()));
+                else {
+                    logMessage(new CompilerException("lut code limit exceeded by " + ((address - fitAddress + 3) >> 2) + " long(s)", line.getData()));
                 }
             }
         }
