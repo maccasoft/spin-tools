@@ -29,7 +29,7 @@ public class InlinePAsm extends Spin2Bytecode {
 
     @Override
     public int resolve(int address) {
-        return line.resolve(address, false, address);
+        return line.resolve(address, false);
     }
 
     @Override

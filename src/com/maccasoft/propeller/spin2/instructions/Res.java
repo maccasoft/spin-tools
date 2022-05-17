@@ -34,9 +34,8 @@ public class Res extends Spin2PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address, boolean hubMode, int memoryAddress) {
+        public int resolve(int address, boolean hubMode) {
             context.setAddress(hubMode ? address : address >> 2);
-            context.setMemoryAddress(memoryAddress);
             return address + argument.getInteger() * 4;
         }
 

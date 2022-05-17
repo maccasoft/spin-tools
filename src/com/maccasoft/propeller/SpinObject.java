@@ -398,8 +398,8 @@ public abstract class SpinObject {
                 if (obj instanceof PAsmDataObject) {
                     int cogAddr = ((PAsmDataObject) obj).addr;
 
-                    ps.print(String.format("%05X %05X   ", address + offset, address));
-                    ps.print(cogAddr < 0x400 ? String.format("%03X", cogAddr) : "   ");
+                    ps.print(String.format("%05X %05X ", address + offset, address));
+                    ps.print(cogAddr < 0x400 ? String.format("  %03X", cogAddr) : String.format("%05X", cogAddr));
 
                     int i = 0;
                     while (i < obj.bytes.length) {
@@ -412,8 +412,8 @@ public abstract class SpinObject {
                             }
                             ps.println();
                             cogAddr++;
-                            ps.print(String.format("%05X %05X   ", address + offset, address));
-                            ps.print(cogAddr < 0x400 ? String.format("%03X", cogAddr) : "   ");
+                            ps.print(String.format("%05X %05X ", address + offset, address));
+                            ps.print(cogAddr < 0x400 ? String.format("  %03X", cogAddr) : String.format("%05X", cogAddr));
                         }
                         ps.print(String.format(" %02X", obj.bytes[i++]));
                         address++;

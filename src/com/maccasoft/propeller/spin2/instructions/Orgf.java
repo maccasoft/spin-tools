@@ -30,6 +30,7 @@ public class Orgf extends Spin2PAsmInstructionFactory {
     public class Orgf_ extends Spin2InstructionObject {
 
         Spin2PAsmExpression arg0;
+        int size;
 
         public Orgf_(Spin2Context context, Spin2PAsmExpression arg0) {
             super(context);
@@ -37,20 +38,24 @@ public class Orgf extends Spin2PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address, boolean hubMode, int memoryAddress) {
+        public int resolve(int address, boolean hubMode) {
             context.setAddress(hubMode ? address : address >> 2);
-            context.setMemoryAddress(memoryAddress);
-            return arg0.getInteger() << 2;
+            int newAddress = arg0.getInteger() << 2;
+            if (address > newAddress) {
+                newAddress = address;
+            }
+            size = newAddress - address;
+            return newAddress;
         }
 
         @Override
         public int getSize() {
-            return 0;
+            return size;
         }
 
         @Override
         public byte[] getBytes() {
-            return new byte[0];
+            return new byte[size];
         }
 
     }

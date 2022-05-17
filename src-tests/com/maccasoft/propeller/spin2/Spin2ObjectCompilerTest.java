@@ -1457,8 +1457,8 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
             + "00004 00004       22 00 00 00    End\n"
-            + "00008 00008   008 01 00 00 00    c                   long    1\n"
-            + "0000C 0000C   00C 02 00 00 00    d                   long    2\n"
+            + "00008 00008   000 01 00 00 00    c                   long    1\n"
+            + "0000C 0000C   004 02 00 00 00    d                   long    2\n"
             + "' PUB main() | a, b\n"
             + "00010 00010       08             (stack size)\n"
             + "'     repeat a from @c to @d\n"
@@ -3037,8 +3037,8 @@ class Spin2ObjectCompilerTest {
             + "' Object header\n"
             + "00000 00000       10 00 00 80    Method start @ $00010 (0 parameters, 0 returns)\n"
             + "00004 00004       18 00 00 00    End\n"
-            + "00008 00008   008 00 00 00 00    a                   long    0\n"
-            + "0000C 0000C   00C 00 00 00 00    b                   long    0\n"
+            + "00008 00008   000 00 00 00 00    a                   long    0\n"
+            + "0000C 0000C   004 00 00 00 00    b                   long    0\n"
             + "' PUB start()\n"
             + "00010 00010       00             (stack size)\n"
             + "'     ++a\n"
@@ -4127,6 +4127,43 @@ class Spin2ObjectCompilerTest {
             + "00008 00008   100 02 00 00 00                        long    2\n"
             + "0000C 0000C   101 03 00 00 00                        long    3\n"
             + "00010 00010   102 04 00 00 00                        long    4\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testOrgf() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "label0          long    1\n"
+            + "                long    2\n"
+            + "                orgf  $10\n"
+            + "label10         long    2\n"
+            + "                long    3\n"
+            + "                long    4\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 01 00 00 00    label0              long    1\n"
+            + "00004 00004   001 02 00 00 00                        long    2\n"
+            + "00008 00008   002 00 00 00 00                        orgf    $10\n"
+            + "0000C 0000C   003 00 00 00 00   \n"
+            + "00010 00010   004 00 00 00 00   \n"
+            + "00014 00014   005 00 00 00 00   \n"
+            + "00018 00018   006 00 00 00 00   \n"
+            + "0001C 0001C   007 00 00 00 00   \n"
+            + "00020 00020   008 00 00 00 00   \n"
+            + "00024 00024   009 00 00 00 00   \n"
+            + "00028 00028   00A 00 00 00 00   \n"
+            + "0002C 0002C   00B 00 00 00 00   \n"
+            + "00030 00030   00C 00 00 00 00   \n"
+            + "00034 00034   00D 00 00 00 00   \n"
+            + "00038 00038   00E 00 00 00 00   \n"
+            + "0003C 0003C   00F 00 00 00 00\n"
+            + "00040 00040   010 02 00 00 00    label10             long    2\n"
+            + "00044 00044   011 03 00 00 00                        long    3\n"
+            + "00048 00048   012 04 00 00 00                        long    4\n"
             + "", compile(text));
     }
 

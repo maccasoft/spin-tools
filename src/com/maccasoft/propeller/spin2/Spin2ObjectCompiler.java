@@ -386,22 +386,26 @@ public class Spin2ObjectCompiler {
         object.addAllSymbols(publicSymbols);
 
         int address = 0;
-        int hubAddress = object.getSize();
+        int objectAddress = object.getSize();
         boolean hubMode = true;
         boolean cogCode = false;
+        boolean spinMode = methods.size() != 0;
 
         for (Spin2PAsmLine line : source) {
             if (!hubMode && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) && !(line.getInstructionFactory() instanceof Word)) {
-                hubAddress = (hubAddress + 3) & ~3;
+                objectAddress = (objectAddress + 3) & ~3;
                 address = (address + 3) & ~3;
             }
-            line.getScope().setObjectAddress(hubAddress);
+            line.getScope().setObjectAddress(objectAddress);
+            line.getScope().setMemoryAddress(memoryOffset + objectAddress);
             if (line.getInstructionFactory() instanceof Orgh) {
                 hubMode = true;
+                cogCode = false;
+                address = spinMode ? 0x400 : objectAddress;
             }
             if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
                 hubMode = false;
-                hubAddress = (hubAddress + 3) & ~3;
+                objectAddress = (objectAddress + 3) & ~3;
             }
             if (line.getInstructionFactory() instanceof Fit) {
                 ((Fit) line.getInstructionFactory()).setDefaultLimit(hubMode ? 0x80000 : (cogCode ? 0x1F8 : 0x400));
@@ -413,8 +417,8 @@ public class Spin2ObjectCompiler {
                         throw new CompilerException("cog symbols must be long-aligned", line.getData());
                     }
                 }
-                address = line.resolve(hubMode ? hubAddress : address, hubMode, memoryOffset + hubAddress);
-                hubAddress += line.getInstructionObject().getSize();
+                address = line.resolve(address, hubMode);
+                objectAddress += line.getInstructionObject().getSize();
                 if ((line.getInstructionFactory() instanceof Org)) {
                     cogCode = address < 0x200 * 4;
                 }
@@ -425,11 +429,8 @@ public class Spin2ObjectCompiler {
             }
 
             if (hubMode) {
-                if (address > hubAddress) {
-                    hubAddress = address;
-                }
-                else {
-                    address = hubAddress;
+                if (!spinMode && address > objectAddress) {
+                    objectAddress = address;
                 }
             }
             else {
@@ -443,9 +444,9 @@ public class Spin2ObjectCompiler {
         }
 
         for (Spin2PAsmLine line : source) {
-            hubAddress = line.getScope().getObjectAddress();
-            if (object.getSize() < hubAddress) {
-                object.writeBytes(new byte[hubAddress - object.getSize()], "(filler)");
+            objectAddress = line.getScope().getObjectAddress();
+            if (object.getSize() < objectAddress) {
+                object.writeBytes(new byte[objectAddress - object.getSize()], "(filler)");
             }
             try {
                 object.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());

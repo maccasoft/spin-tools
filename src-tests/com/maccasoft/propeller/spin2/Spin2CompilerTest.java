@@ -1326,7 +1326,7 @@ class Spin2CompilerTest {
             + ".loop           drvnot  #56\n"
             + "                addct1  ct, delay\n"
             + "                waitct1\n"
-            + "                jmp     #\\@@.loop\n"
+            + "                jmp     #\\.loop\n"
             + "");
 
         Assertions.assertEquals(""
@@ -1336,13 +1336,13 @@ class Spin2CompilerTest {
             + "00008 00008   000                                    org\n"
             + "00008 00008   000 00 B4 C4 04    delay               long    _CLKFREQ / 2\n"
             + "0000C 0000C   001                ct                  res     1\n"
-            + "0000C 0000C   00C                                    orgh\n"
-            + "0000C 0000C   00C                blink               \n"
-            + "0000C 0000C   00C 1A 02 60 FD                        getct   ct\n"
-            + "00010 00010   010 5F 70 64 FD    .loop               drvnot  #56\n"
-            + "00014 00014   014 00 02 60 FA                        addct1  ct, delay\n"
-            + "00018 00018   018 24 22 60 FD                        waitct1\n"
-            + "0001C 0001C   01C D4 12 80 FD                        jmp     #\\@@.loop\n"
+            + "0000C 0000C 00400                                    orgh\n"
+            + "0000C 0000C 00400                blink               \n"
+            + "0000C 0000C 00400 1A 02 60 FD                        getct   ct\n"
+            + "00010 00010 00404 5F 70 64 FD    .loop               drvnot  #56\n"
+            + "00014 00014 00408 00 02 60 FA                        addct1  ct, delay\n"
+            + "00018 00018 0040C 24 22 60 FD                        waitct1\n"
+            + "0001C 0001C 00410 04 04 80 FD                        jmp     #\\.loop\n"
             + "' PUB main()\n"
             + "00020 00020       00             (stack size)\n"
             + "'     coginit(HUBEXEC_NEW, @blink, 0)\n"
@@ -1354,6 +1354,45 @@ class Spin2CompilerTest {
             + "00028 00028       12 7F          JMP $00028 (-1)\n"
             + "0002A 0002A       04             RETURN\n"
             + "0002B 0002B       00             Padding\n"
+            + "", compile("main.spin2", sources));
+    }
+
+    @Test
+    void testSpinOrgModes() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "PUB start()\n"
+            + "\n"
+            + "DAT\n"
+            + "                org     $000\n"
+            + "\n"
+            + "driver1         jmp     #\\$\n"
+            + "\n"
+            + "DAT\n"
+            + "                org     $040\n"
+            + "\n"
+            + "driver2         jmp     #\\$\n"
+            + "\n"
+            + "DAT\n"
+            + "                orgh\n"
+            + "\n"
+            + "driver3         jmp     #\\$\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00 00 80    Method start @ $00014 (0 parameters, 0 returns)\n"
+            + "00004 00004       16 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 00 00 80 FD    driver1             jmp     #\\$\n"
+            + "0000C 0000C   001                                    org     $040\n"
+            + "0000C 0000C   040 40 00 80 FD    driver2             jmp     #\\$\n"
+            + "00010 00010 00400                                    orgh\n"
+            + "00010 00010 00400 00 04 80 FD    driver3             jmp     #\\$\n"
+            + "' PUB start()\n"
+            + "00014 00014       00             (stack size)\n"
+            + "00015 00015       04             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
             + "", compile("main.spin2", sources));
     }
 

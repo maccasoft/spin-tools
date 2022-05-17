@@ -45,9 +45,8 @@ public class Orgh extends Spin2PAsmInstructionFactory {
         }
 
         @Override
-        public int resolve(int address, boolean hubMode, int memoryAddress) {
+        public int resolve(int address, boolean hubMode) {
             context.setAddress(hubMode ? address : address >> 2);
-            context.setMemoryAddress(memoryAddress);
             return arg0 != null ? arg0.getInteger() : address;
         }
 
