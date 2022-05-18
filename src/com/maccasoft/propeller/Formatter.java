@@ -88,6 +88,13 @@ public abstract class Formatter {
             }
         }
 
+        public char lastChar() {
+            if (sb.length() == 0) {
+                return '\0';
+            }
+            return sb.charAt(sb.length() - 1);
+        }
+
         @Override
         public String toString() {
             return sb.toString();
@@ -95,6 +102,7 @@ public abstract class Formatter {
 
     }
 
+    int enabled = 0;
     FormatterStringBuilder sb = new FormatterStringBuilder();
 
     private static final Set<String> sections = new HashSet<String>(Arrays.asList(new String[] {
@@ -243,11 +251,7 @@ public abstract class Formatter {
                         }
                     }
 
-                    while (true) {
-                        token = stream.peekNext();
-                        if (token.type == Token.EOF) {
-                            break;
-                        }
+                    while ((token = stream.peekNext()).type != Token.EOF) {
                         if (token.type == Token.NL) {
                             if (keepBlankLines) {
                                 sb.append(System.lineSeparator());
@@ -257,7 +261,8 @@ public abstract class Formatter {
                                 break;
                             }
                         }
-                        else if (token.type == Token.COMMENT) {
+                        else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                            checkTags(token);
                             sb.alignToColumn(token.column);
                             sb.append(stream.nextToken());
                             if (stream.peekNext().type == Token.NL) {
@@ -296,17 +301,23 @@ public abstract class Formatter {
 
                             if (instruction == null) {
                                 if (label != null) {
+                                    if (!isEnabled()) {
+                                        sb.alignToColumn(token.column);
+                                    }
                                     sb.append(label);
                                     while ((token = stream.peekNext()).type != Token.EOF) {
                                         if (token.type == Token.NL) {
                                             break;
                                         }
                                         if (token.type == Token.COMMENT) {
-                                            sb.alignToColumn(commentsColumn);
+                                            sb.alignToColumn(isEnabled() ? commentsColumn : token.column);
                                             sb.append(stream.nextToken());
                                             break;
                                         }
                                         else {
+                                            if (!isEnabled()) {
+                                                sb.alignToColumn(token.column);
+                                            }
                                             sb.append(stream.nextToken());
                                         }
                                     }
@@ -314,6 +325,9 @@ public abstract class Formatter {
                             }
                             else {
                                 if (label != null) {
+                                    if (!isEnabled()) {
+                                        sb.alignToColumn(label.column);
+                                    }
                                     sb.append(label);
                                     if (isolateLargeLabels) {
                                         if (condition == null && label.getText().length() >= instructionColumn) {
@@ -326,26 +340,38 @@ public abstract class Formatter {
                                 }
 
                                 if (condition != null) {
-                                    if (sb.column >= conditionColumn) {
-                                        sb.append(" ");
+                                    if (isEnabled()) {
+                                        if (sb.column >= conditionColumn) {
+                                            sb.append(" ");
+                                        }
+                                        else {
+                                            sb.alignToColumn(conditionColumn);
+                                        }
                                     }
                                     else {
-                                        sb.alignToColumn(conditionColumn);
+                                        sb.alignToColumn(condition.column);
                                     }
                                     sb.append(condition.getText().toLowerCase());
                                 }
 
-                                if (sb.column >= instructionColumn) {
-                                    sb.append(" ");
+                                if (isEnabled()) {
+                                    if (sb.column >= instructionColumn) {
+                                        sb.append(" ");
+                                    }
+                                    else {
+                                        sb.alignToColumn(instructionColumn);
+                                    }
                                 }
                                 else {
-                                    sb.alignToColumn(instructionColumn);
+                                    sb.alignToColumn(instruction.column);
                                 }
                                 sb.append(instruction.getText().toLowerCase());
 
                                 if (token.type != Token.NL && token.type != Token.EOF) {
                                     if (!"debug".equalsIgnoreCase(instruction.getText())) {
-                                        sb.alignToColumn(argumentsColumn);
+                                        if (isEnabled()) {
+                                            sb.alignToColumn(argumentsColumn);
+                                        }
                                     }
                                     formatPAsmTokens(stream, effectsColumn);
                                 }
@@ -844,6 +870,11 @@ public abstract class Formatter {
                 break;
             }
             token = stream.nextToken();
+            if (!isEnabled()) {
+                sb.alignToColumn(token.column);
+                sb.append(token);
+                continue;
+            }
             if (type == 2 && pasmModifier(token)) {
                 if (sb.column >= effectsColumn) {
                     sb.append(" ");
@@ -920,6 +951,10 @@ public abstract class Formatter {
                             sb.append(token);
                             return;
                         }
+                        else if (type == 2) {
+                            sb.append(token);
+                            break;
+                        }
                         // Fall-through
                     default:
                         sb.append(" ");
@@ -949,6 +984,21 @@ public abstract class Formatter {
             }
             stop = token.stop;
         }
+    }
+
+    void checkTags(Token token) {
+        if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+            if (token.getText().toUpperCase().contains("*INDENT-OFF*")) {
+                enabled--;
+            }
+            else if (token.getText().toUpperCase().contains("*INDENT-ON*")) {
+                enabled++;
+            }
+        }
+    }
+
+    public boolean isEnabled() {
+        return enabled == 0;
     }
 
 }
