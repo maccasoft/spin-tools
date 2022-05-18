@@ -732,7 +732,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
             }
 
-            return false;
+            return true;
         }
 
         @Override
