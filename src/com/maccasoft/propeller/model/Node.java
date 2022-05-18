@@ -26,6 +26,7 @@ public class Node {
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
     public List<Token> document = new ArrayList<Token>();
+    public List<Token> comments = new ArrayList<Token>();
 
     public Node() {
         this.parent = null;
@@ -143,6 +144,14 @@ public class Node {
 
     public List<Token> getDocument() {
         return document;
+    }
+
+    public void addComment(Token token) {
+        comments.add(token);
+    }
+
+    public List<Token> getComments() {
+        return comments;
     }
 
     @Override

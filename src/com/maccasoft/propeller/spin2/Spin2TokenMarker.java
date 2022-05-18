@@ -1032,7 +1032,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         root = subject.parse();
 
         // Comments are hidden from the parser
-        for (Token token : stream.getHiddenTokens()) {
+        for (Token token : root.getComments()) {
             tokens.add(new TokenMarker(token, TokenId.COMMENT));
         }
 

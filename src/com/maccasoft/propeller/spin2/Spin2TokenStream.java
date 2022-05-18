@@ -20,7 +20,7 @@ public class Spin2TokenStream extends TokenStream {
     }
 
     @Override
-    public Token nextToken(boolean skipComments) {
+    public Token nextToken() {
         int nested = 0;
         int state = Token.START;
         boolean escape = false;
@@ -97,7 +97,6 @@ public class Spin2TokenStream extends TokenStream {
                         if (ch == '@' || ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';' || ch == '\\') {
                             index++;
                             column++;
-                            state = Token.START;
                             return token;
                         }
                         state = Token.OPERATOR;
@@ -105,14 +104,7 @@ public class Spin2TokenStream extends TokenStream {
                     break;
                 case Token.COMMENT:
                     if (ch == '\r' || ch == '\n') {
-                        state = Token.START;
-                        hiddenTokens.add(token);
-                        if (!skipComments) {
-                            return token;
-                        }
-                        index--;
-                        token = EOF_TOKEN;
-                        break;
+                        return token;
                     }
                     token.stop++;
                     break;
@@ -127,15 +119,9 @@ public class Spin2TokenStream extends TokenStream {
                     }
                     else if (ch == '}') {
                         if (nested == 0) {
-                            state = Token.START;
-                            hiddenTokens.add(token);
-                            if (!skipComments) {
-                                index++;
-                                column++;
-                                return token;
-                            }
-                            token = EOF_TOKEN;
-                            break;
+                            index++;
+                            column++;
+                            return token;
                         }
                         nested--;
                     }
@@ -159,7 +145,6 @@ public class Spin2TokenStream extends TokenStream {
                         }
                     }
 
-                    state = Token.START;
                     return token;
                 case Token.STRING:
                     token.stop++;
@@ -170,7 +155,6 @@ public class Spin2TokenStream extends TokenStream {
                     if (ch == '"') {
                         index++;
                         column++;
-                        state = Token.START;
                         return token;
                     }
                     break;
@@ -188,7 +172,6 @@ public class Spin2TokenStream extends TokenStream {
                                 break;
                             }
                         }
-                        state = Token.START;
                         return token;
                     }
                     if (ch == '=') {
@@ -357,12 +340,10 @@ public class Spin2TokenStream extends TokenStream {
                             }
                         }
                     }
-                    state = Token.START;
                     return token;
                 case Token.OPERATOR:
                     if (text.charAt(index - 1) == '#') {
                         if (ch != '>' && ch != '=' && ch != '#') {
-                            state = Token.START;
                             return token;
                         }
                     }
@@ -371,7 +352,6 @@ public class Spin2TokenStream extends TokenStream {
                         token.stop++;
                         break;
                     }
-                    state = Token.START;
                     return token;
                 case Token.DEBUG:
                     if (ch == '(') {
@@ -379,7 +359,6 @@ public class Spin2TokenStream extends TokenStream {
                     }
                     else if (ch == ')') {
                         if (nested == 0) {
-                            state = Token.START;
                             return token;
                         }
                         if (nested > 0) {
@@ -387,18 +366,10 @@ public class Spin2TokenStream extends TokenStream {
                         }
                     }
                     if (nested == 0 && ch == '`') {
-                        state = Token.START;
                         return token;
                     }
                     token.stop++;
                     break;
-            }
-        }
-
-        if (state == Token.COMMENT || state == Token.BLOCK_COMMENT) {
-            hiddenTokens.add(token);
-            if (skipComments) {
-                token = EOF_TOKEN;
             }
         }
 

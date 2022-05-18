@@ -56,6 +56,9 @@ public class Spin2Parser {
             if (token.type == Token.NL) {
                 stream.nextToken();
             }
+            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                root.addComment(stream.nextToken());
+            }
             else {
                 if ("VAR".equalsIgnoreCase(token.getText())) {
                     parseVariables();
@@ -90,11 +93,12 @@ public class Spin2Parser {
 
         Node node = new ConstantsNode(root, stream.nextToken());
 
-        while ((token = stream.peekNext(false)).type != Token.EOF) {
+        while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
-            node.addToken(stream.nextToken(false));
+            node.addToken(token);
+            root.addComment(stream.nextToken());
         }
 
         if ((token = stream.peekNext()).type == Token.NL) {
@@ -219,11 +223,12 @@ public class Spin2Parser {
         Node node = new VariablesNode(root);
         node.addToken(stream.nextToken());
 
-        while ((token = stream.peekNext(false)).type != Token.EOF) {
+        while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
-            node.addToken(stream.nextToken(false));
+            node.addToken(token);
+            root.addComment(stream.nextToken());
         }
 
         if ((token = stream.peekNext()).type == Token.NL) {
@@ -253,11 +258,7 @@ public class Spin2Parser {
             if (token.type == Token.NL) {
                 break;
             }
-
             switch (state) {
-                case 0:
-                    state = 1;
-                    // fall-through
                 case 1:
                     if (Spin2Model.isType(token.getText())) {
                         node = new VariableNode(parent);
@@ -305,11 +306,12 @@ public class Spin2Parser {
         Node node = new ObjectsNode(root);
         node.addToken(stream.nextToken());
 
-        while ((token = stream.peekNext(false)).type != Token.EOF) {
+        while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
-            node.addToken(stream.nextToken(false));
+            node.addToken(token);
+            root.addComment(stream.nextToken());
         }
 
         if ((token = stream.peekNext()).type == Token.NL) {
@@ -518,11 +520,11 @@ public class Spin2Parser {
             }
         }
 
-        while ((token = stream.peekNext(false)).type != Token.EOF) {
+        while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type == Token.NL) {
-                stream.nextToken(false);
+                stream.nextToken();
 
-                token = stream.peekNext(false);
+                token = stream.peekNext();
                 if (sections.contains(token.getText().toUpperCase())) {
                     return;
                 }
@@ -531,11 +533,11 @@ public class Spin2Parser {
                 if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                     break;
                 }
-                token = stream.nextToken(false);
+                token = stream.nextToken();
                 if (token.getText().startsWith("''") || token.getText().startsWith("{{")) {
                     node.document.add(token);
-                    //node.addToken(stream.nextToken(false));
                 }
+                root.addComment(token);
             }
         }
 
@@ -546,9 +548,14 @@ public class Spin2Parser {
                     break;
                 }
             }
-            parseStatement(node, 0);
-            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                break;
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                root.addComment(stream.nextToken());
+            }
+            else {
+                parseStatement(node, 0);
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    break;
+                }
             }
         }
     }
@@ -562,6 +569,9 @@ public class Spin2Parser {
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                     return;
                 }
+            }
+            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                root.addComment(stream.nextToken());
             }
             else if (column > 0 && token.column <= column) {
                 break;
@@ -616,6 +626,9 @@ public class Spin2Parser {
                     return;
                 }
             }
+            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                root.addComment(stream.nextToken());
+            }
             else if (column > 0 && token.column <= column) {
                 break;
             }
@@ -634,6 +647,12 @@ public class Spin2Parser {
                     }
                     statement.addToken(token);
                     if (":".equals(token.getText())) {
+                        while ((token = stream.peekNext()).type != Token.EOF) {
+                            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
+                                break;
+                            }
+                            root.addComment(stream.nextToken());
+                        }
                         break;
                     }
                 }
@@ -649,8 +668,6 @@ public class Spin2Parser {
     void parseInlineCode(Node parent) {
 
         while (true) {
-            parseDatLine(parent);
-
             Token token = stream.peekNext();
             if (token.type == Token.EOF) {
                 break;
@@ -666,6 +683,9 @@ public class Spin2Parser {
                 statement.addToken(stream.nextToken());
                 break;
             }
+            else {
+                parseDatLine(parent);
+            }
         }
     }
 
@@ -675,11 +695,12 @@ public class Spin2Parser {
         Node node = new DataNode(root);
         node.addToken(stream.nextToken());
 
-        while ((token = stream.peekNext(false)).type != Token.EOF) {
+        while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
-            node.addToken(stream.nextToken(false));
+            node.addToken(token);
+            root.addComment(stream.nextToken());
         }
 
         if ((token = stream.peekNext()).type == Token.NL) {
@@ -693,15 +714,14 @@ public class Spin2Parser {
         }
 
         while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.NL) {
-                stream.nextToken();
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                root.addComment(stream.nextToken());
+            }
+            else {
+                parseDatLine(node);
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                     break;
                 }
-            }
-            parseDatLine(node);
-            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                break;
             }
         }
     }
@@ -718,9 +738,6 @@ public class Spin2Parser {
             }
             node.addToken(token);
             switch (state) {
-                case 0:
-                    state = 1;
-                    // fall-through
                 case 1:
                     if ("debug".equalsIgnoreCase(token.getText())) {
                         node.instruction = token;
@@ -795,6 +812,10 @@ public class Spin2Parser {
                     break;
             }
         }
+
+        if (node.getTokenCount() == 0) {
+            parent.getChilds().remove(node);
+        }
     }
 
     Token nextToken() {
@@ -802,29 +823,35 @@ public class Spin2Parser {
     }
 
     Token nextToken(boolean skipComments) {
-        Token token = stream.nextToken(skipComments);
+        Token token = stream.nextToken();
+        if (skipComments && (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT)) {
+            do {
+                root.addComment(token);
+                token = stream.nextToken();
+            } while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT);
+        }
         if (token.type == Token.NL) {
-            while (stream.peekNext(false).type == Token.NL) {
+            while (stream.peekNext().type == Token.NL) {
                 stream.nextToken();
             }
         }
         else if ("@".equals(token.getText())) {
-            Token nextToken = stream.peekNext(true);
+            Token nextToken = stream.peekNext();
             if ("@".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
-                token = token.merge(stream.nextToken(true));
-                nextToken = stream.peekNext(true);
+                token = token.merge(stream.nextToken());
+                nextToken = stream.peekNext();
             }
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken(true));
+                token = token.merge(stream.nextToken());
                 if (nextToken.type == Token.STRING) {
                     token.type = Token.STRING;
                 }
             }
         }
         else if (".".equals(token.getText())) {
-            Token nextToken = stream.peekNext(true);
+            Token nextToken = stream.peekNext();
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken(true));
+                token = token.merge(stream.nextToken());
             }
         }
         return token;
@@ -835,30 +862,36 @@ public class Spin2Parser {
     }
 
     Token nextPAsmToken(boolean skipComments) {
-        Token token = stream.nextToken(skipComments);
+        Token token = stream.nextToken();
+        if (skipComments && (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT)) {
+            do {
+                root.addComment(token);
+                token = stream.nextToken();
+            } while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT);
+        }
         if (token.type == Token.NL) {
             while (stream.peekNext().type == Token.NL) {
                 stream.nextToken();
             }
         }
         else if ("@".equals(token.getText())) {
-            Token nextToken = stream.peekNext(true);
+            Token nextToken = stream.peekNext();
             if ("@".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
-                token = token.merge(stream.nextToken(true));
-                nextToken = stream.peekNext(true);
+                token = token.merge(stream.nextToken());
+                nextToken = stream.peekNext();
             }
             if (".".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
-                token = token.merge(stream.nextToken(true));
-                nextToken = stream.peekNext(true);
+                token = token.merge(stream.nextToken());
+                nextToken = stream.peekNext();
             }
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken(true));
+                token = token.merge(stream.nextToken());
             }
         }
         else if (".".equals(token.getText())) {
-            Token nextToken = stream.peekNext(true);
+            Token nextToken = stream.peekNext();
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken(true));
+                token = token.merge(stream.nextToken());
             }
         }
         return token;

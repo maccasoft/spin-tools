@@ -10,9 +10,6 @@
 
 package com.maccasoft.propeller.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public abstract class TokenStream {
 
     protected final Token EOF_TOKEN = new Token(null, 0, Token.EOF);
@@ -23,10 +20,6 @@ public abstract class TokenStream {
     protected int line = 0;
     protected int column = 0;
 
-    protected boolean skipComments = true;
-
-    protected List<Token> hiddenTokens = new ArrayList<Token>();
-
     public TokenStream(String text) {
         this.text = text;
         if (text == null) {
@@ -34,49 +27,28 @@ public abstract class TokenStream {
         }
     }
 
-    public void skipComments(boolean skip) {
-        this.skipComments = skip;
-    }
-
     public Token peekNext() {
-        return peekNext(skipComments);
-    }
-
-    public Token peekNext(boolean skipComments) {
         int saveIndex = index;
         int saveLine = line;
         int saveColumn = column;
-        int hiddentTokensSize = hiddenTokens.size();
 
-        Token token = nextToken(skipComments);
+        Token token = nextToken();
 
         index = saveIndex;
         line = saveLine;
         column = saveColumn;
-        while (hiddenTokens.size() > hiddentTokensSize) {
-            hiddenTokens.remove(hiddenTokens.size() - 1);
-        }
 
         return token;
     }
 
-    public Token nextToken() {
-        return nextToken(skipComments);
-    }
-
-    public abstract Token nextToken(boolean skipComments);
+    public abstract Token nextToken();
 
     public String getSource(int start, int stop) {
         return text.substring(start, stop + 1);
     }
 
-    public List<Token> getHiddenTokens() {
-        return hiddenTokens;
-    }
-
     public void reset() {
         index = column = line = 0;
-        hiddenTokens.clear();
     }
 
 }

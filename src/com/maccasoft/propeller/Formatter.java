@@ -171,7 +171,6 @@ public abstract class Formatter {
         }
 
         stream.reset();
-        stream.skipComments(false);
 
         while (true) {
             Token token = stream.peekNext();
@@ -470,10 +469,12 @@ public abstract class Formatter {
         int inlineConditionWidth = inlineInstructionColumn - inlineConditionColumn;
 
         stream.reset();
-        stream.skipComments(true);
 
         while (true) {
             Token token = stream.nextToken();
+            while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                token = stream.nextToken();
+            }
             if (token.type == Token.EOF) {
                 break;
             }
