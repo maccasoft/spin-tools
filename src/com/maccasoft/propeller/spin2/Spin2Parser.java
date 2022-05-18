@@ -28,7 +28,6 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
-import com.maccasoft.propeller.spin1.Spin1Model;
 
 public class Spin2Parser {
 
@@ -262,7 +261,7 @@ public class Spin2Parser {
                     state = 1;
                     // fall-through
                 case 1:
-                    if (Spin1Model.isType(token.getText())) {
+                    if (Spin2Model.isType(token.getText())) {
                         node = new VariableNode(parent);
                         node.addToken(token);
                         node.type = token;
@@ -394,8 +393,6 @@ public class Spin2Parser {
         MethodNode node = new MethodNode(root, stream.nextToken());
 
         int state = 1;
-        Node parent = node;
-        Node child = node;
         MethodNode.ParameterNode param = null;
         MethodNode.ReturnNode ret = null;
         MethodNode.LocalVariableNode local = null;
@@ -552,55 +549,104 @@ public class Spin2Parser {
                     break;
                 }
             }
-            else {
-                if (child.getTokens().size() != 0) {
-                    while (token.column < child.getToken(0).column && child.getParent() != node) {
-                        child = child.getParent();
-                        parent = child.getParent();
-                    }
+            parseStatement(node, 0);
+            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                break;
+            }
+        }
+    }
 
-                    if (token.column > child.getToken(0).column) {
-                        if (Spin1Model.isBlockStart(child.getToken(0).getText())) {
-                            parent = child;
-                        }
-                        else if (child.getText().endsWith(":")) {
-                            parent = child;
-                        }
-                    }
-                }
+    void parseStatement(Node parent, int column) {
+        Token token;
 
-                if ("ORG".equalsIgnoreCase(token.getText())) {
-                    parseInlineCode(parent);
-                }
-                else {
-                    child = parseStatement(parent);
-                }
+        while ((token = stream.peekNext()).type != Token.EOF) {
+            if (token.type == Token.NL) {
+                stream.nextToken();
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                    break;
+                    return;
+                }
+            }
+            else if (column > 0 && token.column <= column) {
+                break;
+            }
+            else if ("ORG".equalsIgnoreCase(token.getText())) {
+                parseInlineCode(parent);
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
+            }
+            else {
+                Node statement = new StatementNode(parent);
+                statement.addToken(token = nextToken());
+
+                boolean blockStart = Spin2Model.isBlockStart(token.getText());
+                int blockColumn = token.column;
+
+                while ((token = nextToken()).type != Token.EOF) {
+                    if (token.type == Token.NL) {
+                        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                            return;
+                        }
+                        break;
+                    }
+                    statement.addToken(token);
+                }
+
+                token = statement.getStartToken();
+                if ("CASE".equalsIgnoreCase(token.getText()) || "CASE_FAST".equalsIgnoreCase(token.getText())) {
+                    parseCaseStatement(statement, blockColumn);
+                    if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                        return;
+                    }
+                }
+                else if (blockStart) {
+                    parseStatement(statement, blockColumn);
+                    if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                        return;
+                    }
                 }
             }
         }
     }
 
-    Node parseStatement(Node parent) {
-        Token token = nextToken();
+    void parseCaseStatement(Node parent, int column) {
+        Token token;
 
-        Node statement = new StatementNode(parent);
-        statement.addToken(token);
-
-        boolean isCase = parent.getTokens().size() != 0 && ("CASE".equalsIgnoreCase(parent.getStartToken().getText()) || "CASE_FAST".equalsIgnoreCase(parent.getStartToken().getText()));
-
-        while ((token = nextToken()).type != Token.EOF) {
+        while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type == Token.NL) {
+                stream.nextToken();
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
+            }
+            else if (column > 0 && token.column <= column) {
                 break;
             }
-            statement.addToken(token);
-            if (isCase && ":".equals(token.getText())) {
-                break;
+            else {
+                Node statement = new StatementNode(parent);
+                statement.addToken(token = nextToken());
+
+                int blockColumn = token.column;
+
+                while ((token = nextToken()).type != Token.EOF) {
+                    if (token.type == Token.NL) {
+                        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                            return;
+                        }
+                        break;
+                    }
+                    statement.addToken(token);
+                    if (":".equals(token.getText())) {
+                        break;
+                    }
+                }
+
+                parseStatement(statement, blockColumn);
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
             }
         }
-
-        return statement;
     }
 
     void parseInlineCode(Node parent) {

@@ -686,16 +686,6 @@ class Spin2ParserTest {
     }
 
     @Test
-    void testParseTernaryExpression() {
-        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
-            + "a := (b == 1) ? 2 : 3\n"
-            + ""));
-
-        Node root = subject.parseStatement(new Node());
-        Assertions.assertEquals("a := (b == 1) ? 2 : 3", root.getText());
-    }
-
-    @Test
     void testDatDebugLines() {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "DAT    org $000\n"

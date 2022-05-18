@@ -593,16 +593,6 @@ class Spin1ParserTest {
             + "", tree(root));
     }
 
-    @Test
-    void testParseTernaryExpression() {
-        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
-            + "a := (b == 1) ? 2 : 3\n"
-            + ""));
-
-        Node root = subject.parseStatement(new Node());
-        Assertions.assertEquals("a := (b == 1) ? 2 : 3", root.getText());
-    }
-
     String tree(Node root) throws Exception {
         return tree(root, 0);
     }
