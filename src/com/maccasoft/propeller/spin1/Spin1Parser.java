@@ -94,8 +94,7 @@ public class Spin1Parser {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
-            node.document.add(stream.nextToken(false));
-            //node.addToken(stream.nextToken(false));
+            node.addToken(stream.nextToken(false));
         }
 
         if ((token = stream.peekNext()).type == Token.NL) {
@@ -224,8 +223,7 @@ public class Spin1Parser {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
-            node.document.add(stream.nextToken(false));
-            //node.addToken(stream.nextToken(false));
+            node.addToken(stream.nextToken(false));
         }
 
         if ((token = stream.peekNext()).type == Token.NL) {
@@ -311,8 +309,7 @@ public class Spin1Parser {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
-            node.document.add(stream.nextToken(false));
-            //node.addToken(stream.nextToken(false));
+            node.addToken(stream.nextToken(false));
         }
 
         if ((token = stream.peekNext()).type == Token.NL) {
@@ -653,8 +650,7 @@ public class Spin1Parser {
             if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
-            node.document.add(stream.nextToken(false));
-            //node.addToken(stream.nextToken(false));
+            node.addToken(stream.nextToken(false));
         }
 
         if ((token = stream.peekNext()).type == Token.NL) {

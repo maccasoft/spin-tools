@@ -168,14 +168,16 @@ public class OutlineView {
             String text = node.getStartToken().getText().toUpperCase();
             appendText(text, sectionStyle);
 
-            if (node.getDocument().size() != 0) {
-                sb.append(" ");
-
-                text = node.getDocument().get(0).getText();
+            if (node.getTokenCount() > 1) {
+                text = node.getToken(1).getText();
                 while (text.startsWith("'")) {
                     text = text.substring(1);
                 }
-                appendText(text.trim(), commentStyle);
+                text = text.trim();
+                if (!text.isEmpty()) {
+                    sb.append(" ");
+                    appendText(text, commentStyle);
+                }
             }
         }
 

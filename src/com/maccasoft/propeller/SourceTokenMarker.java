@@ -618,7 +618,15 @@ public abstract class SourceTokenMarker {
                 else if (token.type == Token.BLOCK_COMMENT) {
                     String s = token.getText().substring(2);
                     s = s.substring(0, s.length() - 2);
-                    sb.append(s.replaceAll("[\\r\\n|\\r|\\n]", "<br>"));
+                    s = s.replaceAll(" ", "&nbsp;");
+                    s = s.replaceAll("[\\r\\n|\\r|\\n]", "<br>");
+                    while (s.startsWith("<br>")) {
+                        s = s.substring(4);
+                    }
+                    while (s.endsWith("<br>")) {
+                        s = s.substring(0, s.length() - 4);
+                    }
+                    sb.append(s);
                 }
             }
             sb.append("</code>");

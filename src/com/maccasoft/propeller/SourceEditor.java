@@ -915,7 +915,7 @@ public class SourceEditor {
                         layout.marginHeight = layout.marginWidth = 5;
                         popupWindow.setLayout(layout);
 
-                        StyledText content = new StyledText(popupWindow, SWT.READ_ONLY | SWT.WRAP | SWT.V_SCROLL);
+                        StyledText content = new StyledText(popupWindow, SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL);
                         content.setCaret(null);
                         new HTMLStyledTextParser(content).setText(text);
 
