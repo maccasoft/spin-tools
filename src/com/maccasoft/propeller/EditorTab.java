@@ -827,11 +827,11 @@ public class EditorTab implements FindReplaceTarget {
     public void formatSource() {
         Formatter formatter = tabItemText.toLowerCase().endsWith(".spin2") ? new Spin2Formatter() : new Spin1Formatter();
 
-        formatter.setKeepBlankLines(true);
-        formatter.setPAsmColumns(8, 16, 24, 44, 52);
-        formatter.setInlinePAsmColumns(8, 16, 24, 44, 52);
-        formatter.setAdjustPAsmColumns(true);
-        formatter.setIsolateLargeLabels(true);
+        //formatter.setKeepBlankLines(true);
+        formatter.setPAsmColumns(4, 16, 24, 44, 52);
+        //formatter.setInlinePAsmColumns(8, 16, 24, 44, 52);
+        //formatter.setAdjustPAsmColumns(true);
+        //formatter.setIsolateLargeLabels(true);
 
         editor.format(formatter);
     }

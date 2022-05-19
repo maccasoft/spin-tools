@@ -19,21 +19,13 @@ import com.maccasoft.propeller.model.TokenStream;
 
 public abstract class Formatter {
 
-    int conditionColumn;
-    int instructionColumn;
-    int argumentsColumn;
-    int effectsColumn;
-    int commentsColumn;
+    private static final Set<String> sections = new HashSet<String>(Arrays.asList(new String[] {
+        "CON", "VAR", "OBJ", "PUB", "PRI", "DAT"
+    }));
 
-    int inlineConditionColumn;
-    int inlineInstructionColumn;
-    int inlineArgumentsColumn;
-    int inlineEffectsColumn;
-    int inlineCommentsColumn;
-
-    boolean isolateLargeLabels;
-    boolean keepBlankLines;
-    boolean adjustPAsmColumns;
+    public static Set<String> types = new HashSet<String>(Arrays.asList(new String[] {
+        "LONG", "WORD", "BYTE",
+    }));
 
     class FormatterStringBuilder {
         int line = 0;
@@ -102,75 +94,670 @@ public abstract class Formatter {
 
     }
 
-    int enabled = 0;
+    TokenStream stream;
+
+    boolean keepBlankLines;
+
+    int conditionColumn;
+    int instructionColumn;
+    int argumentsColumn;
+    int modifiersColumn;
+    int commentsColumn;
+
     FormatterStringBuilder sb = new FormatterStringBuilder();
 
-    private static final Set<String> sections = new HashSet<String>(Arrays.asList(new String[] {
-        "CON", "VAR", "OBJ", "PUB", "PRI", "DAT"
-    }));
-    private static final Set<String> blockStart = new HashSet<String>(Arrays.asList(new String[] {
-        "REPEAT", "IF", "IFNOT", "ELSE", "ELSEIF", "ELSEIFNOT", "CASE", "CASE_FAST"
-    }));
-    private static final Set<String> blockEnd = new HashSet<String>(Arrays.asList(new String[] {
-        "WHILE", "UNTIL"
-    }));
-
     public Formatter() {
-        conditionColumn = 8;
-        instructionColumn = 16;
-        argumentsColumn = 24;
-        effectsColumn = 36;
-        commentsColumn = 52;
+        this.keepBlankLines = true;
 
-        inlineConditionColumn = 8;
-        inlineInstructionColumn = 16;
-        inlineArgumentsColumn = 24;
-        inlineEffectsColumn = 36;
-        inlineCommentsColumn = 52;
-    }
-
-    public void setTabSpaces(int n) {
-        sb.tabspaces = n;
-    }
-
-    public void setIsolateLargeLabels(boolean isolateLargeLabels) {
-        this.isolateLargeLabels = isolateLargeLabels;
+        this.conditionColumn = 8;
+        this.instructionColumn = 16;
+        this.argumentsColumn = 24;
+        this.modifiersColumn = 36;
+        this.commentsColumn = 52;
     }
 
     public void setKeepBlankLines(boolean keepBlankLines) {
         this.keepBlankLines = keepBlankLines;
     }
 
-    public void setPAsmColumns(int condition, int instruction, int arguments, int effects, int comments) {
+    public void setPAsmColumns(int condition, int instruction, int arguments, int modifiers, int comments) {
         conditionColumn = condition;
         instructionColumn = instruction;
         argumentsColumn = arguments;
-        effectsColumn = effects;
+        modifiersColumn = modifiers;
         commentsColumn = comments;
-    }
-
-    public void setInlinePAsmColumns(int condition, int instruction, int arguments, int effects, int comments) {
-        inlineConditionColumn = condition;
-        inlineInstructionColumn = instruction;
-        inlineArgumentsColumn = arguments;
-        inlineEffectsColumn = effects;
-        inlineCommentsColumn = comments;
-    }
-
-    public void setAdjustPAsmColumns(boolean adjustPAsmColumns) {
-        this.adjustPAsmColumns = adjustPAsmColumns;
     }
 
     public abstract String format(String text);
 
     protected String format(TokenStream stream) {
-        boolean blockSeparator = false;
+        Token token;
 
-        if (adjustPAsmColumns) {
-            computeDatColumns(stream);
+        this.stream = stream;
+
+        while ((token = stream.peekNext()).type != Token.EOF) {
+            if (token.type == Token.EOF) {
+                break;
+            }
+            if (token.type == Token.NL) {
+                if (keepBlankLines) {
+                    sb.append(System.lineSeparator());
+                }
+                stream.nextToken();
+            }
+            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                sb.alignToColumn(token.column);
+                if (sb.column > 0 && sb.lastChar() != ' ') {
+                    sb.append(" ");
+                }
+                sb.append(stream.nextToken());
+                if (token.type == Token.COMMENT) {
+                    if (!keepBlankLines) {
+                        sb.append(System.lineSeparator());
+                    }
+                }
+            }
+            else {
+                if ("VAR".equalsIgnoreCase(token.getText())) {
+                    formatVariables();
+                }
+                else if ("OBJ".equalsIgnoreCase(token.getText())) {
+                    formatObjects();
+                }
+                else if ("PUB".equalsIgnoreCase(token.getText()) || "PRI".equalsIgnoreCase(token.getText())) {
+                    formatMethod();
+                }
+                else if ("DAT".equalsIgnoreCase(token.getText())) {
+                    formatDat();
+                }
+                else if ("CON".equalsIgnoreCase(token.getText())) {
+                    formatConstants();
+                }
+                else {
+                    formatConstant();
+                }
+            }
         }
 
-        stream.reset();
+        return sb.toString();
+    }
+
+    void formatConstants() {
+        appendSectionHeader(stream.nextToken());
+        if (stream.peekNext().type == Token.NL) {
+            stream.nextToken();
+        }
+        else {
+            formatConstant();
+        }
+        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+            return;
+        }
+
+        while (stream.peekNext().type != Token.EOF) {
+            formatConstant();
+            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                break;
+            }
+        }
+    }
+
+    void formatConstant() {
+        int state = 1;
+
+        Token token;
+        while ((token = nextToken()).type != Token.EOF) {
+            if (token.type == Token.NL) {
+                break;
+            }
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                sb.alignToColumn(token.column);
+                if (sb.column > 0 && sb.lastChar() != ' ') {
+                    sb.append(" ");
+                }
+                sb.append(token);
+                continue;
+            }
+            switch (state) {
+                case 1:
+                    sb.alignToColumn(sb.tabspaces);
+                    if (token.type == 0 && sb.lastChar() != ' ') {
+                        sb.append(" ");
+                    }
+                    sb.append(token);
+                    if ("#".equals(token.getText())) {
+                        state = 2;
+                        break;
+                    }
+                    state = 4;
+                    break;
+                case 2:
+                    if (",".equals(token.getText())) {
+                        sb.append(token);
+                        break;
+                    }
+                    if ("[".equals(token.getText())) {
+                        sb.append(token);
+                        state = 3;
+                        break;
+                    }
+                    if (sb.lastChar() != ' ' && sb.lastChar() != '#') {
+                        sb.append(" ");
+                    }
+                    sb.append(token);
+                    break;
+                case 3:
+                    sb.append(token);
+                    if ("]".equals(token.getText())) {
+                        state = 2;
+                        break;
+                    }
+                    break;
+                case 4:
+                    if ("=".equals(token.getText())) {
+                        sb.append(" ");
+                        sb.append(token);
+                        state = 5;
+                        break;
+                    }
+                    if (",".equals(token.getText())) {
+                        sb.append(token);
+                        state = 1;
+                        break;
+                    }
+                    if ("[".equals(token.getText())) {
+                        sb.append(token);
+                        state = 6;
+                        break;
+                    }
+                    if (sb.lastChar() != ' ') {
+                        sb.append(" ");
+                    }
+                    sb.append(token);
+                    break;
+                case 5:
+                    if (",".equals(token.getText())) {
+                        sb.append(token);
+                        state = 1;
+                        break;
+                    }
+                    appendExpressionToken(token);
+                    break;
+                case 6:
+                    if ("]".equals(token.getText())) {
+                        sb.append(token);
+                        state = 1;
+                        break;
+                    }
+                    appendExpressionToken(token);
+                    break;
+            }
+        }
+
+        sb.append(System.lineSeparator());
+    }
+
+    void formatVariables() {
+        appendSectionHeader(stream.nextToken());
+        if (stream.peekNext().type == Token.NL) {
+            stream.nextToken();
+        }
+        else {
+            formatVariable();
+        }
+        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+            return;
+        }
+
+        while (stream.peekNext().type != Token.EOF) {
+            formatVariable();
+            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                break;
+            }
+        }
+    }
+
+    void formatVariable() {
+        int state = 1;
+
+        Token token;
+        while ((token = nextToken()).type != Token.EOF) {
+            if (token.type == Token.NL) {
+                break;
+            }
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                sb.alignToColumn(token.column);
+                if (sb.column > 0 && sb.lastChar() != ' ') {
+                    sb.append(" ");
+                }
+                sb.append(token);
+                continue;
+            }
+            switch (state) {
+                case 1:
+                    sb.alignToColumn(sb.tabspaces);
+                    if (types.contains(token.getText().toUpperCase())) {
+                        if (sb.lastChar() != ' ') {
+                            sb.append(" ");
+                        }
+                        sb.append(token);
+                        state = 2;
+                        break;
+                    }
+                    // fall-through
+                case 2:
+                    if (",".equals(token.getText())) {
+                        sb.append(token);
+                        state = 1;
+                        break;
+                    }
+                    if ("[".equals(token.getText())) {
+                        sb.append(token);
+                        state = 3;
+                        break;
+                    }
+                    if (sb.lastChar() != ' ') {
+                        sb.append(" ");
+                    }
+                    sb.append(token);
+                    break;
+
+                case 3:
+                    if ("]".equals(token.getText())) {
+                        sb.append(token);
+                        state = 2;
+                        break;
+                    }
+                    appendExpressionToken(token);
+                    break;
+            }
+        }
+
+        sb.append(System.lineSeparator());
+    }
+
+    void formatObjects() {
+        appendSectionHeader(stream.nextToken());
+        if (stream.peekNext().type == Token.NL) {
+            stream.nextToken();
+        }
+        else {
+            formatObject();
+        }
+        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+            return;
+        }
+
+        while (stream.peekNext().type != Token.EOF) {
+            formatObject();
+            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                break;
+            }
+        }
+    }
+
+    void formatObject() {
+        int state = 1;
+
+        Token token;
+        while ((token = nextToken()).type != Token.EOF) {
+            if (token.type == Token.NL) {
+                break;
+            }
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                sb.alignToColumn(token.column);
+                if (sb.column > 0 && sb.lastChar() != ' ') {
+                    sb.append(" ");
+                }
+                sb.append(token);
+                continue;
+            }
+            switch (state) {
+                case 1:
+                    sb.alignToColumn(sb.tabspaces);
+                    sb.append(token);
+                    state = 2;
+                    break;
+                case 2:
+                    if ("[".equals(token.getText())) {
+                        sb.append(token);
+                        state = 5;
+                        break;
+                    }
+                    sb.append(" ");
+                    sb.append(token);
+                    if (":".equals(token.getText())) {
+                        state = 4;
+                        break;
+                    }
+                case 4:
+                    sb.append(" ");
+                    sb.append(token);
+                    state = 8;
+                    break;
+
+                case 5:
+                    if ("]".equals(token.getText())) {
+                        sb.append(token);
+                        state = 2;
+                        break;
+                    }
+                    appendExpressionToken(token);
+                    break;
+
+                case 8:
+                    sb.append(" ");
+                    sb.append(token);
+                    break;
+            }
+        }
+
+        sb.append(System.lineSeparator());
+    }
+
+    void formatMethod() {
+        int state = 1;
+
+        sb.append(stream.nextToken().getText().toUpperCase());
+
+        Token token;
+        while ((token = nextToken()).type != Token.EOF) {
+            if (token.type == Token.NL) {
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
+                break;
+            }
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                sb.alignToColumn(token.column);
+                if (sb.column > 0 && sb.lastChar() != ' ') {
+                    sb.append(" ");
+                }
+                sb.append(token);
+                continue;
+            }
+            switch (state) {
+                case 1:
+                    sb.append(" ");
+                    sb.append(token);
+                    state = 2;
+                    break;
+                case 2:
+                    if ("(".equals(token.getText())) {
+                        sb.append(token);
+                        state = 4;
+                        break;
+                    }
+                    sb.append(" ");
+                    sb.append(token);
+                    if (":".equals(token.getText())) {
+                        state = 7;
+                        break;
+                    }
+                    if ("|".equals(token.getText())) {
+                        state = 9;
+                        break;
+                    }
+                    break;
+
+                case 4:
+                    if (",".equals(token.getText())) {
+                        sb.append(token);
+                        break;
+                    }
+                    if (")".equals(token.getText())) {
+                        sb.append(token);
+                        state = 6;
+                        break;
+                    }
+                    if (sb.lastChar() != ' ' && sb.lastChar() != '(') {
+                        sb.append(" ");
+                    }
+                    sb.append(token);
+                    break;
+
+                case 6:
+                    sb.append(" ");
+                    sb.append(token);
+                    if (":".equals(token.getText())) {
+                        state = 7;
+                        break;
+                    }
+                    if ("|".equals(token.getText())) {
+                        state = 9;
+                        break;
+                    }
+                    break;
+
+                case 7:
+                    sb.append(" ");
+                    sb.append(token);
+                    state = 8;
+                    break;
+                case 8:
+                    if (",".equals(token.getText())) {
+                        sb.append(token);
+                        state = 7;
+                        break;
+                    }
+                    sb.append(" ");
+                    sb.append(token);
+                    if ("|".equals(token.getText())) {
+                        state = 9;
+                        break;
+                    }
+                    break;
+
+                case 9:
+                    if (types.contains(token.getText().toUpperCase())) {
+                        sb.append(" ");
+                        sb.append(token);
+                        state = 10;
+                        break;
+                    }
+                    // fall-through
+                case 10:
+                    sb.append(" ");
+                    sb.append(token);
+                    state = 11;
+                    break;
+                case 11:
+                    if (",".equals(token.getText())) {
+                        sb.append(token);
+                        state = 9;
+                        break;
+                    }
+                    if ("[".equals(token.getText())) {
+                        sb.append(token);
+                        state = 12;
+                        break;
+                    }
+                    sb.append(" ");
+                    sb.append(token);
+                    if (":".equals(token.getText())) {
+                        state = 7;
+                        break;
+                    }
+                    break;
+                case 12:
+                    if ("]".equals(token.getText())) {
+                        sb.append(token);
+                        state = 11;
+                        break;
+                    }
+                    appendExpressionToken(token);
+                    break;
+            }
+        }
+
+        sb.append(System.lineSeparator());
+
+        while ((token = stream.peekNext()).type != Token.EOF) {
+            if (token.type == Token.NL) {
+                if (keepBlankLines) {
+                    sb.append(System.lineSeparator());
+                }
+                stream.nextToken();
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    break;
+                }
+            }
+            formatStatement(0, sb.tabspaces);
+            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                break;
+            }
+        }
+    }
+
+    void formatStatement(int column, int indent) {
+        Token token;
+
+        while ((token = stream.peekNext()).type != Token.EOF) {
+            if (token.type == Token.NL) {
+                if (keepBlankLines) {
+                    sb.append(System.lineSeparator());
+                }
+                stream.nextToken();
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
+            }
+            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                sb.alignToColumn(token.column);
+                if (sb.column > 0 && sb.lastChar() != ' ') {
+                    sb.append(" ");
+                }
+                sb.append(stream.nextToken());
+            }
+            else if (column > 0 && token.column <= column) {
+                break;
+            }
+            else {
+                Token startToken = nextToken();
+                int blockColumn = startToken.column;
+
+                sb.alignToColumn(indent);
+                sb.append(startToken);
+
+                while ((token = nextToken()).type != Token.EOF) {
+                    if (token.type == Token.NL) {
+                        break;
+                    }
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                        sb.alignToColumn(token.column);
+                        if (sb.column > 0 && sb.lastChar() != ' ') {
+                            sb.append(" ");
+                        }
+                        sb.append(token);
+                        continue;
+                    }
+                    appendExpressionToken(token);
+                }
+
+                sb.append(System.lineSeparator());
+
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    sb.append(System.lineSeparator());
+                    return;
+                }
+
+                if ("ORG".equalsIgnoreCase(startToken.getText())) {
+                    formatInlineCode(indent);
+                    if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                        return;
+                    }
+                }
+                if ("CASE".equalsIgnoreCase(startToken.getText()) || "CASE_FAST".equalsIgnoreCase(startToken.getText())) {
+                    formatCaseStatement(blockColumn, indent + sb.tabspaces);
+                    if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                        return;
+                    }
+                }
+                else if (isBlockStart(startToken)) {
+                    formatStatement(blockColumn, indent + sb.tabspaces);
+                    if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    void formatCaseStatement(int column, int indent) {
+        Token token;
+
+        while ((token = stream.peekNext()).type != Token.EOF) {
+            if (token.type == Token.NL) {
+                if (keepBlankLines) {
+                    sb.append(System.lineSeparator());
+                }
+                stream.nextToken();
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
+            }
+            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                sb.alignToColumn(token.column);
+                if (sb.column > 0 && sb.lastChar() != ' ') {
+                    sb.append(" ");
+                }
+                sb.append(token);
+            }
+            else if (column > 0 && token.column <= column) {
+                break;
+            }
+            else {
+                Token startToken = nextToken();
+                int blockColumn = startToken.column;
+
+                sb.alignToColumn(indent);
+                sb.append(startToken);
+
+                while ((token = nextToken()).type != Token.EOF) {
+                    if (token.type == Token.NL) {
+                        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                            return;
+                        }
+                        break;
+                    }
+                    if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                        sb.alignToColumn(token.column);
+                        if (sb.column > 0 && sb.lastChar() != ' ') {
+                            sb.append(" ");
+                        }
+                        sb.append(token);
+                        continue;
+                    }
+                    if (":".equals(token.getText())) {
+                        sb.append(token);
+                        while ((token = stream.peekNext()).type != Token.EOF) {
+                            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
+                                break;
+                            }
+                            sb.alignToColumn(token.column);
+                            if (sb.column > 0 && sb.lastChar() != ' ') {
+                                sb.append(" ");
+                            }
+                            sb.append(token);
+                        }
+                        if (token.type == Token.NL) {
+                            stream.nextToken();
+                            sb.append(System.lineSeparator());
+                        }
+                        break;
+                    }
+                    appendExpressionToken(token);
+                }
+
+                formatStatement(blockColumn, indent + sb.tabspaces);
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    return;
+                }
+            }
+        }
+    }
+
+    void formatInlineCode(int indent) {
 
         while (true) {
             Token token = stream.peekNext();
@@ -182,824 +769,290 @@ public abstract class Formatter {
                     sb.append(System.lineSeparator());
                 }
                 stream.nextToken();
-            }
-            else if (token.type == Token.COMMENT) {
-                sb.alignToColumn(token.column);
-                sb.append(stream.nextToken());
-                sb.append(System.lineSeparator());
-                if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                    stream.nextToken();
-                }
-            }
-            else if (token.type == Token.BLOCK_COMMENT) {
-                sb.alignToColumn(token.column);
-                sb.append(stream.nextToken());
-                if (stream.peekNext().type == Token.NL) {
-                    sb.append(System.lineSeparator());
-                    if (keepBlankLines) {
-                        stream.nextToken();
-                    }
-                }
-            }
-            else {
-                if (blockSeparator) {
-                    if (!keepBlankLines) {
-                        sb.append(System.lineSeparator());
-                    }
-                    blockSeparator = false;
-                }
-                if ("PUB".equalsIgnoreCase(token.getText()) || "PRI".equalsIgnoreCase(token.getText())) {
-                    sb.append(stream.nextToken().getText().toUpperCase());
-                    sb.append(" ");
-
-                    formatTokens(stream);
-                    sb.append(System.lineSeparator());
-                    if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                        stream.nextToken();
-                    }
-
-                    while ((token = stream.peekNext()).type != Token.EOF) {
-                        if (token.type == Token.NL) {
-                            if (keepBlankLines) {
-                                sb.append(System.lineSeparator());
-                            }
-                            stream.nextToken();
-                        }
-                        else {
-                            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                                break;
-                            }
-                            formatStatement(sb.tabspaces, stream, token.column);
-                        }
-                    }
-                }
-                else if ("DAT".equalsIgnoreCase(token.getText())) {
-                    sb.append(stream.nextToken().getText().toUpperCase());
-
-                    token = stream.peekNext();
-                    while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                        sb.append(" ");
-                        sb.append(stream.nextToken());
-                        token = stream.peekNext();
-                    }
-                    if (token.type == Token.NL) {
-                        sb.append(System.lineSeparator());
-                        stream.nextToken();
-                        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                            continue;
-                        }
-                    }
-
-                    while ((token = stream.peekNext()).type != Token.EOF) {
-                        if (token.type == Token.NL) {
-                            if (keepBlankLines) {
-                                sb.append(System.lineSeparator());
-                            }
-                            stream.nextToken();
-                            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                                break;
-                            }
-                        }
-                        else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                            checkTags(token);
-                            sb.alignToColumn(token.column);
-                            sb.append(stream.nextToken());
-                            if (stream.peekNext().type == Token.NL) {
-                                sb.append(System.lineSeparator());
-                                stream.nextToken();
-                                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                                    break;
-                                }
-                            }
-                        }
-                        else {
-                            Token label = null;
-                            Token condition = null;
-                            Token instruction = null;
-
-                            if (pasmLabel(token)) {
-                                label = stream.nextToken();
-                                if (":".equals(token.getText()) || ".".equals(token.getText())) {
-                                    token = stream.peekNext();
-                                    if (token.type != Token.NL && token.type != Token.EOF) {
-                                        label = label.merge(stream.nextToken());
-                                    }
-                                }
-                                token = stream.peekNext();
-                            }
-
-                            if (pasmCondition(token)) {
-                                condition = stream.nextToken();
-                                token = stream.peekNext();
-                            }
-
-                            if (token.type == 0) {
-                                instruction = stream.nextToken();
-                                token = stream.peekNext();
-                            }
-
-                            if (instruction == null) {
-                                if (label != null) {
-                                    if (!isEnabled()) {
-                                        sb.alignToColumn(token.column);
-                                    }
-                                    sb.append(label);
-                                    while ((token = stream.peekNext()).type != Token.EOF) {
-                                        if (token.type == Token.NL) {
-                                            break;
-                                        }
-                                        if (token.type == Token.COMMENT) {
-                                            sb.alignToColumn(isEnabled() ? commentsColumn : token.column);
-                                            sb.append(stream.nextToken());
-                                            break;
-                                        }
-                                        else {
-                                            if (!isEnabled()) {
-                                                sb.alignToColumn(token.column);
-                                            }
-                                            sb.append(stream.nextToken());
-                                        }
-                                    }
-                                }
-                            }
-                            else {
-                                if (label != null) {
-                                    if (!isEnabled()) {
-                                        sb.alignToColumn(label.column);
-                                    }
-                                    sb.append(label);
-                                    if (isolateLargeLabels) {
-                                        if (condition == null && label.getText().length() >= instructionColumn) {
-                                            sb.append(System.lineSeparator());
-                                        }
-                                        else if (condition != null && label.getText().length() >= conditionColumn) {
-                                            sb.append(System.lineSeparator());
-                                        }
-                                    }
-                                }
-
-                                if (condition != null) {
-                                    if (isEnabled()) {
-                                        if (sb.column >= conditionColumn) {
-                                            sb.append(" ");
-                                        }
-                                        else {
-                                            sb.alignToColumn(conditionColumn);
-                                        }
-                                    }
-                                    else {
-                                        sb.alignToColumn(condition.column);
-                                    }
-                                    sb.append(condition.getText().toLowerCase());
-                                }
-
-                                if (isEnabled()) {
-                                    if (sb.column >= instructionColumn) {
-                                        sb.append(" ");
-                                    }
-                                    else {
-                                        sb.alignToColumn(instructionColumn);
-                                    }
-                                }
-                                else {
-                                    sb.alignToColumn(instruction.column);
-                                }
-                                sb.append(instruction.getText().toLowerCase());
-
-                                if (token.type != Token.NL && token.type != Token.EOF) {
-                                    if (!"debug".equalsIgnoreCase(instruction.getText())) {
-                                        if (isEnabled()) {
-                                            sb.alignToColumn(argumentsColumn);
-                                        }
-                                    }
-                                    formatPAsmTokens(stream, effectsColumn);
-                                }
-                            }
-                            sb.append(System.lineSeparator());
-                            if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                                stream.nextToken();
-                            }
-                        }
-                    }
-                }
-                else {
-                    if (sections.contains(token.getText().toUpperCase())) {
-                        sb.append(stream.nextToken().getText().toUpperCase());
-                        token = stream.peekNext();
-                        while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                            sb.append(" ");
-                            if (token.type == Token.COMMENT) {
-                                sb.append(stream.nextToken());
-                                break;
-                            }
-                            sb.append(stream.nextToken());
-                            token = stream.peekNext();
-                        }
-                        sb.append(System.lineSeparator());
-                        if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                            stream.nextToken();
-                        }
-                    }
-                    while (true) {
-                        token = stream.peekNext();
-                        if (token.type == Token.EOF) {
-                            break;
-                        }
-                        if (token.type == Token.NL) {
-                            if (keepBlankLines) {
-                                sb.append(System.lineSeparator());
-                            }
-                            stream.nextToken();
-                            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                                break;
-                            }
-                        }
-                        else if (token.type == Token.COMMENT) {
-                            sb.alignToColumn(token.column);
-                            sb.append(stream.nextToken());
-                            sb.append(System.lineSeparator());
-                            if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                                stream.nextToken();
-                                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                                    break;
-                                }
-                            }
-                        }
-                        else if (token.type == Token.BLOCK_COMMENT) {
-                            sb.append(stream.nextToken());
-                            if (stream.peekNext().type == Token.NL) {
-                                sb.append(System.lineSeparator());
-                                if (keepBlankLines) {
-                                    stream.nextToken();
-                                }
-                            }
-                        }
-                        else {
-                            sb.append("    ");
-                            formatTokens(stream);
-                            sb.append(System.lineSeparator());
-                            if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                                stream.nextToken();
-                                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                blockSeparator = true;
-            }
-        }
-
-        return sb.toString();
-    }
-
-    protected abstract boolean pasmLabel(Token token);
-
-    protected abstract boolean pasmCondition(Token token);
-
-    protected abstract boolean pasmInstruction(Token token);
-
-    protected abstract boolean pasmModifier(Token token);
-
-    void computeDatColumns(TokenStream stream) {
-        int labelWidth = conditionColumn;
-        int inlineLabelWidth = inlineConditionColumn;
-        int conditionWidth = instructionColumn - conditionColumn;
-        int inlineConditionWidth = inlineInstructionColumn - inlineConditionColumn;
-
-        stream.reset();
-
-        while (true) {
-            Token token = stream.nextToken();
-            while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                token = stream.nextToken();
-            }
-            if (token.type == Token.EOF) {
-                break;
-            }
-            if (token.type != Token.NL) {
-                if ("DAT".equalsIgnoreCase(token.getText())) {
-                    while ((token = stream.peekNext()).type != Token.EOF) {
-                        if (token.type == Token.NL) {
-                            break;
-                        }
-                        stream.nextToken();
-                    }
-                    while ((token = stream.peekNext()).type != Token.EOF) {
-                        if (token.type == Token.NL) {
-                            stream.nextToken();
-                            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                                break;
-                            }
-                        }
-                        else {
-                            if (pasmLabel(token)) {
-                                Token label = stream.nextToken();
-                                if (":".equals(label.getText()) || ".".equals(label.getText())) {
-                                    token = stream.peekNext();
-                                    if (token.type == 0 && label.isAdjacent(token)) {
-                                        label = label.merge(stream.nextToken());
-                                    }
-                                }
-                                token = stream.peekNext();
-                                if (token.type != Token.NL && token.type != Token.EOF) {
-                                    if (!isolateLargeLabels) {
-                                        labelWidth = Math.max(labelWidth, label.getText().length() + 1);
-                                    }
-                                }
-                            }
-
-                            if (pasmCondition(token)) {
-                                stream.nextToken();
-                                conditionWidth = Math.max(conditionWidth, token.getText().length() + 1);
-                            }
-
-                            while ((token = stream.peekNext()).type != Token.EOF) {
-                                if (token.type == Token.NL) {
-                                    break;
-                                }
-                                stream.nextToken();
-                            }
-                        }
-                    }
-                }
-                else if ("PUB".equalsIgnoreCase(token.getText()) || "PRI".equalsIgnoreCase(token.getText())) {
-                    while (true) {
-                        token = stream.nextToken();
-                        if (token.type == Token.EOF) {
-                            break;
-                        }
-                        if (token.type == Token.NL) {
-                            token = stream.peekNext();
-                            if (sections.contains(token.getText().toUpperCase())) {
-                                break;
-                            }
-                            if ("ORG".equalsIgnoreCase(token.getText().toUpperCase())) {
-                                while (true) {
-                                    token = stream.nextToken();
-                                    if (token.type == Token.EOF) {
-                                        break;
-                                    }
-                                    if (token.type == Token.NL) {
-                                        token = stream.peekNext();
-                                        if ("END".equalsIgnoreCase(token.getText().toUpperCase())) {
-                                            break;
-                                        }
-                                    }
-                                    else {
-                                        if (pasmLabel(token)) {
-                                            if (!isolateLargeLabels) {
-                                                inlineLabelWidth = Math.max(inlineLabelWidth, token.getText().length() + 1);
-                                            }
-                                            token = stream.nextToken();
-                                            if (token.type == Token.NL || token.type == Token.EOF) {
-                                                break;
-                                            }
-                                        }
-
-                                        if (pasmCondition(token)) {
-                                            inlineConditionWidth = Math.max(inlineConditionWidth, token.getText().length() + 1);
-                                            token = stream.nextToken();
-                                            if (token.type == Token.NL || token.type == Token.EOF) {
-                                                break;
-                                            }
-                                        }
-
-                                        while ((token = stream.peekNext()).type != Token.NL) {
-                                            if (token.type == Token.EOF) {
-                                                break;
-                                            }
-                                            stream.nextToken();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                    }
-
-                }
-                else {
-                    while ((token = stream.peekNext()).type != Token.EOF) {
-                        if (token.type == Token.NL) {
-                            break;
-                        }
-                        stream.nextToken();
-                    }
-                }
-            }
-        }
-
-        stream.reset();
-
-        int diff = instructionColumn;
-        conditionColumn = sb.getNextTabStop(labelWidth);
-        instructionColumn = sb.getNextTabStop(conditionColumn + conditionWidth);
-        argumentsColumn = sb.getNextTabStop(instructionColumn + 8);
-        diff = instructionColumn > diff ? instructionColumn - diff : 0;
-        effectsColumn = sb.getNextTabStop(effectsColumn + diff);
-        commentsColumn = sb.getNextTabStop(commentsColumn + diff);
-
-        diff = inlineInstructionColumn;
-        inlineConditionColumn = sb.getNextTabStop(inlineLabelWidth);
-        inlineInstructionColumn = sb.getNextTabStop(inlineConditionColumn + inlineConditionWidth);
-        inlineArgumentsColumn = sb.getNextTabStop(inlineInstructionColumn + 8);
-        diff = inlineInstructionColumn > diff ? inlineInstructionColumn - diff : 0;
-        inlineEffectsColumn = sb.getNextTabStop(inlineEffectsColumn + diff);
-        inlineCommentsColumn = sb.getNextTabStop(inlineCommentsColumn + diff);
-    }
-
-    void formatStatement(int indent, TokenStream stream, int column) {
-        Token token;
-        boolean indentNext = false;
-        boolean caseNext = false;
-
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.NL) {
-                if (keepBlankLines) {
-                    sb.append(System.lineSeparator());
-                }
-                stream.nextToken();
-            }
-            else if (token.type == Token.COMMENT) {
-                if (token.column != 0) {
-                    sb.alignToColumn(indentNext ? (indent + sb.tabspaces) : indent);
-                }
-                sb.append(stream.nextToken());
-                sb.append(System.lineSeparator());
-                if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                    stream.nextToken();
-                }
-            }
-            else if (token.type == Token.BLOCK_COMMENT) {
-                if (token.column != 0) {
-                    sb.alignToColumn(indent);
-                }
-                sb.append(stream.nextToken());
-                if (stream.peekNext().type == Token.NL) {
-                    sb.append(System.lineSeparator());
-                    if (keepBlankLines) {
-                        stream.nextToken();
-                    }
-                }
-            }
-            else {
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                     break;
                 }
-                if ("ORG".equalsIgnoreCase(token.getText().toUpperCase())) {
-
-                    sb.alignToColumn(indent);
-                    formatTokens(stream);
-                    sb.append(System.lineSeparator());
-                    if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                        stream.nextToken();
-                    }
-
-                    formatInlinePAsm(stream);
-                }
-                else {
-                    if (blockEnd.contains(token.getText().toUpperCase())) {
-                        indentNext = false;
-                    }
-                    if (token.column > column && indentNext) {
-                        if (caseNext) {
-                            formatCaseStatement(indent + sb.tabspaces, stream, token.column);
-                        }
-                        else {
-                            formatStatement(indent + sb.tabspaces, stream, token.column);
-                        }
-                        indentNext = false;
-                    }
-                    else if (token.column < column) {
-                        break;
-                    }
-                    else {
-                        indentNext = blockStart.contains(token.getText().toUpperCase());
-                        caseNext = "CASE".equalsIgnoreCase(token.getText()) || "CASE_FAST".equalsIgnoreCase(token.getText());
-
-                        sb.alignToColumn(indent);
-                        formatTokens(stream);
-                        sb.append(System.lineSeparator());
-                        if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                            stream.nextToken();
-                        }
-                    }
-                }
             }
-        }
-    }
-
-    void formatCaseStatement(int indent, TokenStream stream, int column) {
-        Token token;
-
-        while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.NL) {
-                stream.nextToken();
-                sb.append(System.lineSeparator());
-                if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                    stream.nextToken();
+            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+                sb.alignToColumn(token.column);
+                if (sb.column > 0 && sb.lastChar() != ' ') {
+                    sb.append(" ");
                 }
-                formatStatement(indent + sb.tabspaces, stream, column + 1);
+                sb.append(token);
             }
-            else if (token.type == Token.COMMENT) {
+            else if ("END".equalsIgnoreCase(token.getText())) {
                 sb.alignToColumn(indent);
                 sb.append(stream.nextToken());
-                sb.append(System.lineSeparator());
-                if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                    stream.nextToken();
-                }
-            }
-            else if (token.type == Token.BLOCK_COMMENT) {
-                if (token.column != 0) {
-                    sb.alignToColumn(indent);
-                }
-                sb.append(stream.nextToken());
-                if (stream.peekNext().type == Token.NL) {
-                    sb.append(System.lineSeparator());
-                    if (keepBlankLines) {
-                        stream.nextToken();
-                    }
-                }
+                break;
             }
             else {
-                if (token.column < column) {
-                    break;
-                }
-
-                sb.alignToColumn(indent);
-                formatCaseTokens(stream);
-
-                token = stream.peekNext();
-                while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-                    sb.append(" ");
-                    sb.append(stream.nextToken());
-                    token = stream.peekNext();
-                }
-
-                if (token.type != Token.NL && token.type != Token.EOF) {
-                    sb.append(" ");
-                    sb.alignToTabStop();
-                    formatStatement(sb.column, stream, column + 1);
-                }
+                formatDatLine();
             }
         }
     }
 
-    void formatInlinePAsm(TokenStream stream) {
-        Token token;
+    protected boolean isBlockStart(Token token) {
+        return false;
+    }
 
-        while (true) {
-            token = stream.peekNext();
-            if (token.type == Token.EOF) {
+    void formatDat() {
+        appendSectionHeader(stream.nextToken());
+        if (stream.peekNext().type == Token.NL) {
+            stream.nextToken();
+        }
+        else {
+            formatDatLine();
+        }
+        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+            return;
+        }
+
+        while (stream.peekNext().type != Token.EOF) {
+            formatDatLine();
+            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                 break;
-            }
-            if ("END".equalsIgnoreCase(stream.peekNext().getText())) {
-                break;
-            }
-            if (token.type == Token.NL) {
-                if (keepBlankLines) {
-                    sb.append(System.lineSeparator());
-                }
-                stream.nextToken();
-            }
-            else if (token.type == Token.COMMENT) {
-                sb.alignToColumn(token.column);
-                sb.append(stream.nextToken());
-                sb.append(System.lineSeparator());
-                if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                    stream.nextToken();
-                    if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                        break;
-                    }
-                }
-            }
-            else if (token.type == Token.BLOCK_COMMENT) {
-                sb.append(stream.nextToken());
-                if (stream.peekNext().type == Token.NL) {
-                    sb.append(System.lineSeparator());
-                    if (keepBlankLines) {
-                        stream.nextToken();
-                    }
-                }
-            }
-            else {
-                Token label = null;
-                Token condition = null;
-                Token instruction = null;
-
-                token = stream.nextToken();
-                if (pasmLabel(token)) {
-                    label = token;
-                    if (":".equals(token.getText()) || ".".equals(token.getText())) {
-                        label.merge(stream.nextToken());
-                    }
-                    token = stream.nextToken();
-                }
-
-                if (pasmCondition(token)) {
-                    condition = token;
-                    token = stream.nextToken();
-                }
-
-                if (token.type != Token.NL && token.type != Token.EOF) {
-                    instruction = token;
-                }
-
-                if (instruction == null) {
-                    if (label != null) {
-                        sb.append(label);
-                    }
-                }
-                else {
-                    if (label != null) {
-                        sb.append(label);
-                        if (isolateLargeLabels) {
-                            if (condition == null && label.getText().length() >= instructionColumn) {
-                                sb.append(System.lineSeparator());
-                            }
-                            else if (condition != null && label.getText().length() >= conditionColumn) {
-                                sb.append(System.lineSeparator());
-                            }
-                        }
-                    }
-
-                    if (condition != null) {
-                        sb.alignToColumn(inlineConditionColumn);
-                        sb.append(condition);
-                    }
-
-                    sb.alignToColumn(inlineInstructionColumn);
-                    sb.append(instruction);
-
-                    token = stream.peekNext();
-                    if (token.type != Token.NL && token.type != Token.EOF) {
-                        if (!"debug".equalsIgnoreCase(instruction.getText())) {
-                            sb.alignToColumn(argumentsColumn);
-                        }
-                        formatPAsmTokens(stream, inlineEffectsColumn);
-                    }
-                }
-                sb.append(System.lineSeparator());
-                if (keepBlankLines && stream.peekNext().type == Token.NL) {
-                    stream.nextToken();
-                }
             }
         }
     }
 
-    void formatTokens(TokenStream stream) {
-        formatTokens(stream, 0, 0);
-    }
+    void formatDatLine() {
+        int state = 1;
 
-    void formatCaseTokens(TokenStream stream) {
-        formatTokens(stream, 0, 1);
-    }
-
-    void formatPAsmTokens(TokenStream stream, int effectsColumn) {
-        formatTokens(stream, effectsColumn, 2);
-    }
-
-    private void formatTokens(TokenStream stream, int effectsColumn, int type) {
         Token token;
-        int stop = 0;
-        boolean addSpace = false;
-
-        while ((token = stream.peekNext()).type != Token.EOF) {
+        while ((token = nextPAsmToken()).type != Token.EOF) {
             if (token.type == Token.NL) {
                 break;
             }
-            token = stream.nextToken();
-            if (!isEnabled()) {
+            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
                 sb.alignToColumn(token.column);
+                if (sb.column > 0 && sb.lastChar() != ' ') {
+                    sb.append(" ");
+                }
                 sb.append(token);
                 continue;
             }
-            if (type == 2 && pasmModifier(token)) {
-                if (sb.column >= effectsColumn) {
-                    sb.append(" ");
-                    sb.alignToTabStop();
-                }
-                else {
-                    sb.alignToColumn(effectsColumn);
-                }
-                sb.append(token);
-                while ((token = stream.peekNext()).type != Token.EOF) {
-                    if (token.type == Token.NL) {
+            switch (state) {
+                case 1:
+                    if ("debug".equalsIgnoreCase(token.getText())) {
+                        sb.alignToColumn(instructionColumn);
+                        sb.append(token);
+                        state = 9;
                         break;
                     }
-                    if (token.type == Token.COMMENT) {
-                        sb.alignToColumn(commentsColumn);
-                        sb.append(stream.nextToken());
+                    if (pasmCondition(token)) {
+                        sb.alignToColumn(conditionColumn);
+                        sb.append(token);
+                        state = 3;
+                        break;
                     }
-                    else {
-                        sb.append(stream.nextToken().getText().toLowerCase());
+                    if (pasmInstruction(token)) {
+                        sb.alignToColumn(instructionColumn);
+                        sb.append(token);
+                        state = 4;
+                        break;
                     }
-                }
+                    sb.append(token);
+                    state = 2;
+                    break;
+                case 2:
+                    if (pasmCondition(token)) {
+                        if (sb.column >= conditionColumn) {
+                            sb.append(System.lineSeparator());
+                        }
+                        sb.alignToColumn(conditionColumn);
+                        sb.append(token);
+                        state = 3;
+                        break;
+                    }
+                    if (sb.column >= instructionColumn) {
+                        sb.append(System.lineSeparator());
+                    }
+                    // fall-through
+                case 3:
+                    sb.alignToColumn(instructionColumn);
+                    if (sb.lastChar() != ' ') {
+                        sb.append(" ");
+                    }
+                    sb.append(token);
+                    state = "debug".equalsIgnoreCase(token.getText()) ? 9 : 4;
+                    break;
+                case 4:
+                    if (pasmModifier(token)) {
+                        sb.alignToColumn(modifiersColumn);
+                        if (sb.lastChar() != ' ') {
+                            sb.append(" ");
+                            sb.alignToTabStop();
+                        }
+                        sb.append(token);
+                        state = 6;
+                        break;
+                    }
+                    sb.alignToColumn(argumentsColumn);
+                    appendExpressionToken(token);
+                    state = 5;
+                    break;
+                case 5:
+                    if (",".equals(token.getText())) {
+                        sb.append(token);
+                        break;
+                    }
+                    if (pasmModifier(token)) {
+                        sb.alignToColumn(modifiersColumn);
+                        if (sb.lastChar() != ' ') {
+                            sb.append(" ");
+                            sb.alignToTabStop();
+                        }
+                        sb.append(token);
+                        state = 6;
+                        break;
+                    }
+                    if (sb.lastChar() == ',') {
+                        sb.append(" ");
+                    }
+                    if ("[".equals(token.getText())) {
+                        sb.append(token);
+                        state = 7;
+                        break;
+                    }
+                    appendExpressionToken(token);
+                    break;
+                case 6:
+                    sb.append(token);
+                    break;
+                case 7:
+                    if ("]".equals(token.getText())) {
+                        sb.append(token);
+                        state = 5;
+                        break;
+                    }
+                    appendExpressionToken(token);
+                    break;
+                case 9:
+                    if ("(".equals(token.getText())) {
+                        sb.append(token);
+                        break;
+                    }
+                    appendExpressionToken(token);
+                    break;
+            }
+        }
+
+        sb.append(System.lineSeparator());
+    }
+
+    protected boolean pasmCondition(Token token) {
+        return false;
+    }
+
+    protected boolean pasmInstruction(Token token) {
+        return false;
+    }
+
+    protected boolean pasmModifier(Token token) {
+        return false;
+    }
+
+    void appendSectionHeader(Token token) {
+        sb.append(token.getText().toUpperCase());
+
+        while ((token = stream.peekNext()).type != Token.EOF) {
+            if (token.type != Token.COMMENT && token.type != Token.BLOCK_COMMENT) {
                 break;
             }
-            if (token.type == Token.BLOCK_COMMENT) {
-                if (stream.peekNext().type == Token.NL) {
-                    sb.alignToTabStop();
-                    sb.append(token);
-                }
-                else {
-                    if (token.start > stop + 1) {
-                        sb.append(" ");
-                    }
-                    sb.append(token);
-                    stop = token.stop;
-                    if (stream.peekNext().start > stop + 1) {
-                        sb.append(" ");
-                    }
-                }
+            sb.alignToColumn(token.column);
+            if (sb.column > 0 && sb.lastChar() != ' ') {
+                sb.append(" ");
             }
-            else if (token.type == Token.COMMENT) {
-                sb.alignToTabStop();
-                sb.append(token);
-            }
-            else if (token.type == Token.OPERATOR) {
-                if (addSpace) {
-                    if ("@".equals(token.getText())) {
-                        sb.append(" ");
-                    }
-                }
-                addSpace = ")".equals(token.getText()) || "]".equals(token.getText());
-                switch (token.getText()) {
-                    case "(":
-                    case "[":
-                    case ")":
-                    case "]":
-                    case "#":
-                    case "##":
-                    case ".":
-                    case "@":
-                    case "\\":
-                    case "--":
-                    case "++":
-                    case "~":
-                    case "~~":
-                    case "..":
-                        sb.append(token);
-                        break;
-                    case ",":
-                        sb.append(token);
-                        sb.append(" ");
-                        break;
-                    case ":":
-                        if (type == 1) {
-                            sb.append(token);
-                            return;
-                        }
-                        else if (type == 2) {
-                            sb.append(token);
-                            break;
-                        }
-                        // Fall-through
-                    default:
-                        sb.append(" ");
-                        sb.append(token);
-                        sb.append(" ");
-                        break;
-                }
-            }
-            else {
-                if (addSpace) {
+            sb.append(stream.nextToken());
+        }
+        sb.append(System.lineSeparator());
+    }
+
+    void appendExpressionToken(Token token) {
+        switch (token.getText()) {
+            case "(":
+            case "[":
+                if (sb.lastChar() != ' ' && sb.lastChar() != '(' && sb.lastChar() != '[') {
                     sb.append(" ");
                 }
-                if (token.type == Token.NUMBER) {
-                    sb.append(token.getText().toUpperCase());
-                    addSpace = true;
+                sb.append(token);
+                break;
+            case ")":
+            case "]":
+            case ".":
+            case ",":
+            case "@":
+            case "\\":
+            case "--":
+            case "++":
+            case "~":
+            case "~~":
+            case "..":
+                sb.append(token);
+                break;
+            case "#":
+            case "##":
+                if (sb.lastChar() == ',') {
+                    sb.append(" ");
                 }
-                else {
-                    sb.append(token);
-                    if ("and".equalsIgnoreCase(token.getText()) || "or".equalsIgnoreCase(token.getText()) || "not".equalsIgnoreCase(token.getText())) {
-                        sb.append(" ");
-                        addSpace = false;
-                    }
-                    else {
-                        addSpace = true;
-                    }
+                sb.append(token);
+                break;
+            default:
+                if (sb.lastChar() != ' ' && sb.lastChar() != '(' && sb.lastChar() != '[' && sb.lastChar() != '.' && sb.lastChar() != '#') {
+                    sb.append(" ");
                 }
-            }
-            stop = token.stop;
+                sb.append(token);
+                break;
         }
     }
 
-    void checkTags(Token token) {
-        if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-            if (token.getText().toUpperCase().contains("*INDENT-OFF*")) {
-                enabled--;
+    Token nextToken() {
+        Token token = stream.nextToken();
+        if ("@".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if ("@".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
+                token = token.merge(stream.nextToken());
+                nextToken = stream.peekNext();
             }
-            else if (token.getText().toUpperCase().contains("*INDENT-ON*")) {
-                enabled++;
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
+                if (nextToken.type == Token.STRING) {
+                    token.type = Token.STRING;
+                }
             }
         }
+        else if (".".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
+            }
+        }
+        return token;
     }
 
-    public boolean isEnabled() {
-        return enabled == 0;
+    Token nextPAsmToken() {
+        Token token = stream.nextToken();
+        if ("@".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if ("@".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
+                token = token.merge(stream.nextToken());
+                nextToken = stream.peekNext();
+            }
+            if (".".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
+                token = token.merge(stream.nextToken());
+                nextToken = stream.peekNext();
+            }
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
+            }
+        }
+        else if (".".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
+            }
+        }
+        return token;
     }
 
 }

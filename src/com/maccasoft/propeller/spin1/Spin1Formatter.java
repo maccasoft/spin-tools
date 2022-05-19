@@ -16,6 +16,7 @@ import com.maccasoft.propeller.model.Token;
 public class Spin1Formatter extends Formatter {
 
     public Spin1Formatter() {
+
     }
 
     @Override
@@ -24,14 +25,8 @@ public class Spin1Formatter extends Formatter {
     }
 
     @Override
-    protected boolean pasmLabel(Token token) {
-        if (Spin1Model.isPAsmCondition(token.getText())) {
-            return false;
-        }
-        if (Spin1Model.isPAsmInstruction(token.getText())) {
-            return false;
-        }
-        return true;
+    protected boolean isBlockStart(Token token) {
+        return Spin1Model.isBlockStart(token.getText());
     }
 
     @Override
