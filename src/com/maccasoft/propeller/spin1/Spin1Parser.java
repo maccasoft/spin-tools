@@ -342,9 +342,6 @@ public class Spin1Parser {
                 break;
             }
             switch (state) {
-                case 0:
-                    state = 1;
-                    // fall-through
                 case 1:
                     object = new ObjectNode(parent);
                     object.addToken(token);
@@ -786,12 +783,8 @@ public class Spin1Parser {
     }
 
     Token nextToken() {
-        return nextToken(true);
-    }
-
-    Token nextToken(boolean skipComments) {
         Token token = stream.nextToken();
-        if (skipComments && (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT)) {
+        if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
             do {
                 root.addComment(token);
                 token = stream.nextToken();
@@ -825,12 +818,8 @@ public class Spin1Parser {
     }
 
     Token nextPAsmToken() {
-        return nextPAsmToken(true);
-    }
-
-    Token nextPAsmToken(boolean skipComments) {
         Token token = stream.nextToken();
-        if (skipComments && (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT)) {
+        if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
             do {
                 root.addComment(token);
                 token = stream.nextToken();
