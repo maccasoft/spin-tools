@@ -684,7 +684,13 @@ public class Spin1Parser {
         }
 
         while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+            if (token.type == Token.NL) {
+                stream.nextToken();
+                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                    break;
+                }
+            }
+            else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
                 root.addComment(stream.nextToken());
             }
             else {
@@ -776,10 +782,6 @@ public class Spin1Parser {
                     parameter.count.addToken(token);
                     break;
             }
-        }
-
-        if (node.getTokenCount() == 0) {
-            parent.getChilds().remove(node);
         }
     }
 
