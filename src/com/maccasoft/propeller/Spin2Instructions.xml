@@ -276,29 +276,41 @@
         <entry name="case"></entry>
         <entry name="case_fast"></entry>
         <entry name="other"></entry>
-        <entry name="repeat"><![CDATA[<b>REPEAT</b><p>All looping is achieved through REPEAT constructs, which have several forms:</p>
-<b>REPEAT</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+        <entry name="repeat"><![CDATA[<code><b>REPEAT</b></code>
 
-<b>REPEAT &lt;count&gt;</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+All looping is achieved through REPEAT constructs, which have several forms:
 
-<b>REPEAT &lt;variable&gt; FROM &lt;first&gt; TO &lt;last&gt;</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+<code><b>REPEAT</b>
+    &lt;indented code&gt;</code>
 
-<b>REPEAT WHILE &lt;condition&gt;</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+<code><b>REPEAT &lt;count&gt;</b>
+    &lt;indented code&gt;</code>
 
-<b>REPEAT UNTIL &lt;condition&gt;</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+<code><b>REPEAT &lt;variable> FROM &lt;first&gt; TO &lt;last&gt;</b>
+    &lt;indented code&gt;</code>
 
-<b>REPEAT</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/>
-<b>WHILE &lt;condition&gt;</b><br/><br/>
+<code><b>REPEAT WHILE &lt;condition></b>
+    &lt;indented code&gt;</code>
 
-<b>REPEAT</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/>
-<b>UNTIL &lt;condition&gt;</b><br/><br/>
+<code><b>REPEAT UNTIL &lt;condition></b>
+    &lt;indented code&gt;</code>
+
+<code><b>REPEAT</b>
+    &lt;indented code&gt;
+<b>WHILE &lt;condition&gt;</b></code>
+
+<code><b>REPEAT</b>
+    &lt;indented code&gt;
+<b>UNTIL &lt;condition&gt;</b></code>
+
+<code><b>REPEAT</b>
+    &lt;indented code&gt;
+    <b>IF</b> &lt;condition&gt;</code>
+<code>        <b>NEXT</b>
+    &lt;indented code&gt;
+    <b>IF</b> &lt;condition&gt;</code>
+<code>        <b>QUIT</b>
+    &lt;indented code&gt;</code>
 ]]></entry>
         <entry name="from"></entry>
         <entry name="to"></entry>

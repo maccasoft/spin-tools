@@ -353,9 +353,9 @@ public abstract class SourceTokenMarker {
                             public boolean visitConstant(ConstantNode node) {
                                 if (node.getIdentifier() != null) {
                                     if (s[1].equals(node.getIdentifier().getText())) {
-                                        sb.append("<b>");
-                                        sb.append(node.getText());
-                                        sb.append("</b>");
+                                        sb.append("<b><code>");
+                                        sb.append(getHtmlSafeString(node.getText()));
+                                        sb.append("</code></b>");
                                     }
                                 }
                                 return false;
@@ -384,9 +384,9 @@ public abstract class SourceTokenMarker {
                 public boolean visitConstant(ConstantNode node) {
                     if (node.getIdentifier() != null) {
                         if (symbol.equals(node.getIdentifier().getText())) {
-                            sb.append("<b>");
-                            sb.append(node.getText());
-                            sb.append("</b>");
+                            sb.append("<b><code>");
+                            sb.append(getHtmlSafeString(node.getText()));
+                            sb.append("</b></code>");
                         }
                     }
                     return false;
@@ -601,38 +601,48 @@ public abstract class SourceTokenMarker {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("<b>");
-        sb.append(stream.getSource(start.start, stop.stop).trim());
-        sb.append("</b>");
+        sb.append("<pre><b><code>");
+        sb.append(getHtmlSafeString(stream.getSource(start.start, stop.stop).trim()));
+        sb.append("</code></b>");
+        sb.append(System.lineSeparator());
 
         iter = node.getDocument().iterator();
         if (iter.hasNext()) {
-            sb.append("<p/><code>");
+            sb.append(System.lineSeparator());
+            sb.append("<code>");
             while (iter.hasNext()) {
                 Token token = iter.next();
                 if (token.type == Token.COMMENT) {
                     String s = token.getText().substring(2);
-                    sb.append(s.replaceAll(" ", "&nbsp;"));
-                    sb.append("<br>");
+                    sb.append(getHtmlSafeString(s));
+                    sb.append(System.lineSeparator());
                 }
                 else if (token.type == Token.BLOCK_COMMENT) {
                     String s = token.getText().substring(2);
                     s = s.substring(0, s.length() - 2);
-                    s = s.replaceAll(" ", "&nbsp;");
-                    s = s.replaceAll("[\\r\\n|\\r|\\n]", "<br>");
-                    while (s.startsWith("<br>")) {
-                        s = s.substring(4);
+                    s = getHtmlSafeString(s);
+                    s = s.replaceAll("[\\r\\n|\\r|\\n]", System.lineSeparator());
+                    while (s.startsWith(System.lineSeparator())) {
+                        s = s.substring(System.lineSeparator().length());
                     }
-                    while (s.endsWith("<br>")) {
-                        s = s.substring(0, s.length() - 4);
+                    while (s.endsWith(System.lineSeparator())) {
+                        s = s.substring(0, s.length() - System.lineSeparator().length());
                     }
                     sb.append(s);
                 }
             }
             sb.append("</code>");
         }
+        sb.append("</pre>");
 
         return sb.toString();
+    }
+
+    String getHtmlSafeString(String s) {
+        s = s.replaceAll("&", "&amp;");
+        s = s.replaceAll("<", "&lt;");
+        s = s.replaceAll(">", "&gt;");
+        return s;
     }
 
     protected Node getObjectTree(String fileName) {

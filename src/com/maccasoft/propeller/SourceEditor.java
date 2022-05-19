@@ -83,7 +83,7 @@ import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ContentProposalAdapter;
-import com.maccasoft.propeller.internal.HTMLStyledTextParser;
+import com.maccasoft.propeller.internal.HTMLStyledTextDecorator;
 import com.maccasoft.propeller.internal.IContentProposalListener2;
 import com.maccasoft.propeller.internal.StyledTextContentAdapter;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -912,19 +912,23 @@ public class SourceEditor {
                     if (text != null && !"".equals(text)) {
                         popupWindow = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
                         FillLayout layout = new FillLayout();
-                        layout.marginHeight = layout.marginWidth = 5;
+                        layout.marginHeight = layout.marginWidth = 0;
                         popupWindow.setLayout(layout);
 
-                        StyledText content = new StyledText(popupWindow, SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL);
+                        StyledText content = new StyledText(popupWindow, SWT.READ_ONLY | SWT.V_SCROLL | SWT.WRAP);
+                        content.setMargins(5, 5, 5, 5);
                         content.setCaret(null);
-                        new HTMLStyledTextParser(content).setText(text);
+                        HTMLStyledTextDecorator htmlText = new HTMLStyledTextDecorator(content);
+                        htmlText.setText(text);
 
                         popupWindow.pack();
 
                         bounds.y += bounds.height + 3;
-                        if (bounds.width < 640) {
-                            bounds.width = 640;
-                        }
+                        bounds.width = Math.max(Math.max(640, bounds.width),
+                            htmlText.getLineSize() +
+                                content.getLeftMargin() + content.getRightMargin() +
+                                layout.marginWidth * 2 +
+                                popupWindow.getBorderWidth() * 2 + 5);
                         if (bounds.height < 240) {
                             bounds.height = 240;
                         }

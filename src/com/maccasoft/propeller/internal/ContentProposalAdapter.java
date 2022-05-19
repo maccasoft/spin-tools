@@ -406,7 +406,7 @@ public class ContentProposalAdapter {
              * The text control that displays the text.
              */
             private StyledText text;
-            private HTMLStyledTextParser htmlText;
+            private HTMLStyledTextDecorator htmlText;
 
             /*
              * The String shown in the popup.
@@ -426,6 +426,8 @@ public class ContentProposalAdapter {
             @Override
             protected Control createDialogArea(Composite parent) {
                 text = new StyledText(parent, SWT.MULTI | SWT.READ_ONLY | SWT.WRAP | SWT.NO_FOCUS | SWT.V_SCROLL);
+                text.setMargins(5, 5, 5, 5);
+                text.setCaret(null);
 
                 // Use the compact margins employed by PopupDialog.
                 GridData gd = new GridData(GridData.BEGINNING | GridData.FILL_BOTH);
@@ -433,7 +435,7 @@ public class ContentProposalAdapter {
                 gd.verticalIndent = PopupDialog.POPUP_VERTICALSPACING;
                 text.setLayoutData(gd);
 
-                htmlText = new HTMLStyledTextParser(text);
+                htmlText = new HTMLStyledTextDecorator(text);
                 htmlText.setText(contents);
 
                 // since SWT.NO_FOCUS is only a hint...
