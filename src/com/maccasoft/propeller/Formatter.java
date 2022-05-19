@@ -629,12 +629,11 @@ public abstract class Formatter {
                 }
                 sb.append(stream.nextToken());
             }
-            else if (column > 0 && token.column <= column) {
+            else if (token.column < column) {
                 break;
             }
             else {
                 Token startToken = nextToken();
-                int blockColumn = startToken.column;
 
                 sb.alignToColumn(indent);
                 sb.append(startToken);
@@ -668,13 +667,13 @@ public abstract class Formatter {
                     }
                 }
                 if ("CASE".equalsIgnoreCase(startToken.getText()) || "CASE_FAST".equalsIgnoreCase(startToken.getText())) {
-                    formatCaseStatement(blockColumn, indent + sb.tabspaces);
+                    formatCaseStatement(startToken.column + 1, indent + sb.tabspaces);
                     if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                         return;
                     }
                 }
                 else if (isBlockStart(startToken)) {
-                    formatStatement(blockColumn, indent + sb.tabspaces);
+                    formatStatement(startToken.column + 1, indent + sb.tabspaces);
                     if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                         return;
                     }
@@ -703,12 +702,11 @@ public abstract class Formatter {
                 }
                 sb.append(token);
             }
-            else if (column > 0 && token.column <= column) {
+            else if (token.column < column) {
                 break;
             }
             else {
                 Token startToken = nextToken();
-                int blockColumn = startToken.column;
 
                 sb.alignToColumn(indent);
                 sb.append(startToken);
@@ -738,7 +736,7 @@ public abstract class Formatter {
                             if (sb.column > 0 && sb.lastChar() != ' ') {
                                 sb.append(" ");
                             }
-                            sb.append(token);
+                            sb.append(stream.nextToken());
                         }
                         if (token.type == Token.NL) {
                             stream.nextToken();
@@ -749,7 +747,7 @@ public abstract class Formatter {
                     appendExpressionToken(token);
                 }
 
-                formatStatement(blockColumn, indent + sb.tabspaces);
+                formatStatement(startToken.column + 1, indent + sb.tabspaces);
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                     return;
                 }

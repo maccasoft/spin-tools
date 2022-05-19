@@ -28,6 +28,7 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class Spin1Parser {
 
@@ -570,15 +571,14 @@ public class Spin1Parser {
             else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
                 root.addComment(stream.nextToken());
             }
-            else if (column > 0 && token.column <= column) {
+            else if (token.column < column) {
                 break;
             }
             else {
-                Node statement = new StatementNode(parent);
-                statement.addToken(token = nextToken());
+                Token startToken = nextToken();
 
-                boolean blockStart = Spin1Model.isBlockStart(token.getText());
-                int blockColumn = token.column;
+                Node statement = new StatementNode(parent);
+                statement.addToken(startToken);
 
                 while ((token = nextToken()).type != Token.EOF) {
                     if (token.type == Token.NL) {
@@ -590,15 +590,14 @@ public class Spin1Parser {
                     statement.addToken(token);
                 }
 
-                token = statement.getStartToken();
-                if ("CASE".equalsIgnoreCase(token.getText()) || "CASE_FAST".equalsIgnoreCase(token.getText())) {
-                    parseCaseStatement(statement, blockColumn);
+                if ("CASE".equalsIgnoreCase(startToken.getText())) {
+                    parseCaseStatement(statement, startToken.column + 1);
                     if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                         return;
                     }
                 }
-                else if (blockStart) {
-                    parseStatement(statement, blockColumn);
+                else if (Spin2Model.isBlockStart(startToken.getText())) {
+                    parseStatement(statement, startToken.column + 1);
                     if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                         return;
                     }
@@ -620,14 +619,14 @@ public class Spin1Parser {
             else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
                 root.addComment(stream.nextToken());
             }
-            else if (column > 0 && token.column <= column) {
+            else if (token.column < column) {
                 break;
             }
             else {
-                Node statement = new StatementNode(parent);
-                statement.addToken(token = nextToken());
+                Token startToken = nextToken();
 
-                int blockColumn = token.column;
+                Node statement = new StatementNode(parent);
+                statement.addToken(startToken);
 
                 while ((token = nextToken()).type != Token.EOF) {
                     if (token.type == Token.NL) {
@@ -648,7 +647,7 @@ public class Spin1Parser {
                     }
                 }
 
-                parseStatement(statement, blockColumn);
+                parseStatement(statement, startToken.column + 1);
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                     return;
                 }

@@ -423,6 +423,34 @@ class Spin2ParseMethodTest {
         Assertions.assertEquals("            ret", node.getChild(2).getText());
     }
 
+    @Test
+    void testColumnZeroCaseBlocks() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB start()\n"
+            + "\n"
+            + "case a\n"
+            + "  0: a := b\n"
+            + "  1: c := d\n"
+            + "repeat\n"
+            + "  if a<>0\n"
+            + "    a := b\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=start [PUB start()]\n"
+            + "    +-- StatementNode [case a]\n"
+            + "        +-- StatementNode [  0:]\n"
+            + "            +-- StatementNode [  0: a := b]\n"
+            + "        +-- StatementNode [  1:]\n"
+            + "            +-- StatementNode [  1: c := d]\n"
+            + "    +-- StatementNode [repeat]\n"
+            + "        +-- StatementNode [  if a<>0]\n"
+            + "            +-- StatementNode [    a := b]\n"
+            + "", tree(root));
+    }
+
     String tree(Node root) throws Exception {
         return tree(root, 0);
     }
