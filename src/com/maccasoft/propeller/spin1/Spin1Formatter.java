@@ -47,4 +47,26 @@ public class Spin1Formatter extends Formatter {
         return Spin1Model.isPAsmModifier(token.getText());
     }
 
+    @Override
+    protected Token nextPAsmToken() {
+        Token token = stream.nextToken();
+        if ("@".equals(token.getText()) || "@@".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (":".equals(token.getText()) && token.isAdjacent(nextToken)) {
+                token = token.merge(stream.nextToken());
+                nextToken = stream.peekNext();
+            }
+            if (token.isAdjacent(nextToken) && nextToken.type == 0) {
+                token = token.merge(stream.nextToken());
+            }
+        }
+        else if (":".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && nextToken.type == 0) {
+                token = token.merge(stream.nextToken());
+            }
+        }
+        return token;
+    }
+
 }

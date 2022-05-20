@@ -94,7 +94,7 @@ public abstract class Formatter {
 
     }
 
-    TokenStream stream;
+    protected TokenStream stream;
 
     boolean keepBlankLines;
 
@@ -1054,25 +1054,6 @@ public abstract class Formatter {
         return token;
     }
 
-    Token nextPAsmToken() {
-        Token token = stream.nextToken();
-        if ("@".equals(token.getText()) || "@@".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (".".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
-                token = token.merge(stream.nextToken());
-                nextToken = stream.peekNext();
-            }
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-            }
-        }
-        else if (".".equals(token.getText())) {
-            Token nextToken = stream.peekNext();
-            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                token = token.merge(stream.nextToken());
-            }
-        }
-        return token;
-    }
+    protected abstract Token nextPAsmToken();
 
 }

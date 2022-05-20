@@ -351,6 +351,25 @@ class Spin2FormatterTest {
     }
 
     @Test
+    void testPAsmLocalLabel() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "DAT\n"
+            + "label\n"
+            + ".l1 nop\n"
+            + " mov a, #.l1\n"
+            + " jmp #\\.l1\n"
+            + "");
+        Assertions.assertEquals(""
+            + "DAT\n"
+            + "label\n"
+            + ".l1             nop\n"
+            + "                mov     a, #.l1\n"
+            + "                jmp     #\\.l1\n"
+            + "", text);
+    }
+
+    @Test
     void testPAsmInstruction() {
         Formatter subject = new Spin2Formatter();
         String text = subject.format(""
