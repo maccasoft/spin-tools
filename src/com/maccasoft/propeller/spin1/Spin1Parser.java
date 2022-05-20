@@ -794,12 +794,8 @@ public class Spin1Parser {
                 stream.nextToken();
             }
         }
-        else if ("@".equals(token.getText())) {
+        else if ("@".equals(token.getText()) || "@@".equals(token.getText())) {
             Token nextToken = stream.peekNext();
-            if ("@".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
-                token = token.merge(stream.nextToken());
-                nextToken = stream.peekNext();
-            }
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
                 token = token.merge(stream.nextToken());
                 if (nextToken.type == Token.STRING) {
@@ -829,26 +825,20 @@ public class Spin1Parser {
                 stream.nextToken();
             }
         }
-        else {
-            if ("@".equals(token.getText())) {
-                Token nextToken = stream.peekNext();
-                if ("@".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
-                    token = token.merge(stream.nextToken());
-                    nextToken = stream.peekNext();
-                }
-                if (":".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
-                    token = token.merge(stream.nextToken());
-                    nextToken = stream.peekNext();
-                }
-                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                    token = token.merge(stream.nextToken());
-                }
+        else if ("@".equals(token.getText()) || "@@".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (":".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
+                token = token.merge(stream.nextToken());
+                nextToken = stream.peekNext();
             }
-            else if (":".equals(token.getText())) {
-                Token nextToken = stream.peekNext();
-                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                    token = token.merge(stream.nextToken());
-                }
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
+            }
+        }
+        else if (":".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
+                token = token.merge(stream.nextToken());
             }
         }
         return token;

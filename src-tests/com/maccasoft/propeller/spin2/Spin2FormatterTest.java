@@ -259,8 +259,10 @@ class Spin2FormatterTest {
         Assertions.assertEquals(""
             + "PUB start()\n"
             + "    case a\n"
-            + "        1:  b := 1\n"
-            + "        2:  b := 2\n"
+            + "        1:\n"
+            + "            b := 1\n"
+            + "        2:\n"
+            + "            b := 2\n"
             + "            c := 4\n"
             + "        other:\n"
             + "            b := 3\n"
@@ -294,7 +296,8 @@ class Spin2FormatterTest {
             + "                b := 5\n"
             + "        2:\n"
             + "            case b\n"
-            + "                1:  b := 2\n"
+            + "                1:\n"
+            + "                    b := 2\n"
             + "        other:\n"
             + "            b := 3\n"
             + "", text);
@@ -385,6 +388,29 @@ class Spin2FormatterTest {
         Assertions.assertEquals(""
             + "DAT\n"
             + "                mov     a, #12      wc,wz\n"
+            + "", text);
+    }
+
+    @Test
+    void testPAsmImmediateExpressions() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "DAT\n"
+            + " mov a,#(12*SHIFT)+1\n"
+            + " mov a,##12\n"
+            + " wrlong #1,#12\n"
+            + " wrlong ##1,##12\n"
+            + " jmp #\\12\n"
+            + " jmp #\\(12*SHIFT)+1\n"
+            + "");
+        Assertions.assertEquals(""
+            + "DAT\n"
+            + "                mov     a, #(12 * SHIFT) + 1\n"
+            + "                mov     a, ##12\n"
+            + "                wrlong  #1, #12\n"
+            + "                wrlong  ##1, ##12\n"
+            + "                jmp     #\\12\n"
+            + "                jmp     #\\(12 * SHIFT) + 1\n"
             + "", text);
     }
 
@@ -486,8 +512,10 @@ class Spin2FormatterTest {
             + "PUB start()\n"
             + "\n"
             + "    case a\n"
-            + "        0:  a := b\n"
-            + "        1:  c := d\n"
+            + "        0:\n"
+            + "            a := b\n"
+            + "        1:\n"
+            + "            c := d\n"
             + "    repeat\n"
             + "        if a <> 0\n"
             + "            a := b\n"

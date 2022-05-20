@@ -738,9 +738,9 @@ public abstract class Formatter {
                             }
                             sb.append(stream.nextToken());
                         }
+                        sb.append(System.lineSeparator());
                         if (token.type == Token.NL) {
                             stream.nextToken();
-                            sb.append(System.lineSeparator());
                         }
                         break;
                     }
@@ -886,7 +886,12 @@ public abstract class Formatter {
                         break;
                     }
                     sb.alignToColumn(argumentsColumn);
-                    appendExpressionToken(token);
+                    if ("\\".equals(token.getText()) || "#".equals(token.getText()) || "##".equals(token.getText())) {
+                        sb.append(token);
+                    }
+                    else {
+                        appendExpressionToken(token);
+                    }
                     state = 5;
                     break;
                 case 5:
@@ -910,6 +915,14 @@ public abstract class Formatter {
                     if ("[".equals(token.getText())) {
                         sb.append(token);
                         state = 7;
+                        break;
+                    }
+                    if ("\\".equals(token.getText()) || "#".equals(token.getText()) || "##".equals(token.getText())) {
+                        sb.append(token);
+                        break;
+                    }
+                    if (sb.lastChar() == '\\' || sb.lastChar() == '#') {
+                        sb.append(token);
                         break;
                     }
                     appendExpressionToken(token);
@@ -967,51 +980,64 @@ public abstract class Formatter {
     }
 
     void appendExpressionToken(Token token) {
-        switch (token.getText()) {
-            case "(":
-            case "[":
-                if (sb.lastChar() != ' ' && sb.lastChar() != '(' && sb.lastChar() != '[') {
+        if (token.type == Token.OPERATOR) {
+            switch (token.getText()) {
+                case "(":
+                case "[":
+                case ")":
+                case "]":
+                case ",":
+                case ".":
+                case "..":
+                case "!":
+                case "!!":
+                case "++":
+                case "--":
+                case "??":
+                case "||":
+                case "~":
+                case "~~":
+                    sb.append(token);
+                    break;
+                case "#":
+                    if (sb.lastChar() == ',') {
+                        sb.append(" ");
+                    }
+                    sb.append(token);
+                    break;
+                case "\\":
+                    if (sb.lastChar() != ' ') {
+                        sb.append(" ");
+                    }
+                    sb.append(token);
+                    break;
+                case "+":
+                case "-":
+                    if (sb.lastChar() != ' ' && sb.lastChar() != '(' && sb.lastChar() != '[') {
+                        sb.append(" ");
+                    }
+                    sb.append(token);
                     sb.append(" ");
-                }
-                sb.append(token);
-                break;
-            case ")":
-            case "]":
-            case ".":
-            case ",":
-            case "@":
-            case "\\":
-            case "--":
-            case "++":
-            case "~":
-            case "~~":
-            case "..":
-                sb.append(token);
-                break;
-            case "#":
-            case "##":
-                if (sb.lastChar() == ',') {
+                    break;
+                default:
                     sb.append(" ");
-                }
-                sb.append(token);
-                break;
-            default:
-                if (sb.lastChar() != ' ' && sb.lastChar() != '(' && sb.lastChar() != '[' && sb.lastChar() != '.' && sb.lastChar() != '#') {
+                    sb.append(token);
                     sb.append(" ");
-                }
-                sb.append(token);
-                break;
+                    break;
+            }
+        }
+        else {
+            if (sb.lastChar() != ' ' && sb.lastChar() != '(' && sb.lastChar() != '[' && sb.lastChar() != '#' && sb.lastChar() != '.') {
+                sb.append(" ");
+            }
+            sb.append(token);
         }
     }
 
     Token nextToken() {
         Token token = stream.nextToken();
-        if ("@".equals(token.getText())) {
+        if ("@".equals(token.getText()) || "@@".equals(token.getText())) {
             Token nextToken = stream.peekNext();
-            if ("@".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
-                token = token.merge(stream.nextToken());
-                nextToken = stream.peekNext();
-            }
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
                 token = token.merge(stream.nextToken());
                 if (nextToken.type == Token.STRING) {
@@ -1030,12 +1056,8 @@ public abstract class Formatter {
 
     Token nextPAsmToken() {
         Token token = stream.nextToken();
-        if ("@".equals(token.getText())) {
+        if ("@".equals(token.getText()) || "@@".equals(token.getText())) {
             Token nextToken = stream.peekNext();
-            if ("@".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
-                token = token.merge(stream.nextToken());
-                nextToken = stream.peekNext();
-            }
             if (".".equals(nextToken.getText()) && token.isAdjacent(nextToken)) {
                 token = token.merge(stream.nextToken());
                 nextToken = stream.peekNext();

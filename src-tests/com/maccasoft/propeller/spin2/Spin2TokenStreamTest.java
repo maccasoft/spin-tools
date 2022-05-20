@@ -141,6 +141,15 @@ class Spin2TokenStreamTest {
     }
 
     @Test
+    void testFloatMultiply() {
+        Spin2TokenStream subject = new Spin2TokenStream("a *. b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("*.", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
     void testMultiplyAssignmentOperator() {
         Spin2TokenStream subject = new Spin2TokenStream("a *= b");
 
@@ -155,6 +164,15 @@ class Spin2TokenStreamTest {
 
         assertEquals("a", subject.nextToken().getText());
         assertEquals("/", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testFloatDivide() {
+        Spin2TokenStream subject = new Spin2TokenStream("a/.b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("/.", subject.nextToken().getText());
         assertEquals("b", subject.nextToken().getText());
     }
 
@@ -231,6 +249,15 @@ class Spin2TokenStreamTest {
     }
 
     @Test
+    void testFloatAdd() {
+        Spin2TokenStream subject = new Spin2TokenStream("a+.b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("+.", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
     void testAddAssignmentOperator() {
         Spin2TokenStream subject = new Spin2TokenStream("a += b");
 
@@ -245,6 +272,15 @@ class Spin2TokenStreamTest {
 
         assertEquals("a", subject.nextToken().getText());
         assertEquals("-", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testFloatSubtract() {
+        Spin2TokenStream subject = new Spin2TokenStream("a -. b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("-.", subject.nextToken().getText());
         assertEquals("b", subject.nextToken().getText());
     }
 
@@ -303,6 +339,15 @@ class Spin2TokenStreamTest {
     }
 
     @Test
+    void testFloatLessThanOperator() {
+        Spin2TokenStream subject = new Spin2TokenStream("a <. b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("<.", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
     void testUnsignedLessThanOperator() {
         Spin2TokenStream subject = new Spin2TokenStream("a +< b");
 
@@ -317,6 +362,15 @@ class Spin2TokenStreamTest {
 
         assertEquals("a", subject.nextToken().getText());
         assertEquals("<=", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testFloatLessThanOrEqualOperator() {
+        Spin2TokenStream subject = new Spin2TokenStream("a <=. b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("<=.", subject.nextToken().getText());
         assertEquals("b", subject.nextToken().getText());
     }
 
@@ -339,6 +393,15 @@ class Spin2TokenStreamTest {
     }
 
     @Test
+    void testFloatEqualOperator() {
+        Spin2TokenStream subject = new Spin2TokenStream("a ==. b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("==.", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
     void testNotEqualOperator() {
         Spin2TokenStream subject = new Spin2TokenStream("a <> b");
 
@@ -348,11 +411,29 @@ class Spin2TokenStreamTest {
     }
 
     @Test
+    void testFloatNotEqualOperator() {
+        Spin2TokenStream subject = new Spin2TokenStream("a <>. b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals("<>.", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
     void testGreaterThanOperator() {
         Spin2TokenStream subject = new Spin2TokenStream("a > b");
 
         assertEquals("a", subject.nextToken().getText());
         assertEquals(">", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testFloatGreaterThanOperator() {
+        Spin2TokenStream subject = new Spin2TokenStream("a >. b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals(">.", subject.nextToken().getText());
         assertEquals("b", subject.nextToken().getText());
     }
 
@@ -371,6 +452,15 @@ class Spin2TokenStreamTest {
 
         assertEquals("a", subject.nextToken().getText());
         assertEquals(">=", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
+    }
+
+    @Test
+    void testFloatGreaterThanOrEqualOperator() {
+        Spin2TokenStream subject = new Spin2TokenStream("a >=. b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals(">=.", subject.nextToken().getText());
         assertEquals("b", subject.nextToken().getText());
     }
 
@@ -533,6 +623,14 @@ class Spin2TokenStreamTest {
     }
 
     @Test
+    void testAbsoluteAddress() {
+        Spin2TokenStream subject = new Spin2TokenStream("@@a");
+
+        assertEquals("@@", subject.nextToken().getText());
+        assertEquals("a", subject.nextToken().getText());
+    }
+
+    @Test
     void testAbsolute() {
         Spin2TokenStream subject = new Spin2TokenStream("#\\a");
 
@@ -618,6 +716,16 @@ class Spin2TokenStreamTest {
         Spin2TokenStream subject = new Spin2TokenStream("1e-2");
 
         assertEquals("1e-2", subject.nextToken().getText());
+    }
+
+    @Test
+    void testContiguosOperators() {
+        Spin2TokenStream subject = new Spin2TokenStream("a:=++b");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals(":=", subject.nextToken().getText());
+        assertEquals("++", subject.nextToken().getText());
+        assertEquals("b", subject.nextToken().getText());
     }
 
     @Test

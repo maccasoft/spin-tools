@@ -88,13 +88,7 @@ public class Spin1TokenStream extends TokenStream {
                         state = Token.KEYWORD;
                     }
                     else { // operator
-                        token.type = Token.OPERATOR;
-                        if (ch == '@' || ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == ',' || ch == ';') {
-                            index++;
-                            column++;
-                            return token;
-                        }
-                        state = Token.OPERATOR;
+                        state = token.type = Token.OPERATOR;
                     }
                     break;
                 case Token.COMMENT:
@@ -204,15 +198,79 @@ public class Spin1TokenStream extends TokenStream {
 
                     return token;
                 case Token.OPERATOR:
-                    if (text.charAt(index - 1) == '#') {
-                        if (ch != '>' && ch != '=') {
-                            return token;
+                    if ((token.stop - token.start + 1) == 1) {
+                        char ch0 = text.charAt(token.start);
+                        if (ch0 == '#' && (ch == '>')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '%' && (ch == '%')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '&' && (ch == '=')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '*' && (ch == '*' || ch == '=')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '+' && (ch == '+' || ch == '=')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '-' && (ch == '-' || ch == '=' || ch == '>')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '.' && (ch == '.')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '/' && (ch == '/' || ch == '=')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == ':' && (ch == '=')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '<' && (ch == '#' || ch == '-' || ch == '<' || ch == '=' || ch == '>')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '=' && (ch == '<' || ch == '=' || ch == '>')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '>' && (ch == '<' || ch == '=' || ch == '>' || ch == '|')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '@' && (ch == '@')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '^' && (ch == '=' || ch == '^')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '|' && (ch == '<' || ch == '=' || ch == '|')) {
+                            token.stop++;
+                            break;
+                        }
+                        if (ch0 == '~' && (ch == '>' || ch == '~')) {
+                            token.stop++;
+                            break;
                         }
                     }
-                    if (ch == '|' || ch == '!' || ch == '=' || ch == '^' || ch == '+' || ch == '*' || ch == '-' || ch == '/' || ch == '#' || ch == ':' || ch == '>' || ch == '<' || ch == '.'
-                        || ch == '~') {
-                        token.stop++;
-                        break;
+                    else if ((token.stop - token.start + 1) == 2) {
+                        if (ch == '=') {
+                            token.stop++;
+                            index++;
+                            column++;
+                        }
                     }
                     return token;
             }
