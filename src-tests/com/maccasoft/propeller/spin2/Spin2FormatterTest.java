@@ -500,17 +500,13 @@ class Spin2FormatterTest {
         Formatter subject = new Spin2Formatter();
         String text = subject.format(""
             + "DAT\n"
-            + " asmclk\n"
             + " debug(uhex_long(a),udec(b,c,#d))\n"
             + " debug(\"value = \", udec_(a))\n"
-            + " mov a,#12\n"
             + "");
         Assertions.assertEquals(""
             + "DAT\n"
-            + "                asmclk\n"
             + "                debug(uhex_long(a), udec(b, c, #d))\n"
             + "                debug(\"value = \", udec_(a))\n"
-            + "                mov     a, #12\n"
             + "", text);
     }
 
@@ -538,6 +534,23 @@ class Spin2FormatterTest {
             + "    repeat\n"
             + "        if a <> 0\n"
             + "            a := b\n"
+            + "", text);
+    }
+
+    @Test
+    void testExpressions() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "PUB start()\n"
+            + " a:=++b\n"
+            + " a:=b++\n"
+            + " a:=-(c*2)\n"
+            + "");
+        Assertions.assertEquals(""
+            + "PUB start()\n"
+            + "    a := ++b\n"
+            + "    a := b++\n"
+            + "    a := -(c * 2)\n"
             + "", text);
     }
 

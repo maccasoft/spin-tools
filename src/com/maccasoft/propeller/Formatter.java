@@ -1006,28 +1006,29 @@ public abstract class Formatter {
                     sb.append(token);
                     break;
                 case "\\":
-                    if (sb.lastChar() != ' ') {
+                    if (sb.lastChar() != ' ' && sb.lastChar() != '#') {
                         sb.append(" ");
                     }
                     sb.append(token);
                     break;
                 case "+":
                 case "-":
-                    if (sb.lastChar() != ' ' && sb.lastChar() != '(' && sb.lastChar() != '[') {
+                    if (sb.lastChar() == ' ' || sb.lastChar() == '(' || sb.lastChar() == '[') {
+                        sb.append(token);
+                        break;
+                    }
+                default:
+                    if (sb.lastChar() != ' ') {
                         sb.append(" ");
                     }
-                    sb.append(token);
-                    sb.append(" ");
-                    break;
-                default:
-                    sb.append(" ");
                     sb.append(token);
                     sb.append(" ");
                     break;
             }
         }
         else {
-            if (sb.lastChar() != ' ' && sb.lastChar() != '(' && sb.lastChar() != '[' && sb.lastChar() != '#' && sb.lastChar() != '.') {
+            char lc = sb.lastChar();
+            if (lc != ' ' && lc != '(' && lc != '[' && lc != '#' && lc != '.' && lc != '\\' && lc != '+' && lc != '-' && lc != '~' && lc != '!') {
                 sb.append(" ");
             }
             sb.append(token);
