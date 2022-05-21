@@ -80,7 +80,7 @@ public class Spin1Parser {
                     if (defaultNode == null) {
                         defaultNode = new ConstantsNode(root);
                     }
-                    parseConstant(new Node(defaultNode));
+                    parseConstant(defaultNode);
                 }
             }
         }
@@ -113,7 +113,7 @@ public class Spin1Parser {
         }
 
         while ((token = stream.peekNext()).type != Token.EOF) {
-            parseConstant(new Node(node));
+            parseConstant(node);
             if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                 break;
             }
@@ -243,7 +243,7 @@ public class Spin1Parser {
         }
 
         while ((token = stream.peekNext()).type != Token.EOF) {
-            parseVariable(new Node(node));
+            parseVariable(node);
             if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                 break;
             }
@@ -326,7 +326,7 @@ public class Spin1Parser {
         }
 
         while ((token = stream.peekNext()).type != Token.EOF) {
-            parseObject(new Node(node));
+            parseObject(node);
             if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                 break;
             }

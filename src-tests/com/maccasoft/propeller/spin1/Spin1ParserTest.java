@@ -141,9 +141,8 @@ class Spin1ParserTest {
             + "+-- ConstantsNode [CON]\n"
             + "    +-- ConstantNode identifier=EnableFlow [EnableFlow = 8]\n"
             + "        +-- expression = ExpressionNode [8]\n"
-            + "    +-- Node []\n"
-            + "        +-- ConstantNode identifier=DisableFlow [DisableFlow = 4]\n"
-            + "            +-- expression = ExpressionNode [4]\n"
+            + "    +-- ConstantNode identifier=DisableFlow [DisableFlow = 4]\n"
+            + "        +-- expression = ExpressionNode [4]\n"
             + "", tree(root));
     }
 
@@ -158,13 +157,12 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- ConstantsNode [CON]\n"
-            + "    +-- Node []\n"
-            + "        +-- ConstantNode identifier=x [x = 5]\n"
-            + "            +-- expression = ExpressionNode [5]\n"
-            + "        +-- ConstantNode identifier=y [y = -5]\n"
-            + "            +-- expression = ExpressionNode [-5]\n"
-            + "        +-- ConstantNode identifier=z [z = 1]\n"
-            + "            +-- expression = ExpressionNode [1]\n"
+            + "    +-- ConstantNode identifier=x [x = 5]\n"
+            + "        +-- expression = ExpressionNode [5]\n"
+            + "    +-- ConstantNode identifier=y [y = -5]\n"
+            + "        +-- expression = ExpressionNode [-5]\n"
+            + "    +-- ConstantNode identifier=z [z = 1]\n"
+            + "        +-- expression = ExpressionNode [1]\n"
             + "", tree(root));
     }
 
@@ -198,9 +196,8 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- ConstantsNode [CON]\n"
-            + "    +-- Node []\n"
-            + "        +-- ConstantNode identifier=u [u[2]]\n"
-            + "            +-- multiplier = ExpressionNode [2]\n"
+            + "    +-- ConstantNode identifier=u [u[2]]\n"
+            + "        +-- multiplier = ExpressionNode [2]\n"
             + "", tree(root));
     }
 
@@ -215,12 +212,10 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- ConstantsNode []\n"
-            + "    +-- Node []\n"
-            + "        +-- ConstantNode identifier=EnableFlow [EnableFlow = 8]\n"
-            + "            +-- expression = ExpressionNode [8]\n"
-            + "    +-- Node []\n"
-            + "        +-- ConstantNode identifier=DisableFlow [DisableFlow = 4]\n"
-            + "            +-- expression = ExpressionNode [4]\n"
+            + "    +-- ConstantNode identifier=EnableFlow [EnableFlow = 8]\n"
+            + "        +-- expression = ExpressionNode [8]\n"
+            + "    +-- ConstantNode identifier=DisableFlow [DisableFlow = 4]\n"
+            + "        +-- expression = ExpressionNode [4]\n"
             + "", tree(root));
     }
 
@@ -235,8 +230,7 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- ObjectsNode [OBJ]\n"
-            + "    +-- Node []\n"
-            + "        +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\"]\n"
+            + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\"]\n"
             + "", tree(root));
     }
 
@@ -252,10 +246,8 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- ObjectsNode [OBJ]\n"
-            + "    +-- Node []\n"
-            + "        +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\"]\n"
-            + "    +-- Node []\n"
-            + "        +-- ObjectNode name=obj1 file=\"file1\" [obj1 : \"file1\"]\n"
+            + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\"]\n"
+            + "    +-- ObjectNode name=obj1 file=\"file1\" [obj1 : \"file1\"]\n"
             + "", tree(root));
     }
 
@@ -270,9 +262,8 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- ObjectsNode [OBJ]\n"
-            + "    +-- Node []\n"
-            + "        +-- ObjectNode name=obj0 file=\"file0\" [obj0[10] : \"file0\"]\n"
-            + "            +-- count = ExpressionNode [10]\n"
+            + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0[10] : \"file0\"]\n"
+            + "        +-- count = ExpressionNode [10]\n"
             + "", tree(root));
     }
 
@@ -287,8 +278,7 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- ObjectsNode [OBJ]\n"
-            + "    +-- Node []\n"
-            + "        +-- ObjectNode name=obj0 [obj0 =]\n"
+            + "    +-- ObjectNode name=obj0 [obj0 =]\n"
             + "", tree(root));
     }
 
@@ -303,8 +293,7 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- ObjectsNode [OBJ]\n"
-            + "    +-- Node []\n"
-            + "        +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\" a0]\n"
+            + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\" a0]\n"
             + "", tree(root));
     }
 
@@ -536,8 +525,7 @@ class Spin1ParserTest {
             + "Node []\n"
             + "+-- VariablesNode [VAR]\n"
             + "    +-- VariableNode identifier=a [a]\n"
-            + "    +-- Node []\n"
-            + "        +-- VariableNode identifier=b [b]\n"
+            + "    +-- VariableNode identifier=b [b]\n"
             + "", tree(root));
     }
 
@@ -553,8 +541,7 @@ class Spin1ParserTest {
             + "Node []\n"
             + "+-- VariablesNode [VAR]\n"
             + "    +-- VariableNode type=long identifier=a [long a]\n"
-            + "    +-- Node []\n"
-            + "        +-- VariableNode type=word identifier=b [word b]\n"
+            + "    +-- VariableNode type=word identifier=b [word b]\n"
             + "", tree(root));
     }
 
@@ -572,9 +559,8 @@ class Spin1ParserTest {
             + "    +-- VariableNode type=long identifier=a [long a]\n"
             + "    +-- VariableNode identifier=b [b]\n"
             + "    +-- VariableNode identifier=c [c]\n"
-            + "    +-- Node []\n"
-            + "        +-- VariableNode type=word identifier=d [word d]\n"
-            + "        +-- VariableNode identifier=e [e]\n"
+            + "    +-- VariableNode type=word identifier=d [word d]\n"
+            + "    +-- VariableNode identifier=e [e]\n"
             + "", tree(root));
     }
 
