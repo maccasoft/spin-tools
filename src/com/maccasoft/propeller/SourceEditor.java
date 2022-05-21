@@ -221,13 +221,16 @@ public class SourceEditor {
                         }
                         selection = node;
                         for (Node child : node.getChilds()) {
-                            start = child.getStartToken().start - child.getStartToken().column;
-                            if (offset < start) {
-                                return selection;
-                            }
-                            DataLineNode dataLine = (DataLineNode) child;
-                            if (dataLine.label != null && !dataLine.label.getText().startsWith(".")) {
-                                selection = child;
+                            Token token = child.getStartToken();
+                            if (token != null) {
+                                start = token.start - token.column;
+                                if (offset < start) {
+                                    return selection;
+                                }
+                                DataLineNode dataLine = (DataLineNode) child;
+                                if (dataLine.label != null && !dataLine.label.getText().startsWith(".")) {
+                                    selection = child;
+                                }
                             }
                         }
                     }

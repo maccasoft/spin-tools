@@ -69,9 +69,11 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
             }
         }
 
-        contents = styledText.getText(start + lineOffset, position + lineOffset);
-        if (!contents.startsWith(".") && (e = contents.indexOf('.')) != -1) {
-            start += e + 1;
+        if (position + lineOffset > start + lineOffset) {
+            contents = styledText.getText(start + lineOffset, position + lineOffset);
+            if (!contents.startsWith(".") && (e = contents.indexOf('.')) != -1) {
+                start += e + 1;
+            }
         }
 
         styledText.setSelection(new Point(start + lineOffset, position + lineOffset));
