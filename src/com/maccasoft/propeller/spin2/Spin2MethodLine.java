@@ -181,7 +181,7 @@ public class Spin2MethodLine {
         for (Spin2Bytecode bc : source) {
             if (bc instanceof InlinePAsm) {
                 Spin2PAsmLine line = ((InlinePAsm) bc).getLine();
-                obj.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());
+                obj.writeBytes(line.getScope().getAddress(), false, line.getInstructionObject().getBytes(), line.toString());
             }
             else {
                 obj.writeBytes(bc.getBytes(), bc.toString());

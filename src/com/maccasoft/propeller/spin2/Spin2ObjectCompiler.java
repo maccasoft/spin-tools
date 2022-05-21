@@ -450,13 +450,20 @@ public class Spin2ObjectCompiler {
             }
         }
 
+        hubMode = true;
         for (Spin2PAsmLine line : source) {
             objectAddress = line.getScope().getObjectAddress();
             if (object.getSize() < objectAddress) {
                 object.writeBytes(new byte[objectAddress - object.getSize()], "(filler)");
             }
             try {
-                object.writeBytes(line.getScope().getAddress(), line.getInstructionObject().getBytes(), line.toString());
+                if (line.getInstructionFactory() instanceof Orgh) {
+                    hubMode = true;
+                }
+                if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
+                    hubMode = false;
+                }
+                object.writeBytes(line.getScope().getAddress(), hubMode, line.getInstructionObject().getBytes(), line.toString());
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {

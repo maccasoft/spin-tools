@@ -197,15 +197,18 @@ public abstract class SpinObject {
     public static class PAsmDataObject extends DataObject {
 
         int addr;
+        boolean hubMode;
 
-        public PAsmDataObject(int addr, byte[] bytes, String text) {
+        public PAsmDataObject(int addr, boolean hubMode, byte[] bytes, String text) {
             super(bytes, text);
             this.addr = addr;
+            this.hubMode = hubMode;
         }
 
-        public PAsmDataObject(int addr, byte[] bytes) {
+        public PAsmDataObject(int addr, boolean hubMode, byte[] bytes) {
             super(bytes);
             this.addr = addr;
+            this.hubMode = hubMode;
         }
 
     }
@@ -267,12 +270,22 @@ public abstract class SpinObject {
     }
 
     public void writeBytes(int addr, byte[] bytes) {
-        data.add(new PAsmDataObject(addr, bytes.clone()));
+        data.add(new PAsmDataObject(addr, false, bytes.clone()));
         size += bytes.length;
     }
 
     public void writeBytes(int addr, byte[] bytes, String text) {
-        data.add(new PAsmDataObject(addr, bytes.clone(), text));
+        data.add(new PAsmDataObject(addr, false, bytes.clone(), text));
+        size += bytes.length;
+    }
+
+    public void writeBytes(int addr, boolean hubMode, byte[] bytes) {
+        data.add(new PAsmDataObject(addr, hubMode, bytes.clone()));
+        size += bytes.length;
+    }
+
+    public void writeBytes(int addr, boolean hubMode, byte[] bytes, String text) {
+        data.add(new PAsmDataObject(addr, hubMode, bytes.clone(), text));
         size += bytes.length;
     }
 
@@ -397,9 +410,10 @@ public abstract class SpinObject {
             else if (obj.bytes != null) {
                 if (obj instanceof PAsmDataObject) {
                     int cogAddr = ((PAsmDataObject) obj).addr;
+                    boolean hubMode = ((PAsmDataObject) obj).hubMode;
 
                     ps.print(String.format("%05X %05X ", address + offset, address));
-                    ps.print(cogAddr < 0x400 ? String.format("  %03X", cogAddr) : String.format("%05X", cogAddr));
+                    ps.print(hubMode ? String.format("%05X", cogAddr) : String.format("  %03X", cogAddr));
 
                     int i = 0;
                     while (i < obj.bytes.length) {
@@ -411,9 +425,9 @@ public abstract class SpinObject {
                                 }
                             }
                             ps.println();
-                            cogAddr++;
+                            cogAddr += hubMode ? 4 : 1;
                             ps.print(String.format("%05X %05X ", address + offset, address));
-                            ps.print(cogAddr < 0x400 ? String.format("  %03X", cogAddr) : String.format("%05X", cogAddr));
+                            ps.print(hubMode ? String.format("%05X", cogAddr) : String.format("  %03X", cogAddr));
                         }
                         ps.print(String.format(" %02X", obj.bytes[i++]));
                         address++;
