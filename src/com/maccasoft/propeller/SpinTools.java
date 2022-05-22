@@ -1718,13 +1718,6 @@ public class SpinTools {
                         };
 
                         byte[] image = os.toByteArray();
-
-                        byte sum = 0;
-                        for (int i = 0; i < image.length; i++) {
-                            sum += image[i];
-                        }
-                        image[5] = (byte) (0x14 - sum);
-
                         loader.upload(image, writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY);
 
                     } catch (Exception e) {
