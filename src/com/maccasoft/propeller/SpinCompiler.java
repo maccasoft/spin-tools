@@ -148,7 +148,7 @@ public class SpinCompiler {
                 }
             }
 
-            if (cmd.hasOption('b')) {
+            if (!(cmd.hasOption('r') || cmd.hasOption('f')) || cmd.hasOption('b')) {
                 FileOutputStream os = new FileOutputStream(binaryFile);
                 os.write(binaryData.toByteArray());
                 os.close();
