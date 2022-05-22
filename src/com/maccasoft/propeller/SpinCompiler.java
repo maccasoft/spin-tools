@@ -19,6 +19,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -39,6 +40,8 @@ public class SpinCompiler {
 
     public static final String APP_TITLE = "Spin Tools Compiler";
     public static final String APP_VERSION = SpinTools.APP_VERSION;
+
+    static Pattern unusedMethodPattern = Pattern.compile("(.*)warning : method \"(.*)\" is not used");
 
     static boolean quiet;
 
@@ -63,6 +66,8 @@ public class SpinCompiler {
 
             options.addOption("p", true, "serial port");
             options.addOption("t", false, "enter terminal mode after upload");
+
+            options.addOption("u", false, "suppress unused methods warning");
 
             options.addOption("q", false, "quiet mode");
 
@@ -128,8 +133,13 @@ public class SpinCompiler {
             compiler.setRemoveUnusedMethods(true);
             try {
                 compiler.compile(fileToCompile, binaryData, listingStream);
+
+                boolean filterUnusedMethodWarning = cmd.hasOption('u');
                 for (CompilerException e : compiler.getMessages()) {
-                    println(e);
+                    String msg = e.toString();
+                    if (!filterUnusedMethodWarning || !unusedMethodPattern.matcher(msg).matches()) {
+                        println(e);
+                    }
                 }
             } finally {
                 if (listingStream != null) {
