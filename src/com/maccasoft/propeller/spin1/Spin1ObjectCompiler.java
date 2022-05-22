@@ -1020,6 +1020,9 @@ public class Spin1ObjectCompiler {
             token = child.getToken(0);
             if (token.type == 0) {
                 String identifier = child.getText();
+                if ("result".equals(identifier) || "RESULT".equals(identifier)) {
+                    continue;
+                }
                 Expression expression = localScope.getLocalSymbol(identifier);
                 if (expression instanceof LocalVariable) {
                     logMessage(new CompilerException("symbol '" + identifier + "' already defined", child));
