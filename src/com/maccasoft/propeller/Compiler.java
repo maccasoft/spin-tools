@@ -180,4 +180,5 @@ public abstract class Compiler {
         return null;
     }
 
+    public abstract String getObjectTree();
 }

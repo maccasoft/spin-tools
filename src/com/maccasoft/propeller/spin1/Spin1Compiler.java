@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-22 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -43,6 +43,8 @@ public class Spin1Compiler extends Compiler {
 
     boolean removeUnusedMethods;
     Spin1Preprocessor preprocessor;
+
+    List<String> tree = new ArrayList<String>();
 
     public Spin1Compiler() {
 
@@ -148,12 +150,31 @@ public class Spin1Compiler extends Compiler {
         public ObjectNodeVisitor(String fileName, ListOrderedMap<String, Node> list) {
             this.fileName = fileName;
             this.list = list;
+            tree.add(fileName);
         }
 
         public ObjectNodeVisitor(ObjectNodeVisitor parent, String fileName, ListOrderedMap<String, Node> list) {
             this.parent = parent;
             this.fileName = fileName;
             this.list = list;
+
+            StringBuilder sb = new StringBuilder();
+
+            ObjectNodeVisitor o = parent.parent;
+            while (o != null) {
+                o = o.parent;
+                sb.append("    ");
+            }
+            for (int i = tree.size() - 1; i >= 0; i--) {
+                char[] s = tree.get(i).toCharArray();
+                if (s[sb.length()] != ' ') {
+                    break;
+                }
+                s[sb.length()] = '|';
+                tree.set(i, new String(s));
+            }
+            sb.append("+-- " + fileName);
+            tree.add(sb.toString());
         }
 
         @Override
@@ -320,6 +341,18 @@ public class Spin1Compiler extends Compiler {
     @Override
     public List<CompilerException> getMessages() {
         return messages;
+    }
+
+    @Override
+    public String getObjectTree() {
+        StringBuilder sb = new StringBuilder();
+        tree.forEach((s) -> {
+            if (sb.length() > 0) {
+                sb.append(System.lineSeparator());
+            }
+            sb.append(s);
+        });
+        return sb.toString();
     }
 
 }

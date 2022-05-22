@@ -133,6 +133,7 @@ public class SpinCompiler {
             compiler.setRemoveUnusedMethods(true);
             try {
                 compiler.compile(fileToCompile, binaryData, listingStream);
+                println(compiler.getObjectTree());
 
                 boolean filterUnusedMethodWarning = cmd.hasOption('u');
                 for (CompilerException e : compiler.getMessages()) {
