@@ -43,11 +43,14 @@ public class SpinCompiler {
     static boolean quiet;
 
     public static void main(String[] args) {
+        File binaryFile = null, listingFile = null;
         List<File> libraryPaths = new ArrayList<File>();
 
         try {
             Options options = new Options();
             options.addOption("L", true, "add a directory to the library path");
+
+            options.addOption("o", true, "output file name");
 
             options.addOption(new Option("b", false, "output binary file"));
             options.addOption(new Option("l", false, "output listing file"));
@@ -96,11 +99,23 @@ public class SpinCompiler {
 
             libraryPaths.add(0, fileToCompile.getAbsoluteFile().getParentFile());
 
-            int i = name.lastIndexOf('.');
-            File binaryFile = new File(name.substring(0, i) + ".binary");
-            File listingFile = new File(name.substring(0, i) + ".lst");
+            String outName = name.substring(0, name.lastIndexOf('.'));
+            if (cmd.hasOption('o')) {
+                outName = cmd.getOptionValue('o');
+                binaryFile = new File(outName);
+                if (outName.lastIndexOf('.') != -1) {
+                    listingFile = new File(outName.substring(0, outName.lastIndexOf('.')) + ".lst");
+                }
+            }
 
+            if (binaryFile == null) {
+                binaryFile = new File(outName + ".binary");
+            }
             ByteArrayOutputStream binaryData = new ByteArrayOutputStream();
+
+            if (listingFile == null) {
+                listingFile = new File(outName + ".lst");
+            }
             PrintStream listingStream = cmd.hasOption('l') ? new PrintStream(new FileOutputStream(listingFile)) : null;
 
             println("Compiling...");
