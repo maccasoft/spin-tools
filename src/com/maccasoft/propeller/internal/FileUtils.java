@@ -12,6 +12,7 @@ package com.maccasoft.propeller.internal;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 
 public class FileUtils {
 
@@ -31,6 +32,21 @@ public class FileUtils {
         }
 
         return new String(data).replace("\r\n", "\n").replace("\r", "\n");
+    }
+
+    public static byte[] loadBinaryFromFile(File file) throws Exception {
+        InputStream is = new FileInputStream(file);
+        try {
+            byte[] b = new byte[is.available()];
+            is.read(b);
+            return b;
+        } finally {
+            try {
+                is.close();
+            } catch (Exception e) {
+
+            }
+        }
     }
 
 }

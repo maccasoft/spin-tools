@@ -14,8 +14,6 @@ package com.maccasoft.propeller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -78,7 +76,9 @@ public class EditorTab implements FindReplaceTarget {
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
+
     SpinObject object;
+    String objectTree;
 
     final PropertyChangeListener settingsChangeListener = new PropertyChangeListener() {
 
@@ -179,7 +179,8 @@ public class EditorTab implements FindReplaceTarget {
             File localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
             if (localFile.exists()) {
                 try {
-                    return loadBinaryFromFile(localFile);
+                    dependencies.add(localFile.getAbsolutePath());
+                    return FileUtils.loadBinaryFromFile(localFile);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return null;
@@ -190,7 +191,8 @@ public class EditorTab implements FindReplaceTarget {
                 localFile = new File(searchPaths[i], name);
                 if (localFile.exists()) {
                     try {
-                        return loadBinaryFromFile(localFile);
+                        dependencies.add(localFile.getAbsolutePath());
+                        return FileUtils.loadBinaryFromFile(localFile);
                     } catch (Exception e) {
                         e.printStackTrace();
                         return null;
@@ -333,6 +335,7 @@ public class EditorTab implements FindReplaceTarget {
 
                         try {
                             object = compiler.compile(tabItemText, root);
+                            objectTree = compiler.getObjectTree();
                             errors = compiler.hasErrors();
                         } catch (Exception e) {
                             errors = true;
@@ -639,26 +642,6 @@ public class EditorTab implements FindReplaceTarget {
         return null;
     }
 
-    byte[] loadBinaryFromFile(File file) throws Exception {
-        try {
-            InputStream is = new FileInputStream(file);
-            try {
-                byte[] b = new byte[is.available()];
-                is.read(b);
-                return b;
-            } finally {
-                try {
-                    is.close();
-                } catch (Exception e) {
-
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     public SourceEditor getEditor() {
         return editor;
     }
@@ -834,6 +817,14 @@ public class EditorTab implements FindReplaceTarget {
         //formatter.setIsolateLargeLabels(true);
 
         editor.format(formatter);
+    }
+
+    public Set<String> getDependencies() {
+        return dependencies;
+    }
+
+    public String getObjectTree() {
+        return objectTree;
     }
 
 }

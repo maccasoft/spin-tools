@@ -21,13 +21,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Stack;
 import java.util.function.Consumer;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -632,6 +637,22 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Archive Project...");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handleArchiveProject();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
         item.setText("Preferences");
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1020,6 +1041,104 @@ public class SpinTools {
 
                 editorTab.clearDirty();
                 preferences.addToLru(fileToSave);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void handleArchiveProject() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem != null) {
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+            doArchiveProject(editorTab);
+        }
+    }
+
+    private void doArchiveProject(EditorTab editorTab) {
+        FileDialog dlg = new FileDialog(shell, SWT.SAVE);
+        dlg.setText("Archive Project");
+        String[] filterNames = new String[] {
+            "Archive Files"
+        };
+        String[] filterExtensions = new String[] {
+            "*.zip"
+        };
+        dlg.setFilterNames(filterNames);
+        dlg.setFilterExtensions(filterExtensions);
+
+        Date now = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd", Locale.US);
+        SimpleDateFormat timeFormat = new SimpleDateFormat("kk.mm", Locale.US);
+        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("EEEE, LLLL d, yyyy 'at' kk:mm", Locale.US);
+
+        String rootFileName = editorTab.getText();
+        String archiveName = String.format("%s - Archive [Date %s Time %s].zip",
+            rootFileName.substring(0, rootFileName.lastIndexOf('.')),
+            dateFormat.format(now),
+            timeFormat.format(now));
+
+        dlg.setFileName(archiveName);
+        dlg.setOverwrite(true);
+
+        File filterPath = editorTab.getFile();
+        if (filterPath == null && preferences.getLru().size() != 0) {
+            filterPath = new File(preferences.getLru().get(0));
+        }
+        if (filterPath != null) {
+            dlg.setFilterPath(filterPath.getParent());
+        }
+
+        String fileName = dlg.open();
+        if (fileName != null) {
+            File fileToSave = new File(fileName);
+            try {
+                ZipOutputStream archiveStream = new ZipOutputStream(new FileOutputStream(fileToSave));
+                archiveStream.putNextEntry(new ZipEntry(editorTab.getText()));
+                archiveStream.write(editorTab.getEditorText().getBytes());
+
+                for (String path : editorTab.getDependencies()) {
+                    File file = new File(path);
+                    archiveStream.putNextEntry(new ZipEntry(file.getName()));
+
+                    EditorTab tab = findFileEditorTab(file.getAbsolutePath());
+                    if (tab != null) {
+                        archiveStream.write(tab.getEditorText().getBytes());
+                    }
+                    else {
+                        archiveStream.write(FileUtils.loadBinaryFromFile(file));
+                    }
+                }
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("----------------------------------");
+                sb.append(System.lineSeparator());
+                sb.append("Parallax Propeller Project Archive");
+                sb.append(System.lineSeparator());
+                sb.append("----------------------------------");
+                sb.append(System.lineSeparator());
+
+                sb.append(System.lineSeparator());
+
+                sb.append(" Project : ");
+                sb.append(editorTab.getText());
+                sb.append(System.lineSeparator());
+                sb.append("Archived : ");
+                sb.append(dateTimeFormat.format(now));
+                sb.append(System.lineSeparator());
+                sb.append("    Tool : ");
+                sb.append(APP_TITLE);
+                sb.append(" version ");
+                sb.append(APP_VERSION);
+                sb.append(System.lineSeparator());
+
+                sb.append(System.lineSeparator());
+                sb.append(editorTab.getObjectTree());
+
+                archiveStream.putNextEntry(new ZipEntry("_README_.txt"));
+                archiveStream.write(sb.toString().getBytes());
+
+                archiveStream.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -1496,24 +1615,15 @@ public class SpinTools {
     EditorTab findFileEditorTab(String fileName) {
         for (int i = 0; i < tabFolder.getItemCount(); i++) {
             EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
-            if (editorTab.getFile() != null && editorTab.getFile().getAbsolutePath().equals(fileName)) {
+
+            File localFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText());
+            if (localFile.getAbsolutePath().equals(fileName)) {
                 tabFolder.setSelection(i);
                 editorTab.setFocus();
                 updateCaretPosition();
                 return editorTab;
             }
         }
-
-        for (int i = 0; i < tabFolder.getItemCount(); i++) {
-            EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
-            if (editorTab.getText().equals(fileName)) {
-                tabFolder.setSelection(i);
-                editorTab.setFocus();
-                updateCaretPosition();
-                return editorTab;
-            }
-        }
-
         return null;
     }
 
