@@ -591,8 +591,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
     static Map<String, TokenId> modczOperands = new HashMap<String, TokenId>();
     static {
         modczOperands.put("_CLR", TokenId.PASM_INSTRUCTION);
-        modczOperands.put("_NC_AND_Z", TokenId.PASM_INSTRUCTION);
-        modczOperands.put("_Z_AND_NC", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NC_AND_NZ", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NZ_AND_NC", TokenId.PASM_INSTRUCTION);
         modczOperands.put("_GT", TokenId.PASM_INSTRUCTION);
         modczOperands.put("_NC_AND_Z", TokenId.PASM_INSTRUCTION);
         modczOperands.put("_Z_AND_NC", TokenId.PASM_INSTRUCTION);
@@ -602,10 +602,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         modczOperands.put("_NZ_AND_C", TokenId.PASM_INSTRUCTION);
         modczOperands.put("_NZ", TokenId.PASM_INSTRUCTION);
         modczOperands.put("_NE", TokenId.PASM_INSTRUCTION);
-        modczOperands.put("_C_NE_NZ", TokenId.PASM_INSTRUCTION);
-        modczOperands.put("_NZ_NE_C", TokenId.PASM_INSTRUCTION);
-        modczOperands.put("_C_OR_NZ", TokenId.PASM_INSTRUCTION);
-        modczOperands.put("_NZ_OR_C", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_C_NE_Z", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_Z_NE_C", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NC_OR_NZ", TokenId.PASM_INSTRUCTION);
+        modczOperands.put("_NZ_OR_NC", TokenId.PASM_INSTRUCTION);
         modczOperands.put("_C_AND_Z", TokenId.PASM_INSTRUCTION);
         modczOperands.put("_Z_AND_C", TokenId.PASM_INSTRUCTION);
         modczOperands.put("_C_EQ_Z", TokenId.PASM_INSTRUCTION);
