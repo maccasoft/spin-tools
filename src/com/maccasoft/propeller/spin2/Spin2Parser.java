@@ -817,11 +817,9 @@ public class Spin2Parser {
 
     Token nextToken() {
         Token token = stream.nextToken();
-        if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-            do {
-                root.addComment(token);
-                token = stream.nextToken();
-            } while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT);
+        while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+            root.addComment(token);
+            token = stream.nextToken();
         }
         if (token.type == Token.NL) {
             while (stream.peekNext().type == Token.NL) {
@@ -848,11 +846,9 @@ public class Spin2Parser {
 
     Token nextPAsmToken() {
         Token token = stream.nextToken();
-        if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
-            do {
-                root.addComment(token);
-                token = stream.nextToken();
-            } while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT);
+        while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+            root.addComment(token);
+            token = stream.nextToken();
         }
         if (token.type == Token.NL) {
             while (stream.peekNext().type == Token.NL) {
