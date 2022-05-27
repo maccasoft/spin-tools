@@ -4512,6 +4512,7 @@ class Spin2ObjectCompilerTest {
         Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(scope, childObjects, debugEnabled);
         Spin2Object obj = compiler.compileObject(root);
         if (debugEnabled) {
+            obj.setDebugData(compiler.generateDebugData());
             obj.setDebugger(new Spin2Debugger());
         }
 

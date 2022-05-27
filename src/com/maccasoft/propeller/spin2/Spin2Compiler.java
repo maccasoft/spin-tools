@@ -279,6 +279,11 @@ public class Spin2Compiler extends Compiler {
             }
         }
 
+        if (debugEnabled) {
+            Spin2Object debugObject = objectCompiler.generateDebugData();
+            object.setDebugData(debugObject);
+        }
+
         return object;
 
     }

@@ -512,43 +512,43 @@ public class Spin2ObjectCompiler {
 
         object.setVarSize(varOffset);
 
-        if (debugEnabled) {
-            Spin2Object debugObject = new Spin2Object();
-            debugObject.writeComment("Debug data");
-            WordDataObject sizeWord = debugObject.writeWord(2);
+        return object;
+    }
 
-            int pos = (debugStatements.size() + 1) * 2;
-            List<DataObject> l = new ArrayList<DataObject>();
-            for (Object node : debugStatements) {
-                try {
-                    if (node instanceof Spin2StatementNode) {
-                        byte[] data = debug.compileDebugStatement((Spin2StatementNode) node);
-                        l.add(new DataObject(data));
-                        debugObject.writeWord(pos);
-                        pos += data.length;
-                    }
-                    else if (node instanceof Spin2PAsmDebugLine) {
-                        byte[] data = debug.compilePAsmDebugStatement((Spin2PAsmDebugLine) node);
-                        l.add(new DataObject(data));
-                        debugObject.writeWord(pos);
-                        pos += data.length;
-                    }
-                } catch (CompilerException e) {
-                    logMessage(e);
-                } catch (Exception e) {
-                    logMessage(new CompilerException(e, node));
+    public Spin2Object generateDebugData() {
+        Spin2Object object = new Spin2Object();
+        object.writeComment("Debug data");
+        WordDataObject sizeWord = object.writeWord(2);
+
+        int pos = (debugStatements.size() + 1) * 2;
+        List<DataObject> l = new ArrayList<DataObject>();
+        for (Object node : debugStatements) {
+            try {
+                if (node instanceof Spin2StatementNode) {
+                    byte[] data = debug.compileDebugStatement((Spin2StatementNode) node);
+                    l.add(new DataObject(data));
+                    object.writeWord(pos);
+                    pos += data.length;
                 }
+                else if (node instanceof Spin2PAsmDebugLine) {
+                    byte[] data = debug.compilePAsmDebugStatement((Spin2PAsmDebugLine) node);
+                    l.add(new DataObject(data));
+                    object.writeWord(pos);
+                    pos += data.length;
+                }
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, node));
             }
-            for (DataObject data : l) {
-                debugObject.write(data);
-            }
-            sizeWord.setValue(debugObject.getSize());
+        }
+        for (DataObject data : l) {
+            object.write(data);
+        }
+        sizeWord.setValue(object.getSize());
 
-            if (debugObject.getSize() > 16384) {
-                throw new CompilerException("debug data is too long", null);
-            }
-
-            object.setDebugData(debugObject);
+        if (object.getSize() > 16384) {
+            throw new CompilerException("debug data is too long", null);
         }
 
         return object;
