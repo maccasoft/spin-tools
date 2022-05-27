@@ -769,7 +769,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             if (node.instruction != null) {
                 TokenId id = keywords.get(node.instruction.getText().toUpperCase());
                 if (id == null || id != TokenId.TYPE) {
-                    id = TokenId.PASM_INSTRUCTION;
+                    if (Spin2Model.isPAsmInstruction(node.instruction.getText())) {
+                        id = TokenId.PASM_INSTRUCTION;
+                    }
                 }
                 if ("debug".equalsIgnoreCase(node.instruction.getText())) {
                     id = TokenId.KEYWORD;

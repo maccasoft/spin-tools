@@ -54,10 +54,11 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("BYTEMOVE", TokenId.FUNCTION);
         keywords.put("CASE", TokenId.KEYWORD);
         keywords.put("OTHER", TokenId.KEYWORD);
-        keywords.put("CHIPVER", TokenId.CONSTANT);
-        keywords.put("CHIPFREQ", TokenId.CONSTANT);
-        keywords.put("CLKFREQ", TokenId.CONSTANT);
-        keywords.put("CLKMODE", TokenId.CONSTANT);
+        keywords.put("CHIPVER", TokenId.FUNCTION);
+        keywords.put("CLKFREQ", TokenId.FUNCTION);
+        keywords.put("_CLKFREQ", TokenId.CONSTANT);
+        keywords.put("CLKMODE", TokenId.FUNCTION);
+        keywords.put("_CLKMODE", TokenId.CONSTANT);
         keywords.put("CLKSET", TokenId.FUNCTION);
         keywords.put("COGID", TokenId.FUNCTION);
         keywords.put("COGINIT", TokenId.FUNCTION);
@@ -155,6 +156,9 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
     static Map<String, TokenId> pasmKeywords = new HashMap<String, TokenId>();
     static {
+        pasmKeywords.put("CLKFREQ", TokenId.CONSTANT);
+        pasmKeywords.put("CLKMODE", TokenId.CONSTANT);
+
         pasmKeywords.put("DIRA", TokenId.KEYWORD);
         pasmKeywords.put("DIRB", TokenId.KEYWORD);
         pasmKeywords.put("INA", TokenId.KEYWORD);
@@ -289,7 +293,9 @@ public class Spin1TokenMarker extends SourceTokenMarker {
             if (node.instruction != null) {
                 TokenId id = keywords.get(node.instruction.getText().toUpperCase());
                 if (id == null || id != TokenId.TYPE) {
-                    id = TokenId.PASM_INSTRUCTION;
+                    if (Spin1Model.isPAsmInstruction(node.instruction.getText())) {
+                        id = TokenId.PASM_INSTRUCTION;
+                    }
                 }
                 tokens.add(new TokenMarker(node.instruction, id));
             }
@@ -430,6 +436,9 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                         }
                         if (id == null) {
                             id = compilerSymbols.get(token.getText());
+                        }
+                        if (id == null) {
+                            id = keywords.get(token.getText().toUpperCase());
                         }
                         if (id != null) {
                             if (id == TokenId.CONSTANT && token.getText().contains("#")) {
