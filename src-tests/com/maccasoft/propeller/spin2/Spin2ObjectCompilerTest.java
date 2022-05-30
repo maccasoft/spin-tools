@@ -1922,12 +1922,14 @@ class Spin2ObjectCompilerTest {
             + "\n"
             + "        a := @b\n"
             + "        a := @c\n"
+            + "        a := @b[a]\n"
+            + "        a := @c[a]\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       11 00 00 00    End\n"
+            + "00004 00004       1B 00 00 00    End\n"
             + "' PUB main() | a\n"
             + "00008 00008       04             (stack size)\n"
             + "'         a := @b\n"
@@ -1936,8 +1938,16 @@ class Spin2ObjectCompilerTest {
             + "'         a := @c\n"
             + "0000C 0000C       5D 54 7F       VAR_ADDRESS VBASE+$00054\n"
             + "0000F 0000F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "00010 00010       04             RETURN\n"
-            + "00011 00011       00 00 00       Padding\n"
+            + "'         a := @b[a]\n"
+            + "00010 00010       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00011 00011       60 04 7F       VAR_ADDRESS_INDEXED VBASE+$00004\n"
+            + "00014 00014       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'         a := @c[a]\n"
+            + "00015 00015       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00016 00016       60 54 7F       VAR_ADDRESS_INDEXED VBASE+$00054\n"
+            + "00019 00019       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0001A 0001A       04             RETURN\n"
+            + "0001B 0001B       00             Padding\n"
             + "", compile(text));
     }
 
@@ -1950,12 +1960,14 @@ class Spin2ObjectCompilerTest {
             + "\n"
             + "        a := @@b\n"
             + "        a := @@c\n"
+            + "        a := @@b[a]\n"
+            + "        a := @@c[a]\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       13 00 00 00    End\n"
+            + "00004 00004       1F 00 00 00    End\n"
             + "' PUB main() | a\n"
             + "00008 00008       04             (stack size)\n"
             + "'         a := @@b\n"
@@ -1964,8 +1976,16 @@ class Spin2ObjectCompilerTest {
             + "'         a := @@c\n"
             + "0000D 0000D       5D 54 80 24    VAR_ADDRESS PBASE+VBASE+$00054\n"
             + "00011 00011       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "00012 00012       04             RETURN\n"
-            + "00013 00013       00             Padding\n"
+            + "'         a := @@b[a]\n"
+            + "00012 00012       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00013 00013       60 04 80 24    VAR_ADDRESS_INDEXED PBASE+VBASE+$00004\n"
+            + "00017 00017       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'         a := @@c[a]\n"
+            + "00018 00018       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00019 00019       60 54 80 24    VAR_ADDRESS_INDEXED PBASE+VBASE+$00054\n"
+            + "0001D 0001D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0001E 0001E       04             RETURN\n"
+            + "0001F 0001F       00             Padding\n"
             + "", compile(text));
     }
 
@@ -1976,13 +1996,15 @@ class Spin2ObjectCompilerTest {
             + "\n"
             + "        a := @b\n"
             + "        a := @c\n"
+            + "        a := @b[a]\n"
+            + "        a := @c[a]\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       11 00 00 00    End\n"
+            + "00004 00004       1B 00 00 00    End\n"
             + "' PUB main() | a, b[20], c\n"
             + "00008 00008       58             (stack size)\n"
             + "'         a := @b\n"
@@ -1991,8 +2013,16 @@ class Spin2ObjectCompilerTest {
             + "'         a := @c\n"
             + "0000C 0000C       5E 54 7F       VAR_ADDRESS DBASE+$00054\n"
             + "0000F 0000F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "00010 00010       04             RETURN\n"
-            + "00011 00011       00 00 00       Padding\n"
+            + "'         a := @b[a]\n"
+            + "00010 00010       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00011 00011       61 04 7F       VAR_ADDRESS_INDEXED DBASE+$00004\n"
+            + "00014 00014       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'         a := @c[a]\n"
+            + "00015 00015       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00016 00016       61 54 7F       VAR_ADDRESS_INDEXED DBASE+$00054\n"
+            + "00019 00019       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0001A 0001A       04             RETURN\n"
+            + "0001B 0001B       00             Padding\n"
             + "", compile(text));
     }
 
@@ -2003,13 +2033,15 @@ class Spin2ObjectCompilerTest {
             + "\n"
             + "        a := @@b\n"
             + "        a := @@c\n"
+            + "        a := @@b[a]\n"
+            + "        a := @@c[a]\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       12 00 00 00    End\n"
+            + "00004 00004       1E 00 00 00    End\n"
             + "' PUB main() | a, b[20], c\n"
             + "00008 00008       58             (stack size)\n"
             + "'         a := @@b\n"
@@ -2018,8 +2050,16 @@ class Spin2ObjectCompilerTest {
             + "'         a := @@c\n"
             + "0000C 0000C       5E 54 80 24    VAR_ADDRESS PBASE+DBASE+$00054\n"
             + "00010 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "00011 00011       04             RETURN\n"
-            + "00012 00012       00 00          Padding\n"
+            + "'         a := @@b[a]\n"
+            + "00011 00011       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00012 00012       61 04 80 24    VAR_ADDRESS_INDEXED PBASE+DBASE+$00004\n"
+            + "00016 00016       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'         a := @@c[a]\n"
+            + "00017 00017       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00018 00018       61 54 80 24    VAR_ADDRESS_INDEXED PBASE+DBASE+$00054\n"
+            + "0001C 0001C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0001D 0001D       04             RETURN\n"
+            + "0001E 0001E       00 00          Padding\n"
             + "", compile(text));
     }
 

@@ -2923,6 +2923,9 @@ public class Spin2ObjectCompiler {
                                 } catch (Exception e) {
                                     // Do nothing
                                 }
+                                if (popIndex) {
+                                    source.addAll(compileBytecodeExpression(context, indexNode, true));
+                                }
                             }
 
                             VariableOp.Op op = VariableOp.Op.Address;
