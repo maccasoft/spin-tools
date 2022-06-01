@@ -176,7 +176,10 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         public byte[] getResource(String name) {
-            File localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
+            File localFile = new File(name);
+            if (!localFile.exists()) {
+                localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
+            }
             if (localFile.exists()) {
                 try {
                     dependencies.add(localFile.getAbsolutePath());
