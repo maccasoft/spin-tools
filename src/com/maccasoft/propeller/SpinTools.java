@@ -98,7 +98,7 @@ import jssc.SerialPortException;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools";
-    public static final String APP_VERSION = "0.16";
+    public static final String APP_VERSION = "0.18";
 
     Shell shell;
     SashForm sashForm;
@@ -187,7 +187,7 @@ public class SpinTools {
                 }
             }
             if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
-                EditorTab editorTab = findFileEditorTab(fileToOpen.getAbsolutePath());
+                EditorTab editorTab = findFileEditorTab(fileToOpen);
                 if (editorTab == null) {
                     editorTab = openNewTab(fileToOpen, true);
                 }
@@ -272,7 +272,7 @@ public class SpinTools {
                         if (fileToOpen.isDirectory()) {
                             return;
                         }
-                        EditorTab editorTab = findFileEditorTab(fileToOpen.getAbsolutePath());
+                        EditorTab editorTab = findFileEditorTab(fileToOpen);
                         if (editorTab == null) {
                             openNewTab(fileToOpen, true);
                         }
@@ -1101,7 +1101,7 @@ public class SpinTools {
                     File file = new File(path);
                     archiveStream.putNextEntry(new ZipEntry(file.getName()));
 
-                    EditorTab tab = findFileEditorTab(file.getAbsolutePath());
+                    EditorTab tab = findFileEditorTab(file);
                     if (tab != null) {
                         archiveStream.write(tab.getEditorText().getBytes());
                     }
@@ -1528,7 +1528,7 @@ public class SpinTools {
         EditorTab editorTab = (EditorTab) tabItem.getData();
 
         if (editorTab.hasErrors()) {
-            highlightError(editorTab);
+            editorTab.goToFirstError();
             return;
         }
 
@@ -1585,39 +1585,12 @@ public class SpinTools {
         }
     }
 
-    void highlightError(EditorTab editorTab) {
-        for (CompilerException msg : editorTab.getMessages()) {
-            if (msg.type == CompilerException.ERROR) {
-                EditorTab tab = findFileEditorTab(msg.fileName);
-                if (tab == null) {
-                    File parentFile = editorTab.getFile() != null ? editorTab.getFile().getParentFile() : new File("");
-                    File fileToOpen = new File(parentFile, msg.fileName);
-                    if (!fileToOpen.exists()) {
-                        return;
-                    }
-                    tab = openNewTab(fileToOpen, true);
-                }
-                if (tab != editorTab) {
-                    List<CompilerException> list = new ArrayList<CompilerException>();
-                    for (CompilerException m : editorTab.getMessages()) {
-                        if (tab.getText().equals(m.fileName)) {
-                            list.add(m);
-                        }
-                    }
-                    tab.getEditor().setCompilerMessages(list);
-                }
-                tab.goToFirstError();
-                break;
-            }
-        }
-    }
-
-    EditorTab findFileEditorTab(String fileName) {
+    EditorTab findFileEditorTab(File file) {
         for (int i = 0; i < tabFolder.getItemCount(); i++) {
             EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
 
             File localFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText());
-            if (localFile.getAbsolutePath().equals(fileName)) {
+            if (localFile.equals(file)) {
                 tabFolder.setSelection(i);
                 editorTab.setFocus();
                 updateCaretPosition();
@@ -2010,7 +1983,7 @@ public class SpinTools {
                     SourceLocation currentLocation = getCurrentSourceLocation();
 
                     SourceLocation location = backStack.pop();
-                    EditorTab editorTab = findFileEditorTab(location.name);
+                    EditorTab editorTab = findFileEditorTab(location.file);
                     if (editorTab == null && location.file != null) {
                         editorTab = openNewTab(location.file, true);
                     }
@@ -2051,7 +2024,7 @@ public class SpinTools {
                     SourceLocation currentLocation = getCurrentSourceLocation();
 
                     SourceLocation location = forwardStack.pop();
-                    EditorTab editorTab = findFileEditorTab(location.name);
+                    EditorTab editorTab = findFileEditorTab(location.file);
                     if (editorTab == null && location.file != null) {
                         editorTab = openNewTab(location.file, true);
                     }
@@ -2247,7 +2220,8 @@ public class SpinTools {
         StyledText styledText = editorTab.getEditor().getStyledText();
         int offset = styledText.getCaretOffset();
         int topPixel = styledText.getTopPixel();
-        return new SourceLocation(editorTab.getText(), editorTab.getFile(), offset, topPixel);
+        File localFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText());
+        return new SourceLocation(localFile, offset, topPixel);
     }
 
     static {
