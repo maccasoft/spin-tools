@@ -38,6 +38,7 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
 public class OutlineView {
@@ -106,9 +107,27 @@ public class OutlineView {
                 if (element instanceof ConstantsNode || element instanceof VariablesNode || element instanceof ObjectsNode || element instanceof DataNode) {
                     decorateSectionStart((Node) element, cell);
                 }
+                else if (element instanceof VariableNode) {
+                    VariableNode node = (VariableNode) element;
+                    if (node.type != null) {
+                        appendText(node.type.getText(), typeStyle);
+                    }
+                    if (node.identifier != null) {
+                        if (sb.length() != 0) {
+                            sb.append(" ");
+                        }
+                        sb.append(node.identifier.getText());
+                    }
+                }
                 else if (element instanceof ObjectNode) {
                     ObjectNode node = (ObjectNode) element;
-                    sb.append(node.getText());
+                    if (node.name != null) {
+                        sb.append(node.name.getText());
+                        if (node.file != null) {
+                            sb.append(" : ");
+                            appendText(node.file.getText(), stringStyle);
+                        }
+                    }
                 }
                 else if (element instanceof MethodNode) {
                     decorateMethod((MethodNode) element, cell);
@@ -209,6 +228,8 @@ public class OutlineView {
     TextStyle sectionStyle;
     TextStyle methodLocalStyle;
     TextStyle methodReturnStyle;
+    TextStyle typeStyle;
+    TextStyle stringStyle;
     Font fontBold;
 
     public OutlineView(Composite parent) {
@@ -225,6 +246,8 @@ public class OutlineView {
         sectionStyle = new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null);
         methodLocalStyle = new TextStyle(null, ColorRegistry.getColor(0x80, 0x80, 0x00), null);
         methodReturnStyle = new TextStyle(null, ColorRegistry.getColor(0x90, 0x00, 0x00), null);
+        typeStyle = new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null);
+        stringStyle = new TextStyle(null, ColorRegistry.getColor(0x7E, 0x00, 0x7E), null);
     }
 
     public void setLayoutData(Object layoutData) {
