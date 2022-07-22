@@ -94,6 +94,7 @@ import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
 public class SourceEditor {
@@ -208,6 +209,9 @@ public class SourceEditor {
             Node root = tokenMarker.getRoot();
             if (root != null) {
                 for (Node node : root.getChilds()) {
+                    if (node.getStartToken() == null) {
+                        continue;
+                    }
                     int start = node.getStartToken().start - node.getStartToken().column;
                     if (node instanceof MethodNode) {
                         if (offset < start) {
@@ -612,7 +616,10 @@ public class SourceEditor {
                 }
 
                 String hoverText = hoverHighlightToken.getText();
-                if (hoverText.startsWith("@")) {
+                if (hoverText.startsWith("@@")) {
+                    hoverText = hoverText.substring(2);
+                }
+                else if (hoverText.startsWith("@")) {
                     hoverText = hoverText.substring(1);
                 }
 
@@ -684,7 +691,7 @@ public class SourceEditor {
                         for (Node node : root.getChilds()) {
                             if (node instanceof MethodNode) {
                                 MethodNode method = (MethodNode) node;
-                                if (method.name.getText().equals(hoverToken.getText())) {
+                                if (method.name.getText().equals(hoverText)) {
                                     SourceElement element = new SourceElement(null, method.name.line, method.name.column);
                                     display.asyncExec(new Runnable() {
 
@@ -695,6 +702,40 @@ public class SourceEditor {
 
                                     });
                                     break;
+                                }
+                            }
+                            else if (node instanceof VariablesNode) {
+                                for (Node child : node.getChilds()) {
+                                    VariableNode obj = (VariableNode) child;
+                                    if (obj.identifier != null && obj.identifier.getText().equals(hoverText)) {
+                                        SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
+                                        display.asyncExec(new Runnable() {
+
+                                            @Override
+                                            public void run() {
+                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                            }
+
+                                        });
+                                        break;
+                                    }
+                                }
+                            }
+                            else if (node instanceof DataNode) {
+                                for (Node child : node.getChilds()) {
+                                    DataLineNode obj = (DataLineNode) child;
+                                    if (obj.label != null && obj.label.getText().equals(hoverText)) {
+                                        SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
+                                        display.asyncExec(new Runnable() {
+
+                                            @Override
+                                            public void run() {
+                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                            }
+
+                                        });
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -842,7 +883,7 @@ public class SourceEditor {
                             else {
                                 for (TokenMarker entry : markers) {
                                     if (entry.getStart() == token.start && entry.getStop() == token.stop) {
-                                        if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI) {
+                                        if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI || entry.getId() == TokenId.PASM_LABEL || entry.getId() == TokenId.VARIABLE) {
                                             hoverToken = token;
                                             hoverHighlightToken = token;
                                             break;
@@ -1102,7 +1143,14 @@ public class SourceEditor {
                     }
 
                     if (hoverHighlight && hoverHighlightToken != null) {
-                        Rectangle r = styledText.getTextBounds(hoverHighlightToken.start, hoverHighlightToken.stop);
+                        int start = hoverHighlightToken.start;
+                        if (hoverHighlightToken.getText().startsWith("@@")) {
+                            start += 2;
+                        }
+                        else if (hoverHighlightToken.getText().startsWith("@")) {
+                            start += 1;
+                        }
+                        Rectangle r = styledText.getTextBounds(start, hoverHighlightToken.stop);
                         gc.setForeground(ColorRegistry.getColor(0x00, 0x00, 0x00));
                         gc.drawLine(r.x, r.y + r.height, r.x + r.width, r.y + r.height);
                     }

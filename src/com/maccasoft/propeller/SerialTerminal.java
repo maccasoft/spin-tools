@@ -741,7 +741,7 @@ public class SerialTerminal {
 
     public SerialTerminal() {
         this.serialBaudRate = 115200;
-        this.cursorState = CURSOR_ON | CURSOR_FLASH | CURSOR_BLOCK;
+        this.cursorState = CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
     }
 
     public void open() {
@@ -986,8 +986,10 @@ public class SerialTerminal {
                         for (int x = selectionRectangle.x; x < selectionRectangle.x + selectionRectangle.width; x++) {
                             line.append(screen[y][x].character);
                         }
+                        if (text.length() != 0) {
+                            text.append(System.lineSeparator());
+                        }
                         text.append(line.toString().replaceFirst("\\s++$", ""));
-                        text.append(System.lineSeparator());
                     }
 
                     ImageData imageData = new ImageData(selectionRectangle.width * characterWidth, selectionRectangle.height * characterHeight, 24, new PaletteData(0xff0000, 0x00ff00, 0x0000ff));
@@ -1023,9 +1025,10 @@ public class SerialTerminal {
                             PngImageTransfer.getInstance(),
                             ImageTransfer.getInstance()
                         });
-                    } finally {
-                        clipboard.dispose();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
                     }
+                    clipboard.dispose();
 
                     image.dispose();
                 }

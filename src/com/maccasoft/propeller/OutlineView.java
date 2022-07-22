@@ -31,6 +31,7 @@ import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Composite;
 
 import com.maccasoft.propeller.internal.ColorRegistry;
+import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -64,7 +65,12 @@ public class OutlineView {
 
             if (hasChildren(parentElement)) {
                 for (Node child : ((Node) parentElement).getChilds()) {
-                    if (child instanceof DataLineNode) {
+                    if (child instanceof ConstantNode) {
+                        if (((ConstantNode) child).identifier != null) {
+                            list.add(child);
+                        }
+                    }
+                    else if (child instanceof DataLineNode) {
                         if (((DataLineNode) child).label != null) {
                             if (!((DataLineNode) child).label.getText().startsWith(".")) {
                                 list.add(child);
