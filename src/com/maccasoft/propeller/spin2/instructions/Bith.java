@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -50,6 +51,17 @@ public class Bith extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
+            CompilerException msgs = new CompilerException();
+            if (dst.getInteger() > 0x1FF) {
+                msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
+            }
+            if (src.getInteger() > 0x1FF) {
+                msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+            }
+            if (msgs.hasChilds()) {
+                throw msgs;
+            }
+
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b0100001);
             value = cz.setValue(value, encodeEffect(effect));

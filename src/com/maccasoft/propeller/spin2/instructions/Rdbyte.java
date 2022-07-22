@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -55,6 +56,11 @@ public class Rdbyte extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
+            CompilerException errors = new CompilerException();
+            if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
+                errors.addMessage(new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData()));
+            }
+
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1010110);
             value = cz.setValue(value, encodeEffect(effect));
@@ -63,10 +69,18 @@ public class Rdbyte extends Spin2PAsmInstructionFactory {
                 value = s.setValue(value, encodePtr(src));
             }
             else {
+                if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
+                    errors.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+                }
                 value = i.setBoolean(value, src.isLiteral());
                 value = s.setValue(value, src.getInteger());
             }
             value = d.setValue(value, dst.getInteger());
+
+            if (errors.hasChilds()) {
+                throw errors;
+            }
+
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 

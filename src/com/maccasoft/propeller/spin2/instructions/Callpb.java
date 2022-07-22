@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -68,17 +69,45 @@ public class Callpb extends Spin2PAsmInstructionFactory {
             value = c.setValue(value, 1);
             value = l.setBoolean(value, dst.isLiteral());
             value = i.setBoolean(value, src.isLiteral());
-            value = d.setValue(value, dst.getInteger());
-            int offset = src.isLiteral() ? (src.getInteger() - context.getSymbol("$").getNumber().intValue() - 1) : src.getInteger();
-            value = s.setValue(value, offset);
-            if (dst.isLongLiteral() && src.isLongLiteral()) {
-                return getBytes(encodeAugd(condition, dst.getInteger()), encodeAugs(condition, offset), value);
+
+            if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
+                throw new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData());
             }
+            value = d.setValue(value, dst.getInteger());
+
+            if (src.isLiteral()) {
+                int addr = src.getInteger();
+                int ours = context.getSymbol("$").getNumber().intValue();
+                if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
+                    throw new CompilerException("relative addresses cann't cross between cog and hub domains", src.getExpression().getData());
+                }
+                int offset = addr - ours - 1;
+                if (!src.isLongLiteral() && (offset < -256 || offset > 255)) {
+                    throw new CompilerException("relative offset out of range", src.getExpression().getData());
+                }
+                value = s.setValue(value, offset);
+                if (dst.isLongLiteral() && src.isLongLiteral()) {
+                    return getBytes(encodeAugd(condition, dst.getInteger()), encodeAugs(condition, offset), value);
+                }
+                if (src.isLongLiteral()) {
+                    return getBytes(encodeAugs(condition, offset), value);
+                }
+            }
+            else {
+                if (src.getInteger() > 0x1FF) {
+                    throw new CompilerException("source register cannot exceed $1FF", src.getExpression().getData());
+                }
+                value = s.setValue(value, src.getInteger());
+                if (dst.isLongLiteral() && src.isLongLiteral()) {
+                    return getBytes(encodeAugd(condition, dst.getInteger()), encodeAugs(condition, src.getInteger()), value);
+                }
+                if (src.isLongLiteral()) {
+                    return getBytes(encodeAugs(condition, src.getInteger()), value);
+                }
+            }
+
             if (dst.isLongLiteral()) {
                 return getBytes(encodeAugd(condition, dst.getInteger()), value);
-            }
-            if (src.isLongLiteral()) {
-                return getBytes(encodeAugs(condition, offset), value);
             }
             return getBytes(value);
         }

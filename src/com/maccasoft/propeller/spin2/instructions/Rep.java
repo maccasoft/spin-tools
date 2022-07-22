@@ -45,6 +45,11 @@ public class Rep extends Spin2PAsmInstructionFactory {
             this.src = src;
         }
 
+        @Override
+        public int getSize() {
+            return src.isLongLiteral() ? 8 : 4;
+        }
+
         // EEEE 1100110 1LI DDDDDDDDD SSSSSSSSS
 
         @Override
@@ -70,7 +75,7 @@ public class Rep extends Spin2PAsmInstructionFactory {
             }
 
             value = s.setValue(value, src.getInteger());
-            return getBytes(value);
+            return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 
     }

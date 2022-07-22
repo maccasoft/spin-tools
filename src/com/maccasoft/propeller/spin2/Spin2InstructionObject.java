@@ -247,11 +247,11 @@ public abstract class Spin2InstructionObject {
         value = cz.setValue(value, encodeEffect(effect));
         value = i.setBoolean(value, src.isLiteral());
         if (dst.getInteger() > 0x1FF) {
-            msgs.addMessage(new CompilerException("Destination register cannot exceed $1FF", dst.getExpression().getData()));
+            msgs.addMessage(new CompilerException("destination register cannot exceed $1FF", dst.getExpression().getData()));
         }
         value = d.setValue(value, dst.getInteger());
         if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-            msgs.addMessage(new CompilerException("Source register/constant cannot exceed $1FF", src.getExpression().getData()));
+            msgs.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
         }
         value = s.setValue(value, src.getInteger());
 

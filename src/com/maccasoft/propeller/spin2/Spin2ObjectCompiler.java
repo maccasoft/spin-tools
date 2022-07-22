@@ -500,7 +500,13 @@ public class Spin2ObjectCompiler {
                 methodData.get(index).setValue(value | 0x80000000L);
                 methodData.get(index).setText(
                     String.format("Method %s @ $%05X (%d parameters, %d returns)", method.getLabel(), object.getSize(), method.getParametersCount(), method.getReturnsCount()));
-                method.writeTo(object);
+                try {
+                    method.writeTo(object);
+                } catch (CompilerException e) {
+                    logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, method.getData()));
+                }
                 index++;
             }
             if (index > 0) {
@@ -916,6 +922,10 @@ public class Spin2ObjectCompiler {
             }
             scope = new Spin2Context(scope);
             nested++;
+        }
+
+        if (node.label == null && node.instruction == null) {
+            throw new CompilerException("syntax error", node);
         }
 
         Spin2Context localScope = new Spin2Context(scope);
