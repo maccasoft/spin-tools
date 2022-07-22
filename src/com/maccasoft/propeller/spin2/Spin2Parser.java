@@ -729,7 +729,7 @@ public class Spin2Parser {
 
     void parseDatLine(Node parent) {
         int state = 1;
-        DataLineNode node = new DataLineNode(parent);
+        DataLineNode node = null;
         DataLineNode.ParameterNode parameter = null;
 
         Token token;
@@ -737,9 +737,13 @@ public class Spin2Parser {
             if (token.type == Token.NL) {
                 break;
             }
-            node.addToken(token);
+            if (node != null) {
+                node.addToken(token);
+            }
             switch (state) {
                 case 1:
+                    node = new DataLineNode(parent);
+                    node.addToken(token);
                     if ("debug".equalsIgnoreCase(token.getText())) {
                         node.instruction = token;
                         state = 9;
@@ -755,6 +759,12 @@ public class Spin2Parser {
                         state = 4;
                         break;
                     }
+                    if (Spin2Model.isPAsmModifier(token.getText())) {
+                        node.modifier = new Node(node);
+                        node.modifier.addToken(token);
+                        state = 6;
+                        break;
+                    }
                     node.label = token;
                     state = 2;
                     break;
@@ -764,8 +774,20 @@ public class Spin2Parser {
                         state = 3;
                         break;
                     }
+                    if (Spin2Model.isPAsmModifier(token.getText())) {
+                        node.modifier = new Node(node);
+                        node.modifier.addToken(token);
+                        state = 6;
+                        break;
+                    }
                     // fall-through
                 case 3:
+                    if (Spin2Model.isPAsmModifier(token.getText())) {
+                        node.modifier = new Node(node);
+                        node.modifier.addToken(token);
+                        state = 6;
+                        break;
+                    }
                     node.instruction = token;
                     state = "debug".equalsIgnoreCase(token.getText()) ? 9 : 4;
                     break;

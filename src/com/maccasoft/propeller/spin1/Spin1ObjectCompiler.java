@@ -789,6 +789,9 @@ public class Spin1ObjectCompiler {
             if (node.getTokenCount() == 0) {
                 continue;
             }
+            if (node.label == null && node.instruction == null) {
+                throw new CompilerException("syntax error", node);
+            }
 
             String label = node.label != null ? node.label.getText() : null;
             String condition = node.condition != null ? node.condition.getText() : null;
