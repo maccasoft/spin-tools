@@ -26,7 +26,7 @@ class Spin2ExpressionBuilderTest {
         String text = "1 + 2 * 3";
         Expression expression = parse(text);
         Assertions.assertEquals(text, expression.toString());
-        Assertions.assertEquals(new Long(7), expression.getNumber());
+        Assertions.assertEquals(Long.valueOf(7), expression.getNumber());
     }
 
     @Test
@@ -34,7 +34,7 @@ class Spin2ExpressionBuilderTest {
         String text = "16 / 2 / 2";
         Expression expression = parse(text);
         Assertions.assertEquals(text, expression.toString());
-        Assertions.assertEquals(new Long(4), expression.getNumber());
+        Assertions.assertEquals(Long.valueOf(4), expression.getNumber());
     }
 
     @Test

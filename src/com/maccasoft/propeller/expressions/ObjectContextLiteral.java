@@ -15,7 +15,7 @@ public class ObjectContextLiteral extends Literal {
 
     @Override
     public Number getNumber() {
-        return new Long(context.getObjectAddress());
+        return Long.valueOf(context.getObjectAddress());
     }
 
     @Override
