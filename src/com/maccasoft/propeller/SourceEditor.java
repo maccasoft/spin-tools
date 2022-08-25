@@ -385,6 +385,17 @@ public class SourceEditor {
                     case ST.PASTE:
                         SourceEditor.this.paste();
                         break;
+                    case ST.TOGGLE_OVERWRITE:
+                        if (styledText.getCaret() == insertCaret) {
+                            overwriteCaret.setLocation(styledText.getCaret().getLocation());
+                            styledText.setCaret(overwriteCaret);
+                        }
+                        else {
+                            insertCaret.setLocation(styledText.getCaret().getLocation());
+                            styledText.setCaret(insertCaret);
+                        }
+                        super.invokeAction(action);
+                        break;
                     default:
                         super.invokeAction(action);
                 }
@@ -503,9 +514,6 @@ public class SourceEditor {
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.keyCode == SWT.INSERT && e.stateMask == 0) {
-                    styledText.setCaret(styledText.getCaret() == insertCaret ? overwriteCaret : insertCaret);
-                }
                 if (e.keyCode == SWT.CTRL) {
                     if (hoverToken != null) {
                         styledText.setCursor(display.getSystemCursor(SWT.CURSOR_HAND));
