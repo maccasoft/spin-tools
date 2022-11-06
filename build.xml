@@ -17,8 +17,7 @@
         classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar" />
 
     <taskdef name="bundleapp"
-        classname="com.oracle.appbundler.AppBundlerTask"
-        classpath="build/macosx/appbundler-1.0.jar" />
+        classname="com.oracle.appbundler.AppBundlerTask" />
 
     <target name="build">
         <antcall target="build-linux64" />
