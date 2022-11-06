@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -61,6 +62,9 @@ public class Wmlong extends Spin2PAsmInstructionFactory {
                 value = s.setValue(value, encodePtr(src));
             }
             else {
+                if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
+                    throw new CompilerException("Source constant cannot exceed $FF", src.getExpression().getData());
+                }
                 value = i.setBoolean(value, src.isLiteral());
                 value = s.setValue(value, src.getInteger());
             }

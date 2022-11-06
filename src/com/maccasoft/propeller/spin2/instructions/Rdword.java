@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -59,10 +60,13 @@ public class Rdword extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1010111);
             value = cz.setValue(value, encodeEffect(effect));
             if (isPtr(src)) {
-                value = i.setValue(value, 1);
+                value = i.setBoolean(value, true);
                 value = s.setValue(value, encodePtr(src));
             }
             else {
+                if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
+                    throw new CompilerException("Source constant cannot exceed $FF", src.getExpression().getData());
+                }
                 value = i.setBoolean(value, src.isLiteral());
                 value = s.setValue(value, src.getInteger());
             }

@@ -70,10 +70,10 @@ public class Wrlut extends Spin2PAsmInstructionFactory {
                 value = s.setValue(value, encodePtr(src));
             }
             else {
-                value = i.setBoolean(value, src.isLiteral());
-                if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                    throw new CompilerException("Source register/constant cannot exceed $1FF", src.getExpression().getData());
+                if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
+                    throw new CompilerException("Source constant cannot exceed $FF", src.getExpression().getData());
                 }
+                value = i.setBoolean(value, src.isLiteral());
                 value = s.setValue(value, src.getInteger());
             }
             if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {

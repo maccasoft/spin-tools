@@ -65,12 +65,12 @@ public class Rdlong extends Spin2PAsmInstructionFactory {
             value = o.setValue(value, 0b1011000);
             value = cz.setValue(value, encodeEffect(effect));
             if (isPtr(src)) {
-                value = i.setValue(value, 1);
+                value = i.setBoolean(value, true);
                 value = s.setValue(value, encodePtr(src));
             }
             else {
-                if (!src.isLongLiteral() && src.getInteger() > 0x1FF) {
-                    errors.addMessage(new CompilerException("source register/constant cannot exceed $1FF", src.getExpression().getData()));
+                if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
+                    throw new CompilerException("Source constant cannot exceed $FF", src.getExpression().getData());
                 }
                 value = i.setBoolean(value, src.isLiteral());
                 value = s.setValue(value, src.getInteger());
