@@ -26,6 +26,54 @@
         <antcall target="build-macosx" />
     </target>
 
+    <target name="test">
+        <delete dir="${work}" includeemptydirs="true" />
+
+        <mkdir dir="${work}/bin" />
+        <javac target="11" source="11" destdir="${work}/bin" srcdir="src" debug="true" includeantruntime="false">
+            <classpath refid="lib.path.ref" />
+            <classpath>
+                <pathelement location="lib/org.eclipse.swt.gtk.linux.x86_64_3.120.0.v20220530-1036.jar" />
+            </classpath>
+        </javac>
+        <mkdir dir="${work}/bin-tests" />
+        <javac target="11" source="11" destdir="${work}/bin" srcdir="src-tests" debug="true" includeantruntime="false">
+            <classpath refid="lib.path.ref" />
+            <classpath refid="junit.path.ref" />
+            <classpath>
+                <pathelement location="lib/org.eclipse.swt.gtk.linux.x86_64_3.120.0.v20220530-1036.jar" />
+            </classpath>
+        </javac>
+
+        <copy todir="${work}/bin">
+            <fileset dir="src">
+                <exclude name="**/*.java" />
+            </fileset>
+            <fileset dir="src-tests">
+                <exclude name="**/*.java" />
+            </fileset>
+        </copy>
+
+        <mkdir dir="${work}/test-results" />
+        <junitlauncher haltOnFailure="false" printsummary="true">
+            <classpath refid="lib.path.ref" />
+            <classpath refid="junit.path.ref" />
+            <classpath>
+                <pathelement location="lib/org.eclipse.swt.gtk.linux.x86_64_3.120.0.v20220530-1036.jar" />
+            </classpath>
+            <classpath>
+                <pathelement location="${work}/bin"/>
+            </classpath>
+
+            <testclasses outputdir="${work}/test-results">
+                <fileset dir="${work}/bin">
+                    <include name="**/*Test.class"/>
+                </fileset>
+                <listener type="legacy-xml"/>
+            </testclasses>
+        </junitlauncher>
+    </target>
+
     <!-- Linux x86/64 -->
     <target name="build-linux64">
         <delete dir="${work}" includeemptydirs="true" />
@@ -113,7 +161,7 @@
     <target name="build-macosx">
         <delete dir="${work}" includeemptydirs="true"/>
         <mkdir dir="${work}/${folder}" />
-        
+
         <mkdir dir="${work}/bin" />
         <javac target="11" source="11" destdir="${work}/bin" srcdir="src" debug="true" includeantruntime="false">
             <classpath refid="lib.path.ref"/>
@@ -121,10 +169,10 @@
                 <pathelement location="lib/org.eclipse.swt.cocoa.macosx.x86_64_3.120.0.v20220530-1036.jar"/>
             </classpath>
         </javac>
-        
+
         <antcall target="copy-common-files" />
         <copy todir="${work}/${folder}/lib" file="lib/org.eclipse.swt.cocoa.macosx.x86_64_3.120.0.v20220530-1036.jar"/>
-        
+
         <bundleapp
             outputdirectory="${work}"
             name="${mac-folder}"
@@ -136,20 +184,20 @@
             copyright="Marco Maccaferri"
             applicationCategory="public.app-category.developer-tools"
             mainclassname="${main-class}">
-        
+
             <classpath file="${work}/${folder}/lib/*.jar"/>
-        
+
             <option value="-DAPP_DIR=$APP_ROOT/Contents/Java"/>
             <option value="-Dcom.apple.macos.useScreenMenuBar=true"/>
             <option value="-Xms128M"/>
             <option value="-Xmx512M"/>
             <option value="-XstartOnFirstThread"/>
         </bundleapp>
-        
+
         <copy todir="${work}/${mac-folder}.app/Contents/Java" includeemptydirs="false">
             <fileset dir="${work}/${folder}" excludes="**/*.jar" />
         </copy>
-        
+
         <exec executable="tar" dir="${work}" failonerror="true">
             <arg value="czf"/>
             <arg value="../${package}-macosx-${version}.tar.gz"/>
@@ -173,6 +221,23 @@
         <pathelement location="lib/commons-lang3-3.12.0.jar" />
         <pathelement location="lib/commons-collections4-4.4.jar" />
         <pathelement location="lib/commons-cli-1.5.0.jar" />
+    </path>
+
+    <path id="junit.path.ref">
+        <pathelement location="/usr/share/java/junit-jupiter-api.jar" />
+        <pathelement location="/usr/share/java/junit-jupiter-engine.jar" />
+        <pathelement location="/usr/share/java/junit-jupiter-migrationsupport.jar" />
+        <pathelement location="/usr/share/java/junit-jupiter-params.jar" />
+        <pathelement location="/usr/share/java/junit-platform-commons.jar" />
+        <pathelement location="/usr/share/java/junit-platform-engine.jar" />
+        <pathelement location="/usr/share/java/junit-platform-launcher.jar" />
+        <pathelement location="/usr/share/java/junit-platform-runner.jar" />
+        <pathelement location="/usr/share/java/junit-platform-suite-api.jar" />
+        <pathelement location="/usr/share/java/junit-vintage-engine.jar" />
+        <pathelement location="/usr/share/java/opentest4j.jar" />
+        <pathelement location="/usr/share/java/apiguardian-api.jar" />
+        <pathelement location="/usr/share/java/junit4.jar" />
+        <pathelement location="/usr/share/java/hamcrest-core.jar" />
     </path>
 
     <target name="copy-common-files">
