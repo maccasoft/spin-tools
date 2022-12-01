@@ -750,7 +750,6 @@ public class SourceEditor {
                     }
                 }
                 hoverToken = hoverHighlightToken = null;
-                hoverHighlight = false;
                 styledText.setCursor(null);
                 styledText.redraw();
             }
@@ -841,6 +840,7 @@ public class SourceEditor {
                     return;
                 }
 
+                hoverHighlight = (e.stateMask & SWT.CTRL) != 0;
                 hoverToken = hoverHighlightToken = null;
 
                 if (hoverHighlight) {
@@ -853,8 +853,12 @@ public class SourceEditor {
                         }
                     }
                     else if (context instanceof DataLineNode) {
-                        hoverToken = tokenMarker.getTokenAt(offset);
-                        hoverHighlightToken = hoverToken;
+                        DataLineNode node = (DataLineNode) context;
+                        Token token = tokenMarker.getTokenAt(offset);
+                        if (token != node.label && token != node.condition && token != node.instruction && token.type == 0) {
+                            hoverToken = tokenMarker.getTokenAt(offset);
+                            hoverHighlightToken = hoverToken;
+                        }
                     }
                     else if (context instanceof StatementNode) {
                         Token token = tokenMarker.getTokenAt(offset);
@@ -940,7 +944,7 @@ public class SourceEditor {
                 Rectangle bounds = display.map(styledText, null, styledText.getTextBounds(token.start, token.stop));
 
                 if (marker != null && marker.getError() != null) {
-                    popupWindow = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
+                    popupWindow = new Shell(styledText.getShell(), SWT.RESIZE | SWT.ON_TOP);
                     FillLayout layout = new FillLayout();
                     layout.marginHeight = layout.marginWidth = 5;
                     popupWindow.setLayout(layout);
@@ -951,8 +955,7 @@ public class SourceEditor {
                     Point size = popupWindow.getSize();
                     popupWindow.setLocation(bounds.x, bounds.y - size.y - 3);
 
-                    popupWindow.open();
-                    styledText.forceFocus();
+                    popupWindow.setVisible(true);
                     return;
                 }
 
@@ -962,7 +965,7 @@ public class SourceEditor {
                         text = tokenMarker.getMethod(token.getText());
                     }
                     if (text != null && !"".equals(text)) {
-                        popupWindow = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
+                        popupWindow = new Shell(styledText.getShell(), SWT.RESIZE | SWT.ON_TOP);
                         FillLayout layout = new FillLayout();
                         layout.marginHeight = layout.marginWidth = 0;
                         popupWindow.setLayout(layout);
@@ -984,10 +987,9 @@ public class SourceEditor {
                         if (bounds.height < 240) {
                             bounds.height = 240;
                         }
-
                         popupWindow.setBounds(bounds);
-                        popupWindow.open();
-                        styledText.forceFocus();
+
+                        popupWindow.setVisible(true);
                     }
                 }
 
