@@ -3,30 +3,26 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11">
 		<attributes>
 			<attribute name="module" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" output="bin-tests" path="src-tests">
+	<classpathentry kind="src" output="target/classes" path="src">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" output="target/test-classes" path="src-tests">
 		<attributes>
 			<attribute name="test" value="true"/>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5"/>
-	<classpathentry kind="lib" path="lib/commons-lang3-3.12.0.jar" sourcepath="lib/commons-lang3-3.12.0-sources.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.core.commands_3.10.200.v20220512-0851.jar" sourcepath="lib/org.eclipse.core.commands.source_3.10.200.v20220512-0851.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.core.databinding_1.11.0.v20220118-1028.jar" sourcepath="lib/org.eclipse.core.databinding.source_1.11.0.v20220118-1028.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.core.databinding.beans_1.8.0.v20210619-1111.jar" sourcepath="lib/org.eclipse.core.databinding.beans.source_1.8.0.v20210619-1111.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.core.databinding.observable_1.12.0.v20211231-1006.jar" sourcepath="lib/org.eclipse.core.databinding.observable.source_1.12.0.v20211231-1006.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.core.databinding.property_1.9.0.v20210619-1129.jar" sourcepath="lib/org.eclipse.core.databinding.property.source_1.9.0.v20210619-1129.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.equinox.common_3.16.100.v20220315-2327.jar" sourcepath="lib/org.eclipse.equinox.common.source_3.16.100.v20220315-2327.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.jface_3.26.0.v20220513-0449.jar" sourcepath="lib/org.eclipse.jface.source_3.26.0.v20220513-0449.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.jface.databinding_1.13.0.v20210619-1146.jar" sourcepath="lib/org.eclipse.jface.databinding.source_1.13.0.v20210619-1146.jar"/>
-	<classpathentry kind="lib" path="lib/org.eclipse.swt.gtk.linux.x86_64_3.120.0.v20220530-1036.jar" sourcepath="lib/org.eclipse.swt.gtk.linux.x86_64.source_3.120.0.v20220530-1036.jar"/>
-	<classpathentry kind="lib" path="lib/jssc-2.9.4.jar" sourcepath="lib/jssc-2.9.4-sources.jar"/>
-	<classpathentry kind="lib" path="lib/jackson-annotations-2.7.0.jar"/>
-	<classpathentry kind="lib" path="lib/jackson-core-2.7.0.jar"/>
-	<classpathentry kind="lib" path="lib/jackson-databind-2.7.0.jar"/>
-	<classpathentry kind="lib" path="lib/commons-collections4-4.4.jar" sourcepath="lib/commons-collections4-4.4-sources.jar"/>
-	<classpathentry kind="lib" path="lib/commons-cli-1.5.0.jar" sourcepath="lib/commons-cli-1.5.0-sources.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>

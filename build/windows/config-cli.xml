@@ -1,32 +1,32 @@
 <launch4jConfig>
-  <dontWrapJar>true</dontWrapJar>
-  <headerType>console</headerType>
-  <outfile>spinc.exe</outfile>
-  <errTitle>Spin Tools Compiler</errTitle>
-  <downloadUrl>http://www.oracle.com/technetwork/java/javase/downloads/index.html</downloadUrl>
-  <classPath>
-    <mainClass>com.maccasoft.propeller.SpinCompiler</mainClass>
-    <cp>%EXEDIR%/lib/*.jar</cp>
-  </classPath>
-  <jre>
-    <path>java</path>
-    <minVersion>1.8.0</minVersion>
-    <runtimeBits>64</runtimeBits>
-    <opt>-DAPP_DIR="%EXEDIR%"</opt>
-  </jre>
-  <versionInfo>
-    <fileDescription>Spin Tools Command-line Compiler</fileDescription>
-    <copyright>Marco Maccaferri</copyright>
-    <productName>Spin Tools Compiler</productName>
-    <companyName>Marco Maccaferri</companyName>
-    <internalName>spinc</internalName>
-    <originalFilename>spinc.exe</originalFilename>
-  </versionInfo>
-  <messages>
-    <startupErr>An error occurred while starting the application.</startupErr>
-    <bundledJreErr>This application was configured to use a bundled Java Runtime Environment but the runtime is missing or corrupted.</bundledJreErr>
-    <jreVersionErr>This application requires at least Java Development Kit</jreVersionErr>
-    <launcherErr>The registry refers to a nonexistent Java Development Kit installation or the runtime is corrupted.</launcherErr>
-    <instanceAlreadyExistsMsg>An application instance is already running.</instanceAlreadyExistsMsg>
-  </messages>
+    <dontWrapJar>true</dontWrapJar>
+    <headerType>console</headerType>
+    <outfile>spinc.exe</outfile>
+    <errTitle>Spin Tools Compiler</errTitle>
+    <downloadUrl>http://www.oracle.com/technetwork/java/javase/downloads/index.html</downloadUrl>
+    <classPath>
+        <mainClass>com.maccasoft.propeller.SpinCompiler</mainClass>
+        <cp>%EXEDIR%/lib/*.jar</cp>
+    </classPath>
+    <jre>
+        <path>java</path>
+        <minVersion>1.8.0</minVersion>
+        <runtimeBits>64</runtimeBits>
+        <opt>-DAPP_DIR="%EXEDIR%"</opt>
+    </jre>
+    <versionInfo>
+        <fileDescription>Spin Tools Command-line Compiler</fileDescription>
+        <copyright>Marco Maccaferri</copyright>
+        <productName>Spin Tools Compiler</productName>
+        <companyName>Marco Maccaferri</companyName>
+        <internalName>spinc</internalName>
+        <originalFilename>spinc.exe</originalFilename>
+    </versionInfo>
+    <messages>
+        <startupErr>An error occurred while starting the application.</startupErr>
+        <bundledJreErr>This application was configured to use a bundled Java Runtime Environment but the runtime is missing or corrupted.</bundledJreErr>
+        <jreVersionErr>This application requires at least Java Development Kit</jreVersionErr>
+        <launcherErr>The registry refers to a nonexistent Java Development Kit installation or the runtime is corrupted.</launcherErr>
+        <instanceAlreadyExistsMsg>An application instance is already running.</instanceAlreadyExistsMsg>
+    </messages>
 </launch4jConfig>
