@@ -1800,13 +1800,15 @@ public class Spin1ObjectCompiler {
     }
 
     List<Spin1Bytecode> compileConstantExpression(Spin1Context context, Spin1StatementNode node) {
-        try {
-            Expression expression = buildConstantExpression(context, node);
-            if (expression.isConstant()) {
-                return Collections.singletonList(new Constant(context, expression));
-            }
-        } catch (Exception e) {
+        if (!Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY) {
+            try {
+                Expression expression = buildConstantExpression(context, node);
+                if (expression.isConstant()) {
+                    return Collections.singletonList(new Constant(context, expression));
+                }
+            } catch (Exception e) {
 
+            }
         }
         return compileBytecodeExpression(context, node, true);
     }
