@@ -47,6 +47,18 @@ class Spin1TreeBuilderTest {
     }
 
     @Test
+    public void testAssignmentsChain() throws Exception {
+        String text = "a := b := c";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [:=]\n"
+            + "      +-- [b]\n"
+            + "      +-- [c]\n"
+            + "", parse(text));
+    }
+
+    @Test
     void testGroupOperatorPrecedence() {
         String text = "(1 + 2) * 3";
         Assertions.assertEquals(""
@@ -510,6 +522,77 @@ class Spin1TreeBuilderTest {
             + "           +-- [a]\n"
             + "           +-- [b]\n"
             + " +-- [1]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testRotateAssign() {
+        String text = "dira[a] := b <-= 1";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [dira]\n"
+            + "      +-- [a]\n"
+            + " +-- [<-=]\n"
+            + "      +-- [b]\n"
+            + "      +-- [1]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testAddAssign() {
+        String text = "dira[a] := b += 1";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [dira]\n"
+            + "      +-- [a]\n"
+            + " +-- [+=]\n"
+            + "      +-- [b]\n"
+            + "      +-- [1]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    public void testAssignmentPriority() throws Exception {
+        String text = "exponent += result := 13";
+        Assertions.assertEquals(""
+            + "[+=]\n"
+            + " +-- [exponent]\n"
+            + " +-- [:=]\n"
+            + "      +-- [result]\n"
+            + "      +-- [13]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testComplexPriority() {
+        String text = "mask_value := |<xpin + |<ypin";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [mask_value]\n"
+            + " +-- [+]\n"
+            + "      +-- [|<]\n"
+            + "           +-- [xpin]\n"
+            + "      +-- [|<]\n"
+            + "           +-- [ypin]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testActual() {
+        String text = "waitcnt(((clkfreq / 1_000 * msecs - 3932) #> WMIN) + cnt)";
+        Assertions.assertEquals(""
+            + "[waitcnt]\n"
+            + " +-- [+]\n"
+            + "      +-- [#>]\n"
+            + "           +-- [-]\n"
+            + "                +-- [*]\n"
+            + "                     +-- [/]\n"
+            + "                          +-- [clkfreq]\n"
+            + "                          +-- [1_000]\n"
+            + "                     +-- [msecs]\n"
+            + "                +-- [3932]\n"
+            + "           +-- [WMIN]\n"
+            + "      +-- [cnt]\n"
             + "", parse(text));
     }
 

@@ -98,56 +98,60 @@ public class Spin2TreeBuilder {
 
         precedence.put(",", 2);
 
-        precedence.put(":=", 1);
         precedence.put("\\", 1);
+    }
 
-        precedence.put(">>=", 0);
-        precedence.put("<<=", 0);
-        precedence.put("SAR=", 0);
-        precedence.put("ROR=", 0);
-        precedence.put("ROL=", 0);
-        precedence.put("REV=", 0);
-        precedence.put("ZEROX=", 0);
-        precedence.put("SIGNX=", 0);
+    static Set<String> assignements = new HashSet<String>();
+    static {
+        assignements.add(":=");
 
-        precedence.put("&=", 0);
-        precedence.put("^=", 0);
-        precedence.put("|=", 0);
+        assignements.add(">>=");
+        assignements.add("<<=");
+        assignements.add("SAR=");
+        assignements.add("ROR=");
+        assignements.add("ROL=");
+        assignements.add("REV=");
+        assignements.add("ZEROX=");
+        assignements.add("SIGNX=");
 
-        precedence.put("*=", 0);
-        precedence.put("/=", 0);
-        precedence.put("+/=", 0);
-        precedence.put("//=", 0);
-        precedence.put("+//=", 0);
-        precedence.put("SCA=", 0);
-        precedence.put("SCAS=", 0);
-        precedence.put("FRAC=", 0);
+        assignements.add("&=");
+        assignements.add("^=");
+        assignements.add("|=");
 
-        precedence.put("+=", 0);
-        precedence.put("-=", 0);
+        assignements.add("*=");
+        assignements.add("/=");
+        assignements.add("+/=");
+        assignements.add("//=");
+        assignements.add("+//=");
+        assignements.add("SCA=");
+        assignements.add("SCAS=");
+        assignements.add("FRAC=");
 
-        precedence.put("#>=", 0);
-        precedence.put("<#=", 0);
+        assignements.add("+=");
+        assignements.add("-=");
 
-        precedence.put("ADDBITS=", 0);
-        precedence.put("ADDPINS=", 0);
+        assignements.add("#>=");
+        assignements.add("<#=");
 
-        precedence.put("+<=", 0);
-        precedence.put("<==", 0);
-        precedence.put("+<==", 0);
-        precedence.put("===", 0);
-        precedence.put("<>=", 0);
-        precedence.put("+>==", 0);
-        precedence.put(">==", 0);
-        precedence.put("+>=", 0);
-        precedence.put("<=>=", 0);
+        assignements.add("ADDBITS=");
+        assignements.add("ADDPINS=");
 
-        precedence.put("&&=", 0);
-        precedence.put("AND=", 0);
-        precedence.put("^^=", 0);
-        precedence.put("XOR=", 0);
-        precedence.put("||=", 0);
-        precedence.put("OR=", 0);
+        assignements.add("+<=");
+        assignements.add("<==");
+        assignements.add("+<==");
+        assignements.add("===");
+        assignements.add("<>=");
+        assignements.add("+>==");
+        assignements.add(">==");
+        assignements.add("+>=");
+        assignements.add("<=>=");
+
+        assignements.add("&&=");
+        assignements.add("AND=");
+        assignements.add("^^=");
+        assignements.add("XOR=");
+        assignements.add("||=");
+        assignements.add("OR=");
     }
 
     static Set<String> unary = new HashSet<String>();
@@ -232,6 +236,15 @@ public class Spin2TreeBuilder {
             }
             if (",".equals(token.getText()) && !comma) {
                 return left;
+            }
+
+            if (assignements.contains(token.getText().toUpperCase())) {
+                Spin2StatementNode node = new Spin2StatementNode(next());
+                if (left != null) {
+                    node.addChild(left);
+                }
+                node.addChild(parseLevel(parseAtom(), 0, comma));
+                return node;
             }
 
             Integer p = precedence.get(token.getText().toUpperCase());

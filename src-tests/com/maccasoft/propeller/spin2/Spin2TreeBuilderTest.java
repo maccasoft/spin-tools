@@ -73,6 +73,18 @@ class Spin2TreeBuilderTest {
     }
 
     @Test
+    public void testAssignmentsChain() throws Exception {
+        String text = "a := b := c";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [:=]\n"
+            + "      +-- [b]\n"
+            + "      +-- [c]\n"
+            + "", parse(text));
+    }
+
+    @Test
     void testFunctionCall() {
         String text = "function()";
         Assertions.assertEquals(""

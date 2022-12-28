@@ -66,40 +66,43 @@ public class Spin1TreeBuilder {
 
         precedence.put(":", 3);
         precedence.put("?", 2);
+    }
 
-        precedence.put(":=", 1);
+    static Set<String> assignements = new HashSet<String>();
+    static {
+        assignements.add(":=");
 
-        precedence.put(">>=", 0);
-        precedence.put("<<=", 0);
-        precedence.put("~>=", 0);
-        precedence.put("->=", 0);
-        precedence.put("<-=", 0);
-        precedence.put("><=", 0);
+        assignements.add(">>=");
+        assignements.add("<<=");
+        assignements.add("~>=");
+        assignements.add("->=");
+        assignements.add("<-=");
+        assignements.add("><=");
 
-        precedence.put("&=", 0);
-        precedence.put("^=", 0);
-        precedence.put("|=", 0);
+        assignements.add("&=");
+        assignements.add("^=");
+        assignements.add("|=");
 
-        precedence.put("*=", 0);
-        precedence.put("**=", 0);
-        precedence.put("/=", 0);
-        precedence.put("//=", 0);
+        assignements.add("*=");
+        assignements.add("**=");
+        assignements.add("/=");
+        assignements.add("//=");
 
-        precedence.put("+=", 0);
-        precedence.put("-=", 0);
+        assignements.add("+=");
+        assignements.add("-=");
 
-        precedence.put("#>=", 0);
-        precedence.put("<#=", 0);
+        assignements.add("#>=");
+        assignements.add("<#=");
 
-        precedence.put("<=", 0);
-        precedence.put("=<=", 0);
-        precedence.put("===", 0);
-        precedence.put("<>=", 0);
-        precedence.put("=>=", 0);
-        precedence.put(">=", 0);
+        assignements.add("<=");
+        assignements.add("=<=");
+        assignements.add("===");
+        assignements.add("<>=");
+        assignements.add("=>=");
+        assignements.add(">=");
 
-        precedence.put("AND=", 0);
-        precedence.put("OR=", 0);
+        assignements.add("AND=");
+        assignements.add("OR=");
     }
 
     static Set<String> unary = new HashSet<String>();
@@ -168,6 +171,15 @@ public class Spin1TreeBuilder {
             Token token = peek();
             if (token == null) {
                 return left;
+            }
+
+            if (assignements.contains(token.getText().toUpperCase())) {
+                Spin1StatementNode node = new Spin1StatementNode(next());
+                if (left != null) {
+                    node.addChild(left);
+                }
+                node.addChild(parseLevel(parseAtom(), 0));
+                return node;
             }
 
             Integer p = precedence.get(token.getText().toUpperCase());
