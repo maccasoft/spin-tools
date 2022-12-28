@@ -336,6 +336,16 @@ class Spin1ExamplesTest {
         compileAndCompare(new File(path + "/system", "Counters.spin"), new File(path + "/system", "Counters.binary"));
     }
 
+    @Test
+    void test_jm_165_ez_demo() throws Exception {
+        compileAndCompare(new File(path, "jm_165_ez_demo.spin"), new File(path, "jm_165_ez_demo.binary"));
+    }
+
+    @Test
+    void test_jm_i2c_devices() throws Exception {
+        compileAndCompare(new File(path, "jm_i2c_devices.spin"), new File(path, "jm_i2c_devices.binary"));
+    }
+
     class Spin1CompilerAdapter extends Spin1Compiler {
 
         File parent;

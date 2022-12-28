@@ -308,6 +308,11 @@ class Spin1LibraryTest {
     }
 
     @Test
+    void test_jm_165_ez() throws Exception {
+        compileAndCompare(new File(path, "jm_165_ez.spin"), new File(path, "jm_165_ez.binary"));
+    }
+
+    @Test
     void test_jm_ansi() throws Exception {
         compileAndCompare(new File(path, "jm_ansi.spin"), new File(path, "jm_ansi.binary"));
     }
@@ -318,8 +323,18 @@ class Spin1LibraryTest {
     }
 
     @Test
+    void test_jm_i2c() throws Exception {
+        compileAndCompare(new File(path, "jm_i2c.spin"), new File(path, "jm_i2c.binary"));
+    }
+
+    @Test
     void test_jm_io() throws Exception {
         compileAndCompare(new File(path, "jm_io.spin"), new File(path, "jm_io.binary"));
+    }
+
+    @Test
+    void test_jm_io_basic() throws Exception {
+        compileAndCompare(new File(path, "jm_io_basic.spin"), new File(path, "jm_io_basic.binary"));
     }
 
     @Test
