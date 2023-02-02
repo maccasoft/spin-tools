@@ -28,12 +28,16 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class Preferences {
 
+    public static final String PROP_ROOTS = "roots";
     public static final String PROP_SHOW_LINE_NUMBERS = "showLineNumbers";
     public static final String PROP_EDITOR_FONT = "editorFont";
+    public static final String PROP_SHOW_INDENT_LINES = "showIndentLines";
+    public static final String PROP_INDENT_LINES_SIZE = "showLinesSize";
     public static final String PROP_LRU = "lru";
     public static final String PROP_PORT = "port";
     public static final String PROP_SPIN1_LIBRARY_PATH = "spin1LibraryPath";
     public static final String PROP_SPIN2_LIBRARY_PATH = "spin2LibraryPath";
+    public static final String PROP_TERMINAL_FONT = "terminalFont";
 
     public static final String PREFERENCES_NAME = ".spin-tools";
 
@@ -65,11 +69,21 @@ public class Preferences {
 
     public static class SerializedPreferences {
 
+        public SerializedPreferences() {
+            showLineNumbers = true;
+            showIndentLines = true;
+            reloadOpenTabs = true;
+        }
+
         public Bounds window;
         public int[] weights;
 
+        public String[] roots;
+
         public boolean showLineNumbers;
         public String editorFont;
+        public boolean showIndentLines;
+        public int indentLinesSize;
         public String port;
         public String[] spin1LibraryPath;
         public String[] spin2LibraryPath;
@@ -83,6 +97,7 @@ public class Preferences {
 
         public Bounds terminalWindow;
         public int terminalType;
+        public String terminalFont;
 
         public SearchPreferences search;
 
@@ -125,8 +140,7 @@ public class Preferences {
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
     Preferences() {
-        preferences.showLineNumbers = true;
-        preferences.reloadOpenTabs = true;
+
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -164,6 +178,23 @@ public class Preferences {
         preferences.weights = weights;
     }
 
+    public String[] getRoots() {
+        return preferences.roots;
+    }
+
+    public void setRoots(String[] roots) {
+        if (preferences.roots == roots) {
+            return;
+        }
+        if (preferences.roots == null && roots != null && roots.length == 0) {
+            return;
+        }
+        if (Arrays.deepEquals(preferences.roots, roots)) {
+            return;
+        }
+        changeSupport.firePropertyChange(PROP_ROOTS, preferences.roots, preferences.roots = roots);
+    }
+
     public boolean getShowLineNumbers() {
         return preferences.showLineNumbers;
     }
@@ -180,6 +211,22 @@ public class Preferences {
         if (preferences.editorFont != editorFont) {
             changeSupport.firePropertyChange(PROP_EDITOR_FONT, preferences.editorFont, preferences.editorFont = editorFont);
         }
+    }
+
+    public boolean getShowIndentLines() {
+        return preferences.showIndentLines;
+    }
+
+    public void setShowIndentLines(boolean showIndentLines) {
+        changeSupport.firePropertyChange(PROP_SHOW_INDENT_LINES, preferences.showIndentLines, preferences.showIndentLines = showIndentLines);
+    }
+
+    public int getIndentLinesSize() {
+        return preferences.indentLinesSize;
+    }
+
+    public void setIndentLinesSize(int indentLinesSize) {
+        changeSupport.firePropertyChange(PROP_INDENT_LINES_SIZE, preferences.indentLinesSize, preferences.indentLinesSize = indentLinesSize);
     }
 
     public List<String> getLru() {
@@ -302,6 +349,16 @@ public class Preferences {
 
     public int getTerminalType() {
         return preferences.terminalType;
+    }
+
+    public String getTerminalFont() {
+        return preferences.terminalFont;
+    }
+
+    public void setTerminalFont(String terminalFont) {
+        if (preferences.terminalFont != terminalFont) {
+            changeSupport.firePropertyChange(PROP_TERMINAL_FONT, preferences.terminalFont, preferences.terminalFont = terminalFont);
+        }
     }
 
     public SearchPreferences getSearchPreferences() {

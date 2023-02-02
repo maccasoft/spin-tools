@@ -10,6 +10,8 @@
 
 package com.maccasoft.propeller;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +24,7 @@ import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalProvider;
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -111,6 +114,9 @@ public class SourceEditor {
     OutlineView outline;
     StyledText styledText;
     OverviewRuler overview;
+
+    boolean showIndentLines;
+    int indentLinesSize;
 
     Font font;
     Font fontBold;
@@ -309,12 +315,40 @@ public class SourceEditor {
         }
     };
 
+    final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            switch (evt.getPropertyName()) {
+                case Preferences.PROP_EDITOR_FONT:
+                    Font textFont = JFaceResources.getTextFont();
+                    FontData fontData = textFont.getFontData()[0];
+                    if (evt.getNewValue() != null) {
+                        fontData = StringConverter.asFontData(evt.getNewValue().toString());
+                    }
+                    fontData.setStyle(SWT.NONE);
+                    updateFontsFrom(fontData);
+                    break;
+                case Preferences.PROP_SHOW_LINE_NUMBERS:
+                    ruler.setVisible((Boolean) evt.getNewValue());
+                    container.layout(true);
+                    break;
+                case Preferences.PROP_SHOW_INDENT_LINES:
+                    showIndentLines = (Boolean) evt.getNewValue();
+                    styledText.redraw();
+                    break;
+            }
+        }
+    };
+
     Shell popupWindow;
     Rectangle popupMouseBounds;
 
     boolean hoverHighlight;
     Token hoverHighlightToken;
     Token hoverToken;
+
+    Preferences preferences;
 
     public SourceEditor(Composite parent) {
         display = parent.getDisplay();
@@ -327,40 +361,10 @@ public class SourceEditor {
         containerLayout.marginWidth = containerLayout.marginHeight = 0;
         container.setLayout(containerLayout);
 
-        Font textFont = JFaceResources.getTextFont();
-        FontData[] fontData = textFont.getFontData();
-
-        font = new Font(display, fontData[0].getName(), fontData[0].getHeight(), SWT.NONE);
-        fontBold = new Font(display, fontData[0].getName(), fontData[0].getHeight(), SWT.BOLD);
-        fontItalic = new Font(display, fontData[0].getName(), fontData[0].getHeight(), SWT.ITALIC);
-        fontBoldItalic = new Font(display, fontData[0].getName(), fontData[0].getHeight(), SWT.BOLD | SWT.ITALIC);
-
         currentLine = 0;
         currentLineBackground = new Color(display, 0xE8, 0xF2, 0xFE);
 
-        styleMap.put(TokenId.COMMENT, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x7E, 0x7E), null));
-        styleMap.put(TokenId.SECTION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
-
-        styleMap.put(TokenId.NUMBER, new TextStyle(font, ColorRegistry.getColor(0x00, 0x66, 0x99), null));
-        styleMap.put(TokenId.STRING, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x00, 0x7E), null));
-        styleMap.put(TokenId.CONSTANT, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x00, 0x7E), null));
-
-        styleMap.put(TokenId.METHOD_PUB, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
-        styleMap.put(TokenId.METHOD_PRI, new TextStyle(fontBoldItalic, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
-        styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(font, ColorRegistry.getColor(0x80, 0x80, 0x00), null));
-        styleMap.put(TokenId.METHOD_RETURN, new TextStyle(font, ColorRegistry.getColor(0x90, 0x00, 0x00), null));
-
-        styleMap.put(TokenId.TYPE, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
-        styleMap.put(TokenId.KEYWORD, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x80, 0x00), null));
-        styleMap.put(TokenId.FUNCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
-
-        styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(fontItalic, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
-        styleMap.put(TokenId.PASM_CONDITION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
-        styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x80, 0x00, 0x00), null));
-        styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
-
         ruler = new LineNumbersRuler(container);
-        ruler.setFont(font);
 
         styledText = new StyledText(container, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL) {
 
@@ -402,7 +406,9 @@ public class SourceEditor {
         styledText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         styledText.setMargins(5, 5, 5, 5);
         styledText.setTabs(8);
-        styledText.setFont(font);
+
+        insertCaret = new Caret(styledText, SWT.NULL);
+        overwriteCaret = new Caret(styledText, SWT.NULL);
 
         overview = new OverviewRuler(container);
         overview.setStyledText(styledText);
@@ -414,19 +420,22 @@ public class SourceEditor {
             8000, 2000
         });
 
+        preferences = Preferences.getInstance();
+
+        Font textFont = JFaceResources.getTextFont();
+        FontData fontData = textFont.getFontData()[0];
+        if (preferences.getEditorFont() != null) {
+            fontData = StringConverter.asFontData(preferences.getEditorFont());
+        }
+        fontData.setStyle(SWT.NONE);
+        updateFontsFrom(fontData);
+
+        showIndentLines = preferences.getShowIndentLines();
+        indentLinesSize = preferences.getIndentLinesSize();
+
+        preferences.addPropertyChangeListener(preferencesChangeListener);
+
         ruler.setText(styledText);
-
-        insertCaret = new Caret(styledText, SWT.NULL);
-        insertCaret.setSize(2, styledText.getLineHeight());
-        insertCaret.setFont(font);
-
-        GC gc = new GC(styledText);
-        charSize = gc.stringExtent("A"); //$NON-NLS-1$
-        gc.dispose();
-
-        overwriteCaret = new Caret(styledText, SWT.NULL);
-        overwriteCaret.setSize(charSize.x, styledText.getLineHeight());
-        overwriteCaret.setFont(styledText.getFont());
 
         styledText.setCaret(insertCaret);
         styledText.addCaretListener(caretListener);
@@ -1091,6 +1100,7 @@ public class SourceEditor {
             @Override
             public void paintControl(PaintEvent e) {
                 GC gc = e.gc;
+
                 try {
                     clientArea = styledText.getClientArea();
                     clientArea.x += styledText.getRightMargin();
@@ -1102,28 +1112,30 @@ public class SourceEditor {
 
                     gc.setAdvanced(true);
                     gc.setAntialias(SWT.OFF);
-                    gc.setLineWidth(1);
                     gc.setClipping(clientArea);
 
+                    gc.setLineWidth(indentLinesSize);
                     gc.setForeground(ColorRegistry.getColor(0xA0, 0xA0, 0xA0));
 
-                    Node root = tokenMarker.getRoot();
-                    if (root != null) {
-                        for (Node node : root.getChilds()) {
-                            if (node instanceof MethodNode) {
-                                for (int i = 0; i < node.getChildCount(); i++) {
-                                    Node child = node.getChild(i);
-                                    if ((child instanceof StatementNode) || (child instanceof DataLineNode)) {
-                                        int y2 = paintBlock(gc, child);
-                                        Token token = child.getStartToken();
-                                        if ("REPEAT".equalsIgnoreCase(token.getText())) {
-                                            if (i + 1 < node.getChildCount()) {
-                                                Node nextChild = node.getChild(i + 1);
-                                                Token nextToken = nextChild.getStartToken();
-                                                if ("WHILE".equalsIgnoreCase(nextToken.getText()) || "UNTIL".equalsIgnoreCase(nextToken.getText())) {
-                                                    int x2 = (charSize.x * token.column + charSize.x) - rightOffset;
-                                                    int y3 = styledText.getLinePixel(nextToken.line);
-                                                    gc.drawLine(x2, y2, x2, y3);
+                    if (showIndentLines) {
+                        Node root = tokenMarker.getRoot();
+                        if (root != null) {
+                            for (Node node : root.getChilds()) {
+                                if (node instanceof MethodNode) {
+                                    for (int i = 0; i < node.getChildCount(); i++) {
+                                        Node child = node.getChild(i);
+                                        if ((child instanceof StatementNode) || (child instanceof DataLineNode)) {
+                                            int y2 = paintBlock(gc, child);
+                                            Token token = child.getStartToken();
+                                            if ("REPEAT".equalsIgnoreCase(token.getText())) {
+                                                if (i + 1 < node.getChildCount()) {
+                                                    Node nextChild = node.getChild(i + 1);
+                                                    Token nextToken = nextChild.getStartToken();
+                                                    if ("WHILE".equalsIgnoreCase(nextToken.getText()) || "UNTIL".equalsIgnoreCase(nextToken.getText())) {
+                                                        int x2 = (charSize.x * token.column + charSize.x) - rightOffset;
+                                                        int y3 = styledText.getLinePixel(nextToken.line);
+                                                        gc.drawLine(x2, y2, x2, y3);
+                                                    }
                                                 }
                                             }
                                         }
@@ -1132,6 +1144,8 @@ public class SourceEditor {
                             }
                         }
                     }
+
+                    gc.setLineWidth(1);
 
                     for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
                         try {
@@ -1250,6 +1264,7 @@ public class SourceEditor {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
+                preferences.removePropertyChangeListener(preferencesChangeListener);
                 font.dispose();
                 fontBold.dispose();
                 fontItalic.dispose();
@@ -1267,6 +1282,57 @@ public class SourceEditor {
                 overwriteCaret.dispose();
             }
         });
+    }
+
+    void updateFontsFrom(FontData fontData) {
+        Font oldFont = font;
+        Font oldFontBold = fontBold;
+        Font oldFontItalic = fontItalic;
+        Font oldFontBoldItalic = fontBoldItalic;
+
+        font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
+        fontBold = new Font(display, fontData.getName(), fontData.getHeight(), SWT.BOLD);
+        fontItalic = new Font(display, fontData.getName(), fontData.getHeight(), SWT.ITALIC);
+        fontBoldItalic = new Font(display, fontData.getName(), fontData.getHeight(), SWT.BOLD | SWT.ITALIC);
+
+        styleMap.put(TokenId.COMMENT, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x7E, 0x7E), null));
+        styleMap.put(TokenId.SECTION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
+
+        styleMap.put(TokenId.NUMBER, new TextStyle(font, ColorRegistry.getColor(0x00, 0x66, 0x99), null));
+        styleMap.put(TokenId.STRING, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x00, 0x7E), null));
+        styleMap.put(TokenId.CONSTANT, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x00, 0x7E), null));
+
+        styleMap.put(TokenId.METHOD_PUB, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
+        styleMap.put(TokenId.METHOD_PRI, new TextStyle(fontBoldItalic, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
+        styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(font, ColorRegistry.getColor(0x80, 0x80, 0x00), null));
+        styleMap.put(TokenId.METHOD_RETURN, new TextStyle(font, ColorRegistry.getColor(0x90, 0x00, 0x00), null));
+
+        styleMap.put(TokenId.TYPE, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.KEYWORD, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x80, 0x00), null));
+        styleMap.put(TokenId.FUNCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+
+        styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(fontItalic, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.PASM_CONDITION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x80, 0x00, 0x00), null));
+        styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+
+        ruler.setFont(font);
+        styledText.setFont(font);
+
+        GC gc = new GC(styledText);
+        gc.setFont(font);
+        charSize = gc.stringExtent("A"); //$NON-NLS-1$
+        gc.dispose();
+
+        insertCaret.setSize(2, styledText.getLineHeight());
+        overwriteCaret.setSize(charSize.x, styledText.getLineHeight());
+
+        if (oldFont != null) {
+            oldFont.dispose();
+            oldFontBold.dispose();
+            oldFontItalic.dispose();
+            oldFontBoldItalic.dispose();
+        }
     }
 
     public void setTokenMarker(SourceTokenMarker tokenMarker) {

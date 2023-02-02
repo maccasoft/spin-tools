@@ -11,6 +11,8 @@
 
 package com.maccasoft.propeller;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -22,6 +24,7 @@ import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.ImageTransfer;
@@ -42,6 +45,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
@@ -740,6 +744,50 @@ public class SerialTerminal {
         }
     };
 
+    final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            switch (evt.getPropertyName()) {
+                case Preferences.PROP_TERMINAL_FONT:
+                    Font textFont = JFaceResources.getTextFont();
+                    FontData fontData = textFont.getFontData()[0];
+                    if (evt.getNewValue() != null) {
+                        fontData = StringConverter.asFontData(evt.getNewValue().toString());
+                    }
+                    if (font != null) {
+                        font.dispose();
+                    }
+                    font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
+
+                    GC gc = new GC(shell);
+                    try {
+                        gc.setFont(font);
+                        Point pt = gc.textExtent("M");
+                        characterWidth = pt.x;
+                        characterHeight = pt.y;
+                    } finally {
+                        gc.dispose();
+                    }
+
+                    GridData gridData = (GridData) canvas.getLayoutData();
+                    Rectangle rect = preferences.getTerminalWindow();
+                    if (rect != null) {
+                        gridData.widthHint = rect.width * characterWidth;
+                        gridData.heightHint = rect.height * characterHeight;
+                    }
+                    else {
+                        gridData.widthHint = 80 * characterWidth;
+                        gridData.heightHint = 30 * characterHeight;
+                    }
+
+                    shell.pack();
+                    redraw();
+                    break;
+            }
+        }
+    };
+
     public SerialTerminal() {
         this.serialBaudRate = 115200;
         this.cursorState = CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
@@ -749,17 +797,12 @@ public class SerialTerminal {
         display = Display.getDefault();
         preferences = Preferences.getInstance();
 
-        font = JFaceResources.getTextFont();
-
-        setTerminalType(preferences.getTerminalType());
-
-        shell = new Shell(display);
-        shell.setText(WINDOW_TITLE);
-        shell.setData(this);
-
-        FillLayout layout = new FillLayout();
-        layout.marginWidth = layout.marginHeight = 0;
-        shell.setLayout(layout);
+        Font textFont = JFaceResources.getTextFont();
+        FontData fontData = textFont.getFontData()[0];
+        if (preferences.getTerminalFont() != null) {
+            fontData = StringConverter.asFontData(preferences.getTerminalFont());
+        }
+        font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
 
         GC gc = new GC(shell);
         try {
@@ -771,12 +814,24 @@ public class SerialTerminal {
             gc.dispose();
         }
 
+        setTerminalType(preferences.getTerminalType());
+
+        shell = new Shell(display);
+        shell.setText(WINDOW_TITLE);
+        shell.setData(this);
+
+        FillLayout layout = new FillLayout();
+        layout.marginWidth = layout.marginHeight = 0;
+        shell.setLayout(layout);
+
         createContents(shell);
 
         Rectangle rect = preferences.getTerminalWindow();
         if (rect != null) {
             shell.setLocation(rect.x, rect.y);
         }
+
+        preferences.addPropertyChangeListener(preferencesChangeListener);
 
         shell.addListener(SWT.Traverse, new Listener() {
 
@@ -792,6 +847,7 @@ public class SerialTerminal {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
+                preferences.removePropertyChangeListener(preferencesChangeListener);
                 try {
                     serialPort.removeEventListener();
                     if (serialPort.isOpened()) {
@@ -821,6 +877,46 @@ public class SerialTerminal {
         });
 
         display.timerExec(FRAME_TIMER, screenUpdateRunnable);
+
+        display.timerExec(100, new Runnable() {
+
+            @Override
+            public void run() {
+                print("[--------|---------|---------|---------|---------|---------|---------|---------]\r\n");
+                print("01234567890123456789012345678901234567890123456789012345678901234567890123456789\r\n");
+                print(" 1\r\n");
+                print(" 2\r\n");
+                print(" 3\r\n");
+                print(" 4\r\n");
+                print(" 5\r\n");
+                print(" 6\r\n");
+                print(" 7\r\n");
+                print(" 8\r\n");
+                print(" 9\r\n");
+                print("10\r\n");
+                print("11\r\n");
+                print("12\r\n");
+                print("13\r\n");
+                print("14\r\n");
+                print("15\r\n");
+                print("16\r\n");
+                print("17\r\n");
+                print("18\r\n");
+                print("19\r\n");
+                print("20\r\n");
+                print("21\r\n");
+                print("22\r\n");
+                print("23\r\n");
+                print("24\r\n");
+                print("[--------|---------|---------|---------|---------|---------|---------|---------]\r\n");
+            }
+
+            void print(String s) {
+                for (int i = 0; i < s.length(); i++) {
+                    write(s.charAt(i));
+                }
+            }
+        });
     }
 
     protected void createContents(Composite parent) {
@@ -830,7 +926,6 @@ public class SerialTerminal {
         container.setLayout(layout);
 
         canvas = new Canvas(container, SWT.DOUBLE_BUFFERED);
-        canvas.setFont(font);
 
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
         Rectangle rect = preferences.getTerminalWindow();
@@ -941,6 +1036,8 @@ public class SerialTerminal {
                 int y1 = Math.min((e.y + e.height) / characterHeight, screenHeight - 1);
                 int x0 = e.x / characterWidth;
                 int x1 = Math.min((e.x + e.width) / characterWidth, screenWidth - 1);
+
+                e.gc.setFont(font);
 
                 for (int y = y1, cy = y * characterHeight; y >= y0; y--, cy -= characterHeight) {
                     for (int x = x1, cx = x * characterWidth; x >= x0; x--, cx -= characterWidth) {

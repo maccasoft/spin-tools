@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -98,7 +98,7 @@ import jssc.SerialPortException;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools";
-    public static final String APP_VERSION = "0.19";
+    public static final String APP_VERSION = "0.19.2";
 
     Shell shell;
     SashForm sashForm;
@@ -240,9 +240,13 @@ public class SpinTools {
         }
         sashForm.setWeights(weights);
 
-        browser.setRoots(new String[] {
-            new File(System.getProperty("user.home")).getAbsolutePath()
-        });
+        String[] roots = preferences.getRoots();
+        if (roots == null || roots.length == 0) {
+            roots = new String[] {
+                new File(System.getProperty("user.home")).getAbsolutePath()
+            };
+        }
+        browser.setRoots(roots);
 
         browser.addSelectionChangedListener(new ISelectionChangedListener() {
 
@@ -379,6 +383,24 @@ public class SpinTools {
                 statusLine.setPort(port);
             }
 
+        });
+
+        preferences.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                switch (evt.getPropertyName()) {
+                    case Preferences.PROP_ROOTS:
+                        String[] roots = (String[]) evt.getNewValue();
+                        if (roots == null || roots.length == 0) {
+                            roots = new String[] {
+                                new File(System.getProperty("user.home")).getAbsolutePath()
+                            };
+                        }
+                        browser.setRoots(roots);
+                        break;
+                }
+            }
         });
 
         shell.addListener(SWT.Close, new Listener() {
@@ -659,7 +681,8 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 try {
-
+                    PreferencesDialog dlg = new PreferencesDialog(shell);
+                    dlg.open();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }

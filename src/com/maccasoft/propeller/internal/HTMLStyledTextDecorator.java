@@ -23,6 +23,7 @@ import javax.swing.text.html.HTMLEditorKit.ParserCallback;
 import javax.swing.text.html.parser.ParserDelegator;
 
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
@@ -32,6 +33,8 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
+
+import com.maccasoft.propeller.Preferences;
 
 public class HTMLStyledTextDecorator extends ParserCallback {
 
@@ -74,9 +77,14 @@ public class HTMLStyledTextDecorator extends ParserCallback {
     Font getCodeFont(int style) {
         Font font = fonts.get(style);
         if (font == null) {
+            Preferences preferences = Preferences.getInstance();
             Font textFont = JFaceResources.getTextFont();
-            FontData[] fontData = textFont.getFontData();
-            font = new Font(styledText.getDisplay(), fontData[0].getName(), fontData[0].getHeight(), style);
+            FontData fontData = textFont.getFontData()[0];
+            if (preferences.getEditorFont() != null) {
+                fontData = StringConverter.asFontData(preferences.getEditorFont());
+            }
+            fontData.setStyle(SWT.NONE);
+            font = new Font(styledText.getDisplay(), fontData.getName(), fontData.getHeight(), style);
             fonts.put(style, font);
         }
         return font;

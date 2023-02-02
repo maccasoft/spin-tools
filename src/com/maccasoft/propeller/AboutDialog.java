@@ -66,7 +66,7 @@ public class AboutDialog extends Dialog {
 
         String title = SpinTools.APP_TITLE + " " + SpinTools.APP_VERSION;
         final String epl = "http://www.eclipse.org/legal/epl-v10.html";
-        final String message = title + "\r\n\r\n" + "Copyright (c) 2021-22 Marco Maccaferri and others. All rights reserved.\r\n\r\n"
+        final String message = title + "\r\n\r\n" + "Copyright (c) 2021-23 Marco Maccaferri and others. All rights reserved.\r\n\r\n"
             + "This program and the accompanying materials are made available under the\r\n"
             + "terms of the Eclipse Public License v1.0 which accompanies this distribution\r\n"
             + "and is available at " + epl;

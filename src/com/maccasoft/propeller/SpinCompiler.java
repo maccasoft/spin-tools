@@ -75,7 +75,7 @@ public class SpinCompiler {
             quiet = cmd.hasOption('q') && cmd.getArgList().size() == 1;
 
             println(APP_TITLE + " - Version " + APP_VERSION);
-            println("Copyright (c) 2021-22 Marco Maccaferri and others. All rights reserved.");
+            println("Copyright (c) 2021-23 Marco Maccaferri and others. All rights reserved.");
 
             if (cmd.getArgList().size() != 1) {
                 HelpFormatter help = new HelpFormatter();
