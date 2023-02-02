@@ -250,10 +250,12 @@ public class Preferences {
     }
 
     public void setLastPath(File lastPath) {
-        if (lastPath == null) {
+        if (lastPath != null) {
+            preferences.lastPath = lastPath.getAbsolutePath();
+        }
+        else {
             preferences.lastPath = null;
         }
-        preferences.lastPath = lastPath.getAbsolutePath();
     }
 
     public String getPort() {

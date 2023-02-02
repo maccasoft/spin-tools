@@ -160,7 +160,7 @@ public class PreferencesDialog extends Dialog {
         label.setText("File browser root paths");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 
-        roots = new List(group, SWT.SINGLE | SWT.BORDER);
+        roots = new List(group, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
         gridData.widthHint = convertWidthInCharsToPixels(50);
         gridData.heightHint = convertHeightInCharsToPixels(5) + roots.getBorderWidth() * 2;
