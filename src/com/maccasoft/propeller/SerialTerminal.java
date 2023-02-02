@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Marco Maccaferri and others.
+ * Copyright (c) 2022-23 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.ImageTransfer;
@@ -748,7 +749,7 @@ public class SerialTerminal {
         display = Display.getDefault();
         preferences = Preferences.getInstance();
 
-        font = new Font(display, "win32".equals(SWT.getPlatform()) ? "Courier New" : "mono", 11, SWT.NONE);
+        font = JFaceResources.getTextFont();
 
         setTerminalType(preferences.getTerminalType());
 

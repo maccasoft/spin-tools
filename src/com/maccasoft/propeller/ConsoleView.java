@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,6 +14,7 @@ package com.maccasoft.propeller;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
@@ -186,12 +187,7 @@ public class ConsoleView {
         console.setMargins(5, 5, 5, 5);
         console.setTabs(4);
 
-        if ("win32".equals(SWT.getPlatform())) {
-            consoleFont = new Font(Display.getDefault(), "Courier New", 9, SWT.NONE);
-        }
-        else {
-            consoleFont = new Font(Display.getDefault(), "mono", 9, SWT.NONE);
-        }
+        consoleFont = JFaceResources.getTextFont();
         console.setFont(consoleFont);
         console.addDisposeListener(new DisposeListener() {
 

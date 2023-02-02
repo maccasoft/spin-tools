@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -18,6 +18,7 @@ import java.text.NumberFormat;
 import org.apache.commons.lang3.BitField;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -32,7 +33,6 @@ import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
@@ -113,14 +113,7 @@ public class P2MemoryDialog extends Dialog {
 
         display = parent.getDisplay();
 
-        Font dialogFont = parent.getFont();
-        FontData[] fontData = dialogFont.getFontData();
-        if ("win32".equals(SWT.getPlatform())) {
-            font = new Font(display, "Courier New", fontData[0].getHeight(), SWT.NONE);
-        }
-        else {
-            font = new Font(display, "mono", fontData[0].getHeight(), SWT.NONE);
-        }
+        font = JFaceResources.getTextFont();
 
         GC gc = new GC(content);
         gc.setFont(font);

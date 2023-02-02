@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalProvider;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -64,6 +65,7 @@ import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -325,18 +327,13 @@ public class SourceEditor {
         containerLayout.marginWidth = containerLayout.marginHeight = 0;
         container.setLayout(containerLayout);
 
-        if ("win32".equals(SWT.getPlatform())) {
-            font = new Font(display, "Courier New", 10, SWT.NONE);
-            fontBold = new Font(display, "Courier New", 10, SWT.BOLD);
-            fontItalic = new Font(display, "Courier New", 10, SWT.ITALIC);
-            fontBoldItalic = new Font(display, "Courier New", 10, SWT.BOLD | SWT.ITALIC);
-        }
-        else {
-            font = new Font(display, "mono", 10, SWT.NONE);
-            fontBold = new Font(display, "mono", 10, SWT.BOLD);
-            fontItalic = new Font(display, "mono", 10, SWT.ITALIC);
-            fontBoldItalic = new Font(display, "mono", 10, SWT.BOLD | SWT.ITALIC);
-        }
+        Font textFont = JFaceResources.getTextFont();
+        FontData[] fontData = textFont.getFontData();
+
+        font = new Font(display, fontData[0].getName(), fontData[0].getHeight(), SWT.NONE);
+        fontBold = new Font(display, fontData[0].getName(), fontData[0].getHeight(), SWT.BOLD);
+        fontItalic = new Font(display, fontData[0].getName(), fontData[0].getHeight(), SWT.ITALIC);
+        fontBoldItalic = new Font(display, fontData[0].getName(), fontData[0].getHeight(), SWT.BOLD | SWT.ITALIC);
 
         currentLine = 0;
         currentLineBackground = new Color(display, 0xE8, 0xF2, 0xFE);

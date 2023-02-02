@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -22,6 +22,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLEditorKit.ParserCallback;
 import javax.swing.text.html.parser.ParserDelegator;
 
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
@@ -73,12 +74,9 @@ public class HTMLStyledTextDecorator extends ParserCallback {
     Font getCodeFont(int style) {
         Font font = fonts.get(style);
         if (font == null) {
-            if ("win32".equals(SWT.getPlatform())) {
-                font = new Font(styledText.getDisplay(), "Courier New", fontData.getHeight() - 1, style);
-            }
-            else {
-                font = new Font(styledText.getDisplay(), "mono", fontData.getHeight() - 1, style);
-            }
+            Font textFont = JFaceResources.getTextFont();
+            FontData[] fontData = textFont.getFontData();
+            font = new Font(styledText.getDisplay(), fontData[0].getName(), fontData[0].getHeight(), style);
             fonts.put(style, font);
         }
         return font;
