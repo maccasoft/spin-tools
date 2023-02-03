@@ -804,6 +804,12 @@ public class SerialTerminal {
         }
         font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
 
+        setTerminalType(preferences.getTerminalType());
+
+        shell = new Shell(display);
+        shell.setText(WINDOW_TITLE);
+        shell.setData(this);
+
         GC gc = new GC(shell);
         try {
             gc.setFont(font);
@@ -813,12 +819,6 @@ public class SerialTerminal {
         } finally {
             gc.dispose();
         }
-
-        setTerminalType(preferences.getTerminalType());
-
-        shell = new Shell(display);
-        shell.setText(WINDOW_TITLE);
-        shell.setData(this);
 
         FillLayout layout = new FillLayout();
         layout.marginWidth = layout.marginHeight = 0;
@@ -877,46 +877,6 @@ public class SerialTerminal {
         });
 
         display.timerExec(FRAME_TIMER, screenUpdateRunnable);
-
-        display.timerExec(100, new Runnable() {
-
-            @Override
-            public void run() {
-                print("[--------|---------|---------|---------|---------|---------|---------|---------]\r\n");
-                print("01234567890123456789012345678901234567890123456789012345678901234567890123456789\r\n");
-                print(" 1\r\n");
-                print(" 2\r\n");
-                print(" 3\r\n");
-                print(" 4\r\n");
-                print(" 5\r\n");
-                print(" 6\r\n");
-                print(" 7\r\n");
-                print(" 8\r\n");
-                print(" 9\r\n");
-                print("10\r\n");
-                print("11\r\n");
-                print("12\r\n");
-                print("13\r\n");
-                print("14\r\n");
-                print("15\r\n");
-                print("16\r\n");
-                print("17\r\n");
-                print("18\r\n");
-                print("19\r\n");
-                print("20\r\n");
-                print("21\r\n");
-                print("22\r\n");
-                print("23\r\n");
-                print("24\r\n");
-                print("[--------|---------|---------|---------|---------|---------|---------|---------]\r\n");
-            }
-
-            void print(String s) {
-                for (int i = 0; i < s.length(); i++) {
-                    write(s.charAt(i));
-                }
-            }
-        });
     }
 
     protected void createContents(Composite parent) {
