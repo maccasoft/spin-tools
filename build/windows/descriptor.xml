@@ -13,14 +13,14 @@
     </dependencySets>
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}/examples</directory>
+            <directory>../../examples</directory>
             <outputDirectory>examples</outputDirectory>
             <excludes>
                 <exclude>**/*.binary</exclude>
             </excludes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/library</directory>
+            <directory>../../library</directory>
             <outputDirectory>library</outputDirectory>
             <excludes>
                 <exclude>**/*.binary</exclude>

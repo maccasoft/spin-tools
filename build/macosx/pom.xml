@@ -2,13 +2,13 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.maccasoft</groupId>
     <artifactId>macosx</artifactId>
-    <version>0.19.2</version>
+    <version>0.19.3</version>
     <packaging>pom</packaging>
     <dependencies>
         <dependency>
             <groupId>com.maccasoft</groupId>
             <artifactId>com.maccasoft.spin.tools</artifactId>
-            <version>0.19.2</version>
+            <version>0.19.3</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -50,7 +50,8 @@
                                     signature="????"
                                     copyright="Marco Maccaferri"
                                     applicationCategory="public.app-category.developer-tools"
-                                    mainclassname="com.maccasoft.propeller.SpinTools">
+                                    mainclassname="com.maccasoft.propeller.SpinTools"
+                                    jvmrequired="11">
                                     <option value="-DAPP_DIR=$APP_ROOT/Contents/Java" />
                                     <option value="-Dcom.apple.macos.useScreenMenuBar=true" />
                                     <option value="-Xms128M" />
