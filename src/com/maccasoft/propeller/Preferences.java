@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class Preferences {
 
+    public static final String PROP_SHOW_BROWSER = "showBrowser";
     public static final String PROP_ROOTS = "roots";
     public static final String PROP_SHOW_LINE_NUMBERS = "showLineNumbers";
     public static final String PROP_EDITOR_FONT = "editorFont";
@@ -78,6 +79,7 @@ public class Preferences {
         public Bounds window;
         public int[] weights;
 
+        public Boolean showBrowser;
         public String[] roots;
 
         public boolean showLineNumbers;
@@ -176,6 +178,16 @@ public class Preferences {
 
     public void setWeights(int[] weights) {
         preferences.weights = weights;
+    }
+
+    public boolean getShowBrowser() {
+        return preferences.showBrowser != null ? preferences.showBrowser : true;
+    }
+
+    public void setShowBrowser(boolean showBrowser) {
+        boolean oldValue = getShowBrowser();
+        preferences.showBrowser = showBrowser ? null : showBrowser;
+        changeSupport.firePropertyChange(PROP_SHOW_BROWSER, oldValue, showBrowser);
     }
 
     public String[] getRoots() {

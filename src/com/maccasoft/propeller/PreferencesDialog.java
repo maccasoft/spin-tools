@@ -12,6 +12,7 @@ package com.maccasoft.propeller;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -47,6 +48,7 @@ public class PreferencesDialog extends Dialog {
     Composite stack;
     StackLayout stackLayout;
 
+    Button showBrowser;
     PathList roots;
 
     Text editorFont;
@@ -73,6 +75,174 @@ public class PreferencesDialog extends Dialog {
     String oldTerminalFont;
 
     static int lastPage;
+
+    class PathList {
+
+        Composite group;
+
+        List list;
+        Button add;
+        Button remove;
+        Button moveUp;
+        Button moveDown;
+
+        public PathList(Composite parent, boolean allowMove) {
+            group = new Composite(parent, SWT.NONE);
+            GridLayout layout = new GridLayout(2, false);
+            layout.marginWidth = layout.marginHeight = 0;
+            group.setLayout(layout);
+
+            list = new List(group, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
+            GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+            gridData.widthHint = convertWidthInCharsToPixels(50);
+            gridData.heightHint = convertHeightInCharsToPixels(12) + list.getBorderWidth() * 2;
+            list.setLayoutData(gridData);
+            list.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    updateButtons();
+                }
+            });
+
+            Composite container = new Composite(group, SWT.NONE);
+            layout = new GridLayout(1, true);
+            layout.marginWidth = layout.marginHeight = 0;
+            container.setLayout(layout);
+            container.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, false));
+
+            add = new Button(container, SWT.PUSH);
+            add.setImage(ImageRegistry.getImageFromResources("add.png"));
+            add.setToolTipText("Add");
+            add.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    DirectoryDialog dlg = new DirectoryDialog(parent.getShell());
+
+                    int index = list.getSelectionIndex();
+                    if (index != -1) {
+                        dlg.setFilterPath(list.getItem(index));
+                    }
+
+                    String s = dlg.open();
+                    if (s != null) {
+                        list.add(s);
+                        updateButtons();
+                    }
+                }
+
+            });
+
+            remove = new Button(container, SWT.PUSH);
+            remove.setImage(ImageRegistry.getImageFromResources("delete.png"));
+            remove.setToolTipText("Remove");
+            remove.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    list.remove(list.getSelectionIndex());
+                    updateButtons();
+                }
+
+            });
+            remove.setEnabled(false);
+
+            if (allowMove) {
+                moveUp = new Button(container, SWT.PUSH);
+                moveUp.setImage(ImageRegistry.getImageFromResources("arrow_up.png"));
+                moveUp.setToolTipText("Up");
+                moveUp.addSelectionListener(new SelectionAdapter() {
+
+                    @Override
+                    public void widgetSelected(SelectionEvent e) {
+                        int index = list.getSelectionIndex();
+                        ArrayList<String> items = new ArrayList<String>(Arrays.asList(list.getItems()));
+                        String s = items.get(index);
+                        items.remove(index);
+                        items.add(index - 1, s);
+                        list.setItems(items.toArray(new String[items.size()]));
+                        list.setSelection(index - 1);
+                        list.setFocus();
+                        updateButtons();
+                    }
+
+                });
+                moveUp.setEnabled(false);
+
+                moveDown = new Button(container, SWT.PUSH);
+                moveDown.setImage(ImageRegistry.getImageFromResources("arrow_down.png"));
+                moveDown.setToolTipText("Down");
+                moveDown.addSelectionListener(new SelectionAdapter() {
+
+                    @Override
+                    public void widgetSelected(SelectionEvent e) {
+                        int index = list.getSelectionIndex();
+                        ArrayList<String> items = new ArrayList<String>(Arrays.asList(list.getItems()));
+                        String s = items.get(index);
+                        items.add(index + 2, s);
+                        items.remove(index);
+                        list.setItems(items.toArray(new String[items.size()]));
+                        list.setSelection(index + 1);
+                        list.setFocus();
+                        updateButtons();
+                    }
+
+                });
+                moveDown.setEnabled(false);
+            }
+        }
+
+        void updateButtons() {
+            int index = list.getSelectionIndex();
+            remove.setEnabled(index != -1);
+            if (moveUp != null) {
+                moveUp.setEnabled(index != -1 && index > 0);
+            }
+            if (moveDown != null) {
+                moveDown.setEnabled(index != -1 && index < (list.getItemCount() - 1));
+            }
+        }
+
+        public void setLayoutData(Object layoutData) {
+            group.setLayoutData(layoutData);
+        }
+
+        public Object getLayoutData() {
+            return group.getLayoutData();
+        }
+
+        public void setItems(String[] items) {
+            if (moveUp != null && moveDown != null) {
+                java.util.List<String> l = Arrays.asList(items);
+                Collections.sort(l);
+                items = l.toArray(new String[l.size()]);
+            }
+            list.setItems(items);
+        }
+
+        public String[] getItems() {
+            return list.getItems();
+        }
+
+        public void setFileItems(File[] fileItems) {
+            String[] items = new String[fileItems.length];
+            for (int i = 0; i < items.length; i++) {
+                items[i] = fileItems[i].getAbsolutePath();
+            }
+            list.setItems(items);
+        }
+
+        public File[] getFileItems() {
+            String[] items = list.getItems();
+            File[] fileItems = new File[items.length];
+            for (int i = 0; i < fileItems.length; i++) {
+                fileItems[i] = new File(items[i]);
+            }
+            return fileItems;
+        }
+
+    }
 
     public PreferencesDialog(Shell parentShell) {
         super(parentShell);
@@ -150,199 +320,44 @@ public class PreferencesDialog extends Dialog {
         return composite;
     }
 
-    class PathList {
-
-        Composite group;
-
-        List list;
-        Button add;
-        Button remove;
-        Button moveUp;
-        Button moveDown;
-
-        public PathList(Composite parent) {
-            group = new Composite(parent, SWT.NONE);
-            GridLayout layout = new GridLayout(2, false);
-            layout.marginWidth = layout.marginHeight = 0;
-            group.setLayout(layout);
-
-            list = new List(group, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
-            GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-            gridData.widthHint = convertWidthInCharsToPixels(50);
-            gridData.heightHint = convertHeightInCharsToPixels(5) + list.getBorderWidth() * 2;
-            list.setLayoutData(gridData);
-            list.addSelectionListener(new SelectionAdapter() {
-
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    updateButtons();
-                }
-            });
-
-            Composite container = new Composite(group, SWT.NONE);
-            layout = new GridLayout(1, true);
-            layout.marginWidth = layout.marginHeight = 0;
-            container.setLayout(layout);
-            container.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, false));
-
-            add = new Button(container, SWT.PUSH);
-            add.setImage(ImageRegistry.getImageFromResources("add.png"));
-            add.setToolTipText("Add");
-            add.addSelectionListener(new SelectionAdapter() {
-
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    DirectoryDialog dlg = new DirectoryDialog(parent.getShell());
-
-                    int index = list.getSelectionIndex();
-                    if (index != -1) {
-                        dlg.setFilterPath(list.getItem(index));
-                    }
-
-                    String s = dlg.open();
-                    if (s != null) {
-                        list.add(s);
-                        updateButtons();
-                    }
-                }
-
-            });
-
-            remove = new Button(container, SWT.PUSH);
-            remove.setImage(ImageRegistry.getImageFromResources("delete.png"));
-            remove.setToolTipText("Remove");
-            remove.addSelectionListener(new SelectionAdapter() {
-
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    list.remove(list.getSelectionIndex());
-                    updateButtons();
-                }
-
-            });
-            remove.setEnabled(false);
-
-            moveUp = new Button(container, SWT.PUSH);
-            moveUp.setImage(ImageRegistry.getImageFromResources("arrow_up.png"));
-            moveUp.setToolTipText("Up");
-            moveUp.addSelectionListener(new SelectionAdapter() {
-
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    int index = list.getSelectionIndex();
-                    ArrayList<String> items = new ArrayList<String>(Arrays.asList(list.getItems()));
-                    String s = items.get(index);
-                    items.remove(index);
-                    items.add(index - 1, s);
-                    list.setItems(items.toArray(new String[items.size()]));
-                    list.setSelection(index - 1);
-                    list.setFocus();
-                    updateButtons();
-                }
-
-            });
-            moveUp.setEnabled(false);
-
-            moveDown = new Button(container, SWT.PUSH);
-            moveDown.setImage(ImageRegistry.getImageFromResources("arrow_down.png"));
-            moveDown.setToolTipText("Down");
-            moveDown.addSelectionListener(new SelectionAdapter() {
-
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    int index = list.getSelectionIndex();
-                    ArrayList<String> items = new ArrayList<String>(Arrays.asList(list.getItems()));
-                    String s = items.get(index);
-                    items.add(index + 2, s);
-                    items.remove(index);
-                    list.setItems(items.toArray(new String[items.size()]));
-                    list.setSelection(index + 1);
-                    list.setFocus();
-                    updateButtons();
-                }
-
-            });
-            moveDown.setEnabled(false);
-        }
-
-        void updateButtons() {
-            int index = list.getSelectionIndex();
-            remove.setEnabled(index != -1);
-            moveUp.setEnabled(index != -1 && index > 0);
-            moveDown.setEnabled(index != -1 && index < (list.getItemCount() - 1));
-        }
-
-        public void setLayoutData(Object layoutData) {
-            group.setLayoutData(layoutData);
-        }
-
-        public Object getLayoutData() {
-            return group.getLayoutData();
-        }
-
-        public void setItems(String[] items) {
-            list.setItems(items);
-        }
-
-        public String[] getItems() {
-            return list.getItems();
-        }
-
-        public void setFileItems(File[] fileItems) {
-            String[] items = new String[fileItems.length];
-            for (int i = 0; i < items.length; i++) {
-                items[i] = fileItems[i].getAbsolutePath();
-            }
-            list.setItems(items);
-        }
-
-        public File[] getFileItems() {
-            String[] items = list.getItems();
-            File[] fileItems = new File[items.length];
-            for (int i = 0; i < fileItems.length; i++) {
-                fileItems[i] = new File(items[i]);
-            }
-            return fileItems;
-        }
-
-    }
-
     void createGeneralPage(Composite parent) {
         Composite composite = createPage(parent, "General");
 
-        Composite group = new Composite(composite, SWT.NONE);
-        GridLayout layout = new GridLayout(2, false);
-        layout.marginWidth = layout.marginHeight = 0;
-        group.setLayout(layout);
-        group.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+        showBrowser = new Button(composite, SWT.CHECK);
+        showBrowser.setText("Show file browser");
+        showBrowser.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
+        showBrowser.setSelection(preferences.getShowBrowser());
+        showBrowser.addSelectionListener(new SelectionAdapter() {
 
-        Label label = new Label(group, SWT.NONE);
-        label.setText("File browser root paths");
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setShowBrowser(showBrowser.getSelection());
+            }
+
+        });
+
+        Label label = new Label(composite, SWT.NONE);
+        label.setText("File browser visible paths");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 
-        roots = new PathList(group);
+        roots = new PathList(composite, false);
         roots.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 
-        String[] items = preferences.getRoots();
+        java.util.List<String> items = Arrays.asList(preferences.getRoots());
         if (items != null) {
-            roots.setItems(items);
+            Collections.sort(items);
+            roots.setItems(items.toArray(new String[items.size()]));
         }
     }
 
     void createSpin1CompilerPage(Composite parent) {
         Composite composite = createPage(parent, "Spin1");
 
-        Composite group = new Composite(composite, SWT.NONE);
-        GridLayout layout = new GridLayout(2, false);
-        layout.marginWidth = layout.marginHeight = 0;
-        group.setLayout(layout);
-        group.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
-
-        Label label = new Label(group, SWT.NONE);
+        Label label = new Label(composite, SWT.NONE);
         label.setText("Library paths");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 
-        spin1Paths = new PathList(group);
+        spin1Paths = new PathList(composite, true);
         spin1Paths.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 
         File[] items = preferences.getSpin1LibraryPath();
@@ -354,17 +369,11 @@ public class PreferencesDialog extends Dialog {
     void createSpin2CompilerPage(Composite parent) {
         Composite composite = createPage(parent, "Spin2");
 
-        Composite group = new Composite(composite, SWT.NONE);
-        GridLayout layout = new GridLayout(2, false);
-        layout.marginWidth = layout.marginHeight = 0;
-        group.setLayout(layout);
-        group.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
-
-        Label label = new Label(group, SWT.NONE);
+        Label label = new Label(composite, SWT.NONE);
         label.setText("Library paths");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 
-        spin2Paths = new PathList(group);
+        spin2Paths = new PathList(composite, true);
         spin2Paths.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 
         File[] items = preferences.getSpin2LibraryPath();
@@ -568,6 +577,7 @@ public class PreferencesDialog extends Dialog {
 
     @Override
     protected void okPressed() {
+        preferences.setShowBrowser(showBrowser.getSelection());
         preferences.setRoots(roots.getItems());
         preferences.setSpin1LibraryPath(spin1Paths.getFileItems());
         preferences.setSpin2LibraryPath(spin2Paths.getFileItems());

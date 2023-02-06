@@ -38,8 +38,9 @@ public class FileBrowser {
 
     Display display;
     TreeViewer viewer;
-    File[] roots;
 
+    String[] visiblePaths;
+    Set<String> visibleParents;
     Set<String> visibleExtensions;
 
     class FileLabelProvider extends LabelProvider {
@@ -63,18 +64,17 @@ public class FileBrowser {
 
         @Override
         public void dispose() {
+
         }
 
         @Override
         public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+
         }
 
         @Override
         public Object[] getElements(Object inputElement) {
-            if (inputElement instanceof File[]) {
-                return (File[]) inputElement;
-            }
-            return new File[0];
+            return (File[]) inputElement;
         }
 
         @Override
@@ -99,9 +99,6 @@ public class FileBrowser {
 
         @Override
         public int compare(Viewer viewer, Object e1, Object e2) {
-            if (isRootObject(e1) || isRootObject(e2)) {
-                return 0;
-            }
             if (((File) e1).isDirectory() && !((File) e2).isDirectory()) {
                 return -1;
             }
@@ -111,15 +108,6 @@ public class FileBrowser {
             return ((File) e1).getName().compareToIgnoreCase(((File) e2).getName());
         }
 
-        boolean isRootObject(Object o) {
-            for (int i = 0; i < roots.length; i++) {
-                if (o == roots[i]) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
     }
 
     final FileFilter visibleExtensionsFilter = new FileFilter() {
@@ -127,16 +115,25 @@ public class FileBrowser {
         @Override
         public boolean accept(File pathname) {
             String name = pathname.getName();
-            if (pathname.isDirectory()) {
-                if (name.equals(".") || name.equals("..")) {
-                    return false;
-                }
-                return true;
-            }
             if (name.startsWith(".")) {
                 return false;
             }
-            return accept(name);
+            if (pathname.isDirectory()) {
+                if (visibleParents.contains(pathname.getAbsolutePath())) {
+                    return true;
+                }
+                if (visiblePaths != null) {
+                    while ((pathname = pathname.getParentFile()) != null) {
+                        for (int i = 0; i < visiblePaths.length; i++) {
+                            if (pathname.getAbsolutePath().equals(visiblePaths[i])) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+            return visibleExtensions.size() == 0 || accept(name);
         }
 
         boolean accept(String name) {
@@ -202,24 +199,31 @@ public class FileBrowser {
         visibleExtensions.add(".spin2");
     }
 
-    public File[] getRoots() {
-        return roots;
-    }
+    public void setInput(File[] input) {
+        File currentSelection = getSelection();
 
-    public void setRoots(File[] roots) {
-        this.roots = roots;
-        viewer.setInput(roots);
+        viewer.setInput(input);
+
+        if (currentSelection != null) {
+            setSelection(currentSelection);
+        }
     }
 
     public void setRoots(String[] roots) {
-        this.roots = new File[roots.length];
+        this.visiblePaths = roots;
+        this.visibleParents = new HashSet<String>();
+
         for (int i = 0; i < roots.length; i++) {
-            this.roots[i] = new File(roots[i]);
+            File f = new File(roots[i]);
+            while (f != null) {
+                this.visibleParents.add(f.getAbsolutePath());
+                f = f.getParentFile();
+            }
         }
 
         File currentSelection = getSelection();
 
-        viewer.setInput(this.roots);
+        viewer.refresh();
 
         if (currentSelection != null) {
             setSelection(currentSelection);
@@ -279,6 +283,10 @@ public class FileBrowser {
 
     public void refresh() {
         viewer.refresh();
+    }
+
+    public void setVisible(boolean visible) {
+        viewer.getControl().setVisible(visible);
     }
 
 }

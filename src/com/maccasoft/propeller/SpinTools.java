@@ -199,6 +199,28 @@ public class SpinTools {
 
     };
 
+    final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            switch (evt.getPropertyName()) {
+                case Preferences.PROP_SHOW_BROWSER:
+                    browser.setVisible((Boolean) evt.getNewValue());
+                    sashForm.layout(true);
+                    break;
+                case Preferences.PROP_ROOTS:
+                    String[] roots = (String[]) evt.getNewValue();
+                    if (roots == null || roots.length == 0) {
+                        roots = new String[] {
+                            new File(System.getProperty("user.home")).getAbsolutePath()
+                        };
+                    }
+                    browser.setRoots(roots);
+                    break;
+            }
+        }
+    };
+
     public SpinTools(Shell shell) {
         this.shell = shell;
         this.shell.setData(this);
@@ -213,7 +235,6 @@ public class SpinTools {
         Menu menu = new Menu(shell, SWT.BAR);
         createFileMenu(menu);
         createEditMenu(menu);
-        //createSketchMenu(menu);
         createToolsMenu(menu);
         createHelpMenu(menu);
         shell.setMenuBar(menu);
@@ -227,6 +248,7 @@ public class SpinTools {
         sashForm.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         browser = new FileBrowser(sashForm);
+        browser.setVisible(preferences.getShowBrowser());
 
         tabFolder = new CTabFolder(sashForm, SWT.BORDER);
         tabFolder.setMaximizeVisible(false);
@@ -240,13 +262,14 @@ public class SpinTools {
         }
         sashForm.setWeights(weights);
 
+        browser.setInput(new File[] {
+            new File(System.getProperty("user.home")).getAbsoluteFile()
+        });
+
         String[] roots = preferences.getRoots();
-        if (roots == null || roots.length == 0) {
-            roots = new String[] {
-                new File(System.getProperty("user.home")).getAbsolutePath()
-            };
+        if (roots != null) {
+            browser.setRoots(roots);
         }
-        browser.setRoots(roots);
 
         browser.addSelectionChangedListener(new ISelectionChangedListener() {
 
@@ -385,23 +408,7 @@ public class SpinTools {
 
         });
 
-        preferences.addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                switch (evt.getPropertyName()) {
-                    case Preferences.PROP_ROOTS:
-                        String[] roots = (String[]) evt.getNewValue();
-                        if (roots == null || roots.length == 0) {
-                            roots = new String[] {
-                                new File(System.getProperty("user.home")).getAbsolutePath()
-                            };
-                        }
-                        browser.setRoots(roots);
-                        break;
-                }
-            }
-        });
+        preferences.addPropertyChangeListener(preferencesChangeListener);
 
         shell.addListener(SWT.Close, new Listener() {
 
@@ -521,12 +528,6 @@ public class SpinTools {
                             e.printStackTrace();
                         }
                         File lastPath = preferences.getLastPath();
-                        if (lastPath == null) {
-                            File[] roots = browser.getRoots();
-                            if (roots.length != 0) {
-                                lastPath = roots[0];
-                            }
-                        }
                         if (lastPath != null) {
                             browser.setSelection(lastPath);
                         }
