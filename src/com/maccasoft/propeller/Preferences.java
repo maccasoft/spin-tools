@@ -298,12 +298,14 @@ public class Preferences {
         for (int i = 0; i < path.length; i++) {
             l.add(defaultSpin1LibraryPath.equals(path[i]) ? null : path[i].getAbsolutePath());
         }
-        String[] ar = l.toArray(new String[l.size()]);
-        if (ar.length == 0 || (ar.length == 1 && ar[0] == null)) {
-            changeSupport.firePropertyChange(PROP_SPIN1_LIBRARY_PATH, preferences.spin1LibraryPath, preferences.spin1LibraryPath = null);
+        String[] newValue = l.toArray(new String[l.size()]);
+        if (newValue.length == 0 || (newValue.length == 1 && newValue[0] == null)) {
+            if (preferences.spin1LibraryPath != null) {
+                changeSupport.firePropertyChange(PROP_SPIN1_LIBRARY_PATH, preferences.spin1LibraryPath, preferences.spin1LibraryPath = null);
+            }
         }
-        else if (!Arrays.equals(ar, preferences.spin1LibraryPath)) {
-            changeSupport.firePropertyChange(PROP_SPIN1_LIBRARY_PATH, preferences.spin1LibraryPath, preferences.spin1LibraryPath = ar);
+        else if (!Arrays.equals(newValue, preferences.spin1LibraryPath)) {
+            changeSupport.firePropertyChange(PROP_SPIN1_LIBRARY_PATH, preferences.spin1LibraryPath, preferences.spin1LibraryPath = newValue);
         }
     }
 
@@ -325,12 +327,14 @@ public class Preferences {
         for (int i = 0; i < path.length; i++) {
             l.add(defaultSpin2LibraryPath.equals(path[i]) ? null : path[i].getAbsolutePath());
         }
-        String[] ar = l.toArray(new String[l.size()]);
-        if (ar.length == 0 || (ar.length == 1 && ar[0] == null)) {
-            changeSupport.firePropertyChange(PROP_SPIN2_LIBRARY_PATH, preferences.spin2LibraryPath, preferences.spin2LibraryPath = null);
+        String[] newValue = l.toArray(new String[l.size()]);
+        if (newValue.length == 0 || (newValue.length == 1 && newValue[0] == null)) {
+            if (preferences.spin2LibraryPath != null) {
+                changeSupport.firePropertyChange(PROP_SPIN2_LIBRARY_PATH, preferences.spin2LibraryPath, preferences.spin2LibraryPath = null);
+            }
         }
-        else if (!Arrays.equals(ar, preferences.spin2LibraryPath)) {
-            changeSupport.firePropertyChange(PROP_SPIN2_LIBRARY_PATH, preferences.spin2LibraryPath, preferences.spin2LibraryPath = ar);
+        else if (!Arrays.equals(newValue, preferences.spin2LibraryPath)) {
+            changeSupport.firePropertyChange(PROP_SPIN2_LIBRARY_PATH, preferences.spin2LibraryPath, preferences.spin2LibraryPath = newValue);
         }
     }
 

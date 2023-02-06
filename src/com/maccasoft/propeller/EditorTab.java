@@ -436,6 +436,7 @@ public class EditorTab implements FindReplaceTarget {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
+                preferences.removePropertyChangeListener(preferencesChangeListener);
                 sourcePool.removePropertyChangeListener(sourcePoolChangeListener);
                 File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
                 sourcePool.removeParsedSource(localFile.getAbsolutePath());

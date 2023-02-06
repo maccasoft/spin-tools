@@ -10,9 +10,12 @@
 
 package com.maccasoft.propeller;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringReader;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -299,6 +302,44 @@ class PreferencesTest {
         Assertions.assertArrayEquals(new int[] {
             8, 16
         }, subject.getTabStops());
+    }
+
+    @Test
+    void testSpin1DefaultLibraryNotifications() throws Exception {
+        AtomicBoolean notify = new AtomicBoolean(false);
+
+        Preferences subject = new Preferences();
+        subject.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                notify.set(true);
+            }
+        });
+
+        File[] paths = subject.getSpin1LibraryPath();
+        subject.setSpin1LibraryPath(paths);
+
+        Assertions.assertFalse(notify.get());
+    }
+
+    @Test
+    void testSpin2DefaultLibraryNotifications() throws Exception {
+        AtomicBoolean notify = new AtomicBoolean(false);
+
+        Preferences subject = new Preferences();
+        subject.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                notify.set(true);
+            }
+        });
+
+        File[] paths = subject.getSpin2LibraryPath();
+        subject.setSpin2LibraryPath(paths);
+
+        Assertions.assertFalse(notify.get());
     }
 
 }
