@@ -178,7 +178,7 @@ public class SpinTools {
 
             File fileToOpen = new File(parent, name);
             if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
-                String[] searchPaths = ".spin2".equals(suffix) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath();
+                File[] searchPaths = ".spin2".equals(suffix) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath();
                 for (int i = 0; i < searchPaths.length; i++) {
                     fileToOpen = new File(searchPaths[i], name);
                     if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
@@ -728,10 +728,10 @@ public class SpinTools {
 
     void populateOpenFromMenu(Menu menu) {
         List<String> defaultList = Arrays.asList(new String[] {
-            new File("examples/P1").getAbsolutePath(),
-            new File("examples/P2").getAbsolutePath(),
-            new File("library/spin1").getAbsolutePath(),
-            new File("library/spin2").getAbsolutePath()
+            new File(System.getProperty("APP_DIR"), "examples/P1").getAbsolutePath(),
+            new File(System.getProperty("APP_DIR"), "examples/P2").getAbsolutePath(),
+            Preferences.defaultSpin1LibraryPath.getAbsolutePath(),
+            Preferences.defaultSpin2LibraryPath.getAbsolutePath()
         });
         List<String> list = new ArrayList<String>();
 

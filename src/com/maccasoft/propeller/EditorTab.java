@@ -80,11 +80,24 @@ public class EditorTab implements FindReplaceTarget {
     SpinObject object;
     String objectTree;
 
-    final PropertyChangeListener settingsChangeListener = new PropertyChangeListener() {
+    Preferences preferences;
+
+    final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-
+            switch (evt.getPropertyName()) {
+                case Preferences.PROP_SPIN1_LIBRARY_PATH:
+                    if (!tabItemText.toLowerCase().endsWith(".spin2")) {
+                        scheduleCompile();
+                    }
+                    break;
+                case Preferences.PROP_SPIN2_LIBRARY_PATH:
+                    if (tabItemText.toLowerCase().endsWith(".spin2")) {
+                        scheduleCompile();
+                    }
+                    break;
+            }
         }
     };
 
@@ -117,11 +130,8 @@ public class EditorTab implements FindReplaceTarget {
 
         File[] searchPaths;
 
-        public EditorTabSourceProvider(String[] searchPaths) {
-            this.searchPaths = new File[searchPaths.length];
-            for (int i = 0; i < searchPaths.length; i++) {
-                this.searchPaths[i] = new File(searchPaths[i]);
-            }
+        public EditorTabSourceProvider(File[] searchPaths) {
+            this.searchPaths = searchPaths;
         }
 
         @Override
@@ -233,7 +243,7 @@ public class EditorTab implements FindReplaceTarget {
             }
 
             if (node == null) {
-                String[] paths = Preferences.getInstance().getSpin1LibraryPath();
+                File[] paths = preferences.getSpin1LibraryPath();
                 for (int i = 0; i < paths.length; i++) {
                     localFile = new File(paths[i], fileName + ".spin");
                     if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
@@ -283,7 +293,7 @@ public class EditorTab implements FindReplaceTarget {
             }
 
             if (node == null) {
-                String[] searchPaths = Preferences.getInstance().getSpin2LibraryPath();
+                File[] searchPaths = preferences.getSpin2LibraryPath();
                 for (int i = 0; i < searchPaths.length; i++) {
                     localFile = new File(searchPaths[i], fileName + ".spin2");
                     if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
@@ -330,10 +340,10 @@ public class EditorTab implements FindReplaceTarget {
                         compiler.setRemoveUnusedMethods(true);
                         if (compiler instanceof Spin2Compiler) {
                             compiler.setDebugEnabled(sourcePool.isDebugEnabled());
-                            compiler.addSourceProvider(new EditorTabSourceProvider(Preferences.getInstance().getSpin2LibraryPath()));
+                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
                         }
                         if (compiler instanceof Spin1Compiler) {
-                            compiler.addSourceProvider(new EditorTabSourceProvider(Preferences.getInstance().getSpin1LibraryPath()));
+                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
                         }
 
                         try {
@@ -387,6 +397,7 @@ public class EditorTab implements FindReplaceTarget {
     public EditorTab(CTabFolder folder, String name, SourcePool sourcePool) {
         this.tabItemText = name;
         this.sourcePool = sourcePool;
+        this.preferences = Preferences.getInstance();
 
         tabItem = new CTabItem(folder, SWT.NONE);
         tabItem.setShowClose(true);
@@ -419,6 +430,7 @@ public class EditorTab implements FindReplaceTarget {
         });
 
         sourcePool.addPropertyChangeListener(sourcePoolChangeListener);
+        preferences.addPropertyChangeListener(preferencesChangeListener);
 
         tabItem.addDisposeListener(new DisposeListener() {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -41,8 +41,8 @@ public class Preferences {
 
     public static final String PREFERENCES_NAME = ".spin-tools";
 
-    private static String defaultSpin1LibraryPath = "library/spin1";
-    private static String defaultSpin2LibraryPath = "library/spin2";
+    public static File defaultSpin1LibraryPath = new File(new File(System.getProperty("APP_DIR"), "library/spin1").getAbsolutePath());
+    public static File defaultSpin2LibraryPath = new File(new File(System.getProperty("APP_DIR"), "library/spin2").getAbsolutePath());
 
     static final int[] defaultTabStops = new int[] {
         4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80
@@ -266,48 +266,60 @@ public class Preferences {
         changeSupport.firePropertyChange(PROP_PORT, preferences.port, preferences.port = port);
     }
 
-    public String[] getSpin1LibraryPath() {
+    public File[] getSpin1LibraryPath() {
         if (preferences.spin1LibraryPath != null) {
             if (preferences.spin1LibraryPath != null) {
-                List<String> l = new ArrayList<String>();
+                List<File> l = new ArrayList<>();
                 for (int i = 0; i < preferences.spin1LibraryPath.length; i++) {
-                    l.add(preferences.spin1LibraryPath[i] != null ? preferences.spin1LibraryPath[i] : defaultSpin1LibraryPath);
+                    l.add(preferences.spin1LibraryPath[i] != null ? new File(preferences.spin1LibraryPath[i]) : defaultSpin1LibraryPath);
                 }
-                return l.toArray(new String[l.size()]);
+                return l.toArray(new File[l.size()]);
             }
         }
-        return new String[] {
+        return new File[] {
             defaultSpin1LibraryPath
         };
     }
 
-    public void setSpin1LibraryPath(String[] path) {
+    public void setSpin1LibraryPath(File[] path) {
         List<String> l = new ArrayList<String>();
         for (int i = 0; i < path.length; i++) {
-            l.add(defaultSpin1LibraryPath.equals(path[i]) ? null : path[i]);
+            l.add(defaultSpin1LibraryPath.equals(path[i]) ? null : path[i].getAbsolutePath());
         }
-        preferences.spin1LibraryPath = l.toArray(new String[l.size()]);
+        String[] ar = l.toArray(new String[l.size()]);
+        if (ar.length == 0 || (ar.length == 1 && ar[0] == null)) {
+            changeSupport.firePropertyChange(PROP_SPIN1_LIBRARY_PATH, preferences.spin1LibraryPath, preferences.spin1LibraryPath = null);
+        }
+        else if (!Arrays.equals(ar, preferences.spin1LibraryPath)) {
+            changeSupport.firePropertyChange(PROP_SPIN1_LIBRARY_PATH, preferences.spin1LibraryPath, preferences.spin1LibraryPath = ar);
+        }
     }
 
-    public String[] getSpin2LibraryPath() {
+    public File[] getSpin2LibraryPath() {
         if (preferences.spin2LibraryPath != null) {
-            List<String> l = new ArrayList<String>();
+            List<File> l = new ArrayList<>();
             for (int i = 0; i < preferences.spin2LibraryPath.length; i++) {
-                l.add(preferences.spin2LibraryPath[i] != null ? preferences.spin2LibraryPath[i] : defaultSpin2LibraryPath);
+                l.add(preferences.spin2LibraryPath[i] != null ? new File(preferences.spin2LibraryPath[i]) : defaultSpin2LibraryPath);
             }
-            return l.toArray(new String[l.size()]);
+            return l.toArray(new File[l.size()]);
         }
-        return new String[] {
+        return new File[] {
             defaultSpin2LibraryPath
         };
     }
 
-    public void setSpin2LibraryPath(String[] path) {
+    public void setSpin2LibraryPath(File[] path) {
         List<String> l = new ArrayList<String>();
         for (int i = 0; i < path.length; i++) {
-            l.add(defaultSpin2LibraryPath.equals(path[i]) ? null : path[i]);
+            l.add(defaultSpin2LibraryPath.equals(path[i]) ? null : path[i].getAbsolutePath());
         }
-        preferences.spin2LibraryPath = l.toArray(new String[l.size()]);
+        String[] ar = l.toArray(new String[l.size()]);
+        if (ar.length == 0 || (ar.length == 1 && ar[0] == null)) {
+            changeSupport.firePropertyChange(PROP_SPIN2_LIBRARY_PATH, preferences.spin2LibraryPath, preferences.spin2LibraryPath = null);
+        }
+        else if (!Arrays.equals(ar, preferences.spin2LibraryPath)) {
+            changeSupport.firePropertyChange(PROP_SPIN2_LIBRARY_PATH, preferences.spin2LibraryPath, preferences.spin2LibraryPath = ar);
+        }
     }
 
     public int[] getTabStops() {

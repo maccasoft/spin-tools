@@ -11,6 +11,7 @@
 package com.maccasoft.propeller;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.StringReader;
 
 import org.junit.jupiter.api.Assertions;
@@ -27,8 +28,8 @@ class PreferencesTest {
     @Test
     void testSetSpin1LibraryPath() throws Exception {
         Preferences subject = new Preferences();
-        subject.setSpin1LibraryPath(new String[] {
-            "spin1/path"
+        subject.setSpin1LibraryPath(new File[] {
+            new File("spin1/path")
         });
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -44,7 +45,7 @@ class PreferencesTest {
             + "  \"showLineNumbers\" : true,\n"
             + "  \"showIndentLines\" : true,\n"
             + "  \"indentLinesSize\" : 0,\n"
-            + "  \"spin1LibraryPath\" : [ \"spin1/path\" ],\n"
+            + "  \"spin1LibraryPath\" : [ \"" + new File("spin1/path").getAbsolutePath() + "\" ],\n"
             + "  \"reloadOpenTabs\" : true,\n"
             + "  \"terminalType\" : 0\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
@@ -63,16 +64,59 @@ class PreferencesTest {
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         subject.preferences = mapper.readValue(is, SerializedPreferences.class);
 
-        Assertions.assertArrayEquals(new String[] {
-            "spin1/path"
+        Assertions.assertArrayEquals(new File[] {
+            new File("spin1/path")
         }, subject.getSpin1LibraryPath());
     }
 
     @Test
-    void testSetSpin2LibraryPath() throws Exception {
+    void testGetSpin1LibraryWithDefaultPath() throws Exception {
         Preferences subject = new Preferences();
-        subject.setSpin2LibraryPath(new String[] {
-            "spin2/path"
+        StringReader is = new StringReader(""
+            + "{\n"
+            + "  \"spin1LibraryPath\" : [ \"spin1/path\", null ]\n"
+            + "}"
+            + "");
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        subject.preferences = mapper.readValue(is, SerializedPreferences.class);
+
+        Assertions.assertArrayEquals(new File[] {
+            new File("spin1/path"),
+            Preferences.defaultSpin1LibraryPath
+        }, subject.getSpin1LibraryPath());
+    }
+
+    @Test
+    void testSetSpin1DefaultLibraryPath() throws Exception {
+        Preferences subject = new Preferences();
+        subject.setSpin1LibraryPath(subject.getSpin1LibraryPath());
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.writeValue(os, subject.preferences);
+
+        Assertions.assertEquals(""
+            + "{\n"
+            + "  \"showLineNumbers\" : true,\n"
+            + "  \"showIndentLines\" : true,\n"
+            + "  \"indentLinesSize\" : 0,\n"
+            + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalType\" : 0\n"
+            + "}", os.toString().replaceAll("\\r\\n", "\n"));
+    }
+
+    @Test
+    void testSetSpin1LibraryWithDefaultPath() throws Exception {
+        Preferences subject = new Preferences();
+        subject.setSpin1LibraryPath(new File[] {
+            new File("spin1/path"),
+            Preferences.defaultSpin1LibraryPath
         });
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -88,7 +132,83 @@ class PreferencesTest {
             + "  \"showLineNumbers\" : true,\n"
             + "  \"showIndentLines\" : true,\n"
             + "  \"indentLinesSize\" : 0,\n"
-            + "  \"spin2LibraryPath\" : [ \"spin2/path\" ],\n"
+            + "  \"spin1LibraryPath\" : [ \"" + new File("spin1/path").getAbsolutePath() + "\", null ],\n"
+            + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalType\" : 0\n"
+            + "}", os.toString().replaceAll("\\r\\n", "\n"));
+    }
+
+    @Test
+    void testSetSpin2LibraryPath() throws Exception {
+        Preferences subject = new Preferences();
+        subject.setSpin2LibraryPath(new File[] {
+            new File("spin2/path")
+        });
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.writeValue(os, subject.preferences);
+
+        Assertions.assertEquals(""
+            + "{\n"
+            + "  \"showLineNumbers\" : true,\n"
+            + "  \"showIndentLines\" : true,\n"
+            + "  \"indentLinesSize\" : 0,\n"
+            + "  \"spin2LibraryPath\" : [ \"" + new File("spin2/path").getAbsolutePath() + "\" ],\n"
+            + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalType\" : 0\n"
+            + "}", os.toString().replaceAll("\\r\\n", "\n"));
+    }
+
+    @Test
+    void testSetSpin2DefaultLibraryPath() throws Exception {
+        Preferences subject = new Preferences();
+        subject.setSpin2LibraryPath(subject.getSpin2LibraryPath());
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.writeValue(os, subject.preferences);
+
+        Assertions.assertEquals(""
+            + "{\n"
+            + "  \"showLineNumbers\" : true,\n"
+            + "  \"showIndentLines\" : true,\n"
+            + "  \"indentLinesSize\" : 0,\n"
+            + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalType\" : 0\n"
+            + "}", os.toString().replaceAll("\\r\\n", "\n"));
+    }
+
+    @Test
+    void testSetSpin2LibraryWithDefaultPath() throws Exception {
+        Preferences subject = new Preferences();
+        subject.setSpin2LibraryPath(new File[] {
+            new File("spin2/path"),
+            Preferences.defaultSpin2LibraryPath
+        });
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.writeValue(os, subject.preferences);
+
+        Assertions.assertEquals(""
+            + "{\n"
+            + "  \"showLineNumbers\" : true,\n"
+            + "  \"showIndentLines\" : true,\n"
+            + "  \"indentLinesSize\" : 0,\n"
+            + "  \"spin2LibraryPath\" : [ \"" + new File("spin2/path").getAbsolutePath() + "\", null ],\n"
             + "  \"reloadOpenTabs\" : true,\n"
             + "  \"terminalType\" : 0\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
@@ -107,8 +227,27 @@ class PreferencesTest {
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         subject.preferences = mapper.readValue(is, SerializedPreferences.class);
 
-        Assertions.assertArrayEquals(new String[] {
-            "spin2/path"
+        Assertions.assertArrayEquals(new File[] {
+            new File("spin2/path")
+        }, subject.getSpin2LibraryPath());
+    }
+
+    @Test
+    void testGetSpin2LibraryWithDefaultPath() throws Exception {
+        Preferences subject = new Preferences();
+        StringReader is = new StringReader(""
+            + "{\n"
+            + "  \"spin2LibraryPath\" : [ \"spin2/path\", null ]\n"
+            + "}"
+            + "");
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        subject.preferences = mapper.readValue(is, SerializedPreferences.class);
+
+        Assertions.assertArrayEquals(new File[] {
+            new File("spin2/path"),
+            Preferences.defaultSpin2LibraryPath
         }, subject.getSpin2LibraryPath());
     }
 
