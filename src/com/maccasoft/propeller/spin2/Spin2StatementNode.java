@@ -22,14 +22,25 @@ public class Spin2StatementNode {
 
     Token token;
 
-    Map<String, Spin2StatementNode> properties = new HashMap<String, Spin2StatementNode>();
-    private List<Spin2StatementNode> childs = new ArrayList<Spin2StatementNode>();
+    protected Map<String, Spin2StatementNode> properties = new HashMap<String, Spin2StatementNode>();
+    protected List<Spin2StatementNode> childs = new ArrayList<Spin2StatementNode>();
 
-    String comment;
-    Spin2StatementNode parent;
+    protected String comment;
+    protected Spin2StatementNode parent;
 
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
+
+    public static class Method extends Spin2StatementNode {
+
+        public Method(Spin2StatementNode node) {
+            super(node.token);
+            this.properties.putAll(node.properties);
+            this.childs.addAll(node.childs);
+            this.data = node.data;
+            this.keyedData = node.keyedData;
+        }
+    }
 
     public Spin2StatementNode(Token token) {
         this.token = token;

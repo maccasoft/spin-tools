@@ -3049,7 +3049,43 @@ public class Spin2ObjectCompiler {
                         source.addAll(compileVariableRead(context, expression, node, push));
                     }
                     else if (expression instanceof Variable) {
-                        source.addAll(compileVariableRead(context, expression, node, push));
+                        if (node instanceof Spin2StatementNode.Method) {
+                            source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
+                            for (int i = 0; i < node.getChildCount(); i++) {
+                                source.addAll(compileConstantExpression(context, node.getChild(i)));
+                            }
+                            source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression));
+                            source.add(new Bytecode(context, new byte[] {
+                                (byte) 0x0B,
+                            }, "CALL_PTR"));
+                        }
+                        else {
+                            source.addAll(compileVariableRead(context, expression, node, push));
+                        }
+                    }
+                    else if (expression instanceof DataVariable) {
+                        if (node instanceof Spin2StatementNode.Method) {
+                            source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
+                            for (int i = 0; i < node.getChildCount(); i++) {
+                                source.addAll(compileConstantExpression(context, node.getChild(i)));
+                            }
+                            MemoryOp.Size ss = MemoryOp.Size.Long;
+                            switch (((DataVariable) expression).getType()) {
+                                case "BYTE":
+                                    ss = MemoryOp.Size.Byte;
+                                    break;
+                                case "WORD":
+                                    ss = MemoryOp.Size.Word;
+                                    break;
+                            }
+                            source.add(new MemoryOp(context, ss, MemoryOp.Base.PBase, MemoryOp.Op.Read, false, expression, 0));
+                            source.add(new Bytecode(context, new byte[] {
+                                (byte) 0x0B,
+                            }, "CALL_PTR"));
+                        }
+                        else {
+                            source.addAll(compileVariableRead(context, expression, node, push));
+                        }
                     }
                     else if (expression instanceof ContextLiteral) {
                         source.addAll(compileVariableRead(context, expression, node, push));

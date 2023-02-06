@@ -318,6 +318,7 @@ public class Spin2TreeBuilder {
             if (peek() != null) {
                 if ("(".equals(peek().getText())) {
                     next();
+                    node = new Spin2StatementNode.Method(node);
                     if (peek() != null && ")".equals(peek().getText())) {
                         next();
                         return node;
