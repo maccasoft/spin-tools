@@ -33,7 +33,6 @@ import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
-import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
@@ -872,8 +871,8 @@ public class Spin1ObjectCompiler {
                             type = "BYTE";
                         }
                         scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
-                        scope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope()));
-                        scope.addSymbol("@@" + pasmLine.getLabel(), new MemoryContextLiteral(pasmLine.getScope()));
+                        scope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
+                        scope.addSymbol("@@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
 
                         if (pasmLine.getMnemonic() == null) {
                             if (!pasmLine.isLocalLabel()) {
@@ -885,8 +884,8 @@ public class Spin1ObjectCompiler {
                                 Spin1PAsmLine line = entry.getKey();
                                 Spin1Context context = entry.getValue();
                                 context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                                context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
-                                context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope()));
+                                context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                                context.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
                             }
                             pendingAlias.clear();
                         }
@@ -914,8 +913,8 @@ public class Spin1ObjectCompiler {
                         Spin1PAsmLine line = entry.getKey();
                         Spin1Context context = entry.getValue();
                         context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                        context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
-                        context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope()));
+                        context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                        context.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
                     }
                     pendingAlias.clear();
                 }
@@ -2585,22 +2584,7 @@ public class Spin1ObjectCompiler {
                         throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                     }
 
-                    if (node.getText().startsWith("@@")) {
-                        if (node.getChildCount() != 0) {
-                            throw new CompilerException("syntax error", node.getToken());
-                        }
-                        if (expression instanceof Variable) {
-                            source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression));
-                            source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
-                        }
-                        else if (expression instanceof MemoryContextLiteral) {
-                            source.add(new Constant(context, expression));
-                        }
-                        else {
-                            throw new CompilerException("syntax error", node.getToken());
-                        }
-                    }
-                    else if (node.getText().startsWith("@")) {
+                    if (node.getText().startsWith("@")) {
                         boolean popIndex = false;
                         Spin1StatementNode postEffectNode = null;
 
@@ -2655,8 +2639,27 @@ public class Spin1ObjectCompiler {
                                 }
                             }
                             else {
-                                source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression));
+                                if (node.getText().startsWith("@@")) {
+                                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression));
+                                    source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
+                                }
+                                else {
+                                    source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression));
+                                }
                             }
+                        }
+                        else if (expression instanceof ObjectContextLiteral) {
+                            MemoryOp.Size ss = MemoryOp.Size.Long;
+                            switch (((ObjectContextLiteral) expression).getType()) {
+                                case "BYTE":
+                                    ss = MemoryOp.Size.Byte;
+                                    break;
+                                case "WORD":
+                                    ss = MemoryOp.Size.Word;
+                                    break;
+                            }
+                            source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
+                            source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
                         }
                         else if (expression instanceof ContextLiteral) {
                             MemoryOp.Size ss = MemoryOp.Size.Long;

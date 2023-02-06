@@ -596,6 +596,20 @@ class Spin1TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void testAbsoluteAddress() {
+        String text = "a := byte[@@b[c]][0]";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [byte]\n"
+            + "      +-- [@@]\n"
+            + "           +-- [b]\n"
+            + "                +-- [c]\n"
+            + "      +-- [0]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin1TreeBuilder builder = new Spin1TreeBuilder();
 
