@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -29,6 +29,29 @@ import com.maccasoft.propeller.Preferences.SerializedPreferences;
 class PreferencesTest {
 
     @Test
+    void testDefaultPreferences() throws Exception {
+        Preferences subject = new Preferences();
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.writeValue(os, subject.preferences);
+
+        Assertions.assertEquals(""
+            + "{\n"
+            + "  \"showLineNumbers\" : true,\n"
+            + "  \"showIndentLines\" : true,\n"
+            + "  \"indentLinesSize\" : 0,\n"
+            + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalType\" : 0,\n"
+            + "  \"terminalBaudRate\" : 115200\n"
+            + "}", os.toString().replaceAll("\\r\\n", "\n"));
+    }
+
+    @Test
     void testSetSpin1LibraryPath() throws Exception {
         Preferences subject = new Preferences();
         subject.setSpin1LibraryPath(new File[] {
@@ -50,7 +73,8 @@ class PreferencesTest {
             + "  \"indentLinesSize\" : 0,\n"
             + "  \"spin1LibraryPath\" : [ \"" + new File("spin1/path").getAbsolutePath() + "\" ],\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalType\" : 0\n"
+            + "  \"terminalType\" : 0,\n"
+            + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -110,7 +134,8 @@ class PreferencesTest {
             + "  \"showIndentLines\" : true,\n"
             + "  \"indentLinesSize\" : 0,\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalType\" : 0\n"
+            + "  \"terminalType\" : 0,\n"
+            + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -137,7 +162,8 @@ class PreferencesTest {
             + "  \"indentLinesSize\" : 0,\n"
             + "  \"spin1LibraryPath\" : [ \"" + new File("spin1/path").getAbsolutePath() + "\", null ],\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalType\" : 0\n"
+            + "  \"terminalType\" : 0,\n"
+            + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -163,7 +189,8 @@ class PreferencesTest {
             + "  \"indentLinesSize\" : 0,\n"
             + "  \"spin2LibraryPath\" : [ \"" + new File("spin2/path").getAbsolutePath() + "\" ],\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalType\" : 0\n"
+            + "  \"terminalType\" : 0,\n"
+            + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -186,7 +213,8 @@ class PreferencesTest {
             + "  \"showIndentLines\" : true,\n"
             + "  \"indentLinesSize\" : 0,\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalType\" : 0\n"
+            + "  \"terminalType\" : 0,\n"
+            + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -213,7 +241,8 @@ class PreferencesTest {
             + "  \"indentLinesSize\" : 0,\n"
             + "  \"spin2LibraryPath\" : [ \"" + new File("spin2/path").getAbsolutePath() + "\", null ],\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalType\" : 0\n"
+            + "  \"terminalType\" : 0,\n"
+            + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -282,7 +311,8 @@ class PreferencesTest {
             + "  \"indentLinesSize\" : 0,\n"
             + "  \"reloadOpenTabs\" : true,\n"
             + "  \"tabStops\" : [ 8, 16 ],\n"
-            + "  \"terminalType\" : 0\n"
+            + "  \"terminalType\" : 0,\n"
+            + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 

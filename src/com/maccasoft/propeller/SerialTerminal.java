@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-23 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -732,6 +732,7 @@ public class SerialTerminal {
         public void widgetSelected(SelectionEvent e) {
             try {
                 serialBaudRate = baudRates.get(baudRate.getSelectionIndex());
+                preferences.setTerminalBaudRate(serialBaudRate);
                 serialPort.setParams(
                     serialBaudRate,
                     SerialPort.DATABITS_8,
@@ -789,13 +790,15 @@ public class SerialTerminal {
     };
 
     public SerialTerminal() {
-        this.serialBaudRate = 115200;
-        this.cursorState = CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
+
     }
 
     public void open() {
         display = Display.getDefault();
         preferences = Preferences.getInstance();
+
+        serialBaudRate = preferences.getTerminalBaudRate();
+        cursorState = CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
 
         Font textFont = JFaceResources.getTextFont();
         FontData fontData = textFont.getFontData()[0];
@@ -1296,7 +1299,7 @@ public class SerialTerminal {
 
     public void setSerialPort(SerialPort serialPort, int serialBaudRate) {
         try {
-            if (this.serialPort != null) {
+            if (this.serialPort != null && this.serialPort != serialPort) {
                 if (this.serialPort.isOpened()) {
                     this.serialPort.removeEventListener();
                 }
@@ -1321,7 +1324,9 @@ public class SerialTerminal {
                     SerialPort.PARITY_NONE,
                     false,
                     false);
-                serialPort.addEventListener(serialEventListener);
+                if (this.serialPort != serialPort) {
+                    serialPort.addEventListener(serialEventListener);
+                }
             }
 
             this.serialPort = serialPort;

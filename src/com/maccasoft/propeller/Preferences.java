@@ -74,6 +74,7 @@ public class Preferences {
             showLineNumbers = true;
             showIndentLines = true;
             reloadOpenTabs = true;
+            terminalBaudRate = 115200;
         }
 
         public Bounds window;
@@ -100,6 +101,7 @@ public class Preferences {
         public Bounds terminalWindow;
         public int terminalType;
         public String terminalFont;
+        public int terminalBaudRate;
 
         public SearchPreferences search;
 
@@ -389,6 +391,14 @@ public class Preferences {
         if (preferences.terminalFont != terminalFont) {
             changeSupport.firePropertyChange(PROP_TERMINAL_FONT, preferences.terminalFont, preferences.terminalFont = terminalFont);
         }
+    }
+
+    public int getTerminalBaudRate() {
+        return preferences.terminalBaudRate;
+    }
+
+    public void setTerminalBaudRate(int terminalBaudRate) {
+        preferences.terminalBaudRate = terminalBaudRate;
     }
 
     public SearchPreferences getSearchPreferences() {

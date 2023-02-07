@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -29,8 +29,6 @@ public class Propeller1Loader {
     public static final int DOWNLOAD_EEPROM = 2;
     public static final int DOWNLOAD_RUN_EEPROM = 3;
     public static final int DOWNLOAD_SHUTDOWN = 4;
-
-    public static int portSpeed = SerialPort.BAUDRATE_115200;
 
     SerialPort serialPort;
     byte LFSR;
@@ -62,7 +60,7 @@ public class Propeller1Loader {
             serialPort.openPort();
         }
         serialPort.setParams(
-            portSpeed,
+            SerialPort.BAUDRATE_115200,
             SerialPort.DATABITS_8,
             SerialPort.STOPBITS_1,
             SerialPort.PARITY_NONE,
@@ -225,7 +223,7 @@ public class Propeller1Loader {
             serialPort.openPort();
         }
         serialPort.setParams(
-            portSpeed,
+            SerialPort.BAUDRATE_115200,
             SerialPort.DATABITS_8,
             SerialPort.STOPBITS_1,
             SerialPort.PARITY_NONE,
@@ -249,7 +247,7 @@ public class Propeller1Loader {
             serialPort.openPort();
         }
         serialPort.setParams(
-            portSpeed,
+            SerialPort.BAUDRATE_115200,
             SerialPort.DATABITS_8,
             SerialPort.STOPBITS_1,
             SerialPort.PARITY_NONE,

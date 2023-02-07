@@ -1509,7 +1509,7 @@ public class SpinTools {
                     if (serialTerminal == null) {
                         serialTerminal = new SerialTerminal();
                         serialTerminal.open();
-                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()), 115200);
+                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
                     }
                     serialTerminal.setFocus();
                 } catch (Exception ex) {
@@ -1727,9 +1727,10 @@ public class SpinTools {
 
         SerialPort serialPort = null;
         boolean serialPortShared = false;
+        boolean isDebug = (obj instanceof Spin2Object) && sourcePool.isDebugEnabled();
 
         SerialTerminal serialTerminal = getSerialTerminal();
-        if (serialTerminal == null && (openTerminal || sourcePool.isDebugEnabled())) {
+        if (serialTerminal == null && (openTerminal || isDebug)) {
             serialTerminal = new SerialTerminal();
             serialTerminal.open();
         }
@@ -1738,11 +1739,11 @@ public class SpinTools {
             if (serialPort == null) {
                 serialPort = new SerialPort(serialPortList.getSelection());
             }
-            serialTerminal.setSerialPort(serialPort, sourcePool.isDebugEnabled() ? 2000000 : serialTerminal.getBaudRate());
+            serialTerminal.setSerialPort(serialPort, isDebug ? Propeller2Loader.UPLOAD_BAUD_RATE : serialTerminal.getBaudRate());
             if (openTerminal) {
                 serialTerminal.setFocus();
             }
-            if (sourcePool.isDebugEnabled()) {
+            if (isDebug) {
                 serialTerminal.clear();
             }
             serialPortShared = true;
@@ -1758,8 +1759,7 @@ public class SpinTools {
         doUpload(obj, writeToFlash, serialPort, serialPortShared);
 
         if (serialTerminal != null) {
-            boolean isDebug = (obj instanceof Spin2Object) && sourcePool.isDebugEnabled();
-            serialTerminal.setSerialPort(serialPort, isDebug ? 2000000 : serialTerminal.getBaudRate());
+            serialTerminal.setSerialPort(serialPort, isDebug ? Propeller2Loader.UPLOAD_BAUD_RATE : serialTerminal.getBaudRate());
         }
     }
 
@@ -2170,7 +2170,7 @@ public class SpinTools {
         return true;
     }
 
-    boolean handleUnsavedContent() {
+    private boolean handleUnsavedContent() {
         boolean dirty = false;
 
         for (CTabItem tabItem : tabFolder.getItems()) {
