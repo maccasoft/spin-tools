@@ -42,8 +42,8 @@ public class Preferences {
 
     public static final String PREFERENCES_NAME = ".spin-tools";
 
-    public static File defaultSpin1LibraryPath = new File(new File(System.getProperty("APP_DIR"), "library/spin1").getAbsolutePath());
-    public static File defaultSpin2LibraryPath = new File(new File(System.getProperty("APP_DIR"), "library/spin2").getAbsolutePath());
+    public static File defaultSpin1LibraryPath = new File(System.getProperty("APP_DIR"), "library/spin1").getAbsoluteFile();
+    public static File defaultSpin2LibraryPath = new File(System.getProperty("APP_DIR"), "library/spin2").getAbsoluteFile();
 
     static final int[] defaultTabStops = new int[] {
         4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80

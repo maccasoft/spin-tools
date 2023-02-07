@@ -100,6 +100,9 @@ public class SpinTools {
     public static final String APP_TITLE = "Spin Tools";
     public static final String APP_VERSION = "0.20.0";
 
+    static final File defaultSpin1Examples = new File(System.getProperty("APP_DIR"), "examples/P1").getAbsoluteFile();
+    static final File defaultSpin2Examples = new File(System.getProperty("APP_DIR"), "examples/P2").getAbsoluteFile();
+
     Shell shell;
     SashForm sashForm;
     FileBrowser browser;
@@ -1011,6 +1014,19 @@ public class SpinTools {
             doFileSaveAs(editorTab);
             return;
         }
+        else {
+            File parentFile = fileToSave.getParentFile();
+            if (parentFile != null) {
+                if (parentFile.equals(Preferences.defaultSpin1LibraryPath) || parentFile.equals(Preferences.defaultSpin2LibraryPath)) {
+                    doFileSaveAs(editorTab);
+                    return;
+                }
+                if (parentFile.equals(defaultSpin1Examples) || parentFile.equals(defaultSpin2Examples)) {
+                    doFileSaveAs(editorTab);
+                    return;
+                }
+            }
+        }
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave));
             writer.write(editorTab.getEditorText());
@@ -1049,7 +1065,29 @@ public class SpinTools {
             filterPath = new File(preferences.getLru().get(0));
         }
         if (filterPath != null) {
-            dlg.setFilterPath(filterPath.getParent());
+            File parentFile = filterPath.getParentFile();
+            if (parentFile != null) {
+                if (parentFile.equals(Preferences.defaultSpin1LibraryPath) || parentFile.equals(Preferences.defaultSpin2LibraryPath)) {
+                    parentFile = null;
+                }
+                else if (parentFile.equals(defaultSpin1Examples) || parentFile.equals(defaultSpin2Examples)) {
+                    parentFile = null;
+                }
+            }
+            if (parentFile == null && preferences.getLru().size() != 0) {
+                parentFile = new File(preferences.getLru().get(0)).getParentFile();
+                if (parentFile != null) {
+                    if (parentFile.equals(Preferences.defaultSpin1LibraryPath) || parentFile.equals(Preferences.defaultSpin2LibraryPath)) {
+                        parentFile = null;
+                    }
+                    else if (parentFile.equals(defaultSpin1Examples) || parentFile.equals(defaultSpin2Examples)) {
+                        parentFile = null;
+                    }
+                }
+            }
+            if (parentFile != null) {
+                dlg.setFilterPath(parentFile.getAbsolutePath());
+            }
         }
 
         String fileName = dlg.open();
