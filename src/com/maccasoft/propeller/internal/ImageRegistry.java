@@ -11,6 +11,7 @@
 
 package com.maccasoft.propeller.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ public class ImageRegistry {
     private static final Map<Object, Image> map = new HashMap<Object, Image>();
 
     ImageRegistry() {
+
     }
 
     public static Image getImage(Object key) {
@@ -69,4 +71,55 @@ public class ImageRegistry {
         }
         return map.get(name);
     }
+
+    private static final Map<String, String> fileMap = new HashMap<>();
+    static {
+        fileMap.put(".asm", "document-text.png");
+        fileMap.put(".bat", "document-text.png");
+        fileMap.put(".bin", "document-binary.png");
+        fileMap.put(".binary", "document-binary.png");
+        fileMap.put(".bmp", "document-image.png");
+        fileMap.put(".c", "document-text.png");
+        fileMap.put(".cpp", "document-text.png");
+        fileMap.put(".dll", "document-binary.png");
+        fileMap.put(".exe", "document-binary.png");
+        fileMap.put(".gif", "document-image.png");
+        fileMap.put(".gz", "document-zipper.png");
+        fileMap.put(".h", "document-text.png");
+        fileMap.put(".img", "document-binary.png");
+        fileMap.put(".java", "document-text.png");
+        fileMap.put(".jpg", "document-image.png");
+        fileMap.put(".json", "document-text.png");
+        fileMap.put(".lib", "document-binary.png");
+        fileMap.put(".log", "document-text.png");
+        fileMap.put(".lst", "document-text.png");
+        fileMap.put(".o", "document-binary.png");
+        fileMap.put(".pdf", "document-pdf.png");
+        fileMap.put(".png", "document-image.png");
+        fileMap.put(".rom", "document-binary.png");
+        fileMap.put(".s", "document-text.png");
+        fileMap.put(".sh", "document-text.png");
+        fileMap.put(".spin", "document-code.png");
+        fileMap.put(".spin2", "document-code.png");
+        fileMap.put(".tga", "document-image.png");
+        fileMap.put(".tar", "document-zipper.png");
+        fileMap.put(".txt", "document-text.png");
+        fileMap.put(".zip", "document-zipper.png");
+    }
+
+    public static Image getImageForFile(File file) {
+        if (file.isDirectory()) {
+            return getImageFromResources("folder.png");
+        }
+        int index = file.getName().lastIndexOf('.');
+        if (index != -1) {
+            String ext = file.getName().substring(index);
+            String imageName = fileMap.get(ext.toLowerCase());
+            if (imageName != null) {
+                return getImageFromResources(imageName);
+            }
+        }
+        return getImageFromResources("document.png");
+    }
+
 }

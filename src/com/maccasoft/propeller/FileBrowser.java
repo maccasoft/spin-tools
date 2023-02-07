@@ -52,10 +52,7 @@ public class FileBrowser {
 
         @Override
         public Image getImage(Object element) {
-            if (((File) element).isDirectory()) {
-                return ImageRegistry.getImageFromResources("folder.png");
-            }
-            return ImageRegistry.getImageFromResources("document-code.png");
+            return ImageRegistry.getImageForFile((File) element);
         }
 
     }
@@ -195,8 +192,8 @@ public class FileBrowser {
         });
 
         visibleExtensions = new HashSet<String>();
-        visibleExtensions.add(".spin");
-        visibleExtensions.add(".spin2");
+        //visibleExtensions.add(".spin");
+        //visibleExtensions.add(".spin2");
     }
 
     public void setInput(File[] input) {
