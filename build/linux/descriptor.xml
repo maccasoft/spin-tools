@@ -38,7 +38,7 @@
             </excludes>
         </fileSet>
         <fileSet>
-            <directory>../../build/linux</directory>
+            <directory>${project.basedir}</directory>
             <outputDirectory></outputDirectory>
             <fileMode>755</fileMode>
             <includes>
@@ -53,6 +53,14 @@
             <outputDirectory></outputDirectory>
             <includes>
                 <include>spinide.png</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../..</directory>
+            <outputDirectory></outputDirectory>
+            <includes>
+                <include>LICENSE</include>
+                <include>CC-BY-3.0.txt</include>
             </includes>
         </fileSet>
     </fileSets>

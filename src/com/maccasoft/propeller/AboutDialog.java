@@ -65,16 +65,21 @@ public class AboutDialog extends Dialog {
         label.setImage(ImageRegistry.getImageFromResources("about.png"));
 
         String title = SpinTools.APP_TITLE + " " + SpinTools.APP_VERSION;
-        final String epl = "http://www.eclipse.org/legal/epl-v10.html";
+        final String eplLink = "http://www.eclipse.org/legal/epl-v10.html";
+        final String epl = "Eclipse Public License v1.0";
+        final String fugue = "Yusuke Kamiyamane";
+        final String fugueLink = "https://p.yusukekamiyamane.com/";
+        final String cc = "Creative Commons\r\nAttribution 3.0";
+        final String ccLink = "https://creativecommons.org/licenses/by/3.0/";
         final String message = title + "\r\n\r\n" + "Copyright (c) 2021-23 Marco Maccaferri and others. All rights reserved.\r\n\r\n"
-            + "This program and the accompanying materials are made available under the\r\n"
-            + "terms of the Eclipse Public License v1.0 which accompanies this distribution\r\n"
-            + "and is available at " + epl;
+            + "This program and the accompanying materials, unless otherwise specified,\r\n"
+            + "are made available under the terms of the " + epl + ".\r\n"
+            + "\r\nIcons by " + fugue + " are licensed under the " + cc + " license.";
 
         final StyledText text = new StyledText(content, SWT.READ_ONLY);
         text.setLayoutData(new GridData(SWT.TOP, SWT.RIGHT, true, false));
         text.setCaret(null);
-        text.setMargins(0, layout.verticalSpacing, convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING), layout.verticalSpacing);
+        text.setMargins(0, layout.verticalSpacing, convertHorizontalDLUsToPixels(7), layout.verticalSpacing);
         text.setText(message);
 
         final List<StyleRange> linkRanges = new ArrayList<StyleRange>();
@@ -93,6 +98,22 @@ public class AboutDialog extends Dialog {
         text.setStyleRange(style);
         linkRanges.add(style);
 
+        style = new StyleRange();
+        style.start = message.indexOf(fugue);
+        style.length = fugue.length();
+        style.underline = true;
+        style.underlineStyle = SWT.UNDERLINE_LINK;
+        text.setStyleRange(style);
+        linkRanges.add(style);
+
+        style = new StyleRange();
+        style.start = message.indexOf(cc);
+        style.length = cc.length();
+        style.underline = true;
+        style.underlineStyle = SWT.UNDERLINE_LINK;
+        text.setStyleRange(style);
+        linkRanges.add(style);
+
         text.addListener(SWT.MouseDown, new Listener() {
 
             @Override
@@ -102,6 +123,15 @@ public class AboutDialog extends Dialog {
                     for (StyleRange style : linkRanges) {
                         if (offset >= style.start && offset < (style.start + style.length)) {
                             String link = text.getText(style.start, style.start + style.length - 1);
+                            if (link.equals(epl)) {
+                                link = eplLink;
+                            }
+                            if (link.equals(fugue)) {
+                                link = fugueLink;
+                            }
+                            if (link.equals(cc)) {
+                                link = ccLink;
+                            }
                             System.out.println("[" + link + "]");
                             Program.launch(link);
                             break;
