@@ -50,7 +50,11 @@ public class FileBrowser {
 
         @Override
         public String getText(Object element) {
-            return ((File) element).getName();
+            String name = ((File) element).getName();
+            if (name == null || name.length() == 0) {
+                name = ((File) element).getPath();
+            }
+            return name;
         }
 
         @Override
