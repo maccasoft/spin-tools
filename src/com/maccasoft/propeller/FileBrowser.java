@@ -12,7 +12,9 @@ package com.maccasoft.propeller;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.jface.viewers.DoubleClickEvent;
@@ -42,6 +44,7 @@ public class FileBrowser {
     String[] visiblePaths;
     Set<String> visibleParents;
     Set<String> visibleExtensions;
+    Set<String> hiddenExtensions;
 
     class FileLabelProvider extends LabelProvider {
 
@@ -71,13 +74,30 @@ public class FileBrowser {
 
         @Override
         public Object[] getElements(Object inputElement) {
-            return (File[]) inputElement;
+            File[] input = (File[]) inputElement;
+
+            if (visibleParents.size() == 0) {
+                return new File[0];
+            }
+
+            if (input.length == 1) {
+                return input[0].listFiles(visibleFoldersFilter);
+            }
+            if (input.length > 1) {
+                List<File> elements = new ArrayList<>();
+                for (int i = 0; i < input.length; i++) {
+                    if (visibleFoldersFilter.accept(input[i])) {
+                        elements.add(input[i]);
+                    }
+                }
+                return elements.toArray(new File[elements.size()]);
+            }
+            return input;
         }
 
         @Override
         public Object[] getChildren(Object parentElement) {
-            File[] childs = ((File) parentElement).listFiles(visibleExtensionsFilter);
-            return childs;
+            return ((File) parentElement).listFiles(visibleExtensionsFilter);
         }
 
         @Override
@@ -107,6 +127,29 @@ public class FileBrowser {
 
     }
 
+    final FileFilter visibleFoldersFilter = new FileFilter() {
+
+        @Override
+        public boolean accept(File pathname) {
+            if (pathname.isDirectory()) {
+                if (visibleParents.contains(pathname.getAbsolutePath())) {
+                    return true;
+                }
+                if (visiblePaths != null) {
+                    while ((pathname = pathname.getParentFile()) != null) {
+                        for (int i = 0; i < visiblePaths.length; i++) {
+                            if (pathname.getAbsolutePath().equals(visiblePaths[i])) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+    };
+
     final FileFilter visibleExtensionsFilter = new FileFilter() {
 
         @Override
@@ -115,6 +158,7 @@ public class FileBrowser {
             if (name.startsWith(".")) {
                 return false;
             }
+
             if (pathname.isDirectory()) {
                 if (visibleParents.contains(pathname.getAbsolutePath())) {
                     return true;
@@ -130,15 +174,32 @@ public class FileBrowser {
                 }
                 return false;
             }
-            return visibleExtensions.size() == 0 || accept(name);
-        }
 
-        boolean accept(String name) {
+            if (visiblePaths != null && visiblePaths.length != 0) {
+                boolean result = false;
+                while ((pathname = pathname.getParentFile()) != null && result == false) {
+                    for (int i = 0; i < visiblePaths.length; i++) {
+                        if (pathname.getAbsolutePath().equals(visiblePaths[i])) {
+                            result = true;
+                            break;
+                        }
+                    }
+                }
+                if (result == false) {
+                    return false;
+                }
+            }
+
             int i = name.lastIndexOf('.');
             if (i != -1) {
-                return visibleExtensions.contains(name.substring(i).toLowerCase());
+                String ext = name.substring(i).toLowerCase();
+                if (hiddenExtensions.contains(ext)) {
+                    return false;
+                }
+                return visibleExtensions.size() == 0 || visibleExtensions.contains(ext);
             }
-            return false;
+
+            return true;
         }
 
     };
@@ -191,9 +252,13 @@ public class FileBrowser {
 
         });
 
+        visibleParents = new HashSet<String>();
+
         visibleExtensions = new HashSet<String>();
-        //visibleExtensions.add(".spin");
-        //visibleExtensions.add(".spin2");
+
+        hiddenExtensions = new HashSet<String>();
+        hiddenExtensions.add(".bin");
+        hiddenExtensions.add(".binary");
     }
 
     public void setInput(File[] input) {
@@ -206,14 +271,14 @@ public class FileBrowser {
         }
     }
 
-    public void setRoots(String[] roots) {
-        this.visiblePaths = roots;
-        this.visibleParents = new HashSet<String>();
+    public void setVisiblePaths(String[] paths) {
+        this.visiblePaths = paths;
 
-        for (int i = 0; i < roots.length; i++) {
-            File f = new File(roots[i]);
+        visibleParents.clear();
+        for (int i = 0; i < paths.length; i++) {
+            File f = new File(paths[i]);
             while (f != null) {
-                this.visibleParents.add(f.getAbsolutePath());
+                visibleParents.add(f.getAbsolutePath());
                 f = f.getParentFile();
             }
         }
@@ -284,6 +349,20 @@ public class FileBrowser {
 
     public void setVisible(boolean visible) {
         viewer.getControl().setVisible(visible);
+    }
+
+    public void setVisibleExtensions(String[] extensions) {
+        visibleExtensions.clear();
+        for (int i = 0; i < extensions.length; i++) {
+            visibleExtensions.add(extensions[i].toLowerCase());
+        }
+    }
+
+    public void setHiddenExtensions(String[] extensions) {
+        hiddenExtensions.clear();
+        for (int i = 0; i < extensions.length; i++) {
+            hiddenExtensions.add(extensions[i].toLowerCase());
+        }
     }
 
 }

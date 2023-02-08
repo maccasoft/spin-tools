@@ -218,7 +218,7 @@ public class SpinTools {
                             new File(System.getProperty("user.home")).getAbsolutePath()
                         };
                     }
-                    browser.setRoots(roots);
+                    browser.setVisiblePaths(roots);
                     break;
             }
         }
@@ -265,14 +265,18 @@ public class SpinTools {
         }
         sashForm.setWeights(weights);
 
-        browser.setInput(new File[] {
-            new File(System.getProperty("user.home")).getAbsoluteFile()
-        });
+        //browser.setInput(new File[] {
+        //    new File(System.getProperty("user.home")).getAbsoluteFile()
+        //});
+        browser.setInput(File.listRoots());
 
         String[] roots = preferences.getRoots();
-        if (roots != null) {
-            browser.setRoots(roots);
+        if (roots == null || roots.length == 0) {
+            roots = new String[] {
+                new File(System.getProperty("user.home")).getAbsolutePath()
+            };
         }
+        browser.setVisiblePaths(roots);
 
         browser.addSelectionChangedListener(new ISelectionChangedListener() {
 
@@ -302,9 +306,12 @@ public class SpinTools {
                         if (fileToOpen.isDirectory()) {
                             return;
                         }
-                        EditorTab editorTab = findFileEditorTab(fileToOpen);
-                        if (editorTab == null) {
-                            openNewTab(fileToOpen, true);
+                        String name = fileToOpen.getName().toLowerCase();
+                        if (name.endsWith(".spin") || name.endsWith(".spin2")) {
+                            EditorTab editorTab = findFileEditorTab(fileToOpen);
+                            if (editorTab == null) {
+                                openNewTab(fileToOpen, true);
+                            }
                         }
                     }
                 } catch (Exception e) {
