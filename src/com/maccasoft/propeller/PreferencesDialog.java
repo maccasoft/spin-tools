@@ -249,6 +249,11 @@ public class PreferencesDialog extends Dialog {
         preferences = Preferences.getInstance();
     }
 
+    PreferencesDialog(Shell parentShell, Preferences preferences) {
+        super(parentShell);
+        this.preferences = preferences;
+    }
+
     @Override
     protected void configureShell(Shell newShell) {
         super.configureShell(newShell);
@@ -343,10 +348,12 @@ public class PreferencesDialog extends Dialog {
         roots = new PathList(composite, false);
         roots.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 
-        java.util.List<String> items = Arrays.asList(preferences.getRoots());
-        if (items != null) {
-            Collections.sort(items);
-            roots.setItems(items.toArray(new String[items.size()]));
+        if (preferences.getRoots() != null) {
+            java.util.List<String> items = Arrays.asList(preferences.getRoots());
+            if (items != null) {
+                Collections.sort(items);
+                roots.setItems(items.toArray(new String[items.size()]));
+            }
         }
     }
 
