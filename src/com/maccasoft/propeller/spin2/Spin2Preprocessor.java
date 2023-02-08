@@ -133,6 +133,9 @@ public class Spin2Preprocessor {
             void markTokens(MethodReference parent, Node node) {
                 for (Token token : node.getTokens()) {
                     MethodNode methodNode = symbols.get(token.getText());
+                    if (methodNode == null && token.getText().startsWith("@")) {
+                        methodNode = symbols.get(token.getText().substring(1));
+                    }
                     if (methodNode != null && methodNode != parent.node) {
                         MethodReference ref = referencedMethods.get(methodNode);
                         ref.count++;

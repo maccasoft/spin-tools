@@ -616,6 +616,70 @@ class Spin2PreprocessorTest {
         Assertions.assertEquals(0, subject.referencedMethods.get(root.getChild(2)).references.size());
     }
 
+    @Test
+    void testPointerMethodReferenceCount() {
+        Map<String, Node> objects = new HashMap<String, Node>();
+
+        Node root = parseSource(""
+            + "PUB main() | a\n"
+            + "    a := @method1\n"
+            + "    method2()\n"
+            + "\n"
+            + "PUB method1()\n"
+            + "\n"
+            + "PRI method2()\n"
+            + "\n"
+            + "");
+
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
+        subject.collectReferencedMethods();
+        subject.removeUnusedMethods();
+
+        Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
+        Assertions.assertEquals(2, subject.referencedMethods.get(root.getChild(0)).references.size());
+
+        Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(1)).count);
+        Assertions.assertEquals(0, subject.referencedMethods.get(root.getChild(1)).references.size());
+
+        Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(2)).count);
+        Assertions.assertEquals(0, subject.referencedMethods.get(root.getChild(2)).references.size());
+    }
+
+    @Test
+    void testObjectMethodsPointerReferenceCount() {
+        Map<String, Node> objects = new HashMap<String, Node>();
+
+        Node root = parseSource(""
+            + "PUB main() | a\n"
+            + "    a := @o.method1\n"
+            + "\n"
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text1\"\n"
+            + "\n"
+            + "");
+        objects.put("text1.spin2", parseSource(""
+            + "PUB method1()\n"
+            + "\n"
+            + "PUB method2()\n"
+            + "\n"
+            + ""));
+
+        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
+        subject.collectReferencedMethods();
+
+        Node text1 = objects.get("text1.spin2");
+
+        Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
+        Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).references.size());
+
+        Assertions.assertEquals(1, subject.referencedMethods.get(text1.getChild(0)).count);
+        Assertions.assertEquals(0, subject.referencedMethods.get(text1.getChild(0)).references.size());
+
+        Assertions.assertEquals(0, subject.referencedMethods.get(text1.getChild(1)).count);
+        Assertions.assertEquals(0, subject.referencedMethods.get(text1.getChild(1)).references.size());
+    }
+
     Node parseSource(String text) {
         Spin2TokenStream stream = new Spin2TokenStream(text);
         return new Spin2Parser(stream).parse();
