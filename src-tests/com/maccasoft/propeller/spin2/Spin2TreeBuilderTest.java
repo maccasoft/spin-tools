@@ -572,6 +572,27 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void testMethodReturn() {
+        String text = "a := ptr():1";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [ptr]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testMethodArgumentAndReturn() {
+        String text = "a := ptr(b):1";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [ptr]\n"
+            + "      +-- [b]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder();
 

@@ -320,7 +320,15 @@ public class Spin2TreeBuilder {
                     next();
                     node = new Spin2StatementNode.Method(node);
                     if (peek() != null && ")".equals(peek().getText())) {
-                        next();
+                        token = next();
+                        if (peek() != null && peek().column == token.column + 1) {
+                            if (":".equals(peek().getText())) {
+                                next();
+                                if ((token = next()) == null) {
+                                    throw new CompilerException("expecting return count", token);
+                                }
+                            }
+                        }
                         return node;
                     }
                     for (;;) {
@@ -336,6 +344,14 @@ public class Spin2TreeBuilder {
                             throw new CompilerException("expecting )", tokens.get(tokens.size() - 1));
                         }
                         if (")".equals(token.getText())) {
+                            if (peek() != null && peek().column == token.column + 1) {
+                                if (":".equals(peek().getText())) {
+                                    next();
+                                    if ((token = next()) == null) {
+                                        throw new CompilerException("expecting return count", token);
+                                    }
+                                }
+                            }
                             return node;
                         }
                         if (!",".equals(token.getText()) && !":".equals(token.getText())) {
