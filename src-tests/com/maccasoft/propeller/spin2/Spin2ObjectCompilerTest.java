@@ -4611,6 +4611,70 @@ class Spin2ObjectCompilerTest {
             + "", compile(text, false));
     }
 
+    @Test
+    void testMethodPointerReturn() throws Exception {
+        String text = ""
+            + "VAR"
+            + "    long _ptr"
+            + "\n"
+            + "PUB main() | a, b\n"
+            + "    a := _ptr():1\n"
+            + "    a, b := _ptr():2\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       15 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     a := _ptr():1\n"
+            + "00009 00009       01             ANCHOR\n"
+            + "0000A 0000A       C1 80          VAR_READ LONG VBASE+$00001 (short)\n"
+            + "0000C 0000C       0B             CALL_PTR\n"
+            + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a, b := _ptr():2\n"
+            + "0000E 0000E       01             ANCHOR\n"
+            + "0000F 0000F       C1 80          VAR_READ LONG VBASE+$00001 (short)\n"
+            + "00011 00011       0B             CALL_PTR\n"
+            + "00012 00012       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "00013 00013       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00014 00014       04             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
+            + "", compile(text, false));
+    }
+
+    @Test
+    void testMethodPointerReturnTernary() throws Exception {
+        String text = ""
+            + "VAR"
+            + "    long _ptr"
+            + "\n"
+            + "PUB main() | a, b\n"
+            + "    a := b ? _ptr():1 : 0\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       12 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     a := b ? _ptr():1 : 0\n"
+            + "00009 00009       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000A 0000A       01             ANCHOR\n"
+            + "0000B 0000B       C1 80          VAR_READ LONG VBASE+$00001 (short)\n"
+            + "0000D 0000D       0B             CALL_PTR\n"
+            + "0000E 0000E       A1             CONSTANT (0)\n"
+            + "0000F 0000F       6B             TERNARY_IF_ELSE\n"
+            + "00010 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00011 00011       04             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
+            + "", compile(text, false));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

@@ -2863,36 +2863,53 @@ public class Spin2ObjectCompiler {
                 }
                 else {
                     Expression expression = context.getLocalSymbol(node.getText());
+                    if (expression == null && node.getText().startsWith("@")) {
+                        expression = context.getLocalSymbol(node.getText().substring(1));
+                    }
                     if (expression instanceof ObjectContextLiteral) {
                         expression = context.getLocalSymbol(node.getText().substring(1));
                     }
                     if (expression == null) {
                         ObjectInfo info = objects.get(node.getText());
+                        String qualifiedName = node.getText() + node.getChild(1).getText();
+                        if (info == null && node.getText().startsWith("@")) {
+                            info = objects.get(node.getText().substring(1));
+                            qualifiedName = node.getText().substring(1) + node.getChild(1).getText();
+                        }
                         if (info != null) {
                             if (node.getChildCount() != 2) {
                                 throw new RuntimeException("syntax error" + node);
                             }
-                            String qualifiedName = node.getText() + node.getChild(1).getText();
                             expression = context.getLocalSymbol(qualifiedName);
                             if (expression != null) {
                                 Method method = (Method) expression;
-                                int parameters = method.getArgumentsCount();
-                                if (node.getChild(1).getChildCount() != parameters) {
-                                    throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChild(1).getChildCount());
+                                if (node.getText().startsWith("@")) {
+                                    source.addAll(compileConstantExpression(context, node.getChild(0)));
+                                    source.add(new Bytecode(context, new byte[] {
+                                        (byte) 0x10,
+                                        (byte) (method.getObject() - 1),
+                                        (byte) ((Method) expression).getOffset()
+                                    }, "OBJ_SUB_ADDRESS (" + (method.getObject() - 1) + "." + method.getOffset() + ")"));
                                 }
-                                if (push && method.getReturnsCount() == 0) {
-                                    throw new RuntimeException("method doesn't return any value");
+                                else {
+                                    int parameters = method.getArgumentsCount();
+                                    if (node.getChild(1).getChildCount() != parameters) {
+                                        throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChild(1).getChildCount());
+                                    }
+                                    if (push && method.getReturnsCount() == 0) {
+                                        throw new RuntimeException("method doesn't return any value");
+                                    }
+                                    source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
+                                    for (int i = 0; i < parameters; i++) {
+                                        source.addAll(compileConstantExpression(context, node.getChild(1).getChild(i)));
+                                    }
+                                    source.addAll(compileConstantExpression(context, node.getChild(0)));
+                                    source.add(new Bytecode(context, new byte[] {
+                                        (byte) 0x09,
+                                        (byte) (method.getObject() - 1),
+                                        (byte) method.getOffset()
+                                    }, "CALL_OBJ_SUB (" + (method.getObject() - 1) + "." + method.getOffset() + ")"));
                                 }
-                                source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
-                                for (int i = 0; i < parameters; i++) {
-                                    source.addAll(compileConstantExpression(context, node.getChild(1).getChild(i)));
-                                }
-                                source.addAll(compileConstantExpression(context, node.getChild(0)));
-                                source.add(new Bytecode(context, new byte[] {
-                                    (byte) 0x09,
-                                    (byte) (method.getObject() - 1),
-                                    (byte) method.getOffset()
-                                }, "CALL_OBJ_SUB (" + (method.getObject() - 1) + "." + method.getOffset() + ")"));
                                 return source;
                             }
                         }
@@ -2902,10 +2919,20 @@ public class Spin2ObjectCompiler {
                     }
                     if (node.getText().startsWith("@")) {
                         if (expression instanceof Method) {
-                            source.add(new Bytecode(context, new byte[] {
-                                (byte) 0x11,
-                                (byte) ((Method) expression).getOffset()
-                            }, "SUB_ADDRESS (" + ((Method) expression).getOffset() + ")"));
+                            Method method = (Method) expression;
+                            if (method.getObject() != 0) {
+                                source.add(new Bytecode(context, new byte[] {
+                                    (byte) 0x0F,
+                                    (byte) (method.getObject() - 1),
+                                    (byte) ((Method) expression).getOffset()
+                                }, "OBJ_SUB_ADDRESS (" + (method.getObject() - 1) + "." + method.getOffset() + ")"));
+                            }
+                            else {
+                                source.add(new Bytecode(context, new byte[] {
+                                    (byte) 0x11,
+                                    (byte) method.getOffset()
+                                }, "SUB_ADDRESS (" + method.getOffset() + ")"));
+                            }
                         }
                         else if (expression instanceof Variable) {
                             Spin2StatementNode indexNode = null;

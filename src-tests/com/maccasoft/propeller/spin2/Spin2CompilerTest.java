@@ -237,6 +237,54 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testObjectMethodPointer() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := @o.start\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       18 00 00 00    Object \"text2.spin2\" @ $00018\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "0000C 0000C       16 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00010 00010       04             (stack size)\n"
+            + "'     a := @o.start\n"
+            + "00011 00011       0F 00 00       OBJ_SUB_ADDRESS (0.0)\n"
+            + "00014 00014       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00015 00015       04             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "00018 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
+            + "0001C 00004       0E 00 00 00    End\n"
+            + "' PUB start(a, b) | c\n"
+            + "00020 00008       04             (stack size)\n"
+            + "'     c := a + b\n"
+            + "00021 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00022 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00023 0000B       8A             ADD\n"
+            + "00024 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "00025 0000D       04             RETURN\n"
+            + "00026 0000E       00 00          Padding\n"
+            + "", compile("main.spin2", sources));
+    }
+
+    @Test
     void testNestedObjectsLink() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin2", ""
@@ -1142,6 +1190,61 @@ class Spin2CompilerTest {
             + "00034 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
             + "00035 0000D       04             RETURN\n"
             + "00036 0000E       00 00          Padding\n"
+            + "", compile("main.spin2", sources));
+    }
+
+    @Test
+    void testObjectArrayMethodPointer() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o[2] : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    a := @o[0].start\n"
+            + "    b := @o[1].start\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       24 00 00 00    Object \"text2.spin2\" @ $00024\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       24 00 00 00    Object \"text2.spin2\" @ $00024\n"
+            + "0000C 0000C       08 00 00 00    Variables @ $00008\n"
+            + "00010 00010       18 00 00 80    Method main @ $00018 (0 parameters, 0 returns)\n"
+            + "00014 00014       24 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "00018 00018       08             (stack size)\n"
+            + "'     a := @o[0].start\n"
+            + "00019 00019       A1             CONSTANT (0)\n"
+            + "0001A 0001A       10 00 00       OBJ_SUB_ADDRESS (0.0)\n"
+            + "0001D 0001D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     b := @o[1].start\n"
+            + "0001E 0001E       A2             CONSTANT (1)\n"
+            + "0001F 0001F       10 00 00       OBJ_SUB_ADDRESS (0.0)\n"
+            + "00022 00022       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "00023 00023       04             RETURN\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "00024 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
+            + "00028 00004       0E 00 00 00    End\n"
+            + "' PUB start(a, b) | c\n"
+            + "0002C 00008       04             (stack size)\n"
+            + "'     c := a + b\n"
+            + "0002D 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0002E 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0002F 0000B       8A             ADD\n"
+            + "00030 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "00031 0000D       04             RETURN\n"
+            + "00032 0000E       00 00          Padding\n"
             + "", compile("main.spin2", sources));
     }
 
