@@ -56,6 +56,7 @@ public class PreferencesDialog extends Dialog {
     Button editorFontBrowse;
     Button showLineNumbers;
     Button showIndentLines;
+    Button showEditorOutline;
 
     PathList spin1Paths;
 
@@ -72,6 +73,7 @@ public class PreferencesDialog extends Dialog {
     String oldEditorFont;
     boolean oldShowLineNumbers;
     boolean oldShowIndentLines;
+    boolean oldShowEditorOutline;
     String oldTerminalFont;
 
     static int lastPage;
@@ -320,6 +322,7 @@ public class PreferencesDialog extends Dialog {
         oldEditorFont = preferences.getEditorFont();
         oldShowLineNumbers = preferences.getShowLineNumbers();
         oldShowIndentLines = preferences.getShowIndentLines();
+        oldShowEditorOutline = preferences.getShowEditorOutline();
         oldTerminalFont = preferences.getTerminalFont();
 
         return composite;
@@ -481,6 +484,19 @@ public class PreferencesDialog extends Dialog {
                 preferences.setShowIndentLines(showIndentLines.getSelection());
             }
         });
+
+        new Label(composite, SWT.NONE);
+
+        showEditorOutline = new Button(composite, SWT.CHECK);
+        showEditorOutline.setText("Show editor outline");
+        showEditorOutline.setSelection(preferences.getShowEditorOutline());
+        showEditorOutline.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setShowEditorOutline(showEditorOutline.getSelection());
+            }
+        });
     }
 
     void createTerminalPage(Composite parent) {
@@ -578,6 +594,7 @@ public class PreferencesDialog extends Dialog {
         preferences.setEditorFont(oldEditorFont);
         preferences.setShowLineNumbers(oldShowLineNumbers);
         preferences.setShowIndentLines(oldShowIndentLines);
+        preferences.setShowEditorOutline(oldShowEditorOutline);
         preferences.setTerminalFont(oldTerminalFont);
         super.cancelPressed();
     }

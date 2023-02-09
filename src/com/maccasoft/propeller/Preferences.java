@@ -34,6 +34,7 @@ public class Preferences {
     public static final String PROP_EDITOR_FONT = "editorFont";
     public static final String PROP_SHOW_INDENT_LINES = "showIndentLines";
     public static final String PROP_INDENT_LINES_SIZE = "showLinesSize";
+    public static final String PROP_SHOW_EDITOR_OUTLINE = "showEditorOutline";
     public static final String PROP_LRU = "lru";
     public static final String PROP_PORT = "port";
     public static final String PROP_SPIN1_LIBRARY_PATH = "spin1LibraryPath";
@@ -73,6 +74,7 @@ public class Preferences {
         public SerializedPreferences() {
             showLineNumbers = true;
             showIndentLines = true;
+            showEditorOutline = true;
             reloadOpenTabs = true;
             terminalBaudRate = 115200;
         }
@@ -87,6 +89,7 @@ public class Preferences {
         public String editorFont;
         public boolean showIndentLines;
         public int indentLinesSize;
+        public boolean showEditorOutline;
         public String port;
         public String[] spin1LibraryPath;
         public String[] spin2LibraryPath;
@@ -241,6 +244,14 @@ public class Preferences {
 
     public void setIndentLinesSize(int indentLinesSize) {
         changeSupport.firePropertyChange(PROP_INDENT_LINES_SIZE, preferences.indentLinesSize, preferences.indentLinesSize = indentLinesSize);
+    }
+
+    public boolean getShowEditorOutline() {
+        return preferences.showEditorOutline;
+    }
+
+    public void setShowEditorOutline(boolean showEditorOutline) {
+        changeSupport.firePropertyChange(PROP_SHOW_EDITOR_OUTLINE, preferences.showEditorOutline, preferences.showEditorOutline = showEditorOutline);
     }
 
     public List<String> getLru() {

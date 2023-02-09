@@ -338,4 +338,12 @@ public class OutlineView {
         return text;
     }
 
+    public void setVisible(boolean visible) {
+        viewer.getControl().setVisible(visible);
+    }
+
+    public boolean getVisible() {
+        return viewer.getControl().getVisible();
+    }
+
 }

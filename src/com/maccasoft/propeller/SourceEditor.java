@@ -337,6 +337,10 @@ public class SourceEditor {
                     showIndentLines = (Boolean) evt.getNewValue();
                     styledText.redraw();
                     break;
+                case Preferences.PROP_SHOW_EDITOR_OUTLINE:
+                    outline.setVisible((Boolean) evt.getNewValue());
+                    sashForm.layout(true);
+                    break;
             }
         }
     };
@@ -352,6 +356,7 @@ public class SourceEditor {
 
     public SourceEditor(Composite parent) {
         display = parent.getDisplay();
+        preferences = Preferences.getInstance();
 
         sashForm = new SashForm(parent, SWT.HORIZONTAL);
 
@@ -415,12 +420,11 @@ public class SourceEditor {
 
         outline = new OutlineView(sashForm);
         outline.addSelectionChangedListener(outlineSelectionListener);
+        outline.setVisible(preferences.getShowEditorOutline());
 
         sashForm.setWeights(new int[] {
             8000, 2000
         });
-
-        preferences = Preferences.getInstance();
 
         Font textFont = JFaceResources.getTextFont();
         FontData fontData = textFont.getFontData()[0];
