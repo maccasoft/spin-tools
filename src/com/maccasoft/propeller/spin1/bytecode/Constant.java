@@ -13,15 +13,16 @@ package com.maccasoft.propeller.spin1.bytecode;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
 import com.maccasoft.propeller.spin1.Spin1Context;
-import com.maccasoft.propeller.spin1.Spin1ObjectCompiler;
 
 public class Constant extends Spin1Bytecode {
 
     public Expression expression;
+    boolean openspinCompatibility;
 
-    public Constant(Spin1Context context, Expression expression) {
+    public Constant(Spin1Context context, Expression expression, boolean openspinCompatibility) {
         super(context);
         this.expression = expression;
+        this.openspinCompatibility = openspinCompatibility;
     }
 
     @Override
@@ -51,7 +52,7 @@ public class Constant extends Spin1Bytecode {
             };
         }
 
-        if (Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY || (value & 0xFFFFFF00) != 0) {
+        if (openspinCompatibility || (value & 0xFFFFFF00) != 0) {
             for (int i = 0; i < 128; i++) {
                 int testVal = 2;
                 testVal <<= (i & 0x1F); // mask i, so that we only actually shift 0 to 31

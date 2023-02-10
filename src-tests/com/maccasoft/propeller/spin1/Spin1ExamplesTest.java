@@ -18,9 +18,7 @@ import java.io.FileReader;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
@@ -30,16 +28,6 @@ class Spin1ExamplesTest {
 
     static final String path = "examples/P1";
     static final String libraryPath = "library/spin1";
-
-    @BeforeAll
-    static void setUp() throws Exception {
-        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = true;
-    }
-
-    @AfterAll
-    static void cleanUp() throws Exception {
-        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = false;
-    }
 
     @Test
     void test_char_Types() throws Exception {
@@ -403,6 +391,7 @@ class Spin1ExamplesTest {
         Node root = subject.parse();
 
         Spin1CompilerAdapter compiler = new Spin1CompilerAdapter(source.getParentFile());
+        compiler.setOpenspinCompatible(true);
         Spin1Object obj = compiler.compile(source.getName(), root);
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

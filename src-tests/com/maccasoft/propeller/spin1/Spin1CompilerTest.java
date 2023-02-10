@@ -15,7 +15,6 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -24,11 +23,6 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
 
 class Spin1CompilerTest {
-
-    @AfterEach
-    void afterEach() {
-        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = false;
-    }
 
     @Test
     void testObjectLink() throws Exception {

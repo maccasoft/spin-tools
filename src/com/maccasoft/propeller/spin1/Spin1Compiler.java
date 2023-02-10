@@ -41,6 +41,7 @@ public class Spin1Compiler extends Compiler {
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
 
+    boolean spenspinCompatible;
     boolean removeUnusedMethods;
     Spin1Preprocessor preprocessor;
 
@@ -48,6 +49,10 @@ public class Spin1Compiler extends Compiler {
 
     public Spin1Compiler() {
 
+    }
+
+    public void setOpenspinCompatible(boolean openspinCompatible) {
+        this.spenspinCompatible = openspinCompatible;
     }
 
     @Override
@@ -263,11 +268,13 @@ public class Spin1Compiler extends Compiler {
 
         for (Entry<String, Node> entry : objects.entrySet()) {
             Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey(), scope, childObjects);
+            objectCompiler.setOpenspinCompatibile(spenspinCompatible);
             objectCompiler.compile(entry.getValue());
             childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), objectCompiler));
         }
 
         Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFileName, scope, childObjects);
+        objectCompiler.setOpenspinCompatibile(spenspinCompatible);
         objectCompiler.compile(root);
 
         Spin1Object object = objectCompiler.generateObject(memoryOffset);

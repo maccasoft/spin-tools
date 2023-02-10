@@ -15,7 +15,6 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -25,11 +24,6 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
 
 class Spin1ObjectCompilerTest {
-
-    @AfterEach
-    void afterEach() {
-        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = false;
-    }
 
     @Test
     void testEmptyMethod() throws Exception {
@@ -1596,8 +1590,6 @@ class Spin1ObjectCompilerTest {
 
     @Test
     void testIfCaseElse() throws Exception {
-        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = true;
-
         String text = ""
             + "PUB main | a\n"
             + "\n"
@@ -1652,7 +1644,7 @@ class Spin1ObjectCompilerTest {
             + "0002C 0002C       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "0002D 0002D       32             RETURN\n"
             + "0002E 0002E       00 00          Padding\n"
-            + "", compile(text));
+            + "", compile(text, true));
     }
 
     @Test
@@ -2721,6 +2713,10 @@ class Spin1ObjectCompilerTest {
     }
 
     String compile(String text) throws Exception {
+        return compile(text, false);
+    }
+
+    String compile(String text, boolean openspinCompatible) throws Exception {
         Spin1Context scope = new Spin1GlobalContext();
         Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
 
@@ -2729,6 +2725,7 @@ class Spin1ObjectCompilerTest {
         Node root = subject.parse();
 
         Spin1ObjectCompiler compiler = new Spin1ObjectCompiler(scope, childObjects);
+        compiler.setOpenspinCompatibile(openspinCompatible);
         Spin1Object obj = compiler.compileObject(root);
 
         for (CompilerException msg : compiler.getMessages()) {

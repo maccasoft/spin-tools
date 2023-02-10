@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -88,8 +88,6 @@ import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class Spin1ObjectCompiler {
 
-    public static boolean OPENSPIN_COMPATIBILITY = false;
-
     public static class ObjectInfo {
         String fileName;
         Spin1ObjectCompiler compiler;
@@ -121,6 +119,8 @@ public class Spin1ObjectCompiler {
     List<Spin1Method> methods = new ArrayList<Spin1Method>();
     Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<String, ObjectInfo>());
 
+    boolean openspinCompatibile;
+
     int dcurr = 0;
     int varOffset = 0;
     int objectVarSize = 0;
@@ -141,6 +141,14 @@ public class Spin1ObjectCompiler {
     public Spin1Object compileObject(Node root) {
         compile(root);
         return generateObject();
+    }
+
+    public boolean getOpenspinCompatibile() {
+        return openspinCompatibile;
+    }
+
+    public void setOpenspinCompatibile(boolean openspinCompatibile) {
+        this.openspinCompatibile = openspinCompatibile;
     }
 
     public void compile(Node root) {
@@ -1630,7 +1638,7 @@ public class Spin1ObjectCompiler {
                 if (repeat.getArgumentsCount() == 4) {
                     line.addSource(compileConstantExpression(line.getScope(), repeat.getArgument(3)));
                 }
-                if (OPENSPIN_COMPATIBILITY) {
+                if (openspinCompatibile) {
                     line.addSource(compileBytecodeExpression(line.getScope(), repeat.getArgument(1), true));
                     line.addSource(compileBytecodeExpression(line.getScope(), repeat.getArgument(2), true));
                 }
@@ -1687,7 +1695,7 @@ public class Spin1ObjectCompiler {
                 if (pop != 0) {
                     try {
                         ByteArrayOutputStream os = new ByteArrayOutputStream();
-                        os.write(new Constant(line.getScope(), new NumberLiteral(pop)).getBytes());
+                        os.write(new Constant(line.getScope(), new NumberLiteral(pop), openspinCompatibile).getBytes());
                         os.write(0x14);
                         line.addSource(new Bytecode(line.getScope(), os.toByteArray(), String.format("POP %d", pop)));
                     } catch (Exception e) {
@@ -1799,11 +1807,11 @@ public class Spin1ObjectCompiler {
     }
 
     List<Spin1Bytecode> compileConstantExpression(Spin1Context context, Spin1StatementNode node) {
-        if (!Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY) {
+        if (!openspinCompatibile) {
             try {
                 Expression expression = buildConstantExpression(context, node);
                 if (expression.isConstant()) {
-                    return Collections.singletonList(new Constant(context, expression));
+                    return Collections.singletonList(new Constant(context, expression, openspinCompatibile));
                 }
             } catch (Exception e) {
 
@@ -1914,7 +1922,7 @@ public class Spin1ObjectCompiler {
                     if (!expression.isConstant()) {
                         throw new CompilerException("expression is not constant", node.getChild(0).getToken());
                     }
-                    source.add(new Constant(context, expression));
+                    source.add(new Constant(context, expression, openspinCompatibile));
                 } catch (Exception e) {
                     throw new CompilerException("expression is not constant", node.getChild(0).getToken());
                 }
@@ -1928,7 +1936,7 @@ public class Spin1ObjectCompiler {
                     if (!expression.isConstant()) {
                         throw new CompilerException("expression is not constant", node.getChild(0).getToken());
                     }
-                    source.add(new Constant(context, new Trunc(expression)));
+                    source.add(new Constant(context, new Trunc(expression), openspinCompatibile));
                 } catch (Exception e) {
                     throw new CompilerException("expression is not constant", node.getChild(0).getToken());
                 }
@@ -1939,7 +1947,7 @@ public class Spin1ObjectCompiler {
                 }, "CHIPVER"));
             }
             else if ("CLKFREQ".equalsIgnoreCase(node.getText())) {
-                source.add(new Constant(context, new NumberLiteral(0)));
+                source.add(new Constant(context, new NumberLiteral(0), openspinCompatibile));
                 source.add(new MemoryOp(context, MemoryOp.Size.Long, false, MemoryOp.Base.Pop, MemoryOp.Op.Read, null));
             }
             else if ("CLKMODE".equalsIgnoreCase(node.getText())) {
@@ -1965,12 +1973,12 @@ public class Spin1ObjectCompiler {
                     for (int i = 0; i < methodNode.getChildCount(); i++) {
                         source.addAll(compileBytecodeExpression(context, methodNode.getChild(i), true));
                     }
-                    source.add(new Constant(context, new NumberLiteral((methodNode.getChildCount() << 8) | ((Method) expression).getOffset())));
+                    source.add(new Constant(context, new NumberLiteral((methodNode.getChildCount() << 8) | ((Method) expression).getOffset()), openspinCompatibile));
                     source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
                     source.add(new Bytecode(context, 0x15, "MARK_INTERPRETED"));
                 }
                 else {
-                    source.add(new Constant(context, new NumberLiteral(-1)));
+                    source.add(new Constant(context, new NumberLiteral(-1), openspinCompatibile));
                     source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                     source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
                 }
@@ -1993,7 +2001,7 @@ public class Spin1ObjectCompiler {
                 }
                 int code_range = code | 0b00000010;
 
-                source.add(new Constant(context, new NumberLiteral(node.getText().toUpperCase().endsWith("Z") ? 0 : 1)));
+                source.add(new Constant(context, new NumberLiteral(node.getText().toUpperCase().endsWith("Z") ? 0 : 1), openspinCompatibile));
 
                 Spin1Bytecode end = new Spin1Bytecode(context);
                 source.add(new Address(context, new ContextLiteral(end.getContext())));
@@ -2010,7 +2018,7 @@ public class Spin1ObjectCompiler {
                     else if (arg.getType() == Token.STRING) {
                         String s = arg.getText().substring(1, arg.getText().length() - 1);
                         for (int x = 0; x < s.length(); x++) {
-                            source.add(new Constant(context, new CharacterLiteral(s.substring(x, x + 1))));
+                            source.add(new Constant(context, new CharacterLiteral(s.substring(x, x + 1)), openspinCompatibile));
                             source.add(new Bytecode(context, code, node.getText().toUpperCase()));
                         }
                     }
@@ -2053,7 +2061,7 @@ public class Spin1ObjectCompiler {
             }
             else if (node.getType() == Token.NUMBER) {
                 Expression expression = new NumberLiteral(node.getText());
-                source.add(new Constant(context, expression));
+                source.add(new Constant(context, expression, openspinCompatibile));
             }
             else if (node.getType() == Token.STRING) {
                 String s = node.getText();
@@ -2068,7 +2076,7 @@ public class Spin1ObjectCompiler {
                     s = s.substring(1, s.length() - 1);
                     if (s.length() == 1) {
                         Expression expression = new CharacterLiteral(s);
-                        source.add(new Constant(context, expression));
+                        source.add(new Constant(context, expression, openspinCompatibile));
                     }
                     else {
                         s += (char) 0x00;
@@ -2080,8 +2088,8 @@ public class Spin1ObjectCompiler {
             }
             else if ("-".equals(node.getText()) && node.getChildCount() == 1) {
                 if (node.getChild(0).getToken().type == Token.NUMBER) {
-                    Spin1Bytecode bc1 = new Constant(context, new Negative(new NumberLiteral(node.getChild(0).getText())));
-                    Spin1Bytecode bc2 = new Constant(context, new Subtract(new NumberLiteral(node.getChild(0).getText()), new NumberLiteral(1)));
+                    Spin1Bytecode bc1 = new Constant(context, new Negative(new NumberLiteral(node.getChild(0).getText())), openspinCompatibile);
+                    Spin1Bytecode bc2 = new Constant(context, new Subtract(new NumberLiteral(node.getChild(0).getText()), new NumberLiteral(1)), openspinCompatibile);
                     if (bc1.getSize() <= (bc2.getSize() + 1)) {
                         source.add(bc1);
                     }
@@ -2093,7 +2101,7 @@ public class Spin1ObjectCompiler {
                 else {
                     Expression expression = context.getLocalSymbol(node.getChild(0).getText());
                     if (expression != null && expression.isConstant() && push) {
-                        source.add(new Constant(context, new Negative(expression)));
+                        source.add(new Constant(context, new Negative(expression), openspinCompatibile));
                     }
                     else {
                         if (!push && (expression instanceof Variable)) {
@@ -2136,7 +2144,7 @@ public class Spin1ObjectCompiler {
                 if (node.getChildCount() != 2) {
                     throw new RuntimeException("expression syntax error " + node.getText());
                 }
-                if (OPENSPIN_COMPATIBILITY) {
+                if (openspinCompatibile) {
                     source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                     source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
                     source.add(new MathOp(context, node.getText(), push));
@@ -2144,7 +2152,7 @@ public class Spin1ObjectCompiler {
                 else {
                     try {
                         Expression expression = buildConstantExpression(context, node);
-                        source.add(new Constant(context, expression));
+                        source.add(new Constant(context, expression, openspinCompatibile));
                     } catch (Exception e) {
                         source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                         source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
@@ -2891,7 +2899,7 @@ public class Spin1ObjectCompiler {
                         }
                     }
                     else if (expression.isConstant()) {
-                        source.add(new Constant(context, expression));
+                        source.add(new Constant(context, expression, openspinCompatibile));
                     }
                     else {
                         throw new CompilerException("invalid operand " + node.getText(), node.getToken());

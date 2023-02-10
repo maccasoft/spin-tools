@@ -13,18 +13,12 @@ package com.maccasoft.propeller.spin1;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.Node;
 
 public class Spin1FunctionalTest {
-
-    @AfterEach
-    void afterEach() {
-        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = false;
-    }
 
     @Test
     void testBlink() throws Exception {
@@ -88,8 +82,6 @@ public class Spin1FunctionalTest {
 
     @Test
     void testBlinkOpenSpin() throws Exception {
-        Spin1ObjectCompiler.OPENSPIN_COMPATIBILITY = true;
-
         String text = ""
             + "CON\n"
             + "\n"
@@ -148,15 +140,20 @@ public class Spin1FunctionalTest {
             + "0002E 0001E       04 70          JMP $00010 (-16)\n"
             + "00030 00020       32             RETURN\n"
             + "00031 00021       00 00 00       Padding\n"
-            + "", compile(text));
+            + "", compile(text, true));
     }
 
     String compile(String text) throws Exception {
+        return compile(text, false);
+    }
+
+    String compile(String text, boolean openspinCompatible) throws Exception {
         Spin1TokenStream stream = new Spin1TokenStream(text);
         Spin1Parser subject = new Spin1Parser(stream);
         Node root = subject.parse();
 
         Spin1Compiler compiler = new Spin1Compiler();
+        compiler.setOpenspinCompatible(openspinCompatible);
         Spin1Object obj = compiler.compile("main.spin", root);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
