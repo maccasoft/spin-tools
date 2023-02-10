@@ -26,7 +26,7 @@ public class Spin2Debug {
     private static final int DBC_IF = 2;
     private static final int DBC_IFNOT = 3;
     private static final int DBC_COGN = 4;
-    private static final int DBC_CHAR = 5;
+    //private static final int DBC_CHAR = 5;
     private static final int DBC_STRING = 6;
     private static final int DBC_DELAY = 7;
 

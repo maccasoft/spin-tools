@@ -39,7 +39,7 @@
         <entry name="P_MINUS1_B"><![CDATA[<b>P_MINUS1_B</b><p>Select pin-1 for B input</p>]]></entry>
 
         <entry name="P_PASS_AB"><![CDATA[<b>P_PASS_AB</b><p>Select A, B</p>]]></entry>
-        <entry name="P_AND_AB"><![CDATA[<b>P_AND_AB</b><p>Select A & B, B</p>]]></entry>
+        <entry name="P_AND_AB"><![CDATA[<b>P_AND_AB</b><p>Select A &amp; B, B</p>]]></entry>
         <entry name="P_OR_AB"><![CDATA[<b>P_OR_AB</b><p>Select A | B, B</p>]]></entry>
         <entry name="P_XOR_AB"><![CDATA[<b>P_XOR_AB</b><p>Select A ^ B, B</p>]]></entry>
         <entry name="P_FILT0_AB"><![CDATA[<b>P_FILT0_AB</b><p>Select FILT0 settings for A, B</p>]]></entry>
@@ -261,7 +261,7 @@
         <entry name="POSX"><![CDATA[<b>POSX</b><p>Positive-extreme integer, +2_147_483_647 ($7FFF_FFFF)</p>]]></entry>
         <entry name="PI"><![CDATA[<b>PI</b><p>Single-precision floating-point value of Pi, 3.14159265</p>]]></entry>
 
-        <entry name="addpins"><![CDATA[<b>x ADDPINS y</b><p>Make pinfield, (x & $3F) | (y & $1F) &lt;&lt; 6</p>]]></entry>
+        <entry name="addpins"><![CDATA[<b>x ADDPINS y</b><p>Make pinfield, (x &amp; $3F) | (y &amp; $1F) &lt;&lt; 6</p>]]></entry>
     </section>
 
     <section class="StatementNode">
@@ -435,8 +435,8 @@ All looping is achieved through REPEAT constructs, which have several forms:
         <entry name="cmpm"><![CDATA[<b>CMPM    D,{#}S   {WC/WZ/WCZ}</b><p>Compare D to S, get MSB of difference into C.                    C = MSB of (D - S).                 Z = (D == S).</p>]]></entry>
         <entry name="subr"><![CDATA[<b>SUBR    D,{#}S   {WC/WZ/WCZ}</b><p>Subtract D from S (reverse).                   D = S - D.        C = borrow of (S - D).              *</p>]]></entry>
         <entry name="cmpsub"><![CDATA[<b>CMPSUB  D,{#}S   {WC/WZ/WCZ}</b><p>Compare and subtract S from D if D >= S. If D => S then D = D - S and C = 1, else D same and C = 0.  *</p>]]></entry>
-        <entry name="fge"><![CDATA[<b>FGE     D,{#}S   {WC/WZ/WCZ}</b><p>Force D >= S. If D < S then D = S and C = 1, else D same and C = 0. *</p>]]></entry>
-        <entry name="fle"><![CDATA[<b>FLE     D,{#}S   {WC/WZ/WCZ}</b><p>Force D <= S. If D > S then D = S and C = 1, else D same and C = 0. *</p>]]></entry>
+        <entry name="fge"><![CDATA[<b>FGE     D,{#}S   {WC/WZ/WCZ}</b><p>Force D &gt;= S. If D &lt; S then D = S and C = 1, else D same and C = 0. *</p>]]></entry>
+        <entry name="fle"><![CDATA[<b>FLE     D,{#}S   {WC/WZ/WCZ}</b><p>Force D &lt;= S. If D &gt; S then D = S and C = 1, else D same and C = 0. *</p>]]></entry>
         <entry name="fges"><![CDATA[<b>FGES    D,{#}S   {WC/WZ/WCZ}</b><p>Force D >= S, signed. If D < S then D = S and C = 1, else D same and C = 0. *</p>]]></entry>
         <entry name="fles"><![CDATA[<b>FLES    D,{#}S   {WC/WZ/WCZ}</b><p>Force D <= S, signed. If D > S then D = S and C = 1, else D same and C = 0. *</p>]]></entry>
         <entry name="sumc"><![CDATA[<b>SUMC    D,{#}S   {WC/WZ/WCZ}</b><p>Sum +/-S into D by  C. If C = 1 then D = D - S, else D = D + S. C = correct sign of (D +/- S). *</p>]]></entry>
@@ -453,14 +453,14 @@ All looping is achieved through REPEAT constructs, which have several forms:
         <entry name="bitnz"><![CDATA[<b>BITNZ   D,{#}S         {WCZ}</b><p>Bits D[S[9:5]+S[4:0]:S[4:0]] = !Z.   Other bits unaffected. Prior SETQ overrides S[9:5]. C,Z = original D[S[4:0]].</p>]]></entry>
         <entry name="bitrnd"><![CDATA[<b>BITRND  D,{#}S         {WCZ}</b><p>Bits D[S[9:5]+S[4:0]:S[4:0]] = RNDs. Other bits unaffected. Prior SETQ overrides S[9:5]. C,Z = original D[S[4:0]].</p>]]></entry>
         <entry name="bitnot"><![CDATA[<b>BITNOT  D,{#}S         {WCZ}</b><p>Toggle bits D[S[9:5]+S[4:0]:S[4:0]]. Other bits unaffected. Prior SETQ overrides S[9:5]. C,Z = original D[S[4:0]].</p>]]></entry>
-        <entry name="and"><![CDATA[<b>AND     D,{#}S   {WC/WZ/WCZ}</b><p>AND S into D.    D = D & S.    C = parity of result. *</p>]]></entry>
-        <entry name="andn"><![CDATA[<b>ANDN    D,{#}S   {WC/WZ/WCZ}</b><p>AND !S into D.   D = D & !S.   C = parity of result. *</p>]]></entry>
+        <entry name="and"><![CDATA[<b>AND     D,{#}S   {WC/WZ/WCZ}</b><p>AND S into D.    D = D &amp; S.    C = parity of result. *</p>]]></entry>
+        <entry name="andn"><![CDATA[<b>ANDN    D,{#}S   {WC/WZ/WCZ}</b><p>AND !S into D.   D = D &amp; !S.   C = parity of result. *</p>]]></entry>
         <entry name="or"><![CDATA[<b>OR      D,{#}S   {WC/WZ/WCZ}</b><p>OR S into D.     D = D | S.    C = parity of result. *</p>]]></entry>
         <entry name="xor"><![CDATA[<b>XOR     D,{#}S   {WC/WZ/WCZ}</b><p>XOR S into D.    D = D ^ S.    C = parity of result. *</p>]]></entry>
-        <entry name="muxc"><![CDATA[<b>MUXC    D,{#}S   {WC/WZ/WCZ}</b><p>Mux  C into each D bit that is '1' in S. D = (!S & D ) | (S & {32{ C}}). C = parity of result. *</p>]]></entry>
-        <entry name="muxnc"><![CDATA[<b>MUXNC   D,{#}S   {WC/WZ/WCZ}</b><p>Mux !C into each D bit that is '1' in S. D = (!S & D ) | (S & {32{!C}}). C = parity of result. *</p>]]></entry>
-        <entry name="muxz"><![CDATA[<b>MUXZ    D,{#}S   {WC/WZ/WCZ}</b><p>Mux  Z into each D bit that is '1' in S. D = (!S & D ) | (S & {32{ Z}}). C = parity of result. *</p>]]></entry>
-        <entry name="muxnz"><![CDATA[<b>MUXNZ   D,{#}S   {WC/WZ/WCZ}</b><p>Mux !Z into each D bit that is '1' in S. D = (!S & D ) | (S & {32{!Z}}). C = parity of result. *</p>]]></entry>
+        <entry name="muxc"><![CDATA[<b>MUXC    D,{#}S   {WC/WZ/WCZ}</b><p>Mux  C into each D bit that is '1' in S. D = (!S &amp; D ) | (S &amp; {32{ C}}). C = parity of result. *</p>]]></entry>
+        <entry name="muxnc"><![CDATA[<b>MUXNC   D,{#}S   {WC/WZ/WCZ}</b><p>Mux !C into each D bit that is '1' in S. D = (!S &amp; D ) | (S &amp; {32{!C}}). C = parity of result. *</p>]]></entry>
+        <entry name="muxz"><![CDATA[<b>MUXZ    D,{#}S   {WC/WZ/WCZ}</b><p>Mux  Z into each D bit that is '1' in S. D = (!S &amp; D ) | (S &amp; {32{ Z}}). C = parity of result. *</p>]]></entry>
+        <entry name="muxnz"><![CDATA[<b>MUXNZ   D,{#}S   {WC/WZ/WCZ}</b><p>Mux !Z into each D bit that is '1' in S. D = (!S &amp; D ) | (S &amp; {32{!Z}}). C = parity of result. *</p>]]></entry>
         <entry name="mov"><![CDATA[<b>MOV     D,{#}S   {WC/WZ/WCZ}</b><p>Move S into D. D = S. C = S[31]. *</p>]]></entry>
         <entry name="not"><![CDATA[<b>NOT     D,{#}S   {WC/WZ/WCZ}</b><p>Get !S into D. D = !S. C = !S[31]. *</p>]]></entry>
         <entry name="not"><![CDATA[<b>NOT     D        {WC/WZ/WCZ}</b><p>Get !D into D. D = !D. C = !D[31]. *</p>]]></entry>
@@ -476,8 +476,8 @@ All looping is achieved through REPEAT constructs, which have several forms:
         <entry name="signx"><![CDATA[<b>SIGNX   D,{#}S   {WC/WZ/WCZ}</b><p>Sign-extend D from bit S[4:0]. C = MSB of result. *</p>]]></entry>
         <entry name="encod"><![CDATA[<b>ENCOD   D        {WC/WZ/WCZ}</b><p>Get bit position of top-most '1' in D into D. D = position of top '1' in S (0..31). C = (S != 0). *</p><b>ENCOD   D,{#}S   {WC/WZ/WCZ}</b><p>Get bit position of top-most '1' in S into D. D = position of top '1' in S (0..31). C = (S != 0). *</p>]]></entry>
         <entry name="ones"><![CDATA[<b>ONES    D        {WC/WZ/WCZ}</b><p>Get number of '1's in D into D. D = number of '1's in S (0..32). C = LSB of result. *</p><b>ONES    D,{#}S   {WC/WZ/WCZ}</b><p>Get number of '1's in S into D. D = number of '1's in S (0..32). C = LSB of result. *</p>]]></entry>
-        <entry name="test"><![CDATA[<b>TEST    D        {WC/WZ/WCZ}</b><p>Test D. C = parity of D. Z = (D == 0).</p><b>TEST    D,{#}S   {WC/WZ/WCZ}</b><p>Test D with S. C = parity of (D & S). Z = ((D & S) == 0).</p>]]></entry>
-        <entry name="testn"><![CDATA[<b>TESTN   D,{#}S   {WC/WZ/WCZ}</b><p>Test D with !S. C = parity of (D & !S). Z = ((D & !S) == 0).</p>]]></entry>
+        <entry name="test"><![CDATA[<b>TEST    D        {WC/WZ/WCZ}</b><p>Test D. C = parity of D. Z = (D == 0).</p><b>TEST    D,{#}S   {WC/WZ/WCZ}</b><p>Test D with S. C = parity of (D &amp; S). Z = ((D &amp; S) == 0).</p>]]></entry>
+        <entry name="testn"><![CDATA[<b>TESTN   D,{#}S   {WC/WZ/WCZ}</b><p>Test D with !S. C = parity of (D &amp; !S). Z = ((D &amp; !S) == 0).</p>]]></entry>
         <entry name="setnib"><![CDATA[<b>SETNIB  D,{#}S,#N</b><p>Set S[3:0] into nibble N in D, keeping rest of D same.</p><b>SETNIB  {#}S</b><p>Set S[3:0] into nibble established by prior ALTSN instruction.</p>]]></entry>
         <entry name="getnib"><![CDATA[<b>GETNIB  D,{#}S,#N</b><p>Get nibble N of S into D. D = {28'b0, S.NIBBLE[N]).</p><b>GETNIB  D</b><p>Get nibble established by prior ALTGN instruction into D.</p>]]></entry>
         <entry name="rolnib"><![CDATA[<b>ROLNIB  D,{#}S,#N</b><p>Rotate-left nibble N of S into D. D = {D[27:0], S.NIBBLE[N]).</p><b>ROLNIB  D</b><p>Rotate-left nibble established by prior ALTGN instruction into D.</p>]]></entry>
@@ -487,16 +487,16 @@ All looping is achieved through REPEAT constructs, which have several forms:
         <entry name="setword"><![CDATA[<b>SETWORD D,{#}S,#N</b><p>Set S[15:0] into word N in D, keeping rest of D same.</p><b>SETWORD {#}S</b><p>Set S[15:0] into word established by prior ALTSW instruction.</p>]]></entry>
         <entry name="getword"><![CDATA[<b>GETWORD D,{#}S,#N</b><p>Get word N of S into D. D = {16'b0, S.WORD[N]).</p><b>GETWORD D</b><p>Get word established by prior ALTGW instruction into D.</p>]]></entry>
         <entry name="rolword"><![CDATA[<b>ROLWORD D,{#}S,#N</b><p>Rotate-left word N of S into D. D = {D[15:0], S.WORD[N]).</p><b>ROLWORD D</b><p>Rotate-left word established by prior ALTGW instruction into D.</p>]]></entry>
-        <entry name="altsn"><![CDATA[<b>ALTSN   D,{#}S</b><p>Alter subsequent SETNIB instruction. Next D field = (D[11:3] + S) & $1FF, N field = D[2:0].          D += sign-extended S[17:9].</p><b>ALTSN   D</b><p>Alter subsequent SETNIB instruction. Next D field = D[11:3], N field = D[2:0].</p>]]></entry>
-        <entry name="altgn"><![CDATA[<b>ALTGN   D,{#}S</b><p>Alter subsequent GETNIB/ROLNIB instruction. Next S field = (D[11:3] + S) & $1FF, N field = D[2:0].   D += sign-extended S[17:9].</p><b>ALTGN   D</b><p>Alter subsequent GETNIB/ROLNIB instruction. Next S field = D[11:3], N field = D[2:0].</p>]]></entry>
-        <entry name="altsb"><![CDATA[<b>ALTSB   D,{#}S</b><p>Alter subsequent SETBYTE instruction. Next D field = (D[10:2] + S) & $1FF, N field = D[1:0].         D += sign-extended S[17:9].</p><b>ALTSB   D</b><p>Alter subsequent SETBYTE instruction. Next D field = D[10:2], N field = D[1:0].</p>]]></entry>
-        <entry name="altgb"><![CDATA[<b>ALTGB   D,{#}S</b><p>Alter subsequent GETBYTE/ROLBYTE instruction. Next S field = (D[10:2] + S) & $1FF, N field = D[1:0]. D += sign-extended S[17:9].</p><b>ALTGB   D</b><p>Alter subsequent GETBYTE/ROLBYTE instruction. Next S field = D[10:2], N field = D[1:0].</p>]]></entry>
-        <entry name="altsw"><![CDATA[<b>ALTSW   D,{#}S</b><p>Alter subsequent SETWORD instruction. Next D field = (D[9:1] + S) & $1FF, N field = D[0].            D += sign-extended S[17:9].</p><b>ALTSW   D</b><p>Alter subsequent SETWORD instruction. Next D field = D[9:1], N field = D[0].</p>]]></entry>
-        <entry name="altgw"><![CDATA[<b>ALTGW   D,{#}S</b><p>Alter subsequent GETWORD/ROLWORD instruction. Next S field = ((D[9:1] + S) & $1FF), N field = D[0].  D += sign-extended S[17:9].</p><b>ALTGW   D</b><p>Alter subsequent GETWORD/ROLWORD instruction. Next S field = D[9:1], N field = D[0].</p>]]></entry>
-        <entry name="altr"><![CDATA[<b>ALTR    D</b><p>Alter result register address (normally D field) of next instruction to D[8:0].</p><b>ALTR    D,{#}S</b><p>Alter result register address (normally D field) of next instruction to (D + S) & $1FF.              D += sign-extended S[17:9].</p>]]></entry>
-        <entry name="altd"><![CDATA[<b>ALTD    D</b><p>Alter D field of next instruction to D[8:0].</p><b>ALTD    D,{#}S</b><p>Alter D field of next instruction to (D + S) & $1FF.                                                 D += sign-extended S[17:9].</p>]]></entry>
-        <entry name="alts"><![CDATA[<b>ALTS    D</b><p>Alter S field of next instruction to D[8:0].</p><b>ALTS    D,{#}S</b><p>Alter S field of next instruction to (D + S) & $1FF.                                                 D += sign-extended S[17:9].</p>]]></entry>
-        <entry name="altb"><![CDATA[<b>ALTB    D</b><p>Alter D field of next instruction to D[13:5].</p><b>ALTB    D,{#}S</b><p>Alter D field of next instruction to (D[13:5] + S) & $1FF.                                           D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altsn"><![CDATA[<b>ALTSN   D,{#}S</b><p>Alter subsequent SETNIB instruction. Next D field = (D[11:3] + S) &amp; $1FF, N field = D[2:0].          D += sign-extended S[17:9].</p><b>ALTSN   D</b><p>Alter subsequent SETNIB instruction. Next D field = D[11:3], N field = D[2:0].</p>]]></entry>
+        <entry name="altgn"><![CDATA[<b>ALTGN   D,{#}S</b><p>Alter subsequent GETNIB/ROLNIB instruction. Next S field = (D[11:3] + S) &amp; $1FF, N field = D[2:0].   D += sign-extended S[17:9].</p><b>ALTGN   D</b><p>Alter subsequent GETNIB/ROLNIB instruction. Next S field = D[11:3], N field = D[2:0].</p>]]></entry>
+        <entry name="altsb"><![CDATA[<b>ALTSB   D,{#}S</b><p>Alter subsequent SETBYTE instruction. Next D field = (D[10:2] + S) &amp; $1FF, N field = D[1:0].         D += sign-extended S[17:9].</p><b>ALTSB   D</b><p>Alter subsequent SETBYTE instruction. Next D field = D[10:2], N field = D[1:0].</p>]]></entry>
+        <entry name="altgb"><![CDATA[<b>ALTGB   D,{#}S</b><p>Alter subsequent GETBYTE/ROLBYTE instruction. Next S field = (D[10:2] + S) &amp; $1FF, N field = D[1:0]. D += sign-extended S[17:9].</p><b>ALTGB   D</b><p>Alter subsequent GETBYTE/ROLBYTE instruction. Next S field = D[10:2], N field = D[1:0].</p>]]></entry>
+        <entry name="altsw"><![CDATA[<b>ALTSW   D,{#}S</b><p>Alter subsequent SETWORD instruction. Next D field = (D[9:1] + S) &amp; $1FF, N field = D[0].            D += sign-extended S[17:9].</p><b>ALTSW   D</b><p>Alter subsequent SETWORD instruction. Next D field = D[9:1], N field = D[0].</p>]]></entry>
+        <entry name="altgw"><![CDATA[<b>ALTGW   D,{#}S</b><p>Alter subsequent GETWORD/ROLWORD instruction. Next S field = ((D[9:1] + S) &amp; $1FF), N field = D[0].  D += sign-extended S[17:9].</p><b>ALTGW   D</b><p>Alter subsequent GETWORD/ROLWORD instruction. Next S field = D[9:1], N field = D[0].</p>]]></entry>
+        <entry name="altr"><![CDATA[<b>ALTR    D</b><p>Alter result register address (normally D field) of next instruction to D[8:0].</p><b>ALTR    D,{#}S</b><p>Alter result register address (normally D field) of next instruction to (D + S) &amp; $1FF.              D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altd"><![CDATA[<b>ALTD    D</b><p>Alter D field of next instruction to D[8:0].</p><b>ALTD    D,{#}S</b><p>Alter D field of next instruction to (D + S) &amp; $1FF.                                                 D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="alts"><![CDATA[<b>ALTS    D</b><p>Alter S field of next instruction to D[8:0].</p><b>ALTS    D,{#}S</b><p>Alter S field of next instruction to (D + S) &amp; $1FF.                                                 D += sign-extended S[17:9].</p>]]></entry>
+        <entry name="altb"><![CDATA[<b>ALTB    D</b><p>Alter D field of next instruction to D[13:5].</p><b>ALTB    D,{#}S</b><p>Alter D field of next instruction to (D[13:5] + S) &amp; $1FF.                                           D += sign-extended S[17:9].</p>]]></entry>
         <entry name="alti"><![CDATA[<b>ALTI    D</b><p>Execute D in place of next instruction. D stays same.</p><b>ALTI    D,{#}S</b><p>Substitute next instruction's I/R/D/S fields with fields from D, per S. Modify D per S.</p>]]></entry>
         <entry name="setr"><![CDATA[<b>SETR    D,{#}S</b><p>Set R field of D to S[8:0]. D = {D[31:28], S[8:0], D[18:0]}.</p>]]></entry>
         <entry name="setd"><![CDATA[<b>SETD    D,{#}S</b><p>Set D field of D to S[8:0]. D = {D[31:18], S[8:0], D[8:0]}.</p>]]></entry>
@@ -507,7 +507,7 @@ All looping is achieved through REPEAT constructs, which have several forms:
         <entry name="crcnib"><![CDATA[<b>CRCNIB  D,{#}S</b><p>Iterate CRC value in D using Q[31:28] and polynomial in S. Like CRCBIT x 4. Q = Q << 4. Use 'REP #n,#1'+SETQ+CRCNIB+CRCNIB+CRCNIB...</p>]]></entry>
         <entry name="muxnits"><![CDATA[<b>MUXNITS D,{#}S</b><p>For each non-zero bit pair in S, copy that bit pair into the corresponding D bits, else leave that D bit pair the same.</p>]]></entry>
         <entry name="muxnibs"><![CDATA[<b>MUXNIBS D,{#}S</b><p>For each non-zero nibble in S, copy that nibble into the corresponding D nibble, else leave that D nibble the same.</p>]]></entry>
-        <entry name="muxq"><![CDATA[<b>MUXQ    D,{#}S</b><p>Used after SETQ. For each '1' bit in Q, copy the corresponding bit in S into D. D = (D & !Q) | (S & Q).</p>]]></entry>
+        <entry name="muxq"><![CDATA[<b>MUXQ    D,{#}S</b><p>Used after SETQ. For each '1' bit in Q, copy the corresponding bit in S into D. D = (D &amp; !Q) | (S &amp; Q).</p>]]></entry>
         <entry name="movbyts"><![CDATA[<b>MOVBYTS D,{#}S</b><p>Move bytes within D, per S. D = {D.BYTE[S[7:6]], D.BYTE[S[5:4]], D.BYTE[S[3:2]], D.BYTE[S[1:0]]}.</p>]]></entry>
         <entry name="mul"><![CDATA[<b>MUL     D,{#}S          {WZ}</b><p>D = unsigned (D[15:0] * S[15:0]). Z = (S == 0) | (D == 0).</p>]]></entry>
         <entry name="muls"><![CDATA[<b>MULS    D,{#}S          {WZ}</b><p>D = signed (D[15:0] * S[15:0]).   Z = (S == 0) | (D == 0).</p>]]></entry>
@@ -635,7 +635,7 @@ All looping is achieved through REPEAT constructs, which have several forms:
         <entry name="setdacs"><![CDATA[<b>SETDACS {#}D</b><p>DAC3 = D[31:24], DAC2 = D[23:16], DAC1 = D[15:8], DAC0 = D[7:0].</p>]]></entry>
         <entry name="setxfrq"><![CDATA[<b>SETXFRQ {#}D</b><p>Set streamer NCO frequency to D.</p>]]></entry>
         <entry name="getxacc"><![CDATA[<b>GETXACC D</b><p>Get the streamer's Goertzel X accumulator into D and the Y accumulator into the next instruction's S, clear accumulators.</p>]]></entry>
-        <entry name="waitx"><![CDATA[<b>WAITX   {#}D     {WC/WZ/WCZ}</b><p>Wait 2 + D clocks if no WC/WZ/WCZ. If WC/WZ/WCZ, wait 2 + (D & RND) clocks. C/Z = 0.</p>]]></entry>
+        <entry name="waitx"><![CDATA[<b>WAITX   {#}D     {WC/WZ/WCZ}</b><p>Wait 2 + D clocks if no WC/WZ/WCZ. If WC/WZ/WCZ, wait 2 + (D &amp; RND) clocks. C/Z = 0.</p>]]></entry>
         <entry name="setse1"><![CDATA[<b>SETSE1  {#}D</b><p>Set SE1 event configuration to D[8:0].</p>]]></entry>
         <entry name="setse2"><![CDATA[<b>SETSE2  {#}D</b><p>Set SE2 event configuration to D[8:0].</p>]]></entry>
         <entry name="setse3"><![CDATA[<b>SETSE3  {#}D</b><p>Set SE3 event configuration to D[8:0].</p>]]></entry>

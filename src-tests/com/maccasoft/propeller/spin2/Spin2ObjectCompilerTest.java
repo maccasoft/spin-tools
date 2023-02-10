@@ -2948,6 +2948,94 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testListReturn() throws Exception {
+        String text = ""
+            + "PUB start() : a, b, c\n"
+            + "\n"
+            + "    a, b, c := function()\n"
+            + "\n"
+            + "PUB function() : r1, r2, r3\n"
+            + "\n"
+            + "    r1 := 1\n"
+            + "    r2 := 2\n"
+            + "    r3 := 3\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0C 00 30 80    Method start @ $0000C (0 parameters, 3 returns)\n"
+            + "00004 00004       14 00 30 80    Method function @ $00014 (0 parameters, 3 returns)\n"
+            + "00008 00008       1C 00 00 00    End\n"
+            + "' PUB start() : a, b, c\n"
+            + "0000C 0000C       00             (stack size)\n"
+            + "'     a, b, c := function()\n"
+            + "0000D 0000D       01             ANCHOR\n"
+            + "0000E 0000E       0A 01          CALL_SUB (1)\n"
+            + "00010 00010       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "00011 00011       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00013 00013       04             RETURN\n"
+            + "' PUB function() : r1, r2, r3\n"
+            + "00014 00014       00             (stack size)\n"
+            + "'     r1 := 1\n"
+            + "00015 00015       A2             CONSTANT (1)\n"
+            + "00016 00016       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     r2 := 2\n"
+            + "00017 00017       A3             CONSTANT (2)\n"
+            + "00018 00018       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "'     r3 := 3\n"
+            + "00019 00019       A4             CONSTANT (3)\n"
+            + "0001A 0001A       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "0001B 0001B       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testListSkipReturn() throws Exception {
+        String text = ""
+            + "PUB start() : a, b, c\n"
+            + "\n"
+            + "    a, _, c := function()\n"
+            + "\n"
+            + "PUB function() : r1, r2, r3\n"
+            + "\n"
+            + "    r1 := 1\n"
+            + "    r2 := 2\n"
+            + "    r3 := 3\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0C 00 30 80    Method start @ $0000C (0 parameters, 3 returns)\n"
+            + "00004 00004       14 00 30 80    Method function @ $00014 (0 parameters, 3 returns)\n"
+            + "00008 00008       1C 00 00 00    End\n"
+            + "' PUB start() : a, b, c\n"
+            + "0000C 0000C       00             (stack size)\n"
+            + "'     a, _, c := function()\n"
+            + "0000D 0000D       01             ANCHOR\n"
+            + "0000E 0000E       0A 01          CALL_SUB (1)\n"
+            + "00010 00010       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "00011 00011       17             POP\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00013 00013       04             RETURN\n"
+            + "' PUB function() : r1, r2, r3\n"
+            + "00014 00014       00             (stack size)\n"
+            + "'     r1 := 1\n"
+            + "00015 00015       A2             CONSTANT (1)\n"
+            + "00016 00016       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     r2 := 2\n"
+            + "00017 00017       A3             CONSTANT (2)\n"
+            + "00018 00018       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "'     r3 := 3\n"
+            + "00019 00019       A4             CONSTANT (3)\n"
+            + "0001A 0001A       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "0001B 0001B       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testPostEffects() throws Exception {
         String text = ""
             + "PUB start() : r | a, b\n"

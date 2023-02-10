@@ -453,6 +453,21 @@ class Spin2TreeBuilderTest {
     }
 
     @Test
+    void testArgumentFunction() {
+        String text = "a := c(10, d(20, 30), 40)";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [c]\n"
+            + "      +-- [10]\n"
+            + "      +-- [d]\n"
+            + "           +-- [20]\n"
+            + "           +-- [30]\n"
+            + "      +-- [40]\n"
+            + "", parse(text));
+    }
+
+    @Test
     void testListAssignment() {
         String text = "a, b, c := d, e, f";
         Assertions.assertEquals(""
