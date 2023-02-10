@@ -608,6 +608,17 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void testCallRegisterExpression() {
+        String text = "call(#a + 2)";
+        Assertions.assertEquals(""
+            + "[call]\n"
+            + " +-- [+]\n"
+            + "      +-- [#a]\n"
+            + "      +-- [2]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder();
 

@@ -37,6 +37,15 @@ public class Spin2GlobalContext extends Spin2Context {
         addBuiltinSymbol("INA", new Register(0x1FE));
         addBuiltinSymbol("INB", new Register(0x1FF));
 
+        addBuiltinSymbol("PR0", new Register(0x1D8));
+        addBuiltinSymbol("PR1", new Register(0x1D9));
+        addBuiltinSymbol("PR2", new Register(0x1DA));
+        addBuiltinSymbol("PR3", new Register(0x1DB));
+        addBuiltinSymbol("PR4", new Register(0x1DC));
+        addBuiltinSymbol("PR5", new Register(0x1DD));
+        addBuiltinSymbol("PR6", new Register(0x1DE));
+        addBuiltinSymbol("PR7", new Register(0x1DF));
+
         // Smart-pin constants
 
         addBuiltinSymbol("P_TRUE_A", 0b0000_0000_000_0000000000000_00_00000_0);

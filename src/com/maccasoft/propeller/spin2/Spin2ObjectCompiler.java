@@ -31,6 +31,7 @@ import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
+import com.maccasoft.propeller.expressions.RegisterAddress;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Divide;
@@ -1019,6 +1020,7 @@ public class Spin2ObjectCompiler {
                     type = "BYTE";
                 }
                 rootScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
+                rootScope.addSymbol("#" + pasmLine.getLabel(), new RegisterAddress(pasmLine.getScope(), type));
                 rootScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope()));
                 rootScope.addSymbol("@@" + pasmLine.getLabel(), new MemoryContextLiteral(pasmLine.getScope()));
 
@@ -1032,6 +1034,7 @@ public class Spin2ObjectCompiler {
                         Spin2PAsmLine line = entry.getKey();
                         Spin2Context context = entry.getValue();
                         context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                        context.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
                         context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
                         context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope()));
                     }
@@ -1057,6 +1060,7 @@ public class Spin2ObjectCompiler {
                 Spin2PAsmLine line = entry.getKey();
                 Spin2Context context = entry.getValue();
                 context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                context.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
                 context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
                 context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope()));
             }
@@ -1085,26 +1089,8 @@ public class Spin2ObjectCompiler {
         localScope.addSymbol("recv", new Register(0x1D2));
         localScope.addSymbol("send", new Register(0x1D3));
 
-        localScope.addSymbol("pr0", new Register(0x1D8));
-        localScope.addSymbol("pr1", new Register(0x1D9));
-        localScope.addSymbol("pr2", new Register(0x1DA));
-        localScope.addSymbol("pr3", new Register(0x1DB));
-        localScope.addSymbol("pr4", new Register(0x1DC));
-        localScope.addSymbol("pr5", new Register(0x1DD));
-        localScope.addSymbol("pr6", new Register(0x1DE));
-        localScope.addSymbol("pr7", new Register(0x1DF));
-
         localScope.addSymbol("RECV", new Register(0x1D2));
         localScope.addSymbol("SEND", new Register(0x1D3));
-
-        localScope.addSymbol("PR0", new Register(0x1D8));
-        localScope.addSymbol("PR1", new Register(0x1D9));
-        localScope.addSymbol("PR2", new Register(0x1DA));
-        localScope.addSymbol("PR3", new Register(0x1DB));
-        localScope.addSymbol("PR4", new Register(0x1DC));
-        localScope.addSymbol("PR5", new Register(0x1DD));
-        localScope.addSymbol("PR6", new Register(0x1DE));
-        localScope.addSymbol("PR7", new Register(0x1DF));
 
         Iterator<Token> iter = node.getTokens().iterator();
         Token token = iter.next(); // First token is PUB/PRI already checked

@@ -427,14 +427,22 @@ public class Spin2TreeBuilder {
 
     Token peek() {
         if (index < tokens.size()) {
-            return tokens.get(index);
+            Token result = tokens.get(index);
+            if ("#".equals(result.getText()) && (index + 1) < tokens.size()) {
+                result = result.merge(tokens.get(index + 1));
+            }
+            return result;
         }
         return null;
     }
 
     Token next() {
         if (index < tokens.size()) {
-            return tokens.get(index++);
+            Token result = tokens.get(index++);
+            if ("#".equals(result.getText()) && index < tokens.size()) {
+                result = result.merge(tokens.get(index++));
+            }
+            return result;
         }
         return null;
     }

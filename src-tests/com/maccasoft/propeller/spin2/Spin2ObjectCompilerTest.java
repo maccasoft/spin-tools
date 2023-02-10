@@ -4036,6 +4036,69 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testAssemblyCall() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "    call(#pasm0)\n"
+            + "    call(#pasm1)\n"
+            + "\n"
+            + "DAT\n"
+            + "        org\n"
+            + "pasm0 _ret_ drvnot  pr0\n"
+            + "pasm1 _ret_ drvl    pr0\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "00004 00004       18 00 00 00    End\n"
+            + "00008 00008   000                                    org\n"
+            + "00008 00008   000 5F B0 63 0D    pasm0   _ret_       drvnot  pr0\n"
+            + "0000C 0000C   001 58 B0 63 0D    pasm1   _ret_       drvl    pr0\n"
+            + "' PUB main()\n"
+            + "00010 00010       00             (stack size)\n"
+            + "'     call(#pasm0)\n"
+            + "00011 00011       A1             CONSTANT ($00000)\n"
+            + "00012 00012       19 62          CALL\n"
+            + "'     call(#pasm1)\n"
+            + "00014 00014       A2             CONSTANT ($00001)\n"
+            + "00015 00015       19 62          CALL\n"
+            + "00017 00017       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testAssemblyCallExpression() throws Exception {
+        String text = ""
+            + "PUB main(a)\n"
+            + "    call(#pasm + a)\n"
+            + "\n"
+            + "DAT\n"
+            + "        org\n"
+            + "pasm  _ret_ drvnot  pr0\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       0C 00 00 81    Method main @ $0000C (1 parameters, 0 returns)\n"
+            + "00004 00004       15 00 00 00    End\n"
+            + "00008 00008   000                                    org\n"
+            + "00008 00008   000 5F B0 63 0D    pasm    _ret_       drvnot  pr0\n"
+            + "' PUB main(a)\n"
+            + "0000C 0000C       00             (stack size)\n"
+            + "'     call(#pasm + a)\n"
+            + "0000D 0000D       5C 08 80       MEM_READ LONG PBASE+$00008\n"
+            + "00010 00010       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00011 00011       8A             ADD\n"
+            + "00012 00012       19 62          CALL\n"
+            + "00014 00014       04             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testRegisters() throws Exception {
         String text = ""
             + "PUB main() | a\n"
