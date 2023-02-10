@@ -46,6 +46,10 @@ public class Preferences {
     public static File defaultSpin1LibraryPath = new File(System.getProperty("APP_DIR"), "library/spin1").getAbsoluteFile();
     public static File defaultSpin2LibraryPath = new File(System.getProperty("APP_DIR"), "library/spin2").getAbsoluteFile();
 
+    public static String[] defaultVisiblePaths = new String[] {
+        new File(System.getProperty("user.home")).getAbsolutePath()
+    };
+
     static final int[] defaultTabStops = new int[] {
         4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80
     };
@@ -196,17 +200,27 @@ public class Preferences {
     }
 
     public String[] getRoots() {
+        if (preferences.roots == null || preferences.roots.length == 0) {
+            return defaultVisiblePaths;
+        }
         return preferences.roots;
     }
 
     public void setRoots(String[] roots) {
-        if (preferences.roots == roots) {
+        String[] oldValue = preferences.roots;
+
+        if (oldValue == roots) {
             return;
         }
-        if (preferences.roots == null && roots != null && roots.length == 0) {
+        if (oldValue != null && (roots == null || roots.length == 0 || Arrays.deepEquals(roots, defaultVisiblePaths))) {
+            preferences.roots = null;
+            changeSupport.firePropertyChange(PROP_ROOTS, oldValue, defaultVisiblePaths);
             return;
         }
-        if (Arrays.deepEquals(preferences.roots, roots)) {
+        if (oldValue == null && roots != null && (roots.length == 0 || Arrays.deepEquals(roots, defaultVisiblePaths))) {
+            return;
+        }
+        if (Arrays.deepEquals(oldValue, roots)) {
             return;
         }
         changeSupport.firePropertyChange(PROP_ROOTS, preferences.roots, preferences.roots = roots);

@@ -30,6 +30,7 @@ import org.eclipse.jface.viewers.TreeExpansionEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -45,6 +46,16 @@ public class FileBrowser {
     Set<String> visibleParents;
     Set<String> visibleExtensions;
     Set<String> hiddenExtensions;
+
+    public static class Model {
+
+        public Model() {
+        }
+
+        public File[] getElements() {
+            return File.listRoots();
+        }
+    }
 
     class FileLabelProvider extends LabelProvider {
 
@@ -78,25 +89,24 @@ public class FileBrowser {
 
         @Override
         public Object[] getElements(Object inputElement) {
-            File[] input = (File[]) inputElement;
-
             if (visibleParents.size() == 0) {
                 return new File[0];
             }
 
-            if (input.length == 1) {
+            File[] input = ((Model) inputElement).getElements();
+
+            // On non-Windows systems, skip root file
+            if (!"win32".equals(SWT.getPlatform()) && input.length == 1) {
                 return input[0].listFiles(visibleFoldersFilter);
             }
-            if (input.length > 1) {
-                List<File> elements = new ArrayList<>();
-                for (int i = 0; i < input.length; i++) {
-                    if (visibleFoldersFilter.accept(input[i])) {
-                        elements.add(input[i]);
-                    }
+
+            List<File> elements = new ArrayList<>();
+            for (int i = 0; i < input.length; i++) {
+                if (visibleFoldersFilter.accept(input[i])) {
+                    elements.add(input[i]);
                 }
-                return elements.toArray(new File[elements.size()]);
             }
-            return input;
+            return elements.toArray(new File[elements.size()]);
         }
 
         @Override
@@ -211,11 +221,20 @@ public class FileBrowser {
     public FileBrowser(Composite parent) {
         display = parent.getDisplay();
 
+        visibleParents = new HashSet<String>();
+
+        visibleExtensions = new HashSet<String>();
+
+        hiddenExtensions = new HashSet<String>();
+        hiddenExtensions.add(".bin");
+        hiddenExtensions.add(".binary");
+
         viewer = new TreeViewer(parent);
         viewer.setLabelProvider(new FileLabelProvider());
         viewer.setComparator(new FileComparator());
         viewer.setContentProvider(new FileTreeContentProvider());
         viewer.setUseHashlookup(true);
+        viewer.setInput(new Model());
 
         viewer.addDoubleClickListener(new IDoubleClickListener() {
 
@@ -255,24 +274,6 @@ public class FileBrowser {
             }
 
         });
-
-        visibleParents = new HashSet<String>();
-
-        visibleExtensions = new HashSet<String>();
-
-        hiddenExtensions = new HashSet<String>();
-        hiddenExtensions.add(".bin");
-        hiddenExtensions.add(".binary");
-    }
-
-    public void setInput(File[] input) {
-        File currentSelection = getSelection();
-
-        viewer.setInput(input);
-
-        if (currentSelection != null) {
-            setSelection(currentSelection);
-        }
     }
 
     public void setVisiblePaths(String[] paths) {
@@ -287,12 +288,11 @@ public class FileBrowser {
             }
         }
 
-        File currentSelection = getSelection();
-
-        viewer.refresh();
-
-        if (currentSelection != null) {
-            setSelection(currentSelection);
+        viewer.getControl().setRedraw(false);
+        try {
+            viewer.refresh();
+        } finally {
+            viewer.getControl().setRedraw(true);
         }
     }
 
@@ -308,9 +308,10 @@ public class FileBrowser {
         viewer.setSelection(new StructuredSelection(file), true);
 
         while (viewer.getSelection().isEmpty()) {
-            file = file.getAbsoluteFile().getParentFile();
-            if (file == null) {
-                return;
+            if (!file.isDirectory()) {
+                if ((file = file.getParentFile().getAbsoluteFile()) == null) {
+                    return;
+                }
             }
             viewer.setSelection(new StructuredSelection(file), true);
         }
@@ -349,6 +350,10 @@ public class FileBrowser {
 
     public void refresh() {
         viewer.refresh();
+    }
+
+    public boolean getVisible() {
+        return viewer.getControl().getVisible();
     }
 
     public void setVisible(boolean visible) {

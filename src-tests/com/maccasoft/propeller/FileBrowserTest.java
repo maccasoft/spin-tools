@@ -163,8 +163,15 @@ class FileBrowserTest {
 
     @Test
     void testDefaultTree() {
-        view.setInput(new File[] {
-            root
+        view.viewer.setInput(new FileBrowser.Model() {
+
+            @Override
+            public File[] getElements() {
+                return new File[] {
+                    root
+                };
+            }
+
         });
         view.setVisiblePaths(new String[] {
             homeUser.getAbsolutePath()
@@ -189,8 +196,15 @@ class FileBrowserTest {
 
     @Test
     void testFilteredTree() {
-        view.setInput(new File[] {
-            root
+        view.viewer.setInput(new FileBrowser.Model() {
+
+            @Override
+            public File[] getElements() {
+                return new File[] {
+                    root
+                };
+            }
+
         });
         view.setVisiblePaths(new String[] {
             homeUser.getAbsolutePath() + "/examples"
@@ -208,8 +222,15 @@ class FileBrowserTest {
 
     @Test
     void testFilteredTreeOutsideHome() {
-        view.setInput(new File[] {
-            root
+        view.viewer.setInput(new FileBrowser.Model() {
+
+            @Override
+            public File[] getElements() {
+                return new File[] {
+                    root
+                };
+            }
+
         });
         view.setVisiblePaths(new String[] {
             optParallax.getAbsolutePath()
@@ -224,8 +245,15 @@ class FileBrowserTest {
 
     @Test
     void testMixedFilteredTree() {
-        view.setInput(new File[] {
-            root
+        view.viewer.setInput(new FileBrowser.Model() {
+
+            @Override
+            public File[] getElements() {
+                return new File[] {
+                    root
+                };
+            }
+
         });
         view.setVisiblePaths(new String[] {
             homeUser.getAbsolutePath() + "/examples",
@@ -247,7 +275,14 @@ class FileBrowserTest {
 
     @Test
     void testMultipleRoot() {
-        view.setInput(root.listFiles());
+        view.viewer.setInput(new FileBrowser.Model() {
+
+            @Override
+            public File[] getElements() {
+                return root.listFiles();
+            }
+
+        });
         view.setVisiblePaths(new String[] {
             homeUser.getAbsolutePath()
         });
@@ -271,7 +306,14 @@ class FileBrowserTest {
 
     @Test
     void testFilteredMultipleRoot() {
-        view.setInput(root.listFiles());
+        view.viewer.setInput(new FileBrowser.Model() {
+
+            @Override
+            public File[] getElements() {
+                return root.listFiles();
+            }
+
+        });
         view.setVisiblePaths(new String[] {
             homeUser.getAbsolutePath() + "/examples",
             optParallax.getAbsolutePath()

@@ -209,16 +209,13 @@ public class SpinTools {
             switch (evt.getPropertyName()) {
                 case Preferences.PROP_SHOW_BROWSER:
                     browser.setVisible((Boolean) evt.getNewValue());
+                    if (browser.getVisible()) {
+                        browser.refresh();
+                    }
                     sashForm.layout(true);
                     break;
                 case Preferences.PROP_ROOTS:
-                    String[] roots = (String[]) evt.getNewValue();
-                    if (roots == null || roots.length == 0) {
-                        roots = new String[] {
-                            new File(System.getProperty("user.home")).getAbsolutePath()
-                        };
-                    }
-                    browser.setVisiblePaths(roots);
+                    browser.setVisiblePaths((String[]) evt.getNewValue());
                     break;
             }
         }
@@ -265,18 +262,7 @@ public class SpinTools {
         }
         sashForm.setWeights(weights);
 
-        //browser.setInput(new File[] {
-        //    new File(System.getProperty("user.home")).getAbsoluteFile()
-        //});
-        browser.setInput(File.listRoots());
-
-        String[] roots = preferences.getRoots();
-        if (roots == null || roots.length == 0) {
-            roots = new String[] {
-                new File(System.getProperty("user.home")).getAbsolutePath()
-            };
-        }
-        browser.setVisiblePaths(roots);
+        browser.setVisiblePaths(preferences.getRoots());
 
         browser.addSelectionChangedListener(new ISelectionChangedListener() {
 
@@ -1431,6 +1417,25 @@ public class SpinTools {
                     }
                     EditorTab editorTab = (EditorTab) tabItem.getData();
                     editorTab.formatSource();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Refresh\tF5");
+        item.setAccelerator(SWT.F5);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    if (browser.getVisible()) {
+                        browser.refresh();
+                    }
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }

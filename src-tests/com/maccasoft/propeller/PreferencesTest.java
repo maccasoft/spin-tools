@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringReader;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -378,6 +379,114 @@ class PreferencesTest {
         subject.setSpin2LibraryPath(paths);
 
         Assertions.assertFalse(notify.get());
+    }
+
+    @Test
+    void testSetVisiblePathsNotifications() throws Exception {
+        AtomicBoolean notify = new AtomicBoolean(false);
+        AtomicReference<String[]> ref = new AtomicReference<>();
+
+        String[] data = new String[] {
+            "a", "b", "c"
+        };
+
+        Preferences subject = new Preferences();
+        subject.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                ref.set((String[]) evt.getNewValue());
+                notify.set(true);
+            }
+        });
+
+        subject.setRoots(data);
+
+        Assertions.assertTrue(notify.get());
+        Assertions.assertArrayEquals(data, ref.get());
+        Assertions.assertArrayEquals(data, subject.preferences.roots);
+    }
+
+    @Test
+    void testUpdateVisiblePathsNotifications() throws Exception {
+        AtomicBoolean notify = new AtomicBoolean(false);
+        AtomicReference<String[]> ref = new AtomicReference<>();
+
+        String[] data = new String[] {
+            "a", "b"
+        };
+
+        Preferences subject = new Preferences();
+        subject.preferences.roots = new String[] {
+            "a", "b", "c"
+        };
+        subject.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                ref.set((String[]) evt.getNewValue());
+                notify.set(true);
+            }
+        });
+
+        subject.setRoots(data);
+
+        Assertions.assertTrue(notify.get());
+        Assertions.assertArrayEquals(data, ref.get());
+        Assertions.assertArrayEquals(data, subject.preferences.roots);
+    }
+
+    @Test
+    void testDefaultVisiblePathsNotifications() throws Exception {
+        AtomicBoolean notify = new AtomicBoolean(false);
+        AtomicReference<String[]> ref = new AtomicReference<>();
+
+        Preferences subject = new Preferences();
+        subject.preferences.roots = new String[] {
+            "a", "b", "c"
+        };
+        subject.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                ref.set((String[]) evt.getNewValue());
+                notify.set(true);
+            }
+        });
+
+        subject.setRoots(null);
+
+        Assertions.assertTrue(notify.get());
+        Assertions.assertArrayEquals(Preferences.defaultVisiblePaths, ref.get());
+        Assertions.assertNull(subject.preferences.roots);
+    }
+
+    @Test
+    void testSameVisiblePathsNotifications() throws Exception {
+        AtomicBoolean notify = new AtomicBoolean(false);
+        AtomicReference<String[]> ref = new AtomicReference<>();
+
+        String[] data = new String[] {
+            "a", "b", "c"
+        };
+
+        Preferences subject = new Preferences();
+        subject.preferences.roots = new String[] {
+            "a", "b", "c"
+        };
+        subject.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                ref.set((String[]) evt.getNewValue());
+                notify.set(true);
+            }
+        });
+
+        subject.setRoots(data);
+
+        Assertions.assertFalse(notify.get());
+        Assertions.assertArrayEquals(data, subject.preferences.roots);
     }
 
 }
