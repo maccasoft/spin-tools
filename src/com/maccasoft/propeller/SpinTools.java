@@ -315,29 +315,12 @@ public class SpinTools {
                 if (e.character != SWT.TAB || (e.stateMask & SWT.MODIFIER_MASK) == 0) {
                     return;
                 }
-                if (tabFolder.getItemCount() <= 1) {
-                    return;
-                }
-
-                int index = tabFolder.getSelectionIndex();
-                if ((e.stateMask & SWT.SHIFT) != 0) {
-                    index--;
-                    if (index < 0) {
-                        index = tabFolder.getItemCount() - 1;
-                    }
+                if ((e.stateMask & SWT.SHIFT) == 0) {
+                    handleNextTab();
                 }
                 else {
-                    index++;
-                    if (index >= tabFolder.getItemCount()) {
-                        index = 0;
-                    }
+                    handlePreviousTab();
                 }
-                tabFolder.setSelection(index);
-
-                Event event = new Event();
-                event.item = tabFolder.getItem(index);
-                tabFolder.notifyListeners(SWT.Selection, event);
-
                 e.doit = false;
             }
         });
@@ -542,7 +525,7 @@ public class SpinTools {
         item.setMenu(menu);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New\tCtrl+N");
+        item.setText("New" + "\t");
         item.setAccelerator(SWT.CTRL + 'N');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -557,7 +540,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P1 template)\tCtrl+Alt+1");
+        item.setText("New (From P1 template)" + "\t");
         item.setAccelerator(SWT.CTRL + SWT.ALT + '1');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -572,7 +555,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P2 template)\tCtrl+Alt+1");
+        item.setText("New (From P2 template)" + "\t");
         item.setAccelerator(SWT.CTRL + SWT.ALT + '2');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -625,7 +608,7 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Save\tCtrl+S");
+        item.setText("Save" + "\t");
         item.setAccelerator(SWT.MOD1 + 'S');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -640,13 +623,28 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Save As...");
+        item.setText("Save As..." + "\t");
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
             public void handleEvent(Event e) {
                 try {
                     handleFileSaveAs();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Save All" + "\t");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'S');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handleFileSaveAll();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1102,6 +1100,16 @@ public class SpinTools {
         }
     }
 
+    private void handleFileSaveAll() {
+        for (int i = 0; i < tabFolder.getItemCount(); i++) {
+            CTabItem tabItem = tabFolder.getItem(i);
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+            if (editorTab.isDirty()) {
+                doFileSave(editorTab);
+            }
+        }
+    }
+
     private void handleArchiveProject() {
         CTabItem tabItem = tabFolder.getSelection();
         if (tabItem != null) {
@@ -1208,7 +1216,7 @@ public class SpinTools {
         item.setMenu(menu);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Undo\tCtrl+Z");
+        item.setText("Undo" + "\t");
         item.setAccelerator(SWT.MOD1 + 'Z');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1225,7 +1233,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Redo\tCtrl+Shift+Z");
+        item.setText("Redo" + "\t");
         item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'Z');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1244,7 +1252,7 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Cut\tCtrl+X");
+        item.setText("Cut" + "\t");
         item.setAccelerator(SWT.MOD1 + 'X');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1261,7 +1269,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Copy\tCtrl+C");
+        item.setText("Copy" + "\t");
         item.setAccelerator(SWT.MOD1 + 'C');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1278,7 +1286,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Paste\tCtrl+V");
+        item.setText("Paste" + "\t");
         item.setAccelerator(SWT.MOD1 + 'V');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1295,7 +1303,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Select All\tCtrl+A");
+        item.setText("Select All" + "\t");
         item.setAccelerator(SWT.MOD1 + 'A');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1314,7 +1322,7 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Find / Replace...\tCtrl+F");
+        item.setText("Find / Replace..." + "\t");
         item.setAccelerator(SWT.MOD1 + 'F');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1338,7 +1346,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Find Next\tCtrl+K");
+        item.setText("Find Next" + "\t");
         item.setAccelerator(SWT.MOD1 + 'K');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1370,7 +1378,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Find Previous\tShift+Ctrl+K");
+        item.setText("Find Previous" + "\t");
         item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'K');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1404,7 +1412,7 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Format source\tShift+Ctrl+F");
+        item.setText("Format source" + "\t");
         item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'F');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1426,7 +1434,39 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Refresh\tF5");
+        item.setText("Next Tab" + "\t");
+        item.setAccelerator(SWT.MOD1 + SWT.TAB);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handleNextTab();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Previous Tab" + "\t");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + SWT.TAB);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    handlePreviousTab();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Refresh" + "\t");
         item.setAccelerator(SWT.F5);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1453,7 +1493,7 @@ public class SpinTools {
         item.setMenu(menu);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Show Info\tF8");
+        item.setText("Show Info" + "\t");
         item.setAccelerator(SWT.F8);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1468,7 +1508,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to RAM\tF10");
+        item.setText("Upload to RAM" + "\t");
         item.setAccelerator(SWT.F10);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1483,7 +1523,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to RAM with Terminal\tShift+F10");
+        item.setText("Upload to RAM with Terminal" + "\t");
         item.setAccelerator(SWT.SHIFT | SWT.F10);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1498,7 +1538,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to Flash\tF11");
+        item.setText("Upload to Flash" + "\t");
         item.setAccelerator(SWT.F11);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1513,7 +1553,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to Flash with Terminal\tShift+F11");
+        item.setText("Upload to Flash with Terminal" + "\t");
         item.setAccelerator(SWT.SHIFT | SWT.F11);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1530,7 +1570,7 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.CHECK);
-        item.setText("Enable P2 DEBUG\tCtrl+D");
+        item.setText("Enable P2 DEBUG" + "\t");
         item.setAccelerator(SWT.MOD1 + 'D');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1548,7 +1588,7 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Serial Terminal\tCtrl+T");
+        item.setText("Serial Terminal" + "\t");
         item.setAccelerator(SWT.MOD1 + 'T');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -2003,7 +2043,7 @@ public class SpinTools {
         final ToolBar toolBar = new ToolBar(tabFolder, SWT.FLAT);
 
         ToolItem toolItem = new ToolItem(toolBar, SWT.PUSH);
-        toolItem.setImage(ImageRegistry.getImageFromResources("arrow_down.png"));
+        toolItem.setImage(ImageRegistry.getImageFromResources("document-text-arrow-270-small.png"));
         toolItem.setToolTipText("Next Annotation");
         toolItem.addListener(SWT.Selection, new Listener() {
 
@@ -2023,7 +2063,7 @@ public class SpinTools {
         });
 
         toolItem = new ToolItem(toolBar, SWT.PUSH);
-        toolItem.setImage(ImageRegistry.getImageFromResources("arrow_up.png"));
+        toolItem.setImage(ImageRegistry.getImageFromResources("document-text-arrow-090-small.png"));
         toolItem.setToolTipText("Previous Annotation");
         toolItem.addListener(SWT.Selection, new Listener() {
 
@@ -2043,8 +2083,8 @@ public class SpinTools {
         });
 
         toolItem = new ToolItem(toolBar, SWT.PUSH);
-        toolItem.setImage(ImageRegistry.getImageFromResources("arrow_left.png"));
-        toolItem.setToolTipText("Back");
+        toolItem.setImage(ImageRegistry.getImageFromResources("arrow-180.png"));
+        toolItem.setToolTipText("Previous edit location");
         toolItem.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2084,8 +2124,8 @@ public class SpinTools {
         });
 
         toolItem = new ToolItem(toolBar, SWT.PUSH);
-        toolItem.setImage(ImageRegistry.getImageFromResources("arrow_right.png"));
-        toolItem.setToolTipText("Forward");
+        toolItem.setImage(ImageRegistry.getImageFromResources("arrow.png"));
+        toolItem.setToolTipText("Next edit location");
         toolItem.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2127,14 +2167,14 @@ public class SpinTools {
         final Menu menu = new Menu(toolBar);
 
         MenuItem item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Next Tab\tCtrl+Tab");
+        item.setText("Next Tab" + "\t");
         item.setAccelerator(SWT.MOD1 + SWT.TAB);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
             public void handleEvent(Event e) {
                 try {
-
+                    handleNextTab();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -2142,14 +2182,14 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Previous Tab\tCtrl+Shift+Tab");
+        item.setText("Previous Tab" + "\t");
         item.setAccelerator(SWT.MOD1 + SWT.MOD2 + SWT.TAB);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
             public void handleEvent(Event e) {
                 try {
-
+                    handlePreviousTab();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -2193,6 +2233,38 @@ public class SpinTools {
         });
 
         tabFolder.setTopRight(toolBar);
+    }
+
+    private void handleNextTab() {
+        if (tabFolder.getItemCount() <= 1) {
+            return;
+        }
+
+        int index = tabFolder.getSelectionIndex() + 1;
+        if (index >= tabFolder.getItemCount()) {
+            index = 0;
+        }
+        tabFolder.setSelection(index);
+
+        Event event = new Event();
+        event.item = tabFolder.getItem(index);
+        tabFolder.notifyListeners(SWT.Selection, event);
+    }
+
+    private void handlePreviousTab() {
+        if (tabFolder.getItemCount() <= 1) {
+            return;
+        }
+
+        int index = tabFolder.getSelectionIndex() - 1;
+        if (index < 0) {
+            index = tabFolder.getItemCount() - 1;
+        }
+        tabFolder.setSelection(index);
+
+        Event event = new Event();
+        event.item = tabFolder.getItem(index);
+        tabFolder.notifyListeners(SWT.Selection, event);
     }
 
     boolean canCloseEditorTab(EditorTab editorTab) {
