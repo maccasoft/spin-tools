@@ -32,7 +32,6 @@ import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
-import com.maccasoft.propeller.expressions.RegisterAddress;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Divide;
@@ -60,6 +59,7 @@ import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
+import com.maccasoft.propeller.expressions.RegisterAddress;
 import com.maccasoft.propeller.expressions.Round;
 import com.maccasoft.propeller.expressions.Sca;
 import com.maccasoft.propeller.expressions.Scas;
@@ -1023,8 +1023,8 @@ public class Spin2ObjectCompiler {
                 }
                 rootScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
                 rootScope.addSymbol("#" + pasmLine.getLabel(), new RegisterAddress(pasmLine.getScope(), type));
-                rootScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope()));
-                rootScope.addSymbol("@@" + pasmLine.getLabel(), new MemoryContextLiteral(pasmLine.getScope()));
+                rootScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
+                rootScope.addSymbol("@@" + pasmLine.getLabel(), new MemoryContextLiteral(pasmLine.getScope(), type));
 
                 if (pasmLine.getMnemonic() == null) {
                     if (!pasmLine.isLocalLabel()) {
@@ -1037,8 +1037,8 @@ public class Spin2ObjectCompiler {
                         Spin2Context context = entry.getValue();
                         context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
                         context.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
-                        context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
-                        context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope()));
+                        context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                        context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope(), type));
                     }
                     pendingAlias.clear();
                 }
@@ -1063,8 +1063,8 @@ public class Spin2ObjectCompiler {
                 Spin2Context context = entry.getValue();
                 context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
                 context.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
-                context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope()));
-                context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope()));
+                context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope(), type));
             }
             pendingAlias.clear();
         }
@@ -2960,9 +2960,6 @@ public class Spin2ObjectCompiler {
 
                             source.add(new VariableOp(context, op, popIndex, (Variable) expression, hasIndex, index));
                         }
-                        else if (expression instanceof MemoryContextLiteral) {
-                            source.add(new Constant(context, expression));
-                        }
                         else {
                             int index = 0;
                             boolean popIndex = false;
@@ -3002,6 +2999,10 @@ public class Spin2ObjectCompiler {
 
                             MemoryOp.Size ss = MemoryOp.Size.Long;
                             MemoryOp.Base bb = MemoryOp.Base.PBase;
+
+                            if ((expression instanceof MemoryContextLiteral) && node.getText().startsWith("@@")) {
+                                expression = context.getLocalSymbol(node.getText().substring(1));
+                            }
                             if (expression instanceof DataVariable) {
                                 switch (((DataVariable) expression).getType()) {
                                     case "BYTE":
@@ -3012,7 +3013,23 @@ public class Spin2ObjectCompiler {
                                         break;
                                 }
                             }
-                            source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, popIndex, expression, index));
+                            else if (expression instanceof ObjectContextLiteral) {
+                                switch (((ObjectContextLiteral) expression).getType()) {
+                                    case "BYTE":
+                                        ss = MemoryOp.Size.Byte;
+                                        break;
+                                    case "WORD":
+                                        ss = MemoryOp.Size.Word;
+                                        break;
+                                }
+                            }
+                            if (node.getText().startsWith("@@")) {
+                                source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, popIndex, expression, index));
+                                source.add(new Bytecode(context, 0x24, "ADD_PBASE"));
+                            }
+                            else {
+                                source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, popIndex, expression, index));
+                            }
 
                             if (postEffectNode != null) {
                                 if ("++".equalsIgnoreCase(postEffectNode.getText())) {

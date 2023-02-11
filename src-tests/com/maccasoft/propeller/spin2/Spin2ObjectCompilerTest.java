@@ -2089,6 +2089,39 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testDatAbsoluteAddress() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "        a := @@b\n"
+            + "        a := @@b[a]\n"
+            + "\n"
+            + "DAT             org   $000\n"
+            + "b               byte  1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       09 00 00 80    Method main @ $00009 (0 parameters, 0 returns)\n"
+            + "00004 00004       13 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 01             b                   byte    1\n"
+            + "' PUB main() | a\n"
+            + "00009 00009       04             (stack size)\n"
+            + "'         a := @@b\n"
+            + "0000A 0000A       A9             CONSTANT (8)\n"
+            + "0000B 0000B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'         a := @@b[a]\n"
+            + "0000C 0000C       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000D 0000D       53 08 80       MEM_READ BYTE INDEXED PBASE+$00008\n"
+            + "00010 00010       24             ADD_PBASE\n"
+            + "00011 00011       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00012 00012       04             RETURN\n"
+            + "00013 00013       00             Padding\n"
+            + "", compile(text, false));
+    }
+
+    @Test
     void testDebug() throws Exception {
         String text = ""
             + "PUB main()\n"

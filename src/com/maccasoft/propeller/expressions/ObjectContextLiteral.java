@@ -29,9 +29,13 @@ public class ObjectContextLiteral extends Literal {
         return Long.valueOf(context.getObjectAddress());
     }
 
+    public Number getMemoryAddress() {
+        return context.getMemoryAddress();
+    }
+
     @Override
     public String toString() {
-        return Long.toString(getNumber().longValue());
+        return Long.toString(getNumber().longValue()) + "@" + Long.toString(context.getMemoryAddress());
     }
 
 }
