@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.Abs;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
@@ -45,6 +46,7 @@ import com.maccasoft.propeller.expressions.LogicalOr;
 import com.maccasoft.propeller.expressions.LogicalXor;
 import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
+import com.maccasoft.propeller.expressions.Nan;
 import com.maccasoft.propeller.expressions.Negative;
 import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NotEquals;
@@ -61,6 +63,7 @@ import com.maccasoft.propeller.expressions.Scl;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
 import com.maccasoft.propeller.expressions.Signx;
+import com.maccasoft.propeller.expressions.Sqrt;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.UnsignedDivide;
@@ -434,6 +437,35 @@ public class Spin2ExpressionBuilder {
                 case "ROUND": {
                     next();
                     Expression expression = new Round(parseLevel(parseAtom(), 0));
+                    token = next();
+                    if (token == null || !")".equals(token.getText())) {
+                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                    }
+                    return expression;
+                }
+                case "SQRT":
+                case "FSQRT": {
+                    next();
+                    Expression expression = new Sqrt(parseLevel(parseAtom(), 0));
+                    token = next();
+                    if (token == null || !")".equals(token.getText())) {
+                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                    }
+                    return expression;
+                }
+                case "ABS":
+                case "FABS": {
+                    next();
+                    Expression expression = new Abs(parseLevel(parseAtom(), 0));
+                    token = next();
+                    if (token == null || !")".equals(token.getText())) {
+                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                    }
+                    return expression;
+                }
+                case "NAN": {
+                    next();
+                    Expression expression = new Nan(parseLevel(parseAtom(), 0));
                     token = next();
                     if (token == null || !")".equals(token.getText())) {
                         throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);

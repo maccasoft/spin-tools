@@ -26,6 +26,7 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
+import com.maccasoft.propeller.expressions.Abs;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
@@ -51,6 +52,7 @@ import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Modulo;
 import com.maccasoft.propeller.expressions.Multiply;
+import com.maccasoft.propeller.expressions.Nan;
 import com.maccasoft.propeller.expressions.Negative;
 import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NotEquals;
@@ -3677,7 +3679,7 @@ public class Spin2ObjectCompiler {
 
         Expression expression = context.getLocalSymbol(node.getText());
         if (expression != null) {
-            if (expression.isConstant()) {
+            if (expression.isConstant() && node.getChildCount() == 0) {
                 return expression;
             }
             throw new RuntimeException("not a constant (" + expression + ")");
@@ -3791,6 +3793,17 @@ public class Spin2ObjectCompiler {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
                 return new NumberLiteral(buildConstantExpression(context, node.getChild(0)).getNumber().doubleValue());
+            case "ABS":
+            case "FABS":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Abs(buildConstantExpression(context, node.getChild(0)));
+            case "NAN":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Nan(buildConstantExpression(context, node.getChild(0)));
         }
 
         throw new RuntimeException("unknown " + node.getText());
