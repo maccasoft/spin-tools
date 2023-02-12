@@ -237,6 +237,122 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testObjectMethodReturnListAsArguments() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    function1(a, o.function2())\n"
+            + "\n"
+            + "PUB function1(p1, p2 , p3)\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "PUB function2() : r1, r2\n"
+            + "\n"
+            + "    r1 := 1\n"
+            + "    r2 := 2\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       20 00 00 00    Object \"text2.spin2\" @ $00020\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       14 00 00 80    Method main @ $00014 (0 parameters, 0 returns)\n"
+            + "0000C 0000C       1E 00 00 83    Method function1 @ $0001E (3 parameters, 0 returns)\n"
+            + "00010 00010       20 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00014 00014       04             (stack size)\n"
+            + "'     function1(a, o.function2())\n"
+            + "00015 00015       00             ANCHOR\n"
+            + "00016 00016       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00017 00017       01             ANCHOR\n"
+            + "00018 00018       08 00 00       CALL_OBJ_SUB (0.0)\n"
+            + "0001B 0001B       0A 03          CALL_SUB (3)\n"
+            + "0001D 0001D       04             RETURN\n"
+            + "' PUB function1(p1, p2 , p3)\n"
+            + "0001E 0001E       00             (stack size)\n"
+            + "0001F 0001F       04             RETURN\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "00020 00000       08 00 20 80    Method function2 @ $00008 (0 parameters, 2 returns)\n"
+            + "00024 00004       0E 00 00 00    End\n"
+            + "' PUB function2() : r1, r2\n"
+            + "00028 00008       00             (stack size)\n"
+            + "'     r1 := 1\n"
+            + "00029 00009       A2             CONSTANT (1)\n"
+            + "0002A 0000A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     r2 := 2\n"
+            + "0002B 0000B       A3             CONSTANT (2)\n"
+            + "0002C 0000C       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "0002D 0000D       04             RETURN\n"
+            + "0002E 0000E       00 00          Padding\n"
+            + "", compile("main.spin2", sources));
+    }
+
+    @Test
+    void testObjectMethodReturnListAsArguments2() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    o.function1(a, o.function2())\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "PUB function1(p1, p2 , p3)\n"
+            + "\n"
+            + "PUB function2() : r1, r2\n"
+            + "\n"
+            + "    r1 := 1\n"
+            + "    r2 := 2\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       1C 00 00 00    Object \"text2.spin2\" @ $0001C\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "0000C 0000C       1B 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00010 00010       04             (stack size)\n"
+            + "'     o.function1(a, o.function2())\n"
+            + "00011 00011       00             ANCHOR\n"
+            + "00012 00012       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00013 00013       01             ANCHOR\n"
+            + "00014 00014       08 00 01       CALL_OBJ_SUB (0.1)\n"
+            + "00017 00017       08 00 00       CALL_OBJ_SUB (0.0)\n"
+            + "0001A 0001A       04             RETURN\n"
+            + "0001B 0001B       00             Padding\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "0001C 00000       0C 00 00 83    Method function1 @ $0000C (3 parameters, 0 returns)\n"
+            + "00020 00004       0E 00 20 80    Method function2 @ $0000E (0 parameters, 2 returns)\n"
+            + "00024 00008       14 00 00 00    End\n"
+            + "' PUB function1(p1, p2 , p3)\n"
+            + "00028 0000C       00             (stack size)\n"
+            + "00029 0000D       04             RETURN\n"
+            + "' PUB function2() : r1, r2\n"
+            + "0002A 0000E       00             (stack size)\n"
+            + "'     r1 := 1\n"
+            + "0002B 0000F       A2             CONSTANT (1)\n"
+            + "0002C 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     r2 := 2\n"
+            + "0002D 00011       A3             CONSTANT (2)\n"
+            + "0002E 00012       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "0002F 00013       04             RETURN\n"
+            + "", compile("main.spin2", sources));
+    }
+
+    @Test
     void testObjectMethodPointer() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin2", ""

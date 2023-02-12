@@ -2857,7 +2857,7 @@ public class Spin2ObjectCompiler {
                     if (expression instanceof ObjectContextLiteral) {
                         expression = context.getLocalSymbol(node.getText().substring(1));
                     }
-                    if (expression == null) {
+                    if (expression == null && node.getChildCount() != 0) {
                         ObjectInfo info = objects.get(node.getText());
                         String qualifiedName = node.getText() + node.getChild(1).getText();
                         if (info == null && node.getText().startsWith("@")) {
@@ -3052,15 +3052,25 @@ public class Spin2ObjectCompiler {
                     }
                     else if (expression instanceof Method) {
                         Method method = (Method) expression;
-                        int parameters = method.getArgumentsCount();
-                        if (node.getChildCount() != parameters) {
-                            throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChildCount());
+                        int expected = method.getArgumentsCount();
+                        int actual = 0;
+                        for (int i = 0; i < node.getChildCount(); i++) {
+                            Expression child = context.getLocalSymbol(node.getChild(i).getText());
+                            if (child != null && (child instanceof Method)) {
+                                actual += ((Method) child).getReturnsCount();
+                            }
+                            else {
+                                actual++;
+                            }
+                        }
+                        if (expected != actual) {
+                            throw new RuntimeException("expected " + expected + " argument(s), found " + actual);
                         }
                         if (push && method.getReturnsCount() == 0) {
                             throw new RuntimeException("method doesn't return any value");
                         }
                         source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
-                        for (int i = 0; i < parameters; i++) {
+                        for (int i = 0; i < node.getChildCount(); i++) {
                             source.addAll(compileConstantExpression(context, node.getChild(i)));
                         }
                         if (method.getObject() != 0) {

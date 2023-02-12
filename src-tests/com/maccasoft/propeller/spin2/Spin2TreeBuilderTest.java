@@ -574,6 +574,24 @@ class Spin2TreeBuilderTest {
     }
 
     @Test
+    void testObjectFunctionCall() {
+        String text = "o.function()";
+        Assertions.assertEquals(""
+            + "[o.function]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testObjectFunctionCallArguments() {
+        String text = "o.function(a, b)";
+        Assertions.assertEquals(""
+            + "[o.function]\n"
+            + " +-- [a]\n"
+            + " +-- [b]\n"
+            + "", parse(text));
+    }
+
+    @Test
     void testObjectArrayExpression() {
         String text = "o[0].start(a, b) > 1";
         Assertions.assertEquals(""

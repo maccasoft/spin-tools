@@ -3069,6 +3069,53 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testReturnListAsArguments() throws Exception {
+        String text = ""
+            + "PUB start() | a\n"
+            + "\n"
+            + "    function1(a, function2())\n"
+            + "\n"
+            + "PUB function1(p1, p2 , p3)\n"
+            + "\n"
+            + "PUB function2() : r1, r2\n"
+            + "\n"
+            + "    r1 := 1\n"
+            + "    r2 := 2\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00 00 80    Method start @ $00010 (0 parameters, 0 returns)\n"
+            + "00004 00004       19 00 00 83    Method function1 @ $00019 (3 parameters, 0 returns)\n"
+            + "00008 00008       1B 00 20 80    Method function2 @ $0001B (0 parameters, 2 returns)\n"
+            + "0000C 0000C       21 00 00 00    End\n"
+            + "' PUB start() | a\n"
+            + "00010 00010       04             (stack size)\n"
+            + "'     function1(a, function2())\n"
+            + "00011 00011       00             ANCHOR\n"
+            + "00012 00012       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00013 00013       01             ANCHOR\n"
+            + "00014 00014       0A 02          CALL_SUB (2)\n"
+            + "00016 00016       0A 01          CALL_SUB (1)\n"
+            + "00018 00018       04             RETURN\n"
+            + "' PUB function1(p1, p2 , p3)\n"
+            + "00019 00019       00             (stack size)\n"
+            + "0001A 0001A       04             RETURN\n"
+            + "' PUB function2() : r1, r2\n"
+            + "0001B 0001B       00             (stack size)\n"
+            + "'     r1 := 1\n"
+            + "0001C 0001C       A2             CONSTANT (1)\n"
+            + "0001D 0001D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     r2 := 2\n"
+            + "0001E 0001E       A3             CONSTANT (2)\n"
+            + "0001F 0001F       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "00020 00020       04             RETURN\n"
+            + "00021 00021       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testPostEffects() throws Exception {
         String text = ""
             + "PUB start() : r | a, b\n"
