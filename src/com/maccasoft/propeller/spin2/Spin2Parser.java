@@ -839,7 +839,7 @@ public class Spin2Parser {
 
     Token nextToken() {
         Token token = stream.nextToken();
-        while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
+        while (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT || token.type == Token.NEXT_LINE) {
             root.addComment(token);
             token = stream.nextToken();
         }

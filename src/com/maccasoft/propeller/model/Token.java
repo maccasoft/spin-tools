@@ -24,6 +24,7 @@ public class Token {
     public static final int FUNCTION = 7;
     public static final int DEBUG = 8;
     public static final int NL = 9;
+    public static final int NEXT_LINE = 10;
     public static final int EOF = -1;
 
     public int type;
@@ -83,6 +84,26 @@ public class Token {
         result.stop = stop > token.stop ? stop : token.stop;
         result.type = type == token.type ? type : 0;
         result.text = getText() + token.getText();
+        return result;
+    }
+
+    public Token substring(int start) {
+        Token result = new Token();
+        result.stream = stream;
+        result.line = line;
+        result.start = this.start + start;
+        result.stop = this.stop;
+        result.type = this.type;
+        return result;
+    }
+
+    public Token substring(int start, int stop) {
+        Token result = new Token();
+        result.stream = stream;
+        result.line = line;
+        result.start = this.start + start;
+        result.stop = this.start + stop;
+        result.type = this.type;
         return result;
     }
 

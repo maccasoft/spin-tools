@@ -672,6 +672,21 @@ class Spin2ParserTest {
     }
 
     @Test
+    void testContinueNextLineOperator() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB main()\n"
+            + "    a := ...\n"
+            + "         1 + 2 * 3"
+            + ""));
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=main [PUB main()]\n"
+            + "    +-- StatementNode [    a := ...\\n         1 + 2 * 3]\n"
+            + "", tree(root));
+    }
+
+    @Test
     void testDatDebugLines() {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "DAT    org $000\n"

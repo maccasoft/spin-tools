@@ -698,6 +698,16 @@ class Spin2TokenStreamTest {
     }
 
     @Test
+    void testContinueNextLine() {
+        Spin2TokenStream subject = new Spin2TokenStream("a := ...\n     1");
+
+        assertEquals("a", subject.nextToken().getText());
+        assertEquals(":=", subject.nextToken().getText());
+        assertEquals("...\n", subject.nextToken().getText());
+        assertEquals("1", subject.nextToken().getText());
+    }
+
+    @Test
     void testScientificNotation1() {
         Spin2TokenStream subject = new Spin2TokenStream("1e2");
 

@@ -1032,7 +1032,13 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         // Comments are hidden from the parser
         for (Token token : root.getComments()) {
-            tokens.add(new TokenMarker(token, TokenId.COMMENT));
+            if (token.type == Token.NEXT_LINE) {
+                tokens.add(new TokenMarker(token.substring(0, 2), TokenId.OPERATOR));
+                tokens.add(new TokenMarker(token.substring(3), TokenId.COMMENT));
+            }
+            else {
+                tokens.add(new TokenMarker(token, TokenId.COMMENT));
+            }
         }
 
         // Collect known keywords and symbols

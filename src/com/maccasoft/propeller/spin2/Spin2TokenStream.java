@@ -434,6 +434,11 @@ public class Spin2TokenStream extends TokenStream {
                             token.stop++;
                             break;
                         }
+                        if (ch0 == '.' && ch1 == '.' && ch == '.') {
+                            token.stop++;
+                            token.type = state = Token.NEXT_LINE;
+                            break;
+                        }
                         if (ch == '=') {
                             token.stop++;
                             index++;
@@ -448,6 +453,28 @@ public class Spin2TokenStream extends TokenStream {
                         }
                     }
                     return token;
+                case Token.NEXT_LINE:
+                    token.stop++;
+                    if (ch == '\r' || ch == '\n') {
+                        if (nested == 0) {
+                            index++;
+                            return token;
+                        }
+                        column = 0;
+                        line++;
+                    }
+                    else if (ch == '{') {
+                        nested++;
+                    }
+                    else if (ch == '}') {
+                        if (nested == 0) {
+                            index++;
+                            column++;
+                            return token;
+                        }
+                        nested--;
+                    }
+                    break;
                 case Token.DEBUG:
                     if (ch == '(') {
                         nested++;
