@@ -38,7 +38,9 @@ public class Preferences {
     public static final String PROP_LRU = "lru";
     public static final String PROP_PORT = "port";
     public static final String PROP_SPIN1_LIBRARY_PATH = "spin1LibraryPath";
+    public static final String PROP_SPIN1_CASE_SENSITIVE_SYMBOLS = "spin1CaseSensitiveSymbols";
     public static final String PROP_SPIN2_LIBRARY_PATH = "spin2LibraryPath";
+    public static final String PROP_SPIN2_CASE_SENSITIVE_SYMBOLS = "spin2CaseSensitiveSymbols";
     public static final String PROP_TERMINAL_FONT = "terminalFont";
 
     public static final String PREFERENCES_NAME = ".spin-tools";
@@ -96,7 +98,9 @@ public class Preferences {
         public boolean showEditorOutline;
         public String port;
         public String[] spin1LibraryPath;
+        public boolean spin1CaseSensitiveSymbols;
         public String[] spin2LibraryPath;
+        public boolean spin2CaseSensitiveSymbols;
         public List<String> lru = new ArrayList<String>();
 
         public boolean reloadOpenTabs;
@@ -336,6 +340,14 @@ public class Preferences {
         }
     }
 
+    public boolean getSpin1CaseSensitiveSymbols() {
+        return preferences.spin1CaseSensitiveSymbols;
+    }
+
+    public void setSpin1CaseSensitiveSymbols(boolean spin1CaseSensitiveSymbols) {
+        changeSupport.firePropertyChange(PROP_SPIN1_CASE_SENSITIVE_SYMBOLS, preferences.spin1CaseSensitiveSymbols, preferences.spin1CaseSensitiveSymbols = spin1CaseSensitiveSymbols);
+    }
+
     public File[] getSpin2LibraryPath() {
         if (preferences.spin2LibraryPath != null) {
             List<File> l = new ArrayList<>();
@@ -347,6 +359,14 @@ public class Preferences {
         return new File[] {
             defaultSpin2LibraryPath
         };
+    }
+
+    public boolean getSpin2CaseSensitiveSymbols() {
+        return preferences.spin2CaseSensitiveSymbols;
+    }
+
+    public void setSpin2CaseSensitiveSymbols(boolean spin2CaseSensitiveSymbols) {
+        changeSupport.firePropertyChange(PROP_SPIN2_CASE_SENSITIVE_SYMBOLS, preferences.spin2CaseSensitiveSymbols, preferences.spin2CaseSensitiveSymbols = spin2CaseSensitiveSymbols);
     }
 
     public void setSpin2LibraryPath(File[] path) {

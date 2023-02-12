@@ -11,12 +11,15 @@
 package com.maccasoft.propeller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
 
@@ -135,8 +138,14 @@ public abstract class SourceTokenMarker {
     }
 
     protected Node root;
-    protected TreeSet<TokenMarker> tokens = new TreeSet<TokenMarker>();
-    protected TreeSet<TokenMarker> compilerTokens = new TreeSet<TokenMarker>();
+    protected TreeSet<TokenMarker> tokens = new TreeSet<>();
+    protected TreeSet<TokenMarker> compilerTokens = new TreeSet<>();
+
+    protected boolean caseSensitive;
+
+    protected Map<String, TokenId> symbols = new CaseInsensitiveMap<>();
+    protected Map<String, TokenId> compilerSymbols = new CaseInsensitiveMap<>();
+    protected Map<String, TokenId> locals = new CaseInsensitiveMap<>();
 
     public SourceTokenMarker() {
 
@@ -144,6 +153,13 @@ public abstract class SourceTokenMarker {
 
     public void setSourceRoot(Node root) {
         this.root = root;
+    }
+
+    public void setCaseSensitive(boolean caseSensitive) {
+        this.caseSensitive = caseSensitive;
+        symbols = caseSensitive ? new HashMap<>() : new CaseInsensitiveMap<>();
+        compilerSymbols = caseSensitive ? new HashMap<>() : new CaseInsensitiveMap<>();
+        locals = caseSensitive ? new HashMap<>() : new CaseInsensitiveMap<>();
     }
 
     public abstract void refreshTokens(String text);
@@ -738,6 +754,10 @@ public abstract class SourceTokenMarker {
 
     public TreeSet<TokenMarker> getTokens() {
         return tokens;
+    }
+
+    public Map<String, TokenId> getSymbols() {
+        return symbols;
     }
 
 }

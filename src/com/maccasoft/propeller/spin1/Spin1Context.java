@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -13,6 +13,8 @@ package com.maccasoft.propeller.spin1;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
+
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
@@ -21,38 +23,73 @@ import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 
 public class Spin1Context implements Context {
 
-    Spin1Context parent;
+    final Spin1Context parent;
+    final boolean caseSensitive;
 
-    Map<String, Expression> symbols = new HashMap<String, Expression>();
+    Map<String, Expression> symbols = new HashMap<>();
+    Map<String, Expression> caseInsensitivesymbols = new CaseInsensitiveMap<>();
 
     Integer address;
     Integer objectAddress;
     Integer memoryAddress;
 
     public Spin1Context() {
+        this(null, false);
+    }
 
+    public Spin1Context(boolean caseSensitive) {
+        this(null, caseSensitive);
     }
 
     public Spin1Context(Spin1Context parent) {
+        this(parent, parent.isCaseSensitive());
+    }
+
+    Spin1Context(Spin1Context parent, boolean caseSensitive) {
         this.parent = parent;
-        symbols.put("$", new ContextLiteral(this));
-        symbols.put("@$", new ObjectContextLiteral(this));
-        symbols.put("@@$", new MemoryContextLiteral(this));
+        this.caseSensitive = caseSensitive;
+        caseInsensitivesymbols.put("$", new ContextLiteral(this));
+        caseInsensitivesymbols.put("@$", new ObjectContextLiteral(this));
+        caseInsensitivesymbols.put("@@$", new MemoryContextLiteral(this));
     }
 
     public Spin1Context getParent() {
         return parent;
     }
 
-    public void addSymbol(String name, Expression value) {
-        if (symbols.containsKey(name)) {
+    public boolean isCaseSensitive() {
+        return caseSensitive;
+    }
+
+    public void addBuiltinSymbol(String name, Expression value) {
+        if (caseInsensitivesymbols.containsKey(name)) {
             throw new RuntimeException("symbol " + name + " already defined");
         }
-        symbols.put(name, value);
+        caseInsensitivesymbols.put(name, value);
+    }
+
+    public void addSymbol(String name, Expression value) {
+        if (caseInsensitivesymbols.containsKey(name)) {
+            throw new RuntimeException("symbol " + name + " already defined");
+        }
+        if (caseSensitive) {
+            if (symbols.containsKey(name)) {
+                throw new RuntimeException("symbol " + name + " already defined");
+            }
+            symbols.put(name, value);
+        }
+        else {
+            caseInsensitivesymbols.put(name, value);
+        }
     }
 
     public void addOrUpdateSymbol(String name, Expression value) {
-        symbols.put(name, value);
+        if (caseSensitive) {
+            symbols.put(name, value);
+        }
+        else {
+            caseInsensitivesymbols.put(name, value);
+        }
     }
 
     @Override
@@ -65,7 +102,10 @@ public class Spin1Context implements Context {
     }
 
     public Expression getLocalSymbol(String name) {
-        Expression exp = symbols.get(name);
+        Expression exp = caseInsensitivesymbols.get(name);
+        if (exp == null && caseSensitive) {
+            exp = symbols.get(name);
+        }
         if (exp == null && parent != null) {
             exp = parent.getLocalSymbol(name);
         }
@@ -74,7 +114,10 @@ public class Spin1Context implements Context {
 
     @Override
     public boolean hasSymbol(String name) {
-        boolean result = symbols.containsKey(name);
+        boolean result = caseInsensitivesymbols.containsKey(name);
+        if (result == false && caseSensitive) {
+            result = symbols.containsKey(name);
+        }
         if (result == false && parent != null) {
             result = parent.hasSymbol(name);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -87,11 +87,15 @@ public class EditorTab implements FindReplaceTarget {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             switch (evt.getPropertyName()) {
+                case Preferences.PROP_SPIN1_CASE_SENSITIVE_SYMBOLS:
+                    tokenMarker.setCaseSensitive((Boolean) evt.getNewValue());
                 case Preferences.PROP_SPIN1_LIBRARY_PATH:
                     if (!tabItemText.toLowerCase().endsWith(".spin2")) {
                         scheduleCompile();
                     }
                     break;
+                case Preferences.PROP_SPIN2_CASE_SENSITIVE_SYMBOLS:
+                    tokenMarker.setCaseSensitive((Boolean) evt.getNewValue());
                 case Preferences.PROP_SPIN2_LIBRARY_PATH:
                     if (tabItemText.toLowerCase().endsWith(".spin2")) {
                         scheduleCompile();
@@ -219,6 +223,10 @@ public class EditorTab implements FindReplaceTarget {
 
     class Spin1TokenMarkerAdatper extends Spin1TokenMarker {
 
+        public Spin1TokenMarkerAdatper() {
+
+        }
+
         @Override
         public void refreshTokens(String text) {
             super.refreshTokens(text);
@@ -268,6 +276,10 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     class Spin2TokenMarkerAdatper extends Spin2TokenMarker {
+
+        public Spin2TokenMarkerAdatper() {
+
+        }
 
         @Override
         public void refreshTokens(String text) {
@@ -336,7 +348,10 @@ public class EditorTab implements FindReplaceTarget {
                     public void run() {
                         dependencies.clear();
 
-                        Compiler compiler = tabItemText.toLowerCase().endsWith(".spin2") ? new Spin2Compiler() : new Spin1Compiler();
+                        boolean spin2 = tabItemText.toLowerCase().endsWith(".spin2") ? true : false;
+                        boolean caseSensitive = spin2 ? preferences.getSpin2CaseSensitiveSymbols() : preferences.getSpin1CaseSensitiveSymbols();
+
+                        Compiler compiler = spin2 ? new Spin2Compiler(caseSensitive) : new Spin1Compiler(caseSensitive);
                         compiler.setRemoveUnusedMethods(true);
                         if (compiler instanceof Spin2Compiler) {
                             compiler.setDebugEnabled(sourcePool.isDebugEnabled());
@@ -410,13 +425,16 @@ public class EditorTab implements FindReplaceTarget {
         editor = new SourceEditor(folder);
 
         if (tabItemText.toLowerCase().endsWith(".spin2")) {
-            editor.setTokenMarker(tokenMarker = new Spin2TokenMarkerAdatper());
+            tokenMarker = new Spin2TokenMarkerAdatper();
+            tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
             editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", new File(""), ".spin2"));
         }
         else {
-            editor.setTokenMarker(tokenMarker = new Spin1TokenMarkerAdatper());
+            tokenMarker = new Spin1TokenMarkerAdatper();
+            tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
             editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", new File(""), ".spin"));
         }
+        editor.setTokenMarker(tokenMarker);
 
         editor.addModifyListener(new ModifyListener() {
 
@@ -486,13 +504,16 @@ public class EditorTab implements FindReplaceTarget {
         this.file = file;
 
         if (file.getName().toLowerCase().endsWith(".spin2")) {
-            editor.setTokenMarker(tokenMarker = new Spin2TokenMarkerAdatper());
+            tokenMarker = new Spin2TokenMarkerAdatper();
+            tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
             editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", file.getParentFile(), ".spin2"));
         }
         else {
-            editor.setTokenMarker(tokenMarker = new Spin1TokenMarkerAdatper());
+            tokenMarker = new Spin1TokenMarkerAdatper();
+            tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
             editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", file.getParentFile(), ".spin"));
         }
+        editor.setTokenMarker(tokenMarker);
 
         tabItem.setToolTipText(file != null ? file.getAbsolutePath() : "");
     }

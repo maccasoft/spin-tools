@@ -70,9 +70,9 @@ class Spin2TokenMarkerTest {
         entry = iter.next();
         Assertions.assertEquals(TokenId.NUMBER, entry.getId());
 
-        Assertions.assertEquals(2, subject.symbols.size());
-        Assertions.assertEquals(TokenId.CONSTANT, subject.symbols.get("EnableFlow"));
-        Assertions.assertEquals(TokenId.CONSTANT, subject.symbols.get("DisableFlow"));
+        Assertions.assertEquals(2, subject.getSymbols().size());
+        Assertions.assertEquals(TokenId.CONSTANT, subject.getSymbols().get("EnableFlow"));
+        Assertions.assertEquals(TokenId.CONSTANT, subject.getSymbols().get("DisableFlow"));
     }
 
     @Test

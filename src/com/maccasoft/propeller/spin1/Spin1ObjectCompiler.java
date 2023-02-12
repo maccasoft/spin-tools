@@ -951,12 +951,9 @@ public class Spin1ObjectCompiler {
         List<LocalVariable> localVariables = new ArrayList<LocalVariable>();
 
         LocalVariable defaultReturn = new LocalVariable("LONG", "RESULT", new NumberLiteral(1), 0);
-        localScope.addSymbol(defaultReturn.getName(), defaultReturn);
-        localScope.addSymbol("@" + defaultReturn.getName(), defaultReturn);
-        localScope.addSymbol("@@" + defaultReturn.getName(), defaultReturn);
-        localScope.addSymbol(defaultReturn.getName().toLowerCase(), defaultReturn);
-        localScope.addSymbol("@" + defaultReturn.getName().toLowerCase(), defaultReturn);
-        localScope.addSymbol("@@" + defaultReturn.getName().toLowerCase(), defaultReturn);
+        localScope.addBuiltinSymbol(defaultReturn.getName(), defaultReturn);
+        localScope.addBuiltinSymbol("@" + defaultReturn.getName(), defaultReturn);
+        localScope.addBuiltinSymbol("@@" + defaultReturn.getName(), defaultReturn);
         returns.add(defaultReturn);
 
         Iterator<Token> iter = node.getTokens().iterator();

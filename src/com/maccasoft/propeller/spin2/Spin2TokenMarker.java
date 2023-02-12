@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,12 +10,13 @@
 
 package com.maccasoft.propeller.spin2;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SourceTokenMarker;
@@ -36,7 +37,7 @@ import com.maccasoft.propeller.model.VariablesNode;
 
 public class Spin2TokenMarker extends SourceTokenMarker {
 
-    static Map<String, TokenId> keywords = new HashMap<String, TokenId>();
+    static Map<String, TokenId> keywords = new CaseInsensitiveMap<>();
     static {
         keywords.put("CON", TokenId.SECTION);
         keywords.put("VAR", TokenId.SECTION);
@@ -453,7 +454,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("INB", TokenId.PASM_INSTRUCTION);
     }
 
-    static Map<String, TokenId> debugKeywords = new HashMap<String, TokenId>();
+    static Map<String, TokenId> debugKeywords = new CaseInsensitiveMap<>();
     static {
         debugKeywords.put("DEBUG", TokenId.KEYWORD);
 
@@ -569,7 +570,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         debugKeywords.put("IFNOT", TokenId.FUNCTION);
     }
 
-    static Map<String, TokenId> spinKeywords = new HashMap<String, TokenId>();
+    static Map<String, TokenId> spinKeywords = new CaseInsensitiveMap<>();
     static {
         spinKeywords.put("PR0", TokenId.PASM_INSTRUCTION);
         spinKeywords.put("PR1", TokenId.PASM_INSTRUCTION);
@@ -588,7 +589,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         modcz.add("MODCZ");
     }
 
-    static Map<String, TokenId> modczOperands = new HashMap<String, TokenId>();
+    static Map<String, TokenId> modczOperands = new CaseInsensitiveMap<>();
     static {
         modczOperands.put("_CLR", TokenId.PASM_INSTRUCTION);
         modczOperands.put("_NC_AND_NZ", TokenId.PASM_INSTRUCTION);
@@ -808,7 +809,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
     final NodeVisitor updateReferencesVisitor = new NodeVisitor() {
 
         String lastLabel = "";
-        Map<String, TokenId> locals = new HashMap<String, TokenId>();
 
         @Override
         public void visitObject(ObjectNode node) {
@@ -1015,9 +1015,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         }
 
     };
-
-    Map<String, TokenId> symbols = new HashMap<String, TokenId>();
-    Map<String, TokenId> compilerSymbols = new HashMap<String, TokenId>();
 
     public Spin2TokenMarker() {
 

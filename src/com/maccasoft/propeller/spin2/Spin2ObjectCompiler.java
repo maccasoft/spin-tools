@@ -336,10 +336,8 @@ public class Spin2ObjectCompiler {
         }
         if (methodData.size() != 0) {
             methodData.add(new LongDataObject(0, "End"));
-            scope.addSymbol("@CLKMODE", new NumberLiteral(0x40));
-            scope.addSymbol("@clkmode", new NumberLiteral(0x40));
-            scope.addSymbol("@CLKFREQ", new NumberLiteral(0x44));
-            scope.addSymbol("@clkfreq", new NumberLiteral(0x44));
+            scope.addBuiltinSymbol("@CLKMODE", new NumberLiteral(0x40));
+            scope.addBuiltinSymbol("@CLKFREQ", new NumberLiteral(0x44));
         }
 
         for (Spin2Method method : methods) {
@@ -1088,11 +1086,8 @@ public class Spin2ObjectCompiler {
 
         //print(node, 0);
 
-        localScope.addSymbol("recv", new Register(0x1D2));
-        localScope.addSymbol("send", new Register(0x1D3));
-
-        localScope.addSymbol("RECV", new Register(0x1D2));
-        localScope.addSymbol("SEND", new Register(0x1D3));
+        localScope.addBuiltinSymbol("RECV", new Register(0x1D2));
+        localScope.addBuiltinSymbol("SEND", new Register(0x1D3));
 
         Iterator<Token> iter = node.getTokens().iterator();
         Token token = iter.next(); // First token is PUB/PRI already checked

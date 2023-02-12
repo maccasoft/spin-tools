@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.Compiler;
@@ -35,8 +36,8 @@ import com.maccasoft.propeller.spin2.Spin2ObjectCompiler.ObjectInfo;
 
 public class Spin2Compiler extends Compiler {
 
-    Spin2Context scope = new Spin2GlobalContext();
-    Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
+    final Spin2Context scope;
+    Map<String, ObjectInfo> childObjects = new CaseInsensitiveMap<>();
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
@@ -52,7 +53,11 @@ public class Spin2Compiler extends Compiler {
     Spin2Interpreter interpreter = new Spin2Interpreter();
 
     public Spin2Compiler() {
+        scope = new Spin2GlobalContext();
+    }
 
+    public Spin2Compiler(boolean caseSensitive) {
+        scope = new Spin2GlobalContext(caseSensitive);
     }
 
     @Override

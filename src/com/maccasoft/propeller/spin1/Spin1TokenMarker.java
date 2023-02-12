@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,10 +10,11 @@
 
 package com.maccasoft.propeller.spin1;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SourceTokenMarker;
@@ -34,7 +35,7 @@ import com.maccasoft.propeller.model.VariablesNode;
 
 public class Spin1TokenMarker extends SourceTokenMarker {
 
-    static Map<String, TokenId> keywords = new HashMap<String, TokenId>();
+    static Map<String, TokenId> keywords = new CaseInsensitiveMap<>();
     static {
         keywords.put("CON", TokenId.SECTION);
         keywords.put("VAR", TokenId.SECTION);
@@ -154,7 +155,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("SPR", TokenId.KEYWORD);
     }
 
-    static Map<String, TokenId> pasmKeywords = new HashMap<String, TokenId>();
+    static Map<String, TokenId> pasmKeywords = new CaseInsensitiveMap<>();
     static {
         pasmKeywords.put("CLKFREQ", TokenId.CONSTANT);
         pasmKeywords.put("CLKMODE", TokenId.CONSTANT);
@@ -291,7 +292,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 tokens.add(new TokenMarker(node.condition, TokenId.PASM_CONDITION));
             }
             if (node.instruction != null) {
-                TokenId id = keywords.get(node.instruction.getText().toUpperCase());
+                TokenId id = keywords.get(node.instruction.getText());
                 if (id == null || id != TokenId.TYPE) {
                     if (Spin1Model.isPAsmInstruction(node.instruction.getText())) {
                         id = TokenId.PASM_INSTRUCTION;
@@ -309,7 +310,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
     final NodeVisitor updateReferencesVisitor = new NodeVisitor() {
 
         String lastLabel = "";
-        Map<String, TokenId> locals = new HashMap<String, TokenId>();
 
         @Override
         public void visitObject(ObjectNode node) {
@@ -366,7 +366,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     tokens.add(new TokenMarker(token, TokenId.STRING));
                 }
                 else {
-                    TokenId id = keywords.get(token.getText().toUpperCase());
+                    TokenId id = keywords.get(token.getText());
                     if (id == null) {
                         id = locals.get(token.getText());
                     }
@@ -430,7 +430,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                         if (s.startsWith(":") || s.startsWith("@:") || s.startsWith("@@:")) {
                             s = lastLabel + s;
                         }
-                        id = pasmKeywords.get(token.getText().toUpperCase());
+                        id = pasmKeywords.get(token.getText());
                         if (id == null) {
                             id = symbols.get(s);
                         }
@@ -438,7 +438,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                             id = compilerSymbols.get(token.getText());
                         }
                         if (id == null) {
-                            id = keywords.get(token.getText().toUpperCase());
+                            id = keywords.get(token.getText());
                         }
                         if (id != null) {
                             if (id == TokenId.CONSTANT && token.getText().contains("#")) {
@@ -468,7 +468,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     tokens.add(new TokenMarker(token, TokenId.STRING));
                 }
                 else {
-                    TokenId id = keywords.get(token.getText().toUpperCase());
+                    TokenId id = keywords.get(token.getText());
                     if (id == null) {
                         id = symbols.get(token.getText());
                     }
@@ -490,9 +490,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         }
 
     };
-
-    Map<String, TokenId> symbols = new HashMap<String, TokenId>();
-    Map<String, TokenId> compilerSymbols = new HashMap<String, TokenId>();
 
     public Spin1TokenMarker() {
 

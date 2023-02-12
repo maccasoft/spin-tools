@@ -68,6 +68,7 @@ public class SpinCompiler {
             options.addOption("t", false, "enter terminal mode after upload");
 
             options.addOption("u", false, "suppress unused methods warning");
+            options.addOption("c", false, "case-sensitive symbols");
 
             options.addOption("q", false, "quiet mode");
 
@@ -125,7 +126,8 @@ public class SpinCompiler {
 
             println("Compiling...");
 
-            Compiler compiler = name.toLowerCase().endsWith(".spin2") ? new Spin2Compiler() : new Spin1Compiler();
+            boolean caseSensitive = cmd.hasOption('c');
+            Compiler compiler = name.toLowerCase().endsWith(".spin2") ? new Spin2Compiler(caseSensitive) : new Spin1Compiler(caseSensitive);
             compiler.addSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
             if (cmd.hasOption('d')) {
                 compiler.setDebugEnabled(true);

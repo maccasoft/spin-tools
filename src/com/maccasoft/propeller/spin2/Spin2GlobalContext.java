@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-21 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,13 +10,17 @@
 
 package com.maccasoft.propeller.spin2;
 
-import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Register;
 
 public class Spin2GlobalContext extends Spin2Context {
 
     public Spin2GlobalContext() {
+        this(false);
+    }
+
+    public Spin2GlobalContext(boolean caseSensitive) {
+        super(caseSensitive);
 
         // Registers
 
@@ -299,19 +303,12 @@ public class Spin2GlobalContext extends Spin2Context {
         addBuiltinSymbol("PI", Math.PI);
     }
 
-    void addBuiltinSymbol(String name, Expression value) {
-        symbols.put(name.toLowerCase(), value);
-        symbols.put(name.toUpperCase(), value);
-    }
-
     void addBuiltinSymbol(String name, long value) {
-        symbols.put(name.toLowerCase(), new NumberLiteral(value));
-        symbols.put(name.toUpperCase(), new NumberLiteral(value));
+        caseInsensitivesymbols.put(name, new NumberLiteral(value));
     }
 
     void addBuiltinSymbol(String name, double value) {
-        symbols.put(name.toLowerCase(), new NumberLiteral(value));
-        symbols.put(name.toUpperCase(), new NumberLiteral(value));
+        caseInsensitivesymbols.put(name, new NumberLiteral(value));
     }
 
 }

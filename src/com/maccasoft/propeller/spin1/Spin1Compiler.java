@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -35,7 +35,7 @@ import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
 
 public class Spin1Compiler extends Compiler {
 
-    Spin1Context scope = new Spin1GlobalContext();
+    Spin1Context scope;
     Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
 
     boolean errors;
@@ -48,7 +48,11 @@ public class Spin1Compiler extends Compiler {
     List<String> tree = new ArrayList<String>();
 
     public Spin1Compiler() {
+        scope = new Spin1GlobalContext();
+    }
 
+    public Spin1Compiler(boolean caseSensitive) {
+        scope = new Spin1GlobalContext(caseSensitive);
     }
 
     public void setOpenspinCompatible(boolean openspinCompatible) {

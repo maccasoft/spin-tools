@@ -19,7 +19,7 @@ import com.maccasoft.propeller.spin2.SpinModel;
 
 public class Spin1Model extends SpinModel {
 
-    static Set<String> pasmInstructions = new HashSet<String>(Arrays.asList(new String[] {
+    static Set<String> pasmInstructions = new HashSet<>(Arrays.asList(new String[] {
         "ORG", "FIT", "RES", "FILE",
         "ABS", "ABSNEG", "ADD", "ADDABS", "ADDS", "ADDSX", "ADDX", "AND", "ANDN", "CALL", "CLKSET", "CMP", "CMPS", "CMPSUB",
         "CMPSX", "CMPX", "COGID", "COGINIT", "COGSTOP", "DEC", "DJNZ", "ENC", "HUBOP", "JMP", "JMPRET", "LOCKCLR", "LOCKNEW",
@@ -30,22 +30,22 @@ public class Spin1Model extends SpinModel {
         "LONG", "WORD", "BYTE"
     }));
 
-    static Set<String> conditions = new HashSet<String>(Arrays.asList(new String[] {
+    static Set<String> conditions = new HashSet<>(Arrays.asList(new String[] {
         "IF_ALWAYS", "IF_NEVER", "IF_E", "IF_NE", "IF_A", "IF_B", "IF_AE", "IF_BE", "IF_C", "IF_NC", "IF_Z", "IF_NZ", "IF_C_EQ_Z",
         "IF_C_NE_Z", "IF_C_AND_Z", "IF_C_AND_NZ", "IF_NC_AND_Z", "IF_NC_AND_NZ", "IF_C_OR_Z", "IF_C_OR_NZ", "IF_NC_OR_Z",
         "IF_NC_OR_NZ", "IF_Z_EQ_C", "IF_Z_NE_C", "IF_Z_AND_C", "IF_Z_AND_NC", "IF_NZ_AND_C", "IF_NZ_AND_NC", "IF_Z_OR_C",
         "IF_Z_OR_NC", "IF_NZ_OR_C", "IF_NZ_OR_NC"
     }));
 
-    static Set<String> modifiers = new HashSet<String>(Arrays.asList(new String[] {
+    static Set<String> modifiers = new HashSet<>(Arrays.asList(new String[] {
         "WZ", "WC", "WR", "NR"
     }));
 
-    static Set<String> types = new HashSet<String>(Arrays.asList(new String[] {
+    static Set<String> types = new HashSet<>(Arrays.asList(new String[] {
         "LONG", "WORD", "BYTE"
     }));
 
-    static Set<String> blockStart = new HashSet<String>(Arrays.asList(new String[] {
+    static Set<String> blockStart = new HashSet<>(Arrays.asList(new String[] {
         "IF", "IFNOT", "ELSEIF", "ELSEIFNOT", "ELSE", "CASE", "CASE_FAST", "OTHER", "REPEAT"
     }));
 

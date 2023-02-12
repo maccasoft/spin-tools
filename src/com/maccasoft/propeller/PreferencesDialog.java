@@ -59,8 +59,10 @@ public class PreferencesDialog extends Dialog {
     Button showEditorOutline;
 
     PathList spin1Paths;
+    Button spin1CaseSensitive;
 
     PathList spin2Paths;
+    Button spin2CaseSensitive;
 
     Text terminalFont;
     Spinner terminalFontSize;
@@ -74,6 +76,8 @@ public class PreferencesDialog extends Dialog {
     boolean oldShowLineNumbers;
     boolean oldShowIndentLines;
     boolean oldShowEditorOutline;
+    boolean oldSpin1CaseSensitive;
+    boolean oldSpin2CaseSensitive;
     String oldTerminalFont;
 
     static int lastPage;
@@ -323,6 +327,8 @@ public class PreferencesDialog extends Dialog {
         oldShowLineNumbers = preferences.getShowLineNumbers();
         oldShowIndentLines = preferences.getShowIndentLines();
         oldShowEditorOutline = preferences.getShowEditorOutline();
+        oldSpin1CaseSensitive = preferences.getSpin1CaseSensitiveSymbols();
+        oldSpin2CaseSensitive = preferences.getSpin2CaseSensitiveSymbols();
         oldTerminalFont = preferences.getTerminalFont();
 
         return composite;
@@ -374,6 +380,19 @@ public class PreferencesDialog extends Dialog {
         if (items != null) {
             spin1Paths.setFileItems(items);
         }
+
+        spin1CaseSensitive = new Button(composite, SWT.CHECK);
+        spin1CaseSensitive.setText("Case sensitive symbols");
+        spin1CaseSensitive.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
+        spin1CaseSensitive.setSelection(preferences.getSpin1CaseSensitiveSymbols());
+        spin1CaseSensitive.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin1CaseSensitiveSymbols(((Button) e.widget).getSelection());
+            }
+
+        });
     }
 
     void createSpin2CompilerPage(Composite parent) {
@@ -390,6 +409,19 @@ public class PreferencesDialog extends Dialog {
         if (items != null) {
             spin2Paths.setFileItems(items);
         }
+
+        spin2CaseSensitive = new Button(composite, SWT.CHECK);
+        spin2CaseSensitive.setText("Case sensitive symbols");
+        spin2CaseSensitive.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
+        spin2CaseSensitive.setSelection(preferences.getSpin2CaseSensitiveSymbols());
+        spin2CaseSensitive.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin2CaseSensitiveSymbols(((Button) e.widget).getSelection());
+            }
+
+        });
     }
 
     void createEditorPage(Composite parent) {
@@ -595,6 +627,8 @@ public class PreferencesDialog extends Dialog {
         preferences.setShowLineNumbers(oldShowLineNumbers);
         preferences.setShowIndentLines(oldShowIndentLines);
         preferences.setShowEditorOutline(oldShowEditorOutline);
+        preferences.setSpin1CaseSensitiveSymbols(oldSpin1CaseSensitive);
+        preferences.setSpin2CaseSensitiveSymbols(oldSpin2CaseSensitive);
         preferences.setTerminalFont(oldTerminalFont);
         super.cancelPressed();
     }
