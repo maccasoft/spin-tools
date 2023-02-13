@@ -42,6 +42,8 @@ public class Preferences {
     public static final String PROP_SPIN2_LIBRARY_PATH = "spin2LibraryPath";
     public static final String PROP_SPIN2_CASE_SENSITIVE_SYMBOLS = "spin2CaseSensitiveSymbols";
     public static final String PROP_TERMINAL_FONT = "terminalFont";
+    public static final String PROP_TERMINAL_LINE_INPUT = "terminalLineInput";
+    public static final String PROP_TERMINAL_LOCAL_ECHO = "terminalLocalEcho";
 
     public static final String PREFERENCES_NAME = ".spin-tools";
 
@@ -110,6 +112,9 @@ public class Preferences {
         public String lastPath;
 
         public Bounds terminalWindow;
+        public boolean terminalLineInput;
+        public boolean terminalLocalEcho;
+        public String[] terminalHistory;
         public int terminalType;
         public String terminalFont;
         public int terminalBaudRate;
@@ -420,6 +425,22 @@ public class Preferences {
         preferences.terminalWindow = new Bounds(rect.x, rect.y, rect.width, rect.height);
     }
 
+    public boolean getTerminalLineInput() {
+        return preferences.terminalLineInput;
+    }
+
+    public void setTerminalLineInput(boolean terminalLineInput) {
+        changeSupport.firePropertyChange(PROP_TERMINAL_LINE_INPUT, preferences.terminalLineInput, preferences.terminalLineInput = terminalLineInput);
+    }
+
+    public String[] getTerminalHistory() {
+        return preferences.terminalHistory;
+    }
+
+    public void setTerminalHistory(String[] terminalHistory) {
+        preferences.terminalHistory = terminalHistory;
+    }
+
     public void setTerminalType(int n) {
         preferences.terminalType = n;
     }
@@ -444,6 +465,14 @@ public class Preferences {
 
     public void setTerminalBaudRate(int terminalBaudRate) {
         preferences.terminalBaudRate = terminalBaudRate;
+    }
+
+    public boolean getTerminalLocalEcho() {
+        return preferences.terminalLocalEcho;
+    }
+
+    public void setTerminalLocalEcho(boolean terminalLocalEcho) {
+        changeSupport.firePropertyChange(PROP_TERMINAL_LOCAL_ECHO, preferences.terminalLocalEcho, preferences.terminalLocalEcho = terminalLocalEcho);
     }
 
     public SearchPreferences getSearchPreferences() {

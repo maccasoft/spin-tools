@@ -50,6 +50,8 @@ class PreferencesTest {
             + "  \"spin1CaseSensitiveSymbols\" : false,\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalLineInput\" : false,\n"
+            + "  \"terminalLocalEcho\" : false,\n"
             + "  \"terminalType\" : 0,\n"
             + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
@@ -80,6 +82,8 @@ class PreferencesTest {
             + "  \"spin1CaseSensitiveSymbols\" : false,\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalLineInput\" : false,\n"
+            + "  \"terminalLocalEcho\" : false,\n"
             + "  \"terminalType\" : 0,\n"
             + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
@@ -144,6 +148,8 @@ class PreferencesTest {
             + "  \"spin1CaseSensitiveSymbols\" : false,\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalLineInput\" : false,\n"
+            + "  \"terminalLocalEcho\" : false,\n"
             + "  \"terminalType\" : 0,\n"
             + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
@@ -175,6 +181,8 @@ class PreferencesTest {
             + "  \"spin1CaseSensitiveSymbols\" : false,\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalLineInput\" : false,\n"
+            + "  \"terminalLocalEcho\" : false,\n"
             + "  \"terminalType\" : 0,\n"
             + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
@@ -205,6 +213,8 @@ class PreferencesTest {
             + "  \"spin2LibraryPath\" : [ \"" + new File("spin2/path").getAbsolutePath() + "\" ],\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalLineInput\" : false,\n"
+            + "  \"terminalLocalEcho\" : false,\n"
             + "  \"terminalType\" : 0,\n"
             + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
@@ -232,6 +242,8 @@ class PreferencesTest {
             + "  \"spin1CaseSensitiveSymbols\" : false,\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalLineInput\" : false,\n"
+            + "  \"terminalLocalEcho\" : false,\n"
             + "  \"terminalType\" : 0,\n"
             + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
@@ -263,6 +275,8 @@ class PreferencesTest {
             + "  \"spin2LibraryPath\" : [ \"" + new File("spin2/path").getAbsolutePath() + "\", null ],\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
+            + "  \"terminalLineInput\" : false,\n"
+            + "  \"terminalLocalEcho\" : false,\n"
             + "  \"terminalType\" : 0,\n"
             + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
@@ -336,6 +350,8 @@ class PreferencesTest {
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
             + "  \"tabStops\" : [ 8, 16 ],\n"
+            + "  \"terminalLineInput\" : false,\n"
+            + "  \"terminalLocalEcho\" : false,\n"
             + "  \"terminalType\" : 0,\n"
             + "  \"terminalBaudRate\" : 115200\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));

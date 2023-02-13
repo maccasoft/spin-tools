@@ -43,6 +43,8 @@ import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -91,6 +93,9 @@ public class SerialTerminal {
 
     Display display;
     Shell shell;
+
+    Composite lineInputGroup;
+    Combo lineInput;
     Canvas canvas;
 
     Combo terminalType;
@@ -120,6 +125,7 @@ public class SerialTerminal {
 
     SerialPort serialPort;
     int serialBaudRate;
+    boolean localEcho;
 
     Preferences preferences;
 
@@ -733,15 +739,11 @@ public class SerialTerminal {
             try {
                 serialBaudRate = baudRates.get(baudRate.getSelectionIndex());
                 preferences.setTerminalBaudRate(serialBaudRate);
-                serialPort.setParams(
-                    serialBaudRate,
-                    SerialPort.DATABITS_8,
-                    SerialPort.STOPBITS_1,
-                    SerialPort.PARITY_NONE);
+                serialPort.setParams(serialBaudRate, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
             } catch (Exception e1) {
                 e1.printStackTrace();
             }
-            canvas.setFocus();
+            setFocus();
         }
     };
 
@@ -785,6 +787,16 @@ public class SerialTerminal {
                     shell.pack();
                     redraw();
                     break;
+
+                case Preferences.PROP_TERMINAL_LINE_INPUT:
+                    lineInputGroup.setVisible(((Boolean) evt.getNewValue()).booleanValue());
+                    ((GridData) lineInputGroup.getLayoutData()).exclude = !((Boolean) evt.getNewValue()).booleanValue();
+                    lineInputGroup.getParent().layout(true);
+                    break;
+
+                case Preferences.PROP_TERMINAL_LOCAL_ECHO:
+                    localEcho = (Boolean) evt.getNewValue();
+                    break;
             }
         }
     };
@@ -798,6 +810,8 @@ public class SerialTerminal {
         preferences = Preferences.getInstance();
 
         serialBaudRate = preferences.getTerminalBaudRate();
+        localEcho = preferences.getTerminalLocalEcho();
+
         cursorState = CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
 
         Font textFont = JFaceResources.getTextFont();
@@ -878,6 +892,13 @@ public class SerialTerminal {
             }
 
         });
+        shell.addShellListener(new ShellAdapter() {
+
+            @Override
+            public void shellActivated(ShellEvent e) {
+                setFocus();
+            }
+        });
 
         display.timerExec(FRAME_TIMER, screenUpdateRunnable);
     }
@@ -887,6 +908,8 @@ public class SerialTerminal {
         GridLayout layout = new GridLayout(1, false);
         layout.marginWidth = layout.marginHeight = 0;
         container.setLayout(layout);
+
+        createLineInputGroup(container);
 
         canvas = new Canvas(container, SWT.DOUBLE_BUFFERED);
 
@@ -980,6 +1003,9 @@ public class SerialTerminal {
                     try {
                         if (serialPort != null && serialPort.isOpened()) {
                             serialPort.writeByte((byte) e.character);
+                            if (localEcho) {
+                                write(e.character);
+                            }
                         }
                         else {
                             write(e.character);
@@ -1132,6 +1158,62 @@ public class SerialTerminal {
         });
     }
 
+    void createLineInputGroup(Composite parent) {
+        lineInputGroup = new Composite(parent, SWT.NONE);
+        lineInputGroup.setLayout(new GridLayout(1, false));
+        lineInputGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        lineInput = new Combo(lineInputGroup, SWT.BORDER | SWT.DROP_DOWN);
+        lineInput.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+        String[] history = preferences.getTerminalHistory();
+        if (history != null) {
+            lineInput.setItems(history);
+        }
+
+        lineInput.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                int l = lineInput.getText().length();
+                lineInput.setSelection(new Point(l, l));
+            }
+        });
+        lineInput.addKeyListener(new KeyAdapter() {
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.keyCode == SWT.CR) {
+                    try {
+                        String text = lineInput.getText();
+                        if (serialPort != null && serialPort.isOpened()) {
+                            serialPort.writeBytes(text.getBytes());
+                            serialPort.writeInt(0x0D);
+                        }
+                        if (!text.isEmpty()) {
+                            int index = lineInput.indexOf(text);
+                            if (index != -1) {
+                                lineInput.remove(index);
+                            }
+                            lineInput.add(text);
+                            while (lineInput.getItemCount() > 10) {
+                                lineInput.remove(0);
+                            }
+                            preferences.setTerminalHistory(lineInput.getItems());
+                        }
+                        lineInput.setText("");
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                    setFocus();
+                }
+            }
+        });
+
+        lineInputGroup.setVisible(preferences.getTerminalLineInput());
+        ((GridData) lineInputGroup.getLayoutData()).exclude = !preferences.getTerminalLineInput();
+    }
+
     void createBottomControls(Composite parent) {
         Composite container = new Composite(parent, SWT.NONE);
         container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -1163,7 +1245,7 @@ public class SerialTerminal {
                 } catch (SerialPortException e1) {
                     e1.printStackTrace();
                 }
-                canvas.setFocus();
+                setFocus();
             }
         });
         dsr = new Button(container, SWT.RADIO);
@@ -1179,7 +1261,7 @@ public class SerialTerminal {
                 } catch (SerialPortException e1) {
                     e1.printStackTrace();
                 }
-                canvas.setFocus();
+                setFocus();
             }
         });
         cts = new Button(container, SWT.RADIO);
@@ -1209,7 +1291,7 @@ public class SerialTerminal {
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
-                canvas.setFocus();
+                setFocus();
             }
         });
 
@@ -1230,7 +1312,7 @@ public class SerialTerminal {
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
-                canvas.setFocus();
+                setFocus();
             }
         });
 
@@ -1258,7 +1340,7 @@ public class SerialTerminal {
             public void widgetSelected(SelectionEvent e) {
                 setTerminalType(terminalType.getSelectionIndex());
                 preferences.setTerminalType(terminalType.getSelectionIndex());
-                canvas.setFocus();
+                setFocus();
             }
         });
     }
@@ -1278,7 +1360,12 @@ public class SerialTerminal {
     }
 
     public void setFocus() {
-        canvas.setFocus();
+        if (lineInputGroup.getVisible()) {
+            lineInput.setFocus();
+        }
+        else {
+            canvas.setFocus();
+        }
     }
 
     public void close() {
@@ -1469,7 +1556,12 @@ public class SerialTerminal {
                     @Override
                     public void run() {
                         try {
-                            serialPort.writeBytes(b);
+                            for (int i = 0; i < b.length; i++) {
+                                serialPort.writeByte(b[i]);
+                                if (localEcho) {
+                                    write((char) b[i]);
+                                }
+                            }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

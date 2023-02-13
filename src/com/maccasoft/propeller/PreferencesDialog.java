@@ -67,6 +67,8 @@ public class PreferencesDialog extends Dialog {
     Text terminalFont;
     Spinner terminalFontSize;
     Button terminalFontBrowse;
+    Button terminalLineInput;
+    Button terminalLocalEcho;
 
     Preferences preferences;
     FontData defaultFont;
@@ -79,6 +81,8 @@ public class PreferencesDialog extends Dialog {
     boolean oldSpin1CaseSensitive;
     boolean oldSpin2CaseSensitive;
     String oldTerminalFont;
+    boolean oldTerminalLineInput;
+    boolean oldTerminalLocalEcho;
 
     static int lastPage;
 
@@ -330,6 +334,8 @@ public class PreferencesDialog extends Dialog {
         oldSpin1CaseSensitive = preferences.getSpin1CaseSensitiveSymbols();
         oldSpin2CaseSensitive = preferences.getSpin2CaseSensitiveSymbols();
         oldTerminalFont = preferences.getTerminalFont();
+        oldTerminalLineInput = preferences.getTerminalLineInput();
+        oldTerminalLocalEcho = preferences.getTerminalLocalEcho();
 
         return composite;
     }
@@ -597,6 +603,32 @@ public class PreferencesDialog extends Dialog {
         }
         terminalFont.setText(fontData.getName());
         terminalFontSize.setSelection(fontData.getHeight());
+
+        new Label(composite, SWT.NONE);
+
+        terminalLineInput = new Button(composite, SWT.CHECK);
+        terminalLineInput.setText("Line input");
+        terminalLineInput.setSelection(preferences.getTerminalLineInput());
+        terminalLineInput.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setTerminalLineInput(((Button) e.widget).getSelection());
+            }
+        });
+
+        new Label(composite, SWT.NONE);
+
+        terminalLocalEcho = new Button(composite, SWT.CHECK);
+        terminalLocalEcho.setText("Local echo");
+        terminalLocalEcho.setSelection(preferences.getTerminalLocalEcho());
+        terminalLocalEcho.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setTerminalLocalEcho(((Button) e.widget).getSelection());
+            }
+        });
     }
 
     Composite createPage(Composite parent, String text) {
@@ -630,6 +662,8 @@ public class PreferencesDialog extends Dialog {
         preferences.setSpin1CaseSensitiveSymbols(oldSpin1CaseSensitive);
         preferences.setSpin2CaseSensitiveSymbols(oldSpin2CaseSensitive);
         preferences.setTerminalFont(oldTerminalFont);
+        preferences.setTerminalLineInput(oldTerminalLineInput);
+        preferences.setTerminalLocalEcho(oldTerminalLocalEcho);
         super.cancelPressed();
     }
 
