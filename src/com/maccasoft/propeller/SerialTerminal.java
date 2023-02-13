@@ -45,6 +45,8 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -126,6 +128,7 @@ public class SerialTerminal {
     SerialPort serialPort;
     int serialBaudRate;
     boolean localEcho;
+    int historyIndex;
 
     Preferences preferences;
 
@@ -1169,6 +1172,7 @@ public class SerialTerminal {
         String[] history = preferences.getTerminalHistory();
         if (history != null) {
             lineInput.setItems(history);
+            historyIndex = lineInput.getItemCount();
         }
 
         lineInput.addSelectionListener(new SelectionAdapter() {
@@ -1177,35 +1181,75 @@ public class SerialTerminal {
             public void widgetSelected(SelectionEvent e) {
                 int l = lineInput.getText().length();
                 lineInput.setSelection(new Point(l, l));
+                historyIndex = lineInput.getSelectionIndex();
+            }
+        });
+        lineInput.addTraverseListener(new TraverseListener() {
+
+            @Override
+            public void keyTraversed(TraverseEvent e) {
+                switch (e.keyCode) {
+                    case SWT.ARROW_UP:
+                        if (historyIndex > 0) {
+                            historyIndex--;
+                            lineInput.select(historyIndex);
+                            int l = lineInput.getText().length();
+                            lineInput.setSelection(new Point(l, l));
+                        }
+                        e.doit = false;
+                        break;
+                    case SWT.ARROW_DOWN:
+                        if (historyIndex < lineInput.getItemCount()) {
+                            historyIndex++;
+                        }
+                        if (historyIndex < lineInput.getItemCount()) {
+                            lineInput.select(historyIndex);
+                            int l = lineInput.getText().length();
+                            lineInput.setSelection(new Point(l, l));
+                        }
+                        else {
+                            lineInput.setText("");
+                        }
+                        e.doit = false;
+                        break;
+                }
             }
         });
         lineInput.addKeyListener(new KeyAdapter() {
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.keyCode == SWT.CR) {
-                    try {
-                        String text = lineInput.getText();
-                        if (serialPort != null && serialPort.isOpened()) {
-                            serialPort.writeBytes(text.getBytes());
-                            serialPort.writeInt(0x0D);
-                        }
-                        if (!text.isEmpty()) {
-                            int index = lineInput.indexOf(text);
-                            if (index != -1) {
-                                lineInput.remove(index);
+                switch (e.keyCode) {
+                    case SWT.ARROW_UP:
+                    case SWT.ARROW_DOWN:
+                        e.doit = false;
+                        break;
+                    case SWT.CR:
+                        try {
+                            String text = lineInput.getText();
+                            if (serialPort != null && serialPort.isOpened()) {
+                                serialPort.writeBytes(text.getBytes());
+                                serialPort.writeInt(0x0D);
                             }
-                            lineInput.add(text);
-                            while (lineInput.getItemCount() > 10) {
-                                lineInput.remove(0);
+                            if (!text.isEmpty()) {
+                                int index = lineInput.indexOf(text);
+                                if (index != -1) {
+                                    lineInput.remove(index);
+                                }
+                                lineInput.add(text);
+                                while (lineInput.getItemCount() > 10) {
+                                    lineInput.remove(0);
+                                }
+                                preferences.setTerminalHistory(lineInput.getItems());
                             }
-                            preferences.setTerminalHistory(lineInput.getItems());
+                            historyIndex = lineInput.getItemCount();
+                            lineInput.setText("");
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
                         }
-                        lineInput.setText("");
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                    setFocus();
+                        setFocus();
+                        e.doit = false;
+                        break;
                 }
             }
         });
