@@ -93,14 +93,14 @@ public class Spin1ObjectCompiler {
         Spin1ObjectCompiler compiler;
 
         long offset;
-        int count;
+        Expression count;
 
         public ObjectInfo(String fileName, Spin1ObjectCompiler compiler) {
             this.fileName = fileName;
             this.compiler = compiler;
         }
 
-        public ObjectInfo(String fileName, Spin1ObjectCompiler compiler, int count) {
+        public ObjectInfo(String fileName, Spin1ObjectCompiler compiler, Expression count) {
             this.fileName = fileName;
             this.compiler = compiler;
             this.count = count;
@@ -154,14 +154,14 @@ public class Spin1ObjectCompiler {
     public void compile(Node root) {
 
         for (Node node : root.getChilds()) {
-            if (node instanceof ObjectsNode) {
-                compileObjBlock(node);
+            if (node instanceof ConstantsNode) {
+                compileConBlock(node);
             }
         }
 
         for (Node node : root.getChilds()) {
-            if (node instanceof ConstantsNode) {
-                compileConBlock(node);
+            if (node instanceof ObjectsNode) {
+                compileObjBlock(node);
             }
         }
 
@@ -268,10 +268,17 @@ public class Spin1ObjectCompiler {
                     scope.addSymbol(qualifiedName, method);
                 }
             }
-            for (int i = 0; i < info.count; i++) {
-                objectLinks.add(new LinkDataObject(info, 0, varOffset));
-                varOffset += info.compiler.getVarSize();
-                objectIndex++;
+            try {
+                int count = info.count.getNumber().intValue();
+                for (int i = 0; i < count; i++) {
+                    objectLinks.add(new LinkDataObject(info, 0, varOffset));
+                    varOffset += info.compiler.getVarSize();
+                    objectIndex++;
+                }
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, info.count.getData()));
             }
         }
 
@@ -326,7 +333,11 @@ public class Spin1ObjectCompiler {
         int count = 0;
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
             ObjectInfo info = infoEntry.getValue();
-            count += info.count;
+            try {
+                count += info.count.getNumber().intValue();
+            } catch (Exception e) {
+                // Do nothing, error throw in compile
+            }
         }
         object.writeByte(count, "Object count");
 
@@ -703,7 +714,7 @@ public class Spin1ObjectCompiler {
 
                 Token token = iter.next();
                 String name = token.getText();
-                int count = 1;
+                Expression count = new NumberLiteral(1);
 
                 if (!iter.hasNext()) {
                     logMessage(new CompilerException("syntax error", node));
@@ -721,8 +732,8 @@ public class Spin1ObjectCompiler {
                         token = iter.next();
                         if ("]".equals(token.getText())) {
                             try {
-                                Expression expression = builder.getExpression();
-                                count = expression.getNumber().intValue();
+                                count = builder.getExpression();
+                                count.setData(node.count);
                             } catch (CompilerException e) {
                                 logMessage(e);
                             } catch (Exception e) {

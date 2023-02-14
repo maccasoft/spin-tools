@@ -1202,22 +1202,18 @@ class Spin2CompilerTest {
     }
 
     @Test
-    void testObjectArrayLink() throws Exception {
+    void testObjectArray() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin2", ""
             + "OBJ\n"
             + "\n"
             + "    o[2] : \"text2\"\n"
             + "\n"
-            + "PUB main() | a\n"
-            + "\n"
-            + "    a := 1\n"
+            + "PUB main()\n"
             + "\n"
             + "");
         sources.put("text2.spin2", ""
-            + "PUB start(a, b) | c\n"
-            + "\n"
-            + "    c := a + b\n"
+            + "PUB start()\n"
             + "\n"
             + "");
 
@@ -1228,25 +1224,62 @@ class Spin2CompilerTest {
             + "00008 00008       1C 00 00 00    Object \"text2.spin2\" @ $0001C\n"
             + "0000C 0000C       08 00 00 00    Variables @ $00008\n"
             + "00010 00010       18 00 00 80    Method main @ $00018 (0 parameters, 0 returns)\n"
-            + "00014 00014       1C 00 00 00    End\n"
-            + "' PUB main() | a\n"
-            + "00018 00018       04             (stack size)\n"
-            + "'     a := 1\n"
-            + "00019 00019       A2             CONSTANT (1)\n"
-            + "0001A 0001A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
-            + "0001B 0001B       04             RETURN\n"
+            + "00014 00014       1A 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "00018 00018       00             (stack size)\n"
+            + "00019 00019       04             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
             + "' Object \"text2.spin2\" header (var size 4)\n"
-            + "0001C 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
-            + "00020 00004       0E 00 00 00    End\n"
-            + "' PUB start(a, b) | c\n"
-            + "00024 00008       04             (stack size)\n"
-            + "'     c := a + b\n"
-            + "00025 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
-            + "00026 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
-            + "00027 0000B       8A             ADD\n"
-            + "00028 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
-            + "00029 0000D       04             RETURN\n"
-            + "0002A 0000E       00 00          Padding\n"
+            + "0001C 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00020 00004       0A 00 00 00    End\n"
+            + "' PUB start()\n"
+            + "00024 00008       00             (stack size)\n"
+            + "00025 00009       04             RETURN\n"
+            + "00026 0000A       00 00          Padding\n"
+            + "", compile("main.spin2", sources));
+    }
+
+    @Test
+    void testObjectArrayExpression() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "CON\n"
+            + "\n"
+            + "    NUMBER = 2\n"
+            + "\n"
+            + "OBJ\n"
+            + "\n"
+            + "    o[NUMBER + 1] : \"text2\"\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "PUB start()\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       24 00 00 00    Object \"text2.spin2\" @ $00024\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       24 00 00 00    Object \"text2.spin2\" @ $00024\n"
+            + "0000C 0000C       08 00 00 00    Variables @ $00008\n"
+            + "00010 00010       24 00 00 00    Object \"text2.spin2\" @ $00024\n"
+            + "00014 00014       0C 00 00 00    Variables @ $0000C\n"
+            + "00018 00018       20 00 00 80    Method main @ $00020 (0 parameters, 0 returns)\n"
+            + "0001C 0001C       22 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "00020 00020       00             (stack size)\n"
+            + "00021 00021       04             RETURN\n"
+            + "00022 00022       00 00          Padding\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "00024 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00028 00004       0A 00 00 00    End\n"
+            + "' PUB start()\n"
+            + "0002C 00008       00             (stack size)\n"
+            + "0002D 00009       04             RETURN\n"
+            + "0002E 0000A       00 00          Padding\n"
             + "", compile("main.spin2", sources));
     }
 
