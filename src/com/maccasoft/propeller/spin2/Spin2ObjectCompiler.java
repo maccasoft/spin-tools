@@ -212,13 +212,11 @@ public class Spin2ObjectCompiler {
                 if (!expression.isConstant()) {
                     logMessage(new CompilerException("expression is not constant", expression.getData()));
                 }
+            } catch (CompilerException e) {
+                logMessage(e);
+                iter.remove();
             } catch (Exception e) {
-                if (e instanceof CompilerException) {
-                    logMessage((CompilerException) e);
-                }
-                else {
-                    logMessage(new CompilerException(e, entry.getValue().getData()));
-                }
+                logMessage(new CompilerException(e, entry.getValue().getData()));
                 iter.remove();
             }
         }
@@ -2928,10 +2926,11 @@ public class Spin2ObjectCompiler {
                             Spin2StatementNode indexNode = null;
 
                             int n = 0;
+                            if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
+                                indexNode = node.getChild(n++);
+                            }
                             if (n < node.getChildCount()) {
-                                if (!isPostEffect(node.getChild(n))) {
-                                    indexNode = node.getChild(n++);
-                                }
+                                throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n));
                             }
 
                             int index = 0;
@@ -2969,18 +2968,14 @@ public class Spin2ObjectCompiler {
                             Spin2StatementNode postEffectNode = null;
 
                             int n = 0;
-                            if (n < node.getChildCount()) {
-                                if (!isPostEffect(node.getChild(n))) {
-                                    indexNode = node.getChild(n++);
-                                }
+                            if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
+                                indexNode = node.getChild(n++);
+                            }
+                            if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+                                postEffectNode = node.getChild(n++);
                             }
                             if (n < node.getChildCount()) {
-                                if (isPostEffect(node.getChild(n))) {
-                                    postEffectNode = node.getChild(n++);
-                                }
-                            }
-                            if (n < node.getChildCount()) {
-                                throw new RuntimeException("syntax error");
+                                throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n));
                             }
 
                             if (indexNode != null) {
@@ -3066,10 +3061,10 @@ public class Spin2ObjectCompiler {
                             }
                         }
                         if (expected != actual) {
-                            throw new RuntimeException("expected " + expected + " argument(s), found " + actual);
+                            throw new CompilerException("expected " + expected + " argument(s), found " + actual, node);
                         }
                         if (push && method.getReturnsCount() == 0) {
-                            throw new RuntimeException("method doesn't return any value");
+                            throw new CompilerException("method doesn't return any value", node);
                         }
                         source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
                         for (int i = 0; i < node.getChildCount(); i++) {
@@ -3135,9 +3130,15 @@ public class Spin2ObjectCompiler {
                         source.addAll(compileVariableRead(context, expression, node, push));
                     }
                     else if (expression.isConstant()) {
+                        if (node.getChildCount() != 0) {
+                            throw new CompilerException("syntax error", node);
+                        }
                         source.add(new Constant(context, expression));
                     }
                     else {
+                        if (node.getChildCount() != 0) {
+                            throw new CompilerException("syntax error", node);
+                        }
                         source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
                     }
                 }
@@ -3171,34 +3172,24 @@ public class Spin2ObjectCompiler {
         }
 
         int n = 0;
-        if (n < node.getChildCount()) {
-            if (!".".equals(node.getChild(n).getText()) && !isPostEffect(node.getChild(n))) {
-                indexNode = node.getChild(n++);
-                if ("..".equals(indexNode.getText())) {
-                    bitfieldNode = indexNode;
-                    indexNode = null;
-                }
+        if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
+            indexNode = node.getChild(n++);
+        }
+        if (n < node.getChildCount() && ".".equals(node.getChild(n).getText())) {
+            n++;
+            if (n >= node.getChildCount()) {
+                throw new CompilerException("expected bitfield expression", node.getChild(n - 1));
             }
+            if (!(node.getChild(n) instanceof Spin2StatementNode.Index)) {
+                throw new CompilerException("invalid bitfield expression", node.getChild(n));
+            }
+            bitfieldNode = node.getChild(n++);
+        }
+        if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+            postEffectNode = node.getChild(n++);
         }
         if (n < node.getChildCount()) {
-            if (".".equals(node.getChild(n).getText())) {
-                if (bitfieldNode != null) {
-                    throw new CompilerException("invalid bitfield expression", node.getToken());
-                }
-                n++;
-                if (n >= node.getChildCount()) {
-                    throw new CompilerException("expected bitfield expression", node.getToken());
-                }
-                bitfieldNode = node.getChild(n++);
-            }
-        }
-        if (n < node.getChildCount()) {
-            if (isPostEffect(node.getChild(n))) {
-                postEffectNode = node.getChild(n++);
-            }
-        }
-        if (n < node.getChildCount()) {
-            throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getToken());
+            throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n));
         }
 
         int index = 0;

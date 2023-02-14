@@ -316,7 +316,64 @@ public class Spin2TreeBuilder {
         if (token.type == 0) {
             Spin2StatementNode node = new Spin2StatementNode(next());
             if (peek() != null) {
-                if ("(".equals(peek().getText())) {
+                if (".".equals(peek().getText())) {
+                    node.addChild(new Spin2StatementNode(next()));
+                    if (peek() == null) {
+                        return node;
+                    }
+                }
+                if ("[".equals(peek().getText())) {
+                    next();
+                    node.addChild(new Spin2StatementNode.Index(parseLevel(parseAtom(), 0, false)));
+                    token = next();
+                    if (token == null || !"]".equals(token.getText())) {
+                        throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
+                    }
+                    if (peek() == null) {
+                        return node;
+                    }
+                    if ("[".equals(peek().getText())) {
+                        next();
+                        node.addChild(new Spin2StatementNode.Index(parseLevel(parseAtom(), 0, false)));
+                        token = next();
+                        if (token == null || !"]".equals(token.getText())) {
+                            throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
+                        }
+                        if (peek() == null) {
+                            return node;
+                        }
+                    }
+                    if (".".equals(peek().getText())) {
+                        node.addChild(new Spin2StatementNode(next()));
+                        if (peek() == null) {
+                            return node;
+                        }
+                    }
+                    else if (peek().getText().startsWith(".")) {
+                        node.addChild(parseAtom());
+                        if (peek() == null) {
+                            return node;
+                        }
+                    }
+                    if ("[".equals(peek().getText())) {
+                        next();
+                        node.addChild(new Spin2StatementNode.Index(parseLevel(parseAtom(), 0, false)));
+                        token = next();
+                        if (token == null || !"]".equals(token.getText())) {
+                            throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
+                        }
+                        if (peek() == null) {
+                            return node;
+                        }
+                    }
+                }
+                if (postEffect.contains(peek().getText())) {
+                    Token postToken = peek();
+                    if (!"?".equals(postToken.getText()) || postToken.start == (token.stop + 1)) {
+                        node.addChild(new Spin2StatementNode(next()));
+                    }
+                }
+                else if ("(".equals(peek().getText())) {
                     next();
                     node = new Spin2StatementNode.Method(node);
                     if (peek() != null && ")".equals(peek().getText())) {
@@ -332,7 +389,7 @@ public class Spin2TreeBuilder {
                         return node;
                     }
                     for (;;) {
-                        Spin2StatementNode child = parseLevel(parseAtom(), 0, false);
+                        Spin2StatementNode child = new Spin2StatementNode.Argument(parseLevel(parseAtom(), 0, false));
                         if (node.getChildCount() == 1 && ":".equals(node.getChild(0).getText())) {
                             node.getChild(0).addChild(child);
                         }
@@ -357,61 +414,6 @@ public class Spin2TreeBuilder {
                         if (!",".equals(token.getText()) && !":".equals(token.getText())) {
                             throw new CompilerException("expecting )", token);
                         }
-                    }
-                }
-                if (".".equals(peek().getText())) {
-                    node.addChild(new Spin2StatementNode(next()));
-                    if (peek() == null) {
-                        return node;
-                    }
-                }
-                if ("[".equals(peek().getText())) {
-                    next();
-                    node.addChild(parseLevel(parseAtom(), 0, false));
-                    token = next();
-                    if (token == null || !"]".equals(token.getText())) {
-                        throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
-                    }
-
-                    if (peek() == null) {
-                        return node;
-                    }
-                    if ("[".equals(peek().getText())) {
-                        next();
-                        node.addChild(parseLevel(parseAtom(), 0, false));
-                        token = next();
-                        if (token == null || !"]".equals(token.getText())) {
-                            throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
-                        }
-                    }
-                    if (peek() == null) {
-                        return node;
-                    }
-                    if (".".equals(peek().getText())) {
-                        node.addChild(new Spin2StatementNode(next()));
-                        if (peek() == null) {
-                            return node;
-                        }
-                    }
-                    else if (peek().getText().startsWith(".")) {
-                        node.addChild(parseAtom());
-                        if (peek() == null) {
-                            return node;
-                        }
-                    }
-                    if ("[".equals(peek().getText())) {
-                        next();
-                        node.addChild(parseLevel(parseAtom(), 0, false));
-                        token = next();
-                        if (token == null || !"]".equals(token.getText())) {
-                            throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
-                        }
-                    }
-                }
-                Token postToken = peek();
-                if (postToken != null && postEffect.contains(postToken.getText())) {
-                    if (!"?".equals(postToken.getText()) || postToken.start == (token.stop + 1)) {
-                        node.addChild(new Spin2StatementNode(next()));
                     }
                 }
             }

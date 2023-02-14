@@ -182,13 +182,11 @@ public class Spin1ObjectCompiler {
                 if (!expression.isConstant()) {
                     logMessage(new CompilerException("expression is not constant", expression.getData()));
                 }
+            } catch (CompilerException e) {
+                logMessage(e);
+                iter.remove();
             } catch (Exception e) {
-                if (e instanceof CompilerException) {
-                    logMessage((CompilerException) e);
-                }
-                else {
-                    logMessage(new CompilerException(e, entry.getValue().toString()));
-                }
+                logMessage(new CompilerException(e, entry.getValue().getData()));
                 iter.remove();
             }
         }
@@ -2578,7 +2576,7 @@ public class Spin1ObjectCompiler {
                                 Method method = (Method) expression;
                                 int parameters = method.getArgumentsCount();
                                 if (node.getChild(1).getChildCount() != parameters) {
-                                    throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChild(1).getChildCount());
+                                    throw new CompilerException("expected " + parameters + " argument(s), found " + node.getChild(1).getChildCount(), node);
                                 }
                                 source.add(new Bytecode(context, new byte[] {
                                     (byte) (push ? 0b00000000 : 0b00000001),
@@ -2758,19 +2756,15 @@ public class Spin1ObjectCompiler {
                         Spin1StatementNode postEffectNode = null;
 
                         int n = 0;
-                        if (n < node.getChildCount()) {
-                            if (!isPostEffect(node.getChild(n))) {
-                                source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
-                                popIndex = true;
-                            }
+                        if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
+                            source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
+                            popIndex = true;
+                        }
+                        if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+                            postEffectNode = node.getChild(n++);
                         }
                         if (n < node.getChildCount()) {
-                            if (isPostEffect(node.getChild(n))) {
-                                postEffectNode = node.getChild(n++);
-                            }
-                        }
-                        if (n < node.getChildCount()) {
-                            throw new RuntimeException("syntax error");
+                            throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n));
                         }
 
                         if (postEffectNode != null) {
@@ -2816,19 +2810,15 @@ public class Spin1ObjectCompiler {
                         Spin1StatementNode postEffectNode = null;
 
                         int n = 0;
-                        if (n < node.getChildCount()) {
-                            if (!isPostEffect(node.getChild(n))) {
-                                source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
-                                popIndex = true;
-                            }
+                        if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
+                            source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
+                            popIndex = true;
+                        }
+                        if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+                            postEffectNode = node.getChild(n++);
                         }
                         if (n < node.getChildCount()) {
-                            if (isPostEffect(node.getChild(n))) {
-                                postEffectNode = node.getChild(n++);
-                            }
-                        }
-                        if (n < node.getChildCount()) {
-                            throw new RuntimeException("syntax error");
+                            throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n));
                         }
 
                         MemoryOp.Size ss = MemoryOp.Size.Long;
@@ -2883,7 +2873,7 @@ public class Spin1ObjectCompiler {
                         Method method = (Method) expression;
                         int parameters = method.getArgumentsCount();
                         if (node.getChildCount() != parameters) {
-                            throw new RuntimeException("expected " + parameters + " argument(s), found " + node.getChildCount());
+                            throw new CompilerException("expected " + parameters + " argument(s), found " + node.getChildCount(), node);
                         }
                         source.add(new Bytecode(context, new byte[] {
                             (byte) (push ? 0b00000000 : 0b00000001),
@@ -2907,9 +2897,15 @@ public class Spin1ObjectCompiler {
                         }
                     }
                     else if (expression.isConstant()) {
+                        if (node.getChildCount() != 0) {
+                            throw new CompilerException("syntax error", node);
+                        }
                         source.add(new Constant(context, expression, openspinCompatibile));
                     }
                     else {
+                        if (node.getChildCount() != 0) {
+                            throw new CompilerException("syntax error", node);
+                        }
                         throw new CompilerException("invalid operand " + node.getText(), node.getToken());
                     }
                 }
@@ -2936,14 +2932,16 @@ public class Spin1ObjectCompiler {
                 throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
             }
 
-            if (node.getChildCount() != 0) {
+            int n = 0;
+            if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
                 indexed = true;
-                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-                if (node.getChildCount() > 1) {
-                    if (isPostEffect(node.getChild(1))) {
-                        postEffect = node.getChild(1);
-                    }
-                }
+                source.addAll(compileBytecodeExpression(context, node.getChild(n++), true));
+            }
+            if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+                postEffect = node.getChild(n++);
+            }
+            if (n < node.getChildCount()) {
+                throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n));
             }
 
             MemoryOp.Base bb = MemoryOp.Base.PBase;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -23,13 +23,46 @@ public class Spin1StatementNode {
     Token token;
 
     Map<String, Spin1StatementNode> properties = new HashMap<String, Spin1StatementNode>();
-    private List<Spin1StatementNode> childs = new ArrayList<Spin1StatementNode>();
+    List<Spin1StatementNode> childs = new ArrayList<Spin1StatementNode>();
 
     String comment;
     Spin1StatementNode parent;
 
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
+
+    public static class Index extends Spin1StatementNode {
+
+        public Index(Spin1StatementNode node) {
+            super(node.token);
+            this.properties.putAll(node.properties);
+            this.childs.addAll(node.childs);
+            this.data = node.data;
+            this.keyedData = node.keyedData;
+        }
+    }
+
+    public static class Method extends Spin1StatementNode {
+
+        public Method(Spin1StatementNode node) {
+            super(node.token);
+            this.properties.putAll(node.properties);
+            this.childs.addAll(node.childs);
+            this.data = node.data;
+            this.keyedData = node.keyedData;
+        }
+    }
+
+    public static class Argument extends Spin1StatementNode {
+
+        public Argument(Spin1StatementNode node) {
+            super(node.token);
+            this.properties.putAll(node.properties);
+            this.childs.addAll(node.childs);
+            this.data = node.data;
+            this.keyedData = node.keyedData;
+        }
+    }
 
     public Spin1StatementNode(Token token) {
         this.token = token;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -31,9 +31,31 @@ public class Spin2StatementNode {
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
+    public static class Index extends Spin2StatementNode {
+
+        public Index(Spin2StatementNode node) {
+            super(node.token);
+            this.properties.putAll(node.properties);
+            this.childs.addAll(node.childs);
+            this.data = node.data;
+            this.keyedData = node.keyedData;
+        }
+    }
+
     public static class Method extends Spin2StatementNode {
 
         public Method(Spin2StatementNode node) {
+            super(node.token);
+            this.properties.putAll(node.properties);
+            this.childs.addAll(node.childs);
+            this.data = node.data;
+            this.keyedData = node.keyedData;
+        }
+    }
+
+    public static class Argument extends Spin2StatementNode {
+
+        public Argument(Spin2StatementNode node) {
             super(node.token);
             this.properties.putAll(node.properties);
             this.childs.addAll(node.childs);
@@ -191,21 +213,36 @@ public class Spin2StatementNode {
                     }
                 }
                 break;
-            case Token.FUNCTION:
+            default: {
                 sb.append(token.getText());
-                sb.append("(");
-                if (childs.size() != 0) {
-                    sb.append(childs.get(0));
+
+                int i = 0;
+                while (i < childs.size()) {
+                    if (!(childs.get(i) instanceof Index)) {
+                        break;
+                    }
+                    sb.append("[");
+                    sb.append(childs.get(i++));
+                    sb.append("]");
                 }
-                sb.append(")");
-                break;
-            default:
-                sb.append(token.getText());
-                for (int i = 0; i < childs.size(); i++) {
+                if (i < childs.size() && (childs.get(i) instanceof Argument)) {
+                    sb.append("(");
+                    sb.append(childs.get(i++));
+                    while (i < childs.size()) {
+                        if (!(childs.get(i) instanceof Argument)) {
+                            break;
+                        }
+                        sb.append(", ");
+                        sb.append(childs.get(i++));
+                    }
+                    sb.append(")");
+                }
+                while (i < childs.size()) {
                     sb.append(" ");
-                    sb.append(childs.get(i));
+                    sb.append(childs.get(i++));
                 }
                 break;
+            }
         }
         return sb.toString();
     }
