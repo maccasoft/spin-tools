@@ -2247,72 +2247,88 @@ public class Spin1ObjectCompiler {
                     }, "CALL_OBJ_SUB"));
                 }
             }
-            else if ("++".equalsIgnoreCase(node.getText())) {
+            else if ("++".equalsIgnoreCase(node.getText()) || "--".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 1) {
-                    throw new RuntimeException("expression syntax error");
+                    throw new CompilerException("expression syntax error", node);
                 }
-                Expression expression = context.getLocalSymbol(node.getChild(0).getText());
-                if (expression == null) {
-                    throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
+                Spin1Bytecode.Type type = Spin1Bytecode.Type.Long;
+                Spin1StatementNode childNode = node.getChild(0);
+                if ("BYTE".equalsIgnoreCase(childNode.getText()) || "WORD".equalsIgnoreCase(childNode.getText()) || "LONG".equalsIgnoreCase(childNode.getText())) {
+                    boolean popIndex = false;
+
+                    if (childNode.getChildCount() == 0) {
+                        throw new RuntimeException("expected index expression");
+                    }
+                    source.addAll(compileBytecodeExpression(context, childNode.getChild(0), true));
+
+                    int n = 1;
+                    if (n < childNode.getChildCount()) {
+                        source.addAll(compileBytecodeExpression(context, childNode.getChild(n++), true));
+                        popIndex = true;
+                    }
+                    if (n < childNode.getChildCount()) {
+                        throw new RuntimeException("unexpected expression");
+                    }
+
+                    if ("BYTE".equalsIgnoreCase(childNode.getText())) {
+                        source.add(new MemoryOp(context, MemoryOp.Size.Byte, popIndex, MemoryOp.Base.Pop, MemoryOp.Op.Assign, null));
+                        type = Spin1Bytecode.Type.Byte;
+                    }
+                    else if ("WORD".equalsIgnoreCase(childNode.getText())) {
+                        source.add(new MemoryOp(context, MemoryOp.Size.Word, popIndex, MemoryOp.Base.Pop, MemoryOp.Op.Assign, null));
+                        type = Spin1Bytecode.Type.Word;
+                    }
+                    else if ("LONG".equalsIgnoreCase(childNode.getText())) {
+                        source.add(new MemoryOp(context, MemoryOp.Size.Long, popIndex, MemoryOp.Base.Pop, MemoryOp.Op.Assign, null));
+                        type = Spin1Bytecode.Type.Long;
+                    }
                 }
-                if (expression instanceof Variable) {
-                    Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
+                else {
+                    Expression expression = context.getLocalSymbol(childNode.getText());
+                    if (expression == null) {
+                        throw new RuntimeException("undefined symbol " + childNode.getText());
+                    }
+                    if (expression instanceof Variable) {
+                        type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
+                        if (childNode.getChildCount() != 0) {
+                            source.addAll(leftAssign(context, node.getChild(0), true));
+                        }
+                        else {
+                            source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
+                        }
+                    }
+                    else if (expression instanceof ContextLiteral) {
+                        MemoryOp.Size ss = MemoryOp.Size.Long;
+                        if (expression instanceof DataVariable) {
+                            switch (((DataVariable) expression).getType()) {
+                                case "BYTE":
+                                    ss = MemoryOp.Size.Byte;
+                                    type = Spin1Bytecode.Type.Word;
+                                    break;
+                                case "WORD":
+                                    ss = MemoryOp.Size.Word;
+                                    type = Spin1Bytecode.Type.Byte;
+                                    break;
+                            }
+                        }
+                        if (childNode.getChildCount() != 0) {
+                            source.addAll(leftAssign(context, node.getChild(0), true));
+                        }
+                        else {
+                            source.add(new MemoryOp(context, ss, false, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
+                        }
+                    }
+                    else {
+                        throw new CompilerException("unsupported operation on " + node.getChild(0).getText(), node.getChild(0).getToken());
+                    }
+                }
+                if ("++".equalsIgnoreCase(node.getText())) {
                     int code = Spin1Bytecode.op_ss.setValue(0b0_0100_000, type.ordinal() + 1);
-                    source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
                     source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "PRE_INC"));
                 }
-                else if (expression instanceof ContextLiteral) {
-                    MemoryOp.Size ss = MemoryOp.Size.Long;
-                    if (expression instanceof DataVariable) {
-                        switch (((DataVariable) expression).getType()) {
-                            case "BYTE":
-                                ss = MemoryOp.Size.Byte;
-                                break;
-                            case "WORD":
-                                ss = MemoryOp.Size.Word;
-                                break;
-                        }
-                    }
-                    source.add(new MemoryOp(context, ss, false, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
-                    int code = Spin1Bytecode.op_ss.setValue(0b0_0100_000, ss.ordinal() + 1);
-                    source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "PRE_INC"));
-                }
-                else {
-                    throw new CompilerException("unsupported operation on " + node.getChild(0).getText(), node.getChild(0).getToken());
-                }
-            }
-            else if ("--".equalsIgnoreCase(node.getText())) {
-                if (node.getChildCount() != 1) {
-                    throw new RuntimeException("expression syntax error");
-                }
-                Expression expression = context.getLocalSymbol(node.getChild(0).getText());
-                if (expression == null) {
-                    throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
-                }
-                if (expression instanceof Variable) {
-                    Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
+                else if ("--".equalsIgnoreCase(node.getText())) {
                     int code = Spin1Bytecode.op_ss.setValue(0b0_0110_000, type.ordinal() + 1);
-                    source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
                     source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "PRE_DEC"));
-                }
-                else if (expression instanceof ContextLiteral) {
-                    MemoryOp.Size ss = MemoryOp.Size.Long;
-                    if (expression instanceof DataVariable) {
-                        switch (((DataVariable) expression).getType()) {
-                            case "BYTE":
-                                ss = MemoryOp.Size.Byte;
-                                break;
-                            case "WORD":
-                                ss = MemoryOp.Size.Word;
-                                break;
-                        }
-                    }
-                    source.add(new MemoryOp(context, ss, false, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
-                    int code = Spin1Bytecode.op_ss.setValue(0b0_0110_000, ss.ordinal() + 1);
-                    source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "PRE_DEC"));
-                }
-                else {
-                    throw new CompilerException("unsupported operation on " + node.getChild(0).getText(), node.getChild(0).getToken());
                 }
             }
             else if ("~".equalsIgnoreCase(node.getText())) {
