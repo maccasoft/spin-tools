@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.text.NumberFormat;
 
-import org.apache.commons.lang3.BitField;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.resource.JFaceResources;
@@ -55,13 +54,6 @@ import com.maccasoft.propeller.spin2.Spin2Object;
 public class P2MemoryDialog extends Dialog {
 
     public static final int BYTES_PER_ROW = 16;
-
-    static BitField cm_pll = new BitField(0b0000_000_1_000000_0000000000_0000_00_00);
-    static BitField cm_xi_div = new BitField(0b0000_000_0_111111_0000000000_0000_00_00);
-    static BitField cm_vco_mul = new BitField(0b0000_000_0_000000_1111111111_0000_00_00);
-    static BitField cm_vco_div = new BitField(0b0000_000_0_000000_0000000000_1111_00_00);
-    static BitField cm_cc = new BitField(0b0000_000_0_000000_0000000000_0000_11_00);
-    static BitField cm_ss = new BitField(0b0000_000_0_000000_0000000000_0000_00_11);
 
     Display display;
 
@@ -306,7 +298,7 @@ public class P2MemoryDialog extends Dialog {
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
 
         StringBuilder sb = new StringBuilder();
-        switch (cm_ss.getValue(clkmode)) {
+        switch (Spin2Object.cm_ss.getValue(clkmode)) {
             case 0b00:
                 sb.append("RCFAST");
                 break;
@@ -314,12 +306,12 @@ public class P2MemoryDialog extends Dialog {
                 sb.append("RCSLOW");
                 break;
             case 0b10:
-                sb.append("XTAL" + cm_cc.getValue(clkmode));
+                sb.append("XTAL" + Spin2Object.cm_cc.getValue(clkmode));
                 break;
             case 0b11:
-                sb.append("XTAL" + cm_cc.getValue(clkmode));
-                if (cm_pll.isSet(clkmode)) {
-                    sb.append("+PLL" + ((cm_vco_mul.getValue(clkmode) + 1) / (cm_xi_div.getValue(clkmode) + 1)) + "X");
+                sb.append("XTAL" + Spin2Object.cm_cc.getValue(clkmode));
+                if (Spin2Object.cm_pll.isSet(clkmode)) {
+                    sb.append("+PLL" + ((Spin2Object.cm_vco_mul.getValue(clkmode) + 1) / (Spin2Object.cm_xi_div.getValue(clkmode) + 1)) + "X");
                 }
                 break;
         }
@@ -331,7 +323,7 @@ public class P2MemoryDialog extends Dialog {
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
 
-        switch (cm_ss.getValue(clkmode)) {
+        switch (Spin2Object.cm_ss.getValue(clkmode)) {
             case 0b00:
                 label.setText("~" + format.format(20000000) + " Hz");
                 break;
@@ -350,16 +342,16 @@ public class P2MemoryDialog extends Dialog {
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
 
-        switch (cm_ss.getValue(clkmode)) {
+        switch (Spin2Object.cm_ss.getValue(clkmode)) {
             case 0b00:
             case 0b01:
                 label.setText("Ignored");
                 break;
             case 0b10:
-                label.setText(format.format(clkfreq * (cm_xi_div.getValue(clkmode) + 1)) + " Hz");
+                label.setText(format.format(clkfreq * (Spin2Object.cm_xi_div.getValue(clkmode) + 1)) + " Hz");
                 break;
             case 0b11:
-                label.setText(format.format(clkfreq / (cm_vco_mul.getValue(clkmode) + 1) * (cm_xi_div.getValue(clkmode) + 1)) + " Hz");
+                label.setText(format.format(clkfreq / (Spin2Object.cm_vco_mul.getValue(clkmode) + 1) * (Spin2Object.cm_xi_div.getValue(clkmode) + 1)) + " Hz");
                 break;
         }
     }

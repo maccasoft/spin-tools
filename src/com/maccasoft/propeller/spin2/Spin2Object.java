@@ -16,10 +16,19 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.BitField;
+
 import com.maccasoft.propeller.SpinObject;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler.ObjectInfo;
 
 public class Spin2Object extends SpinObject {
+
+    public static BitField cm_pll = new BitField(0b0000_000_1_000000_0000000000_0000_00_00);
+    public static BitField cm_xi_div = new BitField(0b0000_000_0_111111_0000000000_0000_00_00);
+    public static BitField cm_vco_mul = new BitField(0b0000_000_0_000000_1111111111_0000_00_00);
+    public static BitField cm_vco_div = new BitField(0b0000_000_0_000000_0000000000_1111_00_00);
+    public static BitField cm_cc = new BitField(0b0000_000_0_000000_0000000000_0000_11_00);
+    public static BitField cm_ss = new BitField(0b0000_000_0_000000_0000000000_0000_00_11);
 
     public static class LinkDataObject extends DataObject {
 

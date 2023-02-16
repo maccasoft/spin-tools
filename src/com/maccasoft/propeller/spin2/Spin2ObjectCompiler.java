@@ -227,43 +227,6 @@ public class Spin2ObjectCompiler {
             varOffset++;
         }
 
-        int _clkfreq = 20000000;
-        if (scope.hasSymbol("_clkfreq")) {
-            _clkfreq = scope.getSymbol("_clkfreq").getNumber().intValue();
-        }
-        else if (scope.hasSymbol("_CLKFREQ")) {
-            _clkfreq = scope.getSymbol("_CLKFREQ").getNumber().intValue();
-        }
-        int _xinfreq = 20000000;
-        if (scope.hasSymbol("_xinfreq")) {
-            _xinfreq = scope.getSymbol("_xinfreq").getNumber().intValue();
-        }
-        else if (scope.hasSymbol("_XINFREQ")) {
-            _xinfreq = scope.getSymbol("_XINFREQ").getNumber().intValue();
-        }
-
-        if (!scope.hasSymbol("_xinfreq")) {
-            scope.addSymbol("_xinfreq", new NumberLiteral(_xinfreq));
-        }
-        if (!scope.hasSymbol("_XINFREQ")) {
-            scope.addSymbol("_XINFREQ", new NumberLiteral(_xinfreq));
-        }
-
-        if (!scope.hasSymbol("_clkfreq")) {
-            scope.addSymbol("_clkfreq", new NumberLiteral(_clkfreq));
-        }
-        if (!scope.hasSymbol("_CLKFREQ")) {
-            scope.addSymbol("_CLKFREQ", new NumberLiteral(_clkfreq));
-        }
-
-        int _clkmode = getClockMode(_xinfreq, _clkfreq);
-        if (!scope.hasSymbol("clkmode_")) {
-            scope.addSymbol("clkmode_", new NumberLiteral(_clkmode));
-        }
-        if (!scope.hasSymbol("CLKMODE_")) {
-            scope.addSymbol("CLKMODE_", new NumberLiteral(_clkmode));
-        }
-
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
                 compileDatBlock(node);
@@ -345,6 +308,8 @@ public class Spin2ObjectCompiler {
             scope.addBuiltinSymbol("@CLKFREQ", new NumberLiteral(0x44));
         }
 
+        computeClockMode();
+
         for (Spin2Method method : methods) {
             for (Spin2MethodLine line : method.getLines()) {
                 try {
@@ -377,7 +342,7 @@ public class Spin2ObjectCompiler {
     public Spin2Object generateObject(int memoryOffset) {
         Spin2Object object = new Spin2Object();
 
-        object.setClkFreq(scope.getSymbol("_CLKFREQ").getNumber().intValue());
+        object.setClkFreq(scope.getSymbol("CLKFREQ_").getNumber().intValue());
         object.setClkMode(scope.getSymbol("CLKMODE_").getNumber().intValue());
 
         object.writeComment("Object header");
@@ -4008,52 +3973,114 @@ public class Spin2ObjectCompiler {
         throw new RuntimeException("unknown " + node.getText());
     }
 
-    int getClockMode(int xinfreq, int clkfreq) {
-        int divd;
-        int zzzz = 11; // 0b10_11
-        double e, post, mult, Fpfd, Fvco, Fout;
-        double result_mult = 0;
-        //double result_Fout = 0;
-        int result_pppp = 0, result_divd = 0;
-        double error = 1e9;
+    void computeClockMode() {
+        Expression clkMode = scope.getLocalSymbol("_CLKMODE");
+        Expression clkFreq = scope.getLocalSymbol("_CLKFREQ");
+        Expression xtlFreq = scope.getLocalSymbol("_XTLFREQ");
+        Expression xinFreq = scope.getLocalSymbol("_XINFREQ");
+        Expression errFreq = scope.getLocalSymbol("_ERRFREQ");
 
-        if (clkfreq == 20000000) {
-            return 0;
+        double clkfreq;
+        double xinfreq = 20000000.0; // default crystal frequency
+        double errfreq = 1000000.0;
+        int clkmode = 0;
+        int finalfreq = 20000000;
+        int zzzz = 0b10_11;
+        int pppp;
+        double error;
+
+        if (scope.hasSymbol("_RCSLOW")) {
+            clkmode = 0b0001;
+            finalfreq = 20000;
         }
-
-        for (int pppp = 0; pppp <= 15; pppp++) {
-            if (pppp == 0) {
-                post = 1.0;
+        else if (clkMode != null || clkFreq != null || xtlFreq != null || xinFreq != null) {
+            if (methodData.size() != 0) {
+                clkfreq = 20000000.0;
             }
             else {
-                post = pppp * 2.0;
+                clkfreq = 160000000.0;
             }
-            for (divd = 64; divd >= 1; --divd) {
-                Fpfd = Math.round(xinfreq / (double) divd);
-                mult = Math.round(clkfreq * post / Fpfd);
-                Fvco = Math.round(Fpfd * mult);
-                Fout = Math.round(Fvco / post);
-                e = Math.abs(Fout - clkfreq);
-                if ((e <= error) && (Fpfd >= 250000) && (mult <= 1024) && (Fvco > 99e6) && ((Fvco <= 201e6) || (Fvco <= clkfreq + 1e6))) {
-                    result_divd = divd;
-                    result_mult = mult;
-                    result_pppp = (pppp - 1) & 15;
-                    //result_Fout = Fout;
-                    error = e;
+
+            if (xinFreq != null) {
+                if (xtlFreq != null) {
+                    throw new RuntimeException("only one of _XTLFREQ or _XINFREQ may be specified");
+                }
+                clkfreq = xinfreq = xinFreq.getNumber().doubleValue();
+                zzzz = 0b01_10;
+            }
+            else if (xtlFreq != null) {
+                clkfreq = xinfreq = xtlFreq.getNumber().doubleValue();
+                if (xinfreq >= 16000000.0) {
+                    zzzz = 0b10_10;
+                }
+                else {
+                    zzzz = 0b11_10;
                 }
             }
+
+            if (clkMode != null) {
+                if (clkFreq == null) {
+                    throw new RuntimeException("_CLKMODE definition requires _CLKFREQ as well");
+                }
+                clkmode = clkMode.getNumber().intValue();
+                finalfreq = clkFreq.getNumber().intValue();
+                //goto set_symbols;
+            }
+            else if (clkFreq != null) {
+                clkfreq = clkFreq.getNumber().doubleValue();
+                if (errFreq != null) {
+                    errfreq = errFreq.getNumber().doubleValue();
+                }
+                zzzz |= 0b00_01;
+
+                // figure out clock mode based on frequency
+                int divd;
+                double abse, post, mult, fpfd, fvco, fout;
+                double result_mult = 0;
+                double result_fout = 0;
+                int result_pppp = 0, result_divd = 0;
+                error = 1e9;
+                for (pppp = 0; pppp <= 15; pppp++) {
+                    if (pppp == 0) {
+                        post = 1.0;
+                    }
+                    else {
+                        post = pppp * 2.0;
+                    }
+                    for (divd = 64; divd >= 1; --divd) {
+                        fpfd = Math.round(xinfreq / divd);
+                        mult = Math.round((post * divd) * clkfreq / xinfreq);
+                        fvco = Math.round(xinfreq * mult / divd);
+                        fout = Math.round(fvco / post);
+                        abse = Math.abs(fout - clkfreq);
+                        if ((abse <= error) && (fpfd >= 250000) && (mult <= 1024) && (fvco > 99e6) && ((fvco <= 201e6) || (fvco <= clkfreq + errfreq))) {
+                            error = abse;
+                            result_divd = divd;
+                            result_mult = mult;
+                            result_pppp = (pppp - 1) & 15;
+                            result_fout = fout;
+                        }
+                    }
+                }
+
+                if (error > errfreq) {
+                    throw new RuntimeException(String.format("unable to find clock settings for freq %d Hz with input freq %d Hz", (int) clkfreq, (int) xinfreq));
+                }
+                int D, M;
+                D = result_divd - 1;
+                M = ((int) result_mult) - 1;
+                clkmode = zzzz | (result_pppp << 4) | (M << 8) | (D << 18) | (1 << 24);
+
+                finalfreq = (int) Math.round(result_fout);
+            }
+            else {
+                clkmode = zzzz;
+                finalfreq = (int) xinfreq;
+            }
         }
-        if (error > 100000.0) {
-            throw new RuntimeException(String.format("Unable to find clock settings for freq %d Hz with input freq %d Hz", clkfreq, xinfreq));
-        }
 
-        int D = result_divd - 1;
-        int M = ((int) result_mult) - 1;
-        int clkmode = zzzz | (result_pppp << 4) | (M << 8) | (D << 18) | (1 << 24);
-
-        //int finalfreq = (int) Math.round(result_Fout);
-
-        return clkmode;
+        scope.addBuiltinSymbol("CLKMODE_", new NumberLiteral(clkmode));
+        scope.addBuiltinSymbol("CLKFREQ_", new NumberLiteral(finalfreq));
     }
 
     public List<Spin2PAsmLine> getSource() {
