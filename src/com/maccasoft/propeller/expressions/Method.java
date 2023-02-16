@@ -25,6 +25,10 @@ public class Method extends Expression {
         this.offset = offset;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public Method copy() {
         return new Method(name, arguments, returns, offset);
     }
