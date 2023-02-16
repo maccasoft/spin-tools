@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
@@ -49,26 +50,47 @@ public class Word extends Spin1PAsmInstructionFactory {
         public int getSize() {
             int size = 0;
             for (Spin1PAsmExpression exp : arguments) {
-                size += 2 * exp.getCount();
+                if (exp.getExpression() instanceof CharacterLiteral) {
+                    size += 2 * ((CharacterLiteral) exp.getExpression()).getString().length();
+                }
+                else {
+                    size += 2 * exp.getCount();
+                }
             }
             return size;
         }
 
         @Override
         public byte[] getBytes() {
+            CompilerException msgs = new CompilerException();
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try {
-                for (Spin1PAsmExpression exp : arguments) {
-                    byte[] value = exp.getWord();
-                    for (int i = 0; i < exp.getCount(); i++) {
-                        os.write(value);
+
+            for (Spin1PAsmExpression exp : arguments) {
+                try {
+                    if (exp.getExpression().isString()) {
+                        byte[] b = exp.getExpression().getString().getBytes();
+                        for (int i = 0; i < b.length; i++) {
+                            os.write(b[i]);
+                            os.write(0);
+                        }
                     }
+                    else {
+                        byte[] value = exp.getWord();
+                        for (int i = 0; i < exp.getCount(); i++) {
+                            os.write(value);
+                        }
+                    }
+                } catch (CompilerException e) {
+                    msgs.addMessage(e);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (CompilerException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
+
+            if (msgs.hasChilds()) {
+                throw msgs;
+            }
+
             return os.toByteArray();
         }
 

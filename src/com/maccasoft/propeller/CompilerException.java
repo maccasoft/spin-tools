@@ -147,6 +147,9 @@ public class CompilerException extends RuntimeException {
 
     public void addMessage(CompilerException msg) {
         childs.add(msg);
+        if (msg.type == ERROR) {
+            type = ERROR;
+        }
     }
 
     public boolean hasChilds() {

@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
@@ -39,7 +40,12 @@ public class Long extends Spin2PAsmInstructionFactory {
         public int getSize() {
             int size = 0;
             for (Spin2PAsmExpression exp : arguments) {
-                size += 4 * exp.getCount();
+                if (exp.getExpression() instanceof CharacterLiteral) {
+                    size += 4 * ((CharacterLiteral) exp.getExpression()).getString().length();
+                }
+                else {
+                    size += 4 * exp.getCount();
+                }
             }
             return size;
         }
@@ -51,9 +57,20 @@ public class Long extends Spin2PAsmInstructionFactory {
 
             for (Spin2PAsmExpression exp : arguments) {
                 try {
-                    byte[] value = exp.getLong();
-                    for (int i = 0; i < exp.getCount(); i++) {
-                        os.write(value);
+                    if (exp.getExpression().isString()) {
+                        byte[] b = exp.getExpression().getString().getBytes();
+                        for (int i = 0; i < b.length; i++) {
+                            os.write(b[i]);
+                            os.write(0);
+                            os.write(0);
+                            os.write(0);
+                        }
+                    }
+                    else {
+                        byte[] value = exp.getLong();
+                        for (int i = 0; i < exp.getCount(); i++) {
+                            os.write(value);
+                        }
                     }
                 } catch (CompilerException e) {
                     msgs.addMessage(e);

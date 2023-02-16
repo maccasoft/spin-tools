@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -55,23 +55,39 @@ public class Wordfit extends Word {
 
         @Override
         public byte[] getBytes() {
+            CompilerException msgs = new CompilerException();
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try {
-                for (Spin1PAsmExpression exp : arguments) {
-                    if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
-                        throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
+
+            for (Spin1PAsmExpression exp : arguments) {
+                try {
+                    if (exp.getExpression().isString()) {
+                        byte[] b = exp.getExpression().getString().getBytes();
+                        for (int i = 0; i < b.length; i++) {
+                            os.write(b[i]);
+                            os.write(0);
+                        }
                     }
-                    byte[] value = getBytes(exp.getInteger());
-                    for (int i = 0; i < exp.getCount(); i++) {
-                        os.write(value[0]);
-                        os.write(value[1]);
+                    else {
+                        if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
+                            throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
+                        }
+                        byte[] value = exp.getWord();
+                        for (int i = 0; i < exp.getCount(); i++) {
+                            os.write(value);
+                        }
                     }
+                } catch (CompilerException e) {
+                    msgs.addMessage(e);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (CompilerException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+
             }
+
+            if (msgs.hasChilds()) {
+                throw msgs;
+            }
+
             return os.toByteArray();
         }
 

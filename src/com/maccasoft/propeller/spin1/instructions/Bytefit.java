@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -51,11 +51,13 @@ public class Bytefit extends Byte {
 
         @Override
         public byte[] getBytes() {
+            CompilerException msgs = new CompilerException();
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try {
-                for (Spin1PAsmExpression exp : arguments) {
-                    if (exp.getExpression() instanceof CharacterLiteral) {
-                        os.write(((CharacterLiteral) exp.getExpression()).getString().getBytes());
+
+            for (Spin1PAsmExpression exp : arguments) {
+                try {
+                    if (exp.getExpression().isString()) {
+                        os.write(exp.getExpression().getString().getBytes());
                     }
                     else {
                         int value = exp.getInteger();
@@ -66,12 +68,17 @@ public class Bytefit extends Byte {
                             os.write(value);
                         }
                     }
+                } catch (CompilerException e) {
+                    msgs.addMessage(e);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (CompilerException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
+
+            if (msgs.hasChilds()) {
+                throw msgs;
+            }
+
             return os.toByteArray();
         }
 
