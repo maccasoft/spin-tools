@@ -3620,8 +3620,6 @@ public class Spin2ObjectCompiler {
             indexNode = null;
             bitfieldNode = null;
 
-            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-
             int n = 1;
             if (n < node.getChildCount()) {
                 if (".".equals(node.getChild(n).getText())) {
@@ -3657,10 +3655,6 @@ public class Spin2ObjectCompiler {
             }
             if (n < node.getChildCount()) {
                 throw new RuntimeException("syntax error " + node.getText());
-            }
-
-            if (indexNode != null) {
-                source.addAll(compileBytecodeExpression(context, indexNode, true));
             }
 
             int bitfield = -1;
@@ -3702,6 +3696,11 @@ public class Spin2ObjectCompiler {
                 }
             }
 
+            source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+            if (indexNode != null) {
+                source.addAll(compileBytecodeExpression(context, indexNode, true));
+            }
+
             MemoryOp.Size ss = MemoryOp.Size.Long;
             if ("BYTE".equalsIgnoreCase(node.getText())) {
                 ss = MemoryOp.Size.Byte;
@@ -3713,7 +3712,7 @@ public class Spin2ObjectCompiler {
             source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
 
             if (bitfieldNode != null) {
-                source.add(new BitField(context, BitField.Op.Write, push, bitfield));
+                source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
             }
         }
         else {
@@ -3834,7 +3833,7 @@ public class Spin2ObjectCompiler {
             }
 
             if (bitfieldNode != null) {
-                source.add(new BitField(context, BitField.Op.Write, push, bitfield));
+                source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
             }
             else if (write) {
                 source.add(new Bytecode(context, 0x82, "WRITE"));

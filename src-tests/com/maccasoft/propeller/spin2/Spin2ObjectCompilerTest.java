@@ -4118,6 +4118,41 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testMemoryBitfields() throws Exception {
+        String text = ""
+            + "PUB main() | a, b, c\n"
+            + "\n"
+            + "    word[@a][1].[2] ^= 3\n"
+            + "    word[@a][b].[c] ^= 3\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       19 00 00 00    End\n"
+            + "' PUB main() | a, b, c\n"
+            + "00008 00008       0C             (stack size)\n"
+            + "'     word[@a][1].[2] ^= 3\n"
+            + "00009 00009       A4             CONSTANT (3)\n"
+            + "0000A 0000A       D0 7F          VAR_ADDRESS DBASE+$00000 (short)\n"
+            + "0000C 0000C       A2             CONSTANT (1)\n"
+            + "0000D 0000D       63             MEM_SETUP WORD INDEXED\n"
+            + "0000E 0000E       E2             BITFIELD_SETUP (short)\n"
+            + "0000F 0000F       A9             BITXOR_ASSIGN\n"
+            + "'     word[@a][b].[c] ^= 3\n"
+            + "00010 00010       A4             CONSTANT (3)\n"
+            + "00011 00011       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00012 00012       D0 7F          VAR_ADDRESS DBASE+$00000 (short)\n"
+            + "00014 00014       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00015 00015       63             MEM_SETUP WORD INDEXED\n"
+            + "00016 00016       DE             BITFIELD_SETUP (pop)\n"
+            + "00017 00017       A9             BITXOR_ASSIGN\n"
+            + "00018 00018       04             RETURN\n"
+            + "00019 00019       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testInlineAssembly() throws Exception {
         String text = ""
             + "PUB main(a)\n"
