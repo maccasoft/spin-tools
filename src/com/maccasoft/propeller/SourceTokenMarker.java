@@ -603,6 +603,58 @@ public abstract class SourceTokenMarker {
         return null;
     }
 
+    public List<IContentProposal> getConstantsProposals(Node context, String token) {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+        if (root == null) {
+            return proposals;
+        }
+
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public boolean visitConstant(ConstantNode node) {
+                if (node.identifier != null) {
+                    String text = node.identifier.getText();
+                    if (text.toUpperCase().contains(token)) {
+                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    }
+                }
+                return false;
+            }
+
+        });
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitObject(ObjectNode objectNode) {
+                if (objectNode.name == null || objectNode.file == null) {
+                    return;
+                }
+                String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                Node objectRoot = getObjectTree(fileName);
+                if (objectRoot == null) {
+                    return;
+                }
+                objectRoot.accept(new NodeVisitor() {
+
+                    @Override
+                    public boolean visitConstant(ConstantNode node) {
+                        if (node.identifier != null) {
+                            String text = objectNode.name.getText() + "." + node.identifier.getText();
+                            if (text.toUpperCase().contains(token)) {
+                                proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
+                            }
+                        }
+                        return false;
+                    }
+
+                });
+            }
+        });
+
+        return proposals;
+    }
+
     String getMethodDocument(MethodNode node) {
         Iterator<Token> iter = node.getTokens().iterator();
         Token start = iter.next();

@@ -1796,6 +1796,9 @@ public class SourceEditor {
                 if (node instanceof StatementNode) {
                     proposals.addAll(tokenMarker.getMethodProposals(node, token));
                 }
+                else {
+                    proposals.addAll(tokenMarker.getConstantsProposals(node, token));
+                }
                 proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), token));
             }
         }
