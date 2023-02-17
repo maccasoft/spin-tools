@@ -72,7 +72,7 @@ public class EditorTab implements FindReplaceTarget {
     AtomicBoolean threadRunning = new AtomicBoolean(false);
     AtomicBoolean pendingCompile = new AtomicBoolean(false);
 
-    Set<String> dependencies = new HashSet<String>();
+    Set<File> dependencies = new HashSet<>();
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
@@ -122,7 +122,7 @@ public class EditorTab implements FindReplaceTarget {
                 }
                 return;
             }
-            if (dependencies.contains(evt.getPropertyName())) {
+            if (dependencies.contains(new File(evt.getPropertyName()))) {
                 scheduleCompile();
                 return;
             }
@@ -133,27 +133,49 @@ public class EditorTab implements FindReplaceTarget {
     class EditorTabSourceProvider extends Compiler.SourceProvider {
 
         File[] searchPaths;
+        List<File> collectedSearchPaths;
 
         public EditorTabSourceProvider(File[] searchPaths) {
             this.searchPaths = searchPaths;
+            this.collectedSearchPaths = new ArrayList<>();
         }
 
         @Override
         public Node getParsedSource(String name) {
             File localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
 
-            Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
+            Node node = sourcePool.getParsedSource(localFile);
+            if (node == null) {
+                for (File file : collectedSearchPaths) {
+                    localFile = new File(file, name);
+                    if ((node = sourcePool.getParsedSource(localFile)) != null) {
+                        break;
+                    }
+                }
+            }
             if (node == null) {
                 for (int i = 0; i < searchPaths.length; i++) {
                     localFile = new File(searchPaths[i], name);
-                    if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
+                    if ((node = sourcePool.getParsedSource(localFile)) != null) {
                         break;
                     }
                 }
             }
 
             if (node != null) {
-                dependencies.add(localFile.getAbsolutePath());
+                File parent = localFile.getParentFile();
+                int i = 0;
+                while (i < searchPaths.length) {
+                    if (parent.equals(searchPaths[i])) {
+                        break;
+                    }
+                    i++;
+                }
+                if (i >= searchPaths.length && !collectedSearchPaths.contains(parent)) {
+                    collectedSearchPaths.add(parent);
+                }
+
+                dependencies.add(localFile);
             }
 
             return node;
@@ -164,7 +186,11 @@ public class EditorTab implements FindReplaceTarget {
             File localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
             if (localFile.exists()) {
                 try {
-                    dependencies.add(localFile.getAbsolutePath());
+                    File parent = localFile.getParentFile();
+                    if (!collectedSearchPaths.contains(parent)) {
+                        collectedSearchPaths.add(parent);
+                    }
+                    dependencies.add(localFile);
                     return FileUtils.loadFromFile(localFile);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -172,11 +198,28 @@ public class EditorTab implements FindReplaceTarget {
                 }
             }
 
+            for (File file : collectedSearchPaths) {
+                localFile = new File(file, name);
+                if (localFile.exists()) {
+                    try {
+                        File parent = localFile.getParentFile();
+                        if (!collectedSearchPaths.contains(parent)) {
+                            collectedSearchPaths.add(parent);
+                        }
+                        dependencies.add(localFile);
+                        return FileUtils.loadFromFile(localFile);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+            }
+
             for (int i = 0; i < searchPaths.length; i++) {
                 localFile = new File(searchPaths[i], name);
                 if (localFile.exists()) {
                     try {
-                        dependencies.add(localFile.getAbsolutePath());
+                        dependencies.add(localFile);
                         return FileUtils.loadFromFile(localFile);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -196,7 +239,11 @@ public class EditorTab implements FindReplaceTarget {
             }
             if (localFile.exists()) {
                 try {
-                    dependencies.add(localFile.getAbsolutePath());
+                    File parent = localFile.getParentFile();
+                    if (!collectedSearchPaths.contains(parent)) {
+                        collectedSearchPaths.add(parent);
+                    }
+                    dependencies.add(localFile);
                     return FileUtils.loadBinaryFromFile(localFile);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -204,11 +251,28 @@ public class EditorTab implements FindReplaceTarget {
                 }
             }
 
+            for (File file : collectedSearchPaths) {
+                localFile = new File(file, name);
+                if (localFile.exists()) {
+                    try {
+                        File parent = localFile.getParentFile();
+                        if (!collectedSearchPaths.contains(parent)) {
+                            collectedSearchPaths.add(parent);
+                        }
+                        dependencies.add(localFile);
+                        return FileUtils.loadBinaryFromFile(localFile);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+            }
+
             for (int i = 0; i < searchPaths.length; i++) {
                 localFile = new File(searchPaths[i], name);
                 if (localFile.exists()) {
                     try {
-                        dependencies.add(localFile.getAbsolutePath());
+                        dependencies.add(localFile);
                         return FileUtils.loadBinaryFromFile(localFile);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -232,14 +296,14 @@ public class EditorTab implements FindReplaceTarget {
             super.refreshTokens(text);
 
             File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
-            sourcePool.setParsedSource(localFile.getAbsolutePath(), getRoot());
+            sourcePool.setParsedSource(localFile, getRoot());
         }
 
         @Override
         protected Node getObjectTree(String fileName) {
             File localFile = file != null ? new File(file.getParentFile(), fileName + ".spin") : new File(fileName + ".spin");
 
-            Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
+            Node node = sourcePool.getParsedSource(localFile);
             if (node == null && localFile.exists()) {
                 try {
                     Spin1TokenStream stream = new Spin1TokenStream(FileUtils.loadFromFile(localFile));
@@ -254,7 +318,7 @@ public class EditorTab implements FindReplaceTarget {
                 File[] paths = preferences.getSpin1LibraryPath();
                 for (int i = 0; i < paths.length; i++) {
                     localFile = new File(paths[i], fileName + ".spin");
-                    if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
+                    if ((node = sourcePool.getParsedSource(localFile)) != null) {
                         break;
                     }
                     if (localFile.exists()) {
@@ -286,14 +350,14 @@ public class EditorTab implements FindReplaceTarget {
             super.refreshTokens(text);
 
             File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
-            sourcePool.setParsedSource(localFile.getAbsolutePath(), getRoot());
+            sourcePool.setParsedSource(localFile, getRoot());
         }
 
         @Override
         protected Node getObjectTree(String fileName) {
             File localFile = file != null ? new File(file.getParentFile(), fileName + ".spin2") : new File(fileName + ".spin2");
 
-            Node node = sourcePool.getParsedSource(localFile.getAbsolutePath());
+            Node node = sourcePool.getParsedSource(localFile);
             if (node == null && localFile.exists()) {
                 try {
                     Spin2TokenStream stream = new Spin2TokenStream(FileUtils.loadFromFile(localFile));
@@ -308,7 +372,7 @@ public class EditorTab implements FindReplaceTarget {
                 File[] searchPaths = preferences.getSpin2LibraryPath();
                 for (int i = 0; i < searchPaths.length; i++) {
                     localFile = new File(searchPaths[i], fileName + ".spin2");
-                    if ((node = sourcePool.getParsedSource(localFile.getAbsolutePath())) != null) {
+                    if ((node = sourcePool.getParsedSource(localFile)) != null) {
                         break;
                     }
                     if (localFile.exists()) {
@@ -340,7 +404,7 @@ public class EditorTab implements FindReplaceTarget {
                 pendingCompile.set(false);
 
                 File localFile = file != null ? file : new File(tabItemText);
-                Node root = sourcePool.getParsedSource(localFile.getAbsolutePath());
+                Node root = sourcePool.getParsedSource(localFile);
 
                 Thread thread = new Thread(new Runnable() {
 
@@ -457,7 +521,7 @@ public class EditorTab implements FindReplaceTarget {
                 preferences.removePropertyChangeListener(preferencesChangeListener);
                 sourcePool.removePropertyChangeListener(sourcePoolChangeListener);
                 File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
-                sourcePool.removeParsedSource(localFile.getAbsolutePath());
+                sourcePool.removeParsedSource(localFile);
                 busyFont.dispose();
             }
 
@@ -499,7 +563,7 @@ public class EditorTab implements FindReplaceTarget {
 
     public void setFile(File file) {
         File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
-        sourcePool.removeParsedSource(localFile.getAbsolutePath());
+        sourcePool.removeParsedSource(localFile);
 
         this.file = file;
 
@@ -856,7 +920,7 @@ public class EditorTab implements FindReplaceTarget {
         editor.format(formatter);
     }
 
-    public Set<String> getDependencies() {
+    public Set<File> getDependencies() {
         return dependencies;
     }
 

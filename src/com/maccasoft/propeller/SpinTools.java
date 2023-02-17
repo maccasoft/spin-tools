@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1159,9 +1160,17 @@ public class SpinTools {
                 archiveStream.putNextEntry(new ZipEntry(editorTab.getText()));
                 archiveStream.write(editorTab.getEditorText().getBytes());
 
-                for (String path : editorTab.getDependencies()) {
-                    File file = new File(path);
-                    archiveStream.putNextEntry(new ZipEntry(file.getName()));
+                File topFile = editorTab.getFile() != null ? new File(editorTab.getFile().getParentFile(), editorTab.getText()) : new File(editorTab.getText());
+                Path topFileParent = topFile.getParentFile().toPath();
+
+                for (File file : editorTab.getDependencies()) {
+                    Path filePath = file.toPath();
+                    if (filePath.startsWith(topFileParent)) {
+                        archiveStream.putNextEntry(new ZipEntry(topFileParent.relativize(filePath).toString()));
+                    }
+                    else {
+                        archiveStream.putNextEntry(new ZipEntry(file.getName()));
+                    }
 
                     EditorTab tab = findFileEditorTab(file);
                     if (tab != null) {

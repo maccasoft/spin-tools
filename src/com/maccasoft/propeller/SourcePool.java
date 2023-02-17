@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,6 +12,7 @@ package com.maccasoft.propeller;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,7 +22,7 @@ public class SourcePool {
 
     public static final String PROP_DEBUG_ENABLED = "__debugEnabled__";
 
-    Map<String, Node> sources = new HashMap<String, Node>();
+    Map<File, Node> sources = new HashMap<>();
     boolean debugEnabled;
 
     final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
@@ -38,18 +39,18 @@ public class SourcePool {
         changeSupport.removePropertyChangeListener(listener);
     }
 
-    public Node getParsedSource(String key) {
+    public Node getParsedSource(File key) {
         return sources.get(key);
     }
 
-    public void setParsedSource(String key, Node node) {
+    public void setParsedSource(File key, Node node) {
         Node oldNode = sources.put(key, node);
-        changeSupport.firePropertyChange(key, oldNode, node);
+        changeSupport.firePropertyChange(key.getAbsolutePath(), oldNode, node);
     }
 
-    public void removeParsedSource(String key) {
+    public void removeParsedSource(File key) {
         Node oldNode = sources.remove(key);
-        changeSupport.firePropertyChange(key, oldNode, null);
+        changeSupport.firePropertyChange(key.getAbsolutePath(), oldNode, null);
     }
 
     public boolean isDebugEnabled() {

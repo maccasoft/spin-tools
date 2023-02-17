@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -38,9 +38,11 @@ public abstract class Compiler {
     public static class FileSourceProvider extends SourceProvider {
 
         File[] searchPaths;
+        List<File> collectedSearchPaths;
 
         public FileSourceProvider(File[] searchPaths) {
             this.searchPaths = searchPaths;
+            this.collectedSearchPaths = new ArrayList<>();
         }
 
         @Override
@@ -48,10 +50,30 @@ public abstract class Compiler {
             File localFile = new File(name);
             if (localFile.exists()) {
                 try {
+                    File parent = localFile.getParentFile();
+                    if (!collectedSearchPaths.contains(parent)) {
+                        collectedSearchPaths.add(parent);
+                    }
                     return FileUtils.loadFromFile(localFile);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return null;
+                }
+            }
+
+            for (File file : collectedSearchPaths) {
+                localFile = new File(file, name);
+                if (localFile.exists()) {
+                    try {
+                        File parent = localFile.getParentFile();
+                        if (!collectedSearchPaths.contains(parent)) {
+                            collectedSearchPaths.add(parent);
+                        }
+                        return FileUtils.loadFromFile(localFile);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
                 }
             }
 
@@ -75,10 +97,30 @@ public abstract class Compiler {
             File localFile = new File(name);
             if (localFile.exists()) {
                 try {
+                    File parent = localFile.getParentFile();
+                    if (!collectedSearchPaths.contains(parent)) {
+                        collectedSearchPaths.add(parent);
+                    }
                     return loadBinaryFromFile(localFile);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return null;
+                }
+            }
+
+            for (File file : collectedSearchPaths) {
+                localFile = new File(file, name);
+                if (localFile.exists()) {
+                    try {
+                        File parent = localFile.getParentFile();
+                        if (!collectedSearchPaths.contains(parent)) {
+                            collectedSearchPaths.add(parent);
+                        }
+                        return loadBinaryFromFile(localFile);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
                 }
             }
 
