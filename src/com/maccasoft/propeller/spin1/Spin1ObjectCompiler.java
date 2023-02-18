@@ -860,8 +860,13 @@ public class Spin1ObjectCompiler {
 
                 try {
                     if ("FILE".equalsIgnoreCase(mnemonic)) {
-                        String fileName = parameters.get(0).toString();
-                        fileName = fileName.substring(1, fileName.length() - 1);
+                        if (node.condition != null) {
+                            throw new CompilerException("not allowed", node.condition);
+                        }
+                        if (node.modifier != null) {
+                            throw new CompilerException("not allowed", node.modifier);
+                        }
+                        String fileName = parameters.get(0).getString();
                         byte[] data = getBinaryFile(fileName);
                         if (data == null) {
                             throw new CompilerException("file \"" + fileName + "\" not found", node.parameters.get(0));
@@ -937,12 +942,59 @@ public class Spin1ObjectCompiler {
                 }
 
                 source.addAll(pasmLine.expand());
+
+                if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                    if (node.condition != null) {
+                        throw new CompilerException("not allowed", node.condition);
+                    }
+                    if (node.modifier != null) {
+                        throw new CompilerException("not allowed", node.modifier);
+                    }
+                    int index = 0;
+                    for (Spin1PAsmExpression argument : pasmLine.getArguments()) {
+                        String fileName = argument.getString();
+                        Node includedNode = getParsedSource(fileName);
+                        try {
+                            if (includedNode == null) {
+                                throw new RuntimeException("file \"" + fileName + "\" not found");
+                            }
+                            compileDatInclude(scope, includedNode);
+                        } catch (Exception e) {
+                            logMessage(new CompilerException(e, node.parameters.get(index)));
+                        }
+                        index++;
+                    }
+                }
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
                 logMessage(new CompilerException(e, node.instruction));
             }
         }
+    }
+
+    void compileDatInclude(Spin1Context scope, Node root) {
+        for (Node node : root.getChilds()) {
+            if (!(node instanceof ConstantsNode) && !(node instanceof DataNode)) {
+                throw new RuntimeException("only CON and DAT sections allowed in included files");
+            }
+        }
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof ConstantsNode) {
+                compileConBlock(node);
+            }
+        }
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof DataNode) {
+                compileDatBlock(scope, node);
+            }
+        }
+    }
+
+    protected Node getParsedSource(String fileName) {
+        return null;
     }
 
     protected byte[] getBinaryFile(String fileName) {

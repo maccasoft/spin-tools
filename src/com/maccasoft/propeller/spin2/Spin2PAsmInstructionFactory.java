@@ -40,6 +40,7 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
         symbols.put("WORDFIT", new Wordfit());
 
         symbols.put("FILE", Empty.instance);
+        symbols.put("INCLUDE", Empty.instance);
         symbols.put("DEBUG", new Debug());
 
         // Instructions

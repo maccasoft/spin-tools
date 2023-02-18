@@ -20,7 +20,7 @@ public class Spin2Model extends SpinModel {
 
     public static Set<String> instructions = new HashSet<String>(Arrays.asList(new String[] {
         "ORG", "ORGH", "ORGF", "FIT",
-        "RES", "FILE", "ASMCLK", "ALIGNL", "ALIGNW",
+        "RES", "FILE", "INCLUDE", "ASMCLK", "ALIGNL", "ALIGNW",
         "NOP", "ROL", "ROR", "SHR", "SHL", "RCR", "RCL", "SAR", "SAL", "ADD", "ADDX", "ADDS", "ADDSX", "SUB", "SUBX", "SUBS",
         "SUBSX", "CMP", "CMPX", "CMPS", "CMPSX", "CMPR", "CMPM", "SUBR", "CMPSUB", "FGE", "FLE", "FGES", "FLES", "SUMC", "SUMNC",
         "SUMZ", "SUMNZ", "TESTB", "TESTBN", "BITL", "BITH", "BITC", "BITNC", "BITZ", "BITNZ", "BITNC", "BITRND", "BITNOT", "AND",

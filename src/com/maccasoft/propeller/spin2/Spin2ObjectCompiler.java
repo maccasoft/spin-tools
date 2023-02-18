@@ -867,6 +867,32 @@ public class Spin2ObjectCompiler {
                 Spin2PAsmLine pasmLine = compileDataLine(node);
                 pasmLine.setData(node);
                 source.addAll(pasmLine.expand());
+
+                if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                    if (node.condition != null) {
+                        throw new CompilerException("not allowed", node.condition);
+                    }
+                    if (node.modifier != null) {
+                        throw new CompilerException("not allowed", node.modifier);
+                    }
+                    int index = 0;
+                    for (Spin2PAsmExpression argument : pasmLine.getArguments()) {
+                        String fileName = argument.getString();
+                        Node includedNode = getParsedSource(fileName);
+                        try {
+                            if (includedNode == null) {
+                                throw new RuntimeException("file \"" + fileName + "\" not found");
+                            }
+                            compileDatInclude(scope, includedNode);
+                        } catch (CompilerException e) {
+                            logMessage(e);
+                        } catch (Exception e) {
+                            logMessage(new CompilerException(e, node.parameters.get(index)));
+                        }
+                        index++;
+                    }
+                }
+
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
@@ -954,6 +980,12 @@ public class Spin2ObjectCompiler {
 
         try {
             if ("FILE".equalsIgnoreCase(mnemonic)) {
+                if (node.condition != null) {
+                    throw new CompilerException("not allowed", node.condition);
+                }
+                if (node.modifier != null) {
+                    throw new CompilerException("not allowed", node.modifier);
+                }
                 String fileName = parameters.get(0).getString();
                 byte[] data = getBinaryFile(fileName);
                 if (data == null) {
@@ -962,6 +994,12 @@ public class Spin2ObjectCompiler {
                 pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data));
             }
             if ("DEBUG".equalsIgnoreCase(mnemonic)) {
+                if (node.condition != null) {
+                    throw new CompilerException("not allowed", node.condition);
+                }
+                if (node.modifier != null) {
+                    throw new CompilerException("not allowed", node.modifier);
+                }
                 int debugIndex = debugStatements.size() + 1;
                 if (debugIndex >= 255) {
                     throw new CompilerException("too much debug statements", node);
@@ -1038,6 +1076,30 @@ public class Spin2ObjectCompiler {
         }
 
         return pasmLine;
+    }
+
+    void compileDatInclude(Spin2Context scope, Node root) {
+        for (Node node : root.getChilds()) {
+            if (!(node instanceof ConstantsNode) && !(node instanceof DataNode)) {
+                throw new RuntimeException("only CON and DAT sections allowed in included files");
+            }
+        }
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof ConstantsNode) {
+                compileConBlock((ConstantsNode) node);
+            }
+        }
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof DataNode) {
+                compileDatBlock(node);
+            }
+        }
+    }
+
+    protected Node getParsedSource(String fileName) {
+        return null;
     }
 
     protected byte[] getBinaryFile(String fileName) {

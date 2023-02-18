@@ -951,6 +951,48 @@ class Spin1CompilerTest {
             + "", compile("main.spin", sources));
     }
 
+    @Test
+    void testDatInclude() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin", ""
+            + "PUB main\n"
+            + "\n"
+            + "DAT\n"
+            + "    org $000\n"
+            + "    call    #label\n"
+            + "    jmp     #$\n"
+            + "    include \"text2\"\n"
+            + "a   long    0\n"
+            + "");
+        sources.put("text2.spin", ""
+            + "DAT\n"
+            + "\n"
+            + "label\n"
+            + "          mov a, #1\n"
+            + "label_ret ret\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       20 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       1C 00 00 00    Function main @ $001C (local size 0)\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 02 06 FC 5C                        call    #label\n"
+            + "0000C 0000C   001 01 00 7C 5C                        jmp     #$\n"
+            + "00010 00010   002                                    include \"text2\"\n"
+            + "00010 00010   002                label               \n"
+            + "00010 00010   002 01 08 FC A0                        mov     a, #1\n"
+            + "00014 00014   003 00 00 7C 5C    label_ret           ret\n"
+            + "00018 00018   004 00 00 00 00    a                   long    0\n"
+            + "' PUB main\n"
+            + "0001C 0001C       32             RETURN\n"
+            + "0001D 0001D       00 00 00       Padding\n"
+            + "", compile("main.spin", sources));
+    }
+
     class Spin1CompilerAdapter extends Spin1Compiler {
 
         Map<String, String> sources;

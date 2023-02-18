@@ -239,6 +239,15 @@ public class Spin1Compiler extends Compiler {
         }
 
         @Override
+        protected Node getParsedSource(String fileName) {
+            Node node = Spin1Compiler.this.getParsedObject(fileName);
+            if (node == null) {
+                node = Spin1Compiler.this.getParsedObject(fileName + ".spin");
+            }
+            return node;
+        }
+
+        @Override
         protected byte[] getBinaryFile(String fileName) {
             return Spin1Compiler.this.getBinaryFile(fileName);
         }

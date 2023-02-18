@@ -20,7 +20,7 @@ import com.maccasoft.propeller.spin2.SpinModel;
 public class Spin1Model extends SpinModel {
 
     static Set<String> pasmInstructions = new HashSet<>(Arrays.asList(new String[] {
-        "ORG", "FIT", "RES", "FILE",
+        "ORG", "FIT", "RES", "FILE", "INCLUDE",
         "ABS", "ABSNEG", "ADD", "ADDABS", "ADDS", "ADDSX", "ADDX", "AND", "ANDN", "CALL", "CLKSET", "CMP", "CMPS", "CMPSUB",
         "CMPSX", "CMPX", "COGID", "COGINIT", "COGSTOP", "DEC", "DJNZ", "ENC", "HUBOP", "JMP", "JMPRET", "LOCKCLR", "LOCKNEW",
         "LOCKRET", "LOCKSET", "MAX", "MAXS", "MIN", "MINS", "MOV", "MOVD", "MOVI", "MOVS", "MUL", "MULS", "MUXC", "MUXNC", "MUXNZ",

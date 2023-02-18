@@ -1650,6 +1650,47 @@ class Spin2CompilerTest {
             + "", compile("main.spin2", sources));
     }
 
+    @Test
+    void testDatInclude() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "PUB main()\n"
+            + "\n"
+            + "DAT\n"
+            + "    org $000\n"
+            + "    call    #\\label\n"
+            + "    jmp     #$\n"
+            + "    include \"text2\"\n"
+            + "a   long    0\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "DAT\n"
+            + "\n"
+            + "label\n"
+            + "          mov a, #1\n"
+            + "          ret\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       1C 00 00 80    Method main @ $0001C (0 parameters, 0 returns)\n"
+            + "00004 00004       1E 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 02 00 A0 FD                        call    #\\label\n"
+            + "0000C 0000C   001 FC FF 9F FD                        jmp     #$\n"
+            + "00010 00010   002                                    include \"text2\"\n"
+            + "00010 00010   002                label               \n"
+            + "00010 00010   002 01 08 04 F6                        mov     a, #1\n"
+            + "00014 00014   003 2D 00 64 FD                        ret\n"
+            + "00018 00018   004 00 00 00 00    a                   long    0\n"
+            + "' PUB main()\n"
+            + "0001C 0001C       00             (stack size)\n"
+            + "0001D 0001D       04             RETURN\n"
+            + "0001E 0001E       00 00          Padding\n"
+            + "", compile("main.spin2", sources));
+    }
+
     class Spin2CompilerAdapter extends Spin2Compiler {
 
         Map<String, String> sources;
