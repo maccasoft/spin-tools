@@ -38,6 +38,7 @@ import java.util.zip.ZipOutputStream;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.databinding.swt.DisplayRealm;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -87,6 +88,7 @@ import com.maccasoft.propeller.Preferences.SearchPreferences;
 import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.internal.ImageRegistry;
+import com.maccasoft.propeller.internal.InternalErrorDialog;
 import com.maccasoft.propeller.internal.TempDirectory;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.spin1.Spin1Object;
@@ -97,7 +99,7 @@ import jssc.SerialPortException;
 
 public class SpinTools {
 
-    public static final String APP_TITLE = "Spin Tools";
+    public static final String APP_TITLE = "Spin Tools IDE";
     public static final String APP_VERSION = "0.22.0";
 
     static final File defaultSpin1Examples = new File(System.getProperty("APP_DIR"), "examples/P1").getAbsoluteFile();
@@ -285,23 +287,19 @@ public class SpinTools {
 
             @Override
             public void open(OpenEvent event) {
-                try {
-                    IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-                    if (selection.getFirstElement() instanceof File) {
-                        File fileToOpen = (File) selection.getFirstElement();
-                        if (fileToOpen.isDirectory()) {
-                            return;
-                        }
-                        String name = fileToOpen.getName().toLowerCase();
-                        if (name.endsWith(".spin") || name.endsWith(".spin2")) {
-                            EditorTab editorTab = findFileEditorTab(fileToOpen);
-                            if (editorTab == null) {
-                                openNewTab(fileToOpen, true);
-                            }
+                IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+                if (selection.getFirstElement() instanceof File) {
+                    File fileToOpen = (File) selection.getFirstElement();
+                    if (fileToOpen.isDirectory()) {
+                        return;
+                    }
+                    String name = fileToOpen.getName().toLowerCase();
+                    if (name.endsWith(".spin") || name.endsWith(".spin2")) {
+                        EditorTab editorTab = findFileEditorTab(fileToOpen);
+                        if (editorTab == null) {
+                            openNewTab(fileToOpen, true);
                         }
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
             }
         });
@@ -531,11 +529,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleFileNew();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleFileNew();
             }
         });
 
@@ -546,11 +540,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleFileNewSpin1();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleFileNewSpin1();
             }
         });
 
@@ -561,11 +551,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleFileNewSpin2();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleFileNewSpin2();
             }
         });
 
@@ -577,11 +563,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleFileOpen();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleFileOpen();
             }
         });
 
@@ -614,11 +596,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleFileSave();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleFileSave();
             }
         });
 
@@ -628,11 +606,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleFileSaveAs();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleFileSaveAs();
             }
         });
 
@@ -643,11 +617,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleFileSaveAll();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleFileSaveAll();
             }
         });
 
@@ -659,11 +629,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleArchiveProject();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleArchiveProject();
             }
         });
 
@@ -675,12 +641,8 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    PreferencesDialog dlg = new PreferencesDialog(shell);
-                    dlg.open();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                PreferencesDialog dlg = new PreferencesDialog(shell);
+                dlg.open();
             }
         });
 
@@ -694,11 +656,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    shell.dispose();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                shell.dispose();
             }
         });
 
@@ -737,11 +695,7 @@ public class SpinTools {
 
                 @Override
                 public void handleEvent(Event event) {
-                    try {
-                        handleFileOpenFrom(folder);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+                    handleFileOpenFrom(folder);
                 }
             });
         }
@@ -764,11 +718,7 @@ public class SpinTools {
 
                     @Override
                     public void handleEvent(Event event) {
-                        try {
-                            handleFileOpenFrom(folder);
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
+                        handleFileOpenFrom(folder);
                     }
                 });
                 list.add(folder);
@@ -789,25 +739,21 @@ public class SpinTools {
 
                 @Override
                 public void handleEvent(Event event) {
-                    try {
-                        if (!fileToOpen.exists()) {
-                            MessageDialog.openError(shell, APP_TITLE, "File " + fileToOpen + " not found");
-                            Preferences.getInstance().getLru().remove(fileToOpen.toString());
+                    if (!fileToOpen.exists()) {
+                        MessageDialog.openError(shell, APP_TITLE, "File " + fileToOpen + " not found");
+                        Preferences.getInstance().getLru().remove(fileToOpen.toString());
 
-                            File parentFile = fileToOpen.getParentFile();
-                            while (parentFile != null) {
-                                if (parentFile.exists()) {
-                                    break;
-                                }
-                                parentFile = parentFile.getParentFile();
+                        File parentFile = fileToOpen.getParentFile();
+                        while (parentFile != null) {
+                            if (parentFile.exists()) {
+                                break;
                             }
-                            handleFileOpenFrom(parentFile != null ? parentFile.getAbsolutePath() : "");
-                            return;
+                            parentFile = parentFile.getParentFile();
                         }
-                        openNewTab(fileToOpen, true);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
+                        handleFileOpenFrom(parentFile != null ? parentFile.getAbsolutePath() : "");
+                        return;
                     }
+                    openNewTab(fileToOpen, true);
                 }
             });
             list.add(item);
@@ -1230,13 +1176,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.undo();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                CTabItem tabItem = tabFolder.getSelection();
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                editorTab.undo();
             }
         });
 
@@ -1247,13 +1189,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.redo();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                CTabItem tabItem = tabFolder.getSelection();
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                editorTab.redo();
             }
         });
 
@@ -1266,13 +1204,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.cut();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                CTabItem tabItem = tabFolder.getSelection();
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                editorTab.cut();
             }
         });
 
@@ -1283,13 +1217,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.copy();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                CTabItem tabItem = tabFolder.getSelection();
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                editorTab.copy();
             }
         });
 
@@ -1300,13 +1230,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.paste();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                CTabItem tabItem = tabFolder.getSelection();
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                editorTab.paste();
             }
         });
 
@@ -1317,13 +1243,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.selectAll();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                CTabItem tabItem = tabFolder.getSelection();
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                editorTab.selectAll();
             }
         });
 
@@ -1360,28 +1282,24 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    if (tabItem == null) {
-                        return;
-                    }
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    if (findReplaceDialog == null || findReplaceDialog.getFindString() == null) {
-                        if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
-                            findReplaceDialog.getShell().setFocus();
-                            return;
-                        }
-
-                        findReplaceDialog = new FindReplaceDialog(shell);
-                        findReplaceDialog.setTarget((EditorTab) tabItem.getData());
-                        findReplaceDialog.open();
-                        return;
-                    }
-                    SearchPreferences prefs = preferences.getSearchPreferences();
-                    editorTab.searchNext(findReplaceDialog.getFindString(), prefs.caseSensitiveSearch, prefs.wrapSearch, prefs.wholeWordSearch, prefs.regexSearch);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem == null) {
+                    return;
                 }
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                if (findReplaceDialog == null || findReplaceDialog.getFindString() == null) {
+                    if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
+                        findReplaceDialog.getShell().setFocus();
+                        return;
+                    }
+
+                    findReplaceDialog = new FindReplaceDialog(shell);
+                    findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                    findReplaceDialog.open();
+                    return;
+                }
+                SearchPreferences prefs = preferences.getSearchPreferences();
+                editorTab.searchNext(findReplaceDialog.getFindString(), prefs.caseSensitiveSearch, prefs.wrapSearch, prefs.wholeWordSearch, prefs.regexSearch);
             }
         });
 
@@ -1392,28 +1310,24 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    if (tabItem == null) {
-                        return;
-                    }
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    if (findReplaceDialog == null || findReplaceDialog.getFindString() == null) {
-                        if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
-                            findReplaceDialog.getShell().setFocus();
-                            return;
-                        }
-
-                        findReplaceDialog = new FindReplaceDialog(shell);
-                        findReplaceDialog.setTarget((EditorTab) tabItem.getData());
-                        findReplaceDialog.open();
-                        return;
-                    }
-                    SearchPreferences prefs = preferences.getSearchPreferences();
-                    editorTab.searchPrevious(findReplaceDialog.getFindString(), prefs.caseSensitiveSearch, prefs.wrapSearch, prefs.wholeWordSearch, prefs.regexSearch);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem == null) {
+                    return;
                 }
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                if (findReplaceDialog == null || findReplaceDialog.getFindString() == null) {
+                    if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
+                        findReplaceDialog.getShell().setFocus();
+                        return;
+                    }
+
+                    findReplaceDialog = new FindReplaceDialog(shell);
+                    findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                    findReplaceDialog.open();
+                    return;
+                }
+                SearchPreferences prefs = preferences.getSearchPreferences();
+                editorTab.searchPrevious(findReplaceDialog.getFindString(), prefs.caseSensitiveSearch, prefs.wrapSearch, prefs.wholeWordSearch, prefs.regexSearch);
             }
         });
 
@@ -1426,16 +1340,12 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    if (tabItem == null) {
-                        return;
-                    }
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.formatSource();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem == null) {
+                    return;
                 }
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                editorTab.formatSource();
             }
         });
 
@@ -1448,11 +1358,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleNextTab();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleNextTab();
             }
         });
 
@@ -1463,11 +1369,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handlePreviousTab();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handlePreviousTab();
             }
         });
 
@@ -1480,12 +1382,8 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    if (browser.getVisible()) {
-                        browser.refresh();
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                if (browser.getVisible()) {
+                    browser.refresh();
                 }
             }
         });
@@ -1507,11 +1405,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleShowInfo();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleShowInfo();
             }
         });
 
@@ -1522,11 +1416,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleUpload(false, false);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleUpload(false, false);
             }
         });
 
@@ -1537,11 +1427,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleUpload(false, true);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleUpload(false, true);
             }
         });
 
@@ -1552,11 +1438,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleUpload(true, false);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleUpload(true, false);
             }
         });
 
@@ -1567,11 +1449,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleUpload(true, true);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleUpload(true, true);
             }
         });
 
@@ -1584,12 +1462,8 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    boolean enabled = ((MenuItem) e.widget).getSelection();
-                    sourcePool.setDebugEnabled(enabled);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                boolean enabled = ((MenuItem) e.widget).getSelection();
+                sourcePool.setDebugEnabled(enabled);
             }
         });
 
@@ -1602,17 +1476,13 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    SerialTerminal serialTerminal = getSerialTerminal();
-                    if (serialTerminal == null) {
-                        serialTerminal = new SerialTerminal();
-                        serialTerminal.open();
-                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
-                    }
-                    serialTerminal.setFocus();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                SerialTerminal serialTerminal = getSerialTerminal();
+                if (serialTerminal == null) {
+                    serialTerminal = new SerialTerminal();
+                    serialTerminal.open();
+                    serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
                 }
+                serialTerminal.setFocus();
             }
         });
 
@@ -2389,16 +2259,16 @@ public class SpinTools {
         display.setErrorHandler(new Consumer<Error>() {
 
             @Override
-            public void accept(Error t) {
-                t.printStackTrace();
+            public void accept(Error e) {
+                openInternalError(display.getActiveShell(), "An unexpected error has occured.", e);
             }
 
         });
         display.setRuntimeExceptionHandler(new Consumer<RuntimeException>() {
 
             @Override
-            public void accept(RuntimeException t) {
-                t.printStackTrace();
+            public void accept(RuntimeException e) {
+                openInternalError(display.getActiveShell(), "An unexpected error has occured.", e);
             }
 
         });
@@ -2453,6 +2323,15 @@ public class SpinTools {
         });
 
         display.dispose();
+    }
+
+    public static void openInternalError(Shell shell, String message, Throwable details) {
+        details.printStackTrace();
+        InternalErrorDialog dlg = new InternalErrorDialog(shell, APP_TITLE, null, "An unexpected error has occured.", details, MessageDialog.ERROR, new String[] {
+            IDialogConstants.OK_LABEL, IDialogConstants.SHOW_DETAILS_LABEL
+        }, 0);
+        dlg.setDetailButton(1);
+        dlg.open();
     }
 
 }
