@@ -8,39 +8,43 @@
     <baseDirectory>spin-tools</baseDirectory>
     <dependencySets>
         <dependencySet>
+            <excludes>
+                <exclude>org.eclipse.platform:org.eclipse.swt.gtk.linux.x86_64</exclude>
+                <exclude>org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64</exclude>
+            </excludes>
             <outputDirectory>lib</outputDirectory>
         </dependencySet>
     </dependencySets>
     <fileSets>
         <fileSet>
-            <directory>../../examples</directory>
+            <directory>../examples</directory>
+            <excludes>
+                <exclude>**/*.binary</exclude>
+            </excludes>
             <outputDirectory>examples</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>../library</directory>
             <excludes>
                 <exclude>**/*.binary</exclude>
             </excludes>
-        </fileSet>
-        <fileSet>
-            <directory>../../library</directory>
             <outputDirectory>library</outputDirectory>
-            <excludes>
-                <exclude>**/*.binary</exclude>
-            </excludes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/target</directory>
-            <outputDirectory></outputDirectory>
+            <directory>target</directory>
             <includes>
                 <include>spinide.exe</include>
                 <include>spinc.exe</include>
             </includes>
+            <outputDirectory></outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>../..</directory>
-            <outputDirectory></outputDirectory>
+            <directory>..</directory>
             <includes>
                 <include>LICENSE</include>
                 <include>CC-BY-3.0.txt</include>
             </includes>
+            <outputDirectory></outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>

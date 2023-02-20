@@ -23,9 +23,9 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          build/linux/target/spin-tools-linux*
-          build/windows/target/spin-tools-windows*
-          build/macosx/target/spin-tools-macos*
+          build/target/spin-tools-linux*
+          build/target/spin-tools-windows*
+          build/target/spin-tools-macos*
 
     - name: Create Tests Summary
       uses: test-summary/action@dist
