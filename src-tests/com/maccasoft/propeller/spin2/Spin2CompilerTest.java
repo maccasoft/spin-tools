@@ -401,6 +401,67 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testObjectMethodPointerAsArgument() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o[2] : \"text2\"\n"
+            + "\n"
+            + "PUB main()\n"
+            + "\n"
+            + "    o[0].set(@method)\n"
+            + "    o[1].set(@method)\n"
+            + "\n"
+            + "PUB method(x, y)\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "PUB set(ptr) | a\n"
+            + "\n"
+            + "    a := ptr\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       30 00 00 00    Object \"text2.spin2\" @ $00030\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       30 00 00 00    Object \"text2.spin2\" @ $00030\n"
+            + "0000C 0000C       08 00 00 00    Variables @ $00008\n"
+            + "00010 00010       1C 00 00 80    Method main @ $0001C (0 parameters, 0 returns)\n"
+            + "00014 00014       2C 00 00 82    Method method @ $0002C (2 parameters, 0 returns)\n"
+            + "00018 00018       2E 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "0001C 0001C       00             (stack size)\n"
+            + "'     o[0].set(@method)\n"
+            + "0001D 0001D       00             ANCHOR\n"
+            + "0001E 0001E       11 05          SUB_ADDRESS (5)\n"
+            + "00020 00020       A1             CONSTANT (0)\n"
+            + "00021 00021       09 00 00       CALL_OBJ_SUB (0.0)\n"
+            + "'     o[1].set(@method)\n"
+            + "00024 00024       00             ANCHOR\n"
+            + "00025 00025       11 05          SUB_ADDRESS (5)\n"
+            + "00027 00027       A2             CONSTANT (1)\n"
+            + "00028 00028       09 00 00       CALL_OBJ_SUB (0.0)\n"
+            + "0002B 0002B       04             RETURN\n"
+            + "' PUB method(x, y)\n"
+            + "0002C 0002C       00             (stack size)\n"
+            + "0002D 0002D       04             RETURN\n"
+            + "0002E 0002E       00 00          Padding\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "00030 00000       08 00 00 81    Method set @ $00008 (1 parameters, 0 returns)\n"
+            + "00034 00004       0C 00 00 00    End\n"
+            + "' PUB set(ptr) | a\n"
+            + "00038 00008       04             (stack size)\n"
+            + "'     a := ptr\n"
+            + "00039 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0003A 0000A       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "0003B 0000B       04             RETURN\n"
+            + "", compile("main.spin2", sources));
+    }
+
+    @Test
     void testNestedObjectsLink() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin2", ""

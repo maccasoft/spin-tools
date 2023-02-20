@@ -265,7 +265,7 @@ public class Spin2ObjectCompiler {
                 try {
                     int offset = -1;
                     if (isReferenced((MethodNode) node)) {
-                        offset = objects.size() * 2 + methodData.size();
+                        offset = (objectIndex - 1) * 2 + methodData.size();
                         methodData.add(new LongDataObject(0, "Method " + method.getLabel()));
                     }
                     else {
@@ -287,7 +287,7 @@ public class Spin2ObjectCompiler {
                 try {
                     int offset = -1;
                     if (isReferenced((MethodNode) node)) {
-                        offset = objects.size() * 2 + methodData.size();
+                        offset = (objectIndex - 1) * 2 + methodData.size();
                         methodData.add(new LongDataObject(0, "Method " + method.getLabel()));
                     }
                     else {
@@ -2894,7 +2894,7 @@ public class Spin2ObjectCompiler {
                                     int actual = 0;
                                     for (int i = 0; i < childNode.getChildCount(); i++) {
                                         Expression child = context.getLocalSymbol(childNode.getChild(i).getText());
-                                        if (child != null && (child instanceof Method)) {
+                                        if (child != null && (child instanceof Method) && !childNode.getChild(i).getText().startsWith("@")) {
                                             actual += ((Method) child).getReturnsCount();
                                         }
                                         else {
@@ -3133,7 +3133,7 @@ public class Spin2ObjectCompiler {
             int actual = 0;
             for (int i = 0; i < node.getChildCount(); i++) {
                 Expression child = context.getLocalSymbol(node.getChild(i).getText());
-                if (child != null && (child instanceof Method)) {
+                if (child != null && (child instanceof Method) && !node.getChild(i).getText().startsWith("@")) {
                     actual += ((Method) child).getReturnsCount();
                 }
                 else {

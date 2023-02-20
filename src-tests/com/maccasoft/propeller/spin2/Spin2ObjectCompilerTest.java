@@ -5275,6 +5275,47 @@ class Spin2ObjectCompilerTest {
             + "", compile(text, false));
     }
 
+    @Test
+    void testMethodPointerAsArgument() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    set(@method)\n"
+            + "\n"
+            + "PUB set(ptr) | a\n"
+            + "\n"
+            + "    a := ptr\n"
+            + "\n"
+            + "PUB method(x, y)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "00004 00004       17 00 00 81    Method set @ $00017 (1 parameters, 0 returns)\n"
+            + "00008 00008       1B 00 00 82    Method method @ $0001B (2 parameters, 0 returns)\n"
+            + "0000C 0000C       1D 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "00010 00010       00             (stack size)\n"
+            + "'     set(@method)\n"
+            + "00011 00011       00             ANCHOR\n"
+            + "00012 00012       11 02          SUB_ADDRESS (2)\n"
+            + "00014 00014       0A 01          CALL_SUB (1)\n"
+            + "00016 00016       04             RETURN\n"
+            + "' PUB set(ptr) | a\n"
+            + "00017 00017       04             (stack size)\n"
+            + "'     a := ptr\n"
+            + "00018 00018       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00019 00019       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "0001A 0001A       04             RETURN\n"
+            + "' PUB method(x, y)\n"
+            + "0001B 0001B       00             (stack size)\n"
+            + "0001C 0001C       04             RETURN\n"
+            + "0001D 0001D       00 00 00       Padding\n"
+            + "", compile(text, false));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
