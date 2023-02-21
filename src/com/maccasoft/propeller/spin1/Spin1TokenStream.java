@@ -122,6 +122,9 @@ public class Spin1TokenStream extends TokenStream {
                     }
 
                     if ((ch == '+' || ch == '-') && (text.charAt(index - 1) == 'e' || text.charAt(index - 1) == 'E')) {
+                        if (text.charAt(token.start) == '$' || text.charAt(token.start) == '%') {
+                            return token;
+                        }
                         token.stop++;
                         break;
                     }

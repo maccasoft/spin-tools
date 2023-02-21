@@ -819,4 +819,13 @@ class Spin1TokenStreamTest {
         assertEquals("1e-2", subject.nextToken().getText());
     }
 
+    @Test
+    void testHexScientificNotation() {
+        Spin1TokenStream subject = new Spin1TokenStream("$E+1");
+
+        assertEquals("$E", subject.nextToken().getText());
+        assertEquals("+", subject.nextToken().getText());
+        assertEquals("1", subject.nextToken().getText());
+    }
+
 }

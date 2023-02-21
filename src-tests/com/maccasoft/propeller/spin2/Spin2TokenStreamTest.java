@@ -729,6 +729,15 @@ class Spin2TokenStreamTest {
     }
 
     @Test
+    void testHexScientificNotation() {
+        Spin2TokenStream subject = new Spin2TokenStream("$E+1");
+
+        assertEquals("$E", subject.nextToken().getText());
+        assertEquals("+", subject.nextToken().getText());
+        assertEquals("1", subject.nextToken().getText());
+    }
+
+    @Test
     void testContiguosOperators() {
         Spin2TokenStream subject = new Spin2TokenStream("a:=++b");
 
