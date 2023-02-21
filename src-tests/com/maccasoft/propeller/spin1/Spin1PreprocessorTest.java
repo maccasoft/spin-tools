@@ -242,6 +242,41 @@ class Spin1PreprocessorTest {
     }
 
     @Test
+    void testObjectIndexMethodsReferenceCount() {
+        Map<String, Node> objects = new HashMap<String, Node>();
+
+        Node root = parseSource(""
+            + "PUB main\n"
+            + "    o[0].method1\n"
+            + "\n"
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text1\"\n"
+            + "\n"
+            + "");
+        objects.put("text1.spin", parseSource(""
+            + "PUB method1\n"
+            + "\n"
+            + "PUB method2\n"
+            + "\n"
+            + ""));
+
+        Spin1Preprocessor subject = new Spin1Preprocessor(root, objects);
+        subject.collectReferencedMethods();
+
+        Node text1 = objects.get("text1.spin");
+
+        Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
+        Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).references.size());
+
+        Assertions.assertEquals(1, subject.referencedMethods.get(text1.getChild(0)).count);
+        Assertions.assertEquals(0, subject.referencedMethods.get(text1.getChild(0)).references.size());
+
+        Assertions.assertEquals(0, subject.referencedMethods.get(text1.getChild(1)).count);
+        Assertions.assertEquals(0, subject.referencedMethods.get(text1.getChild(1)).references.size());
+    }
+
+    @Test
     void testCascadingObjectMethodsReferenceCount() {
         Map<String, Node> objects = new HashMap<String, Node>();
 

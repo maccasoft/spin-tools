@@ -12,10 +12,12 @@ package com.maccasoft.propeller.spin2;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
@@ -74,6 +76,7 @@ public class Spin2Preprocessor {
     }
 
     void countMethodReferences(boolean keepFirst, Node root) {
+        Set<String> objectNames = new HashSet<>();
         Map<String, MethodNode> symbols = new HashMap<String, MethodNode>();
 
         root.accept(new NodeVisitor() {
@@ -93,18 +96,22 @@ public class Spin2Preprocessor {
                         public boolean visitMethod(MethodNode node) {
                             if (node.getName() != null) {
                                 symbols.put(prefix + node.getName().getText(), node);
+                                symbols.put("@" + prefix + node.getName().getText(), node);
                             }
                             return false;
                         }
 
                     });
                 }
+                objectNames.add(node.name.getText());
+                objectNames.add("@" + node.name.getText());
             }
 
             @Override
             public boolean visitMethod(MethodNode node) {
                 if (node.getName() != null) {
                     symbols.put(node.getName().getText(), node);
+                    symbols.put("@" + node.getName().getText(), node);
                 }
                 return false;
             }
@@ -131,10 +138,25 @@ public class Spin2Preprocessor {
             }
 
             void markTokens(MethodReference parent, Node node) {
-                for (Token token : node.getTokens()) {
+                Iterator<Token> iter = node.getTokens().iterator();
+                while (iter.hasNext()) {
+                    Token token = iter.next();
+
                     MethodNode methodNode = symbols.get(token.getText());
-                    if (methodNode == null && token.getText().startsWith("@")) {
-                        methodNode = symbols.get(token.getText().substring(1));
+                    if (methodNode == null && objectNames.contains(token.getText())) {
+                        String prefix = token.getText();
+                        if (iter.hasNext()) {
+                            token = iter.next();
+                            if ("[".equals(token.getText())) {
+                                markIndexTokens(iter, parent);
+                                if (iter.hasNext()) {
+                                    token = iter.next();
+                                }
+                            }
+                            if (token.getText().startsWith(".")) {
+                                methodNode = symbols.get(prefix + token.getText());
+                            }
+                        }
                     }
                     if (methodNode != null && methodNode != parent.node) {
                         MethodReference ref = referencedMethods.get(methodNode);
@@ -145,6 +167,34 @@ public class Spin2Preprocessor {
                 for (Node child : node.getChilds()) {
                     if (child instanceof StatementNode) {
                         markTokens(parent, child);
+                    }
+                }
+            }
+
+            void markIndexTokens(Iterator<Token> iter, MethodReference parent) {
+                while (iter.hasNext()) {
+                    Token token = iter.next();
+                    if ("]".equals(token.getText())) {
+                        break;
+                    }
+
+                    MethodNode methodNode = symbols.get(token.getText());
+                    if (methodNode == null && objectNames.contains(token.getText())) {
+                        String prefix = token.getText();
+                        if (iter.hasNext()) {
+                            token = iter.next();
+                            if ("[".equals(token.getText())) {
+                                markIndexTokens(iter, parent);
+                            }
+                            if (token.getText().startsWith(".")) {
+                                methodNode = symbols.get(prefix + token.getText());
+                            }
+                        }
+                    }
+                    if (methodNode != null && methodNode != parent.node) {
+                        MethodReference ref = referencedMethods.get(methodNode);
+                        ref.count++;
+                        parent.references.add(methodNode);
                     }
                 }
             }
