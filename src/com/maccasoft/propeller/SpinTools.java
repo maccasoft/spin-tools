@@ -2279,7 +2279,7 @@ public class SpinTools {
             public void run() {
                 try {
                     Shell shell = new Shell(display);
-                    shell.setText("Spin Tools");
+                    shell.setText(APP_TITLE);
                     shell.setImages(new Image[] {
                         ImageRegistry.getImageFromResources("app64.png"),
                         ImageRegistry.getImageFromResources("app48.png"),
