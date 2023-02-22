@@ -2656,7 +2656,9 @@ public class Spin2ObjectCompiler {
                 source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                 source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
             }
-            else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
+            else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())
+                || "@BYTE".equalsIgnoreCase(node.getText()) || "@WORD".equalsIgnoreCase(node.getText()) || "@LONG".equalsIgnoreCase(node.getText())
+                || "@@BYTE".equalsIgnoreCase(node.getText()) || "@@WORD".equalsIgnoreCase(node.getText()) || "@@LONG".equalsIgnoreCase(node.getText())) {
                 Spin2StatementNode indexNode = null;
                 Spin2StatementNode bitfieldNode = null;
                 Spin2StatementNode postEffectNode = null;
@@ -2737,14 +2739,24 @@ public class Spin2ObjectCompiler {
                 }
 
                 MemoryOp.Size ss = MemoryOp.Size.Long;
-                if ("BYTE".equalsIgnoreCase(node.getText())) {
+                if ("BYTE".equalsIgnoreCase(node.getText()) || "@BYTE".equalsIgnoreCase(node.getText()) || "@@BYTE".equalsIgnoreCase(node.getText())) {
                     ss = MemoryOp.Size.Byte;
                 }
-                else if ("WORD".equalsIgnoreCase(node.getText())) {
+                else if ("WORD".equalsIgnoreCase(node.getText()) || "@WORD".equalsIgnoreCase(node.getText()) || "@@WORD".equalsIgnoreCase(node.getText())) {
                     ss = MemoryOp.Size.Word;
                 }
-                MemoryOp.Op op = bitfieldNode == null && postEffectNode == null ? (push ? MemoryOp.Op.Read : MemoryOp.Op.Write) : MemoryOp.Op.Setup;
-                source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
+
+                if (node.getText().startsWith("@@")) {
+                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
+                    source.add(new Bytecode(context, 0x24, "ADD_PBASE"));
+                }
+                else if (node.getText().startsWith("@")) {
+                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Address, indexNode != null));
+                }
+                else {
+                    MemoryOp.Op op = bitfieldNode == null && postEffectNode == null ? (push ? MemoryOp.Op.Read : MemoryOp.Op.Write) : MemoryOp.Op.Setup;
+                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, op, indexNode != null));
+                }
 
                 if (bitfieldNode != null) {
                     source.add(new BitField(context, postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup, bitfield));
