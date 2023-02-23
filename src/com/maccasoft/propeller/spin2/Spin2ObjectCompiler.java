@@ -2541,6 +2541,9 @@ public class Spin2ObjectCompiler {
                     else if (expression instanceof DataVariable) {
                         source.addAll(compileMethodCall(context, expression, node.getChild(0), push, true));
                     }
+                    else if ("BYTE".equalsIgnoreCase(node.getChild(0).getText()) || "WORD".equalsIgnoreCase(node.getChild(0).getText()) || "LONG".equalsIgnoreCase(node.getChild(0).getText())) {
+                        source.addAll(compileBytecodeExpression(context, node.getChild(0), push));
+                    }
                     else {
                         throw new CompilerException("symbol " + node.getChild(0).getText() + " is not a method", node.getChild(0).getToken());
                     }
@@ -2677,6 +2680,23 @@ public class Spin2ObjectCompiler {
                     }
                     bitfieldNode = node.getChild(n++);
                 }
+
+                if (node instanceof Spin2StatementNode.Method) {
+                    if (node.getParent() != null && node.getParent().getText().startsWith("\\")) {
+                        source.add(new Bytecode(context, push ? 0x03 : 0x02, "ANCHOR_TRAP"));
+                    }
+                    else {
+                        source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
+                    }
+
+                    while (n < node.getChildCount()) {
+                        if (!(node.getChild(n) instanceof Spin2StatementNode.Argument)) {
+                            throw new CompilerException("syntax error", node.getChild(n));
+                        }
+                        source.addAll(compileConstantExpression(context, node.getChild(n++)));
+                    }
+                }
+
                 if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
                     postEffectNode = node.getChild(n++);
                 }
@@ -2746,7 +2766,13 @@ public class Spin2ObjectCompiler {
                     ss = MemoryOp.Size.Word;
                 }
 
-                if (node.getText().startsWith("@@")) {
+                if (node instanceof Spin2StatementNode.Method) {
+                    source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) 0x0B,
+                    }, "CALL_PTR"));
+                }
+                else if (node.getText().startsWith("@@")) {
                     source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
                     source.add(new Bytecode(context, 0x24, "ADD_PBASE"));
                 }

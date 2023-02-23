@@ -5359,6 +5359,62 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testTypedAddressMethodCall() throws Exception {
+        String text = ""
+            + "PUB main() | a, b, c, d, e\n"
+            + "\n"
+            + "    long[a](c, d, e)\n"
+            + "    long[a][b](c, d, e)\n"
+            + "    \\long[a](c, d, e)\n"
+            + "    \\long[a][b](c, d, e)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       2C 00 00 00    End\n"
+            + "' PUB main() | a, b, c, d, e\n"
+            + "00008 00008       14             (stack size)\n"
+            + "'     long[a](c, d, e)\n"
+            + "00009 00009       00             ANCHOR\n"
+            + "0000A 0000A       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "0000B 0000B       E3             VAR_READ LONG DBASE+$00003 (short)\n"
+            + "0000C 0000C       E4             VAR_READ LONG DBASE+$00004 (short)\n"
+            + "0000D 0000D       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000E 0000E       67 80          MEM_READ LONG\n"
+            + "00010 00010       0B             CALL_PTR\n"
+            + "'     long[a][b](c, d, e)\n"
+            + "00011 00011       00             ANCHOR\n"
+            + "00012 00012       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00013 00013       E3             VAR_READ LONG DBASE+$00003 (short)\n"
+            + "00014 00014       E4             VAR_READ LONG DBASE+$00004 (short)\n"
+            + "00015 00015       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00016 00016       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00017 00017       64 80          MEM_READ LONG INDEXED\n"
+            + "00019 00019       0B             CALL_PTR\n"
+            + "'     \\long[a](c, d, e)\n"
+            + "0001A 0001A       02             ANCHOR_TRAP\n"
+            + "0001B 0001B       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "0001C 0001C       E3             VAR_READ LONG DBASE+$00003 (short)\n"
+            + "0001D 0001D       E4             VAR_READ LONG DBASE+$00004 (short)\n"
+            + "0001E 0001E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0001F 0001F       67 80          MEM_READ LONG\n"
+            + "00021 00021       0B             CALL_PTR\n"
+            + "'     \\long[a][b](c, d, e)\n"
+            + "00022 00022       02             ANCHOR_TRAP\n"
+            + "00023 00023       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00024 00024       E3             VAR_READ LONG DBASE+$00003 (short)\n"
+            + "00025 00025       E4             VAR_READ LONG DBASE+$00004 (short)\n"
+            + "00026 00026       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00027 00027       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00028 00028       64 80          MEM_READ LONG INDEXED\n"
+            + "0002A 0002A       0B             CALL_PTR\n"
+            + "0002B 0002B       04             RETURN\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
