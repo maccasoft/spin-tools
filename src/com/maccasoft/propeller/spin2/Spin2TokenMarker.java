@@ -580,6 +580,12 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         spinKeywords.put("PR5", TokenId.PASM_INSTRUCTION);
         spinKeywords.put("PR6", TokenId.PASM_INSTRUCTION);
         spinKeywords.put("PR7", TokenId.PASM_INSTRUCTION);
+        spinKeywords.put("@BYTE", TokenId.TYPE);
+        spinKeywords.put("@WORD", TokenId.TYPE);
+        spinKeywords.put("@LONG", TokenId.TYPE);
+        spinKeywords.put("@@BYTE", TokenId.TYPE);
+        spinKeywords.put("@@WORD", TokenId.TYPE);
+        spinKeywords.put("@@LONG", TokenId.TYPE);
     }
 
     static Set<String> modcz = new HashSet<String>();
@@ -869,6 +875,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
                 else if (token.type == Token.STRING) {
                     tokens.add(new TokenMarker(token, TokenId.STRING));
+                }
+                else if (token.type == Token.FUNCTION) {
+                    tokens.add(new TokenMarker(token, TokenId.FUNCTION));
                 }
                 else {
                     TokenId id = debug ? debugKeywords.get(token.getText().toUpperCase()) : keywords.get(token.getText().toUpperCase());

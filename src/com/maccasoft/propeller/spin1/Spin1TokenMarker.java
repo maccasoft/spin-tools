@@ -47,6 +47,12 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("BYTE", TokenId.TYPE);
         keywords.put("WORD", TokenId.TYPE);
         keywords.put("LONG", TokenId.TYPE);
+        keywords.put("@BYTE", TokenId.TYPE);
+        keywords.put("@WORD", TokenId.TYPE);
+        keywords.put("@LONG", TokenId.TYPE);
+        keywords.put("@@BYTE", TokenId.TYPE);
+        keywords.put("@@WORD", TokenId.TYPE);
+        keywords.put("@@LONG", TokenId.TYPE);
         keywords.put("BYTEFIT", TokenId.TYPE);
         keywords.put("WORDFIT", TokenId.TYPE);
 
@@ -177,6 +183,16 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         pasmKeywords.put("VSCL", TokenId.KEYWORD);
         pasmKeywords.put("PAR", TokenId.KEYWORD);
         pasmKeywords.put("SPR", TokenId.KEYWORD);
+    }
+
+    static Map<String, TokenId> spinKeywords = new CaseInsensitiveMap<>();
+    static {
+        spinKeywords.put("@BYTE", TokenId.TYPE);
+        spinKeywords.put("@WORD", TokenId.TYPE);
+        spinKeywords.put("@LONG", TokenId.TYPE);
+        spinKeywords.put("@@BYTE", TokenId.TYPE);
+        spinKeywords.put("@@WORD", TokenId.TYPE);
+        spinKeywords.put("@@LONG", TokenId.TYPE);
     }
 
     final NodeVisitor collectKeywordsVisitor = new NodeVisitor() {
@@ -367,6 +383,9 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 }
                 else {
                     TokenId id = keywords.get(token.getText());
+                    if (id == null) {
+                        id = spinKeywords.get(token.getText().toUpperCase());
+                    }
                     if (id == null) {
                         id = locals.get(token.getText());
                     }

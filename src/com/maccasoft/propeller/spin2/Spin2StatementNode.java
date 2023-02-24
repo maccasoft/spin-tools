@@ -46,6 +46,7 @@ public class Spin2StatementNode {
 
         public Method(Spin2StatementNode node) {
             super(node.token);
+            this.token.type = Token.FUNCTION;
             this.properties.putAll(node.properties);
             this.childs.addAll(node.childs);
             this.data = node.data;
