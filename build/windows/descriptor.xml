@@ -15,36 +15,26 @@
             <outputDirectory>lib</outputDirectory>
         </dependencySet>
     </dependencySets>
+    <files>
+        <file><source>target/spinc.exe</source></file>
+        <file><source>target/spinide.exe</source></file>
+        <file><source>LICENSE</source></file>
+        <file><source>CC-BY-3.0.txt</source></file>
+    </files>
     <fileSets>
         <fileSet>
-            <directory>../examples</directory>
+            <directory>examples</directory>
             <excludes>
                 <exclude>**/*.binary</exclude>
             </excludes>
             <outputDirectory>examples</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>../library</directory>
+            <directory>library</directory>
             <excludes>
                 <exclude>**/*.binary</exclude>
             </excludes>
             <outputDirectory>library</outputDirectory>
-        </fileSet>
-        <fileSet>
-            <directory>target</directory>
-            <includes>
-                <include>spinide.exe</include>
-                <include>spinc.exe</include>
-            </includes>
-            <outputDirectory></outputDirectory>
-        </fileSet>
-        <fileSet>
-            <directory>..</directory>
-            <includes>
-                <include>LICENSE</include>
-                <include>CC-BY-3.0.txt</include>
-            </includes>
-            <outputDirectory></outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>

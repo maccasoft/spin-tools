@@ -17,18 +17,18 @@ jobs:
     - name: Maven build
       run: |
         Xvfb :1 -ac -screen 0 1280x1024x8 -nolisten tcp &
-        mvn --batch-mode -f build/pom.xml package
+        mvn --batch-mode package
 
     - name: Upload
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          build/target/spin-tools-linux*
-          build/target/spin-tools-windows*
-          build/target/spin-tools-macos*
+          target/spin-tools-linux*
+          target/spin-tools-windows*
+          target/spin-tools-macos*
 
     - name: Create Tests Summary
       uses: test-summary/action@dist
       with:
-        paths: target/surefire-reports/**/*.xml
+        paths: modules/com.maccasoft.spin.tools/target/surefire-reports/**/*.xml
       if: always()

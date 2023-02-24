@@ -24,5 +24,5 @@ jobs:
     - name: Create Tests Summary
       uses: test-summary/action@dist
       with:
-        paths: target/surefire-reports/**/*.xml
+        paths: modules/com.maccasoft.spin.tools/target/surefire-reports/**/*.xml
       if: always()

@@ -2671,6 +2671,9 @@ public class Spin2ObjectCompiler {
                     indexNode = node.getChild(n++);
                 }
                 if (n < node.getChildCount() && ".".equals(node.getChild(n).getText())) {
+                    if (node.getText().startsWith("@")) {
+                        throw new CompilerException("bitfield expression not allowed", node.getChild(n).getToken());
+                    }
                     n++;
                     if (n >= node.getChildCount()) {
                         throw new RuntimeException("expected bitfield expression");
@@ -2694,6 +2697,11 @@ public class Spin2ObjectCompiler {
                             throw new CompilerException("syntax error", node.getChild(n));
                         }
                         source.addAll(compileConstantExpression(context, node.getChild(n++)));
+                    }
+                }
+                else if (node.getText().startsWith("@")) {
+                    if (n < node.getChildCount()) {
+                        throw new CompilerException("syntax error", node.getChild(n).getToken());
                     }
                 }
 
@@ -2767,6 +2775,9 @@ public class Spin2ObjectCompiler {
                 }
 
                 if (node instanceof Spin2StatementNode.Method) {
+                    if (ss != MemoryOp.Size.Long) {
+                        throw new RuntimeException("method pointers must be long");
+                    }
                     source.add(new MemoryOp(context, ss, MemoryOp.Base.Pop, MemoryOp.Op.Read, indexNode != null));
                     source.add(new Bytecode(context, new byte[] {
                         (byte) 0x0B,
@@ -3237,19 +3248,20 @@ public class Spin2ObjectCompiler {
             }
 
             if (symbol instanceof Variable) {
+                switch (((Variable) symbol).getType()) {
+                    case "BYTE":
+                    case "WORD":
+                        throw new RuntimeException("method pointers must be long");
+                }
                 source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) symbol, hasIndex, index));
             }
             else if (symbol instanceof DataVariable) {
-                MemoryOp.Size ss = MemoryOp.Size.Long;
                 switch (((DataVariable) symbol).getType()) {
                     case "BYTE":
-                        ss = MemoryOp.Size.Byte;
-                        break;
                     case "WORD":
-                        ss = MemoryOp.Size.Word;
-                        break;
+                        throw new RuntimeException("method pointers must be long");
                 }
-                source.add(new MemoryOp(context, ss, MemoryOp.Base.PBase, MemoryOp.Op.Read, popIndex, symbol, index));
+                source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.PBase, MemoryOp.Op.Read, popIndex, symbol, index));
             }
             else {
                 throw new CompilerException("unsupported operation on " + node.getText(), node.getToken());

@@ -15,32 +15,28 @@
             <outputDirectory>Contents/Java</outputDirectory>
         </dependencySet>
     </dependencySets>
+    <files>
+        <file><source>LICENSE</source></file>
+        <file><source>CC-BY-3.0.txt</source></file>
+    </files>
     <fileSets>
         <fileSet>
             <directory>target/Spin Tools IDE.app</directory>
             <outputDirectory></outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>../examples</directory>
+            <directory>examples</directory>
             <excludes>
                 <exclude>**/*.binary</exclude>
             </excludes>
             <outputDirectory>Contents/Java/examples</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>../library</directory>
+            <directory>library</directory>
             <excludes>
                 <exclude>**/*.binary</exclude>
             </excludes>
             <outputDirectory>Contents/Java/library</outputDirectory>
-        </fileSet>
-        <fileSet>
-            <directory>..</directory>
-            <includes>
-                <include>LICENSE</include>
-                <include>CC-BY-3.0.txt</include>
-            </includes>
-            <outputDirectory></outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>
