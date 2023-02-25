@@ -33,4 +33,9 @@ public class Register extends Literal {
         return Long.valueOf(address);
     }
 
+    @Override
+    public String toString() {
+        return String.format("$%03X", address);
+    }
+
 }

@@ -55,7 +55,7 @@ public class RegisterOp extends Spin2Bytecode {
             }
             else {
                 os.write(indexed ? 0x4F : 0x4E);
-                os.write(Constant.wrVars(value - 0x200));
+                os.write(Constant.wrVars(value >= 0x100 ? (value - 0x200) : value));
             }
 
             if (op == Op.Read) {
