@@ -42,7 +42,12 @@ import org.eclipse.swt.widgets.Display;
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.internal.FileUtils;
+import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Formatter;
 import com.maccasoft.propeller.spin1.Spin1Parser;
@@ -912,7 +917,12 @@ public class EditorTab implements FindReplaceTarget {
         Formatter formatter = tabItemText.toLowerCase().endsWith(".spin2") ? new Spin2Formatter() : new Spin1Formatter();
 
         //formatter.setKeepBlankLines(true);
-        formatter.setPAsmColumns(4, 16, 24, 44, 52);
+        formatter.setSectionTabStop("con", preferences.getTabStops(ConstantsNode.class));
+        formatter.setSectionTabStop("var", preferences.getTabStops(VariablesNode.class));
+        formatter.setSectionTabStop("obj", preferences.getTabStops(ObjectsNode.class));
+        formatter.setSectionTabStop("pub", preferences.getTabStops(MethodNode.class));
+        formatter.setSectionTabStop("dat", preferences.getTabStops(DataNode.class));
+        //formatter.setPAsmColumns(4, 16, 24, 44, 52);
         //formatter.setInlinePAsmColumns(8, 16, 24, 44, 52);
         //formatter.setAdjustPAsmColumns(true);
         //formatter.setIsolateLargeLabels(true);

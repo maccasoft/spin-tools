@@ -11,7 +11,9 @@
 package com.maccasoft.propeller;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.maccasoft.propeller.model.Token;
@@ -28,22 +30,32 @@ public abstract class Formatter {
     }));
 
     class FormatterStringBuilder {
-        int line = 0;
         int column = 0;
         StringBuilder sb = new StringBuilder();
 
         int[] tabstops;
         int tabspaces = 4;
 
+        public FormatterStringBuilder(int tabspaces, int[] tabstops) {
+            this.tabspaces = tabspaces;
+            this.tabstops = tabstops;
+        }
+
         public void append(String s) {
             sb.append(s);
             if (s.equals(System.lineSeparator())) {
                 column = 0;
-                line++;
             }
             else {
                 column += s.length();
             }
+        }
+
+        public boolean endsWith(String s) {
+            if (sb.length() < s.length()) {
+                return false;
+            }
+            return s.equals(sb.substring(sb.length() - s.length()));
         }
 
         public void append(Object o) {
@@ -96,36 +108,14 @@ public abstract class Formatter {
 
     protected TokenStream stream;
 
-    boolean keepBlankLines;
-
-    int conditionColumn;
-    int instructionColumn;
-    int argumentsColumn;
-    int modifiersColumn;
-    int commentsColumn;
-
-    FormatterStringBuilder sb = new FormatterStringBuilder();
+    Map<String, int[]> sectionTabStops;
 
     public Formatter() {
-        this.keepBlankLines = true;
-
-        this.conditionColumn = 8;
-        this.instructionColumn = 16;
-        this.argumentsColumn = 24;
-        this.modifiersColumn = 36;
-        this.commentsColumn = 52;
+        this.sectionTabStops = new HashMap<>();
     }
 
-    public void setKeepBlankLines(boolean keepBlankLines) {
-        this.keepBlankLines = keepBlankLines;
-    }
-
-    public void setPAsmColumns(int condition, int instruction, int arguments, int modifiers, int comments) {
-        conditionColumn = condition;
-        instructionColumn = instruction;
-        argumentsColumn = arguments;
-        modifiersColumn = modifiers;
-        commentsColumn = comments;
+    public void setSectionTabStop(String section, int[] tabstops) {
+        sectionTabStops.put(section, tabstops);
     }
 
     public abstract String format(String text);
@@ -135,14 +125,14 @@ public abstract class Formatter {
 
         this.stream = stream;
 
+        FormatterStringBuilder sb = new FormatterStringBuilder(4, sectionTabStops.get("con"));
+
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type == Token.EOF) {
                 break;
             }
             if (token.type == Token.NL) {
-                if (keepBlankLines) {
-                    sb.append(System.lineSeparator());
-                }
+                sb.append(System.lineSeparator());
                 stream.nextToken();
             }
             else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
@@ -151,30 +141,25 @@ public abstract class Formatter {
                     sb.append(" ");
                 }
                 sb.append(stream.nextToken());
-                if (token.type == Token.COMMENT) {
-                    if (!keepBlankLines) {
-                        sb.append(System.lineSeparator());
-                    }
-                }
             }
             else {
                 if ("VAR".equalsIgnoreCase(token.getText())) {
-                    formatVariables();
+                    sb.append(formatVariables());
                 }
                 else if ("OBJ".equalsIgnoreCase(token.getText())) {
-                    formatObjects();
+                    sb.append(formatObjects());
                 }
                 else if ("PUB".equalsIgnoreCase(token.getText()) || "PRI".equalsIgnoreCase(token.getText())) {
-                    formatMethod();
+                    sb.append(formatMethod());
                 }
                 else if ("DAT".equalsIgnoreCase(token.getText())) {
-                    formatDat();
+                    sb.append(formatDat());
                 }
                 else if ("CON".equalsIgnoreCase(token.getText())) {
-                    formatConstants();
+                    sb.append(formatConstants());
                 }
                 else {
-                    formatConstant();
+                    formatConstant(sb);
                 }
             }
         }
@@ -182,27 +167,31 @@ public abstract class Formatter {
         return sb.toString();
     }
 
-    void formatConstants() {
-        appendSectionHeader(stream.nextToken());
+    FormatterStringBuilder formatConstants() {
+        FormatterStringBuilder sb = new FormatterStringBuilder(4, sectionTabStops.get("con"));
+
+        appendSectionHeader(sb, stream.nextToken());
         if (stream.peekNext().type == Token.NL) {
             stream.nextToken();
         }
         else {
-            formatConstant();
+            formatConstant(sb);
         }
         if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-            return;
+            return sb;
         }
 
         while (stream.peekNext().type != Token.EOF) {
-            formatConstant();
+            formatConstant(sb);
             if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                 break;
             }
         }
+
+        return sb;
     }
 
-    void formatConstant() {
+    void formatConstant(FormatterStringBuilder sb) {
         int state = 1;
 
         Token token;
@@ -281,7 +270,7 @@ public abstract class Formatter {
                         state = 1;
                         break;
                     }
-                    appendExpressionToken(token);
+                    appendExpressionToken(sb, token);
                     break;
                 case 6:
                     if ("]".equals(token.getText())) {
@@ -289,7 +278,7 @@ public abstract class Formatter {
                         state = 1;
                         break;
                     }
-                    appendExpressionToken(token);
+                    appendExpressionToken(sb, token);
                     break;
             }
         }
@@ -297,27 +286,31 @@ public abstract class Formatter {
         sb.append(System.lineSeparator());
     }
 
-    void formatVariables() {
-        appendSectionHeader(stream.nextToken());
+    FormatterStringBuilder formatVariables() {
+        FormatterStringBuilder sb = new FormatterStringBuilder(4, sectionTabStops.get("var"));
+
+        appendSectionHeader(sb, stream.nextToken());
         if (stream.peekNext().type == Token.NL) {
             stream.nextToken();
         }
         else {
-            formatVariable();
+            formatVariable(sb);
         }
         if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-            return;
+            return sb;
         }
 
         while (stream.peekNext().type != Token.EOF) {
-            formatVariable();
+            formatVariable(sb);
             if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                 break;
             }
         }
+
+        return sb;
     }
 
-    void formatVariable() {
+    void formatVariable(FormatterStringBuilder sb) {
         int state = 1;
 
         Token token;
@@ -368,7 +361,7 @@ public abstract class Formatter {
                         state = 2;
                         break;
                     }
-                    appendExpressionToken(token);
+                    appendExpressionToken(sb, token);
                     break;
             }
         }
@@ -376,27 +369,31 @@ public abstract class Formatter {
         sb.append(System.lineSeparator());
     }
 
-    void formatObjects() {
-        appendSectionHeader(stream.nextToken());
+    FormatterStringBuilder formatObjects() {
+        FormatterStringBuilder sb = new FormatterStringBuilder(4, sectionTabStops.get("obj"));
+
+        appendSectionHeader(sb, stream.nextToken());
         if (stream.peekNext().type == Token.NL) {
             stream.nextToken();
         }
         else {
-            formatObject();
+            formatObject(sb);
         }
         if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-            return;
+            return sb;
         }
 
         while (stream.peekNext().type != Token.EOF) {
-            formatObject();
+            formatObject(sb);
             if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                 break;
             }
         }
+
+        return sb;
     }
 
-    void formatObject() {
+    void formatObject(FormatterStringBuilder sb) {
         int state = 1;
 
         Token token;
@@ -442,7 +439,7 @@ public abstract class Formatter {
                         state = 2;
                         break;
                     }
-                    appendExpressionToken(token);
+                    appendExpressionToken(sb, token);
                     break;
 
                 case 8:
@@ -455,8 +452,9 @@ public abstract class Formatter {
         sb.append(System.lineSeparator());
     }
 
-    void formatMethod() {
+    FormatterStringBuilder formatMethod() {
         int state = 1;
+        FormatterStringBuilder sb = new FormatterStringBuilder(4, sectionTabStops.get("pub"));
 
         sb.append(stream.nextToken().getText().toUpperCase());
 
@@ -464,7 +462,7 @@ public abstract class Formatter {
         while ((token = nextToken()).type != Token.EOF) {
             if (token.type == Token.NL) {
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                    return;
+                    return sb;
                 }
                 break;
             }
@@ -585,7 +583,7 @@ public abstract class Formatter {
                         state = 11;
                         break;
                     }
-                    appendExpressionToken(token);
+                    appendExpressionToken(sb, token);
                     break;
             }
         }
@@ -594,29 +592,27 @@ public abstract class Formatter {
 
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type == Token.NL) {
-                if (keepBlankLines) {
-                    sb.append(System.lineSeparator());
-                }
+                sb.append(System.lineSeparator());
                 stream.nextToken();
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                     break;
                 }
             }
-            formatStatement(0, sb.tabspaces);
+            formatStatement(sb, 0, sb.getNextTabStop(1));
             if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                 break;
             }
         }
+
+        return sb;
     }
 
-    void formatStatement(int column, int indent) {
+    void formatStatement(FormatterStringBuilder sb, int column, int indent) {
         Token token;
 
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type == Token.NL) {
-                if (keepBlankLines) {
-                    sb.append(System.lineSeparator());
-                }
+                sb.append(System.lineSeparator());
                 stream.nextToken();
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                     return;
@@ -650,7 +646,7 @@ public abstract class Formatter {
                         sb.append(token);
                         continue;
                     }
-                    appendExpressionToken(token);
+                    appendExpressionToken(sb, token);
                 }
 
                 sb.append(System.lineSeparator());
@@ -661,19 +657,19 @@ public abstract class Formatter {
                 }
 
                 if ("ORG".equalsIgnoreCase(startToken.getText())) {
-                    formatInlineCode(indent);
+                    sb.append(formatInlineCode(indent));
                     if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                         return;
                     }
                 }
                 if ("CASE".equalsIgnoreCase(startToken.getText()) || "CASE_FAST".equalsIgnoreCase(startToken.getText())) {
-                    formatCaseStatement(startToken.column + 1, indent + sb.tabspaces);
+                    formatCaseStatement(sb, startToken.column + 1, sb.getNextTabStop(indent + 1));
                     if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                         return;
                     }
                 }
                 else if (isBlockStart(startToken)) {
-                    formatStatement(startToken.column + 1, indent + sb.tabspaces);
+                    formatStatement(sb, startToken.column + 1, sb.getNextTabStop(indent + 1));
                     if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                         return;
                     }
@@ -682,14 +678,12 @@ public abstract class Formatter {
         }
     }
 
-    void formatCaseStatement(int column, int indent) {
+    void formatCaseStatement(FormatterStringBuilder sb, int column, int indent) {
         Token token;
 
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type == Token.NL) {
-                if (keepBlankLines) {
-                    sb.append(System.lineSeparator());
-                }
+                sb.append(System.lineSeparator());
                 stream.nextToken();
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                     return;
@@ -744,10 +738,10 @@ public abstract class Formatter {
                         }
                         break;
                     }
-                    appendExpressionToken(token);
+                    appendExpressionToken(sb, token);
                 }
 
-                formatStatement(startToken.column + 1, indent + sb.tabspaces);
+                formatStatement(sb, startToken.column + 1, indent + sb.tabspaces);
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                     return;
                 }
@@ -755,7 +749,8 @@ public abstract class Formatter {
         }
     }
 
-    void formatInlineCode(int indent) {
+    FormatterStringBuilder formatInlineCode(int indent) {
+        FormatterStringBuilder sb = new FormatterStringBuilder(4, sectionTabStops.get("dat"));
 
         while (true) {
             Token token = stream.peekNext();
@@ -763,9 +758,7 @@ public abstract class Formatter {
                 break;
             }
             if (token.type == Token.NL) {
-                if (keepBlankLines) {
-                    sb.append(System.lineSeparator());
-                }
+                sb.append(System.lineSeparator());
                 stream.nextToken();
                 if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                     break;
@@ -784,37 +777,47 @@ public abstract class Formatter {
                 break;
             }
             else {
-                formatDatLine();
+                formatDatLine(sb);
             }
         }
+
+        return sb;
     }
 
     protected boolean isBlockStart(Token token) {
         return false;
     }
 
-    void formatDat() {
-        appendSectionHeader(stream.nextToken());
+    FormatterStringBuilder formatDat() {
+        FormatterStringBuilder sb = new FormatterStringBuilder(4, sectionTabStops.get("dat"));
+
+        appendSectionHeader(sb, stream.nextToken());
         if (stream.peekNext().type == Token.NL) {
             stream.nextToken();
         }
         else {
-            formatDatLine();
+            formatDatLine(sb);
         }
         if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-            return;
+            return sb;
         }
 
         while (stream.peekNext().type != Token.EOF) {
-            formatDatLine();
+            formatDatLine(sb);
             if (sections.contains(stream.peekNext().getText().toUpperCase())) {
                 break;
             }
         }
+
+        return sb;
     }
 
-    void formatDatLine() {
+    void formatDatLine(FormatterStringBuilder sb) {
         int state = 1;
+        int conditionColumn = sb.tabstops != null && sb.tabstops.length >= 1 ? sb.tabstops[0] : 8;
+        int instructionColumn = sb.tabstops != null && sb.tabstops.length >= 2 ? sb.tabstops[1] : 16;
+        int argumentsColumn = sb.tabstops != null && sb.tabstops.length >= 3 ? sb.tabstops[2] : 24;
+        int modifiersColumn = sb.tabstops != null && sb.tabstops.length >= 4 ? sb.tabstops[3] : 36;
 
         Token token;
         while ((token = nextPAsmToken()).type != Token.EOF) {
@@ -890,7 +893,7 @@ public abstract class Formatter {
                         sb.append(token);
                     }
                     else {
-                        appendExpressionToken(token);
+                        appendExpressionToken(sb, token);
                     }
                     state = 5;
                     break;
@@ -925,7 +928,7 @@ public abstract class Formatter {
                         sb.append(token);
                         break;
                     }
-                    appendExpressionToken(token);
+                    appendExpressionToken(sb, token);
                     break;
                 case 6:
                     sb.append(token);
@@ -936,14 +939,14 @@ public abstract class Formatter {
                         state = 5;
                         break;
                     }
-                    appendExpressionToken(token);
+                    appendExpressionToken(sb, token);
                     break;
                 case 9:
                     if ("(".equals(token.getText())) {
                         sb.append(token);
                         break;
                     }
-                    appendExpressionToken(token);
+                    appendExpressionToken(sb, token);
                     break;
             }
         }
@@ -963,7 +966,7 @@ public abstract class Formatter {
         return false;
     }
 
-    void appendSectionHeader(Token token) {
+    void appendSectionHeader(FormatterStringBuilder sb, Token token) {
         sb.append(token.getText().toUpperCase());
 
         while ((token = stream.peekNext()).type != Token.EOF) {
@@ -979,7 +982,7 @@ public abstract class Formatter {
         sb.append(System.lineSeparator());
     }
 
-    void appendExpressionToken(Token token) {
+    void appendExpressionToken(FormatterStringBuilder sb, Token token) {
         if (token.type == Token.OPERATOR) {
             switch (token.getText()) {
                 case "(":
