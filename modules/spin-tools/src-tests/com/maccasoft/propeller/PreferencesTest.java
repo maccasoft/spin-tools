@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.maccasoft.propeller.Preferences.SerializedPreferences;
+import com.maccasoft.propeller.model.MethodNode;
 
 class PreferencesTest {
 
@@ -322,13 +323,13 @@ class PreferencesTest {
     @Test
     void testGetDefaultTabStops() throws Exception {
         Preferences subject = new Preferences();
-        Assertions.assertArrayEquals(Preferences.defaultTabStops, subject.getTabStops());
+        Assertions.assertArrayEquals(Preferences.defaultTabStops.get(MethodNode.class), subject.getTabStops(MethodNode.class));
     }
 
     @Test
     void testSetTabStops() throws Exception {
         Preferences subject = new Preferences();
-        subject.setTabStops(new int[] {
+        subject.setTabStops(MethodNode.class, new int[] {
             8, 16
         });
 
@@ -349,7 +350,9 @@ class PreferencesTest {
             + "  \"spin1CaseSensitiveSymbols\" : false,\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"tabStops\" : [ 8, 16 ],\n"
+            + "  \"sectionTabStops\" : {\n"
+            + "    \"pub\" : [ 8, 16 ]\n"
+            + "  },\n"
             + "  \"terminalLineInput\" : false,\n"
             + "  \"terminalLocalEcho\" : false,\n"
             + "  \"terminalType\" : 0,\n"
@@ -362,7 +365,9 @@ class PreferencesTest {
         Preferences subject = new Preferences();
         StringReader is = new StringReader(""
             + "{\n"
-            + "  \"tabStops\" : [ 8, 16 ]\n"
+            + "  \"sectionTabStops\" : {\n"
+            + "    \"pub\" : [ 8, 16 ]\n"
+            + "  }\n"
             + "}"
             + "");
 
@@ -372,7 +377,7 @@ class PreferencesTest {
 
         Assertions.assertArrayEquals(new int[] {
             8, 16
-        }, subject.getTabStops());
+        }, subject.getTabStops(MethodNode.class));
     }
 
     @Test

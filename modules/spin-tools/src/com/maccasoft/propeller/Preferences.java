@@ -17,7 +17,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.swt.graphics.Rectangle;
 
@@ -25,6 +27,11 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.MethodNode;
+import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.VariablesNode;
 
 public class Preferences {
 
@@ -54,9 +61,33 @@ public class Preferences {
         new File(System.getProperty("user.home")).getAbsolutePath()
     };
 
-    static final int[] defaultTabStops = new int[] {
-        4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80
-    };
+    static Map<Class<?>, String> sectionMap = new HashMap<>();
+    static {
+        sectionMap.put(ConstantsNode.class, "con");
+        sectionMap.put(VariablesNode.class, "var");
+        sectionMap.put(ObjectsNode.class, "obj");
+        sectionMap.put(MethodNode.class, "pub");
+        sectionMap.put(DataNode.class, "dat");
+    }
+
+    static Map<Class<?>, int[]> defaultTabStops = new HashMap<>();
+    static {
+        defaultTabStops.put(ConstantsNode.class, new int[] {
+            4, 8, 16, 24, 32, 40, 48, 56, 64
+        });
+        defaultTabStops.put(VariablesNode.class, new int[] {
+            4, 8, 16, 24, 32, 40, 48, 56, 64
+        });
+        defaultTabStops.put(ObjectsNode.class, new int[] {
+            4, 8, 16, 24, 32, 40, 48, 56, 64
+        });
+        defaultTabStops.put(MethodNode.class, new int[] {
+            4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64
+        });
+        defaultTabStops.put(DataNode.class, new int[] {
+            4, 8, 16, 24, 28, 32, 36, 40, 44, 48, 56, 64
+        });
+    }
 
     public static class Bounds {
         public int x;
@@ -106,7 +137,7 @@ public class Preferences {
         public List<String> lru = new ArrayList<String>();
 
         public boolean reloadOpenTabs;
-        public int[] tabStops;
+        public Map<String, int[]> sectionTabStops;
 
         public String[] openTabs;
         public String lastPath;
@@ -390,12 +421,35 @@ public class Preferences {
         }
     }
 
-    public int[] getTabStops() {
-        return preferences.tabStops != null ? preferences.tabStops : defaultTabStops;
+    public int[] getTabStops(Class<?> clazz) {
+        int[] result = null;
+
+        String section = sectionMap.get(clazz);
+        if (preferences.sectionTabStops != null && preferences.sectionTabStops.get(section) != null) {
+            result = preferences.sectionTabStops.get(section);
+        }
+        if (result == null) {
+            result = defaultTabStops.get(clazz);
+        }
+
+        return result;
     }
 
-    public void setTabStops(int[] tabStops) {
-        preferences.tabStops = Arrays.equals(tabStops, defaultTabStops) ? null : tabStops;
+    public void setTabStops(Class<?> clazz, int[] tabStops) {
+        if (Arrays.equals(tabStops, defaultTabStops.get(clazz))) {
+            if (preferences.sectionTabStops != null) {
+                preferences.sectionTabStops.remove(sectionMap.get(clazz));
+                if (preferences.sectionTabStops.size() == 0) {
+                    preferences.sectionTabStops = null;
+                }
+            }
+        }
+        else {
+            if (preferences.sectionTabStops == null) {
+                preferences.sectionTabStops = new HashMap<>();
+            }
+            preferences.sectionTabStops.put(sectionMap.get(clazz), tabStops);
+        }
     }
 
     public boolean getReloadOpenTabs() {

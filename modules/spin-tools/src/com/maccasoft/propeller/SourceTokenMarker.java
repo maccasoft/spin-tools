@@ -315,6 +315,14 @@ public abstract class SourceTokenMarker {
             }
 
             @Override
+            public boolean visitMethod(MethodNode node) {
+                if (lineIndex >= node.getStartToken().line) {
+                    result.set(node);
+                }
+                return true;
+            }
+
+            @Override
             public boolean visitStatement(StatementNode node) {
                 if (lineIndex >= node.getStartToken().line) {
                     result.set(node);

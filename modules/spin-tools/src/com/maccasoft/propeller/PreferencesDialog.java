@@ -22,6 +22,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.FocusAdapter;
+import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
@@ -34,6 +36,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.FontDialog;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Shell;
@@ -41,6 +44,11 @@ import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 
 import com.maccasoft.propeller.internal.ImageRegistry;
+import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.MethodNode;
+import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.VariablesNode;
 
 public class PreferencesDialog extends Dialog {
 
@@ -57,6 +65,11 @@ public class PreferencesDialog extends Dialog {
     Button showLineNumbers;
     Button showIndentLines;
     Button showEditorOutline;
+    TabStops conTabStops;
+    TabStops varTabStops;
+    TabStops objTabStops;
+    TabStops pubTabStops;
+    TabStops datTabStops;
 
     PathList spin1Paths;
     Button spin1CaseSensitive;
@@ -430,6 +443,62 @@ public class PreferencesDialog extends Dialog {
         });
     }
 
+    class TabStops {
+
+        Text text;
+
+        TabStops(Composite parent) {
+            text = new Text(parent, SWT.BORDER);
+            text.addFocusListener(new FocusAdapter() {
+
+                @Override
+                public void focusLost(FocusEvent e) {
+                    int[] value = getSelection();
+                    setSelection(value);
+                }
+            });
+        }
+
+        void setLayoutData(Object data) {
+            text.setLayoutData(data);
+        }
+
+        Object getLayoutData() {
+            return text.getLayoutData();
+        }
+
+        void setSelection(int[] value) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < value.length; i++) {
+                if (i != 0) {
+                    sb.append(", ");
+                }
+                sb.append(value[i]);
+            }
+            text.setText(sb.toString());
+        }
+
+        int[] getSelection() {
+            java.util.List<Integer> l = new ArrayList<>();
+
+            String[] s = text.getText().split("[, ]");
+            for (int i = 0; i < s.length; i++) {
+                try {
+                    l.add(Integer.valueOf(s[i]));
+                } catch (Exception e) {
+
+                }
+            }
+
+            int[] result = new int[l.size()];
+            for (int i = 0; i < result.length; i++) {
+                result[i] = l.get(i);
+            }
+
+            return result;
+        }
+    }
+
     void createEditorPage(Composite parent) {
         Composite composite = createPage(parent, "Editor");
 
@@ -535,6 +604,46 @@ public class PreferencesDialog extends Dialog {
                 preferences.setShowEditorOutline(showEditorOutline.getSelection());
             }
         });
+
+        Group group = new Group(composite, SWT.NONE);
+        group.setText("Tab stops");
+        group.setLayout(new GridLayout(2, false));
+        group.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+
+        label = new Label(group, SWT.NONE);
+        label.setText("CON Block");
+        conTabStops = new TabStops(group);
+        conTabStops.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        ((GridData) conTabStops.getLayoutData()).widthHint = convertWidthInCharsToPixels(35);
+        conTabStops.setSelection(preferences.getTabStops(ConstantsNode.class));
+
+        label = new Label(group, SWT.NONE);
+        label.setText("VAR Block");
+        varTabStops = new TabStops(group);
+        varTabStops.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        ((GridData) varTabStops.getLayoutData()).widthHint = convertWidthInCharsToPixels(35);
+        varTabStops.setSelection(preferences.getTabStops(VariablesNode.class));
+
+        label = new Label(group, SWT.NONE);
+        label.setText("OBJ Block");
+        objTabStops = new TabStops(group);
+        objTabStops.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        ((GridData) objTabStops.getLayoutData()).widthHint = convertWidthInCharsToPixels(35);
+        objTabStops.setSelection(preferences.getTabStops(ObjectsNode.class));
+
+        label = new Label(group, SWT.NONE);
+        label.setText("PUB / PRI Block");
+        pubTabStops = new TabStops(group);
+        pubTabStops.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        ((GridData) pubTabStops.getLayoutData()).widthHint = convertWidthInCharsToPixels(35);
+        pubTabStops.setSelection(preferences.getTabStops(MethodNode.class));
+
+        label = new Label(group, SWT.NONE);
+        label.setText("DAT Block");
+        datTabStops = new TabStops(group);
+        datTabStops.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        ((GridData) datTabStops.getLayoutData()).widthHint = convertWidthInCharsToPixels(35);
+        datTabStops.setSelection(preferences.getTabStops(DataNode.class));
     }
 
     void createTerminalPage(Composite parent) {
@@ -671,6 +780,13 @@ public class PreferencesDialog extends Dialog {
     protected void okPressed() {
         preferences.setShowBrowser(showBrowser.getSelection());
         preferences.setRoots(roots.getItems());
+
+        preferences.setTabStops(ConstantsNode.class, conTabStops.getSelection());
+        preferences.setTabStops(VariablesNode.class, varTabStops.getSelection());
+        preferences.setTabStops(ObjectsNode.class, objTabStops.getSelection());
+        preferences.setTabStops(MethodNode.class, pubTabStops.getSelection());
+        preferences.setTabStops(DataNode.class, datTabStops.getSelection());
+
         preferences.setSpin1LibraryPath(spin1Paths.getFileItems());
         preferences.setSpin2LibraryPath(spin2Paths.getFileItems());
         super.okPressed();

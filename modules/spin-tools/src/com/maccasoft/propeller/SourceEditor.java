@@ -1598,8 +1598,13 @@ public class SourceEditor {
         if (indentColumn < leftText.length()) {
             String trimmedText = leftText.substring(indentColumn).toUpperCase();
             if (startsWithBlock(trimmedText)) {
+                Node node = tokenMarker.getContextAtLine(lineNumber);
+                while (node.getParent() != null && node.getParent().getParent() != null) {
+                    node = node.getParent();
+                }
+
                 boolean tabstopMatch = false;
-                int[] tabStops = Preferences.getInstance().getTabStops();
+                int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
 
                 indentColumn++;
                 for (int i = 0; i < tabStops.length; i++) {
@@ -1650,19 +1655,13 @@ public class SourceEditor {
         int lineStart = styledText.getOffsetAtLine(lineNumber);
         int currentColumn = caretOffset - lineStart;
 
-        String lineText = styledText.getLine(lineNumber);
-        if (lineText.substring(0, currentColumn).trim().equals("")) {
-            if (currentColumn < lineText.length() && Character.isWhitespace(lineText.charAt(currentColumn))) {
-                do {
-                    currentColumn++;
-                } while (currentColumn < lineText.length() && Character.isWhitespace(lineText.charAt(currentColumn)));
-                styledText.setCaretOffset(lineStart + currentColumn);
-                return;
-            }
+        Node node = tokenMarker.getContextAtLine(lineNumber);
+        while (node.getParent() != null && node.getParent().getParent() != null) {
+            node = node.getParent();
         }
 
         boolean tabstopMatch = false;
-        int[] tabStops = Preferences.getInstance().getTabStops();
+        int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
 
         int nextTabColumn = currentColumn + 1;
         for (int i = 0; i < tabStops.length; i++) {
@@ -1707,7 +1706,12 @@ public class SourceEditor {
             return;
         }
 
-        int[] tabStops = Preferences.getInstance().getTabStops();
+        Node node = tokenMarker.getContextAtLine(lineNumber);
+        while (node.getParent() != null && node.getParent().getParent() != null) {
+            node = node.getParent();
+        }
+
+        int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
         int previousTabColumn = 0;
         for (int i = 0; i < tabStops.length; i++) {
             if (tabStops[i] >= currentColumn) {
