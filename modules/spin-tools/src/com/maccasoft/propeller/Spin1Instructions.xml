@@ -37,7 +37,7 @@
         <entry name="PI"><![CDATA[<b>PI</b><p>Floating-point value for PI: ~3.141593 ($40490FDB)</p>]]></entry>
     </section>
 
-    <section class="StatementNode">
+    <section class="MethodNode,StatementNode">
         <entry name="abort"><![CDATA[<b>ABORT &lt;Value&gt;</b><p>Exit from PUB / PRI method using abort status with optional return Value.</p>]]></entry>
         <entry name="if"></entry>
         <entry name="ifnot"></entry>
@@ -46,29 +46,42 @@
         <entry name="else"></entry>
         <entry name="case"><![CDATA[<b>CASE CaseExpression</b><p>Compare expression against matching expression(s) and execute code block if match found.</p>]]></entry>
         <entry name="other"></entry>
-        <entry name="repeat"><![CDATA[<b>REPEAT</b><p>All looping is achieved through REPEAT constructs, which have several forms:</p>
-<b>REPEAT</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+        <entry name="repeat"><![CDATA[<code><b>REPEAT</b></code>
 
-<b>REPEAT &lt;count&gt;</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+<p>All looping is achieved through REPEAT constructs, which have several forms:</p>
+<pre>
+<code><b>REPEAT</b>
+    &lt;indented code&gt;</code>
 
-<b>REPEAT &lt;variable&gt; FROM &lt;first&gt; TO &lt;last&gt;</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+<code><b>REPEAT &lt;count&gt;</b>
+    &lt;indented code&gt;</code>
 
-<b>REPEAT WHILE &lt;condition&gt;</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+<code><b>REPEAT &lt;variable> FROM &lt;first&gt; TO &lt;last&gt;</b>
+    &lt;indented code&gt;</code>
 
-<b>REPEAT UNTIL &lt;condition&gt;</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/><br/>
+<code><b>REPEAT WHILE &lt;condition></b>
+    &lt;indented code&gt;</code>
 
-<b>REPEAT</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/>
-<b>WHILE &lt;condition&gt;</b><br/><br/>
+<code><b>REPEAT UNTIL &lt;condition></b>
+    &lt;indented code&gt;</code>
 
-<b>REPEAT</b><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&lt;indented code&gt;<br/>
-<b>UNTIL &lt;condition&gt;</b><br/><br/>
+<code><b>REPEAT</b>
+    &lt;indented code&gt;
+<b>WHILE &lt;condition&gt;</b></code>
+
+<code><b>REPEAT</b>
+    &lt;indented code&gt;
+<b>UNTIL &lt;condition&gt;</b></code>
+
+<code><b>REPEAT</b>
+    &lt;indented code&gt;
+    <b>IF</b> &lt;condition&gt;</code>
+<code>        <b>NEXT</b>
+    &lt;indented code&gt;
+    <b>IF</b> &lt;condition&gt;</code>
+<code>        <b>QUIT</b>
+    &lt;indented code&gt;</code>
+</pre>
 ]]></entry>
         <entry name="from"></entry>
         <entry name="to"></entry>

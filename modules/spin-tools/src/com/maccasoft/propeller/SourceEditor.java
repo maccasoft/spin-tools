@@ -1797,7 +1797,7 @@ public class SourceEditor {
                 }
             }
             else if (node != null) {
-                if (node instanceof StatementNode) {
+                if ((node instanceof StatementNode) || (node instanceof MethodNode)) {
                     proposals.addAll(tokenMarker.getMethodProposals(node, token));
                 }
                 else {

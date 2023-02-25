@@ -264,7 +264,7 @@
         <entry name="addpins"><![CDATA[<b>x ADDPINS y</b><p>Make pinfield, (x &amp; $3F) | (y &amp; $1F) &lt;&lt; 6</p>]]></entry>
     </section>
 
-    <section class="StatementNode">
+    <section class="MethodNode,StatementNode">
         <entry name="abort"></entry>
         <entry name="send"></entry>
         <entry name="recv"></entry>
@@ -278,8 +278,8 @@
         <entry name="other"></entry>
         <entry name="repeat"><![CDATA[<code><b>REPEAT</b></code>
 
-All looping is achieved through REPEAT constructs, which have several forms:
-
+<p>All looping is achieved through REPEAT constructs, which have several forms:</p>
+<pre>
 <code><b>REPEAT</b>
     &lt;indented code&gt;</code>
 
@@ -311,6 +311,7 @@ All looping is achieved through REPEAT constructs, which have several forms:
     <b>IF</b> &lt;condition&gt;</code>
 <code>        <b>QUIT</b>
     &lt;indented code&gt;</code>
+</pre>
 ]]></entry>
         <entry name="from"></entry>
         <entry name="to"></entry>
@@ -399,7 +400,9 @@ All looping is achieved through REPEAT constructs, which have several forms:
         <entry name="lookupz" insert="lookupz(index: v1, v2..v3, etc)"><![CDATA[<b>LOOKUPZ(Index: v1, v2..v3, etc) : Value</b><br/><br/>Lookup value (values and ranges allowed) using 0-based index, return value (0 if index out of range)]]></entry>
         <entry name="lookdown" insert="lookdown(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWN(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 1-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
         <entry name="lookdownz" insert="lookdownz(value: v1, v2..v3, etc)"><![CDATA[<b>LOOKDOWNZ(Value: v1, v2..v3, etc) : Index</b><br/><br/>Determine 0-based index of matching value (values and ranges allowed), return index (0 if no match)]]></entry>
+    </section>
 
+    <section class="StatementNode">
         <entry name="COGEXEC"><![CDATA[<b>COGEXEC</b><p>Use "COGEXEC + CogNumber" to start a cog in cogexec mode</p>]]></entry>
         <entry name="HUBEXEC"><![CDATA[<b>HUBEXEC</b><p>Use "HUBEXEC + CogNumber" to start a cog in hubexec mode</p>]]></entry>
         <entry name="COGEXEC_NEW"><![CDATA[<b>COGEXEC_NEW</b><p>Starts an available cog in cogexec mode</p>]]></entry>
