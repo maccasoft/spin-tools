@@ -10,8 +10,6 @@
 
 package com.maccasoft.propeller.spin1;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -245,7 +243,7 @@ public class Spin1TreeBuilder {
             return node;
         }
 
-        if (token.type == 0) {
+        if (token.type == 0 || token.type == Token.FUNCTION) {
             Spin1StatementNode node = new Spin1StatementNode(next());
             if (peek() != null) {
                 if (".".equals(peek().getText())) {
@@ -344,55 +342,6 @@ public class Spin1TreeBuilder {
             return tokens.get(index++);
         }
         return null;
-    }
-
-    public static void main(String[] args) {
-        String text;
-
-        text = "o[0].start(a, b) > 1";
-        System.out.println(text);
-        System.out.println(parse(text));
-    }
-
-    static String parse(String text) {
-        Spin1TreeBuilder builder = new Spin1TreeBuilder();
-
-        Spin1TokenStream stream = new Spin1TokenStream(text);
-        while (true) {
-            Token token = stream.nextToken();
-            if (token.type == Token.EOF) {
-                break;
-            }
-            if (".".equals(token.getText())) {
-                Token nextToken = stream.peekNext();
-                if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
-                    token = token.merge(stream.nextToken());
-                }
-            }
-            builder.tokens.add(token);
-        }
-
-        Spin1StatementNode root = builder.getRoot();
-
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        print(new PrintStream(os), root, 0);
-        return os.toString();
-    }
-
-    static void print(PrintStream out, Spin1StatementNode node, int indent) {
-        if (indent != 0) {
-            for (int i = 1; i < indent; i++) {
-                out.print("     ");
-            }
-            out.print(" +-- ");
-        }
-
-        out.print("[" + node.getText().replaceAll("\n", "\\\\n") + "]");
-        out.println();
-
-        for (Spin1StatementNode child : node.getChilds()) {
-            print(out, child, indent + 1);
-        }
     }
 
 }
