@@ -67,9 +67,6 @@ public class ObjectTree {
         }
 
         sb.append(name);
-        sb.append(" (");
-        sb.append(file.getAbsolutePath());
-        sb.append(")");
         sb.append(System.lineSeparator());
 
         for (ObjectTree child : childs) {
