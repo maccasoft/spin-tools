@@ -2462,16 +2462,21 @@ public class Spin2ObjectCompiler {
                     source.add(new Bytecode(context, 0x79, "NEGATE"));
                 }
             }
+            else if ("-=".equalsIgnoreCase(node.getText()) && node.getChildCount() == 1) {
+                source.addAll(leftAssign(context, node.getChild(0), true, false));
+                if (push) {
+                    source.add(new Bytecode(context, 0xB9, "NEGATE_ASSIGN (push)"));
+                }
+                else {
+                    source.add(new Bytecode(context, 0x92, "NEGATE_ASSIGN"));
+                }
+            }
             else if (":=".equals(node.getText())) {
                 if (node.getChildCount() != 2) {
                     throw new RuntimeException("expression syntax error");
                 }
                 source.addAll(compileConstantExpression(context, node.getChild(1)));
                 source.addAll(leftAssign(context, node.getChild(0), push, push));
-            }
-            else if ("-=".equalsIgnoreCase(node.getText()) && node.getChildCount() == 1) {
-                source.addAll(leftAssign(context, node.getChild(0), true, false));
-                source.add(new Bytecode(context, 0x92, "NEGATE_ASSIGN"));
             }
             else if (MathOp.isAssignMathOp(node.getText()) && node.getChildCount() == 1) {
                 source.addAll(leftAssign(context, node.getChild(0), true, false));

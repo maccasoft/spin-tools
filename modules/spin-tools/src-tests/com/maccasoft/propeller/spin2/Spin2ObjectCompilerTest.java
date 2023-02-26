@@ -5560,6 +5560,42 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testUnary() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    -= b\n"
+            + "    != b\n"
+            + "    a := -= b\n"
+            + "    a := != b\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       14 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "00008 00008       08             (stack size)\n"
+            + "'     -= b\n"
+            + "00009 00009       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "0000A 0000A       92             NEGATE_ASSIGN\n"
+            + "'     != b\n"
+            + "0000B 0000B       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "0000C 0000C       91             BITNOT_ASSIGN\n"
+            + "'     a := -= b\n"
+            + "0000D 0000D       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "0000E 0000E       B9             NEGATE_ASSIGN (push)\n"
+            + "0000F 0000F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := != b\n"
+            + "00010 00010       D1             VAR_SETUP LONG DBASE+$00001 (short)\n"
+            + "00011 00011       B8             BITNOT_ASSIGN (push)\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00013 00013       04             RETURN\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

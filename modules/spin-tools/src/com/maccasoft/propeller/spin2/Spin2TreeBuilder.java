@@ -156,6 +156,7 @@ public class Spin2TreeBuilder {
     static {
         unary.add("+");
         unary.add("-");
+        unary.add("-=");
         unary.add("++");
         unary.add("--");
         unary.add("??");
