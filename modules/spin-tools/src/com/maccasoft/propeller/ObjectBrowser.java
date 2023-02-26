@@ -10,18 +10,21 @@
 
 package com.maccasoft.propeller;
 
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.TreeItem;
 
 import com.maccasoft.propeller.internal.ImageRegistry;
 
@@ -80,20 +83,45 @@ public class ObjectBrowser {
             }
 
         });
-        viewer.setUseHashlookup(true);
+        viewer.getTree().addMouseMoveListener(new MouseMoveListener() {
 
-        viewer.addDoubleClickListener(new IDoubleClickListener() {
+            TreeItem lastItem;
 
             @Override
-            public void doubleClick(DoubleClickEvent event) {
+            public void mouseMove(MouseEvent e) {
+                TreeItem item = viewer.getTree().getItem(new Point(e.x, e.y));
+                if (item == lastItem) {
+                    return;
+                }
+                if (item != null && (item.getData() instanceof ObjectTree)) {
+                    viewer.getTree().setToolTipText(((ObjectTree) item.getData()).getFile().getAbsolutePath());
+                }
+                else {
+                    viewer.getTree().setToolTipText(null);
+                }
+                lastItem = item;
+            }
+
+        });
+        viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+
+            @Override
+            public void selectionChanged(SelectionChangedEvent event) {
                 IStructuredSelection selection = (IStructuredSelection) event.getSelection();
                 if (selection.isEmpty()) {
                     return;
                 }
-                // TODO
+                ObjectTree object = (ObjectTree) selection.getFirstElement();
+                if (object != null) {
+                    viewer.getTree().setToolTipText(object.getFile().getAbsolutePath());
+                }
+                else {
+                    viewer.getTree().setToolTipText(null);
+                }
             }
 
         });
+        viewer.setUseHashlookup(true);
     }
 
     public void addSelectionChangedListener(ISelectionChangedListener l) {
