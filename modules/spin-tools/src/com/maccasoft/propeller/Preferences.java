@@ -42,6 +42,7 @@ public class Preferences {
     public static final String PROP_EDITOR_FONT = "editorFont";
     public static final String PROP_SHOW_INDENT_LINES = "showIndentLines";
     public static final String PROP_INDENT_LINES_SIZE = "showLinesSize";
+    public static final String PROP_SHOW_SECTIONS_BACKGROUND = "showSectionsBackground";
     public static final String PROP_SHOW_EDITOR_OUTLINE = "showEditorOutline";
     public static final String PROP_LRU = "lru";
     public static final String PROP_PORT = "port";
@@ -131,6 +132,7 @@ public class Preferences {
         public boolean showLineNumbers;
         public String editorFont;
         public boolean showIndentLines;
+        public Boolean showSectionsBackground;
         public int indentLinesSize;
         public boolean showEditorOutline;
         public String port;
@@ -321,6 +323,16 @@ public class Preferences {
 
     public void setIndentLinesSize(int indentLinesSize) {
         changeSupport.firePropertyChange(PROP_INDENT_LINES_SIZE, preferences.indentLinesSize, preferences.indentLinesSize = indentLinesSize);
+    }
+
+    public boolean getShowSectionsBackground() {
+        return preferences.showSectionsBackground != null ? preferences.showSectionsBackground : true;
+    }
+
+    public void setShowSectionsBackground(boolean showSectionsBackground) {
+        boolean oldValue = getShowSectionsBackground();
+        preferences.showSectionsBackground = showSectionsBackground ? null : showSectionsBackground;
+        changeSupport.firePropertyChange(PROP_SHOW_SECTIONS_BACKGROUND, oldValue, showSectionsBackground);
     }
 
     public boolean getShowEditorOutline() {

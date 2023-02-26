@@ -71,6 +71,7 @@ public class PreferencesDialog extends Dialog {
     TabStops objTabStops;
     TabStops pubTabStops;
     TabStops datTabStops;
+    Button showSectionsBackground;
 
     PathList spin1Paths;
     Button spin1CaseSensitive;
@@ -93,6 +94,7 @@ public class PreferencesDialog extends Dialog {
     String oldEditorFont;
     boolean oldShowLineNumbers;
     boolean oldShowIndentLines;
+    boolean oldShowSectionsBackground;
     boolean oldShowEditorOutline;
     boolean oldSpin1CaseSensitive;
     boolean oldSpin2CaseSensitive;
@@ -349,6 +351,7 @@ public class PreferencesDialog extends Dialog {
         oldShowLineNumbers = preferences.getShowLineNumbers();
         oldShowIndentLines = preferences.getShowIndentLines();
         oldShowEditorOutline = preferences.getShowEditorOutline();
+        oldShowSectionsBackground = preferences.getShowSectionsBackground();
         oldSpin1CaseSensitive = preferences.getSpin1CaseSensitiveSymbols();
         oldSpin2CaseSensitive = preferences.getSpin2CaseSensitiveSymbols();
         oldTerminalFont = preferences.getTerminalFont();
@@ -623,6 +626,19 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
+        new Label(composite, SWT.NONE);
+
+        showSectionsBackground = new Button(composite, SWT.CHECK);
+        showSectionsBackground.setText("Show sections background");
+        showSectionsBackground.setSelection(preferences.getShowSectionsBackground());
+        showSectionsBackground.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setShowSectionsBackground(showSectionsBackground.getSelection());
+            }
+        });
+
         Group group = new Group(composite, SWT.NONE);
         group.setText("Tab stops");
         group.setLayout(new GridLayout(2, false));
@@ -784,15 +800,20 @@ public class PreferencesDialog extends Dialog {
     protected void cancelPressed() {
         preferences.setShowObjectBrowser(oldShowObjectBrowser);
         preferences.setShowBrowser(oldShowBrowser);
+
         preferences.setEditorFont(oldEditorFont);
         preferences.setShowLineNumbers(oldShowLineNumbers);
         preferences.setShowIndentLines(oldShowIndentLines);
         preferences.setShowEditorOutline(oldShowEditorOutline);
+        preferences.setShowSectionsBackground(oldShowSectionsBackground);
+
         preferences.setSpin1CaseSensitiveSymbols(oldSpin1CaseSensitive);
         preferences.setSpin2CaseSensitiveSymbols(oldSpin2CaseSensitive);
+
         preferences.setTerminalFont(oldTerminalFont);
         preferences.setTerminalLineInput(oldTerminalLineInput);
         preferences.setTerminalLocalEcho(oldTerminalLocalEcho);
+
         super.cancelPressed();
     }
 
@@ -808,6 +829,7 @@ public class PreferencesDialog extends Dialog {
 
         preferences.setSpin1LibraryPath(spin1Paths.getFileItems());
         preferences.setSpin2LibraryPath(spin2Paths.getFileItems());
+
         super.okPressed();
     }
 }

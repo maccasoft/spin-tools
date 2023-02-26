@@ -341,6 +341,9 @@ public class SourceEditor {
                     outline.setVisible((Boolean) evt.getNewValue());
                     sashForm.layout(true);
                     break;
+                case Preferences.PROP_SHOW_SECTIONS_BACKGROUND:
+                    styledText.redraw();
+                    break;
             }
         }
     };
@@ -613,7 +616,9 @@ public class SourceEditor {
 
             @Override
             public void lineGetBackground(LineBackgroundEvent event) {
-                event.lineBackground = getLineBackground(tokenMarker.getRoot(), event.lineOffset);
+                if (preferences.getShowSectionsBackground()) {
+                    event.lineBackground = getLineBackground(tokenMarker.getRoot(), event.lineOffset);
+                }
                 if (styledText.getLineAtOffset(event.lineOffset) == currentLine) {
                     if (event.lineBackground != null) {
                         event.lineBackground = ColorRegistry.getDimColor(event.lineBackground, -6);
