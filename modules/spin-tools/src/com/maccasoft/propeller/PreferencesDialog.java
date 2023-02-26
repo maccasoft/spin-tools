@@ -88,6 +88,8 @@ public class PreferencesDialog extends Dialog {
     FontData defaultFont;
     Font fontBold;
 
+    boolean oldShowObjectBrowser;
+    boolean oldShowBrowser;
     String oldEditorFont;
     boolean oldShowLineNumbers;
     boolean oldShowIndentLines;
@@ -341,6 +343,8 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
+        oldShowObjectBrowser = preferences.getShowObjectBrowser();
+        oldShowBrowser = preferences.getShowBrowser();
         oldEditorFont = preferences.getEditorFont();
         oldShowLineNumbers = preferences.getShowLineNumbers();
         oldShowIndentLines = preferences.getShowIndentLines();
@@ -778,6 +782,8 @@ public class PreferencesDialog extends Dialog {
 
     @Override
     protected void cancelPressed() {
+        preferences.setShowObjectBrowser(oldShowObjectBrowser);
+        preferences.setShowBrowser(oldShowBrowser);
         preferences.setEditorFont(oldEditorFont);
         preferences.setShowLineNumbers(oldShowLineNumbers);
         preferences.setShowIndentLines(oldShowIndentLines);
@@ -792,7 +798,6 @@ public class PreferencesDialog extends Dialog {
 
     @Override
     protected void okPressed() {
-        preferences.setShowBrowser(showBrowser.getSelection());
         preferences.setRoots(roots.getItems());
 
         preferences.setTabStops(ConstantsNode.class, conTabStops.getSelection());

@@ -36,8 +36,8 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
@@ -883,18 +883,6 @@ public class SerialTerminal {
         shell.pack();
         shell.open();
 
-        shell.addControlListener(new ControlAdapter() {
-
-            @Override
-            public void controlMoved(ControlEvent e) {
-                Point size = canvas.getSize();
-                Rectangle rect = shell.getBounds();
-                rect.width = size.x / characterWidth;
-                rect.height = size.y / characterHeight;
-                preferences.setTerminalWindow(rect);
-            }
-
-        });
         shell.addShellListener(new ShellAdapter() {
 
             @Override
@@ -953,6 +941,18 @@ public class SerialTerminal {
         background = ColorRegistry.getColor(paletteData.getRGB(0));
         canvas.setBackground(background);
 
+        canvas.addDisposeListener(new DisposeListener() {
+
+            @Override
+            public void widgetDisposed(DisposeEvent e) {
+                Rectangle rect = shell.getBounds();
+                rect.width = screenWidth;
+                rect.height = screenHeight;
+                preferences.setTerminalWindow(rect);
+            }
+
+        });
+
         canvas.addControlListener(new ControlAdapter() {
 
             @Override
@@ -982,11 +982,6 @@ public class SerialTerminal {
                     }
                     y++;
                 }
-
-                Rectangle rect = shell.getBounds();
-                rect.width = width;
-                rect.height = height;
-                preferences.setTerminalWindow(rect);
 
                 screenWidth = width;
                 screenHeight = height;
@@ -1050,7 +1045,7 @@ public class SerialTerminal {
                     e.gc.fillRectangle(Math.min(cx, screenWidth - 1) * characterWidth, y, characterWidth, h);
                 }
 
-                if (selectionRectangle != null) {
+                if (selectionRectangle != null && selectionRectangle.width != 0 && selectionRectangle.height != 0) {
                     int x = selectionRectangle.x * characterWidth;
                     int y = selectionRectangle.y * characterHeight;
                     int width = selectionRectangle.width * characterWidth - 1;
@@ -1065,11 +1060,11 @@ public class SerialTerminal {
             }
         });
 
-        canvas.addMouseListener(new MouseListener() {
+        canvas.addMouseListener(new MouseAdapter() {
 
             @Override
             public void mouseUp(MouseEvent e) {
-                if (selectionRectangle != null) {
+                if (selectionRectangle != null && selectionRectangle.width != 0 && selectionRectangle.height != 0) {
                     StringBuilder text = new StringBuilder();
                     for (int y = selectionRectangle.y; y < selectionRectangle.y + selectionRectangle.height; y++) {
                         StringBuilder line = new StringBuilder();
@@ -1080,6 +1075,9 @@ public class SerialTerminal {
                             text.append(System.lineSeparator());
                         }
                         text.append(line.toString().replaceFirst("\\s++$", ""));
+                    }
+                    if (text.length() == 0) {
+                        text.append(" ");
                     }
 
                     ImageData imageData = new ImageData(selectionRectangle.width * characterWidth, selectionRectangle.height * characterHeight, 24, new PaletteData(0xff0000, 0x00ff00, 0x0000ff));
@@ -1130,14 +1128,10 @@ public class SerialTerminal {
             public void mouseDown(MouseEvent e) {
                 int cx = Math.min(e.x / characterWidth, screenWidth - 1);
                 int cy = Math.min(e.y / characterHeight, screenHeight - 1);
-                selectionRectangle = new Rectangle(cx, cy, 1, 1);
+                selectionRectangle = new Rectangle(cx, cy, 0, 0);
                 canvas.redraw();
             }
 
-            @Override
-            public void mouseDoubleClick(MouseEvent e) {
-
-            }
         });
 
         canvas.addMouseMoveListener(new MouseMoveListener() {

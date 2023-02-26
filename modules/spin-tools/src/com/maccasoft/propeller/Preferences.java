@@ -116,7 +116,8 @@ public class Preferences {
             showIndentLines = true;
             showEditorOutline = true;
             reloadOpenTabs = true;
-            terminalBaudRate = 115200;
+
+            terminal = new TerminalPreferences();
         }
 
         public Bounds window;
@@ -145,15 +146,24 @@ public class Preferences {
         public String[] openTabs;
         public String lastPath;
 
-        public Bounds terminalWindow;
-        public boolean terminalLineInput;
-        public boolean terminalLocalEcho;
-        public String[] terminalHistory;
-        public int terminalType;
-        public String terminalFont;
-        public int terminalBaudRate;
+        public TerminalPreferences terminal;
 
         public SearchPreferences search;
+
+    }
+
+    public static class TerminalPreferences {
+        public TerminalPreferences() {
+            baudRate = 115200;
+        }
+
+        public Bounds window;
+        public boolean lineInput;
+        public boolean localEcho;
+        public String[] history;
+        public int type;
+        public String font;
+        public int baudRate;
 
     }
 
@@ -482,64 +492,64 @@ public class Preferences {
     }
 
     public Rectangle getTerminalWindow() {
-        if (preferences.terminalWindow == null) {
+        if (preferences.terminal.window == null) {
             return null;
         }
-        return new Rectangle(preferences.terminalWindow.x, preferences.terminalWindow.y, preferences.terminalWindow.width, preferences.terminalWindow.height);
+        return new Rectangle(preferences.terminal.window.x, preferences.terminal.window.y, preferences.terminal.window.width, preferences.terminal.window.height);
     }
 
     public void setTerminalWindow(Rectangle rect) {
-        preferences.terminalWindow = new Bounds(rect.x, rect.y, rect.width, rect.height);
+        preferences.terminal.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
     }
 
     public boolean getTerminalLineInput() {
-        return preferences.terminalLineInput;
+        return preferences.terminal.lineInput;
     }
 
     public void setTerminalLineInput(boolean terminalLineInput) {
-        changeSupport.firePropertyChange(PROP_TERMINAL_LINE_INPUT, preferences.terminalLineInput, preferences.terminalLineInput = terminalLineInput);
+        changeSupport.firePropertyChange(PROP_TERMINAL_LINE_INPUT, preferences.terminal.lineInput, preferences.terminal.lineInput = terminalLineInput);
     }
 
     public String[] getTerminalHistory() {
-        return preferences.terminalHistory;
+        return preferences.terminal.history;
     }
 
     public void setTerminalHistory(String[] terminalHistory) {
-        preferences.terminalHistory = terminalHistory;
+        preferences.terminal.history = terminalHistory;
     }
 
     public void setTerminalType(int n) {
-        preferences.terminalType = n;
+        preferences.terminal.type = n;
     }
 
     public int getTerminalType() {
-        return preferences.terminalType;
+        return preferences.terminal.type;
     }
 
     public String getTerminalFont() {
-        return preferences.terminalFont;
+        return preferences.terminal.font;
     }
 
     public void setTerminalFont(String terminalFont) {
-        if (preferences.terminalFont != terminalFont) {
-            changeSupport.firePropertyChange(PROP_TERMINAL_FONT, preferences.terminalFont, preferences.terminalFont = terminalFont);
+        if (preferences.terminal.font != terminalFont) {
+            changeSupport.firePropertyChange(PROP_TERMINAL_FONT, preferences.terminal.font, preferences.terminal.font = terminalFont);
         }
     }
 
     public int getTerminalBaudRate() {
-        return preferences.terminalBaudRate;
+        return preferences.terminal.baudRate;
     }
 
     public void setTerminalBaudRate(int terminalBaudRate) {
-        preferences.terminalBaudRate = terminalBaudRate;
+        preferences.terminal.baudRate = terminalBaudRate;
     }
 
     public boolean getTerminalLocalEcho() {
-        return preferences.terminalLocalEcho;
+        return preferences.terminal.localEcho;
     }
 
     public void setTerminalLocalEcho(boolean terminalLocalEcho) {
-        changeSupport.firePropertyChange(PROP_TERMINAL_LOCAL_ECHO, preferences.terminalLocalEcho, preferences.terminalLocalEcho = terminalLocalEcho);
+        changeSupport.firePropertyChange(PROP_TERMINAL_LOCAL_ECHO, preferences.terminal.localEcho, preferences.terminal.localEcho = terminalLocalEcho);
     }
 
     public SearchPreferences getSearchPreferences() {

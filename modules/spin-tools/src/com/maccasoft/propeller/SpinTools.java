@@ -278,6 +278,7 @@ public class SpinTools {
         browserSashForm.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         objectBrowser = new ObjectBrowser(browserSashForm);
+        objectBrowser.setVisible(preferences.getShowObjectBrowser());
 
         fileBrowser = new FileBrowser(browserSashForm);
         fileBrowser.setVisible(preferences.getShowBrowser());

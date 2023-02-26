@@ -51,10 +51,12 @@ class PreferencesTest {
             + "  \"spin1CaseSensitiveSymbols\" : false,\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalLineInput\" : false,\n"
-            + "  \"terminalLocalEcho\" : false,\n"
-            + "  \"terminalType\" : 0,\n"
-            + "  \"terminalBaudRate\" : 115200\n"
+            + "  \"terminal\" : {\n"
+            + "    \"lineInput\" : false,\n"
+            + "    \"localEcho\" : false,\n"
+            + "    \"type\" : 0,\n"
+            + "    \"baudRate\" : 115200\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -83,10 +85,12 @@ class PreferencesTest {
             + "  \"spin1CaseSensitiveSymbols\" : false,\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalLineInput\" : false,\n"
-            + "  \"terminalLocalEcho\" : false,\n"
-            + "  \"terminalType\" : 0,\n"
-            + "  \"terminalBaudRate\" : 115200\n"
+            + "  \"terminal\" : {\n"
+            + "    \"lineInput\" : false,\n"
+            + "    \"localEcho\" : false,\n"
+            + "    \"type\" : 0,\n"
+            + "    \"baudRate\" : 115200\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -149,10 +153,12 @@ class PreferencesTest {
             + "  \"spin1CaseSensitiveSymbols\" : false,\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalLineInput\" : false,\n"
-            + "  \"terminalLocalEcho\" : false,\n"
-            + "  \"terminalType\" : 0,\n"
-            + "  \"terminalBaudRate\" : 115200\n"
+            + "  \"terminal\" : {\n"
+            + "    \"lineInput\" : false,\n"
+            + "    \"localEcho\" : false,\n"
+            + "    \"type\" : 0,\n"
+            + "    \"baudRate\" : 115200\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -182,10 +188,12 @@ class PreferencesTest {
             + "  \"spin1CaseSensitiveSymbols\" : false,\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalLineInput\" : false,\n"
-            + "  \"terminalLocalEcho\" : false,\n"
-            + "  \"terminalType\" : 0,\n"
-            + "  \"terminalBaudRate\" : 115200\n"
+            + "  \"terminal\" : {\n"
+            + "    \"lineInput\" : false,\n"
+            + "    \"localEcho\" : false,\n"
+            + "    \"type\" : 0,\n"
+            + "    \"baudRate\" : 115200\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -214,10 +222,12 @@ class PreferencesTest {
             + "  \"spin2LibraryPath\" : [ \"" + new File("spin2/path").getAbsolutePath() + "\" ],\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalLineInput\" : false,\n"
-            + "  \"terminalLocalEcho\" : false,\n"
-            + "  \"terminalType\" : 0,\n"
-            + "  \"terminalBaudRate\" : 115200\n"
+            + "  \"terminal\" : {\n"
+            + "    \"lineInput\" : false,\n"
+            + "    \"localEcho\" : false,\n"
+            + "    \"type\" : 0,\n"
+            + "    \"baudRate\" : 115200\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -243,10 +253,12 @@ class PreferencesTest {
             + "  \"spin1CaseSensitiveSymbols\" : false,\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalLineInput\" : false,\n"
-            + "  \"terminalLocalEcho\" : false,\n"
-            + "  \"terminalType\" : 0,\n"
-            + "  \"terminalBaudRate\" : 115200\n"
+            + "  \"terminal\" : {\n"
+            + "    \"lineInput\" : false,\n"
+            + "    \"localEcho\" : false,\n"
+            + "    \"type\" : 0,\n"
+            + "    \"baudRate\" : 115200\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -276,10 +288,12 @@ class PreferencesTest {
             + "  \"spin2LibraryPath\" : [ \"" + new File("spin2/path").getAbsolutePath() + "\", null ],\n"
             + "  \"spin2CaseSensitiveSymbols\" : false,\n"
             + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminalLineInput\" : false,\n"
-            + "  \"terminalLocalEcho\" : false,\n"
-            + "  \"terminalType\" : 0,\n"
-            + "  \"terminalBaudRate\" : 115200\n"
+            + "  \"terminal\" : {\n"
+            + "    \"lineInput\" : false,\n"
+            + "    \"localEcho\" : false,\n"
+            + "    \"type\" : 0,\n"
+            + "    \"baudRate\" : 115200\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -353,10 +367,12 @@ class PreferencesTest {
             + "  \"sectionTabStops\" : {\n"
             + "    \"pub\" : [ 8, 16 ]\n"
             + "  },\n"
-            + "  \"terminalLineInput\" : false,\n"
-            + "  \"terminalLocalEcho\" : false,\n"
-            + "  \"terminalType\" : 0,\n"
-            + "  \"terminalBaudRate\" : 115200\n"
+            + "  \"terminal\" : {\n"
+            + "    \"lineInput\" : false,\n"
+            + "    \"localEcho\" : false,\n"
+            + "    \"type\" : 0,\n"
+            + "    \"baudRate\" : 115200\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
