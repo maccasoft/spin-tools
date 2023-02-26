@@ -297,7 +297,7 @@ class Spin2LibraryTest {
         Node root = subject.parse();
 
         Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(source.getParentFile());
-        Spin2Object obj = compiler.compile(source.getName(), root);
+        Spin2Object obj = compiler.compile(source, source.getName(), root);
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {
                 throw msg;

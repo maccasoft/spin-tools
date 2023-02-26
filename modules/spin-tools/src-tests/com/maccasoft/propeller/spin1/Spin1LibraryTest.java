@@ -379,7 +379,7 @@ class Spin1LibraryTest {
 
         Spin1CompilerAdapter compiler = new Spin1CompilerAdapter(source.getParentFile());
         compiler.setOpenspinCompatible(true);
-        Spin1Object obj = compiler.compile(source.getName(), root);
+        Spin1Object obj = compiler.compile(source, source.getName(), root);
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {
                 throw msg;

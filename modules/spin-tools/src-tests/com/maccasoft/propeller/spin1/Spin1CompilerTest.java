@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin1;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -1025,7 +1026,7 @@ class Spin1CompilerTest {
 
         Spin1Compiler compiler = new Spin1CompilerAdapter(sources);
         compiler.setRemoveUnusedMethods(removeUnused);
-        Spin1Object obj = compiler.compileObject(rootFile, root);
+        Spin1Object obj = compiler.compileObject(new File(rootFile), rootFile, root);
 
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

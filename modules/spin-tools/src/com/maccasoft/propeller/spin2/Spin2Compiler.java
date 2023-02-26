@@ -25,6 +25,7 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectTree;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.MethodNode;
@@ -47,8 +48,6 @@ public class Spin2Compiler extends Compiler {
 
     boolean removeUnusedMethods;
     Spin2Preprocessor preprocessor;
-
-    List<String> tree = new ArrayList<String>();
 
     Spin2Interpreter interpreter = new Spin2Interpreter();
 
@@ -78,7 +77,7 @@ public class Spin2Compiler extends Compiler {
         }
         Spin2TokenStream stream = new Spin2TokenStream(text);
         Spin2Parser parser = new Spin2Parser(stream);
-        Spin2Object object = compile(file.getName(), parser.parse());
+        Spin2Object object = compile(file, file.getName(), parser.parse());
 
         if (hasErrors()) {
             throw new CompilerException(messages);
@@ -93,8 +92,8 @@ public class Spin2Compiler extends Compiler {
     }
 
     @Override
-    public Spin2Object compile(String rootFileName, Node root) {
-        Spin2Object obj = compileObject(rootFileName, root);
+    public Spin2Object compile(File rootFile, String rootFileName, Node root) {
+        Spin2Object obj = compileObject(rootFile, rootFileName, root);
 
         for (Entry<String, Expression> entry : obj.getSymbols().entrySet()) {
             if (entry.getValue() instanceof Method) {
@@ -113,40 +112,26 @@ public class Spin2Compiler extends Compiler {
         return obj;
     }
 
-    class ObjectNodeVisitor extends NodeVisitor {
+    class ObjectTreeVisitor extends NodeVisitor {
 
-        ObjectNodeVisitor parent;
         String fileName;
+        ObjectTreeVisitor parent;
         ListOrderedMap<String, Node> list;
+        ObjectTree objectTree;
 
-        public ObjectNodeVisitor(String fileName, ListOrderedMap<String, Node> list) {
+        public ObjectTreeVisitor(File file, String fileName) {
             this.fileName = fileName;
-            this.list = list;
-            tree.add(fileName);
+            this.objectTree = new ObjectTree(file, fileName);
+            this.list = ListOrderedMap.listOrderedMap(new HashMap<>());
         }
 
-        public ObjectNodeVisitor(ObjectNodeVisitor parent, String fileName, ListOrderedMap<String, Node> list) {
+        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, String fileName, ListOrderedMap<String, Node> list) {
             this.parent = parent;
             this.fileName = fileName;
+            this.objectTree = new ObjectTree(file, fileName);
             this.list = list;
 
-            StringBuilder sb = new StringBuilder();
-
-            ObjectNodeVisitor o = parent.parent;
-            while (o != null) {
-                o = o.parent;
-                sb.append("    ");
-            }
-            for (int i = tree.size() - 1; i >= 0; i--) {
-                char[] s = tree.get(i).toCharArray();
-                if (s[sb.length()] != ' ') {
-                    break;
-                }
-                s[sb.length()] = '|';
-                tree.set(i, new String(s));
-            }
-            sb.append("+-- " + fileName);
-            tree.add(sb.toString());
+            parent.objectTree.add(objectTree);
         }
 
         @Override
@@ -154,16 +139,18 @@ public class Spin2Compiler extends Compiler {
             if (node.name == null || node.file == null) {
                 return;
             }
-            String objectName = node.file.getText().substring(1, node.file.getText().length() - 1);
-            String objectFileName = objectName + ".spin2";
 
-            ObjectNodeVisitor p = parent;
+            String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin2";
+
+            ObjectTreeVisitor p = parent;
             while (p != null) {
                 if (p.fileName.equals(objectFileName)) {
                     throw new CompilerException(fileName, "\"" + objectFileName + "\" illegal circular reference", node.file);
                 }
                 p = p.parent;
             }
+
+            File objectFile = getFile(objectFileName);
 
             Node objectRoot = list.get(objectFileName);
             if (objectRoot == null) {
@@ -177,7 +164,15 @@ public class Spin2Compiler extends Compiler {
             list.remove(objectFileName);
             list.put(0, objectFileName, objectRoot);
 
-            objectRoot.accept(new ObjectNodeVisitor(this, objectFileName, list));
+            objectRoot.accept(new ObjectTreeVisitor(this, objectFile, objectFileName, list));
+        }
+
+        public ListOrderedMap<String, Node> getList() {
+            return list;
+        }
+
+        public ObjectTree getObjectTree() {
+            return objectTree;
         }
 
     }
@@ -232,10 +227,13 @@ public class Spin2Compiler extends Compiler {
 
     }
 
-    public Spin2Object compileObject(String rootFileName, Node root) {
-        ListOrderedMap<String, Node> objects = ListOrderedMap.listOrderedMap(new HashMap<String, Node>());
+    Spin2Object compileObject(File rootFile, String rootFileName, Node root) {
+        ObjectTreeVisitor visitor = new ObjectTreeVisitor(rootFile, rootFileName);
 
-        root.accept(new ObjectNodeVisitor(rootFileName, objects));
+        root.accept(visitor);
+
+        tree = visitor.getObjectTree();
+        ListOrderedMap<String, Node> objects = visitor.getList();
 
         preprocessor = new Spin2Preprocessor(root, objects);
         preprocessor.collectReferencedMethods();
@@ -334,18 +332,6 @@ public class Spin2Compiler extends Compiler {
     @Override
     public List<CompilerException> getMessages() {
         return messages;
-    }
-
-    @Override
-    public String getObjectTree() {
-        StringBuilder sb = new StringBuilder();
-        tree.forEach((s) -> {
-            if (sb.length() > 0) {
-                sb.append(System.lineSeparator());
-            }
-            sb.append(s);
-        });
-        return sb.toString();
     }
 
 }

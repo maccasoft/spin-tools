@@ -13,6 +13,7 @@ package com.maccasoft.propeller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -61,6 +62,8 @@ import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class EditorTab implements FindReplaceTarget {
 
+    public static final String OBJECT_TREE = "objectTree";
+
     SourcePool sourcePool;
 
     File file;
@@ -69,6 +72,7 @@ public class EditorTab implements FindReplaceTarget {
 
     Font busyFont;
 
+    ObjectBrowser objectBrowser;
     SourceTokenMarker tokenMarker;
 
     String tabItemText;
@@ -83,7 +87,7 @@ public class EditorTab implements FindReplaceTarget {
     List<CompilerException> messages = new ArrayList<CompilerException>();
 
     SpinObject object;
-    String objectTree;
+    ObjectTree objectTree;
 
     Preferences preferences;
 
@@ -187,107 +191,40 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         @Override
-        public String getSource(String name) {
+        public File getFile(String name) {
             File localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
             if (localFile.exists()) {
-                try {
-                    File parent = localFile.getParentFile();
-                    if (!collectedSearchPaths.contains(parent)) {
-                        collectedSearchPaths.add(parent);
-                    }
-                    dependencies.add(localFile);
-                    return FileUtils.loadFromFile(localFile);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return null;
+                File parent = localFile.getParentFile();
+                if (!collectedSearchPaths.contains(parent)) {
+                    collectedSearchPaths.add(parent);
                 }
+                dependencies.add(localFile);
+                return localFile;
             }
 
             for (File file : collectedSearchPaths) {
                 localFile = new File(file, name);
                 if (localFile.exists()) {
-                    try {
-                        File parent = localFile.getParentFile();
-                        if (!collectedSearchPaths.contains(parent)) {
-                            collectedSearchPaths.add(parent);
-                        }
-                        dependencies.add(localFile);
-                        return FileUtils.loadFromFile(localFile);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
+                    File parent = localFile.getParentFile();
+                    if (!collectedSearchPaths.contains(parent)) {
+                        collectedSearchPaths.add(parent);
                     }
+                    dependencies.add(localFile);
+                    return localFile;
                 }
             }
 
             for (int i = 0; i < searchPaths.length; i++) {
                 localFile = new File(searchPaths[i], name);
                 if (localFile.exists()) {
-                    try {
-                        dependencies.add(localFile);
-                        return FileUtils.loadFromFile(localFile);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        @Override
-        public byte[] getResource(String name) {
-            File localFile = new File(name);
-            if (!localFile.exists()) {
-                localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
-            }
-            if (localFile.exists()) {
-                try {
-                    File parent = localFile.getParentFile();
-                    if (!collectedSearchPaths.contains(parent)) {
-                        collectedSearchPaths.add(parent);
-                    }
                     dependencies.add(localFile);
-                    return FileUtils.loadBinaryFromFile(localFile);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return null;
-                }
-            }
-
-            for (File file : collectedSearchPaths) {
-                localFile = new File(file, name);
-                if (localFile.exists()) {
-                    try {
-                        File parent = localFile.getParentFile();
-                        if (!collectedSearchPaths.contains(parent)) {
-                            collectedSearchPaths.add(parent);
-                        }
-                        dependencies.add(localFile);
-                        return FileUtils.loadBinaryFromFile(localFile);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }
-            }
-
-            for (int i = 0; i < searchPaths.length; i++) {
-                localFile = new File(searchPaths[i], name);
-                if (localFile.exists()) {
-                    try {
-                        dependencies.add(localFile);
-                        return FileUtils.loadBinaryFromFile(localFile);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
+                    return localFile;
                 }
             }
 
             return null;
         }
+
     }
 
     class Spin1TokenMarkerAdatper extends Spin1TokenMarker {
@@ -431,7 +368,7 @@ public class EditorTab implements FindReplaceTarget {
                         }
 
                         try {
-                            object = compiler.compile(tabItemText, root);
+                            object = compiler.compile(localFile, tabItemText, root);
                             objectTree = compiler.getObjectTree();
                             errors = compiler.hasErrors();
                         } catch (Exception e) {
@@ -457,6 +394,7 @@ public class EditorTab implements FindReplaceTarget {
                                     if (editor == null || editor.getStyledText().isDisposed()) {
                                         return;
                                     }
+                                    changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
                                     editor.setCompilerMessages(list);
                                     editor.redraw();
                                     tabItem.setFont(null);
@@ -478,10 +416,15 @@ public class EditorTab implements FindReplaceTarget {
 
     };
 
-    public EditorTab(CTabFolder folder, String name, SourcePool sourcePool) {
+    private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
+
+    public EditorTab(CTabFolder folder, String name, SourcePool sourcePool, ObjectBrowser objectBrowser) {
         this.tabItemText = name;
         this.sourcePool = sourcePool;
+        this.objectBrowser = objectBrowser;
         this.preferences = Preferences.getInstance();
+
+        objectBrowser.setInput(null);
 
         tabItem = new CTabItem(folder, SWT.NONE);
         tabItem.setShowClose(true);
@@ -533,6 +476,22 @@ public class EditorTab implements FindReplaceTarget {
         });
 
         tabItem.setControl(editor.getControl());
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        changeSupport.addPropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        changeSupport.removePropertyChangeListener(listener);
+    }
+
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        changeSupport.addPropertyChangeListener(propertyName, listener);
+    }
+
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        changeSupport.removePropertyChangeListener(propertyName, listener);
     }
 
     public void addCaretListener(CaretListener listener) {
@@ -934,7 +893,7 @@ public class EditorTab implements FindReplaceTarget {
         return dependencies;
     }
 
-    public String getObjectTree() {
+    public ObjectTree getObjectTree() {
         return objectTree;
     }
 

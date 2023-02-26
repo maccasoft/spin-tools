@@ -58,6 +58,7 @@ public class PreferencesDialog extends Dialog {
 
     Button showBrowser;
     PathList roots;
+    Button showObjectBrowser;
 
     Text editorFont;
     Spinner editorFontSize;
@@ -355,6 +356,19 @@ public class PreferencesDialog extends Dialog {
 
     void createGeneralPage(Composite parent) {
         Composite composite = createPage(parent, "General");
+
+        showObjectBrowser = new Button(composite, SWT.CHECK);
+        showObjectBrowser.setText("Show object browser");
+        showObjectBrowser.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
+        showObjectBrowser.setSelection(preferences.getShowObjectBrowser());
+        showObjectBrowser.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setShowObjectBrowser(showObjectBrowser.getSelection());
+            }
+
+        });
 
         showBrowser = new Button(composite, SWT.CHECK);
         showBrowser.setText("Show file browser");

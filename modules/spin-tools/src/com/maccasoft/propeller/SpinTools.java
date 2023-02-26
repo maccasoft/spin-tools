@@ -106,8 +106,10 @@ public class SpinTools {
     static final File defaultSpin2Examples = new File(System.getProperty("APP_DIR"), "examples/P2").getAbsoluteFile();
 
     Shell shell;
+    SashForm browserSashForm;
+    ObjectBrowser objectBrowser;
+    FileBrowser fileBrowser;
     SashForm sashForm;
-    FileBrowser browser;
     CTabFolder tabFolder;
     StatusLine statusLine;
 
@@ -209,15 +211,38 @@ public class SpinTools {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             switch (evt.getPropertyName()) {
+                case Preferences.PROP_SHOW_OBJECT_BROWSER:
+                    objectBrowser.setVisible((Boolean) evt.getNewValue());
+                    browserSashForm.setVisible(objectBrowser.getVisible() || fileBrowser.getVisible());
+                    sashForm.layout(true, true);
+                    break;
                 case Preferences.PROP_SHOW_BROWSER:
-                    browser.setVisible((Boolean) evt.getNewValue());
-                    if (browser.getVisible()) {
-                        browser.refresh();
+                    fileBrowser.setVisible((Boolean) evt.getNewValue());
+                    if (fileBrowser.getVisible()) {
+                        fileBrowser.refresh();
                     }
-                    sashForm.layout(true);
+                    browserSashForm.setVisible(objectBrowser.getVisible() || fileBrowser.getVisible());
+                    sashForm.layout(true, true);
                     break;
                 case Preferences.PROP_ROOTS:
-                    browser.setVisiblePaths((String[]) evt.getNewValue());
+                    fileBrowser.setVisiblePaths((String[]) evt.getNewValue());
+                    break;
+            }
+        }
+    };
+
+    final PropertyChangeListener editorChangeListener = new PropertyChangeListener() {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            CTabItem tabItem = tabFolder.getSelection();
+            if (tabItem == null || tabItem.getData() != evt.getSource()) {
+                return;
+            }
+            //EditorTab editorTab = (EditorTab) tabItem.getData();
+            switch (evt.getPropertyName()) {
+                case EditorTab.OBJECT_TREE:
+                    objectBrowser.setInput((ObjectTree) evt.getNewValue());
                     break;
             }
         }
@@ -249,8 +274,17 @@ public class SpinTools {
         sashForm = new SashForm(container, SWT.HORIZONTAL);
         sashForm.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        browser = new FileBrowser(sashForm);
-        browser.setVisible(preferences.getShowBrowser());
+        browserSashForm = new SashForm(sashForm, SWT.VERTICAL);
+        browserSashForm.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        objectBrowser = new ObjectBrowser(browserSashForm);
+
+        fileBrowser = new FileBrowser(browserSashForm);
+        fileBrowser.setVisible(preferences.getShowBrowser());
+
+        browserSashForm.setWeights(new int[] {
+            2000, 8000
+        });
 
         tabFolder = new CTabFolder(sashForm, SWT.BORDER);
         tabFolder.setMaximizeVisible(false);
@@ -264,9 +298,30 @@ public class SpinTools {
         }
         sashForm.setWeights(weights);
 
-        browser.setVisiblePaths(preferences.getRoots());
+        objectBrowser.addOpenListener(new IOpenListener() {
 
-        browser.addSelectionChangedListener(new ISelectionChangedListener() {
+            @Override
+            public void open(OpenEvent event) {
+                IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+                if (selection.getFirstElement() instanceof ObjectTree) {
+                    File fileToOpen = ((ObjectTree) selection.getFirstElement()).getFile();
+                    if (fileToOpen.isDirectory()) {
+                        return;
+                    }
+                    String name = fileToOpen.getName().toLowerCase();
+                    if (name.endsWith(".spin") || name.endsWith(".spin2")) {
+                        EditorTab editorTab = findFileEditorTab(fileToOpen);
+                        if (editorTab == null) {
+                            openNewTab(fileToOpen, true);
+                        }
+                    }
+                }
+            }
+        });
+
+        fileBrowser.setVisiblePaths(preferences.getRoots());
+
+        fileBrowser.addSelectionChangedListener(new ISelectionChangedListener() {
 
             @Override
             public void selectionChanged(SelectionChangedEvent event) {
@@ -283,7 +338,7 @@ public class SpinTools {
                 }
             }
         });
-        browser.addOpenListener(new IOpenListener() {
+        fileBrowser.addOpenListener(new IOpenListener() {
 
             @Override
             public void open(OpenEvent event) {
@@ -328,6 +383,9 @@ public class SpinTools {
             public void close(CTabFolderEvent event) {
                 EditorTab tab = (EditorTab) event.item.getData();
                 event.doit = canCloseEditorTab(tab);
+                if (event.doit && event.item == tabFolder.getSelection()) {
+                    objectBrowser.setInput(null);
+                }
             }
         });
         tabFolder.addSelectionListener(new SelectionAdapter() {
@@ -337,8 +395,11 @@ public class SpinTools {
                 if (e.item != null && e.item.getData() != null) {
                     CTabItem tabItem = (CTabItem) e.item;
                     tabItem.getControl().setFocus();
+
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    objectBrowser.setInput(editorTab.getObjectTree());
                     if (findReplaceDialog != null) {
-                        findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                        findReplaceDialog.setTarget(editorTab);
                     }
                 }
                 updateCaretPosition();
@@ -471,11 +532,12 @@ public class SpinTools {
 
                                 @Override
                                 public void run() {
-                                    EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
+                                    EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool, objectBrowser);
                                     editorTab.setEditorText(text);
                                     editorTab.setFile(fileToOpen);
                                     editorTab.addCaretListener(caretListener);
                                     editorTab.addOpenListener(openListener);
+                                    editorTab.addPropertyChangeListener(editorChangeListener);
                                 }
 
                             });
@@ -506,7 +568,7 @@ public class SpinTools {
                         }
                         File lastPath = preferences.getLastPath();
                         if (lastPath != null) {
-                            browser.setSelection(lastPath);
+                            fileBrowser.setSelection(lastPath);
                         }
                     }
 
@@ -880,7 +942,7 @@ public class SpinTools {
     }
 
     EditorTab openNewTab(File fileToOpen, boolean select) {
-        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool);
+        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool, objectBrowser);
 
         if (select) {
             tabFolder.setSelection(tabFolder.getItemCount() - 1);
@@ -890,6 +952,7 @@ public class SpinTools {
 
         editorTab.addCaretListener(caretListener);
         editorTab.addOpenListener(openListener);
+        editorTab.addPropertyChangeListener(editorChangeListener);
 
         tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -910,7 +973,7 @@ public class SpinTools {
     }
 
     EditorTab openNewTab(String name, String text, boolean select) {
-        EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
+        EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool, objectBrowser);
 
         if (select) {
             tabFolder.setSelection(tabFolder.getItemCount() - 1);
@@ -919,6 +982,7 @@ public class SpinTools {
 
         editorTab.addCaretListener(caretListener);
         editorTab.addOpenListener(openListener);
+        editorTab.addPropertyChangeListener(editorChangeListener);
 
         tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -1382,8 +1446,8 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                if (browser.getVisible()) {
-                    browser.refresh();
+                if (fileBrowser.getVisible()) {
+                    fileBrowser.refresh();
                 }
             }
         });

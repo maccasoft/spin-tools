@@ -36,6 +36,7 @@ import com.maccasoft.propeller.model.VariablesNode;
 public class Preferences {
 
     public static final String PROP_SHOW_BROWSER = "showBrowser";
+    public static final String PROP_SHOW_OBJECT_BROWSER = "showObjectBrowser";
     public static final String PROP_ROOTS = "roots";
     public static final String PROP_SHOW_LINE_NUMBERS = "showLineNumbers";
     public static final String PROP_EDITOR_FONT = "editorFont";
@@ -120,6 +121,8 @@ public class Preferences {
 
         public Bounds window;
         public int[] weights;
+
+        public Boolean showObjectBrowser;
 
         public Boolean showBrowser;
         public String[] roots;
@@ -264,6 +267,16 @@ public class Preferences {
             return;
         }
         changeSupport.firePropertyChange(PROP_ROOTS, preferences.roots, preferences.roots = roots);
+    }
+
+    public boolean getShowObjectBrowser() {
+        return preferences.showObjectBrowser != null ? preferences.showObjectBrowser : true;
+    }
+
+    public void setShowObjectBrowser(boolean showObjectBrowser) {
+        boolean oldValue = getShowObjectBrowser();
+        preferences.showObjectBrowser = showObjectBrowser ? null : showObjectBrowser;
+        changeSupport.firePropertyChange(PROP_SHOW_OBJECT_BROWSER, oldValue, showObjectBrowser);
     }
 
     public boolean getShowLineNumbers() {

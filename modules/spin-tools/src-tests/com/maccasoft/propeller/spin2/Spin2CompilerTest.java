@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin2;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -1785,7 +1786,7 @@ class Spin2CompilerTest {
         Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
         compiler.setRemoveUnusedMethods(removeUnused);
         compiler.setDebugEnabled(debugEnabled);
-        Spin2Object obj = compiler.compileObject(rootFile, root);
+        Spin2Object obj = compiler.compileObject(new File(rootFile), rootFile, root);
 
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

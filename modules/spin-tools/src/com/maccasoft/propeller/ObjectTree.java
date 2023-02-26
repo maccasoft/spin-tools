@@ -17,26 +17,65 @@ import java.util.List;
 public class ObjectTree {
 
     File file;
+    String name;
+    ObjectTree parent;
     List<ObjectTree> childs = new ArrayList<>();
 
-    public ObjectTree() {
+    public ObjectTree(File file, String name) {
+        this.file = file;
+        this.name = name;
+    }
 
+    public String getName() {
+        return name;
+    }
+
+    public ObjectTree getParent() {
+        return parent;
     }
 
     public void add(ObjectTree child) {
+        child.parent = this;
         childs.add(child);
     }
 
-    public void remove(ObjectTree child) {
-        childs.remove(child);
+    public boolean hasChildren() {
+        return childs.size() != 0;
     }
 
     public File getFile() {
         return file;
     }
 
-    public List<ObjectTree> getChilds() {
-        return childs;
+    public ObjectTree[] getChilds() {
+        return childs.toArray(new ObjectTree[0]);
     }
 
+    @Override
+    public String toString() {
+        return toString(0);
+    }
+
+    private String toString(int indent) {
+        StringBuilder sb = new StringBuilder();
+
+        if (indent != 0) {
+            for (int i = 1; i < indent; i++) {
+                sb.append("     ");
+            }
+            sb.append(" +-- ");
+        }
+
+        sb.append(name);
+        sb.append(" (");
+        sb.append(file.getAbsolutePath());
+        sb.append(")");
+        sb.append(System.lineSeparator());
+
+        for (ObjectTree child : childs) {
+            sb.append(child.toString(indent + 1));
+        }
+
+        return sb.toString();
+    }
 }

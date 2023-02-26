@@ -11,8 +11,6 @@
 package com.maccasoft.propeller;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -30,9 +28,8 @@ public abstract class Compiler {
             return null;
         }
 
-        public abstract String getSource(String name);
+        public abstract File getFile(String name);
 
-        public abstract byte[] getResource(String name);
     }
 
     public static class FileSourceProvider extends SourceProvider {
@@ -46,121 +43,40 @@ public abstract class Compiler {
         }
 
         @Override
-        public String getSource(String name) {
+        public File getFile(String name) {
             File localFile = new File(name);
             if (localFile.exists()) {
-                try {
-                    File parent = localFile.getParentFile();
-                    if (!collectedSearchPaths.contains(parent)) {
-                        collectedSearchPaths.add(parent);
-                    }
-                    return FileUtils.loadFromFile(localFile);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return null;
+                File parent = localFile.getParentFile();
+                if (!collectedSearchPaths.contains(parent)) {
+                    collectedSearchPaths.add(parent);
                 }
+                return localFile;
             }
 
             for (File file : collectedSearchPaths) {
                 localFile = new File(file, name);
                 if (localFile.exists()) {
-                    try {
-                        File parent = localFile.getParentFile();
-                        if (!collectedSearchPaths.contains(parent)) {
-                            collectedSearchPaths.add(parent);
-                        }
-                        return FileUtils.loadFromFile(localFile);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
+                    File parent = localFile.getParentFile();
+                    if (!collectedSearchPaths.contains(parent)) {
+                        collectedSearchPaths.add(parent);
                     }
+                    return localFile;
                 }
             }
 
             for (int i = 0; i < searchPaths.length; i++) {
                 localFile = new File(searchPaths[i], name);
                 if (localFile.exists()) {
-                    try {
-                        return FileUtils.loadFromFile(localFile);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
+                    return localFile;
                 }
             }
 
-            return null;
-        }
-
-        @Override
-        public byte[] getResource(String name) {
-            File localFile = new File(name);
-            if (localFile.exists()) {
-                try {
-                    File parent = localFile.getParentFile();
-                    if (!collectedSearchPaths.contains(parent)) {
-                        collectedSearchPaths.add(parent);
-                    }
-                    return loadBinaryFromFile(localFile);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return null;
-                }
-            }
-
-            for (File file : collectedSearchPaths) {
-                localFile = new File(file, name);
-                if (localFile.exists()) {
-                    try {
-                        File parent = localFile.getParentFile();
-                        if (!collectedSearchPaths.contains(parent)) {
-                            collectedSearchPaths.add(parent);
-                        }
-                        return loadBinaryFromFile(localFile);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }
-            }
-
-            for (int i = 0; i < searchPaths.length; i++) {
-                localFile = new File(searchPaths[i], name);
-                if (localFile.exists()) {
-                    try {
-                        return loadBinaryFromFile(localFile);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }
-            }
-
-            return null;
-
-        }
-
-        byte[] loadBinaryFromFile(File file) throws Exception {
-            try {
-                InputStream is = new FileInputStream(file);
-                try {
-                    byte[] b = new byte[is.available()];
-                    is.read(b);
-                    return b;
-                } finally {
-                    try {
-                        is.close();
-                    } catch (Exception e) {
-
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
             return null;
         }
 
     }
+
+    protected ObjectTree tree;
 
     final List<SourceProvider> sourceProviders = new ArrayList<SourceProvider>();
 
@@ -182,7 +98,7 @@ public abstract class Compiler {
 
     public abstract void compile(File file, OutputStream binary, PrintStream listing) throws Exception;
 
-    public abstract SpinObject compile(String rootFileName, Node root);
+    public abstract SpinObject compile(File rootFile, String rootFileName, Node root);
 
     public boolean hasErrors() {
         return false;
@@ -190,6 +106,16 @@ public abstract class Compiler {
 
     public List<CompilerException> getMessages() {
         return Collections.emptyList();
+    }
+
+    public File getFile(String name) {
+        for (SourceProvider p : sourceProviders) {
+            File file = p.getFile(name);
+            if (file != null) {
+                return file;
+            }
+        }
+        return null;
     }
 
     protected Node getParsedSource(String name) {
@@ -204,9 +130,14 @@ public abstract class Compiler {
 
     protected String getSource(String name) {
         for (SourceProvider p : sourceProviders) {
-            String text = p.getSource(name);
-            if (text != null) {
-                return text;
+            File file = p.getFile(name);
+            if (file != null) {
+                try {
+                    return FileUtils.loadFromFile(file);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
             }
         }
         return null;
@@ -214,13 +145,20 @@ public abstract class Compiler {
 
     protected byte[] getResource(String name) {
         for (SourceProvider p : sourceProviders) {
-            byte[] data = p.getResource(name);
-            if (data != null) {
-                return data;
+            File file = p.getFile(name);
+            if (file != null) {
+                try {
+                    return FileUtils.loadBinaryFromFile(file);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
             }
         }
         return null;
     }
 
-    public abstract String getObjectTree();
+    public ObjectTree getObjectTree() {
+        return tree;
+    }
 }

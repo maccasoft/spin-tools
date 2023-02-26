@@ -24,6 +24,7 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectTree;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.model.MethodNode;
@@ -44,8 +45,6 @@ public class Spin1Compiler extends Compiler {
     boolean spenspinCompatible;
     boolean removeUnusedMethods;
     Spin1Preprocessor preprocessor;
-
-    List<String> tree = new ArrayList<String>();
 
     public Spin1Compiler() {
         scope = new Spin1GlobalContext();
@@ -72,7 +71,7 @@ public class Spin1Compiler extends Compiler {
         }
         Spin1TokenStream stream = new Spin1TokenStream(text);
         Spin1Parser parser = new Spin1Parser(stream);
-        Spin1Object object = compile(file.getName(), parser.parse());
+        Spin1Object object = compile(file, file.getName(), parser.parse());
 
         if (hasErrors()) {
             throw new CompilerException(messages);
@@ -87,8 +86,8 @@ public class Spin1Compiler extends Compiler {
     }
 
     @Override
-    public Spin1Object compile(String rootFileName, Node root) {
-        Spin1Object obj = compileObject(rootFileName, root);
+    public Spin1Object compile(File rootFile, String rootFileName, Node root) {
+        Spin1Object obj = compileObject(rootFile, rootFileName, root);
 
         Spin1Object object = new Spin1Object();
         object.setClkFreq(obj.getClkFreq());
@@ -150,40 +149,26 @@ public class Spin1Compiler extends Compiler {
         return object;
     }
 
-    class ObjectNodeVisitor extends NodeVisitor {
+    class ObjectTreeVisitor extends NodeVisitor {
 
-        ObjectNodeVisitor parent;
         String fileName;
+        ObjectTreeVisitor parent;
         ListOrderedMap<String, Node> list;
+        ObjectTree objectTree;
 
-        public ObjectNodeVisitor(String fileName, ListOrderedMap<String, Node> list) {
+        public ObjectTreeVisitor(File file, String fileName) {
             this.fileName = fileName;
-            this.list = list;
-            tree.add(fileName);
+            this.objectTree = new ObjectTree(file, fileName);
+            this.list = ListOrderedMap.listOrderedMap(new HashMap<>());
         }
 
-        public ObjectNodeVisitor(ObjectNodeVisitor parent, String fileName, ListOrderedMap<String, Node> list) {
+        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, String fileName, ListOrderedMap<String, Node> list) {
             this.parent = parent;
             this.fileName = fileName;
+            this.objectTree = new ObjectTree(file, fileName);
             this.list = list;
 
-            StringBuilder sb = new StringBuilder();
-
-            ObjectNodeVisitor o = parent.parent;
-            while (o != null) {
-                o = o.parent;
-                sb.append("    ");
-            }
-            for (int i = tree.size() - 1; i >= 0; i--) {
-                char[] s = tree.get(i).toCharArray();
-                if (s[sb.length()] != ' ') {
-                    break;
-                }
-                s[sb.length()] = '|';
-                tree.set(i, new String(s));
-            }
-            sb.append("+-- " + fileName);
-            tree.add(sb.toString());
+            parent.objectTree.add(objectTree);
         }
 
         @Override
@@ -191,10 +176,10 @@ public class Spin1Compiler extends Compiler {
             if (node.name == null || node.file == null) {
                 return;
             }
-            String objectName = node.file.getText().substring(1, node.file.getText().length() - 1);
-            String objectFileName = objectName + ".spin";
 
-            ObjectNodeVisitor p = parent;
+            String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin";
+
+            ObjectTreeVisitor p = parent;
             while (p != null) {
                 if (p.fileName.equals(objectFileName)) {
                     throw new CompilerException(fileName, "\"" + objectFileName + "\" illegal circular reference", node.file);
@@ -202,19 +187,29 @@ public class Spin1Compiler extends Compiler {
                 p = p.parent;
             }
 
+            File objectFile = getFile(objectFileName);
+
             Node objectRoot = list.get(objectFileName);
             if (objectRoot == null) {
                 objectRoot = getParsedObject(objectFileName);
             }
             if (objectRoot == null) {
-                //logMessage(new CompilerException(fileName, "object \"" + objectName + "\" not found", node.file));
+                //logMessage(new CompilerMessage(fileName, "object \"" + objectName + "\" not found", node.file));
                 return;
             }
 
             list.remove(objectFileName);
             list.put(0, objectFileName, objectRoot);
 
-            objectRoot.accept(new ObjectNodeVisitor(this, objectFileName, list));
+            objectRoot.accept(new ObjectTreeVisitor(this, objectFile, objectFileName, list));
+        }
+
+        public ListOrderedMap<String, Node> getList() {
+            return list;
+        }
+
+        public ObjectTree getObjectTree() {
+            return objectTree;
         }
 
     }
@@ -269,11 +264,15 @@ public class Spin1Compiler extends Compiler {
 
     }
 
-    Spin1Object compileObject(String rootFileName, Node root) {
+    Spin1Object compileObject(File rootFile, String rootFileName, Node root) {
         int memoryOffset = 16;
-        ListOrderedMap<String, Node> objects = ListOrderedMap.listOrderedMap(new HashMap<String, Node>());
 
-        root.accept(new ObjectNodeVisitor(rootFileName, objects));
+        ObjectTreeVisitor visitor = new ObjectTreeVisitor(rootFile, rootFileName);
+
+        root.accept(visitor);
+
+        tree = visitor.getObjectTree();
+        ListOrderedMap<String, Node> objects = visitor.getList();
 
         preprocessor = new Spin1Preprocessor(root, objects);
         preprocessor.collectReferencedMethods();
@@ -361,18 +360,6 @@ public class Spin1Compiler extends Compiler {
     @Override
     public List<CompilerException> getMessages() {
         return messages;
-    }
-
-    @Override
-    public String getObjectTree() {
-        StringBuilder sb = new StringBuilder();
-        tree.forEach((s) -> {
-            if (sb.length() > 0) {
-                sb.append(System.lineSeparator());
-            }
-            sb.append(s);
-        });
-        return sb.toString();
     }
 
 }
