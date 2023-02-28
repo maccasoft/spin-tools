@@ -13,7 +13,9 @@ package com.maccasoft.propeller.spin2;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.BitField;
 
@@ -182,6 +184,19 @@ public abstract class Spin2InstructionObject {
         mod.put("_set", 0b1111);
     }
 
+    public static Set<String> ptrInstructions = new HashSet<>();
+    static {
+        ptrInstructions.add("rdbyte");
+        ptrInstructions.add("rdword");
+        ptrInstructions.add("rdlong");
+        ptrInstructions.add("rdlut");
+        ptrInstructions.add("wmlong");
+        ptrInstructions.add("wrbyte");
+        ptrInstructions.add("wrword");
+        ptrInstructions.add("wrlong");
+        ptrInstructions.add("wrlut");
+    }
+
     protected final Spin2Context context;
 
     public Spin2InstructionObject(Spin2Context context) {
@@ -330,6 +345,9 @@ public abstract class Spin2InstructionObject {
         }
         if (expression.count != null) {
             int o = expression.getCount();
+            if (o < -32 || o > 31) {
+                throw new CompilerException("constant out of range (-32 to 31)", expression.count.getData());
+            }
             if (str.contains("++")) {
                 if (o < 0) {
                     o = 32 + o;

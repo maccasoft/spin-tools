@@ -21,8 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.model.DataLineNode;
-import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler.ObjectInfo;
 
@@ -221,59 +219,28 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
-    void testCompilePtr() {
-        Spin2ObjectCompiler subject = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
-
-        Spin2Parser parser = new Spin2Parser(new Spin2TokenStream(""
+    void testCompilePtr() throws Exception {
+        String text = ""
             + "DAT    wrlong 0,ptra\n"
             + "       wrlong 0,ptra++\n"
             + "       wrlong 0,++ptra\n"
             + "       wrlong 0,ptra[3]\n"
             + "       wrlong 0,ptra--[3]\n"
             + "       wrlong 0,--ptra[3]\n"
-            + ""));
+            + "\n"
+            + "       mov    0,#ptra+1\n"
+            + "";
 
-        Node root = parser.parse();
-        DataNode data0 = (DataNode) root.getChild(0);
-
-        Spin2PAsmLine line = subject.compileDataLine((DataLineNode) data0.getChild(0));
-        Assertions.assertEquals("ptra", line.getArguments().get(1).getExpression().toString());
-        Assertions.assertEquals(
-            Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_100000000),
-            Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
-
-        line = subject.compileDataLine((DataLineNode) data0.getChild(1));
-        Assertions.assertEquals("ptra++", line.getArguments().get(1).getExpression().toString());
-        Assertions.assertEquals(
-            Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_101100001),
-            Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
-
-        line = subject.compileDataLine((DataLineNode) data0.getChild(2));
-        Assertions.assertEquals("++ptra", line.getArguments().get(1).getExpression().toString());
-        Assertions.assertEquals(
-            Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_101000001),
-            Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
-
-        line = subject.compileDataLine((DataLineNode) data0.getChild(3));
-        Assertions.assertEquals("ptra", line.getArguments().get(1).getExpression().toString());
-        Assertions.assertEquals(3, line.getArguments().get(1).getCount());
-        Assertions.assertEquals(
-            Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_100000011),
-            Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
-
-        line = subject.compileDataLine((DataLineNode) data0.getChild(4));
-        Assertions.assertEquals("ptra--", line.getArguments().get(1).getExpression().toString());
-        Assertions.assertEquals(3, line.getArguments().get(1).getCount());
-        Assertions.assertEquals(
-            Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_101111101),
-            Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
-
-        line = subject.compileDataLine((DataLineNode) data0.getChild(5));
-        Assertions.assertEquals("--ptra", line.getArguments().get(1).getExpression().toString());
-        Assertions.assertEquals(3, line.getArguments().get(1).getCount());
-        Assertions.assertEquals(
-            Spin2InstructionObject.decodeToString(0b1111_1100011_001_000000000_101011101),
-            Spin2InstructionObject.decodeToString(line.getInstructionObject().getBytes()));
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000 00000 00 01 64 FC                        wrlong  0, ptra\n"
+            + "00004 00004 00004 61 01 64 FC                        wrlong  0, ptra++\n"
+            + "00008 00008 00008 41 01 64 FC                        wrlong  0, ++ptra\n"
+            + "0000C 0000C 0000C 03 01 64 FC                        wrlong  0, ptra[3]\n"
+            + "00010 00010 00010 7D 01 64 FC                        wrlong  0, ptra--[3]\n"
+            + "00014 00014 00014 5D 01 64 FC                        wrlong  0, --ptra[3]\n"
+            + "00018 00018 00018 F9 01 04 F6                        mov     0, #ptra + 1\n"
+            + "", compile(text));
     }
 
     @Test

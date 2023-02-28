@@ -932,41 +932,45 @@ public class Spin2ObjectCompiler {
             String prefix = null;
             Expression expression = null, count = null;
 
-            for (Token token : param.getTokens()) {
-                if ("ptra".equalsIgnoreCase(token.getText()) || "ptrb".equalsIgnoreCase(token.getText())) {
-                    expression = new Identifier(param.getText(), scope);
-                    expression.setData(param);
-                    index = param.getTokens().size();
-                    break;
-                }
+            if (parameters.size() == 1 && Spin2InstructionObject.ptrInstructions.contains(mnemonic.toLowerCase()) && isPtrExpression(param.getTokens())) {
+                expression = new Identifier(param.getText(), scope);
+                expression.setData(param);
             }
-
-            Token token;
-            if (index < param.getTokens().size()) {
-                token = param.getToken(index);
-                if (token.getText().startsWith("#")) {
-                    prefix = (prefix == null ? "" : prefix) + token.getText();
-                    index++;
+            else {
+                Token token;
+                if (index < param.getTokens().size()) {
+                    token = param.getToken(index);
+                    if (token.getText().startsWith("#")) {
+                        prefix = (prefix == null ? "" : prefix) + token.getText();
+                        index++;
+                    }
                 }
-            }
-            if (index < param.getTokens().size()) {
-                token = param.getToken(index);
-                if ("\\".equals(token.getText())) {
-                    prefix = (prefix == null ? "" : prefix) + token.getText();
-                    index++;
+                if (index < param.getTokens().size()) {
+                    token = param.getToken(index);
+                    if ("\\".equals(token.getText())) {
+                        prefix = (prefix == null ? "" : prefix) + token.getText();
+                        index++;
+                    }
                 }
-            }
-            if (index < param.getTokens().size()) {
-                try {
-                    expression = buildExpression(param.getTokens().subList(index, param.getTokens().size()), localScope);
-                    expression.setData(param);
-                } catch (Exception e) {
-                    throw new CompilerException(e, param);
+                if (index < param.getTokens().size()) {
+                    try {
+                        Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(localScope, param.getTokens().subList(index, param.getTokens().size()));
+                        expression = expressionBuilder.getExpression();
+                        expression.setData(param);
+                    } catch (CompilerException e) {
+                        throw e;
+                    } catch (Exception e) {
+                        throw new CompilerException(e, param);
+                    }
                 }
             }
             if (param.count != null) {
                 try {
-                    count = buildExpression(param.count, localScope);
+                    Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(localScope, param.count.getTokens());
+                    count = expressionBuilder.getExpression();
+                    count.setData(param.count);
+                } catch (CompilerException e) {
+                    throw e;
                 } catch (Exception e) {
                     throw new CompilerException(e, param.count);
                 }
@@ -1076,6 +1080,32 @@ public class Spin2ObjectCompiler {
         }
 
         return pasmLine;
+    }
+
+    boolean isPtrExpression(List<Token> tokens) {
+        int index = 0;
+
+        if (index >= tokens.size()) {
+            return false;
+        }
+        Token token = tokens.get(index++);
+        if ("++".equals(token.getText()) || "--".equals(token.getText())) {
+            if (index >= tokens.size()) {
+                return false;
+            }
+            token = tokens.get(index++);
+        }
+        if (!("PTRA".equalsIgnoreCase(token.getText()) || "PTRB".equalsIgnoreCase(token.getText()))) {
+            return false;
+        }
+        if (index >= tokens.size()) {
+            return true;
+        }
+        token = tokens.get(index++);
+        if (!("++".equals(token.getText()) || "--".equals(token.getText()) || "[".equals(token.getText()))) {
+            return false;
+        }
+        return index >= tokens.size();
     }
 
     void compileDatInclude(Spin2Context scope, Node root) {
@@ -4626,15 +4656,6 @@ public class Spin2ObjectCompiler {
 
     public List<CompilerException> getMessages() {
         return messages;
-    }
-
-    Expression buildExpression(Node node, Spin2Context scope) {
-        return buildExpression(node.getTokens(), scope);
-    }
-
-    Expression buildExpression(List<Token> tokens, Spin2Context scope) {
-        Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(scope, tokens);
-        return expressionBuilder.getExpression();
     }
 
 }
