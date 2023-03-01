@@ -699,22 +699,27 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Preferences");
+        item.setText("Refresh" + "\t");
+        item.setAccelerator(SWT.F5);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
             public void handleEvent(Event e) {
-                PreferencesDialog dlg = new PreferencesDialog(shell);
-                dlg.open();
+                if (fileBrowser.getVisible()) {
+                    fileBrowser.refresh();
+                }
             }
         });
 
-        new MenuItem(menu, SWT.SEPARATOR);
-
         final int lruIndex = menu.getItemCount();
 
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Exit");
+        item = getSystemMenuItem(SWT.ID_QUIT);
+        if (item == null) {
+            new MenuItem(menu, SWT.SEPARATOR);
+
+            item = new MenuItem(menu, SWT.PUSH);
+            item.setText("Exit");
+        }
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -795,6 +800,11 @@ public class SpinTools {
         Iterator<String> iter = Preferences.getInstance().getLru().iterator();
         while (iter.hasNext()) {
             final File fileToOpen = new File(iter.next());
+
+            if (index == 0) {
+                list.add(new MenuItem(menu, SWT.SEPARATOR, itemIndex++));
+            }
+
             MenuItem item = new MenuItem(menu, SWT.PUSH, itemIndex++);
             item.setText(String.format("%d %s", index + 1, fileToOpen.getName()));
             item.setToolTipText(fileToOpen.getAbsolutePath());
@@ -820,11 +830,8 @@ public class SpinTools {
                 }
             });
             list.add(item);
-            index++;
-        }
 
-        if (index > 0) {
-            list.add(new MenuItem(menu, SWT.SEPARATOR, itemIndex));
+            index++;
         }
     }
 
@@ -1438,18 +1445,19 @@ public class SpinTools {
             }
         });
 
-        new MenuItem(menu, SWT.SEPARATOR);
+        item = getSystemMenuItem(SWT.ID_PREFERENCES);
+        if (item == null) {
+            new MenuItem(menu, SWT.SEPARATOR);
 
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Refresh" + "\t");
-        item.setAccelerator(SWT.F5);
+            item = new MenuItem(menu, SWT.PUSH);
+            item.setText("Preferences");
+        }
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
             public void handleEvent(Event e) {
-                if (fileBrowser.getVisible()) {
-                    fileBrowser.refresh();
-                }
+                PreferencesDialog dlg = new PreferencesDialog(shell);
+                dlg.open();
             }
         });
 
@@ -1966,12 +1974,11 @@ public class SpinTools {
     void createHelpMenu(Menu parent) {
         Menu menu = new Menu(parent.getParent(), SWT.DROP_DOWN);
 
-        MenuItem item = new MenuItem(parent, SWT.CASCADE);
-        item.setText("&Help");
-        item.setMenu(menu);
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("About " + APP_TITLE);
+        MenuItem item = getSystemMenuItem(SWT.ID_ABOUT);
+        if (item == null) {
+            item = new MenuItem(menu, SWT.PUSH);
+            item.setText("About " + APP_TITLE);
+        }
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1980,6 +1987,12 @@ public class SpinTools {
                 dlg.open();
             }
         });
+
+        if (menu.getItemCount() != 0) {
+            item = new MenuItem(parent, SWT.CASCADE);
+            item.setText("&Help");
+            item.setMenu(menu);
+        }
     }
 
     void createTabFolderMenu() {
@@ -2311,6 +2324,19 @@ public class SpinTools {
         int topPixel = styledText.getTopPixel();
         File localFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText());
         return new SourceLocation(localFile, offset, topPixel);
+    }
+
+    private MenuItem getSystemMenuItem(int id) {
+        Menu menu = Display.getDefault().getSystemMenu();
+        if (menu != null) {
+            MenuItem[] item = menu.getItems();
+            for (int i = 0; i < item.length; i++) {
+                if (item[i].getID() == id) {
+                    return item[i];
+                }
+            }
+        }
+        return null;
     }
 
     static {
