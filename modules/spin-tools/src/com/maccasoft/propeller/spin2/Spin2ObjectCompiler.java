@@ -2090,14 +2090,17 @@ public class Spin2ObjectCompiler {
             for (Spin2Bytecode bc : line.getSource()) {
                 if (bc instanceof InlinePAsm) {
                     Spin2PAsmLine pasmLine = ((InlinePAsm) bc).getLine();
+                    List<Spin2PAsmExpression> arguments = pasmLine.getArguments();
                     if (pasmLine.getInstructionFactory() instanceof Org) {
+                        if (arguments.size() > 0) {
+                            org = arguments.get(0).getInteger();
+                        }
                         continue;
                     }
                     if (pasmLine.getInstructionFactory() instanceof Empty) {
                         continue;
                     }
                     count++;
-                    List<Spin2PAsmExpression> arguments = pasmLine.getArguments();
                     if (arguments.size() > 0) {
                         if (arguments.get(0).isLongLiteral()) {
                             count++;

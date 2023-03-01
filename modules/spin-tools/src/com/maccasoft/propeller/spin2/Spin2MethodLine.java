@@ -82,13 +82,22 @@ public class Spin2MethodLine {
     }
 
     public int resolve(int address) {
+        int pasmAddress = 0;
+
         addressChanged = startAddress != address;
         startAddress = address;
 
         scope.setAddress(address);
         for (Spin2Bytecode bc : source) {
-            address = bc.resolve(address);
+            if (bc instanceof InlinePAsm) {
+                pasmAddress = bc.resolve(pasmAddress);
+                address += bc.getSize();
+            }
+            else {
+                address = bc.resolve(address);
+            }
         }
+
         for (Spin2MethodLine line : childs) {
             address = line.resolve(address);
             addressChanged |= line.isAddressChanged();

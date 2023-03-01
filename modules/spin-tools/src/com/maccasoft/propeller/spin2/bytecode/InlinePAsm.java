@@ -34,7 +34,7 @@ public class InlinePAsm extends Spin2Bytecode {
 
     @Override
     public int getSize() {
-        return 4;
+        return line.getInstructionObject().getSize();
     }
 
     @Override
