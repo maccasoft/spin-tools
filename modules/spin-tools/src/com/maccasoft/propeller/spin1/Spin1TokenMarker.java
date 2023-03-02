@@ -244,14 +244,41 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         }
 
         @Override
-        public void visitObject(ObjectNode node) {
-            if (node.name == null || node.file == null) {
+        public void visitObject(ObjectNode objectNode) {
+            if (objectNode.name == null || objectNode.file == null) {
                 return;
             }
 
-            tokens.add(new TokenMarker(node.name, TokenId.OBJECT));
-            if (node.file != null) {
-                tokens.add(new TokenMarker(node.file, TokenId.STRING));
+            symbols.put(objectNode.name.getText(), TokenId.OBJECT);
+            tokens.add(new TokenMarker(objectNode.name, TokenId.OBJECT));
+            if (objectNode.file != null) {
+                tokens.add(new TokenMarker(objectNode.file, TokenId.STRING));
+            }
+
+            String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+            Node objectRoot = getObjectTree(fileName);
+            if (objectRoot != null) {
+                objectRoot.accept(new NodeVisitor() {
+
+                    @Override
+                    public boolean visitConstant(ConstantNode node) {
+                        if (node.getIdentifier() != null) {
+                            symbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public boolean visitMethod(MethodNode methodNode) {
+                        if ("PUB".equalsIgnoreCase(methodNode.type.getText())) {
+                            if (methodNode.name != null) {
+                                symbols.put(objectNode.name.getText() + "." + methodNode.name.getText(), TokenId.METHOD_PUB);
+                            }
+                        }
+                        return false;
+                    }
+
+                });
             }
         }
 
@@ -330,7 +357,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         @Override
         public void visitObject(ObjectNode node) {
             if (node.count != null) {
-                markTokens(node.count);
+                markTokens(node.count, 0, "");
             }
         }
 
@@ -363,26 +390,32 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
             for (Node child : node.getChilds()) {
                 if (child instanceof StatementNode) {
-                    markTokens(child);
+                    markTokens(child, 0, "");
                 }
             }
 
             return false;
         }
 
-        void markTokens(Node node) {
-            for (Token token : node.getTokens()) {
+        int markTokens(Node node, int i, String endMarker) {
+            List<Token> list = node.getTokens();
+
+            while (i < list.size()) {
+                Token token = list.get(i++);
                 if (token.type == Token.NUMBER) {
                     tokens.add(new TokenMarker(token, TokenId.NUMBER));
                 }
                 else if (token.type == Token.OPERATOR) {
                     tokens.add(new TokenMarker(token, TokenId.OPERATOR));
+                    if (token.getText().equals(endMarker)) {
+                        return i;
+                    }
                 }
                 else if (token.type == Token.STRING) {
                     tokens.add(new TokenMarker(token, TokenId.STRING));
                 }
                 else {
-                    TokenId id = keywords.get(token.getText());
+                    TokenId id = keywords.get(token.getText().toUpperCase());
                     if (id == null) {
                         id = spinKeywords.get(token.getText().toUpperCase());
                     }
@@ -408,13 +441,37 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                         }
                         else {
                             tokens.add(new TokenMarker(token, id));
+                            if (id == TokenId.OBJECT && i < list.size()) {
+                                Token objToken = token;
+                                token = list.get(i);
+                                if (token.getText().equals("[")) {
+                                    i = markTokens(node, i, "]");
+                                    if (i < list.size()) {
+                                        token = list.get(i);
+                                    }
+                                }
+                                if (token.getText().startsWith(".") || token.getText().startsWith("#")) {
+                                    String qualifiedName = objToken.getText() + token.getText();
+                                    id = symbols.get(qualifiedName);
+                                    if (id == null) {
+                                        id = compilerSymbols.get(qualifiedName);
+                                    }
+                                    if (id != null) {
+                                        tokens.add(new TokenMarker(token, id));
+                                    }
+                                    i++;
+                                }
+                            }
                         }
                     }
                 }
             }
+
             for (Node child : node.getChilds()) {
-                markTokens(child);
+                markTokens(child, 0, "");
             }
+
+            return i;
         }
 
         @Override

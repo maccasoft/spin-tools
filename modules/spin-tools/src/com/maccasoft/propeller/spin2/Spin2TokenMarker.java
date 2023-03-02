@@ -820,7 +820,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         @Override
         public void visitObject(ObjectNode node) {
             if (node.count != null) {
-                markTokens(node.count);
+                markTokens(node.count, 0, "");
             }
         }
 
@@ -853,7 +853,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
             for (Node child : node.getChilds()) {
                 if (child instanceof StatementNode) {
-                    markTokens(child);
+                    markTokens(child, 0, "");
                 }
                 else if (child instanceof DataLineNode) {
                     markDataTokens((DataLineNode) child, true);
@@ -863,22 +863,23 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             return false;
         }
 
-        void markTokens(Node node) {
+        int markTokens(Node node, int i, String endMarker) {
             List<Token> list = node.getTokens();
             boolean debug = list.size() != 0 && "debug".equalsIgnoreCase(list.get(0).getText());
 
-            for (Token token : list) {
+            while (i < list.size()) {
+                Token token = list.get(i++);
                 if (token.type == Token.NUMBER) {
                     tokens.add(new TokenMarker(token, TokenId.NUMBER));
                 }
                 else if (token.type == Token.OPERATOR) {
                     tokens.add(new TokenMarker(token, TokenId.OPERATOR));
+                    if (token.getText().equals(endMarker)) {
+                        return i;
+                    }
                 }
                 else if (token.type == Token.STRING) {
                     tokens.add(new TokenMarker(token, TokenId.STRING));
-                }
-                else if (token.type == Token.FUNCTION) {
-                    tokens.add(new TokenMarker(token, TokenId.FUNCTION));
                 }
                 else {
                     TokenId id = debug ? debugKeywords.get(token.getText().toUpperCase()) : keywords.get(token.getText().toUpperCase());
@@ -887,33 +888,65 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     }
                     if (id == null) {
                         id = locals.get(token.getText());
+                        if (id == null && token.getText().startsWith("@")) {
+                            id = locals.get(token.getText().substring(1));
+                        }
                     }
                     if (id == null) {
                         id = symbols.get(token.getText());
+                        if (id == null && token.getText().startsWith("@")) {
+                            id = symbols.get(token.getText().substring(1));
+                        }
                     }
                     if (id == null) {
                         id = compilerSymbols.get(token.getText());
+                        if (id == null && token.getText().startsWith("@")) {
+                            id = compilerSymbols.get(token.getText().substring(1));
+                        }
                     }
                     if (id != null) {
-                        if ((id == TokenId.METHOD_PUB || id == TokenId.CONSTANT)) {
+                        if ((id == TokenId.METHOD_PUB || id == TokenId.CONSTANT) && token.getText().contains(".")) {
                             int dot = token.getText().indexOf('.');
-                            if (dot != -1) {
-                                tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
-                                tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
-                            }
-                            else {
-                                tokens.add(new TokenMarker(token, id));
-                            }
+                            tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
+                            tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
                         }
                         else {
                             tokens.add(new TokenMarker(token, id));
+                            if (id == TokenId.OBJECT && i < list.size()) {
+                                Token objToken = token;
+                                token = list.get(i);
+                                if (token.getText().equals("[")) {
+                                    i = markTokens(node, i, "]");
+                                    if (i < list.size()) {
+                                        token = list.get(i);
+                                    }
+                                }
+                                if (token.getText().startsWith(".")) {
+                                    String qualifiedName = objToken.getText() + token.getText();
+                                    id = symbols.get(qualifiedName);
+                                    if (id == null && qualifiedName.startsWith("@")) {
+                                        id = symbols.get(qualifiedName.substring(1));
+                                    }
+                                    if (id == null) {
+                                        id = compilerSymbols.get(qualifiedName);
+                                        if (id == null && qualifiedName.startsWith("@")) {
+                                            id = compilerSymbols.get(qualifiedName.substring(1));
+                                        }
+                                    }
+                                    if (id != null) {
+                                        tokens.add(new TokenMarker(token, id));
+                                    }
+                                    i++;
+                                }
+                            }
                         }
                     }
                 }
             }
             for (Node child : node.getChilds()) {
-                markTokens(child);
+                markTokens(child, 0, "");
             }
+            return i;
         }
 
         @Override

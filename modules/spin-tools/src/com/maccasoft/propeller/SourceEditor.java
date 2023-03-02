@@ -354,6 +354,7 @@ public class SourceEditor {
     boolean hoverHighlight;
     Token hoverHighlightToken;
     Token hoverToken;
+    String hoverItemName;
 
     Preferences preferences;
 
@@ -637,20 +638,62 @@ public class SourceEditor {
                 if (hoverToken == null) {
                     return;
                 }
-
-                String hoverText = hoverHighlightToken.getText();
-                if (hoverText.startsWith("@@")) {
-                    hoverText = hoverText.substring(2);
-                }
-                else if (hoverText.startsWith("@")) {
-                    hoverText = hoverText.substring(1);
-                }
-
                 int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
-                Node context = offset != -1 ? tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset)) : null;
+                if (offset == -1) {
+                    return;
+                }
+                Token token = tokenMarker.getTokenAt(offset);
+                if (token == null || token.type == Token.EOF) {
+                    return;
+                }
+
+                String itemName = token.getText();
+                if (itemName.startsWith("@")) {
+                    itemName = itemName.substring(1);
+                }
+                int dot = itemName.indexOf('.');
+
+                int objstart = -1;
+                int objstop = -1;
+                String objectName = null;
+
+                if (dot == 0) {
+                    int line = styledText.getLineAtOffset(offset);
+                    int lineOffset = styledText.getOffsetAtLine(line);
+                    String lineText = styledText.getLine(line);
+                    int endIndex = token.start - lineOffset - 1;
+                    if (lineText.charAt(endIndex) == ']') {
+                        while (endIndex >= 0 && lineText.charAt(endIndex) != '[') {
+                            endIndex--;
+                        }
+                        endIndex--;
+                    }
+                    if (endIndex >= 0) {
+                        Token objectToken = tokenMarker.getTokenAt(endIndex + lineOffset);
+                        if (objectToken != null) {
+                            objstart = objectToken.start;
+                            objstop = objectToken.stop;
+                            objectName = objectToken.getText();
+                            if (objectName.startsWith("@")) {
+                                objectName = objectName.substring(1);
+                                objstart++;
+                            }
+                        }
+                    }
+                    itemName = itemName.substring(1);
+                }
+                else if (dot != -1) {
+                    objstart = token.start;
+                    objstop = token.start + dot - 1;
+                    objectName = itemName.substring(0, dot);
+                    itemName = itemName.substring(dot + 1);
+                }
+
+                Node context = tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset));
+
                 if (context instanceof ObjectNode) {
                     ObjectNode obj = (ObjectNode) context;
-                    if (obj.file == tokenMarker.getTokenAt(offset)) {
+                    if (obj.file == token) {
                         display.asyncExec(new Runnable() {
 
                             @Override
@@ -671,7 +714,7 @@ public class SourceEditor {
                         if (node instanceof DataNode) {
                             for (Node child : node.getChilds()) {
                                 DataLineNode obj = (DataLineNode) child;
-                                if (obj.label != null && obj.label.getText().equals(hoverText)) {
+                                if (obj.label != null && obj.label.getText().equals(itemName)) {
                                     SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
                                     display.asyncExec(new Runnable() {
 
@@ -689,32 +732,30 @@ public class SourceEditor {
                 }
                 else if (context instanceof StatementNode) {
                     Node root = tokenMarker.getRoot();
-                    int dot = hoverToken.getText().indexOf('.');
-                    if (dot != -1) {
-                        int objstart = hoverToken.start;
-                        int objstop = hoverToken.start + dot - 1;
-                        int namestart = hoverToken.start + dot + 1;
-                        if (hoverHighlightToken.start == objstart) {
-                            for (Node node : root.getChilds()) {
-                                if (node instanceof ObjectsNode) {
-                                    openLinkedObject(node, hoverText);
+                    if (objectName != null) {
+                        for (Node node : root.getChilds()) {
+                            if (node instanceof ObjectsNode) {
+                                if (offset >= objstart && offset <= objstop) {
+                                    if (openLinkedObject(node, objectName)) {
+                                        break;
+                                    }
                                 }
-                            }
-                        }
-                        else if (hoverHighlightToken.start == namestart) {
-                            String objname = hoverToken.getStream().getSource(objstart, objstop);
-                            for (Node node : root.getChilds()) {
-                                if (node instanceof ObjectsNode) {
-                                    openLinkedObjectMethod(node, objname, hoverText);
+                                else if (openLinkedObjectMethod(node, objectName, itemName)) {
+                                    break;
                                 }
                             }
                         }
                     }
                     else {
                         for (Node node : root.getChilds()) {
-                            if (node instanceof MethodNode) {
+                            if (node instanceof ObjectsNode) {
+                                if (openLinkedObject(node, itemName)) {
+                                    break;
+                                }
+                            }
+                            else if (node instanceof MethodNode) {
                                 MethodNode method = (MethodNode) node;
-                                if (method.name.getText().equals(hoverText)) {
+                                if (method.name.getText().equals(itemName)) {
                                     SourceElement element = new SourceElement(null, method.name.line, method.name.column);
                                     display.asyncExec(new Runnable() {
 
@@ -730,7 +771,7 @@ public class SourceEditor {
                             else if (node instanceof VariablesNode) {
                                 for (Node child : node.getChilds()) {
                                     VariableNode obj = (VariableNode) child;
-                                    if (obj.identifier != null && obj.identifier.getText().equals(hoverText)) {
+                                    if (obj.identifier != null && obj.identifier.getText().equals(itemName)) {
                                         SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
                                         display.asyncExec(new Runnable() {
 
@@ -747,7 +788,7 @@ public class SourceEditor {
                             else if (node instanceof DataNode) {
                                 for (Node child : node.getChilds()) {
                                     DataLineNode obj = (DataLineNode) child;
-                                    if (obj.label != null && obj.label.getText().equals(hoverText)) {
+                                    if (obj.label != null && obj.label.getText().equals(itemName)) {
                                         SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
                                         display.asyncExec(new Runnable() {
 
@@ -815,12 +856,11 @@ public class SourceEditor {
                                                 }
 
                                             });
-                                            break;
+                                            return true;
                                         }
                                     }
                                 }
                             }
-                            return true;
                         }
                     }
                     else if (openLinkedObjectMethod(child, objname, hoverText)) {
@@ -878,43 +918,48 @@ public class SourceEditor {
                     else if (context instanceof StatementNode) {
                         Token token = tokenMarker.getTokenAt(offset);
                         if (token != null) {
-                            Set<TokenMarker> markers = tokenMarker.getLineTokens(token.start, token.getText());
-
+                            int objstart = -1;
+                            int objstop = -1;
+                            int namestart = token.start;
+                            int namestop = token.stop;
                             int dot = token.getText().indexOf('.');
-                            if (dot != -1) {
-                                int objstart = token.start;
-                                int objstop = token.start + dot - 1;
-                                int namestart = token.start + dot + 1;
-                                int namestop = token.stop;
-                                for (TokenMarker entry : markers) {
-                                    if (offset >= entry.getStart() && offset <= entry.getStop()) {
-                                        if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI) {
-                                            if (entry.getStart() == namestart && entry.getStop() == namestop) {
-                                                hoverToken = token;
-                                                hoverHighlightToken = new Token(token.getStream(), namestart);
-                                                hoverHighlightToken.stop = namestop;
-                                                break;
-                                            }
-                                        }
-                                        else if (entry.getId() == TokenId.OBJECT) {
-                                            if (entry.getStart() == objstart && entry.getStop() == objstop) {
-                                                hoverToken = token;
-                                                hoverHighlightToken = new Token(token.getStream(), objstart);
-                                                hoverHighlightToken.stop = objstop;
-                                                break;
-                                            }
-                                        }
-                                    }
+
+                            if (dot == -1) {
+                                if (token.getText().charAt(0) == '@') {
+                                    namestart++;
                                 }
                             }
+                            else if (dot == 0) {
+                                namestart++;
+                            }
                             else {
-                                for (TokenMarker entry : markers) {
-                                    if (entry.getStart() == token.start && entry.getStop() == token.stop) {
-                                        if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI || entry.getId() == TokenId.PASM_LABEL || entry.getId() == TokenId.VARIABLE) {
-                                            hoverToken = token;
-                                            hoverHighlightToken = token;
-                                            break;
+                                objstart = token.start;
+                                if (token.getText().charAt(0) == '@') {
+                                    objstart++;
+                                }
+                                objstop = token.start + dot - 1;
+                                namestart = token.start + dot + 1;
+                            }
+
+                            Set<TokenMarker> markers = tokenMarker.getLineTokens(token.start, token.getText());
+                            for (TokenMarker entry : markers) {
+                                if (offset >= entry.getStart() && offset <= entry.getStop()) {
+                                    if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI) {
+                                        hoverToken = token;
+                                        hoverHighlightToken = new Token(token.getStream(), namestart);
+                                        hoverHighlightToken.stop = namestop;
+                                        break;
+                                    }
+                                    else if (entry.getId() == TokenId.OBJECT) {
+                                        hoverToken = token;
+                                        if (objstart != -1) {
+                                            hoverHighlightToken = new Token(token.getStream(), objstart);
+                                            hoverHighlightToken.stop = objstop;
                                         }
+                                        else {
+                                            hoverHighlightToken = token;
+                                        }
+                                        break;
                                     }
                                 }
                             }
@@ -933,8 +978,6 @@ public class SourceEditor {
 
         styledText.addMouseTrackListener(new MouseTrackListener() {
 
-            Token token;
-
             @Override
             public void mouseHover(MouseEvent e) {
                 if (popupWindow != null || hoverHighlight) {
@@ -943,7 +986,7 @@ public class SourceEditor {
 
                 int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
 
-                token = tokenMarker.getTokenAt(offset);
+                Token token = tokenMarker.getTokenAt(offset);
                 if (token == null || token.type == Token.EOF) {
                     return;
                 }
@@ -978,6 +1021,31 @@ public class SourceEditor {
                     String text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
                     if (text == null) {
                         text = tokenMarker.getMethod(token.getText());
+                        if (text == null && token.getText().startsWith("@")) {
+                            text = tokenMarker.getMethod(token.getText().substring(1));
+                        }
+                        if (text == null && token.getText().startsWith(".")) {
+                            int line = styledText.getLineAtOffset(offset);
+                            int lineOffset = styledText.getOffsetAtLine(line);
+                            String lineText = styledText.getLine(line);
+                            int endIndex = token.start - lineOffset - 1;
+                            if (lineText.charAt(endIndex) == ']') {
+                                while (endIndex >= 0 && lineText.charAt(endIndex) != '[') {
+                                    endIndex--;
+                                }
+                                endIndex--;
+                            }
+                            if (endIndex >= 0) {
+                                Token objectToken = tokenMarker.getTokenAt(endIndex + lineOffset);
+                                if (objectToken != null) {
+                                    String qualifiedName = objectToken.getText() + token.getText();
+                                    text = tokenMarker.getMethod(qualifiedName);
+                                    if (text == null && qualifiedName.startsWith("@")) {
+                                        text = tokenMarker.getMethod(qualifiedName.substring(1));
+                                    }
+                                }
+                            }
+                        }
                     }
                     if (text != null && !"".equals(text)) {
                         popupWindow = new Shell(styledText.getShell(), SWT.RESIZE | SWT.ON_TOP);
