@@ -3150,13 +3150,13 @@ public class Spin2ObjectCompiler {
                         if (!(node.getChild(0) instanceof Spin2StatementNode.Index)) {
                             throw new CompilerException("syntax error", node.getChild(0).getToken());
                         }
-                        if (!(node.getChild(1) instanceof Spin2StatementNode.Method)) {
-                            throw new CompilerException("syntax error", node.getChild(1).getToken());
-                        }
 
                         ObjectInfo info = objects.get(node.getText());
                         String qualifiedName = node.getText() + node.getChild(1).getText();
                         if (info == null && node.getText().startsWith("@")) {
+                            if (node.getChild(1) instanceof Spin2StatementNode.Method) {
+                                throw new CompilerException("syntax error", node.getChild(1).getToken());
+                            }
                             info = objects.get(node.getText().substring(1));
                             qualifiedName = node.getText().substring(1) + node.getChild(1).getText();
                         }
