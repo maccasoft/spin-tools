@@ -154,14 +154,14 @@ public class Spin1ObjectCompiler {
     public void compile(Node root) {
 
         for (Node node : root.getChilds()) {
-            if (node instanceof ConstantsNode) {
-                compileConBlock(node);
+            if (node instanceof ObjectsNode) {
+                compileObjBlock(node);
             }
         }
 
         for (Node node : root.getChilds()) {
-            if (node instanceof ObjectsNode) {
-                compileObjBlock(node);
+            if (node instanceof ConstantsNode) {
+                compileConBlock(node);
             }
         }
 

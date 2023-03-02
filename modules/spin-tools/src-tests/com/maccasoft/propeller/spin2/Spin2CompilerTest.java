@@ -1346,6 +1346,57 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testObjectConstantsReference() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "CON\n"
+            + "\n"
+            + "    #o.LAST\n"
+            + "    NUMBER\n"
+            + "\n"
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := NUMBER\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "CON\n"
+            + "\n"
+            + "    #0\n"
+            + "    ONE, TWO\n"
+            + "    LAST\n"
+            + "\n"
+            + "PUB start()\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       14 00 00 00    Object \"text2.spin2\" @ $00014\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "0000C 0000C       14 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00010 00010       04             (stack size)\n"
+            + "'     a := NUMBER\n"
+            + "00011 00011       A3             CONSTANT (2)\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00013 00013       04             RETURN\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "00014 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00018 00004       0A 00 00 00    End\n"
+            + "' PUB start()\n"
+            + "0001C 00008       00             (stack size)\n"
+            + "0001D 00009       04             RETURN\n"
+            + "0001E 0000A       00 00          Padding\n"
+            + "", compile("main.spin2", sources));
+    }
+
+    @Test
     void testObjectArrayMethodCall() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin2", ""

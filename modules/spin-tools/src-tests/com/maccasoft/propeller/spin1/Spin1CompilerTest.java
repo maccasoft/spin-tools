@@ -258,6 +258,58 @@ class Spin1CompilerTest {
     }
 
     @Test
+    void testObjectConstantsReference() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin", ""
+            + "CON\n"
+            + "\n"
+            + "    #o#LAST\n"
+            + "    NUMBER\n"
+            + "\n"
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := NUMBER\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin", ""
+            + "CON\n"
+            + "\n"
+            + "    #0\n"
+            + "    ONE, TWO\n"
+            + "    LAST\n"
+            + "\n"
+            + "PUB start\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       10 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       01             Object count\n"
+            + "00004 00004       0C 00 04 00    Function main @ $000C (local size 4)\n"
+            + "00008 00008       10 00 00 00    Object \"text2.spin\" @ $0010 (variables @ $0000)\n"
+            + "' PUB main | a\n"
+            + "'     a := NUMBER\n"
+            + "0000C 0000C       38 02          CONSTANT (2)\n"
+            + "0000E 0000E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000F 0000F       32             RETURN\n"
+            + "' Object \"text2.spin\" header (var size 0)\n"
+            + "00010 00000       0C 00          Object size\n"
+            + "00012 00002       02             Method count + 1\n"
+            + "00013 00003       00             Object count\n"
+            + "00014 00004       08 00 00 00    Function start @ $0008 (local size 0)\n"
+            + "' PUB start\n"
+            + "00018 00008       32             RETURN\n"
+            + "00019 00009       00 00 00       Padding\n"
+            + "", compile("main.spin", sources));
+    }
+
+    @Test
     void testDuplicatedObjectLink() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin", ""

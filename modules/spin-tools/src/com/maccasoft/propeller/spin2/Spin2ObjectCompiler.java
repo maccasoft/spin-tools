@@ -190,14 +190,14 @@ public class Spin2ObjectCompiler {
     public void compile(Node root) {
 
         for (Node node : root.getChilds()) {
-            if (node instanceof ConstantsNode) {
-                compileConBlock((ConstantsNode) node);
+            if (node instanceof ObjectsNode) {
+                compileObjBlock(node);
             }
         }
 
         for (Node node : root.getChilds()) {
-            if (node instanceof ObjectsNode) {
-                compileObjBlock(node);
+            if (node instanceof ConstantsNode) {
+                compileConBlock((ConstantsNode) node);
             }
         }
 
