@@ -4390,134 +4390,136 @@ public class Spin2ObjectCompiler {
 
         Expression expression = context.getLocalSymbol(node.getText());
         if (expression != null) {
-            if (registerConstant && (expression instanceof Register) && node.getChildCount() == 0) {
-                return expression;
-            }
-            if (expression.isConstant() && node.getChildCount() == 0) {
-                return expression;
+            if (node.getChildCount() == 0) {
+                if (expression.isConstant()) {
+                    return expression;
+                }
+                if (registerConstant && (expression instanceof Register) || (expression instanceof DataVariable)) {
+                    return expression;
+                }
             }
             throw new RuntimeException("not a constant (" + expression + ")");
         }
 
         switch (node.getText().toUpperCase()) {
             case ">>":
-                return new ShiftRight(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new ShiftRight(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "<<":
-                return new ShiftLeft(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new ShiftLeft(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "&":
-                return new And(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new And(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "^":
-                return new Xor(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Xor(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "|":
-                return new Or(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Or(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "*":
             case "*.":
-                return new Multiply(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Multiply(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "/":
             case "/.":
-                return new Divide(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Divide(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "//":
-                return new Modulo(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Modulo(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "+/":
-                return new UnsignedDivide(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new UnsignedDivide(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "+//":
-                return new UnsignedModulo(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new UnsignedModulo(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "SCA":
-                return new Sca(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Sca(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "SCAS":
-                return new Scas(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Scas(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "+":
             case "+.":
                 if (node.getChildCount() == 1) {
-                    return buildConstantExpression(context, node.getChild(0));
+                    return buildConstantExpression(context, node.getChild(0), registerConstant);
                 }
-                return new Add(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Add(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "-":
             case "-.":
                 if (node.getChildCount() == 1) {
-                    return new Negative(buildConstantExpression(context, node.getChild(0)));
+                    return new Negative(buildConstantExpression(context, node.getChild(0), registerConstant));
                 }
-                return new Subtract(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Subtract(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "ADDBITS":
-                return new Addbits(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Addbits(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "ADDPINS":
-                return new Addpins(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Addpins(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "&&":
             case "AND":
-                return new LogicalAnd(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new LogicalAnd(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "||":
             case "OR":
-                return new LogicalOr(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new LogicalOr(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "^^":
             case "XOR":
-                return new LogicalXor(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new LogicalXor(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "<":
-                return new LessThan(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new LessThan(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "<=":
-                return new LessOrEquals(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new LessOrEquals(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "==":
-                return new Equals(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new Equals(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "<>":
-                return new NotEquals(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new NotEquals(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case ">=":
-                return new GreaterOrEquals(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new GreaterOrEquals(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case ">":
-                return new GreaterThan(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new GreaterThan(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "!":
                 if (node.getChildCount() == 1) {
-                    return new Not(buildConstantExpression(context, node.getChild(0)));
+                    return new Not(buildConstantExpression(context, node.getChild(0), registerConstant));
                 }
                 throw new RuntimeException("unary operator with " + node.getChildCount() + " arguments");
 
             case "?": {
-                Expression right = buildConstantExpression(context, node.getChild(1));
+                Expression right = buildConstantExpression(context, node.getChild(1), registerConstant);
                 if (!(right instanceof IfElse)) {
                     throw new RuntimeException("unsupported operator " + node.getText());
                 }
-                return new IfElse(buildConstantExpression(context, node.getChild(0)), ((IfElse) right).getTrueTerm(), ((IfElse) right).getFalseTerm());
+                return new IfElse(buildConstantExpression(context, node.getChild(0), registerConstant), ((IfElse) right).getTrueTerm(), ((IfElse) right).getFalseTerm());
             }
             case ":":
-                return new IfElse(null, buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+                return new IfElse(null, buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "TRUNC":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
-                return new Trunc(buildConstantExpression(context, node.getChild(0)));
+                return new Trunc(buildConstantExpression(context, node.getChild(0), registerConstant));
             case "FSQRT":
             case "SQRT":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
-                return new Sqrt(buildConstantExpression(context, node.getChild(0)));
+                return new Sqrt(buildConstantExpression(context, node.getChild(0), registerConstant));
             case "ROUND":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
-                return new Round(buildConstantExpression(context, node.getChild(0)));
+                return new Round(buildConstantExpression(context, node.getChild(0), registerConstant));
             case "FLOAT":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
-                return new NumberLiteral(buildConstantExpression(context, node.getChild(0)).getNumber().doubleValue());
+                return new NumberLiteral(buildConstantExpression(context, node.getChild(0), registerConstant).getNumber().doubleValue());
             case "ABS":
             case "FABS":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
-                return new Abs(buildConstantExpression(context, node.getChild(0)));
+                return new Abs(buildConstantExpression(context, node.getChild(0), registerConstant));
             case "NAN":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
-                return new Nan(buildConstantExpression(context, node.getChild(0)));
+                return new Nan(buildConstantExpression(context, node.getChild(0), registerConstant));
         }
 
         throw new RuntimeException("unknown " + node.getText());
