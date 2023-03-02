@@ -391,6 +391,7 @@ public class EditorTab implements FindReplaceTarget {
 
                                 @Override
                                 public void run() {
+                                    threadRunning.set(false);
                                     if (editor == null || editor.getStyledText().isDisposed()) {
                                         return;
                                     }
@@ -402,7 +403,6 @@ public class EditorTab implements FindReplaceTarget {
                                 }
                             });
                         }
-                        threadRunning.set(false);
                     }
 
                 });
@@ -868,8 +868,11 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     void scheduleCompile() {
-        Display.getDefault().timerExec(500, compilerRunnable);
+        pendingCompile.set(true);
+        object = null;
+        objectTree = null;
         tabItem.setFont(busyFont);
+        Display.getDefault().timerExec(500, compilerRunnable);
     }
 
     public void formatSource() {
@@ -895,6 +898,34 @@ public class EditorTab implements FindReplaceTarget {
 
     public ObjectTree getObjectTree() {
         return objectTree;
+    }
+
+    public void waitCompile() {
+        AtomicBoolean stop = new AtomicBoolean();
+        Thread waitThread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    while (threadRunning.get() && pendingCompile.get()) {
+                        if (stop.get()) {
+                            break;
+                        }
+                        Thread.sleep(100);
+                    }
+                } catch (Exception e) {
+                    // Do nothing
+                }
+            }
+
+        });
+        waitThread.start();
+        try {
+            waitThread.join(5000);
+        } catch (Exception e) {
+            // Do nothing
+        }
+        stop.set(true);
     }
 
 }

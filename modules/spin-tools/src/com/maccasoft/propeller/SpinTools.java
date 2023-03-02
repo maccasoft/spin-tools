@@ -1591,13 +1591,18 @@ public class SpinTools {
         }
 
         EditorTab editorTab = (EditorTab) tabItem.getData();
-
+        editorTab.waitCompile();
         if (editorTab.hasErrors()) {
+            MessageDialog.openError(shell, APP_TITLE, "Program has errors.");
             editorTab.goToFirstError();
             return;
         }
 
         SpinObject object = editorTab.getObject();
+        if (object == null) {
+            return;
+        }
+
         if (object instanceof Spin1Object) {
             P1MemoryDialog dlg = new P1MemoryDialog(shell) {
 
@@ -1759,12 +1764,17 @@ public class SpinTools {
             return;
         }
         EditorTab editorTab = (EditorTab) tabItem.getData();
+        editorTab.waitCompile();
         if (editorTab.hasErrors()) {
             MessageDialog.openError(shell, APP_TITLE, "Program has errors.");
             editorTab.goToFirstError();
             return;
         }
+
         SpinObject obj = editorTab.getObject();
+        if (obj == null) {
+            return;
+        }
 
         SerialPort serialPort = null;
         boolean serialPortShared = false;
