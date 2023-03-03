@@ -877,6 +877,18 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     if (token.getText().equals(endMarker)) {
                         return i;
                     }
+                    if (token.getText().equals("[")) {
+                        i = markTokens(node, i, "]");
+                        if (i < list.size()) {
+                            token = list.get(i);
+                        }
+                    }
+                    if (token.getText().equals("(")) {
+                        i = markTokens(node, i, ")");
+                        if (i < list.size()) {
+                            token = list.get(i);
+                        }
+                    }
                 }
                 else if (token.type == Token.STRING) {
                     tokens.add(new TokenMarker(token, TokenId.STRING));
@@ -916,7 +928,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                                 Token objToken = token;
                                 token = list.get(i);
                                 if (token.getText().equals("[")) {
-                                    i = markTokens(node, i, "]");
+                                    tokens.add(new TokenMarker(token, TokenId.OPERATOR));
+                                    i = markTokens(node, i + 1, "]");
                                     if (i < list.size()) {
                                         token = list.get(i);
                                     }
@@ -1060,7 +1073,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
     };
 
     public Spin2TokenMarker() {
-
+        this.constantSeparator = ".";
     }
 
     @Override

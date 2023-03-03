@@ -142,6 +142,7 @@ public abstract class SourceTokenMarker {
     protected TreeSet<TokenMarker> compilerTokens = new TreeSet<>();
 
     protected boolean caseSensitive;
+    protected String constantSeparator;
 
     protected Map<String, TokenId> symbols = new CaseInsensitiveMap<>();
     protected Map<String, TokenId> compilerSymbols = new CaseInsensitiveMap<>();
@@ -432,7 +433,7 @@ public abstract class SourceTokenMarker {
         return sb.length() != 0 ? sb.toString() : null;
     }
 
-    public List<IContentProposal> getMethodProposals(Node context, String token) {
+    public List<IContentProposal> getMethodProposals(Node context, String textToken) {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
         if (root == null) {
             return proposals;
@@ -442,50 +443,94 @@ public abstract class SourceTokenMarker {
             context = context.getParent();
         }
 
+        String contextMethodName;
+        if ((context instanceof MethodNode) && ((MethodNode) context).getName() != null) {
+            contextMethodName = ((MethodNode) context).getName().getText();
+        }
+        else {
+            contextMethodName = "";
+        }
+
+        boolean address = textToken.startsWith("@");
+        String token = address ? textToken.substring(1) : textToken;
+
         root.accept(new NodeVisitor() {
 
             @Override
             public boolean visitMethod(MethodNode node) {
-                if (node.getName() != null) {
+                if (node.getName() != null && !contextMethodName.equals(node.getName().getText())) {
                     String text = node.getName().getText();
                     if (text.toUpperCase().contains(token)) {
-                        proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
+                        String content = getMethodInsert(node);
+                        int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
+                        proposals.add(new ContentProposal(content, text, getMethodDocument(node), cursorPosition));
                     }
                 }
                 return false;
             }
 
         });
+
         root.accept(new NodeVisitor() {
 
             @Override
-            public void visitObject(ObjectNode objectNode) {
-                if (objectNode.name == null || objectNode.file == null) {
+            public void visitObject(ObjectNode node) {
+                if (node.name == null || node.file == null) {
                     return;
                 }
-                String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
-                Node objectRoot = getObjectTree(fileName);
-                if (objectRoot == null) {
-                    return;
+                String text = node.name.getText();
+                if (text.toUpperCase().contains(token)) {
+                    if (node.count != null) {
+                        proposals.add(new ContentProposal(text + "[0]", text, ""));
+                    }
+                    else {
+                        proposals.add(new ContentProposal(text, text, ""));
+                    }
                 }
-                objectRoot.accept(new NodeVisitor() {
+                return;
+            }
 
-                    @Override
-                    public boolean visitMethod(MethodNode node) {
-                        if (node.getType() != null && node.getName() != null) {
+        });
+
+        int dot = token.indexOf('.');
+        if (dot != -1) {
+            String objectName = token.substring(0, dot);
+            if (objectName.indexOf('[') != -1) {
+                objectName = objectName.substring(0, objectName.indexOf('['));
+            }
+            String refName = objectName + token.substring(dot);
+            root.accept(new NodeVisitor() {
+
+                @Override
+                public void visitObject(ObjectNode objectNode) {
+                    if (objectNode.name == null || objectNode.file == null) {
+                        return;
+                    }
+                    String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                    Node objectRoot = getObjectTree(fileName);
+                    if (objectRoot == null) {
+                        return;
+                    }
+                    objectRoot.accept(new NodeVisitor() {
+
+                        @Override
+                        public boolean visitMethod(MethodNode node) {
+                            if (node.getType() == null || node.getName() == null) {
+                                return false;
+                            }
                             if ("PUB".equalsIgnoreCase(node.getType().getText())) {
                                 String text = objectNode.name.getText() + "." + node.getName().getText();
-                                if (text.toUpperCase().contains(token)) {
+                                if (text.toUpperCase().contains(refName)) {
                                     proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                 }
                             }
+                            return false;
                         }
-                        return false;
-                    }
 
-                });
-            }
-        });
+                    });
+                }
+            });
+        }
 
         context.accept(new NodeVisitor() {
 
@@ -541,34 +586,37 @@ public abstract class SourceTokenMarker {
             }
 
         });
-        root.accept(new NodeVisitor() {
 
-            @Override
-            public void visitObject(ObjectNode objectNode) {
-                if (objectNode.name == null || objectNode.file == null) {
-                    return;
-                }
-                String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
-                Node objectRoot = getObjectTree(fileName);
-                if (objectRoot == null) {
-                    return;
-                }
-                objectRoot.accept(new NodeVisitor() {
+        if (token.indexOf(constantSeparator) != -1) {
+            root.accept(new NodeVisitor() {
 
-                    @Override
-                    public boolean visitConstant(ConstantNode node) {
-                        if (node.identifier != null) {
-                            String text = objectNode.name.getText() + "." + node.identifier.getText();
-                            if (text.toUpperCase().contains(token)) {
-                                proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
-                            }
-                        }
-                        return false;
+                @Override
+                public void visitObject(ObjectNode objectNode) {
+                    if (objectNode.name == null || objectNode.file == null) {
+                        return;
                     }
+                    String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                    Node objectRoot = getObjectTree(fileName);
+                    if (objectRoot == null) {
+                        return;
+                    }
+                    objectRoot.accept(new NodeVisitor() {
 
-                });
-            }
-        });
+                        @Override
+                        public boolean visitConstant(ConstantNode node) {
+                            if (node.identifier != null) {
+                                String text = objectNode.name.getText() + constantSeparator + node.identifier.getText();
+                                if (text.toUpperCase().contains(token)) {
+                                    proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
+                                }
+                            }
+                            return false;
+                        }
+
+                    });
+                }
+            });
+        }
 
         root.accept(new NodeVisitor() {
 

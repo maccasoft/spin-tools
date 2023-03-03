@@ -568,7 +568,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
     };
 
     public Spin1TokenMarker() {
-
+        this.constantSeparator = "#";
     }
 
     @Override

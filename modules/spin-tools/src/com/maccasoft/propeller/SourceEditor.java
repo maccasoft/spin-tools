@@ -663,7 +663,17 @@ public class SourceEditor {
                     String lineText = styledText.getLine(line);
                     int endIndex = token.start - lineOffset - 1;
                     if (lineText.charAt(endIndex) == ']') {
-                        while (endIndex >= 0 && lineText.charAt(endIndex) != '[') {
+                        int depth = -1;
+                        while (endIndex >= 0) {
+                            if (lineText.charAt(endIndex) == ']') {
+                                depth++;
+                            }
+                            else if (lineText.charAt(endIndex) == '[') {
+                                if (depth == 0) {
+                                    break;
+                                }
+                                depth--;
+                            }
                             endIndex--;
                         }
                         endIndex--;
@@ -1030,7 +1040,17 @@ public class SourceEditor {
                             String lineText = styledText.getLine(line);
                             int endIndex = token.start - lineOffset - 1;
                             if (lineText.charAt(endIndex) == ']') {
-                                while (endIndex >= 0 && lineText.charAt(endIndex) != '[') {
+                                int depth = -1;
+                                while (endIndex >= 0) {
+                                    if (lineText.charAt(endIndex) == ']') {
+                                        depth++;
+                                    }
+                                    else if (lineText.charAt(endIndex) == '[') {
+                                        if (depth == 0) {
+                                            break;
+                                        }
+                                        depth--;
+                                    }
                                     endIndex--;
                                 }
                                 endIndex--;
@@ -1347,14 +1367,6 @@ public class SourceEditor {
                 fontItalic.dispose();
                 fontBoldItalic.dispose();
                 currentLineBackground.dispose();
-                for (TextStyle style : styleMap.values()) {
-                    if (style.foreground != null) {
-                        style.foreground.dispose();
-                    }
-                    if (style.background != null) {
-                        style.background.dispose();
-                    }
-                }
                 insertCaret.dispose();
                 overwriteCaret.dispose();
             }
@@ -1816,21 +1828,7 @@ public class SourceEditor {
         int lineIndex = styledText.getLineAtOffset(styledText.getCaretOffset());
         Node node = tokenMarker.getContextAtLine(lineIndex);
 
-        int start = position;
-        while (start > 0) {
-            if (node instanceof DataLineNode) {
-                if (contents.charAt(start - 1) == '#') {
-                    break;
-                }
-            }
-            char ch = contents.charAt(start - 1);
-            if (!Character.isLetterOrDigit(ch) && ch != '.' && ch != ':' && ch != '#' && ch != '_') {
-                break;
-            }
-            start--;
-        }
-
-        String token = contents.substring(start, position).toUpperCase();
+        String token = getFilterText(node, contents, position).toUpperCase();
 
         if (position == 0) {
             proposals.addAll(helpProvider.fillProposals("Root", token));
@@ -1903,6 +1901,62 @@ public class SourceEditor {
 
         styledText.setCaretOffset(styledText.getOffsetAtLine(line) + column);
         styledText.setTopIndex(topLine);
+    }
+
+    String getFilterText(Node context, String contents, int position) {
+        char ch = 0;
+        int start = position;
+
+        while (start > 0) {
+            if (context instanceof DataLineNode) {
+                if (contents.charAt(start - 1) == '#') {
+                    break;
+                }
+            }
+            ch = contents.charAt(start - 1);
+            if (!Character.isLetterOrDigit(ch) && ch != '.' && ch != ':' && ch != '#' && ch != '_') {
+                break;
+            }
+            start--;
+        }
+
+        String name = contents.substring(start, position);
+
+        if (name.startsWith(".") && start > 0 && contents.charAt(start - 1) == ']') {
+            start -= 2;
+            int depth = 0;
+            while (start > 0) {
+                ch = contents.charAt(start);
+                if (ch == ']') {
+                    depth++;
+                }
+                if (ch == '[') {
+                    if (depth == 0) {
+                        position = start;
+                        break;
+                    }
+                    depth--;
+                }
+                start--;
+            }
+
+            while (start > 0) {
+                if (context instanceof DataLineNode) {
+                    if (contents.charAt(start - 1) == '#') {
+                        break;
+                    }
+                }
+                ch = contents.charAt(start - 1);
+                if (!Character.isLetterOrDigit(ch) && ch != '.' && ch != ':' && ch != '#' && ch != '_') {
+                    break;
+                }
+                start--;
+            }
+
+            name = contents.substring(start, position) + name;
+        }
+
+        return name;
     }
 
     public void setCompilerMessages(List<CompilerException> messages) {

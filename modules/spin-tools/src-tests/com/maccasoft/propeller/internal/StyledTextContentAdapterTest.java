@@ -18,7 +18,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -34,21 +33,6 @@ class StyledTextContentAdapterTest {
     void initialize() {
         display = Display.getDefault();
         shell = new Shell(display);
-    }
-
-    @BeforeEach
-    void setUp() {
-        control = new StyledText(shell, SWT.NONE);
-        control.setText(""
-            + "PUB start\n"
-            + "\n"
-            + "    method1\n"
-            + "    repeat\n"
-            + "        method2(arg0)\n"
-            + "\n");
-        while (display.readAndDispatch()) {
-
-        }
     }
 
     @AfterEach
@@ -75,28 +59,36 @@ class StyledTextContentAdapterTest {
     }
 
     @Test
-    void testGetCursorPosition() {
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-
+    void testGetControlContents() {
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(""
+            + "PUB start\n"
+            + "\n"
+            + "    method1\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n");
         control.setCaretOffset(19);
 
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+
+        Assertions.assertEquals("    method1", subject.getControlContents(control));
         Assertions.assertEquals(8, subject.getCursorPosition(control));
     }
 
     @Test
-    void testGetControlContents() {
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-
-        control.setCaretOffset(19);
-
-        Assertions.assertEquals("    method1", subject.getControlContents(control));
-    }
-
-    @Test
     void testSetShorterControlContents() {
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(""
+            + "PUB start\n"
+            + "\n"
+            + "    method1\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n");
         control.setCaretOffset(19);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, "short", subject.getCursorPosition(control));
 
         Assertions.assertEquals(""
@@ -111,9 +103,17 @@ class StyledTextContentAdapterTest {
 
     @Test
     void testSetLongerControlContents() {
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(""
+            + "PUB start\n"
+            + "\n"
+            + "    method1\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n");
         control.setCaretOffset(19);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, "longmethod", subject.getCursorPosition(control));
 
         Assertions.assertEquals(""
@@ -128,9 +128,17 @@ class StyledTextContentAdapterTest {
 
     @Test
     void testSetArgumentTemplateContents() {
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(""
+            + "PUB start\n"
+            + "\n"
+            + "    method1\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n");
         control.setCaretOffset(19);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
 
         Assertions.assertEquals(""
@@ -145,9 +153,17 @@ class StyledTextContentAdapterTest {
 
     @Test
     void testSetControlContentsKeepExistingArguments() {
-        StyledTextContentAdapter subject = new StyledTextContentAdapter();
-
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(""
+            + "PUB start\n"
+            + "\n"
+            + "    method1\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n");
         control.setCaretOffset(46);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
 
         Assertions.assertEquals(""
@@ -158,6 +174,81 @@ class StyledTextContentAdapterTest {
             + "        method(arg0)\n"
             + "\n", control.getText());
         Assertions.assertEquals(49, control.getCaretOffset());
+    }
+
+    @Test
+    void testSetObjectArray() {
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(""
+            + "PUB start\n"
+            + "\n"
+            + "    object[1].start()\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n");
+        control.setCaretOffset(18);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "array[0]", subject.getCursorPosition(control));
+
+        Assertions.assertEquals(""
+            + "PUB start\n"
+            + "\n"
+            + "    array[1].start()\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n", control.getText());
+        Assertions.assertEquals(21, control.getCaretOffset());
+    }
+
+    @Test
+    void testSetObjectMethod() {
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(""
+            + "PUB start\n"
+            + "\n"
+            + "    object.\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n");
+        control.setCaretOffset(22);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
+
+        Assertions.assertEquals(""
+            + "PUB start\n"
+            + "\n"
+            + "    object.method(arg0,arg1)\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n", control.getText());
+        Assertions.assertEquals(29, control.getCaretOffset());
+    }
+
+    @Test
+    void testSetObjectArrayMethod() {
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(""
+            + "PUB start\n"
+            + "\n"
+            + "    object[0].\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n");
+        control.setCaretOffset(25);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
+
+        Assertions.assertEquals(""
+            + "PUB start\n"
+            + "\n"
+            + "    object[0].method(arg0,arg1)\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n", control.getText());
+        Assertions.assertEquals(32, control.getCaretOffset());
     }
 
 }

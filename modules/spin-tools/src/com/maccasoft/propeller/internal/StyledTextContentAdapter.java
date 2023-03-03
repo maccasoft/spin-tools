@@ -52,18 +52,22 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
             position++;
         }
 
-        if (position < contents.length() && contents.charAt(position) != '(') {
+        if (position < contents.length() && contents.charAt(position) != '(' && contents.charAt(position) != '[') {
             e = position + 1;
             while (e < contents.length() && contents.charAt(e) == ' ') {
                 e++;
             }
-            if (e < contents.length() && contents.charAt(e) == '(') {
+            if (e < contents.length() && (contents.charAt(e) == '(' || contents.charAt(e) == '[')) {
                 position = e;
             }
         }
 
-        if (position < contents.length() && contents.charAt(position) == '(') {
+        if (position < contents.length() && (contents.charAt(position) == '(' || contents.charAt(position) == '[')) {
             if ((e = text.indexOf('(')) != -1) {
+                text = text.substring(0, e + 1);
+                position++;
+            }
+            if ((e = text.indexOf('[')) != -1) {
                 text = text.substring(0, e + 1);
                 position++;
             }
@@ -95,7 +99,7 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
     }
 
     boolean isIdentifierPart(char ch) {
-        return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == '.' || ch == ':';
+        return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == ':';
     }
 
     @Override
