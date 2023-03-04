@@ -2255,24 +2255,26 @@ public class Spin2ObjectCompiler {
         try {
             Descriptor desc = Spin2Bytecode.getDescriptor(node.getText());
             if (desc != null) {
-                if (node.getChildCount() != desc.parameters) {
-                    throw new RuntimeException("expected " + desc.parameters + " argument(s), found " + node.getChildCount());
+                int actual = getArgumentsCount(context, node);
+                if (actual != desc.getParameters()) {
+                    throw new RuntimeException("expected " + desc.getParameters() + " argument(s), found " + actual);
                 }
-                for (int i = 0; i < desc.parameters; i++) {
+                for (int i = 0; i < node.getChildCount(); i++) {
                     source.addAll(compileConstantExpression(context, node.getChild(i)));
                 }
                 source.add(new Bytecode(context, desc.code, node.getText().toUpperCase()));
             }
             else if ("ABORT".equalsIgnoreCase(node.getText())) {
-                if (node.getChildCount() == 0) {
+                int actual = getArgumentsCount(context, node);
+                if (actual == 0) {
                     source.add(new Bytecode(context, 0x06, node.getText().toUpperCase()));
                 }
-                else if (node.getChildCount() == 1) {
+                else if (actual == 1) {
                     source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
                     source.add(new Bytecode(context, 0x07, node.getText().toUpperCase()));
                 }
                 else {
-                    throw new RuntimeException("expected 0 or 1 argument(s), found " + node.getChildCount());
+                    throw new RuntimeException("expected 0 or 1 argument(s), found " + actual);
                 }
             }
             else if ("COGINIT".equalsIgnoreCase(node.getText())) {
@@ -3261,16 +3263,7 @@ public class Spin2ObjectCompiler {
                                     Spin2StatementNode childNode = node.getChild(1);
 
                                     int expected = method.getArgumentsCount();
-                                    int actual = 0;
-                                    for (int i = 0; i < childNode.getChildCount(); i++) {
-                                        Expression child = context.getLocalSymbol(childNode.getChild(i).getText());
-                                        if (child != null && (child instanceof Method) && !childNode.getChild(i).getText().startsWith("@")) {
-                                            actual += ((Method) child).getReturnsCount();
-                                        }
-                                        else {
-                                            actual++;
-                                        }
-                                    }
+                                    int actual = getArgumentsCount(context, childNode);
                                     if (expected != actual) {
                                         throw new CompilerException("expected " + expected + " argument(s), found " + actual, node.getToken());
                                     }
@@ -3486,6 +3479,24 @@ public class Spin2ObjectCompiler {
         return source;
     }
 
+    int getArgumentsCount(Spin2Context context, Spin2StatementNode childNode) {
+        int actual = 0;
+        for (int i = 0; i < childNode.getChildCount(); i++) {
+            Expression child = context.getLocalSymbol(childNode.getChild(i).getText());
+            if (child != null && (child instanceof Method) && !childNode.getChild(i).getText().startsWith("@")) {
+                actual += ((Method) child).getReturnsCount();
+                continue;
+            }
+            Spin2Bytecode.Descriptor descriptor = Spin2Bytecode.getDescriptor(childNode.getChild(i).getText().toUpperCase());
+            if (descriptor != null) {
+                actual += descriptor.getReturns();
+                continue;
+            }
+            actual++;
+        }
+        return actual;
+    }
+
     List<Spin2Bytecode> compileMethodCall(Spin2Context context, Expression symbol, Spin2StatementNode node, boolean push, boolean trap) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
@@ -3500,16 +3511,7 @@ public class Spin2ObjectCompiler {
             Method method = (Method) symbol;
 
             int expected = method.getArgumentsCount();
-            int actual = 0;
-            for (int i = 0; i < node.getChildCount(); i++) {
-                Expression child = context.getLocalSymbol(node.getChild(i).getText());
-                if (child != null && (child instanceof Method) && !node.getChild(i).getText().startsWith("@")) {
-                    actual += ((Method) child).getReturnsCount();
-                }
-                else {
-                    actual++;
-                }
-            }
+            int actual = getArgumentsCount(context, node);
             if (expected != actual) {
                 throw new RuntimeException("expected " + expected + " argument(s), found " + actual);
             }
