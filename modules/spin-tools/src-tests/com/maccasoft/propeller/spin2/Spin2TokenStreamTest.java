@@ -803,4 +803,12 @@ class Spin2TokenStreamTest {
         assertEquals("`uhex_long_array_(image_address, lut_size)", subject.nextToken().getText());
     }
 
+    @Test
+    void testFieldPointer() {
+        Spin2TokenStream subject = new Spin2TokenStream("^@a");
+
+        assertEquals("^@", subject.nextToken().getText());
+        assertEquals("a", subject.nextToken().getText());
+    }
+
 }

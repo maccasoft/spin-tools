@@ -30,7 +30,7 @@ public class MemoryOp extends Spin2Bytecode {
     }
 
     public static enum Op {
-        Read, Write, Setup, Address
+        Read, Write, Setup, Address, Field
     }
 
     public Size ss;
@@ -175,7 +175,10 @@ public class MemoryOp extends Spin2Bytecode {
                 os.write(Constant.wrVar(offset + index));
             }
 
-            if (op == Op.Address) {
+            if (op == Op.Field) {
+                os.write(0x7E);
+            }
+            else if (op == Op.Address) {
                 os.write(0x7F);
             }
             else if (op == Op.Read) {
@@ -206,6 +209,9 @@ public class MemoryOp extends Spin2Bytecode {
         }
         else if (op == Op.Address) {
             sb.append("ADDRESS");
+        }
+        else if (op == Op.Field) {
+            sb.append("BITFIELD_PTR");
         }
 
         if (op != Op.Address) {

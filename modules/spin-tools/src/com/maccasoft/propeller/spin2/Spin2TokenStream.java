@@ -393,7 +393,7 @@ public class Spin2TokenStream extends TokenStream {
                             token.stop++;
                             break;
                         }
-                        if (ch0 == '^' && (ch == '^' || ch == '=')) {
+                        if (ch0 == '^' && (ch == '^' || ch == '=' || ch == '@')) {
                             token.stop++;
                             break;
                         }

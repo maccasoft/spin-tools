@@ -9,7 +9,7 @@ import com.maccasoft.propeller.spin2.Spin2Context;
 public class BitField extends Spin2Bytecode {
 
     public static enum Op {
-        Read, Write, Setup
+        Read, Write, Setup, Field
     }
 
     Op op;
@@ -59,7 +59,10 @@ public class BitField extends Spin2Bytecode {
                 }
             }
 
-            if (op == Op.Read) {
+            if (op == Op.Field) {
+                os.write(0x7E);
+            }
+            else if (op == Op.Read) {
                 os.write(0x80);
             }
             else if (op == Op.Write) {
@@ -85,6 +88,9 @@ public class BitField extends Spin2Bytecode {
                 break;
             case Setup:
                 sb.append("SETUP");
+                break;
+            case Field:
+                sb.append("PTR");
                 break;
         }
 

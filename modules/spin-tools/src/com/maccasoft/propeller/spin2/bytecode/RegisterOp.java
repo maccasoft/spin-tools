@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -20,7 +20,7 @@ import com.maccasoft.propeller.spin2.Spin2Context;
 public class RegisterOp extends Spin2Bytecode {
 
     public static enum Op {
-        Read, Write, Setup
+        Read, Write, Setup, Field
     }
 
     public Op op;
@@ -58,7 +58,10 @@ public class RegisterOp extends Spin2Bytecode {
                 os.write(Constant.wrVars(value >= 0x100 ? (value - 0x200) : value));
             }
 
-            if (op == Op.Read) {
+            if (op == Op.Field) {
+                os.write(0x7E);
+            }
+            else if (op == Op.Read) {
                 os.write(0x80);
             }
             else if (op == Op.Write) {
@@ -81,6 +84,9 @@ public class RegisterOp extends Spin2Bytecode {
         }
         else if (op == Op.Setup) {
             sb.append("SETUP");
+        }
+        else if (op == Op.Field) {
+            sb.append("BITFIELD_PTR");
         }
 
         if (indexed) {

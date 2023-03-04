@@ -3153,6 +3153,9 @@ public class Spin2ObjectCompiler {
                     if (expression == null && node.getText().startsWith("@")) {
                         expression = context.getLocalSymbol(node.getText().substring(1));
                     }
+                    if (expression == null && node.getText().startsWith("^@")) {
+                        expression = context.getLocalSymbol(node.getText().substring(2));
+                    }
                     if (expression instanceof ObjectContextLiteral) {
                         expression = context.getLocalSymbol(node.getText().substring(1));
                     }
@@ -3546,6 +3549,8 @@ public class Spin2ObjectCompiler {
             }
         }
 
+        boolean field = node.getText().startsWith("^@");
+
         int n = 0;
         if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
             indexNode = node.getChild(n++);
@@ -3648,7 +3653,8 @@ public class Spin2ObjectCompiler {
                 source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
             }
 
-            source.add(new BitField(context, postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup, bitfield));
+            BitField.Op op = field ? BitField.Op.Field : (postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup);
+            source.add(new BitField(context, op, bitfield));
 
             if (postEffectNode != null) {
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -3733,13 +3739,13 @@ public class Spin2ObjectCompiler {
             }
             else {
                 if (expression instanceof Register) {
-                    source.add(new RegisterOp(context, RegisterOp.Op.Read, popIndex, expression, index));
+                    source.add(new RegisterOp(context, field ? RegisterOp.Op.Field : RegisterOp.Op.Read, popIndex, expression, index));
                 }
                 else if (expression instanceof ContextLiteral) {
-                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Read, popIndex, expression, index));
+                    source.add(new MemoryOp(context, ss, bb, field ? MemoryOp.Op.Field : MemoryOp.Op.Read, popIndex, expression, index));
                 }
                 else {
-                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression, hasIndex, index));
+                    source.add(new VariableOp(context, field ? VariableOp.Op.Field : VariableOp.Op.Read, popIndex, (Variable) expression, hasIndex, index));
                 }
             }
         }
@@ -3888,6 +3894,10 @@ public class Spin2ObjectCompiler {
         int index = 0;
         boolean popIndex = false;
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
+
+        if (node.getText().startsWith("^@")) {
+            throw new CompilerException("syntax error", node.getToken());
+        }
 
         String[] s = node.getText().split("[\\.]");
         if (s.length == 2 && ("BYTE".equalsIgnoreCase(s[1]) || "WORD".equalsIgnoreCase(s[1]) || "LONG".equalsIgnoreCase(s[1]))) {

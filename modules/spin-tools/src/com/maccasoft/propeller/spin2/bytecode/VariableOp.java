@@ -25,7 +25,7 @@ public class VariableOp extends Spin2Bytecode {
     };
 
     public static enum Op {
-        Read, Write, Setup, Address, PBaseAddress
+        Read, Write, Setup, Address, PBaseAddress, Field
     }
 
     public Size ss;
@@ -106,6 +106,9 @@ public class VariableOp extends Spin2Bytecode {
                         if (op == Op.Address) {
                             os.write(0x7F);
                         }
+                        else if (op == Op.Field) {
+                            os.write(0x7E);
+                        }
                     }
                 }
                 else {
@@ -118,6 +121,9 @@ public class VariableOp extends Spin2Bytecode {
                     }
                     else if (op == Op.Address) {
                         os.write(0x7F);
+                    }
+                    else if (op == Op.Field) {
+                        os.write(0x7E);
                     }
                 }
             }
@@ -151,7 +157,10 @@ public class VariableOp extends Spin2Bytecode {
 
                 os.write(Constant.wrVar(offset));
 
-                if (op == Op.Address) {
+                if (op == Op.Field) {
+                    os.write(0x7E);
+                }
+                else if (op == Op.Address) {
                     os.write(0x7F);
                 }
                 else if (op == Op.Read || op == Op.PBaseAddress) {
@@ -186,6 +195,9 @@ public class VariableOp extends Spin2Bytecode {
         }
         else if (op == Op.Address || op == Op.PBaseAddress) {
             sb.append("ADDRESS");
+        }
+        else if (op == Op.Field) {
+            sb.append("BITFIELD_PTR");
         }
 
         if (indexed) {
