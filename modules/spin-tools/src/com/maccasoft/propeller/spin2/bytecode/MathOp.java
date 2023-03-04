@@ -95,37 +95,41 @@ public class MathOp extends Spin2Bytecode {
         operations.put("SCAS", new Descriptor(0x9C, "SCAS"));
         operations.put("FRAC", new Descriptor(0x9D, "FRAC"));
 
-        operations.put("<.", new Descriptor(new byte[] {
-            0x19, (byte) 0x92
-        }, "FLOAT_LESS_THAN"));
-        operations.put(">.", new Descriptor(new byte[] {
-            0x19, (byte) 0x94
-        }, "FLOAT_GREATER_THAN"));
-        operations.put("<>.", new Descriptor(new byte[] {
-            0x19, (byte) 0x96
-        }, "FLOAT_NOT_EQUAL"));
-        operations.put("==.", new Descriptor(new byte[] {
-            0x19, (byte) 0x98
-        }, "FLOAT_EQUAL"));
-        operations.put("<=.", new Descriptor(new byte[] {
-            0x19, (byte) 0x9A
-        }, "FLOAT_LESS_THAN_OR_EQUAL"));
-        operations.put(">=.", new Descriptor(new byte[] {
-            0x19, (byte) 0x9C
-        }, "FLOAT_GREATER_THAN_OR_EQUAL"));
+        //operations.put("-.", new Descriptor(new byte[] {
+        //    0x19, (byte) 0x94
+        //}, "FLOAT_NEG"));
 
         operations.put("+.", new Descriptor(new byte[] {
-            0x19, (byte) 0xA0
+            0x19, (byte) 0x9A
         }, "FLOAT_ADD"));
         operations.put("-.", new Descriptor(new byte[] {
-            0x19, (byte) 0xA2
+            0x19, (byte) 0x9C
         }, "FLOAT_SUBTRACT"));
         operations.put("*.", new Descriptor(new byte[] {
-            0x19, (byte) 0xA4
+            0x19, (byte) 0x9E
         }, "FLOAT_MULTIPLY"));
         operations.put("/.", new Descriptor(new byte[] {
-            0x19, (byte) 0xA6
+            0x19, (byte) 0xA0
         }, "FLOAT_DIVIDE"));
+        operations.put("<.", new Descriptor(new byte[] {
+            0x19, (byte) 0xA2
+        }, "FLOAT_LESS_THAN"));
+        operations.put(">.", new Descriptor(new byte[] {
+            0x19, (byte) 0xA4
+        }, "FLOAT_GREATER_THAN"));
+        operations.put("<>.", new Descriptor(new byte[] {
+            0x19, (byte) 0xA6
+        }, "FLOAT_NOT_EQUAL"));
+        operations.put("==.", new Descriptor(new byte[] {
+            0x19, (byte) 0xA8
+        }, "FLOAT_EQUAL"));
+        operations.put("<=.", new Descriptor(new byte[] {
+            0x19, (byte) 0xAA
+        }, "FLOAT_LESS_THAN_OR_EQUAL"));
+        operations.put(">=.", new Descriptor(new byte[] {
+            0x19, (byte) 0xAC
+        }, "FLOAT_GREATER_THAN_OR_EQUAL"));
+
     }
 
     public static boolean isMathOp(String s) {

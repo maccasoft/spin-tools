@@ -140,6 +140,7 @@ public class Preferences {
         public boolean spin1CaseSensitiveSymbols;
         public String[] spin2LibraryPath;
         public boolean spin2CaseSensitiveSymbols;
+        public boolean spin2ClockSetter;
         public List<String> lru = new ArrayList<String>();
 
         public boolean reloadOpenTabs;
@@ -454,6 +455,14 @@ public class Preferences {
         else if (!Arrays.equals(newValue, preferences.spin2LibraryPath)) {
             changeSupport.firePropertyChange(PROP_SPIN2_LIBRARY_PATH, preferences.spin2LibraryPath, preferences.spin2LibraryPath = newValue);
         }
+    }
+
+    public boolean getSpin2ClockSetter() {
+        return preferences.spin2ClockSetter;
+    }
+
+    public void setSpin2ClockSetter(boolean spin2ClockSetter) {
+        preferences.spin2ClockSetter = spin2ClockSetter;
     }
 
     public int[] getTabStops(Class<?> clazz) {

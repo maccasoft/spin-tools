@@ -54,7 +54,7 @@ public class RegisterOp extends Spin2Bytecode {
                 os.write(0xB0 + (value - 0x1F8) + 8);
             }
             else {
-                os.write(indexed ? 0x4F : 0x4E);
+                os.write(indexed ? 0x50 : 0x4F);
                 os.write(Constant.wrVars(value >= 0x100 ? (value - 0x200) : value));
             }
 

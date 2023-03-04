@@ -12,6 +12,8 @@ package com.maccasoft.propeller.spin2;
 
 import java.io.InputStream;
 
+import com.maccasoft.propeller.Propeller2Loader;
+
 public class Spin2Debugger {
 
     byte[] code = new byte[0];
@@ -21,6 +23,7 @@ public class Spin2Debugger {
         try {
             code = new byte[is.available()];
             is.read(code);
+            writeLong(0x0148, Propeller2Loader.UPLOAD_BAUD_RATE);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -32,30 +35,40 @@ public class Spin2Debugger {
         }
     }
 
+    public void setTxPin(int txPin) {
+        writeLong(0x0140, txPin);
+    }
+
+    public void setRxPin(int rxPin) {
+        writeLong(0x0144, rxPin);
+    }
+
+    public void setBaud(int baud) {
+        writeLong(0x0148, baud);
+    }
+
     public void setClkFreq(int freq) {
-        long bitmode = (freq * 0x10000L) / 2000000L;
-        writeLong(0x108, (int) ((bitmode & 0xFFFFFC00L) | 7));
-        writeLong(0x10C, freq / 1000);
+        writeLong(0xD4, freq);
     }
 
     public void setClkMode1(int mode) {
-        writeLong(0xA0, mode);
+        writeLong(0xD8, mode);
     }
 
     public void setClkMode2(int mode) {
-        writeLong(0xA4, mode);
+        writeLong(0xDC, mode);
     }
 
     public void setDelay(int delay) {
-        writeLong(0xA8, delay);
+        writeLong(0xE0, delay);
     }
 
     public void setAppSize(int size) {
-        writeLong(0xAC, size);
+        writeLong(0xE4, size);
     }
 
     public void setHubset(int set) {
-        writeLong(0xB0, set);
+        writeLong(0xE8, set);
     }
 
     public int getSize() {

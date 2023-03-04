@@ -1,10 +1,15 @@
-' *** Spin2/PASM Debugger
-' *** Sets up debugger and then launches applicaion
+'**************************************
+'*  Spin2/PASM Debugger - 2022.11.19  *
+'**************************************
+'
+' Sets up debugger and then launches appended applicaion
 '
 CON	dat_addr	=	$FC000
-	sav_addr	=	$FEB00
-	dbg_addr	=	$FF2A0
+	sav_addr	=	$FEA00
+	dbg_addr	=	$FF1A0
 	dbg_size	=	$FFC00 - dbg_addr
+
+	overlay_end	=	$1F7
 '
 '
 ' ********************
@@ -16,9 +21,9 @@ CON	dat_addr	=	$FC000
 '
 ' $FC000 - DEBUG data				addresses fixed in software
 '
-' $FEB00 - Cog N reg $010..$1F7 buffer
+' $FEA00 - Cog N reg $010..$1F7 buffer
 '
-' $FF2A0 - Cog N reg $004..$1F7 debugger + data
+' $FF1A0 - Cog N reg $004..$1F7 debugger + overlay(s) + data
 '
 ' $FFC00 - Cog 7 reg $000..$00F buffer		addresses fixed in silicon
 ' $FFC40 - Cog 7 reg $000..$00F debug ISR
@@ -39,22 +44,34 @@ CON	dat_addr	=	$FC000
 ' $FFEC0 - Cog 2 reg $000..$00F debug ISR
 '
 ' $FFF00 - Cog 1 reg $000..$00F buffer
-' $FFF40 - Cog 1 reg $000..$00F debug ISR
+' $FFF40 - Cog 1 reg $000..$00F debug ISR	in each debug ISR, long[$C] = BRK condition
 '
 ' $FFF80 - Cog 0 reg $000..$00F buffer
-' $FFFC0 - Cog 0 reg $000..$00F debug ISR
+' $FFFC0 - Cog 0 reg $000..$00F debug ISR	in each debug ISR, long[$D] = COGBRK flag
 '
 '
 DAT		org
 '
 '
+' Configure the tx pin so that it stays high
+'
+t		wrpin	#%01_11110_0,@_txpin_/4
+'
+'
+' Configure the rx pin as a long repository to hold the clock frequency
+'
+		wrpin	#%00_00001_0,@_rxpin_/4
+		dirh	@_rxpin_/4
+		wxpin	_clkfreq_,@_rxpin_/4
+'
+'
 ' Set clock mode
 '
-t		hubset	_clkmode1_		'start external clock, remain in rcfast mode	(reused as t)
+		hubset	_clkmode1_		'start external clock, remain in rcfast mode	(reused as t)
 		waitx	##20_000_000 / 100	'allow 10ms for external clock to stabilize
 		hubset	_clkmode2_		'switch to external clock mode
 
-		waitx	_delay_			'do any initial delay
+		waitx	_delay_			'do any startup delay
 '
 '
 ' Allocate lock[15]
@@ -65,6 +82,13 @@ t		hubset	_clkmode1_		'start external clock, remain in rcfast mode	(reused as t)
 		mov	t,#14			'return lock[14..0], leaves lock[15] allocated
 .return		lockret	t
 		djnf	t,#.return
+'
+'
+' Clear upper hub RAM background to clean up debugger view
+'
+		loc	ptra,#$FC000
+		setq	##$4000/4-1
+		wrlong	#0,ptra
 '
 '
 ' Write debugger ISR to all eight cogs' ISR buffers
@@ -80,7 +104,7 @@ t		hubset	_clkmode1_		'start external clock, remain in rcfast mode	(reused as t)
 '
 		loc	ptra,#@debugger
 		loc	ptrb,#dbg_addr
-		loc	pa,#dbg_size
+		loc	pa,#@debugger_end-@debugger
 		call	#move
 '
 '
@@ -105,6 +129,15 @@ t		hubset	_clkmode1_		'start external clock, remain in rcfast mode	(reused as t)
 		callpa	_appsize_,#move
 '
 '
+' Clear trailing hub RAM to clean up debugger view
+'
+		not	t,_appsize_
+		zerox	t,#18
+		shr	t,#2
+		setq	t
+		wrlong	#0,_appsize_
+'
+'
 ' Launch application
 '
 		coginit	#0,#$00000		'relaunch cog 0 from $00000
@@ -119,7 +152,7 @@ move		add	pa,#3			'round bytes up to long
 		fle	pb,pa
 		sub	pa,pb			'adjust remaining-longs count
 
-		sub	pb,#1			'get setq long count
+		sub	pb,#1			'get long count - 1
 
 		setq2	pb			'read block of longs
 		rdlong	0,ptra++
@@ -131,23 +164,26 @@ move		add	pa,#3			'round bytes up to long
 '
 ' Data set by compiler
 '
-_clkmode1_	long	0			'@0A0: clkmode with rcfast
-_clkmode2_	long	0			'@0A4: clkmode with external clock
-_delay_		long	0			'@0A8: initial delay (default is 0)
-_appsize_	long	0			'@0AC: application size in bytes
-_hubset_	long	$2003_00FF		'@0B0: cog-debug-enable bits in low byte (default is $FF)
+_clkfreq_	long	0			'@0D4: initial clock frequency
+_clkmode1_	long	0			'@0D8: initial clkmode with rcfast
+_clkmode2_	long	0			'@0DC: initial clkmode with external clock
+_delay_		long	0			'@0E0: startup delay (default is 0)
+_appsize_	long	0			'@0E4: application size in bytes
+_hubset_	long	$2003_00FF		'@0E8: cog-debug-enable bits in low byte (default is $FF)
 '
 '
 ' *******************************************************
 ' *  Debug ISR						*
 ' *							*
-' *	- on debug interrupt, jmp #$1F8 executes	*
-' *	- registers $000..$00F copy to hub		*
-' *	- registers $000..$00F load from hub		*
-' *	- jmp #0 (debug_isr) executes			*
-' *	- debug_isr code runs, ending with jmp #$1FD	*
-' *	- registers $000..$00F load from hub		*
-' *	- reti0 executes, returns to main code		*
+' *	- on debug interrupt, JMP #$1F8 to ROM		*
+' *	- ROM: registers $000..$00F save to hub		*
+' *	- ROM: registers $000..$00F load from hub	*
+' *	- ROM: JMP #$000 executes			*
+' *	- debug_isr runs to begin debug			*
+' *	- debug saves and later restores $010..$1F7	*
+' *	- JMP #$1FD to ROM				*
+' *	- ROM: registers $000..$00F restore from hub	*
+' *	- ROM: RETI0 executes, returns to main code	*
 ' *							*
 ' *******************************************************
 '
@@ -159,24 +195,29 @@ debug_isr
 '
 cth		getct	cth		wc	'get cth
 ctl		getct	ctl			'get ctl
-regh		mov	regh,##sav_addr		'get regh, regh+1 is used to store next BRK value
+regh		augs	#sav_addr		'get sav_addr into regh
+cond		mov	regh,#sav_addr & $1FF	'cond will hold BRK condition on exit
 
-waitlock	locktry	#15		wc	'wait for lock[15] so that we own the save buffer and the tx pin
-	if_nc	jmp	#waitlock
+.wait		locktry	#15		wc	'wait for lock[15] so that we own the save buffer and tx/rx pins
+	if_nc	jmp	#.wait
 
 		setq	#$1F7-$010		'save registers $010..$1F7 to the save buffer
 		wrlong	$010,regh
 
 		setq	#$1F7-$004		'load debugger into registers $004..$1F7
-		rdlong	$004,##dbg_addr		'(preserve cth..regh+1 at $000..$003)
+		rdlong	$004,##dbg_addr		'(preserve cth..cond at $000..$003)
 
-		jmp	#\debug_entry		'jump to debug_entry (jmp is already pipelined)
+		jmp	#\debug_entry		'jump to debug_entry (jmp was already pipelined)
+
+
+brk_cond	long	$00000010		'@11C: $00C, COGBRK (set later) and BRK are initially enabled
+cogbrk_flag	long	0			'      $00D, COGBRK flag is initially clear
 '
 '
 ' ***********************************************
 ' *  Debugger					*
 ' *						*
-' *	- cth..regh+1 saved at $000..$003	*
+' *	- cth..cond saved at $000..$003		*
 ' *	- debugger loads at $004..$1F7		*
 ' *						*
 ' ***********************************************
@@ -191,12 +232,12 @@ debugger
 debug_exit	setq	#$1F7-$010		'restore registers $010..$1F7 to free the save buffer
 		rdlong	$010,regh
 
-		lockrel	#15			'release lock[15] so that other cogs can own the save buffer and tx pin
+		lockrel	#15			'release lock[15] so other cogs can own the save buffer and tx/rx pins
 
-delay	if_nz	waitx	ctl			'if dlyms was not 0, do exit delay
-overlay	if_nz	djnz	cth,#delay		'(start of overlay area for stall)
+.delay	if_nz	waitx	ctl			'if dlyms was not 0, do exit delay
+	if_nz	djnz	cth,#.delay		'(start of tiny overlay area for stall)
 
-		brk	regh+1			'enable next debug interrupt
+		brk	cond			'enable next debug interrupt
 
 		jmp	#$1FD			'restore $000..$00F, return from debug interrupt
 '
@@ -204,118 +245,157 @@ overlay	if_nz	djnz	cth,#delay		'(start of overlay area for stall)
 ' This 'stall' program gets assembled into $004..$00F
 '
 ' $000-	cth	long	0			'old	<unused>
-' $001-	ctl	long	_waitxms_ << 6		'old	waitx 64ms value
+' $001-	ctl	long	freq >> 16		'old	waitx 64ms value
 ' $002-	regh	long	sav_addr		'old	pointer to save buffer
-' $003-	regh+1	long	0			'old	<unused>
+' $003-	cond	long	0			'old	<unused>
 '
 ' $004-		setq	#$1F7-$010		'old	restore registers $010..$1F7 to free the save buffer
 ' $005-		rdlong	$010,regh		'old
 '
-' $006-		lockrel	#15			'old	release lock[15] so that other cogs can own the save buffer and tx/rx pins
+' $006-		lockrel	#15			'old	release lock[15] so other cogs can own the save buffer and tx/rx pins
 '
-' $007-	if_nz	waitx	ctl			'old	wait for 64ms, z must be clear
+' $007-	if_nz	waitx	ctl			'old	wait for ~64ms (z must be clear)
 '
-' $008-	.wait	locktry	#15		wc	'new	wait for lock[15] so that we own the save buffer and the tx/rx pins again
+' $008-	.wait	locktry	#15		wc	'new	wait for lock[15] so that we own the save buffer and tx/rx pins again
 ' $009-	if_nc	jmp	#.wait			'new
 '
 ' $00A-		setq	#$1F7-$010		'new	resave registers $010..$1F7 to the save buffer
 ' $00B-		wrlong	$010,regh		'new
 '
 ' $00C-		setq	#$1F7-$004		'new	load debugger into registers $004..$1F7
-' $00D-		rdlong	$004,##dbg_addr		'new	(preserve cth..regh+1 at $000..$003)
+' $00D-		rdlong	$004,##dbg_addr		'new	(preserve cth..cond at $000..$003)
 '
 ' $00F-		jmp	#\debug_entry		'new	jump to debug_entry (jmp is already pipelined)
 '
 '
 ' Data set by compiler
 '
-_txpin_		long	62			'@100: tx pin (default is 62, msb = show timestamp)
-_rxpin_		long	63			'@104: rx pin (default is 63)
-_txmode_	long	0			'@108: tx/rx mode (2_000_000-8-N-1)
-_waitxms_	long	0			'@10C: waitx value for 1ms delay
+_txpin_		long	62			'@140: tx pin (default is 62, msb = tx output flag)
+_rxpin_		long	63			'@144: rx pin (default is 63, msb = show timestamp)
+_baud_		long	0			'@148: baud rate
+
+dlyms		long	0			'exit delay in ms
 '
 '
-' Debugger/stall entry - save cog status data
+' DEBUG interrupt entry or STALL return - saves cog data and determines what to do
+' --------------------------------------------------------------------------------
+'
+'	if STALL return
+'	  do BREAKPOINT (updates BRK_COND, stalls or exits)
+'
+'	if COGINIT
+'	  show INIT message
+'	
+'	if COGBRK_FLAG set
+'	  clear COGBRK_FLAG
+'	  do BREAKPOINT (updates BRK_COND, stalls or exits)
+'	
+'	if COGINIT
+'	  if (COGINIT or MAIN) in BRK_COND
+'	    do BREAKPOINT (updates BRK_COND, stalls or exits)
+'	  else
+'	    exit with BRK_COND
+'	
+'	if (DEBUG in BRK_COND) and (BRK code <> $00)
+'	  do MESSAGE (exits)
+'
+'	do BREAKPOINT (updates BRK_COND, stalls or exits)
+'
 '
 debug_entry
 
-cogn		cogid	cogn			'get cogid (cogn..iret form contiguous data, cogn = 0..7)
+regl		brk	#0			'in case stall entry, show debug interrupt return address at inb
 
-brkcz		getbrk	brkcz		wcz	'get status wcz
-brkc		getbrk	brkc		wc	'get status wc
-brkz		getbrk	brkz		wz	'get status wz
+cogn		cogid	cogn			'00: get cogid (cogn = 0..7, cogn..freq form contiguous data)
+brkcz		getbrk	brkcz		wcz	'01: get status wcz
+brkc		getbrk	brkc		wc	'02: get status wc
+brkz		getbrk	brkz		wz	'03: get status wz
+cth2		getct	cth2		wc	'04: get 64-bit ct
+ctl2		getct	ctl2			'05:
+stk0		pop	stk0			'06: get stack
+stk1		pop	stk1			'07:
+stk2		pop	stk2			'08:
+stk3		pop	stk3			'09:
+stk4		pop	stk4			'0A:
+stk5		pop	stk5			'0B:
+stk6		pop	stk6			'0C:
+stk7		pop	stk7			'0D:
+iret		mov	iret,inb		'0E: get debug interrupt return address
+fptr		getptr	fptr			'0F: get rdfast/wrfast pointer
+ptra_		mov	ptra_,ptra		'10: get ptra
+ptrb_		mov	ptrb_,ptrb		'11: get ptrb
+freq		rqpin	freq,_rxpin_		'12: get clock frequency from rx pin in repository mode
 
-fptr		getptr	fptr			'get fast ptr
+t1		decod	regl,#11		'show ina/inb (must be disabled before RETI0)
+t2		brk	regl
 
-stk0		pop	stk0			'save stack
-stk1		pop	stk1
-stk2		pop	stk2
-stk3		pop	stk3
-stk4		pop	stk4
-stk5		pop	stk5
-stk6		pop	stk6
-stk7		pop	stk7
+w		not	regl,cogn		'calculate register $000..$00F buffer address for cog
+x		shl	regl,#7
 
-cth2		getct	cth2		wc	'get 64-bit ct
-ctl2		getct	ctl2
+y		sub	ctl,#62		wc	'trim 64-bit ct from initial debug_entry (not from stall)
+z		subx	cth,#0
 
-iret		mov	iret,$1FF		'save debug interrupt return address
+txrx		encod	x,freq			'compute (freq / _baud_) for tx/rx configuration
+ptr		encod	y,_baud_
+msb		sub	x,y
+dig		add	x,#1
+ma		shl	_baud_,x
+mb		mov	y,freq
+xa		rep	#3,#32+1		'do long division to preserve any user cordic results
+xb		cmpsub	y,_baud_	wc
+expa		rcl	txrx,#1
+expb		shl	y,#1
+		subr	x,#16			'position clocks-per-bit
+		shr	txrx,x
+		setbyte	txrx,#8-1,#0		'set 8-N-1
 
-ptra_		mov	ptra_,ptra		'save ptra
-ptrb_		mov	ptrb_,ptrb		'save ptrb
+		fltl	_txpin_			'reset and configure tx pin
+		wrpin	#%01_11110_0,_txpin_
+		wxpin	txrx,_txpin_
+		drvl	_txpin_
 
-regl		not	regl,cogn		'calculate register $000..$00F buffer address for cog
-ptr		shl	regl,#7
+		fltl	_rxpin_			'reset and configure rx pin
+		wrpin	#%00_11111_0,_rxpin_
+		wxpin	txrx,_rxpin_
+		drvl	_rxpin_
 
-msb		sub	ctl,#62		wc	'trim 64-bit ct from initial debug_entry (not from stall)
-dig		subx	cth,#0
+		mov	ptrb,regl		'point to cog's ISR (use ptrb to preserve ptra for Spin2 DEBUG message)
 
-w		fltl	_txpin_			'reset and configure the tx pin
-x		wrpin	#%01_11110_0,_txpin_
-y		wxpin	_txmode_,_txpin_
-z		drvl	_txpin_
+		rdlong	cond,ptrb[$1C]		'if return from stall, handle breakpoint
+		testb	cond,#11	wc
+  if_c		jmp	#.breakpoint
 
-		testb	$1FE,#31	wc	'check for debugger reentry
+		testb	brkcz,#23	wc	'if COGINIT, output message
+  if_c		call	#coginit_
 
-		brk	##$800			'show ina/inb (must be disabled before RETI0)
+		rdlong	t1,ptrb[$1D]	wz	'if COGBRK, clear flag and handle breakpoint
+  if_nz		wrlong	#0,ptrb[$1D]
+  if_nz		jmp	#.breakpoint
 
-	if_c	jmp	#breakpoint		'debugger reentry?
-		tjs	cth,#breakpoint		'breakpoint stall?
-'
-'
-' If COGINIT then show message
-'
-ma		testb	brkcz,#23 	 wc	'cog started or BRK-instruction interrupt?
-xa	if_nc	jmp	#debug_id
+  if_c		test	cond,#$101	wz	'if COGINIT, if BRK condition <> (COGINIT or MAIN), done
+  if_c_and_z	jmp	#debug_done
 
-mb		call	#cognout		'output "CogN  " with possible timestamp (msb = 31)
+  if_nc		test	cond,#$010	wz	'if not COGINIT, if BRK condition = DEBUG and BRK code <> 0, normal DEBUG message
+  if_nc_and_nz	getbyte	ptr,brkcz,#3
+  if_nc_and_nz	tjnz	ptr,#debug_message
 
-xb		callpb	#_ini,#rstrout		'output "INIT "
+.breakpoint	loc	pb,#\dbg_addr+(@bp_handler-@debugger)	'load breakpoint handler overlay
+		setq	#overlay_end-overlay_begin		'read in overlay code and execute it
+		rdlong	overlay_begin,pb
 
-expa		mov	x,ptrb_			'output ptrb
-expb		call	#hexout
-
-		callpa	#" ",#txbyte		'output " "
-
-		mov	x,ptra_			'output ptra
-		call	#hexout
-
-		testb	brkcz,#0  	 wc	'load or jump?
-	if_nc	callpb	#_lod,#rstrout		'output " load"
-	if_c	callpb	#_jmp,#rstrout		'output " jump"
+		jmp	#bp_handler
 '
 '
 ' Debug done
 '
-debug_done	testb	_com,#31  	 wc	'if tx output has occurred, output new line
-	if_c	callpb	#_lin,#rstrout
+debug_done	rdpin	t1,_txpin_ 	 wc	'wait for tx not busy
+	if_c	jmp	#debug_done
 
-wait_done	rdpin	w,_txpin_ 	 wc	'wait for tx not busy
-	if_c	jmp	#wait_done
+		wrpin	#%00_00001_0,_rxpin_	'set rx pin back to repository mode
+		wxpin	freq,_rxpin_		'write freq back to rx pin repository
 
-		mov	regh+1,#$10		'set value to enable BRK-instruction interrupt
-
-breakpoint_done	fltl	_txpin_			'disable tx pin
+		fltl	_txpin_			'disable tx pin
+		fltl	_rxpin_			'disable rx pin
 
 		push	stk7			'restore stack
 		push	stk6
@@ -329,24 +409,144 @@ breakpoint_done	fltl	_txpin_			'disable tx pin
 		mov	ptra,ptra_		'restore ptra
 		mov	ptrb,ptrb_		'restore ptrb
 
-		mov	ctl,_waitxms_		'save waitx ms value into ctl
+		mov	ctl,freq		'get waitx ~1ms value into ctl
+		shr	ctl,#10
 
-		testb	cth,#31		wc	'stall?
+		testb	cond,#11	wc	'exit or stall?
 
-	if_nc	mov	cth,dlyms	wz	'if not stall, get exit delay, z=1 if 0
+	if_nc	or	cond,#$100		'if exit, enable COGBRK in BRK condition (bit was used for COGINIT)
 
-	if_c	shl	ctl,#6		wz	'if stall, get waitx 64ms value into ctl, z=0
+	if_nc	mov	cth,dlyms	wz	'if exit, get exit delay, z=1 if 0
+
+	if_c	shl	ctl,#6		wz	'if stall, get waitx ~64ms value into ctl, z=0
 
 	if_c	setq	#$00F-$008		'if stall, load locktry..jmp in $008..$00F
 	if_c	rdlong	$008,##$FFFC0+$004*4
 
-		jmp	#debug_exit		'exit debugger (c=0) or do stall (c=1)
+		jmp	#debug_exit		'exit debugger or do stall
 '
 '
-' Get BRK-instruction identifier and point to DEBUG data
+' *****************
+' *  Subroutines  *
+' *****************
 '
-debug_id	getbyte	ptr,brkcz,#3
-		shl	ptr,#1
+'
+' Transmit byte/word/long in pa, preserves c/z
+'
+txlong		call	#txword			'send lower word
+		getword	pa,t1,#1		'get upper word
+
+txword		mov	t1,pa			'pack word as %HHHHHHHH01LLLLLLLL for single transmit
+		shr	pa,#8-2			'..improves overlap of memory computations and serial transmits
+		rolbyte	pa,t1,#0
+		bith	pa,#8
+		bitl	pa,#9
+
+		setbyte	txrx,#17,#0		'ready 18-bit mode for fast word transmit
+
+txbyte		rdpin	t2,_txpin_	wc	'wait until tx not busy
+	if_c	jmp	#txbyte
+
+		wxpin	txrx,_txpin_		'set 18-bit or 8-bit mode
+
+		wypin	pa,_txpin_		'output byte
+
+		setbyte	txrx,#7,#0		'ready 8-bit mode
+
+		bith	_txpin_,#31		'set flag to indicate tx output has occurred
+
+		ret			wcz
+'
+'
+' Receive long into pb, preserves c/z
+'
+rxlong		call	#.word
+.word		call	#.byte
+
+.byte		testp	_rxpin_		wc	'wait for rx byte
+	if_nc	jmp	#.byte
+
+		rdpin	pa,_rxpin_		'get byte
+		shr	pa,#32-8
+		shr	pb,#8
+		setbyte	pb,pa,#3
+
+		ret			wcz
+'
+'
+' z=0 : Read register x into x, preserves c/z
+' z=1 : Write y to register x, preserves c/z
+'
+' $000..$00F = from @regl
+' $010..$1F7 = from @regh
+' $1F8..$1F9 = ptra_, ptrb_
+' $1FA..$1FF = direct
+' $200..$3FF = lut
+'
+rdreg		modz	_clr		wz	'force read
+
+rwreg		signx	x,#9		wc	'lut $200..$3FF? (signx simplifies comparisons)
+  if_c_and_nz	rdlut	x,x
+  if_c_and_z	wrlut	y,x
+  if_c		ret			wcz
+
+		cmp	x,#$010		wc	'$000..$00F ?
+  if_c		shl	x,#2
+  if_c		add	x,regl
+  if_c		jmp	#.hub
+
+		cmp	x,#$1F8		wc	'$010..$1F7 ?
+  if_c		sub	x,#$010
+  if_c		shl	x,#2
+  if_c		add	x,regh
+.hub
+  if_c_and_nz	rdlong	x,x			'reg $000..$1F7
+  if_c_and_z	wrlong	y,x
+  if_c		ret			wcz
+
+		cmp	x,#$1FA		wc	'$1FA..$1FF ?
+  if_c		sub	x,#$1F8 - ptra_		'$1F8..$1F9 ?
+  if_nz		alts	x
+  if_nz		mov	x,0-0			'reg $1F8..$1FF
+  if_z		altd	x
+  if_z		mov	0-0,y
+		ret			wcz
+'
+'
+' End static code and begin overlay area
+'
+overlay_begin
+'
+'
+'*****************************
+'*  Message Handler Overlay  *
+'*****************************
+'
+'
+' Show COGINIT message, preserves c/z
+'
+coginit_	call	#cognout		'output "CogN  " with possible timestamp
+
+		callpb	#_ini,#rstrout		'output "INIT "
+
+		mov	x,ptrb_			'output ptrb
+		call	#hexout
+
+		callpa	#" ",#txbyte		'output " "
+
+		mov	x,ptra_			'output ptra
+		call	#hexout
+
+		testb	brkcz,#0  	 wc	'load or jump?
+	if_nc	callpb	#_lod,#rstrout		'output " load"
+	if_c	callpb	#_jmp,#rstrout		'output " jump"
+
+		ret			wcz	'restore flags
+'
+'
+' Normal DEBUG message
+'
+debug_message	shl	ptr,#1			'compute DEBUG data address
 		bith	ptr,#14 addbits 5
 		rdword	ptr,ptr
 		bith	ptr,#14 addbits 5
@@ -364,7 +564,7 @@ debug_byte	callpa	#z,#getdeb		'get DEBUG bytecode
 		testb	z,#0		wc	'get lsb of command into c
 		jmp	w
 
-.table		byte	debug_done		'0 = end of DEBUG commands
+.table		byte	.done			'0 = end of DEBUG commands
 		byte	.asm			'1 = set asm mode
 		byte	.if			'2 = IF(cond)
 		byte	.if			'3 = IFNOT(cond)
@@ -374,13 +574,12 @@ debug_byte	callpa	#z,#getdeb		'get DEBUG bytecode
 		byte	.dly			'7 = DLY(ms)
 		byte	.pc			'8 = PC_KEY(ptr)
 		byte	.pc			'9 = PC_MOUSE(ptr)
-		byte	breakpoint		'A = breakpoint
 
 .asm		ijnz	asm,#debug_byte		'set asm mode
 
 .if		call	#getval			'IF/IFNOT(cond)
-	if_nc	tjz	x,#debug_done
-	if_c	tjnz	x,#debug_done
+	if_nc	tjz	x,#.done
+	if_c	tjnz	x,#.done
 		jmp	#debug_byte
 
 .cogn		call	#cognout		'output "CogN  " with possible timestamp
@@ -395,22 +594,24 @@ debug_byte	callpa	#z,#getdeb		'get DEBUG bytecode
 
 .dly		call	#getval			'DLY(ms), get ms
 		mov	dlyms,x
+.done		testb	_txpin_,#31  	 wc	'if tx output has occurred, output new line
+	if_c	callpb	#_lin,#rstrout
 		jmp	#debug_done
 
 .pc	if_nc	callpb	#_key,#rstrout		'if PC_KEY(ptr), output "PC_KEY"+cr+lf
 	if_c	callpb	#_mou,#rstrout		'if PC_MOUSE(ptr), output "PC_MOUSE"+cr+lf
 		call	#getval			'get ptr into ptrb
 		mov	ptrb,x
-		call	#rxinit			'receive long into pb
-		call	#rxlong
-		fltl	_rxpin_
+		call	#rxlong			'receive long into pb
 		callpa	#12,#.long		'write mouse x (or key)
 	if_c	callpa	#12,#.long		'write mouse y
 	if_c	callpa	#1,#.long		'write mouse wheel delta
 	if_c	callpa	#0,#.long		'write mouse left button
 	if_c	callpa	#0,#.long		'write mouse middle button
 	if_c	callpa	#0,#.long		'write mouse right button
-		jmp	#wait_done
+	if_c	call	#rxlong			'receive long into pb
+	if_c	callpa	#31,#.long		'write pixel color
+		jmp	#debug_done
 
 .long		mov	y,pb			'pa=topbit, pb=value, ptrb=address
 		signx	y,pa
@@ -423,146 +624,6 @@ debug_byte	callpa	#z,#getdeb		'get DEBUG bytecode
 	_ret_	wrlong	y,ptrb++		'write to hub
 '
 '
-' Breakpoint debugger
-'
-breakpoint	mov	w,#cogn			'send cogn..iret
-.initial	alts	w
-		mov	pa,0-0
-		call	#txlong
-		incmod	w,#iret		wcz	'(z=0 for rwreg)
-	if_nc	jmp	#.initial
-
-		call	#rxinit			'reset and configure the rx pin
-
-.command	call	#rxbyte			'command loop
-		testb	pa,#0		wz	'z=command[0]
-		altgb	pa,#.table
-		getbyte	w
-		jmp	w
-
-.table		byte	.rwhub			'0 = rdhub start,bytes
-		byte	.rwhub			'1 = wrhub start,bytes,data
-		byte	.rwcog			'2 = rdcog start,longs
-		byte	.rwcog			'3 = wrcog start,longs,data
-		byte	.cfpin			'4 = fltl/wrpin/wxpin/wypin/drvl/cogbrk
-		byte	.rqpin			'5 = rqpin 0..63 + flags
-		byte	.stall			'6 = stall for 64ms and wait for another command
-		byte	.brk			'7 = brk long, set brk and exit, $1FE.[31] = !brk.[4]
-
-.rwhub		call	#rxlong			'rdhub start,bytes / wrhub start,bytes,data
-		mov	ptra,pb
-		call	#rxlong
-.rwhub2	if_nz	rdbyte	pa,ptra++
-	if_nz	call	#txbyte
-	if_z	call	#rxbyte
-	if_z	wrbyte	pa,ptra++
-		djnz	pb,#.rwhub2
-		jmp	#.command
-
-.rwcog		call	#rxlong			'rdcog start,longs / wrcog start,longs,data
-		mov	w,pb
-		call	#rxlong
-		mov	z,pb
-.rwcog2	if_z	call	#rxlong
-	if_z	mov	y,pb
-		mov	x,w
-		call	#rwreg			'z=0 for read, z=1 for write
-	if_nz	mov	pa,x
-	if_nz	call	#txlong
-		add	w,#1
-		djnz	z,#.rwcog2
-		jmp	#.command
-
-.cfpin		call	#rxlong			'fltl/wrpin/wxpin/wypin/drvl/cogbrk
-		mov	y,pb
-		testb	y,#31		wc	'fltl?
-	if_c	fltl	y
-		testb	y,#30		wc	'wrpin?
-	if_c	call	#rxlong
-	if_c	wrpin	pb,y
-		testb	y,#29		wc	'wxpin?
-	if_c	call	#rxlong
-	if_c	wxpin	pb,y
-		testb	y,#28		wc	'wypin?
-	if_c	call	#rxlong
-	if_c	wypin	pb,y
-		testb	y,#27		wc	'drvl?
-	if_c	drvl	y
-		testb	y,#26		wc	'cogbrk?
-	if_c	cogbrk	y
-		jmp	#.command
-
-.rqpin		mov	w,#0			'send rqpin 0..63 longs
-.rqpin2		rqpin	pa,w		wc
-		rcr	z,#1		wc
-		rcr	y,#1
-		call	#txlong
-		incmod	w,#$3F		wc
-	if_nc	jmp	#.rqpin2
-		mov	pa,y			'send rqpin 0..63 c flags
-		call	#txlong
-		mov	pa,z
-		call	#txlong
-		jmp	#.command
-
-.stall		not	cth,#0			'flag stall
-		brk	#$000			'for debug_entry, show debug interrupt return address at $1FF
-		fltl	_rxpin_			'disable rx pin
-		jmp	#breakpoint_done	'do stall, then return to stall_done
-
-.brk		call	#rxlong			'brk long
-		testb	pb,#4		wc	'1FE.[31] = BRK instruction not enabled (debugger mode)
-		brk	#0
-		bitnc	$1FE,#31
-		mov	regh+1,pb		'set BRK value
-		fltl	_rxpin_			'disable rx pin
-		jmp	#breakpoint_done
-'
-'
-' Transmit byte/long in pa
-'
-txlong		call	#.word			'output low word
-.word		call	#txbyte			'output high word
-
-txbyte		rdpin	w,_txpin_	 wc	'wait until tx not busy
-	if_c	jmp	#txbyte
-
-		wypin	pa,_txpin_		'output byte
-		shr	pa,#8			'shift in case long
-
-		bith	_com,#31		'set flag to indicate tx output has occurred
-
-		ret			wcz	'return with preserved flags
-'
-'
-' Reset and configure the rx pin
-'
-rxinit		fltl	_rxpin_
-		wrpin	#%00_11111_0,_rxpin_
-		wxpin	_txmode_,_rxpin_
-	_ret_	drvl	_rxpin_
-'
-'
-' Receive long into pb, preserves c/z
-'
-rxlong		call	#.word
-.word		call	#.byte
-.byte		shr	pb,#8
-		call	#rxbyte
-	_ret_	setbyte	pb,pa,#3
-'
-'
-' Receive byte into pa, preserves c/z
-'
-rxbyte		testp	_rxpin_		wc
-	if_nc	jmp	#rxbyte
-
-		rdpin	pa,_rxpin_
-		shr	pa,#32-8
-
-		ret			wcz
-'
-'
 ' Output "CogN  " with possible timestamp
 '
 cognout		setnib	_cog,cogn,#6		'get cog number into string
@@ -570,7 +631,7 @@ cognout		setnib	_cog,cogn,#6		'get cog number into string
 
 		mov	msb,#31			'enable 32-bit output
 
-	_ret_	tjs	_txpin_,#.time		'timestamp?
+	_ret_	tjs	_rxpin_,#.time		'timestamp?
 
 .time		mov	x,cth			'output cth
 		call	#hexout
@@ -664,14 +725,14 @@ value_cmd	testb	z,#3		wc	'determine msb
 		call	w
 
 		testb	z,#4		wz	'if value command then done, else continue array
-  if_nz		jmp	#debug_byte		'(followed by array_ret)
+  if_nz		jmp	#debug_byte		'(followed by array_loop)
 '
 '
 ' Array command
 '
-array_ret	djz	y,#debug_byte		'done?
+array_loop	djz	y,#debug_byte		'done?
 
-		callpb	#_com,#rstrout		'output ", "
+		callpa	#" ",#txbyte		'output " "
 
 array_val	testb	z,#3		wc	'read array element and advance address
 		testb	z,#2		wz
@@ -689,11 +750,6 @@ array_cmd	tjnz	y,#array_val		'if array not empty then output values
 
 		callpb	#_nil,#rstrout		'if array empty then output "nil"
 		jmp	#debug_byte
-'
-'
-' *****************
-' *  Subroutines  *
-' *****************
 '
 '
 ' Get DEBUG byte - pa must hold register to receive byte
@@ -731,130 +787,11 @@ getasm		rdword	x,ptr			'get initial word
 		ret			wcz
 '
 '
-' z=0 : Read register x into x, preserves c/z
-' z=1 : Write y to register x, preserves c/z
-'
-' $000..$00F = from @regl
-' $010..$1F7 = from @regh
-' $1F8..$1F9 = ptra_, ptrb_
-' $1FA..$1FF = direct
-' $200..$3FF = lut
-'
-rwreg		signx	x,#9		wc	'lut $200..$3FF? (signx simplifies comparisons)
-  if_c_and_nz	rdlut	x,x
-  if_c_and_z	wrlut	y,x
-  if_c		ret			wcz
-
-		cmp	x,#$010		wc	'$000..$00F ?
-  if_c		shl	x,#2
-  if_c		add	x,regl
-  if_c		jmp	#.hub
-
-		cmp	x,#$1F8		wc	'$010..$1F7 ?
-  if_c		sub	x,#$010
-  if_c		shl	x,#2
-  if_c		add	x,regh
-.hub
-  if_c_and_nz	rdlong	x,x			'reg $000..$1F7
-  if_c_and_z	wrlong	y,x
-  if_c		ret			wcz
-
-		cmp	x,#$1FA		wc	'$1FA..$1FF ?
-  if_c		sub	x,#$1F8 - ptra_		'$1F8..$1F9 ?
-  if_nz		alts	x
-  if_nz		mov	x,0-0			'reg $1F8..$1FF
-  if_z		altd	x
-  if_z		mov	0-0,y
-		ret			wcz
-'
-'
-' Decimal output x
-'
-decout		mov	pb,#9*4		wz	'start with billions, z=0
-		mov	dig,#2			'set initial underscore trip
-		sets	doutn,#2		'underscore every 3 digits
-		setd	doutc,#"_"		'set underscore character
-
-doutdig		loc	pa,#dbg_addr+(@teni-@debugger)
-		add	pa,pb
-		rdlong	w,pa
-
-		mov	pa,#0			'determine decimal digit
-doutsub		cmpsub	x,w		wc
-  if_c		cmp	pa,pa		wz	'on first non-zero digit, z=1
-  if_c		ijnz	pa,#doutsub
-
-doutn		incmod	dig,#2		wc	'if underscore after digit, c=1
-
-  if_nz		cmp	pb,#0		wz	'always output lowest digit, but not leading zeros
-
-  if_z		add	pa,#"0"			'output a digit
-  if_z		call	#txbyte
-
-  if_z		tjz	pb,#doutnext		'output an underscore?
-doutc
-  if_z_and_c	callpa	#"_",#txbyte
-
-doutnext	sub	pb,#4			'next digit
-  _ret_		tjns	pb,#doutdig
-'
-'
-' Hex output x
-'
-hexout		callpa	#"$",#txbyte		'output "$"
-
-hexout_digits	mov	dig,msb			'determine number of digits
-		shr	dig,#2
-
-.loop		altgn	dig,#x			'output a hex digit
-		getnib	pa
-		cmp	pa,#10		wc
-	if_c	add	pa,#"0"
-	if_nc	add	pa,#"A"-10
-		call	#txbyte
-		cmp	dig,#4		wz	'output an underscore before lower group of 4 digits
-	if_z	callpa	#"_",#txbyte
-	_ret_	djnf	dig,#.loop		'next digit
-'
-'
-' Binary output x
-'
-binout		callpa	#"%",#txbyte		'output "%"
-
-		mov	dig,msb
-
-.loop		testb	x,dig		wz	'output a binary digit
-	if_nz	callpa	#"0",#txbyte
-	if_z	callpa	#"1",#txbyte
-		tjz	dig,#.skip		'output an underscore before groups of 8 digits
-		test	dig,#7		wz
-	if_z	callpa	#"_",#txbyte
-.skip	_ret_	djnf	dig,#.loop		'next digit
-'
-'
 ' Debug string output
 '
 dstrout_loop	call	#txbyte
 dstrout		callpa	#pa,#getdeb
 	_ret_	tjnz	pa,#dstrout_loop
-'
-'
-' Defined data
-'
-asm		long	0			'0 = spin, 1 = asm
-dlyms		long	0			'exit delay in ms
-
-_cog		byte	"Cog0  ",0,0		'strings
-_ini		byte	"INIT ",0,0,0
-_lod		byte	" load",0,0,0
-_jmp		byte	" jump",0,0,0
-_com		byte	", ",0,0		'bit 31 of _com is used as a flag
-_equ		byte	" = ",0
-_nil		byte	"nil",0
-_nan		byte	"NaN",0
-_key		byte	"PC_KEY",13,10,0,0,0,0
-_mou		byte	"PC_MOUSE"
-_lin		byte	13,10,0,0
 '
 '
 ' Floating-point output x
@@ -866,13 +803,13 @@ fpout		mov	ma,x			'get float
 	if_c	callpb	#_nan,#rstrout
 	if_c	ret
 
-	if_z	callpa	#"-",#txbyte		'if negative, output "-"
+	if_z	callpa	#"-",#txbyte2		'if negative, output "-"
 
 		call	#.unpack		'unpack float
 		mov	xb,xa
 		mov	mb,ma		wz
 
-	if_z	callpa	#"0",#txbyte		'if zero, output "0" and exit
+	if_z	callpa	#"0",#txbyte2		'if zero, output "0" and exit
 	if_z	ret
 
 		mov	expa,xb			'estimate base-10 exponent
@@ -911,10 +848,10 @@ fpout		mov	ma,x			'get float
 		sets	doutn,#7
 		setd	doutc,#"."
 		call	#doutdig
-		callpa	#"e",#txbyte		'output "e"
+		callpa	#"e",#txbyte2		'output "e"
 		abs	expa		wc	'make base-10 exponent absolute
-	if_nc	callpa	#"+",#txbyte		'output "+" or "-"
-	if_c	callpa	#"-",#txbyte
+	if_nc	callpa	#"+",#txbyte2		'output "+" or "-"
+	if_c	callpa	#"-",#txbyte2
 		mov	x,expa			'ready base-10 exponent
 		cmp	x,x		wz	'z=1 to output leading 0's
 		mov	pb,#1*4			'start with tens
@@ -950,7 +887,235 @@ fpout		mov	ma,x			'get float
 
 .ten13		long	1e+13
 
-endofpgm
+txbyte2		jmp	#txbyte			'fixes out-of-range callpa
+'
+'
+' Decimal output x
+'
+decout		mov	pb,#9*4		wz	'start with billions, z=0
+		mov	dig,#2			'set initial underscore trip
+		sets	doutn,#2		'underscore every 3 digits
+		setd	doutc,#"_"		'set underscore character
+
+doutdig		loc	pa,#dbg_addr+(@teni-@debugger)
+		add	pa,pb
+		rdlong	w,pa
+
+		mov	pa,#0			'determine decimal digit
+doutsub		cmpsub	x,w		wc
+  if_c		cmp	pa,pa		wz	'on first non-zero digit, z=1
+  if_c		ijnz	pa,#doutsub
+
+doutn		incmod	dig,#2		wc	'if underscore after digit, c=1
+
+  if_nz		cmp	pb,#0		wz	'always output lowest digit, but not leading zeros
+
+  if_z		add	pa,#"0"			'output a digit
+  if_z		call	#txbyte
+
+  if_z		tjz	pb,#doutnext		'output an underscore?
+doutc
+  if_z_and_c	callpa	#"_",#txbyte2
+
+doutnext	sub	pb,#4			'next digit
+  _ret_		tjns	pb,#doutdig
+'
+'
+' Hex output x
+'
+hexout		callpa	#"$",#txbyte2		'output "$"
+
+hexout_digits	mov	dig,msb			'determine number of digits
+		shr	dig,#2
+
+.loop		altgn	dig,#x			'output a hex digit
+		getnib	pa
+		cmp	pa,#10		wc
+	if_c	add	pa,#"0"
+	if_nc	add	pa,#"A"-10
+		call	#txbyte
+		cmp	dig,#4		wz	'output an underscore before lower group of 4 digits
+	if_z	callpa	#"_",#txbyte2
+	_ret_	djnf	dig,#.loop		'next digit
+'
+'
+' Binary output x
+'
+binout		callpa	#"%",#txbyte2		'output "%"
+
+		mov	dig,msb
+
+.loop		testb	x,dig		wz	'output a binary digit
+	if_nz	callpa	#"0",#txbyte2
+	if_z	callpa	#"1",#txbyte2
+		tjz	dig,#.skip		'output an underscore before groups of 8 digits
+		test	dig,#7		wz
+	if_z	callpa	#"_",#txbyte2
+.skip	_ret_	djnf	dig,#.loop		'next digit
+'
+'
+' Defined data
+'
+asm		long	0			'0 = spin, 1 = asm
+
+_cog		byte	"Cog0  ",0,0		'strings
+_ini		byte	"INIT ",0,0,0
+_lod		byte	" load",13,10,0
+_jmp		byte	" jump",13,10,0
+_com		byte	", ",0,0
+_equ		byte	" = ",0
+_nil		byte	"nil",0
+_nan		byte	"NaN",0
+_key		byte	"PC_KEY",13,10,0,0,0,0
+_mou		byte	"PC_MOUSE"
+_lin		byte	13,10,0,0
+
+		fit	overlay_end+1
+'
+'
+'********************************
+'*  Breakpoint Handler Overlay  *
+'********************************
+'
+		org	overlay_begin
+'
+'
+' Breakpoint handler
+'
+bp_handler	mov	z,#cogn			'send cogn..freq
+.packet		alts	z
+		mov	pa,0-0
+		call	#txlong
+		incmod	z,#freq		wc
+	if_nc	jmp	#.packet		'(z=0 after)
+
+		mov	pa,cond			'send BRK condition
+		call	#txlong
+
+.crcblock	bmask	pa,#15			'send 64 CRC words for 16-register groups
+.crclong	mov	x,z
+		call	#rdreg
+		setq	x
+		rep	#1,#8
+		crcnib	pa,crcpoly
+		add	z,#1
+		test	z,#$F		wz	'another register?
+	if_nz	jmp	#.crclong
+		call	#txword			'send CRC word
+		testb	z,#10		wz	'another block?
+	if_nz	jmp	#.crcblock
+
+		mov	ptra,#0			'send 124 checksum words for 4KB hub blocks, from $00000..$7BFFF
+		mov	x,#$1000/$40
+		mov	y,#$7C000/$1000
+		call	#.hubsum
+
+		mov	z,#cmd_regs		'get command longs
+.cmdlong	call	#rxlong
+		altd	z
+		mov	0-0,pb
+		incmod	z,#cmd_brk	wc
+	if_nc	jmp	#.cmdlong		'(z=0 after)
+
+.regreq		mov	x,z			'send requested 16-register blocks
+		shr	x,#4
+		altb	x,#cmd_regs
+		testb	0-0,x		wc
+	if_c	mov	x,z
+	if_c	call	#rdreg
+	if_c	mov	pa,x
+	if_c	call	#txlong
+		incmod	z,h3FF		wc
+	if_nc	jmp	#.regreq		'(z=0 after)
+
+.sumreq		altb	z,#cmd_sums		'send requested sub-4KB hub checksums
+		testb	0-0,z		wc
+	if_c	mov	ptra,z
+	if_c	shl	ptra,#12
+	if_c	mov	x,#$80/$40
+	if_c	mov	y,#$1000/$80
+	if_c	call	#.hubsum
+		incmod	z,#$7C-1	wc
+	if_nc	jmp	#.sumreq
+
+		mov	z,#cmd_read		'send requested hub bytes
+.hubreq		alts	z
+		mov	ptra,0-0
+		mov	x,ptra
+		shr	x,#20		wz
+.hubyte	if_nz	rdbyte	pa,ptra++
+	if_nz	call	#txbyte
+	if_nz	djnz	x,#.hubyte		'(x=0 after)
+		incmod	z,#cmd_read+4	wc	'(z=0 after)
+	if_nc	jmp	#.hubreq
+
+.rqpinread	rqpin	y,z			'read 8 rqpin values and build pin-mask byte
+		incmod	z,#$3F
+		altd	x,#buff
+		mov	0-0,y		wz
+		bitnz	pa,x
+		incmod	x,#7		wc	'(x=0 after)
+	if_nc	jmp	#.rqpinread
+		call	#txbyte			'send pin-mask byte
+.rqpinsend	alts	x,#buff			'send non-zero rqpin values
+		mov	pa,0-0		wz
+	if_nz	call	#txlong
+		incmod	x,#7		wc	'(x=0 after)
+	if_nc	jmp	#.rqpinsend
+		tjnz	z,#.rqpinread		'(z=0 after)
+
+		loc	ptra,#$FFFC0+$D<<2	'perform requested COGBRKs
+.cogbrk		shr	cmd_cogbrk,#1	wc	
+	if_c	cogbrk	z			'do COGBRK on targeted cog
+	if_c	wrlong	#1,ptra			'set targeted cog's COGBRK flag so it can detect COGBRK
+		sub	ptra,#$20<<2
+		incmod	z,#7		wc
+	if_nc	jmp	#.cogbrk
+
+		mov	cond,cmd_brk		'set and save BRK condition
+		wrlong	cond,ptrb[$1C]
+
+		jmp	#debug_done		'exit debugger or do stall
+
+
+.hubsum		mov	pa,#0		wc	'new block, c=0
+		rep	@.hubsum2,x		'compute and send hub checksums of y blocks of x*64 bytes @ptra
+		setq	#16-1
+		rdlong	buff,ptra++
+		sumc	pa,buff+0	wc
+		sumc	pa,buff+1	wc
+		sumnc	pa,buff+2	wc
+		sumc	pa,buff+3	wc
+		sumnc	pa,buff+4	wc
+		sumnc	pa,buff+5	wc
+		sumc	pa,buff+6	wc
+		sumnc	pa,buff+7	wc
+		sumc	pa,buff+8	wc
+		sumnc	pa,buff+9	wc
+		sumnc	pa,buff+10	wc
+		sumc	pa,buff+11	wc
+		sumc	pa,buff+12	wc
+		sumc	pa,buff+13	wc
+		sumnc	pa,buff+14	wc
+		sumnc	pa,buff+15	wc
+.hubsum2	getword	pb,pa,#1		'add upper and lower words
+		sumc	pa,pb
+		call	#txword			'send checksum word
+	_ret_	djnz	y,#.hubsum		'another block?
+
+
+crcpoly		long	$8005 rev 15		'polynomial for 16-bit CRC
+h3FF		long	$3FF
+
+cmd_regs	res	2			'command buffer
+cmd_sums	res	4
+cmd_read	res	5
+cmd_cogbrk	res	1
+cmd_brk		res	1
+
+buff		res	16			'data buffer
+
+		fit	overlay_end+1
 '
 '
 '**************
@@ -996,20 +1161,19 @@ debugger_end
 '	00000111	DLY(ms)				delay for ms
 '	00001000	PC_KEY(ptr)			get PC keyboard
 '	00001001	PC_MOUSE(ptr)			get PC mouse
-'	00001010	breakpoint			breakpoint
 '
 '	______00	', ' + zstr + ' = ' + data	specifiers for ZSTR..SBIN_LONG_ARRAY
 '	______01	       zstr + ' = ' + data
 '	______10	               ', ' + data
 '	______11	                      data
 '
-'	001000__
+'	001000__	<empty>
 '	001001__	ZSTR(ptr)			z-string
-'	001010__
+'	001010__	<empty>
 '	001011__	FDEC(val)			floating point
 '	001100__	FDEC_REG_ARRAY(ptr,len)		floating point
 '	001101__	LSTR(ptr,len)			length-string
-'	001110__
+'	001110__	<empty>
 '	001111__	FDEC_ARRAY(ptr,len)		floating point
 '
 '	010000__	UDEC(val)			unsigned decimal
@@ -1068,138 +1232,3 @@ debugger_end
 '
 '
 ' For PASM mode, each argument can be register or #immediate
-'
-'
-'***********************
-'*  DEBUGGER Commands  *
-'***********************
-'
-'	00000000	rdhub	start,bytes		read hub data
-'	00000001	wrhub	start,bytes,data	write hub data
-'	00000010	rdcog	start,longs		read cog/lut data
-'	00000011	wrcog	start,longs,data	write cog/lut data
-'	00000100	cfpin	pins{,data...}		execute FLTL/WRPIN/WXPIN/WYPIN/DRVL/COGBRK
-'	00000101	rqpin				read RQPIN 0..63 longs and flags
-'	00000110	stall				stall for 64ms then do breakpoint
-'	00000111	break	long			set BRK value and exit, if !brk.[4] then next interrupt is debugger
-'
-
-
-'
-' To Host:
-'
-'	debug_int(cog)
-'
-' From Host:
-'
-'	get_status : cth_curr, ctl_curr, brkcz, brkc, brkz, fptr, stack[7:0], pc, ina, inb
-'	get_regs : $000..$3FF
-'	get_hub(start, count) : bytes
-'	get_rqpin : longs_64 cbits_64
-'	write_regs(start, count, longs...)
-'	write_hub(start, count, bytes...)
-'	write_stk(stack[0..7])
-'	write_pc(pc) - does SKIP #0 to clear skip pattern
-'	async_bp(cog)
-'	wait(clocks) - wait and send new alert
-'	set_brk(brk_value) - returns to code
-'
-'
-'
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'	FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF
-'
-'	Execution						
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	PC- FFFFF
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	STK0- FFFFF
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	STK1- FFFFF
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	STK2- FFFFF
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	STK3- FFFFF
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	STK4- FFFFF
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	STK5- FFFFF
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	STK6- FFFFF
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	STK7- FFFFF
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	FPTR- FFFFF
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	C = 0
-'	000- DEADBEEF   IF_NC_OR_NZ	QROTATE $0F8, #$1FF  WCZ	Z = 1
-'
-'	Skip: 00000000000000000000000000000000
-'	FASTRD/FASTWR
-'
-'	INT1 = Wait XFI
-'	INT2 = None CT1
-'	INT3 = Exec CT2
-'
-'	Events
-'	QMT 0
-'	
-'	
-'
-'
-'

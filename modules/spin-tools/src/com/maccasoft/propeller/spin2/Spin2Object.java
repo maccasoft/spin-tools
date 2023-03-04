@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin2;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.BitField;
 
+import com.maccasoft.propeller.Propeller2Loader;
 import com.maccasoft.propeller.SpinObject;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler.ObjectInfo;
 
@@ -77,32 +79,18 @@ public class Spin2Object extends SpinObject {
     List<LinkDataObject> links = new ArrayList<LinkDataObject>();
 
     Spin2Object debugData;
+    boolean clockSetter;
+
+    int debugTxPin = 62;
+    int debugRxPin = 63;
+    int debugBaud = Propeller2Loader.UPLOAD_BAUD_RATE;
 
     public Spin2Object() {
 
     }
 
-    @Override
-    public void setClkFreq(int clkfreq) {
-        if (interpreter != null) {
-            interpreter.setClkFreq(clkfreq);
-        }
-        if (debugger != null) {
-            debugger.setClkFreq(clkfreq);
-        }
-        super.setClkFreq(clkfreq);
-    }
-
-    @Override
-    public void setClkMode(int _clkmode) {
-        if (interpreter != null) {
-            interpreter.setClkMode(_clkmode);
-        }
-        if (debugger != null) {
-            debugger.setClkMode1(_clkmode & ~3);
-            debugger.setClkMode2(_clkmode);
-        }
-        super.setClkMode(_clkmode);
+    public void setClockSetter(boolean clockSetter) {
+        this.clockSetter = clockSetter;
     }
 
     public Spin2Interpreter getInterpreter() {
@@ -111,8 +99,6 @@ public class Spin2Object extends SpinObject {
 
     public void setInterpreter(Spin2Interpreter interpreter) {
         this.interpreter = interpreter;
-        this.interpreter.setClkFreq(getClkFreq());
-        this.interpreter.setClkMode(getClkMode());
     }
 
     public Spin2Debugger getDebugger() {
@@ -121,17 +107,30 @@ public class Spin2Object extends SpinObject {
 
     public void setDebugger(Spin2Debugger debugger) {
         this.debugger = debugger;
-        this.debugger.setClkFreq(getClkFreq());
-        this.debugger.setClkMode1(getClkMode() & ~3);
-        this.debugger.setClkMode2(getClkMode());
+    }
 
-        int appSize = getSize();
-        if (this.interpreter != null) {
-            appSize += this.interpreter.getSize();
-        }
-        this.debugger.setAppSize(appSize);
+    public int getDebugTxPin() {
+        return debugTxPin;
+    }
 
-        this.debugger.setDelay(200);
+    public void setDebugTxPin(int debugTxPin) {
+        this.debugTxPin = debugTxPin;
+    }
+
+    public int getDebugRxPin() {
+        return debugRxPin;
+    }
+
+    public void setDebugRxPin(int debugRxPin) {
+        this.debugRxPin = debugRxPin;
+    }
+
+    public int getDebugBaud() {
+        return debugBaud;
+    }
+
+    public void setDebugBaud(int debugBaud) {
+        this.debugBaud = debugBaud;
     }
 
     public Spin2Object getDebugData() {
@@ -144,14 +143,42 @@ public class Spin2Object extends SpinObject {
 
     @Override
     public void generateBinary(OutputStream os) throws IOException {
+
         if (debugger != null) {
+            debugger.setClkFreq(getClkFreq());
+            debugger.setClkMode1(getClkMode() & ~3);
+            debugger.setClkMode2(getClkMode());
+
+            int appSize = getSize();
+            if (interpreter != null) {
+                appSize += interpreter.getSize();
+            }
+            debugger.setAppSize(appSize);
+
+            debugger.setDelay(getClkFreq() / 10);
+
+            debugger.setRxPin(debugRxPin);
+            debugger.setTxPin(debugTxPin);
+            debugger.setBaud(debugBaud);
+
             os.write(debugger.getCode());
         }
         if (debugData != null) {
             debugData.generateBinary(os);
         }
         if (interpreter != null) {
+            interpreter.setClkFreq(getClkFreq());
+            interpreter.setClkMode(getClkMode());
+            if (debugger == null) {
+                interpreter.clearDebugPins();
+            }
+            else {
+                interpreter.setDebugPins(debugTxPin, debugRxPin);
+            }
             os.write(interpreter.getCode());
+        }
+        if (clockSetter && interpreter == null && debugger == null) {
+            writeClockSetter(os);
         }
         super.generateBinary(os);
     }
@@ -167,6 +194,48 @@ public class Spin2Object extends SpinObject {
             int size = debugger != null ? debugger.getSize() : 0;
             debugData.generateListing(size, ps);
         }
+    }
+
+    void writeClockSetter(OutputStream os) throws IOException {
+        int clkMode = getClkMode();
+
+        if (clkMode != 0) {
+            InputStream is = getClass().getResourceAsStream("clock_setter.binary");
+            try {
+                byte[] code = new byte[is.available()];
+                is.read(code);
+
+                if (clkMode == 0b01) {
+                    writeLong(code, 0x000, 0);
+                    writeLong(code, 0x004, 0);
+                    writeLong(code, 0x008, 0);
+                }
+                else {
+                    writeLong(code, 0x028, 0);
+                }
+                writeLong(code, 0x034, clkMode & ~0b11);
+                writeLong(code, 0x038, clkMode);
+
+                int programSize = getSize();
+                writeLong(code, 0x03C, (programSize + 2048) >> (9 + 2));
+
+                os.write(code);
+
+            } finally {
+                try {
+                    is.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    void writeLong(byte[] code, int index, int value) {
+        code[index] = (byte) value;
+        code[index + 1] = (byte) (value >> 8);
+        code[index + 2] = (byte) (value >> 16);
+        code[index + 3] = (byte) (value >> 24);
     }
 
 }

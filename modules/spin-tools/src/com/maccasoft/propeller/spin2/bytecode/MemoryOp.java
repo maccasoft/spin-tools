@@ -117,17 +117,6 @@ public class MemoryOp extends Spin2Bytecode {
             switch (base) {
                 case PBase:
                     if (ss == Size.Byte) {
-                        os.write(pop ? 0x53 : 0x50);
-                    }
-                    else if (ss == Size.Word) {
-                        os.write(pop ? 0x59 : 0x56);
-                    }
-                    else {
-                        os.write(pop ? 0x5F : 0x5C);
-                    }
-                    break;
-                case VBase:
-                    if (ss == Size.Byte) {
                         os.write(pop ? 0x54 : 0x51);
                     }
                     else if (ss == Size.Word) {
@@ -137,7 +126,7 @@ public class MemoryOp extends Spin2Bytecode {
                         os.write(pop ? 0x60 : 0x5D);
                     }
                     break;
-                case DBase:
+                case VBase:
                     if (ss == Size.Byte) {
                         os.write(pop ? 0x55 : 0x52);
                     }
@@ -148,15 +137,26 @@ public class MemoryOp extends Spin2Bytecode {
                         os.write(pop ? 0x61 : 0x5E);
                     }
                     break;
-                case Pop:
+                case DBase:
                     if (ss == Size.Byte) {
-                        os.write(pop ? 0x62 : 0x65);
+                        os.write(pop ? 0x54 : 0x53);
                     }
                     else if (ss == Size.Word) {
-                        os.write(pop ? 0x63 : 0x66);
+                        os.write(pop ? 0x5C : 0x59);
                     }
                     else {
+                        os.write(pop ? 0x62 : 0x5F);
+                    }
+                    break;
+                case Pop:
+                    if (ss == Size.Byte) {
+                        os.write(pop ? 0x63 : 0x66);
+                    }
+                    else if (ss == Size.Word) {
                         os.write(pop ? 0x64 : 0x67);
+                    }
+                    else {
+                        os.write(pop ? 0x65 : 0x68);
                     }
                     break;
             }

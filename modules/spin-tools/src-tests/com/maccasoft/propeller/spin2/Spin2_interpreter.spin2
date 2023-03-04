@@ -1,5 +1,5 @@
 '************************************
-'*  Spin2 Interpreter - 2022.01.14  *
+'*  Spin2 Interpreter - 2022.11.19  *
 '************************************
 '
 CON	bc_setup_reg_1D8_1F8	= $B0
@@ -27,11 +27,11 @@ DAT		org
 		wrlong	pbase_init,dbase_init
 
 		setq	dbase_init		'restart cog 0 with interpreter
-		coginit	#$20,##launch_spin
+		coginit	#hubexec,##launch_spin
 
 
 pbase_init	long	@test_pbase + 8				'$30 - compiler supplies initial pbase value, +8 without compiler
-vbase_init	long	@test_vbase + 0<<20			'$34 - compiler supplies initial vbase value, first pub in [31:20]
+vbase_init	long	@test_vbase + 0 << 20			'$34 - compiler supplies initial vbase value, first pub in [31:20]
 dbase_init	long	@test_dbase				'$38 - compiler supplies initial dbase value
 var_longs	long	(@test_dbase - @test_vbase) >> 2	'$3C - compiler supplies VAR longs to clear
 clkmode_hub	long	%1_000000_0000001111_1111_10_11		'$40 - compiler supplies initial clkmode value
@@ -45,7 +45,7 @@ clkfreq_hub	long	320_000_000				'$44 - compiler supplies initial clkfreq value
 stopcog		byte	bc_cogid		& $FF	'cogstop(cogid)
 		byte	bc_cogstop		& $FF
 
-pri_sendb	byte	2*4				'2 parameters		PRI sendb(count,addr)
+pri_sendb	byte	0				'no locals		PRI sendb(count,addr)
 		byte	bc_read_local_0_15+0		'read count		  repeat count
 .loop		byte	bc_setup_local_0_15+1		'setup addr		    send(byte[addr++])
 		byte	bc_var_postinc_push	& $FF	'addr++
@@ -65,45 +65,51 @@ bc_hubset	word	@hubset_	'HUBSET(val)				$54	miscellaneous routines
 bc_clkset	word	@clkset_	'CLKSET(clkmode,clkfreq)		$56	(use ctrl-l to determine address)
 bc_read_clkfreq	word	@read_clkfreq	'CLKFREQ			(push)	$58
 bc_cogspin	word	@cogspin_	'COGSPIN(cog,method(params),stackadr)	$5A
-bc_inline	word	@inline		'inline pasm code			$5C
-bc_regexec	word	@regexec_	'REGEXEC(hubadr)			$5E
-bc_regload	word	@regload_	'REGLOAD(hubadr)			$60
-bc_call		word	@call_		'CALL(anyadr)				$62
-bc_getregs	word	@getregs_	'GETREGS(hubadr,cogadr,longs)		$64
-bc_setregs	word	@getregs_	'SETREGS(hubadr,cogadr,longs)		$66
-bc_bytemove	word	@bytemove_	'BYTEMOVE(dst,src,cnt)			$68	(+0, bit1=0)
-bc_bytefill	word	@bytemove_	'BYTEFILL(dst,val,cnt)			$6A	(+2, bit1=1)
-bc_wordmove	word	@wordmove_	'WORDMOVE(dst,src,cnt)			$6C	(+4, bit1=0)
-bc_wordfill	word	@wordmove_	'WORDFILL(dst,val,cnt)			$6E	(+6, bit1=1)
-bc_longmove	word	@longmove_	'LONGMOVE(dst,src,cnt)			$70	(+8, bit1=0)
-bc_longfill	word	@longmove_	'LONGFILL(dst,val,cnt)			$72	(+A, bit1=1)
-bc_strsize	word	@strsize_	'STRSIZE(adr)			(push)	$74
-bc_strcomp	word	@strcomp_	'STRCOMP(adra,adrb)		(push)	$76
-bc_waitus	word	@waitus_	'WAITUS(us)				$78
-bc_waitms	word	@waitus_	'WAITMS(ms)				$7A
-bc_getms	word	@getms_		'GETMS()			(push)	$7C
-bc_getsec	word	@getms_		'GETSEC()			(push)	$7E
-bc_muldiv64	word	@muldiv64_	'MULDIV64(m1,m2,d)		(push)	$80
-bc_qsin		word	@qsin_		'QSIN(rho,theta,twopi)		(push)	$82
-bc_qcos		word	@qsin_		'QCOS(rho,theta,twopi)		(push)	$84
+bc_cogchk	word	@cogchk_	'COGCHK(cog)			(push)	$5C
+bc_inline	word	@inline		'inline pasm code			$5E
+bc_regexec	word	@regexec_	'REGEXEC(hubadr)			$60
+bc_regload	word	@regload_	'REGLOAD(hubadr)			$62
+bc_call		word	@call_		'CALL(anyadr)				$64
+bc_getregs	word	@getregs_	'GETREGS(hubadr,cogadr,longs)		$66
+bc_setregs	word	@getregs_	'SETREGS(hubadr,cogadr,longs)		$68
+bc_bytemove	word	@bytemove_	'BYTEMOVE(dst,src,cnt)			$6A	(+0, bit1=1)
+bc_bytefill	word	@bytemove_	'BYTEFILL(dst,val,cnt)			$6C	(+2, bit1=0)
+bc_wordmove	word	@wordmove_	'WORDMOVE(dst,src,cnt)			$6E	(+4, bit1=1)
+bc_wordfill	word	@wordmove_	'WORDFILL(dst,val,cnt)			$70	(+6, bit1=0)
+bc_longmove	word	@longmove_	'LONGMOVE(dst,src,cnt)			$72	(+8, bit1=1)
+bc_longfill	word	@longmove_	'LONGFILL(dst,val,cnt)			$74	(+A, bit1=0)
+bc_strsize	word	@strsize_	'STRSIZE(adr)			(push)	$76
+bc_strcomp	word	@strcomp_	'STRCOMP(adra,adrb)		(push)	$78
+bc_strcopy	word	@strcopy_	'STRCOPY(dst,src,max)			$7A
+bc_getcrc	word	@getcrc_	'GETCRC(ptr,poly,cnt)		(push)	$7C
+bc_waitus	word	@waitus_	'WAITUS(us)				$7E
+bc_waitms	word	@waitus_	'WAITMS(ms)				$80
+bc_getms	word	@getms_		'GETMS()			(push)	$82
+bc_getsec	word	@getms_		'GETSEC()			(push)	$84
+bc_muldiv64	word	@muldiv64_	'MULDIV64(m1,m2,d)		(push)	$86
+bc_qsin		word	@qsin_		'QSIN(rho,theta,twopi)		(push)	$88
+bc_qcos		word	@qsin_		'QCOS(rho,theta,twopi)		(push)	$8A
+bc_rotxy	word	@rotxy_		'ROTXY(x,y,t)			(push2)	$8C	(<bc_polxy)
+bc_polxy	word	@polxy_		'POLXY(r,t)			(push2)	$8E	(=bc_polxy)
+bc_xypol	word	@polxy_		'XYPOL(x,y)			(push2)	$90	(>bc_polxy)
 
-bc_float	word	@float_		'FLOAT(integer)			(push)	$86	floating-point routines
-bc_trunc	word	@round_		'TRUNC(float)			(push)	$88	(bit1=0)
-bc_round	word	@round_		'ROUND(float)			(push)	$8A	(bit1=1)
-bc_nan		word	@nan_		'NAN(float)			(push)	$8C
-bc_fneg		word	@fneg_		'-. float			(push)	$8E
-bc_fabs		word	@fabs_		'FABS(float)			(push)	$90
-bc_flt		word	@frel_		'float <.  float		(push)	$92	(bit3..1=001)
-bc_fgt		word	@frel_		'float >.  float		(push)	$94	(bit3..1=010)
-bc_fne		word	@frel_		'float <>. float		(push)	$96	(bit3..1=011)
-bc_fe		word	@frel_		'float ==. float		(push)	$98	(bit3..1=100)
-bc_flte		word	@frel_		'float <=. float		(push)	$9A	(bit3..1=101)
-bc_fgte		word	@frel_		'float >=. float		(push)	$9C	(bit3..1=110)
-bc_fsqrt	word	@fsqrt_		'FSQRT(float)			(push)	$9E
-bc_fadd		word	@fadd_		'float +. float			(push)	$A0
-bc_fsub		word	@fsub_		'float -. float			(push)	$A2
-bc_fmul		word	@fmul_		'float *. float			(push)	$A4
-bc_fdiv		word	@fdiv_		'float /. float			(push)	$A6
+bc_nan		word	@nan_		'NAN(float)			(push)	$92	floating-point routines
+bc_fneg		word	@fneg_		'-. float			(push)	$94
+bc_fabs		word	@fabs_		'FABS(float)			(push)	$96
+bc_fsqrt	word	@fsqrt_		'FSQRT(float)			(push)	$98
+bc_fadd		word	@fadd_		'float +. float			(push)	$9A
+bc_fsub		word	@fsub_		'float -. float			(push)	$9C
+bc_fmul		word	@fmul_		'float *. float			(push)	$9E
+bc_fdiv		word	@fdiv_		'float /. float			(push)	$A0
+bc_flt		word	@frel_		'float <.  float		(push)	$A2	(bit3..1=001)
+bc_fgt		word	@frel_		'float >.  float		(push)	$A4	(bit3..1=010)
+bc_fne		word	@frel_		'float <>. float		(push)	$A6	(bit3..1=011)
+bc_fe		word	@frel_		'float ==. float		(push)	$A8	(bit3..1=100)
+bc_flte		word	@frel_		'float <=. float		(push)	$AA	(bit3..1=101)
+bc_fgte		word	@frel_		'float >=. float		(push)	$AC	(bit3..1=110)
+bc_round	word	@round_		'ROUND(float)			(push)	$AE	(bit1=1)
+bc_trunc	word	@round_		'TRUNC(float)			(push)	$B0	(bit1=0)
+bc_float	word	@float_		'FLOAT(integer)			(push)	$B2
 
 		alignl			'long-align for rest of interpreter
 '
@@ -112,8 +118,18 @@ bc_fdiv		word	@fdiv_		'float /. float			(push)	$A6
 '*  Interpreter - cog registers  *
 '*********************************
 '
-		org	$124		'user area below
-cog_code				'start of cog code
+		org	$122		'start of reg code (user area below)
+reg_code
+'
+'
+' RETURN				(1 long)
+'
+return_		jmp	#returnh	'continue in hub
+'
+'
+' ABORT					(1 long)
+'
+abort_		jmp	#aborth		'continue in hub
 '
 '
 ' Add pbase to x			(1 long)
@@ -361,7 +377,7 @@ wr_reg		mov	0,x
 '
 ' End of cog register code
 '
-cog_end
+reg_end
 '
 '
 ' Interpreter registers
@@ -463,7 +479,7 @@ drophot		mov	v,x		'get top of stack into v
 	_ret_	andn	pbase,#%11	'clear bits 1..0 in pbase
 '
 '
-' Call method / Make method pointer	(12 longs)
+' Call method / Make method pointer	(14 longs)
 '
 '	    dcall --> dbase		(pop)
 '	dbase[-1] --> dcall
@@ -481,18 +497,10 @@ callsend	jmp	#callsendh	'          f |		continue in hub
 		jmp	#callsendbh	'            g		continue in hub
 
 callgo		rdfast	#0,x		'a b c d e f g h	return from hub, start new bytecode read
-		rfvar	x		'a b c d e f g h	get locals
-	_ret_	add	ptra,x		'a b c d e f g h	point stack past locals
-'
-'
-' RETURN				(1 long)
-'
-return_		jmp	#returnh	'continue in hub
-'
-'
-' ABORT					(1 long)
-'
-abort_		jmp	#aborth		'continue in hub
+		rfvar	x		'a b c d e f g h	get number of local longs
+	_ret_	djnf	x,#.clear	'a b c d e f g h	if zero, continue
+.clear		setq	x		'a b c d e f g h	else, clear locals and point stack past them
+	_ret_	wrlong	#0,ptra++	'a b c d e f g h
 '
 '
 ' Miscellaneous				(29 longs)
@@ -512,19 +520,19 @@ pop1	_ret_	popa	x		'| b c d e f g h
 '
 ' STRING()
 '
-string_		rfbyte	w	wz	'a b			b: STRING() - push string address and jump over string
-		brk	w		'a |
-		pusha	x		'| b
-		add	pb,#1		'| b
-		mov	x,pb		'| b			(continued in branch + hub_code)
+string_		rfbyte	w		'a b			b: STRING() - push string address and jump over string
+	_ret_	brk	w		'a |
+		pusha	x		'  b
+		add	pb,#1		'  b
+		mov	x,pb		'  b			(continued in branch + hub_code)
 '
 '
 ' Branches - jmp, jz, jnz, tjz, djnz
 '
-branch		rfvars	w		'| | c d e f g		c: jmp	- branch
-		test	x	wz	'| | | d e f |		d: jz	- test, pop, branch if z
-		popa	x		'| | | d e | |		e: jnz	- test, pop, branch if nz
-	if_nz	ret			'a | | d | f |		f: tjz	- test, if z then pop and branch
+branch		rfvars	w		'  | c d e f g		c: jmp	- branch
+		test	x	wz	'  | | d e f |		d: jz	- test, pop, branch if z
+		popa	x		'  | | d e | |		e: jnz	- test, pop, branch if nz
+	if_nz	ret			'  | | d | f |		f: tjz	- test, if z then pop and branch
 		sub	x,#1	wz	'  | | | | | g		g: djnz	- dec, if z then pop, else branch
 	if_z	popa	x		'  | | | | f g
 	if_z	ret			'  | | | e | g
@@ -538,6 +546,26 @@ hub_code	rfbyte	pa		'  | | | | | |		get function index byte
 		rdword	v,pa	wcz	'  | | | | | |		lookup function address
 		call	v		'  | | | | | |		call function in hub, c/z/v[31]=0
 resume	_ret_	rdfast	#0,pb		'  b c d e f g		resume bytecode stream
+'
+'
+' Setup reg variable			(11 longs)
+'
+reg_im		signx	pa,#3		'a		a: setup reg[$1D8..$1DF]/[$1F8..$1FF]
+		or	pa,#$1D8	'a		b: setup reg[rfvars]
+					'		c: setup reg[rfvars][index]
+reg_ap		rfvars	pa		'| b c
+		add	pa,x		'| | c
+		popa	x		'| | c
+
+		mov	rd,rd_reg	'a b c
+		mov	wr,wr_reg	'a b c
+
+		sets	rd,pa		'a b c
+		setd	wr,pa		'a b c
+
+		mov	sz,#31		'a b c
+
+	_ret_	setq2	#$0E0		'a b c		(next bytecode is a variable operator)
 '
 '
 ' Setup hub variable			(22 longs)
@@ -573,26 +601,6 @@ hub_p		mov	ad,x		'| | | | | | | | | | | | | | | | | | | | | | | x y z	n: setup w
 	_ret_	setq2	#$0E0		'a b c d e f g h i j k l m n o p q r s t u v w x y z	(next bytecode is a variable operator)
 '
 '
-' Setup reg variable			(11 longs)
-'
-reg_im		signx	pa,#3		'a		a: setup reg[$1D8..$1DF]/[$1F8..$1FF]
-		or	pa,#$1D8	'a		b: setup reg[rfvars]
-					'		c: setup reg[rfvars][index]
-reg_ap		rfvars	pa		'| b c
-		add	pa,x		'| | c
-		popa	x		'| | c
-
-		mov	rd,rd_reg	'a b c
-		mov	wr,wr_reg	'a b c
-
-		sets	rd,pa		'a b c
-		setd	wr,pa		'a b c
-
-		mov	sz,#31		'a b c
-
-	_ret_	setq2	#$0E0		'a b c		(next bytecode is a variable operator)
-'
-'
 ' Setup bitfield			(13 longs)
 '
 bit_im		mov	fb,pa		'a		a: setup bitfield [0..31]
@@ -616,36 +624,36 @@ bit_p		mov	fb,x		'| | c
 	_ret_	setq2	#$0E0		'a b c		(next bytecode is a variable operator)
 '
 '
-' Variable address/read/write		(11 longs)
+' Variable read/write			(10 longs)
 '
-var_rd		pusha	x		'a b   d		a: @var
-	_ret_	mov	x,ad		'a |   |		b: read  long[dbase][0..15]
-					'			c: write long[dbase][0..15]	(isolated)
-var_wr_im	getnib	ad,pa,#0	'  b c |		d: read var
-		shl	ad,#2		'  b c |		e: write var			(isolated)
-		add	ad,dbase	'  b c |		f: write var			(push)
+var_rd		pusha	x		'a   c		a: read  long[dbase][0..15]
+					'		b: write long[dbase][0..15]	(isolated)		
+var_wr_im	getnib	ad,pa,#0	'a b |		c: read var		
+		shl	ad,#2		'a b |		d: write var			(isolated)
+		add	ad,dbase	'a b |		e: write var			(push)
 
-		alti	rd		'  | | d
-	_ret_	rdlong	x,ad		'  b | d
+		alti	rd		'| | c
+	_ret_	rdlong	x,ad		'a | c
 
-var_wr		alti	wr		'    | | e f
-		wrlong	x,ad		'    c | e f
+var_wr		alti	wr		'  | | d e
+		wrlong	x,ad		'  b | d e
 
-	_ret_	popa	x		'    c | e |
-	_ret_	zerox	x,sz		'      d   f		(ret for d, ret+zerox for f)
+	_ret_	popa	x		'  b | d |
+	_ret_	zerox	x,sz		'    c   e	(ret for c, ret+zerox for e)
 '
 '
-' Variable operator bytecodes at $27C - triggered via '_ret_ setq2 #$0E0'
+' Variable operator bytecodes at $27B - triggered via '_ret_ setq2 #$0E0'
 '
 altcodes
-		orgf	$27C
+		orgf	$27B
 
-bc_repeat_var_init_1	long  repvari1	|                     %0 << 10	'7C	REPEAT-var init, step=1
-bc_repeat_var_init	long  repvari	|                     %0 << 10	'7D	REPEAT-var init
-bc_repeat_var_loop	long  repvarl	|                     %0 << 10	'7E	REPEAT-var loop
+bc_repeat_var_init_1	long  repvari1	|                     %0 << 10	'7B	REPEAT-var init, step=1
+bc_repeat_var_init	long  repvari	|                     %0 << 10	'7C	REPEAT-var init
+bc_repeat_var_loop	long  repvarl	|                     %0 << 10	'7D	REPEAT-var loop
 
-bc_addr			long  var_rd	|                     %0 << 10	'7F	@var
-bc_read			long  var_rd	|           %01110011110 << 10	'80	read var
+bc_get_field		long  var_ptr	|                    %00 << 10	'7E	^@anyvar
+bc_get_addr		long  var_ptr	|                  %0010 << 10	'7F	@hubvar
+bc_read			long  var_rd	|            %0111001110 << 10	'80	read var
 bc_write		long  var_wr	|                     %0 << 10	'81	write var	(isolated)
 bc_write_push		long  var_wr	|                  %0100 << 10	'82	write var	(push)
 
@@ -749,65 +757,61 @@ bc_sca_write_push	long  muu_mod	|  %0100111011110011000_ << 10	'DB	var SCA= exp	
 bc_scas_write_push	long  mul_mod	|  %01000010111100000010 << 10	'DC	var SCAS= exp	(push)
 bc_frac_write_push	long  muu_mod	|  %0100111110011011000_ << 10	'DD	var FRAC= exp	(push)
 
-bc_setup_field_pop	long  bit_p	|                     %0 << 10	'DE *	setup bitfield .[pop]
-bc_setup_field_rfvar	long  bit_rf	|                  %0110 << 10	'DF *	setup bitfield .[rfvar]
+bc_setup_bfield_pop	long  bit_p	|                     %0 << 10	'DE *	setup bitfield .[pop]
+bc_setup_bfield_rfvar	long  bit_rf	|                  %0110 << 10	'DF *	setup bitfield .[rfvar]
 
 'bytecodes Ex/Fx are collapsed at runtime to LUT entries E0/E1
 
-bc_setup_field_0_31	long  bit_im	|                %011100 << 10	'Ex *	setup bitfield .[0..15]
+bc_setup_bfield_0_31	long  bit_im	|                %011100 << 10	'Ex *	setup bitfield .[0..15]
 			long  bit_im	|                %011100 << 10	'Fx *	setup bitfield .[16..31]
 '
 '
-' PINR(pins)				(7 longs)
+' a: PINR(pins)				(14 longs)
 '
-pinr_		testb	x,#5	wc	'read ina or inb
-	if_nc	mov	y,ina
-	if_c	mov	y,inb
-
-		ror	y,x		'lsb-justify
-
-		shr	x,#6		'trim
-		zerox	y,x
-
-	_ret_	mov	x,y		'result in stack top
+pinr_		testb	x,#5	wc	'a	read ina or inb
+	if_nc	mov	a,ina		'a
+	if_c	mov	a,inb		'a
+		ror	a,x		'a	lsb-justify
+		shr	x,#6		'a	trim
+		zerox	a,x		'a		(continued in pins_)
 '
 '
-' PINSTART(pins,mode,xval,yval)		(8 longs)
+' PINSTART(pins,mode,xval,yval)
 '
-pins_		setq	#4-1		'pop parameters, including new top of stack
-		rdlong	a,--ptra	'a=top of stack, b=pins, c=mode, d=xval, x=yval
-
-		fltl	b		'reset smart pin(s)
-		wrpin	c,b		'set smart pin(s) mode
-		wxpin	d,b		'set smart pin(s) x
-		wypin	x,b		'set smart pin(s) y
-		drvl	b		'enable smart pin(s)
-
-	_ret_	mov	x,a		'set top of stack
+pins_		setq	#4-1		'|	pop parameters, including new top of stack
+		rdlong	a,--ptra	'|	a=top of stack, b=pins, c=mode, d=xval, x=yval
+		fltl	b		'|	reset smart pin(s)
+		wrpin	c,b		'|	set smart pin(s) mode
+		wxpin	d,b		'|	set smart pin(s) x
+		wypin	x,b		'|	set smart pin(s) y
+		drvl	b		'|	enable smart pin(s)
+	_ret_	mov	x,a		'a	set top of stack
 '
 '
-' a: POLLCT(tick)			(15 longs)
-' b: WAITCT(tick)
+' a: POLLCT(tick)			(16 longs)
+' b: LOOKUP/LOOKDOWN done
+' n: WAITCT(tick)
 '
-pwct		getct	w		'a m	a: POLLCT(tick)
-		cmpm	w,x	wc	'a m	m: WAITCT(tick)
-	if_c	jmp	#pwct		'| m
-	_ret_	popa	x		'| m	(continued in op_rel)
+pwct		getct	w		'a   n		a: POLLCT(tick)
+		cmpm	w,x	wc	'a   n		n: WAITCT(tick)
+	if_c	jmp	#pwct		'|   n
+	_ret_	popa	x		'|   n
+lookd		sub	ptra,#2*4	'| b		(continued in op_rel)
 '
 '
 ' Relational operators
 '
-op_rel		popa	w		'| b c d e f g h i j k l	b: <
-		cmps	w,x	wcz	'| b | | | f g h | | | l	c: +<
-		cmps	x,w	wcz	'| | | d | | | | | j | |	d: <=
-		cmp	w,x	wcz	'| | c | | | | | i | | |	e: +<=
-		cmp	x,w	wcz	'| | | | e | | | | | k |	f: ==
-	_ret_	muxnc	x,_FFFFFFFF	'a | | d e | | h i | | |	g: <>
-	_ret_	muxc	x,_FFFFFFFF	'  b c     | |     j k |	h: >=
-	_ret_	muxnz	x,_FFFFFFFF	'          | g         |	i: +>=
-	_ret_	muxz	x,_FFFFFFFF	'          f           |	j: >
-		muxc	x,_FFFFFFFF	'                      l	k: +>
-	_ret_	muxnz	x,#1		'                      l	l: <=>
+op_rel		popa	w		'| | c d e f g h i j k l m	c: <
+		cmps	w,x	wcz	'| | c | | | g h i | | | m	d: +<
+		cmps	x,w	wcz	'| | | | e | | | | | k | |	e: <=
+		cmp	w,x	wcz	'| | | d | | | | | j | | |	f: +<=
+		cmp	x,w	wcz	'| | | | | f | | | | | l |	g: ==
+	_ret_	muxnc	x,_FFFFFFFF	'a b | | e f | | i j | | |	h: <>
+	_ret_	muxc	x,_FFFFFFFF	'    c d     | |     k l |	i: >=
+	_ret_	muxnz	x,_FFFFFFFF	'            | h         |	j: +>=
+	_ret_	muxz	x,_FFFFFFFF	'            g           |	k: >
+		muxc	x,_FFFFFFFF	'                        m	l: +>
+	_ret_	muxnz	x,#1		'                        m	m: <=>
 '
 '
 ' Main bytecodes at $300
@@ -860,97 +864,98 @@ bc_lookup_value		long  lookv	|              %00001000 << 10	'1F C=1	LOOKUP  (tar
 bc_lookdown_value	long  lookv	|              %00000100 << 10	'20 C=0	LOOKDOWN(target : ,,value,,)
 bc_lookup_range		long  range	|%1100111111000000111100 << 10	'21	LOOKUP  (target : ,,value1..value2,,)
 bc_lookdown_range	long  range	|%0011110000110000011100 << 10	'22	LOOKDOWN(target : ,,value1..value2,,)
-bc_look_done		long  lookd	|                     %0 << 10	'23	LOOKUP/LOOKDOWN done
+bc_look_done		long  lookd	|               %0111110 << 10	'23 C=1	LOOKUP/LOOKDOWN done
 
 bc_add_pbase		long  addbase	|                     %0 << 10	'24	add pbase to x
 
 bc_coginit		long  pop2	|     %01111100111111000 << 10	'25	COGINIT(cog,pgm,ptr)
 bc_coginit_push		long  pop2	|          %000111111000 << 10	'26	COGINIT(cog,pgm,ptr)	(push)
 bc_cogstop		long  cogstop_	|                 %01110 << 10	'27	COGSTOP(cog)
-bc_cogid		long  pushv	|                  %0110 << 10	'28	COGID()		(push)
-bc_cogchk		long  cogchk_	|                   %010 << 10	'29	COGCHK(cog)	(push)
+bc_cogid		long  pushv	|                 %01110 << 10	'28	COGID()		(push)
 
-bc_locknew		long  pushv	|          %011111101110 << 10	'2A	LOCKNEW()	(push)
-bc_lockret		long  lockret_	|                  %0110 << 10	'2B	LOCKRET(lock)
-bc_locktry		long  locktry_	|                    %00 << 10	'2C	LOCKTRY(lock)	(push)
-bc_lockrel		long  lockrel_	|                   %010 << 10	'2D	LOCKREL(lock)
-bc_lockchk		long  lockchk_	|                  %0110 << 10	'2E	LOCKCHK(lock)	(push)
+bc_locknew		long  pushv	|         %0111111011110 << 10	'29	LOCKNEW()	(push)
+bc_lockret		long  lockret_	|                  %0110 << 10	'2A	LOCKRET(lock)
+bc_locktry		long  locktry_	|                    %00 << 10	'2B	LOCKTRY(lock)	(push)
+bc_lockrel		long  lockrel_	|                   %010 << 10	'2C	LOCKREL(lock)
+bc_lockchk		long  lockchk_	|                  %0110 << 10	'2D	LOCKCHK(lock)	(push)
 
-bc_cogatn		long  cogatn_	|                    %00 << 10	'2F	COGATN(mask)
-bc_pollatn		long  pushv	|       %011111111011110 << 10	'30	POLLATN()	(push)
-bc_waitatn		long  waitatn_	|                   %000 << 10	'31	WAITATN()
+bc_cogatn		long  cogatn_	|                    %00 << 10	'2E	COGATN(mask)
+bc_pollatn		long  pushv	|       %011111110111110 << 10	'2F	POLLATN()	(push)
+bc_waitatn		long  waitatn_	|                   %000 << 10	'30	WAITATN()
 
-bc_getrnd		long  pushv	|                    %00 << 10	'32	GETRND()	(push)
-bc_getct		long  pushv	|                   %010 << 10	'33	GETCT()		(push)
-bc_pollct		long  pwct	|            %0111111100 << 10	'34	POLLCT(tick)	(push)
-bc_waitct		long  pwct	|                     %0 << 10	'35	WAITCT(tick)
+bc_getrnd		long  pushv	|                   %010 << 10	'31	GETRND()	(push)
+bc_getct		long  pushv	|                  %0110 << 10	'32	GETCT()		(push)
+bc_pollct		long  pwct	|           %01111111100 << 10	'33	POLLCT(tick)	(push)
+bc_waitct		long  pwct	|                     %0 << 10	'34	WAITCT(tick)
 
-bc_pinwrite		long  pop2	|                %011000 << 10	'36	PINWRITE(pins,val)
-bc_pinlow		long  pinl_	|               %0111110 << 10	'37	PINLOW(pins)
-bc_pinhigh		long  pinh_	|                %011110 << 10	'38	PINHIGH(pins)
-bc_pintoggle		long  pint_	|                 %01110 << 10	'39	PINTOGGLE(pins)
-bc_pinfloat		long  pinf_	|                  %0110 << 10	'3A	PINFLOAT(pins)
-bc_pinread		long  pinr_	|                     %0 << 10	'3B	PINREAD(pins)	(push)
+bc_pinwrite		long  pop2	|                %011000 << 10	'35	PINWRITE(pins,val)
+bc_pinlow		long  pinl_	|               %0111110 << 10	'36	PINLOW(pins)
+bc_pinhigh		long  pinh_	|                %011110 << 10	'37	PINHIGH(pins)
+bc_pintoggle		long  pint_	|                 %01110 << 10	'38	PINTOGGLE(pins)
+bc_pinfloat		long  pinf_	|                  %0110 << 10	'39	PINFLOAT(pins)
+bc_pinread		long  pinr_	|        %01111111000000 << 10	'3A	PINREAD(pins)	(push)
 
-bc_pinstart		long  pins_	|                     %0 << 10	'3C	PINSTART(pins,mode,xval,yval)
-bc_pinclear		long  pinf_	|                  %0100 << 10	'3D	PINCLEAR(pins)
+bc_pinstart		long  pins_	|                     %0 << 10	'3B	PINSTART(pins,mode,xval,yval)
+bc_pinclear		long  pinf_	|                  %0100 << 10	'3C	PINCLEAR(pins)
 
-bc_wrpin		long  pop2	|               %0111000 << 10	'3E	WRPIN(pins,val)
-bc_wxpin		long  pop2	|              %01111000 << 10	'3F	WXPIN(pins,val)
-bc_wypin		long  pop2	|             %011111000 << 10	'40	WYPIN(pins,val)
-bc_akpin		long  akpin_	|                    %00 << 10	'41	AKPIN(pins)
-bc_rdpin		long  rdpin_	|                   %010 << 10	'42	RDPIN(pin)	(push)
-bc_rqpin		long  rqpin_	|                    %00 << 10	'43	RQPIN(pin)	(push)
+bc_wrpin		long  pop2	|               %0111000 << 10	'3D	WRPIN(pins,val)
+bc_wxpin		long  pop2	|              %01111000 << 10	'3E	WXPIN(pins,val)
+bc_wypin		long  pop2	|             %011111000 << 10	'3F	WYPIN(pins,val)
+bc_akpin		long  akpin_	|                    %00 << 10	'40	AKPIN(pins)
+bc_rdpin		long  rdpin_	|                   %010 << 10	'41	RDPIN(pin)	(push)
+bc_rqpin		long  rqpin_	|                    %00 << 10	'42	RQPIN(pin)	(push)
 
-bc_debug		long  debug_	|  %01111110001111111000 << 10	'44	DEBUG() rfvar,rfbyte
+bc_debug		long  debug_	|         %0001111111000 << 10	'43	DEBUG() rfvar,rfbyte
 
-bc_con_rfbyte		long  const	|                  %0110 << 10	'45	constant rfbyte
-bc_con_rfbyte_not	long  const	|         %0111111101110 << 10	'46	constant rfbyte!
-bc_con_rfword		long  const	|                %011110 << 10	'47	constant rfword
-bc_con_rfword_not	long  const	|         %0111110111110 << 10	'48	constant rfword!
-bc_con_rflong		long  const	|              %01111110 << 10	'49	constant rflong
-bc_con_rfbyte_decod	long  const	|             %011101110 << 10	'4A	constant rfbyte + decod
-bc_con_rfbyte_decod_not	long  const	|         %0110111101110 << 10	'4B	constant rfbyte + decod + not
-bc_con_rfbyte_bmask	long  const	|           %01111101110 << 10	'4C	constant rfbyte + bmask
-bc_con_rfbyte_bmask_not	long  const	|         %0011111101110 << 10	'4D	constant rfbyte + bmask + not
+bc_con_rfbyte		long  const	|                  %0110 << 10	'44	constant rfbyte
+bc_con_rfbyte_not	long  const	|         %0111111101110 << 10	'45	constant rfbyte!
+bc_con_rfword		long  const	|                %011110 << 10	'46	constant rfword
+bc_con_rfword_not	long  const	|         %0111110111110 << 10	'47	constant rfword!
+bc_con_rflong		long  const	|              %01111110 << 10	'48	constant rflong
+bc_con_rfbyte_decod	long  const	|             %011101110 << 10	'49	constant rfbyte + decod
+bc_con_rfbyte_decod_not	long  const	|         %0110111101110 << 10	'4A	constant rfbyte + decod + not
+bc_con_rfbyte_bmask	long  const	|           %01111101110 << 10	'4B	constant rfbyte + bmask
+bc_con_rfbyte_bmask_not	long  const	|         %0011111101110 << 10	'4C	constant rfbyte + bmask + not
 
-bc_setup_reg		long  reg_ap	|                  %0110 << 10	'4E *	setup reg[rfvars]
-bc_setup_reg_pi		long  reg_ap	|                     %0 << 10	'4F *	setup reg[rfvars][pop index]
+bc_setup_field_p	long  field_	|                     %0 << 10	'4D *	setup field[pop field]
+bc_setup_field_pi	long  fieldi_	|                     %0 << 10	'4E *	setup field[pop field][pop index]
 
-bc_setup_byte_pbase	long  hub_ap	| %011011011011110111110 << 10	'50 *	setup byte[pbase + rfvar]
-bc_setup_byte_vbase	long  hub_ap	| %011011011011101111110 << 10	'51 *	setup byte[vbase + rfvar]
-bc_setup_byte_dbase	long  hub_ap	| %011011011011011111110 << 10	'52 *	setup byte[dbase + rfvar]
-bc_setup_byte_pbase_pi	long  hub_ap	| %011011011001110101110 << 10	'53 *	setup byte[pbase + rfvar][pop index]
-bc_setup_byte_vbase_pi	long  hub_ap	| %011011011001101101110 << 10	'54 *	setup byte[vbase + rfvar][pop index]
-bc_setup_byte_dbase_pi	long  hub_ap	| %011011011001011101110 << 10	'55 *	setup byte[dbase + rfvar][pop index]
+bc_setup_reg		long  reg_ap	|                  %0110 << 10	'4F *	setup reg[rfvars]
+bc_setup_reg_pi		long  reg_ap	|                     %0 << 10	'50 *	setup reg[rfvars][pop index]
 
-bc_setup_word_pbase	long  hub_ap	| %010110110111110111110 << 10	'56 *	setup word[pbase + rfvar]
-bc_setup_word_vbase	long  hub_ap	| %010110110111101111110 << 10	'57 *	setup word[vbase + rfvar]
-bc_setup_word_dbase	long  hub_ap	| %010110110111011111110 << 10	'58 *	setup word[dbase + rfvar]
-bc_setup_word_pbase_pi	long  hub_ap	| %010110110101110100110 << 10	'59 *	setup word[pbase + rfvar][pop index]
-bc_setup_word_vbase_pi	long  hub_ap	| %010110110101101100110 << 10	'5A *	setup word[vbase + rfvar][pop index]
-bc_setup_word_dbase_pi	long  hub_ap	| %010110110101011100110 << 10	'5B *	setup word[dbase + rfvar][pop index]
+bc_setup_byte_pbase	long  hub_ap	| %011011011011110111110 << 10	'51 *	setup byte[pbase + rfvar]
+bc_setup_byte_vbase	long  hub_ap	| %011011011011101111110 << 10	'52 *	setup byte[vbase + rfvar]
+bc_setup_byte_dbase	long  hub_ap	| %011011011011011111110 << 10	'53 *	setup byte[dbase + rfvar]
+bc_setup_byte_pbase_pi	long  hub_ap	| %011011011001110101110 << 10	'54 *	setup byte[pbase + rfvar][pop index]
+bc_setup_byte_vbase_pi	long  hub_ap	| %011011011001101101110 << 10	'55 *	setup byte[vbase + rfvar][pop index]
+bc_setup_byte_dbase_pi	long  hub_ap	| %011011011001011101110 << 10	'56 *	setup byte[dbase + rfvar][pop index]
 
-bc_setup_long_pbase	long  hub_ap	| %001101101111110111110 << 10	'5C *	setup long[pbase + rfvar]
-bc_setup_long_vbase	long  hub_ap	| %001101101111101111110 << 10	'5D *	setup long[vbase + rfvar]
-bc_setup_long_dbase	long  hub_ap	| %001101101111011111110 << 10	'5E *	setup long[dbase + rfvar]
-bc_setup_long_pbase_pi	long  hub_ap	| %001101101101110101010 << 10	'5F *	setup long[pbase + rfvar][pop index]
-bc_setup_long_vbase_pi	long  hub_ap	| %001101101101101101010 << 10	'60 *	setup long[vbase + rfvar][pop index]
-bc_setup_long_dbase_pi	long  hub_ap	| %001101101101011101010 << 10	'61 *	setup long[dbase + rfvar][pop index]
+bc_setup_word_pbase	long  hub_ap	| %010110110111110111110 << 10	'57 *	setup word[pbase + rfvar]
+bc_setup_word_vbase	long  hub_ap	| %010110110111101111110 << 10	'58 *	setup word[vbase + rfvar]
+bc_setup_word_dbase	long  hub_ap	| %010110110111011111110 << 10	'59 *	setup word[dbase + rfvar]
+bc_setup_word_pbase_pi	long  hub_ap	| %010110110101110100110 << 10	'5A *	setup word[pbase + rfvar][pop index]
+bc_setup_word_vbase_pi	long  hub_ap	| %010110110101101100110 << 10	'5B *	setup word[vbase + rfvar][pop index]
+bc_setup_word_dbase_pi	long  hub_ap	| %010110110101011100110 << 10	'5C *	setup word[dbase + rfvar][pop index]
 
-bc_setup_byte_pb_pi	long  hub_pp	|  %01101101100111110110 << 10	'62 *	setup byte[pop base][pop index]
-bc_setup_word_pb_pi	long  hub_pp	|  %01011011010111110010 << 10	'63 *	setup word[pop base][pop index]
-bc_setup_long_pb_pi	long  hub_pp	|  %00110110110111110100 << 10	'64 *	setup long[pop base][pop index]
+bc_setup_long_pbase	long  hub_ap	| %001101101111110111110 << 10	'5D *	setup long[pbase + rfvar]
+bc_setup_long_vbase	long  hub_ap	| %001101101111101111110 << 10	'5E *	setup long[vbase + rfvar]
+bc_setup_long_dbase	long  hub_ap	| %001101101111011111110 << 10	'5F *	setup long[dbase + rfvar]
+bc_setup_long_pbase_pi	long  hub_ap	| %001101101101110101010 << 10	'60 *	setup long[pbase + rfvar][pop index]
+bc_setup_long_vbase_pi	long  hub_ap	| %001101101101101101010 << 10	'61 *	setup long[vbase + rfvar][pop index]
+bc_setup_long_dbase_pi	long  hub_ap	| %001101101101011101010 << 10	'62 *	setup long[dbase + rfvar][pop index]
 
-bc_setup_byte_pa	long  hub_p	|          %011011011000 << 10	'65 *	setup byte[pop address]
-bc_setup_word_pa	long  hub_p	|          %010110110100 << 10	'66 *	setup word[pop address]
-bc_setup_long_pa	long  hub_p	|          %001101101100 << 10	'67 *	setup long[pop address]
+bc_setup_byte_pb_pi	long  hub_pp	|  %01101101100111110110 << 10	'63 *	setup byte[pop base][pop index]
+bc_setup_word_pb_pi	long  hub_pp	|  %01011011010111110010 << 10	'64 *	setup word[pop base][pop index]
+bc_setup_long_pb_pi	long  hub_pp	|  %00110110110111110100 << 10	'65 *	setup long[pop base][pop index]
 
-bc_rotxy		long  rotxy_	|          %000100011100 << 10	'68	ROTXY(x,y,t)	(push x,y)
-bc_polxy		long  polxy_	|              %00010100 << 10	'69	POLXY(r,t)	(push x,y)
-bc_xypol		long  polxy_	|              %00001100 << 10	'6A	XYPOL(x,y)	(push r,t)
+bc_setup_byte_pa	long  hub_p	|          %011011011000 << 10	'66 *	setup byte[pop address]
+bc_setup_word_pa	long  hub_p	|          %010110110100 << 10	'67 *	setup word[pop address]
+bc_setup_long_pa	long  hub_p	|          %001101101100 << 10	'68 *	setup long[pop address]
 
-bc_ternary		long  rotxy_	|                  %0000 << 10	'6B	x ? y : z
+bc_unused1		long  0		|                     %0 << 10	'69
+bc_unused2		long  0		|                     %0 << 10	'6A
+
+bc_ternary		long  ternary	|                  %0000 << 10	'6B	x ? y : z
 
 bc_lt			long  op_rel	|               %0111100 << 10	'6C	exp <   exp
 bc_ltu			long  op_rel	|               %0110110 << 10	'6D	exp +<  exp
@@ -1008,7 +1013,7 @@ bc_scas			long  mul_mod	|    %010010111100000110 << 10	'9C	exp SCAS exp
 bc_frac			long  muu_mod	|    %01111110011011010_ << 10	'9D	exp FRAC exp
 
 bc_string		long  string_	|    %011110111111100010 << 10	'9E	STRING()
-bc_bitrange		long  polxy_	|             %010111110 << 10	'9F	bitrange
+bc_bitrange		long  bitrange	|                 %00110 << 10	'9F	bitrange
 
 'bytecodes Ax/Bx/Cx/Dx/Ex/Fx are collapsed at runtime to LUT entries A0/A1/A2/A3/A4/A5
 
@@ -1016,10 +1021,19 @@ bc_con_n		long  const	|                   %000 << 10	'Ax	constant -1..14
 bc_setup_reg_1D8_1F8_	long  reg_im	|                %011100 << 10	'Bx *	setup reg $1D8..$1DF/$1F8..$1FF
 bc_setup_var_0_15_	long  hub_im	|  %11011011111010111110 << 10	'Cx *	setup long[vbase][0..15]
 bc_setup_local_0_15_	long  hub_im	|  %11011011110110111110 << 10	'Dx *	setup long[dbase][0..15]
-bc_read_local_0_15_	long  var_rd	|               %0100010 << 10	'Ex	read  long[dbase][0..15]
+bc_read_local_0_15_	long  var_rd	|                %010000 << 10	'Ex	read  long[dbase][0..15]
 bc_write_local_0_15_	long  var_wr_im	|               %0111000 << 10	'Fx	write long[dbase][0..15]  (isolated)
 
 					'* must end in '_ret_ setq2 #$0E0' to invoke variable operator bytecodes
+'
+'
+' a: ^@anyvar				(4 longs)
+' b: @hubvar
+'
+var_ptr		pusha	x		'a b
+		jmp	#mfieldh	'a |
+		mov	x,ad		'  b
+	_ret_	zerox	x,#19		'  b
 '
 '
 ' Constants				(13 longs)
@@ -1039,40 +1053,42 @@ const		pusha	x		'a b c d e f g h i j	a: constant -1..14
 	_ret_	not	x		'    c   e     h   j
 '
 '
-' Miscellaneous				(15 longs)
+' Setup field variable			(1 long)
 '
-pushv		pusha	x		'a b c d e		a: GETRND()
-	_ret_	getrnd	x		'a | | | |		b: GETCT()
-	_ret_	getct	x		'  b | | |		c: COGID()
-	_ret_	cogid	x		'    c | |		d: LOCKNEW()
-		locknew	x	wc	'      d |		e: POLLATN()
-waitatn_	pollatn		wc	'      | e f		f: WAITATN()
-	if_nc	jmp	#waitatn_	'      | | f		g: LOCKCHK(lock)
-		ret			'      | | f		h: RDPIN(pin)
-lockchk_	lockrel	x	wc	'      | |   g		i: RQPIN(pin)
-rdpin_		rdpin	x,x	wc	'      | |   | h	j: COGCHK(cog)
-rqpin_		rqpin	x,x	wc	'      | |   | | i	k: LOCKTRY(lock)
-	_ret_	bitc	x,#31		'      d |   g h i
-cogchk_		cogid	x	wc	'        |         j
-locktry_	locktry	x	wc	'        |         | k
-	_ret_	muxc	x,_FFFFFFFF	'        e         j k
+field_		jmp	#fieldh		'continue in hub
 '
 '
-' Miscellaneous				(14 longs)
+' Setup field variable with index	(1 long)
 '
-rotxy_		setq	#2-1		'a b		a: Ternary (y ? z : x)
-		rdlong	y,--ptra	'a b		b: ROTXY(x,y,t)
-	_ret_	tjnz	y,#.true	'a |		c: POLXY(r,t)
-.true	_ret_	mov	x,z		'a |		d: XYPOL(x,y)
-polxy_		popa	y		'  | c d e	e: Bitrange (top,bottom --> bottom,top-bottom)
-		rep	#99,#1		'  b c d |
-		setq	z		'  b | | |	use REP to stall interrupts to protect cordic operation until _ret_
-		qrotate	y,x		'  b c | |
-		qvector	y,x		'  | | d |
-		getqx	x		'  b c d |
-		pusha	x		'  b c d e
-	_ret_	getqy	x		'  b c d |
-	_ret_	subr	x,y		'        e
+fieldi_		jmp	#fieldih	'continue in hub
+'
+'
+' Miscellaneous				(19 longs)
+'
+ternary		setq	#2-1		'a			a: ternary (y ? z : x)
+bitrange	rdlong	y,--ptra	'a b			b: bitrange (top,bottom --> bottom,top-bottom)
+	_ret_	tjnz	y,#.true	'a |			c: GETRND()
+.true	_ret_	mov	x,z		'a |			d: GETCT()
+pushv		pusha	x		'  b c d e f g		e: COGID()
+	_ret_	subr	x,y		'  b | | | | |		f: LOCKNEW()
+	_ret_	getrnd	x		'    c | | | |		g: POLLATN()
+	_ret_	getct	x		'      d | | |		h: WAITATN()
+	_ret_	cogid	x		'        e | |		i: LOCKCHK(lock)
+		locknew	x	wc	'          f |		j: RDPIN(pin)
+waitatn_	pollatn		wc	'          | g h	k: RQPIN(pin)
+	if_nc	jmp	#waitatn_	'          | | h	l: LOCKTRY(lock)
+		ret			'          | | h
+lockchk_	lockrel	x	wc	'          | |   i
+rdpin_		rdpin	x,x	wc	'          | |   | j
+rqpin_		rqpin	x,x	wc	'          | |   | | k
+	_ret_	bitc	x,#31		'          f |   i j k
+locktry_	locktry	x	wc	'            |         l
+	_ret_	muxc	x,_FFFFFFFF	'            g         l
+'
+'
+' Miscellaneous				(5 longs)
+'
+		long	0[5]
 '
 '
 ' a: CASE_FAST init			(4 longs)
@@ -1100,7 +1116,7 @@ casefi		rflong	v		'a	get index base
 casefd		jmp	#casefdh	'  b	continue in hub
 '
 '
-' CASE value				(7 longs)
+' CASE value				(9 longs)
 '
 ' entry:
 '
@@ -1268,7 +1284,7 @@ range		setq	#4-1		'a b c		look: pop address/target/index/value1 into a/b/c/d
   _ret_		add	x,#1		'a b		x = index + delta + 1
 '
 '
-' LOOKUP/LOOKDOWN done			(2 longs)
+' LOOKUP/LOOKDOWN done (code at lookd)
 '
 '
 '  x		index
@@ -1276,8 +1292,10 @@ range		setq	#4-1		'a b c		look: pop address/target/index/value1 into a/b/c/d
 '  ptra[-2]	address
 '
 '
+{
 lookd		sub	ptra,#2*4	'pop target+address
-	_ret_	mov	x,#0		'get zero on stack top	TESTT use op_rel muxc/z, instead, use entrant flag states
+	_ret_	mov	x,#0		'get zero on stack top
+}
 '
 '
 ' CASE done (code at cased)
@@ -1448,6 +1466,7 @@ callsendbh	call	#drophot	'            g		drop anchor
 		setq	#3-1		'            g		push top of stack, count, data address
 		wrlong	x,ptra++	'            g
 		add	pb,w		'            g		set return address
+		setbyte	pb,#2,#3	'            g		set two parameters
 		mov	x,#@pri_sendb	'            g		point to spin method
 		jmp	#callhot	'            g		call spin method
 
@@ -1522,8 +1541,10 @@ callhot		mov	dbase,dcall	'a b c d e f g h	set dbase to dcall
 
 {
 callgo		rdfast	#0,x		'a b c d e f g h	return from hub, start new bytecode read
-		rfvar	x		'a b c d e f g h	get locals
-	_ret_	add	ptra,x		'a b c d e f g h	point stack past locals
+		rfvar	x		'a b c d e f g h	get number of local longs
+	_ret_	djnf	x,#.clear	'a b c d e f g h	if zero, continue
+.clear		setq	x		'a b c d e f g h	else, clear locals and point stack past them
+	_ret_	wrlong	#0,ptra++	'a b c d e f g h
 }
 
 makeptr		shl	v,#20		'                i j k	shift up method index (instruction after branch cannot be skipped)
@@ -1585,6 +1606,136 @@ casefdh		mov	a,x		'| b	get 'done' address
 	_ret_	rdfast	#0,a		'a b	branch to case code
 '
 '
+' Make field
+'
+'    ^@reg                         -->   00_11111_00000_00000000000rrrrrrrrr
+'    ^@reg.[bbbbb addbits sssss]   -->   00_sssss_bbbbb_00000000000rrrrrrrrr
+'   ^@byte                         -->   01_00111_00000_aaaaaaaaaaaaaaaaaaaa
+'   ^@byte.[bbbbb addbits sssss]   -->   01_sssss_bbbbb_aaaaaaaaaaaaaaaaaaaa
+'   ^@word                         -->   10_01111_00000_aaaaaaaaaaaaaaaaaaaa
+'   ^@word.[bbbbb addbits sssss]   -->   10_sssss_bbbbb_aaaaaaaaaaaaaaaaaaaa
+'   ^@long                         -->   11_11111_00000_aaaaaaaaaaaaaaaaaaaa
+'   ^@long.[bbbbb addbits sssss]   -->   11_sssss_bbbbb_aaaaaaaaaaaaaaaaaaaa
+'
+mfieldh		cmp	rd,rd_field	wz	'bitfield?
+	if_z	mov	rd,rdf			'if bitfield, retrieve rd
+	if_nz	mov	fb,#0			'if not bitfield, clear fb
+
+		mov	x,sz			'get sz into x
+
+		cmp	rd,rd_word	wcz	'get type into x
+		bitnc	x,#6			'rd_byte --> 01
+		bitnz	x,#5			'rd_word --> 10
+		cmp	rd,rd_byte	wc	'rd_long --> 11  (rd_reg < rd_byte)
+	if_c	zerox	x,#4			'rd_reg  --> 00
+
+		shl	x,#5			'get fb into x
+		zerox	fb,#4
+		or	x,fb
+
+		shl	x,#20			'get reg or ad into x
+	if_c	sets	x,rd
+	if_nc	zerox	ad,#19
+	if_nc	or	x,ad
+
+	_ret_	rdfast	#0,pb			'restart bytecode stream
+'
+'
+' Setup field with index
+'
+'   I = i * (sssss + 1)
+'
+'
+'   [00_sssss_bbbbb_00000000000rrrrrrrrr][i]   -->   [00_sssss_BBBBB_00000000000RRRRRRRRR]
+'
+'		rrrrrrrrr00000
+'	+		 bbbbb
+'	+	IIIIIIIIIIIIII
+'	=	RRRRRRRRRBBBBB
+'
+'
+'   [01_sssss_bbbbb_aaaaaaaaaaaaaaaaaaaa][i]   -->   [01_sssss_00BBB_AAAAAAAAAAAAAAAAAAAA]
+'   [10_sssss_bbbbb_aaaaaaaaaaaaaaaaaaaa][i]   -->   [10_sssss_00BBB_AAAAAAAAAAAAAAAAAAAA]
+'   [11_sssss_bbbbb_aaaaaaaaaaaaaaaaaaaa][i]   -->   [11_sssss_00BBB_AAAAAAAAAAAAAAAAAAAA]
+'
+'		aaaaaaaaaaaaaaaaaaaa000
+'	+			  bbbbb
+'	+	IIIIIIIIIIIIIIIIIIIIIII
+'	=	AAAAAAAAAAAAAAAAAAAABBB
+'
+fieldih		mov	y,x			'get index
+		popa	x			'pop field, tt_sssss_bbbbb_aaaaaaaaaaaaaaaaaaaa
+
+		rol	x,#2+5			'bbbbb_aaaaaaaaaaaaaaaaaaaa_tt_sssss
+		test	x,#%11_00000	wz	'z=1 if reg, else byte/word/long
+
+		mov	z,x			'scale index by sssss+1
+		and	z,#%11111
+		add	z,#1
+		getword	w,y,#1
+		mul	w,z
+		shl	w,#16
+		mul	y,z
+		add	y,w
+
+		mov	z,x			'get address
+		shr	z,#2+5
+	if_z	shl	z,#5			'------------------rrrrrrrrr00000 for reg
+	if_nz	shl	z,#3			'---------aaaaaaaaaaaaaaaaaaaa000 for byte/word/long
+
+		mov	w,x			'add bbbbb
+		shr	w,#32-5
+		add	z,w
+
+		add	z,y			'add scaled index
+
+		shl	x,#32-2-5		'tt_sssss_00000_00000000000000000000
+
+		mov	w,z			'install updated bbbbb
+	if_z	and	w,#%11111		'keep 5 lsb's for reg
+	if_nz	and	w,#%00111		'keep 3 lsb's for byte/word/long
+		shl	w,#20
+		or	x,w
+
+	if_z	shr	z,#5			'install updated address
+	if_z	zerox	z,#8
+	if_nz	shr	z,#3
+	if_nz	zerox	z,#19
+		or	x,z			'(followed by fieldh)
+'
+'
+' Setup field
+'
+'   [00_sssss_bbbbb_-----------rrrrrrrrr]   -->    reg[-----------rrrrrrrrr].[bbbbb addbits sssss]
+'   [01_sssss_bbbbb_aaaaaaaaaaaaaaaaaaaa]   -->   byte[aaaaaaaaaaaaaaaaaaaa].[bbbbb addbits sssss]
+'   [10_sssss_bbbbb_aaaaaaaaaaaaaaaaaaaa]   -->   word[aaaaaaaaaaaaaaaaaaaa].[bbbbb addbits sssss]
+'   [11_sssss_bbbbb_aaaaaaaaaaaaaaaaaaaa]   -->   long[aaaaaaaaaaaaaaaaaaaa].[bbbbb addbits sssss]
+'
+fieldh		testb	x,#31		wc	'get field type
+		testb	x,#30		wz
+
+	if_00	mov	rd,rd_reg		'reg?
+	if_00	mov	wr,wr_reg
+	if_00	sets	rd,x
+	if_00	setd	wr,x
+
+	if_01	mov	rd,rd_byte		'byte?
+	if_01	mov	wr,wr_byte
+
+	if_10	mov	rd,rd_word		'word?
+	if_10	mov	wr,wr_word
+
+	if_11	mov	rd,rd_long		'long?
+	if_11	mov	wr,wr_long
+
+		mov	ad,x			'set address in case byte/word/long
+
+		shr	x,#20			'position fs and fb in x
+
+		push	##bit_p			'ready to setup bitfield
+	_ret_	rdfast	#0,pb			'restart bytecode stream and setup bitfield
+'
+'
 '***********************************************
 '*  Interpreter - miscellaneous hub bytecodes  *
 '***********************************************
@@ -1603,11 +1754,13 @@ clkset_		mov	z,x			'get clkfreq into z
 		setq	#2-1			'get clkmode into y
 		rdlong	x,--ptra		'get stack top into x
 
+clkset_init	rep	#99,#1			'use REP to stall interrupts until _ret_
+
 		rdlong	w,#@clkmode_hub		'get current clkmode to avoid (PPPP = %1111) clock glitch
 		andn	w,#%11			'switch to 20MHz while maintaining old pll/xtal settings
 		hubset	w
 
-clkset_init	test	y,#%10		wz	'if new pll/xtal settings then switch to 20MHz for 10ms
+		test	y,#%10		wz	'if new pll/xtal settings then switch to 20MHz for 10ms
 	if_nz	mov	w,y			'..while new pll/xtal settings take effect
 	if_nz	andn	w,#%11
 	if_nz	hubset	w
@@ -1615,6 +1768,10 @@ clkset_init	test	y,#%10		wz	'if new pll/xtal settings then switch to 20MHz for 1
 	if_nz	waitx	##20_000_000/100
 
 		hubset	y			'now switch to new settings
+
+_debugnop1_	dirh	#63-63			'write clkfreq to rx pin long repository
+_debugnop2_	wxpin	z,#63-63
+_debugnop3_	dirl	#63-63			'(these 3 are NOP'd by compiler if not DEBUG, else fixed with debug_pin_rx)
 
 		setq	#2-1			'update clkmode and clkfreq
 	_ret_	wrlong	y,#@clkmode_hub
@@ -1702,16 +1859,27 @@ cogspin_	mov	v,x			'save stackadr
 '	ptra[-1] = return (w)	@COGSTOP(COGID)
 '	ptra[ 0] = params...
 '
-launch_spin	setq	#2-1			'get pbase/vbase
+launch_spin	loc	ptrb,#\$80000		'point to zeroes in empty hub space
+
+		setq	#ptra-1			'clear reg 0..ptra-1 (cancels mrecv/msend)
+		rdlong	0,ptrb
+
+		setq	#reg_end-reg_code-1	'load cog_code
+		rdlong	reg_code,#@reg_code
+
+		setq2	#(lut_code-1) & $1FF	'clear lut 0..lut_code-1
+		rdlong	0,ptrb
+
+		setq2	#lut_end-lut_code-1	'load lut_code
+		rdlong	lut_code & $1FF,rdf
+
+		setq	#2-1			'get pbase/vbase
 		rdlong	pbase,ptra
 
 		or	pbase,#%10		'set pbase 'trap' flag
 
 		mov	dbase,ptra		'set dbase to @params
 		add	dbase,#6*4
-
-		mov	mrecv,#0		'set mrecv to cancelled state
-		mov	msend,#0		'set msend to cancelled state
 
 		mov	w,dbase			'set dcall value to be loaded
 
@@ -1720,19 +1888,20 @@ launch_spin	setq	#2-1			'get pbase/vbase
 
 		andn	pbase,#%11		'restore pbase address
 
-		setq	#cog_end-cog_code-1	'load cog code (overwrites dcall register)
-		rdlong	cog_code,#@cog_code
-
-		setq2	#lut_end-lut_code-1	'load lut code
-		rdlong	lut_code & $1FF,rdf
-
-		mov	dcall,dbase		'set dcall (must be after loading cog code)
+		mov	dcall,dbase		'set dcall
 
 		mov	pb,#@stopcog		'set return to COGSTOP(COGID) bytecodes
 
 		push	#wrf_rd			'return to wrf_rd to start xbyte after callinit
 
 		jmp	#callinit		'begin bytecode execution of method in vbase[31:20]
+'
+'
+' COGCHK(cog)
+'
+cogchk_		cogid	x		wc
+	_ret_	muxc	x,_FFFFFFFF
+
 '
 '
 ' a: In-line PASM
@@ -1817,7 +1986,7 @@ bytemove_
 		mov	ptra,buff+14		'set ptra to dst
 		mov	ptrb,buff+15		'set ptrb to src/val
 
-		testb	pa,#1		wz	'move (Z=0) or fill (Z=1)?
+		testbn	pa,#1		wz	'move (Z=0) or fill (Z=1)?
 
   if_nz		cmp	ptrb,ptra	wc	'forward or reverse move?
   if_nz_and_nc	jmp	#move_fwd
@@ -1889,31 +2058,68 @@ fill_buff	not	buff+5,buff+15		'write fill pattern to stack
 	_ret_	wrlong	#0,y			'buff+6
 '
 '
-' STRSIZE(adr)		- returns length
-' STRCOMP(adra,adrb)	- returns true/false
+' STRSIZE(adr) : size
+' STRCOMP(adra,adrb) : match
+' STRCOPY(dst,src,max)
 '
 strsize_	loc	pa,#strsize_buff
 		skip	#%1
 strcomp_	loc	pa,#strcomp_buff
+		skip	#%1
+strcopy_	loc	pa,#strcopy_buff
 
-load_buff	setq	#7-1			'largest buff program is 7 longs
+load_buff	setq	#9-1			'largest buff program is 9 longs
 		rdlong	buff,pa
 		jmp	#buff
 
 
-strsize_buff	rdfast	#0,x
+strsize_buff	rdfast	#0,x			'measure string
 		mov	x,#0
 .loop		rfbyte	y		wz
 	if_nz	ijnz	x,#.loop
 		ret
 
-strcomp_buff	popa	ptrb
+strcomp_buff	popa	ptrb			'compare strings
 		rdfast	#0,x
 .loop		rdbyte	x,ptrb++
 		rfbyte	y
 		cmp	x,y		wz
 	if_z	tjnz	x,#.loop
 	_ret_	muxz	x,_FFFFFFFF
+
+strcopy_buff	mov	w,x			'copy string, get max into w
+		setq	#3-1			'pop top of stack into x, dst into y, src into z
+		rdlong	x,--ptra
+		mov	ptrb,y
+		rdfast	#0,z
+.loop		rfbyte	y		wz
+		wrbyte	y,ptrb++
+	if_nz	djnf	w,#.loop
+	_ret_	wrbyte	#0,--ptrb
+'
+'
+' GETCRC(ptr,poly,cnt) : crc
+'
+getcrc_		setq	#2-1			'pop ptr into buff+14
+		rdlong	buff+14,--ptra		'pop poly into buff+15
+
+		mov	y,x			'get cnt into y
+
+		encod	x,buff+15		'get starting value into x
+		bmask	x
+
+		loc	pa,#getcrc_buff		'if cnt <> 0 then run crc, else x=result
+	_ret_	tjnz	y,#load_buff
+
+
+getcrc_buff	rdfast	#0,buff+14		'compute crc of bytes
+.loop		rfbyte	w
+		shl	w,#24
+		rep	#3,#1
+		setq	w
+		crcnib	x,buff+15
+		crcnib	x,buff+15
+	_ret_	djnz	y,#.loop
 '
 '
 ' WAITUS(us)
@@ -1942,9 +2148,9 @@ waitus_		getct	w			'get ct now to minimize error
 		jmp	#pwct			'do WAITCT
 '
 '
-' GETMS()
-' GETSEC()
-' MULDIV64(m1,m2,d)
+' GETMS() : millseconds
+' GETSEC() : seconds
+' MULDIV64(m1,m2,d) : quotient
 '
 muldiv64_	setq	#2-1			'pop m1 and m2, open top of stack
 		rdlong	y,--ptra		'x=d, y=m1, z=m2
@@ -1993,8 +2199,8 @@ getms_		pusha	x			'push stack to open top of stack
 	_ret_	add	x,y			'add fractional-second milliseconds into whole-second milliseconds
 '
 '
-' QSIN(rho,theta,twopi)
-' QCOS(rho,theta,twopi)
+' QSIN(rho,theta,twopi) : y
+' QCOS(rho,theta,twopi) : x
 '
 qsin_		setq	#2-1			'pop rho and theta, open top of stack
 		rdlong	y,--ptra		'x=twopi, y=rho, z=theta
@@ -2021,41 +2227,25 @@ qsin_		setq	#2-1			'pop rho and theta, open top of stack
 		ret
 '
 '
+' ROTXY(x,y,t) : rotx, roty
+' POLXY(r,t) : x, y
+' XYPOL(x,y) : r, t
+'
+rotxy_		setq	#2-1			'pop x and y for ROTXY
+polxy_		rdlong	y,--ptra		'pop r/x for POLXY/XYPOL
+		cmp	pa,bc_polxy	wcz	'flags differentiate ROTXY/POLXY/XYPOL
+		rep	#99,#1			'use REP to stall interrupts to protect cordic operation until _ret_
+	if_b	setq	z			'if ROTXY, do SETQ
+	if_be	qrotate	y,x			'if ROTXY/POLXY, do QROTATE
+	if_a	qvector	y,x			'if XYPOL, do QVECTOR
+		getqx	x			'get results
+		pusha	x
+	_ret_	getqy	x
+'
+'
 '************************************************
 '*  Interpreter - floating-point hub bytecodes  *
 '************************************************
-'
-'
-' FLOAT(integer)	integer ma --> float ma
-'
-float_		mov	na,#0			'clear NaN
-		abs	ma		wc	'get sign, make integer absolute
-		wrc	sa			'set sign
-		encod	xa,ma			'get exponent
-		ror	ma,xa			'bit29-justify mantissa
-		ror	ma,#1
-		shr	ma,#2
-
-		jmp	#packf			'pack result
-'
-'
-' TRUNC(float)		float ma --> integer ma
-' ROUND(float)		float ma --> integer ma
-'
-round_		call	#unpackf		'unpack float
-
-		add	xa,#1			'if exponent < -1 or exponent > 30 then return zero
-		cmp	xa,#32		wc
-	if_nc	mov	ma,#0
-
-		shl	ma,#31-29
-		subr	xa,#31
-		shr	ma,xa
-		testb	pa,#1		wc	'TRUNC or ROUND?
-	if_c	add	ma,#1
-		shr	ma,#1
-		testb	sa,#0		wc
-	_ret_	negc	ma
 '
 '
 ' NAN(float)		float ma --> boolean x
@@ -2073,33 +2263,6 @@ fneg_	_ret_	bitnot	ma,#31			'negate float
 ' FABS(float)		float ma --> float ma
 '
 fabs_	_ret_	bitl	ma,#31			'absolutize float
-'
-'
-' 001: float <.  float		 --> boolean x
-' 010: float >.  float		 --> boolean x
-' 011: float <>. float		 --> boolean x
-' 100: float ==. float		 --> boolean x
-' 101: float <=. float		 --> boolean x
-' 110: float >=. float		 --> boolean x
-'
-frel_		popa	w			'pop left-side float
-
-		bitl	w,#31		wcz	'make left-side comparable
-		cmp	w,##$7F800001	wc	'if NaN, return false
-	if_nc	jmp	#.nan
-	if_z	neg	w			'+/- %0_xxxxxxxx_mmmmmmmmmmmmmmmmmmmmmmm
-
-		bitl	x,#31		wcz	'make right-side comparable
-		cmp	x,##$7F800001	wc	'if NaN, return false
-	if_nc	jmp	#.nan
-	if_z	neg	x			'+/- %0_xxxxxxxx_mmmmmmmmmmmmmmmmmmmmmmm
-
-		cmps	w,x		wcz	'do comparison
-	if_z	mov	y,#%1000		'equal?
-	if_nz	mov	y,#%0100		'above?
-	if_c	mov	y,#%0010		'below?
-		test	y,pa		wc	'test mask
-.nan	_ret_	muxc	x,_FFFFFFFF		'return boolean
 '
 '
 ' FSQRT(float)		float ma --> float ma
@@ -2192,7 +2355,66 @@ fdiv_		call	#unpackf2		'unpack two floats
 		shr	ma,#2			'justify quotient
 
 		jmp	#packf			'pack result
+'
+'
+' 001: float <.  float		 --> boolean x
+' 010: float >.  float		 --> boolean x
+' 011: float <>. float		 --> boolean x
+' 100: float ==. float		 --> boolean x
+' 101: float <=. float		 --> boolean x
+' 110: float >=. float		 --> boolean x
+'
+frel_		popa	w			'pop left-side float
 
+		bitl	w,#31		wcz	'make left-side comparable
+		cmp	w,##$7F800001	wc	'NaN?
+	if_z	neg	w			'+/- %0_xxxxxxxx_mmmmmmmmmmmmmmmmmmmmmmm
+
+		bitl	x,#31		wcz	'make right-side comparable
+	if_c	cmp	x,##$7F800001	wc	'NaN?
+	if_z	neg	x			'+/- %0_xxxxxxxx_mmmmmmmmmmmmmmmmmmmmmmm
+
+	if_nc	skip	#%11111			'if either NaN, return false
+
+		cmps	w,x		wcz	'do comparison
+	if_z	mov	y,#%1000		'equal?
+	if_nz	mov	y,#%0100		'above?
+	if_c	mov	y,#%0010		'below?
+		test	y,pa		wc	'test mask
+
+	_ret_	muxc	x,_FFFFFFFF		'return boolean
+'
+'
+' TRUNC(float)		float ma --> integer ma
+' ROUND(float)		float ma --> integer ma
+'
+round_		call	#unpackf		'unpack float
+
+		add	xa,#1			'if exponent < -1 or exponent > 30 then return zero
+		cmp	xa,#32		wc
+	if_nc	mov	ma,#0
+
+		shl	ma,#31-29
+		subr	xa,#31
+		shr	ma,xa
+		testb	pa,#1		wc	'TRUNC or ROUND?
+	if_c	add	ma,#1
+		shr	ma,#1
+		testb	sa,#0		wc
+	_ret_	negc	ma
+'
+'
+' FLOAT(integer)	integer ma --> float ma
+'
+float_		mov	na,#0			'clear NaN
+		abs	ma		wc	'get sign, make integer absolute
+		wrc	sa			'set sign
+		encod	xa,ma			'get exponent
+		ror	ma,xa			'bit29-justify mantissa
+		ror	ma,#1
+		shr	ma,#2
+
+		jmp	#packf			'pack result
 '
 '
 ' Unpack two floats

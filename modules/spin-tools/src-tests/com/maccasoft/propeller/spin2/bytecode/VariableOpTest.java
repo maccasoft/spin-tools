@@ -39,7 +39,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("5E 40 80", toString(code));
+        Assertions.assertEquals("5F 40 80", toString(code));
         Assertions.assertEquals("VAR_READ LONG DBASE+$00040", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -63,7 +63,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Write, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("5E 40 81", toString(code));
+        Assertions.assertEquals("5F 40 81", toString(code));
         Assertions.assertEquals("VAR_WRITE LONG DBASE+$00040", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -75,7 +75,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("52 04 80", toString(code));
+        Assertions.assertEquals("53 04 80", toString(code));
         Assertions.assertEquals("VAR_READ BYTE DBASE+$00004", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -87,7 +87,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("58 04 80", toString(code));
+        Assertions.assertEquals("59 04 80", toString(code));
         Assertions.assertEquals("VAR_READ WORD DBASE+$00004", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -111,7 +111,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Setup, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("5E 40", toString(code));
+        Assertions.assertEquals("5F 40", toString(code));
         Assertions.assertEquals("VAR_SETUP LONG DBASE+$00040", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -123,7 +123,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Setup, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("52 04", toString(code));
+        Assertions.assertEquals("53 04", toString(code));
         Assertions.assertEquals("VAR_SETUP BYTE DBASE+$00004", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -135,7 +135,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Setup, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("58 04", toString(code));
+        Assertions.assertEquals("59 04", toString(code));
         Assertions.assertEquals("VAR_SETUP WORD DBASE+$00004", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -147,7 +147,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Read, true, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("61 04 80", toString(code));
+        Assertions.assertEquals("62 04 80", toString(code));
         Assertions.assertEquals("VAR_READ_INDEXED LONG DBASE+$00004", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -159,7 +159,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Read, true, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("5B 04 80", toString(code));
+        Assertions.assertEquals("5C 04 80", toString(code));
         Assertions.assertEquals("VAR_READ_INDEXED WORD DBASE+$00004", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -171,7 +171,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Read, true, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("55 04 80", toString(code));
+        Assertions.assertEquals("56 04 80", toString(code));
         Assertions.assertEquals("VAR_READ_INDEXED BYTE DBASE+$00004", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -195,7 +195,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("5D 40 80", toString(code));
+        Assertions.assertEquals("5E 40 80", toString(code));
         Assertions.assertEquals("VAR_READ LONG VBASE+$00040", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -219,7 +219,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Write, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("5D 40 81", toString(code));
+        Assertions.assertEquals("5E 40 81", toString(code));
         Assertions.assertEquals("VAR_WRITE LONG VBASE+$00040", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -243,7 +243,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Address, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("5D 40 7F", toString(code));
+        Assertions.assertEquals("5E 40 7F", toString(code));
         Assertions.assertEquals("VAR_ADDRESS VBASE+$00040", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -267,7 +267,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Address, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("5E 40 7F", toString(code));
+        Assertions.assertEquals("5F 40 7F", toString(code));
         Assertions.assertEquals("VAR_ADDRESS DBASE+$00040", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }
@@ -279,7 +279,7 @@ class VariableOpTest {
         VariableOp op = new VariableOp(new Spin2Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();
 
-        Assertions.assertEquals("5D 02 80", toString(code));
+        Assertions.assertEquals("5E 02 80", toString(code));
         Assertions.assertEquals("VAR_READ LONG VBASE+$00002", op.toString());
         Assertions.assertEquals(code.length, op.getSize());
     }

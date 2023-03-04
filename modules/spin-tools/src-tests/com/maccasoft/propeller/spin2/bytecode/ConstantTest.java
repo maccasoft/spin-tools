@@ -105,12 +105,20 @@ class ConstantTest {
     void testByteConstant() {
         Constant subject = new Constant(new Spin2Context(), new NumberLiteral(0x12));
         Assertions.assertArrayEquals(new byte[] {
-            (byte) 0x45, (byte) 0x12
+            (byte) 0x44, (byte) 0x12
         }, subject.getBytes());
 
         subject = new Constant(new Spin2Context(), new NumberLiteral(0x10));
         Assertions.assertArrayEquals(new byte[] {
-            (byte) 0x45, (byte) 0x10
+            (byte) 0x44, (byte) 0x10
+        }, subject.getBytes());
+    }
+
+    @Test
+    void testByteConstantNot() {
+        Constant subject = new Constant(new Spin2Context(), new NumberLiteral(0xFFFFFF12));
+        Assertions.assertArrayEquals(new byte[] {
+            (byte) 0x45, (byte) (0x12 ^ 0xFF)
         }, subject.getBytes());
     }
 
@@ -118,7 +126,15 @@ class ConstantTest {
     void testWordConstant() {
         Constant subject = new Constant(new Spin2Context(), new NumberLiteral(0x1234));
         Assertions.assertArrayEquals(new byte[] {
-            (byte) 0x47, (byte) 0x34, (byte) 0x12
+            (byte) 0x46, (byte) 0x34, (byte) 0x12
+        }, subject.getBytes());
+    }
+
+    @Test
+    void testWordConstantNot() {
+        Constant subject = new Constant(new Spin2Context(), new NumberLiteral(0xFFFF1234));
+        Assertions.assertArrayEquals(new byte[] {
+            (byte) 0x47, (byte) (0x34 ^ 0xFF), (byte) (0x12 ^ 0xFF)
         }, subject.getBytes());
     }
 
@@ -126,23 +142,23 @@ class ConstantTest {
     void testLongConstant() {
         Constant subject = new Constant(new Spin2Context(), new NumberLiteral(0x12345678));
         Assertions.assertArrayEquals(new byte[] {
-            (byte) 0x49, (byte) 0x78, (byte) 0x56, (byte) 0x34, (byte) 0x12
+            (byte) 0x48, (byte) 0x78, (byte) 0x56, (byte) 0x34, (byte) 0x12
         }, subject.getBytes());
     }
 
     @Test
-    void testDecodConstant() {
+    void testDecodByteConstant() {
         Constant subject = new Constant(new Spin2Context(), new NumberLiteral(0x10000));
         Assertions.assertArrayEquals(new byte[] {
-            (byte) 0x4A, (byte) 0x10
+            (byte) 0x49, (byte) 0x10
         }, subject.getBytes());
     }
 
     @Test
-    void testDecodConstantNot() {
+    void testDecodByteConstantNot() {
         Constant subject = new Constant(new Spin2Context(), new NumberLiteral(~0x10000));
         Assertions.assertArrayEquals(new byte[] {
-            (byte) 0x4B, (byte) 0x10
+            (byte) 0x4A, (byte) 0x10
         }, subject.getBytes());
     }
 
@@ -150,7 +166,7 @@ class ConstantTest {
     void testBMaskConstant() {
         Constant subject = new Constant(new Spin2Context(), new NumberLiteral(0x1FF));
         Assertions.assertArrayEquals(new byte[] {
-            (byte) 0x4C, (byte) 0x08
+            (byte) 0x4B, (byte) 0x08
         }, subject.getBytes());
     }
 
@@ -158,7 +174,7 @@ class ConstantTest {
     void testBMaskConstantNot() {
         Constant subject = new Constant(new Spin2Context(), new NumberLiteral(~0x1FF));
         Assertions.assertArrayEquals(new byte[] {
-            (byte) 0x4D, (byte) 0x08
+            (byte) 0x4C, (byte) 0x08
         }, subject.getBytes());
     }
 

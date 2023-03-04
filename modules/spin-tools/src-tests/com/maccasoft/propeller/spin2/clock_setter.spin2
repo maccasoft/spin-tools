@@ -1,0 +1,45 @@
+' *** CLOCK SETTER
+' *** Sets clock mode, moves application into position, then executes it.
+
+DAT		org
+'
+'
+' Set clock mode if externally driven
+'
+ext1		hubset	_clkmode1_		'@000: start external clock, remain in rcfast mode	(NOP'd if rcslow)
+ext2		waitx	tenms			'@004: allow 10ms for external clock to stabilize	(NOP'd if rcslow)
+ext3		hubset	_clkmode2_		'@008: switch to external clock mode			(NOP'd if rcslow)
+'
+'
+' Move application down to $00000+
+'
+		mov	ptra,#@app_start
+		mov	ptrb,#0
+		rep	#4,_appblocks_
+		setq2	#$200-1
+		rdlong	0,ptra++
+		setq2	#$200-1
+		wrlong	0,ptrb++
+'
+'
+' Set clock mode if RC_SLOW
+'
+rcslow		hubset	#1			'@028: start external clock, remain in rcfast mode	(NOP'd if not rcslow)
+'
+'
+' Relaunch cog 0 from $00000
+'
+		coginit	#0,#$00000
+'
+'
+' Data set by the compiler
+'
+tenms		long	20_000_000 / 100	'10ms in rcfast
+_clkmode1_	long	0			'@034: clkmode with rcfast
+_clkmode2_	long	0			'@038: clkmode with external clock
+_appblocks_	long	0			'@03C: application size in blocks of $200 longs
+'
+'
+' Application start
+'
+app_start					'append application bytes after this label

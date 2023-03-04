@@ -30,6 +30,11 @@ class Spin2ExamplesTest {
     static final String libraryPath = "library/spin2";
 
     @Test
+    void test_ansi_vgatext_demo() throws Exception {
+        compileAndCompare(new File(path, "ansi_vgatext_demo.spin2"), new File(path, "ansi_vgatext_demo.binary"));
+    }
+
+    @Test
     void test_jm_1_wire_demo() throws Exception {
         compileAndCompare(new File(path, "jm_1-wire_demo.spin2"), new File(path, "jm_1-wire_demo.binary"));
     }
@@ -194,6 +199,18 @@ class Spin2ExamplesTest {
             return null;
         }
 
+        @Override
+        protected byte[] getBinaryFile(String fileName) {
+            File file = new File(parent, fileName);
+            if (!file.exists()) {
+                file = new File(libraryPath, fileName);
+            }
+            if (file.exists()) {
+                return loadBinaryFromFile(file);
+            }
+            return null;
+        }
+
     }
 
     void compileAndCompare(File source, File binary) throws Exception {
@@ -274,34 +291,38 @@ class Spin2ExamplesTest {
         return sb.toString();
     }
 
-    byte[] loadBinaryFromFile(File file) throws Exception {
-        if (file.exists()) {
-            InputStream is = new FileInputStream(file);
-            try {
-                byte[] b = new byte[is.available()];
-                is.read(b);
-                return b;
-            } finally {
+    byte[] loadBinaryFromFile(File file) {
+        try {
+            if (file.exists()) {
+                InputStream is = new FileInputStream(file);
                 try {
-                    is.close();
-                } catch (Exception e) {
+                    byte[] b = new byte[is.available()];
+                    is.read(b);
+                    return b;
+                } finally {
+                    try {
+                        is.close();
+                    } catch (Exception e) {
 
+                    }
                 }
             }
-        }
-        else {
-            InputStream is = getClass().getResourceAsStream(file.getName());
-            try {
-                byte[] b = new byte[is.available()];
-                is.read(b);
-                return b;
-            } finally {
+            else {
+                InputStream is = getClass().getResourceAsStream(file.getName());
                 try {
-                    is.close();
-                } catch (Exception e) {
+                    byte[] b = new byte[is.available()];
+                    is.read(b);
+                    return b;
+                } finally {
+                    try {
+                        is.close();
+                    } catch (Exception e) {
 
+                    }
                 }
             }
+        } catch (Exception e) {
+            throw new RuntimeException("error reading file " + file, e);
         }
     }
 

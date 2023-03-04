@@ -152,12 +152,12 @@ public class Constant extends Spin2Bytecode {
 
         if ((value & 0xFFFFFF00L) == 0) {
             return new byte[] {
-                0x45, (byte) value
+                0x44, (byte) value
             };
         }
         if ((value & 0xFFFFFF00L) == 0xFFFFFF00L) {
             return new byte[] {
-                0x46, (byte) (value ^ 0xFF)
+                0x45, (byte) (value ^ 0xFF)
             };
         }
 
@@ -166,13 +166,13 @@ public class Constant extends Spin2Bytecode {
         for (long i = 31, b = 0xFFFFFFFFL; i >= 0; i--, b >>= 1) {
             if (value == b) {
                 return new byte[] {
-                    (byte) 0x4C,
+                    (byte) 0x4B,
                     (byte) i
                 };
             }
             if (value == (b ^ 0xFFFFFFFFL)) {
                 return new byte[] {
-                    (byte) 0x4D,
+                    (byte) 0x4C,
                     (byte) i
                 };
             }
@@ -181,13 +181,13 @@ public class Constant extends Spin2Bytecode {
         for (long i = 0, b = 1; i < 32; i++, b <<= 1) {
             if (value == b) {
                 return new byte[] {
-                    (byte) 0x4A,
+                    (byte) 0x49,
                     (byte) i
                 };
             }
             if (value == (b ^ 0xFFFFFFFFL)) {
                 return new byte[] {
-                    (byte) 0x4B,
+                    (byte) 0x4A,
                     (byte) i
                 };
             }
@@ -195,18 +195,18 @@ public class Constant extends Spin2Bytecode {
 
         if ((value & 0xFFFF0000L) == 0) {
             return new byte[] {
-                0x47, (byte) value, (byte) (value >> 8)
+                0x46, (byte) value, (byte) (value >> 8)
             };
         }
         if ((value & 0xFFFF0000L) == 0xFFFF0000L) {
             value ^= 0xFFFF;
             return new byte[] {
-                0x48, (byte) value, (byte) (value >> 8)
+                0x47, (byte) value, (byte) (value >> 8)
             };
         }
 
         return new byte[] {
-            0x49, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
+            0x48, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
         };
 
     }

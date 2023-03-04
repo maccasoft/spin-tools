@@ -125,26 +125,26 @@ public class VariableOp extends Spin2Bytecode {
                 if (indexed) {
                     switch (ss) {
                         case Byte:
-                            os.write((variable instanceof LocalVariable) ? 0x55 : 0x54);
+                            os.write((variable instanceof LocalVariable) ? 0x56 : 0x55);
                             break;
                         case Word:
-                            os.write((variable instanceof LocalVariable) ? 0x5B : 0x5A);
+                            os.write((variable instanceof LocalVariable) ? 0x5C : 0x5B);
                             break;
                         case Long:
-                            os.write((variable instanceof LocalVariable) ? 0x61 : 0x60);
+                            os.write((variable instanceof LocalVariable) ? 0x62 : 0x61);
                             break;
                     }
                 }
                 else {
                     switch (ss) {
                         case Byte:
-                            os.write((variable instanceof LocalVariable) ? 0x52 : 0x51);
+                            os.write((variable instanceof LocalVariable) ? 0x53 : 0x52);
                             break;
                         case Word:
-                            os.write((variable instanceof LocalVariable) ? 0x58 : 0x57);
+                            os.write((variable instanceof LocalVariable) ? 0x59 : 0x58);
                             break;
                         case Long:
-                            os.write((variable instanceof LocalVariable) ? 0x5E : 0x5D);
+                            os.write((variable instanceof LocalVariable) ? 0x5F : 0x5E);
                             break;
                     }
                 }

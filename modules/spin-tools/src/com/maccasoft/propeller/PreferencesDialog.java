@@ -78,6 +78,7 @@ public class PreferencesDialog extends Dialog {
 
     PathList spin2Paths;
     Button spin2CaseSensitive;
+    Button spin2ClockSetter;
 
     Text terminalFont;
     Spinner terminalFontSize;
@@ -459,6 +460,19 @@ public class PreferencesDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 preferences.setSpin2CaseSensitiveSymbols(((Button) e.widget).getSelection());
+            }
+
+        });
+
+        spin2ClockSetter = new Button(composite, SWT.CHECK);
+        spin2ClockSetter.setText("Use clock setter for PASM-only code");
+        spin2ClockSetter.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
+        spin2ClockSetter.setSelection(preferences.getSpin2ClockSetter());
+        spin2ClockSetter.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setSpin2ClockSetter(((Button) e.widget).getSelection());
             }
 
         });

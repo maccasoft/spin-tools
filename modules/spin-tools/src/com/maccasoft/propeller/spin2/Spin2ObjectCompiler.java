@@ -345,6 +345,19 @@ public class Spin2ObjectCompiler {
         object.setClkFreq(scope.getSymbol("CLKFREQ_").getNumber().intValue());
         object.setClkMode(scope.getSymbol("CLKMODE_").getNumber().intValue());
 
+        if (scope.hasSymbol("DEBUG_PIN")) {
+            object.setDebugRxPin(scope.getSymbol("DEBUG_PIN").getNumber().intValue() & 0x3F);
+        }
+        if (scope.hasSymbol("DEBUG_PIN_RX")) {
+            object.setDebugRxPin(scope.getSymbol("DEBUG_PIN_RX").getNumber().intValue() & 0x3F);
+        }
+        if (scope.hasSymbol("DEBUG_PIN_TX")) {
+            object.setDebugTxPin(scope.getSymbol("DEBUG_PIN_TX").getNumber().intValue() & 0x3F);
+        }
+        if (scope.hasSymbol("DEBUG_BAUD")) {
+            object.setDebugBaud(scope.getSymbol("DEBUG_BAUD").getNumber().intValue());
+        }
+
         object.writeComment("Object header");
 
         object.links.addAll(objectLinks);
@@ -1838,7 +1851,7 @@ public class Spin2ObjectCompiler {
                 }
                 else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
                     line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Setup, false, (Variable) expression));
-                    line.addSource(new Bytecode(line.getScope(), line.getArgumentsCount() == 4 ? 0x7D : 0x7C, "REPEAT"));
+                    line.addSource(new Bytecode(line.getScope(), line.getArgumentsCount() == 4 ? 0x7C : 0x7B, "REPEAT"));
                 }
                 else {
                     throw new RuntimeException("unsupported " + line.getArgument(0));
@@ -1935,7 +1948,7 @@ public class Spin2ObjectCompiler {
             }
             else if ((expression instanceof Variable) || (expression instanceof LocalVariable)) {
                 line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Setup, false, (Variable) expression));
-                line.addSource(new Bytecode(line.getScope(), 0x7E, "REPEAT_LOOP"));
+                line.addSource(new Bytecode(line.getScope(), 0x7D, "REPEAT_LOOP"));
             }
             else {
                 throw new RuntimeException("unsupported " + line.getArgument(0));
@@ -2122,7 +2135,7 @@ public class Spin2ObjectCompiler {
                 (byte) (count >> 8),
             }, String.format("ORG=$%03x, %d", org, count + 1)));
             line.source.add(0, new Bytecode(line.getScope(), new byte[] {
-                0x19, 0x5C
+                0x19, 0x5E
             }, "INLINE-EXEC"));
         }
         else if (text != null) {
@@ -2363,7 +2376,7 @@ public class Spin2ObjectCompiler {
                 node.setData("context", context);
                 debugStatements.add(node);
                 source.add(new Bytecode(context, new byte[] {
-                    0x44, (byte) pop, (byte) debugIndex
+                    0x43, (byte) pop, (byte) debugIndex
                 }, node.getText().toUpperCase() + " #" + debugIndex));
             }
             else if ("END".equalsIgnoreCase(node.getText())) {

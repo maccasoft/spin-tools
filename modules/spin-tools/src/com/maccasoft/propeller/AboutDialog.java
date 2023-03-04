@@ -73,7 +73,7 @@ public class AboutDialog extends Dialog {
         final String ccLink = "https://creativecommons.org/licenses/by/3.0/";
         final String message = title + "\r\n" + "Copyright (c) 2021-23 Marco Maccaferri and others. All rights reserved.\r\n"
             + "\r\n"
-            + "Spin2 Interpreter: 2022.01.14\r\n"
+            + "Spin2 Interpreter: 2022.11.19\r\n"
             + "\r\n"
             + "This program and the accompanying materials, unless otherwise specified,\r\n"
             + "are made available under the terms of the " + epl + ".\r\n"

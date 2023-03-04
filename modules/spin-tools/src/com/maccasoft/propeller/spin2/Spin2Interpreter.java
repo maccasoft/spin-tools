@@ -21,7 +21,10 @@ public class Spin2Interpreter {
         try {
             code = new byte[is.available()];
             is.read(code);
-            writeLong(0x3C, 0x00000100);
+            writeLong(0x003C, 0x00000100);
+            writeLong(0x0E4C, 0x00000000);
+            writeLong(0x0E50, 0x00000000);
+            writeLong(0x0E54, 0x00000000);
             setPBase(code.length);
         } catch (Exception e) {
             e.printStackTrace();
@@ -87,6 +90,18 @@ public class Spin2Interpreter {
 
     public byte[] getCode() {
         return code;
+    }
+
+    public void clearDebugPins() {
+        writeLong(0x0E4C, 0x00000000); // _debugnop1_     dirh    #63-63                  'write clkfreq to rx pin long repository'
+        writeLong(0x0E50, 0x00000000); // _debugnop2_     wxpin   z,#63-63
+        writeLong(0x0E54, 0x00000000); // _debugnop3_     dirl    #63-63                  '(these 3 are NOP'd by compiler if not DEBUG, else fixed with debug_pin_rx)
+    }
+
+    public void setDebugPins(int tx, int rx) {
+        writeLong(0x0E4C, Spin2InstructionObject.d.setValue(readLong(0x0E4C), rx)); // _debugnop1_     dirh    #63-63                  'write clkfreq to rx pin long repository'
+        writeLong(0x0E50, Spin2InstructionObject.s.setValue(readLong(0x0E50), rx)); // _debugnop2_     wxpin   z,#63-63
+        writeLong(0x0E54, Spin2InstructionObject.d.setValue(readLong(0x0E54), rx)); // _debugnop3_     dirl    #63-63                  '(these 3 are NOP'd by compiler if not DEBUG, else fixed with debug_pin_rx)
     }
 
 }

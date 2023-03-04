@@ -1706,6 +1706,9 @@ public class SpinTools {
             File fileToSave = new File(fileName);
             try {
                 FileOutputStream os = new FileOutputStream(fileToSave);
+                if (object instanceof Spin2Object) {
+                    ((Spin2Object) object).setClockSetter(preferences.getSpin2ClockSetter());
+                }
                 object.generateBinary(os);
                 os.close();
             } catch (Exception e) {
@@ -1775,6 +1778,9 @@ public class SpinTools {
         if (obj == null) {
             return;
         }
+        if (obj instanceof Spin2Object) {
+            ((Spin2Object) obj).setClockSetter(preferences.getSpin2ClockSetter());
+        }
 
         SerialPort serialPort = null;
         boolean serialPortShared = false;
@@ -1790,7 +1796,7 @@ public class SpinTools {
             if (serialPort == null) {
                 serialPort = new SerialPort(serialPortList.getSelection());
             }
-            serialTerminal.setSerialPort(serialPort, isDebug ? Propeller2Loader.UPLOAD_BAUD_RATE : serialTerminal.getBaudRate());
+            serialTerminal.setSerialPort(serialPort, isDebug ? ((Spin2Object) obj).getDebugBaud() : serialTerminal.getBaudRate());
             if (openTerminal) {
                 serialTerminal.setFocus();
             }
@@ -1810,7 +1816,7 @@ public class SpinTools {
         doUpload(obj, writeToFlash, serialPort, serialPortShared);
 
         if (serialTerminal != null) {
-            serialTerminal.setSerialPort(serialPort, isDebug ? Propeller2Loader.UPLOAD_BAUD_RATE : serialTerminal.getBaudRate());
+            serialTerminal.setSerialPort(serialPort, isDebug ? ((Spin2Object) obj).getDebugBaud() : serialTerminal.getBaudRate());
         }
     }
 

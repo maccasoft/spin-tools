@@ -120,11 +120,7 @@ public class Spin2Method {
             count += size;
         }
 
-        while ((count % 4) != 0) {
-            count++;
-        }
-
-        return count;
+        return (count + 3) >> 2;
     }
 
     public void addSource(Spin2MethodLine line) {
