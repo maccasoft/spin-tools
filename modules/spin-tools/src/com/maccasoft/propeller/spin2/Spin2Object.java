@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -170,7 +170,7 @@ public class Spin2Object extends SpinObject {
             interpreter.setClkFreq(getClkFreq());
             interpreter.setClkMode(getClkMode());
             if (debugger == null) {
-                interpreter.clearDebugPins();
+                interpreter.setDelay(getClkFreq() / 10);
             }
             else {
                 interpreter.setDebugPins(debugTxPin, debugRxPin);
