@@ -928,4 +928,12 @@ public class EditorTab implements FindReplaceTarget {
         stop.set(true);
     }
 
+    public boolean isBlockSelection() {
+        return editor.getStyledText().getBlockSelection();
+    }
+
+    public void setBlockSelection(boolean blockSelection) {
+        editor.getStyledText().setBlockSelection(blockSelection);
+    }
+
 }

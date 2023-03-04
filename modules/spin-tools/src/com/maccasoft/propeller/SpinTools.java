@@ -113,6 +113,8 @@ public class SpinTools {
     CTabFolder tabFolder;
     StatusLine statusLine;
 
+    MenuItem blockSelectionItem;
+
     SourcePool sourcePool;
     SerialPortList serialPortList;
 
@@ -402,6 +404,7 @@ public class SpinTools {
                     if (findReplaceDialog != null) {
                         findReplaceDialog.setTarget(editorTab);
                     }
+                    blockSelectionItem.setSelection(editorTab.isBlockSelection());
                 }
                 updateCaretPosition();
             }
@@ -539,6 +542,7 @@ public class SpinTools {
                                     editorTab.addCaretListener(caretListener);
                                     editorTab.addOpenListener(openListener);
                                     editorTab.addPropertyChangeListener(editorChangeListener);
+                                    blockSelectionItem.setSelection(editorTab.isBlockSelection());
                                 }
 
                             });
@@ -962,6 +966,8 @@ public class SpinTools {
         editorTab.addOpenListener(openListener);
         editorTab.addPropertyChangeListener(editorChangeListener);
 
+        blockSelectionItem.setSelection(editorTab.isBlockSelection());
+
         tabFolder.getDisplay().asyncExec(new Runnable() {
 
             @Override
@@ -991,6 +997,8 @@ public class SpinTools {
         editorTab.addCaretListener(caretListener);
         editorTab.addOpenListener(openListener);
         editorTab.addPropertyChangeListener(editorChangeListener);
+
+        blockSelectionItem.setSelection(editorTab.isBlockSelection());
 
         tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -1318,6 +1326,21 @@ public class SpinTools {
                 CTabItem tabItem = tabFolder.getSelection();
                 EditorTab editorTab = (EditorTab) tabItem.getData();
                 editorTab.selectAll();
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        blockSelectionItem = new MenuItem(menu, SWT.CHECK);
+        blockSelectionItem.setText("Block Selection" + "\t");
+        blockSelectionItem.setAccelerator(SWT.MOD2 + SWT.MOD3 + 'A');
+        blockSelectionItem.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                CTabItem tabItem = tabFolder.getSelection();
+                EditorTab editorTab = (EditorTab) tabItem.getData();
+                editorTab.setBlockSelection(((MenuItem) e.widget).getSelection());
             }
         });
 
