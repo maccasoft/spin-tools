@@ -107,6 +107,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("QSIN", TokenId.FUNCTION);
         keywords.put("QCOS", TokenId.FUNCTION);
         keywords.put("MULDIV64", TokenId.FUNCTION);
+        keywords.put("GETRND", TokenId.FUNCTION);
+        keywords.put("NAN", TokenId.FUNCTION);
 
         keywords.put("GETREGS", TokenId.FUNCTION);
         keywords.put("SETREGS", TokenId.FUNCTION);
@@ -119,7 +121,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
         keywords.put("STRSIZE", TokenId.FUNCTION);
         keywords.put("STRCOMP", TokenId.FUNCTION);
+        keywords.put("STRCOPY", TokenId.FUNCTION);
         keywords.put("STRING", TokenId.FUNCTION);
+        keywords.put("GETCRC", TokenId.FUNCTION);
 
         keywords.put("LOOKUP", TokenId.FUNCTION);
         keywords.put("LOOKUPZ", TokenId.FUNCTION);
@@ -180,7 +184,6 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("FLOAT", TokenId.KEYWORD);
         keywords.put("TRUNC", TokenId.KEYWORD);
         keywords.put("ROUND", TokenId.KEYWORD);
-        keywords.put("NAN", TokenId.KEYWORD);
         keywords.put("FABS", TokenId.KEYWORD);
         keywords.put("FSQRT", TokenId.KEYWORD);
 
