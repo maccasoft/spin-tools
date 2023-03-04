@@ -3007,6 +3007,72 @@ public class Spin2ObjectCompiler {
                     }
                 }
             }
+            else if ("FIELD".equalsIgnoreCase(node.getText()) && node.getChildCount() != 0) {
+                Spin2StatementNode indexNode = null;
+                Spin2StatementNode postEffectNode = null;
+
+                int n = 1;
+                if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
+                    indexNode = node.getChild(n++);
+                }
+                if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+                    postEffectNode = node.getChild(n++);
+                }
+                if (n < node.getChildCount()) {
+                    throw new RuntimeException("syntax error");
+                }
+
+                if (postEffectNode != null) {
+                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Constant(context, new NumberLiteral(0)));
+                    }
+                    else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Constant(context, new NumberLiteral(-1)));
+                    }
+                }
+
+                source.addAll(compileConstantExpression(context, node.getChild(0)));
+
+                if (indexNode != null) {
+                    source.addAll(compileConstantExpression(context, indexNode));
+                }
+
+                if (postEffectNode == null) {
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) (indexNode == null ? 0x4D : 0x4E),
+                        (byte) (push ? 0x80 : 0x81)
+                    }, "FIELD_" + (push ? "READ" : "WRITE")));
+                }
+                else {
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) (indexNode == null ? 0x4D : 0x4E)
+                    }, "FIELD_SETUP"));
+                }
+
+                if (postEffectNode != null) {
+                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
+                    }
+                    else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
+                    }
+                    else if ("++".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+                    }
+                    else if ("--".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
+                    }
+                    else if ("!!".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
+                    }
+                    else if ("!".equalsIgnoreCase(postEffectNode.getText())) {
+                        source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
+                    }
+                    else {
+                        throw new CompilerException("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
+                    }
+                }
+            }
             else {
                 String[] s = node.getText().split("[\\.]");
                 if (s.length == 2 && ("BYTE".equalsIgnoreCase(s[1]) || "WORD".equalsIgnoreCase(s[1]) || "LONG".equalsIgnoreCase(s[1]))) {
@@ -4245,6 +4311,28 @@ public class Spin2ObjectCompiler {
             if (bitfieldNode != null) {
                 source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
             }
+        }
+        else if ("FIELD".equalsIgnoreCase(node.getText()) && node.getChildCount() != 0) {
+            indexNode = null;
+
+            int n = 1;
+            if (n < node.getChildCount()) {
+                indexNode = node.getChild(n++);
+            }
+            if (n < node.getChildCount()) {
+                throw new RuntimeException("syntax error " + node.getText());
+            }
+
+            source.addAll(compileConstantExpression(context, node.getChild(0)));
+
+            if (indexNode != null) {
+                source.addAll(compileConstantExpression(context, indexNode));
+            }
+
+            source.add(new Bytecode(context, new byte[] {
+                (byte) (indexNode == null ? 0x4D : 0x4E),
+                (byte) 0x81
+            }, "FIELD_WRITE"));
         }
         else {
             Expression expression = context.getLocalSymbol(node.getText());

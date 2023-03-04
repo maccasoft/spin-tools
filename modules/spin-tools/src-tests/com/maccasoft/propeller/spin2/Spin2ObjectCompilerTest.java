@@ -5834,6 +5834,47 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testField() throws Exception {
+        String text = ""
+            + "PUB main() | a, p\n"
+            + "\n"
+            + "    a := FIELD[p]\n"
+            + "    a := FIELD[p][1]\n"
+            + "\n"
+            + "    FIELD[p] := a\n"
+            + "    FIELD[p][1] := a\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       1C 00 00 00    End\n"
+            + "' PUB main() | a, p\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     a := FIELD[p]\n"
+            + "00009 00009       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000A 0000A       4D 80          FIELD_READ\n"
+            + "0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := FIELD[p][1]\n"
+            + "0000D 0000D       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000E 0000E       A2             CONSTANT (1)\n"
+            + "0000F 0000F       4E 80          FIELD_READ\n"
+            + "00011 00011       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     FIELD[p] := a\n"
+            + "00012 00012       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00013 00013       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00014 00014       4D 81          FIELD_WRITE\n"
+            + "'     FIELD[p][1] := a\n"
+            + "00016 00016       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00017 00017       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00018 00018       A2             CONSTANT (1)\n"
+            + "00019 00019       4E 81          FIELD_WRITE\n"
+            + "0001B 0001B       04             RETURN\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

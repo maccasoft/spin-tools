@@ -587,6 +587,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         spinKeywords.put("@@WORD", TokenId.TYPE);
         spinKeywords.put("@@LONG", TokenId.TYPE);
         spinKeywords.put("REG", TokenId.TYPE);
+        spinKeywords.put("FIELD", TokenId.TYPE);
     }
 
     static Set<String> modcz = new HashSet<String>();
