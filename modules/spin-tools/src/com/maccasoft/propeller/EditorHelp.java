@@ -55,12 +55,7 @@ public class EditorHelp {
                         continue;
                     }
                     Element node = (Element) rootNodeList.item(i);
-                    if ("entry".equals(node.getTagName())) {
-                        if (key.equalsIgnoreCase(node.getAttribute("name"))) {
-                            return node.getTextContent();
-                        }
-                    }
-                    else if ("section".equals(node.getTagName())) {
+                    if ("section".equals(node.getTagName())) {
                         if (context != null && node.getAttribute("class").contains(context)) {
                             NodeList childList = node.getChildNodes();
                             for (int ii = 0; ii < childList.getLength(); ii++) {
@@ -69,8 +64,11 @@ public class EditorHelp {
                                 }
                                 Element element = (Element) childList.item(ii);
                                 if ("entry".equals(element.getTagName())) {
-                                    if (key.equalsIgnoreCase(element.getAttribute("name"))) {
-                                        return element.getTextContent();
+                                    String[] s = element.getAttribute("name").split(",");
+                                    for (int n = 0; n < s.length; n++) {
+                                        if (key.equalsIgnoreCase(s[n])) {
+                                            return element.getTextContent();
+                                        }
                                     }
                                 }
                             }
@@ -103,18 +101,10 @@ public class EditorHelp {
                         continue;
                     }
                     Element node = (Element) rootNodeList.item(i);
-                    if ("entry".equals(node.getTagName())) {
-                        String key = node.getAttribute("name");
-                        if (key.toUpperCase().startsWith(token)) {
-                            String insert = node.getAttribute("insert");
-                            if (insert == null || "".equals(insert)) {
-                                insert = key;
-                            }
-                            proposals.add(new ContentProposal(insert, key, node.getTextContent()));
-                        }
-                    }
-                    else if ("section".equals(node.getTagName())) {
+                    if ("section".equals(node.getTagName())) {
                         if (context != null && node.getAttribute("class").contains(context)) {
+                            List<IContentProposal> list = new ArrayList<>();
+
                             NodeList childList = node.getChildNodes();
                             for (int ii = 0; ii < childList.getLength(); ii++) {
                                 if (!(childList.item(ii) instanceof Element)) {
@@ -122,16 +112,31 @@ public class EditorHelp {
                                 }
                                 Element element = (Element) childList.item(ii);
                                 if ("entry".equals(element.getTagName())) {
-                                    String key = element.getAttribute("name");
-                                    if (key.toUpperCase().startsWith(token)) {
-                                        String insert = element.getAttribute("insert");
-                                        if (insert == null || "".equals(insert)) {
-                                            insert = key;
+                                    String[] key = element.getAttribute("name").split(",");
+                                    for (int n = 0; n < key.length; n++) {
+                                        if (key[n].toUpperCase().startsWith(token)) {
+                                            String insert = element.getAttribute("insert");
+                                            if (insert != null && !"".equals(insert)) {
+                                                list.add(new ContentProposal(insert, key[n], element.getTextContent()));
+                                                break;
+                                            }
+                                            else {
+                                                list.add(new ContentProposal(key[n], key[n], element.getTextContent()));
+                                            }
                                         }
-                                        proposals.add(new ContentProposal(insert, key, element.getTextContent()));
                                     }
                                 }
                             }
+
+                            Collections.sort(list, new Comparator<IContentProposal>() {
+
+                                @Override
+                                public int compare(IContentProposal o1, IContentProposal o2) {
+                                    return o1.getLabel().compareToIgnoreCase(o2.getLabel());
+                                }
+
+                            });
+                            proposals.addAll(list);
                         }
                     }
                 }
@@ -142,15 +147,6 @@ public class EditorHelp {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        Collections.sort(proposals, new Comparator<IContentProposal>() {
-
-            @Override
-            public int compare(IContentProposal o1, IContentProposal o2) {
-                return o1.getLabel().compareToIgnoreCase(o2.getLabel());
-            }
-
-        });
 
         return proposals;
     }

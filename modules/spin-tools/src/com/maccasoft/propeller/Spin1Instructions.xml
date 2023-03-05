@@ -8,46 +8,44 @@
         <entry name="DAT"><![CDATA[<b>DAT</b><p>Data declarations, including PASM code</p>]]></entry>
     </section>
 
-    <section class="ConstantsNode,ExpressionNode">
-        <entry name="CHIPVER">><![CDATA[<b>CHIPVER</b><p>Propeller chip version number</p>]]></entry>
-        <entry name="CLKMODE"><![CDATA[<b>CLKMODE</b><p>Current clock mode setting</p>]]></entry>
-        <entry name="_CLKMODE"><![CDATA[<b>_CLKMODE</b><p>Application-defined clock mode (read-only)</p>]]></entry>
-        <entry name="CLKFREQ"><![CDATA[<b>CLKFREQ</b><p>Current clock frequency</p>]]></entry>
-        <entry name="_CLKFREQ"><![CDATA[<b>_CLKFREQ</b><p>Application-defined clock frequency (read-only)</p>]]></entry>
-        <entry name="CLKSET"><![CDATA[<b>CLKSET</b><p>Set clock mode and clock frequency</p>]]></entry>
-        <entry name="_XINFREQ"><![CDATA[<b>_XINFREQ</b><p>Application-defined external clock frequency (read-only)</p>]]></entry>
-        <entry name="_STACK"><![CDATA[<b>_STACK</b><p>Application-defined stack space to reserve (read-only)</p>]]></entry>
-        <entry name="_FREE"><![CDATA[<b>_FREE</b><p>Application-defined free space to reserve (read-only)</p>]]></entry>
-        <entry name="RCFAST"><![CDATA[<b>RCFAST</b><p>Constant for _CLKMODE : internal fast oscillator</p>]]></entry>
-        <entry name="RCSLOW"><![CDATA[<b>RCSLOW</b><p>Constant for _CLKMODE : internal slow oscillator</p>]]></entry>
-        <entry name="XINPUT"><![CDATA[<b>XINPUT</b><p>Constant for _CLKMODE : external clock/osc (XI pin)</p>]]></entry>
-        <entry name="XTAL1"><![CDATA[<b>XTAL1</b><p>Constant for _CLKMODE : external low-speed crystal</p>]]></entry>
-        <entry name="XTAL2"><![CDATA[<b>XTAL2</b><p>Constant for _CLKMODE : external med-speed crystal</p>]]></entry>
-        <entry name="XTAL3"><![CDATA[<b>XTAL3</b><p>Constant for _CLKMODE : external high-speed crystal</p>]]></entry>
-        <entry name="PLL1X"><![CDATA[<b>PLL1X</b><p>Constant for _CLKMODE : external frequency times 1</p>]]></entry>
-        <entry name="PLL2X"><![CDATA[<b>PLL2X</b><p>Constant for _CLKMODE : external frequency times 2</p>]]></entry>
-        <entry name="PLL4X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 4</p>]]></entry>
-        <entry name="PLL8X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 8</p>]]></entry>
-        <entry name="PLL16X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 16</p>]]></entry>
-
-        <entry name="TRUE"><![CDATA[<b>TRUE</b><p>Logical true: -1 ($FFFFFFFF)</p>]]></entry>
-        <entry name="FALSE"><![CDATA[<b>TRUE</b><p>Logical false: 0 ($00000000)</p>]]></entry>
-        <entry name="POSX"><![CDATA[<b>POSX</b><p>Maximum positive integer: 2,147,483,647 ($7FFFFFFF)</p>]]></entry>
-        <entry name="NEGX"><![CDATA[<b>NEGX</b><p>Maximum negative integer: -2,147,483,648 ($80000000)</p>]]></entry>
-        <entry name="PI"><![CDATA[<b>PI</b><p>Floating-point value for PI: ~3.141593 ($40490FDB)</p>]]></entry>
-    </section>
-
     <section class="MethodNode,StatementNode">
         <entry name="abort"><![CDATA[<b>ABORT &lt;Value&gt;</b><p>Exit from PUB / PRI method using abort status with optional return Value.</p>]]></entry>
-        <entry name="if"></entry>
-        <entry name="ifnot"></entry>
-        <entry name="elseif"></entry>
-        <entry name="elseifnot"></entry>
-        <entry name="else"></entry>
-        <entry name="case"><![CDATA[<b>CASE CaseExpression</b><p>Compare expression against matching expression(s) and execute code block if match found.</p>]]></entry>
-        <entry name="other"></entry>
-        <entry name="repeat"><![CDATA[<code><b>REPEAT</b></code>
+        <entry name="if,ifnot,elseif,elseifnot,else"><![CDATA[<code><b>IF / IFNOT + ELSEIF / ELSEIFNOT + ELSE</b></code>
+<p>The IF construct begins with IF or IFNOT and optionally employs ELSEIF, ELSEIFNOT, and ELSE. To all be part of the same decision tree, these keywords must have the
+same level of indentation.<br />
+<br />
+The indented code under IF or ELSEIF executes if <condition> is not zero. The code under IFNOT or ELSEIFNOT executes if <condition> is zero. The code under ELSE
+executes if no other indented code executed:</p>
 
+<pre>
+<code>
+<b>IF / IFNOT</b> &lt;condition&gt;         - Initial IF or IFNOT
+    &lt;indented code&gt;
+<b>ELSEIF / ELSEIFNOT</b> &lt;condition&gt; - Optional ELSEIF or ELSEIFNOT
+    &lt;indented code&gt;
+<b>ELSE</b>                           - Optional final ELSE
+    &lt;indented code&gt;
+</code></pre>
+]]></entry>
+        <entry name="case,case_fast,other"><![CDATA[<code><b>CASE</b></code>
+<p>The CASE construct sequentially compares a target value to a list of possible matches. When a match is found, the related code executes.<br />
+<br />
+Match values/ranges must be indented past the CASE keyword. Multiple match values/ranges can be expressed with comma separators. Any additional lines of code related to
+the match value/range must be indented past the match value/range:</p>
+
+<pre>
+<code><b>CASE</b> target                  - CASE with target value
+    <b>&lt;match&gt;</b> : &lt;code&gt;        - match value and code
+        &lt;indented code&gt;
+    <b>&lt;match..match&gt;</b> : &lt;code&gt;  - match range and code
+        &lt;indented code&gt;
+    <b>&lt;match&gt;,&lt;match..match&gt;</b> : &lt;code&gt; - match value, range, and code
+        &lt;indented code&gt;
+    <b>OTHER</b> : &lt;code&gt;         - optional OTHER case, in case no match found
+        &lt;indented code&gt;
+</code></pre>
+]]></entry>
+        <entry name="repeat,from,to,step,while,until,next,quit"><![CDATA[<code><b>REPEAT</b></code>
 <p>All looping is achieved through REPEAT constructs, which have several forms:</p>
 <pre>
 <code><b>REPEAT</b>
@@ -83,13 +81,6 @@
     &lt;indented code&gt;</code>
 </pre>
 ]]></entry>
-        <entry name="from"></entry>
-        <entry name="to"></entry>
-        <entry name="step"></entry>
-        <entry name="while"></entry>
-        <entry name="until"></entry>
-        <entry name="next"></entry>
-        <entry name="quit"></entry>
 
         <entry name="result"><![CDATA[<b>RESULT</b><p>Default result variable for PUB / PRI methods.</p>]]></entry>
 
@@ -112,9 +103,38 @@
         <entry name="cogid"><![CDATA[<b>COGID</b><p>The current cog’s ID (0-7).</p>]]></entry>
     </section>
 
-    <section class="DatNode,DataLineNode,Instruction">
+    <section class="ConstantsNode,ExpressionNode">
+        <entry name="CHIPVER">><![CDATA[<b>CHIPVER</b><p>Propeller chip version number</p>]]></entry>
+        <entry name="CLKMODE"><![CDATA[<b>CLKMODE</b><p>Current clock mode setting</p>]]></entry>
+        <entry name="_CLKMODE"><![CDATA[<b>_CLKMODE</b><p>Application-defined clock mode (read-only)</p>]]></entry>
+        <entry name="CLKFREQ"><![CDATA[<b>CLKFREQ</b><p>Current clock frequency</p>]]></entry>
+        <entry name="_CLKFREQ"><![CDATA[<b>_CLKFREQ</b><p>Application-defined clock frequency (read-only)</p>]]></entry>
+        <entry name="CLKSET"><![CDATA[<b>CLKSET</b><p>Set clock mode and clock frequency</p>]]></entry>
+        <entry name="_XINFREQ"><![CDATA[<b>_XINFREQ</b><p>Application-defined external clock frequency (read-only)</p>]]></entry>
+        <entry name="_STACK"><![CDATA[<b>_STACK</b><p>Application-defined stack space to reserve (read-only)</p>]]></entry>
+        <entry name="_FREE"><![CDATA[<b>_FREE</b><p>Application-defined free space to reserve (read-only)</p>]]></entry>
+        <entry name="RCFAST"><![CDATA[<b>RCFAST</b><p>Constant for _CLKMODE : internal fast oscillator</p>]]></entry>
+        <entry name="RCSLOW"><![CDATA[<b>RCSLOW</b><p>Constant for _CLKMODE : internal slow oscillator</p>]]></entry>
+        <entry name="XINPUT"><![CDATA[<b>XINPUT</b><p>Constant for _CLKMODE : external clock/osc (XI pin)</p>]]></entry>
+        <entry name="XTAL1"><![CDATA[<b>XTAL1</b><p>Constant for _CLKMODE : external low-speed crystal</p>]]></entry>
+        <entry name="XTAL2"><![CDATA[<b>XTAL2</b><p>Constant for _CLKMODE : external med-speed crystal</p>]]></entry>
+        <entry name="XTAL3"><![CDATA[<b>XTAL3</b><p>Constant for _CLKMODE : external high-speed crystal</p>]]></entry>
+        <entry name="PLL1X"><![CDATA[<b>PLL1X</b><p>Constant for _CLKMODE : external frequency times 1</p>]]></entry>
+        <entry name="PLL2X"><![CDATA[<b>PLL2X</b><p>Constant for _CLKMODE : external frequency times 2</p>]]></entry>
+        <entry name="PLL4X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 4</p>]]></entry>
+        <entry name="PLL8X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 8</p>]]></entry>
+        <entry name="PLL16X"><![CDATA[<b>PLL4X</b><p>Constant for _CLKMODE : external frequency times 16</p>]]></entry>
+
+        <entry name="TRUE"><![CDATA[<b>TRUE</b><p>Logical true: -1 ($FFFFFFFF)</p>]]></entry>
+        <entry name="FALSE"><![CDATA[<b>TRUE</b><p>Logical false: 0 ($00000000)</p>]]></entry>
+        <entry name="POSX"><![CDATA[<b>POSX</b><p>Maximum positive integer: 2,147,483,647 ($7FFFFFFF)</p>]]></entry>
+        <entry name="NEGX"><![CDATA[<b>NEGX</b><p>Maximum negative integer: -2,147,483,648 ($80000000)</p>]]></entry>
+        <entry name="PI"><![CDATA[<b>PI</b><p>Floating-point value for PI: ~3.141593 ($40490FDB)</p>]]></entry>
     </section>
-    <section class="DatNode,DataLineNode,Condition">
+
+    <section class="DatNode,Instruction">
+    </section>
+    <section class="DatNode,Condition">
     </section>
 
 </content>

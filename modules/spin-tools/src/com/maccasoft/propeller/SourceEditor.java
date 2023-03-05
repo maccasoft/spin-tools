@@ -1858,7 +1858,7 @@ public class SourceEditor {
                     proposals.addAll(helpProvider.fillProposals("Condition", token));
                 }
                 else if (line.instruction != null && position > line.instruction.stop + 1) {
-                    proposals.addAll(helpProvider.fillProposals(line.instruction.getText().toUpperCase(), token));
+                    proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), token));
                     if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
                         proposals.addAll(tokenMarker.getMethodProposals(node.getParent(), token));
                     }
