@@ -2308,8 +2308,9 @@ public class Spin2ObjectCompiler {
                 if (!(expression instanceof Method)) {
                     throw new CompilerException("invalid method " + methodNode.getText(), methodNode.getToken());
                 }
-                if (methodNode.getChildCount() != ((Method) expression).getArgumentsCount()) {
-                    throw new CompilerException("expected " + ((Method) expression).getArgumentsCount() + " argument(s), found " + methodNode.getChildCount(), methodNode.getToken());
+                int actual = getArgumentsCount(context, methodNode);
+                if (actual != ((Method) expression).getArgumentsCount()) {
+                    throw new CompilerException("expected " + ((Method) expression).getArgumentsCount() + " argument(s), found " + actual, methodNode.getToken());
                 }
                 for (int i = 0; i < methodNode.getChildCount(); i++) {
                     source.addAll(compileConstantExpression(context, methodNode.getChild(i)));
