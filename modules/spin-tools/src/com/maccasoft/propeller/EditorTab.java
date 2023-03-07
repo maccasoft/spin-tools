@@ -391,7 +391,6 @@ public class EditorTab implements FindReplaceTarget {
 
                                 @Override
                                 public void run() {
-                                    threadRunning.set(false);
                                     if (editor == null || editor.getStyledText().isDisposed()) {
                                         return;
                                     }
@@ -403,6 +402,8 @@ public class EditorTab implements FindReplaceTarget {
                                 }
                             });
                         }
+
+                        threadRunning.set(false);
                     }
 
                 });
