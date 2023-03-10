@@ -874,7 +874,9 @@ public class Spin2ObjectCompiler {
         for (Node child : parent.getChilds()) {
             DataLineNode node = (DataLineNode) child;
             if (!debugEnabled && node.instruction != null && "DEBUG".equalsIgnoreCase(node.instruction.getText())) {
-                continue;
+                if (node.label == null) {
+                    continue;
+                }
             }
             try {
                 Spin2PAsmLine pasmLine = compileDataLine(node);
@@ -993,6 +995,12 @@ public class Spin2ObjectCompiler {
             }
         }
 
+        if (!debugEnabled && mnemonic != null && "DEBUG".equalsIgnoreCase(mnemonic)) {
+            condition = mnemonic = null;
+            parameters.clear();
+            modifier = null;
+        }
+
         Spin2PAsmLine pasmLine = new Spin2PAsmLine(localScope, label, condition, mnemonic, parameters, modifier);
 
         try {
@@ -1023,7 +1031,11 @@ public class Spin2ObjectCompiler {
                 }
                 parameters.add(new Spin2PAsmExpression("#", new NumberLiteral(debugIndex), null));
 
-                Spin2PAsmDebugLine debugLine = Spin2PAsmDebugLine.buildFrom(pasmLine.getScope(), node.getTokens());
+                List<Token> tokens = new ArrayList<>(node.getTokens());
+                if (node.label != null) {
+                    tokens.remove(node.label);
+                }
+                Spin2PAsmDebugLine debugLine = Spin2PAsmDebugLine.buildFrom(pasmLine.getScope(), tokens);
                 debugStatements.add(debugLine);
             }
         } catch (CompilerException e) {

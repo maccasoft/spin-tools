@@ -5212,6 +5212,26 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testKeepPAsmDebugLabel() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                mov   a, #1\n"
+            + "label           debug(udec(a))\n"
+            + "                ret\n"
+            + "a               res   1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 01 04 04 F6                        mov     a, #1\n"
+            + "00004 00004   001                label               \n"
+            + "00004 00004   001 2D 00 64 FD                        ret\n"
+            + "00008 00008   002                a                   res     1\n"
+            + "", compile(text, false));
+    }
+
+    @Test
     void testAbsoluteAddress() throws Exception {
         String text = ""
             + "DAT             org   $000\n"
