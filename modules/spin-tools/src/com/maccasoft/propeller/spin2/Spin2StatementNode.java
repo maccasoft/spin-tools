@@ -21,6 +21,8 @@ import com.maccasoft.propeller.model.Token;
 public class Spin2StatementNode {
 
     Token token;
+    Token firstToken;
+    Token lastToken;
 
     protected Map<String, Spin2StatementNode> properties = new HashMap<String, Spin2StatementNode>();
     protected List<Spin2StatementNode> childs = new ArrayList<Spin2StatementNode>();
@@ -33,8 +35,10 @@ public class Spin2StatementNode {
 
     public static class Index extends Spin2StatementNode {
 
-        public Index(Spin2StatementNode node) {
+        public Index(Spin2StatementNode node, Token firstToken, Token lastToken) {
             super(node.token);
+            this.firstToken = firstToken;
+            this.lastToken = lastToken;
             this.properties.putAll(node.properties);
             this.childs.addAll(node.childs);
             this.data = node.data;
@@ -156,96 +160,41 @@ public class Spin2StatementNode {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        switch (token.type) {
-            case Token.OPERATOR:
-                if (",".equals(token.getText())) {
-                    for (int i = 0; i < childs.size(); i++) {
-                        if (i != 0) {
-                            sb.append(", ");
-                        }
-                        sb.append(childs.get(i));
-                    }
-                }
-                else if ("(".equals(token.getText())) {
-                    sb.append("(");
-                    for (int i = 0; i < childs.size(); i++) {
-                        sb.append(childs.get(i));
-                    }
-                    sb.append(")");
-                }
-                else if ("[".equals(token.getText())) {
-                    sb.append(childs.get(0));
-                    sb.append("[");
-                    for (int i = 1; i < childs.size(); i++) {
-                        sb.append(childs.get(i));
-                    }
-                    sb.append("]");
-                }
-                else if ("?".equals(token.getText())) {
-                    if (childs.size() == 3) {
-                        sb.append(childs.get(0));
-                        sb.append(" ? ");
-                        sb.append(childs.get(1));
-                        sb.append(" : ");
-                        sb.append(childs.get(2));
-                    }
-                    else {
-                        sb.append(token.getText());
-                        for (int i = 0; i < childs.size(); i++) {
-                            sb.append(" ");
-                            sb.append(childs.get(i));
-                        }
-                    }
-                }
-                else {
-                    if (childs.size() > 0) {
-                        sb.append(childs.get(0));
-                        if (childs.size() > 1) {
-                            sb.append(" ");
-                            sb.append(token.getText());
-                            sb.append(" ");
-                            sb.append(childs.get(1));
-                        }
-                    }
-                    else {
-                        sb.append(" ");
-                        sb.append(token.getText());
-                    }
-                }
-                break;
-            default: {
-                sb.append(token.getText());
-
-                int i = 0;
-                while (i < childs.size()) {
-                    if (!(childs.get(i) instanceof Index)) {
-                        break;
-                    }
-                    sb.append("[");
-                    sb.append(childs.get(i++));
-                    sb.append("]");
-                }
-                if (i < childs.size() && (childs.get(i) instanceof Argument)) {
-                    sb.append("(");
-                    sb.append(childs.get(i++));
-                    while (i < childs.size()) {
-                        if (!(childs.get(i) instanceof Argument)) {
-                            break;
-                        }
-                        sb.append(", ");
-                        sb.append(childs.get(i++));
-                    }
-                    sb.append(")");
-                }
-                while (i < childs.size()) {
-                    sb.append(" ");
-                    sb.append(childs.get(i++));
-                }
-                break;
-            }
+        int[] result = new int[] {
+            token.start, token.stop
+        };
+        if (firstToken != null) {
+            result[0] = Math.min(result[0], firstToken.start);
+            result[1] = Math.max(result[1], firstToken.stop);
         }
-        return sb.toString();
+        if (lastToken != null) {
+            result[0] = Math.min(result[0], lastToken.start);
+            result[1] = Math.max(result[1], lastToken.stop);
+        }
+        for (Spin2StatementNode childNode : getChilds()) {
+            result = computeStartStopIndex(childNode, result);
+        }
+        return token.getStream().getSource(result[0], result[1]);
+    }
+
+    int[] computeStartStopIndex(Spin2StatementNode node, int[] result) {
+        result[0] = Math.min(result[0], node.getToken().start);
+        result[1] = Math.max(result[1], node.getToken().stop);
+
+        if (node.firstToken != null) {
+            result[0] = Math.min(result[0], node.firstToken.start);
+            result[1] = Math.max(result[1], node.firstToken.stop);
+        }
+        if (node.lastToken != null) {
+            result[0] = Math.min(result[0], node.lastToken.start);
+            result[1] = Math.max(result[1], node.lastToken.stop);
+        }
+
+        for (Spin2StatementNode childNode : node.getChilds()) {
+            result = computeStartStopIndex(childNode, result);
+        }
+
+        return result;
     }
 
 }

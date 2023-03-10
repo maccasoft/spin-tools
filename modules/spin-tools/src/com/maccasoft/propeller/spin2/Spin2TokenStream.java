@@ -491,6 +491,8 @@ public class Spin2TokenStream extends TokenStream {
                         }
                     }
                     if (nested == 0 && ch == '`') {
+                        index++;
+                        column++;
                         return token;
                     }
                     token.stop++;

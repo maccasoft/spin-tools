@@ -259,7 +259,9 @@ public class Spin2Debug {
                             break;
 
                         default:
-                            throw new CompilerException("Unknown debug statement '" + node.getText() + "'", node.getToken());
+                            compileSpinStatement(node, os, DBC_TYPE_DEC | DBC_FLAG_SIGNED | flags);
+                            break;
+                        //throw new CompilerException("Unknown debug statement '" + node.getText() + "'", node.getToken());
                     }
                 }
             } catch (IOException e) {
@@ -283,7 +285,7 @@ public class Spin2Debug {
             }
 
             if ((op & DBC_FLAG_NOEXPR) == 0) {
-                os.write(child.getText().getBytes());
+                os.write(child.toString().getBytes());
                 os.write(0x00);
             }
         }

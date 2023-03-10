@@ -10,8 +10,6 @@
 
 package com.maccasoft.propeller.spin2;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -202,52 +200,6 @@ public class Spin2PAsmDebugLine {
 
     public List<Spin2DebugCommand> getStatements() {
         return statements;
-    }
-
-    public static void main(String[] args) {
-        String text;
-
-        text = "debug(if(a>0), \"text\", udec(a,b,#c), udec_reg_array(@a,b), \"text\")";
-        System.out.println(text);
-        System.out.println(parse(text));
-    }
-
-    static String parse(String text) {
-        List<Token> tokens = new ArrayList<Token>();
-
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        while (true) {
-            Token token = stream.nextToken();
-            if (token.type == Token.EOF) {
-                break;
-            }
-            tokens.add(token);
-        }
-
-        Spin2PAsmDebugLine root = Spin2PAsmDebugLine.buildFrom(new Spin2Context(), tokens);
-
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        print(new PrintStream(os), root, 0);
-        return os.toString();
-    }
-
-    static void print(PrintStream out, Spin2PAsmDebugLine node, int indent) {
-        for (Spin2DebugCommand child : node.getStatements()) {
-            out.println(child.getText());
-            for (Spin2DebugExpression arg : child.getArguments()) {
-                printIndent(out, 1);
-                out.println(arg);
-            }
-        }
-    }
-
-    static void printIndent(PrintStream out, int indent) {
-        if (indent != 0) {
-            for (int i = 1; i < indent; i++) {
-                out.print("     ");
-            }
-            out.print(" +-- ");
-        }
     }
 
 }

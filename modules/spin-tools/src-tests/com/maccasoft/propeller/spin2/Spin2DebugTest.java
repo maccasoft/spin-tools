@@ -10,16 +10,56 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.spin2.Spin2ObjectCompiler.ObjectInfo;
 
 class Spin2DebugTest {
+
+    @Test
+    void testDebugExpression() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    debug(`index=`udec(long[a++]))\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       11 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     debug(`index=`udec(long[a++]))\n"
+            + "00009 00009       D0             VAR_SETUP LONG DBASE+$00000 (short)\n"
+            + "0000A 0000A       87             POST_INC (push)\n"
+            + "0000B 0000B       68 80          MEM_READ LONG\n"
+            + "0000D 0000D       43 04 01       DEBUG #1\n"
+            + "00010 00010       04             RETURN\n"
+            + "00011 00011       00 00 00       Padding\n"
+            + "' Debug data\n"
+            + "00B24 00000       1A 00         \n"
+            + "00B26 00002       04 00         \n"
+            + "00B28 00004       04 06 60 69 6E\n"
+            + "00B2D 00009       64 65 78 3D 00\n"
+            + "00B32 0000E       41 6C 6F 6E 67\n"
+            + "00B37 00013       5B 61 2B 2B 5D\n"
+            + "00B3C 00018       00 00\n"
+            + "", compile(text));
+    }
 
     @Test
     void testRegister() {
@@ -425,6 +465,30 @@ class Spin2DebugTest {
             sb.append(String.format("%02X", data[i] & 0xFF));
         }
         return sb.toString();
+    }
+
+    String compile(String text) throws Exception {
+        Spin2Context scope = new Spin2GlobalContext();
+        Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+        Spin2Parser subject = new Spin2Parser(stream);
+        Node root = subject.parse();
+
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(scope, childObjects, true);
+        Spin2Object obj = compiler.compileObject(root);
+        obj.setDebugData(compiler.generateDebugData());
+        obj.setDebugger(new Spin2Debugger());
+
+        for (CompilerException msg : compiler.getMessages()) {
+            if (msg.type == CompilerException.ERROR) {
+                throw msg;
+            }
+        }
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        obj.generateListing(new PrintStream(os));
+
+        return os.toString().replaceAll("\\r\\n", "\n");
     }
 
 }

@@ -219,6 +219,10 @@ public class Spin2TreeBuilder {
                 node.addChild(parseLevel(parseAtom(), 0, true));
                 token = peek();
             }
+            else if (token.getText().startsWith("`")) {
+                node.addChild(parseLevel(parseAtom(), 0, true));
+                token = peek();
+            }
             else {
                 throw new CompilerException("unexpected " + token.getText(), token);
             }
@@ -322,9 +326,10 @@ public class Spin2TreeBuilder {
                     }
                 }
                 if ("[".equals(peek().getText())) {
-                    next();
-                    node.addChild(new Spin2StatementNode.Index(parseLevel(parseAtom(), 0, false)));
+                    Token start = next();
+                    Spin2StatementNode childNode = parseLevel(parseAtom(), 0, false);
                     token = next();
+                    node.addChild(new Spin2StatementNode.Index(childNode, start, token));
                     if (token == null || !"]".equals(token.getText())) {
                         throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
@@ -332,9 +337,10 @@ public class Spin2TreeBuilder {
                         return node;
                     }
                     if ("[".equals(peek().getText())) {
-                        next();
-                        node.addChild(new Spin2StatementNode.Index(parseLevel(parseAtom(), 0, false)));
+                        start = next();
+                        childNode = parseLevel(parseAtom(), 0, false);
                         token = next();
+                        node.addChild(new Spin2StatementNode.Index(childNode, start, token));
                         if (token == null || !"]".equals(token.getText())) {
                             throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                         }
@@ -355,9 +361,10 @@ public class Spin2TreeBuilder {
                         }
                     }
                     if ("[".equals(peek().getText())) {
-                        next();
-                        node.addChild(new Spin2StatementNode.Index(parseLevel(parseAtom(), 0, false)));
+                        start = next();
+                        childNode = parseLevel(parseAtom(), 0, false);
                         token = next();
+                        node.addChild(new Spin2StatementNode.Index(childNode, start, token));
                         if (token == null || !"]".equals(token.getText())) {
                             throw new CompilerException("expecting ]", token == null ? tokens.get(tokens.size() - 1) : token);
                         }
@@ -395,11 +402,12 @@ public class Spin2TreeBuilder {
                         else {
                             node.addChild(child);
                         }
-                        token = next();
+                        token = peek();
                         if (token == null) {
                             throw new CompilerException("expecting )", tokens.get(tokens.size() - 1));
                         }
                         if (")".equals(token.getText())) {
+                            next();
                             if (peek() != null && peek().column == token.column + 1) {
                                 if (":".equals(peek().getText())) {
                                     next();
@@ -410,9 +418,13 @@ public class Spin2TreeBuilder {
                             }
                             return node;
                         }
+                        if (child.getToken().type == Token.STRING && child.getToken().getText().startsWith("`")) {
+                            continue;
+                        }
                         if (!",".equals(token.getText()) && !":".equals(token.getText())) {
                             throw new CompilerException("expecting )", token);
                         }
+                        next();
                     }
                 }
             }

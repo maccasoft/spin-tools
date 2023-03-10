@@ -796,11 +796,15 @@ class Spin2TokenStreamTest {
 
     @Test
     void testBacktickStrings() {
-        Spin2TokenStream subject = new Spin2TokenStream("``#(letter) lutcolors `uhex_long_array_(image_address, lut_size)");
+        Spin2TokenStream subject = new Spin2TokenStream("`#(letter) lutcolors `uhex_long_array_(image_address, lut_size)");
 
-        assertEquals("`", subject.nextToken().getText());
         assertEquals("`#(letter) lutcolors ", subject.nextToken().getText());
-        assertEquals("`uhex_long_array_(image_address, lut_size)", subject.nextToken().getText());
+        assertEquals("uhex_long_array_", subject.nextToken().getText());
+        assertEquals("(", subject.nextToken().getText());
+        assertEquals("image_address", subject.nextToken().getText());
+        assertEquals(",", subject.nextToken().getText());
+        assertEquals("lut_size", subject.nextToken().getText());
+        assertEquals(")", subject.nextToken().getText());
     }
 
     @Test
