@@ -2639,41 +2639,7 @@ public class Spin2ObjectCompiler {
 
                     int bitfield = -1;
                     if (bitfieldNode != null) {
-                        if ("..".equals(bitfieldNode.getText())) {
-                            try {
-                                Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
-                                Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
-                                if (exp1.isConstant() && exp2.isConstant()) {
-                                    int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                                    int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                                    Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                                    bitfield = exp.getNumber().intValue();
-                                }
-                            } catch (Exception e) {
-                                // Do nothing
-                            }
-
-                            if (bitfield == -1) {
-                                source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                                source.add(new Bytecode(context, new byte[] {
-                                    (byte) 0x9F, (byte) 0x94
-                                }, "ADDBITS"));
-                            }
-                        }
-                        else {
-                            try {
-                                Expression exp = buildConstantExpression(context, bitfieldNode);
-                                if (exp.isConstant()) {
-                                    bitfield = exp.getNumber().intValue();
-                                }
-                            } catch (Exception e) {
-                                // Do nothing
-                            }
-
-                            if (bitfield == -1) {
-                                source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                            }
-                        }
+                        bitfield = compileBitfield(context, bitfieldNode, source);
                     }
 
                     MemoryOp.Size ss = MemoryOp.Size.Long;
@@ -2705,13 +2671,6 @@ public class Spin2ObjectCompiler {
                 else if ("??".equalsIgnoreCase(node.getText())) {
                     source.add(new Bytecode(context, push ? 0x8F : 0x8E, "PRE_RND" + (push ? " (push)" : "")));
                 }
-            }
-            else if ("..".equalsIgnoreCase(node.getText())) {
-                if (node.getChildCount() != 2) {
-                    throw new RuntimeException("expression syntax error");
-                }
-                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
-                source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
             }
             else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())
                 || "@BYTE".equalsIgnoreCase(node.getText()) || "@WORD".equalsIgnoreCase(node.getText()) || "@LONG".equalsIgnoreCase(node.getText())
@@ -2766,15 +2725,6 @@ public class Spin2ObjectCompiler {
                     throw new RuntimeException("syntax error");
                 }
 
-                if (postEffectNode != null) {
-                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Constant(context, new NumberLiteral(0)));
-                    }
-                    else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Constant(context, new NumberLiteral(-1)));
-                    }
-                }
-
                 source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
 
                 if (indexNode != null) {
@@ -2783,41 +2733,7 @@ public class Spin2ObjectCompiler {
 
                 int bitfield = -1;
                 if (bitfieldNode != null) {
-                    if ("..".equals(bitfieldNode.getText())) {
-                        try {
-                            Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
-                            Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
-                            if (exp1.isConstant() && exp2.isConstant()) {
-                                int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                                int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                                Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                                bitfield = exp.getNumber().intValue();
-                            }
-                        } catch (Exception e) {
-                            // Do nothing
-                        }
-
-                        if (bitfield == -1) {
-                            source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                            source.add(new Bytecode(context, new byte[] {
-                                (byte) 0x9F, (byte) 0x94
-                            }, "ADDBITS"));
-                        }
-                    }
-                    else {
-                        try {
-                            Expression exp = buildConstantExpression(context, bitfieldNode);
-                            if (exp.isConstant()) {
-                                bitfield = exp.getNumber().intValue();
-                            }
-                        } catch (Exception e) {
-                            // Do nothing
-                        }
-
-                        if (bitfield == -1) {
-                            source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                        }
-                    }
+                    bitfield = compileBitfield(context, bitfieldNode, source);
                 }
 
                 MemoryOp.Size ss = MemoryOp.Size.Long;
@@ -2854,27 +2770,7 @@ public class Spin2ObjectCompiler {
                 }
 
                 if (postEffectNode != null) {
-                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
-                    }
-                    else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
-                    }
-                    else if ("++".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
-                    }
-                    else if ("--".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
-                    }
-                    else if ("!!".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
-                    }
-                    else if ("!".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
-                    }
-                    else {
-                        throw new CompilerException("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
-                    }
+                    compilePostEffect(context, postEffectNode, source, push);
                 }
             }
             else if ("REG".equalsIgnoreCase(node.getText())) {
@@ -2904,52 +2800,9 @@ public class Spin2ObjectCompiler {
                     throw new RuntimeException("syntax error");
                 }
 
-                if (postEffectNode != null) {
-                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Constant(context, new NumberLiteral(0)));
-                    }
-                    else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Constant(context, new NumberLiteral(-1)));
-                    }
-                }
-
                 int bitfield = -1;
                 if (bitfieldNode != null) {
-                    if ("..".equals(bitfieldNode.getText())) {
-                        try {
-                            Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
-                            Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
-                            if (exp1.isConstant() && exp2.isConstant()) {
-                                int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                                int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                                Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                                bitfield = exp.getNumber().intValue();
-                            }
-                        } catch (Exception e) {
-                            // Do nothing
-                        }
-
-                        if (bitfield == -1) {
-                            source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                            source.add(new Bytecode(context, new byte[] {
-                                (byte) 0x9F, (byte) 0x94
-                            }, "ADDBITS"));
-                        }
-                    }
-                    else {
-                        try {
-                            Expression exp = buildConstantExpression(context, bitfieldNode);
-                            if (exp.isConstant()) {
-                                bitfield = exp.getNumber().intValue();
-                            }
-                        } catch (Exception e) {
-                            // Do nothing
-                        }
-
-                        if (bitfield == -1) {
-                            source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                        }
-                    }
+                    bitfield = compileBitfield(context, bitfieldNode, source);
                 }
 
                 Expression expression = null;
@@ -2987,27 +2840,7 @@ public class Spin2ObjectCompiler {
                 }
 
                 if (postEffectNode != null) {
-                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
-                    }
-                    else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
-                    }
-                    else if ("++".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
-                    }
-                    else if ("--".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
-                    }
-                    else if ("!!".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
-                    }
-                    else if ("!".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
-                    }
-                    else {
-                        throw new CompilerException("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
-                    }
+                    compilePostEffect(context, postEffectNode, source, push);
                 }
             }
             else if ("FIELD".equalsIgnoreCase(node.getText()) && node.getChildCount() != 0) {
@@ -3023,15 +2856,6 @@ public class Spin2ObjectCompiler {
                 }
                 if (n < node.getChildCount()) {
                     throw new RuntimeException("syntax error");
-                }
-
-                if (postEffectNode != null) {
-                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Constant(context, new NumberLiteral(0)));
-                    }
-                    else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Constant(context, new NumberLiteral(-1)));
-                    }
                 }
 
                 source.addAll(compileConstantExpression(context, node.getChild(0)));
@@ -3053,27 +2877,7 @@ public class Spin2ObjectCompiler {
                 }
 
                 if (postEffectNode != null) {
-                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
-                    }
-                    else if ("~~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
-                    }
-                    else if ("++".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
-                    }
-                    else if ("--".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
-                    }
-                    else if ("!!".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
-                    }
-                    else if ("!".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
-                    }
-                    else {
-                        throw new CompilerException("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
-                    }
+                    compilePostEffect(context, postEffectNode, source, push);
                 }
             }
             else {
@@ -3134,41 +2938,7 @@ public class Spin2ObjectCompiler {
 
                     int bitfield = -1;
                     if (bitfieldNode != null) {
-                        if ("..".equals(bitfieldNode.getText())) {
-                            try {
-                                Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
-                                Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
-                                if (exp1.isConstant() && exp2.isConstant()) {
-                                    int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                                    int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                                    Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                                    bitfield = exp.getNumber().intValue();
-                                }
-                            } catch (Exception e) {
-                                // Do nothing
-                            }
-
-                            if (bitfield == -1) {
-                                source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                                source.add(new Bytecode(context, new byte[] {
-                                    (byte) 0x9F, (byte) 0x94
-                                }, "ADDBITS"));
-                            }
-                        }
-                        else {
-                            try {
-                                Expression exp = buildConstantExpression(context, bitfieldNode);
-                                if (exp.isConstant()) {
-                                    bitfield = exp.getNumber().intValue();
-                                }
-                            } catch (Exception e) {
-                                // Do nothing
-                            }
-
-                            if (bitfield == -1) {
-                                source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                            }
-                        }
+                        bitfield = compileBitfield(context, bitfieldNode, source);
                     }
 
                     if (indexNode != null) {
@@ -3229,30 +2999,27 @@ public class Spin2ObjectCompiler {
                         expression = context.getLocalSymbol(node.getText().substring(1));
                     }
                     if (expression == null) {
-                        if (node.getChildCount() != 2) {
-                            throw new CompilerException("syntax error", node.getToken());
-                        }
-                        if (!(node.getChild(0) instanceof Spin2StatementNode.Index)) {
-                            throw new CompilerException("syntax error", node.getChild(0).getToken());
-                        }
-
                         ObjectInfo info = objects.get(node.getText());
-                        String qualifiedName = node.getText() + node.getChild(1).getText();
                         if (info == null && node.getText().startsWith("@")) {
-                            if (node.getChild(1) instanceof Spin2StatementNode.Method) {
-                                throw new CompilerException("syntax error", node.getChild(1).getToken());
-                            }
                             info = objects.get(node.getText().substring(1));
-                            qualifiedName = node.getText().substring(1) + node.getChild(1).getText();
                         }
                         if (info != null) {
                             if (node.getChildCount() != 2) {
-                                throw new RuntimeException("syntax error");
+                                throw new CompilerException("syntax error", node.getToken());
                             }
+                            if (!(node.getChild(0) instanceof Spin2StatementNode.Index)) {
+                                throw new CompilerException("syntax error", node.getChild(0).getToken());
+                            }
+
+                            String qualifiedName = node.getText() + node.getChild(1).getText();
+
                             expression = context.getLocalSymbol(qualifiedName);
+                            if (expression == null && qualifiedName.startsWith("@")) {
+                                expression = context.getLocalSymbol(qualifiedName.substring(1));
+                            }
                             if (expression != null) {
                                 Method method = (Method) expression;
-                                if (node.getText().startsWith("@")) {
+                                if (qualifiedName.startsWith("@")) {
                                     source.addAll(compileConstantExpression(context, node.getChild(0)));
                                     source.add(new Bytecode(context, new byte[] {
                                         (byte) 0x10,
@@ -3480,6 +3247,52 @@ public class Spin2ObjectCompiler {
         return source;
     }
 
+    int compileBitfield(Spin2Context context, Spin2StatementNode node, List<Spin2Bytecode> source) {
+        int bitfield = -1;
+
+        if ("..".equals(node.getText())) {
+            if (node.getChildCount() != 2) {
+                throw new RuntimeException("syntax error");
+            }
+            try {
+                Expression exp1 = buildConstantExpression(context, node.getChild(0));
+                Expression exp2 = buildConstantExpression(context, node.getChild(1));
+                if (exp1.isConstant() && exp2.isConstant()) {
+                    int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
+                    int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
+                    Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
+                    bitfield = exp.getNumber().intValue();
+                }
+            } catch (Exception e) {
+                // Do nothing
+            }
+
+            if (bitfield == -1) {
+                source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
+                source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) 0x9F, (byte) 0x94
+                }, "ADDBITS"));
+            }
+        }
+        else {
+            try {
+                Expression exp = buildConstantExpression(context, node);
+                if (exp.isConstant()) {
+                    bitfield = exp.getNumber().intValue();
+                }
+            } catch (Exception e) {
+                // Do nothing
+            }
+
+            if (bitfield == -1) {
+                source.addAll(compileBytecodeExpression(context, node, true));
+            }
+        }
+
+        return bitfield;
+    }
+
     int getArgumentsCount(Spin2Context context, Spin2StatementNode childNode) {
         int actual = 0;
         for (int i = 0; i < childNode.getChildCount(); i++) {
@@ -3660,53 +3473,7 @@ public class Spin2ObjectCompiler {
         }
 
         if (bitfieldNode != null) {
-            if (postEffectNode != null) {
-                if ("~".equalsIgnoreCase(postEffectNode.getText()) || "~~".equalsIgnoreCase(postEffectNode.getText())) {
-                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Constant(context, new NumberLiteral(0)));
-                    }
-                    else {
-                        source.add(new Constant(context, new NumberLiteral(-1)));
-                    }
-                }
-            }
-
-            int bitfield = -1;
-            if ("..".equals(bitfieldNode.getText())) {
-                try {
-                    Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
-                    Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
-                    if (exp1.isConstant() && exp2.isConstant()) {
-                        int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                        int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                        Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                        bitfield = exp.getNumber().intValue();
-                    }
-                } catch (Exception e) {
-                    // Do nothing
-                }
-
-                if (bitfield == -1) {
-                    source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                    source.add(new Bytecode(context, new byte[] {
-                        (byte) 0x9F, (byte) 0x94
-                    }, "ADDBITS"));
-                }
-            }
-            else {
-                try {
-                    Expression exp = buildConstantExpression(context, bitfieldNode);
-                    if (exp.isConstant()) {
-                        bitfield = exp.getNumber().intValue();
-                    }
-                } catch (Exception e) {
-                    // Do nothing
-                }
-
-                if (bitfield == -1) {
-                    source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                }
-            }
+            int bitfield = compileBitfield(context, bitfieldNode, source);
 
             if (popIndex) {
                 source.addAll(compileBytecodeExpression(context, indexNode, true));
@@ -3726,32 +3493,7 @@ public class Spin2ObjectCompiler {
             source.add(new BitField(context, op, bitfield));
 
             if (postEffectNode != null) {
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                StringBuilder sb = new StringBuilder();
-                if ("~".equalsIgnoreCase(postEffectNode.getText()) || "~~".equalsIgnoreCase(postEffectNode.getText())) {
-                    os.write(push ? 0x8D : 0x81);
-                    sb.append(push ? "SWAP" : "WRITE");
-                }
-                else if ("++".equalsIgnoreCase(postEffectNode.getText())) {
-                    os.write(push ? 0x87 : 0x83);
-                    sb.append("POST_INC");
-                }
-                else if ("--".equalsIgnoreCase(postEffectNode.getText())) {
-                    os.write(push ? 0x88 : 0x84);
-                    sb.append("POST_DEC");
-                }
-                else if ("!!".equalsIgnoreCase(postEffectNode.getText())) {
-                    os.write(push ? 0x8A : 0x89);
-                    sb.append("POST_LOGICAL_NOT");
-                }
-                else if ("!".equalsIgnoreCase(postEffectNode.getText())) {
-                    os.write(push ? 0x8C : 0x8B);
-                    sb.append("POST_NOT");
-                }
-                else {
-                    throw new CompilerException("unsupported post effect " + postEffectNode.getText(), postEffectNode.getToken());
-                }
-                source.add(new Bytecode(context, os.toByteArray(), sb.toString()));
+                compilePostEffect(context, postEffectNode, source, push);
             }
         }
         else {
@@ -3822,6 +3564,32 @@ public class Spin2ObjectCompiler {
         return source;
     }
 
+    void compilePostEffect(Spin2Context context, Spin2StatementNode node, List<Spin2Bytecode> source, boolean push) {
+        if ("~".equalsIgnoreCase(node.getText())) {
+            source.add(0, new Constant(context, new NumberLiteral(0)));
+            source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
+        }
+        else if ("~~".equalsIgnoreCase(node.getText())) {
+            source.add(0, new Constant(context, new NumberLiteral(-1)));
+            source.add(new Bytecode(context, push ? 0x8D : 0x81, push ? "SWAP" : "WRITE"));
+        }
+        else if ("++".equalsIgnoreCase(node.getText())) {
+            source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
+        }
+        else if ("--".equalsIgnoreCase(node.getText())) {
+            source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
+        }
+        else if ("!!".equalsIgnoreCase(node.getText())) {
+            source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
+        }
+        else if ("!".equalsIgnoreCase(node.getText())) {
+            source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
+        }
+        else {
+            throw new CompilerException("unhandled post effect " + node.getText(), node.getToken());
+        }
+    }
+
     List<Spin2Bytecode> compileVariableSetup(Spin2Context context, Expression expression, Spin2StatementNode node) {
         Spin2StatementNode indexNode = null;
         Spin2StatementNode bitfieldNode = null;
@@ -3885,42 +3653,7 @@ public class Spin2ObjectCompiler {
         }
 
         if (bitfieldNode != null) {
-            int bitfield = -1;
-            if ("..".equals(bitfieldNode.getText())) {
-                try {
-                    Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
-                    Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
-                    if (exp1.isConstant() && exp2.isConstant()) {
-                        int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                        int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                        Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                        bitfield = exp.getNumber().intValue();
-                    }
-                } catch (Exception e) {
-                    // Do nothing
-                }
-
-                if (bitfield == -1) {
-                    source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                    source.add(new Bytecode(context, new byte[] {
-                        (byte) 0x9F, (byte) 0x94
-                    }, "ADDBITS"));
-                }
-            }
-            else {
-                try {
-                    Expression exp = buildConstantExpression(context, bitfieldNode);
-                    if (exp.isConstant()) {
-                        bitfield = exp.getNumber().intValue();
-                    }
-                } catch (Exception e) {
-                    // Do nothing
-                }
-
-                if (bitfield == -1) {
-                    source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                }
-            }
+            int bitfield = compileBitfield(context, bitfieldNode, source);
 
             if (popIndex) {
                 source.addAll(compileBytecodeExpression(context, indexNode, true));
@@ -3998,41 +3731,7 @@ public class Spin2ObjectCompiler {
 
             int bitfield = -1;
             if (bitfieldNode != null) {
-                if ("..".equals(bitfieldNode.getText())) {
-                    try {
-                        Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
-                        Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
-                        if (exp1.isConstant() && exp2.isConstant()) {
-                            int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                            int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                            Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                            bitfield = exp.getNumber().intValue();
-                        }
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-
-                    if (bitfield == -1) {
-                        source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                        source.add(new Bytecode(context, new byte[] {
-                            (byte) 0x9F, (byte) 0x94
-                        }, "ADDBITS"));
-                    }
-                }
-                else {
-                    try {
-                        Expression exp = buildConstantExpression(context, bitfieldNode);
-                        if (exp.isConstant()) {
-                            bitfield = exp.getNumber().intValue();
-                        }
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-
-                    if (bitfield == -1) {
-                        source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                    }
-                }
+                bitfield = compileBitfield(context, bitfieldNode, source);
             }
 
             if (indexNode != null) {
@@ -4146,41 +3845,7 @@ public class Spin2ObjectCompiler {
 
             int bitfield = -1;
             if (bitfieldNode != null) {
-                if ("..".equals(bitfieldNode.getText())) {
-                    try {
-                        Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
-                        Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
-                        if (exp1.isConstant() && exp2.isConstant()) {
-                            int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                            int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                            Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                            bitfield = exp.getNumber().intValue();
-                        }
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-
-                    if (bitfield == -1) {
-                        source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                        source.add(new Bytecode(context, new byte[] {
-                            (byte) 0x9F, (byte) 0x94
-                        }, "ADDBITS"));
-                    }
-                }
-                else {
-                    try {
-                        Expression exp = buildConstantExpression(context, bitfieldNode);
-                        if (exp.isConstant()) {
-                            bitfield = exp.getNumber().intValue();
-                        }
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-
-                    if (bitfield == -1) {
-                        source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                    }
-                }
+                bitfield = compileBitfield(context, bitfieldNode, source);
             }
 
             source.addAll(compileBytecodeExpression(context, node.getChild(0), true));
@@ -4245,41 +3910,7 @@ public class Spin2ObjectCompiler {
 
             int bitfield = -1;
             if (bitfieldNode != null) {
-                if ("..".equals(bitfieldNode.getText())) {
-                    try {
-                        Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
-                        Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
-                        if (exp1.isConstant() && exp2.isConstant()) {
-                            int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                            int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                            Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                            bitfield = exp.getNumber().intValue();
-                        }
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-
-                    if (bitfield == -1) {
-                        source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                        source.add(new Bytecode(context, new byte[] {
-                            (byte) 0x9F, (byte) 0x94
-                        }, "ADDBITS"));
-                    }
-                }
-                else {
-                    try {
-                        Expression exp = buildConstantExpression(context, bitfieldNode);
-                        if (exp.isConstant()) {
-                            bitfield = exp.getNumber().intValue();
-                        }
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-
-                    if (bitfield == -1) {
-                        source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                    }
-                }
+                bitfield = compileBitfield(context, bitfieldNode, source);
             }
 
             Expression expression = null;
@@ -4384,41 +4015,7 @@ public class Spin2ObjectCompiler {
 
             int bitfield = -1;
             if (bitfieldNode != null) {
-                if ("..".equals(bitfieldNode.getText())) {
-                    try {
-                        Expression exp1 = buildConstantExpression(context, bitfieldNode.getChild(0));
-                        Expression exp2 = buildConstantExpression(context, bitfieldNode.getChild(1));
-                        if (exp1.isConstant() && exp2.isConstant()) {
-                            int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                            int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                            Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                            bitfield = exp.getNumber().intValue();
-                        }
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-
-                    if (bitfield == -1) {
-                        source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                        source.add(new Bytecode(context, new byte[] {
-                            (byte) 0x9F, (byte) 0x94
-                        }, "ADDBITS"));
-                    }
-                }
-                else {
-                    try {
-                        Expression exp = buildConstantExpression(context, bitfieldNode);
-                        if (exp.isConstant()) {
-                            bitfield = exp.getNumber().intValue();
-                        }
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
-
-                    if (bitfield == -1) {
-                        source.addAll(compileBytecodeExpression(context, bitfieldNode, true));
-                    }
-                }
+                bitfield = compileBitfield(context, bitfieldNode, source);
             }
 
             if (popIndex) {

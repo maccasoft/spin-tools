@@ -2638,7 +2638,12 @@ public class Spin1ObjectCompiler {
                             if (node.getChildCount() != 2) {
                                 throw new RuntimeException("syntax error" + node);
                             }
+                            if (!(node.getChild(0) instanceof Spin1StatementNode.Index)) {
+                                throw new CompilerException("syntax error", node.getChild(0).getToken());
+                            }
+
                             String qualifiedName = node.getText() + node.getChild(1).getText();
+
                             expression = context.getLocalSymbol(qualifiedName);
                             if (expression != null) {
                                 Method method = (Method) expression;
