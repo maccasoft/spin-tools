@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,8 +10,7 @@
 
 package com.maccasoft.propeller.spin2;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -22,23 +21,19 @@ class Spin2PreprocessorTest {
 
     @Test
     void testSingleMethod() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
     }
 
     @Test
     void testFirstMethodReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "\n"
@@ -48,8 +43,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(0, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -63,8 +58,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testMethodReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    method1\n"
@@ -75,8 +68,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -90,8 +83,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testCascadingMethodReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    method1\n"
@@ -103,8 +94,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -118,8 +109,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testMultipleMethodReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    method1\n"
@@ -132,8 +121,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(2, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -147,8 +136,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testUnreferencedMethodReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "\n"
@@ -159,8 +146,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(0, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -174,8 +161,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testUnusedObjectMethodsReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "\n"
@@ -184,17 +169,25 @@ class Spin2PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin2", parseSource(""
+        Node text1 = parseSource(""
             + "PUB method1\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
-            + ""));
+            + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor() {
 
-        Node text1 = objects.get("text1.spin2");
+            @Override
+            protected Node getParsedObject(String fileName) {
+                if ("text1.spin2".equals(fileName)) {
+                    return text1;
+                }
+                return null;
+            }
+
+        };
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(0, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -208,8 +201,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testObjectMethodsReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    o.method1\n"
@@ -219,17 +210,25 @@ class Spin2PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin2", parseSource(""
+        Node text1 = parseSource(""
             + "PUB method1\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
-            + ""));
+            + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor() {
 
-        Node text1 = objects.get("text1.spin2");
+            @Override
+            protected Node getParsedObject(String fileName) {
+                if ("text1.spin2".equals(fileName)) {
+                    return text1;
+                }
+                return null;
+            }
+
+        };
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -243,8 +242,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testObjectIndexMethodsReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    o[0].method1\n"
@@ -254,17 +251,25 @@ class Spin2PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin2", parseSource(""
+        Node text1 = parseSource(""
             + "PUB method1\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
-            + ""));
+            + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor() {
 
-        Node text1 = objects.get("text1.spin2");
+            @Override
+            protected Node getParsedObject(String fileName) {
+                if ("text1.spin2".equals(fileName)) {
+                    return text1;
+                }
+                return null;
+            }
+
+        };
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -278,8 +283,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testCascadingObjectMethodsReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    o.method1\n"
@@ -289,18 +292,26 @@ class Spin2PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin2", parseSource(""
+        Node text1 = parseSource(""
             + "PUB method1\n"
             + "    method2\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
-            + ""));
+            + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor() {
 
-        Node text1 = objects.get("text1.spin2");
+            @Override
+            protected Node getParsedObject(String fileName) {
+                if ("text1.spin2".equals(fileName)) {
+                    return text1;
+                }
+                return null;
+            }
+
+        };
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -314,15 +325,13 @@ class Spin2PreprocessorTest {
 
     @Test
     void testKeepSingleMethod() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
@@ -330,8 +339,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testKeepFirstMethod() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "\n"
@@ -341,8 +348,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
@@ -352,8 +359,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testKeepReferencedMethods() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    method1\n"
@@ -364,8 +369,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
@@ -375,8 +380,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testKeepCascadingReferencedMethods() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    method1\n"
@@ -388,8 +391,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
@@ -399,8 +402,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testRemoveUnreferencedCascadingMethods() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "\n"
@@ -411,8 +412,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
@@ -422,8 +423,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testRemoveObjectMethods() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "\n"
@@ -432,18 +431,26 @@ class Spin2PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin2", parseSource(""
+        Node text1 = parseSource(""
             + "PUB method1\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
-            + ""));
+            + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor() {
+
+            @Override
+            protected Node getParsedObject(String fileName) {
+                if ("text1.spin2".equals(fileName)) {
+                    return text1;
+                }
+                return null;
+            }
+
+        };
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
-
-        Node text1 = objects.get("text1.spin2");
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
         Assertions.assertFalse(subject.isReferenced(text1.getChild(0)));
@@ -452,8 +459,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testKeepReferencedObjectMethods() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    o.method1\n"
@@ -463,18 +468,26 @@ class Spin2PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin2", parseSource(""
+        Node text1 = parseSource(""
             + "PUB method1\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
-            + ""));
+            + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor() {
+
+            @Override
+            protected Node getParsedObject(String fileName) {
+                if ("text1.spin2".equals(fileName)) {
+                    return text1;
+                }
+                return null;
+            }
+
+        };
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
-
-        Node text1 = objects.get("text1.spin2");
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
         Assertions.assertTrue(subject.isReferenced(text1.getChild(0)));
@@ -483,8 +496,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testKeepCascadingReferencedObjectMethods() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    o.method1\n"
@@ -494,19 +505,27 @@ class Spin2PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin2", parseSource(""
+        Node text1 = parseSource(""
             + "PUB method1\n"
             + "    method2\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
-            + ""));
+            + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor() {
+
+            @Override
+            protected Node getParsedObject(String fileName) {
+                if ("text1.spin2".equals(fileName)) {
+                    return text1;
+                }
+                return null;
+            }
+
+        };
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
-
-        Node text1 = objects.get("text1.spin2");
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
         Assertions.assertTrue(subject.isReferenced(text1.getChild(0)));
@@ -515,8 +534,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testDontKeepUnreferencedCascadingObjectMethods() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "\n"
@@ -525,19 +542,27 @@ class Spin2PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin2", parseSource(""
+        Node text1 = parseSource(""
             + "PUB method1\n"
             + "    method2\n"
             + "\n"
             + "PUB method2\n"
             + "\n"
-            + ""));
+            + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor() {
+
+            @Override
+            protected Node getParsedObject(String fileName) {
+                if ("text1.spin2".equals(fileName)) {
+                    return text1;
+                }
+                return null;
+            }
+
+        };
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
-
-        Node text1 = objects.get("text1.spin2");
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
         Assertions.assertFalse(subject.isReferenced(text1.getChild(0)));
@@ -546,8 +571,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testSelfReferencingMethodCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "\n"
@@ -558,8 +581,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(0, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -573,8 +596,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testRemoveSelfReferencingMethod() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "\n"
@@ -585,8 +606,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
         Assertions.assertTrue(subject.isReferenced(root.getChild(0)));
@@ -596,8 +617,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testPrivateMethodReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    method1\n"
@@ -609,8 +628,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(2, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -624,8 +643,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testReferencedMethods() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main\n"
             + "    method1\n"
@@ -637,8 +654,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -653,8 +670,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testPointerMethodReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main() | a\n"
             + "    a := @method1\n"
@@ -666,8 +681,8 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor();
+        subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -682,8 +697,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testObjectMethodsPointerReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main() | a\n"
             + "    a := @o.method1\n"
@@ -693,17 +706,25 @@ class Spin2PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin2", parseSource(""
+        Node text1 = parseSource(""
             + "PUB method1()\n"
             + "\n"
             + "PUB method2()\n"
             + "\n"
-            + ""));
+            + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor() {
 
-        Node text1 = objects.get("text1.spin2");
+            @Override
+            protected Node getParsedObject(String fileName) {
+                if ("text1.spin2".equals(fileName)) {
+                    return text1;
+                }
+                return null;
+            }
+
+        };
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -717,8 +738,6 @@ class Spin2PreprocessorTest {
 
     @Test
     void testIndexedObjectMethodsPointerReferenceCount() {
-        Map<String, Node> objects = new HashMap<String, Node>();
-
         Node root = parseSource(""
             + "PUB main() | a\n"
             + "    a := @o[1].method1\n"
@@ -728,17 +747,25 @@ class Spin2PreprocessorTest {
             + "    o : \"text1\"\n"
             + "\n"
             + "");
-        objects.put("text1.spin2", parseSource(""
+        Node text1 = parseSource(""
             + "PUB method1()\n"
             + "\n"
             + "PUB method2()\n"
             + "\n"
-            + ""));
+            + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor(root, objects);
-        subject.collectReferencedMethods();
+        Spin2Preprocessor subject = new Spin2Preprocessor() {
 
-        Node text1 = objects.get("text1.spin2");
+            @Override
+            protected Node getParsedObject(String fileName) {
+                if ("text1.spin2".equals(fileName)) {
+                    return text1;
+                }
+                return null;
+            }
+
+        };
+        subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).references.size());
@@ -754,4 +781,5 @@ class Spin2PreprocessorTest {
         Spin2TokenStream stream = new Spin2TokenStream(text);
         return new Spin2Parser(stream).parse();
     }
+
 }

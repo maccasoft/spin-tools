@@ -1,15 +1,7 @@
-/*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
- * All rights reserved.
- *
- * This program and the accompanying materials are made available under
- * the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- */
 
 package com.maccasoft.propeller.spin2;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,6 +11,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.collections4.map.ListOrderedMap;
+
+import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectTree;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
@@ -39,40 +35,95 @@ public class Spin2Preprocessor {
 
     }
 
-    final Node root;
-    final Map<String, Node> childObjects;
+    class ObjectTreeVisitor extends NodeVisitor {
 
-    Map<MethodNode, MethodReference> referencedMethods = new HashMap<MethodNode, MethodReference>();
+        File file;
+        ObjectTreeVisitor parent;
+        ObjectTree objectTree;
 
-    public Spin2Preprocessor(Node root, Map<String, Node> childObjects) {
-        this.root = root;
-        this.childObjects = childObjects;
+        public ObjectTreeVisitor(File file, ObjectTree objectTree) {
+            this.file = file;
+            this.objectTree = objectTree;
+        }
+
+        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, ListOrderedMap<String, Node> list) {
+            this.parent = parent;
+            this.file = file;
+            this.objectTree = new ObjectTree(file, file.getName());
+
+            this.parent.objectTree.add(objectTree);
+        }
+
+        @Override
+        public boolean visitMethod(MethodNode node) {
+            referencedMethods.put(node, new MethodReference(node));
+            return false;
+        }
+
+        @Override
+        public void visitObject(ObjectNode node) {
+            if (node.name == null || node.file == null) {
+                return;
+            }
+
+            String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin2";
+            File objectFile = getFile(objectFileName);
+            if (objectFile == null) {
+                objectFile = new File(objectFileName);
+            }
+
+            ObjectTreeVisitor p = parent;
+            while (p != null) {
+                if (p.file.equals(objectFile)) {
+                    throw new CompilerException(file.getName(), "\"" + objectFile.getName() + "\" illegal circular reference", node.file);
+                }
+                p = p.parent;
+            }
+
+            Node objectRoot = objects.get(objectFile.getName());
+            if (objectRoot == null) {
+                objectRoot = getParsedObject(objectFile.getName());
+            }
+            if (objectRoot == null) {
+                return;
+            }
+
+            objects.remove(objectFile.getName());
+            objects.put(0, objectFile.getName(), objectRoot);
+
+            objectRoot.accept(new ObjectTreeVisitor(this, objectFile, objects));
+        }
+
     }
 
-    public void collectReferencedMethods() {
-        root.accept(new NodeVisitor() {
+    ListOrderedMap<String, Node> objects;
+    Map<MethodNode, MethodReference> referencedMethods;
 
-            @Override
-            public boolean visitMethod(MethodNode node) {
-                referencedMethods.put(node, new MethodReference(node));
-                return false;
-            }
-        });
-        for (Entry<String, Node> entry : childObjects.entrySet()) {
-            entry.getValue().accept(new NodeVisitor() {
+    ObjectTree objectTree;
 
-                @Override
-                public boolean visitMethod(MethodNode node) {
-                    referencedMethods.put(node, new MethodReference(node));
-                    return false;
-                }
-            });
-        }
+    public Spin2Preprocessor() {
+
+    }
+
+    public void process(File rootFile, Node root) {
+        objects = ListOrderedMap.listOrderedMap(new HashMap<>());
+        referencedMethods = new HashMap<>();
+        objectTree = new ObjectTree(rootFile, rootFile.getName());
+
+        root.accept(new ObjectTreeVisitor(rootFile, objectTree));
 
         countMethodReferences(true, root);
-        for (Node node : childObjects.values()) {
+        for (Node node : objects.values()) {
             countMethodReferences(false, node);
         }
+    }
+
+    protected File getFile(String name) {
+        return null;
+    }
+
+    protected Node getParsedObject(String fileName) {
+        return null;
     }
 
     void countMethodReferences(boolean keepFirst, Node root) {
@@ -87,7 +138,7 @@ public class Spin2Preprocessor {
                     return;
                 }
                 String fileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin2";
-                Node objectRoot = childObjects.get(fileName);
+                Node objectRoot = objects.get(fileName);
                 if (objectRoot != null) {
                     String prefix = node.name.getText() + ".";
                     objectRoot.accept(new NodeVisitor() {
@@ -224,6 +275,14 @@ public class Spin2Preprocessor {
 
     public boolean isReferenced(Node node) {
         return referencedMethods.containsKey(node);
+    }
+
+    public ListOrderedMap<String, Node> getObjects() {
+        return objects;
+    }
+
+    public ObjectTree getObjectTree() {
+        return objectTree;
     }
 
 }

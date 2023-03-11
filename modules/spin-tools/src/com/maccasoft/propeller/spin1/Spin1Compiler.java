@@ -24,13 +24,10 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.ObjectTree;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.NodeVisitor;
-import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.spin1.Spin1Object.LinkDataObject;
 import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
 
@@ -149,73 +146,6 @@ public class Spin1Compiler extends Compiler {
         return object;
     }
 
-    class ObjectTreeVisitor extends NodeVisitor {
-
-        File file;
-        ObjectTreeVisitor parent;
-        ListOrderedMap<String, Node> list;
-        ObjectTree objectTree;
-
-        public ObjectTreeVisitor(File file) {
-            this.file = file;
-            this.objectTree = new ObjectTree(file, file.getName());
-            this.list = ListOrderedMap.listOrderedMap(new HashMap<>());
-        }
-
-        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, ListOrderedMap<String, Node> list) {
-            this.parent = parent;
-            this.file = file;
-            this.objectTree = new ObjectTree(file, file.getName());
-            this.list = list;
-
-            parent.objectTree.add(objectTree);
-        }
-
-        @Override
-        public void visitObject(ObjectNode node) {
-            if (node.name == null || node.file == null) {
-                return;
-            }
-
-            String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin";
-            File objectFile = getFile(objectFileName);
-            if (objectFile == null) {
-                objectFile = new File(objectFileName);
-            }
-
-            ObjectTreeVisitor p = parent;
-            while (p != null) {
-                if (p.file.equals(objectFile)) {
-                    throw new CompilerException(file.getName(), "\"" + objectFile.getName() + "\" illegal circular reference", node.file);
-                }
-                p = p.parent;
-            }
-
-            Node objectRoot = list.get(objectFile.getName());
-            if (objectRoot == null) {
-                objectRoot = getParsedObject(objectFile.getName());
-            }
-            if (objectRoot == null) {
-                //logMessage(new CompilerMessage(fileName, "object \"" + objectName + "\" not found", node.file));
-                return;
-            }
-
-            list.remove(objectFile.getName());
-            list.put(0, objectFile.getName(), objectRoot);
-
-            objectRoot.accept(new ObjectTreeVisitor(this, objectFile, list));
-        }
-
-        public ListOrderedMap<String, Node> getList() {
-            return list;
-        }
-
-        public ObjectTree getObjectTree() {
-            return objectTree;
-        }
-
-    }
-
     class Spin1ObjectCompilerProxy extends Spin1ObjectCompiler {
 
         String fileName;
@@ -269,16 +199,23 @@ public class Spin1Compiler extends Compiler {
     Spin1Object compileObject(File rootFile, Node root) {
         int memoryOffset = 16;
 
-        ObjectTreeVisitor visitor = new ObjectTreeVisitor(rootFile);
+        preprocessor = new Spin1Preprocessor() {
 
-        root.accept(visitor);
+            @Override
+            protected File getFile(String name) {
+                return Spin1Compiler.this.getFile(name);
+            }
 
-        tree = visitor.getObjectTree();
-        ListOrderedMap<String, Node> objects = visitor.getList();
+            @Override
+            protected Node getParsedObject(String fileName) {
+                return Spin1Compiler.this.getParsedObject(fileName);
+            }
 
-        preprocessor = new Spin1Preprocessor(root, objects);
-        preprocessor.collectReferencedMethods();
+        };
+        preprocessor.process(rootFile, root);
         preprocessor.removeUnusedMethods();
+
+        ListOrderedMap<String, Node> objects = preprocessor.getObjects();
 
         for (Entry<String, Node> entry : objects.entrySet()) {
             Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey(), scope, childObjects);
@@ -325,6 +262,8 @@ public class Spin1Compiler extends Compiler {
                 }
             }
         }
+
+        tree = preprocessor.getObjectTree();
 
         return object;
 
