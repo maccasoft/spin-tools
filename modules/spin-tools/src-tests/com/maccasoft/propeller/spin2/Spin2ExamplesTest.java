@@ -222,7 +222,7 @@ class Spin2ExamplesTest {
         Node root = subject.parse();
 
         Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(source.getParentFile());
-        Spin2Object obj = compiler.compile(source, source.getName(), root);
+        Spin2Object obj = compiler.compile(source, root);
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {
                 throw msg;

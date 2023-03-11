@@ -1078,7 +1078,7 @@ class Spin1CompilerTest {
 
         Spin1Compiler compiler = new Spin1CompilerAdapter(sources);
         compiler.setRemoveUnusedMethods(removeUnused);
-        Spin1Object obj = compiler.compileObject(new File(rootFile), rootFile, root);
+        Spin1Object obj = compiler.compileObject(new File(rootFile), root);
 
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

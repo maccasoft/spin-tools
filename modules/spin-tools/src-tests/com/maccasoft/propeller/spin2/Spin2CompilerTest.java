@@ -1837,7 +1837,7 @@ class Spin2CompilerTest {
         Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(sources);
         compiler.setRemoveUnusedMethods(removeUnused);
         compiler.setDebugEnabled(debugEnabled);
-        Spin2Object obj = compiler.compileObject(new File(rootFile), rootFile, root);
+        Spin2Object obj = compiler.compileObject(new File(rootFile), root);
 
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

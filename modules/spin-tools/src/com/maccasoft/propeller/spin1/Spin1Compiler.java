@@ -71,7 +71,7 @@ public class Spin1Compiler extends Compiler {
         }
         Spin1TokenStream stream = new Spin1TokenStream(text);
         Spin1Parser parser = new Spin1Parser(stream);
-        Spin1Object object = compile(file, file.getName(), parser.parse());
+        Spin1Object object = compile(file, parser.parse());
 
         if (hasErrors()) {
             throw new CompilerException(messages);
@@ -86,8 +86,8 @@ public class Spin1Compiler extends Compiler {
     }
 
     @Override
-    public Spin1Object compile(File rootFile, String rootFileName, Node root) {
-        Spin1Object obj = compileObject(rootFile, rootFileName, root);
+    public Spin1Object compile(File rootFile, Node root) {
+        Spin1Object obj = compileObject(rootFile, root);
 
         Spin1Object object = new Spin1Object();
         object.setClkFreq(obj.getClkFreq());
@@ -114,7 +114,7 @@ public class Spin1Compiler extends Compiler {
         dbase.setValue(object.getSize() + offset);
 
         if (!(obj.getObject(4) instanceof LongDataObject)) {
-            logMessage(new CompilerException(CompilerException.ERROR, rootFileName, "No PUB routines found", null));
+            logMessage(new CompilerException(CompilerException.ERROR, rootFile.getName(), "No PUB routines found", null));
             return null;
         }
         pcurr.setValue((int) (pbase.getValue() + (((LongDataObject) obj.getObject(4)).getValue() & 0xFFFF)));
@@ -137,12 +137,12 @@ public class Spin1Compiler extends Compiler {
         }
 
         if (stackRequired > 0x2000) {
-            logMessage(new CompilerException(rootFileName, "_STACK and _FREE must sum to under 8k longs."));
+            logMessage(new CompilerException(rootFile.getName(), "_STACK and _FREE must sum to under 8k longs."));
         }
         else {
             int requiredSize = object.getSize() + obj.getVarSize() + (stackRequired << 2);
             if (requiredSize >= 0x8000) {
-                logMessage(new CompilerException(rootFileName, "object exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs."));
+                logMessage(new CompilerException(rootFile.getName(), "object exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs."));
             }
         }
 
@@ -151,21 +151,21 @@ public class Spin1Compiler extends Compiler {
 
     class ObjectTreeVisitor extends NodeVisitor {
 
-        String fileName;
+        File file;
         ObjectTreeVisitor parent;
         ListOrderedMap<String, Node> list;
         ObjectTree objectTree;
 
-        public ObjectTreeVisitor(File file, String fileName) {
-            this.fileName = fileName;
-            this.objectTree = new ObjectTree(file, fileName);
+        public ObjectTreeVisitor(File file) {
+            this.file = file;
+            this.objectTree = new ObjectTree(file, file.getName());
             this.list = ListOrderedMap.listOrderedMap(new HashMap<>());
         }
 
-        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, String fileName, ListOrderedMap<String, Node> list) {
+        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, ListOrderedMap<String, Node> list) {
             this.parent = parent;
-            this.fileName = fileName;
-            this.objectTree = new ObjectTree(file, fileName);
+            this.file = file;
+            this.objectTree = new ObjectTree(file, file.getName());
             this.list = list;
 
             parent.objectTree.add(objectTree);
@@ -178,30 +178,32 @@ public class Spin1Compiler extends Compiler {
             }
 
             String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin";
+            File objectFile = getFile(objectFileName);
+            if (objectFile == null) {
+                objectFile = new File(objectFileName);
+            }
 
             ObjectTreeVisitor p = parent;
             while (p != null) {
-                if (p.fileName.equals(objectFileName)) {
-                    throw new CompilerException(fileName, "\"" + objectFileName + "\" illegal circular reference", node.file);
+                if (p.file.equals(objectFile)) {
+                    throw new CompilerException(file.getName(), "\"" + objectFile.getName() + "\" illegal circular reference", node.file);
                 }
                 p = p.parent;
             }
 
-            File objectFile = getFile(objectFileName);
-
-            Node objectRoot = list.get(objectFileName);
+            Node objectRoot = list.get(objectFile.getName());
             if (objectRoot == null) {
-                objectRoot = getParsedObject(objectFileName);
+                objectRoot = getParsedObject(objectFile.getName());
             }
             if (objectRoot == null) {
                 //logMessage(new CompilerMessage(fileName, "object \"" + objectName + "\" not found", node.file));
                 return;
             }
 
-            list.remove(objectFileName);
-            list.put(0, objectFileName, objectRoot);
+            list.remove(objectFile.getName());
+            list.put(0, objectFile.getName(), objectRoot);
 
-            objectRoot.accept(new ObjectTreeVisitor(this, objectFile, objectFileName, list));
+            objectRoot.accept(new ObjectTreeVisitor(this, objectFile, list));
         }
 
         public ListOrderedMap<String, Node> getList() {
@@ -264,10 +266,10 @@ public class Spin1Compiler extends Compiler {
 
     }
 
-    Spin1Object compileObject(File rootFile, String rootFileName, Node root) {
+    Spin1Object compileObject(File rootFile, Node root) {
         int memoryOffset = 16;
 
-        ObjectTreeVisitor visitor = new ObjectTreeVisitor(rootFile, rootFileName);
+        ObjectTreeVisitor visitor = new ObjectTreeVisitor(rootFile);
 
         root.accept(visitor);
 
@@ -285,7 +287,7 @@ public class Spin1Compiler extends Compiler {
             childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), objectCompiler));
         }
 
-        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFileName, scope, childObjects);
+        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFile.getName(), scope, childObjects);
         objectCompiler.setOpenspinCompatibile(spenspinCompatible);
         objectCompiler.compile(root);
 

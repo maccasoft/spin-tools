@@ -98,7 +98,7 @@ public abstract class Compiler {
 
     public abstract void compile(File file, OutputStream binary, PrintStream listing) throws Exception;
 
-    public abstract SpinObject compile(File rootFile, String rootFileName, Node root);
+    public abstract SpinObject compile(File rootFile, Node root);
 
     public boolean hasErrors() {
         return false;

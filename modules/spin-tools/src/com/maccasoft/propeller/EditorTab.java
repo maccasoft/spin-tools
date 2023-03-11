@@ -368,7 +368,7 @@ public class EditorTab implements FindReplaceTarget {
                         }
 
                         try {
-                            object = compiler.compile(localFile, tabItemText, root);
+                            object = compiler.compile(localFile, root);
                             objectTree = compiler.getObjectTree();
                             errors = compiler.hasErrors();
                         } catch (Exception e) {

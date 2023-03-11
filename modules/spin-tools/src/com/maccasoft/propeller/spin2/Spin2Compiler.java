@@ -77,7 +77,7 @@ public class Spin2Compiler extends Compiler {
         }
         Spin2TokenStream stream = new Spin2TokenStream(text);
         Spin2Parser parser = new Spin2Parser(stream);
-        Spin2Object object = compile(file, file.getName(), parser.parse());
+        Spin2Object object = compile(file, parser.parse());
 
         if (hasErrors()) {
             throw new CompilerException(messages);
@@ -92,8 +92,8 @@ public class Spin2Compiler extends Compiler {
     }
 
     @Override
-    public Spin2Object compile(File rootFile, String rootFileName, Node root) {
-        Spin2Object obj = compileObject(rootFile, rootFileName, root);
+    public Spin2Object compile(File rootFile, Node root) {
+        Spin2Object obj = compileObject(rootFile, root);
 
         for (Entry<String, Expression> entry : obj.getSymbols().entrySet()) {
             if (entry.getValue() instanceof Method) {
@@ -114,21 +114,21 @@ public class Spin2Compiler extends Compiler {
 
     class ObjectTreeVisitor extends NodeVisitor {
 
-        String fileName;
+        File file;
         ObjectTreeVisitor parent;
         ListOrderedMap<String, Node> list;
         ObjectTree objectTree;
 
-        public ObjectTreeVisitor(File file, String fileName) {
-            this.fileName = fileName;
-            this.objectTree = new ObjectTree(file, fileName);
+        public ObjectTreeVisitor(File file) {
+            this.file = file;
+            this.objectTree = new ObjectTree(file, file.getName());
             this.list = ListOrderedMap.listOrderedMap(new HashMap<>());
         }
 
-        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, String fileName, ListOrderedMap<String, Node> list) {
+        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, ListOrderedMap<String, Node> list) {
             this.parent = parent;
-            this.fileName = fileName;
-            this.objectTree = new ObjectTree(file, fileName);
+            this.file = file;
+            this.objectTree = new ObjectTree(file, file.getName());
             this.list = list;
 
             parent.objectTree.add(objectTree);
@@ -141,30 +141,32 @@ public class Spin2Compiler extends Compiler {
             }
 
             String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin2";
+            File objectFile = getFile(objectFileName);
+            if (objectFile == null) {
+                objectFile = new File(objectFileName);
+            }
 
             ObjectTreeVisitor p = parent;
             while (p != null) {
-                if (p.fileName.equals(objectFileName)) {
-                    throw new CompilerException(fileName, "\"" + objectFileName + "\" illegal circular reference", node.file);
+                if (p.file.equals(objectFile)) {
+                    throw new CompilerException(file.getName(), "\"" + objectFile.getName() + "\" illegal circular reference", node.file);
                 }
                 p = p.parent;
             }
 
-            File objectFile = getFile(objectFileName);
-
-            Node objectRoot = list.get(objectFileName);
+            Node objectRoot = list.get(objectFile.getName());
             if (objectRoot == null) {
-                objectRoot = getParsedObject(objectFileName);
+                objectRoot = getParsedObject(objectFile.getName());
             }
             if (objectRoot == null) {
                 //logMessage(new CompilerMessage(fileName, "object \"" + objectName + "\" not found", node.file));
                 return;
             }
 
-            list.remove(objectFileName);
-            list.put(0, objectFileName, objectRoot);
+            list.remove(objectFile.getName());
+            list.put(0, objectFile.getName(), objectRoot);
 
-            objectRoot.accept(new ObjectTreeVisitor(this, objectFile, objectFileName, list));
+            objectRoot.accept(new ObjectTreeVisitor(this, objectFile, list));
         }
 
         public ListOrderedMap<String, Node> getList() {
@@ -227,8 +229,8 @@ public class Spin2Compiler extends Compiler {
 
     }
 
-    Spin2Object compileObject(File rootFile, String rootFileName, Node root) {
-        ObjectTreeVisitor visitor = new ObjectTreeVisitor(rootFile, rootFileName);
+    Spin2Object compileObject(File rootFile, Node root) {
+        ObjectTreeVisitor visitor = new ObjectTreeVisitor(rootFile);
 
         root.accept(visitor);
 
@@ -245,7 +247,7 @@ public class Spin2Compiler extends Compiler {
             childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), objectCompiler));
         }
 
-        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFileName, scope, childObjects, debugEnabled, debugStatements);
+        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFile.getName(), scope, childObjects, debugEnabled, debugStatements);
         objectCompiler.compile(root);
 
         int memoryOffset = 0;

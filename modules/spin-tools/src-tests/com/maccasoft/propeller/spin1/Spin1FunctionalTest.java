@@ -155,7 +155,7 @@ public class Spin1FunctionalTest {
 
         Spin1Compiler compiler = new Spin1Compiler();
         compiler.setOpenspinCompatible(openspinCompatible);
-        Spin1Object obj = compiler.compile(new File("main.spin"), "main.spin", root);
+        Spin1Object obj = compiler.compile(new File("main.spin"), root);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         obj.generateListing(new PrintStream(os));
