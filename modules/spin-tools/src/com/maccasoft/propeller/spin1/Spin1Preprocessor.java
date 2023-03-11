@@ -24,6 +24,7 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectTree;
+import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
@@ -104,6 +105,22 @@ public class Spin1Preprocessor {
             objects.put(0, objectFile.getName(), objectRoot);
 
             objectRoot.accept(new ObjectTreeVisitor(this, objectFile, objects));
+        }
+
+        @Override
+        public void visitDataLine(DataLineNode node) {
+            if (node.instruction != null && node.parameters.size() != 0) {
+                if ("FILE".equalsIgnoreCase(node.instruction.getText()) || "INCLUDE".equalsIgnoreCase(node.instruction.getText())) {
+                    for (Node parameterNode : node.parameters) {
+                        String fileName = parameterNode.getText().substring(1, parameterNode.getText().length() - 1);
+                        File file = getFile(fileName);
+                        if (file == null) {
+                            file = new File(fileName);
+                        }
+                        objectTree.add(new ObjectTree(file, fileName));
+                    }
+                }
+            }
         }
 
     }
