@@ -66,10 +66,13 @@ public class Spin2Preprocessor {
                 return;
             }
 
-            String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin2";
+            String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1);
             File objectFile = getFile(objectFileName);
             if (objectFile == null) {
-                objectFile = new File(objectFileName);
+                objectFile = getFile(objectFileName + ".spin2");
+            }
+            if (objectFile == null) {
+                objectFile = new File(objectFileName + ".spin2");
             }
 
             ObjectTreeVisitor p = parent;
@@ -137,8 +140,11 @@ public class Spin2Preprocessor {
                 if (node.file == null) {
                     return;
                 }
-                String fileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin2";
+                String fileName = node.file.getText().substring(1, node.file.getText().length() - 1);
                 Node objectRoot = objects.get(fileName);
+                if (objectRoot == null) {
+                    objectRoot = objects.get(fileName + ".spin2");
+                }
                 if (objectRoot != null) {
                     String prefix = node.name.getText() + ".";
                     objectRoot.accept(new NodeVisitor() {

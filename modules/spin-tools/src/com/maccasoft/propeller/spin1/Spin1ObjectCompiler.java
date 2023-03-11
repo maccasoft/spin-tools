@@ -765,9 +765,12 @@ public class Spin1ObjectCompiler {
                     logMessage(new CompilerException("expecting file name", token));
                     return;
                 }
-                String fileName = token.getText().substring(1, token.getText().length() - 1) + ".spin";
+                String fileName = token.getText().substring(1, token.getText().length() - 1);
 
                 ObjectInfo info = childObjects.get(fileName);
+                if (info == null) {
+                    info = childObjects.get(fileName + ".spin");
+                }
                 if (info == null) {
                     logMessage(new CompilerException("object " + token + " not found", token));
                     return;

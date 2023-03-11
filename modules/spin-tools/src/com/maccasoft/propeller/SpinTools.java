@@ -181,13 +181,20 @@ public class SpinTools {
                 suffix = tabName.substring(tabName.lastIndexOf('.'));
             }
 
-            String name = node.file.getText().substring(1, node.file.getText().length() - 1) + suffix;
+            String name = node.file.getText().substring(1, node.file.getText().length() - 1);
 
             File fileToOpen = new File(parent, name);
+            if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
+                fileToOpen = new File(parent, name + suffix);
+            }
+
             if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
                 File[] searchPaths = ".spin2".equals(suffix) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath();
                 for (int i = 0; i < searchPaths.length; i++) {
                     fileToOpen = new File(searchPaths[i], name);
+                    if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
+                        fileToOpen = new File(searchPaths[i], name + suffix);
+                    }
                     if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
                         break;
                     }

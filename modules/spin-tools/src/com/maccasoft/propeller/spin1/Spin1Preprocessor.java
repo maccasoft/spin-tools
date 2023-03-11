@@ -75,10 +75,13 @@ public class Spin1Preprocessor {
                 return;
             }
 
-            String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin";
+            String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1);
             File objectFile = getFile(objectFileName);
             if (objectFile == null) {
-                objectFile = new File(objectFileName);
+                objectFile = getFile(objectFileName + ".spin");
+            }
+            if (objectFile == null) {
+                objectFile = new File(objectFileName + ".spin");
             }
 
             ObjectTreeVisitor p = parent;
@@ -146,8 +149,11 @@ public class Spin1Preprocessor {
                 if (node.file == null) {
                     return;
                 }
-                String fileName = node.file.getText().substring(1, node.file.getText().length() - 1) + ".spin";
+                String fileName = node.file.getText().substring(1, node.file.getText().length() - 1);
                 Node objectRoot = objects.get(fileName);
+                if (objectRoot == null) {
+                    objectRoot = objects.get(fileName + ".spin");
+                }
                 if (objectRoot != null) {
                     String prefix = node.name.getText() + ".";
                     objectRoot.accept(new NodeVisitor() {
