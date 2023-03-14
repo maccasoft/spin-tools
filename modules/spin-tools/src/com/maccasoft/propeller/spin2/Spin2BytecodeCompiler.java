@@ -56,6 +56,7 @@ import com.maccasoft.propeller.expressions.Sca;
 import com.maccasoft.propeller.expressions.Scas;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
+import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Sqrt;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
@@ -371,7 +372,7 @@ public class Spin2BytecodeCompiler {
                     source.add(new Bytecode(context, 0x92, "NEGATE_ASSIGN"));
                 }
             }
-            else if (":=".equals(node.getText())) {
+            else if (isAssign(node.getText())) {
                 if (node.getChildCount() != 2) {
                     throw new RuntimeException("expression syntax error");
                 }
@@ -840,7 +841,7 @@ public class Spin2BytecodeCompiler {
                 }
                 else {
                     Expression expression = context.getLocalSymbol(node.getText());
-                    if (expression == null && node.getText().startsWith("@")) {
+                    if (expression == null && isAddress(node.getText())) {
                         expression = context.getLocalSymbol(node.getText().substring(1));
                     }
                     if (expression == null && node.getText().startsWith("^@")) {
@@ -850,66 +851,60 @@ public class Spin2BytecodeCompiler {
                         expression = context.getLocalSymbol(node.getText().substring(1));
                     }
                     if (expression == null) {
-                        ObjectInfo info = objects.get(node.getText());
-                        if (info == null && node.getText().startsWith("@")) {
-                            info = objects.get(node.getText().substring(1));
-                        }
-                        if (info != null) {
-                            if (node.getChildCount() != 2) {
-                                throw new CompilerException("syntax error", node.getToken());
-                            }
-                            if (!(node.getChild(0) instanceof Spin2StatementNode.Index)) {
-                                throw new CompilerException("syntax error", node.getChild(0).getToken());
-                            }
-
-                            String qualifiedName = node.getText() + node.getChild(1).getText();
-
-                            expression = context.getLocalSymbol(qualifiedName);
-                            if (expression == null && qualifiedName.startsWith("@")) {
-                                expression = context.getLocalSymbol(qualifiedName.substring(1));
-                            }
-                            if (expression != null) {
-                                Method method = (Method) expression;
-                                if (qualifiedName.startsWith("@")) {
-                                    source.addAll(compileConstantExpression(context, node.getChild(0)));
-                                    source.add(new Bytecode(context, new byte[] {
-                                        (byte) 0x10,
-                                        (byte) (method.getObject() - 1),
-                                        (byte) ((Method) expression).getOffset()
-                                    }, "OBJ_SUB_ADDRESS (" + (method.getObject() - 1) + "." + method.getOffset() + ")"));
-                                }
-                                else {
-                                    Spin2StatementNode childNode = node.getChild(1);
-
-                                    int expected = method.getArgumentsCount();
-                                    int actual = getArgumentsCount(context, childNode);
-                                    if (expected != actual) {
-                                        throw new CompilerException("expected " + expected + " argument(s), found " + actual, node.getToken());
-                                    }
-                                    if (push && method.getReturnsCount() == 0) {
-                                        throw new RuntimeException("method doesn't return any value");
-                                    }
-
-                                    source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
-                                    for (int i = 0; i < childNode.getChildCount(); i++) {
-                                        source.addAll(compileConstantExpression(context, childNode.getChild(i)));
-                                    }
-                                    source.addAll(compileConstantExpression(context, node.getChild(0)));
-                                    source.add(new Bytecode(context, new byte[] {
-                                        (byte) 0x09,
-                                        (byte) (method.getObject() - 1),
-                                        (byte) method.getOffset()
-                                    }, "CALL_OBJ_SUB (" + (method.getObject() - 1) + "." + method.getOffset() + ")"));
-                                }
-                                return source;
-                            }
-                        }
-                    }
-                    if (expression == null) {
                         throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                     }
-                    if (node.getText().startsWith("@")) {
-                        if (expression instanceof Method) {
+                    if (expression instanceof SpinObject) {
+                        if (node.getChildCount() != 2) {
+                            throw new CompilerException("syntax error", node.getToken());
+                        }
+                        if (!(node.getChild(0) instanceof Spin2StatementNode.Index)) {
+                            throw new CompilerException("syntax error", node.getChild(0).getToken());
+                        }
+
+                        String qualifiedName = node.getText() + node.getChild(1).getText();
+
+                        expression = context.getLocalSymbol(qualifiedName);
+                        if (expression == null && qualifiedName.startsWith("@")) {
+                            expression = context.getLocalSymbol(qualifiedName.substring(1));
+                        }
+                        if (expression != null) {
+                            Method method = (Method) expression;
+                            if (isAddress(node.getText())) {
+                                source.addAll(compileConstantExpression(context, node.getChild(0)));
+                                source.add(new Bytecode(context, new byte[] {
+                                    (byte) 0x10,
+                                    (byte) (method.getObject() - 1),
+                                    (byte) ((Method) expression).getOffset()
+                                }, "OBJ_SUB_ADDRESS (" + (method.getObject() - 1) + "." + method.getOffset() + ")"));
+                            }
+                            else {
+                                Spin2StatementNode childNode = node.getChild(1);
+
+                                int expected = method.getArgumentsCount();
+                                int actual = getArgumentsCount(context, childNode);
+                                if (expected != actual) {
+                                    throw new CompilerException("expected " + expected + " argument(s), found " + actual, node.getToken());
+                                }
+                                if (push && method.getReturnsCount() == 0) {
+                                    throw new RuntimeException("method doesn't return any value");
+                                }
+
+                                source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
+                                for (int i = 0; i < childNode.getChildCount(); i++) {
+                                    source.addAll(compileConstantExpression(context, childNode.getChild(i)));
+                                }
+                                source.addAll(compileConstantExpression(context, node.getChild(0)));
+                                source.add(new Bytecode(context, new byte[] {
+                                    (byte) 0x09,
+                                    (byte) (method.getObject() - 1),
+                                    (byte) method.getOffset()
+                                }, "CALL_OBJ_SUB (" + (method.getObject() - 1) + "." + method.getOffset() + ")"));
+                            }
+                            return source;
+                        }
+                    }
+                    else if (expression instanceof Method) {
+                        if (isAddress(node.getText())) {
                             Method method = (Method) expression;
                             if (method.getObject() != 0) {
                                 source.add(new Bytecode(context, new byte[] {
@@ -925,7 +920,15 @@ public class Spin2BytecodeCompiler {
                                 }, "SUB_ADDRESS (" + method.getOffset() + ")"));
                             }
                         }
-                        else if (expression instanceof Variable) {
+                        else {
+                            source.addAll(compileMethodCall(context, expression, node, push, false));
+                        }
+                    }
+                    else if (expression instanceof Variable) {
+                        if (isAddress(node.getText())) {
+                            int index = 0;
+                            boolean popIndex = false;
+                            boolean hasIndex = false;
                             Spin2StatementNode indexNode = null;
 
                             int n = 0;
@@ -935,10 +938,6 @@ public class Spin2BytecodeCompiler {
                             if (n < node.getChildCount()) {
                                 throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n));
                             }
-
-                            int index = 0;
-                            boolean hasIndex = false;
-                            boolean popIndex = false;
 
                             if (indexNode != null) {
                                 popIndex = true;
@@ -965,17 +964,23 @@ public class Spin2BytecodeCompiler {
                             source.add(new VariableOp(context, op, popIndex, (Variable) expression, hasIndex, index));
                         }
                         else {
+                            if (node instanceof Spin2StatementNode.Method) {
+                                source.addAll(compileMethodCall(context, expression, node, push, false));
+                            }
+                            else {
+                                source.addAll(compileVariableRead(context, expression, node, push));
+                            }
+                        }
+                    }
+                    else {
+                        if (isAddress(node.getText())) {
                             int index = 0;
                             boolean popIndex = false;
                             Spin2StatementNode indexNode = null;
-                            Spin2StatementNode postEffectNode = null;
 
                             int n = 0;
                             if (n < node.getChildCount() && (node.getChild(n) instanceof Spin2StatementNode.Index)) {
                                 indexNode = node.getChild(n++);
-                            }
-                            if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
-                                postEffectNode = node.getChild(n++);
                             }
                             if (n < node.getChildCount()) {
                                 throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n));
@@ -1030,62 +1035,33 @@ public class Spin2BytecodeCompiler {
                             else {
                                 source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, popIndex, expression, index));
                             }
-
-                            if (postEffectNode != null) {
-                                if ("++".equalsIgnoreCase(postEffectNode.getText())) {
-                                    source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
-                                }
-                                else if ("--".equalsIgnoreCase(postEffectNode.getText())) {
-                                    source.add(new Bytecode(context, push ? 0x88 : 0x84, "POST_DEC" + (push ? " (push)" : "")));
-                                }
-                                else if ("!!".equalsIgnoreCase(postEffectNode.getText())) {
-                                    source.add(new Bytecode(context, push ? 0x8A : 0x89, "POST_LOGICAL_NOT" + (push ? " (push)" : "")));
-                                }
-                                else if ("!".equalsIgnoreCase(postEffectNode.getText())) {
-                                    source.add(new Bytecode(context, push ? 0x8C : 0x8B, "POST_NOT" + (push ? " (push)" : "")));
-                                }
-                                else {
-                                    throw new CompilerException("unhandled post effect " + postEffectNode.getText(), postEffectNode.getToken());
-                                }
+                        }
+                        else if (expression instanceof Register) {
+                            source.addAll(compileVariableRead(context, expression, node, push));
+                        }
+                        else if (expression instanceof DataVariable) {
+                            if (node instanceof Spin2StatementNode.Method) {
+                                source.addAll(compileMethodCall(context, expression, node, push, false));
+                            }
+                            else {
+                                source.addAll(compileVariableRead(context, expression, node, push));
                             }
                         }
-                    }
-                    else if (expression instanceof Method) {
-                        source.addAll(compileMethodCall(context, expression, node, push, false));
-                    }
-                    else if (expression instanceof Register) {
-                        source.addAll(compileVariableRead(context, expression, node, push));
-                    }
-                    else if (expression instanceof Variable) {
-                        if (node instanceof Spin2StatementNode.Method) {
-                            source.addAll(compileMethodCall(context, expression, node, push, false));
-                        }
-                        else {
+                        else if (expression instanceof ContextLiteral) {
                             source.addAll(compileVariableRead(context, expression, node, push));
                         }
-                    }
-                    else if (expression instanceof DataVariable) {
-                        if (node instanceof Spin2StatementNode.Method) {
-                            source.addAll(compileMethodCall(context, expression, node, push, false));
+                        else if (expression.isConstant()) {
+                            if (node.getChildCount() != 0) {
+                                throw new RuntimeException("syntax error");
+                            }
+                            source.add(new Constant(context, expression));
                         }
                         else {
-                            source.addAll(compileVariableRead(context, expression, node, push));
+                            if (node.getChildCount() != 0) {
+                                throw new RuntimeException("syntax error");
+                            }
+                            source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
                         }
-                    }
-                    else if (expression instanceof ContextLiteral) {
-                        source.addAll(compileVariableRead(context, expression, node, push));
-                    }
-                    else if (expression.isConstant()) {
-                        if (node.getChildCount() != 0) {
-                            throw new RuntimeException("syntax error");
-                        }
-                        source.add(new Constant(context, expression));
-                    }
-                    else {
-                        if (node.getChildCount() != 0) {
-                            throw new RuntimeException("syntax error");
-                        }
-                        source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.PBase, MemoryOp.Op.Read, expression));
                     }
                 }
             }
@@ -1096,6 +1072,14 @@ public class Spin2BytecodeCompiler {
         }
 
         return source;
+    }
+
+    protected boolean isAddress(String text) {
+        return text.startsWith("@");
+    }
+
+    protected boolean isAssign(String text) {
+        return ":=".equals(text);
     }
 
     protected int getArgumentsCount(Spin2Context context, Spin2StatementNode childNode) {

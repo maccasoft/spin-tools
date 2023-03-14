@@ -30,6 +30,7 @@ import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
+import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
@@ -248,9 +249,10 @@ public class Spin1ObjectCompiler {
         int objectIndex = methodData.size() + 1;
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
             ObjectInfo info = infoEntry.getValue();
+            String name = infoEntry.getKey();
             for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                 if (objEntry.getValue() instanceof Method) {
-                    String qualifiedName = infoEntry.getKey() + "." + objEntry.getKey();
+                    String qualifiedName = name + "." + objEntry.getKey();
                     Method method = ((Method) objEntry.getValue()).copy();
                     method.setObject(objectIndex);
                     scope.addSymbol(qualifiedName, method);
@@ -258,11 +260,12 @@ public class Spin1ObjectCompiler {
             }
             try {
                 int count = info.count.getNumber().intValue();
+                scope.addSymbol(name, new SpinObject(name, objectIndex, count));
                 for (int i = 0; i < count; i++) {
                     objectLinks.add(new LinkDataObject(info, 0, varOffset));
                     varOffset += info.compiler.getVarSize();
-                    objectIndex++;
                 }
+                objectIndex += count;
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {

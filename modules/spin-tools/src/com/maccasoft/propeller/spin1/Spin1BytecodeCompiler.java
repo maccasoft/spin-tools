@@ -39,6 +39,7 @@ import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
+import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.Variable;
@@ -303,7 +304,7 @@ public class Spin1BytecodeCompiler {
                     }
                 }
             }
-            else if (":=".equals(node.getText())) {
+            else if (isAssign(node.getText())) {
                 source.addAll(compileBytecodeExpression(context, node.getChild(1), true));
                 source.addAll(leftAssign(context, node.getChild(0), push));
                 if (push) {
@@ -764,45 +765,41 @@ public class Spin1BytecodeCompiler {
                         expression = context.getLocalSymbol(node.getText().substring(1));
                     }
                     if (expression == null) {
-                        ObjectInfo info = objects.get(node.getText());
-                        if (info != null) {
-                            if (node.getChildCount() != 2) {
-                                throw new RuntimeException("syntax error" + node);
-                            }
-                            if (!(node.getChild(0) instanceof Spin1StatementNode.Index)) {
-                                throw new CompilerException("syntax error", node.getChild(0).getToken());
-                            }
-
-                            String qualifiedName = node.getText() + node.getChild(1).getText();
-
-                            expression = context.getLocalSymbol(qualifiedName);
-                            if (expression != null) {
-                                Method method = (Method) expression;
-                                int parameters = method.getArgumentsCount();
-                                if (node.getChild(1).getChildCount() != parameters) {
-                                    throw new CompilerException("expected " + parameters + " argument(s), found " + node.getChild(1).getChildCount(), node.getToken());
-                                }
-                                source.add(new Bytecode(context, new byte[] {
-                                    (byte) (push ? 0b00000000 : 0b00000001),
-                                }, "ANCHOR"));
-                                for (int i = 0; i < parameters; i++) {
-                                    source.addAll(compileBytecodeExpression(context, node.getChild(1).getChild(i), true));
-                                }
-                                source.addAll(compileConstantExpression(context, node.getChild(0)));
-                                source.add(new Bytecode(context, new byte[] {
-                                    (byte) 0b00000111,
-                                    (byte) method.getObject(),
-                                    (byte) method.getOffset()
-                                }, "CALL_OBJ_SUB"));
-                                return source;
-                            }
-                        }
-                    }
-                    if (expression == null) {
                         throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                     }
+                    if (expression instanceof SpinObject) {
+                        if (node.getChildCount() != 2) {
+                            throw new RuntimeException("syntax error" + node);
+                        }
+                        if (!(node.getChild(0) instanceof Spin1StatementNode.Index)) {
+                            throw new CompilerException("syntax error", node.getChild(0).getToken());
+                        }
 
-                    if (node.getText().startsWith("@")) {
+                        String qualifiedName = node.getText() + node.getChild(1).getText();
+
+                        expression = context.getLocalSymbol(qualifiedName);
+                        if (expression != null) {
+                            Method method = (Method) expression;
+                            int parameters = method.getArgumentsCount();
+                            if (node.getChild(1).getChildCount() != parameters) {
+                                throw new CompilerException("expected " + parameters + " argument(s), found " + node.getChild(1).getChildCount(), node.getToken());
+                            }
+                            source.add(new Bytecode(context, new byte[] {
+                                (byte) (push ? 0b00000000 : 0b00000001),
+                            }, "ANCHOR"));
+                            for (int i = 0; i < parameters; i++) {
+                                source.addAll(compileBytecodeExpression(context, node.getChild(1).getChild(i), true));
+                            }
+                            source.addAll(compileConstantExpression(context, node.getChild(0)));
+                            source.add(new Bytecode(context, new byte[] {
+                                (byte) 0b00000111,
+                                (byte) method.getObject(),
+                                (byte) method.getOffset()
+                            }, "CALL_OBJ_SUB"));
+                            return source;
+                        }
+                    }
+                    else if (isAddress(node.getText())) {
                         boolean popIndex = false;
                         Spin1StatementNode postEffectNode = null;
 
@@ -1121,6 +1118,14 @@ public class Spin1BytecodeCompiler {
         }
 
         return source;
+    }
+
+    protected boolean isAddress(String text) {
+        return text.startsWith("@");
+    }
+
+    protected boolean isAssign(String text) {
+        return ":=".equals(text);
     }
 
     List<Spin1Bytecode> compileConstantExpression(Spin1Context context, Spin1StatementNode node) {

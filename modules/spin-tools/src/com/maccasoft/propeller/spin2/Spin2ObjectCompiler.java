@@ -37,6 +37,7 @@ import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.RegisterAddress;
+import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
@@ -222,11 +223,12 @@ public class Spin2ObjectCompiler {
             }
             try {
                 int count = info.count.getNumber().intValue();
+                scope.addSymbol(name, new SpinObject(name, objectIndex, count));
                 for (int i = 0; i < count; i++) {
                     objectLinks.add(new LinkDataObject(info, 0, varOffset));
                     varOffset += info.compiler.getVarSize();
-                    objectIndex++;
                 }
+                objectIndex += count;
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
