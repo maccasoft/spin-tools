@@ -24,7 +24,7 @@ public class Cogid extends Spin1PAsmInstructionFactory {
     @Override
     public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
         if (Spin1PAsmSchema.D.check(arguments, effect)) {
-            return new Cogid_(context, condition, arguments.get(0));
+            return new Cogid_(context, condition, arguments.get(0), effect);
         }
         throw new RuntimeException("error: invalid arguments");
     }
@@ -36,11 +36,13 @@ public class Cogid extends Spin1PAsmInstructionFactory {
 
         String condition;
         Spin1PAsmExpression dst;
+        String effect;
 
-        public Cogid_(Spin1Context context, String condition, Spin1PAsmExpression dst) {
+        public Cogid_(Spin1Context context, String condition, Spin1PAsmExpression dst, String effect) {
             super(context);
             this.condition = condition;
             this.dst = dst;
+            this.effect = effect;
         }
 
         // 000011_0011_1111_ddddddddd_xxxxxx001
@@ -49,7 +51,7 @@ public class Cogid extends Spin1PAsmInstructionFactory {
         public byte[] getBytes() {
             int value = instr.setValue(0, 0b000011);
             value = con.setValue(value, encodeCondition(condition));
-            value = zcr.setValue(value, 0b001);
+            value = zcr.setValue(value, encodeEffect(0b001, effect));
             value = i.setBoolean(value, true);
             if (dst.getInteger() > 0x1FF) {
                 throw new CompilerException("Destination register cannot exceed $1FF", dst.getExpression().getData());

@@ -72,7 +72,7 @@ public abstract class Spin1PAsmSchema {
     };
 
     /**
-     * OPCODE  D
+     * OPCODE  D        {WC/WZ/NR/WR}
      */
     public static Spin1PAsmSchema D = new Spin1PAsmSchema() {
 
@@ -81,7 +81,7 @@ public abstract class Spin1PAsmSchema {
             if (arguments.size() != 1) {
                 throw new RuntimeException("error: expected 2 operands, found " + arguments.size());
             }
-            return arguments.size() == 1 && arguments.get(0).prefix == null && effect == null;
+            return arguments.size() == 1 && arguments.get(0).prefix == null;
         }
 
     };
