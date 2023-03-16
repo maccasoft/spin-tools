@@ -59,26 +59,21 @@ import com.maccasoft.propeller.spin1.bytecode.RegisterBitOp;
 import com.maccasoft.propeller.spin1.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
 
-public class Spin1BytecodeCompiler {
+public abstract class Spin1BytecodeCompiler {
 
     Map<String, ObjectInfo> objects;
     boolean openspinCompatible;
 
     List<Spin1Bytecode> stringData;
 
-    boolean errors;
-    List<CompilerException> messages;
-
     Spin1BytecodeCompiler() {
         this.objects = ListOrderedMap.listOrderedMap(new HashMap<String, ObjectInfo>());
-        this.messages = new ArrayList<CompilerException>();
         this.stringData = new ArrayList<>();
     }
 
     public Spin1BytecodeCompiler(Map<String, ObjectInfo> objects, boolean openspinCompatible) {
         this.objects = objects;
         this.openspinCompatible = openspinCompatible;
-        this.messages = new ArrayList<>();
         this.stringData = new ArrayList<>();
     }
 
@@ -1381,28 +1376,6 @@ public class Spin1BytecodeCompiler {
         return stringData;
     }
 
-    protected void logMessage(CompilerException message) {
-        if (message.hasChilds()) {
-            for (CompilerException msg : message.getChilds()) {
-                if (msg.type == CompilerException.ERROR) {
-                    errors = true;
-                }
-            }
-        }
-        else {
-            if (message.type == CompilerException.ERROR) {
-                errors = true;
-            }
-        }
-        messages.add(message);
-    }
-
-    public boolean hasErrors() {
-        return errors;
-    }
-
-    public List<CompilerException> getMessages() {
-        return messages;
-    }
+    protected abstract void logMessage(CompilerException message);
 
 }

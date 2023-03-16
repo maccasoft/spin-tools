@@ -24,17 +24,14 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.ContextLiteral;
-import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
-import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.MethodNode;
@@ -60,7 +57,6 @@ import com.maccasoft.propeller.spin1.bytecode.Jz;
 import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
 import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
-import com.maccasoft.propeller.spin1.instructions.FileInc;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
 import com.maccasoft.propeller.spin2.Spin2Model;
@@ -184,9 +180,45 @@ public class Spin1ObjectCompiler {
 
         compileVarBlocks(root);
 
+        Spin1PAsmCompiler pasmCompiler = new Spin1PAsmCompiler() {
+
+            @Override
+            protected List<Spin1PAsmLine> compileDatInclude(Spin1Context scope, Node root) {
+
+                for (Node node : root.getChilds()) {
+                    if (!(node instanceof ConstantsNode) && !(node instanceof DataNode)) {
+                        throw new RuntimeException("only CON and DAT sections allowed in included files");
+                    }
+                }
+
+                for (Node node : root.getChilds()) {
+                    if (node instanceof ConstantsNode) {
+                        compileConBlock(node);
+                    }
+                }
+
+                return super.compileDatInclude(scope, root);
+            }
+
+            @Override
+            protected Node getParsedSource(String fileName) {
+                return Spin1ObjectCompiler.this.getParsedSource(fileName);
+            }
+
+            @Override
+            protected byte[] getBinaryFile(String fileName) {
+                return Spin1ObjectCompiler.this.getBinaryFile(fileName);
+            }
+
+            @Override
+            protected void logMessage(CompilerException message) {
+                Spin1ObjectCompiler.this.logMessage(message);
+            }
+
+        };
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
-                compileDatBlock(scope, node);
+                source.addAll(pasmCompiler.compileDatBlock(scope, node));
             }
         }
 
@@ -792,205 +824,6 @@ public class Spin1ObjectCompiler {
             }
 
         });
-    }
-
-    void compileDatBlock(Spin1Context scope, Node parent) {
-        Spin1Context savedContext = scope;
-        Map<Spin1PAsmLine, Spin1Context> pendingAlias = new HashMap<Spin1PAsmLine, Spin1Context>();
-
-        for (Node child : parent.getChilds()) {
-            DataLineNode node = (DataLineNode) child;
-            if (node.getTokenCount() == 0) {
-                continue;
-            }
-            if (node.label == null && node.instruction == null) {
-                throw new CompilerException("syntax error", node);
-            }
-
-            String label = node.label != null ? node.label.getText() : null;
-            String condition = node.condition != null ? node.condition.getText() : null;
-            String mnemonic = node.instruction != null ? node.instruction.getText() : null;
-            String modifier = node.modifier != null ? node.modifier.getText() : null;
-            List<Spin1PAsmExpression> parameters = new ArrayList<Spin1PAsmExpression>();
-
-            try {
-                Spin1PAsmLine pasmLine = new Spin1PAsmLine(scope, label, condition, mnemonic, parameters, modifier);
-                pasmLine.setData(node);
-
-                for (DataLineNode.ParameterNode param : node.parameters) {
-                    int index = 0;
-                    String prefix = null;
-                    Expression expression = null, count = null;
-
-                    Token token;
-                    if (index < param.getTokens().size()) {
-                        token = param.getToken(index);
-                        if (token.getText().startsWith("#")) {
-                            prefix = (prefix == null ? "" : prefix) + token.getText();
-                            index++;
-                        }
-                    }
-                    if (index < param.getTokens().size()) {
-                        token = param.getToken(index);
-                        if ("\\".equals(token.getText())) {
-                            prefix = (prefix == null ? "" : prefix) + token.getText();
-                            index++;
-                        }
-                    }
-                    if (index < param.getTokens().size()) {
-                        try {
-                            Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(pasmLine.getScope(), param.getTokens().subList(index, param.getTokens().size()));
-                            expression = builder.getExpression();
-                            expression.setData(param);
-                        } catch (Exception e) {
-                            throw new CompilerException(e, param);
-                        }
-                    }
-
-                    if (param.count != null) {
-                        try {
-                            Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(pasmLine.getScope(), param.count.getTokens());
-                            count = builder.getExpression();
-                        } catch (Exception e) {
-                            throw new CompilerException(e, param.count);
-                        }
-                    }
-                    parameters.add(new Spin1PAsmExpression(prefix, expression, count));
-                }
-
-                try {
-                    if ("FILE".equalsIgnoreCase(mnemonic)) {
-                        if (node.condition != null) {
-                            throw new CompilerException("not allowed", node.condition);
-                        }
-                        if (node.modifier != null) {
-                            throw new CompilerException("not allowed", node.modifier);
-                        }
-                        String fileName = parameters.get(0).getString();
-                        byte[] data = getBinaryFile(fileName);
-                        if (data == null) {
-                            throw new CompilerException("file \"" + fileName + "\" not found", node.parameters.get(0));
-                        }
-                        pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data));
-                    }
-                } catch (RuntimeException e) {
-                    throw new CompilerException(e, node);
-                }
-
-                if (pasmLine.getLabel() != null) {
-                    try {
-                        if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
-                            scope = savedContext;
-                        }
-                        String type = "LONG";
-                        if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Word) {
-                            type = "WORD";
-                        }
-                        else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
-                            type = "BYTE";
-                        }
-                        else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                            type = "BYTE";
-                        }
-                        scope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
-                        scope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
-                        scope.addSymbol("@@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
-
-                        if (pasmLine.getMnemonic() == null) {
-                            if (!pasmLine.isLocalLabel()) {
-                                pendingAlias.put(pasmLine, scope);
-                            }
-                        }
-                        else if (pendingAlias.size() != 0) {
-                            for (Entry<Spin1PAsmLine, Spin1Context> entry : pendingAlias.entrySet()) {
-                                Spin1PAsmLine line = entry.getKey();
-                                Spin1Context context = entry.getValue();
-                                context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                                context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-                                context.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-                            }
-                            pendingAlias.clear();
-                        }
-
-                        if (pasmLine.getLabel() != null && !pasmLine.isLocalLabel()) {
-                            scope = pasmLine.getScope();
-                        }
-                    } catch (RuntimeException e) {
-                        throw new CompilerException(e, node.label);
-                    }
-                }
-                else if (pasmLine.getMnemonic() != null && pendingAlias.size() != 0) {
-                    String type = "LONG";
-                    if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Word) {
-                        type = "WORD";
-                    }
-                    else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
-                        type = "BYTE";
-                    }
-                    else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                        type = "BYTE";
-                    }
-
-                    for (Entry<Spin1PAsmLine, Spin1Context> entry : pendingAlias.entrySet()) {
-                        Spin1PAsmLine line = entry.getKey();
-                        Spin1Context context = entry.getValue();
-                        context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                        context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-                        context.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-                    }
-                    pendingAlias.clear();
-                }
-
-                source.addAll(pasmLine.expand());
-
-                if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                    if (node.condition != null) {
-                        throw new CompilerException("not allowed", node.condition);
-                    }
-                    if (node.modifier != null) {
-                        throw new CompilerException("not allowed", node.modifier);
-                    }
-                    int index = 0;
-                    for (Spin1PAsmExpression argument : pasmLine.getArguments()) {
-                        String fileName = argument.getString();
-                        Node includedNode = getParsedSource(fileName);
-                        try {
-                            if (includedNode == null) {
-                                throw new RuntimeException("file \"" + fileName + "\" not found");
-                            }
-                            compileDatInclude(scope, includedNode);
-                        } catch (Exception e) {
-                            logMessage(new CompilerException(e, node.parameters.get(index)));
-                        }
-                        index++;
-                    }
-                }
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, node.instruction));
-            }
-        }
-    }
-
-    void compileDatInclude(Spin1Context scope, Node root) {
-        for (Node node : root.getChilds()) {
-            if (!(node instanceof ConstantsNode) && !(node instanceof DataNode)) {
-                throw new RuntimeException("only CON and DAT sections allowed in included files");
-            }
-        }
-
-        for (Node node : root.getChilds()) {
-            if (node instanceof ConstantsNode) {
-                compileConBlock(node);
-            }
-        }
-
-        for (Node node : root.getChilds()) {
-            if (node instanceof DataNode) {
-                compileDatBlock(scope, node);
-            }
-        }
     }
 
     protected Node getParsedSource(String fileName) {

@@ -76,25 +76,20 @@ import com.maccasoft.propeller.spin2.bytecode.MemoryOp;
 import com.maccasoft.propeller.spin2.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 
-public class Spin2BytecodeCompiler {
+public abstract class Spin2BytecodeCompiler {
 
     Map<String, ObjectInfo> objects;
 
     List<Object> debugStatements;
 
-    boolean errors;
-    List<CompilerException> messages;
-
     Spin2BytecodeCompiler() {
         this.objects = ListOrderedMap.listOrderedMap(new HashMap<String, ObjectInfo>());
         this.debugStatements = new ArrayList<Object>();
-        this.messages = new ArrayList<CompilerException>();
     }
 
     public Spin2BytecodeCompiler(Map<String, ObjectInfo> objects, List<Object> debugStatements) {
         this.objects = objects;
         this.debugStatements = debugStatements;
-        this.messages = new ArrayList<CompilerException>();
     }
 
     public List<Spin2Bytecode> compileBytecodeExpression(Spin2Context context, Spin2StatementNode node) {
@@ -2071,28 +2066,6 @@ public class Spin2BytecodeCompiler {
         }
     }
 
-    protected void logMessage(CompilerException message) {
-        if (message.hasChilds()) {
-            for (CompilerException msg : message.getChilds()) {
-                if (msg.type == CompilerException.ERROR) {
-                    errors = true;
-                }
-            }
-        }
-        else {
-            if (message.type == CompilerException.ERROR) {
-                errors = true;
-            }
-        }
-        messages.add(message);
-    }
-
-    public boolean hasErrors() {
-        return errors;
-    }
-
-    public List<CompilerException> getMessages() {
-        return messages;
-    }
+    protected abstract void logMessage(CompilerException message);
 
 }
