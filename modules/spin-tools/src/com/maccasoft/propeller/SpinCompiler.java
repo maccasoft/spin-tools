@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -127,8 +127,9 @@ public class SpinCompiler {
             println("Compiling...");
 
             boolean caseSensitive = cmd.hasOption('c');
-            Compiler compiler = name.toLowerCase().endsWith(".spin2") ? new Spin2Compiler(caseSensitive) : new Spin1Compiler(caseSensitive);
-            compiler.addSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
+            String suffix = name.substring(name.lastIndexOf('.')).toLowerCase();
+            Compiler compiler = ".spin2".equals(suffix) ? new Spin2Compiler(caseSensitive) : new Spin1Compiler(caseSensitive);
+            compiler.addSourceProvider(new Compiler.FileSourceProvider(suffix, libraryPaths.toArray(new File[libraryPaths.size()])));
             if (cmd.hasOption('d')) {
                 compiler.setDebugEnabled(true);
             }

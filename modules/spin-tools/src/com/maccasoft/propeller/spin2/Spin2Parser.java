@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -24,12 +24,13 @@ import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
-public class Spin2Parser {
+public class Spin2Parser extends Parser {
 
     private static final Set<String> sections = new HashSet<String>(Arrays.asList(new String[] {
         "CON", "VAR", "OBJ", "PUB", "PRI", "DAT"
@@ -43,6 +44,7 @@ public class Spin2Parser {
         this.stream = stream;
     }
 
+    @Override
     public Node parse() {
         Token token;
         ConstantsNode defaultNode = null;

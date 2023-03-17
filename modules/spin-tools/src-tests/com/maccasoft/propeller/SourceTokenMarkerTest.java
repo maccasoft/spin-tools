@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
 import com.maccasoft.propeller.spin1.Spin1TokenStream;
@@ -35,7 +36,7 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker();
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
 
         Node context = subject.getRoot().getChild(0);
@@ -58,7 +59,7 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker();
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
 
         Node context = subject.getRoot().getChild(0);
@@ -85,7 +86,7 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker();
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
 
         Node context = subject.getRoot().getChild(0);
@@ -119,7 +120,7 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker() {
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
             protected Node getObjectTree(String fileName) {
@@ -163,7 +164,7 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker() {
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
             protected Node getObjectTree(String fileName) {
@@ -211,7 +212,7 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker() {
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
             protected Node getObjectTree(String fileName) {
@@ -255,7 +256,7 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker() {
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
             protected Node getObjectTree(String fileName) {
@@ -299,7 +300,7 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker() {
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
             protected Node getObjectTree(String fileName) {
@@ -354,7 +355,7 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker() {
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
             protected Node getObjectTree(String fileName) {
@@ -414,7 +415,7 @@ public class SourceTokenMarkerTest {
             + "    \n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker() {
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
             protected Node getObjectTree(String fileName) {
@@ -467,7 +468,7 @@ public class SourceTokenMarkerTest {
             + "    PIN_TX = 2\n"
             + "";
 
-        SourceTokenMarker subject = new Spin1TokenMarker() {
+        SourceTokenMarker subject = new Spin1TokenMarker(SourceProvider.NULL) {
 
             @Override
             protected Node getObjectTree(String fileName) {
@@ -515,7 +516,7 @@ public class SourceTokenMarkerTest {
             + "    PIN_TX = 2\n"
             + "";
 
-        SourceTokenMarker subject = new Spin2TokenMarker() {
+        SourceTokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL) {
 
             @Override
             protected Node getObjectTree(String fileName) {

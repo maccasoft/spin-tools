@@ -19,25 +19,19 @@ import java.util.List;
 
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.SourceProvider;
 
 public abstract class Compiler {
 
-    public static abstract class SourceProvider {
-
-        public Node getParsedSource(String name) {
-            return null;
-        }
-
-        public abstract File getFile(String name);
-
-    }
-
     public static class FileSourceProvider extends SourceProvider {
 
-        File[] searchPaths;
-        List<File> collectedSearchPaths;
+        final String suffix;
+        final File[] searchPaths;
 
-        public FileSourceProvider(File[] searchPaths) {
+        final List<File> collectedSearchPaths;
+
+        public FileSourceProvider(String suffix, File[] searchPaths) {
+            this.suffix = suffix;
             this.searchPaths = searchPaths;
             this.collectedSearchPaths = new ArrayList<>();
         }
@@ -71,6 +65,11 @@ public abstract class Compiler {
                 }
             }
 
+            return null;
+        }
+
+        @Override
+        public Node getParsedSource(String name) {
             return null;
         }
 

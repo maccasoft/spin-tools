@@ -1,0 +1,35 @@
+/*
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
+ * All rights reserved.
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
+
+package com.maccasoft.propeller.model;
+
+import java.io.File;
+
+public abstract class SourceProvider {
+
+    public static final SourceProvider NULL = new SourceProvider() {
+
+        @Override
+        public Node getParsedSource(String name) {
+            return null;
+        }
+
+        @Override
+        public File getFile(String name) {
+            return null;
+        }
+
+    };
+
+    public abstract Node getParsedSource(String name);
+
+    public abstract File getFile(String name);
+
+}

@@ -79,8 +79,6 @@ public class ImageRegistry {
         fileMap.put(".bin", "document-binary.png");
         fileMap.put(".binary", "document-binary.png");
         fileMap.put(".bmp", "document-image.png");
-        fileMap.put(".c", "document-text.png");
-        fileMap.put(".cpp", "document-text.png");
         fileMap.put(".dll", "document-binary.png");
         fileMap.put(".exe", "document-binary.png");
         fileMap.put(".gif", "document-image.png");

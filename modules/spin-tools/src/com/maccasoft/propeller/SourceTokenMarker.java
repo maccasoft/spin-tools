@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,6 +24,7 @@ import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
 
+import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -32,6 +34,8 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.Parser;
+import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenStream;
@@ -137,6 +141,8 @@ public abstract class SourceTokenMarker {
 
     }
 
+    protected SourceProvider sourceProvider;
+
     protected Node root;
     protected TreeSet<TokenMarker> tokens = new TreeSet<>();
     protected TreeSet<TokenMarker> compilerTokens = new TreeSet<>();
@@ -148,8 +154,8 @@ public abstract class SourceTokenMarker {
     protected Map<String, TokenId> compilerSymbols = new CaseInsensitiveMap<>();
     protected Map<String, TokenId> locals = new CaseInsensitiveMap<>();
 
-    public SourceTokenMarker() {
-
+    public SourceTokenMarker(SourceProvider sourceProvider) {
+        this.sourceProvider = sourceProvider;
     }
 
     public void setSourceRoot(Node root) {
@@ -770,7 +776,24 @@ public abstract class SourceTokenMarker {
     }
 
     protected Node getObjectTree(String fileName) {
-        return null;
+        Node node = null;
+
+        if (sourceProvider != null) {
+            node = sourceProvider.getParsedSource(fileName);
+            if (node == null) {
+                File file = sourceProvider.getFile(fileName);
+                if (file != null && fileName.lastIndexOf('.') != -1) {
+                    try {
+                        String suffix = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+                        node = Parser.parse(suffix, FileUtils.loadFromFile(file));
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                }
+            }
+        }
+
+        return node;
     }
 
     public List<IContentProposal> getPAsmProposals(Node ref, String token) {

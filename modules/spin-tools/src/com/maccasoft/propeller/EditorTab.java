@@ -42,23 +42,19 @@ import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
-import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Formatter;
-import com.maccasoft.propeller.spin1.Spin1Parser;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
-import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Formatter;
-import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 public class EditorTab implements FindReplaceTarget {
 
@@ -139,7 +135,7 @@ public class EditorTab implements FindReplaceTarget {
 
     };
 
-    class EditorTabSourceProvider extends Compiler.SourceProvider {
+    class EditorTabSourceProvider extends SourceProvider {
 
         File[] searchPaths;
         List<File> collectedSearchPaths;
@@ -230,7 +226,7 @@ public class EditorTab implements FindReplaceTarget {
     class Spin1TokenMarkerAdatper extends Spin1TokenMarker {
 
         public Spin1TokenMarkerAdatper() {
-
+            super(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
         }
 
         @Override
@@ -243,39 +239,10 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected Node getObjectTree(String fileName) {
-            File localFile = file != null ? new File(file.getParentFile(), fileName + ".spin") : new File(fileName + ".spin");
-
-            Node node = sourcePool.getParsedSource(localFile);
-            if (node == null && localFile.exists()) {
-                try {
-                    Spin1TokenStream stream = new Spin1TokenStream(FileUtils.loadFromFile(localFile));
-                    Spin1Parser subject = new Spin1Parser(stream);
-                    node = subject.parse();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
+            Node node = super.getObjectTree(fileName);
             if (node == null) {
-                File[] paths = preferences.getSpin1LibraryPath();
-                for (int i = 0; i < paths.length; i++) {
-                    localFile = new File(paths[i], fileName + ".spin");
-                    if ((node = sourcePool.getParsedSource(localFile)) != null) {
-                        break;
-                    }
-                    if (localFile.exists()) {
-                        try {
-                            Spin1TokenStream stream = new Spin1TokenStream(FileUtils.loadFromFile(localFile));
-                            Spin1Parser subject = new Spin1Parser(stream);
-                            node = subject.parse();
-                            break;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+                node = super.getObjectTree(fileName + ".spin");
             }
-
             return node;
         }
 
@@ -284,7 +251,7 @@ public class EditorTab implements FindReplaceTarget {
     class Spin2TokenMarkerAdatper extends Spin2TokenMarker {
 
         public Spin2TokenMarkerAdatper() {
-
+            super(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
         }
 
         @Override
@@ -297,39 +264,10 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected Node getObjectTree(String fileName) {
-            File localFile = file != null ? new File(file.getParentFile(), fileName + ".spin2") : new File(fileName + ".spin2");
-
-            Node node = sourcePool.getParsedSource(localFile);
-            if (node == null && localFile.exists()) {
-                try {
-                    Spin2TokenStream stream = new Spin2TokenStream(FileUtils.loadFromFile(localFile));
-                    Spin2Parser subject = new Spin2Parser(stream);
-                    node = subject.parse();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
+            Node node = super.getObjectTree(fileName);
             if (node == null) {
-                File[] searchPaths = preferences.getSpin2LibraryPath();
-                for (int i = 0; i < searchPaths.length; i++) {
-                    localFile = new File(searchPaths[i], fileName + ".spin2");
-                    if ((node = sourcePool.getParsedSource(localFile)) != null) {
-                        break;
-                    }
-                    if (localFile.exists()) {
-                        try {
-                            Spin2TokenStream stream = new Spin2TokenStream(FileUtils.loadFromFile(localFile));
-                            Spin2Parser subject = new Spin2Parser(stream);
-                            node = subject.parse();
-                            break;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+                node = super.getObjectTree(fileName + ".spin2");
             }
-
             return node;
         }
 

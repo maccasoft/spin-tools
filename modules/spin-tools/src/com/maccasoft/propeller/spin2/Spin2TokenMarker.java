@@ -30,6 +30,7 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
@@ -1076,7 +1077,12 @@ public class Spin2TokenMarker extends SourceTokenMarker {
 
     };
 
-    public Spin2TokenMarker() {
+    Spin2TokenMarker() {
+        super(SourceProvider.NULL);
+    }
+
+    public Spin2TokenMarker(SourceProvider sourceProvider) {
+        super(sourceProvider);
         this.constantSeparator = ".";
     }
 
