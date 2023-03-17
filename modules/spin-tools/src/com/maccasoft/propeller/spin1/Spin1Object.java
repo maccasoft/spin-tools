@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -10,21 +10,17 @@
 
 package com.maccasoft.propeller.spin1;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.maccasoft.propeller.SpinObject;
-import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
 
 public class Spin1Object extends SpinObject {
 
     public static class LinkDataObject extends DataObject {
 
-        ObjectInfo object;
+        Object object;
         long offset;
         long varOffset;
 
-        public LinkDataObject(ObjectInfo object, long offset, long varOffset) {
+        public LinkDataObject(Object object, long offset, long varOffset) {
             super(new byte[] {
                 (byte) offset,
                 (byte) (offset >> 8),
@@ -64,14 +60,13 @@ public class Spin1Object extends SpinObject {
             this.varOffset = varOffset;
         }
 
-        public ObjectInfo getObject() {
+        public Object getObject() {
             return object;
         }
 
     }
 
     int dcurr;
-    List<LinkDataObject> links = new ArrayList<LinkDataObject>();
 
     public Spin1Object() {
 

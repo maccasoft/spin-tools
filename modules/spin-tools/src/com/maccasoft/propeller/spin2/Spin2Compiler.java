@@ -45,7 +45,7 @@ public class Spin2Compiler extends Compiler {
     boolean removeUnusedMethods;
     Spin2Preprocessor preprocessor;
 
-    Spin2Interpreter interpreter = new Spin2Interpreter();
+    Spin2Interpreter interpreter;
 
     public Spin2Compiler() {
         scope = new Spin2GlobalContext();
@@ -91,14 +91,8 @@ public class Spin2Compiler extends Compiler {
     public Spin2Object compile(File rootFile, Node root) {
         Spin2Object obj = compileObject(rootFile, root);
 
-        for (Entry<String, Expression> entry : obj.getSymbols().entrySet()) {
-            if (entry.getValue() instanceof Method) {
-                interpreter.setVBase((interpreter.getPBase() + obj.getSize()) | (obj.links.size() << 21));
-                interpreter.setDBase(interpreter.getPBase() + obj.getSize() + obj.getVarSize());
-                interpreter.setClearLongs(255 + ((obj.getVarSize() + 3) / 4));
-                obj.setInterpreter(interpreter);
-                break;
-            }
+        if (interpreter != null) {
+            obj.setInterpreter(interpreter);
         }
 
         if (debugEnabled) {
@@ -189,6 +183,7 @@ public class Spin2Compiler extends Compiler {
         int memoryOffset = 0;
         for (Entry<String, Expression> entry : objectCompiler.getPublicSymbols().entrySet()) {
             if (entry.getValue() instanceof Method) {
+                interpreter = new Spin2Interpreter();
                 memoryOffset = interpreter.getSize();
                 break;
             }
@@ -210,7 +205,7 @@ public class Spin2Compiler extends Compiler {
         for (ObjectInfo info : childObjects.values()) {
             for (LinkDataObject linkData : info.compiler.getObjectLinks()) {
                 for (ObjectInfo info2 : childObjects.values()) {
-                    if (info2.compiler == linkData.object.compiler) {
+                    if (info2.compiler == linkData.object) {
                         linkData.setOffset(info2.offset - info.offset);
                         linkData.setText(String.format("Object \"%s\" @ $%05X", info2.fileName, linkData.getOffset()));
                         break;
@@ -219,14 +214,20 @@ public class Spin2Compiler extends Compiler {
             }
         }
 
-        for (LinkDataObject linkData : object.links) {
+        for (LinkDataObject linkData : objectCompiler.getObjectLinks()) {
             for (ObjectInfo info : childObjects.values()) {
-                if (info.compiler == linkData.object.compiler) {
+                if (info.compiler == linkData.object) {
                     linkData.setOffset(info.offset);
                     linkData.setText(String.format("Object \"%s\" @ $%05X", info.fileName, linkData.getOffset()));
                     break;
                 }
             }
+        }
+
+        if (interpreter != null) {
+            interpreter.setVBase((interpreter.getPBase() + object.getSize()) | (objectCompiler.getObjectLinks().size() << 21));
+            interpreter.setDBase(interpreter.getPBase() + object.getSize() + object.getVarSize());
+            interpreter.setClearLongs(255 + ((object.getVarSize() + 3) / 4));
         }
 
         if (debugEnabled) {

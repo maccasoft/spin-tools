@@ -253,7 +253,7 @@ public class Spin2ObjectCompiler {
                 int count = info.count.getNumber().intValue();
                 scope.addSymbol(name, new SpinObject(name, objectIndex, count));
                 for (int i = 0; i < count; i++) {
-                    objectLinks.add(new LinkDataObject(info, 0, varOffset));
+                    objectLinks.add(new LinkDataObject(info.compiler, 0, varOffset));
                     varOffset += info.compiler.getVarSize();
                 }
                 objectIndex += count;
@@ -365,7 +365,6 @@ public class Spin2ObjectCompiler {
 
         object.writeComment("Object header");
 
-        object.links.addAll(objectLinks);
         for (LinkDataObject linkData : objectLinks) {
             object.write(linkData);
             object.writeLong(linkData.getVarOffset(), String.format("Variables @ $%05X", linkData.getVarOffset()));

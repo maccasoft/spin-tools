@@ -244,7 +244,7 @@ public class Spin1Compiler extends Compiler {
         for (ObjectInfo info : childObjects.values()) {
             for (LinkDataObject linkData : info.compiler.getObjectLinks()) {
                 for (ObjectInfo info2 : childObjects.values()) {
-                    if (info2.compiler == linkData.object.compiler) {
+                    if (info2.compiler == linkData.object) {
                         linkData.setOffset(info2.offset - info.offset);
                         linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", info2.fileName, linkData.getOffset(), linkData.getVarOffset()));
                         break;
@@ -253,9 +253,9 @@ public class Spin1Compiler extends Compiler {
             }
         }
 
-        for (LinkDataObject linkData : object.links) {
+        for (LinkDataObject linkData : objectCompiler.getObjectLinks()) {
             for (ObjectInfo info : childObjects.values()) {
-                if (info.compiler == linkData.object.compiler) {
+                if (info.compiler == linkData.object) {
                     linkData.setOffset(info.offset);
                     linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", info.fileName, linkData.getOffset(), linkData.getVarOffset()));
                     break;

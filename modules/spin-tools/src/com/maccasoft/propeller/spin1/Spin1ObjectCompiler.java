@@ -294,7 +294,7 @@ public class Spin1ObjectCompiler {
                 int count = info.count.getNumber().intValue();
                 scope.addSymbol(name, new SpinObject(name, objectIndex, count));
                 for (int i = 0; i < count; i++) {
-                    objectLinks.add(new LinkDataObject(info, 0, varOffset));
+                    objectLinks.add(new LinkDataObject(info.compiler, 0, varOffset));
                     varOffset += info.compiler.getVarSize();
                 }
                 objectIndex += count;
@@ -373,7 +373,6 @@ public class Spin1ObjectCompiler {
         for (LinkDataObject linkData : objectLinks) {
             object.write(linkData);
         }
-        object.links.addAll(objectLinks);
 
         object.setDcurr(dcurr);
         object.addAllSymbols(publicSymbols);
