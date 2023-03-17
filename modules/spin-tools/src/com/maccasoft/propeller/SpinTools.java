@@ -98,7 +98,7 @@ import jssc.SerialPortException;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools IDE";
-    public static final String APP_VERSION = "0.24.1";
+    public static final String APP_VERSION = "0.25.0";
 
     static final File defaultSpin1Examples = new File(System.getProperty("APP_DIR"), "examples/P1").getAbsoluteFile();
     static final File defaultSpin2Examples = new File(System.getProperty("APP_DIR"), "examples/P2").getAbsoluteFile();
@@ -930,10 +930,6 @@ public class SpinTools {
     EditorTab openNewTab(File fileToOpen, boolean select) {
         EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool, objectBrowser);
 
-        if (select) {
-            tabFolder.setSelection(tabFolder.getItemCount() - 1);
-            editorTab.setFocus();
-        }
         preferences.addToLru(fileToOpen);
 
         editorTab.addCaretListener(caretListener);
@@ -949,6 +945,10 @@ public class SpinTools {
                 try {
                     editorTab.setEditorText(FileUtils.loadFromFile(fileToOpen));
                     editorTab.setFile(fileToOpen);
+                    if (select) {
+                        tabFolder.setSelection(tabFolder.getItemCount() - 1);
+                        editorTab.setFocus();
+                    }
                     updateCaretPosition();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -963,11 +963,6 @@ public class SpinTools {
     EditorTab openNewTab(String name, String text, boolean select) {
         EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool, objectBrowser);
 
-        if (select) {
-            tabFolder.setSelection(tabFolder.getItemCount() - 1);
-            editorTab.setFocus();
-        }
-
         editorTab.addCaretListener(caretListener);
         editorTab.addOpenListener(openListener);
         editorTab.addPropertyChangeListener(editorChangeListener);
@@ -980,6 +975,10 @@ public class SpinTools {
             public void run() {
                 try {
                     editorTab.setEditorText(text);
+                    if (select) {
+                        tabFolder.setSelection(tabFolder.getItemCount() - 1);
+                        editorTab.setFocus();
+                    }
                     updateCaretPosition();
                 } catch (Exception e) {
                     e.printStackTrace();

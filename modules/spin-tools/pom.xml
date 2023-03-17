@@ -2,18 +2,11 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.maccasoft</groupId>
     <artifactId>spin-tools</artifactId>
-    <version>0.24.0</version>
+    <version>0.25.0</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-    <repositories>
-        <repository>
-            <id>eclipse</id>
-            <url>https://download.eclipse.org/eclipse/updates/4.26</url>
-            <layout>p2</layout>
-        </repository>
-    </repositories>
     <profiles>
         <profile>
             <id>linux</id>
@@ -24,7 +17,7 @@
                 <dependency>
                     <groupId>org.eclipse.platform</groupId>
                     <artifactId>org.eclipse.swt.gtk.linux.x86_64</artifactId>
-                    <version>3.122.0</version>
+                    <version>3.123.0</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -37,7 +30,7 @@
                 <dependency>
                     <groupId>org.eclipse.platform</groupId>
                     <artifactId>org.eclipse.swt.win32.win32.x86_64</artifactId>
-                    <version>3.122.0</version>
+                    <version>3.123.0</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -50,7 +43,7 @@
                 <dependency>
                     <groupId>org.eclipse.platform</groupId>
                     <artifactId>org.eclipse.swt.cocoa.macosx.x86_64</artifactId>
-                    <version>3.122.0</version>
+                    <version>3.123.0</version>
                 </dependency>
             </dependencies>
         </profile>
@@ -59,7 +52,7 @@
         <dependency>
             <groupId>org.eclipse.platform</groupId>
             <artifactId>org.eclipse.jface.databinding</artifactId>
-            <version>1.14.0</version>
+            <version>1.14.100</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -119,11 +112,6 @@
             </testResource>
         </testResources>
         <plugins>
-            <plugin>
-                <groupId>org.eclipse.tycho</groupId>
-                <artifactId>tycho-p2-repository-plugin</artifactId>
-                <version>2.7.5</version>
-            </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
