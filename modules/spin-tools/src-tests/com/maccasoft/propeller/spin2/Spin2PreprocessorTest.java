@@ -26,7 +26,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -43,7 +43,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -68,7 +68,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -94,7 +94,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -121,7 +121,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -146,7 +146,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -176,17 +176,25 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor() {
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler() {
 
             @Override
-            protected Node getParsedObject(String fileName) {
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin2")) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedObject(String fileName) {
                 if ("text1.spin2".equals(fileName)) {
                     return text1;
                 }
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -217,17 +225,25 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor() {
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler() {
 
             @Override
-            protected Node getParsedObject(String fileName) {
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin2")) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedObject(String fileName) {
                 if ("text1.spin2".equals(fileName)) {
                     return text1;
                 }
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -258,17 +274,25 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor() {
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler() {
 
             @Override
-            protected Node getParsedObject(String fileName) {
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin2")) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedObject(String fileName) {
                 if ("text1.spin2".equals(fileName)) {
                     return text1;
                 }
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -300,17 +324,25 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor() {
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler() {
 
             @Override
-            protected Node getParsedObject(String fileName) {
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin2")) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedObject(String fileName) {
                 if ("text1.spin2".equals(fileName)) {
                     return text1;
                 }
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -330,7 +362,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -348,7 +380,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -369,7 +401,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -391,7 +423,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -412,7 +444,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -438,17 +470,25 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor() {
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler() {
 
             @Override
-            protected Node getParsedObject(String fileName) {
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin2")) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedObject(String fileName) {
                 if ("text1.spin2".equals(fileName)) {
                     return text1;
                 }
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -475,17 +515,25 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor() {
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler() {
 
             @Override
-            protected Node getParsedObject(String fileName) {
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin2")) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedObject(String fileName) {
                 if ("text1.spin2".equals(fileName)) {
                     return text1;
                 }
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -513,17 +561,25 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor() {
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler() {
 
             @Override
-            protected Node getParsedObject(String fileName) {
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin2")) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedObject(String fileName) {
                 if ("text1.spin2".equals(fileName)) {
                     return text1;
                 }
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -550,17 +606,25 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor() {
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler() {
 
             @Override
-            protected Node getParsedObject(String fileName) {
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin2")) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedObject(String fileName) {
                 if ("text1.spin2".equals(fileName)) {
                     return text1;
                 }
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -581,7 +645,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -606,7 +670,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -628,7 +692,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -654,7 +718,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -681,7 +745,7 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor();
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -713,17 +777,25 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor() {
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler() {
 
             @Override
-            protected Node getParsedObject(String fileName) {
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin2")) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedObject(String fileName) {
                 if ("text1.spin2".equals(fileName)) {
                     return text1;
                 }
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -754,17 +826,25 @@ class Spin2PreprocessorTest {
             + "\n"
             + "");
 
-        Spin2Preprocessor subject = new Spin2Preprocessor() {
+        Spin2Preprocessor subject = new Spin2Preprocessor(new Spin2Compiler() {
 
             @Override
-            protected Node getParsedObject(String fileName) {
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin2")) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedObject(String fileName) {
                 if ("text1.spin2".equals(fileName)) {
                     return text1;
                 }
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);

@@ -12,11 +12,7 @@ package com.maccasoft.propeller.spin2;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Abs;
@@ -66,7 +62,6 @@ import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
-import com.maccasoft.propeller.spin2.Spin2ObjectCompiler.ObjectInfo;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.BitField;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
@@ -78,17 +73,13 @@ import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 
 public abstract class Spin2BytecodeCompiler {
 
-    Map<String, ObjectInfo> objects;
-
     List<Object> debugStatements;
 
     Spin2BytecodeCompiler() {
-        this.objects = ListOrderedMap.listOrderedMap(new HashMap<String, ObjectInfo>());
         this.debugStatements = new ArrayList<Object>();
     }
 
-    public Spin2BytecodeCompiler(Map<String, ObjectInfo> objects, List<Object> debugStatements) {
-        this.objects = objects;
+    public Spin2BytecodeCompiler(List<Object> debugStatements) {
         this.debugStatements = debugStatements;
     }
 

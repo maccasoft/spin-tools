@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
+ * All rights reserved.
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ */
 
 package com.maccasoft.propeller.spin2;
 
@@ -47,7 +56,7 @@ public class Spin2Preprocessor {
             this.objectTree = objectTree;
         }
 
-        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, ListOrderedMap<String, Node> list) {
+        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, ListOrderedMap<File, Node> list) {
             this.parent = parent;
             this.file = file;
             this.objectTree = new ObjectTree(file, file.getName());
@@ -68,9 +77,9 @@ public class Spin2Preprocessor {
             }
 
             String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1);
-            File objectFile = getFile(objectFileName);
+            File objectFile = compiler.getFile(objectFileName);
             if (objectFile == null) {
-                objectFile = getFile(objectFileName + ".spin2");
+                objectFile = compiler.getFile(objectFileName + ".spin2");
             }
             if (objectFile == null) {
                 objectFile = new File(objectFileName + ".spin2");
@@ -84,16 +93,16 @@ public class Spin2Preprocessor {
                 p = p.parent;
             }
 
-            Node objectRoot = objects.get(objectFile.getName());
+            Node objectRoot = objects.get(objectFile);
             if (objectRoot == null) {
-                objectRoot = getParsedObject(objectFile.getName());
+                objectRoot = compiler.getParsedObject(objectFile.getName());
             }
             if (objectRoot == null) {
                 return;
             }
 
-            objects.remove(objectFile.getName());
-            objects.put(0, objectFile.getName(), objectRoot);
+            objects.remove(objectFile);
+            objects.put(0, objectFile, objectRoot);
 
             objectRoot.accept(new ObjectTreeVisitor(this, objectFile, objects));
         }
@@ -104,7 +113,7 @@ public class Spin2Preprocessor {
                 if ("FILE".equalsIgnoreCase(node.instruction.getText()) || "INCLUDE".equalsIgnoreCase(node.instruction.getText())) {
                     for (Node parameterNode : node.parameters) {
                         String fileName = parameterNode.getText().substring(1, parameterNode.getText().length() - 1);
-                        File file = getFile(fileName);
+                        File file = compiler.getFile(fileName);
                         if (file == null) {
                             file = new File(fileName);
                         }
@@ -116,13 +125,15 @@ public class Spin2Preprocessor {
 
     }
 
-    ListOrderedMap<String, Node> objects;
+    Spin2Compiler compiler;
+
+    ListOrderedMap<File, Node> objects;
     Map<MethodNode, MethodReference> referencedMethods;
 
     ObjectTree objectTree;
 
-    public Spin2Preprocessor() {
-
+    public Spin2Preprocessor(Spin2Compiler compiler) {
+        this.compiler = compiler;
     }
 
     public void process(File rootFile, Node root) {
@@ -138,17 +149,9 @@ public class Spin2Preprocessor {
         }
     }
 
-    protected File getFile(String name) {
-        return null;
-    }
-
-    protected Node getParsedObject(String fileName) {
-        return null;
-    }
-
     void countMethodReferences(boolean keepFirst, Node root) {
         Set<String> objectNames = new HashSet<>();
-        Map<String, MethodNode> symbols = new HashMap<String, MethodNode>();
+        Map<String, MethodNode> symbols = new HashMap<>();
 
         root.accept(new NodeVisitor() {
 
@@ -158,10 +161,11 @@ public class Spin2Preprocessor {
                     return;
                 }
                 String fileName = node.file.getText().substring(1, node.file.getText().length() - 1);
-                Node objectRoot = objects.get(fileName);
-                if (objectRoot == null) {
-                    objectRoot = objects.get(fileName + ".spin2");
+                File file = compiler.getFile(fileName);
+                if (file == null) {
+                    file = compiler.getFile(fileName + ".spin2");
                 }
+                Node objectRoot = objects.get(file);
                 if (objectRoot != null) {
                     String prefix = node.name.getText() + ".";
                     objectRoot.accept(new NodeVisitor() {
@@ -300,7 +304,7 @@ public class Spin2Preprocessor {
         return referencedMethods.containsKey(node);
     }
 
-    public ListOrderedMap<String, Node> getObjects() {
+    public ListOrderedMap<File, Node> getObjects() {
         return objects;
     }
 

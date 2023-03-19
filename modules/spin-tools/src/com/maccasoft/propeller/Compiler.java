@@ -79,6 +79,8 @@ public abstract class Compiler {
 
     final List<SourceProvider> sourceProviders = new ArrayList<SourceProvider>();
 
+    boolean caseSensitive;
+
     public Compiler() {
 
     }
@@ -160,4 +162,13 @@ public abstract class Compiler {
     public ObjectTree getObjectTree() {
         return tree;
     }
+
+    public boolean isCaseSensitive() {
+        return caseSensitive;
+    }
+
+    public void setCaseSensitive(boolean caseSensitive) {
+        this.caseSensitive = caseSensitive;
+    }
+
 }

@@ -1813,7 +1813,15 @@ class Spin2CompilerTest {
         }
 
         @Override
-        protected Node getParsedObject(String fileName) {
+        public File getFile(String name) {
+            if (sources.containsKey(name)) {
+                return new File(name);
+            }
+            return null;
+        }
+
+        @Override
+        public Node getParsedObject(String fileName) {
             String text = sources.get(fileName);
             if (text == null) {
                 return null;

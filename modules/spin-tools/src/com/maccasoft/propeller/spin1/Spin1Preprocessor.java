@@ -56,7 +56,7 @@ public class Spin1Preprocessor {
             this.objectTree = objectTree;
         }
 
-        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, ListOrderedMap<String, Node> list) {
+        public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, ListOrderedMap<File, Node> list) {
             this.parent = parent;
             this.file = file;
             this.objectTree = new ObjectTree(file, file.getName());
@@ -77,9 +77,9 @@ public class Spin1Preprocessor {
             }
 
             String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1);
-            File objectFile = getFile(objectFileName);
+            File objectFile = compiler.getFile(objectFileName);
             if (objectFile == null) {
-                objectFile = getFile(objectFileName + ".spin");
+                objectFile = compiler.getFile(objectFileName + ".spin");
             }
             if (objectFile == null) {
                 objectFile = new File(objectFileName + ".spin");
@@ -93,16 +93,16 @@ public class Spin1Preprocessor {
                 p = p.parent;
             }
 
-            Node objectRoot = objects.get(objectFile.getName());
+            Node objectRoot = objects.get(objectFile);
             if (objectRoot == null) {
-                objectRoot = getParsedObject(objectFile.getName());
+                objectRoot = compiler.getParsedObject(objectFile.getName());
             }
             if (objectRoot == null) {
                 return;
             }
 
-            objects.remove(objectFile.getName());
-            objects.put(0, objectFile.getName(), objectRoot);
+            objects.remove(objectFile);
+            objects.put(0, objectFile, objectRoot);
 
             objectRoot.accept(new ObjectTreeVisitor(this, objectFile, objects));
         }
@@ -113,7 +113,7 @@ public class Spin1Preprocessor {
                 if ("FILE".equalsIgnoreCase(node.instruction.getText()) || "INCLUDE".equalsIgnoreCase(node.instruction.getText())) {
                     for (Node parameterNode : node.parameters) {
                         String fileName = parameterNode.getText().substring(1, parameterNode.getText().length() - 1);
-                        File file = getFile(fileName);
+                        File file = compiler.getFile(fileName);
                         if (file == null) {
                             file = new File(fileName);
                         }
@@ -125,13 +125,15 @@ public class Spin1Preprocessor {
 
     }
 
-    ListOrderedMap<String, Node> objects;
+    Spin1Compiler compiler;
+
+    ListOrderedMap<File, Node> objects;
     Map<MethodNode, MethodReference> referencedMethods;
 
     ObjectTree objectTree;
 
-    public Spin1Preprocessor() {
-
+    public Spin1Preprocessor(Spin1Compiler compiler) {
+        this.compiler = compiler;
     }
 
     public void process(File rootFile, Node root) {
@@ -147,14 +149,6 @@ public class Spin1Preprocessor {
         }
     }
 
-    protected File getFile(String name) {
-        return null;
-    }
-
-    protected Node getParsedObject(String fileName) {
-        return null;
-    }
-
     void countMethodReferences(boolean keepFirst, Node root) {
         Set<String> objectNames = new HashSet<>();
         Map<String, MethodNode> symbols = new HashMap<String, MethodNode>();
@@ -167,10 +161,11 @@ public class Spin1Preprocessor {
                     return;
                 }
                 String fileName = node.file.getText().substring(1, node.file.getText().length() - 1);
-                Node objectRoot = objects.get(fileName);
-                if (objectRoot == null) {
-                    objectRoot = objects.get(fileName + ".spin");
+                File file = compiler.getFile(fileName);
+                if (file == null) {
+                    file = compiler.getFile(fileName + ".spin");
                 }
+                Node objectRoot = objects.get(file);
                 if (objectRoot != null) {
                     String prefix = node.name.getText() + ".";
                     objectRoot.accept(new NodeVisitor() {
@@ -306,7 +301,7 @@ public class Spin1Preprocessor {
         return referencedMethods.containsKey(node);
     }
 
-    public ListOrderedMap<String, Node> getObjects() {
+    public ListOrderedMap<File, Node> getObjects() {
         return objects;
     }
 

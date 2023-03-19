@@ -49,6 +49,7 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
+import com.maccasoft.propeller.spin2.Spin2Compiler.ObjectInfo;
 import com.maccasoft.propeller.spin2.Spin2Object.LinkDataObject;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
@@ -72,32 +73,7 @@ import com.maccasoft.propeller.spin2.instructions.Word;
 
 public class Spin2ObjectCompiler {
 
-    public static class ObjectInfo {
-        String fileName;
-        Spin2ObjectCompiler compiler;
-
-        long offset;
-        Expression count;
-
-        public ObjectInfo(String fileName, Spin2ObjectCompiler compiler) {
-            this.fileName = fileName;
-            this.compiler = compiler;
-        }
-
-        public ObjectInfo(String fileName, Spin2ObjectCompiler compiler, Expression count) {
-            this.fileName = fileName;
-            this.compiler = compiler;
-            this.count = count;
-        }
-
-        public boolean hasErrors() {
-            return compiler.hasErrors();
-        }
-
-    }
-
     Spin2Context scope;
-    Map<String, ObjectInfo> childObjects;
 
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
     List<Spin2Method> methods = new ArrayList<Spin2Method>();
@@ -117,24 +93,14 @@ public class Spin2ObjectCompiler {
     List<LinkDataObject> objectLinks = new ArrayList<LinkDataObject>();
     List<LongDataObject> methodData = new ArrayList<LongDataObject>();
 
+    Spin2Compiler compiler;
     Spin2BytecodeCompiler bytecodeCompiler;
     Spin2PasmCompiler pasmCompiler;
 
-    public Spin2ObjectCompiler(Spin2Context scope, Map<String, ObjectInfo> childObjects) {
-        this(scope, childObjects, false);
-    }
-
-    public Spin2ObjectCompiler(Spin2Context scope, Map<String, ObjectInfo> childObjects, boolean debugEnabled) {
-        this.scope = new Spin2Context(scope);
-        this.childObjects = childObjects;
-        this.debugEnabled = debugEnabled;
-        this.debugStatements = new ArrayList<Object>();
-    }
-
-    protected Spin2ObjectCompiler(Spin2Context scope, Map<String, ObjectInfo> childObjects, boolean debugEnabled, List<Object> debugStatements) {
-        this.scope = new Spin2Context(scope);
-        this.childObjects = childObjects;
-        this.debugEnabled = debugEnabled;
+    public Spin2ObjectCompiler(Spin2Compiler compiler, List<Object> debugStatements) {
+        this.scope = new Spin2GlobalContext(compiler.isCaseSensitive());
+        this.compiler = compiler;
+        this.debugEnabled = compiler.isDebugEnabled();
         this.debugStatements = debugStatements;
     }
 
@@ -148,7 +114,7 @@ public class Spin2ObjectCompiler {
     }
 
     public void compile(Node root) {
-        bytecodeCompiler = new Spin2BytecodeCompiler(objects, debugStatements) {
+        bytecodeCompiler = new Spin2BytecodeCompiler(debugStatements) {
 
             @Override
             protected void logMessage(CompilerException message) {
@@ -840,10 +806,7 @@ public class Spin2ObjectCompiler {
                 }
                 String fileName = token.getText().substring(1, token.getText().length() - 1);
 
-                ObjectInfo info = childObjects.get(fileName);
-                if (info == null) {
-                    info = childObjects.get(fileName + ".spin2");
-                }
+                ObjectInfo info = compiler.getObjectInfo(fileName);
                 if (info == null) {
                     logMessage(new CompilerException("object " + token + " not found", token));
                     return;
@@ -853,7 +816,7 @@ public class Spin2ObjectCompiler {
                     return;
                 }
 
-                objects.put(name, new ObjectInfo(info.fileName, info.compiler, count));
+                objects.put(name, new ObjectInfo(info.compiler, count));
 
                 for (Entry<String, Expression> entry : info.compiler.getPublicSymbols().entrySet()) {
                     if (!(entry.getValue() instanceof Method)) {
@@ -2092,6 +2055,10 @@ public class Spin2ObjectCompiler {
 
     public List<Spin2PAsmLine> getSource() {
         return source;
+    }
+
+    public Spin2Context getScope() {
+        return scope;
     }
 
     protected void logMessage(CompilerException message) {

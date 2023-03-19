@@ -12,8 +12,6 @@ package com.maccasoft.propeller.spin1;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -21,7 +19,6 @@ import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
 
 class Spin1ObjectCompilerTest {
 
@@ -2815,14 +2812,11 @@ class Spin1ObjectCompilerTest {
     }
 
     String compile(String text, boolean openspinCompatible) throws Exception {
-        Spin1Context scope = new Spin1GlobalContext();
-        Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
-
         Spin1TokenStream stream = new Spin1TokenStream(text);
         Spin1Parser subject = new Spin1Parser(stream);
         Node root = subject.parse();
 
-        Spin1ObjectCompiler compiler = new Spin1ObjectCompiler(scope, childObjects);
+        Spin1ObjectCompiler compiler = new Spin1ObjectCompiler(new Spin1Compiler());
         compiler.setOpenspinCompatibile(openspinCompatible);
         Spin1Object obj = compiler.compileObject(root);
 

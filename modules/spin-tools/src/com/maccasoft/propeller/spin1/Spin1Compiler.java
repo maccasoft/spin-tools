@@ -26,38 +26,55 @@ import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
+import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Object.LinkDataObject;
-import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
 
 public class Spin1Compiler extends Compiler {
 
-    Spin1Context scope;
-    Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
+    public static class ObjectInfo {
+
+        Spin1ObjectCompiler compiler;
+
+        long offset;
+        Expression count;
+
+        public ObjectInfo(Spin1ObjectCompiler compiler) {
+            this.compiler = compiler;
+        }
+
+        public ObjectInfo(Spin1ObjectCompiler compiler, Expression count) {
+            this.compiler = compiler;
+            this.count = count;
+        }
+
+        public boolean hasErrors() {
+            return compiler.hasErrors();
+        }
+
+    }
+
+    boolean removeUnusedMethods;
+    boolean openspinCompatible;
+
+    Spin1Preprocessor preprocessor;
+    Map<File, ObjectInfo> childObjects = new HashMap<>();
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
 
-    boolean spenspinCompatible;
-    boolean removeUnusedMethods;
-    Spin1Preprocessor preprocessor;
-
     public Spin1Compiler() {
-        scope = new Spin1GlobalContext();
-    }
 
-    public Spin1Compiler(boolean caseSensitive) {
-        scope = new Spin1GlobalContext(caseSensitive);
-    }
-
-    public void setOpenspinCompatible(boolean openspinCompatible) {
-        this.spenspinCompatible = openspinCompatible;
     }
 
     @Override
     public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
         this.removeUnusedMethods = removeUnusedMethods;
+    }
+
+    public void setOpenspinCompatible(boolean openspinCompatible) {
+        this.openspinCompatible = openspinCompatible;
     }
 
     @Override
@@ -119,30 +136,6 @@ public class Spin1Compiler extends Compiler {
         offset = 4 + obj.getDcurr();
         dcurr.setValue(dbase.getValue() + offset);
 
-        int stackRequired = 16;
-        if (scope.hasSymbol("_STACK")) {
-            stackRequired = scope.getLocalSymbol("_STACK").getNumber().intValue();
-        }
-        else if (scope.hasSymbol("_stack")) {
-            stackRequired = scope.getLocalSymbol("_stack").getNumber().intValue();
-        }
-        if (scope.hasSymbol("_FREE")) {
-            stackRequired += scope.getLocalSymbol("_FREE").getNumber().intValue();
-        }
-        else if (scope.hasSymbol("_free")) {
-            stackRequired += scope.getLocalSymbol("_free").getNumber().intValue();
-        }
-
-        if (stackRequired > 0x2000) {
-            logMessage(new CompilerException(rootFile.getName(), "_STACK and _FREE must sum to under 8k longs."));
-        }
-        else {
-            int requiredSize = object.getSize() + obj.getVarSize() + (stackRequired << 2);
-            if (requiredSize >= 0x8000) {
-                logMessage(new CompilerException(rootFile.getName(), "object exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs."));
-            }
-        }
-
         return object;
     }
 
@@ -150,8 +143,8 @@ public class Spin1Compiler extends Compiler {
 
         String fileName;
 
-        public Spin1ObjectCompilerProxy(String fileName, Spin1Context scope, Map<String, ObjectInfo> childObjects) {
-            super(scope, childObjects);
+        public Spin1ObjectCompilerProxy(String fileName) {
+            super(Spin1Compiler.this);
             this.fileName = fileName;
         }
 
@@ -199,54 +192,43 @@ public class Spin1Compiler extends Compiler {
     Spin1Object compileObject(File rootFile, Node root) {
         int memoryOffset = 16;
 
-        preprocessor = new Spin1Preprocessor() {
-
-            @Override
-            protected File getFile(String name) {
-                return Spin1Compiler.this.getFile(name);
-            }
-
-            @Override
-            protected Node getParsedObject(String fileName) {
-                return Spin1Compiler.this.getParsedObject(fileName);
-            }
-
-        };
+        preprocessor = new Spin1Preprocessor(this);
         preprocessor.process(rootFile, root);
         preprocessor.removeUnusedMethods();
 
-        ListOrderedMap<String, Node> objects = preprocessor.getObjects();
+        ListOrderedMap<File, Node> objects = preprocessor.getObjects();
 
-        for (Entry<String, Node> entry : objects.entrySet()) {
-            Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey(), scope, childObjects);
-            objectCompiler.setOpenspinCompatibile(spenspinCompatible);
+        for (Entry<File, Node> entry : objects.entrySet()) {
+            Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey().getName());
+            objectCompiler.setOpenspinCompatibile(openspinCompatible);
             objectCompiler.compile(entry.getValue());
-            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), objectCompiler));
+            childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
         }
 
-        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFile.getName(), scope, childObjects);
-        objectCompiler.setOpenspinCompatibile(spenspinCompatible);
+        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFile.getName());
+        objectCompiler.setOpenspinCompatibile(openspinCompatible);
         objectCompiler.compile(root);
 
         Spin1Object object = objectCompiler.generateObject(memoryOffset);
         memoryOffset += object.getSize();
 
         for (int i = objects.size() - 1; i >= 0; i--) {
-            String fileName = objects.get(i);
-            ObjectInfo info = childObjects.get(fileName);
+            File file = objects.get(i);
+            ObjectInfo info = childObjects.get(file);
             info.offset = object.getSize();
             Spin1Object linkedObject = info.compiler.generateObject(memoryOffset);
             memoryOffset += linkedObject.getSize();
-            linkedObject.getObject(0).setText("Object \"" + fileName + "\" header (var size " + linkedObject.getVarSize() + ")");
+            linkedObject.getObject(0).setText("Object \"" + file.getName() + "\" header (var size " + linkedObject.getVarSize() + ")");
             object.writeObject(linkedObject);
         }
 
         for (ObjectInfo info : childObjects.values()) {
             for (LinkDataObject linkData : info.compiler.getObjectLinks()) {
-                for (ObjectInfo info2 : childObjects.values()) {
+                for (Entry<File, ObjectInfo> entry : childObjects.entrySet()) {
+                    ObjectInfo info2 = entry.getValue();
                     if (info2.compiler == linkData.object) {
                         linkData.setOffset(info2.offset - info.offset);
-                        linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", info2.fileName, linkData.getOffset(), linkData.getVarOffset()));
+                        linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", entry.getKey().getName(), linkData.getOffset(), linkData.getVarOffset()));
                         break;
                     }
                 }
@@ -254,12 +236,31 @@ public class Spin1Compiler extends Compiler {
         }
 
         for (LinkDataObject linkData : objectCompiler.getObjectLinks()) {
-            for (ObjectInfo info : childObjects.values()) {
+            for (Entry<File, ObjectInfo> entry : childObjects.entrySet()) {
+                ObjectInfo info = entry.getValue();
                 if (info.compiler == linkData.object) {
                     linkData.setOffset(info.offset);
-                    linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", info.fileName, linkData.getOffset(), linkData.getVarOffset()));
+                    linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", entry.getKey().getName(), linkData.getOffset(), linkData.getVarOffset()));
                     break;
                 }
+            }
+        }
+
+        int stackRequired = 16;
+        if (objectCompiler.getScope().hasSymbol("_STACK")) {
+            stackRequired = objectCompiler.getScope().getLocalSymbol("_STACK").getNumber().intValue();
+        }
+        if (objectCompiler.getScope().hasSymbol("_FREE")) {
+            stackRequired += objectCompiler.getScope().getLocalSymbol("_FREE").getNumber().intValue();
+        }
+
+        if (stackRequired > 0x2000) {
+            logMessage(new CompilerException(rootFile.getName(), "_STACK and _FREE must sum to under 8k longs."));
+        }
+        else {
+            int requiredSize = object.getSize() + object.getVarSize() + (stackRequired << 2);
+            if (requiredSize >= 0x8000) {
+                logMessage(new CompilerException(rootFile.getName(), "object exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs."));
             }
         }
 
@@ -267,6 +268,14 @@ public class Spin1Compiler extends Compiler {
 
         return object;
 
+    }
+
+    public ObjectInfo getObjectInfo(String fileName) {
+        File file = getFile(fileName);
+        if (file == null) {
+            file = getFile(fileName + ".spin");
+        }
+        return childObjects.get(file);
     }
 
     protected Node getParsedObject(String fileName) {

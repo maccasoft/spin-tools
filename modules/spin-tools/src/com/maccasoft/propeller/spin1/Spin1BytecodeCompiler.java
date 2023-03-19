@@ -12,11 +12,7 @@ package com.maccasoft.propeller.spin1;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Add;
@@ -46,7 +42,6 @@ import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin1.Spin1Bytecode.Descriptor;
-import com.maccasoft.propeller.spin1.Spin1ObjectCompiler.ObjectInfo;
 import com.maccasoft.propeller.spin1.bytecode.Address;
 import com.maccasoft.propeller.spin1.bytecode.Bytecode;
 import com.maccasoft.propeller.spin1.bytecode.Constant;
@@ -61,18 +56,15 @@ import com.maccasoft.propeller.spin1.bytecode.VariableOp;
 
 public abstract class Spin1BytecodeCompiler {
 
-    Map<String, ObjectInfo> objects;
     boolean openspinCompatible;
 
     List<Spin1Bytecode> stringData;
 
     Spin1BytecodeCompiler() {
-        this.objects = ListOrderedMap.listOrderedMap(new HashMap<String, ObjectInfo>());
         this.stringData = new ArrayList<>();
     }
 
-    public Spin1BytecodeCompiler(Map<String, ObjectInfo> objects, boolean openspinCompatible) {
-        this.objects = objects;
+    public Spin1BytecodeCompiler(boolean openspinCompatible) {
         this.openspinCompatible = openspinCompatible;
         this.stringData = new ArrayList<>();
     }

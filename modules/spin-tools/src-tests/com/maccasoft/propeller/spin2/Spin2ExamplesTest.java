@@ -178,7 +178,19 @@ class Spin2ExamplesTest {
         }
 
         @Override
-        protected Node getParsedObject(String fileName) {
+        public File getFile(String name) {
+            File file = new File(parent, name);
+            if (!file.exists() || file.isDirectory()) {
+                file = new File(path, name);
+            }
+            if (!file.exists() || file.isDirectory()) {
+                file = new File(libraryPath, name);
+            }
+            return file.exists() && !file.isDirectory() ? file : null;
+        }
+
+        @Override
+        public Node getParsedObject(String fileName) {
             String text = getObjectSource(fileName);
             if (text == null) {
                 return null;

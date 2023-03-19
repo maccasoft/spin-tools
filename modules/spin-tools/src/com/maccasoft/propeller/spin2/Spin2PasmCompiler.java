@@ -125,7 +125,9 @@ public abstract class Spin2PasmCompiler {
         Spin2Context rootScope = scope;
         if (label != null && !label.startsWith(".")) {
             if (nested > 0) {
-                scope = rootScope = scope.getParent();
+                if (scope.getParent() != null) {
+                    scope = rootScope = scope.getParent();
+                }
                 nested--;
             }
             scope = new Spin2Context(scope);

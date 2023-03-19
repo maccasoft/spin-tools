@@ -259,7 +259,13 @@ class Spin2LibraryTest {
         }
 
         @Override
-        protected Node getParsedObject(String fileName) {
+        public File getFile(String name) {
+            File file = new File(path, name);
+            return file.exists() ? file : null;
+        }
+
+        @Override
+        public Node getParsedObject(String fileName) {
             String text = getObjectSource(fileName);
             if (text == null) {
                 return null;

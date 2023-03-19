@@ -295,50 +295,59 @@ public class EditorTab implements FindReplaceTarget {
                         boolean spin2 = tabItemText.toLowerCase().endsWith(".spin2") ? true : false;
                         boolean caseSensitive = spin2 ? preferences.getSpin2CaseSensitiveSymbols() : preferences.getSpin1CaseSensitiveSymbols();
 
-                        Compiler compiler = spin2 ? new Spin2Compiler(caseSensitive) : new Spin1Compiler(caseSensitive);
-                        compiler.setRemoveUnusedMethods(true);
-                        if (compiler instanceof Spin2Compiler) {
-                            compiler.setDebugEnabled(sourcePool.isDebugEnabled());
-                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+                        Compiler compiler = null;
+                        if (tabItemText.toLowerCase().endsWith(".spin")) {
+                            compiler = new Spin1Compiler();
                         }
-                        if (compiler instanceof Spin1Compiler) {
-                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
+                        else if (tabItemText.toLowerCase().endsWith(".spin2")) {
+                            compiler = new Spin2Compiler();
                         }
-
-                        try {
-                            object = compiler.compile(localFile, root);
-                            objectTree = compiler.getObjectTree();
-                            errors = compiler.hasErrors();
-                        } catch (Exception e) {
-                            errors = true;
-                            e.printStackTrace();
-                        }
-
-                        if (!pendingCompile.get()) {
-                            messages.clear();
-                            messages.addAll(compiler.getMessages());
-
-                            List<CompilerException> list = new ArrayList<CompilerException>();
-                            for (CompilerException msg : messages) {
-                                if (tabItemText.equals(msg.fileName)) {
-                                    list.add(msg);
-                                }
+                        if (compiler != null) {
+                            compiler.setCaseSensitive(caseSensitive);
+                            compiler.setRemoveUnusedMethods(true);
+                            if (compiler instanceof Spin2Compiler) {
+                                compiler.setDebugEnabled(sourcePool.isDebugEnabled());
+                                compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+                            }
+                            if (compiler instanceof Spin1Compiler) {
+                                compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
                             }
 
-                            Display.getDefault().asyncExec(new Runnable() {
+                            try {
+                                object = compiler.compile(localFile, root);
+                                objectTree = compiler.getObjectTree();
+                                errors = compiler.hasErrors();
+                            } catch (Exception e) {
+                                errors = true;
+                                e.printStackTrace();
+                            }
 
-                                @Override
-                                public void run() {
-                                    if (editor == null || editor.getStyledText().isDisposed()) {
-                                        return;
+                            if (!pendingCompile.get()) {
+                                messages.clear();
+                                messages.addAll(compiler.getMessages());
+
+                                List<CompilerException> list = new ArrayList<CompilerException>();
+                                for (CompilerException msg : messages) {
+                                    if (tabItemText.equals(msg.fileName)) {
+                                        list.add(msg);
                                     }
-                                    changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
-                                    editor.setCompilerMessages(list);
-                                    editor.redraw();
-                                    tabItem.setFont(null);
-                                    updateTabItemText();
                                 }
-                            });
+
+                                Display.getDefault().asyncExec(new Runnable() {
+
+                                    @Override
+                                    public void run() {
+                                        if (editor == null || editor.getStyledText().isDisposed()) {
+                                            return;
+                                        }
+                                        changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
+                                        editor.setCompilerMessages(list);
+                                        editor.redraw();
+                                        tabItem.setFont(null);
+                                        updateTabItemText();
+                                    }
+                                });
+                            }
                         }
 
                         threadRunning.set(false);

@@ -15,11 +15,11 @@ import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.Compiler;
@@ -29,30 +29,46 @@ import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.Spin2Object.LinkDataObject;
-import com.maccasoft.propeller.spin2.Spin2ObjectCompiler.ObjectInfo;
 
 public class Spin2Compiler extends Compiler {
 
-    final Spin2Context scope;
-    Map<String, ObjectInfo> childObjects = new CaseInsensitiveMap<>();
+    public static class ObjectInfo {
+
+        public Spin2ObjectCompiler compiler;
+
+        public long offset;
+        public Expression count;
+
+        public ObjectInfo(Spin2ObjectCompiler compiler) {
+            this.compiler = compiler;
+        }
+
+        public ObjectInfo(Spin2ObjectCompiler compiler, Expression count) {
+            this.compiler = compiler;
+            this.count = count;
+        }
+
+        public boolean hasErrors() {
+            return compiler.hasErrors();
+        }
+
+    }
+
+    protected boolean removeUnusedMethods;
+
+    protected boolean debugEnabled;
+    protected List<Object> debugStatements = new ArrayList<Object>();
+
+    protected Spin2Interpreter interpreter;
+
+    Spin2Preprocessor preprocessor;
+    protected Map<File, ObjectInfo> childObjects = new HashMap<>();
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
 
-    boolean debugEnabled;
-    List<Object> debugStatements = new ArrayList<Object>();
-
-    boolean removeUnusedMethods;
-    Spin2Preprocessor preprocessor;
-
-    Spin2Interpreter interpreter;
-
     public Spin2Compiler() {
-        scope = new Spin2GlobalContext();
-    }
 
-    public Spin2Compiler(boolean caseSensitive) {
-        scope = new Spin2GlobalContext(caseSensitive);
     }
 
     @Override
@@ -106,8 +122,8 @@ public class Spin2Compiler extends Compiler {
 
         String fileName;
 
-        public Spin2ObjectCompilerProxy(String fileName, Spin2Context scope, Map<String, ObjectInfo> childObjects, boolean debugEnabled, List<Object> debugStatements) {
-            super(scope, childObjects, debugEnabled, debugStatements);
+        public Spin2ObjectCompilerProxy(String fileName, List<Object> debugStatements) {
+            super(Spin2Compiler.this, debugStatements);
             this.fileName = fileName;
         }
 
@@ -152,32 +168,20 @@ public class Spin2Compiler extends Compiler {
 
     }
 
-    Spin2Object compileObject(File rootFile, Node root) {
-        preprocessor = new Spin2Preprocessor() {
-
-            @Override
-            protected File getFile(String name) {
-                return Spin2Compiler.this.getFile(name);
-            }
-
-            @Override
-            protected Node getParsedObject(String fileName) {
-                return Spin2Compiler.this.getParsedObject(fileName);
-            }
-
-        };
+    protected Spin2Object compileObject(File rootFile, Node root) {
+        preprocessor = new Spin2Preprocessor(this);
         preprocessor.process(rootFile, root);
         preprocessor.removeUnusedMethods();
 
-        ListOrderedMap<String, Node> objects = preprocessor.getObjects();
+        ListOrderedMap<File, Node> objects = preprocessor.getObjects();
 
-        for (Entry<String, Node> entry : objects.entrySet()) {
-            Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey(), scope, childObjects, debugEnabled, debugStatements);
+        for (Entry<File, Node> entry : objects.entrySet()) {
+            Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey().getName(), debugStatements);
             objectCompiler.compile(entry.getValue());
-            childObjects.put(entry.getKey(), new ObjectInfo(entry.getKey(), objectCompiler));
+            childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
         }
 
-        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFile.getName(), scope, childObjects, debugEnabled, debugStatements);
+        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFile.getName(), debugStatements);
         objectCompiler.compile(root);
 
         int memoryOffset = 0;
@@ -193,21 +197,22 @@ public class Spin2Compiler extends Compiler {
         memoryOffset += object.getSize();
 
         for (int i = objects.size() - 1; i >= 0; i--) {
-            String fileName = objects.get(i);
-            ObjectInfo info = childObjects.get(fileName);
+            File file = objects.get(i);
+            ObjectInfo info = childObjects.get(file);
             info.offset = object.getSize();
             Spin2Object linkedObject = info.compiler.generateObject(memoryOffset);
             memoryOffset += linkedObject.getSize();
-            linkedObject.getObject(0).setText("Object \"" + fileName + "\" header (var size " + linkedObject.getVarSize() + ")");
+            linkedObject.getObject(0).setText("Object \"" + file.getName() + "\" header (var size " + linkedObject.getVarSize() + ")");
             object.writeObject(linkedObject);
         }
 
         for (ObjectInfo info : childObjects.values()) {
             for (LinkDataObject linkData : info.compiler.getObjectLinks()) {
-                for (ObjectInfo info2 : childObjects.values()) {
+                for (Entry<File, ObjectInfo> entry : childObjects.entrySet()) {
+                    ObjectInfo info2 = entry.getValue();
                     if (info2.compiler == linkData.object) {
                         linkData.setOffset(info2.offset - info.offset);
-                        linkData.setText(String.format("Object \"%s\" @ $%05X", info2.fileName, linkData.getOffset()));
+                        linkData.setText(String.format("Object \"%s\" @ $%05X", entry.getKey().getName(), linkData.getOffset()));
                         break;
                     }
                 }
@@ -215,10 +220,11 @@ public class Spin2Compiler extends Compiler {
         }
 
         for (LinkDataObject linkData : objectCompiler.getObjectLinks()) {
-            for (ObjectInfo info : childObjects.values()) {
+            for (Entry<File, ObjectInfo> entry : childObjects.entrySet()) {
+                ObjectInfo info = entry.getValue();
                 if (info.compiler == linkData.object) {
                     linkData.setOffset(info.offset);
-                    linkData.setText(String.format("Object \"%s\" @ $%05X", info.fileName, linkData.getOffset()));
+                    linkData.setText(String.format("Object \"%s\" @ $%05X", entry.getKey().getName(), linkData.getOffset()));
                     break;
                 }
             }
@@ -241,7 +247,19 @@ public class Spin2Compiler extends Compiler {
 
     }
 
-    protected Node getParsedObject(String fileName) {
+    public boolean isDebugEnabled() {
+        return debugEnabled;
+    }
+
+    public ObjectInfo getObjectInfo(String fileName) {
+        File file = getFile(fileName);
+        if (file == null) {
+            file = getFile(fileName + ".spin2");
+        }
+        return childObjects.get(file);
+    }
+
+    public Node getParsedObject(String fileName) {
         Node node = getParsedSource(fileName);
         if (node == null) {
             String text = getSource(fileName);

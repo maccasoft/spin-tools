@@ -1055,6 +1055,14 @@ class Spin1CompilerTest {
         }
 
         @Override
+        public File getFile(String name) {
+            if (sources.containsKey(name)) {
+                return new File(name);
+            }
+            return null;
+        }
+
+        @Override
         protected Node getParsedObject(String fileName) {
             String text = sources.get(fileName);
             if (text == null) {

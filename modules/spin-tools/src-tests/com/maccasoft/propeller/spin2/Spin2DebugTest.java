@@ -13,9 +13,7 @@ package com.maccasoft.propeller.spin2;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -24,7 +22,6 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.spin2.Spin2ObjectCompiler.ObjectInfo;
 
 class Spin2DebugTest {
 
@@ -468,18 +465,18 @@ class Spin2DebugTest {
     }
 
     String compile(String text) throws Exception {
-        Spin2Context scope = new Spin2GlobalContext();
-        Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
         Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser subject = new Spin2Parser(stream);
-        Node root = subject.parse();
+        Spin2Parser parser = new Spin2Parser(stream);
+        Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(scope, childObjects, true);
-        Spin2Object obj = compiler.compileObject(root);
-        obj.setDebugData(compiler.generateDebugData());
+        Spin2Compiler compiler = new Spin2Compiler();
+        compiler.setDebugEnabled(true);
+        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(compiler, new ArrayList<>());
+        Spin2Object obj = objectCompiler.compileObject(root);
+        obj.setDebugData(objectCompiler.generateDebugData());
         obj.setDebugger(new Spin2Debugger());
 
-        for (CompilerException msg : compiler.getMessages()) {
+        for (CompilerException msg : objectCompiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {
                 throw msg;
             }

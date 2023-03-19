@@ -128,7 +128,8 @@ public class SpinCompiler {
 
             boolean caseSensitive = cmd.hasOption('c');
             String suffix = name.substring(name.lastIndexOf('.')).toLowerCase();
-            Compiler compiler = ".spin2".equals(suffix) ? new Spin2Compiler(caseSensitive) : new Spin1Compiler(caseSensitive);
+            Compiler compiler = ".spin2".equals(suffix) ? new Spin2Compiler() : new Spin1Compiler();
+            compiler.setCaseSensitive(caseSensitive);
             compiler.addSourceProvider(new Compiler.FileSourceProvider(suffix, libraryPaths.toArray(new File[libraryPaths.size()])));
             if (cmd.hasOption('d')) {
                 compiler.setDebugEnabled(true);

@@ -343,6 +343,18 @@ class Spin1ExamplesTest {
         }
 
         @Override
+        public File getFile(String name) {
+            File file = new File(parent, name);
+            if (!file.exists() || file.isDirectory()) {
+                file = new File(path, name);
+            }
+            if (!file.exists() || file.isDirectory()) {
+                file = new File(libraryPath, name);
+            }
+            return file.exists() && !file.isDirectory() ? file : null;
+        }
+
+        @Override
         protected Node getParsedObject(String fileName) {
             String text = getObjectSource(fileName);
             if (text == null) {

@@ -12,9 +12,7 @@ package com.maccasoft.propeller.spin2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -22,7 +20,6 @@ import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.spin2.Spin2ObjectCompiler.ObjectInfo;
 
 class Spin2ObjectCompilerTest {
 
@@ -36,7 +33,7 @@ class Spin2ObjectCompilerTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
         Assertions.assertEquals(0b00_00, compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
@@ -54,7 +51,7 @@ class Spin2ObjectCompilerTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
         Assertions.assertEquals(250_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -73,7 +70,7 @@ class Spin2ObjectCompilerTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
         Assertions.assertEquals(148_500_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -92,7 +89,7 @@ class Spin2ObjectCompilerTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
         Assertions.assertEquals(100_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -110,7 +107,7 @@ class Spin2ObjectCompilerTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
         Assertions.assertEquals(16_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -129,7 +126,7 @@ class Spin2ObjectCompilerTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
         Assertions.assertEquals(297_500_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -147,7 +144,7 @@ class Spin2ObjectCompilerTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
         Assertions.assertEquals(16_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -165,7 +162,7 @@ class Spin2ObjectCompilerTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
         Assertions.assertEquals(20_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -183,7 +180,7 @@ class Spin2ObjectCompilerTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
         Assertions.assertEquals(20_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -206,7 +203,7 @@ class Spin2ObjectCompilerTest {
         Spin2Parser parser = new Spin2Parser(stream);
         Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2GlobalContext(), Collections.emptyMap());
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
         Assertions.assertEquals(0x000L, compiler.source.get(0).getScope().getSymbol("$").getNumber());
@@ -4377,6 +4374,47 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testInlineAssemblyLocalLabel() throws Exception {
+        String text = ""
+            + "PUB main(a)\n"
+            + "\n"
+            + "        org\n"
+            + "        mov     pr0, #0\n"
+            + ".l1    add     pr0, a\n"
+            + "        djnz    a, #.l1\n"
+            + "        end\n"
+            + "\n"
+            + "    repeat a from 0 to 7\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 81    Method main @ $00008 (1 parameters, 0 returns)\n"
+            + "00004 00004       28 00 00 00    End\n"
+            + "' PUB main(a)\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'         org\n"
+            + "00009 00009       19 5E          INLINE-EXEC\n"
+            + "0000B 0000B       00 00 03 00    ORG=$000, 4\n"
+            + "0000F 0000F   000                                    org\n"
+            + "0000F 0000F   000 00 B0 07 F6                        mov     pr0, #0\n"
+            + "00013 00013   001 E0 B1 03 F1    .l1                 add     pr0, a\n"
+            + "00017 00017   002 FE C1 6F FB                        djnz    a, #.l1\n"
+            + "0001B 0001B   003 2D 00 64 FD                        ret\n"
+            + "'     repeat a from 0 to 7\n"
+            + "0001F 0001F       44 25          ADDRESS ($00025)\n"
+            + "00021 00021       A8             CONSTANT (7)\n"
+            + "00022 00022       A1             CONSTANT (0)\n"
+            + "00023 00023       D0             VAR_SETUP LONG DBASE+$00000 (short)\n"
+            + "00024 00024       7B             REPEAT\n"
+            + "00025 00025       D0             VAR_SETUP LONG DBASE+$00000 (short)\n"
+            + "00026 00026       7D             REPEAT_LOOP\n"
+            + "00027 00027       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testInlineAssemblyOrg() throws Exception {
         String text = ""
             + "PUB main(a)\n"
@@ -5895,25 +5933,50 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testPAsmLocalLabel() throws Exception {
+        String text = ""
+            + "DAT\n"
+            + "        org     $000\n"
+            + "start\n"
+            + "        mov     pr0, #0\n"
+            + ".l1     add     pr0, a\n"
+            + "        djnz    a, #.l1\n"
+            + ".l2     jmp     #.l2\n"
+            + "a       long    10\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000                start               \n"
+            + "00000 00000   000 00 B0 07 F6                        mov     pr0, #0\n"
+            + "00004 00004   001 04 B0 03 F1    .l1                 add     pr0, a\n"
+            + "00008 00008   002 FE 09 6C FB                        djnz    a, #.l1\n"
+            + "0000C 0000C   003 FC FF 9F FD    .l2                 jmp     #.l2\n"
+            + "00010 00010   004 0A 00 00 00    a                   long    10\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
 
     String compile(String text, boolean debugEnabled) throws Exception {
-        Spin2Context scope = new Spin2GlobalContext();
-        Map<String, ObjectInfo> childObjects = new HashMap<String, ObjectInfo>();
         Spin2TokenStream stream = new Spin2TokenStream(text);
-        Spin2Parser subject = new Spin2Parser(stream);
-        Node root = subject.parse();
+        Spin2Parser parser = new Spin2Parser(stream);
+        Node root = parser.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(scope, childObjects, debugEnabled);
-        Spin2Object obj = compiler.compileObject(root);
+        Spin2Compiler compiler = new Spin2Compiler();
+        compiler.setDebugEnabled(debugEnabled);
+        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(compiler, new ArrayList<>());
+        Spin2Object obj = objectCompiler.compileObject(root);
         if (debugEnabled) {
-            obj.setDebugData(compiler.generateDebugData());
+            obj.setDebugData(objectCompiler.generateDebugData());
             obj.setDebugger(new Spin2Debugger());
         }
 
-        for (CompilerException msg : compiler.getMessages()) {
+        for (CompilerException msg : objectCompiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {
                 throw msg;
             }

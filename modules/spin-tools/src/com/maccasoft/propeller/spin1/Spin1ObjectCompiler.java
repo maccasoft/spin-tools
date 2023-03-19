@@ -44,6 +44,7 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1Bytecode.Descriptor;
+import com.maccasoft.propeller.spin1.Spin1Compiler.ObjectInfo;
 import com.maccasoft.propeller.spin1.Spin1Object.LinkDataObject;
 import com.maccasoft.propeller.spin1.bytecode.Address;
 import com.maccasoft.propeller.spin1.bytecode.Bytecode;
@@ -63,34 +64,10 @@ import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class Spin1ObjectCompiler {
 
-    public static class ObjectInfo {
-        String fileName;
-        Spin1ObjectCompiler compiler;
-
-        long offset;
-        Expression count;
-
-        public ObjectInfo(String fileName, Spin1ObjectCompiler compiler) {
-            this.fileName = fileName;
-            this.compiler = compiler;
-        }
-
-        public ObjectInfo(String fileName, Spin1ObjectCompiler compiler, Expression count) {
-            this.fileName = fileName;
-            this.compiler = compiler;
-            this.count = count;
-        }
-
-        public boolean hasErrors() {
-            return compiler.hasErrors();
-        }
-
-    }
-
     class BytecodeCompiler extends Spin1BytecodeCompiler {
 
-        public BytecodeCompiler(Map<String, ObjectInfo> objects, boolean openspinCompatible) {
-            super(objects, openspinCompatible);
+        public BytecodeCompiler(boolean openspinCompatible) {
+            super(openspinCompatible);
         }
 
         @Override
@@ -101,7 +78,7 @@ public class Spin1ObjectCompiler {
     }
 
     final Spin1Context scope;
-    final Map<String, ObjectInfo> childObjects;
+    final Spin1Compiler compiler;
 
     List<Spin1PAsmLine> source = new ArrayList<Spin1PAsmLine>();
     List<Spin1Method> methods = new ArrayList<Spin1Method>();
@@ -120,9 +97,9 @@ public class Spin1ObjectCompiler {
     List<LinkDataObject> objectLinks = new ArrayList<LinkDataObject>();
     List<LongDataObject> methodData = new ArrayList<LongDataObject>();
 
-    public Spin1ObjectCompiler(Spin1Context scope, Map<String, ObjectInfo> childObjects) {
-        this.scope = new Spin1Context(scope);
-        this.childObjects = childObjects;
+    public Spin1ObjectCompiler(Spin1Compiler compiler) {
+        this.scope = new Spin1GlobalContext(compiler.isCaseSensitive());
+        this.compiler = compiler;
     }
 
     public Spin1Object compileObject(Node root) {
@@ -306,7 +283,7 @@ public class Spin1ObjectCompiler {
         }
 
         for (Spin1Method method : methods) {
-            Spin1BytecodeCompiler compiler = new BytecodeCompiler(objects, openspinCompatible);
+            Spin1BytecodeCompiler compiler = new BytecodeCompiler(openspinCompatible);
             List<Spin1MethodLine> lines = method.getLines();
             for (Spin1MethodLine line : lines) {
                 try {
@@ -793,10 +770,7 @@ public class Spin1ObjectCompiler {
                 }
                 String fileName = token.getText().substring(1, token.getText().length() - 1);
 
-                ObjectInfo info = childObjects.get(fileName);
-                if (info == null) {
-                    info = childObjects.get(fileName + ".spin");
-                }
+                ObjectInfo info = compiler.getObjectInfo(fileName);
                 if (info == null) {
                     logMessage(new CompilerException("object " + token + " not found", token));
                     return;
@@ -806,7 +780,7 @@ public class Spin1ObjectCompiler {
                     return;
                 }
 
-                objects.put(name, new ObjectInfo(info.fileName, info.compiler, count));
+                objects.put(name, new ObjectInfo(info.compiler, count));
 
                 for (Entry<String, Expression> entry : info.compiler.getPublicSymbols().entrySet()) {
                     if (!(entry.getValue() instanceof Method)) {
@@ -1781,6 +1755,10 @@ public class Spin1ObjectCompiler {
         }
 
         return bitPos;
+    }
+
+    public Spin1Context getScope() {
+        return scope;
     }
 
     protected void logMessage(CompilerException message) {

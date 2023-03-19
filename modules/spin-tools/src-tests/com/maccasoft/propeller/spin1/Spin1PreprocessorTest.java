@@ -26,7 +26,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -43,7 +43,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -68,7 +68,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -94,7 +94,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -121,7 +121,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -146,7 +146,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -176,7 +176,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor() {
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler() {
 
             @Override
             protected Node getParsedObject(String fileName) {
@@ -186,7 +186,7 @@ class Spin1PreprocessorTest {
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -217,7 +217,15 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor() {
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler() {
+
+            @Override
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin")) {
+                    return new File(name);
+                }
+                return null;
+            }
 
             @Override
             protected Node getParsedObject(String fileName) {
@@ -227,7 +235,7 @@ class Spin1PreprocessorTest {
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -258,7 +266,15 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor() {
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler() {
+
+            @Override
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin")) {
+                    return new File(name);
+                }
+                return null;
+            }
 
             @Override
             protected Node getParsedObject(String fileName) {
@@ -268,7 +284,7 @@ class Spin1PreprocessorTest {
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -300,7 +316,15 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor() {
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler() {
+
+            @Override
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin")) {
+                    return new File(name);
+                }
+                return null;
+            }
 
             @Override
             protected Node getParsedObject(String fileName) {
@@ -310,7 +334,7 @@ class Spin1PreprocessorTest {
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -330,7 +354,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -348,7 +372,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -369,7 +393,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -391,7 +415,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -412,7 +436,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -438,7 +462,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor() {
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler() {
 
             @Override
             protected Node getParsedObject(String fileName) {
@@ -448,7 +472,7 @@ class Spin1PreprocessorTest {
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -475,7 +499,15 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor() {
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler() {
+
+            @Override
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin")) {
+                    return new File(name);
+                }
+                return null;
+            }
 
             @Override
             protected Node getParsedObject(String fileName) {
@@ -485,7 +517,7 @@ class Spin1PreprocessorTest {
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -513,7 +545,15 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor() {
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler() {
+
+            @Override
+            public File getFile(String name) {
+                if (name.toLowerCase().endsWith(".spin")) {
+                    return new File(name);
+                }
+                return null;
+            }
 
             @Override
             protected Node getParsedObject(String fileName) {
@@ -523,7 +563,7 @@ class Spin1PreprocessorTest {
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -550,7 +590,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor() {
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler() {
 
             @Override
             protected Node getParsedObject(String fileName) {
@@ -560,7 +600,7 @@ class Spin1PreprocessorTest {
                 return null;
             }
 
-        };
+        });
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -581,7 +621,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -606,7 +646,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
@@ -628,7 +668,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
 
         Assertions.assertEquals(1, subject.referencedMethods.get(root.getChild(0)).count);
@@ -654,7 +694,7 @@ class Spin1PreprocessorTest {
             + "\n"
             + "");
 
-        Spin1Preprocessor subject = new Spin1Preprocessor();
+        Spin1Preprocessor subject = new Spin1Preprocessor(new Spin1Compiler());
         subject.process(new File("root"), root);
         subject.removeUnusedMethods();
 
