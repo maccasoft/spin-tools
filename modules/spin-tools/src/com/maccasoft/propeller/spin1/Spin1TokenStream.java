@@ -139,6 +139,9 @@ public class Spin1TokenStream extends TokenStream {
 
                     return token;
                 case Token.STRING:
+                    if (ch == '\r' || ch == '\n') {
+                        return token;
+                    }
                     token.stop++;
                     if (escape) {
                         escape = false;
