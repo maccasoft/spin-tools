@@ -324,6 +324,7 @@ public class Spin1ObjectCompiler {
                     while (methodsIterator.hasNext()) {
                         Spin1Method method = methodsIterator.next();
                         if (!method.isReferenced()) {
+                            logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.getLabel() + "\" is not used", method.getData()));
                             method.remove();
                             methodsIterator.remove();
                             loop = true;
@@ -339,6 +340,9 @@ public class Spin1ObjectCompiler {
             methodData.add(new LongDataObject(0, "Function " + method.getLabel()));
             while (methodsIterator.hasNext()) {
                 method = methodsIterator.next();
+                if (!method.isReferenced()) {
+                    logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.getLabel() + "\" is not used", method.getData()));
+                }
                 methodData.add(new LongDataObject(0, "Function " + method.getLabel()));
             }
         }
