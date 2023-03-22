@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -11,6 +11,10 @@
 package com.maccasoft.propeller.model;
 
 public class NodeVisitor {
+
+    public void visitDirective(DirectiveNode node) {
+
+    }
 
     public boolean visitConstants(ConstantsNode node) {
         return true;
@@ -37,6 +41,10 @@ public class NodeVisitor {
     }
 
     public boolean visitMethod(MethodNode node) {
+        return true;
+    }
+
+    public boolean visitFunction(FunctionNode node) {
         return true;
     }
 

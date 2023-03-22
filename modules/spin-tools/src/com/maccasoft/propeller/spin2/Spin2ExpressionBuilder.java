@@ -186,8 +186,8 @@ public class Spin2ExpressionBuilder {
     static {
     }
 
-    Spin2Context context;
-    List<Token> tokens = new ArrayList<Token>();
+    protected Spin2Context context;
+    protected List<Token> tokens = new ArrayList<Token>();
 
     int index;
 
@@ -215,7 +215,7 @@ public class Spin2ExpressionBuilder {
         return node;
     }
 
-    Expression parseLevel(Expression left, int level) {
+    protected Expression parseLevel(Expression left, int level) {
         for (;;) {
             Token token = peek();
             if (token == null) {
@@ -376,7 +376,7 @@ public class Spin2ExpressionBuilder {
         }
     }
 
-    Expression parseAtom() {
+    protected Expression parseAtom() {
         Token token = peek();
         if (token == null) {
             throw new CompilerException("expecting operand", tokens.get(tokens.size() - 1));
@@ -415,121 +415,102 @@ public class Spin2ExpressionBuilder {
 
         if (token.type != Token.OPERATOR) {
             token = next();
-            switch (token.getText().toUpperCase()) {
-                case "FLOAT": {
-                    next();
-                    Expression expression = new com.maccasoft.propeller.expressions.Float(parseLevel(parseAtom(), 0));
-                    token = next();
-                    if (token == null || !")".equals(token.getText())) {
-                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
-                    }
-                    return expression;
-                }
-                case "TRUNC": {
-                    next();
-                    Expression expression = new Trunc(parseLevel(parseAtom(), 0));
-                    token = next();
-                    if (token == null || !")".equals(token.getText())) {
-                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
-                    }
-                    return expression;
-                }
-                case "ROUND": {
-                    next();
-                    Expression expression = new Round(parseLevel(parseAtom(), 0));
-                    token = next();
-                    if (token == null || !")".equals(token.getText())) {
-                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
-                    }
-                    return expression;
-                }
-                case "SQRT":
-                case "FSQRT": {
-                    next();
-                    Expression expression = new Sqrt(parseLevel(parseAtom(), 0));
-                    token = next();
-                    if (token == null || !")".equals(token.getText())) {
-                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
-                    }
-                    return expression;
-                }
-                case "ABS":
-                case "FABS": {
-                    next();
-                    Expression expression = new Abs(parseLevel(parseAtom(), 0));
-                    token = next();
-                    if (token == null || !")".equals(token.getText())) {
-                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
-                    }
-                    return expression;
-                }
-                case "NAN": {
-                    next();
-                    Expression expression = new Nan(parseLevel(parseAtom(), 0));
-                    token = next();
-                    if (token == null || !")".equals(token.getText())) {
-                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
-                    }
-                    return expression;
-                }
-                default:
-                    if (token.type == Token.NUMBER) {
-                        if ("$".equals(token.getText())) {
-                            return new SpinIdentifier(token, context);
-                        }
-                        return new NumberLiteral(token.getText());
-                    }
-                    if (token.type == Token.STRING) {
-                        String s = token.getText().substring(1);
-                        return new CharacterLiteral(s.substring(0, s.length() - 1));
-                    }
-                    return new SpinIdentifier(token, context);
-            }
+            return compilePseudoFunction(token);
         }
 
         throw new CompilerException("unexpected " + token.getText(), token);
     }
 
-    Token peek() {
+    protected Expression compilePseudoFunction(Token token) {
+
+        switch (token.getText().toUpperCase()) {
+            case "FLOAT": {
+                next();
+                Expression expression = new com.maccasoft.propeller.expressions.Float(parseLevel(parseAtom(), 0));
+                token = next();
+                if (token == null || !")".equals(token.getText())) {
+                    throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
+                return expression;
+            }
+            case "TRUNC": {
+                next();
+                Expression expression = new Trunc(parseLevel(parseAtom(), 0));
+                token = next();
+                if (token == null || !")".equals(token.getText())) {
+                    throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
+                return expression;
+            }
+            case "ROUND": {
+                next();
+                Expression expression = new Round(parseLevel(parseAtom(), 0));
+                token = next();
+                if (token == null || !")".equals(token.getText())) {
+                    throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
+                return expression;
+            }
+            case "SQRT":
+            case "FSQRT": {
+                next();
+                Expression expression = new Sqrt(parseLevel(parseAtom(), 0));
+                token = next();
+                if (token == null || !")".equals(token.getText())) {
+                    throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
+                return expression;
+            }
+            case "ABS":
+            case "FABS": {
+                next();
+                Expression expression = new Abs(parseLevel(parseAtom(), 0));
+                token = next();
+                if (token == null || !")".equals(token.getText())) {
+                    throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
+                return expression;
+            }
+            case "NAN": {
+                next();
+                Expression expression = new Nan(parseLevel(parseAtom(), 0));
+                token = next();
+                if (token == null || !")".equals(token.getText())) {
+                    throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                }
+                return expression;
+            }
+            default:
+                if (token.type == Token.NUMBER) {
+                    if ("$".equals(token.getText())) {
+                        return new SpinIdentifier(token, context);
+                    }
+                    return new NumberLiteral(token.getText());
+                }
+                if (token.type == Token.STRING) {
+                    String s = token.getText().substring(1);
+                    return new CharacterLiteral(s.substring(0, s.length() - 1));
+                }
+                return new SpinIdentifier(token, context);
+        }
+    }
+
+    protected Token peek() {
         if (index < tokens.size()) {
             return tokens.get(index);
         }
         return null;
     }
 
-    Token next() {
+    protected Token next() {
         if (index < tokens.size()) {
             return tokens.get(index++);
         }
         return null;
     }
 
-    static Spin2Context scope = new Spin2Context();
-
-    public static void main(String[] args) {
-        String text;
-        Expression expression;
-
-        text = "decod 12";
-        System.out.println(text);
-        expression = parse(text);
-        System.out.println(expression + " = " + expression.getNumber());
-    }
-
-    static Expression parse(String text) {
-        List<Token> tokens = new ArrayList<Token>();
-
-        Spin2TokenStream stream = new Spin2TokenStream(text);
-        while (true) {
-            Token token = stream.nextToken();
-            if (token.type == Token.EOF) {
-                break;
-            }
-            tokens.add(token);
-        }
-
-        Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope, tokens);
-        return builder.getExpression();
+    public List<Token> getTokens() {
+        return tokens;
     }
 
 }

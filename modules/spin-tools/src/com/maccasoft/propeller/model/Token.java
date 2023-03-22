@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -83,7 +83,6 @@ public class Token {
         result.start = start < token.start ? start : token.start;
         result.stop = stop > token.stop ? stop : token.stop;
         result.type = type == token.type ? type : 0;
-        result.text = getText() + token.getText();
         return result;
     }
 

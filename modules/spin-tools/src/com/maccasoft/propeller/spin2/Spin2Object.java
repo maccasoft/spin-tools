@@ -14,8 +14,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.lang3.BitField;
 
@@ -33,9 +31,9 @@ public class Spin2Object extends SpinObject {
 
     public static class LinkDataObject extends DataObject {
 
-        Object object;
-        long offset;
-        long varOffset;
+        public Object object;
+        public long offset;
+        public long varOffset;
 
         public LinkDataObject(Object object, long offset, long varOffset) {
             super(new byte[] {
@@ -73,16 +71,15 @@ public class Spin2Object extends SpinObject {
 
     }
 
-    Spin2Interpreter interpreter;
-    Spin2Debugger debugger;
-    List<LinkDataObject> links = new ArrayList<LinkDataObject>();
+    public Spin2Interpreter interpreter;
+    public Spin2Debugger debugger;
 
-    Spin2Object debugData;
-    boolean clockSetter;
+    public Spin2Object debugData;
+    public boolean clockSetter;
 
-    int debugTxPin = 62;
-    int debugRxPin = 63;
-    int debugBaud = Propeller2Loader.UPLOAD_BAUD_RATE;
+    public int debugTxPin = 62;
+    public int debugRxPin = 63;
+    public int debugBaud = Propeller2Loader.UPLOAD_BAUD_RATE;
 
     public Spin2Object() {
 

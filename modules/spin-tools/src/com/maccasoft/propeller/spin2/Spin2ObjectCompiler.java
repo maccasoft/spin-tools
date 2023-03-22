@@ -1278,7 +1278,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
                         Spin2MethodLine loopLine = line;
                         if (line.getArgumentsCount() == 1) {
-                            loopLine = new Spin2MethodLine(context, null);
+                            loopLine = new Spin2MethodLine(context);
                             line.addChild(loopLine);
                         }
 

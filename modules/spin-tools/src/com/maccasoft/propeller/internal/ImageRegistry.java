@@ -79,6 +79,8 @@ public class ImageRegistry {
         fileMap.put(".bin", "document-binary.png");
         fileMap.put(".binary", "document-binary.png");
         fileMap.put(".bmp", "document-image.png");
+        fileMap.put(".c", "document-code.png");
+        fileMap.put(".cpp", "document-text.png");
         fileMap.put(".dll", "document-binary.png");
         fileMap.put(".exe", "document-binary.png");
         fileMap.put(".gif", "document-image.png");
@@ -92,6 +94,7 @@ public class ImageRegistry {
         fileMap.put(".log", "document-text.png");
         fileMap.put(".lst", "document-text.png");
         fileMap.put(".o", "document-binary.png");
+        fileMap.put(".p2asm", "document-text.png");
         fileMap.put(".pdf", "document-pdf.png");
         fileMap.put(".png", "document-image.png");
         fileMap.put(".rom", "document-binary.png");

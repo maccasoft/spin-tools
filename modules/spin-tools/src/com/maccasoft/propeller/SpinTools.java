@@ -123,6 +123,19 @@ public class SpinTools {
 
     FindReplaceDialog findReplaceDialog;
 
+    static final String[] filterNames = new String[] {
+        "C Files",
+        "Spin1 Files",
+        "Spin2 Files",
+        "All Source Files"
+    };
+    static final String[] filterExtensions = new String[] {
+        "*.c",
+        "*.spin",
+        "*.spin2",
+        "*.spin;*.spin2;*.c",
+    };
+
     final CaretListener caretListener = new CaretListener() {
 
         @Override
@@ -357,7 +370,7 @@ public class SpinTools {
                         return;
                     }
                     String name = fileToOpen.getName().toLowerCase();
-                    if (name.endsWith(".spin") || name.endsWith(".spin2")) {
+                    if (name.endsWith(".spin") || name.endsWith(".spin2") || name.endsWith(".c")) {
                         EditorTab editorTab = findFileEditorTab(fileToOpen);
                         if (editorTab == null) {
                             openNewTab(fileToOpen, true);
@@ -581,18 +594,32 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleFileNewSpin1();
+                String name = getUniqueName("Untitled", ".spin");
+                openNewTab(name, getResourceAsString("template.spin"), true);
             }
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P2 template)" + "\t");
+        item.setText("New (From P2/C template)" + "\t");
         item.setAccelerator(SWT.CTRL + SWT.ALT + '2');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
             public void handleEvent(Event e) {
-                handleFileNewSpin2();
+                String name = getUniqueName("Untitled", ".c");
+                openNewTab(name, getResourceAsString("template.c"), true);
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("New (From P2/Spin template)" + "\t");
+        item.setAccelerator(SWT.CTRL + SWT.ALT + '3');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                String name = getUniqueName("Untitled", ".spin2");
+                openNewTab(name, getResourceAsString("template.spin2"), true);
             }
         });
 
@@ -826,16 +853,6 @@ public class SpinTools {
         openNewTab(name, "", true);
     }
 
-    private void handleFileNewSpin1() {
-        String name = getUniqueName("Untitled", ".spin");
-        openNewTab(name, getResourceAsString("template.spin"), true);
-    }
-
-    private void handleFileNewSpin2() {
-        String name = getUniqueName("Untitled", ".spin2");
-        openNewTab(name, getResourceAsString("template.spin2"), true);
-    }
-
     String getUniqueName(String prefix, String suffix) {
         int count = 0;
         String name = prefix + suffix;
@@ -874,15 +891,10 @@ public class SpinTools {
 
     private void handleFileOpen() {
         FileDialog dlg = new FileDialog(shell, SWT.OPEN);
-        dlg.setText("Open Spin File");
-        String[] filterNames = new String[] {
-            "Spin Files"
-        };
-        String[] filterExtensions = new String[] {
-            "*.spin;*.spin2"
-        };
+        dlg.setText("Open Source File");
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
+        dlg.setFilterIndex(filterExtensions.length - 1);
 
         File filterPath = null;
 
@@ -901,21 +913,21 @@ public class SpinTools {
 
         String fileName = dlg.open();
         if (fileName != null) {
-            openNewTab(new File(fileName), true);
+            File fileToOpen = new File(fileName);
+            EditorTab editorTab = findFileEditorTab(fileToOpen);
+            if (editorTab == null) {
+                editorTab = openNewTab(new File(fileName), true);
+            }
+            tabFolder.setSelection(editorTab.getTabItem());
         }
     }
 
     private void handleFileOpenFrom(String filterPath) {
         FileDialog dlg = new FileDialog(shell, SWT.OPEN);
-        dlg.setText("Open Spin File");
-        String[] filterNames = new String[] {
-            "Spin Files"
-        };
-        String[] filterExtensions = new String[] {
-            "*.spin;*.spin2"
-        };
+        dlg.setText("Open Source File");
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
+        dlg.setFilterIndex(filterExtensions.length - 1);
 
         if (filterPath != null) {
             dlg.setFilterPath(filterPath);
@@ -923,7 +935,12 @@ public class SpinTools {
 
         String fileName = dlg.open();
         if (fileName != null) {
-            openNewTab(new File(fileName), true);
+            File fileToOpen = new File(fileName);
+            EditorTab editorTab = findFileEditorTab(fileToOpen);
+            if (editorTab == null) {
+                editorTab = openNewTab(new File(fileName), true);
+            }
+            tabFolder.setSelection(editorTab.getTabItem());
         }
     }
 
@@ -1037,15 +1054,10 @@ public class SpinTools {
 
     private void doFileSaveAs(EditorTab editorTab) {
         FileDialog dlg = new FileDialog(shell, SWT.SAVE);
-        dlg.setText("Save Spin File");
-        String[] filterNames = new String[] {
-            "Spin Files"
-        };
-        String[] filterExtensions = new String[] {
-            "*.spin;*.spin2"
-        };
+        dlg.setText("Save Source File");
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
+        dlg.setFilterIndex(filterExtensions.length - 1);
 
         dlg.setFileName(editorTab.getText());
         dlg.setOverwrite(true);

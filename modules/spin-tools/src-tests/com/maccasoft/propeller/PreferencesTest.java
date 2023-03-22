@@ -344,7 +344,7 @@ class PreferencesTest {
     @Test
     void testGetDefaultTabStops() throws Exception {
         Preferences subject = new Preferences();
-        Assertions.assertArrayEquals(Preferences.defaultTabStops.get(MethodNode.class), subject.getTabStops(MethodNode.class));
+        Assertions.assertArrayEquals(Preferences.defaultTabStops.get("pub"), subject.getTabStops(MethodNode.class));
     }
 
     @Test

@@ -30,6 +30,7 @@ import org.apache.commons.cli.Options;
 
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
+import com.maccasoft.propeller.spinc.Spin2CCompiler;
 
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
@@ -128,9 +129,13 @@ public class SpinCompiler {
 
             boolean caseSensitive = cmd.hasOption('c');
             String suffix = name.substring(name.lastIndexOf('.')).toLowerCase();
-            Compiler compiler = ".spin2".equals(suffix) ? new Spin2Compiler() : new Spin1Compiler();
+
+            Compiler compiler = ".spin2".equals(suffix) ? new Spin2Compiler() : (".c".equals(suffix) ? new Spin2CCompiler() : new Spin1Compiler());
             compiler.setCaseSensitive(caseSensitive);
             compiler.addSourceProvider(new Compiler.FileSourceProvider(suffix, libraryPaths.toArray(new File[libraryPaths.size()])));
+            if (".c".equals(suffix)) {
+                compiler.addSourceProvider(new Compiler.FileSourceProvider(".spin2", libraryPaths.toArray(new File[libraryPaths.size()])));
+            }
             if (cmd.hasOption('d')) {
                 compiler.setDebugEnabled(true);
             }

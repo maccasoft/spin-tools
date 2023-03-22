@@ -52,7 +52,20 @@ public class Spin2MethodLine {
         this.scope = new Spin2Context(scope);
         this.statement = statement;
         this.data = node;
-        this.text = node.getText();
+        this.text = node.toString().replaceAll("[\\r\\n]", "");
+    }
+
+    public Spin2MethodLine(Spin2Context scope, Spin2MethodLine parent) {
+        this.scope = new Spin2Context(scope);
+        this.parent = parent;
+    }
+
+    public Spin2MethodLine(Spin2Context scope, Spin2MethodLine parent, String statement, Node node) {
+        this.scope = new Spin2Context(scope);
+        this.parent = parent;
+        this.statement = statement;
+        this.data = node;
+        this.text = node.toString().replaceAll("[\\r\\n]", "");
     }
 
     public Spin2Context getScope() {
@@ -156,6 +169,10 @@ public class Spin2MethodLine {
 
     public void addSource(Spin2Bytecode line) {
         source.add(line);
+    }
+
+    public void addSource(int index, Spin2Bytecode line) {
+        source.add(index, line);
     }
 
     public void addSource(Collection<Spin2Bytecode> lines) {

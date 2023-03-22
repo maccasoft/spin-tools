@@ -154,6 +154,10 @@ public class Node {
         return comments;
     }
 
+    public TokenIterator iterator() {
+        return new TokenIterator(tokens);
+    }
+
     @Override
     public String toString() {
         if (tokens.size() == 0) {
@@ -162,7 +166,10 @@ public class Node {
         if (tokens.size() == 1 && tokens.get(0).type == Token.EOF) {
             return "<EOF>";
         }
-        return getText();
+        int s = tokens.size() != 0 ? tokens.get(0).start - tokens.get(0).column : -1;
+        int e = tokens.size() != 0 ? tokens.get(tokens.size() - 1).stop : -1;
+        TokenStream stream = getStartToken().getStream();
+        return stream.getSource(s, e);
     }
 
 }

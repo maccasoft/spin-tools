@@ -29,6 +29,8 @@ import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.DirectiveNode;
+import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
@@ -53,6 +55,7 @@ public abstract class SourceTokenMarker {
         KEYWORD,
         FUNCTION,
         OPERATOR,
+        DIRECTIVE,
         TYPE,
 
         CONSTANT,
@@ -291,6 +294,13 @@ public abstract class SourceTokenMarker {
         root.accept(new NodeVisitor() {
 
             @Override
+            public void visitDirective(DirectiveNode node) {
+                if (lineIndex >= node.getStartToken().line) {
+                    result.set(node);
+                }
+            }
+
+            @Override
             public boolean visitConstants(ConstantsNode node) {
                 if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
@@ -307,11 +317,19 @@ public abstract class SourceTokenMarker {
             }
 
             @Override
-            public boolean visitObjects(ObjectsNode node) {
+            public void visitVariable(VariableNode node) {
                 if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
                 }
-                return true;
+            }
+
+            @Override
+            public boolean visitObjects(ObjectsNode node) {
+                if (lineIndex >= node.getStartToken().line) {
+                    result.set(node);
+                    return true;
+                }
+                return false;
             }
 
             @Override
@@ -325,16 +343,30 @@ public abstract class SourceTokenMarker {
             public boolean visitMethod(MethodNode node) {
                 if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
+                    return true;
                 }
-                return true;
+                return false;
+            }
+
+            @Override
+            public boolean visitFunction(FunctionNode node) {
+                if (lineIndex >= node.getStartToken().line) {
+                    result.set(node);
+                    return true;
+                }
+                return false;
             }
 
             @Override
             public boolean visitStatement(StatementNode node) {
+                if (node.getStartToken() == null) {
+                    return true;
+                }
                 if (lineIndex >= node.getStartToken().line) {
                     result.set(node);
+                    return true;
                 }
-                return true;
+                return false;
             }
 
             @Override
@@ -359,6 +391,7 @@ public abstract class SourceTokenMarker {
 
     public String getMethod(String symbol) {
         StringBuilder sb = new StringBuilder();
+        Map<String, Node> alias = new HashMap<>();
 
         if (symbol.indexOf('.') != -1) {
             String[] s = symbol.split("[\\.]");
@@ -366,6 +399,85 @@ public abstract class SourceTokenMarker {
                 return null;
             }
             root.accept(new NodeVisitor() {
+
+                @Override
+                public void visitDirective(DirectiveNode node) {
+                    if (node instanceof DirectiveNode.IncludeNode) {
+                        DirectiveNode.IncludeNode include = (DirectiveNode.IncludeNode) node;
+                        if (include.getFile() != null) {
+                            String name = include.getFile().getText().substring(1, include.getFile().getText().length() - 1);
+                            if (name.toLowerCase().endsWith(".spin2") || name.toLowerCase().endsWith(".c")) {
+                                name = name.substring(0, name.lastIndexOf('.'));
+                            }
+
+                            String fileName = include.getFile().getText().substring(1, include.getFile().getText().length() - 1);
+                            Node objectRoot = getObjectTree(fileName);
+                            alias.put(name, objectRoot);
+
+                            if (objectRoot != null && name.equals(s[0])) {
+                                objectRoot.accept(new NodeVisitor() {
+
+                                    @Override
+                                    public boolean visitFunction(FunctionNode node) {
+                                        if (node.getIdentifier() != null) {
+                                            if (s[1].equals(node.getIdentifier().getText())) {
+                                                sb.append(getMethodDocument(node));
+                                            }
+                                        }
+                                        return false;
+                                    }
+
+                                    @Override
+                                    public boolean visitMethod(MethodNode node) {
+                                        if (node.getName() != null) {
+                                            if (s[1].equals(node.getName().getText())) {
+                                                sb.append(getMethodDocument(node));
+                                            }
+                                        }
+                                        return false;
+                                    }
+
+                                });
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void visitVariable(VariableNode node) {
+                    if (node.getType() != null && node.getIdentifier() != null) {
+                        Node objectRoot = alias.get(node.getType().getText());
+                        if (objectRoot != null) {
+                            String name = node.getIdentifier().getText();
+                            if (!name.equalsIgnoreCase(s[0])) {
+                                return;
+                            }
+                            objectRoot.accept(new NodeVisitor() {
+
+                                @Override
+                                public boolean visitFunction(FunctionNode node) {
+                                    if (node.getIdentifier() != null) {
+                                        if (s[1].equals(node.getIdentifier().getText())) {
+                                            sb.append(getMethodDocument(node));
+                                        }
+                                    }
+                                    return false;
+                                }
+
+                                @Override
+                                public boolean visitMethod(MethodNode node) {
+                                    if (node.getName() != null) {
+                                        if (s[1].equals(node.getName().getText())) {
+                                            sb.append(getMethodDocument(node));
+                                        }
+                                    }
+                                    return false;
+                                }
+
+                            });
+                        }
+                    }
+                }
 
                 @Override
                 public void visitObject(ObjectNode node) {
@@ -424,6 +536,16 @@ public abstract class SourceTokenMarker {
                 }
 
                 @Override
+                public boolean visitFunction(FunctionNode node) {
+                    if (node.getIdentifier() != null) {
+                        if (symbol.equals(node.getIdentifier().getText())) {
+                            sb.append(getMethodDocument(node));
+                        }
+                    }
+                    return false;
+                }
+
+                @Override
                 public boolean visitMethod(MethodNode node) {
                     if (node.getName() != null) {
                         if (symbol.equals(node.getName().getText())) {
@@ -445,13 +567,16 @@ public abstract class SourceTokenMarker {
             return proposals;
         }
 
-        while (!(context instanceof MethodNode) && context.getParent() != null) {
+        while (!(context instanceof MethodNode) && !(context instanceof FunctionNode) && context.getParent() != null) {
             context = context.getParent();
         }
 
         String contextMethodName;
         if ((context instanceof MethodNode) && ((MethodNode) context).getName() != null) {
             contextMethodName = ((MethodNode) context).getName().getText();
+        }
+        else if ((context instanceof FunctionNode) && ((FunctionNode) context).getIdentifier() != null) {
+            contextMethodName = ((FunctionNode) context).getIdentifier().getText();
         }
         else {
             contextMethodName = "";
@@ -475,9 +600,42 @@ public abstract class SourceTokenMarker {
                 return false;
             }
 
+            @Override
+            public boolean visitFunction(FunctionNode node) {
+                if (node.getIdentifier() != null && !contextMethodName.equals(node.getIdentifier().getText())) {
+                    String text = node.getIdentifier().getText();
+                    if (text.toUpperCase().contains(token)) {
+                        String content = getMethodInsert(node);
+                        int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
+                        proposals.add(new ContentProposal(content, text, "", cursorPosition));
+                    }
+                }
+                return false;
+            }
+
         });
 
         root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitDirective(DirectiveNode node) {
+                Iterator<Token> iter = node.getTokens().iterator();
+                if (iter.hasNext()) {
+                    iter.next();
+                }
+                if (iter.hasNext()) {
+                    Token directive = iter.next();
+                    if ("include".equals(directive.getText())) {
+                        if (iter.hasNext()) {
+                            Token file = iter.next();
+                            String name = file.getText().substring(1, file.getText().length() - 1);
+                            if (name.toUpperCase().contains(token)) {
+                                proposals.add(new ContentProposal(name, name, ""));
+                            }
+                        }
+                    }
+                }
+            }
 
             @Override
             public void visitObject(ObjectNode node) {
@@ -508,6 +666,56 @@ public abstract class SourceTokenMarker {
             root.accept(new NodeVisitor() {
 
                 @Override
+                public void visitDirective(DirectiveNode node) {
+                    Iterator<Token> iter = node.getTokens().iterator();
+                    if (iter.hasNext()) {
+                        iter.next();
+                    }
+                    if (iter.hasNext()) {
+                        Token directive = iter.next();
+                        if ("include".equals(directive.getText())) {
+                            if (iter.hasNext()) {
+                                Token file = iter.next();
+                                String name = file.getText().substring(1, file.getText().length() - 1);
+
+                                String fileName = file.getText().substring(1, file.getText().length() - 1);
+                                Node objectRoot = getObjectTree(fileName);
+                                if (objectRoot != null) {
+                                    objectRoot.accept(new NodeVisitor() {
+
+                                        @Override
+                                        public boolean visitFunction(FunctionNode node) {
+                                            if (node.getIdentifier() != null) {
+                                                String text = name + "." + node.getIdentifier().getText();
+                                                if (text.toUpperCase().contains(refName)) {
+                                                    proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
+                                                }
+                                            }
+                                            return false;
+                                        }
+
+                                        @Override
+                                        public boolean visitMethod(MethodNode node) {
+                                            if (node.getType() == null || node.getName() == null) {
+                                                return false;
+                                            }
+                                            if ("PUB".equalsIgnoreCase(node.getType().getText())) {
+                                                String text = name + "." + node.getName().getText();
+                                                if (text.toUpperCase().contains(refName)) {
+                                                    proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
+                                                }
+                                            }
+                                            return false;
+                                        }
+
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+
+                @Override
                 public void visitObject(ObjectNode objectNode) {
                     if (objectNode.name == null || objectNode.file == null) {
                         return;
@@ -518,6 +726,17 @@ public abstract class SourceTokenMarker {
                         return;
                     }
                     objectRoot.accept(new NodeVisitor() {
+
+                        @Override
+                        public boolean visitFunction(FunctionNode node) {
+                            if (node.getIdentifier() != null) {
+                                String text = objectNode.name.getText() + "." + node.getIdentifier().getText();
+                                if (text.toUpperCase().contains(refName)) {
+                                    proposals.add(new ContentProposal(getMethodInsert(node), text, ""));
+                                }
+                            }
+                            return false;
+                        }
 
                         @Override
                         public boolean visitMethod(MethodNode node) {
@@ -718,6 +937,57 @@ public abstract class SourceTokenMarker {
     }
 
     String getMethodDocument(MethodNode node) {
+        Iterator<Token> iter = node.getTokens().iterator();
+        Token start = iter.next();
+        Token stop = start;
+        TokenStream stream = start.getStream();
+
+        while (iter.hasNext()) {
+            stop = iter.next();
+            if (")".equals(stop.getText())) {
+                break;
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<pre><b><code>");
+        sb.append(getHtmlSafeString(stream.getSource(start.start, stop.stop).trim()));
+        sb.append("</code></b>");
+        sb.append(System.lineSeparator());
+
+        iter = node.getDocument().iterator();
+        if (iter.hasNext()) {
+            sb.append(System.lineSeparator());
+            sb.append("<code>");
+            while (iter.hasNext()) {
+                Token token = iter.next();
+                if (token.type == Token.COMMENT) {
+                    String s = token.getText().substring(2);
+                    sb.append(getHtmlSafeString(s));
+                    sb.append(System.lineSeparator());
+                }
+                else if (token.type == Token.BLOCK_COMMENT) {
+                    String s = token.getText().substring(2);
+                    s = s.substring(0, s.length() - 2);
+                    s = getHtmlSafeString(s);
+                    s = s.replaceAll("[\\r\\n|\\r|\\n]", System.lineSeparator());
+                    while (s.startsWith(System.lineSeparator())) {
+                        s = s.substring(System.lineSeparator().length());
+                    }
+                    while (s.endsWith(System.lineSeparator())) {
+                        s = s.substring(0, s.length() - System.lineSeparator().length());
+                    }
+                    sb.append(s);
+                }
+            }
+            sb.append("</code>");
+        }
+        sb.append("</pre>");
+
+        return sb.toString();
+    }
+
+    String getMethodDocument(FunctionNode node) {
         Iterator<Token> iter = node.getTokens().iterator();
         Token start = iter.next();
         Token stop = start;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2023 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -12,11 +12,13 @@ package com.maccasoft.propeller.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-public class MethodNode extends Node {
+public class FunctionNode extends Node {
 
+    public Token modifier;
     public Token type;
-    public Token name;
+    public Token identifier;
     public List<ParameterNode> parameters = new ArrayList<ParameterNode>();
     public List<ReturnNode> returnVariables = new ArrayList<ReturnNode>();
     public List<LocalVariableNode> localVariables = new ArrayList<LocalVariableNode>();
@@ -26,7 +28,7 @@ public class MethodNode extends Node {
         public Token type;
         public Token identifier;
 
-        public ParameterNode(MethodNode parent) {
+        public ParameterNode(FunctionNode parent) {
             super(parent);
             parent.parameters.add(this);
         }
@@ -44,13 +46,14 @@ public class MethodNode extends Node {
         public Token getIdentifier() {
             return identifier;
         }
+
     }
 
     public static class ReturnNode extends Node {
 
         public Token identifier;
 
-        public ReturnNode(MethodNode parent) {
+        public ReturnNode(FunctionNode parent) {
             super(parent);
             parent.returnVariables.add(this);
         }
@@ -64,6 +67,7 @@ public class MethodNode extends Node {
         public Token getIdentifier() {
             return identifier;
         }
+
     }
 
     public static class LocalVariableNode extends Node {
@@ -72,7 +76,7 @@ public class MethodNode extends Node {
         public Token identifier;
         public ExpressionNode size;
 
-        public LocalVariableNode(MethodNode parent) {
+        public LocalVariableNode(FunctionNode parent) {
             super(parent);
             parent.localVariables.add(this);
         }
@@ -94,31 +98,54 @@ public class MethodNode extends Node {
         public ExpressionNode getSize() {
             return size;
         }
-    }
 
-    public MethodNode(Node parent, Token type) {
-        super(parent);
-        this.type = type;
-        addToken(type);
-    }
-
-    public MethodNode(Node parent, Token type, Token name) {
-        super(parent);
-        this.type = type;
-        this.name = name;
-        if (type != null) {
-            addToken(type);
+        @Override
+        public int hashCode() {
+            return Objects.hash(identifier);
         }
-        if (name != null) {
-            addToken(name);
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            LocalVariableNode other = (LocalVariableNode) obj;
+            return Objects.equals(identifier, other.identifier);
+        }
+
+    }
+
+    public FunctionNode(Node parent, Token modifier, Token type, Token identifier) {
+        super(parent);
+        this.modifier = modifier;
+        this.type = type;
+        this.identifier = identifier;
+        if (modifier != null) {
+            tokens.add(modifier);
+        }
+        if (type != null) {
+            tokens.add(type);
+        }
+        if (identifier != null) {
+            tokens.add(identifier);
         }
     }
 
     @Override
     public void accept(NodeVisitor visitor) {
-        if (visitor.visitMethod(this)) {
+        if (visitor.visitFunction(this)) {
             super.accept(visitor);
         }
+    }
+
+    public Token getModifier() {
+        return modifier;
     }
 
     public Token getType() {
@@ -126,11 +153,11 @@ public class MethodNode extends Node {
     }
 
     public boolean isPublic() {
-        return "PUB".equalsIgnoreCase(type.getText());
+        return modifier == null || !modifier.getText().equals("static");
     }
 
-    public Token getName() {
-        return name;
+    public Token getIdentifier() {
+        return identifier;
     }
 
     public List<ParameterNode> getParameters() {

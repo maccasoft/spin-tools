@@ -93,6 +93,8 @@ import com.maccasoft.propeller.internal.IContentProposalListener2;
 import com.maccasoft.propeller.internal.StyledTextContentAdapter;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.DirectiveNode;
+import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectNode;
@@ -101,6 +103,7 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
+import com.maccasoft.propeller.spinc.CTokenMarker;
 
 public class SourceEditor {
 
@@ -137,6 +140,7 @@ public class SourceEditor {
     Map<TokenId, TextStyle> styleMap = new HashMap<TokenId, TextStyle>();
 
     EditorHelp helpProvider;
+    ContentProposalAdapter proposalAdapter;
 
     boolean ignoreUndo;
     boolean ignoreRedo;
@@ -205,6 +209,16 @@ public class SourceEditor {
             Node selection = getCaretNode(caretOffset, line);
             outline.removeSelectionChangedListener(outlineSelectionListener);
             try {
+                if (selection instanceof DirectiveNode) {
+                    proposalAdapter.setAutoActivationCharacters(new char[] {
+                        '"', '<'
+                    });
+                }
+                else {
+                    proposalAdapter.setAutoActivationCharacters(new char[] {
+                        '.', '#', '@'
+                    });
+                }
                 outline.setSelection(selection != null ? new StructuredSelection(selection) : StructuredSelection.EMPTY);
             } finally {
                 outline.addSelectionChangedListener(outlineSelectionListener);
@@ -221,7 +235,7 @@ public class SourceEditor {
                         continue;
                     }
                     int start = node.getStartToken().start - node.getStartToken().column;
-                    if (node instanceof MethodNode) {
+                    if ((node instanceof MethodNode) || (node instanceof FunctionNode)) {
                         if (offset < start) {
                             return selection;
                         }
@@ -618,7 +632,9 @@ public class SourceEditor {
             @Override
             public void lineGetBackground(LineBackgroundEvent event) {
                 if (preferences.getShowSectionsBackground()) {
-                    event.lineBackground = getLineBackground(tokenMarker.getRoot(), event.lineOffset);
+                    if (!(tokenMarker instanceof CTokenMarker)) {
+                        event.lineBackground = getLineBackground(tokenMarker.getRoot(), event.lineOffset);
+                    }
                 }
                 if (styledText.getLineAtOffset(event.lineOffset) == currentLine) {
                     if (event.lineBackground != null) {
@@ -1027,7 +1043,7 @@ public class SourceEditor {
                     return;
                 }
 
-                if (token != null) {
+                if (token != null && helpProvider != null) {
                     String text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
                     if (text == null) {
                         text = tokenMarker.getMethod(token.getText());
@@ -1115,7 +1131,7 @@ public class SourceEditor {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        ContentProposalAdapter adapter = new ContentProposalAdapter(
+        proposalAdapter = new ContentProposalAdapter(
             styledText,
             new StyledTextContentAdapter(),
             new IContentProposalProvider() {
@@ -1130,21 +1146,22 @@ public class SourceEditor {
             new char[] {
                 '.', '#', '@'
             });
-        adapter.setPopupSize(new Point(200, 300));
-        adapter.setPropagateKeys(true);
-        adapter.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);
-        adapter.addContentProposalListener(new IContentProposalListener2() {
+        proposalAdapter.setPopupSize(new Point(200, 300));
+        proposalAdapter.setPropagateKeys(true);
+        proposalAdapter.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);
+        proposalAdapter.addContentProposalListener(new IContentProposalListener2() {
+
+            char[] activationChars;
 
             @Override
             public void proposalPopupOpened(ContentProposalAdapter adapter) {
+                activationChars = adapter.getAutoActivationCharacters();
                 adapter.setAutoActivationCharacters(null);
             }
 
             @Override
             public void proposalPopupClosed(ContentProposalAdapter adapter) {
-                adapter.setAutoActivationCharacters(new char[] {
-                    '.', '#', '@'
-                });
+                adapter.setAutoActivationCharacters(activationChars);
             }
         });
 
@@ -1152,7 +1169,7 @@ public class SourceEditor {
 
             @Override
             public void verifyKey(VerifyEvent e) {
-                if (adapter.isProposalPopupOpen()) {
+                if (proposalAdapter.isProposalPopupOpen()) {
                     switch (e.keyCode) {
                         case SWT.CR:
                         case SWT.PAGE_DOWN:
@@ -1399,6 +1416,9 @@ public class SourceEditor {
         styleMap.put(TokenId.TYPE, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
         styleMap.put(TokenId.KEYWORD, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x80, 0x00), null));
         styleMap.put(TokenId.FUNCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.OBJECT, new TextStyle(font, ColorRegistry.getColor(0x00, 0x00, 0xC0), null));
+
+        styleMap.put(TokenId.DIRECTIVE, new TextStyle(font, ColorRegistry.getColor(0x00, 0x80, 0x00), null));
 
         styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(fontItalic, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
         styleMap.put(TokenId.PASM_CONDITION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
@@ -1731,6 +1751,9 @@ public class SourceEditor {
         if (text.startsWith("IF") || text.startsWith("ELSE") || text.startsWith("REPEAT") || text.startsWith("CASE")) {
             return true;
         }
+        if (text.startsWith("DO") || text.startsWith("SWITCH")) {
+            return true;
+        }
         return false;
     }
 
@@ -1740,25 +1763,31 @@ public class SourceEditor {
         int lineStart = styledText.getOffsetAtLine(lineNumber);
         int currentColumn = caretOffset - lineStart;
 
-        Node node = tokenMarker.getContextAtLine(lineNumber);
-        while (node.getParent() != null && node.getParent().getParent() != null) {
-            node = node.getParent();
-        }
-
         boolean tabstopMatch = false;
-        int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
-
         int nextTabColumn = currentColumn + 1;
-        for (int i = 0; i < tabStops.length; i++) {
-            if (tabStops[i] >= nextTabColumn) {
-                nextTabColumn = tabStops[i];
-                tabstopMatch = true;
-                break;
+
+        Node node = tokenMarker.getContextAtLine(lineNumber);
+        if (node != null) {
+            int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
+            while (tabStops == null) {
+                if ((node = node.getParent()) == null) {
+                    break;
+                }
+                tabStops = Preferences.getInstance().getTabStops(node.getClass());
+            }
+            if (tabStops != null) {
+                for (int i = 0; i < tabStops.length; i++) {
+                    if (tabStops[i] >= nextTabColumn) {
+                        nextTabColumn = tabStops[i];
+                        tabstopMatch = true;
+                        break;
+                    }
+                }
             }
         }
 
         if (!tabstopMatch) {
-            int defaultTabStop = styledText.getTabs();
+            int defaultTabStop = 4;
             while ((nextTabColumn % defaultTabStop) != 0) {
                 nextTabColumn++;
             }
@@ -1791,18 +1820,35 @@ public class SourceEditor {
             return;
         }
 
+        boolean tabstopMatch = false;
+        int previousTabColumn = currentColumn - 1;
+
         Node node = tokenMarker.getContextAtLine(lineNumber);
-        while (node.getParent() != null && node.getParent().getParent() != null) {
-            node = node.getParent();
+        if (node != null) {
+            int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
+            while (tabStops == null) {
+                if ((node = node.getParent()) == null) {
+                    break;
+                }
+                tabStops = Preferences.getInstance().getTabStops(node.getClass());
+            }
+            if (tabStops != null) {
+                for (int i = 0; i < tabStops.length; i++) {
+                    if (tabStops[i] >= currentColumn) {
+                        tabstopMatch = true;
+                        break;
+                    }
+                    previousTabColumn = tabStops[i];
+                }
+            }
         }
 
-        int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
-        int previousTabColumn = 0;
-        for (int i = 0; i < tabStops.length; i++) {
-            if (tabStops[i] >= currentColumn) {
-                break;
+        if (!tabstopMatch) {
+            int defaultTabStop = 4;
+            previousTabColumn = currentColumn - 1;
+            while ((previousTabColumn % defaultTabStop) != 0) {
+                previousTabColumn--;
             }
-            previousTabColumn = tabStops[i];
         }
 
         while (currentColumn > 0 && currentColumn > previousTabColumn) {
@@ -1834,7 +1880,10 @@ public class SourceEditor {
             proposals.addAll(helpProvider.fillProposals("Root", token));
         }
         else {
-            if (node instanceof ObjectNode) {
+            if (node instanceof DirectiveNode.IncludeNode) {
+                proposals.addAll(helpProvider.fillSourceProposals(token));
+            }
+            else if (node instanceof ObjectNode) {
                 proposals.addAll(helpProvider.fillSourceProposals(token));
             }
             else if (node instanceof DataLineNode) {
@@ -1868,7 +1917,7 @@ public class SourceEditor {
                 }
             }
             else if (node != null) {
-                if ((node instanceof StatementNode) || (node instanceof MethodNode)) {
+                if ((node instanceof StatementNode) || (node instanceof MethodNode) || (node instanceof FunctionNode)) {
                     proposals.addAll(tokenMarker.getMethodProposals(node, token));
                 }
                 else {

@@ -16,7 +16,9 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.SourceProvider;
@@ -157,6 +159,10 @@ public abstract class Compiler {
             }
         }
         return null;
+    }
+
+    public Map<String, Expression> getPublicSymbols() {
+        return Collections.emptyMap();
     }
 
     public ObjectTree getObjectTree() {

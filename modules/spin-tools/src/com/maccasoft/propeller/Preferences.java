@@ -72,21 +72,21 @@ public class Preferences {
         sectionMap.put(DataNode.class, "dat");
     }
 
-    static Map<Class<?>, int[]> defaultTabStops = new HashMap<>();
+    static Map<String, int[]> defaultTabStops = new HashMap<>();
     static {
-        defaultTabStops.put(ConstantsNode.class, new int[] {
+        defaultTabStops.put("con", new int[] {
             4, 8, 16, 24, 32, 40, 48, 56, 64
         });
-        defaultTabStops.put(VariablesNode.class, new int[] {
+        defaultTabStops.put("var", new int[] {
             4, 8, 16, 24, 32, 40, 48, 56, 64
         });
-        defaultTabStops.put(ObjectsNode.class, new int[] {
+        defaultTabStops.put("obj", new int[] {
             4, 8, 16, 24, 32, 40, 48, 56, 64
         });
-        defaultTabStops.put(MethodNode.class, new int[] {
+        defaultTabStops.put("pub", new int[] {
             4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64
         });
-        defaultTabStops.put(DataNode.class, new int[] {
+        defaultTabStops.put("dat", new int[] {
             8, 16, 24, 36, 40, 44, 48, 56, 64 // 4, 8, 16, 24, 28, 32, 36, 40, 44, 48, 56, 64
         });
     }
@@ -473,16 +473,17 @@ public class Preferences {
             result = preferences.sectionTabStops.get(section);
         }
         if (result == null) {
-            result = defaultTabStops.get(clazz);
+            result = defaultTabStops.get(section);
         }
 
         return result;
     }
 
     public void setTabStops(Class<?> clazz, int[] tabStops) {
-        if (Arrays.equals(tabStops, defaultTabStops.get(clazz))) {
+        String section = sectionMap.get(clazz);
+        if (Arrays.equals(tabStops, defaultTabStops.get(section))) {
             if (preferences.sectionTabStops != null) {
-                preferences.sectionTabStops.remove(sectionMap.get(clazz));
+                preferences.sectionTabStops.remove(section);
                 if (preferences.sectionTabStops.size() == 0) {
                     preferences.sectionTabStops = null;
                 }
@@ -492,7 +493,7 @@ public class Preferences {
             if (preferences.sectionTabStops == null) {
                 preferences.sectionTabStops = new HashMap<>();
             }
-            preferences.sectionTabStops.put(sectionMap.get(clazz), tabStops);
+            preferences.sectionTabStops.put(section, tabStops);
         }
     }
 

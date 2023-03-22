@@ -281,6 +281,28 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testParameterVarAssignment() throws Exception {
+        String text = ""
+            + "PUB main(a)\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       08 00 00 81    Method main @ $00008 (1 parameters, 0 returns)\n"
+            + "00004 00004       0C 00 00 00    End\n"
+            + "' PUB main(a)\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'     a := 1\n"
+            + "00009 00009       A2             CONSTANT (1)\n"
+            + "0000A 0000A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000B 0000B       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testGlobalVarAssignment() throws Exception {
         String text = ""
             + "VAR\n"

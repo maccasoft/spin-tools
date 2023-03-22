@@ -19,6 +19,7 @@ import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.OwnerDrawLabelProvider;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -35,10 +36,13 @@ import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.DirectiveNode;
+import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
@@ -46,14 +50,73 @@ public class OutlineView {
 
     TreeViewer viewer;
 
+    static class DefinesNode extends Node {
+
+        public DefinesNode(Token token) {
+            tokens.add(new Token(0, "#" + token.getText()));
+        }
+
+    }
+
+    static class DefinitionNode extends Node {
+
+        String text;
+
+        public DefinitionNode(Node parent, Token identifier, String text) {
+            super(parent);
+            tokens.add(identifier);
+            this.text = text;
+        }
+
+        @Override
+        public String getText() {
+            return text;
+        }
+
+    }
+
     final ITreeContentProvider contentProvider = new ITreeContentProvider() {
 
         @Override
         public Object[] getElements(Object inputElement) {
             List<Object> list = new ArrayList<Object>();
 
+            DefinesNode defines = null;
+            DefinesNode includes = null;
+
             for (Node node : ((Node) inputElement).getChilds()) {
-                list.add(node);
+                if (node instanceof DirectiveNode.IncludeNode) {
+                    DirectiveNode.IncludeNode directive = (DirectiveNode.IncludeNode) node;
+                    if (directive.getFile() != null) {
+                        if (includes == null) {
+                            includes = new DefinesNode(directive.getDirective());
+                        }
+                        String text = directive.getFile().getText().substring(1, directive.getFile().getText().length() - 1);
+                        new DefinitionNode(includes, directive.getFile(), text);
+                    }
+                }
+                else if (node instanceof DirectiveNode.DefineNode) {
+                    DirectiveNode.DefineNode directive = (DirectiveNode.DefineNode) node;
+                    if (directive.getIdentifier() != null) {
+                        if (defines == null) {
+                            defines = new DefinesNode(directive.getDirective());
+                        }
+                        new DefinitionNode(defines, directive.getIdentifier(), directive.getIdentifier().getText());
+                    }
+                }
+                else {
+                    list.add(node);
+                    if (node instanceof VariableNode) {
+                        list.addAll(node.getChilds());
+                    }
+                }
+            }
+
+            if (defines != null) {
+                list.add(0, defines);
+            }
+            if (includes != null) {
+                list.add(0, includes);
             }
 
             return list.toArray(new Object[list.size()]);
@@ -93,6 +156,9 @@ public class OutlineView {
 
         @Override
         public boolean hasChildren(Object element) {
+            if (element instanceof DefinesNode) {
+                return true;
+            }
             return (element instanceof ConstantsNode) || (element instanceof VariablesNode) || (element instanceof ObjectsNode) || (element instanceof DataNode);
         }
 
@@ -113,16 +179,31 @@ public class OutlineView {
                 if (element instanceof ConstantsNode || element instanceof VariablesNode || element instanceof ObjectsNode || element instanceof DataNode) {
                     decorateSectionStart((Node) element, cell);
                 }
+                else if (element instanceof DefinesNode) {
+                    String text = ((Node) element).getStartToken().getText();
+                    appendText(text, sectionStyle);
+                }
+                else if (element instanceof DefinitionNode) {
+                    sb.append(((Node) element).getText());
+                }
                 else if (element instanceof VariableNode) {
                     VariableNode node = (VariableNode) element;
-                    if (node.type != null) {
-                        appendText(node.type.getText(), typeStyle);
-                    }
                     if (node.identifier != null) {
                         if (sb.length() != 0) {
                             sb.append(" ");
                         }
                         sb.append(node.identifier.getText());
+                    }
+                    if (node.type != null) {
+                        sb.append(" : ");
+                        appendText(node.type.getText(), methodReturnStyle);
+                    }
+                    else if (node.getParent() instanceof VariableNode) {
+                        Token type = ((VariableNode) node.getParent()).type;
+                        if (type != null) {
+                            sb.append(" : ");
+                            appendText(type.getText(), methodReturnStyle);
+                        }
                     }
                 }
                 else if (element instanceof ObjectNode) {
@@ -137,6 +218,9 @@ public class OutlineView {
                 }
                 else if (element instanceof MethodNode) {
                     decorateMethod((MethodNode) element, cell);
+                }
+                else if (element instanceof FunctionNode) {
+                    decorateFunction((FunctionNode) element, cell);
                 }
                 else if (element instanceof DataLineNode) {
                     sb.append(((DataLineNode) element).label.getText());
@@ -202,6 +286,36 @@ public class OutlineView {
                 if (!text.isEmpty()) {
                     sb.append(" ");
                     appendText(text, commentStyle);
+                }
+            }
+        }
+
+        void decorateFunction(FunctionNode node, ViewerCell cell) {
+            if (node.getIdentifier() != null) {
+                if (sb.length() != 0) {
+                    sb.append(" ");
+                }
+                appendText(node.getIdentifier().getText(), sectionStyle);
+
+                sb.append("(");
+                boolean first = true;
+                for (FunctionNode.ParameterNode child : node.getParameters()) {
+                    if (!first) {
+                        sb.append(", ");
+                    }
+                    if (child.type != null) {
+                        appendText(child.type.getText(), methodLocalStyle);
+                    }
+                    else {
+                        appendText(child.identifier.getText(), methodLocalStyle);
+                    }
+                    first = false;
+                }
+                sb.append(")");
+
+                if (node.getType() != null) {
+                    sb.append(" : ");
+                    appendText(node.getType().getText(), methodReturnStyle);
                 }
             }
         }
@@ -292,6 +406,22 @@ public class OutlineView {
     }
 
     public void setSelection(IStructuredSelection selection) {
+        Object node = selection.getFirstElement();
+        if (node instanceof DirectiveNode.IncludeNode) {
+            DirectiveNode.IncludeNode directive = (DirectiveNode.IncludeNode) node;
+            if (directive.getFile() != null) {
+                DefinesNode includes = new DefinesNode(directive.getDirective());
+                String text = directive.getFile().getText().substring(1, directive.getFile().getText().length() - 1);
+                selection = new StructuredSelection(new DefinitionNode(includes, directive.getFile(), text));
+            }
+        }
+        else if (node instanceof DirectiveNode.DefineNode) {
+            DirectiveNode.DefineNode directive = (DirectiveNode.DefineNode) node;
+            if (directive.getIdentifier() != null) {
+                DefinesNode defines = new DefinesNode(directive.getDirective());
+                selection = new StructuredSelection(new DefinitionNode(defines, directive.getIdentifier(), directive.getIdentifier().getText()));
+            }
+        }
         viewer.setSelection(selection, true);
     }
 
@@ -325,16 +455,43 @@ public class OutlineView {
 
     String getPathText(Object element) {
         Node node = (Node) element;
-        String text = node.getTokenCount() != 0 ? node.getStartToken().getText() : "";
-        if (node instanceof MethodNode && ((MethodNode) node).name != null) {
-            text += " " + ((MethodNode) node).name.getText();
+
+        if (node instanceof DirectiveNode.IncludeNode) {
+            DirectiveNode.IncludeNode directive = (DirectiveNode.IncludeNode) node;
+            if (directive.getFile() != null) {
+                return directive.getFile().getText();
+            }
+        }
+        if (node instanceof DirectiveNode.DefineNode) {
+            DirectiveNode.DefineNode directive = (DirectiveNode.DefineNode) node;
+            if (directive.getIdentifier() != null) {
+                return directive.getIdentifier().getText();
+            }
         }
 
-        if (!(node instanceof MethodNode)) {
+        String text = node.getTokenCount() != 0 ? node.getStartToken().getText() : "";
+
+        if (node instanceof VariableNode) {
+            if (((VariableNode) node).identifier != null) {
+                text = ((VariableNode) node).identifier.getText();
+            }
+        }
+        else if (node instanceof FunctionNode) {
+            if (((FunctionNode) node).identifier != null) {
+                text += " " + ((FunctionNode) node).identifier.getText();
+            }
+        }
+        else if (node instanceof MethodNode) {
+            if (((MethodNode) node).name != null) {
+                text += " " + ((MethodNode) node).name.getText();
+            }
+        }
+        else if (!(node instanceof DefinitionNode)) {
             if (node.getParent() != null && node.getParent().getParent() == null) {
                 text += String.valueOf(node.getParent().getChilds().indexOf(node));
             }
         }
+
         return text;
     }
 

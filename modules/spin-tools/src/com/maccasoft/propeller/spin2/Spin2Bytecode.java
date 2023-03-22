@@ -15,10 +15,10 @@ import java.util.Map;
 
 public class Spin2Bytecode {
 
-    static class Descriptor {
-        byte[] code;
-        int parameters;
-        int returns;
+    public static class Descriptor {
+        public byte[] code;
+        public int parameters;
+        public int returns;
 
         public Descriptor(int b0, int b1, int parameters, int returns) {
             if (b1 == -1) {

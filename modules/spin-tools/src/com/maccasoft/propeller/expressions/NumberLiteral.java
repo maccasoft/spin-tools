@@ -38,6 +38,14 @@ public class NumberLiteral extends Literal {
             s = s.substring(1);
             this.base = 16;
         }
+        else if (s.startsWith("0b")) {
+            s = s.substring(2);
+            this.base = 2;
+        }
+        else if (s.startsWith("0x")) {
+            s = s.substring(2);
+            this.base = 16;
+        }
         else {
             this.base = 10;
         }

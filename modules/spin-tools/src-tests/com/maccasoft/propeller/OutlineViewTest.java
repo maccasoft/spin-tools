@@ -12,9 +12,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 
+import com.maccasoft.propeller.OutlineView.DefinesNode;
+import com.maccasoft.propeller.OutlineView.DefinitionNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
+import com.maccasoft.propeller.spinc.CParser;
+import com.maccasoft.propeller.spinc.CTokenStream;
 
 @TestInstance(Lifecycle.PER_CLASS)
 class OutlineViewTest {
@@ -48,6 +53,21 @@ class OutlineViewTest {
     @AfterAll
     void terminate() {
         display.dispose();
+    }
+
+    @Test
+    void testVarComparer() {
+        String text = ""
+            + "VAR\n"
+            + "  long pin\n"
+            + "";
+
+        Spin2TokenStream stream = new Spin2TokenStream(text);
+        Spin2Parser parser = new Spin2Parser(stream);
+        Node root = parser.parse();
+
+        Assertions.assertEquals("/VAR0", view.getPath(root.getChild(0)));
+        Assertions.assertEquals("/VAR0/pin", view.getPath(root.getChild(0).getChild(0)));
     }
 
     @Test
@@ -141,6 +161,61 @@ class OutlineViewTest {
 
         Assertions.assertEquals("/DAT0", view.getPath(path0));
         Assertions.assertEquals("/DAT0/driver", view.getPath(path1));
+    }
+
+    @Test
+    void testIncludeComparer() {
+        String text = ""
+            + "#include <object>\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        Assertions.assertEquals("/<object>", view.getPath(root.getChild(0)));
+    }
+
+    @Test
+    void testhelperNodesComparer() {
+        DefinesNode defines = new DefinesNode(new Token(Token.KEYWORD, "include"));
+        new DefinitionNode(defines, new Token(Token.KEYWORD, "<object>"), "object");
+
+        Assertions.assertEquals("/<object>", view.getPath(defines.getChild(0)));
+    }
+
+    @Test
+    void testFunctionComparer() {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        Assertions.assertEquals("/void main", view.getPath(root.getChild(0)));
+    }
+
+    @Test
+    void testFunctionTreepathComparer() {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        TreePath path0 = new TreePath(new Object[] {
+            root.getChild(0)
+        });
+
+        Assertions.assertEquals("/void main", view.getPath(path0));
     }
 
 }

@@ -705,6 +705,33 @@ class Spin2ParserTest {
         Assertions.assertEquals(")", line1.getToken(3).getText());
     }
 
+    @Test
+    void testCase() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    case a\n"
+            + "        1: a := 4\n"
+            + "        2: a := 5\n"
+            + "        3: a := 6\n"
+            + "\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=main [PUB main() | a]\n"
+            + "    +-- LocalVariableNode identifier=a [a]\n"
+            + "    +-- StatementNode [    case a]\n"
+            + "        +-- StatementNode [        1:]\n"
+            + "            +-- StatementNode [        1: a := 4]\n"
+            + "        +-- StatementNode [        2:]\n"
+            + "            +-- StatementNode [        2: a := 5]\n"
+            + "        +-- StatementNode [        3:]\n"
+            + "            +-- StatementNode [        3: a := 6]\n"
+            + "", tree(root));
+    }
+
     String tree(Node root) throws Exception {
         return tree(root, 0);
     }

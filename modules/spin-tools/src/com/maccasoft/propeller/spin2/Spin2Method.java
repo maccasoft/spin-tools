@@ -59,6 +59,10 @@ public class Spin2Method {
         return label;
     }
 
+    public void addLocalVariable(LocalVariable variable) {
+        localVariables.add(variable);
+    }
+
     public void register() {
         for (Spin2MethodLine line : lines) {
             line.register(scope);
@@ -124,6 +128,30 @@ public class Spin2Method {
         }
 
         return (count + 3) >> 2;
+    }
+
+    public int getLocalVarSize() {
+        int count = parameters.size() * 4 + returns.size() * 4;
+
+        for (LocalVariable var : localVariables) {
+            int size = 4;
+            if ("WORD".equalsIgnoreCase(var.getType())) {
+                size = 2;
+            }
+            else if ("BYTE".equalsIgnoreCase(var.getType())) {
+                size = 1;
+            }
+            if (var.getSize() != null) {
+                try {
+                    size = size * var.getSize().getNumber().intValue();
+                } catch (Exception e) {
+                    // Do nothing
+                }
+            }
+            count += size;
+        }
+
+        return count;
     }
 
     public void addSource(Spin2MethodLine line) {
