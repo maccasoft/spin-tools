@@ -15,22 +15,15 @@ public class Method extends Expression {
     String name;
     int arguments;
     int returns;
-    int object;
-    int offset;
 
-    public Method(String name, int arguments, int returns, int offset) {
+    public Method(String name, int arguments, int returns) {
         this.name = name;
         this.arguments = arguments;
         this.returns = returns;
-        this.offset = offset;
     }
 
     public String getName() {
         return name;
-    }
-
-    public Method copy() {
-        return new Method(name, arguments, returns, offset);
     }
 
     public int getArgumentsCount() {
@@ -41,16 +34,12 @@ public class Method extends Expression {
         return returns;
     }
 
-    public int getObject() {
-        return object;
+    public int getObjectIndex() {
+        return -1;
     }
 
-    public void setObject(int object) {
-        this.object = object;
-    }
-
-    public int getOffset() {
-        return offset;
+    public int getIndex() {
+        return -1;
     }
 
     @Override

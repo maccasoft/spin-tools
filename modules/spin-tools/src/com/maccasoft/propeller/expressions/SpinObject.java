@@ -13,12 +13,10 @@ package com.maccasoft.propeller.expressions;
 public class SpinObject extends Expression {
 
     String name;
-    int index;
     int count;
 
-    public SpinObject(String name, int index, int count) {
+    public SpinObject(String name, int count) {
         this.name = name;
-        this.index = index;
         this.count = count;
     }
 
@@ -31,7 +29,7 @@ public class SpinObject extends Expression {
     }
 
     public int getIndex() {
-        return index;
+        return -1;
     }
 
     @Override

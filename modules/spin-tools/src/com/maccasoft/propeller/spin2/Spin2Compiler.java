@@ -24,9 +24,10 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectCompiler;
+import com.maccasoft.propeller.SpinObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
-import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.Spin2Object.LinkDataObject;
 
@@ -34,16 +35,16 @@ public class Spin2Compiler extends Compiler {
 
     public static class ObjectInfo {
 
-        public Spin2ObjectCompiler compiler;
+        public ObjectCompiler compiler;
 
         public long offset;
         public Expression count;
 
-        public ObjectInfo(Spin2ObjectCompiler compiler) {
+        public ObjectInfo(ObjectCompiler compiler) {
             this.compiler = compiler;
         }
 
-        public ObjectInfo(Spin2ObjectCompiler compiler, Expression count) {
+        public ObjectInfo(ObjectCompiler compiler, Expression count) {
             this.compiler = compiler;
             this.count = count;
         }
@@ -74,6 +75,10 @@ public class Spin2Compiler extends Compiler {
     @Override
     public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
         this.removeUnusedMethods = removeUnusedMethods;
+    }
+
+    public boolean isRemoveUnusedMethods() {
+        return removeUnusedMethods;
     }
 
     @Override
@@ -128,16 +133,6 @@ public class Spin2Compiler extends Compiler {
         }
 
         @Override
-        protected boolean isReferenced(MethodNode node) {
-            if (!preprocessor.isReferenced(node)) {
-                if (removeUnusedMethods) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        @Override
         protected Node getParsedSource(String fileName) {
             Node node = Spin2Compiler.this.getParsedObject(fileName);
             if (node == null) {
@@ -171,7 +166,6 @@ public class Spin2Compiler extends Compiler {
     protected Spin2Object compileObject(File rootFile, Node root) {
         preprocessor = new Spin2Preprocessor(this);
         preprocessor.process(rootFile, root);
-        preprocessor.removeUnusedMethods();
 
         ListOrderedMap<File, Node> objects = preprocessor.getObjects();
 
@@ -183,6 +177,13 @@ public class Spin2Compiler extends Compiler {
 
         Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFile.getName(), debugStatements);
         objectCompiler.compile(root);
+
+        objectCompiler.compilePass2();
+        for (int i = objects.size() - 1; i >= 0; i--) {
+            File file = objects.get(i);
+            ObjectInfo info = childObjects.get(file);
+            info.compiler.compilePass2();
+        }
 
         int memoryOffset = 0;
         for (Entry<String, Expression> entry : objectCompiler.getPublicSymbols().entrySet()) {
@@ -200,7 +201,7 @@ public class Spin2Compiler extends Compiler {
             File file = objects.get(i);
             ObjectInfo info = childObjects.get(file);
             info.offset = object.getSize();
-            Spin2Object linkedObject = info.compiler.generateObject(memoryOffset);
+            SpinObject linkedObject = info.compiler.generateObject(memoryOffset);
             memoryOffset += linkedObject.getSize();
             linkedObject.getObject(0).setText("Object \"" + file.getName() + "\" header (var size " + linkedObject.getVarSize() + ")");
             object.writeObject(linkedObject);

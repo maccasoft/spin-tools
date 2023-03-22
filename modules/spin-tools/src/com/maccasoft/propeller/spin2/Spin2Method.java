@@ -40,6 +40,9 @@ public class Spin2Method {
     int endAddress;
     boolean addressChanged;
 
+    List<Spin2Method> calledBy = new ArrayList<>();
+    List<Spin2Method> calls = new ArrayList<>();
+
     public Spin2Method(Spin2Context scope, String label, List<LocalVariable> parameters, List<LocalVariable> returns, List<LocalVariable> localVariables) {
         this.scope = scope;
         this.label = label;
@@ -157,6 +160,37 @@ public class Spin2Method {
 
     public void setData(Object data) {
         this.data = data;
+    }
+
+    public void setCalledBy(Spin2Method method) {
+        if (method == this) {
+            return;
+        }
+        if (!calledBy.contains(method)) {
+            calledBy.add(method);
+        }
+        if (!method.calls.contains(this)) {
+            method.calls.add(this);
+        }
+    }
+
+    void removeCalledBy(Spin2Method method) {
+        calledBy.remove(method);
+        if (calledBy.size() == 0) {
+            for (Spin2Method ref : calls) {
+                ref.removeCalledBy(this);
+            }
+        }
+    }
+
+    public void remove() {
+        for (Spin2Method ref : calls) {
+            ref.removeCalledBy(this);
+        }
+    }
+
+    public boolean isReferenced() {
+        return calledBy.size() != 0;
     }
 
 }

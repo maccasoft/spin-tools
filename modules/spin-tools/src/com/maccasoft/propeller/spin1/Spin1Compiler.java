@@ -27,7 +27,6 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Object.LinkDataObject;
 
@@ -66,6 +65,10 @@ public class Spin1Compiler extends Compiler {
 
     public Spin1Compiler() {
 
+    }
+
+    public boolean isRemoveUnusedMethods() {
+        return removeUnusedMethods;
     }
 
     @Override
@@ -149,16 +152,6 @@ public class Spin1Compiler extends Compiler {
         }
 
         @Override
-        protected boolean isReferenced(MethodNode node) {
-            if (!preprocessor.isReferenced(node)) {
-                if (removeUnusedMethods) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        @Override
         protected Node getParsedSource(String fileName) {
             Node node = Spin1Compiler.this.getParsedObject(fileName);
             if (node == null) {
@@ -194,7 +187,6 @@ public class Spin1Compiler extends Compiler {
 
         preprocessor = new Spin1Preprocessor(this);
         preprocessor.process(rootFile, root);
-        preprocessor.removeUnusedMethods();
 
         ListOrderedMap<File, Node> objects = preprocessor.getObjects();
 
@@ -208,6 +200,13 @@ public class Spin1Compiler extends Compiler {
         Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFile.getName());
         objectCompiler.setOpenspinCompatibile(openspinCompatible);
         objectCompiler.compile(root);
+
+        objectCompiler.compilePass2();
+        for (int i = objects.size() - 1; i >= 0; i--) {
+            File file = objects.get(i);
+            ObjectInfo info = childObjects.get(file);
+            info.compiler.compilePass2();
+        }
 
         Spin1Object object = objectCompiler.generateObject(memoryOffset);
         memoryOffset += object.getSize();

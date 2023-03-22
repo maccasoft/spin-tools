@@ -2136,7 +2136,7 @@ class Spin1ObjectCompilerTest {
             + "'     cognew(thread(1,2), @b)\n"
             + "0000C 0000C       36             CONSTANT (1)\n"
             + "0000D 0000D       38 02          CONSTANT (2)\n"
-            + "0000F 0000F       39 02 02       CONSTANT (514)\n"
+            + "0000F 0000F       39 02 02       CONSTANT ($202)\n"
             + "00012 00012       6B             VAR_ADDRESS LONG DBASE+$0008 (short)\n"
             + "00013 00013       15             MARK_INTERPRETED\n"
             + "00014 00014       2C             COGNEW\n"

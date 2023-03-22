@@ -38,6 +38,9 @@ public class Spin1Method {
     int endAddress;
     boolean addressChanged;
 
+    List<Spin1Method> calledBy = new ArrayList<>();
+    List<Spin1Method> calls = new ArrayList<>();
+
     public Spin1Method(Spin1Context scope, String label) {
         this.scope = scope;
         this.label = label;
@@ -152,6 +155,37 @@ public class Spin1Method {
 
     public void setData(Object data) {
         this.data = data;
+    }
+
+    public void setCalledBy(Spin1Method method) {
+        if (method == this) {
+            return;
+        }
+        if (!calledBy.contains(method)) {
+            calledBy.add(method);
+        }
+        if (!method.calls.contains(this)) {
+            method.calls.add(this);
+        }
+    }
+
+    void removeCalledBy(Spin1Method method) {
+        calledBy.remove(method);
+        if (calledBy.size() == 0) {
+            for (Spin1Method ref : calls) {
+                ref.removeCalledBy(this);
+            }
+        }
+    }
+
+    public void remove() {
+        for (Spin1Method ref : calls) {
+            ref.removeCalledBy(this);
+        }
+    }
+
+    public boolean isReferenced() {
+        return calledBy.size() != 0;
     }
 
 }

@@ -71,16 +71,16 @@ public class NumberLiteral extends Literal {
         if (text == null) {
             switch (base) {
                 case 2:
-                    text = "%" + Long.toBinaryString(value.longValue());
+                    text = "%" + Long.toBinaryString(getNumber().longValue());
                     break;
                 case 4:
-                    text = "%%" + Long.toString(value.longValue(), 4);
+                    text = "%%" + Long.toString(getNumber().longValue(), 4);
                     break;
                 case 16:
-                    text = "$" + Long.toHexString(value.longValue());
+                    text = "$" + Long.toHexString(getNumber().longValue());
                     break;
                 default:
-                    text = value.toString();
+                    text = getNumber().toString();
                     break;
             }
         }
