@@ -50,10 +50,7 @@ public class Spin1Preprocessor {
             }
 
             String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1);
-            File objectFile = compiler.getFile(objectFileName);
-            if (objectFile == null) {
-                objectFile = compiler.getFile(objectFileName + ".spin");
-            }
+            File objectFile = compiler.getFile(objectFileName, ".spin");
             if (objectFile == null) {
                 objectFile = new File(objectFileName + ".spin");
             }
@@ -68,7 +65,7 @@ public class Spin1Preprocessor {
 
             Node objectRoot = objects.get(objectFile);
             if (objectRoot == null) {
-                objectRoot = compiler.getParsedObject(objectFile.getName());
+                objectRoot = compiler.getParsedObject(objectFile.getName(), ".spin");
             }
             if (objectRoot == null) {
                 return;
@@ -86,7 +83,7 @@ public class Spin1Preprocessor {
                 if ("FILE".equalsIgnoreCase(node.instruction.getText()) || "INCLUDE".equalsIgnoreCase(node.instruction.getText())) {
                     for (Node parameterNode : node.parameters) {
                         String fileName = parameterNode.getText().substring(1, parameterNode.getText().length() - 1);
-                        File file = compiler.getFile(fileName);
+                        File file = compiler.getFile(fileName, ".spin");
                         if (file == null) {
                             file = new File(fileName);
                         }

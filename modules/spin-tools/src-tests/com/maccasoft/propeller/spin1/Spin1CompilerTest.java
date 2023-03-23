@@ -22,6 +22,7 @@ import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.SourceProvider;
 
 class Spin1CompilerTest {
 
@@ -1046,35 +1047,6 @@ class Spin1CompilerTest {
             + "", compile("main.spin", sources));
     }
 
-    class Spin1CompilerAdapter extends Spin1Compiler {
-
-        Map<String, String> sources;
-
-        public Spin1CompilerAdapter(Map<String, String> sources) {
-            this.sources = sources;
-        }
-
-        @Override
-        public File getFile(String name) {
-            if (sources.containsKey(name)) {
-                return new File(name);
-            }
-            return null;
-        }
-
-        @Override
-        protected Node getParsedObject(String fileName) {
-            String text = sources.get(fileName);
-            if (text == null) {
-                return null;
-            }
-            Spin1TokenStream stream = new Spin1TokenStream(text);
-            Spin1Parser subject = new Spin1Parser(stream);
-            return subject.parse();
-        }
-
-    }
-
     String compile(String rootFile, Map<String, String> sources) throws Exception {
         return compile(rootFile, sources, false);
     }
@@ -1084,7 +1056,29 @@ class Spin1CompilerTest {
         Spin1Parser subject = new Spin1Parser(stream);
         Node root = subject.parse();
 
-        Spin1Compiler compiler = new Spin1CompilerAdapter(sources);
+        Spin1Compiler compiler = new Spin1Compiler();
+        compiler.addSourceProvider(new SourceProvider() {
+
+            @Override
+            public File getFile(String name) {
+                if (sources.containsKey(name)) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedSource(String name) {
+                String text = sources.get(name);
+                if (text == null) {
+                    return null;
+                }
+                Spin1TokenStream stream = new Spin1TokenStream(text);
+                Spin1Parser subject = new Spin1Parser(stream);
+                return subject.parse();
+            }
+
+        });
         compiler.setRemoveUnusedMethods(removeUnused);
         Spin1Object obj = compiler.compileObject(new File(rootFile), root);
 

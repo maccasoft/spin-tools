@@ -18,6 +18,7 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectTree;
 import com.maccasoft.propeller.model.DataLineNode;
+import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
@@ -44,16 +45,48 @@ public class Spin2Preprocessor {
         }
 
         @Override
+        public void visitDirective(DirectiveNode node) {
+            if (node instanceof DirectiveNode.IncludeNode) {
+                DirectiveNode.IncludeNode include = (DirectiveNode.IncludeNode) node;
+                if (include.getFile() != null) {
+                    String objectFileName = include.getFile().getText().substring(1, include.getFile().getText().length() - 1);
+                    File objectFile = compiler.getFile(objectFileName, ".c", ".spin2");
+                    if (objectFile == null) {
+                        objectFile = new File(objectFileName + ".c");
+                    }
+
+                    ObjectTreeVisitor p = parent;
+                    while (p != null) {
+                        if (p.file.equals(objectFile)) {
+                            throw new CompilerException(file.getName(), "\"" + objectFile.getName() + "\" illegal circular reference", include.getFile());
+                        }
+                        p = p.parent;
+                    }
+
+                    Node objectRoot = objects.get(objectFile);
+                    if (objectRoot == null) {
+                        objectRoot = compiler.getParsedObject(objectFile.getName(), ".c", ".spin2");
+                    }
+                    if (objectRoot == null) {
+                        return;
+                    }
+
+                    objects.remove(objectFile);
+                    objects.put(0, objectFile, objectRoot);
+
+                    objectRoot.accept(new ObjectTreeVisitor(this, objectFile, objects));
+                }
+            }
+        }
+
+        @Override
         public void visitObject(ObjectNode node) {
             if (node.name == null || node.file == null) {
                 return;
             }
 
             String objectFileName = node.file.getText().substring(1, node.file.getText().length() - 1);
-            File objectFile = compiler.getFile(objectFileName);
-            if (objectFile == null) {
-                objectFile = compiler.getFile(objectFileName + ".spin2");
-            }
+            File objectFile = compiler.getFile(objectFileName, ".spin2", ".c");
             if (objectFile == null) {
                 objectFile = new File(objectFileName + ".spin2");
             }
@@ -68,7 +101,7 @@ public class Spin2Preprocessor {
 
             Node objectRoot = objects.get(objectFile);
             if (objectRoot == null) {
-                objectRoot = compiler.getParsedObject(objectFile.getName());
+                objectRoot = compiler.getParsedObject(objectFile.getName(), ".spin2", ".c");
             }
             if (objectRoot == null) {
                 return;
@@ -86,7 +119,7 @@ public class Spin2Preprocessor {
                 if ("FILE".equalsIgnoreCase(node.instruction.getText()) || "INCLUDE".equalsIgnoreCase(node.instruction.getText())) {
                     for (Node parameterNode : node.parameters) {
                         String fileName = parameterNode.getText().substring(1, parameterNode.getText().length() - 1);
-                        File file = compiler.getFile(fileName);
+                        File file = compiler.getFile(fileName, ".spin2");
                         if (file == null) {
                             file = new File(fileName);
                         }

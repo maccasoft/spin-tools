@@ -131,15 +131,6 @@ public class Spin1Compiler extends Compiler {
         }
 
         @Override
-        protected Node getParsedSource(String fileName) {
-            Node node = Spin1Compiler.this.getParsedObject(fileName);
-            if (node == null) {
-                node = Spin1Compiler.this.getParsedObject(fileName + ".spin");
-            }
-            return node;
-        }
-
-        @Override
         protected byte[] getBinaryFile(String fileName) {
             return Spin1Compiler.this.getBinaryFile(fileName);
         }
@@ -250,24 +241,11 @@ public class Spin1Compiler extends Compiler {
 
     @Override
     public ObjectInfo getObjectInfo(String fileName) {
-        File file = getFile(fileName);
+        File file = getFile(fileName + ".spin");
         if (file == null) {
-            file = getFile(fileName + ".spin");
+            file = getFile(fileName);
         }
         return childObjects.get(file);
-    }
-
-    protected Node getParsedObject(String fileName) {
-        Node node = getParsedSource(fileName);
-        if (node == null) {
-            String text = getSource(fileName);
-            if (text != null) {
-                Spin1TokenStream stream = new Spin1TokenStream(text);
-                Spin1Parser parser = new Spin1Parser(stream);
-                node = parser.parse();
-            }
-        }
-        return node;
     }
 
     protected byte[] getBinaryFile(String fileName) {

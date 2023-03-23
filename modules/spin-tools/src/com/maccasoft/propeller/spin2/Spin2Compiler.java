@@ -24,11 +24,13 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.spinc.Spin2CObjectCompiler;
 
 public class Spin2Compiler extends Compiler {
 
@@ -111,12 +113,34 @@ public class Spin2Compiler extends Compiler {
         }
 
         @Override
-        protected Node getParsedSource(String fileName) {
-            Node node = Spin2Compiler.this.getParsedObject(fileName);
-            if (node == null) {
-                node = Spin2Compiler.this.getParsedObject(fileName + ".spin2");
+        protected byte[] getBinaryFile(String fileName) {
+            return Spin2Compiler.this.getBinaryFile(fileName);
+        }
+
+        @Override
+        protected void logMessage(CompilerException message) {
+            message.fileName = fileName;
+            if (message.hasChilds()) {
+                for (CompilerException msg : message.getChilds()) {
+                    msg.fileName = fileName;
+                    Spin2Compiler.this.logMessage(msg);
+                }
             }
-            return node;
+            else {
+                Spin2Compiler.this.logMessage(message);
+            }
+            super.logMessage(message);
+        }
+
+    }
+
+    class Spin2CObjectCompilerProxy extends Spin2CObjectCompiler {
+
+        String fileName;
+
+        public Spin2CObjectCompilerProxy(String fileName, List<Object> debugStatements) {
+            super(Spin2Compiler.this, debugStatements);
+            this.fileName = fileName;
         }
 
         @Override
@@ -148,7 +172,15 @@ public class Spin2Compiler extends Compiler {
         ListOrderedMap<File, Node> objects = preprocessor.getObjects();
 
         for (Entry<File, Node> entry : objects.entrySet()) {
-            Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(entry.getKey().getName(), debugStatements);
+            String fileName = entry.getKey().getName();
+
+            ObjectCompiler objectCompiler;
+            if (fileName.toLowerCase().endsWith(".c")) {
+                objectCompiler = new Spin2CObjectCompilerProxy(fileName, debugStatements);
+            }
+            else {
+                objectCompiler = new Spin2ObjectCompilerProxy(fileName, debugStatements);
+            }
             objectCompiler.compile(entry.getValue());
             childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
         }
@@ -233,24 +265,14 @@ public class Spin2Compiler extends Compiler {
 
     @Override
     public ObjectInfo getObjectInfo(String fileName) {
-        File file = getFile(fileName);
+        File file = getFile(fileName + ".spin2");
         if (file == null) {
-            file = getFile(fileName + ".spin2");
+            file = getFile(fileName + ".c");
+        }
+        if (file == null) {
+            file = getFile(fileName);
         }
         return childObjects.get(file);
-    }
-
-    public Node getParsedObject(String fileName) {
-        Node node = getParsedSource(fileName);
-        if (node == null) {
-            String text = getSource(fileName);
-            if (text != null) {
-                Spin2TokenStream stream = new Spin2TokenStream(text);
-                Spin2Parser parser = new Spin2Parser(stream);
-                node = parser.parse();
-            }
-        }
-        return node;
     }
 
     protected byte[] getBinaryFile(String fileName) {

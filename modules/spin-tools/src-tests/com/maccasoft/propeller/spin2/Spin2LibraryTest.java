@@ -21,6 +21,7 @@ import java.io.PrintStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
 
@@ -250,50 +251,6 @@ class Spin2LibraryTest {
         compileAndCompare(new File(path, "vga_tile_driver.spin2"), new File(path, "vga_tile_driver.binary"));
     }
 
-    class Spin2CompilerAdapter extends Spin2Compiler {
-
-        File parent;
-
-        public Spin2CompilerAdapter(File parent) {
-            this.parent = parent;
-        }
-
-        @Override
-        public File getFile(String name) {
-            File file = new File(path, name);
-            return file.exists() ? file : null;
-        }
-
-        @Override
-        public Node getParsedObject(String fileName) {
-            String text = getObjectSource(fileName);
-            if (text == null) {
-                return null;
-            }
-            Spin2TokenStream stream = new Spin2TokenStream(text);
-            Spin2Parser subject = new Spin2Parser(stream);
-            return subject.parse();
-        }
-
-        protected String getObjectSource(String fileName) {
-            File file = new File(parent, fileName);
-            if (file.exists()) {
-                return loadFromFile(file);
-            }
-            return null;
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            File file = new File(parent, fileName);
-            if (file.exists()) {
-                return loadBinaryFromFile(file);
-            }
-            return null;
-        }
-
-    }
-
     void compileAndCompare(File source, File binary) throws Exception {
         String text = loadFromFile(source);
         byte[] expected = loadBinaryFromFile(binary);
@@ -302,7 +259,11 @@ class Spin2LibraryTest {
         Spin2Parser subject = new Spin2Parser(stream);
         Node root = subject.parse();
 
-        Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(source.getParentFile());
+        Spin2Compiler compiler = new Spin2Compiler();
+        compiler.addSourceProvider(new FileSourceProvider(new File[] {
+            source.getParentFile(),
+            new File(path)
+        }));
         Spin2Object obj = compiler.compile(source, root);
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {

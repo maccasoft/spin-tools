@@ -132,17 +132,14 @@ public class SpinCompiler {
 
             Compiler compiler = ".spin2".equals(suffix) ? new Spin2Compiler() : (".c".equals(suffix) ? new Spin2CCompiler() : new Spin1Compiler());
             compiler.setCaseSensitive(caseSensitive);
-            compiler.addSourceProvider(new Compiler.FileSourceProvider(suffix, libraryPaths.toArray(new File[libraryPaths.size()])));
-            if (".c".equals(suffix)) {
-                compiler.addSourceProvider(new Compiler.FileSourceProvider(".spin2", libraryPaths.toArray(new File[libraryPaths.size()])));
-            }
+            compiler.addSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
             if (cmd.hasOption('d')) {
                 compiler.setDebugEnabled(true);
             }
             compiler.setRemoveUnusedMethods(true);
             try {
                 compiler.compile(fileToCompile, binaryData, listingStream);
-                println(compiler.getObjectTree());
+                print(compiler.getObjectTree());
 
                 boolean filterUnusedMethodWarning = cmd.hasOption('u');
                 for (CompilerException e : compiler.getMessages()) {

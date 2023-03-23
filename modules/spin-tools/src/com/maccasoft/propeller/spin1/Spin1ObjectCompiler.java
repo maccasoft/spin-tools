@@ -182,7 +182,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
             @Override
             protected Node getParsedSource(String fileName) {
-                return Spin1ObjectCompiler.this.getParsedSource(fileName);
+                return compiler.getParsedObject(fileName, ".spin");
             }
 
             @Override
@@ -849,10 +849,6 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
             }
 
         });
-    }
-
-    protected Node getParsedSource(String fileName) {
-        return null;
     }
 
     protected byte[] getBinaryFile(String fileName) {

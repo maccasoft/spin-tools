@@ -21,6 +21,7 @@ import java.io.PrintStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
 
@@ -334,62 +335,6 @@ class Spin1ExamplesTest {
         compileAndCompare(new File(path, "jm_i2c_devices.spin"), new File(path, "jm_i2c_devices.binary"));
     }
 
-    class Spin1CompilerAdapter extends Spin1Compiler {
-
-        File parent;
-
-        public Spin1CompilerAdapter(File parent) {
-            this.parent = parent;
-        }
-
-        @Override
-        public File getFile(String name) {
-            File file = new File(parent, name);
-            if (!file.exists() || file.isDirectory()) {
-                file = new File(path, name);
-            }
-            if (!file.exists() || file.isDirectory()) {
-                file = new File(libraryPath, name);
-            }
-            return file.exists() && !file.isDirectory() ? file : null;
-        }
-
-        @Override
-        protected Node getParsedObject(String fileName) {
-            String text = getObjectSource(fileName);
-            if (text == null) {
-                return null;
-            }
-            Spin1TokenStream stream = new Spin1TokenStream(text);
-            Spin1Parser subject = new Spin1Parser(stream);
-            return subject.parse();
-        }
-
-        protected String getObjectSource(String fileName) {
-            File file = new File(parent, fileName);
-            if (!file.exists()) {
-                file = new File(libraryPath, fileName);
-            }
-            if (file.exists()) {
-                return loadFromFile(file);
-            }
-            return null;
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            File file = new File(parent, fileName);
-            if (!file.exists()) {
-                file = new File(libraryPath, fileName);
-            }
-            if (file.exists()) {
-                return loadBinaryFromFile(file);
-            }
-            return null;
-        }
-
-    }
-
     void compileAndCompare(File source) throws Exception {
         compileAndCompare(new File(source.getAbsolutePath() + ".spin"), new File(source.getAbsolutePath() + ".binary"));
     }
@@ -402,7 +347,12 @@ class Spin1ExamplesTest {
         Spin1Parser subject = new Spin1Parser(stream);
         Node root = subject.parse();
 
-        Spin1CompilerAdapter compiler = new Spin1CompilerAdapter(source.getParentFile());
+        Spin1Compiler compiler = new Spin1Compiler();
+        compiler.addSourceProvider(new FileSourceProvider(new File[] {
+            source.getParentFile(),
+            new File(path),
+            new File(libraryPath)
+        }));
         compiler.setOpenspinCompatible(true);
         Spin1Object obj = compiler.compile(source, root);
         for (CompilerException msg : compiler.getMessages()) {

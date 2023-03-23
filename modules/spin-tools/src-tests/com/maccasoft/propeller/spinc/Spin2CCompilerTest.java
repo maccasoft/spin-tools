@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
@@ -331,35 +332,6 @@ class Spin2CCompilerTest {
             + "", compile("main.c", sources, true, false));
     }
 
-    class Spin2CCompilerAdapter extends Spin2CCompiler {
-
-        Map<String, String> sources;
-
-        public Spin2CCompilerAdapter(Map<String, String> sources) {
-            this.sources = sources;
-        }
-
-        @Override
-        public File getFile(String name) {
-            if (sources.containsKey(name)) {
-                return new File(name);
-            }
-            return null;
-        }
-
-        @Override
-        public Node getParsedObject(String fileName) {
-            String text = sources.get(fileName);
-            if (text == null) {
-                return null;
-            }
-            Spin2TokenStream stream = new Spin2TokenStream(text);
-            Spin2Parser subject = new Spin2Parser(stream);
-            return subject.parse();
-        }
-
-    }
-
     String compile(String rootFile, Map<String, String> sources) throws Exception {
         return compile(rootFile, sources, false, false);
     }
@@ -369,7 +341,29 @@ class Spin2CCompilerTest {
         CParser subject = new CParser(stream);
         Node root = subject.parse();
 
-        Spin2CCompilerAdapter compiler = new Spin2CCompilerAdapter(sources);
+        Spin2CCompiler compiler = new Spin2CCompiler();
+        compiler.addSourceProvider(new SourceProvider() {
+
+            @Override
+            public File getFile(String name) {
+                if (sources.containsKey(name)) {
+                    return new File(name);
+                }
+                return null;
+            }
+
+            @Override
+            public Node getParsedSource(String name) {
+                String text = sources.get(name);
+                if (text == null) {
+                    return null;
+                }
+                Spin2TokenStream stream = new Spin2TokenStream(text);
+                Spin2Parser subject = new Spin2Parser(stream);
+                return subject.parse();
+            }
+
+        });
         compiler.setRemoveUnusedMethods(removeUnused);
         compiler.setDebugEnabled(debugEnabled);
         Spin2Object obj = compiler.compileObject(new File(rootFile), root);

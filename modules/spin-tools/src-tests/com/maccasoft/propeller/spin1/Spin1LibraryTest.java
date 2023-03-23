@@ -21,6 +21,7 @@ import java.io.PrintStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
 
@@ -340,41 +341,6 @@ class Spin1LibraryTest {
         compileAndCompare(new File(path, "jm_time_80.spin"), new File(path, "jm_time_80.binary"));
     }
 
-    class Spin1CompilerAdapter extends Spin1Compiler {
-
-        File parent;
-
-        public Spin1CompilerAdapter(File parent) {
-            this.parent = parent;
-        }
-
-        @Override
-        public File getFile(String name) {
-            File file = new File(path, name);
-            return file.exists() ? file : null;
-        }
-
-        @Override
-        protected Node getParsedObject(String fileName) {
-            String text = getObjectSource(fileName);
-            if (text == null) {
-                return null;
-            }
-            Spin1TokenStream stream = new Spin1TokenStream(text);
-            Spin1Parser subject = new Spin1Parser(stream);
-            return subject.parse();
-        }
-
-        protected String getObjectSource(String fileName) {
-            File file = new File(parent, fileName);
-            if (file.exists()) {
-                return loadFromFile(file);
-            }
-            return null;
-        }
-
-    }
-
     void compileAndCompare(File source, File binary) throws Exception {
         String text = loadFromFile(source);
         byte[] expected = loadBinaryFromFile(binary);
@@ -383,7 +349,11 @@ class Spin1LibraryTest {
         Spin1Parser subject = new Spin1Parser(stream);
         Node root = subject.parse();
 
-        Spin1CompilerAdapter compiler = new Spin1CompilerAdapter(source.getParentFile());
+        Spin1Compiler compiler = new Spin1Compiler();
+        compiler.addSourceProvider(new FileSourceProvider(new File[] {
+            source.getParentFile(),
+            new File(path)
+        }));
         compiler.setOpenspinCompatible(true);
         Spin1Object obj = compiler.compile(source, root);
         for (CompilerException msg : compiler.getMessages()) {

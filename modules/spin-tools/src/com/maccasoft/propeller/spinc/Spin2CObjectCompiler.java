@@ -46,6 +46,7 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin2.Spin2BytecodeCompiler;
+import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2Debug;
 import com.maccasoft.propeller.spin2.Spin2ExpressionBuilder;
@@ -96,11 +97,11 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
     List<LinkDataObject> objectLinks = new ArrayList<>();
     List<LongDataObject> methodData = new ArrayList<>();
 
-    Spin2CCompiler compiler;
+    Spin2Compiler compiler;
     Spin2BytecodeCompiler spinCompiler;
     Spin2PasmCompiler pasmCompiler;
 
-    public Spin2CObjectCompiler(Spin2CCompiler compiler, List<Object> debugStatements) {
+    public Spin2CObjectCompiler(Spin2Compiler compiler, List<Object> debugStatements) {
         this.scope = new Spin2CContext(new Spin2GlobalContext());
         this.compiler = compiler;
         this.debugEnabled = compiler.isDebugEnabled();

@@ -30,10 +30,11 @@ import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Interpreter;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
+import com.maccasoft.propeller.spin2.Spin2Preprocessor;
 
 public class Spin2CCompiler extends Spin2Compiler {
 
-    Spin2CPreprocessor preprocessor;
+    Spin2Preprocessor preprocessor;
 
     public Spin2CCompiler() {
 
@@ -71,18 +72,6 @@ public class Spin2CCompiler extends Spin2Compiler {
         }
 
         @Override
-        protected Node getParsedSource(String fileName) {
-            Node node = Spin2CCompiler.this.getParsedObject(fileName);
-            if (node == null) {
-                node = Spin2CCompiler.this.getParsedObject(fileName + ".c");
-            }
-            if (node == null) {
-                node = Spin2CCompiler.this.getParsedObject(fileName + ".spin2");
-            }
-            return node;
-        }
-
-        @Override
         protected byte[] getBinaryFile(String fileName) {
             return Spin2CCompiler.this.getBinaryFile(fileName);
         }
@@ -114,15 +103,6 @@ public class Spin2CCompiler extends Spin2Compiler {
         }
 
         @Override
-        protected Node getParsedSource(String fileName) {
-            Node node = Spin2CCompiler.this.getParsedObject(fileName);
-            if (node == null) {
-                node = Spin2CCompiler.this.getParsedObject(fileName + ".spin2");
-            }
-            return node;
-        }
-
-        @Override
         protected byte[] getBinaryFile(String fileName) {
             return Spin2CCompiler.this.getBinaryFile(fileName);
         }
@@ -146,7 +126,7 @@ public class Spin2CCompiler extends Spin2Compiler {
 
     @Override
     protected Spin2Object compileObject(File rootFile, Node root) {
-        preprocessor = new Spin2CPreprocessor(this);
+        preprocessor = new Spin2Preprocessor(this);
         preprocessor.process(rootFile, root);
 
         ListOrderedMap<File, Node> objects = preprocessor.getObjects();
@@ -236,6 +216,18 @@ public class Spin2CCompiler extends Spin2Compiler {
 
         return object;
 
+    }
+
+    @Override
+    public ObjectInfo getObjectInfo(String fileName) {
+        File file = getFile(fileName + ".c");
+        if (file == null) {
+            file = getFile(fileName + ".spin2");
+        }
+        if (file == null) {
+            file = getFile(fileName);
+        }
+        return childObjects.get(file);
     }
 
 }

@@ -21,6 +21,7 @@ import java.util.Map;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.SourceProvider;
 
 public abstract class Compiler {
@@ -49,13 +50,10 @@ public abstract class Compiler {
 
     public static class FileSourceProvider extends SourceProvider {
 
-        final String suffix;
         final File[] searchPaths;
-
         final List<File> collectedSearchPaths;
 
-        public FileSourceProvider(String suffix, File[] searchPaths) {
-            this.suffix = suffix;
+        public FileSourceProvider(File[] searchPaths) {
             this.searchPaths = searchPaths;
             this.collectedSearchPaths = new ArrayList<>();
         }
@@ -145,12 +143,63 @@ public abstract class Compiler {
         return Collections.emptyList();
     }
 
-    public File getFile(String name) {
+    public Node getParsedObject(String fileName, String... extensions) {
+        for (String suffix : extensions) {
+            Node node = getParsedSource(fileName + suffix);
+            if (node != null) {
+                return node;
+            }
+        }
+
+        Node node = getParsedSource(fileName);
+        if (node != null) {
+            return node;
+        }
+
+        for (String suffix : extensions) {
+            String text = getSource(fileName + suffix);
+            if (text != null) {
+                Parser parser = Parser.getInstance(suffix, text);
+                return parser.parse();
+            }
+        }
+
+        String text = getSource(fileName);
+
+        if (text != null) {
+            int dotIndex = fileName.lastIndexOf('.');
+            if (dotIndex != -1) {
+                Parser parser = Parser.getInstance(fileName.substring(dotIndex), text);
+                if (parser != null) {
+                    return parser.parse();
+                }
+            }
+        }
+
+        if (text != null && extensions.length != 0) {
+            Parser parser = Parser.getInstance(extensions[0], text);
+            if (parser != null) {
+                return parser.parse();
+            }
+        }
+
+        return null;
+    }
+
+    public File getFile(String name, String... extensions) {
         for (SourceProvider p : sourceProviders) {
+            for (String suffix : extensions) {
+                File file = p.getFile(name + suffix);
+                if (file != null) {
+                    return file;
+                }
+            }
+
             File file = p.getFile(name);
             if (file != null) {
                 return file;
             }
+
         }
         return null;
     }

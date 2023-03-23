@@ -273,6 +273,9 @@ public class EditorTab implements FindReplaceTarget {
             if (node == null) {
                 node = super.getObjectTree(fileName + ".spin2");
             }
+            if (node == null) {
+                node = super.getObjectTree(fileName + ".c");
+            }
             return node;
         }
 

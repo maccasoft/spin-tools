@@ -148,7 +148,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
             @Override
             protected Node getParsedSource(String fileName) {
-                return Spin2ObjectCompiler.this.getParsedSource(fileName);
+                return compiler.getParsedObject(fileName, ".spin2");
             }
 
             @Override
@@ -902,10 +902,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
             }
 
         });
-    }
-
-    protected Node getParsedSource(String fileName) {
-        return null;
     }
 
     protected byte[] getBinaryFile(String fileName) {
@@ -2116,10 +2112,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
         scope.addBuiltinSymbol("CLKMODE_", new NumberLiteral(clkmode));
         scope.addBuiltinSymbol("CLKFREQ_", new NumberLiteral(finalfreq));
-    }
-
-    public List<Spin2PAsmLine> getSource() {
-        return source;
     }
 
     public Spin2Context getScope() {

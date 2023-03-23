@@ -22,12 +22,11 @@ import java.util.ArrayList;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.Spin2Debugger;
 import com.maccasoft.propeller.spin2.Spin2Object;
-import com.maccasoft.propeller.spin2.Spin2Parser;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 class Spin2CExamplesTest {
 
@@ -170,62 +169,6 @@ class Spin2CExamplesTest {
         return os.toString().replaceAll("\\r\\n", "\n");
     }
 
-    class Spin2CompilerAdapter extends Spin2CCompiler {
-
-        File parent;
-
-        public Spin2CompilerAdapter(File parent) {
-            this.parent = parent;
-        }
-
-        @Override
-        public File getFile(String name) {
-            File file = new File(parent, name);
-            if (!file.exists() || file.isDirectory()) {
-                file = new File(path, name);
-            }
-            if (!file.exists() || file.isDirectory()) {
-                file = new File(libraryPath, name);
-            }
-            return file.exists() && !file.isDirectory() ? file : null;
-        }
-
-        @Override
-        public Node getParsedObject(String fileName) {
-            String text = getObjectSource(fileName);
-            if (text == null) {
-                return null;
-            }
-            Spin2TokenStream stream = new Spin2TokenStream(text);
-            Spin2Parser subject = new Spin2Parser(stream);
-            return subject.parse();
-        }
-
-        protected String getObjectSource(String fileName) {
-            File file = new File(parent, fileName);
-            if (!file.exists()) {
-                file = new File(libraryPath, fileName);
-            }
-            if (file.exists()) {
-                return loadFromFile(file);
-            }
-            return null;
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            File file = new File(parent, fileName);
-            if (!file.exists()) {
-                file = new File(libraryPath, fileName);
-            }
-            if (file.exists()) {
-                return loadBinaryFromFile(file);
-            }
-            return null;
-        }
-
-    }
-
     void compileAndCompare(File source, File binary) throws Exception {
         String text = loadFromFile(source);
         byte[] expected = loadBinaryFromFile(binary);
@@ -234,7 +177,12 @@ class Spin2CExamplesTest {
         CParser subject = new CParser(stream);
         Node root = subject.parse();
 
-        Spin2CompilerAdapter compiler = new Spin2CompilerAdapter(source.getParentFile());
+        Spin2CCompiler compiler = new Spin2CCompiler();
+        compiler.addSourceProvider(new FileSourceProvider(new File[] {
+            source.getParentFile(),
+            new File(path),
+            new File(libraryPath)
+        }));
         Spin2Object obj = compiler.compile(source, root);
         for (CompilerException msg : compiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {
