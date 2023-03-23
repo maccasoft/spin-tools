@@ -92,6 +92,46 @@ public abstract class SpinObject {
 
     }
 
+    public static abstract class LinkDataObject extends DataObject {
+
+        Object object;
+        long offset;
+        long varOffset;
+
+        public LinkDataObject(Object object, long offset, long varOffset) {
+            super(new byte[] {
+                (byte) 0,
+                (byte) 0,
+                (byte) 0,
+                (byte) 0
+            });
+            this.object = object;
+            this.offset = offset;
+            this.varOffset = varOffset;
+        }
+
+        public long getOffset() {
+            return offset;
+        }
+
+        public void setOffset(long offset) {
+            this.offset = offset;
+        }
+
+        public long getVarOffset() {
+            return varOffset;
+        }
+
+        public void setVarOffset(long varOffset) {
+            this.varOffset = varOffset;
+        }
+
+        public boolean isObject(Object other) {
+            return this.object == other;
+        }
+
+    }
+
     public static class LongDataObject extends DataObject {
 
         long value;

@@ -29,28 +29,13 @@ public class Spin2Object extends SpinObject {
     public static BitField cm_cc = new BitField(0b0000_000_0_000000_0000000000_0000_11_00);
     public static BitField cm_ss = new BitField(0b0000_000_0_000000_0000000000_0000_00_11);
 
-    public static class LinkDataObject extends DataObject {
+    public static class Spin2LinkDataObject extends LinkDataObject {
 
-        public Object object;
-        public long offset;
-        public long varOffset;
-
-        public LinkDataObject(Object object, long offset, long varOffset) {
-            super(new byte[] {
-                (byte) offset,
-                (byte) (offset >> 8),
-                (byte) (offset >> 16),
-                (byte) (offset >> 24)
-            });
-            this.object = object;
-            this.offset = offset;
-            this.varOffset = varOffset;
+        public Spin2LinkDataObject(Object object, long offset, long varOffset) {
+            super(object, offset, varOffset);
         }
 
-        public long getOffset() {
-            return offset;
-        }
-
+        @Override
         public void setOffset(long offset) {
             this.bytes = new byte[] {
                 (byte) offset,
@@ -58,15 +43,7 @@ public class Spin2Object extends SpinObject {
                 (byte) (offset >> 16),
                 (byte) (offset >> 24)
             };
-            this.offset = offset;
-        }
-
-        public long getVarOffset() {
-            return varOffset;
-        }
-
-        public Object getObject() {
-            return object;
+            super.setOffset(offset);
         }
 
     }

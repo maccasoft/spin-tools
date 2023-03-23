@@ -13,9 +13,9 @@ package com.maccasoft.propeller;
 import java.util.List;
 import java.util.Map;
 
+import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.spin2.Spin2Object.LinkDataObject;
 
 public abstract class ObjectCompiler {
 

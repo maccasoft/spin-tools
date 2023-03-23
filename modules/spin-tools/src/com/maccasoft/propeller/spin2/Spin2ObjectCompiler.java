@@ -22,9 +22,11 @@ import java.util.TreeMap;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
+import com.maccasoft.propeller.Compiler.ObjectInfo;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject.DataObject;
+import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.ContextLiteral;
@@ -50,8 +52,7 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin2.Spin2Bytecode.Descriptor;
-import com.maccasoft.propeller.spin2.Spin2Compiler.ObjectInfo;
-import com.maccasoft.propeller.spin2.Spin2Object.LinkDataObject;
+import com.maccasoft.propeller.spin2.Spin2Object.Spin2LinkDataObject;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
 import com.maccasoft.propeller.spin2.bytecode.CaseFastJmp;
@@ -213,7 +214,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
             try {
                 int count = info.count.getNumber().intValue();
 
-                LinkDataObject linkData = new LinkDataObject(info.compiler, 0, varOffset);
+                LinkDataObject linkData = new Spin2LinkDataObject(info.compiler, 0, varOffset);
                 for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                     if (objEntry.getValue() instanceof Method) {
                         String qualifiedName = name + "." + objEntry.getKey();
@@ -247,7 +248,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 varOffset += info.compiler.getVarSize();
 
                 for (int i = 1; i < count; i++) {
-                    objectLinks.add(new LinkDataObject(info.compiler, 0, varOffset));
+                    objectLinks.add(new Spin2LinkDataObject(info.compiler, 0, varOffset));
                     varOffset += info.compiler.getVarSize();
                 }
 

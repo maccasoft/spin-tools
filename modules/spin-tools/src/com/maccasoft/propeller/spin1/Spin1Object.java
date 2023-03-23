@@ -14,54 +14,32 @@ import com.maccasoft.propeller.SpinObject;
 
 public class Spin1Object extends SpinObject {
 
-    public static class LinkDataObject extends DataObject {
+    public static class Spin1LinkDataObject extends LinkDataObject {
 
-        Object object;
-        long offset;
-        long varOffset;
-
-        public LinkDataObject(Object object, long offset, long varOffset) {
-            super(new byte[] {
-                (byte) offset,
-                (byte) (offset >> 8),
-                (byte) varOffset,
-                (byte) (varOffset >> 8)
-            });
-            this.object = object;
-            this.offset = offset;
-            this.varOffset = varOffset;
+        public Spin1LinkDataObject(Object object, long offset, long varOffset) {
+            super(object, offset, varOffset);
         }
 
-        public long getOffset() {
-            return offset;
-        }
-
+        @Override
         public void setOffset(long offset) {
             this.bytes = new byte[] {
                 (byte) offset,
                 (byte) (offset >> 8),
-                (byte) varOffset,
-                (byte) (varOffset >> 8)
+                (byte) getVarOffset(),
+                (byte) (getVarOffset() >> 8)
             };
-            this.offset = offset;
+            super.setOffset(offset);
         }
 
-        public long getVarOffset() {
-            return varOffset;
-        }
-
+        @Override
         public void setVarOffset(long varOffset) {
             this.bytes = new byte[] {
-                (byte) offset,
-                (byte) (offset >> 8),
+                (byte) getOffset(),
+                (byte) (getOffset() >> 8),
                 (byte) varOffset,
                 (byte) (varOffset >> 8)
             };
-            this.varOffset = varOffset;
-        }
-
-        public Object getObject() {
-            return object;
+            super.setVarOffset(varOffset);
         }
 
     }

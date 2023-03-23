@@ -24,36 +24,13 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
+import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.spin2.Spin2Object.LinkDataObject;
 
 public class Spin2Compiler extends Compiler {
-
-    public static class ObjectInfo {
-
-        public ObjectCompiler compiler;
-
-        public long offset;
-        public Expression count;
-
-        public ObjectInfo(ObjectCompiler compiler) {
-            this.compiler = compiler;
-        }
-
-        public ObjectInfo(ObjectCompiler compiler, Expression count) {
-            this.compiler = compiler;
-            this.count = count;
-        }
-
-        public boolean hasErrors() {
-            return compiler.hasErrors();
-        }
-
-    }
 
     protected boolean removeUnusedMethods;
 
@@ -77,6 +54,7 @@ public class Spin2Compiler extends Compiler {
         this.removeUnusedMethods = removeUnusedMethods;
     }
 
+    @Override
     public boolean isRemoveUnusedMethods() {
         return removeUnusedMethods;
     }
@@ -211,7 +189,7 @@ public class Spin2Compiler extends Compiler {
             for (LinkDataObject linkData : info.compiler.getObjectLinks()) {
                 for (Entry<File, ObjectInfo> entry : childObjects.entrySet()) {
                     ObjectInfo info2 = entry.getValue();
-                    if (info2.compiler == linkData.object) {
+                    if (linkData.isObject(info2.compiler)) {
                         linkData.setOffset(info2.offset - info.offset);
                         linkData.setText(String.format("Object \"%s\" @ $%05X", entry.getKey().getName(), linkData.getOffset()));
                         break;
@@ -223,7 +201,7 @@ public class Spin2Compiler extends Compiler {
         for (LinkDataObject linkData : objectCompiler.getObjectLinks()) {
             for (Entry<File, ObjectInfo> entry : childObjects.entrySet()) {
                 ObjectInfo info = entry.getValue();
-                if (info.compiler == linkData.object) {
+                if (linkData.isObject(info.compiler)) {
                     linkData.setOffset(info.offset);
                     linkData.setText(String.format("Object \"%s\" @ $%05X", entry.getKey().getName(), linkData.getOffset()));
                     break;
@@ -248,10 +226,12 @@ public class Spin2Compiler extends Compiler {
 
     }
 
+    @Override
     public boolean isDebugEnabled() {
         return debugEnabled;
     }
 
+    @Override
     public ObjectInfo getObjectInfo(String fileName) {
         File file = getFile(fileName);
         if (file == null) {

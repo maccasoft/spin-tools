@@ -25,6 +25,28 @@ import com.maccasoft.propeller.model.SourceProvider;
 
 public abstract class Compiler {
 
+    public static class ObjectInfo {
+
+        public ObjectCompiler compiler;
+
+        public long offset;
+        public Expression count;
+
+        public ObjectInfo(ObjectCompiler compiler) {
+            this.compiler = compiler;
+        }
+
+        public ObjectInfo(ObjectCompiler compiler, Expression count) {
+            this.compiler = compiler;
+            this.count = count;
+        }
+
+        public boolean hasErrors() {
+            return compiler.hasErrors();
+        }
+
+    }
+
     public static class FileSourceProvider extends SourceProvider {
 
         final String suffix;
@@ -91,8 +113,16 @@ public abstract class Compiler {
         sourceProviders.add(provider);
     }
 
+    public boolean isRemoveUnusedMethods() {
+        return false;
+    }
+
     public void setRemoveUnusedMethods(boolean removeUnusedMethods) {
 
+    }
+
+    public boolean isDebugEnabled() {
+        return false;
     }
 
     public void setDebugEnabled(boolean enabled) {
@@ -102,6 +132,10 @@ public abstract class Compiler {
     public abstract void compile(File file, OutputStream binary, PrintStream listing) throws Exception;
 
     public abstract SpinObject compile(File rootFile, Node root);
+
+    public ObjectInfo getObjectInfo(String fileName) {
+        return null;
+    }
 
     public boolean hasErrors() {
         return false;

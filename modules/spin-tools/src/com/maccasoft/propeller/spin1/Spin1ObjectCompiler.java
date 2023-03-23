@@ -20,7 +20,10 @@ import java.util.Map.Entry;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
+import com.maccasoft.propeller.Compiler.ObjectInfo;
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectCompiler;
+import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.ContextLiteral;
@@ -44,8 +47,7 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1Bytecode.Descriptor;
-import com.maccasoft.propeller.spin1.Spin1Compiler.ObjectInfo;
-import com.maccasoft.propeller.spin1.Spin1Object.LinkDataObject;
+import com.maccasoft.propeller.spin1.Spin1Object.Spin1LinkDataObject;
 import com.maccasoft.propeller.spin1.bytecode.Address;
 import com.maccasoft.propeller.spin1.bytecode.Bytecode;
 import com.maccasoft.propeller.spin1.bytecode.CaseJmp;
@@ -61,7 +63,7 @@ import com.maccasoft.propeller.spin1.bytecode.VariableOp;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
 
-public class Spin1ObjectCompiler {
+public class Spin1ObjectCompiler extends ObjectCompiler {
 
     class BytecodeCompiler extends Spin1BytecodeCompiler {
 
@@ -115,6 +117,7 @@ public class Spin1ObjectCompiler {
         this.openspinCompatible = openspinCompatibile;
     }
 
+    @Override
     public void compile(Node root) {
 
         for (Node node : root.getChilds()) {
@@ -250,7 +253,7 @@ public class Spin1ObjectCompiler {
             try {
                 int count = info.count.getNumber().intValue();
 
-                LinkDataObject linkData = new LinkDataObject(info.compiler, 0, varOffset);
+                LinkDataObject linkData = new Spin1LinkDataObject(info.compiler, 0, varOffset);
                 for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                     if (objEntry.getValue() instanceof Method) {
                         String qualifiedName = name + "." + objEntry.getKey();
@@ -284,7 +287,7 @@ public class Spin1ObjectCompiler {
                 varOffset += info.compiler.getVarSize();
 
                 for (int i = 1; i < count; i++) {
-                    objectLinks.add(new LinkDataObject(info.compiler, 0, varOffset));
+                    objectLinks.add(new Spin1LinkDataObject(info.compiler, 0, varOffset));
                     varOffset += info.compiler.getVarSize();
                 }
 
@@ -312,6 +315,7 @@ public class Spin1ObjectCompiler {
         }
     }
 
+    @Override
     public void compilePass2() {
 
         if (methods.size() != 0) {
@@ -348,22 +352,27 @@ public class Spin1ObjectCompiler {
         }
     }
 
+    @Override
     public Map<String, Expression> getPublicSymbols() {
         return publicSymbols;
     }
 
+    @Override
     public int getVarSize() {
         return varOffset;
     }
 
+    @Override
     public List<LinkDataObject> getObjectLinks() {
         return objectLinks;
     }
 
+    @Override
     public Spin1Object generateObject() {
         return generateObject(0);
     }
 
+    @Override
     public Spin1Object generateObject(int memoryOffset) {
         int address = 0, hubAddress = 0;
         Spin1Object object = new Spin1Object();
@@ -1816,6 +1825,7 @@ public class Spin1ObjectCompiler {
         messages.add(message);
     }
 
+    @Override
     public boolean hasErrors() {
         return errors;
     }

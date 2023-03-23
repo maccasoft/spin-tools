@@ -23,9 +23,11 @@ import java.util.Stack;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
+import com.maccasoft.propeller.Compiler.ObjectInfo;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject.DataObject;
+import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.ContextLiteral;
@@ -44,7 +46,6 @@ import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin2.Spin2BytecodeCompiler;
-import com.maccasoft.propeller.spin2.Spin2Compiler.ObjectInfo;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2Debug;
 import com.maccasoft.propeller.spin2.Spin2ExpressionBuilder;
@@ -52,7 +53,7 @@ import com.maccasoft.propeller.spin2.Spin2GlobalContext;
 import com.maccasoft.propeller.spin2.Spin2Method;
 import com.maccasoft.propeller.spin2.Spin2MethodLine;
 import com.maccasoft.propeller.spin2.Spin2Object;
-import com.maccasoft.propeller.spin2.Spin2Object.LinkDataObject;
+import com.maccasoft.propeller.spin2.Spin2Object.Spin2LinkDataObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmLine;
@@ -92,8 +93,8 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
     List<CompilerException> messages = new ArrayList<CompilerException>();
 
     Map<String, Expression> publicSymbols = new HashMap<String, Expression>();
-    List<LinkDataObject> objectLinks = new ArrayList<LinkDataObject>();
-    List<LongDataObject> methodData = new ArrayList<LongDataObject>();
+    List<LinkDataObject> objectLinks = new ArrayList<>();
+    List<LongDataObject> methodData = new ArrayList<>();
 
     Spin2CCompiler compiler;
     Spin2BytecodeCompiler spinCompiler;
@@ -295,7 +296,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                 }
 
                 if (token.getText().startsWith("<")) {
-                    LinkDataObject linkData = new LinkDataObject(info.compiler, 0, varOffset);
+                    LinkDataObject linkData = new Spin2LinkDataObject(info.compiler, 0, varOffset);
 
                     for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                         if (objEntry.getValue() instanceof Method) {
@@ -543,7 +544,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             try {
                 int count = size.getNumber().intValue();
 
-                LinkDataObject linkData = new LinkDataObject(info.compiler, 0, varOffset);
+                LinkDataObject linkData = new Spin2LinkDataObject(info.compiler, 0, varOffset);
                 for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                     if (objEntry.getValue() instanceof Method) {
                         String qualifiedName = identifier.getText() + "." + objEntry.getKey();
@@ -577,7 +578,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                 varOffset += info.compiler.getVarSize();
 
                 for (int i = 1; i < count; i++) {
-                    objectLinks.add(new LinkDataObject(info.compiler, 0, varOffset));
+                    objectLinks.add(new Spin2LinkDataObject(info.compiler, 0, varOffset));
                     varOffset += info.compiler.getVarSize();
                 }
 
