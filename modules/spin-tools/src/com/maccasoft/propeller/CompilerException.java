@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -75,6 +75,19 @@ public class CompilerException extends RuntimeException {
             this.column = token.column;
             this.startToken = token;
             this.stopToken = token;
+        }
+        else if (data instanceof List) {
+            List<?> c = (List<?>) data;
+            if (c.size() != 0) {
+                Object first = c.get(0);
+                Object last = c.get(c.size() - 1);
+                if ((first instanceof Token) && (last instanceof Token)) {
+                    this.startToken = (Token) first;
+                    this.stopToken = (Token) last;
+                    this.line = this.startToken.line + 1;
+                    this.column = this.startToken.column;
+                }
+            }
         }
     }
 

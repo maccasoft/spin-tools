@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -23,16 +23,15 @@ public class Spin1MethodLine {
     Spin1Context scope;
 
     String statement;
-    List<Spin1StatementNode> arguments = new ArrayList<Spin1StatementNode>();
 
     Spin1MethodLine parent;
-    List<Spin1MethodLine> childs = new ArrayList<Spin1MethodLine>();
+    List<Spin1MethodLine> childs = new ArrayList<>();
 
     String text;
-    List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
+    List<Spin1Bytecode> source = new ArrayList<>();
 
     protected Node data;
-    protected Map<String, Object> keyedData = new HashMap<String, Object>();
+    protected Map<String, Object> keyedData = new HashMap<>();
 
     int startAddress;
     int endAddress;
@@ -51,7 +50,20 @@ public class Spin1MethodLine {
         this.scope = new Spin1Context(scope);
         this.statement = statement;
         this.data = node;
-        this.text = node.getText();
+        this.text = node.toString().replaceAll("[\\r\\n]", "");
+    }
+
+    public Spin1MethodLine(Spin1Context scope, Spin1MethodLine parent) {
+        this.scope = new Spin1Context(scope);
+        this.parent = parent;
+    }
+
+    public Spin1MethodLine(Spin1Context scope, Spin1MethodLine parent, String statement, Node node) {
+        this.scope = new Spin1Context(scope);
+        this.parent = parent;
+        this.statement = statement;
+        this.data = node;
+        this.text = node.toString().replaceAll("[\\r\\n]", "");
     }
 
     public Spin1Context getScope() {
@@ -104,22 +116,6 @@ public class Spin1MethodLine {
         return addressChanged;
     }
 
-    public void addArgument(Spin1StatementNode node) {
-        arguments.add(node);
-    }
-
-    public int getArgumentsCount() {
-        return arguments.size();
-    }
-
-    public List<Spin1StatementNode> getArguments() {
-        return arguments;
-    }
-
-    public Spin1StatementNode getArgument(int index) {
-        return arguments.get(index);
-    }
-
     public Spin1MethodLine getParent() {
         return parent;
     }
@@ -127,6 +123,11 @@ public class Spin1MethodLine {
     public void addChild(Spin1MethodLine line) {
         line.parent = this;
         childs.add(line);
+    }
+
+    public void addChild(int index, Spin1MethodLine line) {
+        line.parent = this;
+        childs.add(index, line);
     }
 
     public void addChilds(Collection<Spin1MethodLine> lines) {

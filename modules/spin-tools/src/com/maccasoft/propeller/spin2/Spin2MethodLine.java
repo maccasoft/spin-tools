@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -24,7 +24,6 @@ public class Spin2MethodLine {
     Spin2Context scope;
 
     String statement;
-    List<Spin2StatementNode> arguments = new ArrayList<Spin2StatementNode>();
 
     Spin2MethodLine parent;
     List<Spin2MethodLine> childs = new ArrayList<Spin2MethodLine>();
@@ -124,22 +123,6 @@ public class Spin2MethodLine {
 
     public boolean isAddressChanged() {
         return addressChanged;
-    }
-
-    public void addArgument(Spin2StatementNode node) {
-        arguments.add(node);
-    }
-
-    public int getArgumentsCount() {
-        return arguments.size();
-    }
-
-    public List<Spin2StatementNode> getArguments() {
-        return arguments;
-    }
-
-    public Spin2StatementNode getArgument(int index) {
-        return arguments.get(index);
     }
 
     public Spin2MethodLine getParent() {

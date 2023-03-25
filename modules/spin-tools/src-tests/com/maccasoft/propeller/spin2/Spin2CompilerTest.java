@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -664,7 +664,7 @@ class Spin2CompilerTest {
             + "00040 0000C       C2 80          VAR_READ LONG VBASE+$00002 (short)\n"
             + "00042 0000E       96             MULTIPLY\n"
             + "00043 0000F       8A             ADD\n"
-            + "00044 00010       05             return\n"
+            + "00044 00010       05             RETURN\n"
             + "00045 00011       04             RETURN\n"
             + "00046 00012       00 00          Padding\n"
             + "' Object \"object2.spin2\" header (var size 8)\n"
@@ -680,7 +680,7 @@ class Spin2CompilerTest {
             + "00055 0000D       8A             ADD\n"
             + "00056 0000E       C1 80          VAR_READ LONG VBASE+$00001 (short)\n"
             + "00058 00010       96             MULTIPLY\n"
-            + "00059 00011       05             return\n"
+            + "00059 00011       05             RETURN\n"
             + "0005A 00012       04             RETURN\n"
             + "0005B 00013       00             Padding\n"
             + "", compile("main.spin2", sources));
@@ -775,7 +775,7 @@ class Spin2CompilerTest {
             + "0004F 0001B       C2 80          VAR_READ LONG VBASE+$00002 (short)\n"
             + "00051 0001D       96             MULTIPLY\n"
             + "00052 0001E       8A             ADD\n"
-            + "00053 0001F       05             return\n"
+            + "00053 0001F       05             RETURN\n"
             + "00054 00020       04             RETURN\n"
             + "00055 00021       00 00 00       Padding\n"
             + "' Object \"object2.spin2\" header (var size 8)\n"
@@ -791,7 +791,7 @@ class Spin2CompilerTest {
             + "00065 0000D       8A             ADD\n"
             + "00066 0000E       C1 80          VAR_READ LONG VBASE+$00001 (short)\n"
             + "00068 00010       96             MULTIPLY\n"
-            + "00069 00011       05             return\n"
+            + "00069 00011       05             RETURN\n"
             + "0006A 00012       04             RETURN\n"
             + "0006B 00013       00             Padding\n"
             + "", compile("main.spin2", sources));
@@ -892,7 +892,7 @@ class Spin2CompilerTest {
             + "0003F 0001B       C2 80          VAR_READ LONG VBASE+$00002 (short)\n"
             + "00041 0001D       96             MULTIPLY\n"
             + "00042 0001E       8A             ADD\n"
-            + "00043 0001F       05             return\n"
+            + "00043 0001F       05             RETURN\n"
             + "00044 00020       04             RETURN\n"
             + "00045 00021       00 00 00       Padding\n"
             + "' Object \"object2.spin2\" header (var size 20)\n"
@@ -913,7 +913,7 @@ class Spin2CompilerTest {
             + "00063 0001B       C2 80          VAR_READ LONG VBASE+$00002 (short)\n"
             + "00065 0001D       97             DIVIDE\n"
             + "00066 0001E       8A             ADD\n"
-            + "00067 0001F       05             return\n"
+            + "00067 0001F       05             RETURN\n"
             + "00068 00020       04             RETURN\n"
             + "00069 00021       00 00 00       Padding\n"
             + "' Object \"object3.spin2\" header (var size 8)\n"
@@ -929,7 +929,7 @@ class Spin2CompilerTest {
             + "00079 0000D       8A             ADD\n"
             + "0007A 0000E       C1 80          VAR_READ LONG VBASE+$00001 (short)\n"
             + "0007C 00010       96             MULTIPLY\n"
-            + "0007D 00011       05             return\n"
+            + "0007D 00011       05             RETURN\n"
             + "0007E 00012       04             RETURN\n"
             + "0007F 00013       00             Padding\n"
             + "", compile("main.spin2", sources));

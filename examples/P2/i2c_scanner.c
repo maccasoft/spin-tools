@@ -22,7 +22,7 @@ jm_serial term;
 
 void main()
 {
-    i2c.setup(SCL, SDA, 100, P_HIGH_1K5);
+    i2c.setup(SCL, SDA, 100, PU_1K5);
     term.startx(RX1, TX1, 115_200);
 
 #if STYLE == S_LIST
@@ -31,7 +31,8 @@ void main()
     i2c_matrix();
 #endif
 
-    for(;;) waitct(0);
+    for(;;)
+        waitct(0);
 }
 
 /*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -22,7 +22,7 @@ import com.maccasoft.propeller.model.Token;
 
 public class Spin2TreeBuilder {
 
-    static Map<String, Integer> precedence = new HashMap<String, Integer>();
+    static Map<String, Integer> precedence = new HashMap<>();
     static {
         precedence.put(">>", 16);
         precedence.put("<<", 16);
@@ -99,7 +99,7 @@ public class Spin2TreeBuilder {
         precedence.put("\\", 1);
     }
 
-    static Set<String> assignements = new HashSet<String>();
+    static Set<String> assignements = new HashSet<>();
     static {
         assignements.add(":=");
 
@@ -152,7 +152,7 @@ public class Spin2TreeBuilder {
         assignements.add("OR=");
     }
 
-    static Set<String> unary = new HashSet<String>();
+    static Set<String> unary = new HashSet<>();
     static {
         unary.add("+");
         unary.add("-");
@@ -183,7 +183,7 @@ public class Spin2TreeBuilder {
         unary.add("QEXP=");
     }
 
-    static Set<String> postEffect = new HashSet<String>();
+    static Set<String> postEffect = new HashSet<>();
     static {
         postEffect.add("++");
         postEffect.add("--");
@@ -194,7 +194,7 @@ public class Spin2TreeBuilder {
     }
 
     int index;
-    List<Token> tokens = new ArrayList<Token>();
+    List<Token> tokens = new ArrayList<>();
 
     public Spin2TreeBuilder() {
 
@@ -202,6 +202,10 @@ public class Spin2TreeBuilder {
 
     public void addToken(Token token) {
         tokens.add(token);
+    }
+
+    public List<Token> getTokens() {
+        return tokens;
     }
 
     public Spin2StatementNode getRoot() {

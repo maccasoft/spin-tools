@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -319,7 +319,7 @@ class Spin1ObjectCompilerTest {
             + "0000A 0000A       64             VAR_READ LONG DBASE+$0004 (short)\n"
             + "0000B 0000B       36             CONSTANT (1)\n"
             + "0000C 0000C       0D 01          CASE-JMP $0000F (1)\n"
-            + "0000E 0000E       0C             JMP_POP\n"
+            + "0000E 0000E       0C             CASE_DONE\n"
             + "'             1: quit\n"
             + "0000F 0000F       38 08 14       POP 8\n"
             + "00012 00012       04 05          JMP $00019 (5)\n"
@@ -909,7 +909,7 @@ class Spin1ObjectCompilerTest {
             + "00028 00028       0D 0D          CASE-JMP $00037 (13)\n"
             + "0002A 0002A       38 09          CONSTANT (9)\n"
             + "0002C 0002C       0D 09          CASE-JMP $00037 (9)\n"
-            + "0002E 0002E       0C             JMP_POP\n"
+            + "0002E 0002E       0C             CASE_DONE\n"
             + "'         1, 2      : a := 14\n"
             + "0002F 0002F       38 0E          CONSTANT (14)\n"
             + "00031 00031       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
@@ -1719,7 +1719,7 @@ class Spin1ObjectCompilerTest {
             + "00015 00015       0D 09          CASE-JMP $00020 (9)\n"
             + "00017 00017       37 21          CONSTANT (3)\n"
             + "00019 00019       0D 09          CASE-JMP $00024 (9)\n"
-            + "0001B 0001B       0C             JMP_POP\n"
+            + "0001B 0001B       0C             CASE_DONE\n"
             + "'             1: a := 4\n"
             + "0001C 0001C       37 01          CONSTANT (4)\n"
             + "0001E 0001E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
@@ -2050,6 +2050,7 @@ class Spin1ObjectCompilerTest {
             + "0000F 0000F       87 1F          MEM_ADDRESS BYTE PBASE+$001F\n"
             + "00011 00011       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
             + "00012 00012       32             RETURN\n"
+            + "' (string data)\n"
             + "00013 00013       31 32 33 34 0D STRING\n"
             + "00018 00018       0A 00\n"
             + "0001A 0001A       31 32 33 34 00 STRING\n"
@@ -2081,6 +2082,7 @@ class Spin1ObjectCompilerTest {
             + "0000C 0000C       38 32          CONSTANT (\"2\")\n"
             + "0000E 0000E       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
             + "0000F 0000F       32             RETURN\n"
+            + "' (string data)\n"
             + "00010 00010       31 00          STRING\n"
             + "00012 00012       00 00          Padding\n"
             + "", compile(text));
