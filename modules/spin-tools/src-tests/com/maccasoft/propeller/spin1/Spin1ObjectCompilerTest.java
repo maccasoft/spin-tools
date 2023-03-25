@@ -1041,7 +1041,51 @@ class Spin1ObjectCompilerTest {
             + "00018 00018       32             RETURN\n"
             + "00019 00019       32             RETURN\n"
             + "0001A 0001A       00 00          Padding\n"
-            + "", compile(text));
+            + "", compile(text, true));
+    }
+
+    @Test
+    void testOptimizedMethodReturn() throws Exception {
+        String text = ""
+            + "PUB main\n"
+            + "\n"
+            + "    return 1\n"
+            + "\n"
+            + "PUB function1 | a\n"
+            + "\n"
+            + "    return a\n"
+            + "\n"
+            + "PUB function2 : b\n"
+            + "\n"
+            + "    b := 1\n"
+            + "    return\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       18 00          Object size\n"
+            + "00002 00002       04             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       10 00 00 00    Function main @ $0010 (local size 0)\n"
+            + "00008 00008       12 00 04 00    Function function1 @ $0012 (local size 4)\n"
+            + "0000C 0000C       14 00 00 00    Function function2 @ $0014 (local size 0)\n"
+            + "' PUB main\n"
+            + "'     return 1\n"
+            + "00010 00010       36             CONSTANT (1)\n"
+            + "00011 00011       33             RETURN\n"
+            + "' PUB function1 | a\n"
+            + "'     return a\n"
+            + "00012 00012       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00013 00013       33             RETURN\n"
+            + "' PUB function2 : b\n"
+            + "'     b := 1\n"
+            + "00014 00014       36             CONSTANT (1)\n"
+            + "00015 00015       61             VAR_WRITE LONG DBASE+$0000 (short)\n"
+            + "'     return\n"
+            + "00016 00016       32             RETURN\n"
+            + "00017 00017       00             Padding\n"
+            + "", compile(text, false));
     }
 
     @Test
@@ -2055,7 +2099,61 @@ class Spin1ObjectCompilerTest {
             + "00018 00018       0A 00\n"
             + "0001A 0001A       31 32 33 34 00 STRING\n"
             + "0001F 0001F       31 32 33 34 00 STRING\n"
-            + "", compile(text));
+            + "", compile(text, true));
+    }
+
+    @Test
+    void testOptimizeStrings() throws Exception {
+        String text = ""
+            + "PUB main | a, b, c\n"
+            + "\n"
+            + "    a := string(\"1234\", 13, 10)\n"
+            + "    b := \"1234\"\n"
+            + "    c := @\"1234\"\n"
+            + "\n"
+            + "PUB setup | a, b, c\n"
+            + "\n"
+            + "    a := string(\"1234\", 13, 10)\n"
+            + "    b := \"1234\"\n"
+            + "    c := @\"1234\"\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       30 00          Object size\n"
+            + "00002 00002       03             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       0C 00 0C 00    Function main @ $000C (local size 12)\n"
+            + "00008 00008       17 00 0C 00    Function setup @ $0017 (local size 12)\n"
+            + "' PUB main | a, b, c\n"
+            + "'     a := string(\"1234\", 13, 10)\n"
+            + "0000C 0000C       87 80 22       MEM_ADDRESS BYTE PBASE+$0022\n"
+            + "0000F 0000F       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     b := \"1234\"\n"
+            + "00010 00010       87 29          MEM_ADDRESS BYTE PBASE+$0029\n"
+            + "00012 00012       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     c := @\"1234\"\n"
+            + "00013 00013       87 29          MEM_ADDRESS BYTE PBASE+$0029\n"
+            + "00015 00015       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
+            + "00016 00016       32             RETURN\n"
+            + "' PUB setup | a, b, c\n"
+            + "'     a := string(\"1234\", 13, 10)\n"
+            + "00017 00017       87 80 22       MEM_ADDRESS BYTE PBASE+$0022\n"
+            + "0001A 0001A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     b := \"1234\"\n"
+            + "0001B 0001B       87 29          MEM_ADDRESS BYTE PBASE+$0029\n"
+            + "0001D 0001D       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     c := @\"1234\"\n"
+            + "0001E 0001E       87 29          MEM_ADDRESS BYTE PBASE+$0029\n"
+            + "00020 00020       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
+            + "00021 00021       32             RETURN\n"
+            + "' (string data)\n"
+            + "00022 00022       31 32 33 34 0D STRING\n"
+            + "00027 00027       0A 00\n"
+            + "00029 00029       31 32 33 34 00 STRING\n"
+            + "0002E 0002E       00 00          Padding\n"
+            + "", compile(text, false));
     }
 
     @Test

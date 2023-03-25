@@ -313,17 +313,21 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
             for (Spin1MethodLine line : compileStatement(method.getScope(), method, null, node)) {
                 method.addSource(line);
             }
-            Spin1MethodLine line = new Spin1MethodLine(method.getScope(), "RETURN");
-            line.addSource(new Bytecode(line.getScope(), 0b00110010, line.getStatement()));
-            method.addSource(line);
+            if (openspinCompatible || method.getLines().size() == 0 || !"RETURN".equals(method.getLines().get(method.getLines().size() - 1).getStatement())) {
+                Spin1MethodLine line = new Spin1MethodLine(method.getScope(), "RETURN");
+                line.addSource(new Bytecode(line.getScope(), 0b00110010, line.getStatement()));
+                method.addSource(line);
+            }
 
-            List<Spin1Bytecode> data = bytecodeCompiler.getStringData();
-            if (data.size() != 0) {
-                Spin1MethodLine stringDataLine = new Spin1MethodLine(method.getScope());
-                stringDataLine.setText("(string data)");
-                stringDataLine.addSource(data);
-                method.addSource(stringDataLine);
-                data.clear();
+            if (openspinCompatible) {
+                List<Spin1Bytecode> data = bytecodeCompiler.getStringData();
+                if (data.size() != 0) {
+                    Spin1MethodLine stringDataLine = new Spin1MethodLine(method.getScope());
+                    stringDataLine.setText("(string data)");
+                    stringDataLine.addSource(data);
+                    method.addSource(stringDataLine);
+                    data.clear();
+                }
             }
         }
     }
@@ -463,6 +467,13 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
             }
         }
 
+        Spin1MethodLine stringDataLine = null;
+        if (!openspinCompatible && bytecodeCompiler.getStringData().size() != 0) {
+            stringDataLine = new Spin1MethodLine(scope);
+            stringDataLine.setText("(string data)");
+            stringDataLine.addSource(bytecodeCompiler.getStringData());
+        }
+
         if (methods.size() != 0) {
             boolean loop;
             do {
@@ -472,6 +483,10 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                     address = method.resolve(address);
                     loop |= method.isAddressChanged();
                 }
+                if (stringDataLine != null) {
+                    address = stringDataLine.resolve(address);
+                    loop |= stringDataLine.isAddressChanged();
+                }
             } while (loop);
 
             int index = 0;
@@ -480,6 +495,10 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                 methodData.get(index).setText(String.format("Function %s @ $%04X (local size %d)", method.getLabel(), object.getSize(), method.getLocalsSize()));
                 method.writeTo(object);
                 index++;
+            }
+
+            if (stringDataLine != null) {
+                stringDataLine.writeTo(object);
             }
 
             object.alignToLong();

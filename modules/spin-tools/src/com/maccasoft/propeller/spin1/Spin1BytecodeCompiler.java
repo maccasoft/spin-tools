@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin1;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -240,9 +241,8 @@ public abstract class Spin1BytecodeCompiler {
                     }
                 }
                 sb.append((char) 0x00);
-                Spin1Bytecode target = new Bytecode(context, sb.toString().getBytes(), "STRING".toUpperCase());
+                Spin1Bytecode target = addStringData(new Bytecode(context, sb.toString().getBytes(), "STRING".toUpperCase()));
                 source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
-                stringData.add(target);
             }
             else if (node.getType() == Token.NUMBER) {
                 Expression expression = new NumberLiteral(node.getText());
@@ -253,9 +253,8 @@ public abstract class Spin1BytecodeCompiler {
                 if (s.startsWith("@")) {
                     s = s.substring(2, s.length() - 1);
                     s += (char) 0x00;
-                    Spin1Bytecode target = new Bytecode(context, s.getBytes(), "STRING".toUpperCase());
+                    Spin1Bytecode target = addStringData(new Bytecode(context, s.getBytes(), "STRING".toUpperCase()));
                     source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, new ContextLiteral(target.getContext())));
-                    stringData.add(target);
                 }
                 else {
                     s = s.substring(1, s.length() - 1);
@@ -265,9 +264,8 @@ public abstract class Spin1BytecodeCompiler {
                     }
                     else {
                         s += (char) 0x00;
-                        Spin1Bytecode target = new Bytecode(context, s.getBytes(), "STRING".toUpperCase());
+                        Spin1Bytecode target = addStringData(new Bytecode(context, s.getBytes(), "STRING".toUpperCase()));
                         source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, new ContextLiteral(target.getContext())));
-                        stringData.add(target);
                     }
                 }
             }
@@ -1346,6 +1344,18 @@ public abstract class Spin1BytecodeCompiler {
         }
         String s = node.getText();
         return "++".equals(s) || "--".equals(s) || "~".equals(s) || "~~".equals(s) || "?".equals(s);
+    }
+
+    public Spin1Bytecode addStringData(Spin1Bytecode string) {
+        if (!openspinCompatible) {
+            for (Spin1Bytecode bc : stringData) {
+                if (Arrays.equals(bc.getBytes(), string.getBytes())) {
+                    return bc;
+                }
+            }
+        }
+        stringData.add(string);
+        return string;
     }
 
     public List<Spin1Bytecode> getStringData() {

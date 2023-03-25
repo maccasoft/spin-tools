@@ -387,10 +387,9 @@ class Spin1CompilerTest {
             + "00033 0000B       F4             MULTIPLY\n"
             + "00034 0000C       EC             ADD\n"
             + "00035 0000D       33             RETURN\n"
-            + "00036 0000E       32             RETURN\n"
-            + "00037 0000F       00             Padding\n"
+            + "00036 0000E       00 00          Padding\n"
             + "' Object \"object2.spin\" header (var size 4)\n"
-            + "00038 00000       14 00          Object size\n"
+            + "00038 00000       10 00          Object size\n"
             + "0003A 00002       02             Method count + 1\n"
             + "0003B 00003       00             Object count\n"
             + "0003C 00004       08 00 08 00    Function function @ $0008 (local size 8)\n"
@@ -404,8 +403,6 @@ class Spin1CompilerTest {
             + "00045 0000D       40             VAR_READ LONG VBASE+$0000 (short)\n"
             + "00046 0000E       F4             MULTIPLY\n"
             + "00047 0000F       33             RETURN\n"
-            + "00048 00010       32             RETURN\n"
-            + "00049 00011       00 00 00       Padding\n"
             + "", compile("main.spin", sources));
     }
 
@@ -497,10 +494,9 @@ class Spin1CompilerTest {
             + "0003E 00016       F4             MULTIPLY\n"
             + "0003F 00017       EC             ADD\n"
             + "00040 00018       33             RETURN\n"
-            + "00041 00019       32             RETURN\n"
-            + "00042 0001A       00 00          Padding\n"
+            + "00041 00019       00 00 00       Padding\n"
             + "' Object \"object2.spin\" header (var size 4)\n"
-            + "00044 00000       14 00          Object size\n"
+            + "00044 00000       10 00          Object size\n"
             + "00046 00002       02             Method count + 1\n"
             + "00047 00003       00             Object count\n"
             + "00048 00004       08 00 08 00    Function function @ $0008 (local size 8)\n"
@@ -514,8 +510,6 @@ class Spin1CompilerTest {
             + "00051 0000D       40             VAR_READ LONG VBASE+$0000 (short)\n"
             + "00052 0000E       F4             MULTIPLY\n"
             + "00053 0000F       33             RETURN\n"
-            + "00054 00010       32             RETURN\n"
-            + "00055 00011       00 00 00       Padding\n"
             + "", compile("main.spin", sources));
     }
 
@@ -614,8 +608,7 @@ class Spin1CompilerTest {
             + "00032 00016       F4             MULTIPLY\n"
             + "00033 00017       EC             ADD\n"
             + "00034 00018       33             RETURN\n"
-            + "00035 00019       32             RETURN\n"
-            + "00036 0001A       00 00          Padding\n"
+            + "00035 00019       00 00 00       Padding\n"
             + "' Object \"object2.spin\" header (var size 12)\n"
             + "00038 00000       1C 00          Object size\n"
             + "0003A 00002       02             Method count + 1\n"
@@ -635,10 +628,9 @@ class Spin1CompilerTest {
             + "0004E 00016       F6             DIVIDE\n"
             + "0004F 00017       EC             ADD\n"
             + "00050 00018       33             RETURN\n"
-            + "00051 00019       32             RETURN\n"
-            + "00052 0001A       00 00          Padding\n"
+            + "00051 00019       00 00 00       Padding\n"
             + "' Object \"object3.spin\" header (var size 4)\n"
-            + "00054 00000       14 00          Object size\n"
+            + "00054 00000       10 00          Object size\n"
             + "00056 00002       02             Method count + 1\n"
             + "00057 00003       00             Object count\n"
             + "00058 00004       08 00 08 00    Function function @ $0008 (local size 8)\n"
@@ -652,8 +644,6 @@ class Spin1CompilerTest {
             + "00061 0000D       40             VAR_READ LONG VBASE+$0000 (short)\n"
             + "00062 0000E       F4             MULTIPLY\n"
             + "00063 0000F       33             RETURN\n"
-            + "00064 00010       32             RETURN\n"
-            + "00065 00011       00 00 00       Padding\n"
             + "", compile("main.spin", sources));
     }
 
