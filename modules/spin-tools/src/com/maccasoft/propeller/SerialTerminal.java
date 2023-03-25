@@ -194,15 +194,40 @@ public class SerialTerminal {
 
     SerialPortEventListener serialEventListener = new SerialPortEventListener() {
 
+        int index = 0, max = 0;
+        byte[] buf = new byte[4];
+
         @Override
         public void serialEvent(SerialPortEvent serialPortEvent) {
             switch (serialPortEvent.getEventType()) {
                 case SerialPort.MASK_RXCHAR:
                     try {
-                        final byte[] rx = serialPort.readBytes();
-                        if (rx != null) {
-                            for (int i = 0; i < rx.length; i++) {
-                                write((char) rx[i]);
+                        byte[] rx = serialPort.readBytes();
+                        for (int i = 0; i < rx.length; i++) {
+                            byte b = rx[i];
+                            if (index == 0) {
+                                if ((b & 0b111_00000) == 0b110_00000) {
+                                    buf[index++] = b;
+                                    max = 2;
+                                }
+                                else if ((b & 0b1111_0000) == 0b1110_0000) {
+                                    buf[index++] = b;
+                                    max = 3;
+                                }
+                                else if ((b & 0b11111_000) == 0b11110_000) {
+                                    buf[index++] = b;
+                                    max = 4;
+                                }
+                                else {
+                                    write((char) b);
+                                }
+                            }
+                            else {
+                                buf[index++] = b;
+                                if (index >= max) {
+                                    write(new String(buf, 0, max).charAt(0));
+                                    index = 0;
+                                }
                             }
                         }
                     } catch (Exception e) {

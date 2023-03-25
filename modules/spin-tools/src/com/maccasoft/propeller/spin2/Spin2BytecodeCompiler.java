@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -294,15 +295,14 @@ public abstract class Spin2BytecodeCompiler {
                         }
                     }
                 }
-                byte[] code = new byte[sb.length() + 3];
-                int index = 0;
-                code[index++] = (byte) 0x9E;
-                code[index++] = (byte) (sb.length() + 1);
-                for (int i = 0; i < sb.length(); i++) {
-                    code[index++] = (byte) sb.charAt(i);
-                }
-                code[index++] = (byte) 0x00;
-                source.add(new Bytecode(context, code, node.getText().toUpperCase()));
+                sb.append((char) 0x00);
+
+                byte[] code = sb.toString().getBytes();
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                os.write(0x9E);
+                os.write(code.length);
+                os.writeBytes(code);
+                source.add(new Bytecode(context, os.toByteArray(), node.getText().toUpperCase()));
             }
             else if (node.getType() == Token.NUMBER) {
                 Expression expression = new NumberLiteral(node.getText());
@@ -311,16 +311,15 @@ public abstract class Spin2BytecodeCompiler {
             else if (node.getType() == Token.STRING) {
                 String s = node.getText();
                 if (s.startsWith("@")) {
-                    s = s.substring(2, s.length() - 1);
-                    byte[] code = new byte[s.length() + 3];
-                    int index = 0;
-                    code[index++] = (byte) 0x9E;
-                    code[index++] = (byte) (s.length() + 1);
-                    for (int i = 0; i < s.length(); i++) {
-                        code[index++] = (byte) s.charAt(i);
-                    }
-                    code[index++] = (byte) 0x00;
-                    source.add(new Bytecode(context, code, "STRING"));
+                    StringBuilder sb = new StringBuilder(s.substring(2, s.length() - 1));
+                    sb.append((char) 0x00);
+
+                    byte[] code = sb.toString().getBytes();
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    os.write(0x9E);
+                    os.write(code.length);
+                    os.writeBytes(code);
+                    source.add(new Bytecode(context, os.toByteArray(), "STRING"));
                 }
                 else {
                     s = s.substring(1, s.length() - 1);
@@ -329,15 +328,15 @@ public abstract class Spin2BytecodeCompiler {
                         source.add(new Constant(context, expression));
                     }
                     else {
-                        byte[] code = new byte[s.length() + 3];
-                        int index = 0;
-                        code[index++] = (byte) 0x9E;
-                        code[index++] = (byte) (s.length() + 1);
-                        for (int i = 0; i < s.length(); i++) {
-                            code[index++] = (byte) s.charAt(i);
-                        }
-                        code[index++] = (byte) 0x00;
-                        source.add(new Bytecode(context, code, "STRING"));
+                        StringBuilder sb = new StringBuilder(s);
+                        sb.append((char) 0x00);
+
+                        byte[] code = sb.toString().getBytes();
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        os.write(0x9E);
+                        os.write(code.length);
+                        os.writeBytes(code);
+                        source.add(new Bytecode(context, os.toByteArray(), "STRING"));
                     }
                 }
             }
