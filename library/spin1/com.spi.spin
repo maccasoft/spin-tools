@@ -63,7 +63,7 @@ PUB Send(bits, value)
 
 PUB Receive(bits)
 
-    ShiftIn(_datapin, _clockpin, _inputmode, bits)
+    return ShiftIn(_datapin, _clockpin, _inputmode, bits)
 
 PUB Stop
 {{

@@ -51,8 +51,8 @@ CON
 
 PUB Main | ClockDelay, ClockState, celsius, fahrenheit
 
-    term.StartRxTx(31, 30, 0, 9600) '' Initialize serial communication to the PC through the USB connector
-                                    '' To view termial data on the PC use the Parallax termial Terminal (PST) program.
+    term.StartRxTx(31, 30, 0, 115_200) '' Initialize serial communication to the PC through the USB connector
+                                       '' To view termial data on the PC use the Parallax termial Terminal (PST) program.
 
     spi.Start(DQ, CLK, spi#LSBPRE, spi#LSBFIRST, 15, 1)
 
@@ -92,6 +92,8 @@ PUB Main | ClockDelay, ClockState, celsius, fahrenheit
         term.Str(num.Dec(fahrenheit - fahrenheit/10*10))
         term.Str(string("°F"))
         term.Char(13)
+
+        waitcnt(cnt+clkfreq)
 
 PUB High(Pin)
 
