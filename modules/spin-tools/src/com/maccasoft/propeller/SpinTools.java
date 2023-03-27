@@ -90,6 +90,7 @@ import com.maccasoft.propeller.internal.InternalErrorDialog;
 import com.maccasoft.propeller.internal.TempDirectory;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ObjectNode;
+import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin2.Spin2Object;
 
@@ -163,10 +164,23 @@ public class SpinTools {
                     return;
                 }
             }
+            else if (element instanceof VariableNode) {
+                if (openOrSwitchToTab(((VariableNode) element).getType().getText()) == null) {
+                    return;
+                }
+            }
             else if (element instanceof SourceElement) {
                 SourceElement sourceElement = (SourceElement) element;
 
-                EditorTab editorTab = sourceElement.object != null ? openOrSwitchToTab(sourceElement.object.getFileName()) : (EditorTab) tabFolder.getSelection().getData();
+                String objectFileName = null;
+                if (sourceElement.object instanceof ObjectNode) {
+                    objectFileName = ((ObjectNode) sourceElement.object).getFileName();
+                }
+                if (sourceElement.object instanceof VariableNode) {
+                    objectFileName = ((VariableNode) sourceElement.object).getType().getText();
+                }
+
+                EditorTab editorTab = objectFileName != null ? openOrSwitchToTab(objectFileName) : (EditorTab) tabFolder.getSelection().getData();
                 if (editorTab == null) {
                     return;
                 }

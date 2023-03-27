@@ -654,6 +654,7 @@ public class SourceEditor {
                 if (hoverToken == null) {
                     return;
                 }
+
                 int offset = styledText.getOffsetAtPoint(new Point(e.x, e.y));
                 if (offset == -1) {
                     return;
@@ -734,6 +735,23 @@ public class SourceEditor {
                         styledText.redraw();
                     }
                 }
+                else if (context instanceof VariableNode) {
+                    VariableNode obj = (VariableNode) context;
+                    if (obj.getType() == token) {
+                        display.asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(obj)));
+                            }
+
+                        });
+                        hoverToken = hoverHighlightToken = null;
+                        hoverHighlight = false;
+                        styledText.setCursor(null);
+                        styledText.redraw();
+                    }
+                }
                 else if (context instanceof DirectiveNode.IncludeNode) {
                     DirectiveNode.IncludeNode obj = (DirectiveNode.IncludeNode) context;
                     if (obj.getFile() == token) {
@@ -784,6 +802,45 @@ public class SourceEditor {
                                     }
                                 }
                                 else if (openLinkedObjectMethod(node, objectName, itemName)) {
+                                    break;
+                                }
+                            }
+                            else if (node instanceof VariableNode) {
+                                VariableNode obj = (VariableNode) node;
+                                if (obj.getIdentifier().getText().equals(objectName)) {
+                                    if (offset >= objstart && offset <= objstop) {
+                                        SourceElement element = new SourceElement(null, obj.getIdentifier().line, obj.getIdentifier().column);
+                                        display.asyncExec(new Runnable() {
+
+                                            @Override
+                                            public void run() {
+                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                            }
+
+                                        });
+                                    }
+                                    else {
+                                        Node objectRoot = tokenMarker.getObjectTree(obj.getType().getText());
+                                        if (objectRoot != null) {
+                                            for (Node objectNode : objectRoot.getChilds()) {
+                                                if (objectNode instanceof MethodNode) {
+                                                    MethodNode method = (MethodNode) objectNode;
+                                                    if (method.name.getText().equals(itemName)) {
+                                                        SourceElement element = new SourceElement(obj, method.name.line, method.name.column);
+                                                        display.asyncExec(new Runnable() {
+
+                                                            @Override
+                                                            public void run() {
+                                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                                            }
+
+                                                        });
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                     break;
                                 }
                             }
@@ -954,6 +1011,22 @@ public class SourceEditor {
                         if (((DirectiveNode.IncludeNode) context).getFile() == tokenMarker.getTokenAt(offset)) {
                             hoverToken = ((DirectiveNode.IncludeNode) context).getFile();
                             hoverHighlightToken = hoverToken;
+                        }
+                    }
+                    else if (context instanceof VariableNode) {
+                        VariableNode node = (VariableNode) context;
+                        if (node.getType() == tokenMarker.getTokenAt(offset)) {
+                            boolean builtinType = false;
+                            if ("int".equals(node.getType().getText()) || "short".equals(node.getType().getText()) || "void".equals(node.getType().getText())) {
+                                builtinType = true;
+                            }
+                            if ("LONG".equalsIgnoreCase(node.getType().getText()) || "WORD".equalsIgnoreCase(node.getType().getText()) || "BYTE".equalsIgnoreCase(node.getType().getText())) {
+                                builtinType = true;
+                            }
+                            if (!builtinType) {
+                                hoverToken = node.getType();
+                                hoverHighlightToken = hoverToken;
+                            }
                         }
                     }
                     else if (context instanceof DataLineNode) {
