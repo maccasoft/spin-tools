@@ -145,6 +145,22 @@ public class Spin2CCompiler extends Spin2Compiler {
             childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
         }
 
+        for (Entry<File, Node> entry : preprocessor.getIncludedObjects().entrySet()) {
+            if (!childObjects.containsKey(entry.getKey())) {
+                String fileName = entry.getKey().getName();
+
+                ObjectCompiler objectCompiler;
+                if (fileName.toLowerCase().endsWith(".spin2")) {
+                    objectCompiler = new Spin2ObjectCompilerProxy(fileName, debugStatements);
+                }
+                else {
+                    objectCompiler = new Spin2CObjectCompilerProxy(fileName, debugStatements);
+                }
+                objectCompiler.compile(entry.getValue());
+                childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
+            }
+        }
+
         Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompilerProxy(rootFile.getName(), debugStatements);
         objectCompiler.compile(root);
 

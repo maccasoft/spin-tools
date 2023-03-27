@@ -32,11 +32,11 @@ class Spin2CCompilerTest {
     void testObjectLink() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.c", ""
-            + "#include <text2>\n"
+            + "text2 o;\n"
             + "\n"
             + "void main()\n"
             + "{\n"
-            + "\n"
+            + "    int a = 1;\n"
             + "}\n"
             + "");
         sources.put("text2.spin2", ""
@@ -51,12 +51,14 @@ class Spin2CCompilerTest {
             + "00000 00000       14 00 00 00    Object \"text2.spin2\" @ $00014\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
-            + "0000C 0000C       12 00 00 00    End\n"
+            + "0000C 0000C       14 00 00 00    End\n"
             + "' void main() {\n"
-            + "00010 00010       00             (stack size)\n"
+            + "00010 00010       01             (stack size)\n"
+            + "'     int a = 1;\n"
+            + "00011 00011       A2             CONSTANT (1)\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "' }\n"
-            + "00011 00011       04             RETURN\n"
-            + "00012 00012       00 00          Padding\n"
+            + "00013 00013       04             RETURN\n"
             + "' Object \"text2.spin2\" header (var size 4)\n"
             + "00014 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
             + "00018 00004       0E 00 00 00    End\n"
@@ -73,65 +75,21 @@ class Spin2CCompilerTest {
     }
 
     @Test
-    void testObjectMethodCall() throws Exception {
-        Map<String, String> sources = new HashMap<String, String>();
-        sources.put("main.c", ""
-            + "#include <text2>\n"
-            + "\n"
-            + "void main()\n"
-            + "{\n"
-            + "    text2.start(1, 2);\n"
-            + "}\n"
-            + "");
-        sources.put("text2.spin2", ""
-            + "PUB start(a, b) | c\n"
-            + "\n"
-            + "    c := a + b\n"
-            + "\n"
-            + "");
-
-        Assertions.assertEquals(""
-            + "' Object header\n"
-            + "00000 00000       18 00 00 00    Object \"text2.spin2\" @ $00018\n"
-            + "00004 00004       04 00 00 00    Variables @ $00004\n"
-            + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
-            + "0000C 0000C       18 00 00 00    End\n"
-            + "' void main() {\n"
-            + "00010 00010       00             (stack size)\n"
-            + "'     text2.start(1, 2);\n"
-            + "00011 00011       00             ANCHOR\n"
-            + "00012 00012       A2             CONSTANT (1)\n"
-            + "00013 00013       A3             CONSTANT (2)\n"
-            + "00014 00014       08 00 00       CALL_OBJ_SUB (0.0)\n"
-            + "' }\n"
-            + "00017 00017       04             RETURN\n"
-            + "' Object \"text2.spin2\" header (var size 4)\n"
-            + "00018 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
-            + "0001C 00004       0E 00 00 00    End\n"
-            + "' PUB start(a, b) | c\n"
-            + "00020 00008       01             (stack size)\n"
-            + "'     c := a + b\n"
-            + "00021 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
-            + "00022 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
-            + "00023 0000B       8A             ADD\n"
-            + "00024 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
-            + "00025 0000D       04             RETURN\n"
-            + "00026 0000E       00 00          Padding\n"
-            + "", compile("main.c", sources));
-    }
-
-    @Test
-    void testObjectInclude() throws Exception {
+    void testObjectConstant() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.c", ""
             + "#include \"text2\"\n"
             + "\n"
             + "void main()\n"
             + "{\n"
-            + "\n"
+            + "    int a = CONSTANT;\n"
             + "}\n"
             + "");
         sources.put("text2.spin2", ""
+            + "CON\n"
+            + "\n"
+            + "    CONSTANT = 1\n"
+            + "\n"
             + "PUB start(a, b) | c\n"
             + "\n"
             + "    c := a + b\n"
@@ -141,32 +99,21 @@ class Spin2CCompilerTest {
         Assertions.assertEquals(""
             + "' Object header\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       0A 00 00 00    End\n"
+            + "00004 00004       0C 00 00 00    End\n"
             + "' void main() {\n"
-            + "00008 00008       00             (stack size)\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     int a = CONSTANT;\n"
+            + "00009 00009       A2             CONSTANT (1)\n"
+            + "0000A 0000A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "' }\n"
-            + "00009 00009       04             RETURN\n"
-            + "0000A 0000A       00 00          Padding\n"
-            + "' Object \"text2.spin2\" header (var size 4)\n"
-            + "0000C 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
-            + "00010 00004       0E 00 00 00    End\n"
-            + "' PUB start(a, b) | c\n"
-            + "00014 00008       01             (stack size)\n"
-            + "'     c := a + b\n"
-            + "00015 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
-            + "00016 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
-            + "00017 0000B       8A             ADD\n"
-            + "00018 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
-            + "00019 0000D       04             RETURN\n"
-            + "0001A 0000E       00 00          Padding\n"
+            + "0000B 0000B       04             RETURN\n"
             + "", compile("main.c", sources, false, false));
     }
 
     @Test
-    void testIncludedObjectMethodCall() throws Exception {
+    void testObjectMethodCall() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.c", ""
-            + "#include \"text2\"\n"
             + "\n"
             + "text2 o;\n"
             + "\n"
@@ -213,11 +160,9 @@ class Spin2CCompilerTest {
     }
 
     @Test
-    void testIncludedObjectInstancesMethodCall() throws Exception {
+    void testObjectInstances() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.c", ""
-            + "#include \"text2\"\n"
-            + "\n"
             + "text2 o1;\n"
             + "text2 o2;\n"
             + "\n"
@@ -273,11 +218,55 @@ class Spin2CCompilerTest {
     }
 
     @Test
-    void testIncludedObjectArrayMethodCall() throws Exception {
+    void testObjectArray() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.c", ""
-            + "#include \"text2\"\n"
+            + "text2 o[2];\n"
             + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "\n"
+            + "}\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       1C 00 00 00    Object \"text2.spin2\" @ $0001C\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       1C 00 00 00    Object \"text2.spin2\" @ $0001C\n"
+            + "0000C 0000C       08 00 00 00    Variables @ $00008\n"
+            + "00010 00010       18 00 00 80    Method main @ $00018 (0 parameters, 0 returns)\n"
+            + "00014 00014       1A 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00018 00018       00             (stack size)\n"
+            + "' }\n"
+            + "00019 00019       04             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "0001C 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
+            + "00020 00004       0E 00 00 00    End\n"
+            + "' PUB start(a, b) | c\n"
+            + "00024 00008       01             (stack size)\n"
+            + "'     c := a + b\n"
+            + "00025 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00026 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00027 0000B       8A             ADD\n"
+            + "00028 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "00029 0000D       04             RETURN\n"
+            + "0002A 0000E       00 00          Padding\n"
+            + "", compile("main.c", sources, true, false));
+    }
+
+    @Test
+    void testObjectArrayMethodCall() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.c", ""
             + "text2 o[2];\n"
             + "\n"
             + "void main()\n"

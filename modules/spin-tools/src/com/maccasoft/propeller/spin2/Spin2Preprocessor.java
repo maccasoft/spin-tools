@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -22,6 +23,7 @@ import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
+import com.maccasoft.propeller.model.VariableNode;
 
 public class Spin2Preprocessor {
 
@@ -65,18 +67,61 @@ public class Spin2Preprocessor {
 
                     Node objectRoot = objects.get(objectFile);
                     if (objectRoot == null) {
+                        objectRoot = includedObjects.get(objectFile);
+                    }
+                    if (objectRoot == null) {
                         objectRoot = compiler.getParsedObject(objectFile.getName(), ".c", ".spin2");
                     }
                     if (objectRoot == null) {
                         return;
                     }
 
-                    objects.remove(objectFile);
-                    objects.put(0, objectFile, objectRoot);
+                    includedObjects.put(objectFile, objectRoot);
 
                     objectRoot.accept(new ObjectTreeVisitor(this, objectFile, objects));
                 }
             }
+        }
+
+        @Override
+        public void visitVariable(VariableNode node) {
+            if (node.getType() == null) {
+                return;
+            }
+
+            String objectFileName = node.getType().getText();
+            if ("LONG".equalsIgnoreCase(objectFileName) || "WORD".equalsIgnoreCase(objectFileName) || "BYTE".equalsIgnoreCase(objectFileName)) {
+                return;
+            }
+            if ("INT".equalsIgnoreCase(objectFileName) || "SHORT".equalsIgnoreCase(objectFileName)) {
+                return;
+            }
+
+            File objectFile = compiler.getFile(objectFileName, ".c", ".spin2");
+            if (objectFile == null) {
+                objectFile = new File(objectFileName + ".c");
+            }
+
+            ObjectTreeVisitor p = parent;
+            while (p != null) {
+                if (p.file.equals(objectFile)) {
+                    throw new CompilerException(file.getName(), "\"" + objectFile.getName() + "\" illegal circular reference", node.getType());
+                }
+                p = p.parent;
+            }
+
+            Node objectRoot = objects.get(objectFile);
+            if (objectRoot == null) {
+                objectRoot = compiler.getParsedObject(objectFile.getName(), ".c", ".spin2");
+            }
+            if (objectRoot == null) {
+                return;
+            }
+
+            objects.remove(objectFile);
+            objects.put(0, objectFile, objectRoot);
+
+            objectRoot.accept(new ObjectTreeVisitor(this, objectFile, objects));
         }
 
         @Override
@@ -133,6 +178,7 @@ public class Spin2Preprocessor {
 
     Spin2Compiler compiler;
     ListOrderedMap<File, Node> objects;
+    Map<File, Node> includedObjects;
     ObjectTree objectTree;
 
     public Spin2Preprocessor(Spin2Compiler compiler) {
@@ -141,6 +187,7 @@ public class Spin2Preprocessor {
 
     public void process(File rootFile, Node root) {
         objects = ListOrderedMap.listOrderedMap(new HashMap<>());
+        includedObjects = new HashMap<>();
         objectTree = new ObjectTree(rootFile, rootFile.getName());
 
         root.accept(new ObjectTreeVisitor(rootFile, objectTree));
@@ -148,6 +195,10 @@ public class Spin2Preprocessor {
 
     public ListOrderedMap<File, Node> getObjects() {
         return objects;
+    }
+
+    public Map<File, Node> getIncludedObjects() {
+        return includedObjects;
     }
 
     public ObjectTree getObjectTree() {

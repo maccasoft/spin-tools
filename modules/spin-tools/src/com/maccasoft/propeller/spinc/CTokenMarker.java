@@ -635,54 +635,24 @@ public class CTokenMarker extends SourceTokenMarker {
                     if (name.toLowerCase().endsWith(".spin2") || name.toLowerCase().endsWith(".c")) {
                         name = name.substring(0, name.lastIndexOf('.'));
                     }
-                    symbols.put(name, TokenId.TYPE);
 
                     String fileName = include.getFile().getText().substring(1, include.getFile().getText().length() - 1);
                     Node objectRoot = getObjectTree(fileName);
                     if (objectRoot != null) {
-                        String objectPrefix = name + ".";
-                        objectRoot.accept(new NodeVisitor() {
-
-                            @Override
-                            public void visitDirective(DirectiveNode node) {
-                                if (node instanceof DirectiveNode.DefineNode) {
-                                    DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
-                                    if (define.getIdentifier() != null) {
-                                        symbols.put(define.getIdentifier().getText(), TokenId.CONSTANT);
-                                    }
+                        for (Node child : objectRoot.getChilds()) {
+                            if (child instanceof DirectiveNode.DefineNode) {
+                                DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
+                                if (define.getIdentifier() != null) {
+                                    symbols.put(define.getIdentifier().getText(), TokenId.CONSTANT);
                                 }
                             }
-
-                            @Override
-                            public boolean visitConstant(ConstantNode node) {
-                                if (node.getIdentifier() != null) {
-                                    symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
+                            else if (child instanceof ConstantNode) {
+                                ConstantNode constant = (ConstantNode) child;
+                                if (constant.getIdentifier() != null) {
+                                    symbols.put(constant.getIdentifier().getText(), TokenId.CONSTANT);
                                 }
-                                return false;
                             }
-
-                            @Override
-                            public boolean visitMethod(MethodNode methodNode) {
-                                if ("PUB".equalsIgnoreCase(methodNode.type.getText())) {
-                                    if (methodNode.name != null) {
-                                        symbols.put(objectPrefix + methodNode.name.getText(), TokenId.METHOD_PUB);
-                                    }
-                                }
-                                return false;
-                            }
-
-                            @Override
-                            public boolean visitFunction(FunctionNode functionNode) {
-                                if (functionNode.getModifier() != null && "static".equals(functionNode.getModifier().getText())) {
-                                    return false;
-                                }
-                                if (functionNode.getIdentifier() != null) {
-                                    symbols.put(objectPrefix + functionNode.getIdentifier().getText(), TokenId.METHOD_PUB);
-                                }
-                                return false;
-                            }
-
-                        });
+                        }
                     }
                 }
             }
@@ -709,6 +679,34 @@ public class CTokenMarker extends SourceTokenMarker {
                 symbols.put(identifier, TokenId.VARIABLE);
                 tokens.add(new TokenMarker(node.getIdentifier(), TokenId.VARIABLE));
             }
+
+            String objectName = node.getType().getText();
+            if (symbols.get(objectName) == null) {
+                Node objectRoot = getObjectTree(objectName);
+                if (objectRoot != null) {
+                    symbols.put(objectName, TokenId.TYPE);
+                    String objectPrefix = objectName + ".";
+                    for (Node child : objectRoot.getChilds()) {
+                        if (child instanceof MethodNode) {
+                            MethodNode methodNode = (MethodNode) child;
+                            if ("PUB".equalsIgnoreCase(methodNode.type.getText())) {
+                                if (methodNode.name != null) {
+                                    symbols.put(objectPrefix + methodNode.name.getText(), TokenId.METHOD_PUB);
+                                }
+                            }
+                        }
+                        else if (child instanceof FunctionNode) {
+                            FunctionNode functionNode = (FunctionNode) child;
+                            if (functionNode.getModifier() == null || !"static".equals(functionNode.getModifier().getText())) {
+                                if (functionNode.getIdentifier() != null) {
+                                    symbols.put(objectPrefix + functionNode.getIdentifier().getText(), TokenId.METHOD_PUB);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             if (node.getType() != null && node.getIdentifier() != null) {
                 if (symbols.get(node.getType().getText()) == TokenId.TYPE) {
                     alias.put(node.getIdentifier().getText(), node.getType().getText());

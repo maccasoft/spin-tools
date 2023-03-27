@@ -282,8 +282,6 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                     name = name.substring(0, name.lastIndexOf('.'));
                 }
 
-                objects.put(name, new ObjectInfo(info.compiler, new NumberLiteral(1)));
-
                 for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                     if (!(objEntry.getValue() instanceof Method)) {
                         String identifier = objEntry.getKey();
@@ -294,40 +292,6 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                             scope.addSymbol(identifier, objEntry.getValue());
                         }
                     }
-                }
-
-                if (token.getText().startsWith("<")) {
-                    LinkDataObject linkData = new Spin2LinkDataObject(info.compiler, 0, varOffset);
-
-                    for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
-                        if (objEntry.getValue() instanceof Method) {
-                            Method objectMethod = (Method) objEntry.getValue();
-                            String identifier = name + "." + objEntry.getKey();
-                            if (scope.hasSymbol(identifier) || scope.isDefined(identifier)) {
-                                logMessage(new CompilerException(CompilerException.ERROR, "duplicated function definition: " + identifier, token));
-                            }
-                            else {
-                                Method method = new Method(objectMethod.getName(), objectMethod.getArgumentsCount(), objectMethod.getReturnsCount()) {
-
-                                    @Override
-                                    public int getIndex() {
-                                        return objectMethod.getIndex();
-                                    }
-
-                                    @Override
-                                    public int getObjectIndex() {
-                                        return objectLinks.indexOf(linkData);
-                                    }
-
-                                };
-                                method.setData(Spin2Method.class.getName(), objectMethod.getData(Spin2Method.class.getName()));
-                                scope.addSymbol(identifier, method);
-                            }
-                        }
-                    }
-
-                    objectLinks.add(linkData);
-                    varOffset += info.compiler.getVarSize();
                 }
             }
             return;
@@ -517,8 +481,16 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
         Token token = iter.next();
 
-        ObjectInfo info = objects.get(token.getText());
-        if (info != null) {
+        String type = "LONG";
+        if ("short".equals(token.getText()) || "word".equals(token.getText())) {
+            type = "WORD";
+        }
+        else if ("byte".equals(token.getText())) {
+            type = "BYTE";
+        }
+        else if (!"int".equals(token.getText()) && !"long".equals(token.getText())) {
+            type = token.getText();
+
             if (!iter.hasNext()) {
                 throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
             }
@@ -526,6 +498,20 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             if (identifier.type != Token.KEYWORD) {
                 throw new CompilerException("expecting identifier", identifier);
             }
+
+            ObjectInfo info = objects.get(type);
+            if (info == null) {
+                info = this.compiler.getObjectInfo(type);
+                if (info == null) {
+                    logMessage(new CompilerException("object '" + type + "' not found", token));
+                    return;
+                }
+                if (info.hasErrors()) {
+                    logMessage(new CompilerException("object '" + type + "' has errors", token));
+                    return;
+                }
+            }
+
             Expression size = new NumberLiteral(1);
 
             if (iter.hasNext() && "[".equals(iter.peekNext().getText())) {
@@ -590,17 +576,6 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             }
 
             return;
-        }
-
-        String type = "LONG";
-        if ("short".equals(token.getText()) || "word".equals(token.getText())) {
-            type = "WORD";
-        }
-        else if ("byte".equals(token.getText())) {
-            type = "BYTE";
-        }
-        else if (!"int".equals(token.getText()) && !"long".equals(token.getText())) {
-            throw new CompilerException("unsupported type", token);
         }
 
         while (iter.hasNext()) {
