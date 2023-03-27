@@ -734,6 +734,23 @@ public class SourceEditor {
                         styledText.redraw();
                     }
                 }
+                else if (context instanceof DirectiveNode.IncludeNode) {
+                    DirectiveNode.IncludeNode obj = (DirectiveNode.IncludeNode) context;
+                    if (obj.getFile() == token) {
+                        display.asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(obj)));
+                            }
+
+                        });
+                        hoverToken = hoverHighlightToken = null;
+                        hoverHighlight = false;
+                        styledText.setCursor(null);
+                        styledText.redraw();
+                    }
+                }
                 else if (context instanceof DataLineNode) {
                     Node root = tokenMarker.getRoot();
                     for (Node node : root.getChilds()) {
@@ -930,6 +947,12 @@ public class SourceEditor {
                     if (context instanceof ObjectNode) {
                         if (((ObjectNode) context).file == tokenMarker.getTokenAt(offset)) {
                             hoverToken = ((ObjectNode) context).file;
+                            hoverHighlightToken = hoverToken;
+                        }
+                    }
+                    else if (context instanceof DirectiveNode.IncludeNode) {
+                        if (((DirectiveNode.IncludeNode) context).getFile() == tokenMarker.getTokenAt(offset)) {
+                            hoverToken = ((DirectiveNode.IncludeNode) context).getFile();
                             hoverHighlightToken = hoverToken;
                         }
                     }
@@ -1745,14 +1768,27 @@ public class SourceEditor {
     }
 
     boolean startsWithBlock(String text) {
-        if (text.startsWith("CON") || text.startsWith("VAR") || text.startsWith("OBJ") || text.startsWith("PUB") || text.startsWith("PRI")) {
+        if (text.startsWith("IF") || text.startsWith("ELSE") || text.startsWith("CASE")) {
             return true;
         }
-        if (text.startsWith("IF") || text.startsWith("ELSE") || text.startsWith("REPEAT") || text.startsWith("CASE")) {
-            return true;
+        if (tokenMarker instanceof CTokenMarker) {
+            if (text.endsWith(";")) {
+                return false;
+            }
+            if (text.startsWith("FOR") || text.startsWith("DO") || text.startsWith("WHILE") || text.startsWith("SWITCH")) {
+                return true;
+            }
+            if (text.endsWith("{")) {
+                return true;
+            }
         }
-        if (text.startsWith("DO") || text.startsWith("SWITCH")) {
-            return true;
+        else {
+            if (text.startsWith("CON") || text.startsWith("VAR") || text.startsWith("OBJ") || text.startsWith("PUB") || text.startsWith("PRI")) {
+                return true;
+            }
+            if (text.startsWith("REPEAT")) {
+                return true;
+            }
         }
         return false;
     }

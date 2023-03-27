@@ -88,6 +88,7 @@ import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.InternalErrorDialog;
 import com.maccasoft.propeller.internal.TempDirectory;
+import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin2.Spin2Object;
@@ -153,14 +154,19 @@ public class SpinTools {
 
             Object element = ((IStructuredSelection) event.getSelection()).getFirstElement();
             if (element instanceof ObjectNode) {
-                if (openOrSwitchToTab((ObjectNode) element) == null) {
+                if (openOrSwitchToTab(((ObjectNode) element).getFileName()) == null) {
+                    return;
+                }
+            }
+            else if (element instanceof DirectiveNode.IncludeNode) {
+                if (openOrSwitchToTab(((DirectiveNode.IncludeNode) element).getFileName()) == null) {
                     return;
                 }
             }
             else if (element instanceof SourceElement) {
                 SourceElement sourceElement = (SourceElement) element;
 
-                EditorTab editorTab = sourceElement.object != null ? openOrSwitchToTab(sourceElement.object) : (EditorTab) tabFolder.getSelection().getData();
+                EditorTab editorTab = sourceElement.object != null ? openOrSwitchToTab(sourceElement.object.getFileName()) : (EditorTab) tabFolder.getSelection().getData();
                 if (editorTab == null) {
                     return;
                 }
@@ -181,8 +187,32 @@ public class SpinTools {
             }
         }
 
-        EditorTab openOrSwitchToTab(ObjectNode node) {
+        EditorTab openOrSwitchToTab(String name) {
             String suffix = ".spin";
+
+            if (tabFolder.getSelection() != null) {
+                EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
+                String tabName = currentTab.getText();
+                suffix = tabName.substring(tabName.lastIndexOf('.'));
+            }
+
+            File[] searchPaths = ".spin".equals(suffix) ? Preferences.getInstance().getSpin1LibraryPath() : Preferences.getInstance().getSpin2LibraryPath();
+
+            EditorTab editorTab = openOrSwitchToTab(name + suffix, searchPaths);
+            if (editorTab == null && ".c".equals(suffix)) {
+                editorTab = openOrSwitchToTab(name + ".spin2", searchPaths);
+            }
+            if (editorTab == null && ".spin2".equals(suffix)) {
+                editorTab = openOrSwitchToTab(name + ".c", searchPaths);
+            }
+            if (editorTab == null) {
+                editorTab = openOrSwitchToTab(name, searchPaths);
+            }
+
+            return editorTab;
+        }
+
+        EditorTab openOrSwitchToTab(String name, File[] searchPaths) {
             File parent = new File("");
 
             if (tabFolder.getSelection() != null) {
@@ -190,29 +220,21 @@ public class SpinTools {
                 if (currentTab.getFile() != null) {
                     parent = currentTab.getFile().getParentFile();
                 }
-                String tabName = currentTab.getText();
-                suffix = tabName.substring(tabName.lastIndexOf('.'));
             }
-
-            String name = node.file.getText().substring(1, node.file.getText().length() - 1);
 
             File fileToOpen = new File(parent, name);
             if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
-                fileToOpen = new File(parent, name + suffix);
-            }
-
-            if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
-                File[] searchPaths = ".spin2".equals(suffix) ? Preferences.getInstance().getSpin2LibraryPath() : Preferences.getInstance().getSpin1LibraryPath();
                 for (int i = 0; i < searchPaths.length; i++) {
                     fileToOpen = new File(searchPaths[i], name);
-                    if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
-                        fileToOpen = new File(searchPaths[i], name + suffix);
-                    }
                     if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
                         break;
                     }
                 }
             }
+            if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
+                fileToOpen = new File(parent, name);
+            }
+
             if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
                 EditorTab editorTab = findFileEditorTab(fileToOpen);
                 if (editorTab == null) {

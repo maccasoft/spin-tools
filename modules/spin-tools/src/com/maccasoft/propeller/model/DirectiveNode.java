@@ -28,6 +28,16 @@ public class DirectiveNode extends Node {
             return file;
         }
 
+        public String getFileName() {
+            if (file == null) {
+                return null;
+            }
+            if (file.type != Token.STRING) {
+                return file.getText();
+            }
+            return file.getText().substring(1, file.getText().length() - 1);
+        }
+
     }
 
     public static class DefineNode extends DirectiveNode {

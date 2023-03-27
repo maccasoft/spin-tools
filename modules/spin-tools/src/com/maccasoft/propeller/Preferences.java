@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.VariablesNode;
@@ -69,6 +70,7 @@ public class Preferences {
         sectionMap.put(VariablesNode.class, "var");
         sectionMap.put(ObjectsNode.class, "obj");
         sectionMap.put(MethodNode.class, "pub");
+        sectionMap.put(FunctionNode.class, "pub");
         sectionMap.put(DataNode.class, "dat");
     }
 
