@@ -2157,6 +2157,62 @@ class Spin1ObjectCompilerTest {
     }
 
     @Test
+    void testOptimizePartialStrings() throws Exception {
+        String text = ""
+            + "PUB main | a, b, c\n"
+            + "\n"
+            + "    a := string(\"12345678\", 13, 10)\n"
+            + "    b := \"12345678\"\n"
+            + "    c := @\"5678\"\n"
+            + "\n"
+            + "PUB setup | a, b, c\n"
+            + "\n"
+            + "    a := string(\"12345678\", 13, 10)\n"
+            + "    b := \"12345678\"\n"
+            + "    c := @\"5678\"\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header\n"
+            + "00000 00000       38 00          Object size\n"
+            + "00002 00002       03             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       0C 00 0C 00    Function main @ $000C (local size 12)\n"
+            + "00008 00008       17 00 0C 00    Function setup @ $0017 (local size 12)\n"
+            + "' PUB main | a, b, c\n"
+            + "'     a := string(\"12345678\", 13, 10)\n"
+            + "0000C 0000C       87 80 22       MEM_ADDRESS BYTE PBASE+$0022\n"
+            + "0000F 0000F       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     b := \"12345678\"\n"
+            + "00010 00010       87 2D          MEM_ADDRESS BYTE PBASE+$002D\n"
+            + "00012 00012       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     c := @\"5678\"\n"
+            + "00013 00013       87 31          MEM_ADDRESS BYTE PBASE+$0031\n"
+            + "00015 00015       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
+            + "00016 00016       32             RETURN\n"
+            + "' PUB setup | a, b, c\n"
+            + "'     a := string(\"12345678\", 13, 10)\n"
+            + "00017 00017       87 80 22       MEM_ADDRESS BYTE PBASE+$0022\n"
+            + "0001A 0001A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     b := \"12345678\"\n"
+            + "0001B 0001B       87 2D          MEM_ADDRESS BYTE PBASE+$002D\n"
+            + "0001D 0001D       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     c := @\"5678\"\n"
+            + "0001E 0001E       87 31          MEM_ADDRESS BYTE PBASE+$0031\n"
+            + "00020 00020       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
+            + "00021 00021       32             RETURN\n"
+            + "' (string data)\n"
+            + "00022 00022       31 32 33 34 35 STRING\n"
+            + "00027 00027       36 37 38 0D 0A\n"
+            + "0002C 0002C       00\n"
+            + "0002D 0002D       31 32 33 34 35 STRING\n"
+            + "00032 00032       36 37 38 00\n"
+            + "00036 00036       00 00          Padding\n"
+            + "", compile(text, false));
+    }
+
+    @Test
     void testCharacterLiteral() throws Exception {
         String text = ""
             + "PUB main | a, b\n"

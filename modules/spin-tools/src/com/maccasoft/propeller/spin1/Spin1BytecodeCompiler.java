@@ -1353,7 +1353,31 @@ public abstract class Spin1BytecodeCompiler {
                     return bc;
                 }
             }
+
+            byte[] b1 = string.getBytes();
+            for (Spin1Bytecode bc : stringData) {
+                byte[] b0 = bc.getBytes();
+                if (b0.length > b1.length && Arrays.equals(b0, b0.length - b1.length, b0.length, b1, 0, b1.length)) {
+                    Spin1Context sharedContext = new Spin1Context() {
+
+                        @Override
+                        public int getObjectAddress() {
+                            return bc.getContext().getObjectAddress() + (b0.length - b1.length);
+                        }
+
+                    };
+                    return new Spin1Bytecode(sharedContext) {
+
+                        @Override
+                        public Spin1Context getContext() {
+                            return sharedContext;
+                        }
+
+                    };
+                }
+            }
         }
+
         stringData.add(string);
         return string;
     }
