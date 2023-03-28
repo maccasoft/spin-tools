@@ -193,7 +193,21 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
         varOffset = (varOffset + 3) & ~3;
 
-        scope.addSymbol("_CLKFREQ", compileDefinedExpression("_CLKFREQ"));
+        if (scope.isDefined("_CLKFREQ")) {
+            scope.addSymbol("_CLKFREQ", compileDefinedExpression("_CLKFREQ"));
+        }
+        if (scope.isDefined("_XINFREQ")) {
+            scope.addSymbol("_XINFREQ", compileDefinedExpression("_XINFREQ"));
+        }
+        if (scope.isDefined("_XTLFREQ")) {
+            scope.addSymbol("_XTLFREQ", compileDefinedExpression("_XTLFREQ"));
+        }
+        if (scope.isDefined("_RCSLOW")) {
+            scope.addSymbol("_RCSLOW", new NumberLiteral(1));
+        }
+        if (scope.isDefined("_RCFAST")) {
+            scope.addSymbol("_RCFAST", new NumberLiteral(1));
+        }
 
         if (methodData.size() != 0) {
             methodData.add(new LongDataObject(0, "End"));

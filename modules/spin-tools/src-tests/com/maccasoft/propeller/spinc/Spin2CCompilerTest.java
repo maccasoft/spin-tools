@@ -13,6 +13,7 @@ package com.maccasoft.propeller.spinc;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,11 +23,202 @@ import org.junit.jupiter.api.Test;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.SourceProvider;
+import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2Parser;
 import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 class Spin2CCompilerTest {
+
+    @Test
+    void testClockModeDefault() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
+        compiler.compileObject(root);
+
+        Assertions.assertEquals(0b00_00, compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
+        Assertions.assertEquals(20_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
+    }
+
+    @Test
+    void testClkFreqClockMode() throws Exception {
+        String text = ""
+            + "#define _CLKFREQ 250_000_000\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
+        compiler.compileObject(root);
+
+        Assertions.assertEquals(250_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals(0b10_11, compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
+    }
+
+    @Test
+    void testXtlFreq1() throws Exception {
+        String text = ""
+            + "#define _XTLFREQ 12_000_000\n"
+            + "#define _CLKFREQ 148_500_000\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
+        compiler.compileObject(root);
+
+        Assertions.assertEquals(148_500_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("011C62FF", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+    }
+
+    @Test
+    void testXtlFreq2() throws Exception {
+        String text = ""
+            + "#define _XTLFREQ 20_000_000\n"
+            + "#define _CLKFREQ 100_000_000\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
+        compiler.compileObject(root);
+
+        Assertions.assertEquals(100_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("0100090B", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+    }
+
+    @Test
+    void testXtlFreqClockMode() throws Exception {
+        String text = ""
+            + "#define _XTLFREQ 16_000_000\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
+        compiler.compileObject(root);
+
+        Assertions.assertEquals(16_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("0000000A", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+    }
+
+    @Test
+    void testXinFreq() throws Exception {
+        String text = ""
+            + "#define _XINFREQ 32_000_000\n"
+            + "#define _CLKFREQ 297_500_000\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
+        compiler.compileObject(root);
+
+        Assertions.assertEquals(297_500_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("01FE52F7", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+    }
+
+    @Test
+    void testXinFreqClockMode() throws Exception {
+        String text = ""
+            + "#define _XINFREQ 16_000_000\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
+        compiler.compileObject(root);
+
+        Assertions.assertEquals(16_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("00000006", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+    }
+
+    @Test
+    void testRcSlow() throws Exception {
+        String text = ""
+            + "#define _RCSLOW\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
+        compiler.compileObject(root);
+
+        Assertions.assertEquals(20_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("00000001", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+    }
+
+    @Test
+    void testRcFast() throws Exception {
+        String text = ""
+            + "#define _RCFAST\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        CTokenStream stream = new CTokenStream(text);
+        CParser parser = new CParser(stream);
+        Node root = parser.parse();
+
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
+        compiler.compileObject(root);
+
+        Assertions.assertEquals(20_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("00000000", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+    }
 
     @Test
     void testObjectLink() throws Exception {
