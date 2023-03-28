@@ -41,9 +41,17 @@ public class Spin2Preprocessor {
         public ObjectTreeVisitor(ObjectTreeVisitor parent, File file, ListOrderedMap<File, Node> list) {
             this.parent = parent;
             this.file = file;
-            this.objectTree = new ObjectTree(file, file.getName());
 
-            this.parent.objectTree.add(objectTree);
+            for (ObjectTree t : this.parent.objectTree.getChilds()) {
+                if (t.getFile().equals(file)) {
+                    this.objectTree = t;
+                    break;
+                }
+            }
+            if (this.objectTree == null) {
+                this.objectTree = new ObjectTree(file, file.getName());
+                this.parent.objectTree.add(objectTree);
+            }
         }
 
         @Override
