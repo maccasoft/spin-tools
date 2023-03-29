@@ -90,8 +90,16 @@ public class Spin2Method {
         return addressChanged;
     }
 
+    public List<LocalVariable> getReturns() {
+        return returns;
+    }
+
     public int getReturnsCount() {
         return returns.size();
+    }
+
+    public List<LocalVariable> getParameters() {
+        return parameters;
     }
 
     public int getParametersCount() {
@@ -99,6 +107,10 @@ public class Spin2Method {
     }
 
     public List<LocalVariable> getLocalVariables() {
+        return localVariables;
+    }
+
+    public List<LocalVariable> getAllLocalVariables() {
         List<LocalVariable> list = new ArrayList<LocalVariable>();
         list.addAll(parameters);
         list.addAll(returns);

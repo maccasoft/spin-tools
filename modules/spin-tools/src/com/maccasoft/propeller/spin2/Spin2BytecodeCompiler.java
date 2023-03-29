@@ -767,11 +767,9 @@ public abstract class Spin2BytecodeCompiler {
                         ss = MemoryOp.Size.Word;
                     }
                     MemoryOp.Base bb = MemoryOp.Base.PBase;
-                    if (expression instanceof LocalVariable) {
-                        bb = MemoryOp.Base.DBase;
-                    }
-                    else if (expression instanceof Variable) {
-                        bb = MemoryOp.Base.VBase;
+                    if (expression instanceof Variable) {
+                        bb = expression instanceof LocalVariable ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                        ((Variable) expression).setCalledBy(method);
                     }
 
                     int bitfield = -1;
@@ -943,6 +941,7 @@ public abstract class Spin2BytecodeCompiler {
                                 source.addAll(compileVariableRead(context, method, expression, node, push));
                             }
                         }
+                        ((Variable) expression).setCalledBy(method);
                     }
                     else {
                         if (isAddress(node.getText())) {
@@ -1307,11 +1306,9 @@ public abstract class Spin2BytecodeCompiler {
                 ss = MemoryOp.Size.Word;
             }
             MemoryOp.Base bb = MemoryOp.Base.PBase;
-            if (expression instanceof LocalVariable) {
-                bb = MemoryOp.Base.DBase;
-            }
-            else if (expression instanceof Variable) {
-                bb = MemoryOp.Base.VBase;
+            if (expression instanceof Variable) {
+                bb = expression instanceof LocalVariable ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                ((Variable) expression).setCalledBy(method);
             }
 
             MemoryOp.Op op = push || bitfieldNode != null ? MemoryOp.Op.Setup : MemoryOp.Op.Write;
@@ -1577,11 +1574,9 @@ public abstract class Spin2BytecodeCompiler {
             else if (expression instanceof ContextLiteral) {
                 MemoryOp.Size ss = MemoryOp.Size.Long;
                 MemoryOp.Base bb = MemoryOp.Base.PBase;
-                if (expression instanceof LocalVariable) {
-                    bb = MemoryOp.Base.DBase;
-                }
-                else if (expression instanceof Variable) {
-                    bb = MemoryOp.Base.VBase;
+                if (expression instanceof Variable) {
+                    bb = expression instanceof LocalVariable ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                    ((Variable) expression).setCalledBy(method);
                 }
                 if (expression instanceof DataVariable) {
                     switch (((DataVariable) expression).getType()) {
@@ -1598,6 +1593,7 @@ public abstract class Spin2BytecodeCompiler {
             }
             else {
                 source.add(new VariableOp(context, bitfieldNode != null || push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, (Variable) expression, hasIndex, index));
+                ((Variable) expression).setCalledBy(method);
             }
 
             if (bitfieldNode != null) {
@@ -1680,6 +1676,7 @@ public abstract class Spin2BytecodeCompiler {
                         throw new RuntimeException("method pointers must be long");
                 }
                 source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) symbol, hasIndex, index));
+                ((Variable) symbol).setCalledBy(method);
             }
             else if (symbol instanceof DataVariable) {
                 switch (((DataVariable) symbol).getType()) {
@@ -1824,6 +1821,7 @@ public abstract class Spin2BytecodeCompiler {
             }
             else {
                 source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
+                ((Variable) expression).setCalledBy(method);
             }
 
             source.add(new BitField(context, BitField.Op.Setup, bitfield));
@@ -1840,6 +1838,7 @@ public abstract class Spin2BytecodeCompiler {
             }
             else {
                 source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
+                ((Variable) expression).setCalledBy(method);
             }
         }
 
@@ -1921,6 +1920,7 @@ public abstract class Spin2BytecodeCompiler {
             }
             else {
                 source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
+                ((Variable) expression).setCalledBy(method);
             }
 
             BitField.Op op = field ? BitField.Op.Field : (postEffectNode == null ? BitField.Op.Read : BitField.Op.Setup);
@@ -1950,6 +1950,7 @@ public abstract class Spin2BytecodeCompiler {
                     }
                     else {
                         source.add(new VariableOp(context, push ? VariableOp.Op.Setup : VariableOp.Op.Write, popIndex, (Variable) expression, hasIndex, index));
+                        ((Variable) expression).setCalledBy(method);
                     }
                     if (push) {
                         source.add(new Bytecode(context, 0x8D, "SWAP"));
@@ -1964,6 +1965,7 @@ public abstract class Spin2BytecodeCompiler {
                     }
                     else {
                         source.add(new VariableOp(context, VariableOp.Op.Setup, popIndex, (Variable) expression, hasIndex, index));
+                        ((Variable) expression).setCalledBy(method);
                     }
                     if ("++".equalsIgnoreCase(postEffectNode.getText())) {
                         source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
@@ -1991,6 +1993,7 @@ public abstract class Spin2BytecodeCompiler {
                 }
                 else {
                     source.add(new VariableOp(context, field ? VariableOp.Op.Field : VariableOp.Op.Read, popIndex, (Variable) expression, hasIndex, index));
+                    ((Variable) expression).setCalledBy(method);
                 }
             }
         }

@@ -356,6 +356,7 @@ public abstract class Spin1BytecodeCompiler {
                         }
                         source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
                         source.add(new Bytecode(context, code, "RANDOM_FORWARD"));
+                        ((Variable) expression).setCalledBy(method);
                     }
                 }
                 else {
@@ -461,6 +462,7 @@ public abstract class Spin1BytecodeCompiler {
                         }
                         else {
                             source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
+                            ((Variable) expression).setCalledBy(method);
                         }
                     }
                     else if (expression instanceof ContextLiteral) {
@@ -680,12 +682,11 @@ public abstract class Spin1BytecodeCompiler {
                     }
 
                     MemoryOp.Base bb = MemoryOp.Base.PBase;
-                    if (expression instanceof LocalVariable) {
-                        bb = MemoryOp.Base.DBase;
+                    if (expression instanceof Variable) {
+                        bb = (expression instanceof LocalVariable) ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                        ((Variable) expression).setCalledBy(method);
                     }
-                    else if (expression instanceof Variable) {
-                        bb = MemoryOp.Base.VBase;
-                    }
+
                     MemoryOp.Op op = push ? MemoryOp.Op.Read : MemoryOp.Op.Write;
                     if (postEffect != null) {
                         op = MemoryOp.Op.Assign;
@@ -842,6 +843,7 @@ public abstract class Spin1BytecodeCompiler {
                                     source.add(new VariableOp(context, VariableOp.Op.Address, popIndex, (Variable) expression));
                                 }
                             }
+                            ((Variable) expression).setCalledBy(method);
                         }
                         else if (expression instanceof ObjectContextLiteral) {
                             MemoryOp.Size ss = MemoryOp.Size.Long;
@@ -985,6 +987,7 @@ public abstract class Spin1BytecodeCompiler {
                         else {
                             source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression));
                         }
+                        ((Variable) expression).setCalledBy(method);
                     }
                     else if (expression instanceof ContextLiteral) {
                         boolean popIndex = false;
@@ -1213,12 +1216,11 @@ public abstract class Spin1BytecodeCompiler {
             }
 
             MemoryOp.Base bb = MemoryOp.Base.PBase;
-            if (expression instanceof LocalVariable) {
-                bb = MemoryOp.Base.DBase;
+            if (expression instanceof Variable) {
+                bb = (expression instanceof LocalVariable) ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                ((Variable) expression).setCalledBy(method);
             }
-            else if (expression instanceof Variable) {
-                bb = MemoryOp.Base.VBase;
-            }
+
             MemoryOp.Op op = push ? MemoryOp.Op.Assign : MemoryOp.Op.Write;
             if ("BYTE".equalsIgnoreCase(s[1])) {
                 source.add(new MemoryOp(context, MemoryOp.Size.Byte, indexed, bb, op, expression));
@@ -1312,6 +1314,7 @@ public abstract class Spin1BytecodeCompiler {
                     indexed = true;
                 }
                 source.add(new VariableOp(context, push ? VariableOp.Op.Assign : VariableOp.Op.Write, indexed, (Variable) expression));
+                ((Variable) expression).setCalledBy(method);
             }
             else {
                 MemoryOp.Size ss = MemoryOp.Size.Long;

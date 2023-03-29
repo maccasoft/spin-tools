@@ -81,6 +81,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
     int varOffset;
 
+    List<Variable> variables = new ArrayList<>();
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
     List<Spin2MethodLine> setupLines = new ArrayList<>();
     List<Spin2Method> methods = new ArrayList<Spin2Method>();
@@ -609,7 +610,10 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
             try {
                 String identifierText = identifier.getText();
-                scope.addSymbol(identifierText, new Variable(type, identifierText, size, varOffset));
+                Variable var = new Variable(type, identifierText, size, varOffset);
+                scope.addSymbol(identifierText, var);
+                variables.add(var);
+                var.setData(identifier);
 
                 int varSize = size.getNumber().intValue();
                 if ("WORD".equalsIgnoreCase(type)) {
@@ -733,12 +737,13 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             if (token.type != Token.KEYWORD) {
                 throw new CompilerException("expecting identifier", token);
             }
-            String identifier = token.getText();
+            Token identifier = token;
 
-            LocalVariable var = new LocalVariable("LONG", identifier, new NumberLiteral(1), localVarOffset);
-            localScope.addSymbol(identifier, var);
-            localScope.addSymbol("&" + identifier, var);
+            LocalVariable var = new LocalVariable("LONG", identifier.getText(), new NumberLiteral(1), localVarOffset);
+            localScope.addSymbol(identifier.getText(), var);
+            localScope.addSymbol("&" + identifier.getText(), var);
             parameters.add(var);
+            var.setData(identifier);
 
             localVarOffset += 4;
 
@@ -918,6 +923,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                         LocalVariable variable = new LocalVariable(typeText, identifierText, size, method.getLocalVarSize());
                         context.addSymbol(identifierText, variable);
                         method.addLocalVariable(variable);
+                        variable.setData(identifier);
 
                         boolean add = true;
                         FunctionNode functionNode = (FunctionNode) method.getData();
@@ -1021,6 +1027,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                         LocalVariable variable = new LocalVariable(type, identifierText, new NumberLiteral(1), method.getLocalVarSize());
                         context.addSymbol(identifierText, variable);
                         method.addLocalVariable(variable);
+                        variable.setData(identifier);
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, identifier));
                     }
@@ -1377,7 +1384,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             Spin2CContext scope = new Spin2CContext(context);
 
             int address = 0x1E0;
-            for (LocalVariable var : method.getLocalVariables()) {
+            for (LocalVariable var : method.getAllLocalVariables()) {
                 scope.addSymbol(var.getName(), new NumberLiteral(address));
                 if (var.getSize() != null) {
                     address += var.getSize().getNumber().intValue();
@@ -1474,6 +1481,12 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
     @Override
     public void compilePass2() {
 
+        for (Variable var : variables) {
+            if (!var.isReferenced() && var.getData() != null) {
+                logMessage(new CompilerException(CompilerException.WARNING, "variable \"" + var.getName() + "\" is not used", var.getData()));
+            }
+        }
+
         if (methods.size() != 0) {
             if (compiler.isRemoveUnusedMethods()) {
                 boolean loop;
@@ -1484,7 +1497,18 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                     while (methodsIterator.hasNext()) {
                         Spin2Method method = methodsIterator.next();
                         if (!method.isReferenced()) {
-                            logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.getLabel() + "\" is not used", method.getData()));
+                            FunctionNode node = (FunctionNode) method.getData();
+                            logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.getLabel() + "\" is not used", node.getIdentifier()));
+                            for (Variable var : method.getParameters()) {
+                                if (!var.isReferenced() && var.getData() != null) {
+                                    logMessage(new CompilerException(CompilerException.WARNING, "parameter \"" + var.getName() + "\" is not used", var.getData()));
+                                }
+                            }
+                            for (Variable var : method.getLocalVariables()) {
+                                if (!var.isReferenced() && var.getData() != null) {
+                                    logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
+                                }
+                            }
                             method.remove();
                             methodsIterator.remove();
                             loop = true;
@@ -1494,13 +1518,36 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             }
 
             Iterator<Spin2Method> methodsIterator = methods.iterator();
+
             Spin2Method method = methodsIterator.next();
+            for (Variable var : method.getParameters()) {
+                if (!var.isReferenced() && var.getData() != null) {
+                    logMessage(new CompilerException(CompilerException.WARNING, "parameter \"" + var.getName() + "\" is not used", var.getData()));
+                }
+            }
+            for (Variable var : method.getLocalVariables()) {
+                if (!var.isReferenced() && var.getData() != null) {
+                    logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
+                }
+            }
+
             methodData.add(new LongDataObject(0, "Method " + method.getLabel()));
 
             while (methodsIterator.hasNext()) {
                 method = methodsIterator.next();
                 if (!method.isReferenced()) {
-                    logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.getLabel() + "\" is not used", method.getData()));
+                    FunctionNode node = (FunctionNode) method.getData();
+                    logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.getLabel() + "\" is not used", node.getIdentifier()));
+                }
+                for (Variable var : method.getParameters()) {
+                    if (!var.isReferenced() && var.getData() != null) {
+                        logMessage(new CompilerException(CompilerException.WARNING, "parameter \"" + var.getName() + "\" is not used", var.getData()));
+                    }
+                }
+                for (Variable var : method.getLocalVariables()) {
+                    if (!var.isReferenced() && var.getData() != null) {
+                        logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
+                    }
                 }
                 methodData.add(new LongDataObject(0, "Method " + method.getLabel()));
             }

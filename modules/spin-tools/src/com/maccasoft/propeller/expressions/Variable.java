@@ -10,12 +10,17 @@
 
 package com.maccasoft.propeller.expressions;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Variable extends Expression {
 
     String type;
     String name;
     Expression size;
     int offset;
+
+    Set<Object> calledBy = new HashSet<>();
 
     public Variable(String type, String name, Expression size, int offset) {
         this.type = type;
@@ -43,6 +48,20 @@ public class Variable extends Expression {
     @Override
     public boolean isConstant() {
         return false;
+    }
+
+    public void setCalledBy(Object method) {
+        if (!calledBy.contains(method)) {
+            calledBy.add(method);
+        }
+    }
+
+    public void removeCalledBy(Object method) {
+        calledBy.remove(method);
+    }
+
+    public boolean isReferenced() {
+        return calledBy.size() != 0;
     }
 
     @Override

@@ -212,10 +212,24 @@ public class OverviewRuler {
     }
 
     public void setErrorHighlight(int line, String message) {
+        String msg = errorHighlight.get(line - 1);
+        if (msg != null) {
+            if (!msg.contains(System.lineSeparator())) {
+                msg = "Multiple errors at this line" + System.lineSeparator() + "    - " + msg;
+            }
+            message = msg + System.lineSeparator() + "    - " + message;
+        }
         errorHighlight.put(line - 1, message);
     }
 
     public void setWarningHighlight(int line, String message) {
+        String msg = warningHighlight.get(line - 1);
+        if (msg != null) {
+            if (!msg.contains(System.lineSeparator())) {
+                msg = "Multiple warnings at this line" + System.lineSeparator() + "    - " + msg;
+            }
+            message = msg + System.lineSeparator() + "    - " + message;
+        }
         warningHighlight.put(line - 1, message);
     }
 
