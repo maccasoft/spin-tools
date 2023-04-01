@@ -276,7 +276,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
                     publicSymbols.put(method.getLabel(), exp);
                     scope.addSymbol(method.getLabel(), exp);
-                    scope.addSymbol("@" + method.getLabel(), exp);
 
                     methods.add(method);
 
@@ -300,7 +299,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     exp.setData(method.getClass().getName(), method);
 
                     scope.addSymbol(method.getLabel(), exp);
-                    scope.addSymbol("@" + method.getLabel(), exp);
 
                     methods.add(method);
                 } catch (Exception e) {
@@ -826,8 +824,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 try {
                     Variable var = new Variable(type, identifier.getText(), size, varOffset);
                     scope.addSymbol(identifier.getText(), var);
-                    scope.addSymbol("@" + identifier.getText(), var);
-                    scope.addSymbol("@@" + identifier.getText(), var);
                     variables.add(var);
                     var.setData(identifier);
 
@@ -952,9 +948,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
     Spin2Method compileMethod(MethodNode node) {
         Spin2Context localScope = new Spin2Context(scope);
-        List<LocalVariable> parameters = new ArrayList<LocalVariable>();
-        List<LocalVariable> returns = new ArrayList<LocalVariable>();
-        List<LocalVariable> localVariables = new ArrayList<LocalVariable>();
 
         //print(node, 0);
 
@@ -974,11 +967,10 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
             return null;
         }
 
-        Spin2Method method = new Spin2Method(localScope, token.getText(), parameters, returns, localVariables);
+        Spin2Method method = new Spin2Method(localScope, token.getText());
         method.setComment(node.getText());
         method.setData(node);
 
-        int offset = 0;
         for (MethodNode.ParameterNode child : node.getParameters()) {
             token = child.getToken(0);
             if (token.type == 0) {
@@ -991,13 +983,8 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     if (expression != null) {
                         logMessage(new CompilerException(CompilerException.WARNING, "parameter '" + identifier + "' hides global variable", child));
                     }
-                    LocalVariable var = new LocalVariable("LONG", identifier, new NumberLiteral(1), offset);
-                    localScope.addSymbol(identifier, var);
-                    localScope.addSymbol("@" + identifier, var);
-                    localScope.addSymbol("@@" + identifier, var);
-                    parameters.add(var);
+                    LocalVariable var = method.addParameter(identifier, new NumberLiteral(1));
                     var.setData(child.getIdentifier());
-                    offset += 4;
                 }
             }
             else {
@@ -1042,13 +1029,8 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     if (expression != null) {
                         logMessage(new CompilerException(CompilerException.WARNING, "return variable '" + identifier + "' hides global variable", child));
                     }
-                    LocalVariable var = new LocalVariable("LONG", identifier, new NumberLiteral(1), offset);
-                    localScope.addSymbol(identifier, var);
-                    localScope.addSymbol("@" + identifier, var);
-                    localScope.addSymbol("@@" + identifier, var);
-                    returns.add(var);
+                    LocalVariable var = method.addReturnVariable(identifier);
                     var.setData(child.getIdentifier());
-                    offset += 4;
                 }
             }
             else {
@@ -1076,7 +1058,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
             if (token.type == 0) {
                 Token identifier = token;
                 Expression size = new NumberLiteral(1);
-                int varSize = 1;
 
                 if (iter.hasNext()) {
                     token = iter.next();
@@ -1091,7 +1072,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                             if ("]".equals(token.getText())) {
                                 try {
                                     size = builder.getExpression();
-                                    varSize = size.getNumber().intValue();
+                                    size.getNumber().intValue();
                                 } catch (CompilerException e) {
                                     logMessage(e);
                                 } catch (Exception e) {
@@ -1122,21 +1103,8 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     if (expression != null) {
                         logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier + "' hides global variable", child));
                     }
-                    LocalVariable var = new LocalVariable(type, identifier.getText(), size, offset);
-                    localScope.addSymbol(identifier.getText(), var);
-                    localScope.addSymbol("@" + identifier.getText(), var);
-                    localScope.addSymbol("@@" + identifier.getText(), var);
-                    localVariables.add(var);
+                    LocalVariable var = method.addLocalVariable(type, identifier.getText(), size);
                     var.setData(identifier);
-
-                    int count = 4;
-                    if ("BYTE".equalsIgnoreCase(type)) {
-                        count = 1;
-                    }
-                    if ("WORD".equalsIgnoreCase(type)) {
-                        count = 2;
-                    }
-                    offset += count * varSize;
                 }
 
                 if (iter.hasNext()) {

@@ -667,6 +667,12 @@ public abstract class Spin1BytecodeCompiler {
                     boolean indexed = false;
 
                     Expression expression = context.getLocalSymbol(s[0]);
+                    if (expression == null && isAbsoluteAddress(s[0])) {
+                        expression = context.getLocalSymbol(s[0].substring(2));
+                    }
+                    if (expression == null && isAddress(s[0])) {
+                        expression = context.getLocalSymbol(s[0].substring(1));
+                    }
                     if (expression == null) {
                         throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                     }
@@ -691,7 +697,7 @@ public abstract class Spin1BytecodeCompiler {
                     if (postEffect != null) {
                         op = MemoryOp.Op.Assign;
                     }
-                    if (s[0].startsWith("@")) {
+                    if (isAddress(s[0])) {
                         op = MemoryOp.Op.Address;
                     }
                     if ("BYTE".equalsIgnoreCase(s[1])) {
@@ -744,6 +750,12 @@ public abstract class Spin1BytecodeCompiler {
                 }
                 else {
                     Expression expression = context.getLocalSymbol(node.getText());
+                    if (expression == null && isAbsoluteAddress(node.getText())) {
+                        expression = context.getLocalSymbol(node.getText().substring(2));
+                    }
+                    if (expression == null && isAddress(node.getText())) {
+                        expression = context.getLocalSymbol(node.getText().substring(1));
+                    }
                     if (expression instanceof ObjectContextLiteral) {
                         expression = context.getLocalSymbol(node.getText().substring(1));
                     }
@@ -835,7 +847,7 @@ public abstract class Spin1BytecodeCompiler {
                                 }
                             }
                             else {
-                                if (node.getText().startsWith("@@")) {
+                                if (isAbsoluteAddress(node.getText())) {
                                     source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression));
                                     source.add(new MemoryOp(context, MemoryOp.Size.Byte, true, MemoryOp.Base.PBase, MemoryOp.Op.Address, new NumberLiteral(0)));
                                 }
@@ -1094,6 +1106,10 @@ public abstract class Spin1BytecodeCompiler {
 
     protected boolean isAddress(String text) {
         return text.startsWith("@");
+    }
+
+    protected boolean isAbsoluteAddress(String text) {
+        return text.startsWith("@@");
     }
 
     protected boolean isAssign(String text) {

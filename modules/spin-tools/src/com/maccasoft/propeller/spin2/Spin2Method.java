@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -15,7 +15,9 @@ import java.util.List;
 
 import org.apache.commons.lang3.BitField;
 
+import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
+import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
 
 public class Spin2Method {
@@ -43,12 +45,12 @@ public class Spin2Method {
     List<Spin2Method> calledBy = new ArrayList<>();
     List<Spin2Method> calls = new ArrayList<>();
 
-    public Spin2Method(Spin2Context scope, String label, List<LocalVariable> parameters, List<LocalVariable> returns, List<LocalVariable> localVariables) {
+    public Spin2Method(Spin2Context scope, String label) {
         this.scope = scope;
         this.label = label;
-        this.parameters = parameters;
-        this.returns = returns;
-        this.localVariables = localVariables;
+        this.parameters = new ArrayList<>();
+        this.returns = new ArrayList<>();
+        this.localVariables = new ArrayList<>();
     }
 
     public Spin2Context getScope() {
@@ -59,8 +61,63 @@ public class Spin2Method {
         return label;
     }
 
-    public void addLocalVariable(LocalVariable variable) {
-        localVariables.add(variable);
+    public LocalVariable addParameter(String name, Expression size) {
+        LocalVariable var = new LocalVariable("LONG", name, size, 0) {
+
+            @Override
+            public int getOffset() {
+                return parameters.indexOf(this) * 4;
+            }
+
+        };
+        scope.addSymbol(name, var);
+        parameters.add(var);
+        return var;
+    }
+
+    public LocalVariable addReturnVariable(String name) {
+        LocalVariable var = new LocalVariable("LONG", name, new NumberLiteral(1), 0) {
+
+            @Override
+            public int getOffset() {
+                return (parameters.size() + returns.indexOf(this)) * 4;
+            }
+
+        };
+        scope.addSymbol(name, var);
+        returns.add(var);
+        return var;
+    }
+
+    public LocalVariable addLocalVariable(String type, String name, Expression size) {
+        LocalVariable var = new LocalVariable(type, name, size, 0) {
+
+            @Override
+            public int getOffset() {
+                int offset = (parameters.size() + returns.size()) * 4;
+
+                for (LocalVariable var : localVariables) {
+                    if (var == this) {
+                        break;
+                    }
+                    int count = 4;
+                    int varSize = var.getSize() != null ? var.getSize().getNumber().intValue() : 1;
+                    if ("WORD".equalsIgnoreCase(var.getType())) {
+                        count = 2;
+                    }
+                    else if ("BYTE".equalsIgnoreCase(var.getType())) {
+                        count = 1;
+                    }
+                    offset += count * varSize;
+                }
+
+                return offset;
+            }
+
+        };
+        scope.addSymbol(name, var);
+        localVariables.add(var);
+        return var;
     }
 
     public void register() {

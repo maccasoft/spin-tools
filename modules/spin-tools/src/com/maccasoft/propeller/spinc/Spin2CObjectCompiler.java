@@ -696,28 +696,26 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
     void compileFunction(FunctionNode node) {
         Iterator<Token> iter = node.getTokens().iterator();
 
-        Token token = iter.next();
-        if (!types.contains(token.getText())) {
-            throw new CompilerException("unsupported type", token);
+        Token type = iter.next();
+        if (!types.contains(type.getText())) {
+            throw new CompilerException("unsupported type", type);
         }
 
         Spin2CContext localScope = new Spin2CContext(scope);
-        int localVarOffset = 0;
 
-        List<LocalVariable> returns = new ArrayList<LocalVariable>();
-        if (!"void".equals(token.getText())) {
-            LocalVariable var = new LocalVariable("LONG", "__default_return__", new NumberLiteral(1), localVarOffset);
-            returns.add(var);
-            localVarOffset += 4;
-        }
-
-        token = iter.next();
+        Token token = iter.next();
         if (token.type != Token.KEYWORD) {
             throw new CompilerException("expecting identifier", token);
         }
         String functionIdentifier = token.getText();
 
-        List<LocalVariable> parameters = new ArrayList<LocalVariable>();
+        Spin2Method method = new Spin2Method(localScope, functionIdentifier);
+        method.setComment(node.getText().replaceAll("[\n\r]+", " "));
+        method.setData(node);
+
+        if (!"void".equals(type.getText())) {
+            method.addReturnVariable("__default_return__");
+        }
 
         token = iter.next();
         if (!"(".equals(token.getText())) {
@@ -739,13 +737,8 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             }
             Token identifier = token;
 
-            LocalVariable var = new LocalVariable("LONG", identifier.getText(), new NumberLiteral(1), localVarOffset);
-            localScope.addSymbol(identifier.getText(), var);
-            localScope.addSymbol("&" + identifier.getText(), var);
-            parameters.add(var);
+            LocalVariable var = method.addParameter(identifier.getText(), new NumberLiteral(1));
             var.setData(identifier);
-
-            localVarOffset += 4;
 
             if (!iter.hasNext()) {
                 throw new CompilerException("expecting comma or closing bracket", new Token(token.getStream(), token.stop));
@@ -759,10 +752,6 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             }
         }
 
-        Spin2Method method = new Spin2Method(localScope, functionIdentifier, parameters, returns, new ArrayList<>());
-        method.setComment(node.getText().replaceAll("[\n\r]+", " "));
-        method.setData(node);
-
         Method exp = new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount()) {
 
             @Override
@@ -775,7 +764,6 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
         publicSymbols.put(method.getLabel(), exp);
         scope.addSymbol(method.getLabel(), exp);
-        scope.addSymbol("&" + method.getLabel(), exp);
 
         methods.add(method);
 
@@ -920,9 +908,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
                     try {
                         String identifierText = identifier.getText();
-                        LocalVariable variable = new LocalVariable(typeText, identifierText, size, method.getLocalVarSize());
-                        context.addSymbol(identifierText, variable);
-                        method.addLocalVariable(variable);
+                        LocalVariable variable = method.addLocalVariable(typeText, identifierText, size);
                         variable.setData(identifier);
 
                         boolean add = true;
@@ -1024,9 +1010,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                     }
                     try {
                         String identifierText = identifier.getText();
-                        LocalVariable variable = new LocalVariable(type, identifierText, new NumberLiteral(1), method.getLocalVarSize());
-                        context.addSymbol(identifierText, variable);
-                        method.addLocalVariable(variable);
+                        LocalVariable variable = method.addLocalVariable(type, identifierText, new NumberLiteral(1));
                         variable.setData(identifier);
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, identifier));

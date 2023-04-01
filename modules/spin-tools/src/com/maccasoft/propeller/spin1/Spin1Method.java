@@ -15,7 +15,9 @@ import java.util.List;
 
 import org.apache.commons.lang3.BitField;
 
+import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
+import com.maccasoft.propeller.expressions.NumberLiteral;
 
 public class Spin1Method {
 
@@ -47,14 +49,10 @@ public class Spin1Method {
         this.parameters = new ArrayList<>();
         this.returns = new ArrayList<>();
         this.localVariables = new ArrayList<>();
-    }
 
-    public Spin1Method(Spin1Context scope, String label, List<LocalVariable> parameters, List<LocalVariable> returns, List<LocalVariable> localVariables) {
-        this.scope = scope;
-        this.label = label;
-        this.parameters = parameters;
-        this.returns = returns;
-        this.localVariables = localVariables;
+        LocalVariable defaultReturn = new LocalVariable("LONG", "RESULT", new NumberLiteral(1), 0);
+        scope.addBuiltinSymbol(defaultReturn.getName(), defaultReturn);
+        this.returns.add(defaultReturn);
     }
 
     public Spin1Context getScope() {
@@ -63,6 +61,57 @@ public class Spin1Method {
 
     public String getLabel() {
         return label;
+    }
+
+    public LocalVariable addParameter(String name, Expression size) {
+        LocalVariable var = new LocalVariable("LONG", name, size, 0) {
+
+            @Override
+            public int getOffset() {
+                return 4 + parameters.indexOf(this) * 4;
+            }
+
+        };
+        scope.addSymbol(name, var);
+        parameters.add(var);
+        return var;
+    }
+
+    public LocalVariable addReturnVariable(String name) {
+        LocalVariable var = new LocalVariable("LONG", name, new NumberLiteral(1), 0);
+        scope.addSymbol(name, var);
+        return var;
+    }
+
+    public LocalVariable addLocalVariable(String type, String name, Expression size) {
+        LocalVariable var = new LocalVariable(type, name, size, 0) {
+
+            @Override
+            public int getOffset() {
+                int offset = 4 + parameters.size() * 4;
+
+                for (LocalVariable var : localVariables) {
+                    if (var == this) {
+                        break;
+                    }
+                    int count = 4;
+                    int varSize = var.getSize() != null ? var.getSize().getNumber().intValue() : 1;
+                    if ("WORD".equalsIgnoreCase(var.getType())) {
+                        count = 2;
+                    }
+                    else if ("BYTE".equalsIgnoreCase(var.getType())) {
+                        count = 1;
+                    }
+                    offset += ((count * varSize + 3) / 4) * 4;
+                }
+
+                return offset;
+            }
+
+        };
+        scope.addSymbol(name, var);
+        localVariables.add(var);
+        return var;
     }
 
     public void register() {
