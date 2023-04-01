@@ -79,7 +79,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
     Spin2CContext scope;
 
-    int varOffset;
+    int objectVarSize;
 
     List<Variable> variables = new ArrayList<>();
     List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
@@ -122,7 +122,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
     @Override
     public void compile(Node root) {
-        varOffset = 4;
+        objectVarSize = 4;
 
         spinCompiler = new Spin2BytecodeCompiler(debugStatements) {
 
@@ -192,7 +192,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             }
         }
 
-        varOffset = (varOffset + 3) & ~3;
+        objectVarSize = (objectVarSize + 3) & ~3;
 
         if (scope.isDefined("_CLKFREQ")) {
             scope.addSymbol("_CLKFREQ", compileDefinedExpression("_CLKFREQ"));
@@ -546,7 +546,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             try {
                 int count = size.getNumber().intValue();
 
-                LinkDataObject linkData = new Spin2LinkDataObject(info.compiler, 0, varOffset);
+                LinkDataObject linkData = new Spin2LinkDataObject(info.compiler, info.compiler.getVarSize());
                 for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                     if (objEntry.getValue() instanceof Method) {
                         String qualifiedName = identifier.getText() + "." + objEntry.getKey();
@@ -577,11 +577,9 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
                 });
                 objectLinks.add(linkData);
-                varOffset += info.compiler.getVarSize();
 
                 for (int i = 1; i < count; i++) {
-                    objectLinks.add(new Spin2LinkDataObject(info.compiler, 0, varOffset));
-                    varOffset += info.compiler.getVarSize();
+                    objectLinks.add(new Spin2LinkDataObject(info.compiler, info.compiler.getVarSize()));
                 }
 
             } catch (CompilerException e) {
@@ -610,7 +608,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
             try {
                 String identifierText = identifier.getText();
-                Variable var = new Variable(type, identifierText, size, varOffset);
+                Variable var = new Variable(type, identifierText, size, objectVarSize);
                 scope.addSymbol(identifierText, var);
                 variables.add(var);
                 var.setData(identifier);
@@ -622,7 +620,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                 else if (!"BYTE".equalsIgnoreCase(type)) {
                     varSize = varSize * 4;
                 }
-                varOffset += varSize;
+                objectVarSize += varSize;
             } catch (Exception e) {
                 logMessage(new CompilerException(e, identifier));
             }
@@ -1547,7 +1545,11 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
     @Override
     public int getVarSize() {
-        return varOffset;
+        int linkedVarOffset = objectVarSize;
+        for (LinkDataObject linkData : objectLinks) {
+            linkedVarOffset += linkData.getVarSize();
+        }
+        return linkedVarOffset;
     }
 
     @Override
@@ -1580,12 +1582,16 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             object.setDebugBaud(scope.getSymbol("DEBUG_BAUD").getNumber().intValue());
         }
 
-        object.writeComment("Object header");
+        object.writeComment("Object header (var size " + objectVarSize + ")");
 
+        int linkedVarOffset = objectVarSize;
         for (LinkDataObject linkData : objectLinks) {
             object.write(linkData);
-            object.writeLong(linkData.getVarOffset(), String.format("Variables @ $%05X", linkData.getVarOffset()));
+            object.writeLong(linkedVarOffset, String.format("Variables @ $%05X", linkedVarOffset));
+            linkedVarOffset += linkData.getVarSize();
         }
+        object.setVarSize(linkedVarOffset);
+
         for (LongDataObject data : methodData) {
             object.write(data);
         }
@@ -1713,8 +1719,6 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
             object.alignToLong();
         }
-
-        object.setVarSize(varOffset);
 
         return object;
     }

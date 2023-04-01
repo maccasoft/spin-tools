@@ -239,7 +239,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 4)\n"
             + "00000 00000       14 00 00 00    Object \"text2.spin2\" @ $00014\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
@@ -289,7 +289,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       0C 00 00 00    End\n"
             + "' void main() {\n"
@@ -322,7 +322,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 4)\n"
             + "00000 00000       18 00 00 00    Object \"text2.spin2\" @ $00018\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
@@ -372,7 +372,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 4)\n"
             + "00000 00000       28 00 00 00    Object \"text2.spin2\" @ $00028\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       28 00 00 00    Object \"text2.spin2\" @ $00028\n"
@@ -428,7 +428,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 4)\n"
             + "00000 00000       1C 00 00 00    Object \"text2.spin2\" @ $0001C\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       1C 00 00 00    Object \"text2.spin2\" @ $0001C\n"
@@ -475,7 +475,7 @@ class Spin2CCompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 4)\n"
             + "00000 00000       28 00 00 00    Object \"text2.spin2\" @ $00028\n"
             + "00004 00004       04 00 00 00    Variables @ $00004\n"
             + "00008 00008       28 00 00 00    Object \"text2.spin2\" @ $00028\n"
@@ -511,6 +511,61 @@ class Spin2CCompilerTest {
             + "00035 0000D       04             RETURN\n"
             + "00036 0000E       00 00          Padding\n"
             + "", compile("main.c", sources, true, false));
+    }
+
+    @Test
+    void testVariablesAndObjectLink() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.c", ""
+            + "text2 o;\n"
+            + "\n"
+            + "int a;\n"
+            + "int b;\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "    a = 1;\n"
+            + "    b = 2;\n"
+            + "}\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "VAR c\n"
+            + "\n"
+            + "PUB start(a, b)\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 12)\n"
+            + "00000 00000       18 00 00 00    Object \"text2.spin2\" @ $00018\n"
+            + "00004 00004       0C 00 00 00    Variables @ $0000C\n"
+            + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "0000C 0000C       18 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00010 00010       00             (stack size)\n"
+            + "'     a = 1;\n"
+            + "00011 00011       A2             CONSTANT (1)\n"
+            + "00012 00012       C1 81          VAR_WRITE LONG VBASE+$00001 (short)\n"
+            + "'     b = 2;\n"
+            + "00014 00014       A3             CONSTANT (2)\n"
+            + "00015 00015       C2 81          VAR_WRITE LONG VBASE+$00002 (short)\n"
+            + "' }\n"
+            + "00017 00017       04             RETURN\n"
+            + "' Object \"text2.spin2\" header (var size 8)\n"
+            + "00018 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
+            + "0001C 00004       0F 00 00 00    End\n"
+            + "' PUB start(a, b)\n"
+            + "00020 00008       00             (stack size)\n"
+            + "'     c := a + b\n"
+            + "00021 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00022 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00023 0000B       8A             ADD\n"
+            + "00024 0000C       C1 81          VAR_WRITE LONG VBASE+$00001 (short)\n"
+            + "00026 0000E       04             RETURN\n"
+            + "00027 0000F       00             Padding\n"
+            + "", compile("main.c", sources));
     }
 
     String compile(String rootFile, Map<String, String> sources) throws Exception {

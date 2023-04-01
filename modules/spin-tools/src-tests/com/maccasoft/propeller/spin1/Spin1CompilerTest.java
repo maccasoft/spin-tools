@@ -717,7 +717,7 @@ class Spin1CompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 0)\n"
             + "00000 00000       0C 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
@@ -749,7 +749,7 @@ class Spin1CompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 0)\n"
             + "00000 00000       1C 00          Object size\n"
             + "00002 00002       03             Method count + 1\n"
             + "00003 00003       00             Object count\n"
@@ -1018,7 +1018,7 @@ class Spin1CompilerTest {
             + "");
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 0)\n"
             + "00000 00000       20 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"

@@ -82,7 +82,8 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
     List<Spin2Method> methods = new ArrayList<>();
     Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<>());
 
-    int varOffset = 4;
+    int objectVarSize;
+
     int nested;
 
     boolean debugEnabled;
@@ -198,10 +199,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
         compileVarBlocks(root);
 
-        while ((varOffset % 4) != 0) {
-            varOffset++;
-        }
-
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
                 source.addAll(pasmCompiler.compileDat((DataNode) node));
@@ -215,7 +212,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
             try {
                 int count = info.count.getNumber().intValue();
 
-                LinkDataObject linkData = new Spin2LinkDataObject(info.compiler, 0, varOffset);
+                LinkDataObject linkData = new Spin2LinkDataObject(info.compiler, info.compiler.getVarSize());
                 for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                     if (objEntry.getValue() instanceof Method) {
                         String qualifiedName = name + "." + objEntry.getKey();
@@ -246,11 +243,9 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
                 });
                 objectLinks.add(linkData);
-                varOffset += info.compiler.getVarSize();
 
                 for (int i = 1; i < count; i++) {
-                    objectLinks.add(new Spin2LinkDataObject(info.compiler, 0, varOffset));
-                    varOffset += info.compiler.getVarSize();
+                    objectLinks.add(new Spin2LinkDataObject(info.compiler, info.compiler.getVarSize()));
                 }
 
             } catch (CompilerException e) {
@@ -409,7 +404,11 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
     @Override
     public int getVarSize() {
-        return varOffset;
+        int linkedVarOffset = objectVarSize;
+        for (LinkDataObject linkData : objectLinks) {
+            linkedVarOffset += linkData.getVarSize();
+        }
+        return linkedVarOffset;
     }
 
     @Override
@@ -442,12 +441,16 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
             object.setDebugBaud(scope.getSymbol("DEBUG_BAUD").getNumber().intValue());
         }
 
-        object.writeComment("Object header");
+        object.writeComment("Object header (var size " + objectVarSize + ")");
 
+        int linkedVarOffset = objectVarSize;
         for (LinkDataObject linkData : objectLinks) {
             object.write(linkData);
-            object.writeLong(linkData.getVarOffset(), String.format("Variables @ $%05X", linkData.getVarOffset()));
+            object.writeLong(linkedVarOffset, String.format("Variables @ $%05X", linkedVarOffset));
+            linkedVarOffset += linkData.getVarSize();
         }
+        object.setVarSize(linkedVarOffset);
+
         for (LongDataObject data : methodData) {
             object.write(data);
         }
@@ -575,8 +578,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
             object.alignToLong();
         }
-
-        object.setVarSize(varOffset);
 
         return object;
     }
@@ -760,6 +761,8 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
     }
 
     void compileVarBlocks(Node root) {
+        objectVarSize = 4;
+
         root.accept(new NodeVisitor() {
 
             String type = "LONG";
@@ -822,7 +825,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 }
 
                 try {
-                    Variable var = new Variable(type, identifier.getText(), size, varOffset);
+                    Variable var = new Variable(type, identifier.getText(), size, objectVarSize);
                     scope.addSymbol(identifier.getText(), var);
                     variables.add(var);
                     var.setData(identifier);
@@ -834,7 +837,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     else if (!"BYTE".equalsIgnoreCase(type)) {
                         varSize = varSize * 4;
                     }
-                    varOffset += varSize;
+                    objectVarSize += varSize;
                 } catch (Exception e) {
                     logMessage(new CompilerException(e, node.identifier));
                 }
@@ -847,6 +850,8 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
             }
 
         });
+
+        objectVarSize = (objectVarSize + 3) & ~3;
     }
 
     void compileObjBlock(Node parent) {

@@ -89,9 +89,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
     boolean openspinCompatible;
 
-    int dcurr = 0;
-    int varOffset = 0;
-    int objectVarSize = 0;
+    int objectVarSize;
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<>();
@@ -121,6 +119,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
     @Override
     public void compile(Node root) {
+        objectVarSize = 0;
 
         for (Node node : root.getChilds()) {
             if (node instanceof ObjectsNode) {
@@ -264,7 +263,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
             try {
                 int count = info.count.getNumber().intValue();
 
-                LinkDataObject linkData = new Spin1LinkDataObject(info.compiler, 0, varOffset);
+                LinkDataObject linkData = new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize());
                 for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
                     if (objEntry.getValue() instanceof Method) {
                         String qualifiedName = name + "." + objEntry.getKey();
@@ -295,11 +294,9 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
                 });
                 objectLinks.add(linkData);
-                varOffset += info.compiler.getVarSize();
 
                 for (int i = 1; i < count; i++) {
-                    objectLinks.add(new Spin1LinkDataObject(info.compiler, 0, varOffset));
-                    varOffset += info.compiler.getVarSize();
+                    objectLinks.add(new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize()));
                 }
 
             } catch (CompilerException e) {
@@ -386,8 +383,6 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                 }
             }
 
-            dcurr = method.getStackSize();
-
             methodData.add(new LongDataObject(0, "Function " + method.getLabel()));
             while (methodsIterator.hasNext()) {
                 method = methodsIterator.next();
@@ -417,7 +412,11 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
     @Override
     public int getVarSize() {
-        return varOffset;
+        int linkedVarOffset = objectVarSize;
+        for (LinkDataObject linkData : objectLinks) {
+            linkedVarOffset += linkData.getVarSize();
+        }
+        return linkedVarOffset;
     }
 
     @Override
@@ -438,12 +437,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         object.setClkFreq(scope.getLocalSymbol("CLKFREQ").getNumber().intValue());
         object.setClkMode(scope.getLocalSymbol("CLKMODE").getNumber().intValue());
 
-        if (objects.size() != 0) {
-            object.writeComment("Object header (var size " + objectVarSize + ")");
-        }
-        else {
-            object.writeComment("Object header");
-        }
+        object.writeComment("Object header (var size " + objectVarSize + ")");
 
         WordDataObject objectSize = object.writeWord(0, "Object size");
         object.writeByte(methodData.size() + 1, "Method count + 1");
@@ -462,14 +456,19 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         for (LongDataObject linkData : methodData) {
             object.write(linkData);
         }
-
-        for (LinkDataObject linkData : objectLinks) {
-            object.write(linkData);
+        if (methods.size() != 0) {
+            object.setDcurr(methods.get(0).getStackSize());
         }
 
-        object.setDcurr(dcurr);
+        int linkedVarOffset = objectVarSize;
+        for (LinkDataObject linkData : objectLinks) {
+            linkData.setVarOffset(linkedVarOffset);
+            object.write(linkData);
+            linkedVarOffset += linkData.getVarSize();
+        }
+        object.setVarSize(linkedVarOffset);
+
         object.addAllSymbols(publicSymbols);
-        object.setVarSize(varOffset);
 
         hubAddress = object.getSize();
 
@@ -757,7 +756,6 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         });
 
         objectVarSize = (objectVarSize + 3) & ~3;
-        varOffset = objectVarSize;
     }
 
     void compileVariable(String type, VariableNode node) {

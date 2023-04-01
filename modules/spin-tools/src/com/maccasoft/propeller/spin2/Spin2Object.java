@@ -31,8 +31,8 @@ public class Spin2Object extends SpinObject {
 
     public static class Spin2LinkDataObject extends LinkDataObject {
 
-        public Spin2LinkDataObject(Object object, long offset, long varOffset) {
-            super(object, offset, varOffset);
+        public Spin2LinkDataObject(Object object, long varSize) {
+            super(object, varSize);
         }
 
         @Override

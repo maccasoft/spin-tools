@@ -97,8 +97,9 @@ public abstract class SpinObject {
         Object object;
         long offset;
         long varOffset;
+        long varSize;
 
-        public LinkDataObject(Object object, long offset, long varOffset) {
+        public LinkDataObject(Object object, long varSize) {
             super(new byte[] {
                 (byte) 0,
                 (byte) 0,
@@ -106,8 +107,11 @@ public abstract class SpinObject {
                 (byte) 0
             });
             this.object = object;
-            this.offset = offset;
-            this.varOffset = varOffset;
+            this.varSize = varSize;
+        }
+
+        public long getVarSize() {
+            return varSize;
         }
 
         public long getOffset() {

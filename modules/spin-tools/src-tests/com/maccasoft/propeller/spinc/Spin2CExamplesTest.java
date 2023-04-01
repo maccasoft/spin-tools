@@ -53,7 +53,7 @@ class Spin2CExamplesTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
             + "00004 00004       15 00 00 00    End\n"
             + "' void main() {\n"
@@ -104,7 +104,7 @@ class Spin2CExamplesTest {
             + "";
 
         Assertions.assertEquals(""
-            + "' Object header\n"
+            + "' Object header (var size 260)\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
             + "00004 00004       1F 00 00 82    Method blink @ $0001F (2 parameters, 0 returns)\n"
             + "00008 00008       28 00 00 00    End\n"

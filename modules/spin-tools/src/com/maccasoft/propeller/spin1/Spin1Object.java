@@ -16,8 +16,8 @@ public class Spin1Object extends SpinObject {
 
     public static class Spin1LinkDataObject extends LinkDataObject {
 
-        public Spin1LinkDataObject(Object object, long offset, long varOffset) {
-            super(object, offset, varOffset);
+        public Spin1LinkDataObject(Object object, long varSize) {
+            super(object, varSize);
         }
 
         @Override
@@ -25,8 +25,8 @@ public class Spin1Object extends SpinObject {
             this.bytes = new byte[] {
                 (byte) offset,
                 (byte) (offset >> 8),
-                (byte) getVarOffset(),
-                (byte) (getVarOffset() >> 8)
+                this.bytes[2],
+                this.bytes[3]
             };
             super.setOffset(offset);
         }
@@ -34,8 +34,8 @@ public class Spin1Object extends SpinObject {
         @Override
         public void setVarOffset(long varOffset) {
             this.bytes = new byte[] {
-                (byte) getOffset(),
-                (byte) (getOffset() >> 8),
+                this.bytes[0],
+                this.bytes[1],
                 (byte) varOffset,
                 (byte) (varOffset >> 8)
             };
