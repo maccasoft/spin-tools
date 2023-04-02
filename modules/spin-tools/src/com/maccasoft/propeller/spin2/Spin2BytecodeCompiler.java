@@ -349,6 +349,14 @@ public abstract class Spin2BytecodeCompiler {
                     source.add(new Bytecode(context, 0x79, "NEGATE"));
                 }
             }
+            else if ("+".equalsIgnoreCase(node.getText()) && node.getChildCount() == 1) {
+                try {
+                    Expression expression = buildConstantExpression(context, node);
+                    source.add(new Constant(context, expression));
+                } catch (Exception e) {
+                    source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
+                }
+            }
             else if ("-=".equalsIgnoreCase(node.getText()) && node.getChildCount() == 1) {
                 source.addAll(leftAssign(context, method, node.getChild(0), true, false));
                 if (push) {

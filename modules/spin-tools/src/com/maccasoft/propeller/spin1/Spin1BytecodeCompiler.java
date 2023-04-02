@@ -297,6 +297,9 @@ public abstract class Spin1BytecodeCompiler {
                     }
                 }
             }
+            else if ("+".equals(node.getText()) && node.getChildCount() == 1) {
+                source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
+            }
             else if (isAssign(node.getText())) {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
                 source.addAll(leftAssign(context, method, node.getChild(0), push));
