@@ -35,14 +35,18 @@ public class Spin1Compiler extends Compiler {
     boolean removeUnusedMethods;
     boolean openspinCompatible;
 
-    Spin1Preprocessor preprocessor;
-    Map<File, ObjectInfo> childObjects = new HashMap<>();
+    protected Spin1Preprocessor preprocessor;
+    protected Map<File, ObjectInfo> childObjects = new HashMap<>();
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
 
     public Spin1Compiler() {
 
+    }
+
+    public Spin1Compiler(boolean caseSensitive) {
+        super(caseSensitive);
     }
 
     @Override
@@ -110,7 +114,7 @@ public class Spin1Compiler extends Compiler {
         dbase.setValue(object.getSize() + offset);
 
         if (!(obj.getObject(4) instanceof LongDataObject)) {
-            logMessage(new CompilerException(CompilerException.ERROR, rootFile.getName(), "No PUB routines found", null));
+            logMessage(new CompilerException(CompilerException.ERROR, rootFile.getName(), "No PUB routines found", (Object) null));
             return null;
         }
         pcurr.setValue((int) (pbase.getValue() + (((LongDataObject) obj.getObject(4)).getValue() & 0xFFFF)));
@@ -152,7 +156,7 @@ public class Spin1Compiler extends Compiler {
 
     }
 
-    Spin1Object compileObject(File rootFile, Node root) {
+    public Spin1Object compileObject(File rootFile, Node root) {
         int memoryOffset = 16;
 
         preprocessor = new Spin1Preprocessor(this);

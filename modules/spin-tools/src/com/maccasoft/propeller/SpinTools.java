@@ -624,6 +624,18 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
+        item.setText("New (From P1/C template)" + "\t");
+        item.setAccelerator(SWT.CTRL + SWT.ALT + '2');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                String name = getUniqueName("Untitled", ".c");
+                openNewTab(name, getResourceAsString("template1.c"), true);
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
         item.setText("New (From P1 template)" + "\t");
         item.setAccelerator(SWT.CTRL + SWT.ALT + '1');
         item.addListener(SWT.Selection, new Listener() {
@@ -643,7 +655,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 String name = getUniqueName("Untitled", ".c");
-                openNewTab(name, getResourceAsString("template.c"), true);
+                openNewTab(name, getResourceAsString("template2.c"), true);
             }
         });
 

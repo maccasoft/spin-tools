@@ -75,7 +75,7 @@ public abstract class Spin1BytecodeCompiler {
         return compileBytecodeExpression(context, method, node, false);
     }
 
-    List<Spin1Bytecode> compileBytecodeExpression(Spin1Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
+    public List<Spin1Bytecode> compileBytecodeExpression(Spin1Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
         List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
 
         try {

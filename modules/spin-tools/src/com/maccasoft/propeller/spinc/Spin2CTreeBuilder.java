@@ -21,7 +21,7 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2StatementNode;
 
-public class CTreeBuilder {
+public class Spin2CTreeBuilder {
 
     static Map<String, Integer> precedence = new HashMap<String, Integer>();
     static {
@@ -199,7 +199,7 @@ public class CTreeBuilder {
     int index;
     List<Token> tokens = new ArrayList<Token>();
 
-    public CTreeBuilder(Spin2CContext scope) {
+    public Spin2CTreeBuilder(Spin2CContext scope) {
         this.scope = scope;
     }
 

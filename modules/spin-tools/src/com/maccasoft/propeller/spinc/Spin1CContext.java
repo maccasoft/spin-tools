@@ -17,18 +17,18 @@ import java.util.Map;
 
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Token;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.spin1.Spin1Context;
 
-public class Spin2CContext extends Spin2Context implements CContext {
+public class Spin1CContext extends Spin1Context implements CContext {
 
     Map<String, List<Token>> defines;
 
-    public Spin2CContext() {
+    public Spin1CContext() {
         super(true);
         this.defines = new HashMap<>();
     }
 
-    public Spin2CContext(Spin2Context parent) {
+    public Spin1CContext(Spin1Context parent) {
         super(parent);
         this.defines = new HashMap<>();
     }
@@ -52,8 +52,8 @@ public class Spin2CContext extends Spin2Context implements CContext {
     @Override
     public List<Token> getDefinition(String identifier) {
         List<Token> result = defines.get(identifier);
-        if (result == null && (getParent() instanceof Spin2CContext)) {
-            result = ((Spin2CContext) getParent()).getDefinition(identifier);
+        if (result == null && (getParent() instanceof Spin1CContext)) {
+            result = ((Spin1CContext) getParent()).getDefinition(identifier);
         }
         return result;
     }

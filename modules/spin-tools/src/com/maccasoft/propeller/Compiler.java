@@ -107,6 +107,10 @@ public abstract class Compiler {
 
     }
 
+    public Compiler(boolean caseSensitive) {
+        this.caseSensitive = caseSensitive;
+    }
+
     public void addSourceProvider(SourceProvider provider) {
         sourceProviders.add(provider);
     }

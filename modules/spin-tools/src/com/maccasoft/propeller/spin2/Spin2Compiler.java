@@ -41,7 +41,7 @@ public class Spin2Compiler extends Compiler {
 
     protected Spin2Interpreter interpreter;
 
-    Spin2Preprocessor preprocessor;
+    protected Spin2Preprocessor preprocessor;
     protected Map<File, ObjectInfo> childObjects = new HashMap<>();
 
     boolean errors;
@@ -49,6 +49,11 @@ public class Spin2Compiler extends Compiler {
 
     public Spin2Compiler() {
 
+    }
+
+    public Spin2Compiler(boolean caseSensitive, boolean debugEnabled) {
+        super(caseSensitive);
+        this.debugEnabled = debugEnabled;
     }
 
     @Override

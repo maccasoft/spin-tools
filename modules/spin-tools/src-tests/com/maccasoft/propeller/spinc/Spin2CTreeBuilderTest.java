@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2StatementNode;
 
-class CTreeBuilderTest {
+class Spin2CTreeBuilderTest {
 
     @Test
     void testMultipleStatements() {
@@ -48,7 +48,7 @@ class CTreeBuilderTest {
     }
 
     String parse(String text) {
-        CTreeBuilder builder = new CTreeBuilder(new Spin2CContext());
+        Spin2CTreeBuilder builder = new Spin2CTreeBuilder(new Spin2CContext());
 
         CTokenStream stream = new CTokenStream(text);
         while (true) {

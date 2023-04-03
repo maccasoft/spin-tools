@@ -90,13 +90,13 @@ public class CExpressionBuilder {
         unary.add("not");
     }
 
-    protected Spin2CContext context;
+    protected CContext context;
     protected List<Token> tokens = new ArrayList<Token>();
 
     int index;
     Set<String> dependencies = new HashSet<>();
 
-    public CExpressionBuilder(Spin2CContext context) {
+    public CExpressionBuilder(CContext context) {
         this.context = context;
     }
 

@@ -42,6 +42,30 @@ class Spin1ObjectCompilerTest {
     }
 
     @Test
+    void testParameterVarAssignment() throws Exception {
+        String text = ""
+            + "PUB main(a)\n"
+            + "\n"
+            + "    a := 1\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       0C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 00 00    Function main @ $0008 (local size 0)\n"
+            + "' PUB main(a)\n"
+            + "'     a := 1\n"
+            + "00008 00008       36             CONSTANT (1)\n"
+            + "00009 00009       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000A 0000A       32             RETURN\n"
+            + "0000B 0000B       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testLocalVarAssignment() throws Exception {
         String text = ""
             + "PUB main | a\n"

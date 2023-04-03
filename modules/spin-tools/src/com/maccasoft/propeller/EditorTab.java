@@ -47,6 +47,7 @@ import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectsNode;
@@ -59,6 +60,7 @@ import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Formatter;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
 import com.maccasoft.propeller.spinc.CTokenMarker;
+import com.maccasoft.propeller.spinc.Spin1CCompiler;
 import com.maccasoft.propeller.spinc.Spin2CCompiler;
 
 public class EditorTab implements FindReplaceTarget {
@@ -248,6 +250,9 @@ public class EditorTab implements FindReplaceTarget {
             if (node == null) {
                 node = super.getObjectTree(fileName + ".spin");
             }
+            if (node == null) {
+                node = super.getObjectTree(fileName + ".c");
+            }
             return node;
         }
 
@@ -296,12 +301,26 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         @Override
+        protected void setP1(boolean p1) {
+            if (p1) {
+                this.sourceProvider = new EditorTabSourceProvider(preferences.getSpin1LibraryPath());
+            }
+            else {
+                this.sourceProvider = new EditorTabSourceProvider(preferences.getSpin2LibraryPath());
+            }
+            super.setP1(p1);
+        }
+
+        @Override
         protected Node getObjectTree(String fileName) {
             Node node = super.getObjectTree(fileName);
             if (node == null) {
                 node = super.getObjectTree(fileName + ".c");
             }
-            if (node == null) {
+            if (node == null && isP1()) {
+                node = super.getObjectTree(fileName + ".spin");
+            }
+            if (node == null && isP2()) {
                 node = super.getObjectTree(fileName + ".spin2");
             }
             return node;
@@ -328,34 +347,49 @@ public class EditorTab implements FindReplaceTarget {
                     public void run() {
                         dependencies.clear();
 
-                        boolean spin2 = tabItemText.toLowerCase().endsWith(".spin2") ? true : false;
-                        boolean caseSensitive = spin2 ? preferences.getSpin2CaseSensitiveSymbols() : preferences.getSpin1CaseSensitiveSymbols();
-
                         Compiler compiler = null;
                         if (tabItemText.toLowerCase().endsWith(".spin")) {
-                            compiler = new Spin1Compiler();
+                            compiler = new Spin1Compiler(preferences.getSpin1CaseSensitiveSymbols());
+                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
                         }
                         else if (tabItemText.toLowerCase().endsWith(".spin2")) {
-                            compiler = new Spin2Compiler();
+                            compiler = new Spin2Compiler(preferences.getSpin2CaseSensitiveSymbols(), sourcePool.isDebugEnabled());
+                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
                         }
                         else if (tabItemText.toLowerCase().endsWith(".c")) {
-                            compiler = new Spin2CCompiler();
+                            for (Node node : root.getChilds()) {
+                                if (node instanceof DirectiveNode) {
+                                    int index = 1;
+                                    if (index < node.getTokenCount()) {
+                                        if ("pragma".equals(node.getToken(index).getText())) {
+                                            index++;
+                                            if (index < node.getTokenCount()) {
+                                                if ("target".equals(node.getToken(index).getText())) {
+                                                    index++;
+                                                    if (index < node.getTokenCount()) {
+                                                        if ("P1".equals(node.getToken(index).getText())) {
+                                                            compiler = new Spin1CCompiler(preferences.getSpin1CaseSensitiveSymbols());
+                                                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
+                                                        }
+                                                        else if ("P2".equals(node.getToken(index).getText())) {
+                                                            compiler = new Spin2CCompiler(preferences.getSpin2CaseSensitiveSymbols(), sourcePool.isDebugEnabled());
+                                                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (compiler == null) {
+                                compiler = new Spin2CCompiler();
+                                compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+                            }
                         }
                         if (compiler != null) {
-                            compiler.setCaseSensitive(caseSensitive);
                             compiler.setRemoveUnusedMethods(true);
-                            if (compiler instanceof Spin2CCompiler) {
-                                compiler.setDebugEnabled(sourcePool.isDebugEnabled());
-                                compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
-                            }
-                            if (compiler instanceof Spin2Compiler) {
-                                compiler.setDebugEnabled(sourcePool.isDebugEnabled());
-                                compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
-                            }
-                            if (compiler instanceof Spin1Compiler) {
-                                compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
-                            }
-
                             try {
                                 object = compiler.compile(localFile, root);
                                 objectTree = compiler.getObjectTree();

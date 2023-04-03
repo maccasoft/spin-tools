@@ -162,6 +162,10 @@ public class Spin1ExpressionBuilder {
         tokens.add(token);
     }
 
+    public List<Token> getTokens() {
+        return tokens;
+    }
+
     public Expression getExpression() {
         Expression node = parseLevel(parseAtom(), 0);
 
