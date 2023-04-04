@@ -103,7 +103,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
     Spin2PasmCompiler pasmCompiler;
 
     public Spin2CObjectCompiler(Spin2Compiler compiler, List<Object> debugStatements) {
-        this.scope = new Spin2CContext(new Spin2GlobalContext());
+        this.scope = new Spin2CContext(new Spin2GlobalContext(true));
         this.compiler = compiler;
         this.debugEnabled = compiler.isDebugEnabled();
         this.debugStatements = debugStatements;

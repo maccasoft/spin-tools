@@ -89,7 +89,7 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
     Spin1PAsmCompiler pasmCompiler;
 
     public Spin1CObjectCompiler(Spin1Compiler compiler) {
-        this.scope = new Spin1CContext(new Spin1GlobalContext());
+        this.scope = new Spin1CContext(new Spin1GlobalContext(true));
         this.compiler = compiler;
 
         this.scope.addDefinition("__P1__", new NumberLiteral(1));
