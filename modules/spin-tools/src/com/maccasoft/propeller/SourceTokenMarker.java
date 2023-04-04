@@ -401,52 +401,15 @@ public abstract class SourceTokenMarker {
             root.accept(new NodeVisitor() {
 
                 @Override
-                public void visitDirective(DirectiveNode node) {
-                    if (node instanceof DirectiveNode.IncludeNode) {
-                        DirectiveNode.IncludeNode include = (DirectiveNode.IncludeNode) node;
-                        if (include.getFile() != null) {
-                            String name = include.getFile().getText().substring(1, include.getFile().getText().length() - 1);
-                            if (name.toLowerCase().endsWith(".spin2") || name.toLowerCase().endsWith(".c")) {
-                                name = name.substring(0, name.lastIndexOf('.'));
-                            }
-
-                            String fileName = include.getFile().getText().substring(1, include.getFile().getText().length() - 1);
-                            Node objectRoot = getObjectTree(fileName);
-                            alias.put(name, objectRoot);
-
-                            if (objectRoot != null && name.equals(s[0])) {
-                                objectRoot.accept(new NodeVisitor() {
-
-                                    @Override
-                                    public boolean visitFunction(FunctionNode node) {
-                                        if (node.getIdentifier() != null) {
-                                            if (s[1].equals(node.getIdentifier().getText())) {
-                                                sb.append(getMethodDocument(node));
-                                            }
-                                        }
-                                        return false;
-                                    }
-
-                                    @Override
-                                    public boolean visitMethod(MethodNode node) {
-                                        if (node.getName() != null) {
-                                            if (s[1].equals(node.getName().getText())) {
-                                                sb.append(getMethodDocument(node));
-                                            }
-                                        }
-                                        return false;
-                                    }
-
-                                });
-                            }
-                        }
-                    }
-                }
-
-                @Override
                 public void visitVariable(VariableNode node) {
                     if (node.getType() != null && node.getIdentifier() != null) {
                         Node objectRoot = alias.get(node.getType().getText());
+                        if (objectRoot == null) {
+                            objectRoot = getObjectTree(node.getType().getText());
+                            if (objectRoot != null) {
+                                alias.put(node.getType().getText(), objectRoot);
+                            }
+                        }
                         if (objectRoot != null) {
                             String name = node.getIdentifier().getText();
                             if (!name.equalsIgnoreCase(s[0])) {

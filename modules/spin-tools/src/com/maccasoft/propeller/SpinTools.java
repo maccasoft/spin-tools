@@ -202,25 +202,41 @@ public class SpinTools {
         }
 
         EditorTab openOrSwitchToTab(String name) {
-            String suffix = ".spin";
+            EditorTab editorTab = null;
 
-            if (tabFolder.getSelection() != null) {
-                EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
-                String tabName = currentTab.getText();
-                suffix = tabName.substring(tabName.lastIndexOf('.'));
-            }
+            EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
+            String tabName = currentTab.getText();
+            String suffix = tabName.substring(tabName.lastIndexOf('.'));
 
-            File[] searchPaths = ".spin".equals(suffix) ? Preferences.getInstance().getSpin1LibraryPath() : Preferences.getInstance().getSpin2LibraryPath();
-
-            EditorTab editorTab = openOrSwitchToTab(name + suffix, searchPaths);
-            if (editorTab == null && ".c".equals(suffix)) {
-                editorTab = openOrSwitchToTab(name + ".spin2", searchPaths);
+            if (".spin".equals(suffix)) {
+                editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin1LibraryPath());
+                if (editorTab == null) {
+                    editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin1LibraryPath());
+                }
             }
-            if (editorTab == null && ".spin2".equals(suffix)) {
-                editorTab = openOrSwitchToTab(name + ".c", searchPaths);
+            else if (".spin2".equals(suffix)) {
+                editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
+                if (editorTab == null) {
+                    editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
+                }
             }
-            if (editorTab == null) {
-                editorTab = openOrSwitchToTab(name, searchPaths);
+            else if (".c".equals(suffix)) {
+                editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
+                if (editorTab == null) {
+                    editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin1LibraryPath());
+                }
+                if (editorTab == null) {
+                    editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
+                }
+                if (editorTab == null) {
+                    editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin1LibraryPath());
+                }
+                if (editorTab == null) {
+                    editorTab = openOrSwitchToTab(name + ".spin2", Preferences.getInstance().getSpin2LibraryPath());
+                }
+                if (editorTab == null) {
+                    editorTab = openOrSwitchToTab(name + ".spin", Preferences.getInstance().getSpin1LibraryPath());
+                }
             }
 
             return editorTab;
