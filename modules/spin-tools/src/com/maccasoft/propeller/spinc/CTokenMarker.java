@@ -21,6 +21,7 @@ import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.SourceTokenMarker;
 import com.maccasoft.propeller.model.ConstantNode;
+import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.DirectiveNode;
@@ -817,10 +818,12 @@ public class CTokenMarker extends SourceTokenMarker {
                                     symbols.put(define.getIdentifier().getText(), TokenId.CONSTANT);
                                 }
                             }
-                            else if (child instanceof ConstantNode) {
-                                ConstantNode constant = (ConstantNode) child;
-                                if (constant.getIdentifier() != null) {
-                                    symbols.put(constant.getIdentifier().getText(), TokenId.CONSTANT);
+                            else if (child instanceof ConstantsNode) {
+                                for (Node n : child.getChilds()) {
+                                    ConstantNode constant = (ConstantNode) n;
+                                    if (constant.getIdentifier() != null) {
+                                        symbols.put(constant.getIdentifier().getText(), TokenId.CONSTANT);
+                                    }
                                 }
                             }
                         }
