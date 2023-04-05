@@ -105,17 +105,13 @@ public class CTokenStream extends TokenStream {
                     else if (ch == '"') { // String
                         state = token.type = Token.STRING;
                     }
+                    else if (ch == '\'') { // Char
+                        state = token.type = Token.CHAR;
+                    }
                     else if (ch == '$') { // Hex number
                         state = token.type = Token.NUMBER;
                     }
                     else if (ch == '%') { // Bin/Quad number
-                        if ((index + 1) < text.length()) {
-                            if (text.charAt(index + 1) == '%') {
-                                token.stop++;
-                                index++;
-                                column++;
-                            }
-                        }
                         state = token.type = Token.NUMBER;
                     }
                     else if (ch >= '0' && ch <= '9') { // Decimal
@@ -167,6 +163,15 @@ public class CTokenStream extends TokenStream {
                     }
                     break;
                 case Token.NUMBER:
+                    if ((token.stop - token.start + 1) == 1) {
+                        if (text.charAt(token.start) == '%') {
+                            if (ch != '%' && ch != '0' && ch != '1') {
+                                token.type = state = Token.OPERATOR;
+                                index = token.start;
+                                break;
+                            }
+                        }
+                    }
                     if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_') {
                         token.stop++;
                         break;
@@ -204,6 +209,21 @@ public class CTokenStream extends TokenStream {
                         return token;
                     }
                     break;
+                case Token.CHAR:
+                    if (ch == '\r' || ch == '\n') {
+                        return token;
+                    }
+                    token.stop++;
+                    if (escape) {
+                        escape = false;
+                        break;
+                    }
+                    if (ch == '\'') {
+                        index++;
+                        column++;
+                        return token;
+                    }
+                    break;
                 case Token.KEYWORD:
                     if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_') {
                         token.stop++;
@@ -223,7 +243,7 @@ public class CTokenStream extends TokenStream {
                 case Token.OPERATOR:
                     if ((token.stop - token.start + 1) == 1) {
                         char ch0 = text.charAt(token.start);
-                        if (ch0 == '!' && (ch == '!' || ch == '=')) {
+                        if (ch0 == '!' && ch == '=') {
                             token.stop++;
                             break;
                         }
@@ -231,31 +251,27 @@ public class CTokenStream extends TokenStream {
                             token.stop++;
                             break;
                         }
-                        if (ch0 == '#' && (ch == '>' || ch == '#')) {
-                            token.stop++;
-                            break;
-                        }
                         if (ch0 == '&' && (ch == '&' || ch == '=')) {
                             token.stop++;
                             break;
                         }
-                        if (ch0 == '*' && (ch == '=' || ch == '.')) {
+                        if (ch0 == '*' && ch == '=') {
                             token.stop++;
                             break;
                         }
-                        if (ch0 == '+' && (ch == '+' || ch == '/' || ch == '<' || ch == '=' || ch == '>' || ch == '.')) {
+                        if (ch0 == '+' && (ch == '+' || ch == '=')) {
                             token.stop++;
                             break;
                         }
-                        if (ch0 == '-' && (ch == '-' || ch == '=' || ch == '.')) {
+                        if (ch0 == '-' && (ch == '-' || ch == '=')) {
                             token.stop++;
                             break;
                         }
-                        if (ch0 == '/' && (ch == '/' || ch == '=' || ch == '.')) {
+                        if (ch0 == '/' && ch == '=') {
                             token.stop++;
                             break;
                         }
-                        if (ch0 == '<' && (ch == '#' || ch == '<' || ch == '=' || ch == '>' || ch == '.')) {
+                        if (ch0 == '<' && (ch == '<' || ch == '=')) {
                             token.stop++;
                             break;
                         }
@@ -263,15 +279,11 @@ public class CTokenStream extends TokenStream {
                             token.stop++;
                             break;
                         }
-                        if (ch0 == '>' && (ch == '=' || ch == '>' || ch == '.')) {
+                        if (ch0 == '>' && (ch == '=' || ch == '>')) {
                             token.stop++;
                             break;
                         }
-                        if (ch0 == '?' && (ch == '?')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '^' && (ch == '^' || ch == '=' || ch == '@')) {
+                        if (ch0 == '^' && (ch == '^' || ch == '=')) {
                             token.stop++;
                             break;
                         }
@@ -279,11 +291,7 @@ public class CTokenStream extends TokenStream {
                             token.stop++;
                             break;
                         }
-                        if (ch0 == '~' && (ch == '~')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '@' && (ch == '@')) {
+                        if (ch0 == '%' && (ch == '=')) {
                             token.stop++;
                             break;
                         }
@@ -291,34 +299,13 @@ public class CTokenStream extends TokenStream {
                     else if ((token.stop - token.start + 1) == 2) {
                         char ch0 = text.charAt(token.start);
                         char ch1 = text.charAt(token.start + 1);
-                        if (ch0 == '+' && ch1 == '/' && ch == '/') {
+                        if (ch0 == '<' && ch1 == '<' && (ch == '=')) {
                             token.stop++;
                             break;
                         }
-                        if (ch0 == '+' && ch1 == '<' && ch == '/') {
+                        if (ch0 == '>' && ch1 == '>' && (ch == '=')) {
                             token.stop++;
                             break;
-                        }
-                        if (ch0 == '<' && ch1 == '=' && (ch == '>' || ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '>' && ch1 == '=' && (ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '<' && ch1 == '>' && (ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch0 == '=' && ch1 == '=' && (ch == '.')) {
-                            token.stop++;
-                            break;
-                        }
-                        if (ch == '=') {
-                            token.stop++;
-                            index++;
-                            column++;
                         }
                     }
                     return token;

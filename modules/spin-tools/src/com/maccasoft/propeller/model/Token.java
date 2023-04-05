@@ -18,13 +18,14 @@ public class Token {
     public static final int COMMENT = 1;
     public static final int BLOCK_COMMENT = 2;
     public static final int STRING = 3;
-    public static final int NUMBER = 4;
-    public static final int KEYWORD = 5;
-    public static final int OPERATOR = 6;
-    public static final int FUNCTION = 7;
-    public static final int DEBUG = 8;
-    public static final int NL = 9;
-    public static final int NEXT_LINE = 10;
+    public static final int CHAR = 4;
+    public static final int NUMBER = 5;
+    public static final int KEYWORD = 6;
+    public static final int OPERATOR = 7;
+    public static final int FUNCTION = 8;
+    public static final int DEBUG = 9;
+    public static final int NL = 10;
+    public static final int NEXT_LINE = 11;
     public static final int EOF = -1;
 
     public int type;

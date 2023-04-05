@@ -43,7 +43,6 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.model.VariableNode;
-import com.maccasoft.propeller.spin1.Spin1BytecodeCompiler;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Context;
 import com.maccasoft.propeller.spin1.Spin1ExpressionBuilder;
@@ -85,7 +84,7 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
     List<LongDataObject> methodData = new ArrayList<>();
 
     Spin1Compiler compiler;
-    Spin1BytecodeCompiler bytecodeCompiler;
+    Spin1CBytecodeCompiler bytecodeCompiler;
     Spin1PAsmCompiler pasmCompiler;
 
     public Spin1CObjectCompiler(Spin1Compiler compiler) {
@@ -107,12 +106,7 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
     public void compile(Node root) {
         objectVarSize = 0;
 
-        bytecodeCompiler = new Spin1BytecodeCompiler(false) {
-
-            @Override
-            protected boolean isAssign(String text) {
-                return "=".equals(text);
-            }
+        bytecodeCompiler = new Spin1CBytecodeCompiler() {
 
             @Override
             protected boolean isAddress(String text) {
@@ -464,7 +458,7 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
         }
     }
 
-    void compileVariable(Spin1BytecodeCompiler compiler, VariableNode node) {
+    void compileVariable(Spin1CBytecodeCompiler compiler, VariableNode node) {
         TokenIterator iter = node.iterator();
 
         Token token = iter.next();
@@ -1348,7 +1342,7 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
         return line;
     }
 
-    void compileCase(Spin1Method method, Spin1MethodLine line, Spin1StatementNode arg, Spin1MethodLine target, Spin1BytecodeCompiler compiler) {
+    void compileCase(Spin1Method method, Spin1MethodLine line, Spin1StatementNode arg, Spin1MethodLine target, Spin1CBytecodeCompiler compiler) {
         if (",".equals(arg.getText())) {
             for (Spin1StatementNode child : arg.getChilds()) {
                 compileCase(method, line, child, target, compiler);

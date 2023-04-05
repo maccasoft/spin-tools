@@ -54,7 +54,7 @@ public class Spin1CTreeBuilder {
         precedence.put(">=", 8);
         precedence.put(">", 8);
 
-        precedence.put("!", 7);
+        //precedence.put("!", 7);
 
         precedence.put("&&", 6);
 
@@ -82,9 +82,9 @@ public class Spin1CTreeBuilder {
         assignements.add("|=");
 
         assignements.add("*=");
-        assignements.add("**=");
-        assignements.add("/=");
-        assignements.add("//=");
+        //assignements.add("**=");
+        //assignements.add("/=");
+        assignements.add("%=");
 
         assignements.add("+=");
         assignements.add("-=");
@@ -107,27 +107,27 @@ public class Spin1CTreeBuilder {
     static {
         unary.add("+");
         unary.add("-");
-        unary.add("?");
+        //unary.add("?");
         unary.add("!");
-        unary.add("\\");
-        unary.add("~");
+        //unary.add("\\");
+        //unary.add("~");
         unary.add("++");
         unary.add("--");
-        unary.add("||");
-        unary.add("~~");
-        unary.add("|<");
-        unary.add(">|");
-        unary.add("^^");
+        //unary.add("||");
+        //unary.add("~~");
+        //unary.add("|<");
+        //unary.add(">|");
+        //unary.add("^^");
         //unary.add("@@");
     }
 
     static Set<String> postEffect = new HashSet<>();
     static {
-        postEffect.add("?");
-        postEffect.add("~");
+        //postEffect.add("?");
+        //postEffect.add("~");
         postEffect.add("++");
         postEffect.add("--");
-        postEffect.add("~~");
+        //postEffect.add("~~");
     }
 
     Spin1CContext scope;
@@ -315,7 +315,7 @@ public class Spin1CTreeBuilder {
                         return node;
                     }
                     for (;;) {
-                        Spin1StatementNode child = new Spin1StatementNode.Argument(parseLevel(parseAtom(), 0));
+                        Spin1StatementNode child = parseLevel(parseAtom(), 0);
                         if (node.getChildCount() == 1 && ":".equals(node.getChild(0).getText())) {
                             node.getChild(0).addChild(child);
                         }

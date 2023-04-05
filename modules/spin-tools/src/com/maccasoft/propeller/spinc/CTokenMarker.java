@@ -38,18 +38,31 @@ import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class CTokenMarker extends SourceTokenMarker {
 
+    static Map<String, TokenId> keywords = new CaseInsensitiveMap<>();
+    static {
+        keywords.put("void", TokenId.TYPE);
+        keywords.put("int", TokenId.TYPE);
+        keywords.put("float", TokenId.TYPE);
+        keywords.put("byte", TokenId.TYPE);
+        keywords.put("word", TokenId.TYPE);
+        keywords.put("long", TokenId.TYPE);
+
+        keywords.put("break", TokenId.KEYWORD);
+        keywords.put("case", TokenId.KEYWORD);
+        keywords.put("continue", TokenId.KEYWORD);
+        keywords.put("default", TokenId.KEYWORD);
+        keywords.put("do", TokenId.KEYWORD);
+        keywords.put("else", TokenId.KEYWORD);
+        keywords.put("for", TokenId.KEYWORD);
+        keywords.put("if", TokenId.KEYWORD);
+        keywords.put("return", TokenId.KEYWORD);
+        keywords.put("select", TokenId.KEYWORD);
+        keywords.put("until", TokenId.KEYWORD);
+        keywords.put("while", TokenId.KEYWORD);
+    }
+
     static Map<String, TokenId> spin1Keywords = new CaseInsensitiveMap<>();
     static {
-        spin1Keywords.put("CON", TokenId.SECTION);
-        spin1Keywords.put("VAR", TokenId.SECTION);
-        spin1Keywords.put("OBJ", TokenId.SECTION);
-        spin1Keywords.put("PUB", TokenId.SECTION);
-        spin1Keywords.put("PRI", TokenId.SECTION);
-        spin1Keywords.put("DAT", TokenId.SECTION);
-
-        spin1Keywords.put("BYTE", TokenId.TYPE);
-        spin1Keywords.put("WORD", TokenId.TYPE);
-        spin1Keywords.put("LONG", TokenId.TYPE);
         spin1Keywords.put("@BYTE", TokenId.TYPE);
         spin1Keywords.put("@WORD", TokenId.TYPE);
         spin1Keywords.put("@LONG", TokenId.TYPE);
@@ -59,67 +72,46 @@ public class CTokenMarker extends SourceTokenMarker {
         spin1Keywords.put("BYTEFIT", TokenId.TYPE);
         spin1Keywords.put("WORDFIT", TokenId.TYPE);
 
-        spin1Keywords.put("ABORT", TokenId.KEYWORD);
-        spin1Keywords.put("BYTEFILL", TokenId.FUNCTION);
-        spin1Keywords.put("BYTEMOVE", TokenId.FUNCTION);
-        spin1Keywords.put("CASE", TokenId.KEYWORD);
-        spin1Keywords.put("OTHER", TokenId.KEYWORD);
-        spin1Keywords.put("CHIPVER", TokenId.FUNCTION);
-        spin1Keywords.put("CLKFREQ", TokenId.FUNCTION);
-        spin1Keywords.put("_CLKFREQ", TokenId.CONSTANT);
-        spin1Keywords.put("CLKMODE", TokenId.FUNCTION);
-        spin1Keywords.put("_CLKMODE", TokenId.CONSTANT);
-        spin1Keywords.put("CLKSET", TokenId.FUNCTION);
-        spin1Keywords.put("COGID", TokenId.FUNCTION);
-        spin1Keywords.put("COGINIT", TokenId.FUNCTION);
-        spin1Keywords.put("COGNEW", TokenId.FUNCTION);
-        spin1Keywords.put("COGSTOP", TokenId.FUNCTION);
-        spin1Keywords.put("CONSTANT", TokenId.FUNCTION);
-        spin1Keywords.put("FLOAT", TokenId.FUNCTION);
-        spin1Keywords.put("FILE", TokenId.KEYWORD);
-        spin1Keywords.put("FLOAT", TokenId.FUNCTION);
-        spin1Keywords.put("IF", TokenId.KEYWORD);
-        spin1Keywords.put("IFNOT", TokenId.KEYWORD);
-        spin1Keywords.put("ELSEIF", TokenId.KEYWORD);
-        spin1Keywords.put("ELSEIFNOT", TokenId.KEYWORD);
-        spin1Keywords.put("ELSE", TokenId.KEYWORD);
-        spin1Keywords.put("LOCKCLR", TokenId.FUNCTION);
-        spin1Keywords.put("LOCKNEW", TokenId.FUNCTION);
-        spin1Keywords.put("LOCKRET", TokenId.FUNCTION);
-        spin1Keywords.put("LOCKSET", TokenId.FUNCTION);
-        spin1Keywords.put("LONGFILL", TokenId.FUNCTION);
-        spin1Keywords.put("LONGMOVE", TokenId.FUNCTION);
-        spin1Keywords.put("LOOKDOWN", TokenId.FUNCTION);
-        spin1Keywords.put("LOOKDOWNZ", TokenId.FUNCTION);
-        spin1Keywords.put("LOOKUP", TokenId.FUNCTION);
-        spin1Keywords.put("LOOKUPZ", TokenId.FUNCTION);
-        spin1Keywords.put("NEXT", TokenId.KEYWORD);
-        spin1Keywords.put("QUIT", TokenId.KEYWORD);
-        spin1Keywords.put("REBOOT", TokenId.KEYWORD);
-        spin1Keywords.put("REPEAT", TokenId.KEYWORD);
-        spin1Keywords.put("FROM", TokenId.KEYWORD);
-        spin1Keywords.put("TO", TokenId.KEYWORD);
-        spin1Keywords.put("STEP", TokenId.KEYWORD);
-        spin1Keywords.put("WHILE", TokenId.KEYWORD);
-        spin1Keywords.put("UNTIL", TokenId.KEYWORD);
-        spin1Keywords.put("RESULT", TokenId.METHOD_RETURN);
-        spin1Keywords.put("@RESULT", TokenId.METHOD_RETURN);
-        spin1Keywords.put("RETURN", TokenId.KEYWORD);
-        spin1Keywords.put("STRCOMP", TokenId.FUNCTION);
-        spin1Keywords.put("STRING", TokenId.FUNCTION);
-        spin1Keywords.put("STRSIZE", TokenId.FUNCTION);
-        spin1Keywords.put("TRUNC", TokenId.FUNCTION);
-        spin1Keywords.put("WAITCNT", TokenId.FUNCTION);
-        spin1Keywords.put("WAITPEQ", TokenId.FUNCTION);
-        spin1Keywords.put("WAITPNE", TokenId.FUNCTION);
-        spin1Keywords.put("WAITVID", TokenId.FUNCTION);
-        spin1Keywords.put("WORDFILL", TokenId.FUNCTION);
-        spin1Keywords.put("WORDMOVE", TokenId.FUNCTION);
-
-        spin1Keywords.put("NOT", TokenId.KEYWORD);
-        spin1Keywords.put("OR", TokenId.KEYWORD);
-        spin1Keywords.put("AND", TokenId.KEYWORD);
-        spin1Keywords.put("XOR", TokenId.KEYWORD);
+        spin1Keywords.put("abort", TokenId.KEYWORD);
+        spin1Keywords.put("bytefill", TokenId.FUNCTION);
+        spin1Keywords.put("bytemove", TokenId.FUNCTION);
+        spin1Keywords.put("chipver", TokenId.FUNCTION);
+        spin1Keywords.put("clkfreq", TokenId.FUNCTION);
+        spin1Keywords.put("_clkfreq", TokenId.CONSTANT);
+        spin1Keywords.put("clkmode", TokenId.FUNCTION);
+        spin1Keywords.put("_clkmode", TokenId.CONSTANT);
+        spin1Keywords.put("clkset", TokenId.FUNCTION);
+        spin1Keywords.put("cogid", TokenId.FUNCTION);
+        spin1Keywords.put("coginit", TokenId.FUNCTION);
+        spin1Keywords.put("cognew", TokenId.FUNCTION);
+        spin1Keywords.put("cogstop", TokenId.FUNCTION);
+        spin1Keywords.put("constant", TokenId.FUNCTION);
+        spin1Keywords.put("float", TokenId.FUNCTION);
+        spin1Keywords.put("file", TokenId.KEYWORD);
+        spin1Keywords.put("float", TokenId.FUNCTION);
+        spin1Keywords.put("lockclr", TokenId.FUNCTION);
+        spin1Keywords.put("locknew", TokenId.FUNCTION);
+        spin1Keywords.put("lockret", TokenId.FUNCTION);
+        spin1Keywords.put("lockset", TokenId.FUNCTION);
+        spin1Keywords.put("longfill", TokenId.FUNCTION);
+        spin1Keywords.put("longmove", TokenId.FUNCTION);
+        spin1Keywords.put("lookdown", TokenId.FUNCTION);
+        spin1Keywords.put("lookdownz", TokenId.FUNCTION);
+        spin1Keywords.put("lookup", TokenId.FUNCTION);
+        spin1Keywords.put("lookupz", TokenId.FUNCTION);
+        spin1Keywords.put("reboot", TokenId.KEYWORD);
+        spin1Keywords.put("result", TokenId.METHOD_RETURN);
+        spin1Keywords.put("@result", TokenId.METHOD_RETURN);
+        spin1Keywords.put("strcomp", TokenId.FUNCTION);
+        spin1Keywords.put("string", TokenId.FUNCTION);
+        spin1Keywords.put("strsize", TokenId.FUNCTION);
+        spin1Keywords.put("trunc", TokenId.FUNCTION);
+        spin1Keywords.put("waitcnt", TokenId.FUNCTION);
+        spin1Keywords.put("waitpeq", TokenId.FUNCTION);
+        spin1Keywords.put("waitpne", TokenId.FUNCTION);
+        spin1Keywords.put("waitvid", TokenId.FUNCTION);
+        spin1Keywords.put("wordfill", TokenId.FUNCTION);
+        spin1Keywords.put("wordmove", TokenId.FUNCTION);
 
         spin1Keywords.put("_CLKFREQ", TokenId.CONSTANT);
         spin1Keywords.put("_CLKMODE", TokenId.CONSTANT);
@@ -200,12 +192,6 @@ public class CTokenMarker extends SourceTokenMarker {
 
     static Map<String, TokenId> spin2Keywords = new CaseInsensitiveMap<>();
     static {
-        spin2Keywords.put("void", TokenId.TYPE);
-        spin2Keywords.put("int", TokenId.TYPE);
-        spin2Keywords.put("float", TokenId.TYPE);
-        spin2Keywords.put("byte", TokenId.TYPE);
-        spin2Keywords.put("word", TokenId.TYPE);
-        spin2Keywords.put("long", TokenId.TYPE);
         spin2Keywords.put("bytefit", TokenId.TYPE);
         spin2Keywords.put("wordfit", TokenId.TYPE);
 
@@ -288,18 +274,6 @@ public class CTokenMarker extends SourceTokenMarker {
         spin2Keywords.put("lookdownz", TokenId.FUNCTION);
 
         spin2Keywords.put("asm", TokenId.KEYWORD);
-        spin2Keywords.put("break", TokenId.KEYWORD);
-        spin2Keywords.put("case", TokenId.KEYWORD);
-        spin2Keywords.put("continue", TokenId.KEYWORD);
-        spin2Keywords.put("default", TokenId.KEYWORD);
-        spin2Keywords.put("do", TokenId.KEYWORD);
-        spin2Keywords.put("else", TokenId.KEYWORD);
-        spin2Keywords.put("for", TokenId.KEYWORD);
-        spin2Keywords.put("if", TokenId.KEYWORD);
-        spin2Keywords.put("return", TokenId.KEYWORD);
-        spin2Keywords.put("select", TokenId.KEYWORD);
-        spin2Keywords.put("until", TokenId.KEYWORD);
-        spin2Keywords.put("while", TokenId.KEYWORD);
 
         spin2Keywords.put("abs", TokenId.KEYWORD);
         spin2Keywords.put("encod", TokenId.KEYWORD);
@@ -1062,7 +1036,7 @@ public class CTokenMarker extends SourceTokenMarker {
 
             while (i < list.size()) {
                 Token token = list.get(i++);
-                if (token.type == Token.NUMBER) {
+                if (token.type == Token.NUMBER || token.type == Token.CHAR) {
                     tokens.add(new TokenMarker(token, TokenId.NUMBER));
                 }
                 else if (token.type == Token.OPERATOR) {
@@ -1088,7 +1062,10 @@ public class CTokenMarker extends SourceTokenMarker {
                 }
                 else {
                     int dot = token.getText().indexOf('.');
-                    TokenId id = spin1Keywords.get(token.getText().toUpperCase());
+                    TokenId id = keywords.get(token.getText().toUpperCase());
+                    if (id == null) {
+                        id = spin1Keywords.get(token.getText().toUpperCase());
+                    }
                     if (id == null) {
                         id = spin1MethodKeywords.get(token.getText().toUpperCase());
                     }
@@ -1272,9 +1249,15 @@ public class CTokenMarker extends SourceTokenMarker {
                 }
                 else {
                     int dot = token.getText().indexOf('.');
-                    TokenId id = debug ? debugKeywords.get(token.getText().toUpperCase()) : spin2Keywords.get(token.getText().toUpperCase());
+                    TokenId id = keywords.get(token.getText().toUpperCase());
+                    if (id == null) {
+                        id = spin2Keywords.get(token.getText().toUpperCase());
+                    }
                     if (id == null) {
                         id = spin2MethodKeywords.get(token.getText().toUpperCase());
+                    }
+                    if (id == null && debug) {
+                        id = debugKeywords.get(token.getText().toUpperCase());
                     }
                     if (id == null) {
                         id = locals.get(token.getText());

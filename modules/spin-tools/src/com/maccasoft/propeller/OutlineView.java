@@ -104,7 +104,7 @@ public class OutlineView {
                         new DefinitionNode(defines, directive.getIdentifier(), directive.getIdentifier().getText());
                     }
                 }
-                else {
+                else if (!(node instanceof DirectiveNode)) {
                     list.add(node);
                     if (node instanceof VariableNode) {
                         list.addAll(node.getChilds());

@@ -45,7 +45,6 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.model.VariableNode;
-import com.maccasoft.propeller.spin2.Spin2BytecodeCompiler;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2Debug;
@@ -99,7 +98,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
     List<LongDataObject> methodData = new ArrayList<>();
 
     Spin2Compiler compiler;
-    Spin2BytecodeCompiler spinCompiler;
+    Spin2CBytecodeCompiler spinCompiler;
     Spin2PasmCompiler pasmCompiler;
 
     public Spin2CObjectCompiler(Spin2Compiler compiler, List<Object> debugStatements) {
@@ -124,12 +123,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
     public void compile(Node root) {
         objectVarSize = 4;
 
-        spinCompiler = new Spin2BytecodeCompiler(debugStatements) {
-
-            @Override
-            protected boolean isAssign(String text) {
-                return "=".equals(text);
-            }
+        spinCompiler = new Spin2CBytecodeCompiler(debugStatements) {
 
             @Override
             protected boolean isAddress(String text) {
@@ -494,7 +488,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         }
     }
 
-    void compileVariable(Spin2BytecodeCompiler compiler, VariableNode node) {
+    void compileVariable(Spin2CBytecodeCompiler compiler, VariableNode node) {
         TokenIterator iter = node.iterator();
 
         Token token = iter.next();
@@ -1442,7 +1436,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         return line;
     }
 
-    void compileCase(Spin2Method method, Spin2MethodLine line, Spin2StatementNode arg, Spin2MethodLine target, Spin2BytecodeCompiler compiler) {
+    void compileCase(Spin2Method method, Spin2MethodLine line, Spin2StatementNode arg, Spin2MethodLine target, Spin2CBytecodeCompiler compiler) {
         if (",".equals(arg.getText())) {
             for (Spin2StatementNode child : arg.getChilds()) {
                 compileCase(method, line, child, target, compiler);
