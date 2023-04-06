@@ -500,6 +500,9 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         else if ("byte".equals(token.getText())) {
             type = "BYTE";
         }
+        else if ("float".equals(token.getText())) {
+            type = "FLOAT";
+        }
         else if (!"int".equals(token.getText()) && !"long".equals(token.getText())) {
             type = token.getText();
 
@@ -709,7 +712,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         method.setData(node);
 
         if (!"void".equals(type.getText())) {
-            method.addReturnVariable("__default_return__");
+            method.addReturnVariable("float".equals(type.getText()) ? "FLOAT" : "LONG", "__default_return__");
         }
 
         token = iter.next();
@@ -722,8 +725,13 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             if (")".equals(token.getText())) {
                 break;
             }
-            if (!"int".equals(token.getText()) && !"long".equals(token.getText())) {
-                throw new CompilerException("parameters must be int or long", token);
+
+            String paramType = token.getText();
+            if ("int".equals(token.getText())) {
+                paramType = "LONG";
+            }
+            else if (!"long".equals(token.getText()) && !"float".equals(token.getText())) {
+                throw new CompilerException("parameters must be int, long or float", token);
             }
 
             token = iter.next();
@@ -732,7 +740,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             }
             Token identifier = token;
 
-            LocalVariable var = method.addParameter(identifier.getText(), new NumberLiteral(1));
+            LocalVariable var = method.addParameter(paramType.toUpperCase(), identifier.getText(), new NumberLiteral(1));
             var.setData(identifier);
 
             if (!iter.hasNext()) {
@@ -843,6 +851,9 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             }
             else if ("byte".equals(token.getText())) {
                 typeText = "BYTE";
+            }
+            else if ("float".equals(token.getText())) {
+                typeText = "FLOAT";
             }
             else if (!"int".equals(token.getText()) && !"long".equals(token.getText())) {
                 throw new CompilerException("unsupported type", token);

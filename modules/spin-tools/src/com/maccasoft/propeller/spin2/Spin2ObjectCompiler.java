@@ -988,7 +988,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     if (expression != null) {
                         logMessage(new CompilerException(CompilerException.WARNING, "parameter '" + identifier + "' hides global variable", child));
                     }
-                    LocalVariable var = method.addParameter(identifier, new NumberLiteral(1));
+                    LocalVariable var = method.addParameter("LONG", identifier, new NumberLiteral(1));
                     var.setData(child.getIdentifier());
                 }
             }
@@ -1034,7 +1034,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     if (expression != null) {
                         logMessage(new CompilerException(CompilerException.WARNING, "return variable '" + identifier + "' hides global variable", child));
                     }
-                    LocalVariable var = method.addReturnVariable(identifier);
+                    LocalVariable var = method.addReturnVariable("LONG", identifier);
                     var.setData(child.getIdentifier());
                 }
             }

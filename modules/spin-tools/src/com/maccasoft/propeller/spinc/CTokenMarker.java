@@ -1004,6 +1004,14 @@ public class CTokenMarker extends SourceTokenMarker {
         String lastLabel = "";
 
         @Override
+        public void visitVariable(VariableNode node) {
+            markTokens(node, 0, "");
+            for (Node child : node.getChilds()) {
+                markTokens(child, 0, "");
+            }
+        }
+
+        @Override
         public boolean visitFunction(FunctionNode node) {
             locals.clear();
 

@@ -59,16 +59,16 @@ public class VariableOp extends Spin2Bytecode {
         this.hasIndex = hasIndex;
         this.index = index;
 
-        if ("LONG".equalsIgnoreCase(variable.getType())) {
-            this.ss = Size.Long;
-            this.index = index * 4;
+        if ("BYTE".equalsIgnoreCase(variable.getType())) {
+            this.ss = Size.Byte;
         }
         else if ("WORD".equalsIgnoreCase(variable.getType())) {
             this.ss = Size.Word;
             this.index = index * 2;
         }
         else {
-            this.ss = Size.Byte;
+            this.ss = Size.Long;
+            this.index = index * 4;
         }
     }
 

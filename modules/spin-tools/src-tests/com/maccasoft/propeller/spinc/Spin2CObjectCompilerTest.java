@@ -1345,6 +1345,321 @@ class Spin2CObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testFloatAssignment() throws Exception {
+        String text = ""
+            + "float a = 1.0, b;\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "    float c = 3.0, d;\n"
+            + "\n"
+            + "    b = 2.0;\n"
+            + "    d = 4.0;\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 12)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       24 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00008 00008       02             (stack size)\n"
+            + "00009 00009       49 00 00 80 3F CONSTANT (1.0)\n"
+            + "0000E 0000E       C1 81          VAR_WRITE FLOAT VBASE+$00001 (short)\n"
+            + "'     float c = 3.0, d;\n"
+            + "00010 00010       49 00 00 40 40 CONSTANT (3.0)\n"
+            + "00015 00015       F0             VAR_WRITE FLOAT DBASE+$00000 (short)\n"
+            + "'     b = 2.0;\n"
+            + "00016 00016       49 00 00 00 40 CONSTANT (2.0)\n"
+            + "0001B 0001B       C2 81          VAR_WRITE FLOAT VBASE+$00002 (short)\n"
+            + "'     d = 4.0;\n"
+            + "0001D 0001D       49 00 00 80 40 CONSTANT (4.0)\n"
+            + "00022 00022       F1             VAR_WRITE FLOAT DBASE+$00001 (short)\n"
+            + "' }\n"
+            + "00023 00023       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testFloatExpression() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    float a = 3.0, b;\n"
+            + "\n"
+            + "    b = (a + 1.0) * 2.0;\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       20 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     float a = 3.0, b;\n"
+            + "00009 00009       49 00 00 40 40 CONSTANT (3.0)\n"
+            + "0000E 0000E       F0             VAR_WRITE FLOAT DBASE+$00000 (short)\n"
+            + "'     b = (a + 1.0) * 2.0;\n"
+            + "0000F 0000F       E0             VAR_READ FLOAT DBASE+$00000 (short)\n"
+            + "00010 00010       49 00 00 80 3F CONSTANT (1.0)\n"
+            + "00015 00015       19 9A          FLOAT_ADD\n"
+            + "00017 00017       49 00 00 00 40 CONSTANT (2.0)\n"
+            + "0001C 0001C       19 9E          FLOAT_MULTIPLY\n"
+            + "0001E 0001E       F1             VAR_WRITE FLOAT DBASE+$00001 (short)\n"
+            + "' }\n"
+            + "0001F 0001F       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testFloatPromotedConstants() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    float a = 3, b;\n"
+            + "\n"
+            + "    b = (a + 1) * 2;\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       20 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     float a = 3, b;\n"
+            + "00009 00009       49 00 00 40 40 CONSTANT (3.0)\n"
+            + "0000E 0000E       F0             VAR_WRITE FLOAT DBASE+$00000 (short)\n"
+            + "'     b = (a + 1) * 2;\n"
+            + "0000F 0000F       E0             VAR_READ FLOAT DBASE+$00000 (short)\n"
+            + "00010 00010       49 00 00 80 3F CONSTANT (1.0)\n"
+            + "00015 00015       19 9A          FLOAT_ADD\n"
+            + "00017 00017       49 00 00 00 40 CONSTANT (2.0)\n"
+            + "0001C 0001C       19 9E          FLOAT_MULTIPLY\n"
+            + "0001E 0001E       F1             VAR_WRITE FLOAT DBASE+$00001 (short)\n"
+            + "' }\n"
+            + "0001F 0001F       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testFloatPromotedExpression() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    int a = 3;\n"
+            + "    float b;\n"
+            + "\n"
+            + "    b = (a + 1) * 2;\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       14 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     int a = 3;\n"
+            + "00009 00009       A4             CONSTANT (3)\n"
+            + "0000A 0000A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     b = (a + 1) * 2;\n"
+            + "0000B 0000B       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000C 0000C       A2             CONSTANT (1)\n"
+            + "0000D 0000D       8A             ADD\n"
+            + "0000E 0000E       A3             CONSTANT (2)\n"
+            + "0000F 0000F       96             MULTIPLY\n"
+            + "00010 00010       19 B2          FLOAT\n"
+            + "00012 00012       F1             VAR_WRITE FLOAT DBASE+$00001 (short)\n"
+            + "' }\n"
+            + "00013 00013       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testFloatToIntegerExpression() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    float a = 3;\n"
+            + "    int b;\n"
+            + "\n"
+            + "    b = (a + 1) * 2;\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       22 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     float a = 3;\n"
+            + "00009 00009       49 00 00 40 40 CONSTANT (3.0)\n"
+            + "0000E 0000E       F0             VAR_WRITE FLOAT DBASE+$00000 (short)\n"
+            + "'     b = (a + 1) * 2;\n"
+            + "0000F 0000F       E0             VAR_READ FLOAT DBASE+$00000 (short)\n"
+            + "00010 00010       49 00 00 80 3F CONSTANT (1.0)\n"
+            + "00015 00015       19 9A          FLOAT_ADD\n"
+            + "00017 00017       49 00 00 00 40 CONSTANT (2.0)\n"
+            + "0001C 0001C       19 9E          FLOAT_MULTIPLY\n"
+            + "0001E 0001E       19 AE          ROUND\n"
+            + "00020 00020       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "' }\n"
+            + "00021 00021       04             RETURN\n"
+            + "00022 00022       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMixedExpression() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    int a = 3, b;\n"
+            + "    float c, d;\n"
+            + "\n"
+            + "    c = (a + d) * b;\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       18 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00008 00008       04             (stack size)\n"
+            + "'     int a = 3, b;\n"
+            + "00009 00009       A4             CONSTANT (3)\n"
+            + "0000A 0000A       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     c = (a + d) * b;\n"
+            + "0000B 0000B       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000C 0000C       19 B2          FLOAT\n"
+            + "0000E 0000E       E3             VAR_READ FLOAT DBASE+$00003 (short)\n"
+            + "0000F 0000F       19 9A          FLOAT_ADD\n"
+            + "00011 00011       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00012 00012       19 B2          FLOAT\n"
+            + "00014 00014       19 9E          FLOAT_MULTIPLY\n"
+            + "00016 00016       F2             VAR_WRITE FLOAT DBASE+$00002 (short)\n"
+            + "' }\n"
+            + "00017 00017       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testFloatFunctionArguments() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    setup(1, 2.0);\n"
+            + "}\n"
+            + "\n"
+            + "void setup(int a, float b)\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       17 00 00 82    Method setup @ $00017 (2 parameters, 0 returns)\n"
+            + "00008 00008       19 00 00 00    End\n"
+            + "' void main() {\n"
+            + "0000C 0000C       00             (stack size)\n"
+            + "'     setup(1, 2.0);\n"
+            + "0000D 0000D       00             ANCHOR\n"
+            + "0000E 0000E       A2             CONSTANT (1)\n"
+            + "0000F 0000F       49 00 00 00 40 CONSTANT (2.0)\n"
+            + "00014 00014       0A 01          CALL_SUB (1)\n"
+            + "' }\n"
+            + "00016 00016       04             RETURN\n"
+            + "' void setup(int a, float b) {\n"
+            + "00017 00017       00             (stack size)\n"
+            + "' }\n"
+            + "00018 00018       04             RETURN\n"
+            + "00019 00019       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testPromoteFloatFunctionArguments() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    int a, b;\n"
+            + "\n"
+            + "    setup(a, b);\n"
+            + "}\n"
+            + "\n"
+            + "void setup(int a, float b)\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       15 00 00 82    Method setup @ $00015 (2 parameters, 0 returns)\n"
+            + "00008 00008       17 00 00 00    End\n"
+            + "' void main() {\n"
+            + "0000C 0000C       02             (stack size)\n"
+            + "'     setup(a, b);\n"
+            + "0000D 0000D       00             ANCHOR\n"
+            + "0000E 0000E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000F 0000F       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00010 00010       19 B2          FLOAT\n"
+            + "00012 00012       0A 01          CALL_SUB (1)\n"
+            + "' }\n"
+            + "00014 00014       04             RETURN\n"
+            + "' void setup(int a, float b) {\n"
+            + "00015 00015       00             (stack size)\n"
+            + "' }\n"
+            + "00016 00016       04             RETURN\n"
+            + "00017 00017       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testRoundFloatFunctionArguments() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    float a, b;\n"
+            + "\n"
+            + "    setup(a, b);\n"
+            + "}\n"
+            + "\n"
+            + "void setup(int a, float b)\n"
+            + "{\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       15 00 00 82    Method setup @ $00015 (2 parameters, 0 returns)\n"
+            + "00008 00008       17 00 00 00    End\n"
+            + "' void main() {\n"
+            + "0000C 0000C       02             (stack size)\n"
+            + "'     setup(a, b);\n"
+            + "0000D 0000D       00             ANCHOR\n"
+            + "0000E 0000E       E0             VAR_READ FLOAT DBASE+$00000 (short)\n"
+            + "0000F 0000F       19 AE          ROUND\n"
+            + "00011 00011       E1             VAR_READ FLOAT DBASE+$00001 (short)\n"
+            + "00012 00012       0A 01          CALL_SUB (1)\n"
+            + "' }\n"
+            + "00014 00014       04             RETURN\n"
+            + "' void setup(int a, float b) {\n"
+            + "00015 00015       00             (stack size)\n"
+            + "' }\n"
+            + "00016 00016       04             RETURN\n"
+            + "00017 00017       00             Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

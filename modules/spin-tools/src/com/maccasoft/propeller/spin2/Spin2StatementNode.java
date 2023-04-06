@@ -48,6 +48,10 @@ public class Spin2StatementNode {
 
     public static class Method extends Spin2StatementNode {
 
+        public Method(Token token) {
+            super(token);
+        }
+
         public Method(Spin2StatementNode node) {
             super(node.token);
             this.token.type = Token.FUNCTION;

@@ -268,41 +268,44 @@ public abstract class Spin2CBytecodeCompiler {
         //operators.put("SCA", new Descriptor(0x9B, "SCA"));
         //operators.put("SCAS", new Descriptor(0x9C, "SCAS"));
         //operators.put("FRAC", new Descriptor(0x9D, "FRAC"));
+    };
 
-        //operations.put("-.", new Descriptor(new byte[] {
+    static Map<String, Descriptor> floatOperators = new HashMap<String, Descriptor>();
+    static {
+        //floatOperators.put("-.", new Descriptor(new byte[] {
         //    0x19, (byte) 0x94
         //}, "FLOAT_NEG"));
 
-        //operators.put("+.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0x9A
-        //}, "FLOAT_ADD"));
-        //operators.put("-.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0x9C
-        //}, "FLOAT_SUBTRACT"));
-        //operators.put("*.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0x9E
-        //}, "FLOAT_MULTIPLY"));
-        //operators.put("/.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0xA0
-        //}, "FLOAT_DIVIDE"));
-        //operators.put("<.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0xA2
-        //}, "FLOAT_LESS_THAN"));
-        //operators.put(">.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0xA4
-        //}, "FLOAT_GREATER_THAN"));
-        //operators.put("<>.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0xA6
-        //}, "FLOAT_NOT_EQUAL"));
-        //operators.put("==.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0xA8
-        //}, "FLOAT_EQUAL"));
-        //operators.put("<=.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0xAA
-        //}, "FLOAT_LESS_THAN_OR_EQUAL"));
-        //operators.put(">=.", new Descriptor(new byte[] {
-        //    0x19, (byte) 0xAC
-        //}, "FLOAT_GREATER_THAN_OR_EQUAL"));
+        floatOperators.put("+", new Descriptor(new byte[] {
+            0x19, (byte) 0x9A
+        }, "FLOAT_ADD"));
+        floatOperators.put("-", new Descriptor(new byte[] {
+            0x19, (byte) 0x9C
+        }, "FLOAT_SUBTRACT"));
+        floatOperators.put("*", new Descriptor(new byte[] {
+            0x19, (byte) 0x9E
+        }, "FLOAT_MULTIPLY"));
+        floatOperators.put("/", new Descriptor(new byte[] {
+            0x19, (byte) 0xA0
+        }, "FLOAT_DIVIDE"));
+        floatOperators.put("<", new Descriptor(new byte[] {
+            0x19, (byte) 0xA2
+        }, "FLOAT_LESS_THAN"));
+        floatOperators.put(">", new Descriptor(new byte[] {
+            0x19, (byte) 0xA4
+        }, "FLOAT_GREATER_THAN"));
+        floatOperators.put("!=", new Descriptor(new byte[] {
+            0x19, (byte) 0xA6
+        }, "FLOAT_NOT_EQUAL"));
+        floatOperators.put("==", new Descriptor(new byte[] {
+            0x19, (byte) 0xA8
+        }, "FLOAT_EQUAL"));
+        floatOperators.put("<=", new Descriptor(new byte[] {
+            0x19, (byte) 0xAA
+        }, "FLOAT_LESS_THAN_OR_EQUAL"));
+        floatOperators.put(">=", new Descriptor(new byte[] {
+            0x19, (byte) 0xAC
+        }, "FLOAT_GREATER_THAN_OR_EQUAL"));
 
     }
 
@@ -641,7 +644,23 @@ public abstract class Spin2CBytecodeCompiler {
                 if (node.getChildCount() != 2) {
                     throw new RuntimeException("expression syntax error");
                 }
-                source.addAll(compileConstantExpression(context, method, node.getChild(1)));
+                boolean leftIsFloat = isFloat(context, node.getChild(0));
+                boolean rightIsFloat = isFloat(context, node.getChild(1));
+
+                if (leftIsFloat && !rightIsFloat) {
+                    Spin2StatementNode exp = new Spin2StatementNode.Method(new Token(Token.FUNCTION, "float"));
+                    exp.getChilds().add(node.getChild(1));
+                    source.addAll(compileConstantExpression(context, method, exp));
+                }
+                else if (!leftIsFloat && rightIsFloat) {
+                    logMessage(new CompilerException(CompilerException.WARNING, "float to integer conversion", node.getChild(0).getToken()));
+                    Spin2StatementNode exp = new Spin2StatementNode.Method(new Token(Token.FUNCTION, "round"));
+                    exp.getChilds().add(node.getChild(1));
+                    source.addAll(compileConstantExpression(context, method, exp));
+                }
+                else {
+                    source.addAll(compileConstantExpression(context, method, node.getChild(1)));
+                }
                 source.addAll(leftAssign(context, method, node.getChild(0), push, push));
             }
             else if (MathOp.isAssignMathOp(node.getText()) && node.getChildCount() == 1) {
@@ -652,8 +671,25 @@ public abstract class Spin2CBytecodeCompiler {
                 if (node.getChildCount() != 2) {
                     throw new CompilerException("expression syntax error", node.getToken());
                 }
+                boolean leftIsFloat = isFloat(context, node.getChild(0));
+                boolean rightIsFloat = isFloat(context, node.getChild(1));
+
                 Descriptor desc = assignOperators.get(node.getText());
-                source.addAll(compileConstantExpression(context, method, node.getChild(1)));
+
+                if (leftIsFloat && !rightIsFloat) {
+                    Spin2StatementNode exp = new Spin2StatementNode.Method(new Token(Token.FUNCTION, "float"));
+                    exp.getChilds().add(node.getChild(1));
+                    source.addAll(compileConstantExpression(context, method, exp));
+                }
+                else if (!leftIsFloat && rightIsFloat) {
+                    logMessage(new CompilerException(CompilerException.WARNING, "float to integer conversion", node.getChild(0).getToken()));
+                    Spin2StatementNode exp = new Spin2StatementNode.Method(new Token(Token.FUNCTION, "round"));
+                    exp.getChilds().add(node.getChild(1));
+                    source.addAll(compileConstantExpression(context, method, exp));
+                }
+                else {
+                    source.addAll(compileConstantExpression(context, method, node.getChild(1)));
+                }
                 source.addAll(leftAssign(context, method, node.getChild(0), true, false));
                 source.add(new Bytecode(context, push ? desc.push_value : desc.value, desc.text + (push ? " (push)" : "")));
             }
@@ -669,9 +705,31 @@ public abstract class Spin2CBytecodeCompiler {
                 if (node.getChildCount() != 2) {
                     throw new CompilerException("expression syntax error", node.getToken());
                 }
-                Descriptor desc = operators.get(node.getText());
-                source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
-                source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
+                boolean leftIsFloat = isFloat(context, node.getChild(0));
+                boolean rightIsFloat = isFloat(context, node.getChild(1));
+                Descriptor desc = (leftIsFloat || rightIsFloat) ? floatOperators.get(node.getText()) : operators.get(node.getText());
+                if (desc == null) {
+                    throw new CompilerException("invalid operator", node.getToken());
+                }
+
+                if (!leftIsFloat && rightIsFloat) {
+                    Spin2StatementNode exp = new Spin2StatementNode.Method(new Token(Token.FUNCTION, "float"));
+                    exp.getChilds().add(node.getChild(0));
+                    source.addAll(compileBytecodeExpression(context, method, exp, true));
+                }
+                else {
+                    source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
+                }
+
+                if (leftIsFloat && !rightIsFloat) {
+                    Spin2StatementNode exp = new Spin2StatementNode.Method(new Token(Token.FUNCTION, "float"));
+                    exp.getChilds().add(node.getChild(1));
+                    source.addAll(compileConstantExpression(context, method, exp));
+                }
+                else {
+                    source.addAll(compileConstantExpression(context, method, node.getChild(1)));
+                }
+
                 source.add(new Bytecode(context, push ? desc.push_value : desc.value, desc.text));
             }
             else if ("?".equals(node.getText())) {
@@ -1887,9 +1945,33 @@ public abstract class Spin2CBytecodeCompiler {
             if (push && !trap && methodExpression.getReturnsCount() == 0) {
                 throw new RuntimeException("method doesn't return any value");
             }
-            for (int i = 0; i < node.getChildCount(); i++) {
-                source.addAll(compileConstantExpression(context, method, node.getChild(i)));
+
+            if (methodExpression.getArgumentsCount() != 0) {
+                Spin2Method targetMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
+
+                int p = 0;
+                for (int i = 0; i < node.getChildCount(); i++) {
+                    LocalVariable parameter = targetMethod.getParameters().get(p++);
+                    boolean leftIsFloat = "FLOAT".equals(parameter.getType());
+                    boolean rightIsFloat = isFloat(context, node.getChild(i));
+
+                    if (leftIsFloat && !rightIsFloat) {
+                        Spin2StatementNode exp = new Spin2StatementNode.Method(new Token(Token.FUNCTION, "float"));
+                        exp.getChilds().add(node.getChild(i));
+                        source.addAll(compileConstantExpression(context, method, exp));
+                    }
+                    else if (!leftIsFloat && rightIsFloat) {
+                        logMessage(new CompilerException(CompilerException.WARNING, "float to integer conversion", node.getChild(i).getToken()));
+                        Spin2StatementNode exp = new Spin2StatementNode.Method(new Token(Token.FUNCTION, "round"));
+                        exp.getChilds().add(node.getChild(i));
+                        source.addAll(compileConstantExpression(context, method, exp));
+                    }
+                    else {
+                        source.addAll(compileConstantExpression(context, method, node.getChild(i)));
+                    }
+                }
             }
+
             source.add(new CallSub(context, methodExpression));
             Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
             calledMethod.setCalledBy(method);
@@ -1903,7 +1985,7 @@ public abstract class Spin2CBytecodeCompiler {
                 }
             }
             while (i < node.getChildCount()) {
-                if (!(node.getChild(i) instanceof Spin2StatementNode.Argument)) {
+                if (node.getChild(i) instanceof Spin2StatementNode.Index) {
                     throw new CompilerException("syntax error", node.getChild(i));
                 }
                 source.addAll(compileConstantExpression(context, method, node.getChild(i++)));
@@ -2250,6 +2332,41 @@ public abstract class Spin2CBytecodeCompiler {
         else {
             throw new CompilerException("unhandled post effect " + node.getText(), node.getToken());
         }
+    }
+
+    boolean isFloat(Spin2Context context, Spin2StatementNode node) {
+        boolean result = false;
+
+        if (node.getType() == Token.NUMBER) {
+            Expression expression = new NumberLiteral(node.getText());
+            if (expression.isNumber() && (expression.getNumber() instanceof Double)) {
+                return true;
+            }
+        }
+
+        Expression expression = context.getLocalSymbol(node.getText());
+        if (expression != null) {
+            if (expression.isNumber() && (expression.getNumber() instanceof Double)) {
+                return true;
+            }
+            if (expression instanceof Variable) {
+                if ("FLOAT".equals(((Variable) expression).getType())) {
+                    return true;
+                }
+            }
+            if (expression instanceof Method) {
+                Spin2Method method = (Spin2Method) expression.getData(Spin2Method.class.getName());
+                if (method.getReturnsCount() != 0 && "FLOAT".equals(method.getReturns().get(0).getType())) {
+                    return true;
+                }
+            }
+        }
+
+        for (Spin2StatementNode child : node.getChilds()) {
+            result |= isFloat(context, child);
+        }
+
+        return result;
     }
 
     protected abstract void logMessage(CompilerException message);
