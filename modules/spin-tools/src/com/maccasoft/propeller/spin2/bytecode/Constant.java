@@ -138,7 +138,7 @@ public class Constant extends Spin2Bytecode {
         if (expression.getNumber() instanceof Double) {
             int value = Float.floatToIntBits(expression.getNumber().floatValue());
             return new byte[] {
-                0x49, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
+                0x48, (byte) value, (byte) (value >> 8), (byte) (value >> 16), (byte) (value >> 24)
             };
         }
 
