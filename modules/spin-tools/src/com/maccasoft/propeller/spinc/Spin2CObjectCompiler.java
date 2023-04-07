@@ -685,10 +685,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
     }
 
     Set<String> types = new HashSet<>(Arrays.asList(new String[] {
-        "void", "int", "byte", "word", "short", "long", "float"
-    }));
-    Set<String> blocks = new HashSet<>(Arrays.asList(new String[] {
-        "if", "else", "do", "while", "until", "select", "case"
+        "void", "int", "byte", "word", "float"
     }));
 
     void compileFunction(FunctionNode node) {
@@ -712,6 +709,9 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         method.setData(node);
 
         if (!"void".equals(type.getText())) {
+            if (!"int".equals(type.getText()) && !"float".equals(type.getText())) {
+                throw new CompilerException("unsupported return type", type);
+            }
             method.addReturnVariable("float".equals(type.getText()) ? "FLOAT" : "LONG", "__default_return__");
         }
 
@@ -730,8 +730,8 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             if ("int".equals(token.getText())) {
                 paramType = "LONG";
             }
-            else if (!"long".equals(token.getText()) && !"float".equals(token.getText())) {
-                throw new CompilerException("parameters must be int, long or float", token);
+            else if (!"float".equals(token.getText())) {
+                throw new CompilerException("unsupported parameter type", token);
             }
 
             token = iter.next();

@@ -29,11 +29,14 @@ import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.Frac;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
 import com.maccasoft.propeller.expressions.GreaterThan;
 import com.maccasoft.propeller.expressions.IfElse;
 import com.maccasoft.propeller.expressions.LessOrEquals;
 import com.maccasoft.propeller.expressions.LessThan;
+import com.maccasoft.propeller.expressions.LimitMax;
+import com.maccasoft.propeller.expressions.LimitMin;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.LogicalAnd;
 import com.maccasoft.propeller.expressions.LogicalOr;
@@ -49,7 +52,12 @@ import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Register;
+import com.maccasoft.propeller.expressions.Rev;
+import com.maccasoft.propeller.expressions.Rol;
+import com.maccasoft.propeller.expressions.Ror;
 import com.maccasoft.propeller.expressions.Round;
+import com.maccasoft.propeller.expressions.Sca;
+import com.maccasoft.propeller.expressions.Scas;
 import com.maccasoft.propeller.expressions.ShiftLeft;
 import com.maccasoft.propeller.expressions.ShiftRight;
 import com.maccasoft.propeller.expressions.SpinObject;
@@ -182,6 +190,27 @@ public abstract class Spin2CBytecodeCompiler {
         descriptors.put("akpin", new FunctionDescriptor(0x40, -1, 1, 0));
         descriptors.put("rdpin", new FunctionDescriptor(0x41, -1, 1, 1));
         descriptors.put("rqpin", new FunctionDescriptor(0x42, -1, 1, 1));
+
+        descriptors.put("encod", new FunctionDescriptor(0x7B, -1, 1, 1));
+        descriptors.put("decod", new FunctionDescriptor(0x7C, -1, 1, 1));
+        descriptors.put("bmask", new FunctionDescriptor(0x7D, -1, 1, 1));
+        descriptors.put("ones", new FunctionDescriptor(0x7E, -1, 1, 1));
+        descriptors.put("qlog", new FunctionDescriptor(0x80, -1, 1, 1));
+        descriptors.put("qexp", new FunctionDescriptor(0x81, -1, 1, 1));
+
+        descriptors.put("sar", new FunctionDescriptor(0x84, -1, 2, 1));
+        descriptors.put("ror", new FunctionDescriptor(0x85, -1, 2, 1));
+        descriptors.put("rol", new FunctionDescriptor(0x86, -1, 2, 1));
+        descriptors.put("rev", new FunctionDescriptor(0x87, -1, 2, 1));
+        descriptors.put("zerox", new FunctionDescriptor(0x88, -1, 2, 1));
+        descriptors.put("signx", new FunctionDescriptor(0x89, -1, 2, 1));
+        descriptors.put("min", new FunctionDescriptor(0x92, -1, 2, 1));
+        descriptors.put("max", new FunctionDescriptor(0x93, -1, 2, 1));
+        descriptors.put("addbits", new FunctionDescriptor(0x94, -1, 2, 1));
+        descriptors.put("addpins", new FunctionDescriptor(0x95, -1, 2, 1));
+        descriptors.put("sca", new FunctionDescriptor(0x9B, -1, 2, 1));
+        descriptors.put("scas", new FunctionDescriptor(0x9C, -1, 2, 1));
+        descriptors.put("frac", new FunctionDescriptor(0x9D, -1, 2, 1));
     }
 
     static class Descriptor {
@@ -1573,11 +1602,6 @@ public abstract class Spin2CBytecodeCompiler {
                 }
                 return new Subtract(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
-            case "ADDBITS":
-                return new Addbits(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
-            case "ADDPINS":
-                return new Addpins(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
-
             case "&&":
                 return new LogicalAnd(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "||":
@@ -1617,7 +1641,6 @@ public abstract class Spin2CBytecodeCompiler {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
                 return new Trunc(buildConstantExpression(context, node.getChild(0), registerConstant));
-            case "FSQRT":
             case "SQRT":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
@@ -1634,7 +1657,6 @@ public abstract class Spin2CBytecodeCompiler {
                 }
                 return new NumberLiteral(buildConstantExpression(context, node.getChild(0), registerConstant).getNumber().doubleValue());
             case "ABS":
-            case "FABS":
                 if (node.getChildCount() != 1) {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
@@ -1644,6 +1666,26 @@ public abstract class Spin2CBytecodeCompiler {
                     throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
                 }
                 return new Nan(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "ADDBITS":
+                return new Addbits(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "ADDPINS":
+                return new Addpins(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "MIN":
+                return new LimitMin(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "MAX":
+                return new LimitMax(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "ROR":
+                return new Ror(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "ROL":
+                return new Rol(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "REV":
+                return new Rev(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "SCA":
+                return new Sca(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "SCAS":
+                return new Scas(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "FRAC":
+                return new Frac(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
         }
 
         throw new RuntimeException("unknown " + node.getText());

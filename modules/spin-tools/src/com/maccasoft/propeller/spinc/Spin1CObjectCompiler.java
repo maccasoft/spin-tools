@@ -652,10 +652,7 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
     }
 
     Set<String> types = new HashSet<>(Arrays.asList(new String[] {
-        "void", "int", "byte", "word", "short", "long", "float"
-    }));
-    Set<String> blocks = new HashSet<>(Arrays.asList(new String[] {
-        "if", "else", "do", "while", "until", "select", "case"
+        "void", "int", "byte", "word", "float"
     }));
 
     void compileFunction(FunctionNode node) {
@@ -679,6 +676,9 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
         method.setData(node);
 
         if (!"void".equals(type.getText())) {
+            if (!"int".equals(type.getText())) {
+                throw new CompilerException("unsupported return type", type);
+            }
             method.addReturnVariable("__default_return__");
         }
 
@@ -692,8 +692,8 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
             if (")".equals(token.getText())) {
                 break;
             }
-            if (!"int".equals(token.getText()) && !"long".equals(token.getText())) {
-                throw new CompilerException("parameters must be int or long", token);
+            if (!"int".equals(token.getText())) {
+                throw new CompilerException("unsupported parameter type", token);
             }
 
             token = iter.next();

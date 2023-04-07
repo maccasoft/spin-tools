@@ -59,8 +59,8 @@ public class Spin2CTreeBuilder {
         //precedence.put("#>", 10);
         //precedence.put("<#", 10);
 
-        precedence.put("ADDBITS", 9);
-        precedence.put("ADDPINS", 9);
+        //precedence.put("ADDBITS", 9);
+        //precedence.put("ADDPINS", 9);
 
         precedence.put("<", 8);
         //precedence.put("+<", 8);
