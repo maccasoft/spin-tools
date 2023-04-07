@@ -89,6 +89,29 @@ public class Spin2StatementNode {
         return token;
     }
 
+    public List<Token> getTokens() {
+        List<Token> list = new ArrayList<>();
+
+        if (childs.size() == 0) {
+            list.add(token);
+        }
+        else if (childs.size() == 1) {
+            list.add(token);
+            list.addAll(childs.get(0).getTokens());
+        }
+        else {
+            int i = 0;
+            while (i < childs.size()) {
+                if (i != 0) {
+                    list.add(token);
+                }
+                list.addAll(childs.get(i++).getTokens());
+            }
+        }
+
+        return list;
+    }
+
     public void setProperty(String name, Spin2StatementNode node) {
         properties.put(name, node);
     }

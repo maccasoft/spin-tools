@@ -68,7 +68,6 @@ import com.maccasoft.propeller.spin2.bytecode.BitField;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
 import com.maccasoft.propeller.spin2.bytecode.CallSub;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
-import com.maccasoft.propeller.spin2.bytecode.MathOp;
 import com.maccasoft.propeller.spin2.bytecode.MemoryOp;
 import com.maccasoft.propeller.spin2.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin2.bytecode.SubAddress;
@@ -142,13 +141,6 @@ public abstract class Spin2CBytecodeCompiler {
         //descriptors.put("rotxy", new FunctionDescriptor(0x19, 0x8C, 3, 2));
         //descriptors.put("polxy", new FunctionDescriptor(0x19, 0x8E, 2, 2));
         //descriptors.put("xypol", new FunctionDescriptor(0x19, 0x90, 2, 2));
-
-        descriptors.put("nan", new FunctionDescriptor(0x19, 0x92, 1, 1));
-        descriptors.put("fabs", new FunctionDescriptor(0x19, 0x96, 1, 1));
-        descriptors.put("fsqrt", new FunctionDescriptor(0x19, 0x98, 1, 1));
-        descriptors.put("round", new FunctionDescriptor(0x19, 0xAE, 1, 1));
-        descriptors.put("trunc", new FunctionDescriptor(0x19, 0xB0, 1, 1));
-        descriptors.put("float", new FunctionDescriptor(0x19, 0xB2, 1, 1));
 
         descriptors.put("cogstop", new FunctionDescriptor(0x27, -1, 1, 0));
         descriptors.put("cogid", new FunctionDescriptor(0x28, -1, 0, 1));
@@ -312,7 +304,7 @@ public abstract class Spin2CBytecodeCompiler {
     static Map<String, Descriptor> unaryOperators = new HashMap<String, Descriptor>();
     static {
         //unaryOperators.put("!!", new Descriptor(0x77, "BOOLEAN_NOT"));
-        //unaryOperators.put("NOT", new Descriptor(0x77, "BOOLEAN_NOT"));
+        unaryOperators.put("!", new Descriptor(0x77, "BOOLEAN_NOT"));
         //unaryOperators.put("!", new Descriptor(0x78, "BITNOT"));
         ////unary.put("-", new Descriptor(0x79, "NEGATE"));
         //unaryOperators.put("ABS", new Descriptor(0x7A, "ABS"));
@@ -394,9 +386,109 @@ public abstract class Spin2CBytecodeCompiler {
                         throw new RuntimeException("expected " + desc.getParameters() + " argument(s), found " + actual);
                     }
                     for (int i = 0; i < node.getChildCount(); i++) {
-                        source.addAll(compileConstantExpression(context, method, node.getChild(i)));
+                        if (isFloat(context, node.getChild(i))) {
+                            logMessage(new CompilerException(CompilerException.WARNING, "float to integer conversion", node.getChild(i).getTokens()));
+                            Spin2StatementNode exp = new Spin2StatementNode.Method(new Token(Token.FUNCTION, "round"));
+                            exp.getChilds().add(node.getChild(i));
+                            source.addAll(compileConstantExpression(context, method, exp));
+                        }
+                        else {
+                            source.addAll(compileConstantExpression(context, method, node.getChild(i)));
+                        }
                     }
                     source.add(new Bytecode(context, desc.code, node.getText().toUpperCase()));
+                }
+                else if ("abs".equals(node.getText())) {
+                    int actual = getArgumentsCount(context, node);
+                    if (actual != 1) {
+                        throw new RuntimeException("expected " + 1 + " argument(s), found " + actual);
+                    }
+                    source.addAll(compileConstantExpression(context, method, node.getChild(0)));
+                    if (isFloat(context, node.getChild(0))) {
+                        source.add(new Bytecode(context, new byte[] {
+                            0x19, (byte) 0x86
+                        }, "FLOAT_" + node.getText().toUpperCase()));
+                    }
+                    else {
+                        source.add(new Bytecode(context, 0x7A, node.getText().toUpperCase()));
+                    }
+                }
+                else if ("sqrt".equals(node.getText())) {
+                    int actual = getArgumentsCount(context, node);
+                    if (actual != 1) {
+                        throw new RuntimeException("expected " + 1 + " argument(s), found " + actual);
+                    }
+                    source.addAll(compileConstantExpression(context, method, node.getChild(0)));
+                    if (isFloat(context, node.getChild(0))) {
+                        source.add(new Bytecode(context, new byte[] {
+                            0x19, (byte) 0x98
+                        }, "FLOAT_" + node.getText().toUpperCase()));
+                    }
+                    else {
+                        source.add(new Bytecode(context, 0x7F, node.getText().toUpperCase()));
+                    }
+                }
+                else if ("nan".equals(node.getText())) {
+                    int actual = getArgumentsCount(context, node);
+                    if (actual != 1) {
+                        throw new RuntimeException("expected " + 1 + " argument(s), found " + actual);
+                    }
+                    if (!isFloat(context, node.getChild(0))) {
+                        Spin2StatementNode exp = new Spin2StatementNode.Method(new Token(Token.FUNCTION, "float"));
+                        exp.getChilds().add(node.getChild(0));
+                        source.addAll(compileConstantExpression(context, method, exp));
+                    }
+                    else {
+                        source.addAll(compileConstantExpression(context, method, node.getChild(0)));
+                    }
+                    source.add(new Bytecode(context, new byte[] {
+                        0x19, (byte) 0x92
+                    }, node.getText().toUpperCase()));
+                }
+                else if ("round".equals(node.getText())) {
+                    int actual = getArgumentsCount(context, node);
+                    if (actual != 1) {
+                        throw new RuntimeException("expected " + 1 + " argument(s), found " + actual);
+                    }
+                    source.addAll(compileConstantExpression(context, method, node.getChild(0)));
+                    if (isFloat(context, node.getChild(0))) {
+                        source.add(new Bytecode(context, new byte[] {
+                            0x19, (byte) 0xAE
+                        }, node.getText().toUpperCase()));
+                    }
+                    else {
+                        logMessage(new CompilerException(CompilerException.WARNING, "not floating point", node.getChild(0).getTokens()));
+                    }
+                }
+                else if ("trunc".equals(node.getText())) {
+                    int actual = getArgumentsCount(context, node);
+                    if (actual != 1) {
+                        throw new RuntimeException("expected " + 1 + " argument(s), found " + actual);
+                    }
+                    source.addAll(compileConstantExpression(context, method, node.getChild(0)));
+                    if (isFloat(context, node.getChild(0))) {
+                        source.add(new Bytecode(context, new byte[] {
+                            0x19, (byte) 0xB0
+                        }, node.getText().toUpperCase()));
+                    }
+                    else {
+                        logMessage(new CompilerException(CompilerException.WARNING, "not floating point", node.getChild(0).getTokens()));
+                    }
+                }
+                else if ("float".equals(node.getText())) {
+                    int actual = getArgumentsCount(context, node);
+                    if (actual != 1) {
+                        throw new RuntimeException("expected " + 1 + " argument(s), found " + actual);
+                    }
+                    source.addAll(compileConstantExpression(context, method, node.getChild(0)));
+                    if (!isFloat(context, node.getChild(0))) {
+                        source.add(new Bytecode(context, new byte[] {
+                            0x19, (byte) 0xB2
+                        }, node.getText().toUpperCase()));
+                    }
+                    else {
+                        logMessage(new CompilerException(CompilerException.WARNING, "already floating point", node.getChild(0).getTokens()));
+                    }
                 }
                 else if ("coginit".equals(node.getText())) {
                     if (node.getChildCount() != 3) {
@@ -619,8 +711,14 @@ public abstract class Spin2CBytecodeCompiler {
                     Expression expression = buildConstantExpression(context, node);
                     source.add(new Constant(context, expression));
                 } catch (Exception e) {
-                    source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
-                    source.add(new Bytecode(context, 0x79, "NEGATE"));
+                    if (isFloat(context, node.getChild(0))) {
+                        source.add(new Bytecode(context, new byte[] {
+                            0x19, (byte) 0x94
+                        }, "FLOAT_NEGATE"));
+                    }
+                    else {
+                        source.add(new Bytecode(context, 0x79, "NEGATE"));
+                    }
                 }
             }
             else if ("+".equals(node.getText()) && node.getChildCount() == 1) {
@@ -662,10 +760,6 @@ public abstract class Spin2CBytecodeCompiler {
                     source.addAll(compileConstantExpression(context, method, node.getChild(1)));
                 }
                 source.addAll(leftAssign(context, method, node.getChild(0), push, push));
-            }
-            else if (MathOp.isAssignMathOp(node.getText()) && node.getChildCount() == 1) {
-                source.addAll(leftAssign(context, method, node.getChild(0), true, false));
-                source.add(new MathOp(context, node.getText(), push));
             }
             else if (assignOperators.containsKey(node.getText())) {
                 if (node.getChildCount() != 2) {
@@ -1961,7 +2055,7 @@ public abstract class Spin2CBytecodeCompiler {
                         source.addAll(compileConstantExpression(context, method, exp));
                     }
                     else if (!leftIsFloat && rightIsFloat) {
-                        logMessage(new CompilerException(CompilerException.WARNING, "float to integer conversion", node.getChild(i).getToken()));
+                        logMessage(new CompilerException(CompilerException.WARNING, "float to integer conversion", node.getChild(i).getTokens()));
                         Spin2StatementNode exp = new Spin2StatementNode.Method(new Token(Token.FUNCTION, "round"));
                         exp.getChilds().add(node.getChild(i));
                         source.addAll(compileConstantExpression(context, method, exp));
@@ -2342,6 +2436,18 @@ public abstract class Spin2CBytecodeCompiler {
             if (expression.isNumber() && (expression.getNumber() instanceof Double)) {
                 return true;
             }
+        }
+        if ("nan".equals(node.getText()) || "round".equals(node.getText()) || "trunc".equals(node.getText())) {
+            return false;
+        }
+        if ("float".equals(node.getText())) {
+            return true;
+        }
+        if ("abs".equals(node.getText()) || "sqrt".equals(node.getText())) {
+            return isFloat(context, node.getChild(0));
+        }
+        if (descriptors.containsKey(node.getText())) {
+            return false;
         }
 
         Expression expression = context.getLocalSymbol(node.getText());
