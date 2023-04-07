@@ -391,7 +391,6 @@ public abstract class SourceTokenMarker {
 
     public String getMethod(String symbol) {
         StringBuilder sb = new StringBuilder();
-        Map<String, Node> alias = new HashMap<>();
 
         if (symbol.indexOf('.') != -1) {
             String[] s = symbol.split("[\\.]");
@@ -402,43 +401,38 @@ public abstract class SourceTokenMarker {
 
                 @Override
                 public void visitVariable(VariableNode node) {
-                    if (node.getType() != null && node.getIdentifier() != null) {
-                        Node objectRoot = alias.get(node.getType().getText());
-                        if (objectRoot == null) {
-                            objectRoot = getObjectTree(node.getType().getText());
-                            if (objectRoot != null) {
-                                alias.put(node.getType().getText(), objectRoot);
-                            }
+                    if (node.getType() == null || node.getIdentifier() == null) {
+                        return;
+                    }
+                    Node objectRoot = getObjectTree(node.getType().getText());
+                    if (objectRoot != null) {
+                        String name = node.getIdentifier().getText();
+                        if (!name.equalsIgnoreCase(s[0])) {
+                            return;
                         }
-                        if (objectRoot != null) {
-                            String name = node.getIdentifier().getText();
-                            if (!name.equalsIgnoreCase(s[0])) {
-                                return;
+                        objectRoot.accept(new NodeVisitor() {
+
+                            @Override
+                            public boolean visitFunction(FunctionNode node) {
+                                if (node.getIdentifier() != null) {
+                                    if (s[1].equals(node.getIdentifier().getText())) {
+                                        sb.append(getMethodDocument(node));
+                                    }
+                                }
+                                return false;
                             }
-                            objectRoot.accept(new NodeVisitor() {
 
-                                @Override
-                                public boolean visitFunction(FunctionNode node) {
-                                    if (node.getIdentifier() != null) {
-                                        if (s[1].equals(node.getIdentifier().getText())) {
-                                            sb.append(getMethodDocument(node));
-                                        }
+                            @Override
+                            public boolean visitMethod(MethodNode node) {
+                                if (node.getName() != null) {
+                                    if (s[1].equals(node.getName().getText())) {
+                                        sb.append(getMethodDocument(node));
                                     }
-                                    return false;
                                 }
+                                return false;
+                            }
 
-                                @Override
-                                public boolean visitMethod(MethodNode node) {
-                                    if (node.getName() != null) {
-                                        if (s[1].equals(node.getName().getText())) {
-                                            sb.append(getMethodDocument(node));
-                                        }
-                                    }
-                                    return false;
-                                }
-
-                            });
-                        }
+                        });
                     }
                 }
 
@@ -629,52 +623,41 @@ public abstract class SourceTokenMarker {
             root.accept(new NodeVisitor() {
 
                 @Override
-                public void visitDirective(DirectiveNode node) {
-                    Iterator<Token> iter = node.getTokens().iterator();
-                    if (iter.hasNext()) {
-                        iter.next();
+                public void visitVariable(VariableNode node) {
+                    if (node.getType() == null || node.getIdentifier() == null) {
+                        return;
                     }
-                    if (iter.hasNext()) {
-                        Token directive = iter.next();
-                        if ("include".equals(directive.getText())) {
-                            if (iter.hasNext()) {
-                                Token file = iter.next();
-                                String name = file.getText().substring(1, file.getText().length() - 1);
+                    Node objectRoot = getObjectTree(node.getType().getText());
+                    if (objectRoot != null) {
+                        String name = node.getIdentifier().getText();
+                        objectRoot.accept(new NodeVisitor() {
 
-                                String fileName = file.getText().substring(1, file.getText().length() - 1);
-                                Node objectRoot = getObjectTree(fileName);
-                                if (objectRoot != null) {
-                                    objectRoot.accept(new NodeVisitor() {
-
-                                        @Override
-                                        public boolean visitFunction(FunctionNode node) {
-                                            if (node.getIdentifier() != null) {
-                                                String text = name + "." + node.getIdentifier().getText();
-                                                if (text.toUpperCase().contains(refName)) {
-                                                    proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
-                                                }
-                                            }
-                                            return false;
-                                        }
-
-                                        @Override
-                                        public boolean visitMethod(MethodNode node) {
-                                            if (node.getType() == null || node.getName() == null) {
-                                                return false;
-                                            }
-                                            if ("PUB".equalsIgnoreCase(node.getType().getText())) {
-                                                String text = name + "." + node.getName().getText();
-                                                if (text.toUpperCase().contains(refName)) {
-                                                    proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
-                                                }
-                                            }
-                                            return false;
-                                        }
-
-                                    });
+                            @Override
+                            public boolean visitFunction(FunctionNode node) {
+                                if (node.getIdentifier() != null) {
+                                    String text = name + "." + node.getIdentifier().getText();
+                                    if (text.toUpperCase().contains(refName)) {
+                                        proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
+                                    }
                                 }
+                                return false;
                             }
-                        }
+
+                            @Override
+                            public boolean visitMethod(MethodNode node) {
+                                if (node.getType() == null || node.getName() == null) {
+                                    return false;
+                                }
+                                if ("PUB".equalsIgnoreCase(node.getType().getText())) {
+                                    String text = name + "." + node.getName().getText();
+                                    if (text.toUpperCase().contains(refName)) {
+                                        proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
+                                    }
+                                }
+                                return false;
+                            }
+
+                        });
                     }
                 }
 

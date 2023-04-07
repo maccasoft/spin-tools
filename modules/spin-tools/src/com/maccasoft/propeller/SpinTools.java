@@ -93,6 +93,7 @@ import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin2.Spin2Object;
+import com.maccasoft.propeller.spinc.CTokenMarker;
 
 import jssc.SerialPort;
 import jssc.SerialPortException;
@@ -209,33 +210,36 @@ public class SpinTools {
             String suffix = tabName.substring(tabName.lastIndexOf('.'));
 
             if (".spin".equals(suffix)) {
-                editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin1LibraryPath());
-                if (editorTab == null) {
-                    editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin1LibraryPath());
-                }
-            }
-            else if (".spin2".equals(suffix)) {
-                editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
-                if (editorTab == null) {
-                    editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
-                }
-            }
-            else if (".c".equals(suffix)) {
-                editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
+                editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin1LibraryPath());
                 if (editorTab == null) {
                     editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin1LibraryPath());
                 }
+            }
+            else if (".spin2".equals(suffix)) {
+                editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
                 if (editorTab == null) {
-                    editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
+                    editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
                 }
-                if (editorTab == null) {
+            }
+            else if (".c".equals(suffix)) {
+                CTokenMarker tokenMarker = (CTokenMarker) currentTab.getTokenMarker();
+                if (tokenMarker.isP1()) {
                     editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin1LibraryPath());
+                    if (editorTab == null) {
+                        editorTab = openOrSwitchToTab(name + ".spin", Preferences.getInstance().getSpin1LibraryPath());
+                    }
+                    if (editorTab == null) {
+                        editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin1LibraryPath());
+                    }
                 }
-                if (editorTab == null) {
-                    editorTab = openOrSwitchToTab(name + ".spin2", Preferences.getInstance().getSpin2LibraryPath());
-                }
-                if (editorTab == null) {
-                    editorTab = openOrSwitchToTab(name + ".spin", Preferences.getInstance().getSpin1LibraryPath());
+                else {
+                    editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
+                    if (editorTab == null) {
+                        editorTab = openOrSwitchToTab(name + ".spin2", Preferences.getInstance().getSpin2LibraryPath());
+                    }
+                    if (editorTab == null) {
+                        editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
+                    }
                 }
             }
 

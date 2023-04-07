@@ -246,12 +246,12 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected Node getObjectTree(String fileName) {
-            Node node = super.getObjectTree(fileName);
-            if (node == null) {
-                node = super.getObjectTree(fileName + ".spin");
-            }
+            Node node = super.getObjectTree(fileName + ".spin");
             if (node == null) {
                 node = super.getObjectTree(fileName + ".c");
+            }
+            if (node == null) {
+                node = super.getObjectTree(fileName);
             }
             return node;
         }
@@ -274,12 +274,12 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected Node getObjectTree(String fileName) {
-            Node node = super.getObjectTree(fileName);
-            if (node == null) {
-                node = super.getObjectTree(fileName + ".spin2");
-            }
+            Node node = super.getObjectTree(fileName + ".spin2");
             if (node == null) {
                 node = super.getObjectTree(fileName + ".c");
+            }
+            if (node == null) {
+                node = super.getObjectTree(fileName);
             }
             return node;
         }
@@ -313,15 +313,15 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         protected Node getObjectTree(String fileName) {
-            Node node = super.getObjectTree(fileName);
-            if (node == null) {
-                node = super.getObjectTree(fileName + ".c");
-            }
+            Node node = super.getObjectTree(fileName + ".c");
             if (node == null && isP1()) {
                 node = super.getObjectTree(fileName + ".spin");
             }
             if (node == null && isP2()) {
                 node = super.getObjectTree(fileName + ".spin2");
+            }
+            if (node == null) {
+                node = super.getObjectTree(fileName);
             }
             return node;
         }
@@ -976,6 +976,10 @@ public class EditorTab implements FindReplaceTarget {
 
     public void setBlockSelection(boolean blockSelection) {
         editor.getStyledText().setBlockSelection(blockSelection);
+    }
+
+    public SourceTokenMarker getTokenMarker() {
+        return tokenMarker;
     }
 
 }

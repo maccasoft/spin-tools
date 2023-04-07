@@ -721,11 +721,12 @@ public class SourceEditor {
                 if (context instanceof ObjectNode) {
                     ObjectNode obj = (ObjectNode) context;
                     if (obj.file == token) {
+                        SourceElement element = new SourceElement(obj, 0, 0);
                         display.asyncExec(new Runnable() {
 
                             @Override
                             public void run() {
-                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(obj)));
+                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
                             }
 
                         });
@@ -738,11 +739,12 @@ public class SourceEditor {
                 else if (context instanceof VariableNode) {
                     VariableNode obj = (VariableNode) context;
                     if (obj.getType() == token) {
+                        SourceElement element = new SourceElement(obj, 0, 0);
                         display.asyncExec(new Runnable() {
 
                             @Override
                             public void run() {
-                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(obj)));
+                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
                             }
 
                         });
@@ -1987,6 +1989,11 @@ public class SourceEditor {
 
         if (position == 0) {
             proposals.addAll(helpProvider.fillProposals("Root", token));
+            if (tokenMarker instanceof CTokenMarker) {
+                if (node == null || (node instanceof DirectiveNode) || (node instanceof VariableNode)) {
+                    proposals.addAll(helpProvider.fillSourceProposals(token));
+                }
+            }
         }
         else {
             if (node instanceof DirectiveNode.IncludeNode) {
@@ -1994,6 +2001,15 @@ public class SourceEditor {
             }
             else if (node instanceof ObjectNode) {
                 proposals.addAll(helpProvider.fillSourceProposals(token));
+            }
+            else if (node instanceof VariableNode) {
+                if (tokenMarker instanceof CTokenMarker) {
+                    VariableNode line = (VariableNode) node;
+                    position = styledText.getCaretOffset();
+                    if (line.type != null && position >= line.type.start && position <= line.type.stop + 1) {
+                        proposals.addAll(helpProvider.fillSourceProposals(token));
+                    }
+                }
             }
             else if (node instanceof DataLineNode) {
                 DataLineNode line = (DataLineNode) node;
