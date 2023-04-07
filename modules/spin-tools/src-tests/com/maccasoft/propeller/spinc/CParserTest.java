@@ -143,6 +143,29 @@ class CParserTest {
     }
 
     @Test
+    void testIfElseSimpleBlock() throws Exception {
+        CParser subject = new CParser(new CTokenStream(""
+            + "void main() {\n"
+            + "    if (a == 1)\n"
+            + "        method(1, 2);\n"
+            + "    else\n"
+            + "        a = function(1, 2);\n"
+            + "}\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- FunctionNode type=void identifier=main [void main() {]\n"
+            + "    +-- StatementNode [    if (a == 1)]\n"
+            + "        +-- StatementNode [        method(1, 2);]\n"
+            + "    +-- StatementNode [    else]\n"
+            + "        +-- StatementNode [        a = function(1, 2);]\n"
+            + "    +-- StatementNode [}]\n"
+            + "", tree(root));
+    }
+
+    @Test
     void testIfElseIfElseBlock() throws Exception {
         CParser subject = new CParser(new CTokenStream(""
             + "void main()\n"

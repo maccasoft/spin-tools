@@ -416,6 +416,39 @@ public class CParser extends Parser {
                         parseStatement(node);
                     }
                 }
+                else if ("else".equals(token.getText())) {
+                    if ((token = peekNextTokenSkipNL()).type != Token.EOF) {
+                        if ("{".equals(token.getText())) {
+                            node.addToken(nextTokenSkipNL());
+                            while ((token = peekNextTokenSkipNL()).type != Token.EOF) {
+                                if ("}".equals(token.getText())) {
+                                    boolean isDo = "do".equals(node.getStartToken().getText());
+
+                                    node = new StatementNode(parent);
+                                    node.addToken(nextTokenSkipNL());
+
+                                    if (isDo) {
+                                        token = peekNextTokenSkipNL();
+                                        if ("while".equals(token.getText()) || "until".equals(token.getText())) {
+                                            while ((token = nextTokenSkipNL()).type != Token.EOF) {
+                                                node.addToken(token);
+                                                if (";".equals(token.getText())) {
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    break;
+                                }
+                                parseStatement(node);
+                            }
+                        }
+                        else {
+                            parseStatement(node);
+                        }
+                    }
+                }
                 else if (!";".equals(token.getText())) {
                     while ((token = nextTokenSkipNL()).type != Token.EOF) {
                         node.addToken(token);

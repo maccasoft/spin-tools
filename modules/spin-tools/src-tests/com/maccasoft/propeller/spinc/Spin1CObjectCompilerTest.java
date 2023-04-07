@@ -727,6 +727,46 @@ class Spin1CObjectCompilerTest {
     }
 
     @Test
+    void testIfElseSimpleBlock() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    int a;\n"
+            + "\n"
+            + "    if (a == 0)\n"
+            + "        a = 1;\n"
+            + "    else\n"
+            + "        a = 2;\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       18 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' void main() {\n"
+            + "'     if (a == 0)\n"
+            + "00008 00008       64             VAR_READ LONG DBASE+$0004 (short)\n"
+            + "00009 00009       35             CONSTANT (0)\n"
+            + "0000A 0000A       FC             TEST_EQUAL\n"
+            + "0000B 0000B       0A 04          JZ $00011 (4)\n"
+            + "'         a = 1;\n"
+            + "0000D 0000D       36             CONSTANT (1)\n"
+            + "0000E 0000E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0000F 0000F       04 03          JMP $00014 (3)\n"
+            + "'     else\n"
+            + "'         a = 2;\n"
+            + "00011 00011       38 02          CONSTANT (2)\n"
+            + "00013 00013       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "' }\n"
+            + "00014 00014       32             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testIfElseIf() throws Exception {
         String text = ""
             + "void main()\n"

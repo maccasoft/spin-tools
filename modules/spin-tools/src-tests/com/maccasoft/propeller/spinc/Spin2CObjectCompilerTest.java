@@ -708,6 +708,45 @@ class Spin2CObjectCompilerTest {
     }
 
     @Test
+    void testIfElseSimpleBlock() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    int a;\n"
+            + "\n"
+            + "    if (a == 0)\n"
+            + "        a = 1;\n"
+            + "    else\n"
+            + "        a = 2;\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       15 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     if (a == 0)\n"
+            + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A 0000A       A1             CONSTANT (0)\n"
+            + "0000B 0000B       70             EQUAL\n"
+            + "0000C 0000C       13 05          JZ $00012 (5)\n"
+            + "'         a = 1;\n"
+            + "0000E 0000E       A2             CONSTANT (1)\n"
+            + "0000F 0000F       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00010 00010       12 03          JMP $00014 (3)\n"
+            + "'     else\n"
+            + "'         a = 2;\n"
+            + "00012 00012       A3             CONSTANT (2)\n"
+            + "00013 00013       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "' }\n"
+            + "00014 00014       04             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testIfElseIf() throws Exception {
         String text = ""
             + "void main()\n"
