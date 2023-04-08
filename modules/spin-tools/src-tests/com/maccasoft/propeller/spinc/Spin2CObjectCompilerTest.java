@@ -1699,6 +1699,117 @@ class Spin2CObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testBytePointer() throws Exception {
+        String text = ""
+            + "byte * ptr, a, *b;\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "    ptr = \"Hello, World!\";\n"
+            + "    a = 'a';\n"
+            + "    b = \"b\";\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 16)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       28 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'     ptr = \"Hello, World!\";\n"
+            + "00009 00009       9E 0E 48 65 6C STRING\n"
+            + "0000E 0000E       6C 6F 2C 20 57\n"
+            + "00013 00013       6F 72 6C 64 21\n"
+            + "00018 00018       00\n"
+            + "00019 00019       C1 81          VAR_WRITE LONG VBASE+$00001 (short)\n"
+            + "'     a = 'a';\n"
+            + "0001B 0001B       44 61          CONSTANT (\"a\")\n"
+            + "0001D 0001D       52 08 81       VAR_WRITE BYTE VBASE+$00008\n"
+            + "'     b = \"b\";\n"
+            + "00020 00020       9E 02 62 00    STRING\n"
+            + "00024 00024       5E 09 81       VAR_WRITE LONG VBASE+$00009\n"
+            + "' }\n"
+            + "00027 00027       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testBytePointerStatements() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    byte * ptr, a, *b;\n"
+            + "\n"
+            + "    ptr = \"Hello, World!\";\n"
+            + "    a = 'a';\n"
+            + "    b = \"b\";\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       27 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00008 00008       03             (stack size)\n"
+            + "'     ptr = \"Hello, World!\";\n"
+            + "00009 00009       9E 0E 48 65 6C STRING\n"
+            + "0000E 0000E       6C 6F 2C 20 57\n"
+            + "00013 00013       6F 72 6C 64 21\n"
+            + "00018 00018       00\n"
+            + "00019 00019       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a = 'a';\n"
+            + "0001A 0001A       44 61          CONSTANT (\"a\")\n"
+            + "0001C 0001C       53 04 81       VAR_WRITE BYTE DBASE+$00004\n"
+            + "'     b = \"b\";\n"
+            + "0001F 0001F       9E 02 62 00    STRING\n"
+            + "00023 00023       5F 05 81       VAR_WRITE LONG DBASE+$00005\n"
+            + "' }\n"
+            + "00026 00026       04             RETURN\n"
+            + "00027 00027       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testBytePointerArgument() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    str(\"Hello, World!\");\n"
+            + "}\n"
+            + "\n"
+            + "void str(byte * ptr)\n"
+            + "{\n"
+            + "\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       21 00 00 81    Method str @ $00021 (1 parameters, 0 returns)\n"
+            + "00008 00008       23 00 00 00    End\n"
+            + "' void main() {\n"
+            + "0000C 0000C       00             (stack size)\n"
+            + "'     str(\"Hello, World!\");\n"
+            + "0000D 0000D       00             ANCHOR\n"
+            + "0000E 0000E       9E 0E 48 65 6C STRING\n"
+            + "00013 00013       6C 6F 2C 20 57\n"
+            + "00018 00018       6F 72 6C 64 21\n"
+            + "0001D 0001D       00\n"
+            + "0001E 0001E       0A 01          CALL_SUB (1)\n"
+            + "' }\n"
+            + "00020 00020       04             RETURN\n"
+            + "' void str(byte * ptr) {\n"
+            + "00021 00021       00             (stack size)\n"
+            + "' }\n"
+            + "00022 00022       04             RETURN\n"
+            + "00023 00023       00             Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

@@ -1363,6 +1363,125 @@ class Spin1CObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testBytePointer() throws Exception {
+        String text = ""
+            + "byte * ptr, a, *b;\n"
+            + "\n"
+            + "void main()\n"
+            + "{\n"
+            + "    ptr = \"Hello, World!\";\n"
+            + "    a = 'a';\n"
+            + "    b = \"b\";\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 12)\n"
+            + "00000 00000       24 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 00 00    Function main @ $0008 (local size 0)\n"
+            + "' void main() {\n"
+            + "'     ptr = \"Hello, World!\";\n"
+            + "00008 00008       87 13          MEM_ADDRESS BYTE PBASE+$0013\n"
+            + "0000A 0000A       41             VAR_WRITE LONG VBASE+$0000 (short)\n"
+            + "'     a = 'a';\n"
+            + "0000B 0000B       38 61          CONSTANT (\"a\")\n"
+            + "0000D 0000D       89 04          VAR_WRITE BYTE VBASE+$0004\n"
+            + "'     b = \"b\";\n"
+            + "0000F 0000F       87 21          MEM_ADDRESS BYTE PBASE+$0021\n"
+            + "00011 00011       45             VAR_WRITE LONG VBASE+$0005 (short)\n"
+            + "' }\n"
+            + "00012 00012       32             RETURN\n"
+            + "' (string data)\n"
+            + "00013 00013       48 65 6C 6C 6F STRING\n"
+            + "00018 00018       2C 20 57 6F 72\n"
+            + "0001D 0001D       6C 64 21 00\n"
+            + "00021 00021       62 00          STRING\n"
+            + "00023 00023       00             Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testBytePointerStatements() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    byte * ptr, a, *b;\n"
+            + "\n"
+            + "    ptr = \"Hello, World!\";\n"
+            + "    a = 'a';\n"
+            + "    b = \"b\";\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       24 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 0C 00    Function main @ $0008 (local size 12)\n"
+            + "' void main() {\n"
+            + "'     ptr = \"Hello, World!\";\n"
+            + "00008 00008       87 12          MEM_ADDRESS BYTE PBASE+$0012\n"
+            + "0000A 0000A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a = 'a';\n"
+            + "0000B 0000B       38 61          CONSTANT (\"a\")\n"
+            + "0000D 0000D       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "'     b = \"b\";\n"
+            + "0000E 0000E       87 20          MEM_ADDRESS BYTE PBASE+$0020\n"
+            + "00010 00010       6D             VAR_WRITE LONG DBASE+$000C (short)\n"
+            + "' }\n"
+            + "00011 00011       32             RETURN\n"
+            + "' (string data)\n"
+            + "00012 00012       48 65 6C 6C 6F STRING\n"
+            + "00017 00017       2C 20 57 6F 72\n"
+            + "0001C 0001C       6C 64 21 00\n"
+            + "00020 00020       62 00          STRING\n"
+            + "00022 00022       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testBytePointerArgument() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    str(\"Hello, World!\");\n"
+            + "}\n"
+            + "\n"
+            + "void str(byte * ptr)\n"
+            + "{\n"
+            + "\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       24 00          Object size\n"
+            + "00002 00002       03             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       0C 00 00 00    Function main @ $000C (local size 0)\n"
+            + "00008 00008       12 00 00 00    Function str @ $0012 (local size 0)\n"
+            + "' void main() {\n"
+            + "'     str(\"Hello, World!\");\n"
+            + "0000C 0000C       01             ANCHOR\n"
+            + "0000D 0000D       87 13          MEM_ADDRESS BYTE PBASE+$0013\n"
+            + "0000F 0000F       05 02          CALL_SUB\n"
+            + "' }\n"
+            + "00011 00011       32             RETURN\n"
+            + "' void str(byte * ptr) {\n"
+            + "' }\n"
+            + "00012 00012       32             RETURN\n"
+            + "' (string data)\n"
+            + "00013 00013       48 65 6C 6C 6F STRING\n"
+            + "00018 00018       2C 20 57 6F 72\n"
+            + "0001D 0001D       6C 64 21 00\n"
+            + "00021 00021       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         CTokenStream stream = new CTokenStream(text);
         CParser subject = new CParser(stream);

@@ -57,14 +57,14 @@ public class VariableOp extends Spin1Bytecode {
         this.oo = oo;
         this.value = value;
 
-        if ("WORD".equalsIgnoreCase(value.getType())) {
-            this.ss = Size.Word;
-        }
-        else if ("BYTE".equalsIgnoreCase(value.getType())) {
-            this.ss = Size.Byte;
-        }
-        else {
-            this.ss = Size.Long;
+        this.ss = Size.Long;
+        if (!value.isPointer()) {
+            if ("BYTE".equalsIgnoreCase(value.getType())) {
+                this.ss = Size.Byte;
+            }
+            else if ("WORD".equalsIgnoreCase(value.getType())) {
+                this.ss = Size.Word;
+            }
         }
     }
 
@@ -134,17 +134,7 @@ public class VariableOp extends Spin1Bytecode {
             sb.append("_INDEXED");
         }
         sb.append(" ");
-        switch (ss) {
-            case Byte:
-                sb.append("BYTE");
-                break;
-            case Word:
-                sb.append("WORD");
-                break;
-            case Long:
-                sb.append("LONG");
-                break;
-        }
+        sb.append(value.getType());
         sb.append(" ");
         switch (b) {
             case VBase:

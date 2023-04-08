@@ -23,7 +23,6 @@ import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
-import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class CParser extends Parser {
@@ -31,7 +30,6 @@ public class CParser extends Parser {
     CTokenStream stream;
 
     Node root;
-    VariablesNode variables;
 
     public CParser(CTokenStream stream) {
         this.stream = stream;
@@ -173,25 +171,34 @@ public class CParser extends Parser {
                             node.addToken(token);
                             break;
                         }
+
                         FunctionNode.ParameterNode param = new FunctionNode.ParameterNode((FunctionNode) node);
-                        if (peekNextToken().type == Token.KEYWORD) {
-                            param.type = token;
-                            param.addToken(token);
+                        param.type = token;
+
+                        token = nextTokenSkipNL();
+                        if ("*".equals(token.getText())) {
+                            param.type = param.type.merge(token);
+                            param.type.type = Token.KEYWORD;
                             if ((token = nextTokenSkipNL()).type == Token.EOF) {
                                 break;
                             }
-                            if (")".equals(token.getText()) || ",".equals(token.getText())) {
-                                break;
-                            }
                         }
-                        param.identifier = token;
-                        param.addToken(token);
-                        while ((token = nextTokenSkipNL()).type != Token.EOF) {
-                            if (")".equals(token.getText()) || ",".equals(token.getText())) {
-                                node.addToken(token);
-                                break;
-                            }
+                        param.addToken(param.type);
+
+                        if (")".equals(token.getText())) {
+                            node.addToken(token);
+                            break;
+                        }
+                        if (!",".equals(token.getText())) {
+                            param.identifier = token;
                             param.addToken(token);
+                            while ((token = nextTokenSkipNL()).type != Token.EOF) {
+                                if (")".equals(token.getText()) || ",".equals(token.getText())) {
+                                    node.addToken(token);
+                                    break;
+                                }
+                                param.addToken(token);
+                            }
                         }
                         if (")".equals(token.getText())) {
                             break;
@@ -251,6 +258,7 @@ public class CParser extends Parser {
                                 if ((token = nextTokenSkipNL()).type == Token.EOF) {
                                     break;
                                 }
+                                node.addToken(token);
                                 child = new VariableNode(node, null, type, token);
                             }
                             else {

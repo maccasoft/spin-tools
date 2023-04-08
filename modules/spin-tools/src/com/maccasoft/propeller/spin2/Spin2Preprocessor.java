@@ -93,7 +93,7 @@ public class Spin2Preprocessor {
 
         @Override
         public void visitVariable(VariableNode node) {
-            if (node.getType() == null) {
+            if (node.getType() == null || node.getIdentifier() == null) {
                 return;
             }
 
@@ -102,6 +102,9 @@ public class Spin2Preprocessor {
                 return;
             }
             if ("INT".equalsIgnoreCase(objectFileName) || "SHORT".equalsIgnoreCase(objectFileName)) {
+                return;
+            }
+            if ("FLOAT".equalsIgnoreCase(objectFileName)) {
                 return;
             }
 

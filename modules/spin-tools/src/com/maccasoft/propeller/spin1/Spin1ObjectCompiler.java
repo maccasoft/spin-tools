@@ -959,7 +959,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                     if (expression != null) {
                         logMessage(new CompilerException(CompilerException.WARNING, "parameter '" + identifier + "' hides global variable", child));
                     }
-                    LocalVariable var = method.addParameter(identifier.getText(), new NumberLiteral(1));
+                    LocalVariable var = method.addParameter("LONG", identifier.getText(), new NumberLiteral(1));
                     var.setData(identifier);
                 }
             }

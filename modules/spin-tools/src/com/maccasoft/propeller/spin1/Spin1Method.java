@@ -63,8 +63,8 @@ public class Spin1Method {
         return label;
     }
 
-    public LocalVariable addParameter(String name, Expression size) {
-        LocalVariable var = new LocalVariable("LONG", name, size, 0) {
+    public LocalVariable addParameter(String type, String name, Expression size) {
+        LocalVariable var = new LocalVariable(type, name, size, 0) {
 
             @Override
             public int getOffset() {

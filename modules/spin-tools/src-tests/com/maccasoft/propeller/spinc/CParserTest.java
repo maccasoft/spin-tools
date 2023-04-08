@@ -482,7 +482,7 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "Node []\n"
-            + "+-- VariableNode type=int * identifier=a [int *a, *]\n"
+            + "+-- VariableNode type=int * identifier=a [int *a, *b]\n"
             + "    +-- VariableNode type=* identifier=b [*b]\n"
             + "+-- VariableNode type=short * identifier=c [short *c]\n"
             + "+-- FunctionNode type=void identifier=main [void main() {]\n"

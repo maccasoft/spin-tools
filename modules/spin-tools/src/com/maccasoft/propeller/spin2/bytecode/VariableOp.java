@@ -43,11 +43,13 @@ public class VariableOp extends Spin2Bytecode {
         this.variable = variable;
 
         this.ss = Size.Long;
-        if ("BYTE".equalsIgnoreCase(variable.getType())) {
-            this.ss = Size.Byte;
-        }
-        else if ("WORD".equalsIgnoreCase(variable.getType())) {
-            this.ss = Size.Word;
+        if (!variable.isPointer()) {
+            if ("BYTE".equalsIgnoreCase(variable.getType())) {
+                this.ss = Size.Byte;
+            }
+            else if ("WORD".equalsIgnoreCase(variable.getType())) {
+                this.ss = Size.Word;
+            }
         }
     }
 
@@ -59,16 +61,22 @@ public class VariableOp extends Spin2Bytecode {
         this.hasIndex = hasIndex;
         this.index = index;
 
-        if ("BYTE".equalsIgnoreCase(variable.getType())) {
-            this.ss = Size.Byte;
-        }
-        else if ("WORD".equalsIgnoreCase(variable.getType())) {
-            this.ss = Size.Word;
-            this.index = index * 2;
-        }
-        else {
+        if (variable.isPointer()) {
             this.ss = Size.Long;
             this.index = index * 4;
+        }
+        else {
+            if ("BYTE".equalsIgnoreCase(variable.getType())) {
+                this.ss = Size.Byte;
+            }
+            else if ("WORD".equalsIgnoreCase(variable.getType())) {
+                this.ss = Size.Word;
+                this.index = index * 2;
+            }
+            else {
+                this.ss = Size.Long;
+                this.index = index * 4;
+            }
         }
     }
 

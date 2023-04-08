@@ -492,20 +492,9 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         TokenIterator iter = node.iterator();
 
         Token token = iter.next();
+        String type = token.getText();
 
-        String type = "LONG";
-        if ("short".equals(token.getText()) || "word".equals(token.getText())) {
-            type = "WORD";
-        }
-        else if ("byte".equals(token.getText())) {
-            type = "BYTE";
-        }
-        else if ("float".equals(token.getText())) {
-            type = "FLOAT";
-        }
-        else if (!"int".equals(token.getText()) && !"long".equals(token.getText())) {
-            type = token.getText();
-
+        if (!type.matches("(int|long|float|short|word|byte)[\\s]*[*]?")) {
             if (!iter.hasNext()) {
                 throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
             }
@@ -593,6 +582,13 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
         while (iter.hasNext()) {
             Token identifier = iter.next();
+            if ("*".equals(identifier.getText())) {
+                type += " *";
+                if (!iter.hasNext()) {
+                    throw new CompilerException("expecting identifier", identifier);
+                }
+                identifier = iter.next();
+            }
             if (identifier.type != Token.KEYWORD) {
                 throw new CompilerException("expecting identifier", identifier);
             }
@@ -655,6 +651,10 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                 if (!",".equals(token.getText())) {
                     throw new CompilerException("expecting comma or statement end", token);
                 }
+            }
+
+            if (type.endsWith("*")) {
+                type = type.substring(0, type.indexOf('*')).trim();
             }
         }
     }
@@ -727,10 +727,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             }
 
             String paramType = token.getText();
-            if ("int".equals(token.getText())) {
-                paramType = "LONG";
-            }
-            else if (!"float".equals(token.getText())) {
+            if (!paramType.matches("(int|long|float|short|word|byte)[\\s]*[*]?")) {
                 throw new CompilerException("unsupported parameter type", token);
             }
 
@@ -843,21 +840,9 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             token = iter.next();
         }
 
-        if (types.contains(token.getText())) {
+        if (token.getText().matches("(int|long|float|short|word|byte)[\\s]*[*]?")) {
             Token type = token;
-            String typeText = "LONG";
-            if ("short".equals(token.getText()) || "word".equals(token.getText())) {
-                typeText = "WORD";
-            }
-            else if ("byte".equals(token.getText())) {
-                typeText = "BYTE";
-            }
-            else if ("float".equals(token.getText())) {
-                typeText = "FLOAT";
-            }
-            else if (!"int".equals(token.getText()) && !"long".equals(token.getText())) {
-                throw new CompilerException("unsupported type", token);
-            }
+            String typeText = token.getText();
 
             if ("[".equals(iter.peekNext().getText())) {
                 Spin2CTreeBuilder builder = new Spin2CTreeBuilder(scope);
@@ -875,6 +860,13 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             else {
                 while (iter.hasNext()) {
                     Token identifier = iter.next();
+                    if ("*".equals(identifier.getText())) {
+                        typeText += " *";
+                        if (!iter.hasNext()) {
+                            throw new CompilerException("expecting identifier", identifier);
+                        }
+                        identifier = iter.next();
+                    }
                     if (identifier.type != Token.KEYWORD) {
                         throw new CompilerException("expecting identifier", identifier);
                     }
@@ -964,6 +956,10 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                     }
                     if (!",".equals(token.getText())) {
                         throw new CompilerException("expecting comma or statement end", token);
+                    }
+
+                    if (typeText.endsWith("*")) {
+                        typeText = typeText.substring(0, typeText.indexOf('*')).trim();
                     }
                 }
             }

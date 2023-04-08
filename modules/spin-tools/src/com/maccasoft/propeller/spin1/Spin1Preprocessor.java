@@ -104,6 +104,9 @@ public class Spin1Preprocessor {
             if ("INT".equalsIgnoreCase(objectFileName) || "SHORT".equalsIgnoreCase(objectFileName)) {
                 return;
             }
+            if ("FLOAT".equalsIgnoreCase(objectFileName)) {
+                return;
+            }
 
             File objectFile = compiler.getFile(objectFileName, ".c", ".spin");
             if (objectFile == null) {

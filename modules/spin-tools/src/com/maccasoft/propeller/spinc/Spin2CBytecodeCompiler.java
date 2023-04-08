@@ -1549,12 +1549,15 @@ public abstract class Spin2CBytecodeCompiler {
         if (node.getType() == Token.NUMBER) {
             return new NumberLiteral(node.getText());
         }
-        else if (node.getType() == Token.STRING) {
+        else if (node.getType() == Token.CHAR) {
             String s = node.getText().substring(1);
             s = s.substring(0, s.length() - 1);
             if (s.length() == 1) {
                 return new CharacterLiteral(s);
             }
+            throw new RuntimeException("string not allowed");
+        }
+        else if (node.getType() == Token.STRING) {
             throw new RuntimeException("string not allowed");
         }
 

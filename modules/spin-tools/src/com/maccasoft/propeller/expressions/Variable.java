@@ -15,22 +15,35 @@ import java.util.Set;
 
 public class Variable extends Expression {
 
-    String type;
-    String name;
-    Expression size;
-    int offset;
+    private String type;
+    private String name;
+    private Expression size;
+    private int offset;
 
-    Set<Object> calledBy = new HashSet<>();
+    private Set<Object> calledBy = new HashSet<>();
 
     public Variable(String type, String name, Expression size, int offset) {
-        this.type = type;
+        this.type = type.toUpperCase();
         this.name = name;
         this.size = size;
         this.offset = offset;
     }
 
     public String getType() {
+        if (type.endsWith("*")) {
+            return "LONG";
+        }
+        if ("SHORT".equals(type)) {
+            return "WORD";
+        }
+        if ("INT".equals(type)) {
+            return "LONG";
+        }
         return type;
+    }
+
+    public boolean isPointer() {
+        return type.endsWith("*");
     }
 
     public String getName() {
