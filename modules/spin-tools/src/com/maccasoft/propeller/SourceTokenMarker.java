@@ -839,6 +839,19 @@ public abstract class SourceTokenMarker {
         root.accept(new NodeVisitor() {
 
             @Override
+            public void visitDirective(DirectiveNode node) {
+                if (node instanceof DirectiveNode.DefineNode) {
+                    DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
+                    if (define.getIdentifier() != null) {
+                        String text = define.getIdentifier().getText();
+                        if (text.toUpperCase().contains(token)) {
+                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                        }
+                    }
+                }
+            }
+
+            @Override
             public boolean visitConstant(ConstantNode node) {
                 if (node.identifier != null) {
                     String text = node.identifier.getText();
@@ -851,6 +864,47 @@ public abstract class SourceTokenMarker {
 
         });
         root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitDirective(DirectiveNode node) {
+                if (node instanceof DirectiveNode.IncludeNode) {
+                    DirectiveNode.IncludeNode include = (DirectiveNode.IncludeNode) node;
+                    if (include.getFile() == null) {
+                        return;
+                    }
+
+                    Node objectRoot = getObjectTree(include.getFileName());
+                    if (objectRoot != null) {
+                        objectRoot.accept(new NodeVisitor() {
+
+                            @Override
+                            public void visitDirective(DirectiveNode node) {
+                                if (node instanceof DirectiveNode.DefineNode) {
+                                    DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
+                                    if (define.getIdentifier() != null) {
+                                        String text = define.getIdentifier().getText();
+                                        if (text.toUpperCase().contains(token)) {
+                                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                                        }
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public boolean visitConstant(ConstantNode node) {
+                                if (node.identifier != null) {
+                                    String text = node.identifier.getText();
+                                    if (text.toUpperCase().contains(token)) {
+                                        proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
+                                    }
+                                }
+                                return false;
+                            }
+
+                        });
+                    }
+                }
+            }
 
             @Override
             public void visitObject(ObjectNode objectNode) {

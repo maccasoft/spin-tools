@@ -2042,11 +2042,9 @@ public class SourceEditor {
                 }
             }
             else if (node != null) {
+                proposals.addAll(tokenMarker.getConstantsProposals(node, token));
                 if ((node instanceof StatementNode) || (node instanceof MethodNode) || (node instanceof FunctionNode)) {
                     proposals.addAll(tokenMarker.getMethodProposals(node, token));
-                }
-                else {
-                    proposals.addAll(tokenMarker.getConstantsProposals(node, token));
                 }
                 proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), token));
             }
