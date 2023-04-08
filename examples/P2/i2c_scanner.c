@@ -77,12 +77,12 @@ void i2c_matrix()
 
     for (int type = %0001; type <= %1110; type++) {
         term.fxhex(type << 4, 2);
-        term.tx(" ");
+        term.tx(' ');
         for (int addr = %000; addr <= %111; addr++) {
             int devid = (type << 4) | (addr << 1);
             if (i2c.present(devid)) {
                 term.fxhex(devid, 2);
-                term.tx(" ");
+                term.tx(' ');
                 count++;
             }
             else {
