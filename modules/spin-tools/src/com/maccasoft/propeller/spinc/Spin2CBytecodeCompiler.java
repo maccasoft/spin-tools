@@ -135,9 +135,6 @@ public abstract class Spin2CBytecodeCompiler {
         descriptors.put("strsize", new FunctionDescriptor(0x19, 0x76, 1, 1));
         descriptors.put("strcomp", new FunctionDescriptor(0x19, 0x78, 2, 1));
         descriptors.put("strcopy", new FunctionDescriptor(0x19, 0x7A, 3, 0));
-        descriptors.put("strlen", new FunctionDescriptor(0x19, 0x76, 1, 1));
-        descriptors.put("strcmp", new FunctionDescriptor(0x19, 0x78, 2, 1));
-        descriptors.put("strcpy", new FunctionDescriptor(0x19, 0x7A, 3, 0));
         descriptors.put("getcrc", new FunctionDescriptor(0x19, 0x7C, 3, 1));
         descriptors.put("waitus", new FunctionDescriptor(0x19, 0x7E, 1, 0));
         descriptors.put("waitms", new FunctionDescriptor(0x19, 0x80, 1, 0));
@@ -204,8 +201,8 @@ public abstract class Spin2CBytecodeCompiler {
         descriptors.put("rev", new FunctionDescriptor(0x87, -1, 2, 1));
         descriptors.put("zerox", new FunctionDescriptor(0x88, -1, 2, 1));
         descriptors.put("signx", new FunctionDescriptor(0x89, -1, 2, 1));
-        descriptors.put("min", new FunctionDescriptor(0x92, -1, 2, 1));
-        descriptors.put("max", new FunctionDescriptor(0x93, -1, 2, 1));
+        descriptors.put("max", new FunctionDescriptor(0x92, -1, 2, 1));
+        descriptors.put("min", new FunctionDescriptor(0x93, -1, 2, 1));
         descriptors.put("addbits", new FunctionDescriptor(0x94, -1, 2, 1));
         descriptors.put("addpins", new FunctionDescriptor(0x95, -1, 2, 1));
         descriptors.put("sca", new FunctionDescriptor(0x9B, -1, 2, 1));
@@ -1674,9 +1671,9 @@ public abstract class Spin2CBytecodeCompiler {
             case "ADDPINS":
                 return new Addpins(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "MIN":
-                return new LimitMin(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
-            case "MAX":
                 return new LimitMax(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "MAX":
+                return new LimitMin(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "ROR":
                 return new Ror(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "ROL":

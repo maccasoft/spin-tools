@@ -145,7 +145,6 @@ public class CTokenMarker extends SourceTokenMarker {
         spin1Functions.put("lookupz", TokenId.FUNCTION);
         spin1Functions.put("reboot", TokenId.FUNCTION);
         spin1Functions.put("strcomp", TokenId.FUNCTION);
-        spin1Functions.put("string", TokenId.FUNCTION);
         spin1Functions.put("strsize", TokenId.FUNCTION);
         spin1Functions.put("waitcnt", TokenId.FUNCTION);
         spin1Functions.put("waitpeq", TokenId.FUNCTION);
@@ -156,8 +155,8 @@ public class CTokenMarker extends SourceTokenMarker {
 
         spin1Functions.put("ror", TokenId.FUNCTION);
         spin1Functions.put("rol", TokenId.FUNCTION);
-        spin1Functions.put("min", TokenId.FUNCTION);
         spin1Functions.put("max", TokenId.FUNCTION);
+        spin1Functions.put("min", TokenId.FUNCTION);
         spin1Functions.put("abs", TokenId.FUNCTION);
         spin1Functions.put("rev", TokenId.FUNCTION);
         spin1Functions.put("encod", TokenId.FUNCTION);
@@ -532,7 +531,6 @@ public class CTokenMarker extends SourceTokenMarker {
         spin2Functions.put("wordfill", TokenId.FUNCTION);
         spin2Functions.put("longfill", TokenId.FUNCTION);
 
-        spin2Functions.put("string", TokenId.FUNCTION);
         spin2Functions.put("strsize", TokenId.FUNCTION);
         spin2Functions.put("strcomp", TokenId.FUNCTION);
         spin2Functions.put("strcopy", TokenId.FUNCTION);
@@ -558,6 +556,8 @@ public class CTokenMarker extends SourceTokenMarker {
         spin2Functions.put("rev", TokenId.FUNCTION);
         spin2Functions.put("zerox", TokenId.FUNCTION);
         spin2Functions.put("signx", TokenId.FUNCTION);
+        spin2Functions.put("max", TokenId.FUNCTION);
+        spin2Functions.put("min", TokenId.FUNCTION);
         spin2Functions.put("addpins", TokenId.FUNCTION);
         spin2Functions.put("addbits", TokenId.FUNCTION);
         spin2Functions.put("sca", TokenId.FUNCTION);

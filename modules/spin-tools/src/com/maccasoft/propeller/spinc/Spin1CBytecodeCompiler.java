@@ -120,8 +120,8 @@ public abstract class Spin1CBytecodeCompiler {
 
         descriptors.put("ror", new FunctionDescriptor(0b111_00000, 0b111_00000, 2));
         descriptors.put("rol", new FunctionDescriptor(0b111_00001, 0b111_00001, 2));
-        descriptors.put("min", new FunctionDescriptor(0b111_00100, 0b111_00100, 2));
-        descriptors.put("max", new FunctionDescriptor(0b111_00101, 0b111_00101, 2));
+        descriptors.put("max", new FunctionDescriptor(0b111_00100, 0b111_00100, 2));
+        descriptors.put("min", new FunctionDescriptor(0b111_00101, 0b111_00101, 2));
         descriptors.put("abs", new FunctionDescriptor(0b111_01001, 0b111_01001, 1));
         descriptors.put("rev", new FunctionDescriptor(0b111_01111, 0b111_01111, 2));
         descriptors.put("encod", new FunctionDescriptor(0b111_10001, 0b111_10001, 1));
@@ -1160,10 +1160,10 @@ public abstract class Spin1CBytecodeCompiler {
             return new Abs(buildConstantExpression(context, node.getChild(0)));
         }
         if ("MIN".equalsIgnoreCase(node.getText())) {
-            return new LimitMin(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+            return new LimitMax(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
         if ("MAX".equalsIgnoreCase(node.getText())) {
-            return new LimitMax(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
+            return new LimitMin(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
         }
         if ("ROR".equalsIgnoreCase(node.getText())) {
             return new Ror(buildConstantExpression(context, node.getChild(0)), buildConstantExpression(context, node.getChild(1)));
