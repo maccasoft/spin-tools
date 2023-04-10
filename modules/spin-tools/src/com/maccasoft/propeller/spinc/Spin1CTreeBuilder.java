@@ -105,6 +105,7 @@ public class Spin1CTreeBuilder {
 
     static Set<String> unary = new HashSet<>();
     static {
+        unary.add("*");
         unary.add("+");
         unary.add("-");
         //unary.add("?");

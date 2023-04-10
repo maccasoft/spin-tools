@@ -155,9 +155,9 @@ public class Spin2CTreeBuilder {
 
     static Set<String> unary = new HashSet<String>();
     static {
+        unary.add("*");
         unary.add("+");
         unary.add("-");
-        unary.add("-=");
         unary.add("++");
         unary.add("--");
         //unary.add("??");

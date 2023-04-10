@@ -53,6 +53,10 @@ public class VariableOp extends Spin2Bytecode {
         }
     }
 
+    public VariableOp(Spin2Context context, Op op, Variable variable) {
+        this(context, op, false, variable, false, 0);
+    }
+
     public VariableOp(Spin2Context context, Op op, boolean indexed, Variable variable, boolean hasIndex, int index) {
         super(context);
         this.op = op;
@@ -78,14 +82,6 @@ public class VariableOp extends Spin2Bytecode {
                 this.index = index * 4;
             }
         }
-    }
-
-    public VariableOp(Spin2Context context, Size ss, Op op, boolean indexed, Variable variable) {
-        super(context);
-        this.ss = ss;
-        this.op = op;
-        this.indexed = indexed;
-        this.variable = variable;
     }
 
     @Override

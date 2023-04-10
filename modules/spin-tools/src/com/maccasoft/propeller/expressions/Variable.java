@@ -46,6 +46,23 @@ public class Variable extends Expression {
         return type.endsWith("*");
     }
 
+    public String getPointerType() {
+        if (!type.endsWith("*")) {
+            return null;
+        }
+        return type.substring(0, type.indexOf(' ')).toUpperCase();
+    }
+
+    public int getPointerSize() {
+        if (type.startsWith("BYTE")) {
+            return 1;
+        }
+        if (type.startsWith("WORD") || type.startsWith("SHORT")) {
+            return 2;
+        }
+        return 4;
+    }
+
     public String getName() {
         return name;
     }

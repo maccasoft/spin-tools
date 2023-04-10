@@ -437,6 +437,9 @@ public abstract class Spin1CBytecodeCompiler {
                     }
                 }
             }
+            else if ("*".equals(node.getText()) && node.getChildCount() == 1) {
+                source.addAll(compilePointerDereference(context, method, node.getChild(0), push ? MemoryOp.Op.Read : MemoryOp.Op.Write));
+            }
             else if ("+".equals(node.getText()) && node.getChildCount() == 1) {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
             }
@@ -968,37 +971,115 @@ public abstract class Spin1CBytecodeCompiler {
                     }
                     else if (expression instanceof Variable) {
                         boolean popIndex = false;
+                        Spin1StatementNode indexNode = null;
                         Spin1StatementNode postEffectNode = null;
+                        Variable variable = (Variable) expression;
 
-                        int n = 0;
-                        if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
-                            source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
-                            popIndex = true;
-                        }
-                        if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
-                            postEffectNode = node.getChild(n++);
-                        }
-                        if (n < node.getChildCount()) {
-                            throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getToken());
-                        }
-
-                        if (postEffectNode != null) {
-                            source.add(new VariableOp(context, VariableOp.Op.Assign, popIndex, (Variable) expression));
-                            if ("++".equals(postEffectNode.getText())) {
-                                Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
-                                int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, type.ordinal() + 1);
-                                source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_INC"));
+                        if (variable.isPointer()) {
+                            int n = 0;
+                            if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
+                                indexNode = node.getChild(n++);
+                                popIndex = true;
                             }
-                            else if ("--".equals(postEffectNode.getText())) {
-                                Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
-                                int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, type.ordinal() + 1);
-                                source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_DEC"));
+                            if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+                                postEffectNode = node.getChild(n++);
+                            }
+                            if (n < node.getChildCount()) {
+                                throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getToken());
+                            }
+
+                            source.add(new VariableOp(context, VariableOp.Op.Read, variable));
+
+                            if (indexNode != null) {
+                                source.addAll(compileConstantExpression(context, method, indexNode));
+
+                                MemoryOp.Size ss = MemoryOp.Size.Long;
+                                if ("BYTE".equalsIgnoreCase(variable.getPointerType())) {
+                                    ss = MemoryOp.Size.Byte;
+                                }
+                                else if ("WORD".equalsIgnoreCase(variable.getPointerType())) {
+                                    ss = MemoryOp.Size.Word;
+                                }
+
+                                if (postEffectNode != null) {
+                                    source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.Pop, MemoryOp.Op.Assign, null));
+                                    if ("++".equals(postEffectNode.getText())) {
+                                        Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(variable.getType());
+                                        int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, type.ordinal() + 1);
+                                        source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_INC"));
+                                    }
+                                    else if ("--".equals(postEffectNode.getText())) {
+                                        Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(variable.getType());
+                                        int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, type.ordinal() + 1);
+                                        source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_DEC"));
+                                    }
+                                    else {
+                                        throw new CompilerException("unsupported post effect " + postEffectNode.getText(), postEffectNode.getToken());
+                                    }
+                                }
+                                else {
+                                    source.add(new MemoryOp(context, ss, popIndex, MemoryOp.Base.Pop, push ? MemoryOp.Op.Read : MemoryOp.Op.Write, null));
+                                }
+                            }
+
+                            else if (postEffectNode != null) {
+                                source.add(new VariableOp(context, VariableOp.Op.Assign, false, variable));
+                                if (variable.getPointerSize() == 1) {
+                                    if ("++".equals(postEffectNode.getText())) {
+                                        int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, Spin1Bytecode.Type.Long.ordinal() + 1);
+                                        source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_INC"));
+                                    }
+                                    else if ("--".equals(postEffectNode.getText())) {
+                                        int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, Spin1Bytecode.Type.Long.ordinal() + 1);
+                                        source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_DEC"));
+                                    }
+                                }
+                                else {
+                                    source.add(new Constant(context, new NumberLiteral(variable.getPointerSize()), false));
+                                    source.add(new VariableOp(context, VariableOp.Op.Assign, popIndex, variable));
+                                    if ("++".equals(postEffectNode.getText())) {
+                                        OperatorDescriptor desc = assignOperators.get("+=");
+                                        source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(desc.value, push), desc.text));
+                                    }
+                                    else if ("--".equals(postEffectNode.getText())) {
+                                        OperatorDescriptor desc = assignOperators.get("-=");
+                                        source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(desc.value, push), desc.text));
+                                    }
+                                }
                             }
                         }
                         else {
-                            source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) expression));
+                            int n = 0;
+                            if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
+                                source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
+                                popIndex = true;
+                            }
+                            if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+                                postEffectNode = node.getChild(n++);
+                            }
+                            if (n < node.getChildCount()) {
+                                throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getToken());
+                            }
+
+                            if (postEffectNode != null) {
+                                source.add(new VariableOp(context, VariableOp.Op.Assign, popIndex, (Variable) expression));
+                                if ("++".equals(postEffectNode.getText())) {
+                                    Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(variable.getType());
+                                    int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, type.ordinal() + 1);
+                                    source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_INC"));
+                                }
+                                else if ("--".equals(postEffectNode.getText())) {
+                                    Spin1Bytecode.Type type = Spin1Bytecode.Type.fromString(variable.getType());
+                                    int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, type.ordinal() + 1);
+                                    source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, push), "POST_DEC"));
+                                }
+                            }
+                            else {
+                                source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, variable));
+                            }
                         }
-                        ((Variable) expression).setCalledBy(method);
+
+                        variable.setCalledBy(method);
                     }
                     else if (expression instanceof ContextLiteral) {
                         boolean popIndex = false;
@@ -1243,6 +1324,9 @@ public abstract class Spin1CBytecodeCompiler {
                 }
             }
         }
+        else if ("*".equals(node.getText()) && node.getChildCount() == 1) {
+            source.addAll(compilePointerDereference(context, method, node.getChild(0), push ? MemoryOp.Op.Assign : MemoryOp.Op.Write));
+        }
         else if (node.getType() == Token.OPERATOR) {
             source.addAll(leftAssign(context, method, node.getChild(1), true));
             source.add(new Bytecode(context, 0x80, "WRITE"));
@@ -1281,12 +1365,33 @@ public abstract class Spin1CBytecodeCompiler {
                 }
             }
             else if (expression instanceof Variable) {
-                boolean indexed = false;
+                Spin1StatementNode indexNode = null;
                 if (node.getChildCount() != 0) {
-                    source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
-                    indexed = true;
+                    indexNode = node.getChild(0);
                 }
-                source.add(new VariableOp(context, push ? VariableOp.Op.Assign : VariableOp.Op.Write, indexed, (Variable) expression));
+
+                if (((Variable) expression).isPointer() && indexNode != null) {
+                    source.add(new VariableOp(context, VariableOp.Op.Read, false, (Variable) expression));
+
+                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    if ("BYTE".equals(((Variable) expression).getPointerType())) {
+                        ss = MemoryOp.Size.Byte;
+                    }
+                    else if ("WORD".equals(((Variable) expression).getPointerType())) {
+                        ss = MemoryOp.Size.Word;
+                    }
+
+                    source.addAll(compileBytecodeExpression(context, method, indexNode, true));
+
+                    MemoryOp.Op op = push ? MemoryOp.Op.Assign : MemoryOp.Op.Write;
+                    source.add(new MemoryOp(context, ss, indexNode != null, MemoryOp.Base.Pop, op, null));
+                }
+                else {
+                    if (indexNode != null) {
+                        source.addAll(compileBytecodeExpression(context, method, indexNode, true));
+                    }
+                    source.add(new VariableOp(context, push ? VariableOp.Op.Assign : VariableOp.Op.Write, indexNode != null, (Variable) expression));
+                }
                 ((Variable) expression).setCalledBy(method);
             }
             else {
@@ -1310,6 +1415,77 @@ public abstract class Spin1CBytecodeCompiler {
                 source.add(new MemoryOp(context, ss, indexed, MemoryOp.Base.PBase, push ? MemoryOp.Op.Assign : MemoryOp.Op.Write, expression));
             }
         }
+
+        return source;
+    }
+
+    List<Spin1Bytecode> compilePointerDereference(Spin1Context context, Spin1Method method, Spin1StatementNode node, MemoryOp.Op op) {
+        Spin1StatementNode postEffectNode = null;
+        List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
+
+        Expression expression = context.getLocalSymbol(node.getText());
+        if (expression == null) {
+            throw new CompilerException("undefined symbol " + node.getText(), node.getTokens());
+        }
+        if (!(expression instanceof Variable)) {
+            throw new CompilerException("unsupported", node.getTokens());
+        }
+
+        Variable variable = (Variable) expression;
+        if (!variable.isPointer()) {
+            logMessage(new CompilerException(CompilerException.WARNING, "not a pointer", node.getTokens()));
+        }
+        variable.setCalledBy(method);
+
+        int n = 0;
+        if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+            postEffectNode = node.getChild(n++);
+        }
+        if (n < node.getChildCount()) {
+            throw new CompilerException("syntax error", node.getChild(n).getTokens());
+        }
+
+        if (postEffectNode != null && variable.getPointerSize() == 1) {
+            source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
+            if ("++".equals(postEffectNode.getText())) {
+                int code = Spin1Bytecode.op_ss.setValue(0b0_0101_000, Spin1Bytecode.Type.Long.ordinal() + 1);
+                source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, true), "POST_INC"));
+            }
+            else if ("--".equals(postEffectNode.getText())) {
+                int code = Spin1Bytecode.op_ss.setValue(0b0_0111_000, Spin1Bytecode.Type.Long.ordinal() + 1);
+                source.add(new Bytecode(context, Spin1Bytecode.op_p.setBoolean(code, true), "POST_DEC"));
+            }
+            else {
+                throw new CompilerException("unsupported post effect " + postEffectNode.getText(), postEffectNode.getToken());
+            }
+        }
+        else {
+            source.add(new VariableOp(context, VariableOp.Op.Read, variable));
+            if (postEffectNode != null) {
+                source.add(new Constant(context, new NumberLiteral(variable.getPointerSize()), false));
+                source.add(new VariableOp(context, VariableOp.Op.Assign, variable));
+                if ("++".equals(postEffectNode.getText())) {
+                    OperatorDescriptor desc = assignOperators.get("+=");
+                    source.add(new Bytecode(context, desc.value, desc.text));
+                }
+                else if ("--".equals(postEffectNode.getText())) {
+                    OperatorDescriptor desc = assignOperators.get("-=");
+                    source.add(new Bytecode(context, desc.value, desc.text));
+                }
+                else {
+                    throw new CompilerException("unsupported post effect " + postEffectNode.getText(), postEffectNode.getToken());
+                }
+            }
+        }
+
+        MemoryOp.Size ss = MemoryOp.Size.Long;
+        if ("BYTE".equals(((Variable) expression).getPointerType())) {
+            ss = MemoryOp.Size.Byte;
+        }
+        else if ("WORD".equals(((Variable) expression).getPointerType())) {
+            ss = MemoryOp.Size.Word;
+        }
+        source.add(new MemoryOp(context, ss, false, MemoryOp.Base.Pop, op, null));
 
         return source;
     }

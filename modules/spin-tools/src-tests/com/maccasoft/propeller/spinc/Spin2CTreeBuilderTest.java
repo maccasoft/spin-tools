@@ -47,6 +47,25 @@ class Spin2CTreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void testPointerDereference() {
+        String text = "*a";
+        Assertions.assertEquals(""
+            + "[*]\n"
+            + " +-- [a]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testPointerDereferencePostEffect() {
+        String text = "*a++";
+        Assertions.assertEquals(""
+            + "[*]\n"
+            + " +-- [a]\n"
+            + "      +-- [++]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2CTreeBuilder builder = new Spin2CTreeBuilder(new Spin2CContext());
 
