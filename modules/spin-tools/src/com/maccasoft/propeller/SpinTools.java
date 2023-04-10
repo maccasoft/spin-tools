@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -1889,16 +1890,26 @@ public class SpinTools {
         if (serialTerminal != null) {
             serialTerminal.setSerialPort(null);
         }
-        doUpload(obj, writeToFlash, serialPort, serialPortShared);
+
+        SerialPort uploadPort = doUpload(obj, writeToFlash, serialPort, serialPortShared);
 
         if (serialTerminal != null) {
-            serialTerminal.setSerialPort(serialPort, isDebug ? ((Spin2Object) obj).getDebugBaud() : serialTerminal.getBaudRate());
+            serialTerminal.setSerialPort(uploadPort != null ? uploadPort : serialPort, isDebug ? ((Spin2Object) obj).getDebugBaud() : serialTerminal.getBaudRate());
+        }
+
+        if (uploadPort != null && !uploadPort.getPortName().equals(serialPort.getPortName())) {
+            try {
+                serialPort.closePort();
+            } catch (SerialPortException e) {
+                // Do nothing
+            }
         }
     }
 
-    private void doUpload(SpinObject obj, boolean writeToFlash, SerialPort serialPort, boolean serialPortShared) {
+    private SerialPort doUpload(SpinObject obj, boolean writeToFlash, SerialPort serialPort, boolean serialPortShared) {
         IRunnableWithProgress thread;
         Shell activeShell = Display.getDefault().getActiveShell();
+        AtomicReference<SerialPort> port = new AtomicReference<>(serialPort);
 
         ProgressMonitorDialog dlg = new ProgressMonitorDialog(activeShell);
 
@@ -1914,22 +1925,6 @@ public class SpinTools {
                         obj.generateBinary(os);
 
                         Propeller1Loader loader = new Propeller1Loader(serialPort, serialPortShared) {
-
-                            @Override
-                            protected int hwfind() throws SerialPortException, IOException {
-                                int rc = super.hwfind();
-                                if (rc == 0) {
-                                    throw new RuntimeException("Propeller 1 not found on " + serialPort.getPortName());
-                                }
-                                Display.getDefault().syncExec(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        dlg.open();
-                                    }
-                                });
-                                return rc;
-                            }
 
                             @Override
                             protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
@@ -1956,6 +1951,20 @@ public class SpinTools {
                             }
 
                         };
+
+                        SerialPort detectedPort = loader.detect();
+                        if (detectedPort == null) {
+                            throw new RuntimeException("Propeller 1 not found");
+                        }
+                        port.set(detectedPort);
+
+                        Display.getDefault().syncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                dlg.open();
+                            }
+                        });
 
                         byte[] image = os.toByteArray();
                         loader.upload(image, writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY);
@@ -1996,22 +2005,6 @@ public class SpinTools {
                         Propeller2Loader loader = new Propeller2Loader(serialPort, serialPortShared) {
 
                             @Override
-                            protected int hwfind() throws SerialPortException, IOException {
-                                int rc = super.hwfind();
-                                if (rc == 0) {
-                                    throw new RuntimeException("Propeller 2 not found on " + serialPort.getPortName());
-                                }
-                                Display.getDefault().syncExec(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        dlg.open();
-                                    }
-                                });
-                                return rc;
-                            }
-
-                            @Override
                             protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
                                 monitor.setTaskName("Loading " + text + " to RAM");
                                 super.bufferUpload(type, binaryImage, text);
@@ -2030,6 +2023,21 @@ public class SpinTools {
                             }
 
                         };
+
+                        SerialPort detectedPort = loader.detect();
+                        if (detectedPort == null) {
+                            throw new RuntimeException("Propeller 2 not found");
+                        }
+                        port.set(detectedPort);
+
+                        Display.getDefault().syncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                dlg.open();
+                            }
+                        });
+
                         loader.upload(os.toByteArray(), writeToFlash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM);
 
                     } catch (Exception e) {
@@ -2061,6 +2069,8 @@ public class SpinTools {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return port.get();
     }
 
     void createHelpMenu(Menu parent) {

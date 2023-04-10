@@ -20,6 +20,7 @@ import java.util.Base64.Encoder;
 
 import jssc.SerialPort;
 import jssc.SerialPortException;
+import jssc.SerialPortList;
 import jssc.SerialPortTimeoutException;
 
 public class Propeller2Loader {
@@ -33,10 +34,6 @@ public class Propeller2Loader {
     int portBaudRate = UPLOAD_BAUD_RATE;
 
     boolean shared;
-
-    public Propeller2Loader(String port) {
-        this.serialPort = new SerialPort(port);
-    }
 
     public Propeller2Loader(SerialPort serialPort, boolean shared) {
         this.serialPort = serialPort;
@@ -57,6 +54,42 @@ public class Propeller2Loader {
 
     public void setPortBaudRate(int portBaudRate) {
         this.portBaudRate = portBaudRate;
+    }
+
+    public SerialPort detect() {
+        if (serialPort != null) {
+            try {
+                if (find() != 0) {
+                    return serialPort;
+                }
+            } catch (Exception e) {
+                // Do nothing
+            }
+        }
+
+        String[] portNames = SerialPortList.getPortNames();
+        for (int i = 0; i < portNames.length; i++) {
+            if (serialPort != null && portNames[i].equals(serialPort.getPortName())) {
+                continue;
+            }
+            serialPort = new SerialPort(portNames[i]);
+            try {
+                if (find() != 0) {
+                    return serialPort;
+                }
+            } catch (Exception e) {
+                // Do nothing
+            }
+            if (shared) {
+                try {
+                    serialPort.closePort();
+                } catch (Exception e) {
+                    // Do nothing
+                }
+            }
+        }
+
+        return null;
     }
 
     public int find() throws Exception {
