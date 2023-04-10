@@ -929,6 +929,10 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
                     if (!",".equals(token.getText())) {
                         throw new CompilerException("expecting comma or statement end", token);
                     }
+
+                    if (typeText.endsWith("*")) {
+                        typeText = typeText.substring(0, typeText.indexOf('*')).trim();
+                    }
                 }
             }
         }
