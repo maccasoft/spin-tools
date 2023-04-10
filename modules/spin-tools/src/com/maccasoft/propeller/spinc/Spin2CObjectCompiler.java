@@ -844,94 +844,68 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             Token type = token;
             String typeText = token.getText();
 
-            if ("[".equals(iter.peekNext().getText())) {
-                Spin2CTreeBuilder builder = new Spin2CTreeBuilder(scope);
-                builder.addToken(type);
-                while (iter.hasNext()) {
+            while (iter.hasNext()) {
+                Token identifier = iter.next();
+                if ("*".equals(identifier.getText())) {
+                    typeText += " *";
+                    if (!iter.hasNext()) {
+                        throw new CompilerException("expecting identifier", identifier);
+                    }
+                    identifier = iter.next();
+                }
+                if (identifier.type != Token.KEYWORD) {
+                    throw new CompilerException("expecting identifier", identifier);
+                }
+                Expression size = new NumberLiteral(1);
+
+                if (iter.hasNext() && "[".equals(iter.peekNext().getText())) {
+                    token = iter.next();
+                    if (!iter.hasNext()) {
+                        throw new CompilerException("expecting expression", token);
+                    }
+                    size = buildIndexExpression(iter);
+                }
+
+                try {
+                    String identifierText = identifier.getText();
+
+                    Expression expression = method.getScope().getLocalSymbol(identifierText);
+                    if (expression instanceof LocalVariable) {
+                        logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
+                    }
+                    else {
+                        if (expression != null) {
+                            logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier.getText() + "' hides global", identifier));
+                        }
+                    }
+
+                    LocalVariable variable = method.addLocalVariable(typeText, identifierText, size);
+                    variable.setData(identifier);
+
+                    boolean add = true;
+                    FunctionNode functionNode = (FunctionNode) method.getData();
+                    for (FunctionNode.LocalVariableNode param : functionNode.getLocalVariables()) {
+                        if (param.getIdentifier().equals(identifier)) {
+                            add = false;
+                            break;
+                        }
+                    }
+                    if (add) {
+                        FunctionNode.LocalVariableNode local = new FunctionNode.LocalVariableNode(functionNode);
+                        local.type = type;
+                        local.identifier = identifier;
+                    }
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, identifier));
+                }
+
+                if (iter.hasNext()) {
                     token = iter.next();
                     if (";".equals(token.getText())) {
                         break;
                     }
-                    builder.addToken(token);
-                }
-                line = new Spin2MethodLine(context, parent, null, node);
-                line.addSource(spinCompiler.compileBytecodeExpression(context, method, builder.getRoot(), false));
-            }
-            else {
-                while (iter.hasNext()) {
-                    Token identifier = iter.next();
-                    if ("*".equals(identifier.getText())) {
-                        typeText += " *";
-                        if (!iter.hasNext()) {
-                            throw new CompilerException("expecting identifier", identifier);
-                        }
-                        identifier = iter.next();
-                    }
-                    if (identifier.type != Token.KEYWORD) {
-                        throw new CompilerException("expecting identifier", identifier);
-                    }
-                    Expression size = new NumberLiteral(1);
-
-                    if (iter.hasNext()) {
-                        token = iter.next();
-                        if ("[".equals(token.getText())) {
-                            if (!iter.hasNext()) {
-                                throw new CompilerException("expecting expression", new Token(token.getStream(), token.stop));
-                            }
-                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(context);
-                            while (iter.hasNext()) {
-                                token = iter.next();
-                                if ("]".equals(token.getText())) {
-                                    try {
-                                        size = builder.getExpression();
-                                    } catch (CompilerException e) {
-                                        logMessage(e);
-                                    } catch (Exception e) {
-                                        logMessage(new CompilerException(e, builder.getTokens()));
-                                    }
-                                    break;
-                                }
-                                builder.addToken(token);
-                            }
-                            if (!"]".equals(token.getText())) {
-                                throw new CompilerException("expecting '['", token);
-                            }
-                            size = builder.getExpression();
-                            if (!iter.hasNext()) {
-                                throw new CompilerException("expecting comma or statement end", token);
-                            }
-                            token = iter.next();
-                        }
-                    }
-
-                    try {
-                        String identifierText = identifier.getText();
-                        LocalVariable variable = method.addLocalVariable(typeText, identifierText, size);
-                        variable.setData(identifier);
-
-                        boolean add = true;
-                        FunctionNode functionNode = (FunctionNode) method.getData();
-                        for (FunctionNode.LocalVariableNode param : functionNode.getLocalVariables()) {
-                            if (param.getIdentifier().equals(identifier)) {
-                                add = false;
-                                break;
-                            }
-                        }
-                        if (add) {
-                            FunctionNode.LocalVariableNode local = new FunctionNode.LocalVariableNode(functionNode);
-                            local.type = type;
-                            local.identifier = identifier;
-                        }
-
-                    } catch (Exception e) {
-                        logMessage(new CompilerException(e, identifier));
-                    }
-
-                    if (!iter.hasNext()) {
-                        break;
-                    }
                     if ("=".equals(token.getText())) {
-                        Spin2CTreeBuilder builder = new Spin2CTreeBuilder(context);
+                        Spin2CTreeBuilder builder = new Spin2CTreeBuilder(scope);
                         builder.addToken(identifier);
                         builder.addToken(token);
                         while (iter.hasNext()) {
@@ -941,7 +915,6 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                             }
                             builder.addToken(token);
                         }
-
                         if (line == null) {
                             line = new Spin2MethodLine(context, parent, null, node);
                         }
@@ -957,10 +930,10 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                     if (!",".equals(token.getText())) {
                         throw new CompilerException("expecting comma or statement end", token);
                     }
+                }
 
-                    if (typeText.endsWith("*")) {
-                        typeText = typeText.substring(0, typeText.indexOf('*')).trim();
-                    }
+                if (typeText.endsWith("*")) {
+                    typeText = typeText.substring(0, typeText.indexOf('*')).trim();
                 }
             }
         }
@@ -976,6 +949,8 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             Spin2StatementNode initializer = null;
             Spin2StatementNode condition = null;
             Spin2StatementNode increment = null;
+
+            line = new Spin2MethodLine(context, parent, null, node);
 
             Spin2CTreeBuilder builder = new Spin2CTreeBuilder(context);
             if (iter.hasNext()) {
@@ -1094,7 +1069,6 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                 throw new RuntimeException("syntax error");
             }
 
-            line = new Spin2MethodLine(context, parent, null, node);
             if (initializer != null) {
                 for (int i = 0; i < initializer.getChildCount(); i++) {
                     line.addSource(spinCompiler.compileBytecodeExpression(context, method, initializer.getChild(i), false));
