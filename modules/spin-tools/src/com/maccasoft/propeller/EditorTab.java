@@ -304,9 +304,11 @@ public class EditorTab implements FindReplaceTarget {
         protected void setP1(boolean p1) {
             if (p1) {
                 this.sourceProvider = new EditorTabSourceProvider(preferences.getSpin1LibraryPath());
+                editor.setHelpProvider(new EditorHelp("Spin1CInstructions.xml", new File(""), ".spin"));
             }
             else {
                 this.sourceProvider = new EditorTabSourceProvider(preferences.getSpin2LibraryPath());
+                editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", new File(""), ".spin2"));
             }
             super.setP1(p1);
         }
