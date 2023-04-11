@@ -91,18 +91,20 @@ public class Spin1Method {
                 int offset = 4 + parameters.size() * 4;
 
                 for (LocalVariable var : localVariables) {
+                    int count = 1;
+                    if ("WORD".equalsIgnoreCase(var.getType())) {
+                        count = 2;
+                        offset = (offset + 1) & ~1;
+                    }
+                    else if (!"BYTE".equalsIgnoreCase(var.getType())) {
+                        count = 4;
+                        offset = (offset + 3) & ~3;
+                    }
                     if (var == this) {
                         break;
                     }
-                    int count = 4;
                     int varSize = var.getSize() != null ? var.getSize().getNumber().intValue() : 1;
-                    if ("WORD".equalsIgnoreCase(var.getType())) {
-                        count = 2;
-                    }
-                    else if ("BYTE".equalsIgnoreCase(var.getType())) {
-                        count = 1;
-                    }
-                    offset += ((count * varSize + 3) / 4) * 4;
+                    offset += count * varSize;
                 }
 
                 return offset;
@@ -164,12 +166,14 @@ public class Spin1Method {
         int count = 0;
 
         for (LocalVariable var : localVariables) {
-            int size = 4;
+            int size = 1;
             if ("WORD".equalsIgnoreCase(var.getType())) {
                 size = 2;
+                count = (count + 1) & ~1;
             }
-            else if ("BYTE".equalsIgnoreCase(var.getType())) {
-                size = 1;
+            else if (!"BYTE".equalsIgnoreCase(var.getType())) {
+                size = 4;
+                count = (count + 3) & ~3;
             }
             if (var.getSize() != null) {
                 size = size * var.getSize().getNumber().intValue();
@@ -177,7 +181,7 @@ public class Spin1Method {
             count += size;
         }
 
-        return count;
+        return (count + 3) & ~3;
     }
 
     public int getStackSize() {

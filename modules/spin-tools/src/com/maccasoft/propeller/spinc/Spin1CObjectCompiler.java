@@ -576,18 +576,28 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
 
             try {
                 String identifierText = identifier.getText();
+
+                int varSize = size.getNumber().intValue();
+                if ("WORD".equalsIgnoreCase(type)) {
+                    varSize = varSize * 2;
+                    if ((objectVarSize & 1) != 0) {
+                        logMessage(new CompilerException(CompilerException.WARNING, "variable is not word-aligned", identifier));
+                    }
+                    objectVarSize = (objectVarSize + 1) & ~1;
+                }
+                else if (!"BYTE".equalsIgnoreCase(type)) {
+                    varSize = varSize * 4;
+                    if ((objectVarSize & 3) != 0) {
+                        logMessage(new CompilerException(CompilerException.WARNING, "variable is not long-aligned", identifier));
+                    }
+                    objectVarSize = (objectVarSize + 3) & ~3;
+                }
+
                 Variable var = new Variable(type, identifier.getText(), size, objectVarSize);
                 scope.addSymbol(identifierText, var);
                 variables.add(var);
                 var.setData(identifier);
 
-                int varSize = size.getNumber().intValue();
-                if ("WORD".equalsIgnoreCase(type)) {
-                    varSize = varSize * 2;
-                }
-                else if (!"BYTE".equalsIgnoreCase(type)) {
-                    varSize = varSize * 4;
-                }
                 objectVarSize += varSize;
             } catch (Exception e) {
                 logMessage(new CompilerException(e, identifier));
