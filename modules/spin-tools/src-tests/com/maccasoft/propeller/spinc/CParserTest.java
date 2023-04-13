@@ -626,6 +626,71 @@ class CParserTest {
             + "", tree(root));
     }
 
+    @Test
+    void testStructureDefinition() throws Exception {
+        CParser subject = new CParser(new CTokenStream(""
+            + "struct data {\n"
+            + "    byte a;\n"
+            + "    byte b, c;\n"
+            + "    byte d[10];\n"
+            + "};\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- TypeDefinitionNode type=struct identifier=data [struct data { byte a; byte b, c; byte d[10]; };]\n"
+            + "    +-- Definition type=byte identifier=a [byte a]\n"
+            + "    +-- Definition type=byte identifier=b [byte b]\n"
+            + "        +-- Definition identifier=c [c]\n"
+            + "    +-- Definition type=byte identifier=d [byte d[10]]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testStructureDefinitionAndVariables() throws Exception {
+        CParser subject = new CParser(new CTokenStream(""
+            + "struct data {\n"
+            + "    byte a;\n"
+            + "    byte b, c;\n"
+            + "    byte d[10];\n"
+            + "} a, *b, c;\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- TypeDefinitionNode type=struct identifier=data [struct data { byte a; byte b, c; byte d[10]; } a, *b, c;]\n"
+            + "    +-- Definition type=byte identifier=a [byte a]\n"
+            + "    +-- Definition type=byte identifier=b [byte b]\n"
+            + "        +-- Definition identifier=c [c]\n"
+            + "    +-- Definition type=byte identifier=d [byte d[10]]\n"
+            + "    +-- VariableNode identifier=a [a]\n"
+            + "    +-- VariableNode type=* identifier=b [*b]\n"
+            + "    +-- VariableNode identifier=c [c]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testStructureVariables() throws Exception {
+        CParser subject = new CParser(new CTokenStream(""
+            + "struct data a;\n"
+            + "struct data b, c;\n"
+            + "struct data *d, e, *f;\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- VariableNode modifier=struct type=data identifier=a [struct data a]\n"
+            + "+-- VariableNode modifier=struct type=data identifier=b [struct data b, c]\n"
+            + "    +-- VariableNode identifier=c [c]\n"
+            + "+-- VariableNode modifier=struct type=data identifier=* [struct data *d, e, *f]\n"
+            + "    +-- VariableNode identifier=e [e]\n"
+            + "    +-- VariableNode type=* identifier=f [*f]\n"
+            + "", tree(root));
+    }
+
     String tree(Node root) throws Exception {
         return tree(root, 0);
     }
@@ -648,8 +713,8 @@ class CParserTest {
             }
         }
 
-        String text = root.getText().replaceAll("[\n\n]+", " ");
-        if (root.getTokenCount() > 1 && !"}".equals(root.getStartToken().getText())) {
+        String text = root.getText().replaceAll("[\n\r]+[ ]*", " ");
+        if (text.indexOf('}') < text.indexOf('{')) {
             text = text.replaceAll("}[ ]+", "");
         }
 

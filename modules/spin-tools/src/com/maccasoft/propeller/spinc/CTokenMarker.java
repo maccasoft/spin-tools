@@ -32,6 +32,7 @@ import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin1.Spin1Model;
 import com.maccasoft.propeller.spin2.Spin2Model;
@@ -59,6 +60,9 @@ public class CTokenMarker extends SourceTokenMarker {
         keywords.put("select", TokenId.KEYWORD);
         keywords.put("until", TokenId.KEYWORD);
         keywords.put("while", TokenId.KEYWORD);
+
+        keywords.put("static", TokenId.KEYWORD);
+        keywords.put("struct", TokenId.KEYWORD);
 
         keywords.put("BYTE", TokenId.TYPE);
         keywords.put("WORD", TokenId.TYPE);
@@ -814,6 +818,39 @@ public class CTokenMarker extends SourceTokenMarker {
         }
 
         @Override
+        public void visitTypeDefinition(TypeDefinitionNode node) {
+            if (node.getType() != null) {
+                tokens.add(new TokenMarker(node.getType(), TokenId.TYPE));
+            }
+            if (node.getIdentifier() != null) {
+                symbols.put(node.getIdentifier().getText(), TokenId.TYPE);
+                tokens.add(new TokenMarker(node.getIdentifier(), TokenId.TYPE));
+            }
+
+            for (Node child : node.getChilds()) {
+                if (child instanceof TypeDefinitionNode.Definition) {
+                    TypeDefinitionNode.Definition def = (TypeDefinitionNode.Definition) child;
+
+                    if (def.getModifier() != null) {
+                        tokens.add(new TokenMarker(def.getModifier(), TokenId.TYPE));
+                    }
+                    if (def.getType() != null) {
+                        tokens.add(new TokenMarker(def.getType(), TokenId.TYPE));
+                    }
+                    if (def.getIdentifier() != null) {
+                        tokens.add(new TokenMarker(node.getIdentifier(), TokenId.VARIABLE));
+                    }
+                }
+                else if (child instanceof VariableNode) {
+                    VariableNode var = (VariableNode) child;
+                    if (var.getIdentifier() != null) {
+                        tokens.add(new TokenMarker(var.getIdentifier(), TokenId.VARIABLE));
+                    }
+                }
+            }
+        }
+
+        @Override
         public void visitVariable(VariableNode node) {
             if (node.getModifier() != null) {
                 tokens.add(new TokenMarker(node.getModifier(), TokenId.TYPE));
@@ -1002,6 +1039,14 @@ public class CTokenMarker extends SourceTokenMarker {
     final NodeVisitor updateSpin1ReferencesVisitor = new NodeVisitor() {
 
         String lastLabel = "";
+
+        @Override
+        public void visitTypeDefinition(TypeDefinitionNode node) {
+            markTokens(node, 0, "");
+            for (Node child : node.getChilds()) {
+                markTokens(child, 0, "");
+            }
+        }
 
         @Override
         public void visitVariable(VariableNode node) {
@@ -1216,6 +1261,14 @@ public class CTokenMarker extends SourceTokenMarker {
     final NodeVisitor updateSpin2ReferencesVisitor = new NodeVisitor() {
 
         String lastLabel = "";
+
+        @Override
+        public void visitTypeDefinition(TypeDefinitionNode node) {
+            markTokens(node, 0, "");
+            for (Node child : node.getChilds()) {
+                markTokens(child, 0, "");
+            }
+        }
 
         @Override
         public void visitVariable(VariableNode node) {

@@ -16,6 +16,10 @@ public class NodeVisitor {
 
     }
 
+    public void visitTypeDefinition(TypeDefinitionNode node) {
+
+    }
+
     public boolean visitConstants(ConstantsNode node) {
         return true;
     }

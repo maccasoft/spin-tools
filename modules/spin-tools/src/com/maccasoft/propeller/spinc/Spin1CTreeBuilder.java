@@ -120,6 +120,7 @@ public class Spin1CTreeBuilder {
         //unary.add(">|");
         //unary.add("^^");
         //unary.add("@@");
+        unary.add("~");
     }
 
     static Set<String> postEffect = new HashSet<>();

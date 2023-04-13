@@ -182,6 +182,7 @@ public class Spin2CTreeBuilder {
         //unary.add("QLOG=");
         //unary.add("QEXP");
         //unary.add("QEXP=");
+        unary.add("~");
     }
 
     static Set<String> postEffect = new HashSet<String>();

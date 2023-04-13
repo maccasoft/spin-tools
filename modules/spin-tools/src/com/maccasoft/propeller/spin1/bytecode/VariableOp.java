@@ -133,8 +133,10 @@ public class VariableOp extends Spin1Bytecode {
         if (i) {
             sb.append("_INDEXED");
         }
-        sb.append(" ");
-        sb.append(value.getType());
+        if (oo != Op.Address) {
+            sb.append(" ");
+            sb.append(value.getType());
+        }
         sb.append(" ");
         switch (b) {
             case VBase:

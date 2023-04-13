@@ -42,6 +42,19 @@ public class Variable extends Expression {
         return type;
     }
 
+    public int getTypeSize() {
+        if (type.endsWith("*")) {
+            return 4;
+        }
+        if ("SHORT".equals(type) || "WORD".equals(type)) {
+            return 2;
+        }
+        if ("BYTE".equals(type)) {
+            return 1;
+        }
+        return 4;
+    }
+
     public boolean isPointer() {
         return type.endsWith("*");
     }

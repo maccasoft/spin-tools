@@ -22,6 +22,7 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin2.Spin2Model;
 
@@ -49,9 +50,8 @@ public class CParser extends Parser {
                 if (token.type == Token.BLOCK_COMMENT) {
                     commentToken = token;
                 }
-                continue;
             }
-            if ("#".equals(token.getText())) {
+            else if ("#".equals(token.getText())) {
                 Token directive = nextToken();
                 if (directive.type != Token.EOF && directive.type != Token.NL) {
                     if ("include".equals(directive.getText())) {
@@ -129,6 +129,56 @@ public class CParser extends Parser {
                     }
                 }
                 commentToken = null;
+            }
+            else if ("struct".equals(token.getText())) {
+                Token type = token;
+
+                if ((token = nextTokenSkipNL()).type == Token.EOF) {
+                    break;
+                }
+                Token identifier = token;
+
+                if ((token = nextTokenSkipNL()).type != Token.EOF) {
+                    if ("{".equals(token.getText())) {
+                        TypeDefinitionNode node = new TypeDefinitionNode(root, type, identifier);
+                        node.addToken(token);
+                        parseStructure(node);
+                    }
+                    else {
+                        VariableNode node = new VariableNode(root, type, identifier, token);
+                        VariableNode child = null;
+
+                        token = nextTokenSkipNL();
+                        while (token.type != Token.EOF) {
+                            if (";".equals(token.getText())) {
+                                break;
+                            }
+                            node.addToken(token);
+                            if (",".equals(token.getText())) {
+                                if ((token = nextTokenSkipNL()).type == Token.EOF) {
+                                    break;
+                                }
+                                node.addToken(token);
+                                if ("*".equals(token.getText())) {
+                                    type = token;
+                                    if ((token = nextTokenSkipNL()).type == Token.EOF) {
+                                        break;
+                                    }
+                                    node.addToken(token);
+                                    child = new VariableNode(node, null, type, token);
+                                }
+                                else {
+                                    child = new VariableNode(node, null, null, token);
+                                }
+                            }
+                            else if (child != null) {
+                                child.addToken(token);
+                            }
+                            token = nextTokenSkipNL();
+                        }
+                    }
+                }
+
             }
             else {
                 Token modifier = null;
@@ -276,6 +326,111 @@ public class CParser extends Parser {
         }
 
         return root;
+    }
+
+    void parseStructure(TypeDefinitionNode parent) {
+        Token token;
+
+        while ((token = nextTokenSkipNL()).type != Token.EOF) {
+            parent.addToken(token);
+
+            if ("}".equals(token.getText())) {
+                break;
+            }
+
+            Token modifier = null;
+
+            if ("struct".equals(token.getText())) {
+                modifier = token;
+                if ((token = nextTokenSkipNL()).type != Token.EOF) {
+                    break;
+                }
+                parent.addToken(token);
+            }
+
+            Token type = token;
+
+            token = nextTokenSkipNL();
+            if ("*".equals(token.getText())) {
+                parent.addToken(token);
+                type = type.merge(token);
+                type.type = Token.KEYWORD;
+                if ((token = nextTokenSkipNL()).type == Token.EOF) {
+                    break;
+                }
+            }
+
+            Token identifier = token;
+            parent.addToken(token);
+
+            if ((token = nextTokenSkipNL()).type == Token.EOF) {
+                break;
+            }
+
+            TypeDefinitionNode.Definition node = new TypeDefinitionNode.Definition(parent, modifier, type, identifier);
+            TypeDefinitionNode.Definition child = node;
+
+            while (token.type != Token.EOF) {
+                parent.addToken(token);
+                if (";".equals(token.getText())) {
+                    break;
+                }
+                if (",".equals(token.getText())) {
+                    if ((token = nextTokenSkipNL()).type == Token.EOF) {
+                        break;
+                    }
+                    parent.addToken(token);
+                    if ("*".equals(token.getText())) {
+                        type = token;
+                        if ((token = nextTokenSkipNL()).type == Token.EOF) {
+                            break;
+                        }
+                        parent.addToken(token);
+                        child = new TypeDefinitionNode.Definition(node, null, type, token);
+                    }
+                    else {
+                        child = new TypeDefinitionNode.Definition(node, null, null, token);
+                    }
+                }
+                else if (child != null) {
+                    child.addToken(token);
+                }
+                token = nextTokenSkipNL();
+            }
+        }
+
+        if ((token = nextTokenSkipNL()).type != Token.EOF) {
+            parent.addToken(token);
+            if (!";".equals(token.getText())) {
+                new VariableNode(parent, null, null, token);
+
+                token = nextTokenSkipNL();
+                while (token.type != Token.EOF) {
+                    parent.addToken(token);
+                    if (";".equals(token.getText())) {
+                        break;
+                    }
+                    if (",".equals(token.getText())) {
+                        if ((token = nextTokenSkipNL()).type == Token.EOF) {
+                            break;
+                        }
+                        parent.addToken(token);
+                        if ("*".equals(token.getText())) {
+                            Token type = token;
+                            if ((token = nextTokenSkipNL()).type == Token.EOF) {
+                                break;
+                            }
+                            parent.addToken(token);
+                            new VariableNode(parent, null, type, token);
+                        }
+                        else {
+                            new VariableNode(parent, null, null, token);
+                        }
+                    }
+                    token = nextTokenSkipNL();
+                }
+            }
+        }
     }
 
     private static Set<String> argBlocks = new HashSet<>(Arrays.asList(new String[] {

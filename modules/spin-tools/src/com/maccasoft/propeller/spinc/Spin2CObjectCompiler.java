@@ -36,6 +36,7 @@ import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.SpinObject;
+import com.maccasoft.propeller.expressions.StructureVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DirectiveNode;
@@ -44,6 +45,7 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
+import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Context;
@@ -96,6 +98,8 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
     Map<String, Expression> publicSymbols = new HashMap<String, Expression>();
     List<LinkDataObject> objectLinks = new ArrayList<>();
     List<LongDataObject> methodData = new ArrayList<>();
+
+    Map<String, Node> structures = new HashMap<>();
 
     Spin2Compiler compiler;
     Spin2CBytecodeCompiler spinCompiler;
@@ -164,6 +168,32 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             try {
                 if (node instanceof DirectiveNode) {
                     compileDirective((DirectiveNode) node);
+                }
+                else if (node instanceof TypeDefinitionNode) {
+                    if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
+                        TypeDefinitionNode typeNode = (TypeDefinitionNode) node;
+                        if (typeNode.getIdentifier() != null) {
+                            String symbol = typeNode.getIdentifier().getText();
+                            if (structures.containsKey(symbol)) {
+                                logMessage(new CompilerException("structure " + symbol + " redefinition", typeNode.getIdentifier()));
+                            }
+
+                            StructureVariable var = new StructureVariable("LONG", "__validation__", new NumberLiteral(0), 0, false);
+                            for (Node child : node.getChilds()) {
+                                if (child instanceof TypeDefinitionNode.Definition) {
+                                    compileStructureDefinition(var, child);
+                                }
+                            }
+
+                            structures.put(symbol, typeNode);
+                        }
+                    }
+                    else {
+                        Token token = new Token(node.getStartToken().getStream(), node.getStartIndex());
+                        token.stop = node.getStopIndex();
+                        root.addComment(token);
+                        node.getParent().getChilds().remove(node);
+                    }
                 }
                 else if (node instanceof VariableNode) {
                     if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
@@ -488,13 +518,107 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         }
     }
 
+    void compileStructureDefinition(StructureVariable target, Node node) {
+        TokenIterator iter = node.iterator();
+
+        Token token = iter.next();
+
+        String type = token.getText();
+        if (!type.matches("(int|long|short|word|byte)[\\s]*[*]?")) {
+            throw new CompilerException("unsupported type " + type, token);
+        }
+
+        while (iter.hasNext()) {
+            Token identifier = iter.next();
+            if ("*".equals(identifier.getText())) {
+                type += " *";
+                if (!iter.hasNext()) {
+                    throw new CompilerException("expecting identifier", identifier);
+                }
+                identifier = iter.next();
+            }
+            if (identifier.type != Token.KEYWORD) {
+                throw new CompilerException("expecting identifier", identifier);
+            }
+            Expression size = new NumberLiteral(1);
+
+            if (iter.hasNext() && "[".equals(iter.peekNext().getText())) {
+                token = iter.next();
+                if (!iter.hasNext()) {
+                    throw new CompilerException("expecting expression", token);
+                }
+                size = buildIndexExpression(iter);
+            }
+
+            if (target.getVariable(identifier.getText()) != null) {
+                logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", identifier));
+            }
+            target.addVariable(type, identifier.getText(), size);
+
+            if (iter.hasNext()) {
+                token = iter.next();
+                if (";".equals(token.getText())) {
+                    break;
+                }
+                if (!",".equals(token.getText())) {
+                    logMessage(new CompilerException("expecting comma or statement end", token));
+                    break;
+                }
+            }
+
+            if (type.endsWith("*")) {
+                type = type.substring(0, type.indexOf('*')).trim();
+            }
+        }
+    }
+
     void compileVariable(Spin2CBytecodeCompiler compiler, VariableNode node) {
         TokenIterator iter = node.iterator();
 
         Token token = iter.next();
-        String type = token.getText();
 
-        if (!type.matches("(int|long|float|short|word|byte)[\\s]*[*]?")) {
+        String type = token.getText();
+        if ("struct".equals(type) && iter.hasNext()) {
+            token = iter.next();
+            type = token.getText();
+        }
+
+        if (structures.containsKey(type)) {
+            Expression size = new NumberLiteral(1);
+
+            if (!iter.hasNext()) {
+                throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
+            }
+
+            Token identifier = iter.next();
+
+            if (iter.hasNext() && "[".equals(iter.peekNext().getText())) {
+                token = iter.next();
+                if (!iter.hasNext()) {
+                    throw new CompilerException("expecting expression", token);
+                }
+                size = buildIndexExpression(iter);
+            }
+
+            StructureVariable var = new StructureVariable("BYTE", identifier.getText(), size, objectVarSize, false);
+            scope.addSymbol(identifier.getText(), var);
+            variables.add(var);
+            var.setData(node.getIdentifier());
+
+            Node definitionRoot = structures.get(type);
+            for (Node child : definitionRoot.getChilds()) {
+                if (child instanceof TypeDefinitionNode.Definition) {
+                    compileStructureDefinition(var, child);
+                }
+            }
+
+            objectVarSize += size.getNumber().intValue() * var.getTypeSize();
+
+            if (iter.hasNext()) {
+                throw new CompilerException("expecting end of statement", iter.next());
+            }
+        }
+        else if (!type.matches("(int|long|float|short|word|byte)[\\s]*[*]?")) {
             if (!iter.hasNext()) {
                 throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
             }
