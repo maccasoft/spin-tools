@@ -296,12 +296,27 @@ public class Spin2CTreeBuilder {
             throw new CompilerException("expecting operand", tokens.get(tokens.size() - 1));
         }
 
-        if (unary.contains(token.getText().toUpperCase())) {
+        if ("sizeof".equals(token.getText())) {
+            Spin2StatementNode node = new Spin2StatementNode.Method(next());
+            token = peek();
+            if (token != null && "(".equals(token.getText())) {
+                next();
+                while ((token = next()) != null) {
+                    if (")".equals(token.getText())) {
+                        break;
+                    }
+                    node.addChild(new Spin2StatementNode(token));
+                }
+            }
+            return node;
+        }
+
+        if (unary.contains(token.getText())) {
             Spin2StatementNode node = new Spin2StatementNode(next());
             node.addChild(parseAtom());
             return node;
         }
-        if (precedence.containsKey(token.getText().toUpperCase())) {
+        if (precedence.containsKey(token.getText())) {
             return null;
         }
 

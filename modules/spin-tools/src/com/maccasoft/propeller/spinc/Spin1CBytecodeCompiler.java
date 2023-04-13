@@ -376,6 +376,59 @@ public abstract class Spin1CBytecodeCompiler {
                     Spin1Bytecode target = addStringData(new Bytecode(context, sb.toString().getBytes(), "STRING".toUpperCase()));
                     source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
                 }
+                else if ("sizeof".equals(node.getText())) {
+                    if (node.getChildCount() == 0) {
+                        throw new CompilerException("syntax error", node.getTokens());
+                    }
+
+                    int n = 0;
+                    String typeText = node.getChild(n++).getText();
+                    boolean pointer = false;
+
+                    if ("struct".equals(typeText)) {
+                        if (n >= node.getChildCount()) {
+                            throw new CompilerException("syntax error", node.getTokens());
+                        }
+                        typeText += " " + node.getChild(n++).getText();
+                    }
+
+                    if (n < node.getChildCount()) {
+                        if (!"*".equals(node.getChild(n++).getText())) {
+                            throw new CompilerException("syntax error", node.getTokens());
+                        }
+                        pointer = true;
+                    }
+
+                    if (n < node.getChildCount()) {
+                        throw new CompilerException("syntax error", node.getTokens());
+                    }
+
+                    if (pointer) {
+                        source.add(new Constant(context, new NumberLiteral(4), false));
+                    }
+                    else {
+                        Expression expression = null;
+                        if ("int".equals(typeText) || "long".equals(typeText) || "float".equals(typeText)) {
+                            source.add(new Constant(context, new NumberLiteral(4), false));
+                        }
+                        else if ("word".equals(typeText) || "short".equals(typeText)) {
+                            source.add(new Constant(context, new NumberLiteral(2), false));
+                        }
+                        else if ("byte".equals(typeText)) {
+                            source.add(new Constant(context, new NumberLiteral(1), false));
+                        }
+                        else {
+                            expression = context.getLocalSymbol(typeText);
+                            if (expression instanceof Variable) {
+                                Variable variable = (Variable) expression;
+                                source.add(new Constant(context, new NumberLiteral(variable.getTypeSize() * variable.getSize().getNumber().intValue()), false));
+                            }
+                            else {
+                                throw new CompilerException("invalid type", node.getChild(0).getTokens());
+                            }
+                        }
+                    }
+                }
                 else {
                     Expression expression = context.getLocalSymbol(node.getText());
                     if (expression == null && !(expression instanceof Method)) {

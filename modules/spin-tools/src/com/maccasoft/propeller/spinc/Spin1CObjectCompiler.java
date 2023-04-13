@@ -156,11 +156,16 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
                                 logMessage(new CompilerException("structure " + symbol + " redefinition", typeNode.getIdentifier()));
                             }
 
-                            StructureVariable var = new StructureVariable("LONG", "__validation__", new NumberLiteral(0), 0, true);
+                            StructureVariable var = new StructureVariable("BYTE", "struct " + symbol, new NumberLiteral(1), 0, true);
                             for (Node child : node.getChilds()) {
                                 if (child instanceof TypeDefinitionNode.Definition) {
                                     compileStructureDefinition(var, child);
                                 }
+                            }
+                            try {
+                                scope.addSymbol(var.getName(), var);
+                            } catch (Exception e) {
+                                // Ignore
                             }
 
                             structures.put(symbol, typeNode);

@@ -61,8 +61,9 @@ public class CTokenMarker extends SourceTokenMarker {
         keywords.put("until", TokenId.KEYWORD);
         keywords.put("while", TokenId.KEYWORD);
 
-        keywords.put("static", TokenId.KEYWORD);
-        keywords.put("struct", TokenId.KEYWORD);
+        keywords.put("static", TokenId.TYPE);
+        keywords.put("struct", TokenId.TYPE);
+        keywords.put("sizeof", TokenId.KEYWORD);
 
         keywords.put("BYTE", TokenId.TYPE);
         keywords.put("WORD", TokenId.TYPE);

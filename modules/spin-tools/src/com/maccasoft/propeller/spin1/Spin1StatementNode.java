@@ -44,6 +44,10 @@ public class Spin1StatementNode {
 
     public static class Method extends Spin1StatementNode {
 
+        public Method(Token token) {
+            super(token);
+        }
+
         public Method(Spin1StatementNode node) {
             super(node.token);
             this.properties.putAll(node.properties);
