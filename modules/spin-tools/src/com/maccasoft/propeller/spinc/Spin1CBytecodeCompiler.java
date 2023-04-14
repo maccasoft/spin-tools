@@ -131,6 +131,11 @@ public abstract class Spin1CBytecodeCompiler {
         descriptors.put("encod", new FunctionDescriptor(0b111_10001, 0b111_10001, 1));
         descriptors.put("decod", new FunctionDescriptor(0b111_10011, 0b111_10011, 1));
         descriptors.put("sqrt", new FunctionDescriptor(0b111_11000, 0b111_11000, 1));
+
+        descriptors.put("strlen", new FunctionDescriptor(0b00010110, 0b00010110, 1));
+        descriptors.put("strcmp", new FunctionDescriptor(0b00010111, 0b00010111, 2));
+        descriptors.put("memset", new FunctionDescriptor(0b00011000, 3));
+        descriptors.put("memmov", new FunctionDescriptor(0b00011100, 3));
     }
 
     public static class OperatorDescriptor {

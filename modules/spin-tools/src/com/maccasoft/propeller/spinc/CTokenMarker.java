@@ -167,6 +167,11 @@ public class CTokenMarker extends SourceTokenMarker {
         spin1Functions.put("encod", TokenId.FUNCTION);
         spin1Functions.put("decod", TokenId.FUNCTION);
         spin1Functions.put("sqrt", TokenId.FUNCTION);
+
+        spin1Functions.put("strlen", TokenId.FUNCTION);
+        spin1Functions.put("strcmp", TokenId.FUNCTION);
+        spin1Functions.put("memset", TokenId.FUNCTION);
+        spin1Functions.put("memmov", TokenId.FUNCTION);
     }
 
     static Map<String, TokenId> pasmKeywords = new CaseInsensitiveMap<>();
@@ -568,6 +573,12 @@ public class CTokenMarker extends SourceTokenMarker {
         spin2Functions.put("sca", TokenId.FUNCTION);
         spin2Functions.put("scas", TokenId.FUNCTION);
         spin2Functions.put("frac", TokenId.FUNCTION);
+
+        spin2Functions.put("strlen", TokenId.FUNCTION);
+        spin2Functions.put("strcmp", TokenId.FUNCTION);
+        spin2Functions.put("strcpy", TokenId.FUNCTION);
+        spin2Functions.put("memmov", TokenId.FUNCTION);
+        spin2Functions.put("memset", TokenId.FUNCTION);
     }
 
     static Map<String, TokenId> spin2MethodKeywords = new CaseInsensitiveMap<>();

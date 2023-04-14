@@ -212,6 +212,12 @@ public abstract class Spin2CBytecodeCompiler {
         descriptors.put("sca", new FunctionDescriptor(0x9B, -1, 2, 1));
         descriptors.put("scas", new FunctionDescriptor(0x9C, -1, 2, 1));
         descriptors.put("frac", new FunctionDescriptor(0x9D, -1, 2, 1));
+
+        descriptors.put("strlen", new FunctionDescriptor(0x19, 0x76, 1, 1));
+        descriptors.put("strcmp", new FunctionDescriptor(0x19, 0x78, 2, 1));
+        descriptors.put("strcpy", new FunctionDescriptor(0x19, 0x7A, 3, 0));
+        descriptors.put("memmov", new FunctionDescriptor(0x19, 0x6A, 3, 0));
+        descriptors.put("memset", new FunctionDescriptor(0x19, 0x6C, 3, 0));
     }
 
     static class Descriptor {
