@@ -66,9 +66,132 @@
         <entry name="PI"><![CDATA[<b>PI</b><p>Floating-point value for PI: ~3.141593 ($40490FDB)</p>]]></entry>
     </section>
 
-    <section class="DatNode,Instruction">
+    <section class="DatNode,DataLineNode,Instruction">
+        <entry name="org"></entry>
+        <entry name="fit"></entry>
+        <entry name="res"></entry>
+        <entry name="byte"></entry>
+        <entry name="word"></entry>
+        <entry name="long"></entry>
+        <entry name="bytefit"></entry>
+        <entry name="wordfit"></entry>
+
+        <entry name="file"></entry>
+        <entry name="include"></entry>
+
+        <entry name="abs"></entry>
+        <entry name="absneg"></entry>
+        <entry name="add"></entry>
+        <entry name="addabs"></entry>
+        <entry name="adds"></entry>
+        <entry name="addsx"></entry>
+        <entry name="addx"></entry>
+        <entry name="and"></entry>
+        <entry name="andn"></entry>
+        <entry name="call"></entry>
+        <entry name="clkset"></entry>
+        <entry name="cmp"><![CDATA[<b>CMP     D,{#}S   {WC/WZ}</b><p>Compare D to S.                                                  C = borrow of (D - S).              Z = (D == S).</p>]]></entry>
+        <entry name="cmps"><![CDATA[<b>CMPS    D,{#}S   {WC/WZ}</b><p>Compare D to S, signed.                                          C = correct sign of (D - S).        Z = (D == S).</p>]]></entry>
+        <entry name="cmpsub"></entry>
+        <entry name="cmpsx"><![CDATA[<b>CMPSX   D,{#}S   {WC/WZ}</b><p>Compare D to (S + C), signed and extended.                       C = correct sign of (D - (S + C)).  Z = Z AND (D == S + C).</p>]]></entry>
+        <entry name="cmpx"><![CDATA[<b>CMPX    D,{#}S   {WC/WZ}</b><p>Compare D to (S + C), extended.                                  C = borrow of (D - (S + C)).        Z = Z AND (D == S + C).</p>]]></entry>
+        <entry name="cogid"></entry>
+        <entry name="coginit"></entry>
+        <entry name="cogstop"></entry>
+        <entry name="djnz"><![CDATA[<b>DJNZ    D,{#}S</b><p>Decrement D and jump to S** if result is not zero.</p>]]></entry>
+        <entry name="hubop"></entry>
+        <entry name="jmp"></entry>
+        <entry name="jmpret"></entry>
+        <entry name="lockclr"></entry>
+        <entry name="locknew"></entry>
+        <entry name="lockret"></entry>
+        <entry name="lockset"></entry>
+        <entry name="max"></entry>
+        <entry name="maxs"></entry>
+        <entry name="min"></entry>
+        <entry name="mins"></entry>
+        <entry name="mov"><![CDATA[<b>MOV     D,{#}S   {WC/WZ}</b><p>Move S into D. D = S. C = S[31]. *</p>]]></entry>
+        <entry name="movd"></entry>
+        <entry name="movi"></entry>
+        <entry name="movs"></entry>
+        <entry name="muxc"></entry>
+        <entry name="muxnc"></entry>
+        <entry name="muxnz"></entry>
+        <entry name="muxz"></entry>
+        <entry name="neg"><![CDATA[<b>NEG     D        {WC/WZ}</b><p>Negate D.        D = -D. C = MSB of result. *</p><b>NEG     D,{#}S   {WC/WZ/WCZ}</b><p>Negate S into D. D = -S. C = MSB of result. *</p>]]></entry>
+        <entry name="negc"><![CDATA[<b>NEGC    D        {WC/WZ}</b><p>Negate D by  C.        If C = 1 then D = -D, else D = D. C = MSB of result. *</p><b>NEGC    D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by  C into D. If C = 1 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
+        <entry name="negnc"><![CDATA[<b>NEGNC   D        {WC/WZ}</b><p>Negate D by !C.        If C = 0 then D = -D, else D = D. C = MSB of result. *</p><b>NEGNC   D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by !C into D. If C = 0 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
+        <entry name="negnz"><![CDATA[<b>NEGNZ   D        {WC/WZ}</b><p>Negate D by !Z.        If Z = 0 then D = -D, else D = D. C = MSB of result. *</p><b>NEGNZ   D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by !Z into D. If Z = 0 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
+        <entry name="negz"><![CDATA[<b>NEGZ    D        {WC/WZ}</b><p>Negate D by  Z.        If Z = 1 then D = -D, else D = D. C = MSB of result. *</p><b>NEGZ    D,{#}S   {WC/WZ/WCZ}</b><p>Negate S by  Z into D. If Z = 1 then D = -S, else D = S. C = MSB of result. *</p>]]></entry>
+        <entry name="nop"><![CDATA[<b>NOP</b><p>No operation.</p>]]></entry>
+        <entry name="or"></entry>
+        <entry name="rcl"></entry>
+        <entry name="rcr"></entry>
+        <entry name="ret"></entry>
+        <entry name="rev"></entry>
+        <entry name="rol"></entry>
+        <entry name="ror"></entry>
+        <entry name="rdbyte"><![CDATA[<b>RDBYTE  D,{#}S   {WZ}</b><p>Read zero-extended byte from hub address {#}S into D.</p>]]></entry>
+        <entry name="rdword"><![CDATA[<b>RDWORD  D,{#}S   {WZ}</b><p>Read zero-extended word from hub address {#}S into D.</p>]]></entry>
+        <entry name="rdlong"><![CDATA[<b>RDLONG  D,{#}S   {WZ}</b><p>Read long from hub address {#}S into D.</p>]]></entry>
+        <entry name="wrbyte"><![CDATA[<b>WRBYTE  {#}D,{#}S</b><p>Write byte in D[7:0] to hub address {#}S.</p>]]></entry>
+        <entry name="wrword"><![CDATA[<b>WRWORD  {#}D,{#}S</b><p>Write word in D[15:0] to hub address {#}S.</p>]]></entry>
+        <entry name="wrlong"><![CDATA[<b>WRLONG  {#}D,{#}S</b><p>Write long in D[31:0] to hub address {#}S.</p>]]></entry>
+        <entry name="sar"></entry>
+        <entry name="shl"></entry>
+        <entry name="shr"></entry>
+        <entry name="sub"></entry>
+        <entry name="subabs"></entry>
+        <entry name="subs"></entry>
+        <entry name="subsx"></entry>
+        <entry name="subx"></entry>
+        <entry name="sumc"></entry>
+        <entry name="sumnc"></entry>
+        <entry name="sumnz"></entry>
+        <entry name="sumz"></entry>
+        <entry name="test"></entry>
+        <entry name="testn"></entry>
+        <entry name="tjnz"></entry>
+        <entry name="tjz"></entry>
+        <entry name="waitcnt"></entry>
+        <entry name="waitpeq"></entry>
+        <entry name="waitpne"></entry>
+        <entry name="waitvid"></entry>
+        <entry name="xor"><![CDATA[<b>XOR     D,{#}S   {WC/WZ}</b><p>XOR S into D.    D = D ^ S.    C = parity of result. *</p>]]></entry>
     </section>
-    <section class="DatNode,Condition">
+    <section class="DatNode,DataLineNode,Condition">
+        <entry name="if_never"><![CDATA[<b>IF_NEVER      <inst>  <ops></b><p>Execute <inst> never.</p>]]></entry>
+        <entry name="if_nc_and_nz"><![CDATA[<b>IF_NC_AND_NZ  <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0.</p>]]></entry>
+        <entry name="if_nz_and_nc"><![CDATA[<b>IF_NZ_AND_NC  <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0.</p>]]></entry>
+        <entry name="if_a"><![CDATA[<b>IF_A          <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 0, or if 'above' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_nc_and_z"><![CDATA[<b>IF_NC_AND_Z   <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 1.</p>]]></entry>
+        <entry name="if_z_and_nc"><![CDATA[<b>IF_Z_AND_NC   <inst>  <ops></b><p>Execute <inst> if C = 0 and Z = 1.</p>]]></entry>
+        <entry name="if_nc"><![CDATA[<b>IF_NC         <inst>  <ops></b><p>Execute <inst> if C = 0.</p>]]></entry>
+        <entry name="if_ae"><![CDATA[<b>IF_AE         <inst>  <ops></b><p>Execute <inst> if C = 0, or if 'above or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_c_and_nz"><![CDATA[<b>IF_C_AND_NZ   <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 0.</p>]]></entry>
+        <entry name="if_nz_and_c"><![CDATA[<b>IF_NZ_AND_C   <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 0.</p>]]></entry>
+        <entry name="if_nz"><![CDATA[<b>IF_NZ         <inst>  <ops></b><p>Execute <inst> if Z = 0.</p>]]></entry>
+        <entry name="if_ne"><![CDATA[<b>IF_NE         <inst>  <ops></b><p>Execute <inst> if Z = 0, or if 'not equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_c_ne_z"><![CDATA[<b>IF_C_NE_Z     <inst>  <ops></b><p>Execute <inst> if C != Z.</p>]]></entry>
+        <entry name="if_z_ne_c"><![CDATA[<b>IF_Z_NE_C     <inst>  <ops></b><p>Execute <inst> if C != Z.</p>]]></entry>
+        <entry name="if_nc_or_nz"><![CDATA[<b>IF_NC_OR_NZ   <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 0.</p>]]></entry>
+        <entry name="if_nz_or_nc"><![CDATA[<b>IF_NZ_OR_NC   <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 0.</p>]]></entry>
+        <entry name="if_c_and_z"><![CDATA[<b>IF_C_AND_Z    <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 1.</p>]]></entry>
+        <entry name="if_z_and_c"><![CDATA[<b>IF_Z_AND_C    <inst>  <ops></b><p>Execute <inst> if C = 1 and Z = 1.</p>]]></entry>
+        <entry name="if_c_eq_z"><![CDATA[<b>IF_C_EQ_Z     <inst>  <ops></b><p>Execute <inst> if C = Z.</p>]]></entry>
+        <entry name="if_z_eq_c"><![CDATA[<b>IF_Z_EQ_C     <inst>  <ops></b><p>Execute <inst> if C = Z.</p>]]></entry>
+        <entry name="if_z"><![CDATA[<b>IF_Z          <inst>  <ops></b><p>Execute <inst> if Z = 1.</p>]]></entry>
+        <entry name="if_e"><![CDATA[<b>IF_E          <inst>  <ops></b><p>Execute <inst> if Z = 1, or if 'equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_nc_or_z"><![CDATA[<b>IF_NC_OR_Z    <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 1.</p>]]></entry>
+        <entry name="if_z_or_nc"><![CDATA[<b>IF_Z_OR_NC    <inst>  <ops></b><p>Execute <inst> if C = 0 or Z = 1.</p>]]></entry>
+        <entry name="if_c"><![CDATA[<b>IF_C          <inst>  <ops></b><p>Execute <inst> if C = 1.</p>]]></entry>
+        <entry name="if_b"><![CDATA[<b>IF_B          <inst>  <ops></b><p>Execute <inst> if C = 1, or if 'below' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_c_or_nz"><![CDATA[<b>IF_C_OR_NZ    <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 0.</p>]]></entry>
+        <entry name="if_nz_or_c"><![CDATA[<b>IF_NZ_OR_C    <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 0.</p>]]></entry>
+        <entry name="if_c_or_z"><![CDATA[<b>IF_C_OR_Z     <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1.</p>]]></entry>
+        <entry name="if_z_or_c"><![CDATA[<b>IF_Z_OR_C     <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1.</p>]]></entry>
+        <entry name="if_be"><![CDATA[<b>IF_BE         <inst>  <ops></b><p>Execute <inst> if C = 1 or Z = 1, or if 'below or equal' after a comparison/subtraction.</p>]]></entry>
+        <entry name="if_always"><![CDATA[<b>IF_ALWAYS     <inst>  <ops></b><p>Execute <inst> always.</p>]]></entry>
     </section>
 
 </content>
