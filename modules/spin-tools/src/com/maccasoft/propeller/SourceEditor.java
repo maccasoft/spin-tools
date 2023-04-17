@@ -668,55 +668,56 @@ public class SourceEditor {
                 if (itemName.startsWith("@")) {
                     itemName = itemName.substring(1);
                 }
-                int dot = itemName.indexOf('.');
 
                 int objstart = -1;
                 int objstop = -1;
                 String objectName = null;
 
-                if (dot == 0) {
-                    int line = styledText.getLineAtOffset(offset);
-                    int lineOffset = styledText.getOffsetAtLine(line);
-                    String lineText = styledText.getLine(line);
-                    int endIndex = token.start - lineOffset - 1;
-                    if (lineText.charAt(endIndex) == ']') {
-                        int depth = -1;
-                        while (endIndex >= 0) {
-                            if (lineText.charAt(endIndex) == ']') {
-                                depth++;
-                            }
-                            else if (lineText.charAt(endIndex) == '[') {
-                                if (depth == 0) {
-                                    break;
+                Node context = tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset));
+                if (!(context instanceof DataLineNode)) {
+                    int dot = itemName.indexOf('.');
+                    if (dot == 0) {
+                        int line = styledText.getLineAtOffset(offset);
+                        int lineOffset = styledText.getOffsetAtLine(line);
+                        String lineText = styledText.getLine(line);
+                        int endIndex = token.start - lineOffset - 1;
+                        if (lineText.charAt(endIndex) == ']') {
+                            int depth = -1;
+                            while (endIndex >= 0) {
+                                if (lineText.charAt(endIndex) == ']') {
+                                    depth++;
                                 }
-                                depth--;
+                                else if (lineText.charAt(endIndex) == '[') {
+                                    if (depth == 0) {
+                                        break;
+                                    }
+                                    depth--;
+                                }
+                                endIndex--;
                             }
                             endIndex--;
                         }
-                        endIndex--;
-                    }
-                    if (endIndex >= 0) {
-                        Token objectToken = tokenMarker.getTokenAt(endIndex + lineOffset);
-                        if (objectToken != null) {
-                            objstart = objectToken.start;
-                            objstop = objectToken.stop;
-                            objectName = objectToken.getText();
-                            if (objectName.startsWith("@")) {
-                                objectName = objectName.substring(1);
-                                objstart++;
+                        if (endIndex >= 0) {
+                            Token objectToken = tokenMarker.getTokenAt(endIndex + lineOffset);
+                            if (objectToken != null) {
+                                objstart = objectToken.start;
+                                objstop = objectToken.stop;
+                                objectName = objectToken.getText();
+                                if (objectName.startsWith("@")) {
+                                    objectName = objectName.substring(1);
+                                    objstart++;
+                                }
                             }
                         }
+                        itemName = itemName.substring(1);
                     }
-                    itemName = itemName.substring(1);
+                    else if (dot != -1) {
+                        objstart = token.start;
+                        objstop = token.start + dot - 1;
+                        objectName = itemName.substring(0, dot);
+                        itemName = itemName.substring(dot + 1);
+                    }
                 }
-                else if (dot != -1) {
-                    objstart = token.start;
-                    objstop = token.start + dot - 1;
-                    objectName = itemName.substring(0, dot);
-                    itemName = itemName.substring(dot + 1);
-                }
-
-                Node context = tokenMarker.getContextAtLine(styledText.getLineAtOffset(offset));
 
                 if (context instanceof ObjectNode) {
                     ObjectNode obj = (ObjectNode) context;
@@ -772,12 +773,14 @@ public class SourceEditor {
                     }
                 }
                 else if (context instanceof DataLineNode) {
-                    Node root = tokenMarker.getRoot();
-                    for (Node node : root.getChilds()) {
-                        if (node instanceof DataNode) {
-                            for (Node child : node.getChilds()) {
-                                DataLineNode obj = (DataLineNode) child;
-                                if (obj.label != null && obj.label.getText().equals(itemName)) {
+                    boolean fired = false;
+                    if (itemName.startsWith(".") || itemName.startsWith(":")) {
+                        Node parent = context.getParent();
+                        int index = parent.getChilds().indexOf(context);
+                        while (index > 0) {
+                            DataLineNode obj = (DataLineNode) parent.getChild(index);
+                            if (obj.label != null) {
+                                if (obj.label.getText().equals(itemName)) {
                                     SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
                                     display.asyncExec(new Runnable() {
 
@@ -787,7 +790,59 @@ public class SourceEditor {
                                         }
 
                                     });
+                                    fired = true;
                                     break;
+                                }
+                                if (!obj.label.getText().startsWith(".") && !obj.label.getText().startsWith(":")) {
+                                    break;
+                                }
+                            }
+                            index--;
+                        }
+                        index = parent.getChilds().indexOf(context) + 1;
+                        while (index < parent.getChildCount()) {
+                            DataLineNode obj = (DataLineNode) parent.getChild(index);
+                            if (obj.label != null) {
+                                if (obj.label.getText().equals(itemName)) {
+                                    SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
+                                    display.asyncExec(new Runnable() {
+
+                                        @Override
+                                        public void run() {
+                                            fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                        }
+
+                                    });
+                                    fired = true;
+                                    break;
+                                }
+                                if (!obj.label.getText().startsWith(".") && !obj.label.getText().startsWith(":")) {
+                                    break;
+                                }
+                            }
+                            index++;
+                        }
+                    }
+
+                    if (!fired) {
+                        Node root = tokenMarker.getRoot();
+                        for (Node node : root.getChilds()) {
+                            if (node instanceof DataNode) {
+
+                                for (Node child : node.getChilds()) {
+                                    DataLineNode obj = (DataLineNode) child;
+                                    if (obj.label != null && obj.label.getText().equals(itemName)) {
+                                        SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
+                                        display.asyncExec(new Runnable() {
+
+                                            @Override
+                                            public void run() {
+                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                            }
+
+                                        });
+                                        break;
+                                    }
                                 }
                             }
                         }
