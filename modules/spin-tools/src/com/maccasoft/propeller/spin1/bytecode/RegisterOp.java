@@ -13,7 +13,7 @@ package com.maccasoft.propeller.spin1.bytecode;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class RegisterOp extends Spin1Bytecode {
 
@@ -27,7 +27,7 @@ public class RegisterOp extends Spin1Bytecode {
     public Op oo;
     public int value;
 
-    public RegisterOp(Spin1Context context, Op oo, int value) {
+    public RegisterOp(Context context, Op oo, int value) {
         super(context);
         this.oo = oo;
         this.value = value;

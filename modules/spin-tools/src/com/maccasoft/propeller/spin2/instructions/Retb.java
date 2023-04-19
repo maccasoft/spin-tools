@@ -12,7 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
@@ -24,7 +24,7 @@ import com.maccasoft.propeller.spin2.Spin2PAsmSchema;
 public class Retb extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2InstructionObject createObject(Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         if (Spin2PAsmSchema.WC_WZ_WCZ.check(arguments, effect)) {
             return new Retb_(context, condition, effect);
         }
@@ -36,7 +36,7 @@ public class Retb extends Spin2PAsmInstructionFactory {
         String condition;
         String effect;
 
-        public Retb_(Spin2Context context, String condition, String effect) {
+        public Retb_(Context context, String condition, String effect) {
             super(context);
             this.condition = condition;
             this.effect = effect;

@@ -18,6 +18,7 @@ import java.util.Map;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.Context;
 
 public abstract class Spin1InstructionObject {
 
@@ -98,9 +99,9 @@ public abstract class Spin1InstructionObject {
         conditions.put("if_always", 0b1111);
     }
 
-    protected final Spin1Context context;
+    protected final Context context;
 
-    public Spin1InstructionObject(Spin1Context context) {
+    public Spin1InstructionObject(Context context) {
         this.context = context;
     }
 

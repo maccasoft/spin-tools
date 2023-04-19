@@ -17,11 +17,12 @@ import java.util.Collections;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.instructions.Empty;
 
 public class Spin1PAsmLine {
 
-    Spin1Context scope;
+    Context scope;
     String label;
     String condition;
     String mnemonic;
@@ -34,8 +35,8 @@ public class Spin1PAsmLine {
     List<CompilerException> annotations = new ArrayList<CompilerException>();
     Object data;
 
-    public Spin1PAsmLine(Spin1Context scope, String label, String condition, String mnemonic, List<Spin1PAsmExpression> arguments, String effect) {
-        this.scope = new Spin1Context(scope);
+    public Spin1PAsmLine(Context scope, String label, String condition, String mnemonic, List<Spin1PAsmExpression> arguments, String effect) {
+        this.scope = new Context(scope);
         this.label = label;
         this.condition = condition;
         this.mnemonic = mnemonic;
@@ -53,7 +54,7 @@ public class Spin1PAsmLine {
         }
     }
 
-    public Spin1Context getScope() {
+    public Context getScope() {
         return scope;
     }
 

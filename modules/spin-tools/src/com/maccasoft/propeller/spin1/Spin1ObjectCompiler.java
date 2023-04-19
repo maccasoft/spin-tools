@@ -26,6 +26,7 @@ import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
@@ -77,7 +78,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
     }
 
-    final Spin1Context scope;
+    final Context scope;
     final Spin1Compiler compiler;
     Spin1BytecodeCompiler bytecodeCompiler;
     Spin1PAsmCompiler pasmCompiler;
@@ -139,13 +140,10 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
             logMessage(e);
         }
 
-        Iterator<Entry<String, Expression>> iter = scope.symbols.entrySet().iterator();
+        Iterator<Entry<String, Expression>> iter = publicSymbols.entrySet().iterator();
         while (iter.hasNext()) {
             Entry<String, Expression> entry = iter.next();
             try {
-                if ("$".equals(entry.getKey()) || "@$".equals(entry.getKey())) {
-                    continue;
-                }
                 Expression expression = entry.getValue().resolve();
                 if (!expression.isConstant()) {
                     logMessage(new CompilerException("expression is not constant", expression.getData()));
@@ -173,7 +171,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         pasmCompiler = new Spin1PAsmCompiler() {
 
             @Override
-            protected List<Spin1PAsmLine> compileDatInclude(Spin1Context scope, Node root) {
+            protected List<Spin1PAsmLine> compileDatInclude(Context scope, Node root) {
 
                 for (Node node : root.getChilds()) {
                     if (!(node instanceof ConstantsNode) && !(node instanceof DataNode)) {
@@ -928,7 +926,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
     }
 
     Spin1Method compileMethod(MethodNode node) {
-        Spin1Context localScope = new Spin1Context(scope);
+        Context localScope = new Context(scope);
 
         Iterator<Token> iter = node.getTokens().iterator();
         Token token = iter.next(); // First token is PUB/PRI already checked
@@ -1105,7 +1103,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         return method;
     }
 
-    List<Spin1MethodLine> compileStatement(Spin1Context context, Spin1Method method, Spin1MethodLine parent, Node statementNode) {
+    List<Spin1MethodLine> compileStatement(Context context, Spin1Method method, Spin1MethodLine parent, Node statementNode) {
         List<Spin1MethodLine> lines = new ArrayList<>();
 
         Spin1MethodLine previousLine = null;
@@ -1131,7 +1129,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         return lines;
     }
 
-    Spin1MethodLine compileStatement(Spin1Context context, Spin1Method method, Spin1MethodLine parent, Node node, Spin1MethodLine previousLine) {
+    Spin1MethodLine compileStatement(Context context, Spin1Method method, Spin1MethodLine parent, Node node, Spin1MethodLine previousLine) {
         Spin1MethodLine line = null;
 
         try {
@@ -1174,7 +1172,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                     line.addSource(new Jnz(line.getScope(), new ContextLiteral(falseLine.getScope())));
                 }
 
-                line.addChilds(compileStatement(new Spin1Context(context), method, line, node));
+                line.addChilds(compileStatement(new Context(context), method, line, node));
 
                 line.addChild(falseLine);
                 line.addChild(new Spin1MethodLine(context));
@@ -1202,7 +1200,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                     }
                 }
 
-                line.addChilds(compileStatement(new Spin1Context(context), method, line, node));
+                line.addChilds(compileStatement(new Context(context), method, line, node));
                 line.addChild(falseLine);
                 line.addChild(exitLine);
 
@@ -1250,7 +1248,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                             line.addSource(new Jnz(line.getScope(), new ContextLiteral(quitLine.getScope())));
                         }
 
-                        line.addChilds(compileStatement(new Spin1Context(context), method, line, node));
+                        line.addChilds(compileStatement(new Context(context), method, line, node));
 
                         Spin1MethodLine loopLine = new Spin1MethodLine(context);
                         loopLine.addSource(new Jmp(loopLine.getScope(), new ContextLiteral(line.getScope())));
@@ -1328,7 +1326,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
                             Spin1MethodLine loopLine = new Spin1MethodLine(context);
                             line.addChild(loopLine);
-                            line.addChilds(compileStatement(new Spin1Context(context), method, line, node));
+                            line.addChilds(compileStatement(new Context(context), method, line, node));
 
                             if (step != null) {
                                 nextLine.addSource(bytecodeCompiler.compileConstantExpression(line.getScope(), method, step));
@@ -1350,7 +1348,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
                             Spin1MethodLine loopLine = new Spin1MethodLine(context);
                             line.addChild(loopLine);
-                            line.addChilds(compileStatement(new Spin1Context(context), method, line, node));
+                            line.addChilds(compileStatement(new Context(context), method, line, node));
 
                             nextLine.addSource(new Djnz(nextLine.getScope(), new ContextLiteral(loopLine.getScope())));
                             line.addChild(nextLine);
@@ -1362,7 +1360,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                     line.setData("next", nextLine);
 
                     line.addChild(nextLine);
-                    line.addChilds(compileStatement(new Spin1Context(context), method, line, node));
+                    line.addChilds(compileStatement(new Context(context), method, line, node));
 
                     Spin1MethodLine loopLine = new Spin1MethodLine(context);
                     loopLine.addSource(new Jmp(loopLine.getScope(), new ContextLiteral(line.getScope())));
@@ -1472,7 +1470,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                 for (Node child : node.getChilds()) {
                     if (child instanceof StatementNode) {
                         Spin1MethodLine caseLine = new Spin1MethodLine(context);
-                        caseLine.addChilds(compileStatement(new Spin1Context(context), method, line, child));
+                        caseLine.addChilds(compileStatement(new Context(context), method, line, child));
 
                         Iterator<Token> childIter = child.getTokens().iterator();
                         token = childIter.next();
@@ -1635,7 +1633,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         return bitPos;
     }
 
-    public Spin1Context getScope() {
+    public Context getScope() {
         return scope;
     }
 

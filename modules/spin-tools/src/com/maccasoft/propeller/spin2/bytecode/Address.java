@@ -12,13 +12,13 @@ package com.maccasoft.propeller.spin2.bytecode;
 
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class Address extends Spin2Bytecode {
 
     public ContextLiteral expression;
 
-    public Address(Spin2Context context, ContextLiteral expression) {
+    public Address(Context context, ContextLiteral expression) {
         super(context);
         this.expression = expression;
     }

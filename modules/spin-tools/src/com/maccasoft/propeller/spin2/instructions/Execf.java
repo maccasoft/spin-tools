@@ -13,7 +13,7 @@ package com.maccasoft.propeller.spin2.instructions;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
@@ -22,7 +22,7 @@ import com.maccasoft.propeller.spin2.Spin2PAsmSchema;
 public class Execf extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2InstructionObject createObject(Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         if (Spin2PAsmSchema.LD.check(arguments, effect)) {
             return new Execf_(context, condition, arguments.get(0));
         }
@@ -37,7 +37,7 @@ public class Execf extends Spin2PAsmInstructionFactory {
         String condition;
         Spin2PAsmExpression dst;
 
-        public Execf_(Spin2Context context, String condition, Spin2PAsmExpression dst) {
+        public Execf_(Context context, String condition, Spin2PAsmExpression dst) {
             super(context);
             this.condition = condition;
             this.dst = dst;

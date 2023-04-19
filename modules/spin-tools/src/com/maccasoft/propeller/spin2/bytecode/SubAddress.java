@@ -12,19 +12,19 @@ package com.maccasoft.propeller.spin2.bytecode;
 
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class SubAddress extends Spin2Bytecode {
 
     Method method;
     boolean indexed;
 
-    public SubAddress(Spin2Context context, Method method) {
+    public SubAddress(Context context, Method method) {
         super(context);
         this.method = method;
     }
 
-    public SubAddress(Spin2Context context, Method method, boolean indexed) {
+    public SubAddress(Context context, Method method, boolean indexed) {
         super(context);
         this.method = method;
         this.indexed = indexed;

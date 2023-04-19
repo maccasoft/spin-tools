@@ -20,7 +20,7 @@ import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
@@ -30,7 +30,7 @@ import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 class PtrTest {
 
-    Spin2Context scope = new Spin2Context();
+    Context scope = new Context();
 
     @Test
     void testEncodePtr() throws Exception {
@@ -71,7 +71,7 @@ class PtrTest {
     class Spin2InstructionObjectMock extends Spin2InstructionObject {
 
         public Spin2InstructionObjectMock() {
-            super(new Spin2Context());
+            super(new Context());
         }
 
         @Override

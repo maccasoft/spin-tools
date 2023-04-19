@@ -13,7 +13,7 @@ package com.maccasoft.propeller.spin1.instructions;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
@@ -22,7 +22,7 @@ import com.maccasoft.propeller.spin1.Spin1PAsmSchema;
 public class Lockclr extends Spin1PAsmInstructionFactory {
 
     @Override
-    public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
+    public Spin1InstructionObject createObject(Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
         if (Spin1PAsmSchema.D_WC_WZ.check(arguments, effect)) {
             return new Lockclr_(context, condition, arguments.get(0), effect);
         }
@@ -38,7 +38,7 @@ public class Lockclr extends Spin1PAsmInstructionFactory {
         Spin1PAsmExpression dst;
         String effect;
 
-        public Lockclr_(Spin1Context context, String condition, Spin1PAsmExpression dst, String effect) {
+        public Lockclr_(Context context, String condition, Spin1PAsmExpression dst, String effect) {
             super(context);
             this.condition = condition;
             this.dst = dst;

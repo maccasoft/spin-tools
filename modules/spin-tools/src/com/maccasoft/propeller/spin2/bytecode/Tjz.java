@@ -11,11 +11,11 @@
 package com.maccasoft.propeller.spin2.bytecode;
 
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class Tjz extends Jmp {
 
-    public Tjz(Spin2Context context, Expression expression) {
+    public Tjz(Context context, Expression expression) {
         super(context, 0x15, expression);
     }
 

@@ -14,15 +14,15 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.expressions.ContextLiteral;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 class JmpTest {
 
     @Test
     void testShortForward() {
-        Spin1Context targetContext = new Spin1Context();
+        Context targetContext = new Context();
 
-        Jmp op = new Jmp(new Spin1Context(), new ContextLiteral(targetContext));
+        Jmp op = new Jmp(new Context(), new ContextLiteral(targetContext));
         op.getContext().setAddress(0x001C);
         targetContext.setAddress(0x002F);
 
@@ -32,9 +32,9 @@ class JmpTest {
 
     @Test
     void testLongForward() {
-        Spin1Context targetContext = new Spin1Context();
+        Context targetContext = new Context();
 
-        Jmp op = new Jmp(new Spin1Context(), new ContextLiteral(targetContext));
+        Jmp op = new Jmp(new Context(), new ContextLiteral(targetContext));
         op.getContext().setAddress(0x001C);
         targetContext.setAddress(0x0065);
 
@@ -44,9 +44,9 @@ class JmpTest {
 
     @Test
     void testLongLongForward() {
-        Spin1Context targetContext = new Spin1Context();
+        Context targetContext = new Context();
 
-        Jmp op = new Jmp(new Spin1Context(), new ContextLiteral(targetContext));
+        Jmp op = new Jmp(new Context(), new ContextLiteral(targetContext));
         op.getContext().setAddress(0x001C);
         targetContext.setAddress(0x0139);
 
@@ -56,9 +56,9 @@ class JmpTest {
 
     @Test
     void testShortBackward() {
-        Spin1Context targetContext = new Spin1Context();
+        Context targetContext = new Context();
 
-        Jmp op = new Jmp(new Spin1Context(), new ContextLiteral(targetContext));
+        Jmp op = new Jmp(new Context(), new ContextLiteral(targetContext));
         op.getContext().setAddress(0x0029);
         targetContext.setAddress(0x0018);
 
@@ -68,9 +68,9 @@ class JmpTest {
 
     @Test
     void testLongBackward() {
-        Spin1Context targetContext = new Spin1Context();
+        Context targetContext = new Context();
 
-        Jmp op = new Jmp(new Spin1Context(), new ContextLiteral(targetContext));
+        Jmp op = new Jmp(new Context(), new ContextLiteral(targetContext));
         op.getContext().setAddress(0x005C);
         targetContext.setAddress(0x0018);
 
@@ -80,9 +80,9 @@ class JmpTest {
 
     @Test
     void testLongLongBackward() {
-        Spin1Context targetContext = new Spin1Context();
+        Context targetContext = new Context();
 
-        Jmp op = new Jmp(new Spin1Context(), new ContextLiteral(targetContext));
+        Jmp op = new Jmp(new Context(), new ContextLiteral(targetContext));
         op.getContext().setAddress(0x0131);
         targetContext.setAddress(0x0018);
 

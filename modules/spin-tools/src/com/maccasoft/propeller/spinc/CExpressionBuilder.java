@@ -22,6 +22,7 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Defined;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Equals;
@@ -90,13 +91,13 @@ public class CExpressionBuilder {
         unary.add("not");
     }
 
-    protected CContext context;
+    protected Context context;
     protected List<Token> tokens = new ArrayList<Token>();
 
     int index;
     Set<String> dependencies = new HashSet<>();
 
-    public CExpressionBuilder(CContext context) {
+    public CExpressionBuilder(Context context) {
         this.context = context;
     }
 

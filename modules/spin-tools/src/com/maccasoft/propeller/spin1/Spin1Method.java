@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.BitField;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.NumberLiteral;
@@ -24,7 +25,7 @@ public class Spin1Method {
     public static final BitField address = new BitField(0b0000000000000000_1111111111111111);
     public static final BitField locals = new BitField(0b1111111111111111_0000000000000000);
 
-    Spin1Context scope;
+    Context scope;
 
     String label;
     List<LocalVariable> parameters;
@@ -43,7 +44,7 @@ public class Spin1Method {
     List<Spin1Method> calledBy = new ArrayList<>();
     List<Spin1Method> calls = new ArrayList<>();
 
-    public Spin1Method(Spin1Context scope, String label) {
+    public Spin1Method(Context scope, String label) {
         this.scope = scope;
         this.label = label;
         this.parameters = new ArrayList<>();
@@ -55,7 +56,7 @@ public class Spin1Method {
         this.returns.add(defaultReturn);
     }
 
-    public Spin1Context getScope() {
+    public Context getScope() {
         return scope;
     }
 

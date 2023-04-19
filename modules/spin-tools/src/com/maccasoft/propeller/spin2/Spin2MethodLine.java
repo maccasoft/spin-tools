@@ -16,12 +16,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.bytecode.InlinePAsm;
 
 public class Spin2MethodLine {
 
-    Spin2Context scope;
+    Context scope;
 
     String statement;
 
@@ -38,36 +39,36 @@ public class Spin2MethodLine {
     int endAddress;
     boolean addressChanged;
 
-    public Spin2MethodLine(Spin2Context scope) {
-        this.scope = new Spin2Context(scope);
+    public Spin2MethodLine(Context scope) {
+        this.scope = new Context(scope);
     }
 
-    public Spin2MethodLine(Spin2Context scope, String statement) {
-        this.scope = new Spin2Context(scope);
+    public Spin2MethodLine(Context scope, String statement) {
+        this.scope = new Context(scope);
         this.statement = statement;
     }
 
-    public Spin2MethodLine(Spin2Context scope, String statement, Node node) {
-        this.scope = new Spin2Context(scope);
-        this.statement = statement;
-        this.data = node;
-        this.text = node.toString().replaceAll("[\\r\\n]", "");
-    }
-
-    public Spin2MethodLine(Spin2Context scope, Spin2MethodLine parent) {
-        this.scope = new Spin2Context(scope);
-        this.parent = parent;
-    }
-
-    public Spin2MethodLine(Spin2Context scope, Spin2MethodLine parent, String statement, Node node) {
-        this.scope = new Spin2Context(scope);
-        this.parent = parent;
+    public Spin2MethodLine(Context scope, String statement, Node node) {
+        this.scope = new Context(scope);
         this.statement = statement;
         this.data = node;
         this.text = node.toString().replaceAll("[\\r\\n]", "");
     }
 
-    public Spin2Context getScope() {
+    public Spin2MethodLine(Context scope, Spin2MethodLine parent) {
+        this.scope = new Context(scope);
+        this.parent = parent;
+    }
+
+    public Spin2MethodLine(Context scope, Spin2MethodLine parent, String statement, Node node) {
+        this.scope = new Context(scope);
+        this.parent = parent;
+        this.statement = statement;
+        this.data = node;
+        this.text = node.toString().replaceAll("[\\r\\n]", "");
+    }
+
+    public Context getScope() {
         return scope;
     }
 
@@ -87,7 +88,7 @@ public class Spin2MethodLine {
         this.text = text;
     }
 
-    public void register(Spin2Context context) {
+    public void register(Context context) {
         for (Spin2MethodLine line : childs) {
             line.register(context);
         }

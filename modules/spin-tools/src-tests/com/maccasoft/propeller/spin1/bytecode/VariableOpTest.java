@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 class VariableOpTest {
 
@@ -23,7 +23,7 @@ class VariableOpTest {
     void testReadLocalVarLongShort() {
         LocalVariable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 4);
 
-        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Read, var);
+        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, var);
 
         Assertions.assertEquals("64", toString(op.getBytes()));
         Assertions.assertEquals("VAR_READ LONG DBASE+$0004 (short)", op.toString());
@@ -33,7 +33,7 @@ class VariableOpTest {
     void testReadLocalVarLong() {
         LocalVariable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 64);
 
-        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Read, var);
+        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, var);
 
         Assertions.assertEquals("CC 40", toString(op.getBytes()));
         Assertions.assertEquals("VAR_READ LONG DBASE+$0040", op.toString());
@@ -43,7 +43,7 @@ class VariableOpTest {
     void testReadLocalVarWord() {
         LocalVariable var = new LocalVariable("WORD", "a", new NumberLiteral(1), 4);
 
-        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Read, var);
+        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, var);
 
         Assertions.assertEquals("AC 04", toString(op.getBytes()));
         Assertions.assertEquals("VAR_READ WORD DBASE+$0004", op.toString());
@@ -53,7 +53,7 @@ class VariableOpTest {
     void testReadLocalVarByte() {
         LocalVariable var = new LocalVariable("BYTE", "a", new NumberLiteral(1), 4);
 
-        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Read, var);
+        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, var);
 
         Assertions.assertEquals("8C 04", toString(op.getBytes()));
         Assertions.assertEquals("VAR_READ BYTE DBASE+$0004", op.toString());
@@ -63,7 +63,7 @@ class VariableOpTest {
     void testWriteLocalVarLong() {
         LocalVariable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 4);
 
-        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Write, var);
+        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, var);
 
         Assertions.assertEquals("65", toString(op.getBytes()));
         Assertions.assertEquals("VAR_WRITE LONG DBASE+$0004 (short)", op.toString());
@@ -73,7 +73,7 @@ class VariableOpTest {
     void testWriteLocalVarWord() {
         LocalVariable var = new LocalVariable("WORD", "a", new NumberLiteral(1), 4);
 
-        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Write, var);
+        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, var);
 
         Assertions.assertEquals("AD 04", toString(op.getBytes()));
         Assertions.assertEquals("VAR_WRITE WORD DBASE+$0004", op.toString());
@@ -83,7 +83,7 @@ class VariableOpTest {
     void testWriteLocalVarByte() {
         LocalVariable var = new LocalVariable("BYTE", "a", new NumberLiteral(1), 4);
 
-        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Write, var);
+        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, var);
 
         Assertions.assertEquals("8D 04", toString(op.getBytes()));
         Assertions.assertEquals("VAR_WRITE BYTE DBASE+$0004", op.toString());
@@ -93,7 +93,7 @@ class VariableOpTest {
     void testModifyLocalVarLong() {
         LocalVariable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 4);
 
-        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Assign, var);
+        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Assign, var);
 
         Assertions.assertEquals("66", toString(op.getBytes()));
         Assertions.assertEquals("VAR_MODIFY LONG DBASE+$0004 (short)", op.toString());
@@ -103,7 +103,7 @@ class VariableOpTest {
     void testModifyLocalVarWord() {
         LocalVariable var = new LocalVariable("WORD", "a", new NumberLiteral(1), 4);
 
-        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Assign, var);
+        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Assign, var);
 
         Assertions.assertEquals("AE 04", toString(op.getBytes()));
         Assertions.assertEquals("VAR_MODIFY WORD DBASE+$0004", op.toString());
@@ -113,7 +113,7 @@ class VariableOpTest {
     void testModifyLocalVarByte() {
         LocalVariable var = new LocalVariable("BYTE", "a", new NumberLiteral(1), 4);
 
-        VariableOp op = new VariableOp(new Spin1Context(), VariableOp.Op.Assign, var);
+        VariableOp op = new VariableOp(new Context(), VariableOp.Op.Assign, var);
 
         Assertions.assertEquals("8E 04", toString(op.getBytes()));
         Assertions.assertEquals("VAR_MODIFY BYTE DBASE+$0004", op.toString());

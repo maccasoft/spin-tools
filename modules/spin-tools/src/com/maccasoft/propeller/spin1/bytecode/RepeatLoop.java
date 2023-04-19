@@ -11,11 +11,11 @@
 package com.maccasoft.propeller.spin1.bytecode;
 
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class RepeatLoop extends Jmp {
 
-    public RepeatLoop(Spin1Context context, boolean step, Expression expression) {
+    public RepeatLoop(Context context, boolean step, Expression expression) {
         super(context, step ? 0x06 : 0x02, expression);
     }
 

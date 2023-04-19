@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class MathOp extends Spin2Bytecode {
 
@@ -210,7 +210,7 @@ public class MathOp extends Spin2Bytecode {
     Descriptor op;
     boolean push;
 
-    public MathOp(Spin2Context context, String op, boolean push) {
+    public MathOp(Context context, String op, boolean push) {
         super(context);
         this.op = operations.get(op.toUpperCase());
         if (this.op == null) {

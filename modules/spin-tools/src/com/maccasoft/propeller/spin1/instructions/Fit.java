@@ -10,7 +10,7 @@
 
 package com.maccasoft.propeller.spin1.instructions;
 
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
@@ -33,11 +33,11 @@ public class Fit extends Spin1PAsmInstructionFactory {
 
         Spin1PAsmExpression arg0;
 
-        public Fit_(Spin1Context context) {
+        public Fit_(Context context) {
             super(context);
         }
 
-        public Fit_(Spin1Context context, Spin1PAsmExpression arg0) {
+        public Fit_(Context context, Spin1PAsmExpression arg0) {
             super(context);
             this.arg0 = arg0;
         }

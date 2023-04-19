@@ -19,6 +19,7 @@ import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Decod;
@@ -71,11 +72,11 @@ public abstract class Spin1BytecodeCompiler {
         this.stringData = new ArrayList<>();
     }
 
-    public List<Spin1Bytecode> compileBytecodeExpression(Spin1Context context, Spin1Method method, Spin1StatementNode node) {
+    public List<Spin1Bytecode> compileBytecodeExpression(Context context, Spin1Method method, Spin1StatementNode node) {
         return compileBytecodeExpression(context, method, node, false);
     }
 
-    public List<Spin1Bytecode> compileBytecodeExpression(Spin1Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
+    public List<Spin1Bytecode> compileBytecodeExpression(Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
         List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
 
         try {
@@ -1119,7 +1120,7 @@ public abstract class Spin1BytecodeCompiler {
         return ":=".equals(text);
     }
 
-    List<Spin1Bytecode> compileConstantExpression(Spin1Context context, Spin1Method method, Spin1StatementNode node) {
+    List<Spin1Bytecode> compileConstantExpression(Context context, Spin1Method method, Spin1StatementNode node) {
         if (!openspinCompatible) {
             try {
                 Expression expression = buildConstantExpression(context, node);
@@ -1133,7 +1134,7 @@ public abstract class Spin1BytecodeCompiler {
         return compileBytecodeExpression(context, method, node, true);
     }
 
-    Expression buildConstantExpression(Spin1Context context, Spin1StatementNode node) {
+    Expression buildConstantExpression(Context context, Spin1StatementNode node) {
         if (node.getType() == Token.NUMBER) {
             return new NumberLiteral(node.getText());
         }
@@ -1209,7 +1210,7 @@ public abstract class Spin1BytecodeCompiler {
         throw new RuntimeException("unknown " + node.getText());
     }
 
-    List<Spin1Bytecode> leftAssign(Spin1Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
+    List<Spin1Bytecode> leftAssign(Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
         List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
 
         String[] s = node.getText().split("[\\.]");
@@ -1380,7 +1381,7 @@ public abstract class Spin1BytecodeCompiler {
             for (Spin1Bytecode bc : stringData) {
                 byte[] b0 = bc.getBytes();
                 if (b0.length > b1.length && Arrays.equals(b0, b0.length - b1.length, b0.length, b1, 0, b1.length)) {
-                    Spin1Context sharedContext = new Spin1Context() {
+                    Context sharedContext = new Context() {
 
                         @Override
                         public int getObjectAddress() {
@@ -1391,7 +1392,7 @@ public abstract class Spin1BytecodeCompiler {
                     return new Spin1Bytecode(sharedContext) {
 
                         @Override
-                        public Spin1Context getContext() {
+                        public Context getContext() {
                             return sharedContext;
                         }
 

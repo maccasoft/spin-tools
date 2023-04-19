@@ -15,14 +15,14 @@ import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 
 public class Bytefit extends Byte {
 
     @Override
-    public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
+    public Spin1InstructionObject createObject(Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
         return new Bytefit_(context, arguments);
     }
 
@@ -30,7 +30,7 @@ public class Bytefit extends Byte {
 
         List<Spin1PAsmExpression> arguments;
 
-        public Bytefit_(Spin1Context context, List<Spin1PAsmExpression> arguments) {
+        public Bytefit_(Context context, List<Spin1PAsmExpression> arguments) {
             super(context);
             this.arguments = arguments;
         }

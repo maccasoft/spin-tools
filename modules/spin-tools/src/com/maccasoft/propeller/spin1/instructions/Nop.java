@@ -12,7 +12,7 @@ package com.maccasoft.propeller.spin1.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
@@ -21,7 +21,7 @@ import com.maccasoft.propeller.spin1.Spin1PAsmSchema;
 public class Nop extends Spin1PAsmInstructionFactory {
 
     @Override
-    public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
+    public Spin1InstructionObject createObject(Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
         if (Spin1PAsmSchema.NONE.check(arguments, effect)) {
             return new Nop_(context);
         }
@@ -33,7 +33,7 @@ public class Nop extends Spin1PAsmInstructionFactory {
      */
     public class Nop_ extends Spin1InstructionObject {
 
-        public Nop_(Spin1Context context) {
+        public Nop_(Context context) {
             super(context);
         }
 

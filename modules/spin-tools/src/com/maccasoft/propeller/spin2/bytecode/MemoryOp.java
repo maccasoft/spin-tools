@@ -17,7 +17,7 @@ import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class MemoryOp extends Spin2Bytecode {
 
@@ -40,7 +40,7 @@ public class MemoryOp extends Spin2Bytecode {
     public Expression expression;
     public int index;
 
-    public MemoryOp(Spin2Context context, Size ss, Base bb, Op op, Expression expression) {
+    public MemoryOp(Context context, Size ss, Base bb, Op op, Expression expression) {
         super(context);
         this.ss = ss;
         this.base = bb;
@@ -48,7 +48,7 @@ public class MemoryOp extends Spin2Bytecode {
         this.expression = expression;
     }
 
-    public MemoryOp(Spin2Context context, Size ss, Base bb, Op op, boolean pop) {
+    public MemoryOp(Context context, Size ss, Base bb, Op op, boolean pop) {
         super(context);
         this.ss = ss;
         this.base = bb;
@@ -56,7 +56,7 @@ public class MemoryOp extends Spin2Bytecode {
         this.pop = pop;
     }
 
-    public MemoryOp(Spin2Context context, Size ss, Base bb, Op op, boolean pop, Expression expression) {
+    public MemoryOp(Context context, Size ss, Base bb, Op op, boolean pop, Expression expression) {
         super(context);
         this.ss = ss;
         this.base = bb;
@@ -65,7 +65,7 @@ public class MemoryOp extends Spin2Bytecode {
         this.expression = expression;
     }
 
-    public MemoryOp(Spin2Context context, Size ss, Base bb, Op op, Expression expression, int index) {
+    public MemoryOp(Context context, Size ss, Base bb, Op op, Expression expression, int index) {
         super(context);
         this.ss = ss;
         this.base = bb;
@@ -82,7 +82,7 @@ public class MemoryOp extends Spin2Bytecode {
         }
     }
 
-    public MemoryOp(Spin2Context context, Size ss, Base bb, Op op, boolean pop, Expression expression, int index) {
+    public MemoryOp(Context context, Size ss, Base bb, Op op, boolean pop, Expression expression, int index) {
         super(context);
         this.ss = ss;
         this.base = bb;

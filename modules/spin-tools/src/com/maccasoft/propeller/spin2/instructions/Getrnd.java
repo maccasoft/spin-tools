@@ -12,7 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
@@ -21,7 +21,7 @@ import com.maccasoft.propeller.spin2.Spin2PAsmSchema;
 public class Getrnd extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2InstructionObject createObject(Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         if (Spin2PAsmSchema.WC_WZ_WCZ.check(arguments, effect)) {
             return new Getrnd_(context, condition, effect);
         }
@@ -39,7 +39,7 @@ public class Getrnd extends Spin2PAsmInstructionFactory {
         String condition;
         String effect;
 
-        public Getrnd_(Spin2Context context, String condition, String effect) {
+        public Getrnd_(Context context, String condition, String effect) {
             super(context);
             this.condition = condition;
             this.effect = effect;
@@ -69,7 +69,7 @@ public class Getrnd extends Spin2PAsmInstructionFactory {
         Spin2PAsmExpression dst;
         String effect;
 
-        public Getrnd_D_(Spin2Context context, String condition, Spin2PAsmExpression dst, String effect) {
+        public Getrnd_D_(Context context, String condition, Spin2PAsmExpression dst, String effect) {
             super(context);
             this.condition = condition;
             this.dst = dst;

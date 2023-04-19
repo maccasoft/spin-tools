@@ -15,20 +15,20 @@ import java.io.IOException;
 
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class Jmp extends Spin2Bytecode {
 
     int code;
     Expression expression;
 
-    public Jmp(Spin2Context context, Expression expression) {
+    public Jmp(Context context, Expression expression) {
         super(context);
         this.code = 0x12;
         this.expression = expression;
     }
 
-    protected Jmp(Spin2Context context, int code, Expression expression) {
+    protected Jmp(Context context, int code, Expression expression) {
         super(context);
         this.code = code;
         this.expression = expression;

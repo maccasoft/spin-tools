@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.instructions.Abs;
 import com.maccasoft.propeller.spin1.instructions.Absneg;
 import com.maccasoft.propeller.spin1.instructions.Add;
@@ -223,7 +224,7 @@ public abstract class Spin1PAsmInstructionFactory {
         return createObject(line.getScope(), line.getCondition(), line.getArguments(), line.getEffect());
     }
 
-    public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String modifiers) {
+    public Spin1InstructionObject createObject(Context context, String condition, List<Spin1PAsmExpression> arguments, String modifiers) {
         return null;
     }
 

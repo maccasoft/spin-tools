@@ -15,14 +15,14 @@ import java.io.IOException;
 
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class CaseFastJmp extends Spin2Bytecode {
 
-    Spin2Context ref;
+    Context ref;
     Expression expression;
 
-    public CaseFastJmp(Spin2Context context, Expression expression) {
+    public CaseFastJmp(Context context, Expression expression) {
         super(context);
         this.ref = context;
         this.expression = expression;

@@ -12,7 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
@@ -21,7 +21,7 @@ import com.maccasoft.propeller.spin2.Spin2PAsmSchema;
 public class Bmask extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2InstructionObject createObject(Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         if (Spin2PAsmSchema.D_S.check(arguments, effect)) {
             return new Bmask_(context, condition, arguments.get(0), arguments.get(1));
         }
@@ -40,7 +40,7 @@ public class Bmask extends Spin2PAsmInstructionFactory {
         Spin2PAsmExpression dst;
         Spin2PAsmExpression src;
 
-        public Bmask_(Spin2Context context, String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src) {
+        public Bmask_(Context context, String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src) {
             super(context);
             this.condition = condition;
             this.dst = dst;
@@ -75,7 +75,7 @@ public class Bmask extends Spin2PAsmInstructionFactory {
         String condition;
         Spin2PAsmExpression dst;
 
-        public Bmask_D_(Spin2Context context, String condition, Spin2PAsmExpression dst) {
+        public Bmask_D_(Context context, String condition, Spin2PAsmExpression dst) {
             super(context);
             this.condition = condition;
             this.dst = dst;

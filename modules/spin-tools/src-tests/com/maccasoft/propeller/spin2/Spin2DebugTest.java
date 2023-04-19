@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
@@ -60,7 +61,7 @@ class Spin2DebugTest {
 
     @Test
     void testRegister() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("rega", new NumberLiteral(1));
         context.addSymbol("@rega", new NumberLiteral(4));
 
@@ -75,7 +76,7 @@ class Spin2DebugTest {
 
     @Test
     void testRegisterImmediate() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("rega", new NumberLiteral(1));
         context.addSymbol("@rega", new NumberLiteral(4));
 
@@ -90,7 +91,7 @@ class Spin2DebugTest {
 
     @Test
     void testRegisterPointer() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("rega", new NumberLiteral(1));
         context.addSymbol("@rega", new NumberLiteral(4));
 
@@ -105,7 +106,7 @@ class Spin2DebugTest {
 
     @Test
     void testRegisterPointerImmediate() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("rega", new NumberLiteral(1));
         context.addSymbol("@rega", new NumberLiteral(4));
 
@@ -120,7 +121,7 @@ class Spin2DebugTest {
 
     @Test
     void testRegisterArray() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("rega", new NumberLiteral(1));
         context.addSymbol("@rega", new NumberLiteral(4));
 
@@ -135,7 +136,7 @@ class Spin2DebugTest {
 
     @Test
     void testRegisterArrayImmediateCount() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("rega", new NumberLiteral(1));
         context.addSymbol("@rega", new NumberLiteral(4));
 
@@ -150,7 +151,7 @@ class Spin2DebugTest {
 
     @Test
     void testRegisterValueOnly() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("reg", new NumberLiteral(10));
 
         String text = "debug(udec_(reg))";
@@ -164,7 +165,7 @@ class Spin2DebugTest {
 
     @Test
     void testDly() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
 
         String text = "debug(dly(#100))";
 
@@ -177,7 +178,7 @@ class Spin2DebugTest {
 
     @Test
     void testMultipleArguments() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("reg1", new NumberLiteral(10));
         context.addSymbol("reg2", new NumberLiteral(11));
         context.addSymbol("reg3", new NumberLiteral(12));
@@ -193,7 +194,7 @@ class Spin2DebugTest {
 
     @Test
     void testMultipleStatements() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("reg1", new NumberLiteral(10));
         context.addSymbol("reg2", new NumberLiteral(11));
         context.addSymbol("reg3", new NumberLiteral(12));
@@ -227,7 +228,7 @@ class Spin2DebugTest {
 
     @Test
     void testPAsmString() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
 
         String text = "debug(\"start\")";
 
@@ -240,7 +241,7 @@ class Spin2DebugTest {
 
     @Test
     void testPAsmStringAndRegisters() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("reg1", new NumberLiteral(10));
         context.addSymbol("reg2", new NumberLiteral(11));
         context.addSymbol("reg3", new NumberLiteral(12));
@@ -256,7 +257,7 @@ class Spin2DebugTest {
 
     @Test
     void testZStr() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("rega", new NumberLiteral(1));
         context.addSymbol("@rega", new NumberLiteral(4));
 
@@ -271,7 +272,7 @@ class Spin2DebugTest {
 
     @Test
     void testZStrPointer() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("rega", new NumberLiteral(1));
         context.addSymbol("@rega", new NumberLiteral(4));
 
@@ -286,7 +287,7 @@ class Spin2DebugTest {
 
     @Test
     void testZStrImmediate() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("rega", new NumberLiteral(1));
         context.addSymbol("@rega", new NumberLiteral(4));
 
@@ -301,7 +302,7 @@ class Spin2DebugTest {
 
     @Test
     void testLString() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("ptr", new NumberLiteral(10));
 
         String text = "debug(lstr(ptr,#12))";
@@ -315,7 +316,7 @@ class Spin2DebugTest {
 
     @Test
     void testBacktick() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
 
         String text = "debug(`12345)";
 
@@ -328,7 +329,7 @@ class Spin2DebugTest {
 
     @Test
     void testStringBacktick() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
 
         String text = "debug(\"`12345\")";
 
@@ -377,7 +378,7 @@ class Spin2DebugTest {
 
     @Test
     void testPAsmCondition() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("a", new NumberLiteral(1));
         context.addSymbol("reg", new NumberLiteral(10));
 
@@ -392,7 +393,7 @@ class Spin2DebugTest {
 
     @Test
     void testPAsmConditionMiddle() {
-        Spin2Context context = new Spin2Context();
+        Context context = new Context();
         context.addSymbol("a", new NumberLiteral(1));
         context.addSymbol("reg", new NumberLiteral(10));
 

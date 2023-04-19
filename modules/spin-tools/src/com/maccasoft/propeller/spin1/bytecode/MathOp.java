@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class MathOp extends Spin1Bytecode {
 
@@ -119,7 +119,7 @@ public class MathOp extends Spin1Bytecode {
     Descriptor op;
     boolean push;
 
-    public MathOp(Spin1Context context, String op, boolean push) {
+    public MathOp(Context context, String op, boolean push) {
         super(context);
         this.op = getOperationDescriptor(op);
         this.push = push;

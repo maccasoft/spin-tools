@@ -16,6 +16,7 @@ import java.io.PrintStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin1.Spin1StatementNode;
 
@@ -66,7 +67,7 @@ class Spin1CTreeBuilderTest {
     }
 
     String parse(String text) {
-        Spin1CTreeBuilder builder = new Spin1CTreeBuilder(new Spin1CContext());
+        Spin1CTreeBuilder builder = new Spin1CTreeBuilder(new Context());
 
         CParser parser = new CParser(new CTokenStream(text));
         while (true) {

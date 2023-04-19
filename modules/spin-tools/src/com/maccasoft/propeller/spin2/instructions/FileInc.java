@@ -10,14 +10,14 @@
 
 package com.maccasoft.propeller.spin2.instructions;
 
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 
 public class FileInc extends Spin2InstructionObject {
 
     byte[] data;
 
-    public FileInc(Spin2Context context, byte[] data) {
+    public FileInc(Context context, byte[] data) {
         super(context);
         this.data = data;
     }

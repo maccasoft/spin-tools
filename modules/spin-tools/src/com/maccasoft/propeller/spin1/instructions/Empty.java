@@ -12,7 +12,7 @@ package com.maccasoft.propeller.spin1.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
@@ -22,13 +22,13 @@ public class Empty extends Spin1PAsmInstructionFactory {
     public static final Spin1PAsmInstructionFactory instance = new Empty();
 
     @Override
-    public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
+    public Spin1InstructionObject createObject(Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
         return new Empty_(context);
     }
 
     public static class Empty_ extends Spin1InstructionObject {
 
-        public Empty_(Spin1Context context) {
+        public Empty_(Context context) {
             super(context);
         }
 

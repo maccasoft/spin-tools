@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
@@ -32,9 +33,9 @@ public abstract class Spin1PAsmCompiler {
 
     }
 
-    public List<Spin1PAsmLine> compileDatBlock(Spin1Context scope, Node parent) {
-        Spin1Context savedContext = scope;
-        Map<Spin1PAsmLine, Spin1Context> pendingAlias = new HashMap<>();
+    public List<Spin1PAsmLine> compileDatBlock(Context scope, Node parent) {
+        Context savedContext = scope;
+        Map<Spin1PAsmLine, Context> pendingAlias = new HashMap<>();
         List<Spin1PAsmLine> source = new ArrayList<>();
 
         for (Node child : parent.getChilds()) {
@@ -141,9 +142,9 @@ public abstract class Spin1PAsmCompiler {
                             }
                         }
                         else if (pendingAlias.size() != 0) {
-                            for (Entry<Spin1PAsmLine, Spin1Context> entry : pendingAlias.entrySet()) {
+                            for (Entry<Spin1PAsmLine, Context> entry : pendingAlias.entrySet()) {
                                 Spin1PAsmLine line = entry.getKey();
-                                Spin1Context context = entry.getValue();
+                                Context context = entry.getValue();
                                 context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
                                 context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
                                 context.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
@@ -170,9 +171,9 @@ public abstract class Spin1PAsmCompiler {
                         type = "BYTE";
                     }
 
-                    for (Entry<Spin1PAsmLine, Spin1Context> entry : pendingAlias.entrySet()) {
+                    for (Entry<Spin1PAsmLine, Context> entry : pendingAlias.entrySet()) {
                         Spin1PAsmLine line = entry.getKey();
-                        Spin1Context context = entry.getValue();
+                        Context context = entry.getValue();
                         context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
                         context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
                         context.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
@@ -214,7 +215,7 @@ public abstract class Spin1PAsmCompiler {
         return source;
     }
 
-    protected List<Spin1PAsmLine> compileDatInclude(Spin1Context scope, Node root) {
+    protected List<Spin1PAsmLine> compileDatInclude(Context scope, Node root) {
         List<Spin1PAsmLine> source = new ArrayList<>();
 
         for (Node node : root.getChilds()) {

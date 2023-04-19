@@ -15,6 +15,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.BitField;
 
+import com.maccasoft.propeller.expressions.Context;
+
 public class Spin1Bytecode {
 
     public static final BitField op_ss = new BitField(0b00000110);
@@ -89,19 +91,19 @@ public class Spin1Bytecode {
         return descriptors.get(s.toUpperCase());
     }
 
-    protected Spin1Context context;
+    protected Context context;
     String text;
 
-    public Spin1Bytecode(Spin1Context context) {
-        this.context = new Spin1Context(context);
+    public Spin1Bytecode(Context context) {
+        this.context = new Context(context);
     }
 
-    public Spin1Bytecode(Spin1Context context, String text) {
-        this.context = new Spin1Context(context);
+    public Spin1Bytecode(Context context, String text) {
+        this.context = new Context(context);
         this.text = text;
     }
 
-    public Spin1Context getContext() {
+    public Context getContext() {
         return context;
     }
 

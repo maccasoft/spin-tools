@@ -18,7 +18,7 @@ import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class MemoryOp extends Spin1Bytecode {
 
@@ -45,7 +45,7 @@ public class MemoryOp extends Spin1Bytecode {
     public Op oo;
     public Expression expression;
 
-    public MemoryOp(Spin1Context context, Size ss, boolean i, Base bb, Op oo, Expression expression) {
+    public MemoryOp(Context context, Size ss, boolean i, Base bb, Op oo, Expression expression) {
         super(context);
         this.ss = ss;
         this.i = i;

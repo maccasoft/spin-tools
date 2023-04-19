@@ -11,14 +11,14 @@
 package com.maccasoft.propeller.spin2.bytecode;
 
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2PAsmLine;
 
 public class InlinePAsm extends Spin2Bytecode {
 
     Spin2PAsmLine line;
 
-    public InlinePAsm(Spin2Context context, Spin2PAsmLine line) {
+    public InlinePAsm(Context context, Spin2PAsmLine line) {
         super(context);
         this.line = line;
     }

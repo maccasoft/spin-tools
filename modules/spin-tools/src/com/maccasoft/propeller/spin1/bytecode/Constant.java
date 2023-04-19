@@ -12,14 +12,14 @@ package com.maccasoft.propeller.spin1.bytecode;
 
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class Constant extends Spin1Bytecode {
 
     public Expression expression;
     boolean openspinCompatibility;
 
-    public Constant(Spin1Context context, Expression expression, boolean openspinCompatibility) {
+    public Constant(Context context, Expression expression, boolean openspinCompatibility) {
         super(context);
         this.expression = expression;
         this.openspinCompatibility = openspinCompatibility;

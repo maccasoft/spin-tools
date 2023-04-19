@@ -10,10 +10,11 @@
 
 package com.maccasoft.propeller.spin1;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Register;
 
-public class Spin1GlobalContext extends Spin1Context {
+public class Spin1GlobalContext extends Context {
 
     public Spin1GlobalContext() {
         this(false);
@@ -58,10 +59,6 @@ public class Spin1GlobalContext extends Spin1Context {
         addBuiltinSymbol("PLL4X", new NumberLiteral("%00100000000"));
         addBuiltinSymbol("PLL8X", new NumberLiteral("%01000000000"));
         addBuiltinSymbol("PLL16X", new NumberLiteral("%10000000000"));
-    }
-
-    void addBuiltinSymbol(String name, int value) {
-        caseInsensitivesymbols.put(name, new NumberLiteral(value));
     }
 
 }

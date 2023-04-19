@@ -15,7 +15,7 @@ import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
@@ -23,7 +23,7 @@ import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
 public class Byte extends Spin1PAsmInstructionFactory {
 
     @Override
-    public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
+    public Spin1InstructionObject createObject(Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
         return new Byte_(context, arguments);
     }
 
@@ -31,7 +31,7 @@ public class Byte extends Spin1PAsmInstructionFactory {
 
         List<Spin1PAsmExpression> arguments;
 
-        public Byte_(Spin1Context context, List<Spin1PAsmExpression> arguments) {
+        public Byte_(Context context, List<Spin1PAsmExpression> arguments) {
             super(context);
             this.arguments = arguments;
         }

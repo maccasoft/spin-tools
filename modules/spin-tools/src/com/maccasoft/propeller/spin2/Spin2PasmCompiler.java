@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Identifier;
@@ -32,18 +33,18 @@ import com.maccasoft.propeller.spin2.instructions.FileInc;
 
 public abstract class Spin2PasmCompiler {
 
-    Spin2Context scope;
+    Context scope;
     boolean debugEnabled;
     List<Object> debugStatements;
 
     int nested;
-    Map<Spin2PAsmLine, Spin2Context> pendingAlias = new HashMap<Spin2PAsmLine, Spin2Context>();
+    Map<Spin2PAsmLine, Context> pendingAlias = new HashMap<Spin2PAsmLine, Context>();
 
     Spin2PasmCompiler() {
         this.debugStatements = new ArrayList<Object>();
     }
 
-    public Spin2PasmCompiler(Spin2Context scope, boolean debugEnabled, List<Object> debugStatements) {
+    public Spin2PasmCompiler(Context scope, boolean debugEnabled, List<Object> debugStatements) {
         this.scope = scope;
         this.debugEnabled = debugEnabled;
         this.debugStatements = debugStatements;
@@ -52,7 +53,7 @@ public abstract class Spin2PasmCompiler {
     public List<Spin2PAsmLine> compileDat(DataNode root) {
         List<Spin2PAsmLine> source = new ArrayList<>();
 
-        Spin2Context savedContext = scope;
+        Context savedContext = scope;
         nested = 0;
 
         for (Node child : root.getChilds()) {
@@ -105,8 +106,8 @@ public abstract class Spin2PasmCompiler {
         return source;
     }
 
-    public Spin2PAsmLine compileDataLine(Spin2Context scope, DataLineNode node) {
-        Spin2Context savedContext = this.scope;
+    public Spin2PAsmLine compileDataLine(Context scope, DataLineNode node) {
+        Context savedContext = this.scope;
         this.scope = scope;
         try {
             return compileDataLine(node);
@@ -122,7 +123,7 @@ public abstract class Spin2PasmCompiler {
         String modifier = node.modifier != null ? node.modifier.getText() : null;
         List<Spin2PAsmExpression> parameters = new ArrayList<Spin2PAsmExpression>();
 
-        Spin2Context rootScope = scope;
+        Context rootScope = scope;
         if (label != null && !label.startsWith(".")) {
             if (nested > 0) {
                 if (scope.getParent() != null) {
@@ -130,7 +131,7 @@ public abstract class Spin2PasmCompiler {
                 }
                 nested--;
             }
-            scope = new Spin2Context(scope);
+            scope = new Context(scope);
             nested++;
         }
 
@@ -138,7 +139,7 @@ public abstract class Spin2PasmCompiler {
             throw new CompilerException("syntax error", node);
         }
 
-        Spin2Context localScope = new Spin2Context(scope);
+        Context localScope = new Context(scope);
 
         for (DataLineNode.ParameterNode param : node.parameters) {
             int index = 0;
@@ -265,9 +266,9 @@ public abstract class Spin2PasmCompiler {
                     }
                 }
                 else if (pendingAlias.size() != 0) {
-                    for (Entry<Spin2PAsmLine, Spin2Context> entry : pendingAlias.entrySet()) {
+                    for (Entry<Spin2PAsmLine, Context> entry : pendingAlias.entrySet()) {
                         Spin2PAsmLine line = entry.getKey();
-                        Spin2Context context = entry.getValue();
+                        Context context = entry.getValue();
                         context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
                         context.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
                         context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
@@ -291,9 +292,9 @@ public abstract class Spin2PasmCompiler {
                 type = "BYTE";
             }
 
-            for (Entry<Spin2PAsmLine, Spin2Context> entry : pendingAlias.entrySet()) {
+            for (Entry<Spin2PAsmLine, Context> entry : pendingAlias.entrySet()) {
                 Spin2PAsmLine line = entry.getKey();
-                Spin2Context context = entry.getValue();
+                Context context = entry.getValue();
                 context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
                 context.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
                 context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
@@ -331,7 +332,7 @@ public abstract class Spin2PasmCompiler {
         return index >= tokens.size();
     }
 
-    protected List<Spin2PAsmLine> compileDatInclude(Spin2Context scope, Node root) {
+    protected List<Spin2PAsmLine> compileDatInclude(Context scope, Node root) {
         List<Spin2PAsmLine> source = new ArrayList<>();
 
         for (Node node : root.getChilds()) {

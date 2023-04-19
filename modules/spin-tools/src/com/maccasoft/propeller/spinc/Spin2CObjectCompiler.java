@@ -30,6 +30,7 @@ import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
@@ -48,7 +49,6 @@ import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
-import com.maccasoft.propeller.spin2.Spin2Context;
 import com.maccasoft.propeller.spin2.Spin2Debug;
 import com.maccasoft.propeller.spin2.Spin2ExpressionBuilder;
 import com.maccasoft.propeller.spin2.Spin2GlobalContext;
@@ -78,7 +78,7 @@ import com.maccasoft.propeller.spin2.instructions.Word;
 
 public class Spin2CObjectCompiler extends ObjectCompiler {
 
-    Spin2CContext scope;
+    Context scope;
 
     int objectVarSize;
 
@@ -106,7 +106,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
     Spin2PasmCompiler pasmCompiler;
 
     public Spin2CObjectCompiler(Spin2Compiler compiler, List<Object> debugStatements) {
-        this.scope = new Spin2CContext(new Spin2GlobalContext(true));
+        this.scope = new Context(new Spin2GlobalContext(true));
         this.compiler = compiler;
         this.debugEnabled = compiler.isDebugEnabled();
         this.debugStatements = debugStatements;
@@ -135,7 +135,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             }
 
             @Override
-            protected int getArgumentsCount(Spin2Context context, Spin2StatementNode childNode) {
+            protected int getArgumentsCount(Context context, Spin2StatementNode childNode) {
                 return childNode.getChildCount();
             }
 
@@ -249,7 +249,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
         for (Spin2Method method : methods) {
             Node node = (Node) method.getData();
-            List<Spin2MethodLine> methodLines = compileStatement(method, (Spin2CContext) method.getScope(), null, node);
+            List<Spin2MethodLine> methodLines = compileStatement(method, method.getScope(), null, node);
             for (Spin2MethodLine line : methodLines) {
                 method.addSource(line);
             }
@@ -825,7 +825,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             throw new CompilerException("unsupported type", type);
         }
 
-        Spin2CContext localScope = new Spin2CContext(scope);
+        Context localScope = new Context(scope);
 
         Token token = iter.next();
         if (token.type != Token.KEYWORD) {
@@ -904,7 +904,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         }
     }
 
-    List<Spin2MethodLine> compileStatement(Spin2Method method, Spin2CContext context, Spin2MethodLine parent, Node statementNode) {
+    List<Spin2MethodLine> compileStatement(Spin2Method method, Context context, Spin2MethodLine parent, Node statementNode) {
         List<Spin2MethodLine> lines = new ArrayList<Spin2MethodLine>();
 
         Spin2MethodLine previousLine = null;
@@ -945,7 +945,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         return lines;
     }
 
-    Spin2MethodLine compileStatement(Spin2Method method, Spin2CContext context, Spin2MethodLine parent, Node node, Spin2MethodLine previousLine) {
+    Spin2MethodLine compileStatement(Spin2Method method, Context context, Spin2MethodLine parent, Node node, Spin2MethodLine previousLine) {
         Spin2MethodLine line = null;
 
         TokenIterator iter = node.iterator();
@@ -1216,7 +1216,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                 loopLine.addSource(new Jz(line.getScope(), new ContextLiteral(quitLine.getScope())));
             }
 
-            line.addChilds(compileStatement(method, new Spin2CContext(context), line, node));
+            line.addChilds(compileStatement(method, new Context(context), line, node));
 
             Spin2MethodLine repeatLine = new Spin2MethodLine(context);
             if (increment != null) {
@@ -1232,7 +1232,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         else if ("do".equals(token.getText())) {
             line = new Spin2MethodLine(context, parent, token.getText(), node);
             line.setData("continue", line);
-            line.addChilds(compileStatement(method, new Spin2CContext(context), line, node));
+            line.addChilds(compileStatement(method, new Context(context), line, node));
         }
         else if ("while".equals(token.getText())) {
             Spin2CTreeBuilder builder = new Spin2CTreeBuilder(context);
@@ -1260,7 +1260,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                 Spin2MethodLine quitLine = new Spin2MethodLine(context);
                 line.setData("break", quitLine);
 
-                line.addChilds(compileStatement(method, new Spin2CContext(context), line, node));
+                line.addChilds(compileStatement(method, new Context(context), line, node));
 
                 line.addSource(new Jz(line.getScope(), new ContextLiteral(quitLine.getScope())));
 
@@ -1346,7 +1346,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                         compileCase(method, line, builder.getRoot(), targetLine, spinCompiler);
                     }
 
-                    targetLine.addChilds(compileStatement(method, new Spin2CContext(context), line, child));
+                    targetLine.addChilds(compileStatement(method, new Context(context), line, child));
                 }
             }
 
@@ -1405,7 +1405,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             line.addSource(spinCompiler.compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
             line.addSource(new Jz(line.getScope(), new ContextLiteral(falseLine.getScope())));
 
-            line.addChilds(compileStatement(method, new Spin2CContext(context), line, node));
+            line.addChilds(compileStatement(method, new Context(context), line, node));
             line.addChild(falseLine);
             line.addChild(new Spin2MethodLine(context));
         }
@@ -1437,7 +1437,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                 }
             }
 
-            line.addChilds(compileStatement(method, new Spin2CContext(context), line, node));
+            line.addChilds(compileStatement(method, new Context(context), line, node));
             line.addChild(falseLine);
             line.addChild(exitLine);
 
@@ -1470,7 +1470,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
             line = new Spin2MethodLine(context, parent, token.getText(), node);
 
-            Spin2CContext scope = new Spin2CContext(context);
+            Context scope = new Context(context);
 
             int address = 0x1E0;
             for (LocalVariable var : method.getAllLocalVariables()) {

@@ -72,7 +72,7 @@ import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2Method;
 import com.maccasoft.propeller.spin2.Spin2StatementNode;
 import com.maccasoft.propeller.spin2.bytecode.Address;
@@ -410,7 +410,7 @@ public abstract class Spin2CBytecodeCompiler {
         this.debugStatements = debugStatements;
     }
 
-    public List<Spin2Bytecode> compileBytecodeExpression(Spin2Context context, Spin2Method method, Spin2StatementNode node, boolean push) {
+    public List<Spin2Bytecode> compileBytecodeExpression(Context context, Spin2Method method, Spin2StatementNode node, boolean push) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
         try {
@@ -1637,7 +1637,7 @@ public abstract class Spin2CBytecodeCompiler {
         return text.startsWith("@@");
     }
 
-    protected int getArgumentsCount(Spin2Context context, Spin2StatementNode childNode) {
+    protected int getArgumentsCount(Context context, Spin2StatementNode childNode) {
         int actual = 0;
         for (int i = 0; i < childNode.getChildCount(); i++) {
             Expression child = context.getLocalSymbol(childNode.getChild(i).getText());
@@ -1655,7 +1655,7 @@ public abstract class Spin2CBytecodeCompiler {
         return actual;
     }
 
-    List<Spin2Bytecode> compileConstantExpression(Spin2Context context, Spin2Method method, Spin2StatementNode node) {
+    List<Spin2Bytecode> compileConstantExpression(Context context, Spin2Method method, Spin2StatementNode node) {
         try {
             Expression expression = buildConstantExpression(context, node);
             if (expression.isConstant()) {
@@ -1667,11 +1667,11 @@ public abstract class Spin2CBytecodeCompiler {
         return compileBytecodeExpression(context, method, node, true);
     }
 
-    Expression buildConstantExpression(Spin2Context context, Spin2StatementNode node) {
+    Expression buildConstantExpression(Context context, Spin2StatementNode node) {
         return buildConstantExpression(context, node, false);
     }
 
-    Expression buildConstantExpression(Spin2Context context, Spin2StatementNode node, boolean registerConstant) {
+    Expression buildConstantExpression(Context context, Spin2StatementNode node, boolean registerConstant) {
         if (node.getType() == Token.NUMBER) {
             return new NumberLiteral(node.getText());
         }
@@ -1825,7 +1825,7 @@ public abstract class Spin2CBytecodeCompiler {
         throw new RuntimeException("unknown " + node.getText());
     }
 
-    List<Spin2Bytecode> leftAssign(Spin2Context context, Spin2Method method, Spin2StatementNode node, boolean push, boolean write) {
+    List<Spin2Bytecode> leftAssign(Context context, Spin2Method method, Spin2StatementNode node, boolean push, boolean write) {
         Spin2StatementNode indexNode = null;
         Spin2StatementNode bitfieldNode = null;
         Spin2StatementNode postEffectNode = null;
@@ -2324,7 +2324,7 @@ public abstract class Spin2CBytecodeCompiler {
         return source;
     }
 
-    List<Spin2Bytecode> compileMethodCall(Spin2Context context, Spin2Method method, Expression symbol, Spin2StatementNode node, boolean push, boolean trap) {
+    List<Spin2Bytecode> compileMethodCall(Context context, Spin2Method method, Expression symbol, Spin2StatementNode node, boolean push, boolean trap) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
         if (trap) {
@@ -2439,7 +2439,7 @@ public abstract class Spin2CBytecodeCompiler {
         return source;
     }
 
-    int compileBitfield(Spin2Context context, Spin2Method method, Spin2StatementNode node, List<Spin2Bytecode> source) {
+    int compileBitfield(Context context, Spin2Method method, Spin2StatementNode node, List<Spin2Bytecode> source) {
         int bitfield = -1;
 
         if ("..".equals(node.getText())) {
@@ -2485,7 +2485,7 @@ public abstract class Spin2CBytecodeCompiler {
         return bitfield;
     }
 
-    List<Spin2Bytecode> compileVariableSetup(Spin2Context context, Spin2Method method, Expression expression, Spin2StatementNode node) {
+    List<Spin2Bytecode> compileVariableSetup(Context context, Spin2Method method, Expression expression, Spin2StatementNode node) {
         Spin2StatementNode indexNode = null;
         Spin2StatementNode bitfieldNode = null;
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
@@ -2586,7 +2586,7 @@ public abstract class Spin2CBytecodeCompiler {
         return source;
     }
 
-    List<Spin2Bytecode> compileVariableRead(Spin2Context context, Spin2Method method, Expression expression, Spin2StatementNode node, boolean push) {
+    List<Spin2Bytecode> compileVariableRead(Context context, Spin2Method method, Expression expression, Spin2StatementNode node, boolean push) {
         Spin2StatementNode indexNode = null;
         Spin2StatementNode bitfieldNode = null;
         Spin2StatementNode postEffectNode = null;
@@ -2784,7 +2784,7 @@ public abstract class Spin2CBytecodeCompiler {
         return source;
     }
 
-    List<Spin2Bytecode> compilePointerDereference(Spin2Context context, Spin2Method method, Spin2StatementNode node, MemoryOp.Op op) {
+    List<Spin2Bytecode> compilePointerDereference(Context context, Spin2Method method, Spin2StatementNode node, MemoryOp.Op op) {
         Spin2StatementNode postEffectNode = null;
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
@@ -2853,7 +2853,7 @@ public abstract class Spin2CBytecodeCompiler {
         return "++".equals(s) || "--".equals(s);
     }
 
-    List<Spin2Bytecode> compilePostEffect(Spin2Context context, Spin2StatementNode node, boolean push) {
+    List<Spin2Bytecode> compilePostEffect(Context context, Spin2StatementNode node, boolean push) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
         if ("++".equals(node.getText())) {
             source.add(new Bytecode(context, push ? 0x87 : 0x83, "POST_INC" + (push ? " (push)" : "")));
@@ -2867,7 +2867,7 @@ public abstract class Spin2CBytecodeCompiler {
         return source;
     }
 
-    boolean isFloat(Spin2Context context, Spin2StatementNode node) {
+    boolean isFloat(Context context, Spin2StatementNode node) {
         boolean result = false;
 
         if (node.getType() == Token.NUMBER) {

@@ -13,6 +13,8 @@ package com.maccasoft.propeller.spin2;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.maccasoft.propeller.expressions.Context;
+
 public class Spin2Bytecode {
 
     public static class Descriptor {
@@ -132,19 +134,19 @@ public class Spin2Bytecode {
         return descriptors.get(s.toUpperCase());
     }
 
-    protected Spin2Context context;
+    protected Context context;
     String text;
 
-    public Spin2Bytecode(Spin2Context context) {
-        this.context = new Spin2Context(context);
+    public Spin2Bytecode(Context context) {
+        this.context = new Context(context);
     }
 
-    public Spin2Bytecode(Spin2Context context, String text) {
-        this.context = new Spin2Context(context);
+    public Spin2Bytecode(Context context, String text) {
+        this.context = new Context(context);
         this.text = text;
     }
 
-    public Spin2Context getContext() {
+    public Context getContext() {
         return context;
     }
 

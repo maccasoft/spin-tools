@@ -10,48 +10,10 @@
 
 package com.maccasoft.propeller.expressions;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class ExpressionTest {
-
-    static class SimpleContext implements Context {
-        Map<String, Expression> symbols = new HashMap<String, Expression>();
-
-        @Override
-        public Expression getSymbol(String name) {
-            return symbols.get(name);
-        }
-
-        @Override
-        public boolean hasSymbol(String name) {
-            return symbols.containsKey(name);
-        }
-
-        @Override
-        public boolean isAddressSet() {
-            return true;
-        }
-
-        @Override
-        public int getAddress() {
-            return 0;
-        }
-
-        @Override
-        public int getObjectAddress() {
-            return 0;
-        }
-
-        @Override
-        public int getMemoryAddress() {
-            return 0;
-        }
-
-    }
 
     @Test
     void testIsConstant() {
@@ -67,8 +29,8 @@ class ExpressionTest {
 
     @Test
     void testIdentifierIsConstant() {
-        SimpleContext context = new SimpleContext();
-        context.symbols.put("a", new NumberLiteral(1));
+        Context context = new Context();
+        context.addSymbol("a", new NumberLiteral(1));
 
         Expression exp = new Identifier("a", context);
         Assertions.assertTrue(exp.isConstant());
@@ -76,8 +38,8 @@ class ExpressionTest {
 
     @Test
     void testVariableIsConstant() {
-        SimpleContext context = new SimpleContext();
-        context.symbols.put("a", new NumberLiteral(1));
+        Context context = new Context();
+        context.addSymbol("a", new NumberLiteral(1));
 
         Expression exp = new Variable("LONG", "a", new NumberLiteral(1), 0);
         Assertions.assertFalse(exp.isConstant());

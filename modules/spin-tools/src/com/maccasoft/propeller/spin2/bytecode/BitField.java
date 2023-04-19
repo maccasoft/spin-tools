@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class BitField extends Spin2Bytecode {
 
@@ -16,13 +16,13 @@ public class BitField extends Spin2Bytecode {
     boolean push;
     int bitfield = -1;
 
-    public BitField(Spin2Context context, Op op, int bitfield) {
+    public BitField(Context context, Op op, int bitfield) {
         super(context);
         this.op = op;
         this.bitfield = bitfield;
     }
 
-    public BitField(Spin2Context context, Op op, boolean push, int bitfield) {
+    public BitField(Context context, Op op, boolean push, int bitfield) {
         super(context);
         this.op = op;
         this.push = push;

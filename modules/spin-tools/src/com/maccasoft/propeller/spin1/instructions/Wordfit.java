@@ -14,14 +14,14 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 
 public class Wordfit extends Word {
 
     @Override
-    public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
+    public Spin1InstructionObject createObject(Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
         return new Wordfit_(context, arguments);
     }
 
@@ -29,7 +29,7 @@ public class Wordfit extends Word {
 
         List<Spin1PAsmExpression> arguments;
 
-        public Wordfit_(Spin1Context context, List<Spin1PAsmExpression> arguments) {
+        public Wordfit_(Context context, List<Spin1PAsmExpression> arguments) {
             super(context);
             this.arguments = arguments;
         }

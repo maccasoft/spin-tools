@@ -15,7 +15,7 @@ import java.io.IOException;
 
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class RegisterOp extends Spin2Bytecode {
 
@@ -28,7 +28,7 @@ public class RegisterOp extends Spin2Bytecode {
     public Expression expression;
     public int index;
 
-    public RegisterOp(Spin2Context context, Op op, boolean indexed, Expression expression, int index) {
+    public RegisterOp(Context context, Op op, boolean indexed, Expression expression, int index) {
         super(context);
         this.op = op;
         this.indexed = indexed;

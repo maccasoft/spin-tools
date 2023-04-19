@@ -12,19 +12,19 @@ package com.maccasoft.propeller.spin1.bytecode;
 
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class CallSub extends Spin1Bytecode {
 
     Method method;
     boolean indexed;
 
-    public CallSub(Spin1Context context, Method method) {
+    public CallSub(Context context, Method method) {
         super(context);
         this.method = method;
     }
 
-    public CallSub(Spin1Context context, Method method, boolean indexed) {
+    public CallSub(Context context, Method method, boolean indexed) {
         super(context);
         this.method = method;
         this.indexed = indexed;

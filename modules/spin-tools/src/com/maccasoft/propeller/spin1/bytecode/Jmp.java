@@ -12,20 +12,20 @@ package com.maccasoft.propeller.spin1.bytecode;
 
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class Jmp extends Spin1Bytecode {
 
     int code;
     public Expression expression;
 
-    public Jmp(Spin1Context context, Expression expression) {
+    public Jmp(Context context, Expression expression) {
         super(context);
         this.code = 0b00000100;
         this.expression = expression;
     }
 
-    public Jmp(Spin1Context context, int code, Expression expression) {
+    public Jmp(Context context, int code, Expression expression) {
         super(context);
         this.code = code;
         this.expression = expression;

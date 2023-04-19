@@ -144,16 +144,16 @@ public class Spin1ExpressionBuilder {
         postEffect.add("~~");
     }
 
-    Spin1Context context;
+    Context context;
     List<Token> tokens = new ArrayList<Token>();
 
     int index;
 
-    public Spin1ExpressionBuilder(Spin1Context context) {
+    public Spin1ExpressionBuilder(Context context) {
         this.context = context;
     }
 
-    public Spin1ExpressionBuilder(Spin1Context context, List<Token> tokens) {
+    public Spin1ExpressionBuilder(Context context, List<Token> tokens) {
         this.context = context;
         this.tokens = tokens;
     }
@@ -393,7 +393,7 @@ public class Spin1ExpressionBuilder {
         return null;
     }
 
-    static Spin1Context scope = new Spin1Context();
+    static Context scope = new Context();
 
     public static void main(String[] args) {
         String text;

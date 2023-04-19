@@ -54,7 +54,7 @@ import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.Spin1Method;
 import com.maccasoft.propeller.spin1.Spin1StatementNode;
 import com.maccasoft.propeller.spin1.bytecode.Address;
@@ -226,7 +226,7 @@ public abstract class Spin1CBytecodeCompiler {
         this.stringData = new ArrayList<>();
     }
 
-    public List<Spin1Bytecode> compileBytecodeExpression(Spin1Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
+    public List<Spin1Bytecode> compileBytecodeExpression(Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
         List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
 
         try {
@@ -1294,7 +1294,7 @@ public abstract class Spin1CBytecodeCompiler {
         return text.startsWith("@@");
     }
 
-    List<Spin1Bytecode> compileConstantExpression(Spin1Context context, Spin1Method method, Spin1StatementNode node) {
+    List<Spin1Bytecode> compileConstantExpression(Context context, Spin1Method method, Spin1StatementNode node) {
         if (!false) {
             try {
                 Expression expression = buildConstantExpression(context, node);
@@ -1308,7 +1308,7 @@ public abstract class Spin1CBytecodeCompiler {
         return compileBytecodeExpression(context, method, node, true);
     }
 
-    Expression buildConstantExpression(Spin1Context context, Spin1StatementNode node) {
+    Expression buildConstantExpression(Context context, Spin1StatementNode node) {
         if (node.getType() == Token.NUMBER) {
             return new NumberLiteral(node.getText());
         }
@@ -1410,7 +1410,7 @@ public abstract class Spin1CBytecodeCompiler {
         throw new RuntimeException("unknown " + node.getText());
     }
 
-    List<Spin1Bytecode> leftAssign(Spin1Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
+    List<Spin1Bytecode> leftAssign(Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
         List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
 
         if ("*".equals(node.getText()) && node.getChildCount() == 1) {
@@ -1635,7 +1635,7 @@ public abstract class Spin1CBytecodeCompiler {
         return source;
     }
 
-    List<Spin1Bytecode> compilePointerDereference(Spin1Context context, Spin1Method method, Spin1StatementNode node, MemoryOp.Op op) {
+    List<Spin1Bytecode> compilePointerDereference(Context context, Spin1Method method, Spin1StatementNode node, MemoryOp.Op op) {
         Spin1StatementNode postEffectNode = null;
         List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
 
@@ -1725,7 +1725,7 @@ public abstract class Spin1CBytecodeCompiler {
         for (Spin1Bytecode bc : stringData) {
             byte[] b0 = bc.getBytes();
             if (b0.length > b1.length && Arrays.equals(b0, b0.length - b1.length, b0.length, b1, 0, b1.length)) {
-                Spin1Context sharedContext = new Spin1Context() {
+                Context sharedContext = new Context() {
 
                     @Override
                     public int getObjectAddress() {
@@ -1736,7 +1736,7 @@ public abstract class Spin1CBytecodeCompiler {
                 return new Spin1Bytecode(sharedContext) {
 
                     @Override
-                    public Spin1Context getContext() {
+                    public Context getContext() {
                         return sharedContext;
                     }
 

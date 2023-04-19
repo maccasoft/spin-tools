@@ -19,7 +19,7 @@ import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.Not;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
@@ -28,7 +28,7 @@ import com.maccasoft.propeller.spin2.Spin2PAsmLine;
 public class AsmClk extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2InstructionObject createObject(Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         throw new RuntimeException("Invalid arguments");
     }
 
@@ -37,7 +37,7 @@ public class AsmClk extends Spin2PAsmInstructionFactory {
         List<Spin2PAsmLine> list = new ArrayList<Spin2PAsmLine>();
 
         list.add(new Spin2PAsmLine(
-            new Spin2Context(line.getScope()), line.getLabel(), line.getCondition(), "hubset",
+            new Context(line.getScope()), line.getLabel(), line.getCondition(), "hubset",
             Collections.singletonList(new Spin2PAsmExpression("##",
                 new And(
                     new Identifier("clkmode_", line.getScope()),
@@ -46,7 +46,7 @@ public class AsmClk extends Spin2PAsmInstructionFactory {
             null));
 
         list.add(new Spin2PAsmLine(
-            new Spin2Context(line.getScope()), null, line.getCondition(), "waitx",
+            new Context(line.getScope()), null, line.getCondition(), "waitx",
             Collections.singletonList(new Spin2PAsmExpression("##",
                 new Divide(
                     new NumberLiteral(20000000),
@@ -55,7 +55,7 @@ public class AsmClk extends Spin2PAsmInstructionFactory {
             null));
 
         list.add(new Spin2PAsmLine(
-            new Spin2Context(line.getScope()), null, line.getCondition(), "hubset",
+            new Context(line.getScope()), null, line.getCondition(), "hubset",
             Collections.singletonList(new Spin2PAsmExpression("##", new Identifier("clkmode_", line.getScope()), null)),
             null));
 

@@ -186,16 +186,16 @@ public class Spin2ExpressionBuilder {
     static {
     }
 
-    protected Spin2Context context;
+    protected Context context;
     protected List<Token> tokens = new ArrayList<Token>();
 
     int index;
 
-    public Spin2ExpressionBuilder(Spin2Context context) {
+    public Spin2ExpressionBuilder(Context context) {
         this.context = context;
     }
 
-    public Spin2ExpressionBuilder(Spin2Context context, List<Token> tokens) {
+    public Spin2ExpressionBuilder(Context context, List<Token> tokens) {
         this.context = context;
         this.tokens = tokens;
     }

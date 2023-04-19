@@ -18,27 +18,27 @@ import java.util.Collections;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 
 class GetbyteTest {
 
     @Test
     void testOk() {
-        new Getbyte().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+        new Getbyte().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
             new Spin2PAsmExpression(null, new NumberLiteral(1), null)
         }), null);
-        new Getbyte().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+        new Getbyte().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
             new Spin2PAsmExpression(null, new NumberLiteral(1), null),
             new Spin2PAsmExpression(null, new NumberLiteral(2), null),
             new Spin2PAsmExpression("#", new NumberLiteral(3), null)
         }), null);
-        new Getbyte().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+        new Getbyte().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
             new Spin2PAsmExpression(null, new NumberLiteral(1), null),
             new Spin2PAsmExpression("#", new NumberLiteral(2), null),
             new Spin2PAsmExpression("#", new NumberLiteral(3), null)
         }), null);
-        new Getbyte().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+        new Getbyte().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
             new Spin2PAsmExpression(null, new NumberLiteral(1), null),
             new Spin2PAsmExpression("##", new NumberLiteral(2), null),
             new Spin2PAsmExpression("#", new NumberLiteral(3), null)
@@ -48,13 +48,13 @@ class GetbyteTest {
     @Test
     void testErrors() {
         try {
-            new Getbyte().createObject(new Spin2Context(), null, Collections.emptyList(), null);
+            new Getbyte().createObject(new Context(), null, Collections.emptyList(), null);
             fail("Must throw an exception");
         } catch (RuntimeException e) {
 
         }
         try {
-            new Getbyte().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+            new Getbyte().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
                 new Spin2PAsmExpression("#", new NumberLiteral(1), null)
             }), null);
             fail("Must throw an exception");
@@ -62,7 +62,7 @@ class GetbyteTest {
 
         }
         try {
-            new Getbyte().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+            new Getbyte().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
                 new Spin2PAsmExpression(null, new NumberLiteral(1), null),
                 new Spin2PAsmExpression("#", new NumberLiteral(2), null),
                 new Spin2PAsmExpression(null, new NumberLiteral(3), null)

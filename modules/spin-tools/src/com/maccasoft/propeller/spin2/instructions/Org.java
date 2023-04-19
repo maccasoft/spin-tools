@@ -12,7 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
@@ -20,7 +20,7 @@ import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
 public class Org extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2InstructionObject createObject(Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         if (arguments.size() == 0) {
             return new Org_(context, null, null);
         }
@@ -38,7 +38,7 @@ public class Org extends Spin2PAsmInstructionFactory {
         Spin2PAsmExpression arg0;
         Spin2PAsmExpression arg1;
 
-        public Org_(Spin2Context context, Spin2PAsmExpression arg0, Spin2PAsmExpression arg1) {
+        public Org_(Context context, Spin2PAsmExpression arg0, Spin2PAsmExpression arg1) {
             super(context);
             this.arg0 = arg0;
             this.arg1 = arg1;

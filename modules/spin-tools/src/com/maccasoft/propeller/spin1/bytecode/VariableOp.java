@@ -15,7 +15,7 @@ import org.apache.commons.lang3.BitField;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class VariableOp extends Spin1Bytecode {
 
@@ -46,11 +46,11 @@ public class VariableOp extends Spin1Bytecode {
     public Op oo;
     public Variable value;
 
-    public VariableOp(Spin1Context context, Op oo, Variable value) {
+    public VariableOp(Context context, Op oo, Variable value) {
         this(context, oo, false, value);
     }
 
-    public VariableOp(Spin1Context context, Op oo, boolean i, Variable value) {
+    public VariableOp(Context context, Op oo, boolean i, Variable value) {
         super(context);
         this.b = value instanceof LocalVariable ? Base.DBase : Base.VBase;
         this.i = i;

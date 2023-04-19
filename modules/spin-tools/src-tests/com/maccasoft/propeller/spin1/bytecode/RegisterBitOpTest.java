@@ -13,27 +13,27 @@ package com.maccasoft.propeller.spin1.bytecode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 class RegisterBitOpTest {
 
     @Test
     void testRead() {
-        RegisterBitOp op = new RegisterBitOp(new Spin1Context(), RegisterBitOp.Op.Read, false, 0x1F6);
+        RegisterBitOp op = new RegisterBitOp(new Context(), RegisterBitOp.Op.Read, false, 0x1F6);
         Assertions.assertEquals("3D 96", toString(op.getBytes()));
         Assertions.assertEquals("REGBIT_READ $1F6", op.toString());
     }
 
     @Test
     void testWrite() {
-        RegisterBitOp op = new RegisterBitOp(new Spin1Context(), RegisterBitOp.Op.Write, false, 0x1F6);
+        RegisterBitOp op = new RegisterBitOp(new Context(), RegisterBitOp.Op.Write, false, 0x1F6);
         Assertions.assertEquals("3D B6", toString(op.getBytes()));
         Assertions.assertEquals("REGBIT_WRITE $1F6", op.toString());
     }
 
     @Test
     void testAssign() {
-        RegisterBitOp op = new RegisterBitOp(new Spin1Context(), RegisterBitOp.Op.Assign, false, 0x1F6);
+        RegisterBitOp op = new RegisterBitOp(new Context(), RegisterBitOp.Op.Assign, false, 0x1F6);
         Assertions.assertEquals("3D D6", toString(op.getBytes()));
         Assertions.assertEquals("REGBIT_MODIFY $1F6", op.toString());
     }

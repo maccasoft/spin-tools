@@ -14,7 +14,7 @@ import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class Constant extends Spin2Bytecode {
 
@@ -118,7 +118,7 @@ public class Constant extends Spin2Bytecode {
 
     public Expression expression;
 
-    public Constant(Spin2Context context, Expression expression) {
+    public Constant(Context context, Expression expression) {
         super(context);
         this.expression = expression;
     }

@@ -20,6 +20,7 @@ import java.util.Set;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.Context;
 
 public abstract class Spin2InstructionObject {
 
@@ -197,9 +198,9 @@ public abstract class Spin2InstructionObject {
         ptrInstructions.add("wrlut");
     }
 
-    protected final Spin2Context context;
+    protected final Context context;
 
-    public Spin2InstructionObject(Spin2Context context) {
+    public Spin2InstructionObject(Context context) {
         this.context = context;
     }
 

@@ -18,34 +18,34 @@ import java.util.Collections;
 import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 
 class MovTest {
 
     @Test
     void testOk() {
-        new Mov().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+        new Mov().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
             new Spin2PAsmExpression(null, new NumberLiteral(1), null),
             new Spin2PAsmExpression(null, new NumberLiteral(2), null),
         }), null);
-        new Mov().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+        new Mov().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
             new Spin2PAsmExpression(null, new NumberLiteral(1), null),
             new Spin2PAsmExpression("#", new NumberLiteral(2), null),
         }), null);
-        new Mov().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+        new Mov().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
             new Spin2PAsmExpression(null, new NumberLiteral(1), null),
             new Spin2PAsmExpression("##", new NumberLiteral(2), null),
         }), null);
-        new Mov().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+        new Mov().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
             new Spin2PAsmExpression(null, new NumberLiteral(1), null),
             new Spin2PAsmExpression("##", new NumberLiteral(2), null),
         }), "wc");
-        new Mov().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+        new Mov().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
             new Spin2PAsmExpression(null, new NumberLiteral(1), null),
             new Spin2PAsmExpression("##", new NumberLiteral(2), null),
         }), "wz");
-        new Mov().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+        new Mov().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
             new Spin2PAsmExpression(null, new NumberLiteral(1), null),
             new Spin2PAsmExpression("##", new NumberLiteral(2), null),
         }), "wcz");
@@ -54,13 +54,13 @@ class MovTest {
     @Test
     void testErrors() {
         try {
-            new Mov().createObject(new Spin2Context(), null, Collections.emptyList(), null);
+            new Mov().createObject(new Context(), null, Collections.emptyList(), null);
             fail("Must throw an exception");
         } catch (RuntimeException e) {
 
         }
         try {
-            new Mov().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+            new Mov().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
                 new Spin2PAsmExpression("#", new NumberLiteral(1), null)
             }), null);
             fail("Must throw an exception");
@@ -68,7 +68,7 @@ class MovTest {
 
         }
         try {
-            new Mov().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+            new Mov().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
                 new Spin2PAsmExpression("#", new NumberLiteral(1), null),
                 new Spin2PAsmExpression("#", new NumberLiteral(2), null),
             }), null);
@@ -77,7 +77,7 @@ class MovTest {
 
         }
         try {
-            new Mov().createObject(new Spin2Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
+            new Mov().createObject(new Context(), null, Arrays.asList(new Spin2PAsmExpression[] {
                 new Spin2PAsmExpression(null, new NumberLiteral(1), null),
                 new Spin2PAsmExpression("#", new NumberLiteral(2), null),
             }), "wca");

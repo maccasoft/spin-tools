@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Token;
 
@@ -93,10 +94,10 @@ public class Spin2PAsmDebugLine {
 
     }
 
-    final Spin2Context context;
+    final Context context;
     final List<Spin2DebugCommand> statements = new ArrayList<Spin2DebugCommand>();
 
-    public static Spin2PAsmDebugLine buildFrom(Spin2Context context, List<Token> tokens) {
+    public static Spin2PAsmDebugLine buildFrom(Context context, List<Token> tokens) {
         int index = 0;
         int state = 0;
         Spin2DebugCommand child = null;
@@ -186,7 +187,7 @@ public class Spin2PAsmDebugLine {
         return root;
     }
 
-    public Spin2PAsmDebugLine(Spin2Context context) {
+    public Spin2PAsmDebugLine(Context context) {
         this.context = context;
     }
 

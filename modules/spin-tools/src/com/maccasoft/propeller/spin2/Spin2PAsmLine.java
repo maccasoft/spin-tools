@@ -17,11 +17,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.instructions.Empty;
 
 public class Spin2PAsmLine {
 
-    Spin2Context scope;
+    Context scope;
     String label;
     String condition;
     String mnemonic;
@@ -34,7 +35,7 @@ public class Spin2PAsmLine {
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
-    public Spin2PAsmLine(Spin2Context scope, String label, String condition, String mnemonic, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2PAsmLine(Context scope, String label, String condition, String mnemonic, List<Spin2PAsmExpression> arguments, String effect) {
         this.scope = scope;
         this.label = label;
         this.condition = condition;
@@ -53,7 +54,7 @@ public class Spin2PAsmLine {
         }
     }
 
-    public Spin2Context getScope() {
+    public Context getScope() {
         return scope;
     }
 

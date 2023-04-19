@@ -11,20 +11,20 @@
 package com.maccasoft.propeller.spin2.bytecode;
 
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class Bytecode extends Spin2Bytecode {
 
     byte[] code;
 
-    public Bytecode(Spin2Context context, int code, String text) {
+    public Bytecode(Context context, int code, String text) {
         super(context, text);
         this.code = new byte[] {
             (byte) code
         };
     }
 
-    public Bytecode(Spin2Context context, byte[] code, String text) {
+    public Bytecode(Context context, byte[] code, String text) {
         super(context, text);
         this.code = code;
     }

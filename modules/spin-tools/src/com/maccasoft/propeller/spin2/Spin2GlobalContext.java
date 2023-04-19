@@ -10,10 +10,11 @@
 
 package com.maccasoft.propeller.spin2;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Register;
 
-public class Spin2GlobalContext extends Spin2Context {
+public class Spin2GlobalContext extends Context {
 
     public Spin2GlobalContext() {
         this(false);
@@ -303,12 +304,12 @@ public class Spin2GlobalContext extends Spin2Context {
         addBuiltinSymbol("PI", Math.PI);
     }
 
-    void addBuiltinSymbol(String name, long value) {
-        caseInsensitivesymbols.put(name, new NumberLiteral(value));
+    private void addBuiltinSymbol(String name, long value) {
+        addBuiltinSymbol(name, new NumberLiteral(value));
     }
 
-    void addBuiltinSymbol(String name, double value) {
-        caseInsensitivesymbols.put(name, new NumberLiteral(value));
+    private void addBuiltinSymbol(String name, double value) {
+        addBuiltinSymbol(name, new NumberLiteral(value));
     }
 
 }

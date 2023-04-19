@@ -13,13 +13,13 @@ package com.maccasoft.propeller.spin1.bytecode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 class MemoryOpTest {
 
     @Test
     void testByteMemoryOp() {
-        MemoryOp op = new MemoryOp(new Spin1Context(), MemoryOp.Size.Byte, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
+        MemoryOp op = new MemoryOp(new Context(), MemoryOp.Size.Byte, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
 
         Assertions.assertEquals("90", toString(op.getBytes()));
         Assertions.assertEquals("MEM_READ_INDEXED BYTE POP", op.toString());
@@ -27,7 +27,7 @@ class MemoryOpTest {
 
     @Test
     void testWordMemoryOp() {
-        MemoryOp op = new MemoryOp(new Spin1Context(), MemoryOp.Size.Word, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
+        MemoryOp op = new MemoryOp(new Context(), MemoryOp.Size.Word, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
 
         Assertions.assertEquals("B0", toString(op.getBytes()));
         Assertions.assertEquals("MEM_READ_INDEXED WORD POP", op.toString());
@@ -35,7 +35,7 @@ class MemoryOpTest {
 
     @Test
     void testLongMemoryOp() {
-        MemoryOp op = new MemoryOp(new Spin1Context(), MemoryOp.Size.Long, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
+        MemoryOp op = new MemoryOp(new Context(), MemoryOp.Size.Long, true, MemoryOp.Base.Pop, MemoryOp.Op.Read, null);
 
         Assertions.assertEquals("D0", toString(op.getBytes()));
         Assertions.assertEquals("MEM_READ_INDEXED LONG POP", op.toString());

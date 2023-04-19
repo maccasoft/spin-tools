@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin1.Spin1StatementNode;
 
@@ -132,12 +133,12 @@ public class Spin1CTreeBuilder {
         //postEffect.add("~~");
     }
 
-    Spin1CContext scope;
+    Context scope;
 
     int index;
     List<Token> tokens = new ArrayList<>();
 
-    public Spin1CTreeBuilder(Spin1CContext scope) {
+    public Spin1CTreeBuilder(Context scope) {
         this.scope = scope;
     }
 

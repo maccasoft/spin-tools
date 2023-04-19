@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin2.instructions.*;
 import com.maccasoft.propeller.spin2.instructions.Byte;
@@ -414,6 +415,6 @@ public abstract class Spin2PAsmInstructionFactory extends Expression {
         return Collections.singletonList(line);
     }
 
-    public abstract Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect);
+    public abstract Spin2InstructionObject createObject(Context context, String condition, List<Spin2PAsmExpression> arguments, String effect);
 
 }

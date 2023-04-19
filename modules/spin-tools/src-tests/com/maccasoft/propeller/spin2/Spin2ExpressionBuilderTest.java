@@ -16,6 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Token;
 
@@ -63,7 +64,7 @@ class Spin2ExpressionBuilderTest {
             tokens.add(token);
         }
 
-        Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(new Spin2Context(), tokens);
+        Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(new Context(), tokens);
         return builder.getExpression();
     }
 

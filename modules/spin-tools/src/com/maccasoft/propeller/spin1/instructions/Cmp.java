@@ -13,7 +13,7 @@ package com.maccasoft.propeller.spin1.instructions;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
@@ -34,7 +34,7 @@ public class Cmp extends Spin1PAsmInstructionFactory {
     }
 
     @Override
-    public Spin1InstructionObject createObject(Spin1Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
+    public Spin1InstructionObject createObject(Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
         if (Spin1PAsmSchema.D_S_WC_WZ.check(arguments, effect)) {
             return new Cmp_(context, condition, arguments.get(0), arguments.get(1), effect);
         }
@@ -59,7 +59,7 @@ public class Cmp extends Spin1PAsmInstructionFactory {
             this.effect = line.getEffect();
         }
 
-        public Cmp_(Spin1Context context, String condition, Spin1PAsmExpression dst, Spin1PAsmExpression src, String effect) {
+        public Cmp_(Context context, String condition, Spin1PAsmExpression dst, Spin1PAsmExpression src, String effect) {
             super(context);
             this.condition = condition;
             this.dst = dst;

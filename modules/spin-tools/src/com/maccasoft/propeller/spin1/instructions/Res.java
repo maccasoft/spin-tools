@@ -10,7 +10,7 @@
 
 package com.maccasoft.propeller.spin1.instructions;
 
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
 import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
@@ -33,11 +33,11 @@ public class Res extends Spin1PAsmInstructionFactory {
 
         Spin1PAsmExpression argument;
 
-        public Res_(Spin1Context context) {
+        public Res_(Context context) {
             super(context);
         }
 
-        public Res_(Spin1Context context, Spin1PAsmExpression argument) {
+        public Res_(Context context, Spin1PAsmExpression argument) {
             super(context);
             this.argument = argument;
         }

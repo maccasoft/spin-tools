@@ -12,7 +12,7 @@ package com.maccasoft.propeller.spin2.instructions;
 
 import java.util.List;
 
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
@@ -22,7 +22,7 @@ public class Fit extends Spin2PAsmInstructionFactory {
     int defaultLimit = 0x1F0;
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2InstructionObject createObject(Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         if (arguments.size() == 0) {
             return new Fit_(context);
         }
@@ -40,11 +40,11 @@ public class Fit extends Spin2PAsmInstructionFactory {
 
         Spin2PAsmExpression arg0;
 
-        public Fit_(Spin2Context context) {
+        public Fit_(Context context) {
             super(context);
         }
 
-        public Fit_(Spin2Context context, Spin2PAsmExpression arg0) {
+        public Fit_(Context context, Spin2PAsmExpression arg0) {
             super(context);
             this.arg0 = arg0;
         }

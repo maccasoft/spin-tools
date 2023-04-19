@@ -10,15 +10,15 @@
 
 package com.maccasoft.propeller.spin1.bytecode;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.spin1.Spin1Context;
 
 public class Address extends Spin1Bytecode {
 
     public Expression expression;
 
-    public Address(Spin1Context context, Expression expression) {
+    public Address(Context context, Expression expression) {
         super(context);
         this.expression = expression;
     }

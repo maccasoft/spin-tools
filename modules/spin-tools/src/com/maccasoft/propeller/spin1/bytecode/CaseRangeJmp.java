@@ -11,11 +11,11 @@
 package com.maccasoft.propeller.spin1.bytecode;
 
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.spin1.Spin1Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class CaseRangeJmp extends Jmp {
 
-    public CaseRangeJmp(Spin1Context context, Expression expression) {
+    public CaseRangeJmp(Context context, Expression expression) {
         super(context, 0b00001110, expression);
     }
 

@@ -13,7 +13,7 @@ package com.maccasoft.propeller.spin2.instructions;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
@@ -22,7 +22,7 @@ import com.maccasoft.propeller.spin2.Spin2PAsmSchema;
 public class Setword extends Spin2PAsmInstructionFactory {
 
     @Override
-    public Spin2InstructionObject createObject(Spin2Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
+    public Spin2InstructionObject createObject(Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
         if (Spin2PAsmSchema.D_S_N.check(arguments, effect)) {
             return new Setword_(context, condition, arguments.get(0), arguments.get(1), arguments.get(2));
         }
@@ -42,7 +42,7 @@ public class Setword extends Spin2PAsmInstructionFactory {
         Spin2PAsmExpression src;
         Spin2PAsmExpression n;
 
-        public Setword_(Spin2Context context, String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src, Spin2PAsmExpression n) {
+        public Setword_(Context context, String condition, Spin2PAsmExpression dst, Spin2PAsmExpression src, Spin2PAsmExpression n) {
             super(context);
             this.condition = condition;
             this.dst = dst;
@@ -88,7 +88,7 @@ public class Setword extends Spin2PAsmInstructionFactory {
         String condition;
         Spin2PAsmExpression src;
 
-        public Setword_S_(Spin2Context context, String condition, Spin2PAsmExpression src) {
+        public Setword_S_(Context context, String condition, Spin2PAsmExpression src) {
             super(context);
             this.condition = condition;
             this.src = src;

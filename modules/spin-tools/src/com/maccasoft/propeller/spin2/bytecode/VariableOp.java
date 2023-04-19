@@ -16,7 +16,7 @@ import java.io.IOException;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.spin2.Spin2Context;
+import com.maccasoft.propeller.expressions.Context;
 
 public class VariableOp extends Spin2Bytecode {
 
@@ -36,7 +36,7 @@ public class VariableOp extends Spin2Bytecode {
     public boolean hasIndex;
     public int index;
 
-    public VariableOp(Spin2Context context, Op op, boolean indexed, Variable variable) {
+    public VariableOp(Context context, Op op, boolean indexed, Variable variable) {
         super(context);
         this.op = op;
         this.indexed = indexed;
@@ -53,11 +53,11 @@ public class VariableOp extends Spin2Bytecode {
         }
     }
 
-    public VariableOp(Spin2Context context, Op op, Variable variable) {
+    public VariableOp(Context context, Op op, Variable variable) {
         this(context, op, false, variable, false, 0);
     }
 
-    public VariableOp(Spin2Context context, Op op, boolean indexed, Variable variable, boolean hasIndex, int index) {
+    public VariableOp(Context context, Op op, boolean indexed, Variable variable, boolean hasIndex, int index) {
         super(context);
         this.op = op;
         this.indexed = indexed;
