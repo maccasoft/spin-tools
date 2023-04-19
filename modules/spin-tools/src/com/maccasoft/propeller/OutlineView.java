@@ -140,7 +140,7 @@ public class OutlineView {
                             }
                         }
                     }
-                    else {
+                    else if (!(child instanceof DirectiveNode)) {
                         list.add(child);
                     }
                 }
@@ -274,7 +274,10 @@ public class OutlineView {
         }
 
         void decorateSectionStart(Node node, ViewerCell cell) {
-            String text = node.getStartToken().getText().toUpperCase();
+            String text = "";
+            if (node.getStartToken() != null) {
+                text = node.getStartToken().getText().toUpperCase();
+            }
             appendText(text, sectionStyle);
 
             if (node.getTokenCount() > 1) {

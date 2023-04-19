@@ -42,8 +42,12 @@ public class DirectiveNode extends Node {
 
     public static class DefineNode extends DirectiveNode {
 
-        Token identifier;
-        List<Token> definition = new ArrayList<>();
+        public Token identifier;
+        public List<Token> definition = new ArrayList<>();
+
+        public DefineNode(Node parent) {
+            super(parent);
+        }
 
         public DefineNode(Node parent, Token identifier) {
             super(parent);

@@ -155,10 +155,25 @@ public class Spin1ExpressionBuilder {
 
     public Spin1ExpressionBuilder(Context context, List<Token> tokens) {
         this.context = context;
-        this.tokens = tokens;
+        tokens.iterator().forEachRemaining((t) -> {
+            addToken(t);
+        });
     }
 
     public void addToken(Token token) {
+        if (token.type == 0 || token.type == Token.KEYWORD) {
+            List<Token> l = context.getDefinition(token.getText());
+            if (l != null) {
+                l.iterator().forEachRemaining((t) -> {
+                    addToken(t);
+                });
+                return;
+            }
+        }
+        tokens.add(token);
+    }
+
+    public void addTokenLiteral(Token token) {
         tokens.add(token);
     }
 

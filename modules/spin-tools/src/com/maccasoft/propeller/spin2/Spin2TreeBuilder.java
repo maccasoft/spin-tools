@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.model.Token;
 
 public class Spin2TreeBuilder {
@@ -193,14 +194,30 @@ public class Spin2TreeBuilder {
         postEffect.add("~~");
     }
 
+    Context scope;
+
     int index;
     List<Token> tokens = new ArrayList<>();
+    Set<String> dependencies = new HashSet<>();
 
-    public Spin2TreeBuilder() {
-
+    public Spin2TreeBuilder(Context scope) {
+        this.scope = scope;
     }
 
     public void addToken(Token token) {
+        if (token.type == 0 || token.type == Token.KEYWORD) {
+            List<Token> l = scope.getDefinition(token.getText());
+            if (l != null && l.size() != 0) {
+                if (dependencies.contains(token.getText())) {
+                    throw new CompilerException("circular dependency", token);
+                }
+                dependencies.add(token.getText());
+                l.iterator().forEachRemaining((t) -> {
+                    addToken(t);
+                });
+                return;
+            }
+        }
         tokens.add(token);
     }
 

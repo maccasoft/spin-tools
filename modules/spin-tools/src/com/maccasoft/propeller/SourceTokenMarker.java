@@ -294,15 +294,8 @@ public abstract class SourceTokenMarker {
         root.accept(new NodeVisitor() {
 
             @Override
-            public void visitDirective(DirectiveNode node) {
-                if (lineIndex >= node.getStartToken().line) {
-                    result.set(node);
-                }
-            }
-
-            @Override
             public boolean visitConstants(ConstantsNode node) {
-                if (lineIndex >= node.getStartToken().line) {
+                if (node.getTokenCount() != 0 && lineIndex >= node.getStartToken().line) {
                     result.set(node);
                 }
                 return false;

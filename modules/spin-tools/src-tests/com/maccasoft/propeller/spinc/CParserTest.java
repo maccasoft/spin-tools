@@ -296,9 +296,9 @@ class CParserTest {
         Node root = subject.parse();
         Assertions.assertEquals(""
             + "Node []\n"
-            + "+-- DefineNode [#define CLKFREQ 160_000_000]\n"
-            + "+-- DefineNode [#define PIN_RX  63]\n"
-            + "+-- DefineNode [#define PIN_TX  62]\n"
+            + "+-- DefineNode identifier=CLKFREQ [#define CLKFREQ 160_000_000]\n"
+            + "+-- DefineNode identifier=PIN_RX [#define PIN_RX  63]\n"
+            + "+-- DefineNode identifier=PIN_TX [#define PIN_TX  62]\n"
             + "", tree(root));
     }
 

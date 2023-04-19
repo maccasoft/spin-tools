@@ -24,6 +24,7 @@ import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ExpressionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
@@ -642,6 +643,17 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         String lastLabel = "";
 
         @Override
+        public void visitDirective(DirectiveNode node) {
+            if (node instanceof DirectiveNode.DefineNode) {
+                Token identifier = ((DirectiveNode.DefineNode) node).getIdentifier();
+                if (identifier != null) {
+                    symbols.put(identifier.getText(), TokenId.CONSTANT);
+                    tokens.add(new TokenMarker(identifier, TokenId.CONSTANT));
+                }
+            }
+        }
+
+        @Override
         public boolean visitConstants(ConstantsNode node) {
             if (node.getTextToken() != null) {
                 tokens.add(new TokenMarker(node.getTextToken(), TokenId.SECTION));
@@ -745,7 +757,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
             }
 
-            return true;
+            return false;
         }
 
         @Override
@@ -823,6 +835,24 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         String lastLabel = "";
 
         @Override
+        public void visitDirective(DirectiveNode node) {
+            int index = 0;
+            if (index < node.getTokenCount()) {
+                tokens.add(new TokenMarker(node.getToken(index++), TokenId.DIRECTIVE));
+            }
+            if (index < node.getTokenCount()) {
+                tokens.add(new TokenMarker(node.getToken(index++), TokenId.DIRECTIVE));
+            }
+            if (node instanceof DirectiveNode.DefineNode) {
+                Token identifier = ((DirectiveNode.DefineNode) node).getIdentifier();
+                if (identifier != null) {
+                    index++;
+                }
+            }
+            markTokens(node, index, "");
+        }
+
+        @Override
         public void visitObject(ObjectNode node) {
             if (node.count != null) {
                 markTokens(node.count, 0, "");
@@ -857,7 +887,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             }
 
             for (Node child : node.getChilds()) {
-                if (child instanceof StatementNode) {
+                if (child instanceof DirectiveNode) {
+                    visitDirective((DirectiveNode) child);
+                }
+                else if (child instanceof StatementNode) {
                     markTokens(child, 0, "");
                 }
                 else if (child instanceof DataLineNode) {
@@ -962,7 +995,15 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
             }
             for (Node child : node.getChilds()) {
-                markTokens(child, 0, "");
+                if (child instanceof DirectiveNode) {
+                    visitDirective((DirectiveNode) child);
+                }
+                else if (child instanceof StatementNode) {
+                    markTokens(child, 0, "");
+                }
+                else if (child instanceof DataLineNode) {
+                    markDataTokens((DataLineNode) child, true);
+                }
             }
             return i;
         }
@@ -971,7 +1012,12 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         public boolean visitData(DataNode node) {
             lastLabel = "";
             for (Node child : node.getChilds()) {
-                markDataTokens((DataLineNode) child, false);
+                if (child instanceof DataLineNode) {
+                    markDataTokens((DataLineNode) child, false);
+                }
+                else {
+                    markTokens(child, 0, "");
+                }
             }
             return true;
         }

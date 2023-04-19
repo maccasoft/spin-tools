@@ -18,6 +18,7 @@ import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.ExpressionNode;
 import com.maccasoft.propeller.model.MethodNode;
@@ -29,7 +30,6 @@ import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
-import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class Spin1Parser extends Parser {
 
@@ -82,13 +82,50 @@ public class Spin1Parser extends Parser {
                     if (defaultNode == null) {
                         defaultNode = new ConstantsNode(root);
                     }
-                    parseConstant(defaultNode);
+                    if (token.column == 0 && "#".equalsIgnoreCase(token.getText())) {
+                        parsePreprocessor(defaultNode);
+                    }
+                    else {
+                        parseConstant(defaultNode);
+                    }
                 }
             }
         }
         stream.nextToken();
 
         return root;
+    }
+
+    void parsePreprocessor(Node parent) {
+        Token token = stream.nextToken();
+
+        if ("define".equals(stream.peekNext().getText())) {
+            DirectiveNode.DefineNode node = new DirectiveNode.DefineNode(parent);
+            node.addToken(token);
+            node.addToken(stream.nextToken());
+            if ((token = nextToken()).type != Token.EOF && token.type != Token.NL) {
+                node.identifier = token;
+                node.addToken(token);
+            }
+            if (token.type != Token.EOF && token.type != Token.NL) {
+                while ((token = nextToken()).type != Token.EOF) {
+                    if (token.type == Token.NL) {
+                        break;
+                    }
+                    node.addToken(token);
+                }
+            }
+        }
+        else {
+            DirectiveNode node = new DirectiveNode(parent);
+            node.addToken(token);
+            while ((token = nextToken()).type != Token.EOF) {
+                if (token.type == Token.NL) {
+                    break;
+                }
+                node.addToken(token);
+            }
+        }
     }
 
     void parseConstants() {
@@ -110,14 +147,16 @@ public class Spin1Parser extends Parser {
         else {
             parseConstant(node);
         }
-        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-            return;
-        }
 
         while ((token = stream.peekNext()).type != Token.EOF) {
-            parseConstant(node);
-            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                break;
+            if (sections.contains(token.getText().toUpperCase())) {
+                return;
+            }
+            if (token.column == 0 && "#".equalsIgnoreCase(token.getText())) {
+                parsePreprocessor(node);
+            }
+            else {
+                parseConstant(node);
             }
         }
     }
@@ -240,14 +279,16 @@ public class Spin1Parser extends Parser {
         else {
             parseVariable(node);
         }
-        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-            return;
-        }
 
         while ((token = stream.peekNext()).type != Token.EOF) {
-            parseVariable(node);
-            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+            if (sections.contains(token.getText().toUpperCase())) {
                 break;
+            }
+            if ("#".equalsIgnoreCase(token.getText())) {
+                parsePreprocessor(node);
+            }
+            else {
+                parseVariable(node);
             }
         }
     }
@@ -323,14 +364,16 @@ public class Spin1Parser extends Parser {
         else {
             parseObject(node);
         }
-        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-            return;
-        }
 
         while ((token = stream.peekNext()).type != Token.EOF) {
-            parseObject(node);
-            if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+            if (sections.contains(token.getText().toUpperCase())) {
                 break;
+            }
+            if ("#".equalsIgnoreCase(token.getText())) {
+                parsePreprocessor(node);
+            }
+            else {
+                parseObject(node);
             }
         }
     }
@@ -400,8 +443,12 @@ public class Spin1Parser extends Parser {
         Token token;
         while ((token = nextToken()).type != Token.EOF) {
             if (token.type == Token.NL) {
-                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                token = stream.peekNext();
+                if (sections.contains(token.getText().toUpperCase())) {
                     return;
+                }
+                if ("#".equalsIgnoreCase(token.getText())) {
+                    parsePreprocessor(node);
                 }
                 break;
             }
@@ -566,9 +613,19 @@ public class Spin1Parser extends Parser {
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type == Token.NL) {
                 stream.nextToken();
-                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                token = stream.peekNext();
+                if (sections.contains(token.getText().toUpperCase())) {
                     return;
                 }
+                if ("#".equalsIgnoreCase(token.getText())) {
+                    parsePreprocessor(parent);
+                }
+            }
+            else if (sections.contains(token.getText().toUpperCase())) {
+                return;
+            }
+            else if ("#".equalsIgnoreCase(token.getText())) {
+                parsePreprocessor(parent);
             }
             else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
                 root.addComment(stream.nextToken());
@@ -584,9 +641,6 @@ public class Spin1Parser extends Parser {
 
                 while ((token = nextToken()).type != Token.EOF) {
                     if (token.type == Token.NL) {
-                        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                            return;
-                        }
                         break;
                     }
                     statement.addToken(token);
@@ -594,15 +648,9 @@ public class Spin1Parser extends Parser {
 
                 if ("CASE".equalsIgnoreCase(startToken.getText())) {
                     parseCaseStatement(statement, startToken.column + 1);
-                    if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                        return;
-                    }
                 }
-                else if (Spin2Model.isBlockStart(startToken.getText())) {
+                else if (Spin1Model.isBlockStart(startToken.getText())) {
                     parseStatement(statement, startToken.column + 1);
-                    if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                        return;
-                    }
                 }
             }
         }
@@ -614,8 +662,12 @@ public class Spin1Parser extends Parser {
         while ((token = stream.peekNext()).type != Token.EOF) {
             if (token.type == Token.NL) {
                 stream.nextToken();
-                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                token = stream.peekNext();
+                if (sections.contains(token.getText().toUpperCase())) {
                     return;
+                }
+                if ("#".equalsIgnoreCase(token.getText())) {
+                    parsePreprocessor(parent);
                 }
             }
             else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
@@ -632,8 +684,12 @@ public class Spin1Parser extends Parser {
 
                 while ((token = nextToken()).type != Token.EOF) {
                     if (token.type == Token.NL) {
-                        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                        token = stream.peekNext();
+                        if (sections.contains(token.getText().toUpperCase())) {
                             return;
+                        }
+                        if ("#".equalsIgnoreCase(token.getText())) {
+                            parsePreprocessor(parent);
                         }
                         break;
                     }
@@ -650,8 +706,12 @@ public class Spin1Parser extends Parser {
                 }
 
                 parseStatement(statement, startToken.column + 1);
-                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
+                token = stream.peekNext();
+                if (sections.contains(token.getText().toUpperCase())) {
                     return;
+                }
+                if ("#".equalsIgnoreCase(token.getText())) {
+                    parsePreprocessor(parent);
                 }
             }
         }
@@ -677,25 +737,22 @@ public class Spin1Parser extends Parser {
         else {
             parseDatLine(node);
         }
-        if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-            return;
-        }
 
         while ((token = stream.peekNext()).type != Token.EOF) {
-            if (token.type == Token.NL) {
+            if (sections.contains(token.getText().toUpperCase())) {
+                return;
+            }
+            if ("#".equalsIgnoreCase(token.getText())) {
+                parsePreprocessor(node);
+            }
+            else if (token.type == Token.NL) {
                 stream.nextToken();
-                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                    break;
-                }
             }
             else if (token.type == Token.COMMENT || token.type == Token.BLOCK_COMMENT) {
                 root.addComment(stream.nextToken());
             }
             else {
                 parseDatLine(node);
-                if (sections.contains(stream.peekNext().getText().toUpperCase())) {
-                    break;
-                }
             }
         }
     }
@@ -829,6 +886,7 @@ public class Spin1Parser extends Parser {
             Token nextToken = stream.peekNext();
             if (token.isAdjacent(nextToken) && nextToken.type != Token.OPERATOR) {
                 token = token.merge(stream.nextToken());
+                token.type = Token.FUNCTION;
             }
         }
         return token;

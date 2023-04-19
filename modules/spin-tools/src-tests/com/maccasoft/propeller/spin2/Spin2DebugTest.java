@@ -440,7 +440,7 @@ class Spin2DebugTest {
     }
 
     Spin2StatementNode parse(String text) {
-        Spin2TreeBuilder builder = new Spin2TreeBuilder();
+        Spin2TreeBuilder builder = new Spin2TreeBuilder(new Context());
 
         Spin2TokenStream stream = new Spin2TokenStream(text);
         while (true) {

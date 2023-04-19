@@ -732,6 +732,123 @@ class Spin2ParserTest {
             + "", tree(root));
     }
 
+    @Test
+    void testDefaultSectionPreprocessorDirective() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "     A = 1\n"
+            + "#ifdef P\n"
+            + "     B = 2\n"
+            + "#endif\n"
+            + "     C = 3\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- ConstantsNode []\n"
+            + "    +-- ConstantNode identifier=A [A = 1]\n"
+            + "        +-- expression = ExpressionNode [1]\n"
+            + "    +-- DirectiveNode [#ifdef P]\n"
+            + "    +-- ConstantNode identifier=B [B = 2]\n"
+            + "        +-- expression = ExpressionNode [2]\n"
+            + "    +-- DirectiveNode [#endif]\n"
+            + "    +-- ConstantNode identifier=C [C = 3]\n"
+            + "        +-- expression = ExpressionNode [3]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testConstantsPreprocessorDirective() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "CON\n"
+            + "     A = 1\n"
+            + "#ifdef P\n"
+            + "     B = 2\n"
+            + "#endif\n"
+            + "     C = 3\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode identifier=A [A = 1]\n"
+            + "        +-- expression = ExpressionNode [1]\n"
+            + "    +-- DirectiveNode [#ifdef P]\n"
+            + "    +-- ConstantNode identifier=B [B = 2]\n"
+            + "        +-- expression = ExpressionNode [2]\n"
+            + "    +-- DirectiveNode [#endif]\n"
+            + "    +-- ConstantNode identifier=C [C = 3]\n"
+            + "        +-- expression = ExpressionNode [3]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testMethodPreprocessorDirective() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB main()\n"
+            + "#ifdef A\n"
+            + "    a := b * 2\n"
+            + "#endif\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=main [PUB main()]\n"
+            + "    +-- DirectiveNode [#ifdef A]\n"
+            + "    +-- StatementNode [    a := b * 2]\n"
+            + "    +-- DirectiveNode [#endif]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testStatementBlockPreprocessorDirective() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "PUB main()\n"
+            + "    if 1\n"
+            + "#ifdef A\n"
+            + "        a := b * 2\n"
+            + "#endif\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=main [PUB main()]\n"
+            + "    +-- StatementNode [    if 1]\n"
+            + "        +-- DirectiveNode [#ifdef A]\n"
+            + "        +-- StatementNode [        a := b * 2]\n"
+            + "        +-- DirectiveNode [#endif]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testPAsmPreprocessorDirective() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "DAT\n"
+            + "        org $000\n"
+            + "#ifdef A\n"
+            + "        mov a, #1\n"
+            + "#endif\n"
+            + "        ret\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- DataNode [DAT]\n"
+            + "    +-- DataLineNode instruction=org [        org $000]\n"
+            + "        +-- ParameterNode [$000]\n"
+            + "    +-- DirectiveNode [#ifdef A]\n"
+            + "    +-- DataLineNode instruction=mov [        mov a, #1]\n"
+            + "        +-- ParameterNode [a]\n"
+            + "        +-- ParameterNode [#1]\n"
+            + "    +-- DirectiveNode [#endif]\n"
+            + "    +-- DataLineNode instruction=ret [        ret]\n"
+            + "", tree(root));
+    }
+
     String tree(Node root) throws Exception {
         return tree(root, 0);
     }

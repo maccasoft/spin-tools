@@ -22,6 +22,12 @@ public class Variable extends Expression {
 
     private Set<Object> calledBy = new HashSet<>();
 
+    public Variable(String type, String name, Expression size) {
+        this.type = type.toUpperCase();
+        this.name = name;
+        this.size = size;
+    }
+
     public Variable(String type, String name, Expression size, int offset) {
         this.type = type.toUpperCase();
         this.name = name;
@@ -86,6 +92,10 @@ public class Variable extends Expression {
 
     public int getOffset() {
         return offset;
+    }
+
+    public void setOffset(int offset) {
+        this.offset = offset;
     }
 
     @Override

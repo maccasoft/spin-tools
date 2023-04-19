@@ -253,9 +253,11 @@ public class SourceEditor {
                                 if (offset < start) {
                                     return selection;
                                 }
-                                DataLineNode dataLine = (DataLineNode) child;
-                                if (dataLine.label != null && !dataLine.label.getText().startsWith(".")) {
-                                    selection = child;
+                                if (child instanceof DataLineNode) {
+                                    DataLineNode dataLine = (DataLineNode) child;
+                                    if (dataLine.label != null && !dataLine.label.getText().startsWith(".")) {
+                                        selection = child;
+                                    }
                                 }
                             }
                         }
@@ -302,6 +304,9 @@ public class SourceEditor {
             Node node = (Node) event.getStructuredSelection().getFirstElement();
             if (node != null) {
                 int offset = node.getStartIndex();
+                if (offset == -1) {
+                    offset = 0;
+                }
                 int line = styledText.getLineAtOffset(offset);
                 int column = offset - styledText.getOffsetAtLine(line);
                 SourceElement element = new SourceElement(null, line, column);

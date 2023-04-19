@@ -12,11 +12,14 @@ package com.maccasoft.propeller.spin1;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Stack;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -28,19 +31,22 @@ import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
+import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
+import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.StatementNode;
@@ -60,28 +66,16 @@ import com.maccasoft.propeller.spin1.bytecode.Jz;
 import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
 import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
+import com.maccasoft.propeller.spin1.instructions.FileInc;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
+import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class Spin1ObjectCompiler extends ObjectCompiler {
 
-    class BytecodeCompiler extends Spin1BytecodeCompiler {
-
-        public BytecodeCompiler(boolean openspinCompatible) {
-            super(openspinCompatible);
-        }
-
-        @Override
-        protected void logMessage(CompilerException message) {
-            Spin1ObjectCompiler.this.logMessage(message);
-        }
-
-    }
-
-    final Context scope;
-    final Spin1Compiler compiler;
+    Context scope;
+    Spin1Compiler compiler;
     Spin1BytecodeCompiler bytecodeCompiler;
-    Spin1PAsmCompiler pasmCompiler;
 
     List<Variable> variables = new ArrayList<>();
     List<Spin1PAsmLine> source = new ArrayList<>();
@@ -157,7 +151,26 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
             }
         }
 
-        compileVarBlocks(root);
+        for (Node node : root.getChilds()) {
+            if (node instanceof VariablesNode) {
+                compileVarBlock(node);
+            }
+        }
+
+        Collections.sort(variables, new Comparator<Variable>() {
+
+            @Override
+            public int compare(Variable o1, Variable o2) {
+                return o2.getTypeSize() - o1.getTypeSize();
+            }
+
+        });
+        for (Variable var : variables) {
+            var.setOffset(objectVarSize);
+            objectVarSize += var.getTypeSize() * var.getSize().getNumber().intValue();
+        }
+
+        objectVarSize = (objectVarSize + 3) & ~3;
 
         bytecodeCompiler = new Spin1BytecodeCompiler(openspinCompatible) {
 
@@ -168,45 +181,9 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
         };
 
-        pasmCompiler = new Spin1PAsmCompiler() {
-
-            @Override
-            protected List<Spin1PAsmLine> compileDatInclude(Context scope, Node root) {
-
-                for (Node node : root.getChilds()) {
-                    if (!(node instanceof ConstantsNode) && !(node instanceof DataNode)) {
-                        throw new RuntimeException("only CON and DAT sections allowed in included files");
-                    }
-                }
-
-                for (Node node : root.getChilds()) {
-                    if (node instanceof ConstantsNode) {
-                        compileConBlock(node);
-                    }
-                }
-
-                return super.compileDatInclude(scope, root);
-            }
-
-            @Override
-            protected Node getParsedSource(String fileName) {
-                return compiler.getParsedObject(fileName, ".spin");
-            }
-
-            @Override
-            protected byte[] getBinaryFile(String fileName) {
-                return Spin1ObjectCompiler.this.getBinaryFile(fileName);
-            }
-
-            @Override
-            protected void logMessage(CompilerException message) {
-                Spin1ObjectCompiler.this.logMessage(message);
-            }
-
-        };
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
-                source.addAll(pasmCompiler.compileDatBlock(scope, node));
+                compileDatBlock(node);
             }
         }
 
@@ -548,40 +525,194 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
     }
 
     void compileConBlock(Node parent) {
-        parent.accept(new NodeVisitor() {
-            int enumValue = 0, enumIncrement = 1;
+        int enumValue = 0, enumIncrement = 1;
 
-            @Override
-            public boolean visitConstant(ConstantNode node) {
-                Iterator<Token> iter = node.getTokens().iterator();
+        for (Node node : parent.getChilds()) {
+            try {
+                if (node instanceof DirectiveNode) {
+                    compileDirective(node);
+                }
+                else if (skipNode(node)) {
+                    continue;
+                }
+                if (node instanceof ConstantNode) {
+                    Iterator<Token> iter = node.getTokens().iterator();
 
-                Token token = iter.next();
-                do {
-                    if ("#".equals(token.getText())) {
-                        Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
-                        while (iter.hasNext()) {
-                            token = iter.next();
+                    Token token = iter.next();
+                    do {
+                        if ("#".equals(token.getText())) {
+                            Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                            while (iter.hasNext()) {
+                                token = iter.next();
+                                if ("[".equals(token.getText())) {
+                                    break;
+                                }
+                                builder.addToken(token);
+                            }
+                            try {
+                                Expression expression = builder.getExpression();
+                                enumValue = expression.getNumber().intValue();
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException("expression syntax error", builder.tokens));
+                            }
                             if ("[".equals(token.getText())) {
+                                builder = new Spin1ExpressionBuilder(scope);
+                                while (iter.hasNext()) {
+                                    token = iter.next();
+                                    if ("]".equals(token.getText())) {
+                                        try {
+                                            Expression expression = builder.getExpression();
+                                            enumIncrement = expression.getNumber().intValue();
+                                        } catch (CompilerException e) {
+                                            logMessage(e);
+                                        } catch (Exception e) {
+                                            logMessage(new CompilerException(e, builder.tokens));
+                                        }
+                                        break;
+                                    }
+                                    builder.addToken(token);
+                                }
+                                if (!"]".equals(token.getText())) {
+                                    logMessage(new CompilerException("expecting '['", token));
+                                }
+                            }
+                        }
+                        else {
+                            if (token.type != 0) {
+                                logMessage(new CompilerException("expecting identifier", token));
                                 break;
                             }
-                            builder.addToken(token);
+                            String identifier = token.getText();
+                            if (!iter.hasNext()) {
+                                try {
+                                    scope.addSymbol(identifier, new NumberLiteral(enumValue));
+                                    publicSymbols.put(identifier, new NumberLiteral(enumValue));
+                                } catch (CompilerException e) {
+                                    logMessage(e);
+                                } catch (Exception e) {
+                                    logMessage(new CompilerException(e, token));
+                                }
+                                enumValue += enumIncrement;
+                            }
+                            else {
+                                token = iter.next();
+                                if ("[".equals(token.getText())) {
+                                    try {
+                                        scope.addSymbol(identifier, new NumberLiteral(enumValue));
+                                        publicSymbols.put(identifier, new NumberLiteral(enumValue));
+                                    } catch (CompilerException e) {
+                                        logMessage(e);
+                                    } catch (Exception e) {
+                                        logMessage(new CompilerException(e, token));
+                                    }
+
+                                    Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                                    while (iter.hasNext()) {
+                                        token = iter.next();
+                                        if ("]".equals(token.getText())) {
+                                            break;
+                                        }
+                                        builder.addToken(token);
+                                    }
+                                    try {
+                                        Expression expression = builder.getExpression();
+                                        enumValue += enumIncrement * expression.getNumber().intValue();
+                                    } catch (CompilerException e) {
+                                        logMessage(e);
+                                    } catch (Exception e) {
+                                        logMessage(new CompilerException(e, builder.tokens));
+                                    }
+                                }
+                                else if ("=".equals(token.getText())) {
+                                    Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                                    while (iter.hasNext()) {
+                                        token = iter.next();
+                                        if ("]".equals(token.getText())) {
+                                            break;
+                                        }
+                                        builder.addToken(token);
+                                    }
+                                    try {
+                                        Expression expression = builder.getExpression();
+                                        try {
+                                            scope.addSymbol(identifier, expression);
+                                            publicSymbols.put(identifier, expression);
+                                        } catch (CompilerException e) {
+                                            logMessage(e);
+                                        } catch (Exception e) {
+                                            logMessage(new CompilerException(e, node));
+                                        }
+                                    } catch (CompilerException e) {
+                                        logMessage(e);
+                                    } catch (Exception e) {
+                                        if (builder.tokens.size() == 0) {
+                                            logMessage(new CompilerException("expecting expression", token));
+                                        }
+                                        else {
+                                            logMessage(new CompilerException("expression syntax error", builder.tokens));
+                                        }
+                                    }
+                                }
+                                else {
+                                    logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
+                                    break;
+                                }
+                            }
                         }
-                        try {
-                            Expression expression = builder.getExpression();
-                            enumValue = expression.getNumber().intValue();
-                        } catch (CompilerException e) {
-                            logMessage(e);
-                        } catch (Exception e) {
-                            logMessage(new CompilerException("expression syntax error", builder.tokens));
+                    } while (iter.hasNext());
+                }
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, node));
+            }
+        }
+
+        checkConditionStack();
+    }
+
+    void compileVarBlock(Node parent) {
+        String type = "LONG";
+
+        for (Node node : parent.getChilds()) {
+            try {
+                if (node instanceof DirectiveNode) {
+                    compileDirective(node);
+                }
+                else if (skipNode(node)) {
+                    continue;
+                }
+                if (node instanceof VariableNode) {
+                    Iterator<Token> iter = node.getTokens().iterator();
+
+                    Token token = iter.next();
+                    if (Spin2Model.isType(token.getText())) {
+                        type = token.getText().toUpperCase();
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting identifier", token));
+                            return;
                         }
+                        token = iter.next();
+                    }
+
+                    Token identifier = token;
+                    Expression size = new NumberLiteral(1);
+
+                    if (iter.hasNext()) {
+                        token = iter.next();
                         if ("[".equals(token.getText())) {
-                            builder = new Spin1ExpressionBuilder(scope);
+                            if (!iter.hasNext()) {
+                                logMessage(new CompilerException("expecting expression", token));
+                                return;
+                            }
+                            Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
                             while (iter.hasNext()) {
                                 token = iter.next();
                                 if ("]".equals(token.getText())) {
                                     try {
-                                        Expression expression = builder.getExpression();
-                                        enumIncrement = expression.getNumber().intValue();
+                                        size = builder.getExpression();
                                     } catch (CompilerException e) {
                                         logMessage(e);
                                     } catch (Exception e) {
@@ -593,332 +724,370 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                             }
                             if (!"]".equals(token.getText())) {
                                 logMessage(new CompilerException("expecting '['", token));
+                                return;
                             }
-                        }
-                    }
-                    else {
-                        if (token.type != 0) {
-                            logMessage(new CompilerException("expecting identifier", token));
-                            break;
-                        }
-                        String identifier = token.getText();
-                        if (!iter.hasNext()) {
-                            try {
-                                scope.addSymbol(identifier, new NumberLiteral(enumValue));
-                                publicSymbols.put(identifier, new NumberLiteral(enumValue));
-                            } catch (CompilerException e) {
-                                logMessage(e);
-                            } catch (Exception e) {
-                                logMessage(new CompilerException(e, token));
-                            }
-                            enumValue += enumIncrement;
                         }
                         else {
-                            token = iter.next();
-                            if ("[".equals(token.getText())) {
-                                try {
-                                    scope.addSymbol(identifier, new NumberLiteral(enumValue));
-                                    publicSymbols.put(identifier, new NumberLiteral(enumValue));
-                                } catch (CompilerException e) {
-                                    logMessage(e);
-                                } catch (Exception e) {
-                                    logMessage(new CompilerException(e, token));
-                                }
+                            Node error = new Node();
+                            iter.forEachRemaining(t -> error.addToken(t));
+                            logMessage(new CompilerException("unexpected '" + error + "'", error));
+                        }
+                    }
 
-                                Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
-                                while (iter.hasNext()) {
-                                    token = iter.next();
-                                    if ("]".equals(token.getText())) {
-                                        break;
-                                    }
-                                    builder.addToken(token);
-                                }
+                    try {
+                        Variable var = new Variable(type, identifier.getText(), size);
+                        scope.addSymbol(identifier.getText(), var);
+                        variables.add(var);
+                        var.setData(identifier);
+                    } catch (Exception e) {
+                        logMessage(new CompilerException(e, identifier));
+                    }
+
+                    if (iter.hasNext()) {
+                        Node error = new Node();
+                        iter.forEachRemaining(t -> error.addToken(t));
+                        logMessage(new CompilerException("unexpected '" + error + "'", error));
+                    }
+                }
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, node));
+            }
+        }
+
+        checkConditionStack();
+    }
+
+    void compileObjBlock(Node parent) {
+        for (Node node : parent.getChilds()) {
+            try {
+                if (node instanceof DirectiveNode) {
+                    compileDirective(node);
+                }
+                else if (skipNode(node)) {
+                    continue;
+                }
+                if (node instanceof ObjectNode) {
+                    Iterator<Token> iter = node.getTokens().iterator();
+
+                    Token token = iter.next();
+                    String name = token.getText();
+                    Expression count = new NumberLiteral(1);
+
+                    if (!iter.hasNext()) {
+                        logMessage(new CompilerException("syntax error", node));
+                        return;
+                    }
+                    token = iter.next();
+
+                    if ("[".equals(token.getText())) {
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("syntax error", node));
+                            return;
+                        }
+                        Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                        while (iter.hasNext()) {
+                            token = iter.next();
+                            if ("]".equals(token.getText())) {
                                 try {
-                                    Expression expression = builder.getExpression();
-                                    enumValue += enumIncrement * expression.getNumber().intValue();
+                                    count = builder.getExpression();
+                                    count.setData(((ObjectNode) node).count);
                                 } catch (CompilerException e) {
                                     logMessage(e);
                                 } catch (Exception e) {
                                     logMessage(new CompilerException(e, builder.tokens));
                                 }
-                            }
-                            else if ("=".equals(token.getText())) {
-                                Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
-                                while (iter.hasNext()) {
-                                    token = iter.next();
-                                    if ("]".equals(token.getText())) {
-                                        break;
-                                    }
-                                    builder.addToken(token);
-                                }
-                                try {
-                                    Expression expression = builder.getExpression();
-                                    try {
-                                        scope.addSymbol(identifier, expression);
-                                        publicSymbols.put(identifier, expression);
-                                    } catch (CompilerException e) {
-                                        logMessage(e);
-                                    } catch (Exception e) {
-                                        logMessage(new CompilerException(e, node));
-                                    }
-                                } catch (CompilerException e) {
-                                    logMessage(e);
-                                } catch (Exception e) {
-                                    if (builder.tokens.size() == 0) {
-                                        logMessage(new CompilerException("expecting expression", token));
-                                    }
-                                    else {
-                                        logMessage(new CompilerException("expression syntax error", builder.tokens));
-                                    }
-                                }
-                            }
-                            else {
-                                logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
                                 break;
                             }
+                            builder.addToken(token);
                         }
+                        if (!"]".equals(token.getText())) {
+                            logMessage(new CompilerException("expecting '['", token));
+                            return;
+                        }
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting object file", token));
+                            return;
+                        }
+                        token = iter.next();
                     }
-                } while (iter.hasNext());
 
-                return false;
-            }
-
-        });
-    }
-
-    void compileVarBlocks(Node root) {
-        root.accept(new NodeVisitor() {
-
-            String type = "LONG";
-
-            @Override
-            public boolean visitVariables(VariablesNode node) {
-                type = "LONG";
-                return true;
-            }
-
-            @Override
-            public void visitVariable(VariableNode node) {
-                if (node.type != null) {
-                    type = node.type.getText().toUpperCase();
-                }
-                if ("LONG".equalsIgnoreCase(type)) {
-                    compileVariable(type, node);
-                }
-            }
-
-        });
-
-        root.accept(new NodeVisitor() {
-
-            String type = "LONG";
-
-            @Override
-            public boolean visitVariables(VariablesNode node) {
-                type = "LONG";
-                return true;
-            }
-
-            @Override
-            public void visitVariable(VariableNode node) {
-                if (node.type != null) {
-                    type = node.type.getText().toUpperCase();
-                }
-                if ("WORD".equalsIgnoreCase(type)) {
-                    compileVariable(type, node);
-                }
-            }
-
-        });
-
-        root.accept(new NodeVisitor() {
-
-            String type = "LONG";
-
-            @Override
-            public boolean visitVariables(VariablesNode node) {
-                type = "LONG";
-                return true;
-            }
-
-            @Override
-            public void visitVariable(VariableNode node) {
-                if (node.type != null) {
-                    type = node.type.getText().toUpperCase();
-                }
-                if ("BYTE".equalsIgnoreCase(type)) {
-                    compileVariable(type, node);
-                }
-            }
-
-        });
-
-        objectVarSize = (objectVarSize + 3) & ~3;
-    }
-
-    void compileVariable(String type, VariableNode node) {
-        Iterator<Token> iter = node.getTokens().iterator();
-
-        Token token = iter.next();
-        if (Spin1Model.isType(token.getText())) {
-            type = token.getText().toUpperCase();
-            if (!iter.hasNext()) {
-                logMessage(new CompilerException("expecting identifier", token));
-                return;
-            }
-            token = iter.next();
-        }
-
-        Token identifier = token;
-        Expression size = new NumberLiteral(1);
-
-        if (iter.hasNext()) {
-            token = iter.next();
-            if (!"[".equals(token.getText())) {
-                logMessage(new CompilerException("unexpected '" + token + "'", token));
-                return;
-            }
-            if (!iter.hasNext()) {
-                logMessage(new CompilerException("expecting expression", token));
-                return;
-            }
-            Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
-            while (iter.hasNext()) {
-                token = iter.next();
-                if ("]".equals(token.getText())) {
-                    try {
-                        size = builder.getExpression();
-                    } catch (CompilerException e) {
-                        logMessage(e);
-                    } catch (Exception e) {
-                        logMessage(new CompilerException(e, builder.tokens));
+                    if (!":".equals(token.getText())) {
+                        logMessage(new CompilerException("expecting ':'", token));
+                        return;
                     }
-                    break;
-                }
-                builder.addToken(token);
-            }
-            if (!"]".equals(token.getText())) {
-                logMessage(new CompilerException("expecting '['", token));
-                return;
-            }
-        }
-
-        try {
-            Variable var = new Variable(type, identifier.getText(), size, objectVarSize);
-            scope.addSymbol(identifier.getText(), var);
-            variables.add(var);
-            var.setData(identifier);
-
-            int varSize = size.getNumber().intValue();
-            if ("WORD".equalsIgnoreCase(type)) {
-                varSize = varSize * 2;
-            }
-            else if (!"BYTE".equalsIgnoreCase(type)) {
-                varSize = varSize * 4;
-            }
-            objectVarSize += varSize;
-        } catch (Exception e) {
-            logMessage(new CompilerException(e, node.identifier));
-        }
-
-        if (iter.hasNext()) {
-            Node error = new Node();
-            iter.forEachRemaining(t -> error.addToken(t));
-            logMessage(new CompilerException("unexpected '" + error + "'", error));
-        }
-    }
-
-    void compileObjBlock(Node parent) {
-        parent.accept(new NodeVisitor() {
-
-            @Override
-            public void visitObject(ObjectNode node) {
-                Iterator<Token> iter = node.getTokens().iterator();
-
-                Token token = iter.next();
-                String name = token.getText();
-                Expression count = new NumberLiteral(1);
-
-                if (!iter.hasNext()) {
-                    logMessage(new CompilerException("syntax error", node));
-                    return;
-                }
-                token = iter.next();
-
-                if ("[".equals(token.getText())) {
                     if (!iter.hasNext()) {
                         logMessage(new CompilerException("syntax error", node));
                         return;
                     }
-                    Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
-                    while (iter.hasNext()) {
-                        token = iter.next();
-                        if ("]".equals(token.getText())) {
+                    token = iter.next();
+                    if (token.type != Token.STRING) {
+                        logMessage(new CompilerException("expecting file name", token));
+                        return;
+                    }
+                    String fileName = token.getText().substring(1, token.getText().length() - 1);
+
+                    ObjectInfo info = compiler.getObjectInfo(fileName);
+                    if (info == null) {
+                        logMessage(new CompilerException("object " + token + " not found", token));
+                        return;
+                    }
+                    if (info.hasErrors()) {
+                        logMessage(new CompilerException("object " + token + " has errors", token));
+                        return;
+                    }
+
+                    objects.put(name, new ObjectInfo(info.compiler, count));
+
+                    for (Entry<String, Expression> entry : info.compiler.getPublicSymbols().entrySet()) {
+                        if (!(entry.getValue() instanceof Method)) {
+                            String qualifiedName = name + "#" + entry.getKey();
+                            scope.addSymbol(qualifiedName, entry.getValue());
+                        }
+                    }
+
+                    if (iter.hasNext()) {
+                        Node error = new Node();
+                        iter.forEachRemaining(t -> error.addToken(t));
+                        logMessage(new CompilerException("unexpected '" + error + "'", error));
+                    }
+                }
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, node));
+            }
+        }
+
+        checkConditionStack();
+    }
+
+    int nested;
+    Map<Spin1PAsmLine, Context> pendingAlias = new HashMap<Spin1PAsmLine, Context>();
+
+    void compileDatBlock(Node parent) {
+        Context savedContext = scope;
+        nested = 0;
+
+        for (Node child : parent.getChilds()) {
+            try {
+                if (child instanceof DirectiveNode) {
+                    compileDirective(child);
+                }
+                else if (skipNode(child)) {
+                    continue;
+                }
+                if (child instanceof DataLineNode) {
+                    DataLineNode node = (DataLineNode) child;
+
+                    Spin1PAsmLine pasmLine = compileDataLine(node);
+                    pasmLine.setData(node);
+                    source.addAll(pasmLine.expand());
+
+                    if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                        if (node.condition != null) {
+                            throw new CompilerException("not allowed", node.condition);
+                        }
+                        if (node.modifier != null) {
+                            throw new CompilerException("not allowed", node.modifier);
+                        }
+                        int index = 0;
+                        for (Spin1PAsmExpression argument : pasmLine.getArguments()) {
+                            String fileName = argument.getString();
+                            Node includedNode = compiler.getParsedObject(fileName, ".spin");
                             try {
-                                count = builder.getExpression();
-                                count.setData(node.count);
+                                if (includedNode == null) {
+                                    throw new RuntimeException("file \"" + fileName + "\" not found");
+                                }
+                                compileDatInclude(includedNode);
                             } catch (CompilerException e) {
                                 logMessage(e);
                             } catch (Exception e) {
-                                logMessage(new CompilerException(e, builder.tokens));
+                                logMessage(new CompilerException(e, node.parameters.get(index)));
                             }
-                            break;
+                            index++;
                         }
-                        builder.addToken(token);
-                    }
-                    if (!"]".equals(token.getText())) {
-                        logMessage(new CompilerException("expecting '['", token));
-                        return;
-                    }
-                    if (!iter.hasNext()) {
-                        logMessage(new CompilerException("expecting object file", token));
-                        return;
-                    }
-                    token = iter.next();
-                }
-
-                if (!":".equals(token.getText())) {
-                    logMessage(new CompilerException("expecting ':'", token));
-                    return;
-                }
-                if (!iter.hasNext()) {
-                    logMessage(new CompilerException("syntax error", node));
-                    return;
-                }
-                token = iter.next();
-                if (token.type != Token.STRING) {
-                    logMessage(new CompilerException("expecting file name", token));
-                    return;
-                }
-                String fileName = token.getText().substring(1, token.getText().length() - 1);
-
-                ObjectInfo info = compiler.getObjectInfo(fileName);
-                if (info == null) {
-                    logMessage(new CompilerException("object " + token + " not found", token));
-                    return;
-                }
-                if (info.hasErrors()) {
-                    logMessage(new CompilerException("object " + token + " has errors", token));
-                    return;
-                }
-
-                objects.put(name, new ObjectInfo(info.compiler, count));
-
-                for (Entry<String, Expression> entry : info.compiler.getPublicSymbols().entrySet()) {
-                    if (!(entry.getValue() instanceof Method)) {
-                        String qualifiedName = name + "#" + entry.getKey();
-                        scope.addSymbol(qualifiedName, entry.getValue());
                     }
                 }
 
-                if (iter.hasNext()) {
-                    Node error = new Node();
-                    iter.forEachRemaining(t -> error.addToken(t));
-                    logMessage(new CompilerException("unexpected '" + error + "'", error));
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, child));
+            }
+        }
+
+        pendingAlias.clear();
+        scope = savedContext;
+
+        checkConditionStack();
+    }
+
+    Spin1PAsmLine compileDataLine(DataLineNode node) {
+        String label = node.label != null ? node.label.getText() : null;
+        String condition = node.condition != null ? node.condition.getText() : null;
+        String mnemonic = node.instruction != null ? node.instruction.getText() : null;
+        String modifier = node.modifier != null ? node.modifier.getText() : null;
+        List<Spin1PAsmExpression> parameters = new ArrayList<Spin1PAsmExpression>();
+
+        Context rootScope = scope;
+        if (label != null && !label.startsWith(":")) {
+            if (nested > 0) {
+                if (scope.getParent() != null) {
+                    scope = rootScope = scope.getParent();
+                }
+                nested--;
+            }
+            scope = new Context(scope);
+            nested++;
+        }
+
+        if (node.label == null && node.instruction == null) {
+            throw new CompilerException("syntax error", node);
+        }
+
+        Context localScope = new Context(scope);
+
+        for (DataLineNode.ParameterNode param : node.parameters) {
+            int index = 0;
+            String prefix = null;
+            Expression expression = null, count = null;
+
+            Token token;
+            if (index < param.getTokens().size()) {
+                token = param.getToken(index);
+                if (token.getText().startsWith("#")) {
+                    prefix = (prefix == null ? "" : prefix) + token.getText();
+                    index++;
+                }
+            }
+            if (index < param.getTokens().size()) {
+                token = param.getToken(index);
+                if ("\\".equals(token.getText())) {
+                    prefix = (prefix == null ? "" : prefix) + token.getText();
+                    index++;
+                }
+            }
+            if (index < param.getTokens().size()) {
+                try {
+                    Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(localScope, param.getTokens().subList(index, param.getTokens().size()));
+                    expression = builder.getExpression();
+                    expression.setData(param);
+                } catch (Exception e) {
+                    throw new CompilerException(e, param);
                 }
             }
 
-        });
+            if (param.count != null) {
+                try {
+                    Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(localScope, param.count.getTokens());
+                    count = builder.getExpression();
+                } catch (Exception e) {
+                    throw new CompilerException(e, param.count);
+                }
+            }
+            parameters.add(new Spin1PAsmExpression(prefix, expression, count));
+        }
+
+        Spin1PAsmLine pasmLine = new Spin1PAsmLine(localScope, label, condition, mnemonic, parameters, modifier);
+        pasmLine.setData(node);
+
+        try {
+            if ("FILE".equalsIgnoreCase(mnemonic)) {
+                if (node.condition != null) {
+                    throw new CompilerException("not allowed", node.condition);
+                }
+                if (node.modifier != null) {
+                    throw new CompilerException("not allowed", node.modifier);
+                }
+                String fileName = parameters.get(0).getString();
+                byte[] data = getBinaryFile(fileName);
+                if (data == null) {
+                    throw new CompilerException("file \"" + fileName + "\" not found", node.parameters.get(0));
+                }
+                pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data));
+            }
+        } catch (RuntimeException e) {
+            throw new CompilerException(e, node);
+        }
+
+        if (pasmLine.getLabel() != null) {
+            try {
+                String type = "LONG";
+                if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Word) {
+                    type = "WORD";
+                }
+                else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
+                    type = "BYTE";
+                }
+                else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                    type = "BYTE";
+                }
+                rootScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
+                rootScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
+                rootScope.addSymbol("@@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
+
+                if (pasmLine.getMnemonic() == null) {
+                    if (!pasmLine.isLocalLabel()) {
+                        pendingAlias.put(pasmLine, rootScope);
+                    }
+                }
+                else if (pendingAlias.size() != 0) {
+                    for (Entry<Spin1PAsmLine, Context> entry : pendingAlias.entrySet()) {
+                        Spin1PAsmLine line = entry.getKey();
+                        Context context = entry.getValue();
+                        context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                        context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                        context.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                    }
+                    pendingAlias.clear();
+                }
+            } catch (RuntimeException e) {
+                throw new CompilerException(e, node.label);
+            }
+        }
+        else if (pasmLine.getMnemonic() != null && pendingAlias.size() != 0) {
+            String type = "LONG";
+            if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Word) {
+                type = "WORD";
+            }
+            else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte) {
+                type = "BYTE";
+            }
+            else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                type = "BYTE";
+            }
+
+            for (Entry<Spin1PAsmLine, Context> entry : pendingAlias.entrySet()) {
+                Spin1PAsmLine line = entry.getKey();
+                Context context = entry.getValue();
+                context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                context.addOrUpdateSymbol("@@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+            }
+            pendingAlias.clear();
+        }
+
+        return pasmLine;
+    }
+
+    void compileDatInclude(Node root) {
+        for (Node node : root.getChilds()) {
+            if (!(node instanceof ConstantsNode) && !(node instanceof DataNode)) {
+                throw new RuntimeException("only CON and DAT sections allowed in included files");
+            }
+        }
+        for (Node node : root.getChilds()) {
+            if (node instanceof ConstantsNode) {
+                compileConBlock(node);
+            }
+        }
+        for (Node node : root.getChilds()) {
+            if (node instanceof DataNode) {
+                compileDatBlock(node);
+            }
+        }
     }
 
     protected byte[] getBinaryFile(String fileName) {
@@ -1112,6 +1281,12 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         while (nodeIterator.hasNext()) {
             Node node = nodeIterator.next();
             try {
+                if (node instanceof DirectiveNode) {
+                    compileDirective(node);
+                }
+                else if (skipNode(node)) {
+                    continue;
+                }
                 if (node instanceof StatementNode) {
                     Spin1MethodLine line = compileStatement(context, method, parent, node, previousLine);
                     if (line != null) {
@@ -1144,7 +1319,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
             if ("ABORT".equals(text)) {
                 line = new Spin1MethodLine(context, parent, token.getText(), node);
                 if (iter.hasNext()) {
-                    Spin1TreeBuilder builder = new Spin1TreeBuilder();
+                    Spin1TreeBuilder builder = new Spin1TreeBuilder(context);
                     while (iter.hasNext()) {
                         builder.addToken(iter.next());
                     }
@@ -1158,7 +1333,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
             else if ("IF".equals(text) || "IFNOT".equals(text)) {
                 line = new Spin1MethodLine(context, parent, token.getText(), node);
 
-                Spin1TreeBuilder builder = new Spin1TreeBuilder();
+                Spin1TreeBuilder builder = new Spin1TreeBuilder(context);
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
@@ -1187,7 +1362,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                 Spin1MethodLine exitLine = previousLine.getChilds().remove(previousLine.getChilds().size() - 1);
 
                 if ("ELSEIF".equals(text) || "ELSEIFNOT".equals(text)) {
-                    Spin1TreeBuilder builder = new Spin1TreeBuilder();
+                    Spin1TreeBuilder builder = new Spin1TreeBuilder(context);
                     while (iter.hasNext()) {
                         builder.addToken(iter.next());
                     }
@@ -1212,7 +1387,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                 line = new Spin1MethodLine(context, parent, text, node);
 
                 if (iter.hasNext()) {
-                    Spin1TreeBuilder builder = new Spin1TreeBuilder();
+                    Spin1TreeBuilder builder = new Spin1TreeBuilder(context);
                     while (iter.hasNext()) {
                         builder.addToken(iter.next());
                     }
@@ -1235,7 +1410,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                         line.setStatement(text + " " + token.getText().toUpperCase());
                         line.setData("next", line);
 
-                        Spin1TreeBuilder builder = new Spin1TreeBuilder();
+                        Spin1TreeBuilder builder = new Spin1TreeBuilder(context);
                         while (iter.hasNext()) {
                             builder.addToken(iter.next());
                         }
@@ -1260,7 +1435,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                         Spin1StatementNode to = null;
                         Spin1StatementNode step = null;
 
-                        Spin1TreeBuilder builder = new Spin1TreeBuilder();
+                        Spin1TreeBuilder builder = new Spin1TreeBuilder(context);
                         builder.addToken(token);
                         while (iter.hasNext()) {
                             token = iter.next();
@@ -1276,7 +1451,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                                 throw new CompilerException("syntax error", builder.getTokens());
                             }
 
-                            builder = new Spin1TreeBuilder();
+                            builder = new Spin1TreeBuilder(context);
                             while (iter.hasNext()) {
                                 token = iter.next();
                                 if ("TO".equalsIgnoreCase(token.getText())) {
@@ -1287,7 +1462,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                             from = builder.getRoot();
 
                             if ("TO".equalsIgnoreCase(token.getText())) {
-                                builder = new Spin1TreeBuilder();
+                                builder = new Spin1TreeBuilder(context);
                                 while (iter.hasNext()) {
                                     token = iter.next();
                                     if ("STEP".equalsIgnoreCase(token.getText())) {
@@ -1298,7 +1473,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                                 to = builder.getRoot();
 
                                 if ("STEP".equalsIgnoreCase(token.getText())) {
-                                    builder = new Spin1TreeBuilder();
+                                    builder = new Spin1TreeBuilder(context);
                                     while (iter.hasNext()) {
                                         builder.addToken(iter.next());
                                     }
@@ -1385,7 +1560,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
                 Spin1MethodLine conditionLine = new Spin1MethodLine(context);
 
-                Spin1TreeBuilder builder = new Spin1TreeBuilder();
+                Spin1TreeBuilder builder = new Spin1TreeBuilder(context);
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
@@ -1460,7 +1635,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                 Spin1MethodLine endLine = new Spin1MethodLine(context);
                 line.addSource(new Address(line.getScope(), new ContextLiteral(endLine.getScope())));
 
-                Spin1TreeBuilder builder = new Spin1TreeBuilder();
+                Spin1TreeBuilder builder = new Spin1TreeBuilder(context);
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
@@ -1468,6 +1643,12 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
                 boolean hasOther = false;
                 for (Node child : node.getChilds()) {
+                    if (node instanceof DirectiveNode) {
+                        compileDirective(node);
+                    }
+                    else if (skipNode(node)) {
+                        continue;
+                    }
                     if (child instanceof StatementNode) {
                         Spin1MethodLine caseLine = new Spin1MethodLine(context);
                         caseLine.addChilds(compileStatement(new Context(context), method, line, child));
@@ -1480,7 +1661,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                             hasOther = true;
                         }
                         else {
-                            builder = new Spin1TreeBuilder();
+                            builder = new Spin1TreeBuilder(context);
                             builder.addToken(token);
                             while (childIter.hasNext()) {
                                 token = childIter.next();
@@ -1507,7 +1688,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                 line.addChild(endLine);
             }
             else {
-                Spin1TreeBuilder builder = new Spin1TreeBuilder();
+                Spin1TreeBuilder builder = new Spin1TreeBuilder(context);
                 builder.addToken(token);
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
@@ -1543,6 +1724,229 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
             if (target != null) {
                 line.addSource(new CaseJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
+        }
+    }
+
+    class Condition {
+
+        final Node node;
+        final boolean evaluated;
+        final boolean skip;
+
+        public Condition(Node node, boolean evaluated, boolean skip) {
+            this.node = node;
+            this.evaluated = evaluated;
+            this.skip = skip;
+        }
+
+    }
+
+    Stack<Condition> conditionStack = new Stack<>();
+
+    void compileDirective(Node node) {
+        Token token;
+        boolean skip = !conditionStack.isEmpty() && conditionStack.peek().skip;
+
+        Iterator<Token> iter = node.getTokens().iterator();
+        token = iter.next();
+        if (!iter.hasNext()) {
+            throw new CompilerException("expecting directive", new Token(token.getStream(), token.stop));
+        }
+        token = iter.next();
+        if ("define".equals(token.getText())) {
+            if (!skip) {
+                if (!iter.hasNext()) {
+                    throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
+                }
+                token = iter.next();
+                if (token.type != 0 && token.type != Token.KEYWORD) {
+                    throw new CompilerException("invalid identifier", token);
+                }
+                String identifier = token.getText();
+                if (scope.hasSymbol(identifier) || scope.isDefined(identifier)) {
+                    logMessage(new CompilerException(CompilerException.WARNING, "duplicated definition: " + identifier, token));
+                }
+
+                List<Token> list = new ArrayList<>();
+                if (iter.hasNext()) {
+                    while (iter.hasNext()) {
+                        list.add(iter.next());
+                    }
+                }
+                scope.addDefinition(identifier, list);
+            }
+        }
+        else if ("ifdef".equals(token.getText())) {
+            if (!skip) {
+                if (!iter.hasNext()) {
+                    throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
+                }
+                Token identifier = iter.next();
+                if (token.type != 0 && token.type != Token.KEYWORD) {
+                    throw new CompilerException("invalid identifier", identifier);
+                }
+                skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
+                conditionStack.push(new Condition(node, true, skip));
+            }
+            else {
+                conditionStack.push(new Condition(node, false, skip));
+            }
+        }
+        else if ("elifdef".equals(token.getText())) {
+            if (conditionStack.isEmpty()) {
+                throw new CompilerException("misplaced #elifdef", token);
+            }
+            if (conditionStack.peek().evaluated) {
+                conditionStack.pop();
+
+                Token identifier = iter.next();
+                if (token.type != 0 && token.type != Token.KEYWORD) {
+                    throw new CompilerException("invalid identifier", identifier);
+                }
+                skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
+
+                conditionStack.push(new Condition(node, true, skip));
+            }
+            else {
+                conditionStack.push(new Condition(node, false, skip));
+            }
+        }
+        else if ("ifndef".equals(token.getText())) {
+            if (!skip) {
+                if (!iter.hasNext()) {
+                    throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
+                }
+                Token identifier = iter.next();
+                if (token.type != 0 && token.type != Token.KEYWORD) {
+                    throw new CompilerException("invalid identifier", identifier);
+                }
+                skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());
+                conditionStack.push(new Condition(node, true, skip));
+            }
+            else {
+                conditionStack.push(new Condition(node, false, skip));
+            }
+        }
+        else if ("elifndef".equals(token.getText())) {
+            if (conditionStack.isEmpty()) {
+                throw new CompilerException("misplaced #elifndef", token);
+            }
+            if (conditionStack.peek().evaluated) {
+                conditionStack.pop();
+
+                Token identifier = iter.next();
+                if (token.type != 0 && token.type != Token.KEYWORD) {
+                    throw new CompilerException("invalid identifier", identifier);
+                }
+                skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());
+
+                conditionStack.push(new Condition(node, true, skip));
+            }
+            else {
+                conditionStack.push(new Condition(node, false, skip));
+            }
+        }
+        else if ("else".equals(token.getText())) {
+            if (conditionStack.isEmpty()) {
+                throw new CompilerException("misplaced #else", token);
+            }
+            if (conditionStack.peek().evaluated) {
+                skip = !conditionStack.pop().skip;
+                conditionStack.push(new Condition(node, true, skip));
+            }
+            else {
+                conditionStack.push(new Condition(node, false, skip));
+            }
+        }
+        else if ("if".equals(token.getText())) {
+            if (!skip) {
+                Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                while (iter.hasNext()) {
+                    token = iter.next();
+                    if ("defined".equals(token.getText())) {
+                        builder.addToken(token);
+                        if (iter.hasNext()) {
+                            builder.addTokenLiteral(iter.next());
+                        }
+                        if (iter.hasNext()) {
+                            builder.addTokenLiteral(iter.next());
+                        }
+                        if (iter.hasNext()) {
+                            builder.addTokenLiteral(iter.next());
+                        }
+                    }
+                    else {
+                        builder.addToken(token);
+                    }
+                }
+                Expression expression = builder.getExpression();
+                if (!expression.isConstant()) {
+                    throw new RuntimeException("expression is not constant");
+                }
+                skip = expression.getNumber().intValue() == 0;
+                conditionStack.push(new Condition(node, true, skip));
+            }
+            else {
+                conditionStack.push(new Condition(node, false, skip));
+            }
+        }
+        else if ("elif".equals(token.getText())) {
+            if (conditionStack.isEmpty()) {
+                throw new CompilerException("misplaced #elif", token);
+            }
+            if (conditionStack.peek().evaluated) {
+                conditionStack.pop();
+
+                Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                while (iter.hasNext()) {
+                    token = iter.next();
+                    if ("defined".equals(token.getText())) {
+                        builder.addToken(token);
+                        if (iter.hasNext()) {
+                            builder.addTokenLiteral(iter.next());
+                        }
+                        if (iter.hasNext()) {
+                            builder.addTokenLiteral(iter.next());
+                        }
+                        if (iter.hasNext()) {
+                            builder.addTokenLiteral(iter.next());
+                        }
+                    }
+                    else {
+                        builder.addToken(token);
+                    }
+                }
+                Expression expression = builder.getExpression();
+                if (!expression.isConstant()) {
+                    throw new RuntimeException("expression is not constant");
+                }
+                skip = expression.getNumber().intValue() == 0;
+
+                conditionStack.push(new Condition(node, true, skip));
+            }
+            else {
+                conditionStack.push(new Condition(node, false, skip));
+            }
+        }
+        else if ("endif".equals(token.getText())) {
+            if (conditionStack.isEmpty()) {
+                throw new CompilerException("misplaced #endif", token);
+            }
+            conditionStack.pop();
+        }
+        else {
+            throw new CompilerException("unsupported directive", token);
+        }
+    }
+
+    boolean skipNode(Node node) {
+        return !conditionStack.isEmpty() && conditionStack.peek().skip;
+    }
+
+    void checkConditionStack() {
+        while (!conditionStack.isEmpty()) {
+            Condition c = conditionStack.pop();
+            logMessage(new CompilerException("unbalanced conditional directive", c.node));
         }
     }
 
