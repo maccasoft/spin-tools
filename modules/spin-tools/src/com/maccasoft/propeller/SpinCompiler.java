@@ -12,7 +12,6 @@ package com.maccasoft.propeller;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -28,8 +27,14 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 
+import com.maccasoft.propeller.internal.FileUtils;
+import com.maccasoft.propeller.model.DirectiveNode;
+import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
+import com.maccasoft.propeller.spinc.CParser;
+import com.maccasoft.propeller.spinc.CTokenStream;
+import com.maccasoft.propeller.spinc.Spin1CCompiler;
 import com.maccasoft.propeller.spinc.Spin2CCompiler;
 
 import jssc.SerialPort;
@@ -42,7 +47,7 @@ public class SpinCompiler {
     public static final String APP_TITLE = "Spin Tools Compiler";
     public static final String APP_VERSION = SpinTools.APP_VERSION;
 
-    static Pattern unusedMethodPattern = Pattern.compile("(.*)warning : method \"(.*)\" is not used");
+    static Pattern unusedMethodPattern = Pattern.compile("(.*)warning : (method|parameter|variable|local variable) \"(.*)\" is not used");
 
     static boolean quiet;
 
@@ -52,21 +57,26 @@ public class SpinCompiler {
 
         try {
             Options options = new Options();
-            options.addOption("L", true, "add a directory to the library path");
+            options.addOption(Option.builder("L").desc("add a directory to the library path").hasArg().argName("path").build());
 
-            options.addOption("o", true, "output file name");
+            options.addOption(Option.builder("o").desc("output file name").hasArg().argName("file").build());
 
             options.addOption(new Option("b", false, "output binary file"));
             options.addOption(new Option("l", false, "output listing file"));
             options.addOption(new Option("d", false, "enable debug (P2 only)"));
+
+            OptionGroup targetOptions = new OptionGroup();
+            targetOptions.addOption(new Option("p1", false, "compiler for P1 target (C source only)"));
+            targetOptions.addOption(new Option("p2", false, "compiler for P2 target (C source only)"));
+            options.addOptionGroup(targetOptions);
 
             OptionGroup uploadOptions = new OptionGroup();
             uploadOptions.addOption(new Option("r", false, "upload program to ram and run"));
             uploadOptions.addOption(new Option("f", false, "upload program to flash/eeprom and run"));
             options.addOptionGroup(uploadOptions);
 
-            options.addOption("p", true, "serial port");
-            options.addOption("t", false, "enter terminal mode after upload");
+            options.addOption(Option.builder("p").desc("serial port").hasArg().argName("port").build());
+            options.addOption(Option.builder("t").desc("enter terminal mode after upload (optional baud rate)").hasArg().argName("baud").optionalArg(true).build());
 
             options.addOption("u", false, "suppress unused methods warning");
             options.addOption("c", false, "case-sensitive symbols");
@@ -76,13 +86,13 @@ public class SpinCompiler {
             CommandLine cmd = new DefaultParser().parse(options, args);
             quiet = cmd.hasOption('q') && cmd.getArgList().size() == 1;
 
-            println(APP_TITLE + " - Version " + APP_VERSION);
-            println("Copyright (c) 2021-23 Marco Maccaferri and others. All rights reserved.");
-
             if (cmd.getArgList().size() != 1) {
+                println(APP_TITLE + " - Version " + APP_VERSION);
+                println("Copyright (c) 2021-23 Marco Maccaferri and others. All rights reserved.");
+
                 HelpFormatter help = new HelpFormatter();
                 help.setOptionComparator(null);
-                help.printHelp("spinc [options] <file.spin | file.spin2>", null, options, null, false);
+                help.printHelp("spinc [options] <file.spin | file.spin2 | file.c>", null, options, null, false);
                 System.exit(1);
             }
 
@@ -95,13 +105,13 @@ public class SpinCompiler {
             File fileToCompile = new File(cmd.getArgList().get(0));
 
             String name = fileToCompile.getName();
-            if (!name.toLowerCase().endsWith(".spin") && !name.toLowerCase().endsWith(".spin2")) {
+            if (!name.toLowerCase().endsWith(".spin") && !name.toLowerCase().endsWith(".spin2") && !name.toLowerCase().endsWith(".c")) {
                 name += ".spin";
                 fileToCompile = new File(fileToCompile.getParentFile(), name);
             }
 
             if (!fileToCompile.exists()) {
-                throw new FileNotFoundException("File " + fileToCompile.getAbsolutePath() + " not found");
+                throw new CompilerException("file " + fileToCompile + " not found", (Object) null);
             }
 
             libraryPaths.add(0, fileToCompile.getAbsoluteFile().getParentFile());
@@ -130,12 +140,55 @@ public class SpinCompiler {
             boolean caseSensitive = cmd.hasOption('c');
             String suffix = name.substring(name.lastIndexOf('.')).toLowerCase();
 
-            Compiler compiler = ".spin2".equals(suffix) ? new Spin2Compiler() : (".c".equals(suffix) ? new Spin2CCompiler() : new Spin1Compiler());
+            Compiler compiler = null;
+            if (".spin2".equals(suffix)) {
+                compiler = new Spin2Compiler();
+            }
+            else if (".c".equals(suffix)) {
+                if (cmd.hasOption("p1")) {
+                    compiler = new Spin1CCompiler();
+                }
+                else if (cmd.hasOption("p2")) {
+                    compiler = new Spin2CCompiler();
+                }
+                else {
+                    String text = FileUtils.loadFromFile(fileToCompile);
+                    CParser parser = new CParser(new CTokenStream(text));
+                    for (Node node : parser.parse().getChilds()) {
+                        if (node instanceof DirectiveNode) {
+                            int index = 1;
+                            if (index < node.getTokenCount()) {
+                                if ("pragma".equals(node.getToken(index).getText())) {
+                                    index++;
+                                    if (index < node.getTokenCount()) {
+                                        if ("target".equals(node.getToken(index).getText())) {
+                                            index++;
+                                            if (index < node.getTokenCount()) {
+                                                if ("P1".equals(node.getToken(index).getText())) {
+                                                    compiler = new Spin1CCompiler();
+                                                }
+                                                else if ("P2".equals(node.getToken(index).getText())) {
+                                                    compiler = new Spin2CCompiler();
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (compiler == null) {
+                        compiler = new Spin2CCompiler();
+                    }
+                }
+            }
+            else {
+                compiler = new Spin1Compiler();
+            }
             compiler.setCaseSensitive(caseSensitive);
             compiler.addSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
-            if (cmd.hasOption('d')) {
-                compiler.setDebugEnabled(true);
-            }
+            compiler.setDebugEnabled(cmd.hasOption('d'));
             compiler.setRemoveUnusedMethods(true);
             try {
                 compiler.compile(fileToCompile, binaryData, listingStream);
@@ -163,8 +216,7 @@ public class SpinCompiler {
             println("Program size is " + binaryData.size() + " bytes");
 
             if (cmd.hasOption('r') || cmd.hasOption('f')) {
-                String port = cmd.getOptionValue('p');
-                SerialPort serialPort = new SerialPort(port);
+                SerialPort serialPort = cmd.hasOption('p') ? new SerialPort(cmd.getOptionValue('p')) : null;
 
                 println("Uploading...");
 
@@ -172,16 +224,30 @@ public class SpinCompiler {
                 if (compiler instanceof Spin1Compiler) {
                     Propeller1Loader loader = new Propeller1Loader(serialPort, true) {
 
+                        boolean isDetect;
+
+                        @Override
+                        public SerialPort detect() {
+                            isDetect = true;
+                            try {
+                                return super.detect();
+                            } finally {
+                                isDetect = false;
+                            }
+                        }
+
                         @Override
                         protected int hwfind() throws SerialPortException, IOException {
                             int version = super.hwfind();
 
                             if (version != 0) {
-                                println(String.format("Propeller %d on port %s", version, getPortName()));
+                                if (!isDetect) {
+                                    println(String.format("Propeller %d on port %s", version, getPortName()));
+                                }
                             }
                             else {
                                 println(String.format("No propeller chip on port %s", getPortName()));
-                                error.set(true);
+                                error.set(!isDetect);
                             }
 
                             return version;
@@ -244,21 +310,39 @@ public class SpinCompiler {
                         }
 
                     };
+                    if (serialPort == null) {
+                        loader.detect();
+                    }
                     loader.upload(binaryData.toByteArray(), cmd.hasOption("f") ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY);
+                    serialPort = loader.getSerialPort();
                 }
                 else {
                     Propeller2Loader loader = new Propeller2Loader(serialPort, true) {
+
+                        boolean isDetect;
+
+                        @Override
+                        public SerialPort detect() {
+                            isDetect = true;
+                            try {
+                                return super.detect();
+                            } finally {
+                                isDetect = false;
+                            }
+                        }
 
                         @Override
                         protected int hwfind() throws SerialPortException, IOException {
                             int version = super.hwfind();
 
                             if (version != 0) {
-                                println(String.format("Propeller %d on port %s", version, getPortName()));
+                                if (!isDetect) {
+                                    println(String.format("Propeller %d on port %s", version, getPortName()));
+                                }
                             }
                             else {
                                 println(String.format("No propeller chip on port %s", getPortName()));
-                                error.set(true);
+                                error.set(!isDetect);
                             }
 
                             return version;
@@ -292,20 +376,28 @@ public class SpinCompiler {
                         }
 
                     };
+                    if (serialPort == null) {
+                        loader.detect();
+                    }
                     loader.upload(binaryData.toByteArray(), cmd.hasOption("f") ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM);
+                    serialPort = loader.getSerialPort();
                 }
 
                 println("Done.");
 
                 if (!error.get() && cmd.hasOption('t')) {
                     println("Entering terminal mode. CTRL-C to exit.");
+                    String baud = cmd.getOptionValue('t');
+                    if (baud != null) {
+                        serialPort.setParams(Integer.valueOf(baud), 8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+                    }
                     serialPort.addEventListener(new SerialPortEventListener() {
 
                         @Override
                         public void serialEvent(SerialPortEvent serialPortEvent) {
                             if (serialPortEvent.getEventType() == SerialPort.MASK_RXCHAR) {
                                 try {
-                                    final byte[] rx = serialPort.readBytes();
+                                    final byte[] rx = serialPortEvent.getPort().readBytes();
                                     if (rx != null) {
                                         System.out.write(rx);
                                     }
@@ -325,7 +417,9 @@ public class SpinCompiler {
                     }
                 }
 
-                serialPort.closePort();
+                if (serialPort != null) {
+                    serialPort.closePort();
+                }
             }
             else {
                 println("Done.");
