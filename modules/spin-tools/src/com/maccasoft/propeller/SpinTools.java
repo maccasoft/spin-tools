@@ -822,13 +822,14 @@ public class SpinTools {
     }
 
     void populateOpenFromMenu(Menu menu) {
+        boolean addSeparator;
+        List<String> list = new ArrayList<String>();
         List<String> defaultList = Arrays.asList(new String[] {
             new File(System.getProperty("APP_DIR"), "examples/P1").getAbsolutePath(),
             new File(System.getProperty("APP_DIR"), "examples/P2").getAbsolutePath(),
             Preferences.defaultSpin1LibraryPath.getAbsolutePath(),
             Preferences.defaultSpin2LibraryPath.getAbsolutePath()
         });
-        List<String> list = new ArrayList<String>();
 
         for (String folder : defaultList) {
             MenuItem item = new MenuItem(menu, SWT.PUSH);
@@ -842,10 +843,35 @@ public class SpinTools {
             });
         }
 
+        addSeparator = true;
+        List<File> libraryPath = new ArrayList<>();
+        libraryPath.addAll(Arrays.asList(Preferences.getInstance().getSpin1LibraryPath()));
+        libraryPath.addAll(Arrays.asList(Preferences.getInstance().getSpin2LibraryPath()));
+        Collections.sort(libraryPath, (o1, o2) -> o1.getAbsolutePath().compareToIgnoreCase(o2.getAbsolutePath()));
+        for (File file : libraryPath) {
+            String folder = file.getAbsolutePath();
+            if (!list.contains(folder) && !defaultList.contains(folder)) {
+                if (addSeparator) {
+                    new MenuItem(menu, SWT.SEPARATOR);
+                    addSeparator = false;
+                }
+                MenuItem item = new MenuItem(menu, SWT.PUSH);
+                item.setText(folder);
+                item.addListener(SWT.Selection, new Listener() {
+
+                    @Override
+                    public void handleEvent(Event event) {
+                        handleFileOpenFrom(folder);
+                    }
+                });
+                list.add(folder);
+            }
+        }
+
         List<String> lru = new ArrayList<String>(Preferences.getInstance().getLru());
         Collections.sort(lru, (o1, o2) -> o1.compareToIgnoreCase(o2));
 
-        boolean addSeparator = true;
+        addSeparator = true;
         Iterator<String> iter = lru.iterator();
         while (iter.hasNext()) {
             String folder = new File(iter.next()).getParent();
