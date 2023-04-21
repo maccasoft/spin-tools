@@ -76,7 +76,10 @@ public class SpinCompiler {
             options.addOptionGroup(uploadOptions);
 
             options.addOption(Option.builder("p").desc("serial port").hasArg().argName("port").build());
-            options.addOption(Option.builder("t").desc("enter terminal mode after upload (optional baud rate)").hasArg().argName("baud").optionalArg(true).build());
+            OptionGroup terminalOptions = new OptionGroup();
+            terminalOptions.addOption(Option.builder("t").desc("enter terminal mode after upload (optional baud rate)").hasArg().argName("baud").optionalArg(true).build());
+            terminalOptions.addOption(Option.builder("T").desc("enter PST terminal mode after upload (optional baud rate)").hasArg().argName("baud").optionalArg(true).build());
+            options.addOptionGroup(terminalOptions);
 
             options.addOption("u", false, "suppress unused methods warning");
             options.addOption("c", false, "case-sensitive symbols");
@@ -385,13 +388,20 @@ public class SpinCompiler {
 
                 println("Done.");
 
-                if (!error.get() && cmd.hasOption('t')) {
-                    println("Entering terminal mode. CTRL-C to exit.");
-                    String baud = cmd.getOptionValue('t');
+                if (!error.get() && (cmd.hasOption('t') || cmd.hasOption('T'))) {
+                    boolean pst = cmd.hasOption('T');
+
+                    String baud = pst ? cmd.getOptionValue('T') : cmd.getOptionValue('t');
                     if (baud != null) {
                         serialPort.setParams(Integer.valueOf(baud), 8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
                     }
+
+                    println(String.format("Entering%s terminal mode. CTRL-C to exit.", pst ? " PST" : ""));
+
                     serialPort.addEventListener(new SerialPortEventListener() {
+
+                        int state = 0;
+                        int cmd, p0;
 
                         @Override
                         public void serialEvent(SerialPortEvent serialPortEvent) {
@@ -399,11 +409,94 @@ public class SpinCompiler {
                                 try {
                                     final byte[] rx = serialPortEvent.getPort().readBytes();
                                     if (rx != null) {
-                                        System.out.write(rx);
+                                        if (pst) {
+                                            for (int i = 0; i < rx.length; i++) {
+                                                write(rx[i]);
+                                            }
+                                        }
+                                        else {
+                                            System.out.write(rx);
+                                        }
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
+                            }
+                        }
+
+                        void write(byte c) {
+
+                            if (cmd == 2) { // PC: Position Cursor in x,y
+                                if (state == 0) {
+                                    p0 = c;
+                                    state++;
+                                    return;
+                                }
+                                System.out.print("\033[");
+                                System.out.print(String.valueOf(c));
+                                System.out.print(";");
+                                System.out.print(String.valueOf(p0));
+                                System.out.print("H");
+                                cmd = 0;
+                                return;
+                            }
+                            else if (cmd == 14) { // PX: Position cursor in X
+                                System.out.print("\r\033[");
+                                System.out.print(String.valueOf(c));
+                                System.out.print("C");
+                                cmd = 0;
+                                return;
+                            }
+                            else if (cmd == 15) { // PY: Position cursor in Y
+                                System.out.print("\033[999A");
+                                System.out.print("\033[");
+                                System.out.print(String.valueOf(c));
+                                System.out.print("B");
+                                cmd = 0;
+                                return;
+                            }
+
+                            switch (c) {
+                                case 1: // HM: HoMe cursor
+                                    System.out.print("\033[H");
+                                    break;
+
+                                case 2: // PC: Position Cursor in x,y
+                                case 14: // PX: Position cursor in X
+                                case 15: // PY: Position cursor in Y
+                                    cmd = c;
+                                    state = 0;
+                                    break;
+
+                                case 3: // ML: Move cursor Left
+                                    System.out.print("\033[D");
+                                    break;
+
+                                case 4: // MR: Move cursor Right
+                                    System.out.print("\033[C");
+                                    break;
+
+                                case 5: // MU: Move cursor Up
+                                    System.out.print("\033[A");
+                                    break;
+
+                                case 6: // MR: Move cursor Down
+                                    System.out.print("\033[B");
+                                    break;
+
+                                case 10: // LF: Line Feed
+                                case 13: // NL: New Line
+                                    System.out.write(13);
+                                    System.out.write(10);
+                                    break;
+
+                                case 16: // CS: Clear Screen
+                                    System.out.print("\033[J");
+                                    break;
+
+                                default:
+                                    System.out.write(c);
+                                    break;
                             }
                         }
 
