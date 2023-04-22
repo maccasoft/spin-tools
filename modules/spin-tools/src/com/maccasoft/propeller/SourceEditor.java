@@ -352,6 +352,10 @@ public class SourceEditor {
                     ruler.setVisible((Boolean) evt.getNewValue());
                     container.layout(true);
                     break;
+                case Preferences.PROP_INDENT_LINES_SIZE:
+                    indentLinesSize = (Integer) evt.getNewValue();
+                    styledText.redraw();
+                    break;
                 case Preferences.PROP_SHOW_INDENT_LINES:
                     showIndentLines = (Boolean) evt.getNewValue();
                     styledText.redraw();
@@ -1417,7 +1421,7 @@ public class SourceEditor {
                         }
                     }
 
-                    gc.setLineWidth(1);
+                    gc.setLineWidth(0);
 
                     for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
                         try {

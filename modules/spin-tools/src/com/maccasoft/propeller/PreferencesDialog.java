@@ -65,6 +65,7 @@ public class PreferencesDialog extends Dialog {
     Button editorFontBrowse;
     Button showLineNumbers;
     Button showIndentLines;
+    Spinner indentLinesSize;
     Button showEditorOutline;
     TabStops conTabStops;
     TabStops varTabStops;
@@ -95,6 +96,7 @@ public class PreferencesDialog extends Dialog {
     String oldEditorFont;
     boolean oldShowLineNumbers;
     boolean oldShowIndentLines;
+    int oldIndentLinesSize;
     boolean oldShowSectionsBackground;
     boolean oldShowEditorOutline;
     boolean oldSpin1CaseSensitive;
@@ -351,6 +353,7 @@ public class PreferencesDialog extends Dialog {
         oldEditorFont = preferences.getEditorFont();
         oldShowLineNumbers = preferences.getShowLineNumbers();
         oldShowIndentLines = preferences.getShowIndentLines();
+        oldIndentLinesSize = preferences.getIndentLinesSize();
         oldShowEditorOutline = preferences.getShowEditorOutline();
         oldShowSectionsBackground = preferences.getShowSectionsBackground();
         oldSpin1CaseSensitive = preferences.getSpin1CaseSensitiveSymbols();
@@ -614,18 +617,7 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
-        new Label(composite, SWT.NONE);
-
-        showIndentLines = new Button(composite, SWT.CHECK);
-        showIndentLines.setText("Show indentation lines");
-        showIndentLines.setSelection(preferences.getShowIndentLines());
-        showIndentLines.addSelectionListener(new SelectionAdapter() {
-
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                preferences.setShowIndentLines(showIndentLines.getSelection());
-            }
-        });
+        createIndentLinesGroup(composite);
 
         new Label(composite, SWT.NONE);
 
@@ -692,6 +684,53 @@ public class PreferencesDialog extends Dialog {
         datTabStops.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         ((GridData) datTabStops.getLayoutData()).widthHint = convertWidthInCharsToPixels(35);
         datTabStops.setSelection(preferences.getTabStops(DataNode.class));
+    }
+
+    private void createIndentLinesGroup(Composite parent) {
+        new Label(parent, SWT.NONE);
+
+        showIndentLines = new Button(parent, SWT.CHECK);
+        showIndentLines.setText("Show indentation lines");
+        showIndentLines.setSelection(preferences.getShowIndentLines());
+
+        new Label(parent, SWT.NONE);
+
+        Composite container = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout(2, false);
+        layout.marginWidth = layout.marginHeight = 0;
+        container.setLayout(layout);
+        GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+        gridData.horizontalIndent = convertHorizontalDLUsToPixels(16);
+        container.setLayoutData(gridData);
+
+        Label label = new Label(container, SWT.NONE);
+        label.setText("Line size");
+
+        indentLinesSize = new Spinner(container, SWT.NONE);
+        indentLinesSize.setValues(preferences.getIndentLinesSize(), 0, 16, 0, 1, 1);
+        indentLinesSize.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setIndentLinesSize(indentLinesSize.getSelection());
+            }
+        });
+
+        showIndentLines.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                boolean selection = showIndentLines.getSelection();
+                label.setEnabled(selection);
+                indentLinesSize.setEnabled(selection);
+                preferences.setShowIndentLines(selection);
+            }
+        });
+
+        boolean selection = showIndentLines.getSelection();
+        label.setEnabled(selection);
+        indentLinesSize.setEnabled(selection);
+        preferences.setShowIndentLines(selection);
     }
 
     void createTerminalPage(Composite parent) {
@@ -818,6 +857,7 @@ public class PreferencesDialog extends Dialog {
         preferences.setEditorFont(oldEditorFont);
         preferences.setShowLineNumbers(oldShowLineNumbers);
         preferences.setShowIndentLines(oldShowIndentLines);
+        preferences.setIndentLinesSize(oldIndentLinesSize);
         preferences.setShowEditorOutline(oldShowEditorOutline);
         preferences.setShowSectionsBackground(oldShowSectionsBackground);
 
