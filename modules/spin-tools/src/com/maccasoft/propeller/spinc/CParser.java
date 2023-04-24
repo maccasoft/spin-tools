@@ -787,6 +787,12 @@ public class CParser extends Parser {
                 token = token.merge(stream.nextToken());
             }
         }
+        else if ("#".equals(token.getText())) {
+            Token nextToken = stream.peekNext();
+            if (token.isAdjacent(nextToken) && "#".equals(nextToken.getText())) {
+                token = token.merge(stream.nextToken());
+            }
+        }
         return token;
     }
 

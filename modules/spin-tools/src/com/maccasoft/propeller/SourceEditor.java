@@ -91,6 +91,8 @@ import com.maccasoft.propeller.internal.ContentProposalAdapter;
 import com.maccasoft.propeller.internal.HTMLStyledTextDecorator;
 import com.maccasoft.propeller.internal.IContentProposalListener2;
 import com.maccasoft.propeller.internal.StyledTextContentAdapter;
+import com.maccasoft.propeller.model.ConstantNode;
+import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.DirectiveNode;
@@ -836,8 +838,24 @@ public class SourceEditor {
                     if (!fired) {
                         Node root = tokenMarker.getRoot();
                         for (Node node : root.getChilds()) {
-                            if (node instanceof DataNode) {
+                            if (node instanceof ConstantsNode) {
+                                for (Node child : node.getChilds()) {
+                                    ConstantNode obj = (ConstantNode) child;
+                                    if (obj.identifier != null && obj.identifier.getText().equals(itemName)) {
+                                        SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
+                                        display.asyncExec(new Runnable() {
 
+                                            @Override
+                                            public void run() {
+                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                            }
+
+                                        });
+                                        break;
+                                    }
+                                }
+                            }
+                            else if (node instanceof DataNode) {
                                 for (Node child : node.getChilds()) {
                                     DataLineNode obj = (DataLineNode) child;
                                     if (obj.label != null && obj.label.getText().equals(itemName)) {
@@ -869,6 +887,23 @@ public class SourceEditor {
                                 }
                                 else if (openLinkedObjectMethod(node, objectName, itemName)) {
                                     break;
+                                }
+                            }
+                            else if (node instanceof ConstantsNode) {
+                                for (Node child : node.getChilds()) {
+                                    ConstantNode obj = (ConstantNode) child;
+                                    if (obj.identifier != null && obj.identifier.getText().equals(itemName)) {
+                                        SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
+                                        display.asyncExec(new Runnable() {
+
+                                            @Override
+                                            public void run() {
+                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                            }
+
+                                        });
+                                        break;
+                                    }
                                 }
                             }
                             else if (node instanceof VariableNode) {
@@ -917,6 +952,23 @@ public class SourceEditor {
                             if (node instanceof ObjectsNode) {
                                 if (openLinkedObject(node, itemName)) {
                                     break;
+                                }
+                            }
+                            else if (node instanceof ConstantsNode) {
+                                for (Node child : node.getChilds()) {
+                                    ConstantNode obj = (ConstantNode) child;
+                                    if (obj.identifier != null && obj.identifier.getText().equals(itemName)) {
+                                        SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
+                                        display.asyncExec(new Runnable() {
+
+                                            @Override
+                                            public void run() {
+                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                            }
+
+                                        });
+                                        break;
+                                    }
                                 }
                             }
                             else if (node instanceof MethodNode) {
@@ -1098,9 +1150,14 @@ public class SourceEditor {
                     else if (context instanceof DataLineNode) {
                         DataLineNode node = (DataLineNode) context;
                         Token token = tokenMarker.getTokenAt(offset);
-                        if (token != node.label && token != node.condition && token != node.instruction && token.type == 0) {
-                            hoverToken = tokenMarker.getTokenAt(offset);
-                            hoverHighlightToken = hoverToken;
+                        if (token != null) {
+                            TokenId id = tokenMarker.symbols.get(token.getText());
+                            if (id != null || token.getText().startsWith(".") || token.getText().startsWith(":")) {
+                                if (token != node.label && token != node.condition && token != node.instruction && token.type == 0) {
+                                    hoverToken = token;
+                                    hoverHighlightToken = hoverToken;
+                                }
+                            }
                         }
                     }
                     else if (context instanceof StatementNode) {
@@ -1129,25 +1186,32 @@ public class SourceEditor {
                                 namestart = token.start + dot + 1;
                             }
 
-                            Set<TokenMarker> markers = tokenMarker.getLineTokens(token.start, token.getText());
-                            for (TokenMarker entry : markers) {
-                                if (offset >= entry.getStart() && offset <= entry.getStop()) {
-                                    if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI) {
-                                        hoverToken = token;
-                                        hoverHighlightToken = new Token(token.getStream(), namestart);
-                                        hoverHighlightToken.stop = namestop;
-                                        break;
-                                    }
-                                    else if (entry.getId() == TokenId.OBJECT) {
-                                        hoverToken = token;
-                                        if (objstart != -1) {
-                                            hoverHighlightToken = new Token(token.getStream(), objstart);
-                                            hoverHighlightToken.stop = objstop;
+                            TokenId id = tokenMarker.symbols.get(token.getText());
+                            if (dot <= 0 && id != null) {
+                                hoverToken = token;
+                                hoverHighlightToken = hoverToken;
+                            }
+                            else {
+                                Set<TokenMarker> markers = tokenMarker.getLineTokens(token.start, token.getText());
+                                for (TokenMarker entry : markers) {
+                                    if (offset >= entry.getStart() && offset <= entry.getStop()) {
+                                        if (entry.getId() == TokenId.METHOD_PUB || entry.getId() == TokenId.METHOD_PRI) {
+                                            hoverToken = token;
+                                            hoverHighlightToken = new Token(token.getStream(), namestart);
+                                            hoverHighlightToken.stop = namestop;
+                                            break;
                                         }
-                                        else {
-                                            hoverHighlightToken = token;
+                                        else if (entry.getId() == TokenId.OBJECT) {
+                                            hoverToken = token;
+                                            if (objstart != -1) {
+                                                hoverHighlightToken = new Token(token.getStream(), objstart);
+                                                hoverHighlightToken.stop = objstop;
+                                            }
+                                            else {
+                                                hoverHighlightToken = token;
+                                            }
+                                            break;
                                         }
-                                        break;
                                     }
                                 }
                             }
