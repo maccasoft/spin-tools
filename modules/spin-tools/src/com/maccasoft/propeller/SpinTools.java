@@ -1662,6 +1662,17 @@ public class SpinTools {
             }
         });
 
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Show Devices" + "\t");
+        item.setAccelerator(SWT.F7);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                handleListDevices();
+            }
+        });
+
         createPortMenu(menu);
 
         return menu;
@@ -2097,6 +2108,35 @@ public class SpinTools {
         }
 
         return port.get();
+    }
+
+    private void handleListDevices() {
+        SerialPort terminalPort = null;
+        SerialPort devicePort = null;
+
+        SerialTerminal serialTerminal = getSerialTerminal();
+        if (serialTerminal != null) {
+            terminalPort = serialTerminal.getSerialPort();
+            serialTerminal.setSerialPort(null);
+        }
+
+        DevicesDialog dlg = new DevicesDialog(shell, terminalPort);
+        if (dlg.open() == DevicesDialog.OK) {
+            devicePort = new SerialPort(dlg.getSelection());
+            serialPortList.setSelection(dlg.getSelection());
+        }
+
+        if (serialTerminal != null) {
+            serialTerminal.setSerialPort(devicePort != null ? devicePort : terminalPort);
+        }
+
+        if (terminalPort != null && devicePort != null && !devicePort.getPortName().equals(terminalPort.getPortName())) {
+            try {
+                terminalPort.closePort();
+            } catch (SerialPortException e) {
+                // Do nothing
+            }
+        }
     }
 
     void createHelpMenu(Menu parent) {
