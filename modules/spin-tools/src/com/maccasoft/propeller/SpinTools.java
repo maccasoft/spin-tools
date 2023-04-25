@@ -926,7 +926,11 @@ public class SpinTools {
                         handleFileOpenFrom(parentFile != null ? parentFile.getAbsolutePath() : "");
                         return;
                     }
-                    openNewTab(fileToOpen, true);
+                    EditorTab editorTab = findFileEditorTab(fileToOpen);
+                    if (editorTab == null) {
+                        editorTab = openNewTab(fileToOpen, true);
+                    }
+                    tabFolder.setSelection(editorTab.getTabItem());
                 }
             });
             list.add(item);
