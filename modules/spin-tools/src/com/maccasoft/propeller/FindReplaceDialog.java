@@ -89,10 +89,9 @@ public class FindReplaceDialog extends Dialog {
     protected Rectangle getConstrainedShellBounds(Rectangle preferredSize) {
         Rectangle rect = super.getConstrainedShellBounds(preferredSize);
 
-        SearchPreferences prefs = Preferences.getInstance().getSearchPreferences();
-        if (prefs.window != null) {
-            rect.x = prefs.window.x;
-            rect.y = prefs.window.y;
+        if (preferences.window != null) {
+            rect.x = preferences.window.x;
+            rect.y = preferences.window.y;
         }
 
         return rect;
@@ -370,12 +369,12 @@ public class FindReplaceDialog extends Dialog {
         setGridData(fFindNextButton, SWT.FILL, true, SWT.FILL, false);
 
         /*Button fSelectAllButton = makeButton(panel, "Select All", 106, false, new SelectionAdapter() {
-        
+
             @Override
             public void widgetSelected(SelectionEvent e) {
-        
+
             }
-        
+
         });
         setGridData(fSelectAllButton, SWT.FILL, true, SWT.FILL, false);*/
 
@@ -523,6 +522,9 @@ public class FindReplaceDialog extends Dialog {
         if (!fullSelection.isEmpty()) {
             fFindField.setText(fullSelection);
         }
+        else if (fFindField.getItemCount() != 0) {
+            fFindField.select(0);
+        }
         fFindField.setSelection(new Point(0, fFindField.getText().length()));
     }
 
@@ -536,6 +538,9 @@ public class FindReplaceDialog extends Dialog {
         findString = fFindField.getText();
 
         Point r = fTarget.getSelection();
+        if (r.x != r.y) {
+            fNeedsInitialFindBeforeReplace = false;
+        }
         int findReplacePosition = r.x;
         if (forwardSearch && !fNeedsInitialFindBeforeReplace || !forwardSearch && fNeedsInitialFindBeforeReplace) {
             findReplacePosition += r.y;
