@@ -251,4 +251,58 @@ class StyledTextContentAdapterTest {
         Assertions.assertEquals(32, control.getCaretOffset());
     }
 
+    @Test
+    void testSetSpin1LocalLabel() {
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(""
+            + "DAT\n"
+            + "\n"
+            + "    jmp #:\n"
+            + "    ret\n"
+            + ":local\n"
+            + "    ret\n"
+            + "\n");
+        control.setCaretOffset(15);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, ":local", subject.getCursorPosition(control));
+
+        Assertions.assertEquals(""
+            + "DAT\n"
+            + "\n"
+            + "    jmp #:local\n"
+            + "    ret\n"
+            + ":local\n"
+            + "    ret\n"
+            + "\n", control.getText());
+        Assertions.assertEquals(20, control.getCaretOffset());
+    }
+
+    @Test
+    void testSetSpin2LocalLabel() {
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(""
+            + "DAT\n"
+            + "\n"
+            + "    jmp #.\n"
+            + "    ret\n"
+            + ".local\n"
+            + "    ret\n"
+            + "\n");
+        control.setCaretOffset(15);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, ".local", subject.getCursorPosition(control));
+
+        Assertions.assertEquals(""
+            + "DAT\n"
+            + "\n"
+            + "    jmp #.local\n"
+            + "    ret\n"
+            + ".local\n"
+            + "    ret\n"
+            + "\n", control.getText());
+        Assertions.assertEquals(20, control.getCaretOffset());
+    }
+
 }

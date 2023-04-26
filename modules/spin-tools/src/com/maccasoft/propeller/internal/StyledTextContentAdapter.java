@@ -36,17 +36,18 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
         int e;
 
         String contents = styledText.getLine(line);
+        char prefix = (text.startsWith(".") || text.startsWith(":")) ? text.charAt(0) : '\0';
 
         int position = caretOffset - lineOffset;
         int start = position;
         while (start > 0) {
-            if (!isIdentifierPart(contents.charAt(start - 1))) {
+            if (!isIdentifierPart(contents.charAt(start - 1)) && contents.charAt(start - 1) != prefix) {
                 break;
             }
             start--;
         }
         while (position < contents.length()) {
-            if (!isIdentifierPart(contents.charAt(position))) {
+            if (!isIdentifierPart(contents.charAt(position)) && contents.charAt(start - 1) != prefix) {
                 break;
             }
             position++;
@@ -99,7 +100,7 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
     }
 
     boolean isIdentifierPart(char ch) {
-        return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == ':' || ch == '.';
+        return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == ':';
     }
 
     @Override
