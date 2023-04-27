@@ -769,7 +769,7 @@ public abstract class Formatter {
                 if (sb.column > 0 && sb.lastChar() != ' ') {
                     sb.append(" ");
                 }
-                sb.append(token);
+                sb.append(stream.nextToken());
             }
             else if ("END".equalsIgnoreCase(token.getText())) {
                 sb.alignToColumn(indent);
