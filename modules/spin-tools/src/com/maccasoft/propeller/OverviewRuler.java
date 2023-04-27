@@ -178,7 +178,7 @@ public class OverviewRuler {
                 }
 
                 if (message != null) {
-                    popupWindow = new Shell(styledText.getShell(), SWT.NO_FOCUS | SWT.ON_TOP);
+                    popupWindow = new Shell(styledText.getShell(), SWT.ON_TOP);
                     FillLayout layout = new FillLayout();
                     layout.marginHeight = layout.marginWidth = 5;
                     popupWindow.setLayout(layout);
@@ -191,8 +191,7 @@ public class OverviewRuler {
                     popupRect.y = e.y - popupRect.height / 2;
                     popupWindow.setBounds(display.map(canvas, null, popupRect));
 
-                    popupWindow.open();
-                    styledText.setFocus();
+                    popupWindow.setVisible(true);
                 }
             }
         });
