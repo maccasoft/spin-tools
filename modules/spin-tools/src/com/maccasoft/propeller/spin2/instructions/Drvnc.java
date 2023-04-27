@@ -44,6 +44,11 @@ public class Drvnc extends Spin2PAsmInstructionFactory {
             this.dst = dst;
         }
 
+        @Override
+        public int getSize() {
+            return dst.isLongLiteral() ? 8 : 4;
+        }
+
         // EEEE 1101011 CZL DDDDDDDDD 001011011
 
         @Override
@@ -57,7 +62,7 @@ public class Drvnc extends Spin2PAsmInstructionFactory {
             }
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0b001011011);
-            return getBytes(value);
+            return dst.isLongLiteral() ? getBytes(encodeAugd(condition, dst.getInteger()), value) : getBytes(value);
         }
 
     }

@@ -57,7 +57,7 @@ public class Outnc extends Spin2PAsmInstructionFactory {
             }
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0b001001011);
-            return getBytes(value);
+            return dst.isLongLiteral() ? getBytes(encodeAugd(condition, dst.getInteger()), value) : getBytes(value);
         }
 
     }

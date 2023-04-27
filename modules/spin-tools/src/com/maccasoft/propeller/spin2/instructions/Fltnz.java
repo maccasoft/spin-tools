@@ -44,6 +44,11 @@ public class Fltnz extends Spin2PAsmInstructionFactory {
             this.dst = dst;
         }
 
+        @Override
+        public int getSize() {
+            return dst.isLongLiteral() ? 8 : 4;
+        }
+
         // EEEE 1101011 CZL DDDDDDDDD 001010101
 
         @Override
@@ -57,7 +62,7 @@ public class Fltnz extends Spin2PAsmInstructionFactory {
             }
             value = d.setValue(value, dst.getInteger());
             value = s.setValue(value, 0b001010101);
-            return getBytes(value);
+            return dst.isLongLiteral() ? getBytes(encodeAugd(condition, dst.getInteger()), value) : getBytes(value);
         }
 
     }
