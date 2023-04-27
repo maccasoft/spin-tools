@@ -1480,6 +1480,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                             else {
                                 address += 1;
                             }
+                            var.setCalledBy(method);
                             if (address >= 0x1F0) {
                                 break;
                             }
@@ -2030,7 +2031,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 continue;
             }
             if (node instanceof DataLineNode) {
-                Spin2PAsmLine pasmLine = compileDataLine(scope, (DataLineNode) node);
+                Spin2PAsmLine pasmLine = compileDataLine(localScope, (DataLineNode) node);
                 line.addSource(new InlinePAsm(localScope, pasmLine));
             }
             else if (node instanceof StatementNode) {
