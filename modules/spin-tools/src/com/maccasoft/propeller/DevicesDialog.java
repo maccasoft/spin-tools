@@ -20,6 +20,7 @@ import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.ViewerCell;
@@ -71,9 +72,8 @@ public class DevicesDialog extends Dialog {
     TableViewer viewer;
     String selection;
 
-    public DevicesDialog(Shell parentShell, SerialPort terminalPort) {
+    public DevicesDialog(Shell parentShell) {
         super(parentShell);
-        this.terminalPort = terminalPort;
     }
 
     @Override
@@ -175,6 +175,14 @@ public class DevicesDialog extends Dialog {
 
         viewer.getControl().setEnabled(false);
 
+        String currentSelection;
+        if (viewer.getStructuredSelection().isEmpty()) {
+            currentSelection = selection;
+        }
+        else {
+            currentSelection = ((Device) viewer.getStructuredSelection().getFirstElement()).port;
+        }
+
         Thread thread = new Thread(new Runnable() {
 
             byte LFSR;
@@ -214,7 +222,14 @@ public class DevicesDialog extends Dialog {
                             return;
                         }
                         viewer.setInput(list.toArray(new Device[list.size()]));
+                        for (Device device : list) {
+                            if (device.port.equals(currentSelection)) {
+                                viewer.setSelection(new StructuredSelection(device));
+                                break;
+                            }
+                        }
                         viewer.getControl().setEnabled(true);
+                        viewer.getControl().setFocus();
                         getButton(IDialogConstants.CLIENT_ID).setEnabled(true);
                     }
                 });
@@ -454,8 +469,20 @@ public class DevicesDialog extends Dialog {
         thread.start();
     }
 
+    public SerialPort getTerminalPort() {
+        return terminalPort;
+    }
+
+    public void setTerminalPort(SerialPort terminalPort) {
+        this.terminalPort = terminalPort;
+    }
+
     public String getSelection() {
         return selection;
+    }
+
+    public void setSelection(String selection) {
+        this.selection = selection;
     }
 
 }

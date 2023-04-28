@@ -1938,11 +1938,17 @@ public class SpinTools {
             serialTerminal.setSerialPort(uploadPort != null ? uploadPort : serialPort, isDebug ? ((Spin2Object) obj).getDebugBaud() : serialTerminal.getBaudRate());
         }
 
-        if (uploadPort != null && !uploadPort.getPortName().equals(serialPort.getPortName())) {
-            try {
-                serialPort.closePort();
-            } catch (SerialPortException e) {
-                // Do nothing
+        if (uploadPort != null) {
+            String port = uploadPort.getPortName();
+            serialPortList.setSelection(port);
+            preferences.setPort(port);
+            statusLine.setPort(port);
+            if (!serialPort.getPortName().equals(port)) {
+                try {
+                    serialPort.closePort();
+                } catch (SerialPortException e) {
+                    // Do nothing
+                }
             }
         }
     }
@@ -2124,10 +2130,20 @@ public class SpinTools {
             serialTerminal.setSerialPort(null);
         }
 
-        DevicesDialog dlg = new DevicesDialog(shell, terminalPort);
+        DevicesDialog dlg = new DevicesDialog(shell);
+        dlg.setSelection(serialPortList.getSelection());
+        dlg.setTerminalPort(terminalPort);
         if (dlg.open() == DevicesDialog.OK) {
-            devicePort = new SerialPort(dlg.getSelection());
-            serialPortList.setSelection(dlg.getSelection());
+            String port = dlg.getSelection();
+            if (terminalPort != null && terminalPort.getPortName().equals(port)) {
+                devicePort = terminalPort;
+            }
+            else {
+                devicePort = new SerialPort(port);
+            }
+            serialPortList.setSelection(port);
+            preferences.setPort(port);
+            statusLine.setPort(port);
         }
 
         if (serialTerminal != null) {
