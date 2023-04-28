@@ -152,17 +152,32 @@ public abstract class Spin1InstructionObject {
     }
 
     protected int encodeInstructionParameters(String condition, Spin1PAsmExpression dst, Spin1PAsmExpression src, String effect) {
+        CompilerException msgs = new CompilerException();
+
         int value = con.setValue(0, encodeCondition(condition));
         value = zcr.setValue(value, encodeEffect(effect));
         value = i.setBoolean(value, src.isLiteral());
-        if (dst.getInteger() < 0 || dst.getInteger() > 0x1FF) {
-            throw new CompilerException("Destination register cannot exceed $1FF", dst.getExpression().getData());
+        try {
+            if (dst.getInteger() < 0 || dst.getInteger() > 0x1FF) {
+                throw new CompilerException("Destination register cannot exceed $1FF", dst.getExpression().getData());
+            }
+            value = d.setValue(value, dst.getInteger());
+        } catch (Exception e) {
+            msgs.addMessage(new CompilerException(e.getMessage(), dst.getExpression().getData()));
         }
-        value = d.setValue(value, dst.getInteger());
-        if (src.getInteger() < 0 || src.getInteger() > 0x1FF) {
-            throw new CompilerException("Source register/constant cannot exceed $1FF", src.getExpression().getData());
+        try {
+            if (src.getInteger() < 0 || src.getInteger() > 0x1FF) {
+                throw new CompilerException("Source register/constant cannot exceed $1FF", src.getExpression().getData());
+            }
+            value = s.setValue(value, src.getInteger());
+        } catch (Exception e) {
+            msgs.addMessage(new CompilerException(e.getMessage(), src.getExpression().getData()));
         }
-        value = s.setValue(value, src.getInteger());
+
+        if (msgs.hasChilds()) {
+            throw msgs;
+        }
+
         return value;
     }
 

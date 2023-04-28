@@ -83,14 +83,13 @@ public class Spin2CCompiler extends Spin2Compiler {
             message.fileName = fileName;
             if (message.hasChilds()) {
                 for (CompilerException msg : message.getChilds()) {
-                    msg.fileName = fileName;
-                    Spin2CCompiler.this.logMessage(msg);
+                    logMessage(msg);
                 }
             }
             else {
                 Spin2CCompiler.this.logMessage(message);
+                super.logMessage(message);
             }
-            super.logMessage(message);
         }
 
     }
@@ -114,14 +113,13 @@ public class Spin2CCompiler extends Spin2Compiler {
             message.fileName = fileName;
             if (message.hasChilds()) {
                 for (CompilerException msg : message.getChilds()) {
-                    msg.fileName = fileName;
-                    Spin2CCompiler.this.logMessage(msg);
+                    logMessage(msg);
                 }
             }
             else {
                 Spin2CCompiler.this.logMessage(message);
+                super.logMessage(message);
             }
-            super.logMessage(message);
         }
 
     }

@@ -79,14 +79,13 @@ public class Spin1CCompiler extends Spin1Compiler {
             message.fileName = fileName;
             if (message.hasChilds()) {
                 for (CompilerException msg : message.getChilds()) {
-                    msg.fileName = fileName;
-                    Spin1CCompiler.this.logMessage(msg);
+                    logMessage(msg);
                 }
             }
             else {
                 Spin1CCompiler.this.logMessage(message);
+                super.logMessage(message);
             }
-            super.logMessage(message);
         }
 
     }
@@ -110,14 +109,13 @@ public class Spin1CCompiler extends Spin1Compiler {
             message.fileName = fileName;
             if (message.hasChilds()) {
                 for (CompilerException msg : message.getChilds()) {
-                    msg.fileName = fileName;
-                    Spin1CCompiler.this.logMessage(msg);
+                    logMessage(msg);
                 }
             }
             else {
                 Spin1CCompiler.this.logMessage(message);
+                super.logMessage(message);
             }
-            super.logMessage(message);
         }
 
     }

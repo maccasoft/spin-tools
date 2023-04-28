@@ -127,14 +127,13 @@ public class Spin2Compiler extends Compiler {
             message.fileName = fileName;
             if (message.hasChilds()) {
                 for (CompilerException msg : message.getChilds()) {
-                    msg.fileName = fileName;
-                    Spin2Compiler.this.logMessage(msg);
+                    logMessage(msg);
                 }
             }
             else {
                 Spin2Compiler.this.logMessage(message);
+                super.logMessage(message);
             }
-            super.logMessage(message);
         }
 
     }

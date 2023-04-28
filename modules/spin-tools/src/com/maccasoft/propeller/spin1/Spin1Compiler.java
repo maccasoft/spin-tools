@@ -144,14 +144,13 @@ public class Spin1Compiler extends Compiler {
             message.fileName = fileName;
             if (message.hasChilds()) {
                 for (CompilerException msg : message.getChilds()) {
-                    msg.fileName = fileName;
-                    Spin1Compiler.this.logMessage(msg);
+                    logMessage(msg);
                 }
             }
             else {
                 Spin1Compiler.this.logMessage(message);
+                super.logMessage(message);
             }
-            super.logMessage(message);
         }
 
     }

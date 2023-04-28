@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.bytecode.InlinePAsm;
@@ -184,6 +185,8 @@ public class Spin2MethodLine {
     }
 
     public void writeTo(Spin2Object obj) {
+        CompilerException msgs = new CompilerException();
+
         if (text != null) {
             obj.writeComment(text);
         }
@@ -191,11 +194,21 @@ public class Spin2MethodLine {
         for (Spin2Bytecode bc : source) {
             if (bc instanceof InlinePAsm) {
                 Spin2PAsmLine line = ((InlinePAsm) bc).getLine();
-                obj.writeBytes(line.getScope().getAddress(), false, line.getInstructionObject().getBytes(), line.toString());
+                try {
+                    obj.writeBytes(line.getScope().getAddress(), false, line.getInstructionObject().getBytes(), line.toString());
+                } catch (CompilerException e) {
+                    msgs.addMessage(e);
+                } catch (Exception e) {
+                    msgs.addMessage(new CompilerException(e.getMessage(), line.getData()));
+                }
             }
             else {
                 obj.writeBytes(bc.getBytes(), bc.toString());
             }
+        }
+
+        if (msgs.hasChilds()) {
+            throw msgs;
         }
 
         for (Spin2MethodLine line : childs) {
