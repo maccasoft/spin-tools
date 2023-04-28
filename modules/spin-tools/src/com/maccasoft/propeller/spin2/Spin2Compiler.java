@@ -186,12 +186,12 @@ public class Spin2Compiler extends Compiler {
             else {
                 objectCompiler = new Spin2ObjectCompilerProxy(fileName, debugStatements);
             }
-            objectCompiler.compile(entry.getValue());
+            objectCompiler.compileObject(entry.getValue());
             childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
         }
 
         Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFile.getName(), debugStatements);
-        objectCompiler.compile(root);
+        objectCompiler.compileObject(root);
 
         objectCompiler.compilePass2();
         for (int i = objects.size() - 1; i >= 0; i--) {

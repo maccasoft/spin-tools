@@ -141,7 +141,7 @@ public class Spin1CCompiler extends Spin1Compiler {
             else {
                 objectCompiler = new Spin1CObjectCompilerProxy(fileName);
             }
-            objectCompiler.compile(entry.getValue());
+            objectCompiler.compileObject(entry.getValue());
             childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
         }
 
@@ -156,13 +156,13 @@ public class Spin1CCompiler extends Spin1Compiler {
                 else {
                     objectCompiler = new Spin1CObjectCompilerProxy(fileName);
                 }
-                objectCompiler.compile(entry.getValue());
+                objectCompiler.compileObject(entry.getValue());
                 childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
             }
         }
 
         Spin1CObjectCompiler objectCompiler = new Spin1CObjectCompilerProxy(rootFile.getName());
-        objectCompiler.compile(root);
+        objectCompiler.compileObject(root);
 
         objectCompiler.compilePass2();
         for (int i = objects.size() - 1; i >= 0; i--) {

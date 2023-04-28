@@ -97,7 +97,6 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
     Map<String, Expression> publicSymbols = new HashMap<String, Expression>();
     List<LinkDataObject> objectLinks = new ArrayList<>();
-    List<LongDataObject> methodData = new ArrayList<>();
 
     Map<String, Node> structures = new HashMap<>();
 
@@ -117,9 +116,9 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         this.scope.addDefinition("__debug__", new NumberLiteral(this.debugEnabled ? 1 : 0));
     }
 
+    @Override
     public Spin2Object compileObject(Node root) {
         compile(root);
-        compilePass2();
         return generateObject();
     }
 
@@ -239,8 +238,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             scope.addSymbol("_RCFAST", new NumberLiteral(1));
         }
 
-        if (methodData.size() != 0) {
-            methodData.add(new LongDataObject(0, "End"));
+        if (methods.size() != 0) {
             scope.addBuiltinSymbol("@CLKMODE", new NumberLiteral(0x40));
             scope.addBuiltinSymbol("@CLKFREQ", new NumberLiteral(0x44));
         }
@@ -1620,8 +1618,6 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                 }
             }
 
-            methodData.add(new LongDataObject(0, "Method " + method.getLabel()));
-
             while (methodsIterator.hasNext()) {
                 method = methodsIterator.next();
                 if (!method.isReferenced()) {
@@ -1638,10 +1634,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                         logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
                     }
                 }
-                methodData.add(new LongDataObject(0, "Method " + method.getLabel()));
             }
-
-            methodData.add(new LongDataObject(0, "End"));
         }
     }
 
@@ -1699,8 +1692,18 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         }
         object.setVarSize(linkedVarOffset);
 
-        for (LongDataObject data : methodData) {
-            object.write(data);
+        List<LongDataObject> methodData = new ArrayList<>();
+        if (methods.size() != 0) {
+            Iterator<Spin2Method> methodsIterator = methods.iterator();
+            while (methodsIterator.hasNext()) {
+                Spin2Method method = methodsIterator.next();
+                LongDataObject dataObject = new LongDataObject(0, "Method " + method.getLabel());
+                object.write(dataObject);
+                methodData.add(dataObject);
+            }
+            LongDataObject dataObject = new LongDataObject(0, "End");
+            object.write(dataObject);
+            methodData.add(dataObject);
         }
 
         object.addAllSymbols(publicSymbols);
@@ -1710,7 +1713,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         int fitAddress = 0x1F8 << 2;
         boolean hubMode = true;
         boolean cogCode = false;
-        boolean spinMode = methodData.size() != 0;
+        boolean spinMode = methods.size() != 0;
 
         for (Spin2PAsmLine line : source) {
             if (!hubMode && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) && !(line.getInstructionFactory() instanceof Word)) {
@@ -1890,7 +1893,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             finalfreq = 20000;
         }
         else if (clkMode != null || clkFreq != null || xtlFreq != null || xinFreq != null) {
-            if (methodData.size() != 0) {
+            if (methods.size() != 0) {
                 clkfreq = 20000000.0;
             }
             else {

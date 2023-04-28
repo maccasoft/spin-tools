@@ -103,7 +103,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
     Map<String, Expression> publicSymbols = new HashMap<>();
     List<LinkDataObject> objectLinks = new ArrayList<>();
-    List<LongDataObject> methodData = new ArrayList<>();
 
     Spin2Compiler compiler;
     Spin2BytecodeCompiler bytecodeCompiler;
@@ -119,9 +118,9 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         this.debugEnabled = enabled;
     }
 
+    @Override
     public Spin2Object compileObject(Node root) {
         compile(root);
-        compilePass2();
         return generateObject();
     }
 
@@ -348,8 +347,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 }
             }
 
-            methodData.add(new LongDataObject(0, "Method " + method.getLabel()));
-
             while (methodsIterator.hasNext()) {
                 method = methodsIterator.next();
                 if (!method.isReferenced()) {
@@ -366,10 +363,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                         logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
                     }
                 }
-                methodData.add(new LongDataObject(0, "Method " + method.getLabel()));
             }
-
-            methodData.add(new LongDataObject(0, "End"));
         }
     }
 
@@ -427,8 +421,18 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         }
         object.setVarSize(linkedVarOffset);
 
-        for (LongDataObject data : methodData) {
-            object.write(data);
+        List<LongDataObject> methodData = new ArrayList<>();
+        if (methods.size() != 0) {
+            Iterator<Spin2Method> methodsIterator = methods.iterator();
+            while (methodsIterator.hasNext()) {
+                Spin2Method method = methodsIterator.next();
+                LongDataObject dataObject = new LongDataObject(0, "Method " + method.getLabel());
+                object.write(dataObject);
+                methodData.add(dataObject);
+            }
+            LongDataObject dataObject = new LongDataObject(0, "End");
+            object.write(dataObject);
+            methodData.add(dataObject);
         }
 
         object.addAllSymbols(publicSymbols);
@@ -2391,7 +2395,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
             finalfreq = 20000;
         }
         else if (clkMode != null || clkFreq != null || xtlFreq != null || xinFreq != null) {
-            if (methodData.size() != 0) {
+            if (methods.size() != 0) {
                 clkfreq = 20000000.0;
             }
             else {

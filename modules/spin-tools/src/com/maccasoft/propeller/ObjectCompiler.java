@@ -19,6 +19,8 @@ import com.maccasoft.propeller.model.Node;
 
 public abstract class ObjectCompiler {
 
+    public abstract SpinObject compileObject(Node root);
+
     public abstract void compile(Node root);
 
     public abstract void compilePass2();

@@ -91,16 +91,15 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
     Map<String, Expression> publicSymbols = new HashMap<>();
     List<LinkDataObject> objectLinks = new ArrayList<>();
-    List<LongDataObject> methodData = new ArrayList<>();
 
     public Spin1ObjectCompiler(Spin1Compiler compiler) {
         this.scope = new Spin1GlobalContext(compiler.isCaseSensitive());
         this.compiler = compiler;
     }
 
+    @Override
     public Spin1Object compileObject(Node root) {
         compile(root);
-        compilePass2();
         return generateObject();
     }
 
@@ -252,7 +251,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
                             @Override
                             public int getObjectIndex() {
-                                return objectLinks.indexOf(linkData) + methodData.size() + 1;
+                                return objectLinks.indexOf(linkData) + methods.size() + 1;
                             }
 
                         };
@@ -264,7 +263,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
 
                     @Override
                     public int getIndex() {
-                        return objectLinks.indexOf(linkData) + methodData.size() + 1;
+                        return objectLinks.indexOf(linkData) + methods.size() + 1;
                     }
 
                 });
@@ -358,7 +357,6 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                 }
             }
 
-            methodData.add(new LongDataObject(0, "Function " + method.getLabel()));
             while (methodsIterator.hasNext()) {
                 method = methodsIterator.next();
                 if (!method.isReferenced()) {
@@ -375,7 +373,6 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                         logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
                     }
                 }
-                methodData.add(new LongDataObject(0, "Function " + method.getLabel()));
             }
         }
     }
@@ -415,7 +412,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         object.writeComment("Object header (var size " + objectVarSize + ")");
 
         WordDataObject objectSize = object.writeWord(0, "Object size");
-        object.writeByte(methodData.size() + 1, "Method count + 1");
+        object.writeByte(methods.size() + 1, "Method count + 1");
 
         int count = 0;
         for (Entry<String, ObjectInfo> infoEntry : objects.entrySet()) {
@@ -428,10 +425,15 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         }
         object.writeByte(count, "Object count");
 
-        for (LongDataObject linkData : methodData) {
-            object.write(linkData);
-        }
+        List<LongDataObject> methodData = new ArrayList<>();
         if (methods.size() != 0) {
+            Iterator<Spin1Method> methodsIterator = methods.iterator();
+            while (methodsIterator.hasNext()) {
+                Spin1Method method = methodsIterator.next();
+                LongDataObject dataObject = new LongDataObject(0, "Function " + method.getLabel());
+                object.write(dataObject);
+                methodData.add(dataObject);
+            }
             object.setDcurr(methods.get(0).getStackSize());
         }
 

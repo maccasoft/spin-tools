@@ -167,13 +167,13 @@ public class Spin1Compiler extends Compiler {
         for (Entry<File, Node> entry : objects.entrySet()) {
             Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey().getName());
             objectCompiler.setOpenspinCompatibile(openspinCompatible);
-            objectCompiler.compile(entry.getValue());
+            objectCompiler.compileObject(entry.getValue());
             childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
         }
 
         Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFile.getName());
         objectCompiler.setOpenspinCompatibile(openspinCompatible);
-        objectCompiler.compile(root);
+        objectCompiler.compileObject(root);
 
         objectCompiler.compilePass2();
         for (int i = objects.size() - 1; i >= 0; i--) {
