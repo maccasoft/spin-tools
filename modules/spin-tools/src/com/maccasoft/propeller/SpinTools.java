@@ -71,6 +71,7 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -153,132 +154,91 @@ public class SpinTools {
 
         @Override
         public void open(OpenEvent event) {
+            IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+
+            if (selection.getFirstElement() instanceof File) {
+                File fileToOpen = (File) selection.getFirstElement();
+                if (fileToOpen.isDirectory()) {
+                    return;
+                }
+                String name = fileToOpen.getName().toLowerCase();
+                if (name.endsWith(".spin") || name.endsWith(".spin2") || name.endsWith(".c")) {
+                    EditorTab editorTab = findFileEditorTab(fileToOpen);
+                    if (editorTab == null) {
+                        openNewTab(fileToOpen);
+                    }
+                }
+                else {
+                    Program.launch(fileToOpen.getAbsolutePath());
+                }
+            }
+            else if (selection.getFirstElement() instanceof ObjectTree) {
+                File fileToOpen = ((ObjectTree) selection.getFirstElement()).getFile();
+                if (fileToOpen.isDirectory()) {
+                    return;
+                }
+                String name = fileToOpen.getName().toLowerCase();
+                if (name.endsWith(".spin") || name.endsWith(".spin2")) {
+                    EditorTab editorTab = findFileEditorTab(fileToOpen);
+                    if (editorTab == null) {
+                        openNewTab(fileToOpen);
+                    }
+                }
+            }
+            else if (selection.getFirstElement() instanceof ObjectNode) {
+                if (openOrSwitchToTab(((ObjectNode) selection.getFirstElement()).getFileName()) == null) {
+                    return;
+                }
+            }
+            else if (selection.getFirstElement() instanceof DirectiveNode.IncludeNode) {
+                if (openOrSwitchToTab(((DirectiveNode.IncludeNode) selection.getFirstElement()).getFileName()) == null) {
+                    return;
+                }
+            }
+            else if (selection.getFirstElement() instanceof VariableNode) {
+                if (openOrSwitchToTab(((VariableNode) selection.getFirstElement()).getType().getText()) == null) {
+                    return;
+                }
+            }
+        }
+
+    };
+
+    final SourceListener sourceListener = new SourceListener() {
+
+        @Override
+        public void navigateTo(SourceElement element) {
             SourceLocation sourceLocation = getCurrentSourceLocation();
 
-            Object element = ((IStructuredSelection) event.getSelection()).getFirstElement();
-            if (element instanceof ObjectNode) {
-                if (openOrSwitchToTab(((ObjectNode) element).getFileName()) == null) {
-                    return;
-                }
+            String objectFileName = null;
+            if (element.object instanceof ObjectNode) {
+                objectFileName = ((ObjectNode) element.object).getFileName();
             }
-            else if (element instanceof DirectiveNode.IncludeNode) {
-                if (openOrSwitchToTab(((DirectiveNode.IncludeNode) element).getFileName()) == null) {
-                    return;
-                }
+            if (element.object instanceof DirectiveNode.IncludeNode) {
+                objectFileName = ((DirectiveNode.IncludeNode) element.object).getFileName();
             }
-            else if (element instanceof VariableNode) {
-                if (openOrSwitchToTab(((VariableNode) element).getType().getText()) == null) {
-                    return;
-                }
+            if (element.object instanceof VariableNode) {
+                objectFileName = ((VariableNode) element.object).getType().getText();
             }
-            else if (element instanceof SourceElement) {
-                SourceElement sourceElement = (SourceElement) element;
 
-                String objectFileName = null;
-                if (sourceElement.object instanceof ObjectNode) {
-                    objectFileName = ((ObjectNode) sourceElement.object).getFileName();
-                }
-                if (sourceElement.object instanceof VariableNode) {
-                    objectFileName = ((VariableNode) sourceElement.object).getType().getText();
+            EditorTab editorTab = objectFileName != null ? openOrSwitchToTab(objectFileName) : (EditorTab) tabFolder.getSelection().getData();
+            if (editorTab == null) {
+                return;
+            }
+            SourceEditor editor = editorTab.getEditor();
+            shell.getDisplay().asyncExec(new Runnable() {
+
+                @Override
+                public void run() {
+                    editor.goToLineColumn(element.line, element.column);
                 }
 
-                EditorTab editorTab = objectFileName != null ? openOrSwitchToTab(objectFileName) : (EditorTab) tabFolder.getSelection().getData();
-                if (editorTab == null) {
-                    return;
-                }
-                SourceEditor editor = editorTab.getEditor();
-                shell.getDisplay().asyncExec(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        editor.goToLineColumn(sourceElement.line, sourceElement.column);
-                    }
-
-                });
-            }
+            });
 
             if (sourceLocation != null) {
                 backStack.push(sourceLocation);
                 forwardStack.clear();
             }
-        }
-
-        EditorTab openOrSwitchToTab(String name) {
-            EditorTab editorTab = null;
-
-            EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
-            String tabName = currentTab.getText();
-            String suffix = tabName.substring(tabName.lastIndexOf('.'));
-
-            if (".spin".equals(suffix)) {
-                editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin1LibraryPath());
-                if (editorTab == null) {
-                    editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin1LibraryPath());
-                }
-            }
-            else if (".spin2".equals(suffix)) {
-                editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
-                if (editorTab == null) {
-                    editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
-                }
-            }
-            else if (".c".equals(suffix)) {
-                CTokenMarker tokenMarker = (CTokenMarker) currentTab.getTokenMarker();
-                if (tokenMarker.isP1()) {
-                    editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin1LibraryPath());
-                    if (editorTab == null) {
-                        editorTab = openOrSwitchToTab(name + ".spin", Preferences.getInstance().getSpin1LibraryPath());
-                    }
-                    if (editorTab == null) {
-                        editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin1LibraryPath());
-                    }
-                }
-                else {
-                    editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
-                    if (editorTab == null) {
-                        editorTab = openOrSwitchToTab(name + ".spin2", Preferences.getInstance().getSpin2LibraryPath());
-                    }
-                    if (editorTab == null) {
-                        editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
-                    }
-                }
-            }
-
-            return editorTab;
-        }
-
-        EditorTab openOrSwitchToTab(String name, File[] searchPaths) {
-            File parent = new File("");
-
-            if (tabFolder.getSelection() != null) {
-                EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
-                if (currentTab.getFile() != null) {
-                    parent = currentTab.getFile().getParentFile();
-                }
-            }
-
-            File fileToOpen = new File(parent, name);
-            if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
-                for (int i = 0; i < searchPaths.length; i++) {
-                    fileToOpen = new File(searchPaths[i], name);
-                    if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
-                        break;
-                    }
-                }
-            }
-            if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
-                fileToOpen = new File(parent, name);
-            }
-
-            if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
-                EditorTab editorTab = findFileEditorTab(fileToOpen);
-                if (editorTab == null) {
-                    editorTab = openNewTab(fileToOpen);
-                }
-                return editorTab;
-            }
-
-            return null;
         }
 
     };
@@ -376,26 +336,7 @@ public class SpinTools {
         }
         sashForm.setWeights(weights);
 
-        objectBrowser.addOpenListener(new IOpenListener() {
-
-            @Override
-            public void open(OpenEvent event) {
-                IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-                if (selection.getFirstElement() instanceof ObjectTree) {
-                    File fileToOpen = ((ObjectTree) selection.getFirstElement()).getFile();
-                    if (fileToOpen.isDirectory()) {
-                        return;
-                    }
-                    String name = fileToOpen.getName().toLowerCase();
-                    if (name.endsWith(".spin") || name.endsWith(".spin2")) {
-                        EditorTab editorTab = findFileEditorTab(fileToOpen);
-                        if (editorTab == null) {
-                            openNewTab(fileToOpen);
-                        }
-                    }
-                }
-            }
-        });
+        objectBrowser.addOpenListener(openListener);
 
         fileBrowser.setVisiblePaths(preferences.getRoots());
 
@@ -416,26 +357,7 @@ public class SpinTools {
                 }
             }
         });
-        fileBrowser.addOpenListener(new IOpenListener() {
-
-            @Override
-            public void open(OpenEvent event) {
-                IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-                if (selection.getFirstElement() instanceof File) {
-                    File fileToOpen = (File) selection.getFirstElement();
-                    if (fileToOpen.isDirectory()) {
-                        return;
-                    }
-                    String name = fileToOpen.getName().toLowerCase();
-                    if (name.endsWith(".spin") || name.endsWith(".spin2") || name.endsWith(".c")) {
-                        EditorTab editorTab = findFileEditorTab(fileToOpen);
-                        if (editorTab == null) {
-                            openNewTab(fileToOpen);
-                        }
-                    }
-                }
-            }
-        });
+        fileBrowser.addOpenListener(openListener);
 
         createTabFolderMenu();
 
@@ -583,8 +505,9 @@ public class SpinTools {
                                     EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
                                     editorTab.setEditorText(text);
                                     editorTab.addCaretListener(caretListener);
-                                    editorTab.addOpenListener(openListener);
                                     editorTab.addPropertyChangeListener(editorChangeListener);
+                                    editorTab.getEditor().addSourceListener(sourceListener);
+                                    editorTab.getEditor().getOutline().addOpenListener(openListener);
                                     blockSelectionItem.setSelection(editorTab.isBlockSelection());
                                 }
 
@@ -1042,14 +965,93 @@ public class SpinTools {
         }
     }
 
+    EditorTab openOrSwitchToTab(String name) {
+        EditorTab editorTab = null;
+
+        EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
+        String tabName = currentTab.getText();
+        String suffix = tabName.substring(tabName.lastIndexOf('.'));
+
+        if (".spin".equals(suffix)) {
+            editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin1LibraryPath());
+            if (editorTab == null) {
+                editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin1LibraryPath());
+            }
+        }
+        else if (".spin2".equals(suffix)) {
+            editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
+            if (editorTab == null) {
+                editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
+            }
+        }
+        else if (".c".equals(suffix)) {
+            CTokenMarker tokenMarker = (CTokenMarker) currentTab.getTokenMarker();
+            if (tokenMarker.isP1()) {
+                editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin1LibraryPath());
+                if (editorTab == null) {
+                    editorTab = openOrSwitchToTab(name + ".spin", Preferences.getInstance().getSpin1LibraryPath());
+                }
+                if (editorTab == null) {
+                    editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin1LibraryPath());
+                }
+            }
+            else {
+                editorTab = openOrSwitchToTab(name + suffix, Preferences.getInstance().getSpin2LibraryPath());
+                if (editorTab == null) {
+                    editorTab = openOrSwitchToTab(name + ".spin2", Preferences.getInstance().getSpin2LibraryPath());
+                }
+                if (editorTab == null) {
+                    editorTab = openOrSwitchToTab(name, Preferences.getInstance().getSpin2LibraryPath());
+                }
+            }
+        }
+
+        return editorTab;
+    }
+
+    EditorTab openOrSwitchToTab(String name, File[] searchPaths) {
+        File parent = new File("");
+
+        if (tabFolder.getSelection() != null) {
+            EditorTab currentTab = (EditorTab) tabFolder.getSelection().getData();
+            if (currentTab.getFile() != null) {
+                parent = currentTab.getFile().getParentFile();
+            }
+        }
+
+        File fileToOpen = new File(parent, name);
+        if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
+            for (int i = 0; i < searchPaths.length; i++) {
+                fileToOpen = new File(searchPaths[i], name);
+                if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
+                    break;
+                }
+            }
+        }
+        if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
+            fileToOpen = new File(parent, name);
+        }
+
+        if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
+            EditorTab editorTab = findFileEditorTab(fileToOpen);
+            if (editorTab == null) {
+                editorTab = openNewTab(fileToOpen);
+            }
+            return editorTab;
+        }
+
+        return null;
+    }
+
     EditorTab openNewTab(File fileToOpen) {
         EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
 
         preferences.addToLru(fileToOpen);
 
         editorTab.addCaretListener(caretListener);
-        editorTab.addOpenListener(openListener);
         editorTab.addPropertyChangeListener(editorChangeListener);
+        editorTab.getEditor().addSourceListener(sourceListener);
+        editorTab.getEditor().getOutline().addOpenListener(openListener);
 
         blockSelectionItem.setSelection(editorTab.isBlockSelection());
 
@@ -1076,8 +1078,9 @@ public class SpinTools {
         EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
 
         editorTab.addCaretListener(caretListener);
-        editorTab.addOpenListener(openListener);
         editorTab.addPropertyChangeListener(editorChangeListener);
+        editorTab.getEditor().addSourceListener(sourceListener);
+        editorTab.getEditor().getOutline().addOpenListener(openListener);
 
         blockSelectionItem.setSelection(editorTab.isBlockSelection());
 

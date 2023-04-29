@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -760,16 +759,6 @@ public class EditorTab implements FindReplaceTarget {
 
     public SourceEditor getEditor() {
         return editor;
-    }
-
-    public void addOpenListener(IOpenListener listener) {
-        editor.addOpenListener(listener);
-        editor.getOutline().addOpenListener(listener);
-    }
-
-    public void removeOpenListener(IOpenListener listener) {
-        editor.removeOpenListener(listener);
-        editor.getOutline().removeOpenListener(listener);
     }
 
     @Override

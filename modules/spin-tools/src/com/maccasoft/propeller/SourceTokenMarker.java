@@ -165,6 +165,10 @@ public abstract class SourceTokenMarker {
         this.root = root;
     }
 
+    public boolean isCaseSensitive() {
+        return caseSensitive;
+    }
+
     public void setCaseSensitive(boolean caseSensitive) {
         this.caseSensitive = caseSensitive;
         symbols = caseSensitive ? new HashMap<>() : new CaseInsensitiveMap<>();

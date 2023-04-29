@@ -107,6 +107,10 @@ public class Token {
         return result;
     }
 
+    public boolean equals(String text, boolean caseSensitive) {
+        return caseSensitive ? getText().equals(text) : getText().equalsIgnoreCase(text);
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(type, start, stop);

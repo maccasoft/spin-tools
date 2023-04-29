@@ -26,9 +26,7 @@ import org.eclipse.jface.fieldassist.IContentProposalProvider;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.jface.util.SafeRunnable;
-import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
@@ -153,7 +151,7 @@ public class SourceEditor {
     boolean ignoreModify;
     ListenerList<ModifyListener> modifyListeners = new ListenerList<ModifyListener>();
 
-    private ListenerList<IOpenListener> openListeners = new ListenerList<>();
+    private ListenerList<SourceListener> openListeners = new ListenerList<>();
 
     class TextChange {
 
@@ -316,7 +314,7 @@ public class SourceEditor {
 
                     @Override
                     public void run() {
-                        fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                        fireNavigateToEvent(element);
                     }
 
                 });
@@ -737,7 +735,7 @@ public class SourceEditor {
 
                             @Override
                             public void run() {
-                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                fireNavigateToEvent(element);
                             }
 
                         });
@@ -755,7 +753,7 @@ public class SourceEditor {
 
                             @Override
                             public void run() {
-                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                fireNavigateToEvent(element);
                             }
 
                         });
@@ -768,11 +766,12 @@ public class SourceEditor {
                 else if (context instanceof DirectiveNode.IncludeNode) {
                     DirectiveNode.IncludeNode obj = (DirectiveNode.IncludeNode) context;
                     if (obj.getFile() == token) {
+                        SourceElement element = new SourceElement(obj, 0, 0);
                         display.asyncExec(new Runnable() {
 
                             @Override
                             public void run() {
-                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(obj)));
+                                fireNavigateToEvent(element);
                             }
 
                         });
@@ -790,13 +789,13 @@ public class SourceEditor {
                         while (index > 0) {
                             DataLineNode obj = (DataLineNode) parent.getChild(index);
                             if (obj.label != null) {
-                                if (obj.label.getText().equals(itemName)) {
+                                if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
                                     SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
                                     display.asyncExec(new Runnable() {
 
                                         @Override
                                         public void run() {
-                                            fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                            fireNavigateToEvent(element);
                                         }
 
                                     });
@@ -813,13 +812,13 @@ public class SourceEditor {
                         while (index < parent.getChildCount()) {
                             DataLineNode obj = (DataLineNode) parent.getChild(index);
                             if (obj.label != null) {
-                                if (obj.label.getText().equals(itemName)) {
+                                if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
                                     SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
                                     display.asyncExec(new Runnable() {
 
                                         @Override
                                         public void run() {
-                                            fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                            fireNavigateToEvent(element);
                                         }
 
                                     });
@@ -840,13 +839,13 @@ public class SourceEditor {
                             if (node instanceof ConstantsNode) {
                                 for (Node child : node.getChilds()) {
                                     ConstantNode obj = (ConstantNode) child;
-                                    if (obj.identifier != null && obj.identifier.getText().equals(itemName)) {
+                                    if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
                                         display.asyncExec(new Runnable() {
 
                                             @Override
                                             public void run() {
-                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                                fireNavigateToEvent(element);
                                             }
 
                                         });
@@ -857,13 +856,13 @@ public class SourceEditor {
                             else if (node instanceof DataNode) {
                                 for (Node child : node.getChilds()) {
                                     DataLineNode obj = (DataLineNode) child;
-                                    if (obj.label != null && obj.label.getText().equals(itemName)) {
+                                    if (obj.label != null && obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
                                         display.asyncExec(new Runnable() {
 
                                             @Override
                                             public void run() {
-                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                                fireNavigateToEvent(element);
                                             }
 
                                         });
@@ -891,13 +890,13 @@ public class SourceEditor {
                             else if (node instanceof ConstantsNode) {
                                 for (Node child : node.getChilds()) {
                                     ConstantNode obj = (ConstantNode) child;
-                                    if (obj.identifier != null && obj.identifier.getText().equals(itemName)) {
+                                    if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
                                         display.asyncExec(new Runnable() {
 
                                             @Override
                                             public void run() {
-                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                                fireNavigateToEvent(element);
                                             }
 
                                         });
@@ -907,14 +906,14 @@ public class SourceEditor {
                             }
                             else if (node instanceof VariableNode) {
                                 VariableNode obj = (VariableNode) node;
-                                if (obj.getIdentifier().getText().equals(objectName)) {
+                                if (obj.getIdentifier().equals(objectName, tokenMarker.isCaseSensitive())) {
                                     if (offset >= objstart && offset <= objstop) {
                                         SourceElement element = new SourceElement(null, obj.getIdentifier().line, obj.getIdentifier().column);
                                         display.asyncExec(new Runnable() {
 
                                             @Override
                                             public void run() {
-                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                                fireNavigateToEvent(element);
                                             }
 
                                         });
@@ -925,13 +924,13 @@ public class SourceEditor {
                                             for (Node objectNode : objectRoot.getChilds()) {
                                                 if (objectNode instanceof MethodNode) {
                                                     MethodNode method = (MethodNode) objectNode;
-                                                    if (method.name.getText().equals(itemName)) {
+                                                    if (method.name.equals(itemName, tokenMarker.isCaseSensitive())) {
                                                         SourceElement element = new SourceElement(obj, method.name.line, method.name.column);
                                                         display.asyncExec(new Runnable() {
 
                                                             @Override
                                                             public void run() {
-                                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                                                fireNavigateToEvent(element);
                                                             }
 
                                                         });
@@ -956,13 +955,13 @@ public class SourceEditor {
                             else if (node instanceof ConstantsNode) {
                                 for (Node child : node.getChilds()) {
                                     ConstantNode obj = (ConstantNode) child;
-                                    if (obj.identifier != null && obj.identifier.getText().equals(itemName)) {
+                                    if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
                                         display.asyncExec(new Runnable() {
 
                                             @Override
                                             public void run() {
-                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                                fireNavigateToEvent(element);
                                             }
 
                                         });
@@ -972,13 +971,13 @@ public class SourceEditor {
                             }
                             else if (node instanceof MethodNode) {
                                 MethodNode method = (MethodNode) node;
-                                if (method.name.getText().equals(itemName)) {
+                                if (method.name.equals(itemName, tokenMarker.isCaseSensitive())) {
                                     SourceElement element = new SourceElement(null, method.name.line, method.name.column);
                                     display.asyncExec(new Runnable() {
 
                                         @Override
                                         public void run() {
-                                            fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                            fireNavigateToEvent(element);
                                         }
 
                                     });
@@ -988,13 +987,13 @@ public class SourceEditor {
                             else if (node instanceof VariablesNode) {
                                 for (Node child : node.getChilds()) {
                                     VariableNode obj = (VariableNode) child;
-                                    if (obj.identifier != null && obj.identifier.getText().equals(itemName)) {
+                                    if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
                                         display.asyncExec(new Runnable() {
 
                                             @Override
                                             public void run() {
-                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                                fireNavigateToEvent(element);
                                             }
 
                                         });
@@ -1005,13 +1004,13 @@ public class SourceEditor {
                             else if (node instanceof DataNode) {
                                 for (Node child : node.getChilds()) {
                                     DataLineNode obj = (DataLineNode) child;
-                                    if (obj.label != null && obj.label.getText().equals(itemName)) {
+                                    if (obj.label != null && obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
                                         display.asyncExec(new Runnable() {
 
                                             @Override
                                             public void run() {
-                                                fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                                fireNavigateToEvent(element);
                                             }
 
                                         });
@@ -1031,13 +1030,13 @@ public class SourceEditor {
                 for (Node child : node.getChilds()) {
                     if (child instanceof ObjectNode) {
                         ObjectNode obj = (ObjectNode) child;
-                        if (obj.name.getText().equals(hoverText)) {
+                        if (obj.name.equals(hoverText, tokenMarker.isCaseSensitive())) {
                             SourceElement element = new SourceElement(null, obj.name.line, obj.name.column);
                             display.asyncExec(new Runnable() {
 
                                 @Override
                                 public void run() {
-                                    fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                    fireNavigateToEvent(element);
                                 }
 
                             });
@@ -1055,7 +1054,7 @@ public class SourceEditor {
                 for (Node child : node.getChilds()) {
                     if (child instanceof ObjectNode) {
                         ObjectNode obj = (ObjectNode) child;
-                        if (obj.name.getText().equals(objname)) {
+                        if (obj.name.equals(objname, tokenMarker.isCaseSensitive())) {
 
                             String fileName = obj.file.getText().substring(1, obj.file.getText().length() - 1);
                             Node objectRoot = tokenMarker.getObjectTree(fileName);
@@ -1063,13 +1062,13 @@ public class SourceEditor {
                                 for (Node objectNode : objectRoot.getChilds()) {
                                     if (objectNode instanceof MethodNode) {
                                         MethodNode method = (MethodNode) objectNode;
-                                        if (method.name.getText().equals(hoverText)) {
+                                        if (method.name.equals(hoverText, tokenMarker.isCaseSensitive())) {
                                             SourceElement element = new SourceElement(obj, method.name.line, method.name.column);
                                             display.asyncExec(new Runnable() {
 
                                                 @Override
                                                 public void run() {
-                                                    fireOpen(new OpenEvent(outline.getViewer(), new StructuredSelection(element)));
+                                                    fireNavigateToEvent(element);
                                                 }
 
                                             });
@@ -2355,20 +2354,20 @@ public class SourceEditor {
         return outline;
     }
 
-    public void addOpenListener(IOpenListener listener) {
+    public void addSourceListener(SourceListener listener) {
         openListeners.add(listener);
     }
 
-    public void removeOpenListener(IOpenListener listener) {
+    public void removeSourceListener(SourceListener listener) {
         openListeners.remove(listener);
     }
 
-    protected void fireOpen(final OpenEvent event) {
-        for (IOpenListener l : openListeners) {
+    protected void fireNavigateToEvent(final SourceElement element) {
+        for (SourceListener l : openListeners) {
             SafeRunnable.run(new SafeRunnable() {
                 @Override
                 public void run() {
-                    l.open(event);
+                    l.navigateTo(element);
                 }
             });
         }
