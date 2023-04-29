@@ -110,6 +110,7 @@ public class SpinTools {
     static final File defaultSpin2Examples = new File(System.getProperty("APP_DIR"), "examples/P2").getAbsoluteFile();
 
     Shell shell;
+    ToolBar toolBar;
 
     SashForm sashForm;
     SashForm browserSashForm;
@@ -254,6 +255,11 @@ public class SpinTools {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             switch (evt.getPropertyName()) {
+                case Preferences.PROP_SHOW_TOOLBAR:
+                    toolBar.setVisible((Boolean) evt.getNewValue());
+                    ((GridData) toolBar.getLayoutData()).exclude = !((Boolean) evt.getNewValue()).booleanValue();
+                    toolBar.getParent().layout(true, true);
+                    break;
                 case Preferences.PROP_SHOW_OBJECT_BROWSER:
                     objectBrowser.setVisible((Boolean) evt.getNewValue());
                     browserSashForm.setVisible(objectBrowser.getVisible() || fileBrowser.getVisible());
@@ -316,6 +322,11 @@ public class SpinTools {
         GridLayout layout = new GridLayout(1, false);
         layout.marginWidth = layout.marginHeight = 0;
         container.setLayout(layout);
+
+        toolBar = createToolbar(container);
+        toolBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        toolBar.setVisible(preferences.getShowToolbar());
+        ((GridData) toolBar.getLayoutData()).exclude = !preferences.getShowToolbar();
 
         sashForm = new SashForm(container, SWT.HORIZONTAL);
         sashForm.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -673,6 +684,39 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Close Editor" + "\t");
+        item.setAccelerator(SWT.MOD1 + 'W');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                closeCurrentEditor();
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Close All Editors" + "\t");
+        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'W');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                e.display.asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (closeCurrentEditor()) {
+                            e.display.asyncExec(this);
+                        }
+                    }
+
+                });
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
         item.setText("Save" + "\t");
         item.setAccelerator(SWT.MOD1 + 'S');
         item.addListener(SWT.Selection, new Listener() {
@@ -883,6 +927,410 @@ public class SpinTools {
 
             index++;
         }
+    }
+
+    ToolBar createToolbar(Composite parent) {
+        ToolBar toolBar = new ToolBar(parent, SWT.FLAT);
+
+        ToolItem toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("document-number-1.png"));
+        toolItem.setToolTipText("New from P1 template");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    String name = getUniqueName("Untitled", ".spin");
+                    openNewTab(name, getResourceAsString("template.spin"));
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("document-number-2.png"));
+        toolItem.setToolTipText("New from P2 template");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    String name = getUniqueName("Untitled", ".spin2");
+                    openNewTab(name, getResourceAsString("template.spin2"));
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("folder-horizontal-open.png"));
+        toolItem.setToolTipText("Open");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    handleFileOpen();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("disk-black.png"));
+        toolItem.setToolTipText("Save");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    handleFileSave();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("disks-black.png"));
+        toolItem.setToolTipText("Save All");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    handleFileSaveAll();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("scissors.png"));
+        toolItem.setToolTipText("Cut");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.cut();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("document-copy.png"));
+        toolItem.setToolTipText("Copy");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.copy();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("clipboard-paste.png"));
+        toolItem.setToolTipText("Paste");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.paste();
+                }
+            }
+        });
+
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("arrow-curve-180.png"));
+        toolItem.setToolTipText("Undo");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.undo();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("arrow-curve-000-left.png"));
+        toolItem.setToolTipText("Redo");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.redo();
+                }
+            }
+        });
+
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("flashlight.png"));
+        toolItem.setToolTipText("Find / Replace...");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem == null) {
+                    return;
+                }
+
+                if (findReplaceDialog != null && !findReplaceDialog.isDisposed()) {
+                    findReplaceDialog.getShell().setFocus();
+                    return;
+                }
+
+                findReplaceDialog = new FindReplaceDialog(shell);
+                findReplaceDialog.setTarget((EditorTab) tabItem.getData());
+                findReplaceDialog.open();
+            }
+        });
+
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("document-text-arrow-270-small.png"));
+        toolItem.setToolTipText("Next Annotation");
+        toolItem.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem != null) {
+                        EditorTab editorTab = (EditorTab) tabItem.getData();
+                        editorTab.goToNextAnnotation();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("document-text-arrow-090-small.png"));
+        toolItem.setToolTipText("Previous Annotation");
+        toolItem.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem != null) {
+                        EditorTab editorTab = (EditorTab) tabItem.getData();
+                        editorTab.goToPreviousAnnotation();
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("arrow-180.png"));
+        toolItem.setToolTipText("Previous edit location");
+        toolItem.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    if (backStack.isEmpty()) {
+                        return;
+                    }
+
+                    SourceLocation currentLocation = getCurrentSourceLocation();
+
+                    SourceLocation location = backStack.pop();
+                    EditorTab editorTab = findFileEditorTab(location.file);
+                    if (editorTab == null && location.file != null) {
+                        editorTab = openNewTab(location.file);
+                    }
+                    if (editorTab != null) {
+                        if (currentLocation != null) {
+                            forwardStack.push(currentLocation);
+                        }
+                        SourceEditor editor = editorTab.getEditor();
+                        shell.getDisplay().asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                StyledText styledText = editor.getStyledText();
+                                styledText.setCaretOffset(location.offset);
+                                styledText.setTopPixel(location.topPixel);
+                            }
+
+                        });
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("arrow.png"));
+        toolItem.setToolTipText("Next edit location");
+        toolItem.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                try {
+                    if (forwardStack.isEmpty()) {
+                        return;
+                    }
+
+                    SourceLocation currentLocation = getCurrentSourceLocation();
+
+                    SourceLocation location = forwardStack.pop();
+                    EditorTab editorTab = findFileEditorTab(location.file);
+                    if (editorTab == null && location.file != null) {
+                        editorTab = openNewTab(location.file);
+                    }
+                    if (editorTab != null) {
+                        if (currentLocation != null) {
+                            backStack.push(currentLocation);
+                        }
+                        SourceEditor editor = editorTab.getEditor();
+                        shell.getDisplay().asyncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                StyledText styledText = editor.getStyledText();
+                                styledText.setCaretOffset(location.offset);
+                                styledText.setTopPixel(location.topPixel);
+                            }
+
+                        });
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("information-frame.png"));
+        toolItem.setToolTipText("Show Info");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    handleShowInfo();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("bug.png"));
+        toolItem.setToolTipText("Upload to RAM with Debug");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    CTabItem tabItem = tabFolder.getSelection();
+                    if (tabItem == null) {
+                        return;
+                    }
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    if (!sourcePool.isDebugEnabled()) {
+                        editorTab.runCompile(true);
+                    }
+                    handleUpload(false, false);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("control.png"));
+        toolItem.setToolTipText("Upload to RAM");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    handleUpload(false, false);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("processor.png"));
+        toolItem.setToolTipText("Upload to Flash");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    handleUpload(true, false);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("terminal.png"));
+        toolItem.setToolTipText("Terminal");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    SerialTerminal serialTerminal = getSerialTerminal();
+                    if (serialTerminal == null) {
+                        serialTerminal = new SerialTerminal();
+                        serialTerminal.open();
+                        serialTerminal.setSerialPort(new SerialPort(serialPortList.getSelection()));
+                    }
+                    serialTerminal.setFocus();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        return toolBar;
     }
 
     private void handleFileNew() {
@@ -1372,8 +1820,10 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 CTabItem tabItem = tabFolder.getSelection();
-                EditorTab editorTab = (EditorTab) tabItem.getData();
-                editorTab.undo();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.undo();
+                }
             }
         });
 
@@ -1385,8 +1835,10 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 CTabItem tabItem = tabFolder.getSelection();
-                EditorTab editorTab = (EditorTab) tabItem.getData();
-                editorTab.redo();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.redo();
+                }
             }
         });
 
@@ -1400,8 +1852,10 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 CTabItem tabItem = tabFolder.getSelection();
-                EditorTab editorTab = (EditorTab) tabItem.getData();
-                editorTab.cut();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.cut();
+                }
             }
         });
 
@@ -1413,8 +1867,10 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 CTabItem tabItem = tabFolder.getSelection();
-                EditorTab editorTab = (EditorTab) tabItem.getData();
-                editorTab.copy();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.copy();
+                }
             }
         });
 
@@ -1426,8 +1882,10 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 CTabItem tabItem = tabFolder.getSelection();
-                EditorTab editorTab = (EditorTab) tabItem.getData();
-                editorTab.paste();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.paste();
+                }
             }
         });
 
@@ -1439,8 +1897,10 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 CTabItem tabItem = tabFolder.getSelection();
-                EditorTab editorTab = (EditorTab) tabItem.getData();
-                editorTab.selectAll();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.selectAll();
+                }
             }
         });
 
@@ -1588,7 +2048,7 @@ public class SpinTools {
             new MenuItem(menu, SWT.SEPARATOR);
 
             item = new MenuItem(menu, SWT.PUSH);
-            item.setText("Preferences");
+            item.setText("Preferences" + "\t");
         }
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1933,7 +2393,7 @@ public class SpinTools {
 
         SerialPort serialPort = null;
         boolean serialPortShared = false;
-        boolean isDebug = (obj instanceof Spin2Object) && sourcePool.isDebugEnabled();
+        boolean isDebug = (obj instanceof Spin2Object) && ((Spin2Object) obj).getDebugger() != null;
 
         SerialTerminal serialTerminal = getSerialTerminal();
         if (serialTerminal == null && (openTerminal || isDebug)) {
@@ -2216,134 +2676,10 @@ public class SpinTools {
 
     void createTabFolderMenu() {
         final ToolBar toolBar = new ToolBar(tabFolder, SWT.FLAT);
-
-        ToolItem toolItem = new ToolItem(toolBar, SWT.PUSH);
-        toolItem.setImage(ImageRegistry.getImageFromResources("document-text-arrow-270-small.png"));
-        toolItem.setToolTipText("Next Annotation");
-        toolItem.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    if (tabItem == null) {
-                        return;
-                    }
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.goToNextAnnotation();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-
-        toolItem = new ToolItem(toolBar, SWT.PUSH);
-        toolItem.setImage(ImageRegistry.getImageFromResources("document-text-arrow-090-small.png"));
-        toolItem.setToolTipText("Previous Annotation");
-        toolItem.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    if (tabItem == null) {
-                        return;
-                    }
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    editorTab.goToPreviousAnnotation();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-
-        toolItem = new ToolItem(toolBar, SWT.PUSH);
-        toolItem.setImage(ImageRegistry.getImageFromResources("arrow-180.png"));
-        toolItem.setToolTipText("Previous edit location");
-        toolItem.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                try {
-                    if (backStack.isEmpty()) {
-                        return;
-                    }
-
-                    SourceLocation currentLocation = getCurrentSourceLocation();
-
-                    SourceLocation location = backStack.pop();
-                    EditorTab editorTab = findFileEditorTab(location.file);
-                    if (editorTab == null && location.file != null) {
-                        editorTab = openNewTab(location.file);
-                    }
-                    if (editorTab != null) {
-                        if (currentLocation != null) {
-                            forwardStack.push(currentLocation);
-                        }
-                        SourceEditor editor = editorTab.getEditor();
-                        shell.getDisplay().asyncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                StyledText styledText = editor.getStyledText();
-                                styledText.setCaretOffset(location.offset);
-                                styledText.setTopPixel(location.topPixel);
-                            }
-
-                        });
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-
-        toolItem = new ToolItem(toolBar, SWT.PUSH);
-        toolItem.setImage(ImageRegistry.getImageFromResources("arrow.png"));
-        toolItem.setToolTipText("Next edit location");
-        toolItem.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                try {
-                    if (forwardStack.isEmpty()) {
-                        return;
-                    }
-
-                    SourceLocation currentLocation = getCurrentSourceLocation();
-
-                    SourceLocation location = forwardStack.pop();
-                    EditorTab editorTab = findFileEditorTab(location.file);
-                    if (editorTab == null && location.file != null) {
-                        editorTab = openNewTab(location.file);
-                    }
-                    if (editorTab != null) {
-                        if (currentLocation != null) {
-                            backStack.push(currentLocation);
-                        }
-                        SourceEditor editor = editorTab.getEditor();
-                        shell.getDisplay().asyncExec(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                StyledText styledText = editor.getStyledText();
-                                styledText.setCaretOffset(location.offset);
-                                styledText.setTopPixel(location.topPixel);
-                            }
-
-                        });
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-
         final Menu menu = new Menu(toolBar);
 
         MenuItem item = new MenuItem(menu, SWT.PUSH);
         item.setText("Next Tab" + "\t");
-        item.setAccelerator(SWT.MOD1 + SWT.TAB);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2358,7 +2694,6 @@ public class SpinTools {
 
         item = new MenuItem(menu, SWT.PUSH);
         item.setText("Previous Tab" + "\t");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + SWT.TAB);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2368,6 +2703,37 @@ public class SpinTools {
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Close Editor" + "\t");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                closeCurrentEditor();
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Close All Editors" + "\t");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                e.display.asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (closeCurrentEditor()) {
+                            e.display.asyncExec(this);
+                        }
+                    }
+
+                });
             }
         });
 
@@ -2440,6 +2806,30 @@ public class SpinTools {
         Event event = new Event();
         event.item = tabFolder.getItem(index);
         tabFolder.notifyListeners(SWT.Selection, event);
+    }
+
+    boolean closeCurrentEditor() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem != null) {
+            int index = tabFolder.indexOf(tabItem);
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+            if (canCloseEditorTab(editorTab)) {
+                tabItem.dispose();
+                objectBrowser.setInput(null);
+                outlineViewContainer.setTopControl(null);
+                if (index >= tabFolder.getItemCount()) {
+                    index--;
+                }
+                if (index >= 0) {
+                    Event event = new Event();
+                    event.item = tabFolder.getItem(index);
+                    tabFolder.setSelection((CTabItem) event.item);
+                    tabFolder.notifyListeners(SWT.Selection, event);
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     boolean canCloseEditorTab(EditorTab editorTab) {

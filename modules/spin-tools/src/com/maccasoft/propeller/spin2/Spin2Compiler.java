@@ -51,9 +51,8 @@ public class Spin2Compiler extends Compiler {
 
     }
 
-    public Spin2Compiler(boolean caseSensitive, boolean debugEnabled) {
+    public Spin2Compiler(boolean caseSensitive) {
         super(caseSensitive);
-        this.debugEnabled = debugEnabled;
     }
 
     @Override

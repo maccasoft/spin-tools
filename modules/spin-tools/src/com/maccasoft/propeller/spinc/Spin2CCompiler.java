@@ -38,8 +38,8 @@ public class Spin2CCompiler extends Spin2Compiler {
 
     }
 
-    public Spin2CCompiler(boolean caseSensitive, boolean debugEnabled) {
-        super(caseSensitive, debugEnabled);
+    public Spin2CCompiler(boolean caseSensitive) {
+        super(caseSensitive);
     }
 
     @Override

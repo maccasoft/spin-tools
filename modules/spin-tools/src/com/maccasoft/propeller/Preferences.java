@@ -36,6 +36,7 @@ import com.maccasoft.propeller.model.VariablesNode;
 
 public class Preferences {
 
+    public static final String PROP_SHOW_TOOLBAR = "showToolbar";
     public static final String PROP_SHOW_BROWSER = "showBrowser";
     public static final String PROP_SHOW_OBJECT_BROWSER = "showObjectBrowser";
     public static final String PROP_ROOTS = "roots";
@@ -129,6 +130,7 @@ public class Preferences {
         public Bounds window;
         public Map<String, int[]> folderWeights;
 
+        public Boolean showToolbar;
         public Boolean showObjectBrowser;
 
         public Boolean showBrowser;
@@ -285,6 +287,16 @@ public class Preferences {
             return;
         }
         changeSupport.firePropertyChange(PROP_ROOTS, preferences.roots, preferences.roots = roots);
+    }
+
+    public boolean getShowToolbar() {
+        return preferences.showToolbar != null ? preferences.showToolbar : true;
+    }
+
+    public void setShowToolbar(boolean showToolbar) {
+        boolean oldValue = getShowToolbar();
+        preferences.showToolbar = showToolbar ? null : showToolbar;
+        changeSupport.firePropertyChange(PROP_SHOW_TOOLBAR, oldValue, showToolbar);
     }
 
     public boolean getShowObjectBrowser() {

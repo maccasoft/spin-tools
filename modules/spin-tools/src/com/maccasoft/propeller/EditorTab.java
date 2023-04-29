@@ -470,6 +470,8 @@ public class EditorTab implements FindReplaceTarget {
 
     }
 
+    boolean debug;
+
     final Runnable compilerRunnable = new Runnable() {
 
         @Override
@@ -504,7 +506,7 @@ public class EditorTab implements FindReplaceTarget {
                             compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
                         }
                         else if (tabItemText.toLowerCase().endsWith(".spin2")) {
-                            compiler = new Spin2Compiler(preferences.getSpin2CaseSensitiveSymbols(), sourcePool.isDebugEnabled());
+                            compiler = new Spin2Compiler(preferences.getSpin2CaseSensitiveSymbols());
                             compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
                         }
                         else if (tabItemText.toLowerCase().endsWith(".c")) {
@@ -523,7 +525,7 @@ public class EditorTab implements FindReplaceTarget {
                                                             compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
                                                         }
                                                         else if ("P2".equals(node.getToken(index).getText())) {
-                                                            compiler = new Spin2CCompiler(preferences.getSpin2CaseSensitiveSymbols(), sourcePool.isDebugEnabled());
+                                                            compiler = new Spin2CCompiler(preferences.getSpin2CaseSensitiveSymbols());
                                                             compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
                                                         }
                                                     }
@@ -541,6 +543,7 @@ public class EditorTab implements FindReplaceTarget {
                         }
                         if (compiler != null) {
                             compiler.setRemoveUnusedMethods(true);
+                            compiler.setDebugEnabled(debug || sourcePool.isDebugEnabled());
                             try {
                                 object = compiler.compile(localFile, root);
                                 objectTree = compiler.getObjectTree();
@@ -1082,12 +1085,29 @@ public class EditorTab implements FindReplaceTarget {
         }
     }
 
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
+
     void scheduleCompile() {
         pendingCompile.set(true);
         object = null;
         objectTree = null;
         tabItem.setFont(busyFont);
         Display.getDefault().timerExec(500, compilerRunnable);
+    }
+
+    void runCompile(boolean debug) {
+        this.debug = debug;
+        try {
+            pendingCompile.set(true);
+            object = null;
+            objectTree = null;
+            compilerRunnable.run();
+            waitCompile();
+        } finally {
+            this.debug = false;
+        }
     }
 
     public void formatSource() {

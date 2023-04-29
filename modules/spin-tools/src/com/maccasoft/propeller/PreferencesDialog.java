@@ -58,6 +58,7 @@ public class PreferencesDialog extends Dialog {
 
     Button showBrowser;
     PathList roots;
+    Button showToolbar;
     Button showObjectBrowser;
 
     Text editorFont;
@@ -91,6 +92,7 @@ public class PreferencesDialog extends Dialog {
     FontData defaultFont;
     Font fontBold;
 
+    boolean oldShowToolbar;
     boolean oldShowObjectBrowser;
     boolean oldShowBrowser;
     String oldEditorFont;
@@ -348,6 +350,7 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
+        oldShowToolbar = preferences.getShowToolbar();
         oldShowObjectBrowser = preferences.getShowObjectBrowser();
         oldShowBrowser = preferences.getShowBrowser();
         oldEditorFont = preferences.getEditorFont();
@@ -367,6 +370,19 @@ public class PreferencesDialog extends Dialog {
 
     void createGeneralPage(Composite parent) {
         Composite composite = createPage(parent, "General");
+
+        showToolbar = new Button(composite, SWT.CHECK);
+        showToolbar.setText("Show toolbar");
+        showToolbar.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
+        showToolbar.setSelection(preferences.getShowToolbar());
+        showToolbar.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                preferences.setShowToolbar(showToolbar.getSelection());
+            }
+
+        });
 
         showObjectBrowser = new Button(composite, SWT.CHECK);
         showObjectBrowser.setText("Show object browser");
@@ -851,6 +867,7 @@ public class PreferencesDialog extends Dialog {
 
     @Override
     protected void cancelPressed() {
+        preferences.setShowToolbar(oldShowToolbar);
         preferences.setShowObjectBrowser(oldShowObjectBrowser);
         preferences.setShowBrowser(oldShowBrowser);
 
