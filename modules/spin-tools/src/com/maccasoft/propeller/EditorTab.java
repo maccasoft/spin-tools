@@ -75,7 +75,6 @@ public class EditorTab implements FindReplaceTarget {
 
     Font busyFont;
 
-    ObjectBrowser objectBrowser;
     SourceTokenMarker tokenMarker;
 
     String tabItemText;
@@ -240,7 +239,7 @@ public class EditorTab implements FindReplaceTarget {
         public void refreshTokens(String text) {
             super.refreshTokens(text);
 
-            File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
+            File localFile = file != null ? file : new File(tabItemText);
             sourcePool.setParsedSource(localFile, getRoot());
         }
 
@@ -268,7 +267,7 @@ public class EditorTab implements FindReplaceTarget {
         public void refreshTokens(String text) {
             super.refreshTokens(text);
 
-            File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
+            File localFile = file != null ? file : new File(tabItemText);
             sourcePool.setParsedSource(localFile, getRoot());
         }
 
@@ -296,7 +295,7 @@ public class EditorTab implements FindReplaceTarget {
         public void refreshTokens(String text) {
             super.refreshTokens(text);
 
-            File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
+            File localFile = file != null ? file : new File(tabItemText);
             sourcePool.setParsedSource(localFile, getRoot());
         }
 
@@ -453,13 +452,19 @@ public class EditorTab implements FindReplaceTarget {
 
     private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(this);
 
-    public EditorTab(CTabFolder folder, String name, SourcePool sourcePool, ObjectBrowser objectBrowser) {
+    public EditorTab(CTabFolder folder, String name, SourcePool sourcePool) {
+        this(folder, null, name, sourcePool);
+    }
+
+    public EditorTab(CTabFolder folder, File file, SourcePool sourcePool) {
+        this(folder, file, file.getName(), sourcePool);
+    }
+
+    private EditorTab(CTabFolder folder, File file, String name, SourcePool sourcePool) {
+        this.file = file;
         this.tabItemText = name;
         this.sourcePool = sourcePool;
-        this.objectBrowser = objectBrowser;
         this.preferences = Preferences.getInstance();
-
-        objectBrowser.setInput(null);
 
         tabItem = new CTabItem(folder, SWT.NONE);
         tabItem.setShowClose(true);
@@ -471,20 +476,21 @@ public class EditorTab implements FindReplaceTarget {
 
         editor = new SourceEditor(folder);
 
+        File localFile = this.file != null ? this.file : new File(tabItemText);
         if (tabItemText.toLowerCase().endsWith(".spin")) {
             tokenMarker = new Spin1TokenMarkerAdatper();
             tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
-            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", new File(""), ".spin"));
+            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", localFile.getParentFile(), ".spin"));
         }
         else if (tabItemText.toLowerCase().endsWith(".spin2")) {
             tokenMarker = new Spin2TokenMarkerAdatper();
             tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
-            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", new File(""), ".spin2"));
+            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", localFile.getParentFile(), ".spin2"));
         }
         else if (tabItemText.toLowerCase().endsWith(".c")) {
             tokenMarker = new CTokenMarkerAdatper();
             tokenMarker.setCaseSensitive(true);
-            editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", new File(""), ".spin2"));
+            editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", localFile.getParentFile(), ".spin2"));
         }
         editor.setTokenMarker(tokenMarker);
 
@@ -566,7 +572,7 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     public void setFile(File file) {
-        File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
+        File localFile = this.file != null ? this.file : new File(tabItemText);
         sourcePool.removeParsedSource(localFile);
 
         this.file = file;
@@ -574,16 +580,17 @@ public class EditorTab implements FindReplaceTarget {
         if (tabItemText.toLowerCase().endsWith(".spin")) {
             tokenMarker = new Spin1TokenMarkerAdatper();
             tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
-            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", new File(""), ".spin"));
+            editor.setHelpProvider(new EditorHelp("Spin1Instructions.xml", localFile.getParentFile(), ".spin"));
         }
         else if (tabItemText.toLowerCase().endsWith(".spin2")) {
             tokenMarker = new Spin2TokenMarkerAdatper();
             tokenMarker.setCaseSensitive(preferences.getSpin2CaseSensitiveSymbols());
-            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", new File(""), ".spin2"));
+            editor.setHelpProvider(new EditorHelp("Spin2Instructions.xml", localFile.getParentFile(), ".spin2"));
         }
         else if (tabItemText.toLowerCase().endsWith(".c")) {
             tokenMarker = new CTokenMarkerAdatper();
             tokenMarker.setCaseSensitive(true);
+            editor.setHelpProvider(new EditorHelp("Spin2CInstructions.xml", localFile.getParentFile(), ".spin2"));
         }
         editor.setTokenMarker(tokenMarker);
 
@@ -951,7 +958,7 @@ public class EditorTab implements FindReplaceTarget {
             @Override
             public void run() {
                 try {
-                    while (threadRunning.get() && pendingCompile.get()) {
+                    while (threadRunning.get() || pendingCompile.get()) {
                         if (stop.get()) {
                             break;
                         }

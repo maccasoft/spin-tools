@@ -325,14 +325,14 @@ public class SourceEditor {
         }
     };
 
-    final Runnable refreshViewRunnable = new Runnable() {
+    final Runnable refreshOutlineRunnable = new Runnable() {
 
         @Override
         public void run() {
-            if (styledText == null || styledText.isDisposed()) {
+            if (outline == null || outline.getControl().isDisposed()) {
                 return;
             }
-            styledText.redraw();
+            outline.setInput(tokenMarker.getRoot());
         }
     };
 
@@ -609,8 +609,7 @@ public class SourceEditor {
                     if (modified) {
                         try {
                             tokenMarker.refreshTokens(styledText.getText());
-                            outline.setInput(tokenMarker.getRoot());
-                            //display.timerExec(500, refreshViewRunnable);
+                            display.timerExec(250, refreshOutlineRunnable);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

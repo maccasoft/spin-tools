@@ -30,6 +30,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.model.ConstantNode;
@@ -426,6 +427,10 @@ public class OutlineView {
             }
         }
         viewer.setSelection(selection, true);
+    }
+
+    public Control getControl() {
+        return viewer.getControl();
     }
 
     public TreeViewer getViewer() {

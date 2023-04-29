@@ -273,7 +273,7 @@ public class SpinTools {
             if (fileToOpen.exists() && !fileToOpen.isDirectory()) {
                 EditorTab editorTab = findFileEditorTab(fileToOpen);
                 if (editorTab == null) {
-                    editorTab = openNewTab(fileToOpen, true);
+                    editorTab = openNewTab(fileToOpen);
                 }
                 return editorTab;
             }
@@ -390,7 +390,7 @@ public class SpinTools {
                     if (name.endsWith(".spin") || name.endsWith(".spin2")) {
                         EditorTab editorTab = findFileEditorTab(fileToOpen);
                         if (editorTab == null) {
-                            openNewTab(fileToOpen, true);
+                            openNewTab(fileToOpen);
                         }
                     }
                 }
@@ -430,7 +430,7 @@ public class SpinTools {
                     if (name.endsWith(".spin") || name.endsWith(".spin2") || name.endsWith(".c")) {
                         EditorTab editorTab = findFileEditorTab(fileToOpen);
                         if (editorTab == null) {
-                            openNewTab(fileToOpen, true);
+                            openNewTab(fileToOpen);
                         }
                     }
                 }
@@ -580,9 +580,8 @@ public class SpinTools {
 
                                 @Override
                                 public void run() {
-                                    EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool, objectBrowser);
+                                    EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
                                     editorTab.setEditorText(text);
-                                    editorTab.setFile(fileToOpen);
                                     editorTab.addCaretListener(caretListener);
                                     editorTab.addOpenListener(openListener);
                                     editorTab.addPropertyChangeListener(editorChangeListener);
@@ -652,7 +651,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 String name = getUniqueName("Untitled", ".c");
-                openNewTab(name, getResourceAsString("template1.c"), true);
+                openNewTab(name, getResourceAsString("template1.c"));
             }
         });
 
@@ -664,7 +663,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 String name = getUniqueName("Untitled", ".spin");
-                openNewTab(name, getResourceAsString("template.spin"), true);
+                openNewTab(name, getResourceAsString("template.spin"));
             }
         });
 
@@ -676,7 +675,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 String name = getUniqueName("Untitled", ".c");
-                openNewTab(name, getResourceAsString("template2.c"), true);
+                openNewTab(name, getResourceAsString("template2.c"));
             }
         });
 
@@ -688,7 +687,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 String name = getUniqueName("Untitled", ".spin2");
-                openNewTab(name, getResourceAsString("template.spin2"), true);
+                openNewTab(name, getResourceAsString("template.spin2"));
             }
         });
 
@@ -928,7 +927,7 @@ public class SpinTools {
                     }
                     EditorTab editorTab = findFileEditorTab(fileToOpen);
                     if (editorTab == null) {
-                        editorTab = openNewTab(fileToOpen, true);
+                        editorTab = openNewTab(fileToOpen);
                     }
                     tabFolder.setSelection(editorTab.getTabItem());
                 }
@@ -949,7 +948,7 @@ public class SpinTools {
         }
 
         String name = getUniqueName("Untitled", suffix);
-        openNewTab(name, "", true);
+        openNewTab(name, "");
     }
 
     String getUniqueName(String prefix, String suffix) {
@@ -1015,7 +1014,7 @@ public class SpinTools {
             File fileToOpen = new File(fileName);
             EditorTab editorTab = findFileEditorTab(fileToOpen);
             if (editorTab == null) {
-                editorTab = openNewTab(new File(fileName), true);
+                editorTab = openNewTab(new File(fileName));
             }
             tabFolder.setSelection(editorTab.getTabItem());
         }
@@ -1037,14 +1036,14 @@ public class SpinTools {
             File fileToOpen = new File(fileName);
             EditorTab editorTab = findFileEditorTab(fileToOpen);
             if (editorTab == null) {
-                editorTab = openNewTab(new File(fileName), true);
+                editorTab = openNewTab(new File(fileName));
             }
             tabFolder.setSelection(editorTab.getTabItem());
         }
     }
 
-    EditorTab openNewTab(File fileToOpen, boolean select) {
-        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen.getName(), sourcePool, objectBrowser);
+    EditorTab openNewTab(File fileToOpen) {
+        EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
 
         preferences.addToLru(fileToOpen);
 
@@ -1059,12 +1058,9 @@ public class SpinTools {
             @Override
             public void run() {
                 try {
+                    tabFolder.setSelection(tabFolder.getItemCount() - 1);
                     editorTab.setEditorText(FileUtils.loadFromFile(fileToOpen));
-                    editorTab.setFile(fileToOpen);
-                    if (select) {
-                        tabFolder.setSelection(tabFolder.getItemCount() - 1);
-                        editorTab.setFocus();
-                    }
+                    editorTab.setFocus();
                     updateCaretPosition();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1076,8 +1072,8 @@ public class SpinTools {
         return editorTab;
     }
 
-    EditorTab openNewTab(String name, String text, boolean select) {
-        EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool, objectBrowser);
+    EditorTab openNewTab(String name, String text) {
+        EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
 
         editorTab.addCaretListener(caretListener);
         editorTab.addOpenListener(openListener);
@@ -1090,11 +1086,9 @@ public class SpinTools {
             @Override
             public void run() {
                 try {
+                    tabFolder.setSelection(tabFolder.getItemCount() - 1);
                     editorTab.setEditorText(text);
-                    if (select) {
-                        tabFolder.setSelection(tabFolder.getItemCount() - 1);
-                        editorTab.setFocus();
-                    }
+                    editorTab.setFocus();
                     updateCaretPosition();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -2243,7 +2237,7 @@ public class SpinTools {
                     SourceLocation location = backStack.pop();
                     EditorTab editorTab = findFileEditorTab(location.file);
                     if (editorTab == null && location.file != null) {
-                        editorTab = openNewTab(location.file, true);
+                        editorTab = openNewTab(location.file);
                     }
                     if (editorTab != null) {
                         if (currentLocation != null) {
@@ -2284,7 +2278,7 @@ public class SpinTools {
                     SourceLocation location = forwardStack.pop();
                     EditorTab editorTab = findFileEditorTab(location.file);
                     if (editorTab == null && location.file != null) {
-                        editorTab = openNewTab(location.file, true);
+                        editorTab = openNewTab(location.file);
                     }
                     if (editorTab != null) {
                         if (currentLocation != null) {
