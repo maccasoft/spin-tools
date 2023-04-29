@@ -2199,7 +2199,7 @@ public class SourceEditor {
         openListeners.remove(listener);
     }
 
-    protected void fireNavigateToEvent(final SourceElement element) {
+    public void fireNavigateToEvent(final SourceElement element) {
         for (SourceListener l : openListeners) {
             SafeRunnable.run(new SafeRunnable() {
                 @Override

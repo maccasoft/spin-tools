@@ -166,7 +166,7 @@ public class EditorTab implements FindReplaceTarget {
 
                     @Override
                     public void run() {
-                        editor.goToLineColumn(line, column);
+                        editor.fireNavigateToEvent(new SourceElement(null, line, column));
                     }
 
                 });
