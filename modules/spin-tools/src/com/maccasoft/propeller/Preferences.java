@@ -115,6 +115,9 @@ public class Preferences {
     public static class SerializedPreferences {
 
         public SerializedPreferences() {
+            folderWeights = new HashMap<>();
+            lru = new ArrayList<>();
+
             showLineNumbers = true;
             showIndentLines = true;
             showEditorOutline = true;
@@ -124,7 +127,7 @@ public class Preferences {
         }
 
         public Bounds window;
-        public int[] weights;
+        public Map<String, int[]> folderWeights;
 
         public Boolean showObjectBrowser;
 
@@ -143,7 +146,7 @@ public class Preferences {
         public String[] spin2LibraryPath;
         public boolean spin2CaseSensitiveSymbols;
         public boolean spin2ClockSetter;
-        public List<String> lru = new ArrayList<String>();
+        public List<String> lru;
 
         public boolean reloadOpenTabs;
         public Map<String, int[]> sectionTabStops;
@@ -239,12 +242,12 @@ public class Preferences {
         preferences.window = new Bounds(rect.x, rect.y, rect.width, rect.height);
     }
 
-    public int[] getWeights() {
-        return preferences.weights;
+    public int[] getWeights(String key) {
+        return preferences.folderWeights.get(key);
     }
 
-    public void setWeights(int[] weights) {
-        preferences.weights = weights;
+    public void setWeights(String key, int[] weights) {
+        preferences.folderWeights.put(key, weights);
     }
 
     public boolean getShowBrowser() {

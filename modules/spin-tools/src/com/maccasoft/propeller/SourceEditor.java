@@ -26,9 +26,6 @@ import org.eclipse.jface.fieldassist.IContentProposalProvider;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.jface.util.SafeRunnable;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CaretEvent;
@@ -38,7 +35,6 @@ import org.eclipse.swt.custom.LineBackgroundListener;
 import org.eclipse.swt.custom.LineStyleEvent;
 import org.eclipse.swt.custom.LineStyleListener;
 import org.eclipse.swt.custom.ST;
-import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.TextChangeListener;
@@ -111,10 +107,8 @@ public class SourceEditor {
     private static final int CURRENT_CHANGE_TIMER_EXPIRE = 500;
 
     Display display;
-    SashForm sashForm;
     Composite container;
     LineNumbersRuler ruler;
-    OutlineView outline;
     StyledText styledText;
     OverviewRuler overview;
 
@@ -193,144 +187,6 @@ public class SourceEditor {
                 currentLine = line;
                 styledText.redraw(0, styledText.getLinePixel(currentLine), r.width, styledText.getLineHeight(), false);
             }
-            display.timerExec(250, outlineSyncRunnable);
-        }
-    };
-
-    final Runnable outlineSyncRunnable = new Runnable() {
-
-        @Override
-        public void run() {
-            if (styledText.isDisposed()) {
-                return;
-            }
-            int caretOffset = styledText.getCaretOffset();
-            int line = styledText.getLineAtOffset(caretOffset);
-            Node selection = getCaretNode(caretOffset, line);
-            outline.removeSelectionChangedListener(outlineSelectionListener);
-            try {
-                if (selection instanceof DirectiveNode) {
-                    proposalAdapter.setAutoActivationCharacters(new char[] {
-                        '"', '<'
-                    });
-                }
-                else {
-                    proposalAdapter.setAutoActivationCharacters(new char[] {
-                        '.', '#', '@'
-                    });
-                }
-                outline.setSelection(selection != null ? new StructuredSelection(selection) : StructuredSelection.EMPTY);
-            } finally {
-                outline.addSelectionChangedListener(outlineSelectionListener);
-            }
-        }
-
-        Node getCaretNode(int offset, int line) {
-            Node selection = null;
-
-            Node root = tokenMarker.getRoot();
-            if (root != null) {
-                for (Node node : root.getChilds()) {
-                    if (node.getStartToken() == null) {
-                        continue;
-                    }
-                    int start = node.getStartToken().start - node.getStartToken().column;
-                    if ((node instanceof MethodNode) || (node instanceof FunctionNode)) {
-                        if (offset < start) {
-                            return selection;
-                        }
-                        selection = node;
-                    }
-                    else if (node instanceof DataNode) {
-                        if (offset < start) {
-                            return selection;
-                        }
-                        selection = node;
-                        for (Node child : node.getChilds()) {
-                            Token token = child.getStartToken();
-                            if (token != null) {
-                                start = token.start - token.column;
-                                if (offset < start) {
-                                    return selection;
-                                }
-                                if (child instanceof DataLineNode) {
-                                    DataLineNode dataLine = (DataLineNode) child;
-                                    if (dataLine.label != null && !dataLine.label.getText().startsWith(".")) {
-                                        selection = child;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else {
-                        if (offset < start) {
-                            return selection;
-                        }
-                        selection = node;
-
-                        int childLine = -1;
-                        Node childSelection = selection;
-                        for (Node child : node.getChilds()) {
-                            Token token = child.getStartToken();
-                            if (token != null) {
-                                start = token.start;
-                                if (token.line != childLine) {
-                                    start -= token.column;
-                                    childLine = token.line;
-                                }
-                                if (offset < start) {
-                                    return childSelection;
-                                }
-                                childSelection = child;
-                            }
-                        }
-
-                        if (line == childSelection.getStartToken().line) {
-                            return childSelection;
-                        }
-                    }
-                }
-            }
-
-            return selection;
-        }
-
-    };
-
-    final ISelectionChangedListener outlineSelectionListener = new ISelectionChangedListener() {
-
-        @Override
-        public void selectionChanged(SelectionChangedEvent event) {
-            Node node = (Node) event.getStructuredSelection().getFirstElement();
-            if (node != null) {
-                int offset = node.getStartIndex();
-                if (offset == -1) {
-                    offset = 0;
-                }
-                int line = styledText.getLineAtOffset(offset);
-                int column = offset - styledText.getOffsetAtLine(line);
-                SourceElement element = new SourceElement(null, line, column);
-                display.asyncExec(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        fireNavigateToEvent(element);
-                    }
-
-                });
-                styledText.setFocus();
-            }
-        }
-    };
-
-    final Runnable refreshOutlineRunnable = new Runnable() {
-
-        @Override
-        public void run() {
-            if (outline == null || outline.getControl().isDisposed()) {
-                return;
-            }
-            outline.setInput(tokenMarker.getRoot());
         }
     };
 
@@ -360,10 +216,6 @@ public class SourceEditor {
                     showIndentLines = (Boolean) evt.getNewValue();
                     styledText.redraw();
                     break;
-                case Preferences.PROP_SHOW_EDITOR_OUTLINE:
-                    outline.setVisible((Boolean) evt.getNewValue());
-                    sashForm.layout(true);
-                    break;
                 case Preferences.PROP_SHOW_SECTIONS_BACKGROUND:
                     styledText.redraw();
                     break;
@@ -385,9 +237,7 @@ public class SourceEditor {
         display = parent.getDisplay();
         preferences = Preferences.getInstance();
 
-        sashForm = new SashForm(parent, SWT.HORIZONTAL);
-
-        container = new Composite(sashForm, SWT.NO_FOCUS);
+        container = new Composite(parent, SWT.NO_FOCUS);
         GridLayout containerLayout = new GridLayout(3, false);
         containerLayout.horizontalSpacing = 1;
         containerLayout.marginWidth = containerLayout.marginHeight = 0;
@@ -444,14 +294,6 @@ public class SourceEditor {
 
         overview = new OverviewRuler(container);
         overview.setStyledText(styledText);
-
-        outline = new OutlineView(sashForm);
-        outline.addSelectionChangedListener(outlineSelectionListener);
-        outline.setVisible(preferences.getShowEditorOutline());
-
-        sashForm.setWeights(new int[] {
-            8000, 2000
-        });
 
         Font textFont = JFaceResources.getTextFont();
         FontData fontData = textFont.getFontData()[0];
@@ -607,7 +449,6 @@ public class SourceEditor {
                     if (modified) {
                         try {
                             tokenMarker.refreshTokens(styledText.getText());
-                            display.timerExec(250, refreshOutlineRunnable);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -1687,7 +1528,7 @@ public class SourceEditor {
     }
 
     public Control getControl() {
-        return sashForm;
+        return container;
     }
 
     public StyledText getStyledText() {
@@ -2348,10 +2189,6 @@ public class SourceEditor {
         g += (int) (g / 100.0 * percent);
         b += (int) (b / 100.0 * percent);
         return ColorRegistry.getColor(r, g, b);
-    }
-
-    public OutlineView getOutline() {
-        return outline;
     }
 
     public void addSourceListener(SourceListener listener) {

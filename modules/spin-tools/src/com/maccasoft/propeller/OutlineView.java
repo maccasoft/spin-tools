@@ -18,9 +18,11 @@ import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.ITreeViewerListener;
 import org.eclipse.jface.viewers.OwnerDrawLabelProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
+import org.eclipse.jface.viewers.TreeExpansionEvent;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.ViewerCell;
@@ -361,6 +363,23 @@ public class OutlineView {
         viewer.setContentProvider(contentProvider);
         viewer.setLabelProvider(labelProvider);
         viewer.setComparer(elementComparer);
+        viewer.addTreeListener(new ITreeViewerListener() {
+
+            @Override
+            public void treeExpanded(TreeExpansionEvent event) {
+                if (event.getElement() instanceof Node) {
+                    ((Node) event.getElement()).setData("__treeExpanded__", true);
+                }
+            }
+
+            @Override
+            public void treeCollapsed(TreeExpansionEvent event) {
+                if (event.getElement() instanceof Node) {
+                    ((Node) event.getElement()).setData("__treeExpanded__", false);
+                }
+            }
+
+        });
 
         FontData[] fd = viewer.getControl().getFont().getFontData();
         fd[0].setStyle(SWT.BOLD);
@@ -404,6 +423,12 @@ public class OutlineView {
             Object[] expandedElements = viewer.getExpandedElements();
             viewer.setInput(node);
             viewer.setExpandedElements(expandedElements);
+            for (Node child : node.getChilds()) {
+                Boolean expanded = (Boolean) child.getData("__treeExpanded__");
+                if (expanded != null) {
+                    viewer.setExpandedState(child, expanded.booleanValue());
+                }
+            }
         } finally {
             viewer.getTree().setRedraw(true);
         }

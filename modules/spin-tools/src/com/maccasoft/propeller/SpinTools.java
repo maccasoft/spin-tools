@@ -89,6 +89,7 @@ import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.InternalErrorDialog;
+import com.maccasoft.propeller.internal.StackContainer;
 import com.maccasoft.propeller.internal.TempDirectory;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ObjectNode;
@@ -109,11 +110,16 @@ public class SpinTools {
     static final File defaultSpin2Examples = new File(System.getProperty("APP_DIR"), "examples/P2").getAbsoluteFile();
 
     Shell shell;
+
+    SashForm sashForm;
     SashForm browserSashForm;
+    SashForm editorSashForm;
+
     ObjectBrowser objectBrowser;
     FileBrowser fileBrowser;
-    SashForm sashForm;
     CTabFolder tabFolder;
+    StackContainer outlineViewContainer;
+
     StatusLine statusLine;
 
     MenuItem blockSelectionItem;
@@ -261,6 +267,10 @@ public class SpinTools {
                     browserSashForm.setVisible(objectBrowser.getVisible() || fileBrowser.getVisible());
                     sashForm.layout(true, true);
                     break;
+                case Preferences.PROP_SHOW_EDITOR_OUTLINE:
+                    outlineViewContainer.setVisible((Boolean) evt.getNewValue());
+                    sashForm.layout(true, true);
+                    break;
                 case Preferences.PROP_ROOTS:
                     fileBrowser.setVisiblePaths((String[]) evt.getNewValue());
                     break;
@@ -276,7 +286,6 @@ public class SpinTools {
             if (tabItem == null || tabItem.getData() != evt.getSource()) {
                 return;
             }
-            //EditorTab editorTab = (EditorTab) tabItem.getData();
             switch (evt.getPropertyName()) {
                 case EditorTab.OBJECT_TREE:
                     objectBrowser.setInput((ObjectTree) evt.getNewValue());
@@ -312,7 +321,8 @@ public class SpinTools {
         sashForm.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         browserSashForm = new SashForm(sashForm, SWT.VERTICAL);
-        browserSashForm.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+        editorSashForm = new SashForm(sashForm, SWT.HORIZONTAL);
 
         objectBrowser = new ObjectBrowser(browserSashForm);
         objectBrowser.setVisible(preferences.getShowObjectBrowser());
@@ -320,21 +330,25 @@ public class SpinTools {
         fileBrowser = new FileBrowser(browserSashForm);
         fileBrowser.setVisible(preferences.getShowBrowser());
 
-        browserSashForm.setWeights(new int[] {
-            2000, 8000
-        });
-
-        tabFolder = new CTabFolder(sashForm, SWT.BORDER);
+        tabFolder = new CTabFolder(editorSashForm, SWT.BORDER);
         tabFolder.setMaximizeVisible(false);
         tabFolder.setMinimizeVisible(false);
 
-        int[] weights = preferences.getWeights();
-        if (weights == null) {
-            weights = new int[] {
-                2000, 8000
-            };
-        }
-        sashForm.setWeights(weights);
+        outlineViewContainer = new StackContainer(editorSashForm, SWT.BORDER);
+        outlineViewContainer.setVisible(preferences.getShowEditorOutline());
+
+        int[] weights = preferences.getWeights("sashForm");
+        sashForm.setWeights(weights != null ? weights : new int[] {
+            200, 800
+        });
+        weights = preferences.getWeights("browserSashForm");
+        browserSashForm.setWeights(weights != null ? weights : new int[] {
+            200, 800
+        });
+        weights = preferences.getWeights("editorSashForm");
+        editorSashForm.setWeights(weights != null ? weights : new int[] {
+            750, 250
+        });
 
         objectBrowser.addOpenListener(openListener);
 
@@ -381,10 +395,11 @@ public class SpinTools {
 
             @Override
             public void close(CTabFolderEvent event) {
-                EditorTab tab = (EditorTab) event.item.getData();
-                event.doit = canCloseEditorTab(tab);
+                EditorTab editorTab = (EditorTab) event.item.getData();
+                event.doit = canCloseEditorTab(editorTab);
                 if (event.doit && event.item == tabFolder.getSelection()) {
                     objectBrowser.setInput(null);
+                    outlineViewContainer.setTopControl(null);
                 }
             }
         });
@@ -398,6 +413,9 @@ public class SpinTools {
 
                     EditorTab editorTab = (EditorTab) tabItem.getData();
                     objectBrowser.setInput(editorTab.getObjectTree());
+
+                    outlineViewContainer.setTopControl(editorTab.getOutlineView().getControl());
+
                     if (findReplaceDialog != null) {
                         findReplaceDialog.setTarget(editorTab);
                     }
@@ -462,7 +480,9 @@ public class SpinTools {
             public void widgetDisposed(DisposeEvent e) {
                 try {
                     preferences.setWindowBounds(shell.getBounds());
-                    preferences.setWeights(sashForm.getWeights());
+                    preferences.setWeights("sashForm", sashForm.getWeights());
+                    preferences.setWeights("browserSashForm", browserSashForm.getWeights());
+                    preferences.setWeights("editorSashForm", editorSashForm.getWeights());
 
                     List<String> openTabs = new ArrayList<String>();
                     for (int i = 0; i < tabFolder.getItemCount(); i++) {
@@ -503,11 +523,15 @@ public class SpinTools {
                                 @Override
                                 public void run() {
                                     EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
+
+                                    OutlineView outlineView = new OutlineView(outlineViewContainer.getContainer());
+                                    outlineView.addOpenListener(openListener);
+                                    editorTab.setOutlineView(outlineView);
+
                                     editorTab.setEditorText(text);
                                     editorTab.addCaretListener(caretListener);
                                     editorTab.addPropertyChangeListener(editorChangeListener);
                                     editorTab.getEditor().addSourceListener(sourceListener);
-                                    editorTab.getEditor().getOutline().addOpenListener(openListener);
                                     blockSelectionItem.setSelection(editorTab.isBlockSelection());
                                 }
 
@@ -529,10 +553,10 @@ public class SpinTools {
                             if (tabFolder.getItemCount() != 0) {
                                 tabFolder.setSelection(0);
 
-                                EditorTab tab = (EditorTab) tabFolder.getItem(0).getData();
-                                tab.setFocus();
+                                EditorTab editorTab = (EditorTab) tabFolder.getItem(0).getData();
+                                outlineViewContainer.setTopControl(editorTab.getOutlineView().getControl());
+                                editorTab.setFocus();
                                 updateCaretPosition();
-                                //selection = tab.getFile();
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -1046,14 +1070,18 @@ public class SpinTools {
     EditorTab openNewTab(File fileToOpen) {
         EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
 
+        OutlineView outlineView = new OutlineView(outlineViewContainer.getContainer());
+        outlineView.addOpenListener(openListener);
+        editorTab.setOutlineView(outlineView);
+
         preferences.addToLru(fileToOpen);
 
         editorTab.addCaretListener(caretListener);
         editorTab.addPropertyChangeListener(editorChangeListener);
         editorTab.getEditor().addSourceListener(sourceListener);
-        editorTab.getEditor().getOutline().addOpenListener(openListener);
 
         blockSelectionItem.setSelection(editorTab.isBlockSelection());
+        objectBrowser.setInput(null);
 
         tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -1061,6 +1089,7 @@ public class SpinTools {
             public void run() {
                 try {
                     tabFolder.setSelection(tabFolder.getItemCount() - 1);
+                    outlineViewContainer.setTopControl(editorTab.getOutlineView().getControl());
                     editorTab.setEditorText(FileUtils.loadFromFile(fileToOpen));
                     editorTab.setFocus();
                     updateCaretPosition();
@@ -1077,12 +1106,16 @@ public class SpinTools {
     EditorTab openNewTab(String name, String text) {
         EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
 
+        OutlineView outlineView = new OutlineView(outlineViewContainer.getContainer());
+        outlineView.addOpenListener(openListener);
+        editorTab.setOutlineView(outlineView);
+
         editorTab.addCaretListener(caretListener);
         editorTab.addPropertyChangeListener(editorChangeListener);
         editorTab.getEditor().addSourceListener(sourceListener);
-        editorTab.getEditor().getOutline().addOpenListener(openListener);
 
         blockSelectionItem.setSelection(editorTab.isBlockSelection());
+        objectBrowser.setInput(null);
 
         tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -1090,6 +1123,7 @@ public class SpinTools {
             public void run() {
                 try {
                     tabFolder.setSelection(tabFolder.getItemCount() - 1);
+                    outlineViewContainer.setTopControl(editorTab.getOutlineView().getControl());
                     editorTab.setEditorText(text);
                     editorTab.setFocus();
                     updateCaretPosition();

@@ -622,7 +622,7 @@ public class PreferencesDialog extends Dialog {
         new Label(composite, SWT.NONE);
 
         showEditorOutline = new Button(composite, SWT.CHECK);
-        showEditorOutline.setText("Show editor outline");
+        showEditorOutline.setText("Show outline");
         showEditorOutline.setSelection(preferences.getShowEditorOutline());
         showEditorOutline.addSelectionListener(new SelectionAdapter() {
 

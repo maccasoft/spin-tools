@@ -25,9 +25,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.ITreeViewerListener;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.TreeExpansionEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
+import org.eclipse.swt.custom.CaretEvent;
 import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
@@ -45,12 +51,15 @@ import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.ConstantsNode;
+import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.DirectiveNode;
+import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.SourceProvider;
+import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Formatter;
@@ -70,6 +79,7 @@ public class EditorTab implements FindReplaceTarget {
 
     File file;
     SourceEditor editor;
+    OutlineView outlineView;
     CTabItem tabItem;
 
     Font busyFont;
@@ -136,6 +146,138 @@ public class EditorTab implements FindReplaceTarget {
                 scheduleCompile();
                 return;
             }
+        }
+
+    };
+
+    final ISelectionChangedListener outlineSelectionChangeListener = new ISelectionChangedListener() {
+
+        @Override
+        public void selectionChanged(SelectionChangedEvent event) {
+            Node node = (Node) event.getStructuredSelection().getFirstElement();
+            if (node != null) {
+                int offset = node.getStartIndex();
+                if (offset == -1) {
+                    offset = 0;
+                }
+                int line = editor.getStyledText().getLineAtOffset(offset);
+                int column = offset - editor.getStyledText().getOffsetAtLine(line);
+                Display.getDefault().asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        editor.goToLineColumn(line, column);
+                    }
+
+                });
+                setFocus();
+            }
+        }
+    };
+
+    final ITreeViewerListener outlineTreeListener = new ITreeViewerListener() {
+
+        @Override
+        public void treeExpanded(TreeExpansionEvent event) {
+            setFocus();
+        }
+
+        @Override
+        public void treeCollapsed(TreeExpansionEvent event) {
+            setFocus();
+        }
+
+    };
+
+    final Runnable outlineUpdateRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            if (outlineView.getControl().isDisposed()) {
+                return;
+            }
+            StyledText styledText = editor.getStyledText();
+            int offset = styledText.getCaretOffset();
+            int y = styledText.getLineAtOffset(offset);
+            Node root = tokenMarker.getRoot();
+            if (root != null) {
+                Node selection = getCaretNode(root, offset, y);
+                if (selection != null) {
+                    outlineView.removeSelectionChangedListener(outlineSelectionChangeListener);
+                    try {
+                        outlineView.setSelection(new StructuredSelection(selection));
+                    } finally {
+                        outlineView.addSelectionChangedListener(outlineSelectionChangeListener);
+                    }
+                }
+            }
+        }
+
+        Node getCaretNode(Node root, int offset, int line) {
+            Node selection = null;
+
+            for (Node node : root.getChilds()) {
+                if (node.getStartToken() == null) {
+                    continue;
+                }
+                int start = node.getStartToken().start - node.getStartToken().column;
+                if ((node instanceof MethodNode) || (node instanceof FunctionNode)) {
+                    if (offset < start) {
+                        return selection;
+                    }
+                    selection = node;
+                }
+                else if (node instanceof DataNode) {
+                    if (offset < start) {
+                        return selection;
+                    }
+                    selection = node;
+                    for (Node child : node.getChilds()) {
+                        Token token = child.getStartToken();
+                        if (token != null) {
+                            start = token.start - token.column;
+                            if (offset < start) {
+                                return selection;
+                            }
+                            if (child instanceof DataLineNode) {
+                                DataLineNode dataLine = (DataLineNode) child;
+                                if (dataLine.label != null && !dataLine.label.getText().startsWith(".")) {
+                                    selection = child;
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    if (offset < start) {
+                        return selection;
+                    }
+                    selection = node;
+
+                    int childLine = -1;
+                    Node childSelection = selection;
+                    for (Node child : node.getChilds()) {
+                        Token token = child.getStartToken();
+                        if (token != null) {
+                            start = token.start;
+                            if (token.line != childLine) {
+                                start -= token.column;
+                                childLine = token.line;
+                            }
+                            if (offset < start) {
+                                return childSelection;
+                            }
+                            childSelection = child;
+                        }
+                    }
+
+                    if (line == childSelection.getStartToken().line) {
+                        return childSelection;
+                    }
+                }
+            }
+
+            return selection;
         }
 
     };
@@ -340,6 +482,15 @@ public class EditorTab implements FindReplaceTarget {
 
                 File localFile = file != null ? file : new File(tabItemText);
                 Node root = sourcePool.getParsedSource(localFile);
+                Display.getDefault().asyncExec(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        if (outlineView != null && !outlineView.getControl().isDisposed()) {
+                            outlineView.setInput(root);
+                        }
+                    }
+                });
 
                 Thread thread = new Thread(new Runnable() {
 
@@ -503,6 +654,14 @@ public class EditorTab implements FindReplaceTarget {
                 }
             }
         });
+        editor.getStyledText().addCaretListener(new CaretListener() {
+
+            @Override
+            public void caretMoved(CaretEvent event) {
+                Display.getDefault().timerExec(250, outlineUpdateRunnable);
+            }
+
+        });
 
         sourcePool.addPropertyChangeListener(sourcePoolChangeListener);
         preferences.addPropertyChangeListener(preferencesChangeListener);
@@ -553,6 +712,22 @@ public class EditorTab implements FindReplaceTarget {
 
     public void removeDisposeListener(DisposeListener listener) {
         editor.getControl().removeDisposeListener(listener);
+    }
+
+    public OutlineView getOutlineView() {
+        return outlineView;
+    }
+
+    public void setOutlineView(OutlineView outlineView) {
+        if (this.outlineView != null) {
+            this.outlineView.removeSelectionChangedListener(outlineSelectionChangeListener);
+            this.outlineView.getViewer().removeTreeListener(outlineTreeListener);
+        }
+        this.outlineView = outlineView;
+        if (this.outlineView != null) {
+            this.outlineView.addSelectionChangedListener(outlineSelectionChangeListener);
+            this.outlineView.getViewer().addTreeListener(outlineTreeListener);
+        }
     }
 
     void updateTabItemText() {
