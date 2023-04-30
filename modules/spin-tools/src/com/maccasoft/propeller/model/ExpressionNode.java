@@ -20,9 +20,4 @@ public class ExpressionNode extends Node {
         super(parent);
     }
 
-    @Override
-    public void accept(NodeVisitor visitor) {
-        visitor.visitExpression(this);
-    }
-
 }

@@ -24,8 +24,8 @@ public class NodeVisitor {
         return true;
     }
 
-    public boolean visitConstant(ConstantNode node) {
-        return true;
+    public void visitConstant(ConstantNode node) {
+
     }
 
     public boolean visitVariables(VariablesNode node) {
@@ -61,10 +61,6 @@ public class NodeVisitor {
     }
 
     public void visitDataLine(DataLineNode node) {
-
-    }
-
-    public void visitExpression(ExpressionNode node) {
 
     }
 

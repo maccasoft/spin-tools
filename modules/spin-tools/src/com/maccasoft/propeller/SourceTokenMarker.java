@@ -154,7 +154,6 @@ public abstract class SourceTokenMarker {
     protected String constantSeparator;
 
     protected Map<String, TokenId> symbols = new CaseInsensitiveMap<>();
-    protected Map<String, TokenId> compilerSymbols = new CaseInsensitiveMap<>();
     protected Map<String, TokenId> locals = new CaseInsensitiveMap<>();
 
     public SourceTokenMarker(SourceProvider sourceProvider) {
@@ -172,7 +171,6 @@ public abstract class SourceTokenMarker {
     public void setCaseSensitive(boolean caseSensitive) {
         this.caseSensitive = caseSensitive;
         symbols = caseSensitive ? new HashMap<>() : new CaseInsensitiveMap<>();
-        compilerSymbols = caseSensitive ? new HashMap<>() : new CaseInsensitiveMap<>();
         locals = caseSensitive ? new HashMap<>() : new CaseInsensitiveMap<>();
     }
 
@@ -447,7 +445,7 @@ public abstract class SourceTokenMarker {
                         objectRoot.accept(new NodeVisitor() {
 
                             @Override
-                            public boolean visitConstant(ConstantNode node) {
+                            public void visitConstant(ConstantNode node) {
                                 if (node.getIdentifier() != null) {
                                     if (s[1].equals(node.getIdentifier().getText())) {
                                         sb.append("<b><code>");
@@ -455,7 +453,6 @@ public abstract class SourceTokenMarker {
                                         sb.append("</code></b>");
                                     }
                                 }
-                                return false;
                             }
 
                             @Override
@@ -478,7 +475,7 @@ public abstract class SourceTokenMarker {
             root.accept(new NodeVisitor() {
 
                 @Override
-                public boolean visitConstant(ConstantNode node) {
+                public void visitConstant(ConstantNode node) {
                     if (node.getIdentifier() != null) {
                         if (symbol.equals(node.getIdentifier().getText())) {
                             sb.append("<b><code>");
@@ -486,7 +483,6 @@ public abstract class SourceTokenMarker {
                             sb.append("</b></code>");
                         }
                     }
-                    return false;
                 }
 
                 @Override
@@ -733,14 +729,13 @@ public abstract class SourceTokenMarker {
         root.accept(new NodeVisitor() {
 
             @Override
-            public boolean visitConstant(ConstantNode node) {
+            public void visitConstant(ConstantNode node) {
                 if (node.identifier != null) {
                     String text = node.identifier.getText();
                     if (text.toUpperCase().contains(token)) {
                         proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
                 }
-                return false;
             }
 
             @Override
@@ -771,14 +766,13 @@ public abstract class SourceTokenMarker {
                     objectRoot.accept(new NodeVisitor() {
 
                         @Override
-                        public boolean visitConstant(ConstantNode node) {
+                        public void visitConstant(ConstantNode node) {
                             if (node.identifier != null) {
                                 String text = objectNode.name.getText() + constantSeparator + node.identifier.getText();
                                 if (text.toUpperCase().contains(token)) {
                                     proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
                                 }
                             }
-                            return false;
                         }
 
                     });
@@ -849,14 +843,13 @@ public abstract class SourceTokenMarker {
             }
 
             @Override
-            public boolean visitConstant(ConstantNode node) {
+            public void visitConstant(ConstantNode node) {
                 if (node.identifier != null) {
                     String text = node.identifier.getText();
                     if (text.toUpperCase().contains(token)) {
                         proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
                 }
-                return false;
             }
 
         });
@@ -888,14 +881,13 @@ public abstract class SourceTokenMarker {
                             }
 
                             @Override
-                            public boolean visitConstant(ConstantNode node) {
+                            public void visitConstant(ConstantNode node) {
                                 if (node.identifier != null) {
                                     String text = node.identifier.getText();
                                     if (text.toUpperCase().contains(token)) {
                                         proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
                                     }
                                 }
-                                return false;
                             }
 
                         });
@@ -916,14 +908,13 @@ public abstract class SourceTokenMarker {
                 objectRoot.accept(new NodeVisitor() {
 
                     @Override
-                    public boolean visitConstant(ConstantNode node) {
+                    public void visitConstant(ConstantNode node) {
                         if (node.identifier != null) {
                             String text = objectNode.name.getText() + "." + node.identifier.getText();
                             if (text.toUpperCase().contains(token)) {
                                 proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
                             }
                         }
-                        return false;
                     }
 
                 });
@@ -1071,14 +1062,13 @@ public abstract class SourceTokenMarker {
             root.accept(new NodeVisitor() {
 
                 @Override
-                public boolean visitConstant(ConstantNode node) {
+                public void visitConstant(ConstantNode node) {
                     if (node.identifier != null) {
                         String text = node.identifier.getText();
                         if (text.toUpperCase().contains(token)) {
                             proposals.add(new ContentProposal(text, text, null));
                         }
                     }
-                    return false;
                 }
 
                 @Override

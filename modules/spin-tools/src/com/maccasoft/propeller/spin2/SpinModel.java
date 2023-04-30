@@ -165,14 +165,13 @@ public class SpinModel {
             root.accept(new NodeVisitor() {
 
                 @Override
-                public boolean visitConstant(ConstantNode node) {
+                public void visitConstant(ConstantNode node) {
                     if (node.getIdentifier() != null) {
                         String text = node.getIdentifier().getText();
                         if (StringUtils.containsIgnoreCase(text, token)) {
                             proposals.add(new ContentProposal(text, text, null));
                         }
                     }
-                    return false;
                 }
 
                 @Override

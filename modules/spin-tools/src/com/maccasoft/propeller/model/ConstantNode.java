@@ -29,9 +29,7 @@ public class ConstantNode extends Node {
 
     @Override
     public void accept(NodeVisitor visitor) {
-        if (visitor.visitConstant(this)) {
-            super.accept(visitor);
-        }
+        visitor.visitConstant(this);
     }
 
     public Token getIdentifier() {

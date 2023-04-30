@@ -10,7 +10,6 @@
 
 package com.maccasoft.propeller.spin1;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +22,6 @@ import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.DirectiveNode;
-import com.maccasoft.propeller.model.ExpressionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
@@ -221,12 +219,11 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         }
 
         @Override
-        public boolean visitConstant(ConstantNode node) {
+        public void visitConstant(ConstantNode node) {
             if (node.getIdentifier() != null) {
                 symbols.put(node.getIdentifier().getText(), TokenId.CONSTANT);
                 tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
             }
-            return true;
         }
 
         @Override
@@ -266,32 +263,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
             tokens.add(new TokenMarker(objectNode.name, TokenId.OBJECT));
             if (objectNode.file != null) {
                 tokens.add(new TokenMarker(objectNode.file, TokenId.STRING));
-            }
-
-            String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
-            Node objectRoot = getObjectTree(fileName);
-            if (objectRoot != null) {
-                objectRoot.accept(new NodeVisitor() {
-
-                    @Override
-                    public boolean visitConstant(ConstantNode node) {
-                        if (node.getIdentifier() != null) {
-                            symbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
-                        }
-                        return false;
-                    }
-
-                    @Override
-                    public boolean visitMethod(MethodNode methodNode) {
-                        if ("PUB".equalsIgnoreCase(methodNode.type.getText())) {
-                            if (methodNode.name != null) {
-                                symbols.put(objectNode.name.getText() + "." + methodNode.name.getText(), TokenId.METHOD_PUB);
-                            }
-                        }
-                        return false;
-                    }
-
-                });
             }
         }
 
@@ -368,6 +339,29 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         String lastLabel = "";
 
         @Override
+        public void visitConstant(ConstantNode node) {
+            if (node.getStart() != null) {
+                markTokens(node.getStart(), 0, null);
+            }
+            if (node.getStep() != null) {
+                markTokens(node.getStep(), 0, null);
+            }
+            if (node.getExpression() != null) {
+                markTokens(node.getExpression(), 0, null);
+            }
+            if (node.getMultiplier() != null) {
+                markTokens(node.getMultiplier(), 0, null);
+            }
+        }
+
+        @Override
+        public void visitVariable(VariableNode node) {
+            if (node.getSize() != null) {
+                markTokens(node.getSize(), 0, null);
+            }
+        }
+
+        @Override
         public void visitDirective(DirectiveNode node) {
             int index = 0;
             if (index < node.getTokenCount()) {
@@ -382,13 +376,13 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     index++;
                 }
             }
-            markTokens(node, index, "");
+            markTokens(node, index, null);
         }
 
         @Override
         public void visitObject(ObjectNode node) {
             if (node.count != null) {
-                markTokens(node.count, 0, "");
+                markTokens(node.count, 0, null);
             }
         }
 
@@ -424,7 +418,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
         @Override
         public boolean visitStatement(StatementNode node) {
-            markTokens(node, 0, "");
+            markTokens(node, 0, null);
             return true;
         }
 
@@ -456,9 +450,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     if (id == null) {
                         id = symbols.get(token.getText());
                     }
-                    if (id == null) {
-                        id = compilerSymbols.get(token.getText());
-                    }
                     if (id != null) {
                         if (id == TokenId.METHOD_PUB && token.getText().contains(".")) {
                             int dot = token.getText().indexOf('.');
@@ -484,9 +475,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                                 if (token.getText().startsWith(".") || token.getText().startsWith("#")) {
                                     String qualifiedName = objToken.getText() + token.getText();
                                     id = symbols.get(qualifiedName);
-                                    if (id == null) {
-                                        id = compilerSymbols.get(qualifiedName);
-                                    }
                                     if (id != null) {
                                         tokens.add(new TokenMarker(token, id));
                                     }
@@ -503,7 +491,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     visitDirective((DirectiveNode) child);
                 }
                 else if (child instanceof StatementNode) {
-                    markTokens(child, 0, "");
+                    markTokens(child, 0, null);
                 }
             }
 
@@ -547,9 +535,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                             id = symbols.get(s);
                         }
                         if (id == null) {
-                            id = compilerSymbols.get(token.getText());
-                        }
-                        if (id == null) {
                             id = keywords.get(token.getText());
                         }
                         if (id != null) {
@@ -567,40 +552,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
             }
         }
 
-        @Override
-        public void visitExpression(ExpressionNode node) {
-            for (Token token : node.getTokens()) {
-                if (token.type == Token.NUMBER) {
-                    tokens.add(new TokenMarker(token, TokenId.NUMBER));
-                }
-                else if (token.type == Token.OPERATOR) {
-                    tokens.add(new TokenMarker(token, TokenId.OPERATOR));
-                }
-                else if (token.type == Token.STRING) {
-                    tokens.add(new TokenMarker(token, TokenId.STRING));
-                }
-                else {
-                    TokenId id = keywords.get(token.getText());
-                    if (id == null) {
-                        id = symbols.get(token.getText());
-                    }
-                    if (id == null) {
-                        id = compilerSymbols.get(token.getText());
-                    }
-                    if (id != null) {
-                        if (id == TokenId.CONSTANT && token.getText().contains("#")) {
-                            int dot = token.getText().indexOf('#');
-                            tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
-                            tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
-                        }
-                        else {
-                            tokens.add(new TokenMarker(token, id));
-                        }
-                    }
-                }
-            }
-        }
-
     };
 
     public Spin1TokenMarker(SourceProvider sourceProvider) {
@@ -611,35 +562,26 @@ public class Spin1TokenMarker extends SourceTokenMarker {
     @Override
     public void refreshTokens(String text) {
         tokens.clear();
-        symbols.clear();
-        compilerTokens.clear();
 
         Spin1TokenStream stream = new Spin1TokenStream(text);
         Spin1Parser subject = new Spin1Parser(stream);
         root = subject.parse();
 
-        // Comments are hidden from the parser
         for (Token token : root.getComments()) {
             tokens.add(new TokenMarker(token, TokenId.COMMENT));
         }
 
-        // Collect known keywords and symbols
         root.accept(collectKeywordsVisitor);
-
-        // Update symbols references from expressions
         root.accept(updateReferencesVisitor);
     }
 
     @Override
     public void refreshCompilerTokens(List<CompilerException> messages) {
+        tokens.clear();
         symbols.clear();
-        compilerTokens.clear();
 
-        Iterator<TokenMarker> iter = tokens.iterator();
-        while (iter.hasNext()) {
-            if (iter.next().getId() != TokenId.COMMENT) {
-                iter.remove();
-            }
+        for (Token token : root.getComments()) {
+            tokens.add(new TokenMarker(token, TokenId.COMMENT));
         }
 
         root.accept(collectKeywordsVisitor);
@@ -657,18 +599,17 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     objectRoot.accept(new NodeVisitor() {
 
                         @Override
-                        public boolean visitConstant(ConstantNode node) {
+                        public void visitConstant(ConstantNode node) {
                             if (node.getIdentifier() != null) {
-                                compilerSymbols.put(objectNode.name.getText() + "#" + node.getIdentifier().getText(), TokenId.CONSTANT);
+                                symbols.put(objectNode.name.getText() + constantSeparator + node.getIdentifier().getText(), TokenId.CONSTANT);
                             }
-                            return false;
                         }
 
                         @Override
                         public boolean visitMethod(MethodNode node) {
                             if ("PUB".equalsIgnoreCase(node.type.getText())) {
                                 if (node.name != null) {
-                                    compilerSymbols.put(objectNode.name.getText() + "." + node.name.getText(), TokenId.METHOD_PUB);
+                                    symbols.put(objectNode.name.getText() + "." + node.name.getText(), TokenId.METHOD_PUB);
                                 }
                             }
                             return false;
@@ -679,7 +620,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
             }
 
         });
-
         root.accept(updateReferencesVisitor);
 
         super.refreshCompilerTokens(messages);

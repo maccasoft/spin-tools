@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -48,8 +47,6 @@ import org.eclipse.swt.widgets.Display;
 
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
-import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -549,13 +546,6 @@ public class EditorTab implements FindReplaceTarget {
                                 objectTree = compiler.getObjectTree();
                                 errors = compiler.hasErrors();
 
-                                tokenMarker.compilerSymbols.clear();
-                                for (Entry<String, Expression> entry : compiler.getPublicSymbols().entrySet()) {
-                                    if (entry.getValue() instanceof Method) {
-                                        tokenMarker.compilerSymbols.put(entry.getKey(), TokenId.FUNCTION);
-                                    }
-                                }
-
                             } catch (Exception e) {
                                 errors = true;
                                 e.printStackTrace();
@@ -571,6 +561,7 @@ public class EditorTab implements FindReplaceTarget {
                                         list.add(msg);
                                     }
                                 }
+                                editor.setCompilerMessages(list);
 
                                 Display.getDefault().asyncExec(new Runnable() {
 
@@ -580,7 +571,6 @@ public class EditorTab implements FindReplaceTarget {
                                             return;
                                         }
                                         changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
-                                        editor.setCompilerMessages(list);
                                         editor.redraw();
                                         tabItem.setFont(null);
                                         updateTabItemText();

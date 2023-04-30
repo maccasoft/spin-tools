@@ -431,6 +431,18 @@ public class SourceEditor {
 
             @Override
             public void textChanging(TextChangingEvent event) {
+                for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
+                    if (event.start < entry.start) {
+                        entry.start += event.newCharCount - event.replaceCharCount;
+                        entry.stop += event.newCharCount - event.replaceCharCount;
+                    }
+                    else if (event.start >= entry.start && event.start <= entry.stop) {
+                        entry.stop += event.newCharCount - event.replaceCharCount;
+                        if (entry.stop < entry.start) {
+                            entry.stop = entry.start;
+                        }
+                    }
+                }
                 modified = true;
             }
 
@@ -2115,7 +2127,7 @@ public class SourceEditor {
     }
 
     public void redraw() {
-        styledText.redraw();
+        styledText.redrawRange(0, styledText.getCharCount(), true);
         ruler.redraw();
         overview.redraw();
     }

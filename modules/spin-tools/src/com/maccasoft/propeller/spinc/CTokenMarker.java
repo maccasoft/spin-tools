@@ -797,27 +797,6 @@ public class CTokenMarker extends SourceTokenMarker {
                 DirectiveNode.IncludeNode include = (DirectiveNode.IncludeNode) node;
                 if (include.getFile() != null) {
                     tokens.add(new TokenMarker(include.getFile(), TokenId.STRING));
-
-                    String fileName = include.getFile().getText().substring(1, include.getFile().getText().length() - 1);
-                    Node objectRoot = getObjectTree(fileName);
-                    if (objectRoot != null) {
-                        for (Node child : objectRoot.getChilds()) {
-                            if (child instanceof DirectiveNode.DefineNode) {
-                                DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
-                                if (define.getIdentifier() != null) {
-                                    symbols.put(define.getIdentifier().getText(), TokenId.CONSTANT);
-                                }
-                            }
-                            else if (child instanceof ConstantsNode) {
-                                for (Node n : child.getChilds()) {
-                                    ConstantNode constant = (ConstantNode) n;
-                                    if (constant.getIdentifier() != null) {
-                                        symbols.put(constant.getIdentifier().getText(), TokenId.CONSTANT);
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
             else if (node instanceof DirectiveNode.DefineNode) {
@@ -879,39 +858,6 @@ public class CTokenMarker extends SourceTokenMarker {
 
             if (!hasTarget && p1) {
                 setP1(false);
-            }
-
-            String objectName = node.getType().getText();
-            if (symbols.get(objectName) == null) {
-                Node objectRoot = getObjectTree(objectName);
-                if (objectRoot != null) {
-                    symbols.put(objectName, TokenId.TYPE);
-                    String objectPrefix = objectName + ".";
-                    for (Node child : objectRoot.getChilds()) {
-                        if (child instanceof MethodNode) {
-                            MethodNode methodNode = (MethodNode) child;
-                            if ("PUB".equalsIgnoreCase(methodNode.type.getText())) {
-                                if (methodNode.name != null) {
-                                    symbols.put(objectPrefix + methodNode.name.getText(), TokenId.METHOD_PUB);
-                                }
-                            }
-                        }
-                        else if (child instanceof FunctionNode) {
-                            FunctionNode functionNode = (FunctionNode) child;
-                            if (functionNode.getModifier() == null || !"static".equals(functionNode.getModifier().getText())) {
-                                if (functionNode.getIdentifier() != null) {
-                                    symbols.put(objectPrefix + functionNode.getIdentifier().getText(), TokenId.METHOD_PUB);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (node.getType() != null && node.getIdentifier() != null) {
-                if (symbols.get(node.getType().getText()) == TokenId.TYPE) {
-                    alias.put(node.getIdentifier().getText(), node.getType().getText());
-                }
             }
         }
 
@@ -1153,12 +1099,6 @@ public class CTokenMarker extends SourceTokenMarker {
                             id = symbols.get(token.getText().substring(1));
                         }
                     }
-                    if (id == null) {
-                        id = compilerSymbols.get(token.getText());
-                        if (id == null && token.getText().startsWith("&")) {
-                            id = compilerSymbols.get(token.getText().substring(1));
-                        }
-                    }
                     if (id == null && dot != -1) {
                         String type = token.getText().substring(0, dot);
                         String object = alias.get(type);
@@ -1188,12 +1128,6 @@ public class CTokenMarker extends SourceTokenMarker {
                                     id = symbols.get(qualifiedName);
                                     if (id == null && qualifiedName.startsWith("&")) {
                                         id = symbols.get(qualifiedName.substring(1));
-                                    }
-                                    if (id == null) {
-                                        id = compilerSymbols.get(qualifiedName);
-                                        if (id == null && qualifiedName.startsWith("&")) {
-                                            id = compilerSymbols.get(qualifiedName.substring(1));
-                                        }
                                     }
                                     if (id != null) {
                                         tokens.add(new TokenMarker(token, id));
@@ -1246,9 +1180,6 @@ public class CTokenMarker extends SourceTokenMarker {
                         id = pasmKeywords.get(token.getText());
                         if (id == null) {
                             id = symbols.get(s);
-                        }
-                        if (id == null) {
-                            id = compilerSymbols.get(token.getText());
                         }
                         if (id == null) {
                             id = spin1Keywords.get(token.getText());
@@ -1360,11 +1291,8 @@ public class CTokenMarker extends SourceTokenMarker {
                         if (id == null && token.getText().startsWith("&")) {
                             id = symbols.get(token.getText().substring(1));
                         }
-                    }
-                    if (id == null) {
-                        id = compilerSymbols.get(token.getText());
-                        if (id == null && token.getText().startsWith("&")) {
-                            id = compilerSymbols.get(token.getText().substring(1));
+                        if (id != null && alias.containsKey(token.getText())) {
+                            id = TokenId.OBJECT;
                         }
                     }
                     if (id == null && dot != -1) {
@@ -1391,17 +1319,12 @@ public class CTokenMarker extends SourceTokenMarker {
                                         token = list.get(i);
                                     }
                                 }
-                                if (token.getText().startsWith(".")) {
-                                    String qualifiedName = objToken.getText() + token.getText();
+                                String object = alias.get(objToken.getText());
+                                if (token.getText().startsWith(".") && object != null) {
+                                    String qualifiedName = object + token.getText();
                                     id = symbols.get(qualifiedName);
                                     if (id == null && qualifiedName.startsWith("&")) {
                                         id = symbols.get(qualifiedName.substring(1));
-                                    }
-                                    if (id == null) {
-                                        id = compilerSymbols.get(qualifiedName);
-                                        if (id == null && qualifiedName.startsWith("&")) {
-                                            id = compilerSymbols.get(qualifiedName.substring(1));
-                                        }
                                     }
                                     if (id != null) {
                                         tokens.add(new TokenMarker(token, id));
@@ -1490,9 +1413,6 @@ public class CTokenMarker extends SourceTokenMarker {
                             id = symbols.get(s);
                         }
                         if (id == null) {
-                            id = compilerSymbols.get(token.getText());
-                        }
-                        if (id == null) {
                             id = spin2Keywords.get(token.getText().toUpperCase());
                         }
                         if (inline && id == null) {
@@ -1550,8 +1470,6 @@ public class CTokenMarker extends SourceTokenMarker {
     @Override
     public void refreshTokens(String text) {
         tokens.clear();
-        symbols.clear();
-        compilerTokens.clear();
 
         CTokenStream stream = new CTokenStream(text);
         CParser subject = new CParser(stream);
@@ -1572,15 +1490,90 @@ public class CTokenMarker extends SourceTokenMarker {
 
     @Override
     public void refreshCompilerTokens(List<CompilerException> messages) {
+        Map<String, Node> cache = new HashMap<>();
+
         tokens.clear();
         symbols.clear();
-        compilerTokens.clear();
+        alias.clear();
 
         for (Token token : root.getComments()) {
             tokens.add(new TokenMarker(token, TokenId.COMMENT));
         }
 
         root.accept(collectKeywordsVisitor);
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitDirective(DirectiveNode node) {
+                if (node instanceof DirectiveNode.IncludeNode) {
+                    DirectiveNode.IncludeNode include = (DirectiveNode.IncludeNode) node;
+                    if (include.getFile() != null) {
+                        String fileName = include.getFile().getText().substring(1, include.getFile().getText().length() - 1);
+                        Node objectRoot = cache.get(fileName);
+                        if (objectRoot == null) {
+                            objectRoot = getObjectTree(fileName);
+                            cache.put(fileName, objectRoot);
+                        }
+                        if (objectRoot != null) {
+                            for (Node child : objectRoot.getChilds()) {
+                                if (child instanceof DirectiveNode.DefineNode) {
+                                    DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
+                                    if (define.getIdentifier() != null) {
+                                        symbols.put(define.getIdentifier().getText(), TokenId.CONSTANT);
+                                    }
+                                }
+                                else if (child instanceof ConstantsNode) {
+                                    for (Node n : child.getChilds()) {
+                                        ConstantNode constant = (ConstantNode) n;
+                                        if (constant.getIdentifier() != null) {
+                                            symbols.put(constant.getIdentifier().getText(), TokenId.CONSTANT);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void visitVariable(VariableNode node) {
+                String objectName = node.getType().getText();
+                Node objectRoot = cache.get(objectName);
+                if (objectRoot == null) {
+                    objectRoot = getObjectTree(objectName);
+                    cache.put(objectName, objectRoot);
+                }
+                if (objectRoot != null) {
+                    symbols.put(node.getType().getText(), TokenId.TYPE);
+                    if (node.getIdentifier() != null) {
+                        symbols.put(node.getIdentifier().getText(), TokenId.OBJECT);
+                        alias.put(node.getIdentifier().getText(), node.getType().getText());
+                    }
+
+                    String objectPrefix = objectName + ".";
+                    for (Node child : objectRoot.getChilds()) {
+                        if (child instanceof MethodNode) {
+                            MethodNode methodNode = (MethodNode) child;
+                            if ("PUB".equalsIgnoreCase(methodNode.type.getText())) {
+                                if (methodNode.name != null) {
+                                    symbols.put(objectPrefix + methodNode.name.getText(), TokenId.METHOD_PUB);
+                                }
+                            }
+                        }
+                        else if (child instanceof FunctionNode) {
+                            FunctionNode functionNode = (FunctionNode) child;
+                            if (functionNode.getModifier() == null || !"static".equals(functionNode.getModifier().getText())) {
+                                if (functionNode.getIdentifier() != null) {
+                                    symbols.put(objectPrefix + functionNode.getIdentifier().getText(), TokenId.METHOD_PUB);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        });
         if (isP1()) {
             root.accept(updateSpin1ReferencesVisitor);
         }
