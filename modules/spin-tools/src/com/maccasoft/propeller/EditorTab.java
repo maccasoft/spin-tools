@@ -561,7 +561,6 @@ public class EditorTab implements FindReplaceTarget {
                                         list.add(msg);
                                     }
                                 }
-                                editor.setCompilerMessages(list);
 
                                 Display.getDefault().asyncExec(new Runnable() {
 
@@ -571,6 +570,7 @@ public class EditorTab implements FindReplaceTarget {
                                             return;
                                         }
                                         changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
+                                        editor.setCompilerMessages(list);
                                         editor.redraw();
                                         tabItem.setFont(null);
                                         updateTabItemText();

@@ -432,14 +432,37 @@ public class SourceEditor {
             @Override
             public void textChanging(TextChangingEvent event) {
                 for (TokenMarker entry : tokenMarker.getCompilerTokens()) {
-                    if (event.start < entry.start) {
-                        entry.start += event.newCharCount - event.replaceCharCount;
-                        entry.stop += event.newCharCount - event.replaceCharCount;
+                    if (event.replaceCharCount != 0) {
+                        if (event.start + event.replaceCharCount <= entry.start) {
+                            entry.start -= event.replaceCharCount;
+                            entry.stop -= event.replaceCharCount;
+                        }
+                        else if (event.start >= entry.start && event.start <= entry.stop) {
+                            if (event.start + event.replaceCharCount > entry.stop) {
+                                entry.stop -= entry.stop - event.start;
+                            }
+                            else {
+                                entry.stop -= event.replaceCharCount;
+                            }
+                        }
+                        else if (event.start < entry.start) {
+                            if (event.start + event.replaceCharCount <= entry.stop) {
+                                entry.stop -= (event.start + event.replaceCharCount) - entry.start;
+                                entry.stop -= entry.start - event.start;
+                                entry.start -= entry.start - event.start;
+                            }
+                            else {
+                                entry.stop = entry.start;
+                            }
+                        }
                     }
-                    else if (event.start >= entry.start && event.start <= entry.stop) {
-                        entry.stop += event.newCharCount - event.replaceCharCount;
-                        if (entry.stop < entry.start) {
-                            entry.stop = entry.start;
+                    if (event.newCharCount != 0) {
+                        if (event.start < entry.start) {
+                            entry.start += event.newCharCount;
+                            entry.stop += event.newCharCount;
+                        }
+                        else if (event.start >= entry.start && event.start <= entry.stop) {
+                            entry.stop += event.newCharCount;
                         }
                     }
                 }
