@@ -2989,7 +2989,7 @@ public class SpinTools {
 
                     Rectangle screen = display.getClientArea();
 
-                    Rectangle rect = new Rectangle(0, 0, (int) ((float) screen.width / (float) screen.height * 800), 900);
+                    Rectangle rect = new Rectangle(0, 0, (int) (screen.width * 0.8), (int) (screen.height * 0.85));
                     rect.x = (screen.width - rect.width) / 2;
                     rect.y = (screen.height - rect.height) / 2;
                     if (rect.y < 0) {
