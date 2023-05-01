@@ -61,6 +61,8 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TraverseEvent;
@@ -433,6 +435,15 @@ public class SpinTools {
                     blockSelectionItem.setSelection(editorTab.isBlockSelection());
                 }
                 updateCaretPosition();
+            }
+        });
+        tabFolder.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseDown(MouseEvent e) {
+                CTabItem tab = tabFolder.getItem(new Point(e.x, e.y));
+                if (tab != null && e.button == 2) {
+                    closeEditor(tab);
+                }
             }
         });
 
@@ -2810,11 +2821,19 @@ public class SpinTools {
 
     boolean closeCurrentEditor() {
         CTabItem tabItem = tabFolder.getSelection();
-        if (tabItem != null) {
-            int index = tabFolder.indexOf(tabItem);
-            EditorTab editorTab = (EditorTab) tabItem.getData();
-            if (canCloseEditorTab(editorTab)) {
-                tabItem.dispose();
+        return closeEditor(tabItem);
+    }
+
+    boolean closeEditor(CTabItem tabItem) {
+        if (tabItem == null) {
+            return false;
+        }
+        boolean isCurrent = tabItem == tabFolder.getSelection();
+        int index = tabFolder.indexOf(tabItem);
+        EditorTab editorTab = (EditorTab) tabItem.getData();
+        if (canCloseEditorTab(editorTab)) {
+            tabItem.dispose();
+            if (isCurrent) {
                 objectBrowser.setInput(null);
                 outlineViewContainer.setTopControl(null);
                 if (index >= tabFolder.getItemCount()) {
@@ -2826,8 +2845,8 @@ public class SpinTools {
                     tabFolder.setSelection((CTabItem) event.item);
                     tabFolder.notifyListeners(SWT.Selection, event);
                 }
-                return true;
             }
+            return true;
         }
         return false;
     }
