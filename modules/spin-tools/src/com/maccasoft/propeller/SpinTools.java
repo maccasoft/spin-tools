@@ -613,6 +613,18 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
+        item.setText("New (From P1/Spin template)" + "\t");
+        item.setAccelerator(SWT.CTRL + SWT.ALT + '1');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                String name = getUniqueName("Untitled", ".spin");
+                openNewTab(name, getResourceAsString("template.spin"));
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
         item.setText("New (From P1/C template)" + "\t");
         item.setAccelerator(SWT.CTRL + SWT.ALT + '2');
         item.addListener(SWT.Selection, new Listener() {
@@ -625,30 +637,6 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P1 template)" + "\t");
-        item.setAccelerator(SWT.CTRL + SWT.ALT + '1');
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                String name = getUniqueName("Untitled", ".spin");
-                openNewTab(name, getResourceAsString("template.spin"));
-            }
-        });
-
-        item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P2/C template)" + "\t");
-        item.setAccelerator(SWT.CTRL + SWT.ALT + '2');
-        item.addListener(SWT.Selection, new Listener() {
-
-            @Override
-            public void handleEvent(Event e) {
-                String name = getUniqueName("Untitled", ".c");
-                openNewTab(name, getResourceAsString("template2.c"));
-            }
-        });
-
-        item = new MenuItem(menu, SWT.PUSH);
         item.setText("New (From P2/Spin template)" + "\t");
         item.setAccelerator(SWT.CTRL + SWT.ALT + '3');
         item.addListener(SWT.Selection, new Listener() {
@@ -657,6 +645,18 @@ public class SpinTools {
             public void handleEvent(Event e) {
                 String name = getUniqueName("Untitled", ".spin2");
                 openNewTab(name, getResourceAsString("template.spin2"));
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("New (From P2/C template)" + "\t");
+        item.setAccelerator(SWT.CTRL + SWT.ALT + '4');
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                String name = getUniqueName("Untitled", ".c");
+                openNewTab(name, getResourceAsString("template2.c"));
             }
         });
 
@@ -945,7 +945,7 @@ public class SpinTools {
 
         ToolItem toolItem = new ToolItem(toolBar, SWT.PUSH);
         toolItem.setImage(ImageRegistry.getImageFromResources("document-number-1.png"));
-        toolItem.setToolTipText("New from P1 template");
+        toolItem.setToolTipText("New from P1/Spin template");
         toolItem.addSelectionListener(new SelectionAdapter() {
 
             @Override
@@ -961,7 +961,7 @@ public class SpinTools {
 
         toolItem = new ToolItem(toolBar, SWT.PUSH);
         toolItem.setImage(ImageRegistry.getImageFromResources("document-number-2.png"));
-        toolItem.setToolTipText("New from P2 template");
+        toolItem.setToolTipText("New from P2/Spin template");
         toolItem.addSelectionListener(new SelectionAdapter() {
 
             @Override
@@ -1272,19 +1272,7 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                try {
-                    CTabItem tabItem = tabFolder.getSelection();
-                    if (tabItem == null) {
-                        return;
-                    }
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    if (!sourcePool.isDebugEnabled()) {
-                        editorTab.runCompile(true);
-                    }
-                    handleUpload(false, false);
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
+                handleUpload(false, true, true);
             }
         });
 
@@ -1295,11 +1283,7 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                try {
-                    handleUpload(false, false);
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
+                handleUpload(false, false, sourcePool.isDebugEnabled());
             }
         });
 
@@ -1310,11 +1294,7 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                try {
-                    handleUpload(true, false);
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
+                handleUpload(true, false, sourcePool.isDebugEnabled());
             }
         });
 
@@ -2098,7 +2078,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleUpload(false, false);
+                handleUpload(false, false, sourcePool.isDebugEnabled());
             }
         });
 
@@ -2109,7 +2089,18 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleUpload(false, true);
+                handleUpload(false, true, sourcePool.isDebugEnabled());
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Upload to RAM with Debug" + "\t");
+        item.setAccelerator(SWT.CTRL | SWT.F10);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                handleUpload(false, true, true);
             }
         });
 
@@ -2120,7 +2111,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleUpload(true, false);
+                handleUpload(true, false, sourcePool.isDebugEnabled());
             }
         });
 
@@ -2131,7 +2122,18 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleUpload(true, true);
+                handleUpload(true, true, sourcePool.isDebugEnabled());
+            }
+        });
+
+        item = new MenuItem(menu, SWT.PUSH);
+        item.setText("Upload to Flash with Debug" + "\t");
+        item.setAccelerator(SWT.CTRL | SWT.F11);
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                handleUpload(true, true, true);
             }
         });
 
@@ -2381,7 +2383,10 @@ public class SpinTools {
         }
     }
 
-    private void handleUpload(boolean writeToFlash, boolean openTerminal) {
+    private void handleUpload(boolean writeToFlash, boolean openTerminal, boolean forceDebug) {
+        SerialPort serialPort = null;
+        boolean serialPortShared = false;
+
         CTabItem tabItem = tabFolder.getSelection();
         if (tabItem == null) {
             return;
@@ -2398,13 +2403,22 @@ public class SpinTools {
         if (obj == null) {
             return;
         }
+
+        boolean isDebug = (obj instanceof Spin2Object) && ((Spin2Object) obj).getDebugger() != null;
+        if (isDebug != forceDebug) {
+            editorTab.runCompile(forceDebug);
+            if (editorTab.hasErrors()) {
+                MessageDialog.openError(shell, APP_TITLE, "Program has errors.");
+                editorTab.goToFirstError();
+                return;
+            }
+            obj = editorTab.getObject();
+            isDebug = (obj instanceof Spin2Object) && ((Spin2Object) obj).getDebugger() != null;
+        }
+
         if (obj instanceof Spin2Object) {
             ((Spin2Object) obj).setClockSetter(preferences.getSpin2ClockSetter());
         }
-
-        SerialPort serialPort = null;
-        boolean serialPortShared = false;
-        boolean isDebug = (obj instanceof Spin2Object) && ((Spin2Object) obj).getDebugger() != null;
 
         SerialTerminal serialTerminal = getSerialTerminal();
         if (serialTerminal == null && (openTerminal || isDebug)) {
