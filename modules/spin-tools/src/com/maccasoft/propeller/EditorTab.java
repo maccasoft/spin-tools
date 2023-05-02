@@ -201,10 +201,12 @@ public class EditorTab implements FindReplaceTarget {
                 Node selection = getCaretNode(root, offset, y);
                 if (selection != null) {
                     outlineView.removeSelectionChangedListener(outlineSelectionChangeListener);
+                    outlineView.getViewer().removeTreeListener(outlineTreeListener);
                     try {
                         outlineView.setSelection(new StructuredSelection(selection));
                     } finally {
                         outlineView.addSelectionChangedListener(outlineSelectionChangeListener);
+                        outlineView.getViewer().addTreeListener(outlineTreeListener);
                     }
                 }
             }
