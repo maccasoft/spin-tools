@@ -1411,13 +1411,19 @@ public class SerialTerminal {
     void setTerminalType(int type) {
         switch (type) {
             case 1:
-                emulation = new ANSI();
+                if (!(emulation instanceof ANSI)) {
+                    emulation = new ANSI();
+                }
                 break;
             case 2:
-                emulation = new ParallaxSerialTerminal();
+                if (!(emulation instanceof ParallaxSerialTerminal)) {
+                    emulation = new ParallaxSerialTerminal();
+                }
                 break;
             default:
-                emulation = new TTY();
+                if (!(emulation instanceof TTY)) {
+                    emulation = new TTY();
+                }
                 break;
         }
     }

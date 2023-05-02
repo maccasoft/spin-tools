@@ -2422,6 +2422,10 @@ public class SpinTools {
             }
             if (isDebug) {
                 serialTerminal.clear();
+                serialTerminal.setTerminalType(1);
+            }
+            else {
+                serialTerminal.setTerminalType(preferences.getTerminalType());
             }
             serialPortShared = true;
         }
