@@ -944,7 +944,7 @@ public class SpinTools {
         ToolBar toolBar = new ToolBar(parent, SWT.FLAT);
 
         ToolItem toolItem = new ToolItem(toolBar, SWT.PUSH);
-        toolItem.setImage(ImageRegistry.getImageFromResources("document-number-1.png"));
+        toolItem.setImage(ImageRegistry.getImageFromResources("blue-document-number-1.png"));
         toolItem.setToolTipText("New from P1/Spin template");
         toolItem.addSelectionListener(new SelectionAdapter() {
 
@@ -960,7 +960,7 @@ public class SpinTools {
         });
 
         toolItem = new ToolItem(toolBar, SWT.PUSH);
-        toolItem.setImage(ImageRegistry.getImageFromResources("document-number-2.png"));
+        toolItem.setImage(ImageRegistry.getImageFromResources("blue-document-number-2.png"));
         toolItem.setToolTipText("New from P2/Spin template");
         toolItem.addSelectionListener(new SelectionAdapter() {
 
