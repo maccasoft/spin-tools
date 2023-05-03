@@ -201,6 +201,14 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
         @Override
         public void visitDirective(DirectiveNode node) {
+            int index = 0;
+            if (index < node.getTokenCount()) {
+                tokens.add(new TokenMarker(node.getToken(index++), TokenId.DIRECTIVE));
+            }
+            if (index < node.getTokenCount()) {
+                tokens.add(new TokenMarker(node.getToken(index++), TokenId.DIRECTIVE));
+            }
+
             if (node instanceof DirectiveNode.DefineNode) {
                 Token identifier = ((DirectiveNode.DefineNode) node).getIdentifier();
                 if (identifier != null) {
@@ -363,20 +371,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
         @Override
         public void visitDirective(DirectiveNode node) {
-            int index = 0;
-            if (index < node.getTokenCount()) {
-                tokens.add(new TokenMarker(node.getToken(index++), TokenId.DIRECTIVE));
-            }
-            if (index < node.getTokenCount()) {
-                tokens.add(new TokenMarker(node.getToken(index++), TokenId.DIRECTIVE));
-            }
-            if (node instanceof DirectiveNode.DefineNode) {
-                Token identifier = ((DirectiveNode.DefineNode) node).getIdentifier();
-                if (identifier != null) {
-                    index++;
-                }
-            }
-            markTokens(node, index, null);
+            markTokens(node, 2, null);
         }
 
         @Override

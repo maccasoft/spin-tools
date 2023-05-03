@@ -999,6 +999,11 @@ public class CTokenMarker extends SourceTokenMarker {
         String lastLabel = "";
 
         @Override
+        public void visitDirective(DirectiveNode node) {
+            markTokens(node, 2, null);
+        }
+
+        @Override
         public void visitTypeDefinition(TypeDefinitionNode node) {
             markTokens(node, 0, "");
             for (Node child : node.getChilds()) {
@@ -1204,6 +1209,11 @@ public class CTokenMarker extends SourceTokenMarker {
     final NodeVisitor updateSpin2ReferencesVisitor = new NodeVisitor() {
 
         String lastLabel = "";
+
+        @Override
+        public void visitDirective(DirectiveNode node) {
+            markTokens(node, 2, null);
+        }
 
         @Override
         public void visitTypeDefinition(TypeDefinitionNode node) {
