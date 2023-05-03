@@ -56,8 +56,15 @@ public class NumberLiteral extends Literal {
             this.value = Double.parseDouble(s.replace("_", ""));
         }
         else {
-            this.value = Long.parseLong(s.replace("_", ""), this.base);
+            this.value = signx(Long.parseLong(s.replace("_", ""), this.base));
         }
+    }
+
+    private Long signx(Long number) {
+        long cl = ~31L & 0x3F;
+        long value = number.longValue();
+        value = value << cl;
+        return value >> cl;
     }
 
     @Override
