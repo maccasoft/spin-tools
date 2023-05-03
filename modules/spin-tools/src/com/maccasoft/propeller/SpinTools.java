@@ -602,7 +602,7 @@ public class SpinTools {
         item.setMenu(menu);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New" + "\t");
+        item.setText("New\tCtrl+N");
         item.setAccelerator(SWT.CTRL + 'N');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -613,7 +613,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P1/Spin template)" + "\t");
+        item.setText("New (From P1/Spin template)\tCtrl+Alt+1");
         item.setAccelerator(SWT.CTRL + SWT.ALT + '1');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -625,7 +625,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P1/C template)" + "\t");
+        item.setText("New (From P1/C template)\tCtrl+Alt+2");
         item.setAccelerator(SWT.CTRL + SWT.ALT + '2');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -637,7 +637,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P2/Spin template)" + "\t");
+        item.setText("New (From P2/Spin template)\tCtrl+Alt+3");
         item.setAccelerator(SWT.CTRL + SWT.ALT + '3');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -649,7 +649,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("New (From P2/C template)" + "\t");
+        item.setText("New (From P2/C template)\tCtrl+Alt+4");
         item.setAccelerator(SWT.CTRL + SWT.ALT + '4');
         item.addListener(SWT.Selection, new Listener() {
 
@@ -695,8 +695,8 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Close Editor" + "\t");
-        item.setAccelerator(SWT.MOD1 + 'W');
+        item.setText("Close Editor\tCtrl+W");
+        item.setAccelerator(SWT.CTRL + 'W');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -706,8 +706,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Close All Editors" + "\t");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'W');
+        item.setText("Close All Editors\tShift+Ctrl+W");
+        item.setAccelerator(SWT.SHIFT + SWT.CTRL + 'W');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -728,8 +728,8 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Save" + "\t");
-        item.setAccelerator(SWT.MOD1 + 'S');
+        item.setText("Save\tCtrl+S");
+        item.setAccelerator(SWT.CTRL + 'S');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -739,7 +739,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Save As..." + "\t");
+        item.setText("Save As...");
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -749,8 +749,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Save All" + "\t");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'S');
+        item.setText("Save All\tShift+Ctrl+S");
+        item.setAccelerator(SWT.SHIFT + SWT.CTRL + 'S');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -774,7 +774,7 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Refresh" + "\t");
+        item.setText("Refresh\tF5");
         item.setAccelerator(SWT.F5);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -1804,8 +1804,8 @@ public class SpinTools {
         item.setMenu(menu);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Undo" + "\t");
-        item.setAccelerator(SWT.MOD1 + 'Z');
+        item.setText("Undo\tCtrl+Z");
+        item.setAccelerator(SWT.CTRL + 'Z');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1819,8 +1819,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Redo" + "\t");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'Z');
+        item.setText("Redo\tShift+Ctrl+Z");
+        item.setAccelerator(SWT.SHIFT + SWT.CTRL + 'Z');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1836,8 +1836,8 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Cut" + "\t");
-        item.setAccelerator(SWT.MOD1 + 'X');
+        item.setText("Cut\tCtrl+X");
+        item.setAccelerator(SWT.CTRL + 'X');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1851,8 +1851,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Copy" + "\t");
-        item.setAccelerator(SWT.MOD1 + 'C');
+        item.setText("Copy\tCtrl+C");
+        item.setAccelerator(SWT.CTRL + 'C');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1866,8 +1866,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Paste" + "\t");
-        item.setAccelerator(SWT.MOD1 + 'V');
+        item.setText("Paste\tCtrl+V");
+        item.setAccelerator(SWT.CTRL + 'V');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1881,8 +1881,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Select All" + "\t");
-        item.setAccelerator(SWT.MOD1 + 'A');
+        item.setText("Select All\tCtrl+A");
+        item.setAccelerator(SWT.CTRL + 'A');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1898,8 +1898,8 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         blockSelectionItem = new MenuItem(menu, SWT.CHECK);
-        blockSelectionItem.setText("Block Selection" + "\t");
-        blockSelectionItem.setAccelerator(SWT.MOD2 + SWT.MOD3 + 'A');
+        blockSelectionItem.setText("Block Selection\tShift+Alt+A");
+        blockSelectionItem.setAccelerator(SWT.SHIFT + SWT.ALT + 'A');
         blockSelectionItem.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1913,8 +1913,8 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Find / Replace..." + "\t");
-        item.setAccelerator(SWT.MOD1 + 'F');
+        item.setText("Find / Replace...\tCtrl+F");
+        item.setAccelerator(SWT.CTRL + 'F');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1937,8 +1937,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Find Next" + "\t");
-        item.setAccelerator(SWT.MOD1 + 'K');
+        item.setText("Find Next\tCtrl+K");
+        item.setAccelerator(SWT.CTRL + 'K');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1965,8 +1965,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Find Previous" + "\t");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'K');
+        item.setText("Find Previous\tShift+Ctrl+K");
+        item.setAccelerator(SWT.SHIFT + SWT.CTRL + 'K');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -1995,8 +1995,8 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Format source" + "\t");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + 'F');
+        item.setText("Format source\tShift+Ctrl+F");
+        item.setAccelerator(SWT.SHIFT + SWT.CTRL + 'F');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2013,8 +2013,8 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Next Tab" + "\t");
-        item.setAccelerator(SWT.MOD1 + SWT.TAB);
+        item.setText("Next Tab\tCtrl+Tab");
+        item.setAccelerator(SWT.CTRL + SWT.TAB);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2024,8 +2024,8 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Previous Tab" + "\t");
-        item.setAccelerator(SWT.MOD1 + SWT.MOD2 + SWT.TAB);
+        item.setText("Previous Tab\tShift+Ctrl+Tab");
+        item.setAccelerator(SWT.SHIFT + SWT.CTRL + SWT.TAB);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2039,7 +2039,7 @@ public class SpinTools {
             new MenuItem(menu, SWT.SEPARATOR);
 
             item = new MenuItem(menu, SWT.PUSH);
-            item.setText("Preferences" + "\t");
+            item.setText("Preferences");
         }
         item.addListener(SWT.Selection, new Listener() {
 
@@ -2061,7 +2061,7 @@ public class SpinTools {
         item.setMenu(menu);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Show Info" + "\t");
+        item.setText("Show Info\tF8");
         item.setAccelerator(SWT.F8);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -2072,7 +2072,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to RAM" + "\t");
+        item.setText("Upload to RAM\tF10");
         item.setAccelerator(SWT.F10);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -2083,7 +2083,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to RAM with Terminal" + "\t");
+        item.setText("Upload to RAM with Terminal\tShift+F10");
         item.setAccelerator(SWT.SHIFT | SWT.F10);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -2094,7 +2094,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to RAM with Debug" + "\t");
+        item.setText("Upload to RAM with Debug\tCtrl+F10");
         item.setAccelerator(SWT.CTRL | SWT.F10);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -2105,7 +2105,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to Flash" + "\t");
+        item.setText("Upload to Flash\tF11");
         item.setAccelerator(SWT.F11);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -2116,7 +2116,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to Flash with Terminal" + "\t");
+        item.setText("Upload to Flash with Terminal\tShift+F11");
         item.setAccelerator(SWT.SHIFT | SWT.F11);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -2127,7 +2127,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Upload to Flash with Debug" + "\t");
+        item.setText("Upload to Flash with Debug\tCtrl+F11");
         item.setAccelerator(SWT.CTRL | SWT.F11);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -2140,8 +2140,8 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.CHECK);
-        item.setText("Enable P2 DEBUG" + "\t");
-        item.setAccelerator(SWT.MOD1 + 'D');
+        item.setText("Enable P2 DEBUG\tCtrl+D");
+        item.setAccelerator(SWT.CTRL + 'D');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2154,8 +2154,8 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Serial Terminal" + "\t");
-        item.setAccelerator(SWT.MOD1 + 'T');
+        item.setText("Serial Terminal\tCtrl+T");
+        item.setAccelerator(SWT.CTRL + 'T');
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2171,7 +2171,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Show Devices" + "\t");
+        item.setText("Show Devices\tF7");
         item.setAccelerator(SWT.F7);
         item.addListener(SWT.Selection, new Listener() {
 
@@ -2708,7 +2708,7 @@ public class SpinTools {
         final Menu menu = new Menu(toolBar);
 
         MenuItem item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Next Tab" + "\t");
+        item.setText("Next Tab\tCtrl+Tab");
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2722,7 +2722,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Previous Tab" + "\t");
+        item.setText("Previous Tab\tShift+Ctrl+Tab");
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2738,7 +2738,7 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Close Editor" + "\t");
+        item.setText("Close Editor\tCtrl+W");
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2748,7 +2748,7 @@ public class SpinTools {
         });
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Close All Editors" + "\t");
+        item.setText("Close All Editors\tShift+Ctrl+W");
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
