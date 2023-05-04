@@ -19,8 +19,6 @@ import com.maccasoft.propeller.spin1.Spin1PAsmInstructionFactory;
 
 public class Empty extends Spin1PAsmInstructionFactory {
 
-    public static final Spin1PAsmInstructionFactory instance = new Empty();
-
     @Override
     public Spin1InstructionObject createObject(Context context, String condition, List<Spin1PAsmExpression> arguments, String effect) {
         return new Empty_(context);

@@ -50,7 +50,7 @@ public class Spin1PAsmLine {
             }
         }
         if (this.instructionFactory == null) {
-            this.instructionFactory = Empty.instance;
+            this.instructionFactory = new Empty();
         }
     }
 
