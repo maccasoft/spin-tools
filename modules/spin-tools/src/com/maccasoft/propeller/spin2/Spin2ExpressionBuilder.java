@@ -22,8 +22,10 @@ import com.maccasoft.propeller.expressions.Abs;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
+import com.maccasoft.propeller.expressions.AddpinsRange;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
+import com.maccasoft.propeller.expressions.Compare;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Divide;
@@ -32,12 +34,16 @@ import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Frac;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
+import com.maccasoft.propeller.expressions.GreaterOrEqualsUnsigned;
 import com.maccasoft.propeller.expressions.GreaterThan;
+import com.maccasoft.propeller.expressions.GreaterThanUnsigned;
 import com.maccasoft.propeller.expressions.Group;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.IfElse;
 import com.maccasoft.propeller.expressions.LessOrEquals;
+import com.maccasoft.propeller.expressions.LessOrEqualsUnsigned;
 import com.maccasoft.propeller.expressions.LessThan;
+import com.maccasoft.propeller.expressions.LessThanUnsigned;
 import com.maccasoft.propeller.expressions.LimitMax;
 import com.maccasoft.propeller.expressions.LimitMin;
 import com.maccasoft.propeller.expressions.LogicalAnd;
@@ -298,12 +304,14 @@ public class Spin2ExpressionBuilder {
                     break;
 
                 case "*":
+                case "*.":
                     left = new Multiply(left, right);
                     break;
                 case "**":
                     left = new Scl(left, right);
                     break;
                 case "/":
+                case "/.":
                     left = new Divide(left, right);
                     break;
                 case "//":
@@ -347,6 +355,9 @@ public class Spin2ExpressionBuilder {
                 case "ADDPINS":
                     left = new Addpins(left, right);
                     break;
+                case "..":
+                    left = new AddpinsRange(left, right);
+                    break;
 
                 case "&&":
                 case "AND":
@@ -362,22 +373,45 @@ public class Spin2ExpressionBuilder {
                     break;
 
                 case "<":
+                case "<.":
                     left = new LessThan(left, right);
                     break;
                 case "<=":
+                case "<=.":
                     left = new LessOrEquals(left, right);
                     break;
                 case "==":
+                case "==.":
                     left = new Equals(left, right);
                     break;
                 case "<>":
+                case "<>.":
                     left = new NotEquals(left, right);
                     break;
                 case ">=":
+                case ">=.":
                     left = new GreaterOrEquals(left, right);
                     break;
                 case ">":
+                case ">.":
                     left = new GreaterThan(left, right);
+                    break;
+
+                case "+<":
+                    left = new LessThanUnsigned(left, right);
+                    break;
+                case "+<=":
+                    left = new LessOrEqualsUnsigned(left, right);
+                    break;
+                case "+>=":
+                    left = new GreaterOrEqualsUnsigned(left, right);
+                    break;
+                case "+>":
+                    left = new GreaterThanUnsigned(left, right);
+                    break;
+
+                case "<=>":
+                    left = new Compare(left, right);
                     break;
 
                 case "?":

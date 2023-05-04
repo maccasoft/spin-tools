@@ -6046,6 +6046,42 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testAddpinsRange() throws Exception {
+        String text = ""
+            + "PUB start() | a, b\n"
+            + "\n"
+            + "    pinfloat(1 addpins 6)\n"
+            + "    pinfloat(7..1)\n"
+            + "    pinfloat(1..7)\n"
+            + "    pinfloat(a..b)\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       1B 00 00 00    End\n"
+            + "' PUB start() | a, b\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     pinfloat(1 addpins 6)\n"
+            + "00009 00009       46 81 01       CONSTANT (1 addpins 6)\n"
+            + "0000C 0000C       39             PINFLOAT\n"
+            + "'     pinfloat(7..1)\n"
+            + "0000D 0000D       46 81 01       CONSTANT (7 .. 1)\n"
+            + "00010 00010       39             PINFLOAT\n"
+            + "'     pinfloat(1..7)\n"
+            + "00011 00011       46 87 06       CONSTANT (1 .. 7)\n"
+            + "00014 00014       39             PINFLOAT\n"
+            + "'     pinfloat(a..b)\n"
+            + "00015 00015       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00016 00016       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00017 00017       9F 95          ADDPINS_RANGE\n"
+            + "00019 00019       39             PINFLOAT\n"
+            + "0001A 0001A       04             RETURN\n"
+            + "0001B 0001B       00             Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

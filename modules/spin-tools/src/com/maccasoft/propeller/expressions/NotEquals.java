@@ -13,7 +13,7 @@ public class NotEquals extends BinaryOperator {
 
     @Override
     public String getLexeme() {
-        return "!=";
+        return "<>";
     }
 
 }

@@ -13,8 +13,8 @@ package com.maccasoft.propeller.spin2.bytecode;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.maccasoft.propeller.spin2.Spin2Bytecode;
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.spin2.Spin2Bytecode;
 
 public class MathOp extends Spin2Bytecode {
 
@@ -62,7 +62,7 @@ public class MathOp extends Spin2Bytecode {
         operations.put("+>=", new Descriptor(0x73, "GREATER_THAN_OR_EQUAL (unsigned)"));
         operations.put(">", new Descriptor(0x74, "GREATER_THAN"));
         operations.put("+>", new Descriptor(0x75, "GREATER_THAN (unsigned)"));
-        operations.put("<=>", new Descriptor(0x76, ""));
+        operations.put("<=>", new Descriptor(0x76, "SIGNED_COMPARE"));
         operations.put(">>", new Descriptor(0x82, "SHIFT_RIGHT"));
         operations.put("<<", new Descriptor(0x83, "SHIFT_LEFT"));
         operations.put("SAR", new Descriptor(0x84, "SAR"));
@@ -94,6 +94,9 @@ public class MathOp extends Spin2Bytecode {
         operations.put("SCA", new Descriptor(0x9B, "SCA"));
         operations.put("SCAS", new Descriptor(0x9C, "SCAS"));
         operations.put("FRAC", new Descriptor(0x9D, "FRAC"));
+        operations.put("..", new Descriptor(new byte[] {
+            (byte) 0x9F, (byte) 0x95
+        }, "ADDPINS_RANGE"));
 
         //operations.put("-.", new Descriptor(new byte[] {
         //    0x19, (byte) 0x94

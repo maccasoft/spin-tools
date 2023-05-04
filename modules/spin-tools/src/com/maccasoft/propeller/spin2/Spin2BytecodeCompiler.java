@@ -20,8 +20,10 @@ import com.maccasoft.propeller.expressions.Abs;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
+import com.maccasoft.propeller.expressions.AddpinsRange;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
+import com.maccasoft.propeller.expressions.Compare;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
@@ -29,10 +31,14 @@ import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
+import com.maccasoft.propeller.expressions.GreaterOrEqualsUnsigned;
 import com.maccasoft.propeller.expressions.GreaterThan;
+import com.maccasoft.propeller.expressions.GreaterThanUnsigned;
 import com.maccasoft.propeller.expressions.IfElse;
 import com.maccasoft.propeller.expressions.LessOrEquals;
+import com.maccasoft.propeller.expressions.LessOrEqualsUnsigned;
 import com.maccasoft.propeller.expressions.LessThan;
+import com.maccasoft.propeller.expressions.LessThanUnsigned;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.LogicalAnd;
 import com.maccasoft.propeller.expressions.LogicalOr;
@@ -1182,6 +1188,8 @@ public abstract class Spin2BytecodeCompiler {
                 return new Addbits(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "ADDPINS":
                 return new Addpins(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "..":
+                return new AddpinsRange(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "&&":
             case "AND":
@@ -1194,17 +1202,35 @@ public abstract class Spin2BytecodeCompiler {
                 return new LogicalXor(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "<":
+            case "<.":
                 return new LessThan(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "<=":
+            case "<=.":
                 return new LessOrEquals(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "==":
+            case "==.":
                 return new Equals(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "<>":
+            case "<>.":
                 return new NotEquals(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case ">=":
+            case ">=.":
                 return new GreaterOrEquals(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case ">":
+            case ">.":
                 return new GreaterThan(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+
+            case "+<":
+                return new LessThanUnsigned(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "+<=":
+                return new LessOrEqualsUnsigned(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "+>=":
+                return new GreaterOrEqualsUnsigned(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "+>":
+                return new GreaterThanUnsigned(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+
+            case "<=>":
+                return new Compare(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
             case "!":
                 if (node.getChildCount() == 1) {
