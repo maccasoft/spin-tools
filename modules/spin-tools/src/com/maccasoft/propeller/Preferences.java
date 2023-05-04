@@ -155,6 +155,7 @@ public class Preferences {
 
         public String[] openTabs;
         public String lastPath;
+        public String pinnedEditorName;
 
         public TerminalPreferences terminal;
 
@@ -596,6 +597,14 @@ public class Preferences {
             preferences.search = new SearchPreferences();
         }
         return preferences.search;
+    }
+
+    public String getPinnedSourceName() {
+        return preferences.pinnedEditorName;
+    }
+
+    public void setPinnedSourceName(String pinnedEditorName) {
+        preferences.pinnedEditorName = pinnedEditorName;
     }
 
     public void save() throws IOException {
