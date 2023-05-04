@@ -129,6 +129,8 @@ public class SpinTools {
 
     SourcePool sourcePool;
     SerialPortList serialPortList;
+    EditorTab pinnedEditor;
+    MenuItem pinCheckMenuItem;
 
     Preferences preferences;
 
@@ -290,13 +292,9 @@ public class SpinTools {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            CTabItem tabItem = tabFolder.getSelection();
-            if (tabItem == null || tabItem.getData() != evt.getSource()) {
-                return;
-            }
             switch (evt.getPropertyName()) {
                 case EditorTab.OBJECT_TREE:
-                    objectBrowser.setInput((ObjectTree) evt.getNewValue());
+                    refreshObjectBrowser();
                     break;
             }
         }
@@ -424,9 +422,9 @@ public class SpinTools {
                     CTabItem tabItem = (CTabItem) e.item;
                     tabItem.getControl().setFocus();
 
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    objectBrowser.setInput(editorTab.getObjectTree());
+                    refreshObjectBrowser();
 
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
                     outlineViewContainer.setTopControl(editorTab.getOutlineView().getControl());
 
                     if (findReplaceDialog != null) {
@@ -532,6 +530,7 @@ public class SpinTools {
             @Override
             public void run() {
                 final String[] openTabs = preferences.getOpenTabs();
+                final String pinnedTabName = preferences.getPinnedSourceName();
                 if (openTabs != null && preferences.getReloadOpenTabs()) {
                     for (int i = 0; i < openTabs.length; i++) {
                         File fileToOpen = new File(openTabs[i]);
@@ -555,6 +554,10 @@ public class SpinTools {
                                     editorTab.addPropertyChangeListener(editorChangeListener);
                                     editorTab.getEditor().addSourceListener(sourceListener);
                                     blockSelectionItem.setSelection(editorTab.isBlockSelection());
+
+                                    if (editorTab.file.getName().equals(pinnedTabName)) {
+                                        pinnedEditor = editorTab;
+                                    }
                                 }
 
                             });
@@ -2387,11 +2390,7 @@ public class SpinTools {
         SerialPort serialPort = null;
         boolean serialPortShared = false;
 
-        CTabItem tabItem = tabFolder.getSelection();
-        if (tabItem == null) {
-            return;
-        }
-        EditorTab editorTab = (EditorTab) tabItem.getData();
+        EditorTab editorTab = getCompilationTarget();
         editorTab.waitCompile();
         if (editorTab.hasErrors()) {
             MessageDialog.openError(shell, APP_TITLE, "Program has errors.");
@@ -2737,6 +2736,31 @@ public class SpinTools {
 
         new MenuItem(menu, SWT.SEPARATOR);
 
+        item = new MenuItem(menu, SWT.CHECK);
+        item.setText("Pin as Top Object");
+        item.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                CTabItem tab = tabFolder.getSelection();
+                EditorTab editor = (tab != null) ? (EditorTab)tab.getData() : null;
+                if (editor != null) { 
+                    if (pinnedEditor == editor) {
+                        pinnedEditor = null;
+                        preferences.setPinnedSourceName(null);
+                    }
+                    else {
+                        pinnedEditor = editor;
+                        preferences.setPinnedSourceName(editor.file.getName());
+                    }
+                    refreshObjectBrowser();
+                }
+            }
+        });
+        pinCheckMenuItem = item;
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
         item = new MenuItem(menu, SWT.PUSH);
         item.setText("Close Editor\tCtrl+W");
         item.addListener(SWT.Selection, new Listener() {
@@ -2774,6 +2798,9 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event event) {
+                CTabItem item = tabFolder.getSelection();
+                EditorTab editor = (item != null) ? (EditorTab)item.getData() : null;
+                pinCheckMenuItem.setSelection(pinnedEditor == editor);
                 while (menu.getItemCount() > entriesTokeep) {
                     menu.getItem(menu.getItemCount() - 1).dispose();
                 }
@@ -2851,6 +2878,9 @@ public class SpinTools {
         EditorTab editorTab = (EditorTab) tabItem.getData();
         if (canCloseEditorTab(editorTab)) {
             tabItem.dispose();
+            if (editorTab == pinnedEditor) {
+                pinnedEditor = null;
+            }
             if (isCurrent) {
                 objectBrowser.setInput(null);
                 outlineViewContainer.setTopControl(null);
@@ -2864,6 +2894,7 @@ public class SpinTools {
                     tabFolder.notifyListeners(SWT.Selection, event);
                 }
             }
+            refreshObjectBrowser();
             return true;
         }
         return false;
@@ -2983,6 +3014,18 @@ public class SpinTools {
             }
         }
         return null;
+    }
+
+    private EditorTab getCompilationTarget() {
+        CTabItem selectedTab = tabFolder.getSelection();
+        EditorTab selectedEditor = (selectedTab != null) ? (EditorTab)selectedTab.getData() : null;
+        return (pinnedEditor != null) ? pinnedEditor : selectedEditor;
+    }
+
+    void refreshObjectBrowser() {
+        EditorTab target = getCompilationTarget();
+        boolean pinned = target == pinnedEditor;
+        objectBrowser.setInput(target.getObjectTree(), pinned);
     }
 
     static {

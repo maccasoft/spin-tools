@@ -32,6 +32,7 @@ public class ObjectBrowser {
 
     Display display;
     TreeViewer viewer;
+    boolean isTopPinned = true;
 
     public ObjectBrowser(Composite parent) {
         display = parent.getDisplay();
@@ -41,7 +42,12 @@ public class ObjectBrowser {
 
             @Override
             public String getText(Object element) {
-                return ((ObjectTree) element).getName();
+                ObjectTree objectTree = (ObjectTree)element;
+                String text = objectTree.getName();
+                if (isTopPinned && objectTree.parent == null) {
+                    text += " (Pinned)";
+                }
+                return text;
             }
 
             @Override
@@ -145,6 +151,11 @@ public class ObjectBrowser {
     }
 
     public void setInput(ObjectTree input) {
+        setInput(input, false);
+    }
+
+    public void setInput(ObjectTree input, boolean pinned) {
+        isTopPinned = pinned;
         if (input == null) {
             viewer.setInput(new ObjectTree[0]);
         }
