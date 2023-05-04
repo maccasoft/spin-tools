@@ -572,15 +572,15 @@ public abstract class Spin2BytecodeCompiler {
                     throw new RuntimeException("syntax error");
                 }
 
+                int bitfield = -1;
+                if (bitfieldNode != null) {
+                    bitfield = compileBitfield(context, method, bitfieldNode, source);
+                }
+
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
 
                 if (indexNode != null) {
                     source.addAll(compileBytecodeExpression(context, method, indexNode, true));
-                }
-
-                int bitfield = -1;
-                if (bitfieldNode != null) {
-                    bitfield = compileBitfield(context, method, bitfieldNode, source);
                 }
 
                 MemoryOp.Size ss = MemoryOp.Size.Long;
