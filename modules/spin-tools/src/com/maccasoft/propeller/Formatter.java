@@ -889,7 +889,7 @@ public abstract class Formatter {
                         break;
                     }
                     sb.alignToColumn(argumentsColumn);
-                    if ("\\".equals(token.getText()) || "#".equals(token.getText()) || "##".equals(token.getText())) {
+                    if ("\\".equals(token.getText()) || "#".equals(token.getText()) || "##".equals(token.getText()) || "@".equals(token.getText())) {
                         sb.append(token);
                     }
                     else {
@@ -924,7 +924,7 @@ public abstract class Formatter {
                         sb.append(token);
                         break;
                     }
-                    if (sb.lastChar() == '\\' || sb.lastChar() == '#') {
+                    if (sb.lastChar() == '\\' || sb.lastChar() == '#' || sb.lastChar() == '@') {
                         sb.append(token);
                         break;
                     }

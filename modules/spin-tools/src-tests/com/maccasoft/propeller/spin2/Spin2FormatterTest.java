@@ -434,6 +434,19 @@ class Spin2FormatterTest {
     }
 
     @Test
+    void testPAsmRep() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "DAT\n"
+            + " rep @.l,#a\n"
+            + "");
+        Assertions.assertEquals(""
+            + "DAT\n"
+            + "                rep     @.l, #a\n"
+            + "", text);
+    }
+
+    @Test
     void testComment() {
         Formatter subject = new Spin2Formatter();
         String text = subject.format(""
