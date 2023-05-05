@@ -386,6 +386,14 @@ public class SpinTools {
 
         createTabFolderMenu();
 
+        shell.getDisplay().addFilter(SWT.KeyDown, new Listener() {
+            public void handleEvent(Event e) {
+                if (((e.stateMask & SWT.CTRL) == SWT.CTRL) && (e.keyCode == 'p')) {
+                    togglePinnedEditor();
+                }
+            }
+        });
+
         tabFolder.addTraverseListener(new TraverseListener() {
 
             @Override
@@ -1252,6 +1260,17 @@ public class SpinTools {
         });
 
         new ToolItem(toolBar, SWT.SEPARATOR);
+
+        toolItem = new ToolItem(toolBar, SWT.PUSH);
+        toolItem.setImage(ImageRegistry.getImageFromResources("document-text-pin.png"));
+        toolItem.setToolTipText("Pin current as Top Object");
+        toolItem.addSelectionListener(new SelectionAdapter() {
+            
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                togglePinnedEditor();
+            }
+        });
 
         toolItem = new ToolItem(toolBar, SWT.PUSH);
         toolItem.setImage(ImageRegistry.getImageFromResources("information-frame.png"));
@@ -2210,12 +2229,10 @@ public class SpinTools {
     }
 
     private void handleShowInfo() {
-        CTabItem tabItem = tabFolder.getSelection();
-        if (tabItem == null) {
+        EditorTab editorTab = getCompilationTarget();
+        if (editorTab == null) {
             return;
         }
-
-        EditorTab editorTab = (EditorTab) tabItem.getData();
         editorTab.waitCompile();
         if (editorTab.hasErrors()) {
             MessageDialog.openError(shell, APP_TITLE, "Program has errors.");
@@ -2737,24 +2754,12 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.CHECK);
-        item.setText("Pin as Top Object");
+        item.setText("Pin as Top Object\tCtrl+P");
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
             public void handleEvent(Event e) {
-                CTabItem tab = tabFolder.getSelection();
-                EditorTab editor = (tab != null) ? (EditorTab)tab.getData() : null;
-                if (editor != null) { 
-                    if (pinnedEditor == editor) {
-                        pinnedEditor = null;
-                        preferences.setPinnedSourceName(null);
-                    }
-                    else {
-                        pinnedEditor = editor;
-                        preferences.setPinnedSourceName(editor.file.getName());
-                    }
-                    refreshObjectBrowser();
-                }
+                togglePinnedEditor();
             }
         });
         pinCheckMenuItem = item;
@@ -2798,8 +2803,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event event) {
-                CTabItem item = tabFolder.getSelection();
-                EditorTab editor = (item != null) ? (EditorTab)item.getData() : null;
+                EditorTab editor = getSelectedEditor();
                 pinCheckMenuItem.setSelection(pinnedEditor == editor);
                 while (menu.getItemCount() > entriesTokeep) {
                     menu.getItem(menu.getItemCount() - 1).dispose();
@@ -3016,9 +3020,29 @@ public class SpinTools {
         return null;
     }
 
+    private EditorTab getSelectedEditor() {
+        CTabItem tab = tabFolder.getSelection();
+        EditorTab editor = (tab != null) ? (EditorTab)tab.getData() : null;
+        return editor;
+    }
+
+    private void togglePinnedEditor() {
+        EditorTab editor = getSelectedEditor();
+        if (editor != null) { 
+            if (pinnedEditor == editor) {
+                pinnedEditor = null;
+                preferences.setPinnedSourceName(null);
+            }
+            else {
+                pinnedEditor = editor;
+                preferences.setPinnedSourceName(editor.file.getName());
+            }
+            refreshObjectBrowser();
+        }
+    }
+
     private EditorTab getCompilationTarget() {
-        CTabItem selectedTab = tabFolder.getSelection();
-        EditorTab selectedEditor = (selectedTab != null) ? (EditorTab)selectedTab.getData() : null;
+        EditorTab selectedEditor = getSelectedEditor();
         return (pinnedEditor != null) ? pinnedEditor : selectedEditor;
     }
 
