@@ -574,7 +574,6 @@ public class EditorTab implements FindReplaceTarget {
                                         changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
                                         editor.setCompilerMessages(list);
                                         editor.redraw();
-                                        tabItem.setFont(null);
                                         updateTabItemText();
                                     }
                                 });
@@ -611,15 +610,13 @@ public class EditorTab implements FindReplaceTarget {
         this.sourcePool = sourcePool;
         this.preferences = Preferences.getInstance();
 
-        tabItem = new CTabItem(folder, SWT.NONE);
-        tabItem.setShowClose(true);
-        tabItem.setText(tabItemText);
-        tabItem.setData(this);
-
+        
+        editor = new SourceEditor(folder);
+        createTabItem(folder);
+        
         FontData[] fontData = tabItem.getFont().getFontData();
         busyFont = new Font(tabItem.getDisplay(), fontData[0].getName(), fontData[0].getHeight(), SWT.ITALIC);
 
-        editor = new SourceEditor(folder);
 
         File localFile = this.file != null ? this.file : new File(tabItemText);
         if (tabItemText.toLowerCase().endsWith(".spin")) {
@@ -660,21 +657,6 @@ public class EditorTab implements FindReplaceTarget {
 
         sourcePool.addPropertyChangeListener(sourcePoolChangeListener);
         preferences.addPropertyChangeListener(preferencesChangeListener);
-
-        tabItem.addDisposeListener(new DisposeListener() {
-
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
-                preferences.removePropertyChangeListener(preferencesChangeListener);
-                sourcePool.removePropertyChangeListener(sourcePoolChangeListener);
-                File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
-                sourcePool.removeParsedSource(localFile);
-                busyFont.dispose();
-            }
-
-        });
-
-        tabItem.setControl(editor.getControl());
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -726,6 +708,9 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     void updateTabItemText() {
+        if (tabItem == null) {
+            return;
+        }
         if (dirty) {
             tabItem.setText("*" + tabItemText);
         }
@@ -734,6 +719,7 @@ public class EditorTab implements FindReplaceTarget {
         }
         tabItem.setSelectionForeground(errors ? Display.getDefault().getSystemColor(SWT.COLOR_RED) : null);
         tabItem.setForeground(errors ? Display.getDefault().getSystemColor(SWT.COLOR_RED) : null);
+        tabItem.setFont(pendingCompile.get() ? busyFont : null);
     }
 
     public File getFile() {
@@ -763,7 +749,9 @@ public class EditorTab implements FindReplaceTarget {
         }
         editor.setTokenMarker(tokenMarker);
 
-        tabItem.setToolTipText(file != null ? file.getAbsolutePath() : "");
+        if (tabItem != null) {
+            tabItem.setToolTipText(file != null ? file.getAbsolutePath() : "");
+        }
     }
 
     public void setFocus() {
@@ -781,7 +769,14 @@ public class EditorTab implements FindReplaceTarget {
 
     public void dispose() {
         editor.getControl().dispose();
-        tabItem.dispose();
+        if (tabItem != null) {
+            tabItem.dispose();
+        }
+        preferences.removePropertyChangeListener(preferencesChangeListener);
+        sourcePool.removePropertyChangeListener(sourcePoolChangeListener);
+        File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
+        sourcePool.removeParsedSource(localFile);
+        busyFont.dispose();
     }
 
     public CTabItem getTabItem() {
@@ -1085,7 +1080,7 @@ public class EditorTab implements FindReplaceTarget {
         pendingCompile.set(true);
         object = null;
         objectTree = null;
-        tabItem.setFont(busyFont);
+        updateTabItemText();
         Display.getDefault().timerExec(500, compilerRunnable);
     }
 
@@ -1167,4 +1162,20 @@ public class EditorTab implements FindReplaceTarget {
         return tokenMarker;
     }
 
+    public CTabItem createTabItem(CTabFolder folder) {
+        tabItem = new CTabItem(folder, SWT.NONE);
+        tabItem.setShowClose(true);
+        tabItem.setText(tabItemText);
+        tabItem.setData(this);
+        tabItem.setToolTipText(file != null ? file.getAbsolutePath() : "");
+
+        tabItem.setControl(editor.getControl());
+
+        return tabItem;
+    }
+
+    public void disposeTabItem() {
+        tabItem.dispose();
+        tabItem = null;
+    }
 }

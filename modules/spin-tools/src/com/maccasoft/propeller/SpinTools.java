@@ -416,9 +416,17 @@ public class SpinTools {
             public void close(CTabFolderEvent event) {
                 EditorTab editorTab = (EditorTab) event.item.getData();
                 event.doit = canCloseEditorTab(editorTab);
-                if (event.doit && event.item == tabFolder.getSelection()) {
-                    objectBrowser.setInput(null);
-                    outlineViewContainer.setTopControl(null);
+                if (event.doit) {
+                    if (editorTab == pinnedEditor) {
+                        editorTab.disposeTabItem();
+                    }
+                    else {
+                        editorTab.dispose();
+                    }
+                    if (event.item == tabFolder.getSelection()) {
+                        objectBrowser.setInput(null);
+                        outlineViewContainer.setTopControl(null);
+                    }
                 }
             }
         });
@@ -520,6 +528,7 @@ public class SpinTools {
                         }
                     }
                     preferences.setOpenTabs(openTabs.toArray(new String[openTabs.size()]));
+                    preferences.setPinnedSourceName(pinnedEditor != null ? pinnedEditor.file.getName() : null);
 
                     SerialTerminal serialTerminal = getSerialTerminal();
                     if (serialTerminal != null) {
@@ -564,7 +573,7 @@ public class SpinTools {
                                     blockSelectionItem.setSelection(editorTab.isBlockSelection());
 
                                     if (editorTab.file.getName().equals(pinnedTabName)) {
-                                        pinnedEditor = editorTab;
+                                        setPinnedEditor(editorTab);
                                     }
                                 }
 
@@ -2309,6 +2318,12 @@ public class SpinTools {
                 return editorTab;
             }
         }
+        if (pinnedEditor != null && pinnedEditor.getFile().equals(file)) {
+            CTabItem tab = pinnedEditor.createTabItem(tabFolder);
+            tabFolder.setSelection(tab);
+            pinnedEditor.setFocus();
+            return pinnedEditor;
+        }
         return null;
     }
 
@@ -2881,10 +2896,15 @@ public class SpinTools {
         int index = tabFolder.indexOf(tabItem);
         EditorTab editorTab = (EditorTab) tabItem.getData();
         if (canCloseEditorTab(editorTab)) {
-            tabItem.dispose();
             if (editorTab == pinnedEditor) {
-                pinnedEditor = null;
+                editorTab.disposeTabItem();
             }
+            else {
+                editorTab.dispose();
+            }
+            // if (editorTab == pinnedEditor) {
+            //     pinnedEditor = null;
+            // }
             if (isCurrent) {
                 objectBrowser.setInput(null);
                 outlineViewContainer.setTopControl(null);
@@ -3028,17 +3048,23 @@ public class SpinTools {
 
     private void togglePinnedEditor() {
         EditorTab editor = getSelectedEditor();
-        if (editor != null) { 
-            if (pinnedEditor == editor) {
-                pinnedEditor = null;
-                preferences.setPinnedSourceName(null);
-            }
-            else {
-                pinnedEditor = editor;
-                preferences.setPinnedSourceName(editor.file.getName());
-            }
-            refreshObjectBrowser();
+        if (editor == null || pinnedEditor == editor) {
+            setPinnedEditor(null);
         }
+        else {
+            setPinnedEditor(editor);
+        }
+    }
+
+    private void setPinnedEditor(EditorTab newEditor) {
+        if (newEditor == pinnedEditor) {
+            return;
+        }
+        if (pinnedEditor != null && pinnedEditor.getTabItem() == null) {
+            pinnedEditor.dispose();
+        }
+        pinnedEditor = newEditor;
+        refreshObjectBrowser();
     }
 
     private EditorTab getCompilationTarget() {
@@ -3049,7 +3075,12 @@ public class SpinTools {
     void refreshObjectBrowser() {
         EditorTab target = getCompilationTarget();
         boolean pinned = target == pinnedEditor;
-        objectBrowser.setInput(target.getObjectTree(), pinned);
+        if (target != null) {
+            objectBrowser.setInput(target.getObjectTree(), pinned);
+        }
+        else {
+            objectBrowser.setInput(null);
+        }
     }
 
     static {
