@@ -2902,9 +2902,6 @@ public class SpinTools {
             else {
                 editorTab.dispose();
             }
-            // if (editorTab == pinnedEditor) {
-            //     pinnedEditor = null;
-            // }
             if (isCurrent) {
                 objectBrowser.setInput(null);
                 outlineViewContainer.setTopControl(null);
