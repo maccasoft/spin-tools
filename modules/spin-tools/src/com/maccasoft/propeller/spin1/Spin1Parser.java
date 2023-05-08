@@ -37,6 +37,10 @@ public class Spin1Parser extends Parser {
         "CON", "VAR", "OBJ", "PUB", "PRI", "DAT"
     }));
 
+    private static final Set<String> preprocessor = new HashSet<>(Arrays.asList(new String[] {
+        "define", "ifdef", "elifdef", "ifndef", "elifndef", "else", "if", "elif", "endif"
+    }));
+
     final Spin1TokenStream stream;
 
     Node root;
@@ -82,12 +86,7 @@ public class Spin1Parser extends Parser {
                     if (defaultNode == null) {
                         defaultNode = new ConstantsNode(root);
                     }
-                    if (token.column == 0 && "#".equalsIgnoreCase(token.getText())) {
-                        parsePreprocessor(defaultNode);
-                    }
-                    else {
-                        parseConstant(defaultNode);
-                    }
+                    parseConstant(defaultNode);
                 }
             }
         }
@@ -97,7 +96,13 @@ public class Spin1Parser extends Parser {
     }
 
     void parsePreprocessor(Node parent) {
-        Token token = stream.nextToken();
+        parsePreprocessor(parent, null);
+    }
+
+    void parsePreprocessor(Node parent, Token token) {
+        if (token == null) {
+            token = stream.nextToken();
+        }
 
         if ("define".equals(stream.peekNext().getText())) {
             DirectiveNode.DefineNode node = new DirectiveNode.DefineNode(parent);
@@ -162,7 +167,7 @@ public class Spin1Parser extends Parser {
     }
 
     void parseConstant(Node parent) {
-        int state = 1;
+        int state = 0;
         ConstantNode node = null;
 
         Token token;
@@ -171,6 +176,16 @@ public class Spin1Parser extends Parser {
                 break;
             }
             switch (state) {
+                case 0:
+                    if ("#".equals(token.getText())) {
+                        Token next = stream.peekNext();
+                        if (preprocessor.contains(next.getText().toLowerCase())) {
+                            parsePreprocessor(parent, token);
+                            return;
+                        }
+                    }
+                    state = 1;
+                    // Fall-through
                 case 1:
                     if (",".equals(token.getText())) {
                         node = null;

@@ -736,9 +736,9 @@ class Spin2ParserTest {
     void testDefaultSectionPreprocessorDirective() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "     A = 1\n"
-            + "#ifdef P\n"
+            + "  #ifdef P\n"
             + "     B = 2\n"
-            + "#endif\n"
+            + "  #endif\n"
             + "     C = 3\n"
             + ""));
 
@@ -762,9 +762,9 @@ class Spin2ParserTest {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "CON\n"
             + "     A = 1\n"
-            + "#ifdef P\n"
+            + "  #ifdef P\n"
             + "     B = 2\n"
-            + "#endif\n"
+            + "  #endif\n"
             + "     C = 3\n"
             + ""));
 
@@ -787,9 +787,9 @@ class Spin2ParserTest {
     void testMethodPreprocessorDirective() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "PUB main()\n"
-            + "#ifdef A\n"
+            + "  #ifdef A\n"
             + "    a := b * 2\n"
-            + "#endif\n"
+            + "  #endif\n"
             + ""));
 
         Node root = subject.parse();
@@ -807,9 +807,9 @@ class Spin2ParserTest {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "PUB main()\n"
             + "    if 1\n"
-            + "#ifdef A\n"
+            + "  #ifdef A\n"
             + "        a := b * 2\n"
-            + "#endif\n"
+            + "  #endif\n"
             + ""));
 
         Node root = subject.parse();
@@ -828,9 +828,9 @@ class Spin2ParserTest {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "DAT\n"
             + "        org $000\n"
-            + "#ifdef A\n"
+            + "  #ifdef A\n"
             + "        mov a, #1\n"
-            + "#endif\n"
+            + "  #endif\n"
             + "        ret\n"
             + ""));
 
