@@ -47,6 +47,7 @@ public class Preferences {
     public static final String PROP_SHOW_SECTIONS_BACKGROUND = "showSectionsBackground";
     public static final String PROP_SHOW_EDITOR_OUTLINE = "showEditorOutline";
     public static final String PROP_LRU = "lru";
+    public static final String PROP_TOP_OBJECT = "topObject";
     public static final String PROP_PORT = "port";
     public static final String PROP_SPIN1_LIBRARY_PATH = "spin1LibraryPath";
     public static final String PROP_SPIN1_CASE_SENSITIVE_SYMBOLS = "spin1CaseSensitiveSymbols";
@@ -155,6 +156,7 @@ public class Preferences {
 
         public String[] openTabs;
         public String lastPath;
+        public String topObject;
 
         public TerminalPreferences terminal;
 
@@ -388,6 +390,19 @@ public class Preferences {
         else {
             preferences.lastPath = null;
         }
+    }
+
+    public File getTopObject() {
+        return preferences.topObject != null ? new File(preferences.topObject) : null;
+    }
+
+    public void setTopObject(File topObject) {
+        File oldTopObject = preferences.topObject != null ? new File(preferences.topObject) : null;
+        if (topObject != null && !topObject.isAbsolute()) {
+            topObject = topObject.getAbsoluteFile();
+        }
+        preferences.topObject = topObject != null ? topObject.getAbsolutePath() : null;
+        changeSupport.firePropertyChange(PROP_TOP_OBJECT, oldTopObject, topObject);
     }
 
     public String getPort() {

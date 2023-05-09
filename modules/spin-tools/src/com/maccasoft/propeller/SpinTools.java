@@ -125,7 +125,10 @@ public class SpinTools {
 
     StatusLine statusLine;
 
+    MenuItem topObjectItem;
     MenuItem blockSelectionItem;
+    ToolItem topObjectToolItem;
+    MenuItem topObjectTabItem;
 
     SourcePool sourcePool;
     SerialPortList serialPortList;
@@ -290,13 +293,12 @@ public class SpinTools {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            CTabItem tabItem = tabFolder.getSelection();
-            if (tabItem == null || tabItem.getData() != evt.getSource()) {
-                return;
-            }
+            EditorTab topEditorTab = getTargetObjectEditorTab();
             switch (evt.getPropertyName()) {
                 case EditorTab.OBJECT_TREE:
-                    objectBrowser.setInput((ObjectTree) evt.getNewValue());
+                    if (evt.getSource() == topEditorTab) {
+                        objectBrowser.setInput((ObjectTree) evt.getNewValue(), topEditorTab.isTopObject());
+                    }
                     break;
             }
         }
@@ -410,9 +412,15 @@ public class SpinTools {
             public void close(CTabFolderEvent event) {
                 EditorTab editorTab = (EditorTab) event.item.getData();
                 event.doit = canCloseEditorTab(editorTab);
-                if (event.doit && event.item == tabFolder.getSelection()) {
-                    objectBrowser.setInput(null);
-                    outlineViewContainer.setTopControl(null);
+                if (event.doit) {
+                    Display.getDefault().asyncExec(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            updateEditorSelection();
+                            updateCaretPosition();
+                        }
+                    });
                 }
             }
         });
@@ -420,20 +428,7 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                if (e.item != null && e.item.getData() != null) {
-                    CTabItem tabItem = (CTabItem) e.item;
-                    tabItem.getControl().setFocus();
-
-                    EditorTab editorTab = (EditorTab) tabItem.getData();
-                    objectBrowser.setInput(editorTab.getObjectTree());
-
-                    outlineViewContainer.setTopControl(editorTab.getOutlineView().getControl());
-
-                    if (findReplaceDialog != null) {
-                        findReplaceDialog.setTarget(editorTab);
-                    }
-                    blockSelectionItem.setSelection(editorTab.isBlockSelection());
-                }
+                updateEditorSelection();
                 updateCaretPosition();
             }
         });
@@ -531,6 +526,39 @@ public class SpinTools {
 
             @Override
             public void run() {
+                File topObjectFile = preferences.getTopObject();
+                if (topObjectFile != null) {
+                    try {
+                        String text = FileUtils.loadFromFile(topObjectFile);
+                        Display.getDefault().syncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                EditorTab editorTab = new EditorTab(tabFolder, topObjectFile, sourcePool);
+
+                                OutlineView outlineView = new OutlineView(outlineViewContainer.getContainer());
+                                outlineView.addOpenListener(openListener);
+                                editorTab.setOutlineView(outlineView);
+
+                                editorTab.setEditorText(text);
+                                editorTab.addCaretListener(caretListener);
+                                editorTab.addPropertyChangeListener(editorChangeListener);
+                                editorTab.getEditor().addSourceListener(sourceListener);
+                            }
+
+                        });
+                    } catch (Exception e) {
+                        Display.getDefault().syncExec(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                MessageDialog.openError(shell, APP_TITLE, "Can't reopen top object " + topObjectFile.getAbsolutePath());
+                                preferences.setTopObject(null);
+                            }
+                        });
+                    }
+                }
+
                 final String[] openTabs = preferences.getOpenTabs();
                 if (openTabs != null && preferences.getReloadOpenTabs()) {
                     for (int i = 0; i < openTabs.length; i++) {
@@ -538,9 +566,12 @@ public class SpinTools {
                         if (!fileToOpen.exists() || fileToOpen.isDirectory()) {
                             continue;
                         }
+                        if (topObjectFile != null && topObjectFile.equals(fileToOpen)) {
+                            continue;
+                        }
                         try {
                             String text = FileUtils.loadFromFile(fileToOpen);
-                            tabFolder.getDisplay().asyncExec(new Runnable() {
+                            Display.getDefault().syncExec(new Runnable() {
 
                                 @Override
                                 public void run() {
@@ -554,35 +585,34 @@ public class SpinTools {
                                     editorTab.addCaretListener(caretListener);
                                     editorTab.addPropertyChangeListener(editorChangeListener);
                                     editorTab.getEditor().addSourceListener(sourceListener);
-                                    blockSelectionItem.setSelection(editorTab.isBlockSelection());
                                 }
 
                             });
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            Display.getDefault().syncExec(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    MessageDialog.openError(shell, APP_TITLE, "Can't reopen " + fileToOpen.getAbsolutePath());
+                                    preferences.setTopObject(null);
+                                }
+                            });
                         }
                     }
                 }
 
-                tabFolder.getDisplay().asyncExec(new Runnable() {
+                Display.getDefault().asyncExec(new Runnable() {
 
                     @Override
                     public void run() {
                         if (tabFolder.isDisposed()) {
                             return;
                         }
-                        try {
-                            if (tabFolder.getItemCount() != 0) {
-                                tabFolder.setSelection(0);
-
-                                EditorTab editorTab = (EditorTab) tabFolder.getItem(0).getData();
-                                outlineViewContainer.setTopControl(editorTab.getOutlineView().getControl());
-                                editorTab.setFocus();
-                                updateCaretPosition();
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        if (tabFolder.getItemCount() != 0) {
+                            tabFolder.setSelection(0);
                         }
+                        updateEditorSelection();
+                        updateCaretPosition();
                         File lastPath = preferences.getLastPath();
                         if (lastPath != null) {
                             fileBrowser.setSelection(lastPath);
@@ -760,6 +790,17 @@ public class SpinTools {
         });
 
         new MenuItem(menu, SWT.SEPARATOR);
+
+        topObjectItem = new MenuItem(menu, SWT.CHECK);
+        topObjectItem.setText("Pin as Top Object\tCtrl+T");
+        topObjectItem.setAccelerator(SWT.CTRL + 'T');
+        topObjectItem.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                handleSetTopObject();
+            }
+        });
 
         item = new MenuItem(menu, SWT.PUSH);
         item.setText("Archive Project...");
@@ -1250,6 +1291,19 @@ public class SpinTools {
 
         new ToolItem(toolBar, SWT.SEPARATOR);
 
+        topObjectToolItem = new ToolItem(toolBar, SWT.CHECK);
+        topObjectToolItem.setImage(ImageRegistry.getImageFromResources("document-code-pin.png"));
+        topObjectToolItem.setToolTipText("Pin as Top Object");
+        topObjectToolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                handleSetTopObject();
+            }
+        });
+
+        new ToolItem(toolBar, SWT.SEPARATOR);
+
         toolItem = new ToolItem(toolBar, SWT.PUSH);
         toolItem.setImage(ImageRegistry.getImageFromResources("information-frame.png"));
         toolItem.setToolTipText("Show Info");
@@ -1519,18 +1573,14 @@ public class SpinTools {
         editorTab.addPropertyChangeListener(editorChangeListener);
         editorTab.getEditor().addSourceListener(sourceListener);
 
-        blockSelectionItem.setSelection(editorTab.isBlockSelection());
-        objectBrowser.setInput(null);
-
         tabFolder.getDisplay().asyncExec(new Runnable() {
 
             @Override
             public void run() {
                 try {
                     tabFolder.setSelection(tabFolder.getItemCount() - 1);
-                    outlineViewContainer.setTopControl(editorTab.getOutlineView().getControl());
                     editorTab.setEditorText(FileUtils.loadFromFile(fileToOpen));
-                    editorTab.setFocus();
+                    updateEditorSelection();
                     updateCaretPosition();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -1554,7 +1604,7 @@ public class SpinTools {
         editorTab.getEditor().addSourceListener(sourceListener);
 
         blockSelectionItem.setSelection(editorTab.isBlockSelection());
-        objectBrowser.setInput(null);
+        objectBrowser.setInput(null, false);
 
         tabFolder.getDisplay().asyncExec(new Runnable() {
 
@@ -1794,6 +1844,21 @@ public class SpinTools {
                 e.printStackTrace();
             }
         }
+    }
+
+    EditorTab findFileEditorTab(File file) {
+        for (int i = 0; i < tabFolder.getItemCount(); i++) {
+            EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
+
+            File localFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText());
+            if (localFile.equals(file)) {
+                tabFolder.setSelection(i);
+                editorTab.setFocus();
+                updateCaretPosition();
+                return editorTab;
+            }
+        }
+        return null;
     }
 
     Menu createEditMenu(Menu parent) {
@@ -2154,8 +2219,8 @@ public class SpinTools {
         new MenuItem(menu, SWT.SEPARATOR);
 
         item = new MenuItem(menu, SWT.PUSH);
-        item.setText("Serial Terminal\tCtrl+T");
-        item.setAccelerator(SWT.CTRL + 'T');
+        item.setText("Serial Terminal\tF12");
+        item.setAccelerator(SWT.F12);
         item.addListener(SWT.Selection, new Listener() {
 
             @Override
@@ -2207,12 +2272,10 @@ public class SpinTools {
     }
 
     private void handleShowInfo() {
-        CTabItem tabItem = tabFolder.getSelection();
-        if (tabItem == null) {
+        EditorTab editorTab = getTargetObjectEditorTab();
+        if (editorTab == null) {
             return;
         }
-
-        EditorTab editorTab = (EditorTab) tabItem.getData();
         editorTab.waitCompile();
         if (editorTab.hasErrors()) {
             MessageDialog.openError(shell, APP_TITLE, "Program has errors.");
@@ -2277,22 +2340,12 @@ public class SpinTools {
         }
     }
 
-    EditorTab findFileEditorTab(File file) {
-        for (int i = 0; i < tabFolder.getItemCount(); i++) {
-            EditorTab editorTab = (EditorTab) tabFolder.getItem(i).getData();
-
-            File localFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText());
-            if (localFile.equals(file)) {
-                tabFolder.setSelection(i);
-                editorTab.setFocus();
-                updateCaretPosition();
-                return editorTab;
-            }
-        }
-        return null;
-    }
-
     private void handleBinaryExport(Shell shell, SpinObject object) {
+        EditorTab editorTab = getTargetObjectEditorTab();
+        if (editorTab == null) {
+            return;
+        }
+
         FileDialog dlg = new FileDialog(shell, SWT.SAVE);
         dlg.setOverwrite(true);
         dlg.setText("Save Binary File");
@@ -2304,12 +2357,6 @@ public class SpinTools {
         };
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
-
-        CTabItem tabItem = tabFolder.getSelection();
-        if (tabItem == null) {
-            return;
-        }
-        EditorTab editorTab = (EditorTab) tabItem.getData();
 
         String name = editorTab.getText();
         int i = name.lastIndexOf('.');
@@ -2340,6 +2387,11 @@ public class SpinTools {
     }
 
     private void handleListingExport(Shell shell, SpinObject object) {
+        EditorTab editorTab = getTargetObjectEditorTab();
+        if (editorTab == null) {
+            return;
+        }
+
         FileDialog dlg = new FileDialog(shell, SWT.SAVE);
         dlg.setOverwrite(true);
         dlg.setText("Save Listing File");
@@ -2351,12 +2403,6 @@ public class SpinTools {
         };
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
-
-        CTabItem tabItem = tabFolder.getSelection();
-        if (tabItem == null) {
-            return;
-        }
-        EditorTab editorTab = (EditorTab) tabItem.getData();
 
         String name = editorTab.getText();
         int i = name.lastIndexOf('.');
@@ -2387,11 +2433,10 @@ public class SpinTools {
         SerialPort serialPort = null;
         boolean serialPortShared = false;
 
-        CTabItem tabItem = tabFolder.getSelection();
-        if (tabItem == null) {
+        EditorTab editorTab = getTargetObjectEditorTab();
+        if (editorTab == null) {
             return;
         }
-        EditorTab editorTab = (EditorTab) tabItem.getData();
         editorTab.waitCompile();
         if (editorTab.hasErrors()) {
             MessageDialog.openError(shell, APP_TITLE, "Program has errors.");
@@ -2471,6 +2516,18 @@ public class SpinTools {
                 }
             }
         }
+    }
+
+    EditorTab getTargetObjectEditorTab() {
+        CTabItem[] items = tabFolder.getItems();
+        for (int i = 0; i < items.length; i++) {
+            EditorTab editorTab = (EditorTab) items[i].getData();
+            if (editorTab.isTopObject()) {
+                return editorTab;
+            }
+        }
+        CTabItem tabItem = tabFolder.getSelection();
+        return tabItem != null ? (EditorTab) tabItem.getData() : null;
     }
 
     private SerialPort doUpload(SpinObject obj, boolean writeToFlash, SerialPort serialPort, boolean serialPortShared) {
@@ -2713,11 +2770,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handleNextTab();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handleNextTab();
             }
         });
 
@@ -2727,11 +2780,19 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                try {
-                    handlePreviousTab();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                handlePreviousTab();
+            }
+        });
+
+        new MenuItem(menu, SWT.SEPARATOR);
+
+        topObjectTabItem = new MenuItem(menu, SWT.CHECK);
+        topObjectTabItem.setText("Pin as Top Object\tCtrl+T");
+        topObjectTabItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                handleSetTopObject();
             }
         });
 
@@ -2815,10 +2876,8 @@ public class SpinTools {
             index = 0;
         }
         tabFolder.setSelection(index);
-
-        Event event = new Event();
-        event.item = tabFolder.getItem(index);
-        tabFolder.notifyListeners(SWT.Selection, event);
+        updateEditorSelection();
+        updateCaretPosition();
     }
 
     private void handlePreviousTab() {
@@ -2831,10 +2890,25 @@ public class SpinTools {
             index = tabFolder.getItemCount() - 1;
         }
         tabFolder.setSelection(index);
+        updateEditorSelection();
+        updateCaretPosition();
+    }
 
-        Event event = new Event();
-        event.item = tabFolder.getItem(index);
-        tabFolder.notifyListeners(SWT.Selection, event);
+    private void handleSetTopObject() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem != null) {
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+            editorTab.toggleTopObject();
+            objectBrowser.setInput(editorTab.getObjectTree(), editorTab.isTopObject());
+            topObjectItem.setSelection(editorTab.isTopObject());
+            topObjectTabItem.setSelection(editorTab.isTopObject());
+            topObjectToolItem.setSelection(editorTab.isTopObject());
+        }
+        else {
+            topObjectItem.setSelection(false);
+            topObjectTabItem.setSelection(false);
+            topObjectToolItem.setSelection(false);
+        }
     }
 
     boolean closeCurrentEditor() {
@@ -2852,17 +2926,14 @@ public class SpinTools {
         if (canCloseEditorTab(editorTab)) {
             tabItem.dispose();
             if (isCurrent) {
-                objectBrowser.setInput(null);
-                outlineViewContainer.setTopControl(null);
                 if (index >= tabFolder.getItemCount()) {
                     index--;
                 }
                 if (index >= 0) {
-                    Event event = new Event();
-                    event.item = tabFolder.getItem(index);
-                    tabFolder.setSelection((CTabItem) event.item);
-                    tabFolder.notifyListeners(SWT.Selection, event);
+                    tabFolder.setSelection(index);
                 }
+                updateEditorSelection();
+                updateCaretPosition();
             }
             return true;
         }
@@ -2889,6 +2960,19 @@ public class SpinTools {
                         return false;
                     }
                     break;
+            }
+        }
+        if (editorTab.isTopObject()) {
+            int style = SWT.APPLICATION_MODAL | SWT.ICON_QUESTION | SWT.YES | SWT.NO;
+            MessageBox messageBox = new MessageBox(shell, style);
+            messageBox.setText(APP_TITLE);
+            messageBox.setMessage("Closing this tab will disable top object compile.  Close anyway?");
+            switch (messageBox.open()) {
+                case SWT.YES:
+                    preferences.setTopObject(null);
+                    break;
+                default:
+                    return false;
             }
         }
         return true;
@@ -2943,6 +3027,40 @@ public class SpinTools {
             }
         }
         return null;
+    }
+
+    void updateEditorSelection() {
+        CTabItem tabItem = tabFolder.getSelection();
+        if (tabItem != null) {
+            EditorTab editorTab = (EditorTab) tabItem.getData();
+
+            if (getTargetObjectEditorTab() == editorTab) {
+                objectBrowser.setInput(editorTab.getObjectTree(), editorTab.isTopObject());
+            }
+            outlineViewContainer.setTopControl(editorTab.getOutlineView().getControl());
+            if (findReplaceDialog != null) {
+                findReplaceDialog.setTarget(editorTab);
+            }
+            topObjectItem.setSelection(editorTab.isTopObject());
+            topObjectTabItem.setSelection(editorTab.isTopObject());
+            topObjectToolItem.setSelection(editorTab.isTopObject());
+            blockSelectionItem.setSelection(editorTab.isBlockSelection());
+
+            editorTab.setFocus();
+        }
+        else {
+            if (getTargetObjectEditorTab() == null) {
+                objectBrowser.setInput(null, false);
+            }
+            if (findReplaceDialog != null) {
+                findReplaceDialog.setTarget(null);
+            }
+            topObjectItem.setSelection(false);
+            topObjectTabItem.setSelection(false);
+            topObjectToolItem.setSelection(false);
+            blockSelectionItem.setSelection(false);
+        }
+        updateCaretPosition();
     }
 
     void updateCaretPosition() {

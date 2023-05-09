@@ -14,14 +14,21 @@ import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StyledCellLabelProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerCell;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
-import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.TreeItem;
@@ -33,20 +40,39 @@ public class ObjectBrowser {
     Display display;
     TreeViewer viewer;
 
+    Font fontBold;
+    TextStyle topObjectStyle;
+    boolean topObject;
+
     public ObjectBrowser(Composite parent) {
         display = parent.getDisplay();
 
         viewer = new TreeViewer(parent);
-        viewer.setLabelProvider(new LabelProvider() {
+        viewer.setUseHashlookup(true);
+
+        FontData[] fd = viewer.getControl().getFont().getFontData();
+        fd[0].setStyle(SWT.BOLD);
+        fontBold = new Font(display, fd[0]);
+        topObjectStyle = new TextStyle(fontBold, null, null);
+
+        viewer.setLabelProvider(new StyledCellLabelProvider() {
 
             @Override
-            public String getText(Object element) {
-                return ((ObjectTree) element).getName();
-            }
+            public void update(ViewerCell cell) {
+                ObjectTree element = (ObjectTree) cell.getElement();
+                String text = element.getName();
 
-            @Override
-            public Image getImage(Object element) {
-                return ImageRegistry.getImageForFile(((ObjectTree) element).getFile());
+                cell.setText(text);
+                if (element.getParent() == null && topObject) {
+                    StyleRange range = new StyleRange(topObjectStyle);
+                    range.start = 0;
+                    range.length = text.length();
+                    cell.setStyleRanges(new StyleRange[] {
+                        range
+                    });
+                }
+
+                cell.setImage(ImageRegistry.getImageForFile(element.getFile()));
             }
 
         });
@@ -121,7 +147,13 @@ public class ObjectBrowser {
             }
 
         });
-        viewer.setUseHashlookup(true);
+        viewer.getTree().addDisposeListener(new DisposeListener() {
+
+            @Override
+            public void widgetDisposed(DisposeEvent e) {
+                fontBold.dispose();
+            }
+        });
     }
 
     public void addSelectionChangedListener(ISelectionChangedListener l) {
@@ -144,7 +176,8 @@ public class ObjectBrowser {
         viewer.getControl().setFocus();
     }
 
-    public void setInput(ObjectTree input) {
+    public void setInput(ObjectTree input, boolean topObject) {
+        this.topObject = topObject;
         if (input == null) {
             viewer.setInput(new ObjectTree[0]);
         }

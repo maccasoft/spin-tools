@@ -80,6 +80,8 @@ public class EditorTab implements FindReplaceTarget {
     CTabItem tabItem;
 
     Font busyFont;
+    Font boldFont;
+    Font boldBusyFont;
 
     SourceTokenMarker tokenMarker;
 
@@ -118,6 +120,11 @@ public class EditorTab implements FindReplaceTarget {
                         scheduleCompile();
                     }
                     break;
+                case Preferences.PROP_TOP_OBJECT: {
+                    File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
+                    tabItem.setFont(localFile.equals(evt.getNewValue()) ? boldFont : null);
+                    break;
+                }
             }
         }
     };
@@ -379,7 +386,7 @@ public class EditorTab implements FindReplaceTarget {
         public void refreshTokens(String text) {
             super.refreshTokens(text);
 
-            File localFile = file != null ? file : new File(tabItemText);
+            File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
             sourcePool.setParsedSource(localFile, getRoot());
         }
 
@@ -407,7 +414,7 @@ public class EditorTab implements FindReplaceTarget {
         public void refreshTokens(String text) {
             super.refreshTokens(text);
 
-            File localFile = file != null ? file : new File(tabItemText);
+            File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
             sourcePool.setParsedSource(localFile, getRoot());
         }
 
@@ -435,7 +442,7 @@ public class EditorTab implements FindReplaceTarget {
         public void refreshTokens(String text) {
             super.refreshTokens(text);
 
-            File localFile = file != null ? file : new File(tabItemText);
+            File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
             sourcePool.setParsedSource(localFile, getRoot());
         }
 
@@ -481,7 +488,7 @@ public class EditorTab implements FindReplaceTarget {
             if (!threadRunning.getAndSet(true)) {
                 pendingCompile.set(false);
 
-                File localFile = file != null ? file : new File(tabItemText);
+                File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
                 Node root = sourcePool.getParsedSource(localFile);
                 Display.getDefault().asyncExec(new Runnable() {
 
@@ -574,7 +581,7 @@ public class EditorTab implements FindReplaceTarget {
                                         changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
                                         editor.setCompilerMessages(list);
                                         editor.redraw();
-                                        tabItem.setFont(null);
+                                        tabItem.setFont(localFile.equals(preferences.getTopObject()) ? boldFont : null);
                                         updateTabItemText();
                                     }
                                 });
@@ -618,10 +625,16 @@ public class EditorTab implements FindReplaceTarget {
 
         FontData[] fontData = tabItem.getFont().getFontData();
         busyFont = new Font(tabItem.getDisplay(), fontData[0].getName(), fontData[0].getHeight(), SWT.ITALIC);
+        boldFont = new Font(tabItem.getDisplay(), fontData[0].getName(), fontData[0].getHeight(), SWT.BOLD);
+        boldBusyFont = new Font(tabItem.getDisplay(), fontData[0].getName(), fontData[0].getHeight(), SWT.BOLD | SWT.ITALIC);
 
         editor = new SourceEditor(folder);
 
-        File localFile = this.file != null ? this.file : new File(tabItemText);
+        File localFile = this.file != null ? this.file : new File(tabItemText).getAbsoluteFile();
+        if (localFile.equals(preferences.getTopObject())) {
+            tabItem.setFont(boldFont);
+        }
+
         if (tabItemText.toLowerCase().endsWith(".spin")) {
             tokenMarker = new Spin1TokenMarkerAdatper();
             tokenMarker.setCaseSensitive(preferences.getSpin1CaseSensitiveSymbols());
@@ -670,6 +683,8 @@ public class EditorTab implements FindReplaceTarget {
                 File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
                 sourcePool.removeParsedSource(localFile);
                 busyFont.dispose();
+                boldFont.dispose();
+                boldBusyFont.dispose();
             }
 
         });
@@ -741,7 +756,7 @@ public class EditorTab implements FindReplaceTarget {
     }
 
     public void setFile(File file) {
-        File localFile = this.file != null ? this.file : new File(tabItemText);
+        File localFile = this.file != null ? this.file : new File(tabItemText).getAbsoluteFile();
         sourcePool.removeParsedSource(localFile);
 
         this.file = file;
@@ -763,6 +778,9 @@ public class EditorTab implements FindReplaceTarget {
         }
         editor.setTokenMarker(tokenMarker);
 
+        if (file != null && file.equals(preferences.getTopObject())) {
+            tabItem.setFont(boldFont);
+        }
         tabItem.setToolTipText(file != null ? file.getAbsolutePath() : "");
     }
 
@@ -1084,8 +1102,10 @@ public class EditorTab implements FindReplaceTarget {
     void scheduleCompile() {
         pendingCompile.set(true);
         object = null;
-        objectTree = null;
-        tabItem.setFont(busyFont);
+
+        File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
+        tabItem.setFont(localFile.equals(preferences.getTopObject()) ? boldBusyFont : busyFont);
+
         Display.getDefault().timerExec(500, compilerRunnable);
     }
 
@@ -1094,7 +1114,6 @@ public class EditorTab implements FindReplaceTarget {
         try {
             pendingCompile.set(true);
             object = null;
-            objectTree = null;
             compilerRunnable.run();
             waitCompile();
         } finally {
@@ -1165,6 +1184,16 @@ public class EditorTab implements FindReplaceTarget {
 
     public SourceTokenMarker getTokenMarker() {
         return tokenMarker;
+    }
+
+    public void toggleTopObject() {
+        File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
+        preferences.setTopObject(localFile.equals(preferences.getTopObject()) ? null : localFile);
+    }
+
+    public boolean isTopObject() {
+        File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
+        return localFile.equals(preferences.getTopObject());
     }
 
 }
