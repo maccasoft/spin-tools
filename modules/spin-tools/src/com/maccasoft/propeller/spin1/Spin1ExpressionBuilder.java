@@ -47,6 +47,7 @@ import com.maccasoft.propeller.expressions.Or;
 import com.maccasoft.propeller.expressions.Rev;
 import com.maccasoft.propeller.expressions.Rol;
 import com.maccasoft.propeller.expressions.Ror;
+import com.maccasoft.propeller.expressions.Round;
 import com.maccasoft.propeller.expressions.Sar;
 import com.maccasoft.propeller.expressions.Scl;
 import com.maccasoft.propeller.expressions.ShiftLeft;
@@ -218,7 +219,7 @@ public class Spin1ExpressionBuilder {
                 right = parseLevel(right, p.intValue() + 1);
             }
 
-            switch (token.getText()) {
+            switch (token.getText().toUpperCase()) {
                 case ">>":
                     left = new ShiftRight(left, right);
                     break;
@@ -370,6 +371,18 @@ public class Spin1ExpressionBuilder {
                         throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
                     }
                     Expression expression = new Trunc(parseLevel(parseAtom(), 0));
+                    token = next();
+                    if (token == null || !")".equals(token.getText())) {
+                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                    }
+                    return expression;
+                }
+                case "ROUND": {
+                    token = next();
+                    if (token == null || !"(".equals(token.getText())) {
+                        throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
+                    }
+                    Expression expression = new Round(parseLevel(parseAtom(), 0));
                     token = next();
                     if (token == null || !")".equals(token.getText())) {
                         throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
