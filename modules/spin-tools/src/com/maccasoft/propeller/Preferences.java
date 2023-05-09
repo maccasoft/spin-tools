@@ -146,9 +146,11 @@ public class Preferences {
         public String port;
         public String[] spin1LibraryPath;
         public boolean spin1CaseSensitiveSymbols;
+        public String spin1Template;
         public String[] spin2LibraryPath;
         public boolean spin2CaseSensitiveSymbols;
         public boolean spin2ClockSetter;
+        public String spin2Template;
         public List<String> lru;
 
         public boolean reloadOpenTabs;
@@ -444,6 +446,14 @@ public class Preferences {
         }
     }
 
+    public File getSpin1Template() {
+        return preferences.spin1Template != null ? new File(preferences.spin1Template) : null;
+    }
+
+    public void setSpin1Template(File spin1Template) {
+        preferences.spin1Template = spin1Template != null ? spin1Template.getAbsolutePath() : null;
+    }
+
     public boolean getSpin1CaseSensitiveSymbols() {
         return preferences.spin1CaseSensitiveSymbols;
     }
@@ -495,6 +505,14 @@ public class Preferences {
 
     public void setSpin2ClockSetter(boolean spin2ClockSetter) {
         preferences.spin2ClockSetter = spin2ClockSetter;
+    }
+
+    public File getSpin2Template() {
+        return preferences.spin2Template != null ? new File(preferences.spin2Template) : null;
+    }
+
+    public void setSpin2Template(File spin2Template) {
+        preferences.spin2Template = spin2Template != null ? spin2Template.getAbsolutePath() : null;
     }
 
     public int[] getTabStops(Class<?> clazz) {

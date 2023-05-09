@@ -140,13 +140,13 @@ public class SpinTools {
 
     FindReplaceDialog findReplaceDialog;
 
-    static final String[] filterNames = new String[] {
+    public static final String[] filterNames = new String[] {
         "C Files",
         "Spin1 Files",
         "Spin2 Files",
         "All Source Files"
     };
-    static final String[] filterExtensions = new String[] {
+    public static final String[] filterExtensions = new String[] {
         "*.c",
         "*.spin",
         "*.spin2",
@@ -650,7 +650,18 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 String name = getUniqueName("Untitled", ".spin");
-                openNewTab(name, getResourceAsString("template.spin"));
+                File templateFile = preferences.getSpin1Template();
+                if (templateFile != null) {
+                    try {
+                        String text = FileUtils.loadFromFile(templateFile);
+                        openNewTab(name, text);
+                    } catch (Exception e1) {
+                        openInternalError(shell, "Error opening template file " + templateFile, e1);
+                    }
+                }
+                else {
+                    openNewTab(name, getResourceAsString("template.spin"));
+                }
             }
         });
 
@@ -674,7 +685,18 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 String name = getUniqueName("Untitled", ".spin2");
-                openNewTab(name, getResourceAsString("template.spin2"));
+                File templateFile = preferences.getSpin2Template();
+                if (templateFile != null) {
+                    try {
+                        String text = FileUtils.loadFromFile(templateFile);
+                        openNewTab(name, text);
+                    } catch (Exception e1) {
+                        openInternalError(shell, "Error opening template file " + templateFile, e1);
+                    }
+                }
+                else {
+                    openNewTab(name, getResourceAsString("template.spin2"));
+                }
             }
         });
 
@@ -991,11 +1013,18 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                try {
-                    String name = getUniqueName("Untitled", ".spin");
+                String name = getUniqueName("Untitled", ".spin");
+                File templateFile = preferences.getSpin1Template();
+                if (templateFile != null) {
+                    try {
+                        String text = FileUtils.loadFromFile(templateFile);
+                        openNewTab(name, text);
+                    } catch (Exception e1) {
+                        openInternalError(shell, "Error opening template file " + templateFile, e1);
+                    }
+                }
+                else {
                     openNewTab(name, getResourceAsString("template.spin"));
-                } catch (Exception e1) {
-                    e1.printStackTrace();
                 }
             }
         });
@@ -1007,11 +1036,18 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                try {
-                    String name = getUniqueName("Untitled", ".spin2");
+                String name = getUniqueName("Untitled", ".spin2");
+                File templateFile = preferences.getSpin2Template();
+                if (templateFile != null) {
+                    try {
+                        String text = FileUtils.loadFromFile(templateFile);
+                        openNewTab(name, text);
+                    } catch (Exception e1) {
+                        openInternalError(shell, "Error opening template file " + templateFile, e1);
+                    }
+                }
+                else {
                     openNewTab(name, getResourceAsString("template.spin2"));
-                } catch (Exception e1) {
-                    e1.printStackTrace();
                 }
             }
         });

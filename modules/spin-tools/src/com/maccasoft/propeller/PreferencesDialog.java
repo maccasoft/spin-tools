@@ -35,6 +35,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.FontDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
@@ -77,10 +78,12 @@ public class PreferencesDialog extends Dialog {
 
     PathList spin1Paths;
     Button spin1CaseSensitive;
+    FileSelector spin1Template;
 
     PathList spin2Paths;
     Button spin2CaseSensitive;
     Button spin2ClockSetter;
+    FileSelector spin2Template;
 
     Text terminalFont;
     Spinner terminalFontSize;
@@ -108,6 +111,71 @@ public class PreferencesDialog extends Dialog {
     boolean oldTerminalLocalEcho;
 
     static int lastPage;
+
+    class FileSelector {
+
+        Composite group;
+        Text text;
+        Button browse;
+
+        int filterIndex;
+
+        public FileSelector(Composite parent) {
+            group = new Composite(parent, SWT.NONE);
+            GridLayout layout = new GridLayout(2, false);
+            layout.marginWidth = layout.marginHeight = 0;
+            group.setLayout(layout);
+
+            text = new Text(group, SWT.BORDER);
+            GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+            gridData.widthHint = convertWidthInCharsToPixels(50);
+            text.setLayoutData(gridData);
+
+            browse = new Button(group, SWT.PUSH);
+            browse.setImage(ImageRegistry.getImageFromResources("folder-horizontal-open.png"));
+            browse.addSelectionListener(new SelectionAdapter() {
+
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    FileDialog dlg = new FileDialog(group.getShell(), SWT.OPEN);
+                    dlg.setText("Open Source File");
+                    dlg.setFilterNames(SpinTools.filterNames);
+                    dlg.setFilterExtensions(SpinTools.filterExtensions);
+                    dlg.setFilterIndex(filterIndex);
+                    dlg.setFilterPath(new File(text.getText()).getParent());
+                    String fileName = dlg.open();
+                    if (fileName != null) {
+                        text.setText(fileName);
+                    }
+                }
+
+            });
+
+            filterIndex = SpinTools.filterExtensions.length - 1;
+        }
+
+        public void setFilterIndex(int index) {
+            this.filterIndex = index;
+        }
+
+        public void setLayoutData(Object layoutData) {
+            group.setLayoutData(layoutData);
+        }
+
+        public Object getLayoutData() {
+            return group.getLayoutData();
+        }
+
+        public File getSelection() {
+            String text = this.text.getText().trim();
+            return !text.isEmpty() ? new File(text) : null;
+        }
+
+        public void setSelection(File text) {
+            this.text.setText(text != null ? text.getPath() : "");
+        }
+
+    }
 
     class PathList {
 
@@ -441,9 +509,17 @@ public class PreferencesDialog extends Dialog {
             spin1Paths.setFileItems(items);
         }
 
+        label = new Label(composite, SWT.NONE);
+        label.setText("Template");
+        spin1Template = new FileSelector(composite);
+        spin1Template.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        spin1Template.setFilterIndex(1);
+        spin1Template.setSelection(preferences.getSpin1Template());
+
+        new Label(composite, SWT.NONE);
         spin1CaseSensitive = new Button(composite, SWT.CHECK);
         spin1CaseSensitive.setText("Case sensitive symbols");
-        spin1CaseSensitive.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
+        spin1CaseSensitive.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin1CaseSensitive.setSelection(preferences.getSpin1CaseSensitiveSymbols());
         spin1CaseSensitive.addSelectionListener(new SelectionAdapter() {
 
@@ -470,9 +546,17 @@ public class PreferencesDialog extends Dialog {
             spin2Paths.setFileItems(items);
         }
 
+        label = new Label(composite, SWT.NONE);
+        label.setText("Template");
+        spin2Template = new FileSelector(composite);
+        spin2Template.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        spin2Template.setFilterIndex(2);
+        spin2Template.setSelection(preferences.getSpin2Template());
+
+        new Label(composite, SWT.NONE);
         spin2CaseSensitive = new Button(composite, SWT.CHECK);
         spin2CaseSensitive.setText("Case sensitive symbols");
-        spin2CaseSensitive.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
+        spin2CaseSensitive.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2CaseSensitive.setSelection(preferences.getSpin2CaseSensitiveSymbols());
         spin2CaseSensitive.addSelectionListener(new SelectionAdapter() {
 
@@ -483,9 +567,10 @@ public class PreferencesDialog extends Dialog {
 
         });
 
+        new Label(composite, SWT.NONE);
         spin2ClockSetter = new Button(composite, SWT.CHECK);
         spin2ClockSetter.setText("Use clock setter for PASM-only code");
-        spin2ClockSetter.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
+        spin2ClockSetter.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
         spin2ClockSetter.setSelection(preferences.getSpin2ClockSetter());
         spin2ClockSetter.addSelectionListener(new SelectionAdapter() {
 
@@ -899,7 +984,9 @@ public class PreferencesDialog extends Dialog {
         preferences.setTabStops(DataNode.class, datTabStops.getSelection());
 
         preferences.setSpin1LibraryPath(spin1Paths.getFileItems());
+        preferences.setSpin1Template(spin1Template.getSelection());
         preferences.setSpin2LibraryPath(spin2Paths.getFileItems());
+        preferences.setSpin2Template(spin2Template.getSelection());
 
         super.okPressed();
     }
