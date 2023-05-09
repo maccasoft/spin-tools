@@ -2310,7 +2310,7 @@ public class SpinTools {
                 }
 
             };
-            dlg.setObject((Spin1Object) object);
+            dlg.setObject((Spin1Object) object, editorTab.getObjectTree(), editorTab.isTopObject());
             dlg.open();
         }
         else if (object instanceof Spin2Object) {
@@ -2335,7 +2335,7 @@ public class SpinTools {
                 }
 
             };
-            dlg.setObject((Spin2Object) object);
+            dlg.setObject((Spin2Object) object, editorTab.getObjectTree(), editorTab.isTopObject());
             dlg.open();
         }
     }

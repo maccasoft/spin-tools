@@ -156,6 +156,14 @@ public class ObjectBrowser {
         });
     }
 
+    public void setLayoutData(Object data) {
+        viewer.getControl().setLayoutData(data);
+    }
+
+    public Object getLayoutData() {
+        return viewer.getControl().getLayoutData();
+    }
+
     public void addSelectionChangedListener(ISelectionChangedListener l) {
         viewer.addSelectionChangedListener(l);
     }

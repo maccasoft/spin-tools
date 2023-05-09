@@ -57,6 +57,7 @@ public class P1MemoryDialog extends Dialog {
 
     Display display;
 
+    ObjectBrowser objectTree;
     CTabFolder tabFolder;
     Canvas canvas;
     StyledText styledText;
@@ -68,6 +69,9 @@ public class P1MemoryDialog extends Dialog {
     Color stackFreeBackground;
 
     Spin1Object object;
+    ObjectTree tree;
+    boolean topObject;
+
     byte[] data;
 
     int clkfreq;
@@ -178,13 +182,14 @@ public class P1MemoryDialog extends Dialog {
         container.setLayout(new GridLayout(1, false));
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        Label label = new Label(container, SWT.NONE);
-        label.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        objectTree = new ObjectBrowser(container);
+        objectTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        objectTree.setInput(tree, topObject);
 
         Composite group = new Composite(container, SWT.NONE);
         group.setLayout(new GridLayout(3, false));
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-        label = new Label(group, SWT.NONE);
+        Label label = new Label(group, SWT.NONE);
         label.setText("$0000");
         label = new Label(group, SWT.CENTER);
         label.setText("HUB RAM Usage");
@@ -642,7 +647,7 @@ public class P1MemoryDialog extends Dialog {
         return object;
     }
 
-    public void setObject(Spin1Object object) {
+    public void setObject(Spin1Object object, ObjectTree tree, boolean topObject) {
         this.object = object;
 
         try {
@@ -664,6 +669,10 @@ public class P1MemoryDialog extends Dialog {
             pbase = readWord(6);
             vbase = readWord(8);
             dbase = readWord(10) - 8;
+
+            this.tree = tree;
+            this.topObject = topObject;
+
         } catch (IOException e) {
             e.printStackTrace();
         }
