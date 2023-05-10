@@ -494,7 +494,7 @@ public class EditorTab implements FindReplaceTarget {
 
                     @Override
                     public void run() {
-                        if (outlineView != null && !outlineView.getControl().isDisposed()) {
+                        if (outlineView != null && !outlineView.getControl().isDisposed() && root != null) {
                             outlineView.setInput(root);
                         }
                     }
@@ -575,7 +575,7 @@ public class EditorTab implements FindReplaceTarget {
 
                                     @Override
                                     public void run() {
-                                        if (editor == null || editor.getStyledText().isDisposed()) {
+                                        if (editor == null || tabItem.isDisposed() || editor.getStyledText().isDisposed()) {
                                             return;
                                         }
                                         changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
