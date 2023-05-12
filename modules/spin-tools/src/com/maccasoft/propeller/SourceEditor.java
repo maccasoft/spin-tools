@@ -1574,6 +1574,10 @@ public class SourceEditor {
         container.dispose();
     }
 
+    public boolean isDisposed() {
+        return container.isDisposed();
+    }
+
     public void setText(String text) {
         styledText.setRedraw(false);
         styledText.removeCaretListener(caretListener);

@@ -30,7 +30,9 @@ import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
 import com.maccasoft.propeller.internal.ImageRegistry;
@@ -203,6 +205,18 @@ public class ObjectBrowser {
 
     public void setVisible(boolean visible) {
         viewer.getControl().setVisible(visible);
+    }
+
+    public boolean isDisposed() {
+        return viewer.getControl().isDisposed();
+    }
+
+    public Control getControl() {
+        return viewer.getControl();
+    }
+
+    public Tree getTree() {
+        return viewer.getTree();
     }
 
 }

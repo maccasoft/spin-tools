@@ -575,7 +575,7 @@ public class EditorTab implements FindReplaceTarget {
 
                                     @Override
                                     public void run() {
-                                        if (editor == null || editor.getStyledText().isDisposed()) {
+                                        if (editor == null || editor.isDisposed() || tabItem.isDisposed()) {
                                             return;
                                         }
                                         changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
@@ -678,10 +678,16 @@ public class EditorTab implements FindReplaceTarget {
 
             @Override
             public void widgetDisposed(DisposeEvent e) {
+                Display.getDefault().timerExec(-1, outlineUpdateRunnable);
+
                 preferences.removePropertyChangeListener(preferencesChangeListener);
                 sourcePool.removePropertyChangeListener(sourcePoolChangeListener);
-                File localFile = file != null ? new File(file.getParentFile(), tabItemText) : new File(tabItemText);
+
+                File localFile = file != null ? file : new File(tabItemText).getAbsoluteFile();
                 sourcePool.removeParsedSource(localFile);
+
+                editor.dispose();
+
                 busyFont.dispose();
                 boldFont.dispose();
                 boldBusyFont.dispose();

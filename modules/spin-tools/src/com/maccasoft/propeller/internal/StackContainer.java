@@ -26,13 +26,25 @@ public class StackContainer {
         container.setLayout(layout);
     }
 
+    public Control getTopControl() {
+        return layout.topControl;
+    }
+
     public void setTopControl(Control control) {
         layout.topControl = control;
         container.layout();
     }
 
+    public Control[] getChildren() {
+        return container.getChildren();
+    }
+
     public Composite getContainer() {
         return container;
+    }
+
+    public boolean getVisible() {
+        return container.getVisible();
     }
 
     public void setVisible(boolean visible) {

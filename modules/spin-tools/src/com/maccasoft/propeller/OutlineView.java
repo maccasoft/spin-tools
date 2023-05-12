@@ -536,4 +536,8 @@ public class OutlineView {
         return viewer.getControl().getVisible();
     }
 
+    public void dispose() {
+        viewer.getControl().dispose();
+    }
+
 }
