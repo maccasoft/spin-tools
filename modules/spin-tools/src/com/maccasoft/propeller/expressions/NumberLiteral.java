@@ -1,5 +1,7 @@
 package com.maccasoft.propeller.expressions;
 
+import java.util.Objects;
+
 public class NumberLiteral extends Literal {
 
     public static final NumberLiteral ZERO = new NumberLiteral(0);
@@ -60,6 +62,11 @@ public class NumberLiteral extends Literal {
         }
     }
 
+    public NumberLiteral(Number value) {
+        this.value = value;
+        this.base = 10;
+    }
+
     private Long signx(Long number) {
         long cl = ~31L & 0x3F;
         long value = number.longValue();
@@ -79,6 +86,26 @@ public class NumberLiteral extends Literal {
 
     public int getBase() {
         return base;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        NumberLiteral other = (NumberLiteral) obj;
+        return Objects.equals(value, other.value);
     }
 
     @Override

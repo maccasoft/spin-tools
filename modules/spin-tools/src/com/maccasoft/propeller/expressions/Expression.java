@@ -8,6 +8,43 @@ public abstract class Expression {
     protected Object data;
     protected Map<String, Object> keyedData = new HashMap<String, Object>();
 
+    public static Expression fold(Expression expression) {
+        if (expression instanceof NumberLiteral) {
+            return expression;
+        }
+
+        try {
+            if (expression instanceof BinaryOperator) {
+                Expression term1 = ((BinaryOperator) expression).getTerm1();
+                if (!(term1 instanceof NumberLiteral)) {
+                    term1 = fold(term1);
+                }
+                Expression term2 = ((BinaryOperator) expression).getTerm2();
+                if (!(term2 instanceof NumberLiteral)) {
+                    term2 = fold(term2);
+                }
+                if (expression instanceof Add) {
+                    Expression result = new Add(term1, term2);
+                    if ((term1 instanceof NumberLiteral) && (term2 instanceof NumberLiteral)) {
+                        return new NumberLiteral(result.getNumber());
+                    }
+                    return result;
+                }
+                else if (expression instanceof Multiply) {
+                    Expression result = new Multiply(term1, term2);
+                    if ((term1 instanceof NumberLiteral) && (term2 instanceof NumberLiteral)) {
+                        return new NumberLiteral(result.getNumber());
+                    }
+                    return result;
+                }
+            }
+        } catch (Exception e) {
+            // Do nothing, fall-through
+        }
+
+        return expression;
+    }
+
     public Expression resolve() {
         return this;
     }

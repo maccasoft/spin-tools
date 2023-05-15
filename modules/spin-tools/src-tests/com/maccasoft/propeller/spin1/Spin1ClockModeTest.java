@@ -16,29 +16,8 @@ import org.junit.jupiter.api.Test;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.model.Node;
 
 class Spin1ClockModeTest {
-
-    @Test
-    void testCompileConstants() {
-        String text = ""
-            + "CON\n"
-            + "\n"
-            + "    _XINFREQ = 5_000_000\n"
-            + "    _CLKMODE = XTAL1 + PLL16X\n"
-            + "";
-
-        Spin1TokenStream stream = new Spin1TokenStream(text);
-        Spin1Parser parser = new Spin1Parser(stream);
-        Node root = parser.parse();
-
-        Spin1ObjectCompiler subject = new Spin1ObjectCompiler(new Spin1Compiler());
-        subject.compileConBlock(root.getChild(0));
-
-        Assertions.assertEquals("5_000_000", subject.scope.getSymbol("_XINFREQ").toString());
-        Assertions.assertEquals("XTAL1 + PLL16X", subject.scope.getSymbol("_CLKMODE").toString());
-    }
 
     @Test
     void testDetermineClockDefault() {

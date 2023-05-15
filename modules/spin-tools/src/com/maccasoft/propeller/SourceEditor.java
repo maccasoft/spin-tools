@@ -830,6 +830,9 @@ public class SourceEditor {
                             }
                             else if (node instanceof ConstantsNode) {
                                 for (Node child : node.getChilds()) {
+                                    if (!(child instanceof ConstantNode)) {
+                                        continue;
+                                    }
                                     ConstantNode obj = (ConstantNode) child;
                                     if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
@@ -862,6 +865,9 @@ public class SourceEditor {
                             }
                             else if (node instanceof VariablesNode) {
                                 for (Node child : node.getChilds()) {
+                                    if (!(child instanceof VariableNode)) {
+                                        continue;
+                                    }
                                     VariableNode obj = (VariableNode) child;
                                     if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
@@ -879,6 +885,9 @@ public class SourceEditor {
                             }
                             else if (node instanceof DataNode) {
                                 for (Node child : node.getChilds()) {
+                                    if (!(child instanceof DataLineNode)) {
+                                        continue;
+                                    }
                                     DataLineNode obj = (DataLineNode) child;
                                     if (obj.label != null && obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);

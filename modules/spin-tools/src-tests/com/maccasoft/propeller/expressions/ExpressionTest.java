@@ -81,4 +81,47 @@ class ExpressionTest {
         Assertions.assertEquals(0b00000000111100000000000000000001, exp.getNumber().longValue());
     }
 
+    @Test
+    void testFoldNumberLiterals() {
+        Expression subject = new Add(new NumberLiteral(1), new NumberLiteral(2));
+        Expression result = Expression.fold(subject);
+        Assertions.assertEquals(new NumberLiteral(3), result);
+    }
+
+    @Test
+    void testFoldNumberLiteralsExpression() {
+        Expression subject = new Add(new NumberLiteral(1), new Multiply(new NumberLiteral(2), new NumberLiteral(3)));
+        Expression result = Expression.fold(subject);
+        Assertions.assertEquals(new NumberLiteral(7), result);
+    }
+
+    @Test
+    void testUnfoldable() {
+        Expression subject = new Add(new Identifier("ONE", new Context()), new NumberLiteral(1));
+        Expression result = Expression.fold(subject);
+        Assertions.assertEquals("ONE + 1", result.toString());
+    }
+
+    @Test
+    void testUnfoldableExpression() {
+        Expression subject = new Add(new Identifier("ONE", new Context()), new Multiply(new NumberLiteral(2), new NumberLiteral(3)));
+        Expression result = Expression.fold(subject);
+        Assertions.assertEquals("ONE + 6", result.toString());
+    }
+
+    @Test
+    void testUnfoldableIncrementExpressions() {
+        Expression subject = new Add(new Identifier("ONE", new Context()), new NumberLiteral(1));
+        Expression result = Expression.fold(subject);
+        Assertions.assertEquals("ONE + 1", result.toString());
+
+        subject = new Add(((BinaryOperator) result).getTerm1(), new Add(((BinaryOperator) result).getTerm2(), new NumberLiteral(1)));
+        result = Expression.fold(subject);
+        Assertions.assertEquals("ONE + 2", result.toString());
+
+        subject = new Add(((BinaryOperator) result).getTerm1(), new Add(((BinaryOperator) result).getTerm2(), new NumberLiteral(1)));
+        result = Expression.fold(subject);
+        Assertions.assertEquals("ONE + 3", result.toString());
+    }
+
 }
