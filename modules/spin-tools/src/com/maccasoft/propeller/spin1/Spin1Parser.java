@@ -38,7 +38,7 @@ public class Spin1Parser extends Parser {
     }));
 
     private static final Set<String> preprocessor = new HashSet<>(Arrays.asList(new String[] {
-        "define", "ifdef", "elifdef", "ifndef", "elifndef", "else", "if", "elif", "endif"
+        "define", "ifdef", "elifdef", "elseifdef", "ifndef", "elifndef", "elseifndef", "else", "if", "elif", "elseif", "endif"
     }));
 
     final Spin1TokenStream stream;

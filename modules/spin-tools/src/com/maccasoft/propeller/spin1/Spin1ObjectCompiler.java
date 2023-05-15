@@ -69,7 +69,6 @@ import com.maccasoft.propeller.spin1.bytecode.VariableOp;
 import com.maccasoft.propeller.spin1.instructions.FileInc;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
-import com.maccasoft.propeller.spin2.Spin2Model;
 
 public class Spin1ObjectCompiler extends ObjectCompiler {
 
@@ -222,8 +221,12 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                     };
                     exp.setData(method.getClass().getName(), method);
 
-                    scope.addSymbol(method.getLabel(), exp);
-                    scope.addSymbol("@" + method.getLabel(), exp);
+                    try {
+                        scope.addSymbol(method.getLabel(), exp);
+                        scope.addSymbol("@" + method.getLabel(), exp);
+                    } catch (Exception e) {
+                        logMessage(new CompilerException(e.getMessage(), node));
+                    }
 
                     methods.add(method);
                 }
@@ -690,7 +693,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                     Iterator<Token> iter = node.getTokens().iterator();
 
                     Token token = iter.next();
-                    if (Spin2Model.isType(token.getText())) {
+                    if (Spin1Model.isType(token.getText())) {
                         type = token.getText().toUpperCase();
                         if (!iter.hasNext()) {
                             logMessage(new CompilerException("expecting identifier", token));
@@ -1794,9 +1797,9 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                 conditionStack.push(new Condition(node, false, skip));
             }
         }
-        else if ("elifdef".equals(token.getText())) {
+        else if ("elifdef".equals(token.getText()) || "elseifdef".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #elifdef", token);
+                throw new CompilerException("misplaced #" + token.getText(), token);
             }
             if (conditionStack.peek().evaluated) {
                 conditionStack.pop();
@@ -1829,9 +1832,9 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                 conditionStack.push(new Condition(node, false, skip));
             }
         }
-        else if ("elifndef".equals(token.getText())) {
+        else if ("elifndef".equals(token.getText()) || "elseifndef".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #elifndef", token);
+                throw new CompilerException("misplaced #" + token.getText(), token);
             }
             if (conditionStack.peek().evaluated) {
                 conditionStack.pop();
@@ -1850,7 +1853,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         }
         else if ("else".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #else", token);
+                throw new CompilerException("misplaced #" + token.getText(), token);
             }
             if (conditionStack.peek().evaluated) {
                 skip = !conditionStack.pop().skip;
@@ -1892,9 +1895,9 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
                 conditionStack.push(new Condition(node, false, skip));
             }
         }
-        else if ("elif".equals(token.getText())) {
+        else if ("elif".equals(token.getText()) || "elseif".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #elif", token);
+                throw new CompilerException("misplaced #" + token.getText(), token);
             }
             if (conditionStack.peek().evaluated) {
                 conditionStack.pop();
@@ -1932,7 +1935,7 @@ public class Spin1ObjectCompiler extends ObjectCompiler {
         }
         else if ("endif".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #endif", token);
+                throw new CompilerException("misplaced #" + token.getText(), token);
             }
             conditionStack.pop();
         }

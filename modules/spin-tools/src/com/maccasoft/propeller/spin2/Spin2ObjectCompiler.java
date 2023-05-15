@@ -2216,9 +2216,9 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 conditionStack.push(new Condition(node, false, skip));
             }
         }
-        else if ("elifdef".equals(token.getText())) {
+        else if ("elifdef".equals(token.getText()) || "elseifdef".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #elifdef", token);
+                throw new CompilerException("misplaced #" + token.getText(), token);
             }
             if (conditionStack.peek().evaluated) {
                 conditionStack.pop();
@@ -2251,9 +2251,9 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 conditionStack.push(new Condition(node, false, skip));
             }
         }
-        else if ("elifndef".equals(token.getText())) {
+        else if ("elifndef".equals(token.getText()) || "elseifndef".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #elifndef", token);
+                throw new CompilerException("misplaced #" + token.getText(), token);
             }
             if (conditionStack.peek().evaluated) {
                 conditionStack.pop();
@@ -2272,7 +2272,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         }
         else if ("else".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #else", token);
+                throw new CompilerException("misplaced #" + token.getText(), token);
             }
             if (conditionStack.peek().evaluated) {
                 skip = !conditionStack.pop().skip;
@@ -2314,9 +2314,9 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 conditionStack.push(new Condition(node, false, skip));
             }
         }
-        else if ("elif".equals(token.getText())) {
+        else if ("elif".equals(token.getText()) || "elseif".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #elif", token);
+                throw new CompilerException("misplaced #" + token.getText(), token);
             }
             if (conditionStack.peek().evaluated) {
                 conditionStack.pop();
@@ -2354,7 +2354,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         }
         else if ("endif".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
-                throw new CompilerException("misplaced #endif", token);
+                throw new CompilerException("misplaced #" + token.getText(), token);
             }
             conditionStack.pop();
         }
