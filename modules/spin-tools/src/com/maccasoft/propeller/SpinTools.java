@@ -283,7 +283,7 @@ public class SpinTools {
                     sashForm.layout(true, true);
                     break;
                 case Preferences.PROP_ROOTS:
-                    fileBrowser.setVisiblePaths((String[]) evt.getNewValue());
+                    fileBrowser.setVisiblePaths((File[]) evt.getNewValue());
                     break;
             }
         }
@@ -390,8 +390,6 @@ public class SpinTools {
         });
 
         objectBrowser.addOpenListener(openListener);
-
-        fileBrowser.setVisiblePaths(preferences.getRoots());
 
         fileBrowser.addSelectionChangedListener(new ISelectionChangedListener() {
 
@@ -528,6 +526,8 @@ public class SpinTools {
                     }
                     preferences.setOpenTabs(openTabs.toArray(new String[openTabs.size()]));
 
+                    preferences.setExpandedPaths(fileBrowser.getExpandedPaths());
+
                     SerialTerminal serialTerminal = getSerialTerminal();
                     if (serialTerminal != null) {
                         serialTerminal.close();
@@ -628,6 +628,8 @@ public class SpinTools {
                         if (tabFolder.isDisposed()) {
                             return;
                         }
+                        fileBrowser.setVisiblePaths(preferences.getRoots());
+                        fileBrowser.setExpandedPaths(preferences.getExpandedPaths());
                         if (tabFolder.getItemCount() != 0) {
                             tabFolder.setSelection(0);
                             updateEditorSelection();
@@ -1720,7 +1722,7 @@ public class SpinTools {
             writer.close();
             editorTab.clearDirty();
         } catch (Exception e) {
-            e.printStackTrace();
+            openInternalError(shell, "Unexpected error saving file", e);
         }
     }
 
@@ -1785,8 +1787,10 @@ public class SpinTools {
 
                 editorTab.clearDirty();
                 preferences.addToLru(fileToSave);
+
+                fileBrowser.refresh(fileToSave.getParentFile());
             } catch (Exception e) {
-                e.printStackTrace();
+                openInternalError(shell, "Unexpected error saving file", e);
             }
         }
     }

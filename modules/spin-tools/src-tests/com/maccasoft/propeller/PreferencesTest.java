@@ -445,10 +445,10 @@ class PreferencesTest {
     @Test
     void testSetVisiblePathsNotifications() throws Exception {
         AtomicBoolean notify = new AtomicBoolean(false);
-        AtomicReference<String[]> ref = new AtomicReference<>();
+        AtomicReference<File[]> ref = new AtomicReference<>();
 
-        String[] data = new String[] {
-            "a", "b", "c"
+        File[] data = new File[] {
+            new File("a"), new File("b"), new File("c")
         };
 
         Preferences subject = new Preferences();
@@ -456,7 +456,7 @@ class PreferencesTest {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                ref.set((String[]) evt.getNewValue());
+                ref.set((File[]) evt.getNewValue());
                 notify.set(true);
             }
         });
@@ -471,21 +471,21 @@ class PreferencesTest {
     @Test
     void testUpdateVisiblePathsNotifications() throws Exception {
         AtomicBoolean notify = new AtomicBoolean(false);
-        AtomicReference<String[]> ref = new AtomicReference<>();
+        AtomicReference<File[]> ref = new AtomicReference<>();
 
-        String[] data = new String[] {
-            "a", "b"
+        File[] data = new File[] {
+            new File("a"), new File("b")
         };
 
         Preferences subject = new Preferences();
-        subject.preferences.roots = new String[] {
-            "a", "b", "c"
+        subject.preferences.roots = new File[] {
+            new File("a"), new File("b"), new File("c")
         };
         subject.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                ref.set((String[]) evt.getNewValue());
+                ref.set((File[]) evt.getNewValue());
                 notify.set(true);
             }
         });
@@ -500,17 +500,17 @@ class PreferencesTest {
     @Test
     void testDefaultVisiblePathsNotifications() throws Exception {
         AtomicBoolean notify = new AtomicBoolean(false);
-        AtomicReference<String[]> ref = new AtomicReference<>();
+        AtomicReference<File[]> ref = new AtomicReference<>();
 
         Preferences subject = new Preferences();
-        subject.preferences.roots = new String[] {
-            "a", "b", "c"
+        subject.preferences.roots = new File[] {
+            new File("a"), new File("b"), new File("c")
         };
         subject.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                ref.set((String[]) evt.getNewValue());
+                ref.set((File[]) evt.getNewValue());
                 notify.set(true);
             }
         });
@@ -525,21 +525,21 @@ class PreferencesTest {
     @Test
     void testSameVisiblePathsNotifications() throws Exception {
         AtomicBoolean notify = new AtomicBoolean(false);
-        AtomicReference<String[]> ref = new AtomicReference<>();
+        AtomicReference<File[]> ref = new AtomicReference<>();
 
-        String[] data = new String[] {
-            "a", "b", "c"
+        File[] data = new File[] {
+            new File("a"), new File("b"), new File("c")
         };
 
         Preferences subject = new Preferences();
-        subject.preferences.roots = new String[] {
-            "a", "b", "c"
+        subject.preferences.roots = new File[] {
+            new File("a"), new File("b"), new File("c")
         };
         subject.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                ref.set((String[]) evt.getNewValue());
+                ref.set((File[]) evt.getNewValue());
                 notify.set(true);
             }
         });

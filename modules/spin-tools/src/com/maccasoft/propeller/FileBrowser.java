@@ -42,8 +42,8 @@ public class FileBrowser {
     Display display;
     TreeViewer viewer;
 
-    String[] visiblePaths;
-    Set<String> visibleParents;
+    File[] visiblePaths;
+    Set<File> visibleParents;
     Set<String> visibleExtensions;
     Set<String> hiddenExtensions;
 
@@ -146,13 +146,13 @@ public class FileBrowser {
         @Override
         public boolean accept(File pathname) {
             if (pathname.isDirectory()) {
-                if (visibleParents.contains(pathname.getAbsolutePath())) {
+                if (visibleParents.contains(pathname)) {
                     return true;
                 }
                 if (visiblePaths != null) {
                     while ((pathname = pathname.getParentFile()) != null) {
                         for (int i = 0; i < visiblePaths.length; i++) {
-                            if (pathname.getAbsolutePath().equals(visiblePaths[i])) {
+                            if (pathname.equals(visiblePaths[i])) {
                                 return true;
                             }
                         }
@@ -174,13 +174,13 @@ public class FileBrowser {
             }
 
             if (pathname.isDirectory()) {
-                if (visibleParents.contains(pathname.getAbsolutePath())) {
+                if (visibleParents.contains(pathname)) {
                     return true;
                 }
                 if (visiblePaths != null) {
                     while ((pathname = pathname.getParentFile()) != null) {
                         for (int i = 0; i < visiblePaths.length; i++) {
-                            if (pathname.getAbsolutePath().equals(visiblePaths[i])) {
+                            if (pathname.equals(visiblePaths[i])) {
                                 return true;
                             }
                         }
@@ -193,7 +193,7 @@ public class FileBrowser {
                 boolean result = false;
                 while ((pathname = pathname.getParentFile()) != null && result == false) {
                     for (int i = 0; i < visiblePaths.length; i++) {
-                        if (pathname.getAbsolutePath().equals(visiblePaths[i])) {
+                        if (pathname.equals(visiblePaths[i])) {
                             result = true;
                             break;
                         }
@@ -221,11 +221,11 @@ public class FileBrowser {
     public FileBrowser(Composite parent) {
         display = parent.getDisplay();
 
-        visibleParents = new HashSet<String>();
+        visibleParents = new HashSet<>();
 
-        visibleExtensions = new HashSet<String>();
+        visibleExtensions = new HashSet<>();
 
-        hiddenExtensions = new HashSet<String>();
+        hiddenExtensions = new HashSet<>();
         hiddenExtensions.add(".bin");
         hiddenExtensions.add(".binary");
 
@@ -276,14 +276,14 @@ public class FileBrowser {
         });
     }
 
-    public void setVisiblePaths(String[] paths) {
+    public void setVisiblePaths(File[] paths) {
         this.visiblePaths = paths;
 
         visibleParents.clear();
         for (int i = 0; i < paths.length; i++) {
-            File f = new File(paths[i]);
+            File f = paths[i];
             while (f != null) {
-                visibleParents.add(f.getAbsolutePath());
+                visibleParents.add(f.getAbsoluteFile());
                 f = f.getParentFile();
             }
         }
@@ -314,10 +314,6 @@ public class FileBrowser {
                 }
             }
             viewer.setSelection(new StructuredSelection(file), true);
-        }
-
-        if (file.isDirectory()) {
-            viewer.setExpandedState(file, true);
         }
     }
 
@@ -374,4 +370,14 @@ public class FileBrowser {
         }
     }
 
+    public void setExpandedPaths(File[] paths) {
+        viewer.setExpandedElements((Object[]) paths);
+    }
+
+    public File[] getExpandedPaths() {
+        Object[] elements = viewer.getExpandedElements();
+        File[] result = new File[elements.length];
+        System.arraycopy(elements, 0, result, 0, elements.length);
+        return result;
+    }
 }

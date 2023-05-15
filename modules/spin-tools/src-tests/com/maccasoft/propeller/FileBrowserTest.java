@@ -173,8 +173,8 @@ class FileBrowserTest {
             }
 
         });
-        view.setVisiblePaths(new String[] {
-            homeUser.getAbsolutePath()
+        view.setVisiblePaths(new File[] {
+            homeUser.getAbsoluteFile()
         });
         view.viewer.expandAll();
         Assertions.assertEquals(""
@@ -206,8 +206,8 @@ class FileBrowserTest {
             }
 
         });
-        view.setVisiblePaths(new String[] {
-            homeUser.getAbsolutePath() + "/examples"
+        view.setVisiblePaths(new File[] {
+            new File(homeUser, "examples").getAbsoluteFile()
         });
         view.viewer.expandAll();
         Assertions.assertEquals(""
@@ -232,8 +232,8 @@ class FileBrowserTest {
             }
 
         });
-        view.setVisiblePaths(new String[] {
-            optParallax.getAbsolutePath()
+        view.setVisiblePaths(new File[] {
+            optParallax.getAbsoluteFile()
         });
         view.viewer.expandAll();
         Assertions.assertEquals(""
@@ -255,9 +255,9 @@ class FileBrowserTest {
             }
 
         });
-        view.setVisiblePaths(new String[] {
-            homeUser.getAbsolutePath() + "/examples",
-            optParallax.getAbsolutePath()
+        view.setVisiblePaths(new File[] {
+            new File(homeUser, "examples").getAbsoluteFile(),
+            optParallax.getAbsoluteFile()
         });
         view.viewer.expandAll();
         Assertions.assertEquals(""
@@ -283,8 +283,8 @@ class FileBrowserTest {
             }
 
         });
-        view.setVisiblePaths(new String[] {
-            homeUser.getAbsolutePath()
+        view.setVisiblePaths(new File[] {
+            homeUser.getAbsoluteFile()
         });
         view.viewer.expandAll();
         Assertions.assertEquals(""
@@ -314,9 +314,9 @@ class FileBrowserTest {
             }
 
         });
-        view.setVisiblePaths(new String[] {
-            homeUser.getAbsolutePath() + "/examples",
-            optParallax.getAbsolutePath()
+        view.setVisiblePaths(new File[] {
+            new File(homeUser, "examples").getAbsoluteFile(),
+            optParallax.getAbsoluteFile()
         });
         view.viewer.expandAll();
         Assertions.assertEquals(""

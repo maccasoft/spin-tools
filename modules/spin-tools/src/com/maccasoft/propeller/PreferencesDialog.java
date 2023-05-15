@@ -486,11 +486,13 @@ public class PreferencesDialog extends Dialog {
         roots.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 
         if (preferences.getRoots() != null) {
-            java.util.List<String> items = Arrays.asList(preferences.getRoots());
-            if (items != null) {
-                Collections.sort(items);
-                roots.setItems(items.toArray(new String[items.size()]));
+            java.util.List<String> list = new ArrayList<>(); // Arrays.asList(preferences.getRoots());
+            File[] elements = preferences.getRoots();
+            for (int i = 0; i < elements.length; i++) {
+                list.add(elements[i].getAbsolutePath());
             }
+            Collections.sort(list);
+            roots.setItems(list.toArray(new String[list.size()]));
         }
     }
 
@@ -975,7 +977,12 @@ public class PreferencesDialog extends Dialog {
 
     @Override
     protected void okPressed() {
-        preferences.setRoots(roots.getItems());
+        String[] items = roots.getItems();
+        File[] elements = new File[items.length];
+        for (int i = 0; i < elements.length; i++) {
+            elements[i] = new File(items[i]);
+        }
+        preferences.setRoots(elements);
 
         preferences.setTabStops(ConstantsNode.class, conTabStops.getSelection());
         preferences.setTabStops(VariablesNode.class, varTabStops.getSelection());

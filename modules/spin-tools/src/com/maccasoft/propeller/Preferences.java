@@ -62,8 +62,8 @@ public class Preferences {
     public static File defaultSpin1LibraryPath = new File(System.getProperty("APP_DIR"), "library/spin1").getAbsoluteFile();
     public static File defaultSpin2LibraryPath = new File(System.getProperty("APP_DIR"), "library/spin2").getAbsoluteFile();
 
-    public static String[] defaultVisiblePaths = new String[] {
-        new File(System.getProperty("user.home")).getAbsolutePath()
+    public static File[] defaultVisiblePaths = new File[] {
+        new File(System.getProperty("user.home")).getAbsoluteFile()
     };
 
     static Map<Class<?>, String> sectionMap = new HashMap<>();
@@ -135,7 +135,8 @@ public class Preferences {
         public Boolean showObjectBrowser;
 
         public Boolean showBrowser;
-        public String[] roots;
+        public File[] roots;
+        public File[] expandedPaths;
 
         public boolean showLineNumbers;
         public String editorFont;
@@ -266,16 +267,15 @@ public class Preferences {
         changeSupport.firePropertyChange(PROP_SHOW_BROWSER, oldValue, showBrowser);
     }
 
-    public String[] getRoots() {
+    public File[] getRoots() {
         if (preferences.roots == null || preferences.roots.length == 0) {
             return defaultVisiblePaths;
         }
         return preferences.roots;
     }
 
-    public void setRoots(String[] roots) {
-        String[] oldValue = preferences.roots;
-
+    public void setRoots(File[] roots) {
+        File[] oldValue = preferences.roots == null || preferences.roots.length == 0 ? null : getRoots();
         if (oldValue == roots) {
             return;
         }
@@ -291,6 +291,20 @@ public class Preferences {
             return;
         }
         changeSupport.firePropertyChange(PROP_ROOTS, preferences.roots, preferences.roots = roots);
+    }
+
+    public File[] getExpandedPaths() {
+        if (preferences.expandedPaths == null) {
+            return new File[0];
+        }
+        return preferences.expandedPaths;
+    }
+
+    public void setExpandedPaths(File[] expandedPaths) {
+        if (expandedPaths == null || expandedPaths.length == 0) {
+            preferences.expandedPaths = null;
+        }
+        preferences.expandedPaths = expandedPaths;
     }
 
     public boolean getShowToolbar() {
