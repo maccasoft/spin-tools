@@ -95,7 +95,8 @@ public class OutlineView {
                             includes = new DefinesNode(directive.getDirective());
                         }
                         String text = directive.getFile().getText().substring(1, directive.getFile().getText().length() - 1);
-                        new DefinitionNode(includes, directive.getFile(), text);
+                        DefinitionNode definition = new DefinitionNode(includes, directive.getFile(), text);
+                        definition.setData("__skip__", node.getData("__skip__"));
                     }
                 }
                 else if (node instanceof DirectiveNode.DefineNode) {
@@ -104,7 +105,8 @@ public class OutlineView {
                         if (defines == null) {
                             defines = new DefinesNode(directive.getDirective());
                         }
-                        new DefinitionNode(defines, directive.getIdentifier(), directive.getIdentifier().getText());
+                        DefinitionNode definition = new DefinitionNode(defines, directive.getIdentifier(), directive.getIdentifier().getText());
+                        definition.setData("__skip__", node.getData("__skip__"));
                     }
                 }
                 else if (!(node instanceof DirectiveNode)) {
@@ -184,38 +186,90 @@ public class OutlineView {
                 }
                 else if (element instanceof DefinesNode) {
                     String text = ((Node) element).getStartToken().getText();
-                    appendText(text, sectionStyle);
+                    if (skipNode((Node) element)) {
+                        appendText(text, commentStyle);
+                    }
+                    else {
+                        appendText(text, sectionStyle);
+                    }
                 }
                 else if (element instanceof DefinitionNode) {
-                    sb.append(((Node) element).getText());
+                    if (skipNode((Node) element)) {
+                        StyleRange range = new StyleRange(commentStyle);
+                        range.start = sb.length();
+                        sb.append(((Node) element).getText());
+                        range.length = sb.length() - range.start;
+                        styles.add(range);
+                    }
+                    else {
+                        sb.append(((Node) element).getText());
+                    }
                 }
                 else if (element instanceof VariableNode) {
                     VariableNode node = (VariableNode) element;
-                    if (node.identifier != null) {
-                        if (sb.length() != 0) {
-                            sb.append(" ");
+                    if (skipNode(node)) {
+                        StyleRange range = new StyleRange(commentStyle);
+                        range.start = sb.length();
+                        if (node.identifier != null) {
+                            if (sb.length() != 0) {
+                                sb.append(" ");
+                            }
+                            sb.append(node.identifier.getText());
                         }
-                        sb.append(node.identifier.getText());
-                    }
-                    if (node.type != null) {
-                        sb.append(" : ");
-                        appendText(node.type.getText(), methodReturnStyle);
-                    }
-                    else if (node.getParent() instanceof VariableNode) {
-                        Token type = ((VariableNode) node.getParent()).type;
-                        if (type != null) {
+                        if (node.type != null) {
                             sb.append(" : ");
-                            appendText(type.getText(), methodReturnStyle);
+                            sb.append(node.type.getText());
+                        }
+                        else if (node.getParent() instanceof VariableNode) {
+                            Token type = ((VariableNode) node.getParent()).type;
+                            if (type != null) {
+                                sb.append(" : ");
+                                sb.append(type.getText());
+                            }
+                        }
+                        range.length = sb.length() - range.start;
+                        styles.add(range);
+                    }
+                    else {
+                        if (node.identifier != null) {
+                            if (sb.length() != 0) {
+                                sb.append(" ");
+                            }
+                            sb.append(node.identifier.getText());
+                        }
+                        if (node.type != null) {
+                            sb.append(" : ");
+                            appendText(node.type.getText(), methodReturnStyle);
+                        }
+                        else if (node.getParent() instanceof VariableNode) {
+                            Token type = ((VariableNode) node.getParent()).type;
+                            if (type != null) {
+                                sb.append(" : ");
+                                appendText(type.getText(), methodReturnStyle);
+                            }
                         }
                     }
                 }
                 else if (element instanceof ObjectNode) {
                     ObjectNode node = (ObjectNode) element;
                     if (node.name != null) {
-                        sb.append(node.name.getText());
-                        if (node.file != null) {
+                        if (skipNode(node)) {
+                            StyleRange range = new StyleRange(commentStyle);
+                            range.start = sb.length();
+                            sb.append(node.name.getText());
                             sb.append(" : ");
-                            appendText(node.file.getText(), stringStyle);
+                            if (node.file != null) {
+                                sb.append(node.file.getText());
+                            }
+                            range.length = sb.length() - range.start;
+                            styles.add(range);
+                        }
+                        else {
+                            sb.append(node.name.getText());
+                            if (node.file != null) {
+                                sb.append(" : ");
+                                appendText(node.file.getText(), stringStyle);
+                            }
                         }
                     }
                 }
@@ -226,10 +280,28 @@ public class OutlineView {
                     decorateFunction((FunctionNode) element, cell);
                 }
                 else if (element instanceof DataLineNode) {
-                    sb.append(((DataLineNode) element).label.getText());
+                    if (skipNode((DataLineNode) element)) {
+                        StyleRange range = new StyleRange(commentStyle);
+                        range.start = sb.length();
+                        sb.append(((DataLineNode) element).label.getText());
+                        range.length = sb.length() - range.start;
+                        styles.add(range);
+                    }
+                    else {
+                        sb.append(((DataLineNode) element).label.getText());
+                    }
                 }
                 else {
-                    sb.append(((Node) element).getStartToken().getText());
+                    if (skipNode((Node) element)) {
+                        StyleRange range = new StyleRange(commentStyle);
+                        range.start = sb.length();
+                        sb.append(((Node) element).getStartToken().getText());
+                        range.length = sb.length() - range.start;
+                        styles.add(range);
+                    }
+                    else {
+                        sb.append(((Node) element).getStartToken().getText());
+                    }
                 }
 
                 cell.setText(sb.toString());
@@ -242,35 +314,76 @@ public class OutlineView {
         }
 
         void decorateMethod(MethodNode node, ViewerCell cell) {
-            if (node.getType() != null) {
-                appendText(node.getType().getText().toUpperCase(), sectionStyle);
-            }
-            if (node.getName() != null) {
-                if (sb.length() != 0) {
-                    sb.append(" ");
-                }
-                sb.append(node.getName().getText());
+            if (skipNode(node)) {
+                StyleRange range = new StyleRange(commentStyle);
+                range.start = sb.length();
 
-                sb.append("(");
-                boolean first = true;
-                for (Node child : node.getParameters()) {
-                    if (!first) {
-                        sb.append(", ");
+                if (node.getType() != null) {
+                    sb.append(node.getType().getText().toUpperCase());
+                }
+                if (node.getName() != null) {
+                    if (sb.length() != 0) {
+                        sb.append(" ");
                     }
-                    appendText(child.getText(), methodLocalStyle);
-                    first = false;
-                }
-                sb.append(")");
+                    sb.append(node.getName().getText());
 
-                if (node.getReturnVariables().size() != 0) {
-                    sb.append(" : ");
-                    first = true;
-                    for (Node child : node.getReturnVariables()) {
+                    sb.append("(");
+                    boolean first = true;
+                    for (Node child : node.getParameters()) {
                         if (!first) {
                             sb.append(", ");
                         }
-                        appendText(child.getText(), methodReturnStyle);
+                        sb.append(child.getText());
                         first = false;
+                    }
+                    sb.append(")");
+
+                    if (node.getReturnVariables().size() != 0) {
+                        sb.append(" : ");
+                        first = true;
+                        for (Node child : node.getReturnVariables()) {
+                            if (!first) {
+                                sb.append(", ");
+                            }
+                            sb.append(child.getText());
+                            first = false;
+                        }
+                    }
+                }
+                range.length = sb.length() - range.start;
+                styles.add(range);
+            }
+            else {
+                if (node.getType() != null) {
+                    appendText(node.getType().getText().toUpperCase(), sectionStyle);
+                }
+                if (node.getName() != null) {
+                    if (sb.length() != 0) {
+                        sb.append(" ");
+                    }
+                    sb.append(node.getName().getText());
+
+                    sb.append("(");
+                    boolean first = true;
+                    for (Node child : node.getParameters()) {
+                        if (!first) {
+                            sb.append(", ");
+                        }
+                        appendText(child.getText(), methodLocalStyle);
+                        first = false;
+                    }
+                    sb.append(")");
+
+                    if (node.getReturnVariables().size() != 0) {
+                        sb.append(" : ");
+                        first = true;
+                        for (Node child : node.getReturnVariables()) {
+                            if (!first) {
+                                sb.append(", ");
+                            }
+                            appendText(child.getText(), methodReturnStyle);
+                            first = false;
+                        }
                     }
                 }
             }
@@ -298,30 +411,65 @@ public class OutlineView {
 
         void decorateFunction(FunctionNode node, ViewerCell cell) {
             if (node.getIdentifier() != null) {
-                if (sb.length() != 0) {
-                    sb.append(" ");
-                }
-                appendText(node.getIdentifier().getText(), sectionStyle);
+                if (skipNode(node)) {
+                    StyleRange range = new StyleRange(commentStyle);
+                    range.start = sb.length();
 
-                sb.append("(");
-                boolean first = true;
-                for (FunctionNode.ParameterNode child : node.getParameters()) {
-                    if (!first) {
-                        sb.append(", ");
+                    if (sb.length() != 0) {
+                        sb.append(" ");
                     }
-                    if (child.type != null) {
-                        appendText(child.type.getText(), methodLocalStyle);
-                    }
-                    else {
-                        appendText(child.identifier.getText(), methodLocalStyle);
-                    }
-                    first = false;
-                }
-                sb.append(")");
+                    sb.append(node.getIdentifier().getText());
 
-                if (node.getType() != null) {
-                    sb.append(" : ");
-                    appendText(node.getType().getText(), methodReturnStyle);
+                    sb.append("(");
+                    boolean first = true;
+                    for (FunctionNode.ParameterNode child : node.getParameters()) {
+                        if (!first) {
+                            sb.append(", ");
+                        }
+                        if (child.type != null) {
+                            sb.append(child.type.getText());
+                        }
+                        else {
+                            sb.append(child.identifier.getText());
+                        }
+                        first = false;
+                    }
+                    sb.append(")");
+
+                    if (node.getType() != null) {
+                        sb.append(" : ");
+                        sb.append(node.getType().getText());
+                    }
+
+                    range.length = sb.length() - range.start;
+                    styles.add(range);
+                }
+                else {
+                    if (sb.length() != 0) {
+                        sb.append(" ");
+                    }
+                    appendText(node.getIdentifier().getText(), sectionStyle);
+
+                    sb.append("(");
+                    boolean first = true;
+                    for (FunctionNode.ParameterNode child : node.getParameters()) {
+                        if (!first) {
+                            sb.append(", ");
+                        }
+                        if (child.type != null) {
+                            appendText(child.type.getText(), methodLocalStyle);
+                        }
+                        else {
+                            appendText(child.identifier.getText(), methodLocalStyle);
+                        }
+                        first = false;
+                    }
+                    sb.append(")");
+
+                    if (node.getType() != null) {
+                        sb.append(" : ");
+                        appendText(node.getType().getText(), methodReturnStyle);
+                    }
                 }
             }
         }
@@ -334,6 +482,12 @@ public class OutlineView {
             sb.append(text);
             styles.add(range);
         }
+
+        boolean skipNode(Node node) {
+            Boolean skip = (Boolean) node.getData("__skip__");
+            return skip != null && skip.booleanValue();
+        }
+
     };
 
     final IElementComparer elementComparer = new IElementComparer() {
@@ -415,6 +569,10 @@ public class OutlineView {
 
     public void removeOpenListener(IOpenListener listener) {
         viewer.addOpenListener(listener);
+    }
+
+    public Node getInput() {
+        return (Node) viewer.getInput();
     }
 
     public void setInput(Node node) {
@@ -538,6 +696,10 @@ public class OutlineView {
 
     public void dispose() {
         viewer.getControl().dispose();
+    }
+
+    public void refresh() {
+        viewer.refresh();
     }
 
 }

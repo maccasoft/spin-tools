@@ -494,7 +494,7 @@ public class EditorTab implements FindReplaceTarget {
 
                     @Override
                     public void run() {
-                        if (outlineView != null && !outlineView.getControl().isDisposed()) {
+                        if (outlineView != null && !outlineView.getControl().isDisposed() && outlineView.getInput() == null) {
                             outlineView.setInput(root);
                         }
                     }
@@ -581,6 +581,11 @@ public class EditorTab implements FindReplaceTarget {
                                         changeSupport.firePropertyChange(OBJECT_TREE, null, objectTree);
                                         editor.setCompilerMessages(list);
                                         editor.redraw();
+
+                                        if (outlineView != null && !outlineView.getControl().isDisposed()) {
+                                            outlineView.setInput(root);
+                                        }
+
                                         tabItem.setFont(localFile.equals(preferences.getTopObject()) ? boldFont : null);
                                         updateTabItemText();
                                     }
