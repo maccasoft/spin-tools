@@ -153,6 +153,7 @@ public abstract class SourceTokenMarker {
     protected boolean caseSensitive;
     protected String constantSeparator;
 
+    protected Map<String, TokenId> externals = new CaseInsensitiveMap<>();
     protected Map<String, TokenId> symbols = new CaseInsensitiveMap<>();
     protected Map<String, TokenId> locals = new CaseInsensitiveMap<>();
 

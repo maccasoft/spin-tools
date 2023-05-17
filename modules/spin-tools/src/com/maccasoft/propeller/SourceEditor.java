@@ -2200,7 +2200,7 @@ public class SourceEditor {
     }
 
     public void redraw() {
-        styledText.redrawRange(0, styledText.getCharCount(), true);
+        styledText.redrawRange(0, styledText.getCharCount(), false);
         ruler.redraw();
         overview.redraw();
     }
