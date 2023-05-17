@@ -187,15 +187,20 @@ public class ObjectBrowser {
     }
 
     public void setInput(ObjectTree input, boolean topObject) {
-        this.topObject = topObject;
-        if (input == null) {
-            viewer.setInput(new ObjectTree[0]);
-        }
-        else {
-            viewer.setInput(new ObjectTree[] {
-                input
-            });
-            viewer.expandAll();
+        viewer.getControl().setRedraw(false);
+        try {
+            this.topObject = topObject;
+            if (input == null) {
+                viewer.setInput(new ObjectTree[0]);
+            }
+            else {
+                viewer.setInput(new ObjectTree[] {
+                    input
+                });
+                viewer.expandAll();
+            }
+        } finally {
+            viewer.getControl().setRedraw(true);
         }
     }
 

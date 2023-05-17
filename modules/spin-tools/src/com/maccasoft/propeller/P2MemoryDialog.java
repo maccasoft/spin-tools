@@ -186,6 +186,7 @@ public class P2MemoryDialog extends Dialog {
 
         objectTree = new ObjectBrowser(container);
         objectTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        ((GridData) objectTree.getLayoutData()).heightHint = objectTree.getTree().getItemHeight() * 10;
         objectTree.setInput(tree, topObject);
 
         Composite group = new Composite(container, SWT.NONE);

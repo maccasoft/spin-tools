@@ -305,15 +305,20 @@ public class FileBrowser {
     }
 
     public void setSelection(File file) {
-        viewer.setSelection(new StructuredSelection(file), true);
-
-        while (viewer.getSelection().isEmpty()) {
-            if (!file.isDirectory()) {
-                if ((file = file.getParentFile().getAbsoluteFile()) == null) {
-                    return;
-                }
-            }
+        viewer.getControl().setRedraw(false);
+        try {
             viewer.setSelection(new StructuredSelection(file), true);
+
+            while (viewer.getSelection().isEmpty()) {
+                if (!file.isDirectory()) {
+                    if ((file = file.getParentFile().getAbsoluteFile()) == null) {
+                        return;
+                    }
+                }
+                viewer.setSelection(new StructuredSelection(file), true);
+            }
+        } finally {
+            viewer.getControl().setRedraw(true);
         }
     }
 
