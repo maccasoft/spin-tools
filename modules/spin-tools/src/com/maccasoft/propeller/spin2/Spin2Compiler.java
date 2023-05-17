@@ -26,7 +26,9 @@ import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
+import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
+import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.Node;
@@ -38,6 +40,7 @@ public class Spin2Compiler extends Compiler {
 
     protected boolean debugEnabled;
     protected List<Object> debugStatements = new ArrayList<Object>();
+    protected Spin2Debug debug = new Spin2Debug();
 
     protected Spin2Interpreter interpreter;
 
@@ -111,8 +114,8 @@ public class Spin2Compiler extends Compiler {
 
         String fileName;
 
-        public Spin2ObjectCompilerProxy(String fileName, List<Object> debugStatements) {
-            super(Spin2Compiler.this, debugStatements);
+        public Spin2ObjectCompilerProxy(String fileName) {
+            super(Spin2Compiler.this);
             this.fileName = fileName;
         }
 
@@ -182,13 +185,13 @@ public class Spin2Compiler extends Compiler {
                 objectCompiler = new Spin2CObjectCompilerProxy(fileName, debugStatements);
             }
             else {
-                objectCompiler = new Spin2ObjectCompilerProxy(fileName, debugStatements);
+                objectCompiler = new Spin2ObjectCompilerProxy(fileName);
             }
             objectCompiler.compileObject(entry.getValue());
             childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
         }
 
-        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFile.getName(), debugStatements);
+        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFile.getName());
         objectCompiler.compileObject(root);
 
         objectCompiler.compilePass2();
@@ -251,7 +254,7 @@ public class Spin2Compiler extends Compiler {
         }
 
         if (debugEnabled) {
-            Spin2Object debugObject = objectCompiler.generateDebugData();
+            Spin2Object debugObject = generateDebugData();
             object.setDebugData(debugObject);
         }
 
@@ -264,6 +267,45 @@ public class Spin2Compiler extends Compiler {
     @Override
     public boolean isDebugEnabled() {
         return debugEnabled;
+    }
+
+    public Spin2Object generateDebugData() {
+        Spin2Object object = new Spin2Object();
+        object.writeComment("Debug data");
+        WordDataObject sizeWord = object.writeWord(2);
+
+        int pos = (debugStatements.size() + 1) * 2;
+        List<DataObject> l = new ArrayList<DataObject>();
+        for (Object node : debugStatements) {
+            try {
+                if (node instanceof Spin2StatementNode) {
+                    byte[] data = debug.compileDebugStatement((Spin2StatementNode) node);
+                    l.add(new DataObject(data));
+                    object.writeWord(pos);
+                    pos += data.length;
+                }
+                else if (node instanceof Spin2PAsmDebugLine) {
+                    byte[] data = debug.compilePAsmDebugStatement((Spin2PAsmDebugLine) node);
+                    l.add(new DataObject(data));
+                    object.writeWord(pos);
+                    pos += data.length;
+                }
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, node));
+            }
+        }
+        for (DataObject data : l) {
+            object.write(data);
+        }
+        sizeWord.setValue(object.getSize());
+
+        if (object.getSize() > 16384) {
+            throw new CompilerException("debug data is too long", null);
+        }
+
+        return object;
     }
 
     @Override

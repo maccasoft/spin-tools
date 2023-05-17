@@ -26,120 +26,119 @@ import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.RegisterAddress;
 import com.maccasoft.propeller.model.DataLineNode;
-import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.instructions.FileInc;
 
 public abstract class Spin2PasmCompiler {
 
-    Context scope;
-    boolean debugEnabled;
-    List<Object> debugStatements;
+    protected Context scope;
+    protected Spin2Compiler compiler;
 
-    int nested;
-    Map<Spin2PAsmLine, Context> pendingAlias = new HashMap<Spin2PAsmLine, Context>();
+    private Map<Spin2PAsmLine, Context> pendingAlias = new HashMap<Spin2PAsmLine, Context>();
 
-    Spin2PasmCompiler() {
-        this.debugStatements = new ArrayList<Object>();
-    }
+    protected List<Spin2PAsmLine> source = new ArrayList<>();
 
-    public Spin2PasmCompiler(Context scope, boolean debugEnabled, List<Object> debugStatements) {
+    public Spin2PasmCompiler(Context scope, Spin2Compiler compiler) {
         this.scope = scope;
-        this.debugEnabled = debugEnabled;
-        this.debugStatements = debugStatements;
+        this.compiler = compiler;
     }
 
-    public List<Spin2PAsmLine> compileDat(DataNode root) {
-        List<Spin2PAsmLine> source = new ArrayList<>();
+    public Context getScope() {
+        return scope;
+    }
 
-        Context savedContext = scope;
-        nested = 0;
+    protected void compileDatBlock(Node parent) {
+        Context lineScope = scope;
 
-        for (Node child : root.getChilds()) {
-            DataLineNode node = (DataLineNode) child;
-            if (!debugEnabled && node.instruction != null && "DEBUG".equalsIgnoreCase(node.instruction.getText())) {
-                if (node.label == null) {
+        for (Node child : parent.getChilds()) {
+            try {
+                if (skipNode(child)) {
                     continue;
                 }
-            }
-            try {
-                Spin2PAsmLine pasmLine = compileDataLine(node);
-                pasmLine.setData(node);
-                source.addAll(pasmLine.expand());
-
-                if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                    if (node.condition != null) {
-                        throw new CompilerException("not allowed", node.condition);
-                    }
-                    if (node.modifier != null) {
-                        throw new CompilerException("not allowed", node.modifier);
-                    }
-                    int index = 0;
-                    for (Spin2PAsmExpression argument : pasmLine.getArguments()) {
-                        String fileName = argument.getString();
-                        Node includedNode = getParsedSource(fileName);
-                        try {
-                            if (includedNode == null) {
-                                throw new RuntimeException("file \"" + fileName + "\" not found");
-                            }
-                            source.addAll(compileDatInclude(scope, includedNode));
-                        } catch (CompilerException e) {
-                            logMessage(e);
-                        } catch (Exception e) {
-                            logMessage(new CompilerException(e, node.parameters.get(index)));
+                if (child instanceof DataLineNode) {
+                    DataLineNode node = (DataLineNode) child;
+                    if (!compiler.isDebugEnabled() && node.instruction != null && "DEBUG".equalsIgnoreCase(node.instruction.getText())) {
+                        if (node.label == null) {
+                            continue;
                         }
-                        index++;
+                    }
+
+                    if (node.label != null && !node.label.getText().startsWith(".")) {
+                        lineScope = scope;
+                    }
+
+                    Spin2PAsmLine pasmLine = compileDataLine(lineScope, node);
+                    pasmLine.setData(node);
+                    source.addAll(pasmLine.expand());
+
+                    if (node.label != null && !node.label.getText().startsWith(".")) {
+                        lineScope = pasmLine.getScope();
+                    }
+
+                    if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
+                        if (node.condition != null) {
+                            throw new CompilerException("not allowed", node.condition);
+                        }
+                        if (node.modifier != null) {
+                            throw new CompilerException("not allowed", node.modifier);
+                        }
+                        int index = 0;
+                        for (Spin2PAsmExpression argument : pasmLine.getArguments()) {
+                            String fileName = argument.getString();
+                            Node includedNode = compiler.getParsedObject(fileName, ".spin2");
+                            try {
+                                if (includedNode == null) {
+                                    throw new RuntimeException("file \"" + fileName + "\" not found");
+                                }
+                                compileDatInclude(includedNode);
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException(e, node.parameters.get(index)));
+                            }
+                            index++;
+                        }
                     }
                 }
 
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
-                logMessage(new CompilerException(e, node.instruction));
+                logMessage(new CompilerException(e, child));
             }
         }
 
         pendingAlias.clear();
-        scope = savedContext;
-
-        return source;
     }
 
-    public Spin2PAsmLine compileDataLine(Context scope, DataLineNode node) {
+    protected boolean skipNode(Node node) {
+        Boolean skip = (Boolean) node.getData("__skip__");
+        return skip != null && skip.booleanValue();
+    }
+
+    protected Spin2PAsmLine compileInlineDataLine(Context scope, Context lineScope, DataLineNode node) {
         Context savedContext = this.scope;
         this.scope = scope;
         try {
-            return compileDataLine(node);
+            return compileDataLine(lineScope, node);
         } finally {
             this.scope = savedContext;
         }
     }
 
-    public Spin2PAsmLine compileDataLine(DataLineNode node) {
+    protected Spin2PAsmLine compileDataLine(Context lineScope, DataLineNode node) {
         String label = node.label != null ? node.label.getText() : null;
         String condition = node.condition != null ? node.condition.getText() : null;
         String mnemonic = node.instruction != null ? node.instruction.getText() : null;
         String modifier = node.modifier != null ? node.modifier.getText() : null;
         List<Spin2PAsmExpression> parameters = new ArrayList<Spin2PAsmExpression>();
 
-        Context rootScope = scope;
-        if (label != null && !label.startsWith(".")) {
-            if (nested > 0) {
-                if (scope.getParent() != null) {
-                    scope = rootScope = scope.getParent();
-                }
-                nested--;
-            }
-            scope = new Context(scope);
-            nested++;
-        }
-
         if (node.label == null && node.instruction == null) {
             throw new CompilerException("syntax error", node);
         }
 
-        Context localScope = new Context(scope);
+        Context localScope = new Context(lineScope);
 
         for (DataLineNode.ParameterNode param : node.parameters) {
             int index = 0;
@@ -194,7 +193,7 @@ public abstract class Spin2PasmCompiler {
             }
         }
 
-        if (!debugEnabled && mnemonic != null && "DEBUG".equalsIgnoreCase(mnemonic)) {
+        if (!compiler.isDebugEnabled() && mnemonic != null && "DEBUG".equalsIgnoreCase(mnemonic)) {
             condition = mnemonic = null;
             parameters.clear();
             modifier = null;
@@ -224,7 +223,7 @@ public abstract class Spin2PasmCompiler {
                 if (node.modifier != null) {
                     throw new CompilerException("not allowed", node.modifier);
                 }
-                int debugIndex = debugStatements.size() + 1;
+                int debugIndex = compiler.debugStatements.size() + 1;
                 if (debugIndex >= 255) {
                     throw new CompilerException("too much debug statements", node);
                 }
@@ -235,7 +234,7 @@ public abstract class Spin2PasmCompiler {
                     tokens.remove(node.label);
                 }
                 Spin2PAsmDebugLine debugLine = Spin2PAsmDebugLine.buildFrom(pasmLine.getScope(), tokens);
-                debugStatements.add(debugLine);
+                compiler.debugStatements.add(debugLine);
             }
         } catch (CompilerException e) {
             throw e;
@@ -255,24 +254,24 @@ public abstract class Spin2PasmCompiler {
                 else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
                     type = "BYTE";
                 }
-                rootScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
-                rootScope.addSymbol("#" + pasmLine.getLabel(), new RegisterAddress(pasmLine.getScope(), type));
-                rootScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
-                rootScope.addSymbol("@@" + pasmLine.getLabel(), new MemoryContextLiteral(pasmLine.getScope(), type));
+
+                Context labelScope = pasmLine.isLocalLabel() ? lineScope : scope;
+                labelScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
+                labelScope.addSymbol("#" + pasmLine.getLabel(), new RegisterAddress(pasmLine.getScope(), type));
+                labelScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
+                labelScope.addSymbol("@@" + pasmLine.getLabel(), new MemoryContextLiteral(pasmLine.getScope(), type));
 
                 if (pasmLine.getMnemonic() == null) {
-                    if (!pasmLine.isLocalLabel()) {
-                        pendingAlias.put(pasmLine, rootScope);
-                    }
+                    pendingAlias.put(pasmLine, labelScope);
                 }
                 else if (pendingAlias.size() != 0) {
                     for (Entry<Spin2PAsmLine, Context> entry : pendingAlias.entrySet()) {
                         Spin2PAsmLine line = entry.getKey();
-                        Context context = entry.getValue();
-                        context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                        context.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
-                        context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-                        context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope(), type));
+                        Context aliasScope = entry.getValue();
+                        aliasScope.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                        aliasScope.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
+                        aliasScope.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                        aliasScope.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope(), type));
                     }
                     pendingAlias.clear();
                 }
@@ -294,11 +293,11 @@ public abstract class Spin2PasmCompiler {
 
             for (Entry<Spin2PAsmLine, Context> entry : pendingAlias.entrySet()) {
                 Spin2PAsmLine line = entry.getKey();
-                Context context = entry.getValue();
-                context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                context.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
-                context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-                context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope(), type));
+                Context aliasScope = entry.getValue();
+                aliasScope.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
+                aliasScope.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
+                aliasScope.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
+                aliasScope.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope(), type));
             }
             pendingAlias.clear();
         }
@@ -332,20 +331,7 @@ public abstract class Spin2PasmCompiler {
         return index >= tokens.size();
     }
 
-    protected List<Spin2PAsmLine> compileDatInclude(Context scope, Node root) {
-        List<Spin2PAsmLine> source = new ArrayList<>();
-
-        for (Node node : root.getChilds()) {
-            if (node instanceof DataNode) {
-                List<Spin2PAsmLine> list = compileDat((DataNode) node);
-                source.addAll(list);
-            }
-        }
-
-        return source;
-    }
-
-    protected abstract Node getParsedSource(String fileName);
+    protected abstract void compileDatInclude(Node root);
 
     protected abstract byte[] getBinaryFile(String fileName);
 

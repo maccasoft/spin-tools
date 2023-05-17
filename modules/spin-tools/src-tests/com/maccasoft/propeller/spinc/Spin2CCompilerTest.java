@@ -45,8 +45,8 @@ class Spin2CCompilerTest {
         Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
-        Assertions.assertEquals(0b00_00, compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
-        Assertions.assertEquals(20_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals(0b00_00, compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
+        Assertions.assertEquals(20_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
     }
 
     @Test
@@ -66,8 +66,8 @@ class Spin2CCompilerTest {
         Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
-        Assertions.assertEquals(250_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
-        Assertions.assertEquals(0b10_11, compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
+        Assertions.assertEquals(250_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals(0b10_11, compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
     }
 
     @Test
@@ -88,8 +88,8 @@ class Spin2CCompilerTest {
         Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
-        Assertions.assertEquals(148_500_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
-        Assertions.assertEquals("011C62FF", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+        Assertions.assertEquals(148_500_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("011C62FF", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
     }
 
     @Test
@@ -110,8 +110,8 @@ class Spin2CCompilerTest {
         Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
-        Assertions.assertEquals(100_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
-        Assertions.assertEquals("0100090B", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+        Assertions.assertEquals(100_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("0100090B", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
     }
 
     @Test
@@ -131,8 +131,8 @@ class Spin2CCompilerTest {
         Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
-        Assertions.assertEquals(16_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
-        Assertions.assertEquals("0000000A", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+        Assertions.assertEquals(16_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("0000000A", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
     }
 
     @Test
@@ -153,8 +153,8 @@ class Spin2CCompilerTest {
         Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
-        Assertions.assertEquals(297_500_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
-        Assertions.assertEquals("01FE52F7", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+        Assertions.assertEquals(297_500_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("01FE52F7", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
     }
 
     @Test
@@ -174,8 +174,8 @@ class Spin2CCompilerTest {
         Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
-        Assertions.assertEquals(16_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
-        Assertions.assertEquals("00000006", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+        Assertions.assertEquals(16_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("00000006", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
     }
 
     @Test
@@ -195,8 +195,8 @@ class Spin2CCompilerTest {
         Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
-        Assertions.assertEquals(20_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
-        Assertions.assertEquals("00000001", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+        Assertions.assertEquals(20_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("00000001", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
     }
 
     @Test
@@ -216,8 +216,8 @@ class Spin2CCompilerTest {
         Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2Compiler(), new ArrayList<>());
         compiler.compileObject(root);
 
-        Assertions.assertEquals(20_000_000, compiler.scope.getLocalSymbol("CLKFREQ_").getNumber().intValue());
-        Assertions.assertEquals("00000000", String.format("%08X", compiler.scope.getLocalSymbol("CLKMODE_").getNumber().intValue()));
+        Assertions.assertEquals(20_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
+        Assertions.assertEquals("00000000", String.format("%08X", compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue()));
     }
 
     @Test

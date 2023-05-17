@@ -26,25 +26,18 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.maccasoft.propeller.Compiler.ObjectInfo;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
-import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
-import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.BinaryOperator;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
-import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.LocalVariable;
-import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.Register;
-import com.maccasoft.propeller.expressions.RegisterAddress;
 import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.ConstantNode;
@@ -77,29 +70,19 @@ import com.maccasoft.propeller.spin2.bytecode.Jz;
 import com.maccasoft.propeller.spin2.bytecode.Tjz;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 import com.maccasoft.propeller.spin2.instructions.Empty;
-import com.maccasoft.propeller.spin2.instructions.FileInc;
 import com.maccasoft.propeller.spin2.instructions.Fit;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
 import com.maccasoft.propeller.spin2.instructions.Res;
 import com.maccasoft.propeller.spin2.instructions.Word;
 
-public class Spin2ObjectCompiler extends ObjectCompiler {
-
-    Context scope;
+public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements ObjectCompiler {
 
     List<Variable> variables = new ArrayList<>();
-    List<Spin2PAsmLine> source = new ArrayList<>();
     List<Spin2Method> methods = new ArrayList<>();
     Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<>());
 
     int objectVarSize;
-
-    int nested;
-
-    boolean debugEnabled;
-    Spin2Debug debug = new Spin2Debug();
-    List<Object> debugStatements;
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<>();
@@ -107,18 +90,8 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
     Map<String, Expression> publicSymbols = new HashMap<>();
     List<LinkDataObject> objectLinks = new ArrayList<>();
 
-    Spin2Compiler compiler;
-    Spin2BytecodeCompiler bytecodeCompiler;
-
-    public Spin2ObjectCompiler(Spin2Compiler compiler, List<Object> debugStatements) {
-        this.scope = new Spin2GlobalContext(compiler.isCaseSensitive());
-        this.compiler = compiler;
-        this.debugEnabled = compiler.isDebugEnabled();
-        this.debugStatements = debugStatements;
-    }
-
-    public void setDebugEnabled(boolean enabled) {
-        this.debugEnabled = enabled;
+    public Spin2ObjectCompiler(Spin2Compiler compiler) {
+        super(new Spin2GlobalContext(compiler.isCaseSensitive()), compiler);
     }
 
     @Override
@@ -129,15 +102,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
     @Override
     public void compile(Node root) {
-        bytecodeCompiler = new Spin2BytecodeCompiler(debugStatements) {
-
-            @Override
-            protected void logMessage(CompilerException message) {
-                Spin2ObjectCompiler.this.logMessage(message);
-            }
-
-        };
-
         root.accept(new NodeVisitor() {
 
             @Override
@@ -631,45 +595,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         return object;
     }
 
-    public Spin2Object generateDebugData() {
-        Spin2Object object = new Spin2Object();
-        object.writeComment("Debug data");
-        WordDataObject sizeWord = object.writeWord(2);
-
-        int pos = (debugStatements.size() + 1) * 2;
-        List<DataObject> l = new ArrayList<DataObject>();
-        for (Object node : debugStatements) {
-            try {
-                if (node instanceof Spin2StatementNode) {
-                    byte[] data = debug.compileDebugStatement((Spin2StatementNode) node);
-                    l.add(new DataObject(data));
-                    object.writeWord(pos);
-                    pos += data.length;
-                }
-                else if (node instanceof Spin2PAsmDebugLine) {
-                    byte[] data = debug.compilePAsmDebugStatement((Spin2PAsmDebugLine) node);
-                    l.add(new DataObject(data));
-                    object.writeWord(pos);
-                    pos += data.length;
-                }
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, node));
-            }
-        }
-        for (DataObject data : l) {
-            object.write(data);
-        }
-        sizeWord.setValue(object.getSize());
-
-        if (object.getSize() > 16384) {
-            throw new CompilerException("debug data is too long", null);
-        }
-
-        return object;
-    }
-
     Expression enumValue = new NumberLiteral(0);
     Expression enumIncrement = new NumberLiteral(1);
 
@@ -1001,293 +926,8 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         }
     }
 
-    Map<Spin2PAsmLine, Context> pendingAlias = new HashMap<Spin2PAsmLine, Context>();
-
-    void compileDatBlock(Node parent) {
-        Context savedContext = scope;
-        nested = 0;
-
-        for (Node child : parent.getChilds()) {
-            try {
-                if (skipNode(child)) {
-                    continue;
-                }
-                if (child instanceof DataLineNode) {
-                    DataLineNode node = (DataLineNode) child;
-                    if (!debugEnabled && node.instruction != null && "DEBUG".equalsIgnoreCase(node.instruction.getText())) {
-                        if (node.label == null) {
-                            continue;
-                        }
-                    }
-
-                    Spin2PAsmLine pasmLine = compileDataLine(node);
-                    pasmLine.setData(node);
-                    source.addAll(pasmLine.expand());
-
-                    if ("INCLUDE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                        if (node.condition != null) {
-                            throw new CompilerException("not allowed", node.condition);
-                        }
-                        if (node.modifier != null) {
-                            throw new CompilerException("not allowed", node.modifier);
-                        }
-                        int index = 0;
-                        for (Spin2PAsmExpression argument : pasmLine.getArguments()) {
-                            String fileName = argument.getString();
-                            Node includedNode = compiler.getParsedObject(fileName, ".spin2");
-                            try {
-                                if (includedNode == null) {
-                                    throw new RuntimeException("file \"" + fileName + "\" not found");
-                                }
-                                compileDatInclude(includedNode);
-                            } catch (CompilerException e) {
-                                logMessage(e);
-                            } catch (Exception e) {
-                                logMessage(new CompilerException(e, node.parameters.get(index)));
-                            }
-                            index++;
-                        }
-                    }
-                }
-
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, child));
-            }
-        }
-
-        pendingAlias.clear();
-        scope = savedContext;
-    }
-
-    Spin2PAsmLine compileDataLine(Context scope, DataLineNode node) {
-        Context savedContext = this.scope;
-        this.scope = scope;
-        try {
-            return compileDataLine(node);
-        } finally {
-            this.scope = savedContext;
-        }
-    }
-
-    Spin2PAsmLine compileDataLine(DataLineNode node) {
-        String label = node.label != null ? node.label.getText() : null;
-        String condition = node.condition != null ? node.condition.getText() : null;
-        String mnemonic = node.instruction != null ? node.instruction.getText() : null;
-        String modifier = node.modifier != null ? node.modifier.getText() : null;
-        List<Spin2PAsmExpression> parameters = new ArrayList<Spin2PAsmExpression>();
-
-        Context rootScope = scope;
-        if (label != null && !label.startsWith(".")) {
-            if (nested > 0) {
-                if (scope.getParent() != null) {
-                    scope = rootScope = scope.getParent();
-                }
-                nested--;
-            }
-            scope = new Context(scope);
-            nested++;
-        }
-
-        if (node.label == null && node.instruction == null) {
-            throw new CompilerException("syntax error", node);
-        }
-
-        Context localScope = new Context(scope);
-
-        for (DataLineNode.ParameterNode param : node.parameters) {
-            int index = 0;
-            String prefix = null;
-            Expression expression = null, count = null;
-
-            if (parameters.size() == 1 && Spin2InstructionObject.ptrInstructions.contains(mnemonic.toLowerCase()) && isPtrExpression(param.getTokens())) {
-                expression = new Identifier(param.getText(), scope);
-                expression.setData(param);
-            }
-            else {
-                Token token;
-                if (index < param.getTokens().size()) {
-                    token = param.getToken(index);
-                    if (token.getText().startsWith("#")) {
-                        prefix = (prefix == null ? "" : prefix) + token.getText();
-                        index++;
-                    }
-                }
-                if (index < param.getTokens().size()) {
-                    token = param.getToken(index);
-                    if ("\\".equals(token.getText())) {
-                        prefix = (prefix == null ? "" : prefix) + token.getText();
-                        index++;
-                    }
-                }
-                if (index < param.getTokens().size()) {
-                    try {
-                        Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(localScope, param.getTokens().subList(index, param.getTokens().size()));
-                        expression = expressionBuilder.getExpression();
-                        expression.setData(param);
-                    } catch (CompilerException e) {
-                        throw e;
-                    } catch (Exception e) {
-                        throw new CompilerException(e, param);
-                    }
-                }
-            }
-            if (param.count != null) {
-                try {
-                    Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(localScope, param.count.getTokens());
-                    count = expressionBuilder.getExpression();
-                    count.setData(param.count);
-                } catch (CompilerException e) {
-                    throw e;
-                } catch (Exception e) {
-                    throw new CompilerException(e, param.count);
-                }
-            }
-            if (expression != null) {
-                parameters.add(new Spin2PAsmExpression(prefix, expression, count));
-            }
-        }
-
-        if (!debugEnabled && mnemonic != null && "DEBUG".equalsIgnoreCase(mnemonic)) {
-            condition = mnemonic = null;
-            parameters.clear();
-            modifier = null;
-        }
-
-        Spin2PAsmLine pasmLine = new Spin2PAsmLine(localScope, label, condition, mnemonic, parameters, modifier);
-
-        try {
-            if ("FILE".equalsIgnoreCase(mnemonic)) {
-                if (node.condition != null) {
-                    throw new CompilerException("not allowed", node.condition);
-                }
-                if (node.modifier != null) {
-                    throw new CompilerException("not allowed", node.modifier);
-                }
-                String fileName = parameters.get(0).getString();
-                byte[] data = getBinaryFile(fileName);
-                if (data == null) {
-                    throw new CompilerException("file \"" + fileName + "\" not found", node.parameters.get(0));
-                }
-                pasmLine.setInstructionObject(new FileInc(pasmLine.getScope(), data));
-            }
-            if ("DEBUG".equalsIgnoreCase(mnemonic)) {
-                if (node.condition != null) {
-                    throw new CompilerException("not allowed", node.condition);
-                }
-                if (node.modifier != null) {
-                    throw new CompilerException("not allowed", node.modifier);
-                }
-                int debugIndex = debugStatements.size() + 1;
-                if (debugIndex >= 255) {
-                    throw new CompilerException("too much debug statements", node);
-                }
-                parameters.add(new Spin2PAsmExpression("#", new NumberLiteral(debugIndex), null));
-
-                List<Token> tokens = new ArrayList<>(node.getTokens());
-                if (node.label != null) {
-                    tokens.remove(node.label);
-                }
-                Spin2PAsmDebugLine debugLine = Spin2PAsmDebugLine.buildFrom(pasmLine.getScope(), tokens);
-                debugStatements.add(debugLine);
-            }
-        } catch (CompilerException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            throw new CompilerException(e, node);
-        }
-
-        if (pasmLine.getLabel() != null) {
-            try {
-                String type = "LONG";
-                if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Word) {
-                    type = "WORD";
-                }
-                else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) {
-                    type = "BYTE";
-                }
-                else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                    type = "BYTE";
-                }
-                rootScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
-                rootScope.addSymbol("#" + pasmLine.getLabel(), new RegisterAddress(pasmLine.getScope(), type));
-                rootScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
-                rootScope.addSymbol("@@" + pasmLine.getLabel(), new MemoryContextLiteral(pasmLine.getScope(), type));
-
-                if (pasmLine.getMnemonic() == null) {
-                    if (!pasmLine.isLocalLabel()) {
-                        pendingAlias.put(pasmLine, rootScope);
-                    }
-                }
-                else if (pendingAlias.size() != 0) {
-                    for (Entry<Spin2PAsmLine, Context> entry : pendingAlias.entrySet()) {
-                        Spin2PAsmLine line = entry.getKey();
-                        Context context = entry.getValue();
-                        context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                        context.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
-                        context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-                        context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope(), type));
-                    }
-                    pendingAlias.clear();
-                }
-            } catch (RuntimeException e) {
-                throw new CompilerException(e, node.label);
-            }
-        }
-        else if (pasmLine.getMnemonic() != null && pendingAlias.size() != 0) {
-            String type = "LONG";
-            if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Word) {
-                type = "WORD";
-            }
-            else if (pasmLine.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) {
-                type = "BYTE";
-            }
-            else if ("FILE".equalsIgnoreCase(pasmLine.getMnemonic())) {
-                type = "BYTE";
-            }
-
-            for (Entry<Spin2PAsmLine, Context> entry : pendingAlias.entrySet()) {
-                Spin2PAsmLine line = entry.getKey();
-                Context context = entry.getValue();
-                context.addOrUpdateSymbol(line.getLabel(), new DataVariable(line.getScope(), type));
-                context.addOrUpdateSymbol("#" + line.getLabel(), new RegisterAddress(line.getScope(), type));
-                context.addOrUpdateSymbol("@" + line.getLabel(), new ObjectContextLiteral(line.getScope(), type));
-                context.addOrUpdateSymbol("@@" + line.getLabel(), new MemoryContextLiteral(line.getScope(), type));
-            }
-            pendingAlias.clear();
-        }
-
-        return pasmLine;
-    }
-
-    boolean isPtrExpression(List<Token> tokens) {
-        int index = 0;
-
-        if (index >= tokens.size()) {
-            return false;
-        }
-        Token token = tokens.get(index++);
-        if ("++".equals(token.getText()) || "--".equals(token.getText())) {
-            if (index >= tokens.size()) {
-                return false;
-            }
-            token = tokens.get(index++);
-        }
-        if (!("PTRA".equalsIgnoreCase(token.getText()) || "PTRB".equalsIgnoreCase(token.getText()))) {
-            return false;
-        }
-        if (index >= tokens.size()) {
-            return true;
-        }
-        token = tokens.get(index++);
-        if (!("++".equals(token.getText()) || "--".equals(token.getText()) || "[".equals(token.getText()))) {
-            return false;
-        }
-        return index >= tokens.size();
-    }
-
-    void compileDatInclude(Node root) {
+    @Override
+    protected void compileDatInclude(Node root) {
         for (Node node : root.getChilds()) {
             if (!(node instanceof ConstantsNode) && !(node instanceof DataNode)) {
                 throw new RuntimeException("only CON and DAT sections allowed in included files");
@@ -1309,6 +949,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         }
     }
 
+    @Override
     protected byte[] getBinaryFile(String fileName) {
         return null;
     }
@@ -1521,7 +1162,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     Context savedContext = scope;
                     try {
                         scope = line.getScope();
-                        nested = 0;
 
                         int address = 0x1E0;
                         for (LocalVariable var : method.getAllLocalVariables()) {
@@ -1576,7 +1216,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     while (iter.hasNext()) {
                         builder.addToken(iter.next());
                     }
-                    line.addSource(bytecodeCompiler.compileConstantExpression(context, method, builder.getRoot()));
+                    line.addSource(compileConstantExpression(context, method, builder.getRoot()));
                     line.addSource(new Bytecode(line.getScope(), 0x07, text.toUpperCase()));
                 }
                 else {
@@ -1590,7 +1230,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
-                line.addSource(bytecodeCompiler.compileConstantExpression(context, method, builder.getRoot()));
+                line.addSource(compileConstantExpression(context, method, builder.getRoot()));
 
                 Spin2MethodLine falseLine = new Spin2MethodLine(context);
                 if ("IF".equals(text)) {
@@ -1619,7 +1259,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     while (iter.hasNext()) {
                         builder.addToken(iter.next());
                     }
-                    line.addSource(bytecodeCompiler.compileConstantExpression(context, method, builder.getRoot()));
+                    line.addSource(compileConstantExpression(context, method, builder.getRoot()));
                     if ("ELSEIF".equals(text)) {
                         line.addSource(new Jz(line.getScope(), new ContextLiteral(falseLine.getScope())));
                     }
@@ -1644,7 +1284,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     while (iter.hasNext()) {
                         builder.addToken(iter.next());
                     }
-                    line.addSource(bytecodeCompiler.compileConstantExpression(line.getScope(), method, builder.getRoot()));
+                    line.addSource(compileConstantExpression(line.getScope(), method, builder.getRoot()));
                     line.addSource(new Bytecode(line.getScope(), 0x05, text));
                 }
                 else {
@@ -1667,7 +1307,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                         while (iter.hasNext()) {
                             builder.addToken(iter.next());
                         }
-                        line.addSource(bytecodeCompiler.compileConstantExpression(line.getScope(), method, builder.getRoot()));
+                        line.addSource(compileConstantExpression(line.getScope(), method, builder.getRoot()));
 
                         if ("WHILE".equalsIgnoreCase(token.getText())) {
                             line.addSource(new Jz(line.getScope(), new ContextLiteral(quitLine.getScope())));
@@ -1742,11 +1382,11 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
 
                             line.addSource(new Address(line.getScope(), new ContextLiteral(loopLine.getScope())));
 
-                            line.addSource(bytecodeCompiler.compileConstantExpression(line.getScope(), method, to));
+                            line.addSource(compileConstantExpression(line.getScope(), method, to));
                             if (step != null) {
-                                line.addSource(bytecodeCompiler.compileConstantExpression(line.getScope(), method, step));
+                                line.addSource(compileConstantExpression(line.getScope(), method, step));
                             }
-                            line.addSource(bytecodeCompiler.compileConstantExpression(line.getScope(), method, from));
+                            line.addSource(compileConstantExpression(line.getScope(), method, from));
 
                             Expression expression = line.getScope().getLocalSymbol(counter.getText());
                             if (expression == null) {
@@ -1767,10 +1407,10 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                         }
                         else {
                             try {
-                                Expression expression = bytecodeCompiler.buildConstantExpression(line.getScope(), counter);
+                                Expression expression = buildConstantExpression(line.getScope(), counter);
                                 line.addSource(new Constant(line.getScope(), expression));
                             } catch (Exception e) {
-                                line.addSource(bytecodeCompiler.compileBytecodeExpression(line.getScope(), method, counter, true));
+                                line.addSource(compileBytecodeExpression(line.getScope(), method, counter, true));
                                 line.addSource(new Tjz(line.getScope(), new ContextLiteral(quitLine.getScope())));
                             }
                             line.setData("pop", Integer.valueOf(4));
@@ -1821,7 +1461,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
-                conditionLine.addSource(bytecodeCompiler.compileConstantExpression(line.getScope(), method, builder.getRoot()));
+                conditionLine.addSource(compileConstantExpression(line.getScope(), method, builder.getRoot()));
 
                 if ("WHILE".equals(text)) {
                     conditionLine.addSource(new Jnz(previousLine.getScope(), new ContextLiteral(previousLine.getScope())));
@@ -1906,7 +1546,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
-                line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, builder.getRoot(), true));
+                line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), true));
 
                 boolean hasOther = false;
                 for (Node child : node.getChilds()) {
@@ -1934,7 +1574,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                                 }
                                 builder.addToken(token);
                             }
-                            compileCase(method, line, builder.getRoot(), caseLine, bytecodeCompiler);
+                            compileCase(method, line, builder.getRoot(), caseLine);
 
                             line.addChild(caseLine);
                         }
@@ -1962,7 +1602,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
-                line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, builder.getRoot(), true));
+                line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), true));
                 line.addSource(new Bytecode(line.getScope(), 0x1A, "CASE_FAST"));
 
                 int min = Integer.MAX_VALUE;
@@ -2041,7 +1681,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 line.addChild(endLine);
             }
             else {
-                if (!debugEnabled && "DEBUG".equalsIgnoreCase(token.getText())) {
+                if (!compiler.isDebugEnabled() && "DEBUG".equalsIgnoreCase(token.getText())) {
                     return null;
                 }
 
@@ -2051,7 +1691,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                     builder.addToken(iter.next());
                 }
                 line = new Spin2MethodLine(context, parent, null, node);
-                line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, builder.getRoot(), false));
+                line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), false));
             }
 
         } catch (CompilerException e) {
@@ -2066,7 +1706,8 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
     void compileInlinePAsmStatements(Iterator<Node> linesIterator, Spin2MethodLine line) {
         int org = 0;
         int count = 0;
-        Context localScope = new Context(line.getScope());
+        Context rootScope = new Context(line.getScope());
+        Context lineScope = rootScope;
 
         while (linesIterator.hasNext()) {
             Node node = linesIterator.next();
@@ -2074,13 +1715,20 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 continue;
             }
             if (node instanceof DataLineNode) {
-                Spin2PAsmLine pasmLine = compileDataLine(localScope, (DataLineNode) node);
-                line.addSource(new InlinePAsm(localScope, pasmLine));
+                DataLineNode lineNode = (DataLineNode) node;
+                if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
+                    lineScope = rootScope;
+                }
+                Spin2PAsmLine pasmLine = compileInlineDataLine(rootScope, lineScope, (DataLineNode) node);
+                line.addSource(new InlinePAsm(rootScope, pasmLine));
+                if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
+                    lineScope = pasmLine.getScope();
+                }
             }
             else if (node instanceof StatementNode) {
                 if ("END".equalsIgnoreCase(node.getStartToken().getText())) {
                     Spin2PAsmLine pasmLine = new Spin2PAsmLine(line.getScope(), null, null, "ret", Collections.emptyList(), null);
-                    line.addSource(new InlinePAsm(localScope, pasmLine));
+                    line.addSource(new InlinePAsm(rootScope, pasmLine));
                     break;
                 }
             }
@@ -2125,21 +1773,21 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         }, "INLINE-EXEC"));
     }
 
-    void compileCase(Spin2Method method, Spin2MethodLine line, Spin2StatementNode arg, Spin2MethodLine target, Spin2BytecodeCompiler compiler) {
+    void compileCase(Spin2Method method, Spin2MethodLine line, Spin2StatementNode arg, Spin2MethodLine target) {
         if (",".equals(arg.getText())) {
             for (Spin2StatementNode child : arg.getChilds()) {
-                compileCase(method, line, child, target, compiler);
+                compileCase(method, line, child, target);
             }
         }
         else if ("..".equals(arg.getText())) {
-            line.addSource(compiler.compileBytecodeExpression(line.getScope(), method, arg.getChild(0), false));
-            line.addSource(compiler.compileBytecodeExpression(line.getScope(), method, arg.getChild(1), false));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg.getChild(0), false));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg.getChild(1), false));
             if (target != null) {
                 line.addSource(new CaseRangeJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
         }
         else {
-            line.addSource(compiler.compileBytecodeExpression(line.getScope(), method, arg, false));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg, false));
             if (target != null) {
                 line.addSource(new CaseJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
@@ -2155,7 +1803,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         }
         else if ("..".equals(arg.getText())) {
             try {
-                Expression expression = bytecodeCompiler.buildConstantExpression(line.getScope(), arg.getChild(0));
+                Expression expression = buildConstantExpression(line.getScope(), arg.getChild(0));
                 if (!expression.isConstant()) {
                     throw new CompilerException("expression is not constant", arg.getChild(0));
                 }
@@ -2165,7 +1813,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
                 throw new CompilerException(e, arg);
             }
             try {
-                Expression expression = bytecodeCompiler.buildConstantExpression(line.getScope(), arg.getChild(1));
+                Expression expression = buildConstantExpression(line.getScope(), arg.getChild(1));
                 if (!expression.isConstant()) {
                     throw new CompilerException("expression is not constant", arg.getChild(1));
                 }
@@ -2177,7 +1825,7 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         }
         else {
             try {
-                Expression expression = bytecodeCompiler.buildConstantExpression(line.getScope(), arg);
+                Expression expression = buildConstantExpression(line.getScope(), arg);
                 if (!expression.isConstant()) {
                     throw new CompilerException("expression is not constant", arg);
                 }
@@ -2402,11 +2050,6 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         }
     }
 
-    boolean skipNode(Node node) {
-        Boolean skip = (Boolean) node.getData("__skip__");
-        return skip != null && skip.booleanValue();
-    }
-
     void computeClockMode() {
         Expression clkMode = scope.getLocalSymbol("_CLKMODE");
         Expression clkFreq = scope.getLocalSymbol("_CLKFREQ");
@@ -2517,10 +2160,12 @@ public class Spin2ObjectCompiler extends ObjectCompiler {
         scope.addBuiltinSymbol("CLKFREQ_", new NumberLiteral(finalfreq));
     }
 
+    @Override
     public Context getScope() {
         return scope;
     }
 
+    @Override
     protected void logMessage(CompilerException message) {
         if (message.hasChilds()) {
             for (CompilerException msg : message.getChilds()) {

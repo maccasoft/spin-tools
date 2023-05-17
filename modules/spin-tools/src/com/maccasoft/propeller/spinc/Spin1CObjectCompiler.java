@@ -66,14 +66,11 @@ import com.maccasoft.propeller.spin1.bytecode.Jz;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
 
-public class Spin1CObjectCompiler extends ObjectCompiler {
-
-    Context scope;
+public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCompiler {
 
     int objectVarSize;
 
     List<Variable> variables = new ArrayList<>();
-    List<Spin1PAsmLine> source = new ArrayList<>();
     List<Spin1MethodLine> setupLines = new ArrayList<>();
     List<Spin1Method> methods = new ArrayList<>();
     Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<>());
@@ -86,13 +83,10 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
 
     Map<String, Node> structures = new HashMap<>();
 
-    Spin1Compiler compiler;
     Spin1CBytecodeCompiler bytecodeCompiler;
-    Spin1PAsmCompiler pasmCompiler;
 
     public Spin1CObjectCompiler(Spin1Compiler compiler) {
-        this.scope = new Context(new Spin1GlobalContext(true));
-        this.compiler = compiler;
+        super(new Context(new Spin1GlobalContext(true)), compiler);
 
         this.scope.addDefinition("__P1__", new NumberLiteral(1));
         this.scope.addDefinition("__P2__", new NumberLiteral(0));
@@ -114,24 +108,6 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
             @Override
             protected boolean isAddress(String text) {
                 return text.startsWith("&");
-            }
-
-            @Override
-            protected void logMessage(CompilerException message) {
-                Spin1CObjectCompiler.this.logMessage(message);
-            }
-
-        };
-        pasmCompiler = new Spin1PAsmCompiler() {
-
-            @Override
-            protected Node getParsedSource(String fileName) {
-                return null;
-            }
-
-            @Override
-            protected byte[] getBinaryFile(String fileName) {
-                return Spin1CObjectCompiler.this.getBinaryFile(fileName);
             }
 
             @Override
@@ -1781,10 +1757,12 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
         return bitPos;
     }
 
+    @Override
     public Context getScope() {
         return scope;
     }
 
+    @Override
     protected void logMessage(CompilerException message) {
         if (message.hasChilds()) {
             for (CompilerException msg : message.getChilds()) {
@@ -1805,6 +1783,12 @@ public class Spin1CObjectCompiler extends ObjectCompiler {
         return null;
     }
 
+    @Override
+    protected void compileDatInclude(Node root) {
+
+    }
+
+    @Override
     protected byte[] getBinaryFile(String fileName) {
         return null;
     }

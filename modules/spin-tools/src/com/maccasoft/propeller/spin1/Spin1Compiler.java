@@ -59,6 +59,10 @@ public class Spin1Compiler extends Compiler {
         this.removeUnusedMethods = removeUnusedMethods;
     }
 
+    public boolean isOpenspinCompatible() {
+        return openspinCompatible;
+    }
+
     public void setOpenspinCompatible(boolean openspinCompatible) {
         this.openspinCompatible = openspinCompatible;
     }
@@ -165,13 +169,11 @@ public class Spin1Compiler extends Compiler {
 
         for (Entry<File, Node> entry : objects.entrySet()) {
             Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey().getName());
-            objectCompiler.setOpenspinCompatibile(openspinCompatible);
             objectCompiler.compileObject(entry.getValue());
             childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
         }
 
         Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFile.getName());
-        objectCompiler.setOpenspinCompatibile(openspinCompatible);
         objectCompiler.compileObject(root);
 
         objectCompiler.compilePass2();

@@ -11,16 +11,15 @@
 package com.maccasoft.propeller.spin2.instructions;
 
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
-import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
@@ -220,7 +219,7 @@ class PtrTest {
         Spin2Parser subject = new Spin2Parser(stream);
         Node root = subject.parse();
 
-        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler(), new ArrayList<>());
+        Spin2ObjectCompiler compiler = new Spin2ObjectCompiler(new Spin2Compiler());
         Spin2Object obj = compiler.compileObject(root);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();

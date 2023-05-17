@@ -98,8 +98,8 @@ public class Spin2CCompiler extends Spin2Compiler {
 
         String fileName;
 
-        public Spin2ObjectCompilerProxy(String fileName, List<Object> debugStatements) {
-            super(Spin2CCompiler.this, debugStatements);
+        public Spin2ObjectCompilerProxy(String fileName) {
+            super(Spin2CCompiler.this);
             this.fileName = fileName;
         }
 
@@ -136,7 +136,7 @@ public class Spin2CCompiler extends Spin2Compiler {
 
             ObjectCompiler objectCompiler;
             if (fileName.toLowerCase().endsWith(".spin2")) {
-                objectCompiler = new Spin2ObjectCompilerProxy(fileName, debugStatements);
+                objectCompiler = new Spin2ObjectCompilerProxy(fileName);
             }
             else {
                 objectCompiler = new Spin2CObjectCompilerProxy(fileName, debugStatements);
@@ -151,7 +151,7 @@ public class Spin2CCompiler extends Spin2Compiler {
 
                 ObjectCompiler objectCompiler;
                 if (fileName.toLowerCase().endsWith(".spin2")) {
-                    objectCompiler = new Spin2ObjectCompilerProxy(fileName, debugStatements);
+                    objectCompiler = new Spin2ObjectCompilerProxy(fileName);
                 }
                 else {
                     objectCompiler = new Spin2CObjectCompilerProxy(fileName, debugStatements);

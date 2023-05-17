@@ -472,9 +472,9 @@ class Spin2DebugTest {
 
         Spin2Compiler compiler = new Spin2Compiler();
         compiler.setDebugEnabled(true);
-        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(compiler, new ArrayList<>());
+        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(compiler);
         Spin2Object obj = objectCompiler.compileObject(root);
-        obj.setDebugData(objectCompiler.generateDebugData());
+        obj.setDebugData(compiler.generateDebugData());
         obj.setDebugger(new Spin2Debugger());
 
         for (CompilerException msg : objectCompiler.getMessages()) {

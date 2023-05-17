@@ -905,6 +905,41 @@ class Spin2CObjectCompilerTest {
     }
 
     @Test
+    void testInlineLocalLabels() throws Exception {
+        String text = ""
+            + "void main()\n"
+            + "{\n"
+            + "    asm {\n"
+            + "start\n"
+            + ".l1     nop\n"
+            + "        jmp #.l1\n"
+            + "setup\n"
+            + ".l1     nop\n"
+            + "        jmp #.l1\n"
+            + "    }\n"
+            + "}\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       20 00 00 00    End\n"
+            + "' void main() {\n"
+            + "00008 00008       00             (stack size)\n"
+            + "'     asm {\n"
+            + "00009 00009       19 5E          INLINE-EXEC\n"
+            + "0000B 0000B       00 00 03 00    ORG=$000, 4\n"
+            + "0000F 0000F   000 00 00 00 00    .l1                 nop\n"
+            + "00013 00013   001 F8 FF 9F FD                        jmp     #.l1\n"
+            + "00017 00017   002 00 00 00 00    .l1                 nop\n"
+            + "0001B 0001B   003 F8 FF 9F FD                        jmp     #.l1\n"
+            + "'     }\n"
+            + "' }\n"
+            + "0001F 0001F       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testDebug() throws Exception {
         String text = ""
             + "void main()\n"

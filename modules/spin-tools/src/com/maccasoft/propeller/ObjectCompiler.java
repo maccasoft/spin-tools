@@ -17,24 +17,24 @@ import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Node;
 
-public abstract class ObjectCompiler {
+public interface ObjectCompiler {
 
-    public abstract SpinObject compileObject(Node root);
+    public SpinObject compileObject(Node root);
 
-    public abstract void compile(Node root);
+    public void compile(Node root);
 
-    public abstract void compilePass2();
+    public void compilePass2();
 
-    public abstract boolean hasErrors();
+    public boolean hasErrors();
 
-    public abstract Map<String, Expression> getPublicSymbols();
+    public Map<String, Expression> getPublicSymbols();
 
-    public abstract int getVarSize();
+    public int getVarSize();
 
-    public abstract SpinObject generateObject();
+    public SpinObject generateObject();
 
-    public abstract SpinObject generateObject(int memoryOffset);
+    public SpinObject generateObject(int memoryOffset);
 
-    public abstract List<LinkDataObject> getObjectLinks();
+    public List<LinkDataObject> getObjectLinks();
 
 }

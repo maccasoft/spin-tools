@@ -81,16 +81,10 @@ import com.maccasoft.propeller.spin2.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin2.bytecode.SubAddress;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 
-public abstract class Spin2BytecodeCompiler {
+public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
-    List<Object> debugStatements;
-
-    Spin2BytecodeCompiler() {
-        this.debugStatements = new ArrayList<Object>();
-    }
-
-    public Spin2BytecodeCompiler(List<Object> debugStatements) {
-        this.debugStatements = debugStatements;
+    public Spin2BytecodeCompiler(Context scope, Spin2Compiler compiler) {
+        super(scope, compiler);
     }
 
     public List<Spin2Bytecode> compileBytecodeExpression(Context context, Spin2Method method, Spin2StatementNode node) {
@@ -211,7 +205,7 @@ public abstract class Spin2BytecodeCompiler {
                 }
             }
             else if ("DEBUG".equalsIgnoreCase(node.getText())) {
-                int debugIndex = debugStatements.size() + 1;
+                int debugIndex = compiler.debugStatements.size() + 1;
                 if (debugIndex >= 255) {
                     throw new RuntimeException("too much debug statements");
                 }
@@ -224,7 +218,7 @@ public abstract class Spin2BytecodeCompiler {
                     }
                 }
                 node.setData("context", context);
-                debugStatements.add(node);
+                compiler.debugStatements.add(node);
                 source.add(new Bytecode(context, new byte[] {
                     0x43, (byte) pop, (byte) debugIndex
                 }, node.getText().toUpperCase() + " #" + debugIndex));
@@ -1111,11 +1105,11 @@ public abstract class Spin2BytecodeCompiler {
         return compileBytecodeExpression(context, method, node, true);
     }
 
-    Expression buildConstantExpression(Context context, Spin2StatementNode node) {
+    protected Expression buildConstantExpression(Context context, Spin2StatementNode node) {
         return buildConstantExpression(context, node, false);
     }
 
-    Expression buildConstantExpression(Context context, Spin2StatementNode node, boolean registerConstant) {
+    protected Expression buildConstantExpression(Context context, Spin2StatementNode node, boolean registerConstant) {
         if (node.getType() == Token.NUMBER) {
             return new NumberLiteral(node.getText());
         }
@@ -2083,6 +2077,7 @@ public abstract class Spin2BytecodeCompiler {
         }
     }
 
+    @Override
     protected abstract void logMessage(CompilerException message);
 
 }

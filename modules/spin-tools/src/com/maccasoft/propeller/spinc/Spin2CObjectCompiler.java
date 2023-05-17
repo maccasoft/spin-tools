@@ -76,16 +76,13 @@ import com.maccasoft.propeller.spin2.instructions.Orgh;
 import com.maccasoft.propeller.spin2.instructions.Res;
 import com.maccasoft.propeller.spin2.instructions.Word;
 
-public class Spin2CObjectCompiler extends ObjectCompiler {
-
-    Context scope;
+public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCompiler {
 
     int objectVarSize;
 
     List<Variable> variables = new ArrayList<>();
-    List<Spin2PAsmLine> source = new ArrayList<Spin2PAsmLine>();
     List<Spin2MethodLine> setupLines = new ArrayList<>();
-    List<Spin2Method> methods = new ArrayList<Spin2Method>();
+    List<Spin2Method> methods = new ArrayList<>();
     Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<>());
 
     boolean debugEnabled;
@@ -100,13 +97,10 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
     Map<String, Node> structures = new HashMap<>();
 
-    Spin2Compiler compiler;
     Spin2CBytecodeCompiler spinCompiler;
-    Spin2PasmCompiler pasmCompiler;
 
     public Spin2CObjectCompiler(Spin2Compiler compiler, List<Object> debugStatements) {
-        this.scope = new Context(new Spin2GlobalContext(true));
-        this.compiler = compiler;
+        super(new Spin2GlobalContext(compiler.isCaseSensitive()), compiler);
         this.debugEnabled = compiler.isDebugEnabled();
         this.debugStatements = debugStatements;
 
@@ -136,24 +130,6 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
             @Override
             protected int getArgumentsCount(Context context, Spin2StatementNode childNode) {
                 return childNode.getChildCount();
-            }
-
-            @Override
-            protected void logMessage(CompilerException message) {
-                Spin2CObjectCompiler.this.logMessage(message);
-            }
-
-        };
-        pasmCompiler = new Spin2PasmCompiler(scope, debugEnabled, debugStatements) {
-
-            @Override
-            protected Node getParsedSource(String fileName) {
-                return null;
-            }
-
-            @Override
-            protected byte[] getBinaryFile(String fileName) {
-                return Spin2CObjectCompiler.this.getBinaryFile(fileName);
             }
 
             @Override
@@ -1468,11 +1444,12 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
             line = new Spin2MethodLine(context, parent, token.getText(), node);
 
-            Context scope = new Context(context);
+            Context rootScope = new Context(context);
+            Context lineScope = rootScope;
 
             int address = 0x1E0;
             for (LocalVariable var : method.getAllLocalVariables()) {
-                scope.addSymbol(var.getName(), new NumberLiteral(address));
+                rootScope.addSymbol(var.getName(), new NumberLiteral(address));
                 if (var.getSize() != null) {
                     address += var.getSize().getNumber().intValue();
                 }
@@ -1486,7 +1463,14 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
 
             int count = 0;
             for (Node child : node.getChilds()) {
-                Spin2PAsmLine pasmLine = pasmCompiler.compileDataLine(scope, (DataLineNode) child);
+                DataLineNode lineNode = (DataLineNode) child;
+                if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
+                    lineScope = rootScope;
+                }
+                Spin2PAsmLine pasmLine = compileInlineDataLine(rootScope, lineScope, lineNode);
+                if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
+                    lineScope = pasmLine.getScope();
+                }
 
                 List<Spin2PAsmExpression> arguments = pasmLine.getArguments();
                 if (pasmLine.getInstructionFactory() instanceof Org) {
@@ -1510,7 +1494,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
                     }
                 }
 
-                line.addSource(new InlinePAsm(scope, pasmLine));
+                line.addSource(new InlinePAsm(rootScope, pasmLine));
             }
 
             count--;
@@ -1982,6 +1966,7 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         scope.addBuiltinSymbol("CLKFREQ_", new NumberLiteral(finalfreq));
     }
 
+    @Override
     protected void logMessage(CompilerException message) {
         if (message.hasChilds()) {
             for (CompilerException msg : message.getChilds()) {
@@ -2002,6 +1987,12 @@ public class Spin2CObjectCompiler extends ObjectCompiler {
         return null;
     }
 
+    @Override
+    protected void compileDatInclude(Node root) {
+
+    }
+
+    @Override
     protected byte[] getBinaryFile(String fileName) {
         return null;
     }
