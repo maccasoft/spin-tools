@@ -1523,6 +1523,10 @@ public class SourceEditor {
                 overwriteCaret.dispose();
             }
         });
+
+        container.setTabList(new Control[] {
+            styledText
+        });
     }
 
     void updateFontsFrom(FontData fontData) {
@@ -1843,14 +1847,17 @@ public class SourceEditor {
             String trimmedText = leftText.substring(indentColumn).toUpperCase();
             if (startsWithBlock(trimmedText)) {
                 Node node = tokenMarker.getContextAtLine(lineNumber);
-                while (node.getParent() != null && node.getParent().getParent() != null) {
-                    node = node.getParent();
+                int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
+                while (tabStops == null) {
+                    if ((node = node.getParent()) == null) {
+                        break;
+                    }
+                    tabStops = Preferences.getInstance().getTabStops(node.getClass());
                 }
 
-                boolean tabstopMatch = false;
-                int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
-
                 indentColumn++;
+
+                boolean tabstopMatch = false;
                 for (int i = 0; i < tabStops.length; i++) {
                     if (tabStops[i] >= indentColumn) {
                         indentColumn = tabStops[i];
@@ -1985,12 +1992,16 @@ public class SourceEditor {
                 tabStops = Preferences.getInstance().getTabStops(node.getClass());
             }
             if (tabStops != null) {
-                for (int i = 0; i < tabStops.length; i++) {
-                    if (tabStops[i] >= currentColumn) {
+                for (int i = tabStops.length - 1; i >= 0; i--) {
+                    if (previousTabColumn >= tabStops[i]) {
+                        previousTabColumn = tabStops[i];
                         tabstopMatch = true;
                         break;
                     }
-                    previousTabColumn = tabStops[i];
+                }
+                if (!tabstopMatch && tabStops.length > 0) {
+                    previousTabColumn = 0;
+                    tabstopMatch = true;
                 }
             }
         }
