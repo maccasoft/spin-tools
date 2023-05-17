@@ -86,6 +86,11 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
 
     public Spin1ObjectCompiler(Spin1Compiler compiler) {
         super(new Spin1GlobalContext(compiler.isCaseSensitive()), compiler);
+
+        scope.addDefinition("__P1__", new NumberLiteral(1));
+        scope.addDefinition("__P2__", new NumberLiteral(0));
+        scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
+        scope.addDefinition("__debug__", new NumberLiteral(0));
     }
 
     @Override

@@ -92,6 +92,11 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
 
     public Spin2ObjectCompiler(Spin2Compiler compiler) {
         super(new Spin2GlobalContext(compiler.isCaseSensitive()), compiler);
+
+        scope.addDefinition("__P1__", new NumberLiteral(0));
+        scope.addDefinition("__P2__", new NumberLiteral(1));
+        scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
+        scope.addDefinition("__debug__", new NumberLiteral(compiler.isDebugEnabled() ? 1 : 0));
     }
 
     @Override
