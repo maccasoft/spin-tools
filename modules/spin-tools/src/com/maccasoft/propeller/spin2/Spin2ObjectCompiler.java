@@ -70,6 +70,8 @@ import com.maccasoft.propeller.spin2.bytecode.Jnz;
 import com.maccasoft.propeller.spin2.bytecode.Jz;
 import com.maccasoft.propeller.spin2.bytecode.Tjz;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
+import com.maccasoft.propeller.spin2.instructions.Alignl;
+import com.maccasoft.propeller.spin2.instructions.Alignw;
 import com.maccasoft.propeller.spin2.instructions.Empty;
 import com.maccasoft.propeller.spin2.instructions.Fit;
 import com.maccasoft.propeller.spin2.instructions.Org;
@@ -528,9 +530,23 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                     }
                 }
                 address = line.resolve(address, hubMode);
-                objectAddress += line.getInstructionObject().getSize();
-                if (hubAddress != -1) {
-                    hubAddress += line.getInstructionObject().getSize();
+                if (line.getInstructionFactory() instanceof Alignl) {
+                    if (hubAddress != -1) {
+                        hubAddress = (hubAddress + 3) & ~3;
+                    }
+                    objectAddress = (objectAddress + 3) & ~3;
+                }
+                else if (line.getInstructionFactory() instanceof Alignw) {
+                    if (hubAddress != -1) {
+                        hubAddress = (hubAddress + 1) & ~1;
+                    }
+                    objectAddress = (objectAddress + 1) & ~1;
+                }
+                else {
+                    objectAddress += line.getInstructionObject().getSize();
+                    if (hubAddress != -1) {
+                        hubAddress += line.getInstructionObject().getSize();
+                    }
                 }
                 if ((line.getInstructionFactory() instanceof Org)) {
                     cogCode = address < 0x200 * 4;
