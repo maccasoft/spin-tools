@@ -1886,6 +1886,44 @@ class Spin2CompilerTest {
     }
 
     @Test
+    void testSpinOrgh() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "PUB main()\n"
+            + "\n"
+            + "DAT\n"
+            + "                orgh\n"
+            + "a               long    0\n"
+            + "\n"
+            + "                org\n"
+            + "b               long    a\n"
+            + "                long    b\n"
+            + "                long    c\n"
+            + "\n"
+            + "                orgh\n"
+            + "c               long    0\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       1C 00 00 80    Method main @ $0001C (0 parameters, 0 returns)\n"
+            + "00004 00004       1E 00 00 00    End\n"
+            + "00008 00008 00400                                    orgh\n"
+            + "00008 00008 00400 00 00 00 00    a                   long    0\n"
+            + "0000C 0000C   101                                    org\n"
+            + "0000C 0000C   000 00 04 00 00    b                   long    a\n"
+            + "00010 00010   001 00 00 00 00                        long    b\n"
+            + "00014 00014   002 10 04 00 00                        long    c\n"
+            + "00018 00018 00410                                    orgh\n"
+            + "00018 00018 00410 00 00 00 00    c                   long    0\n"
+            + "' PUB main()\n"
+            + "0001C 0001C       00             (stack size)\n"
+            + "0001D 0001D       04             RETURN\n"
+            + "0001E 0001E       00 00          Padding\n"
+            + "", compile("main.spin2", sources));
+    }
+
+    @Test
     void testDatInclude() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin2", ""

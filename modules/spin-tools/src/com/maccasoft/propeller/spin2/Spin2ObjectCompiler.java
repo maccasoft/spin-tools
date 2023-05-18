@@ -485,6 +485,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
         object.addAllSymbols(publicSymbols);
 
         int address = 0;
+        int hubAddress = -1;
         int objectAddress = object.getSize();
         int fitAddress = 0x1F8 << 2;
         boolean hubMode = true;
@@ -493,6 +494,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
 
         for (Spin2PAsmLine line : source) {
             if (!hubMode && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) && !(line.getInstructionFactory() instanceof Word)) {
+                if (hubAddress != -1) {
+                    hubAddress = (hubAddress + 3) & ~3;
+                }
                 objectAddress = (objectAddress + 3) & ~3;
                 address = (address + 3) & ~3;
             }
@@ -501,10 +505,16 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
             if (line.getInstructionFactory() instanceof Orgh) {
                 hubMode = true;
                 cogCode = false;
-                address = spinMode ? 0x400 : objectAddress;
+                if (hubAddress == -1) {
+                    hubAddress = 0x400;
+                }
+                address = spinMode ? hubAddress : objectAddress;
             }
             if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
                 hubMode = false;
+                if (hubAddress != -1) {
+                    hubAddress = (hubAddress + 3) & ~3;
+                }
                 objectAddress = (objectAddress + 3) & ~3;
             }
             if (line.getInstructionFactory() instanceof Fit) {
@@ -519,6 +529,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                 }
                 address = line.resolve(address, hubMode);
                 objectAddress += line.getInstructionObject().getSize();
+                if (hubAddress != -1) {
+                    hubAddress += line.getInstructionObject().getSize();
+                }
                 if ((line.getInstructionFactory() instanceof Org)) {
                     cogCode = address < 0x200 * 4;
                     fitAddress = cogCode ? 0x1F8 * 4 : 0x400 * 4;
