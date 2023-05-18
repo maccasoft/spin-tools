@@ -35,7 +35,7 @@ public class Spin2Method {
     List<LocalVariable> localVariables;
 
     List<Spin2MethodLine> lines = new ArrayList<>();
-    List<Spin2StatementNode> debugNodes = new ArrayList<>();
+    public List<Spin2StatementNode> debugNodes = new ArrayList<>();
 
     String comment;
     Object data;

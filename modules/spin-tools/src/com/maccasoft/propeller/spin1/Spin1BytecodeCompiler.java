@@ -319,7 +319,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             else if ("+".equals(node.getText()) && node.getChildCount() == 1) {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
             }
-            else if (isAssign(node.getText())) {
+            else if (":=".equals(node.getText())) {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
                 source.addAll(leftAssign(context, method, node.getChild(0), push));
                 if (push) {
@@ -1132,10 +1132,6 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
 
     protected boolean isAbsoluteAddress(String text) {
         return text.startsWith("@@");
-    }
-
-    protected boolean isAssign(String text) {
-        return ":=".equals(text);
     }
 
     List<Spin1Bytecode> compileConstantExpression(Context context, Spin1Method method, Spin1StatementNode node) {

@@ -394,7 +394,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     source.add(new Bytecode(context, 0x92, "NEGATE_ASSIGN"));
                 }
             }
-            else if (isAssign(node.getText())) {
+            else if (":=".equals(node.getText())) {
                 if (node.getChildCount() != 2) {
                     throw new RuntimeException("expression syntax error");
                 }
@@ -1096,10 +1096,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
     protected boolean isAbsoluteAddress(String text) {
         return text.startsWith("@@");
-    }
-
-    protected boolean isAssign(String text) {
-        return ":=".equals(text);
     }
 
     protected int getArgumentsCount(Context context, Spin2StatementNode childNode) {

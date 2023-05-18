@@ -17,7 +17,6 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -149,15 +148,16 @@ class Spin2CExamplesTest {
         CParser subject = new CParser(stream);
         Node root = subject.parse();
 
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new ArrayList<>());
-        compiler.debugEnabled = debugEnabled;
-        Spin2Object obj = compiler.compileObject(root);
+        Spin2CCompiler compiler = new Spin2CCompiler();
+        compiler.setDebugEnabled(debugEnabled);
+        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompiler(compiler);
+        Spin2Object obj = objectCompiler.compileObject(root);
         if (debugEnabled) {
             obj.setDebugData(compiler.generateDebugData());
             obj.setDebugger(new Spin2Debugger());
         }
 
-        for (CompilerException msg : compiler.getMessages()) {
+        for (CompilerException msg : objectCompiler.getMessages()) {
             if (msg.type == CompilerException.ERROR) {
                 throw msg;
             }

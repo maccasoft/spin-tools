@@ -26,6 +26,7 @@ import com.maccasoft.propeller.expressions.Addbits;
 import com.maccasoft.propeller.expressions.Addpins;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Divide;
@@ -72,8 +73,9 @@ import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Method;
+import com.maccasoft.propeller.spin2.Spin2PasmCompiler;
 import com.maccasoft.propeller.spin2.Spin2StatementNode;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.BitField;
@@ -85,7 +87,7 @@ import com.maccasoft.propeller.spin2.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin2.bytecode.SubAddress;
 import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 
-public abstract class Spin2CBytecodeCompiler {
+public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
 
     public static class FunctionDescriptor {
         public byte[] code;
@@ -400,14 +402,8 @@ public abstract class Spin2CBytecodeCompiler {
         //assignOperators.put("FRAC=", new Descriptor(0xB6, 0xDD, "FRAC_ASSIGN"));
     }
 
-    List<Object> debugStatements;
-
-    Spin2CBytecodeCompiler() {
-        this.debugStatements = new ArrayList<Object>();
-    }
-
-    public Spin2CBytecodeCompiler(List<Object> debugStatements) {
-        this.debugStatements = debugStatements;
+    public Spin2CBytecodeCompiler(Context scope, Spin2Compiler compiler) {
+        super(scope, compiler);
     }
 
     public List<Spin2Bytecode> compileBytecodeExpression(Context context, Spin2Method method, Spin2StatementNode node, boolean push) {
@@ -612,23 +608,50 @@ public abstract class Spin2CBytecodeCompiler {
                     }
                 }
                 else if ("debug".equals(node.getText())) {
-                    int debugIndex = debugStatements.size() + 1;
-                    if (debugIndex >= 255) {
-                        throw new RuntimeException("too much debug statements");
-                    }
-
-                    int pop = 0;
+                    int stack = 0;
                     for (Spin2StatementNode child : node.getChilds()) {
                         for (Spin2StatementNode param : child.getChilds()) {
                             source.addAll(compileBytecodeExpression(context, method, param, true));
-                            pop += 4;
+                            stack += 4;
                         }
                     }
                     node.setData("context", context);
-                    debugStatements.add(node);
-                    source.add(new Bytecode(context, new byte[] {
-                        0x43, (byte) pop, (byte) debugIndex
-                    }, node.getText().toUpperCase() + " #" + debugIndex));
+                    method.debugNodes.add(node);
+                    compiler.debugStatements.add(node);
+
+                    int pop = stack;
+                    source.add(new Bytecode(context, 0x43, "") {
+
+                        int index;
+
+                        @Override
+                        public int resolve(int address) {
+                            index = compiler.debugStatements.indexOf(node) + 1;
+                            if (index >= 255) {
+                                throw new CompilerException("too much debug statements", node);
+                            }
+                            return super.resolve(address);
+                        }
+
+                        @Override
+                        public byte[] getBytes() {
+                            if (index == -1) {
+                                return new byte[0];
+                            }
+                            return new byte[] {
+                                0x43, (byte) pop, (byte) index
+                            };
+                        }
+
+                        @Override
+                        public String toString() {
+                            if (index == -1) {
+                                return "";
+                            }
+                            return node.getText().toUpperCase() + " #" + index;
+                        }
+
+                    });
                 }
                 else if ("end".equals(node.getText())) {
                     // Ignored
@@ -1081,22 +1104,22 @@ public abstract class Spin2CBytecodeCompiler {
                     throw new RuntimeException("syntax error");
                 }
 
+                int bitfield = -1;
+                if (bitfieldNode != null) {
+                    bitfield = compileBitfield(context, method, bitfieldNode, source);
+                }
+
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
 
                 if (indexNode != null) {
                     source.addAll(compileBytecodeExpression(context, method, indexNode, true));
                 }
 
-                int bitfield = -1;
-                if (bitfieldNode != null) {
-                    bitfield = compileBitfield(context, method, bitfieldNode, source);
-                }
-
                 MemoryOp.Size ss = MemoryOp.Size.Long;
-                if ("BYTE".equals(node.getText()) || "@BYTE".equals(node.getText()) || "@@BYTE".equals(node.getText())) {
+                if ("BYTE".equalsIgnoreCase(node.getText()) || "@BYTE".equalsIgnoreCase(node.getText()) || "@@BYTE".equalsIgnoreCase(node.getText())) {
                     ss = MemoryOp.Size.Byte;
                 }
-                else if ("WORD".equals(node.getText()) || "@WORD".equals(node.getText()) || "@@WORD".equals(node.getText())) {
+                else if ("WORD".equalsIgnoreCase(node.getText()) || "@WORD".equalsIgnoreCase(node.getText()) || "@@WORD".equalsIgnoreCase(node.getText())) {
                     ss = MemoryOp.Size.Word;
                 }
 
@@ -1630,11 +1653,11 @@ public abstract class Spin2CBytecodeCompiler {
     }
 
     protected boolean isAddress(String text) {
-        return text.startsWith("@");
+        return text.startsWith("&");
     }
 
     protected boolean isAbsoluteAddress(String text) {
-        return text.startsWith("@@");
+        return false;
     }
 
     protected int getArgumentsCount(Context context, Spin2StatementNode childNode) {
@@ -2914,6 +2937,7 @@ public abstract class Spin2CBytecodeCompiler {
         return result;
     }
 
+    @Override
     protected abstract void logMessage(CompilerException message);
 
 }

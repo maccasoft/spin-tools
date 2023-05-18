@@ -54,7 +54,6 @@ import com.maccasoft.propeller.spin1.Spin1Method;
 import com.maccasoft.propeller.spin1.Spin1MethodLine;
 import com.maccasoft.propeller.spin1.Spin1Object;
 import com.maccasoft.propeller.spin1.Spin1Object.Spin1LinkDataObject;
-import com.maccasoft.propeller.spin1.Spin1PAsmCompiler;
 import com.maccasoft.propeller.spin1.Spin1PAsmLine;
 import com.maccasoft.propeller.spin1.Spin1StatementNode;
 import com.maccasoft.propeller.spin1.bytecode.Address;
@@ -67,7 +66,7 @@ import com.maccasoft.propeller.spin1.bytecode.Jz;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
 
-public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCompiler {
+public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler implements ObjectCompiler {
 
     int objectVarSize;
 
@@ -83,8 +82,6 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
     List<LinkDataObject> objectLinks = new ArrayList<>();
 
     Map<String, Node> structures = new HashMap<>();
-
-    Spin1CBytecodeCompiler bytecodeCompiler;
 
     public Spin1CObjectCompiler(Spin1Compiler compiler) {
         super(new Context(new Spin1GlobalContext(true)), compiler);
@@ -103,20 +100,6 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
     @Override
     public void compile(Node root) {
         objectVarSize = 0;
-
-        bytecodeCompiler = new Spin1CBytecodeCompiler() {
-
-            @Override
-            protected boolean isAddress(String text) {
-                return text.startsWith("&");
-            }
-
-            @Override
-            protected void logMessage(CompilerException message) {
-                Spin1CObjectCompiler.this.logMessage(message);
-            }
-
-        };
 
         for (Node node : new ArrayList<>(root.getChilds())) {
             try {
@@ -725,7 +708,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
                         builder.addToken(token);
                     }
                     Spin1MethodLine line = new Spin1MethodLine(scope);
-                    line.addSource(bytecodeCompiler.compileBytecodeExpression(scope, null, builder.getRoot(), false));
+                    line.addSource(compileBytecodeExpression(scope, null, builder.getRoot(), false));
                     setupLines.add(line);
 
                     if (!",".equals(token.getText())) {
@@ -1005,7 +988,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
                         if (line == null) {
                             line = new Spin1MethodLine(context, parent, null, node);
                         }
-                        line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, builder.getRoot(), false));
+                        line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), false));
 
                         if (!",".equals(token.getText())) {
                             if (!iter.hasNext()) {
@@ -1157,7 +1140,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
             line = new Spin1MethodLine(context, parent, null, node);
             if (initializer != null) {
                 for (int i = 0; i < initializer.getChildCount(); i++) {
-                    line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, initializer.getChild(i), false));
+                    line.addSource(compileBytecodeExpression(context, method, initializer.getChild(i), false));
                 }
             }
 
@@ -1169,7 +1152,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
             line.setData("break", quitLine);
 
             if (condition != null) {
-                loopLine.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, condition, true));
+                loopLine.addSource(compileBytecodeExpression(context, method, condition, true));
                 loopLine.addSource(new Jz(line.getScope(), new ContextLiteral(quitLine.getScope())));
             }
 
@@ -1178,7 +1161,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
             Spin1MethodLine repeatLine = new Spin1MethodLine(context);
             if (increment != null) {
                 for (int i = 0; i < increment.getChildCount(); i++) {
-                    repeatLine.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, increment.getChild(i), false));
+                    repeatLine.addSource(compileBytecodeExpression(context, method, increment.getChild(i), false));
                 }
             }
             repeatLine.addSource(new Jmp(line.getScope(), new ContextLiteral(loopLine.getScope())));
@@ -1202,7 +1185,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
                 builder.addToken(token);
             }
             line = new Spin1MethodLine(context, parent, token.getText(), node);
-            line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
+            line.addSource(compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
 
             if (previousLine != null && "do".equals(previousLine.getStatement())) {
                 line.addSource(new Jnz(previousLine.getScope(), new ContextLiteral(previousLine.getScope())));
@@ -1243,7 +1226,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
                 builder.addToken(token);
             }
             line = new Spin1MethodLine(context, parent, null, node);
-            line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
+            line.addSource(compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
             line.addSource(new Jz(line.getScope(), new ContextLiteral(previousLine.getScope())));
 
             Spin1MethodLine quitLine = new Spin1MethodLine(context);
@@ -1265,7 +1248,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
                 }
                 builder.addToken(token);
             }
-            line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
+            line.addSource(compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
 
             boolean hasDefault = false;
             for (Node child : node.getChilds()) {
@@ -1300,7 +1283,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
                             }
                             builder.addToken(token);
                         }
-                        compileCase(method, line, builder.getRoot(), targetLine, bytecodeCompiler);
+                        compileCase(method, line, builder.getRoot(), targetLine);
                     }
 
                     targetLine.addChilds(compileStatement(method, new Context(context), line, child));
@@ -1359,7 +1342,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
                 }
                 builder.addToken(token);
             }
-            line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
+            line.addSource(compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
             line.addSource(new Jz(line.getScope(), new ContextLiteral(falseLine.getScope())));
 
             line.addChilds(compileStatement(method, new Context(context), line, node));
@@ -1389,7 +1372,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
                         }
                         builder.addToken(token);
                     }
-                    line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
+                    line.addSource(compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
                     line.addSource(new Jz(line.getScope(), new ContextLiteral(falseLine.getScope())));
                 }
             }
@@ -1415,7 +1398,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
                     }
                     builder.addToken(token);
                 }
-                line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, builder.getRoot(), true));
+                line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), true));
                 line.addSource(new Bytecode(line.getScope(), 0b00110011, line.getStatement()));
             }
             else {
@@ -1433,27 +1416,27 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
                 builder.addToken(token);
             }
             line = new Spin1MethodLine(context, parent, null, node);
-            line.addSource(bytecodeCompiler.compileBytecodeExpression(context, method, builder.getRoot(), false));
+            line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), false));
         }
 
         return line;
     }
 
-    void compileCase(Spin1Method method, Spin1MethodLine line, Spin1StatementNode arg, Spin1MethodLine target, Spin1CBytecodeCompiler compiler) {
+    void compileCase(Spin1Method method, Spin1MethodLine line, Spin1StatementNode arg, Spin1MethodLine target) {
         if (",".equals(arg.getText())) {
             for (Spin1StatementNode child : arg.getChilds()) {
-                compileCase(method, line, child, target, compiler);
+                compileCase(method, line, child, target);
             }
         }
         else if ("..".equals(arg.getText())) {
-            line.addSource(compiler.compileBytecodeExpression(line.getScope(), method, arg.getChild(0), false));
-            line.addSource(compiler.compileBytecodeExpression(line.getScope(), method, arg.getChild(1), false));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg.getChild(0), false));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg.getChild(1), false));
             if (target != null) {
                 line.addSource(new CaseRangeJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
         }
         else {
-            line.addSource(compiler.compileBytecodeExpression(line.getScope(), method, arg, false));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg, false));
             if (target != null) {
                 line.addSource(new CaseJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
@@ -1641,10 +1624,10 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
         }
 
         Spin1MethodLine stringDataLine = null;
-        if (bytecodeCompiler.getStringData().size() != 0) {
+        if (getStringData().size() != 0) {
             stringDataLine = new Spin1MethodLine(scope);
             stringDataLine.setText("(string data)");
-            stringDataLine.addSource(bytecodeCompiler.getStringData());
+            stringDataLine.addSource(getStringData());
         }
 
         if (methods.size() != 0) {

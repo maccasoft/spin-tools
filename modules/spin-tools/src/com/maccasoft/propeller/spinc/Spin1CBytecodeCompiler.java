@@ -24,6 +24,7 @@ import com.maccasoft.propeller.expressions.Abs;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Divide;
@@ -54,8 +55,9 @@ import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.expressions.Xor;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Method;
+import com.maccasoft.propeller.spin1.Spin1PAsmCompiler;
 import com.maccasoft.propeller.spin1.Spin1StatementNode;
 import com.maccasoft.propeller.spin1.bytecode.Address;
 import com.maccasoft.propeller.spin1.bytecode.Bytecode;
@@ -70,7 +72,7 @@ import com.maccasoft.propeller.spin1.bytecode.RegisterBitOp;
 import com.maccasoft.propeller.spin1.bytecode.RegisterOp;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
 
-public abstract class Spin1CBytecodeCompiler {
+public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
 
     static class FunctionDescriptor {
         public byte[] code;
@@ -222,7 +224,8 @@ public abstract class Spin1CBytecodeCompiler {
 
     List<Spin1Bytecode> stringData;
 
-    public Spin1CBytecodeCompiler() {
+    public Spin1CBytecodeCompiler(Context scope, Spin1Compiler compiler) {
+        super(scope, compiler);
         this.stringData = new ArrayList<>();
     }
 
@@ -1287,7 +1290,7 @@ public abstract class Spin1CBytecodeCompiler {
     }
 
     protected boolean isAddress(String text) {
-        return text.startsWith("@");
+        return text.startsWith("&");
     }
 
     protected boolean isAbsoluteAddress(String text) {
@@ -1752,6 +1755,7 @@ public abstract class Spin1CBytecodeCompiler {
         return stringData;
     }
 
+    @Override
     protected abstract void logMessage(CompilerException message);
 
 }

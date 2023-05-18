@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -21,7 +22,9 @@ import java.util.Map.Entry;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
+import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
+import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.Node;
@@ -29,7 +32,9 @@ import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Interpreter;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
+import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine;
 import com.maccasoft.propeller.spin2.Spin2Preprocessor;
+import com.maccasoft.propeller.spin2.Spin2StatementNode;
 
 public class Spin2CCompiler extends Spin2Compiler {
 
@@ -67,8 +72,8 @@ public class Spin2CCompiler extends Spin2Compiler {
 
         String fileName;
 
-        public Spin2CObjectCompilerProxy(String fileName, List<Object> debugStatements) {
-            super(Spin2CCompiler.this, debugStatements);
+        public Spin2CObjectCompilerProxy(String fileName) {
+            super(Spin2CCompiler.this);
             this.fileName = fileName;
         }
 
@@ -128,7 +133,7 @@ public class Spin2CCompiler extends Spin2Compiler {
         preprocessor = new Spin2Preprocessor(this);
         preprocessor.process(rootFile, root);
 
-        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompilerProxy(rootFile.getName(), debugStatements);
+        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompilerProxy(rootFile.getName());
         objectCompiler.compileObject(root);
 
         objectCompiler.compilePass2();
@@ -185,7 +190,7 @@ public class Spin2CCompiler extends Spin2Compiler {
         }
 
         if (debugEnabled) {
-            Spin2Object debugObject = objectCompiler.generateDebugData();
+            Spin2Object debugObject = generateDebugData();
             object.setDebugData(debugObject);
         }
 
@@ -196,6 +201,46 @@ public class Spin2CCompiler extends Spin2Compiler {
     }
 
     @Override
+    public Spin2Object generateDebugData() {
+        Spin2Object object = new Spin2Object();
+        object.writeComment("Debug data");
+        WordDataObject sizeWord = object.writeWord(2);
+
+        int pos = (debugStatements.size() + 1) * 2;
+        List<DataObject> l = new ArrayList<DataObject>();
+        for (Object node : debugStatements) {
+            try {
+                if (node instanceof Spin2StatementNode) {
+                    byte[] data = debug.compileDebugStatement((Spin2StatementNode) node);
+                    l.add(new DataObject(data));
+                    object.writeWord(pos);
+                    pos += data.length;
+                }
+                else if (node instanceof Spin2PAsmDebugLine) {
+                    byte[] data = debug.compilePAsmDebugStatement((Spin2PAsmDebugLine) node);
+                    l.add(new DataObject(data));
+                    object.writeWord(pos);
+                    pos += data.length;
+                }
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, node));
+            }
+        }
+        for (DataObject data : l) {
+            object.write(data);
+        }
+        sizeWord.setValue(object.getSize());
+
+        if (object.getSize() > 16384) {
+            throw new CompilerException("debug data is too long", null);
+        }
+
+        return object;
+    }
+
+    @Override
     public ObjectInfo getObjectInfo(String fileName, Map<String, Expression> parameters) {
         File objectFile = getFile(fileName, ".c", ".spin2");
         if (objectFile != null) {
@@ -203,7 +248,7 @@ public class Spin2CCompiler extends Spin2Compiler {
             if (objectRoot != null) {
                 ObjectCompiler objectCompiler;
                 if (objectFile.getName().toLowerCase().endsWith(".c")) {
-                    objectCompiler = new Spin2CObjectCompilerProxy(fileName, debugStatements);
+                    objectCompiler = new Spin2CObjectCompilerProxy(fileName);
                 }
                 else {
                     objectCompiler = new Spin2ObjectCompilerProxy(fileName);

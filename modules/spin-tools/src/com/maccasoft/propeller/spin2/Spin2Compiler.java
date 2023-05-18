@@ -36,7 +36,7 @@ public class Spin2Compiler extends Compiler {
     protected boolean removeUnusedMethods;
 
     protected boolean debugEnabled;
-    protected List<Object> debugStatements = new ArrayList<Object>();
+    public List<Object> debugStatements = new ArrayList<Object>();
     protected Spin2Debug debug = new Spin2Debug();
 
     protected Spin2Interpreter interpreter;
@@ -141,8 +141,8 @@ public class Spin2Compiler extends Compiler {
 
         String fileName;
 
-        public Spin2CObjectCompilerProxy(String fileName, List<Object> debugStatements) {
-            super(Spin2Compiler.this, debugStatements);
+        public Spin2CObjectCompilerProxy(String fileName) {
+            super(Spin2Compiler.this);
             this.fileName = fileName;
         }
 
@@ -291,7 +291,7 @@ public class Spin2Compiler extends Compiler {
             if (objectRoot != null) {
                 ObjectCompiler objectCompiler;
                 if (objectFile.getName().toLowerCase().endsWith(".c")) {
-                    objectCompiler = new Spin2CObjectCompilerProxy(fileName, debugStatements);
+                    objectCompiler = new Spin2CObjectCompilerProxy(fileName);
                 }
                 else {
                     objectCompiler = new Spin2ObjectCompilerProxy(fileName);
@@ -323,7 +323,7 @@ public class Spin2Compiler extends Compiler {
             if (objectRoot != null) {
                 ObjectCompiler objectCompiler;
                 if (objectFile.getName().toLowerCase().endsWith(".c")) {
-                    objectCompiler = new Spin2CObjectCompilerProxy(fileName, debugStatements);
+                    objectCompiler = new Spin2CObjectCompilerProxy(fileName);
                 }
                 else {
                     objectCompiler = new Spin2ObjectCompilerProxy(fileName);

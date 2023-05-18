@@ -27,10 +27,8 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.maccasoft.propeller.Compiler.ObjectInfo;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
-import com.maccasoft.propeller.SpinObject.DataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
-import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
@@ -50,17 +48,14 @@ import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
-import com.maccasoft.propeller.spin2.Spin2Debug;
 import com.maccasoft.propeller.spin2.Spin2ExpressionBuilder;
 import com.maccasoft.propeller.spin2.Spin2GlobalContext;
 import com.maccasoft.propeller.spin2.Spin2Method;
 import com.maccasoft.propeller.spin2.Spin2MethodLine;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2Object.Spin2LinkDataObject;
-import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmLine;
-import com.maccasoft.propeller.spin2.Spin2PasmCompiler;
 import com.maccasoft.propeller.spin2.Spin2StatementNode;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
@@ -77,7 +72,7 @@ import com.maccasoft.propeller.spin2.instructions.Orgh;
 import com.maccasoft.propeller.spin2.instructions.Res;
 import com.maccasoft.propeller.spin2.instructions.Word;
 
-public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCompiler {
+public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler implements ObjectCompiler {
 
     int objectVarSize;
 
@@ -85,10 +80,6 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
     List<Spin2MethodLine> setupLines = new ArrayList<>();
     List<Spin2Method> methods = new ArrayList<>();
     Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<>());
-
-    boolean debugEnabled;
-    Spin2Debug debug = new Spin2Debug();
-    List<Object> debugStatements;
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
@@ -98,17 +89,13 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
 
     Map<String, Node> structures = new HashMap<>();
 
-    Spin2CBytecodeCompiler spinCompiler;
-
-    public Spin2CObjectCompiler(Spin2Compiler compiler, List<Object> debugStatements) {
+    public Spin2CObjectCompiler(Spin2Compiler compiler) {
         super(new Spin2GlobalContext(compiler.isCaseSensitive()), compiler);
-        this.debugEnabled = compiler.isDebugEnabled();
-        this.debugStatements = debugStatements;
 
         this.scope.addDefinition("__P1__", new NumberLiteral(0));
         this.scope.addDefinition("__P2__", new NumberLiteral(1));
         this.scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
-        this.scope.addDefinition("__debug__", new NumberLiteral(this.debugEnabled ? 1 : 0));
+        this.scope.addDefinition("__debug__", new NumberLiteral(compiler.isDebugEnabled() ? 1 : 0));
     }
 
     @Override
@@ -120,25 +107,6 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
     @Override
     public void compile(Node root) {
         objectVarSize = 4;
-
-        spinCompiler = new Spin2CBytecodeCompiler(debugStatements) {
-
-            @Override
-            protected boolean isAddress(String text) {
-                return text.startsWith("&");
-            }
-
-            @Override
-            protected int getArgumentsCount(Context context, Spin2StatementNode childNode) {
-                return childNode.getChildCount();
-            }
-
-            @Override
-            protected void logMessage(CompilerException message) {
-                Spin2CObjectCompiler.this.logMessage(message);
-            }
-
-        };
 
         for (Node node : new ArrayList<>(root.getChilds())) {
             try {
@@ -178,7 +146,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
                 }
                 else if (node instanceof VariableNode) {
                     if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
-                        compileVariable(spinCompiler, (VariableNode) node);
+                        compileVariable((VariableNode) node);
                     }
                     else {
                         Token token = new Token(node.getStartToken().getStream(), node.getStartIndex());
@@ -552,7 +520,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
         }
     }
 
-    void compileVariable(Spin2CBytecodeCompiler compiler, VariableNode node) {
+    void compileVariable(VariableNode node) {
         TokenIterator iter = node.iterator();
 
         Token token = iter.next();
@@ -742,7 +710,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
                         builder.addToken(token);
                     }
                     Spin2MethodLine line = new Spin2MethodLine(scope);
-                    line.addSource(compiler.compileBytecodeExpression(scope, null, builder.getRoot(), false));
+                    line.addSource(compileBytecodeExpression(scope, null, builder.getRoot(), false));
                     setupLines.add(line);
 
                     if (!",".equals(token.getText())) {
@@ -1022,7 +990,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
                         if (line == null) {
                             line = new Spin2MethodLine(context, parent, null, node);
                         }
-                        line.addSource(spinCompiler.compileBytecodeExpression(context, method, builder.getRoot(), false));
+                        line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), false));
 
                         if (!",".equals(token.getText())) {
                             if (!iter.hasNext()) {
@@ -1175,7 +1143,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
 
             if (initializer != null) {
                 for (int i = 0; i < initializer.getChildCount(); i++) {
-                    line.addSource(spinCompiler.compileBytecodeExpression(context, method, initializer.getChild(i), false));
+                    line.addSource(compileBytecodeExpression(context, method, initializer.getChild(i), false));
                 }
             }
 
@@ -1187,7 +1155,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
             line.setData("break", quitLine);
 
             if (condition != null) {
-                loopLine.addSource(spinCompiler.compileBytecodeExpression(context, method, condition, true));
+                loopLine.addSource(compileBytecodeExpression(context, method, condition, true));
                 loopLine.addSource(new Jz(line.getScope(), new ContextLiteral(quitLine.getScope())));
             }
 
@@ -1196,7 +1164,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
             Spin2MethodLine repeatLine = new Spin2MethodLine(context);
             if (increment != null) {
                 for (int i = 0; i < increment.getChildCount(); i++) {
-                    repeatLine.addSource(spinCompiler.compileBytecodeExpression(context, method, increment.getChild(i), false));
+                    repeatLine.addSource(compileBytecodeExpression(context, method, increment.getChild(i), false));
                 }
             }
             repeatLine.addSource(new Jmp(line.getScope(), new ContextLiteral(loopLine.getScope())));
@@ -1220,7 +1188,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
                 builder.addToken(token);
             }
             line = new Spin2MethodLine(context, parent, token.getText(), node);
-            line.addSource(spinCompiler.compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
+            line.addSource(compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
 
             if (previousLine != null && "do".equals(previousLine.getStatement())) {
                 line.addSource(new Jnz(previousLine.getScope(), new ContextLiteral(previousLine.getScope())));
@@ -1261,7 +1229,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
                 builder.addToken(token);
             }
             line = new Spin2MethodLine(context, parent, null, node);
-            line.addSource(spinCompiler.compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
+            line.addSource(compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
             line.addSource(new Jz(line.getScope(), new ContextLiteral(previousLine.getScope())));
 
             Spin2MethodLine quitLine = new Spin2MethodLine(context);
@@ -1283,7 +1251,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
                 }
                 builder.addToken(token);
             }
-            line.addSource(spinCompiler.compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
+            line.addSource(compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
 
             boolean hasDefault = false;
             for (Node child : node.getChilds()) {
@@ -1318,7 +1286,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
                             }
                             builder.addToken(token);
                         }
-                        compileCase(method, line, builder.getRoot(), targetLine, spinCompiler);
+                        compileCase(method, line, builder.getRoot(), targetLine);
                     }
 
                     targetLine.addChilds(compileStatement(method, new Context(context), line, child));
@@ -1377,7 +1345,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
                 }
                 builder.addToken(token);
             }
-            line.addSource(spinCompiler.compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
+            line.addSource(compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
             line.addSource(new Jz(line.getScope(), new ContextLiteral(falseLine.getScope())));
 
             line.addChilds(compileStatement(method, new Context(context), line, node));
@@ -1407,7 +1375,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
                         }
                         builder.addToken(token);
                     }
-                    line.addSource(spinCompiler.compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
+                    line.addSource(compileBytecodeExpression(context, method, builder.getRoot().getChild(0), true));
                     line.addSource(new Jz(line.getScope(), new ContextLiteral(falseLine.getScope())));
                 }
             }
@@ -1433,7 +1401,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
                     }
                     builder.addToken(token);
                 }
-                line.addSource(spinCompiler.compileBytecodeExpression(context, method, builder.getRoot(), true));
+                line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), true));
                 line.addSource(new Bytecode(line.getScope(), 0x05, line.getStatement()));
             }
             else {
@@ -1510,7 +1478,7 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
             }, "INLINE-EXEC"));
         }
         else {
-            if (!debugEnabled && "debug".equals(token.getText())) {
+            if (!compiler.isDebugEnabled() && "debug".equals(token.getText())) {
                 return null;
             }
             Spin2CTreeBuilder builder = new Spin2CTreeBuilder(scope);
@@ -1523,27 +1491,27 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
                 builder.addToken(token);
             }
             line = new Spin2MethodLine(context, parent, null, node);
-            line.addSource(spinCompiler.compileBytecodeExpression(context, method, builder.getRoot(), false));
+            line.addSource(compileBytecodeExpression(context, method, builder.getRoot(), false));
         }
 
         return line;
     }
 
-    void compileCase(Spin2Method method, Spin2MethodLine line, Spin2StatementNode arg, Spin2MethodLine target, Spin2CBytecodeCompiler compiler) {
+    void compileCase(Spin2Method method, Spin2MethodLine line, Spin2StatementNode arg, Spin2MethodLine target) {
         if (",".equals(arg.getText())) {
             for (Spin2StatementNode child : arg.getChilds()) {
-                compileCase(method, line, child, target, compiler);
+                compileCase(method, line, child, target);
             }
         }
         else if ("..".equals(arg.getText())) {
-            line.addSource(compiler.compileBytecodeExpression(line.getScope(), method, arg.getChild(0), false));
-            line.addSource(compiler.compileBytecodeExpression(line.getScope(), method, arg.getChild(1), false));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg.getChild(0), false));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg.getChild(1), false));
             if (target != null) {
                 line.addSource(new CaseRangeJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
         }
         else {
-            line.addSource(compiler.compileBytecodeExpression(line.getScope(), method, arg, false));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg, false));
             if (target != null) {
                 line.addSource(new CaseJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
@@ -1813,45 +1781,6 @@ public class Spin2CObjectCompiler extends Spin2PasmCompiler implements ObjectCom
             }
 
             object.alignToLong();
-        }
-
-        return object;
-    }
-
-    public Spin2Object generateDebugData() {
-        Spin2Object object = new Spin2Object();
-        object.writeComment("Debug data");
-        WordDataObject sizeWord = object.writeWord(2);
-
-        int pos = (debugStatements.size() + 1) * 2;
-        List<DataObject> l = new ArrayList<DataObject>();
-        for (Object node : debugStatements) {
-            try {
-                if (node instanceof Spin2StatementNode) {
-                    byte[] data = debug.compileDebugStatement((Spin2StatementNode) node);
-                    l.add(new DataObject(data));
-                    object.writeWord(pos);
-                    pos += data.length;
-                }
-                else if (node instanceof Spin2PAsmDebugLine) {
-                    byte[] data = debug.compilePAsmDebugStatement((Spin2PAsmDebugLine) node);
-                    l.add(new DataObject(data));
-                    object.writeWord(pos);
-                    pos += data.length;
-                }
-            } catch (CompilerException e) {
-                logMessage(e);
-            } catch (Exception e) {
-                logMessage(new CompilerException(e, node));
-            }
-        }
-        for (DataObject data : l) {
-            object.write(data);
-        }
-        sizeWord.setValue(object.getSize());
-
-        if (object.getSize() > 16384) {
-            throw new CompilerException("debug data is too long", null);
         }
 
         return object;
