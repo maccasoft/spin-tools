@@ -791,15 +791,21 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             }
 
             @Override
-            public void visitObject(ObjectNode objectNode) {
-                if (objectNode.name == null || objectNode.file == null) {
+            public void visitObject(ObjectNode node) {
+                if (node.name == null || node.file == null) {
                     return;
                 }
 
-                symbols.put(objectNode.name.getText(), TokenId.OBJECT);
-                tokens.add(new TokenMarker(objectNode.name, TokenId.OBJECT));
-                if (objectNode.file != null) {
-                    tokens.add(new TokenMarker(objectNode.file, TokenId.STRING));
+                symbols.put(node.name.getText(), TokenId.OBJECT);
+                tokens.add(new TokenMarker(node.name, TokenId.OBJECT));
+                if (node.file != null) {
+                    tokens.add(new TokenMarker(node.file, TokenId.STRING));
+                }
+
+                for (ObjectNode.ParameterNode param : node.parameters) {
+                    if (param.identifier != null) {
+                        tokens.add(new TokenMarker(param.identifier, TokenId.CONSTANT));
+                    }
                 }
             }
 
@@ -935,6 +941,11 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             public void visitObject(ObjectNode node) {
                 if (node.count != null) {
                     markTokens(node.count, 0, null);
+                }
+                for (ObjectNode.ParameterNode param : node.parameters) {
+                    if (param.expression != null) {
+                        markTokens(param.expression, 0, null);
+                    }
                 }
             }
 
