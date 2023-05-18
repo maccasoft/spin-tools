@@ -167,7 +167,7 @@ public class Spin2TokenStream extends TokenStream {
                     if ((ch == '.' || ch == '#')) {
                         if (index + 1 < text.length()) {
                             char ch1 = text.charAt(index + 1);
-                            if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '=') {
+                            if ((ch1 >= '0' && ch1 <= '9') || (ch1 >= 'A' && ch1 <= 'Z') || (ch1 >= 'a' && ch1 <= 'z') || ch1 == '_') {
                                 token.stop++;
                                 break;
                             }
