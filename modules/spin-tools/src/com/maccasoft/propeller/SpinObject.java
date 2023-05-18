@@ -15,9 +15,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.maccasoft.propeller.expressions.Expression;
 
@@ -63,6 +65,29 @@ public abstract class SpinObject {
             return index;
         }
 
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + Arrays.hashCode(bytes);
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            DataObject other = (DataObject) obj;
+            return Arrays.equals(bytes, other.bytes);
+        }
+
     }
 
     public static class CommentDataObject extends DataObject {
@@ -99,6 +124,8 @@ public abstract class SpinObject {
         long varOffset;
         long varSize;
 
+        private int hash = (int) (Math.random() * Integer.MAX_VALUE);
+
         public LinkDataObject(Object object, long varSize) {
             super(new byte[] {
                 (byte) 0,
@@ -132,6 +159,16 @@ public abstract class SpinObject {
 
         public boolean isObject(Object other) {
             return this.object == other;
+        }
+
+        @Override
+        public int hashCode() {
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (this == obj);
         }
 
     }
@@ -529,6 +566,26 @@ public abstract class SpinObject {
             index = obj.setBytes(bytes, index);
         }
         return index;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(data, symbols, varSize);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        SpinObject other = (SpinObject) obj;
+        return Objects.equals(data, other.data) && Objects.equals(symbols, other.symbols) && varSize == other.varSize;
     }
 
 }

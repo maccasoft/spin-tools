@@ -205,23 +205,50 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
             }
             else if ("DEBUG".equalsIgnoreCase(node.getText())) {
-                int debugIndex = compiler.debugStatements.size() + 1;
-                if (debugIndex >= 255) {
-                    throw new RuntimeException("too much debug statements");
-                }
-
-                int pop = 0;
+                int stack = 0;
                 for (Spin2StatementNode child : node.getChilds()) {
                     for (Spin2StatementNode param : child.getChilds()) {
                         source.addAll(compileBytecodeExpression(context, method, param, true));
-                        pop += 4;
+                        stack += 4;
                     }
                 }
                 node.setData("context", context);
+                method.debugNodes.add(node);
                 compiler.debugStatements.add(node);
-                source.add(new Bytecode(context, new byte[] {
-                    0x43, (byte) pop, (byte) debugIndex
-                }, node.getText().toUpperCase() + " #" + debugIndex));
+
+                int pop = stack;
+                source.add(new Bytecode(context, 0x43, "") {
+
+                    int index;
+
+                    @Override
+                    public int resolve(int address) {
+                        index = compiler.debugStatements.indexOf(node) + 1;
+                        if (index >= 255) {
+                            throw new CompilerException("too much debug statements", node);
+                        }
+                        return super.resolve(address);
+                    }
+
+                    @Override
+                    public byte[] getBytes() {
+                        if (index == -1) {
+                            return new byte[0];
+                        }
+                        return new byte[] {
+                            0x43, (byte) pop, (byte) index
+                        };
+                    }
+
+                    @Override
+                    public String toString() {
+                        if (index == -1) {
+                            return "";
+                        }
+                        return node.getText().toUpperCase() + " #" + index;
+                    }
+
+                });
             }
             else if ("END".equalsIgnoreCase(node.getText())) {
                 // Ignored

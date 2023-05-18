@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Stack;
 import java.util.TreeMap;
 
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.Compiler.ObjectInfo;
@@ -87,7 +88,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
     boolean errors;
     List<CompilerException> messages = new ArrayList<>();
 
-    Map<String, Expression> publicSymbols = new HashMap<>();
+    Map<String, Expression> publicSymbols;
     List<LinkDataObject> objectLinks = new ArrayList<>();
 
     public Spin2ObjectCompiler(Spin2Compiler compiler) {
@@ -107,6 +108,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
 
     @Override
     public void compile(Node root) {
+        publicSymbols = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
+
         root.accept(new NodeVisitor() {
 
             @Override
@@ -266,8 +269,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                         exp.setData(method.getClass().getName(), method);
 
                         try {
-                            scope.addSymbol(method.getLabel(), exp);
-                            publicSymbols.put(method.getLabel(), exp);
+                            if (publicSymbols.containsKey(method.getLabel())) {
+                                logMessage(new CompilerException("symbol " + method.getLabel() + " already defined", method.getLabel()));
+                            }
+                            else {
+                                scope.addSymbol(method.getLabel(), exp);
+                                publicSymbols.put(method.getLabel(), exp);
+                            }
                         } catch (Exception e) {
                             logMessage(new CompilerException(e.getMessage(), node));
                         }
@@ -365,6 +373,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                             }
                             method.remove();
                             methodsIterator.remove();
+                            compiler.debugStatements.removeAll(method.debugNodes);
                             loop = true;
                         }
                     }
@@ -651,11 +660,18 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                         logMessage(new CompilerException("expecting identifier", token));
                         break;
                     }
-                    String identifier = token.getText();
+                    Token identifier = token;
                     if (!iter.hasNext()) {
                         try {
-                            scope.addSymbol(identifier, enumValue);
-                            publicSymbols.put(identifier, enumValue);
+                            if (publicSymbols.containsKey(identifier.getText())) {
+                                logMessage(new CompilerException("symbol " + identifier.getText() + " already defined", identifier));
+                            }
+                            else {
+                                if (!scope.hasSymbol(identifier.getText())) {
+                                    scope.addSymbol(identifier.getText(), enumValue);
+                                }
+                                publicSymbols.put(identifier.getText(), scope.getLocalSymbol(identifier.getText()));
+                            }
                         } catch (CompilerException e) {
                             logMessage(e);
                         } catch (Exception e) {
@@ -672,8 +688,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                         token = iter.next();
                         if ("[".equals(token.getText())) {
                             try {
-                                scope.addSymbol(identifier, enumValue);
-                                publicSymbols.put(identifier, enumValue);
+                                if (publicSymbols.containsKey(identifier.getText())) {
+                                    logMessage(new CompilerException("symbol " + identifier.getText() + " already defined", identifier));
+                                }
+                                else {
+                                    if (!scope.hasSymbol(identifier.getText())) {
+                                        scope.addSymbol(identifier.getText(), enumValue);
+                                    }
+                                    publicSymbols.put(identifier.getText(), scope.getLocalSymbol(identifier.getText()));
+                                }
                             } catch (CompilerException e) {
                                 logMessage(e);
                             } catch (Exception e) {
@@ -715,8 +738,15 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                             try {
                                 Expression expression = builder.getExpression();
                                 try {
-                                    scope.addSymbol(identifier, expression);
-                                    publicSymbols.put(identifier, expression);
+                                    if (publicSymbols.containsKey(identifier.getText())) {
+                                        logMessage(new CompilerException("symbol " + identifier.getText() + " already defined", identifier));
+                                    }
+                                    else {
+                                        if (!scope.hasSymbol(identifier.getText())) {
+                                            scope.addSymbol(identifier.getText(), expression);
+                                        }
+                                        publicSymbols.put(identifier.getText(), scope.getLocalSymbol(identifier.getText()));
+                                    }
                                 } catch (CompilerException e) {
                                     logMessage(e);
                                 } catch (Exception e) {
@@ -899,7 +929,65 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
             }
             String fileName = token.getText().substring(1, token.getText().length() - 1);
 
-            ObjectInfo info = compiler.getObjectInfo(fileName);
+            Map<String, Expression> parameters = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
+            if (iter.hasNext()) {
+                token = iter.next();
+                if (!"|".equals(token.getText())) {
+                    logMessage(new CompilerException("syntax error", token));
+                    return;
+                }
+                while (iter.hasNext()) {
+                    token = iter.next();
+                    if (token.type != 0) {
+                        logMessage(new CompilerException("expecting identifier", token));
+                        break;
+                    }
+                    String identifier = token.getText();
+                    if (!iter.hasNext()) {
+                        logMessage(new CompilerException("expecting expression", identifier));
+                        break;
+                    }
+                    token = iter.next();
+                    if ("=".equals(token.getText())) {
+                        Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                        while (iter.hasNext()) {
+                            token = iter.next();
+                            if (",".equals(token.getText())) {
+                                break;
+                            }
+                            builder.addToken(token);
+                        }
+                        try {
+                            Expression expression = builder.getExpression();
+                            try {
+                                parameters.put(identifier, expression);
+                            } catch (CompilerException e) {
+                                logMessage(e);
+                            } catch (Exception e) {
+                                logMessage(new CompilerException(e, node));
+                            }
+                        } catch (CompilerException e) {
+                            logMessage(e);
+                        } catch (Exception e) {
+                            if (builder.tokens.size() == 0) {
+                                logMessage(new CompilerException("expecting expression", token));
+                            }
+                            else {
+                                logMessage(new CompilerException("expression syntax error", builder.tokens));
+                            }
+                        }
+                    }
+                    else {
+                        logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
+                        break;
+                    }
+                    if (!",".equals(token.getText())) {
+                        break;
+                    }
+                }
+            }
+
+            ObjectInfo info = compiler.getObjectInfo(fileName, parameters);
             if (info == null) {
                 logMessage(new CompilerException("object " + token + " not found", token));
                 return;
@@ -909,7 +997,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                 return;
             }
 
-            objects.put(name, new ObjectInfo(info.compiler, count));
+            objects.put(name, new ObjectInfo(info, count));
 
             for (Entry<String, Expression> entry : info.compiler.getPublicSymbols().entrySet()) {
                 if (!(entry.getValue() instanceof Method)) {

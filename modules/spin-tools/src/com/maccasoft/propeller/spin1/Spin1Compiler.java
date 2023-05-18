@@ -15,19 +15,17 @@ import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-
-import org.apache.commons.collections4.map.ListOrderedMap;
 
 import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
+import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Node;
 
 public class Spin1Compiler extends Compiler {
@@ -36,7 +34,7 @@ public class Spin1Compiler extends Compiler {
     boolean openspinCompatible;
 
     protected Spin1Preprocessor preprocessor;
-    protected Map<File, ObjectInfo> childObjects = new HashMap<>();
+    protected List<ObjectInfo> childObjects = new ArrayList<>();
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<CompilerException>();
@@ -165,44 +163,31 @@ public class Spin1Compiler extends Compiler {
         preprocessor = new Spin1Preprocessor(this);
         preprocessor.process(rootFile, root);
 
-        ListOrderedMap<File, Node> objects = preprocessor.getObjects();
-
-        for (Entry<File, Node> entry : objects.entrySet()) {
-            Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(entry.getKey().getName());
-            objectCompiler.compileObject(entry.getValue());
-            childObjects.put(entry.getKey(), new ObjectInfo(objectCompiler));
-        }
-
         Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFile.getName());
         objectCompiler.compileObject(root);
 
         objectCompiler.compilePass2();
-        for (int i = objects.size() - 1; i >= 0; i--) {
-            File file = objects.get(i);
-            ObjectInfo info = childObjects.get(file);
+        for (ObjectInfo info : childObjects) {
             info.compiler.compilePass2();
         }
 
         Spin1Object object = objectCompiler.generateObject(memoryOffset);
         memoryOffset += object.getSize();
 
-        for (int i = objects.size() - 1; i >= 0; i--) {
-            File file = objects.get(i);
-            ObjectInfo info = childObjects.get(file);
+        for (ObjectInfo info : childObjects) {
             info.offset = object.getSize();
             SpinObject linkedObject = info.compiler.generateObject(memoryOffset);
             memoryOffset += linkedObject.getSize();
-            linkedObject.getObject(0).setText("Object \"" + file.getName() + "\" header (var size " + linkedObject.getVarSize() + ")");
+            linkedObject.getObject(0).setText("Object \"" + info.file.getName() + "\" header (var size " + linkedObject.getVarSize() + ")");
             object.writeObject(linkedObject);
         }
 
-        for (ObjectInfo info : childObjects.values()) {
+        for (ObjectInfo info : childObjects) {
             for (LinkDataObject linkData : info.compiler.getObjectLinks()) {
-                for (Entry<File, ObjectInfo> entry : childObjects.entrySet()) {
-                    ObjectInfo info2 = entry.getValue();
+                for (ObjectInfo info2 : childObjects) {
                     if (linkData.isObject(info2.compiler)) {
                         linkData.setOffset(info2.offset - info.offset);
-                        linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", entry.getKey().getName(), linkData.getOffset(), linkData.getVarOffset()));
+                        linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", info2.file.getName(), linkData.getOffset(), linkData.getVarOffset()));
                         break;
                     }
                 }
@@ -210,11 +195,10 @@ public class Spin1Compiler extends Compiler {
         }
 
         for (LinkDataObject linkData : objectCompiler.getObjectLinks()) {
-            for (Entry<File, ObjectInfo> entry : childObjects.entrySet()) {
-                ObjectInfo info = entry.getValue();
+            for (ObjectInfo info : childObjects) {
                 if (linkData.isObject(info.compiler)) {
                     linkData.setOffset(info.offset);
-                    linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", entry.getKey().getName(), linkData.getOffset(), linkData.getVarOffset()));
+                    linkData.setText(String.format("Object \"%s\" @ $%04X (variables @ $%04X)", info.file.getName(), linkData.getOffset(), linkData.getVarOffset()));
                     break;
                 }
             }
@@ -245,12 +229,41 @@ public class Spin1Compiler extends Compiler {
     }
 
     @Override
-    public ObjectInfo getObjectInfo(String fileName) {
-        File file = getFile(fileName + ".spin");
-        if (file == null) {
-            file = getFile(fileName);
+    public ObjectInfo getObjectInfo(String fileName, Map<String, Expression> parameters) {
+        File objectFile = getFile(fileName, ".spin");
+        if (objectFile != null) {
+            Node objectRoot = getParsedObject(objectFile.getName(), ".spin");
+            if (objectRoot != null) {
+                ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(fileName);
+                ObjectInfo info = new ObjectInfo(objectFile, objectCompiler, parameters);
+                int index = childObjects.indexOf(info);
+                if (index != -1) {
+                    info = childObjects.remove(index);
+                }
+                childObjects.add(info);
+                objectCompiler.compileObject(objectRoot);
+                return info;
+            }
         }
-        return childObjects.get(file);
+        return null;
+    }
+
+    public ObjectInfo getObjectInclude(String fileName, Map<String, Expression> parameters) {
+        File objectFile = getFile(fileName, ".spin");
+        if (objectFile != null) {
+            Node objectRoot = getParsedObject(objectFile.getName(), ".spin");
+            if (objectRoot != null) {
+                ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(fileName);
+                ObjectInfo info = new ObjectInfo(objectFile, objectCompiler, parameters);
+                int index = childObjects.indexOf(info);
+                if (index != -1) {
+                    return childObjects.get(index);
+                }
+                objectCompiler.compileObject(objectRoot);
+                return info;
+            }
+        }
+        return null;
     }
 
     protected byte[] getBinaryFile(String fileName) {

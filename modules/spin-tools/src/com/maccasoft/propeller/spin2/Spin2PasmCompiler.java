@@ -38,6 +38,7 @@ public abstract class Spin2PasmCompiler {
     private Map<Spin2PAsmLine, Context> pendingAlias = new HashMap<Spin2PAsmLine, Context>();
 
     protected List<Spin2PAsmLine> source = new ArrayList<>();
+    protected List<Spin2PAsmDebugLine> debugSource = new ArrayList<>();
 
     public Spin2PasmCompiler(Context scope, Spin2Compiler compiler) {
         this.scope = scope;
@@ -223,18 +224,27 @@ public abstract class Spin2PasmCompiler {
                 if (node.modifier != null) {
                     throw new CompilerException("not allowed", node.modifier);
                 }
-                int debugIndex = compiler.debugStatements.size() + 1;
-                if (debugIndex >= 255) {
-                    throw new CompilerException("too much debug statements", node);
-                }
-                parameters.add(new Spin2PAsmExpression("#", new NumberLiteral(debugIndex), null));
 
                 List<Token> tokens = new ArrayList<>(node.getTokens());
                 if (node.label != null) {
                     tokens.remove(node.label);
                 }
                 Spin2PAsmDebugLine debugLine = Spin2PAsmDebugLine.buildFrom(pasmLine.getScope(), tokens);
+                debugSource.add(debugLine);
                 compiler.debugStatements.add(debugLine);
+
+                parameters.add(new Spin2PAsmExpression("#", new NumberLiteral(0) {
+
+                    @Override
+                    public Number getNumber() {
+                        int index = compiler.debugStatements.indexOf(debugLine) + 1;
+                        if (index >= 255) {
+                            throw new CompilerException("too much debug statements", node);
+                        }
+                        return Long.valueOf(index);
+                    }
+
+                }, null));
             }
         } catch (CompilerException e) {
             throw e;

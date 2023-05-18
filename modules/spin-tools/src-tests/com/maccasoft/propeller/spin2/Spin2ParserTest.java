@@ -257,6 +257,38 @@ class Spin2ParserTest {
     }
 
     @Test
+    void testObjectParameters() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0 : \"file0\" | par0 = 1, par1 = 1\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- ObjectsNode [OBJ]\n"
+            + "    +-- ObjectNode name=obj0 file=\"file0\" [obj0 : \"file0\" | par0 = 1, par1 = 1]\n"
+            + "        +-- ParameterNode identifier=par0 [par0 = 1]\n"
+            + "            +-- expression = ExpressionNode [1]\n"
+            + "        +-- ParameterNode identifier=par1 [par1 = 1]\n"
+            + "            +-- expression = ExpressionNode [1]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testObjectNodeToString() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "OBJ\n"
+            + "    obj0 : \"file0\"\n"
+            + "    obj1 : \"file0\" | par0 = 1, par1 = 1\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals("    obj0 : \"file0\"", root.getChild(0).getChild(0).toString());
+        Assertions.assertEquals("    obj1 : \"file0\" | par0 = 1, par1 = 1", root.getChild(0).getChild(1).toString());
+    }
+
+    @Test
     void testParseObjects() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "OBJ\n"

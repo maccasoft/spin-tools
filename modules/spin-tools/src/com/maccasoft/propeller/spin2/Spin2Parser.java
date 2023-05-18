@@ -396,6 +396,7 @@ public class Spin2Parser extends Parser {
     void parseObject(Node parent) {
         int state = 1;
         ObjectNode object = null;
+        ObjectNode.ParameterNode param = null;
 
         Token token;
         while ((token = nextToken()).type != Token.EOF) {
@@ -427,7 +428,7 @@ public class Spin2Parser extends Parser {
                 case 4:
                     object.addToken(token);
                     object.file = token;
-                    state = 8;
+                    state = 6;
                     break;
 
                 case 5:
@@ -439,7 +440,44 @@ public class Spin2Parser extends Parser {
                     object.count.addToken(token);
                     break;
 
+                case 6:
+                    object.addToken(token);
+                    if ("|".equals(token.getText())) {
+                        state = 7;
+                        break;
+                    }
+                    state = 10;
+                    break;
+
+                case 7:
+                    param = new ObjectNode.ParameterNode(object);
+                    param.identifier = token;
+                    param.addToken(token);
+                    state = 8;
+                    break;
+
                 case 8:
+                    object.addToken(token);
+                    if ("=".equals(token.getText())) {
+                        param.expression = new ExpressionNode(param);
+                        state = 9;
+                        break;
+                    }
+                    state = 10;
+                    break;
+
+                case 9:
+                    if (",".equals(token.getText())) {
+                        object.addToken(token);
+                        param = null;
+                        state = 7;
+                        break;
+                    }
+                    param.addToken(token);
+                    param.expression.addToken(token);
+                    break;
+
+                case 10:
                     object.addToken(token);
                     break;
             }

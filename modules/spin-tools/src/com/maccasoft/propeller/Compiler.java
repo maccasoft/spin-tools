@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.internal.FileUtils;
@@ -28,22 +29,48 @@ public abstract class Compiler {
 
     public static class ObjectInfo {
 
+        public File file;
         public ObjectCompiler compiler;
+        public Map<String, Expression> parameters;
 
         public long offset;
         public Expression count;
 
-        public ObjectInfo(ObjectCompiler compiler) {
+        public ObjectInfo(File file, ObjectCompiler compiler, Map<String, Expression> parameters) {
+            this.file = file;
             this.compiler = compiler;
+            this.parameters = parameters;
         }
 
-        public ObjectInfo(ObjectCompiler compiler, Expression count) {
-            this.compiler = compiler;
+        public ObjectInfo(ObjectInfo info, Expression count) {
+            this.file = info.file;
+            this.compiler = info.compiler;
+            this.parameters = info.parameters;
             this.count = count;
         }
 
         public boolean hasErrors() {
             return compiler.hasErrors();
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(file, parameters);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            ObjectInfo other = (ObjectInfo) obj;
+            return Objects.equals(file, other.file) && Objects.equals(parameters, other.parameters);
         }
 
     }
@@ -135,7 +162,7 @@ public abstract class Compiler {
 
     public abstract SpinObject compile(File rootFile, Node root);
 
-    public ObjectInfo getObjectInfo(String fileName) {
+    public ObjectInfo getObjectInfo(String fileName, Map<String, Expression> parameters) {
         return null;
     }
 

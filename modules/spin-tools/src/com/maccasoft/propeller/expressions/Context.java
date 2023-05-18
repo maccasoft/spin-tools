@@ -15,7 +15,7 @@ public class Context {
     final boolean caseSensitive;
 
     Map<String, Expression> symbols = new HashMap<>();
-    Map<String, Expression> caseInsensitivesymbols = new CaseInsensitiveMap<>();
+    Map<String, Expression> caseInsensitiveSymbols = new CaseInsensitiveMap<>();
 
     Map<String, List<Token>> defines = new HashMap<>();
     Map<String, List<Token>> caseInsensitiveDefines = new CaseInsensitiveMap<>();
@@ -39,9 +39,9 @@ public class Context {
     Context(Context parent, boolean caseSensitive) {
         this.parent = parent;
         this.caseSensitive = caseSensitive;
-        caseInsensitivesymbols.put("$", new ContextLiteral(this));
-        caseInsensitivesymbols.put("@$", new ObjectContextLiteral(this));
-        caseInsensitivesymbols.put("@@$", new MemoryContextLiteral(this));
+        caseInsensitiveSymbols.put("$", new ContextLiteral(this));
+        caseInsensitiveSymbols.put("@$", new ObjectContextLiteral(this));
+        caseInsensitiveSymbols.put("@@$", new MemoryContextLiteral(this));
     }
 
     public Context getParent() {
@@ -52,15 +52,24 @@ public class Context {
         return caseSensitive;
     }
 
+    public void addAll(Map<String, Expression> map) {
+        if (caseSensitive) {
+            symbols.putAll(map);
+        }
+        else {
+            caseInsensitiveSymbols.putAll(map);
+        }
+    }
+
     public void addBuiltinSymbol(String name, Expression value) {
-        if (caseInsensitivesymbols.containsKey(name)) {
+        if (caseInsensitiveSymbols.containsKey(name)) {
             throw new RuntimeException("symbol " + name + " already defined");
         }
-        caseInsensitivesymbols.put(name, value);
+        caseInsensitiveSymbols.put(name, value);
     }
 
     public void addSymbol(String name, Expression value) {
-        if (caseInsensitivesymbols.containsKey(name)) {
+        if (caseInsensitiveSymbols.containsKey(name)) {
             throw new RuntimeException("symbol " + name + " already defined");
         }
         if (caseSensitive) {
@@ -70,7 +79,7 @@ public class Context {
             symbols.put(name, value);
         }
         else {
-            caseInsensitivesymbols.put(name, value);
+            caseInsensitiveSymbols.put(name, value);
         }
     }
 
@@ -79,7 +88,7 @@ public class Context {
             symbols.put(name, value);
         }
         else {
-            caseInsensitivesymbols.put(name, value);
+            caseInsensitiveSymbols.put(name, value);
         }
     }
 
@@ -92,7 +101,7 @@ public class Context {
     }
 
     public Expression getLocalSymbol(String name) {
-        Expression exp = caseInsensitivesymbols.get(name);
+        Expression exp = caseInsensitiveSymbols.get(name);
         if (exp == null && caseSensitive) {
             exp = symbols.get(name);
         }
@@ -133,7 +142,7 @@ public class Context {
     }
 
     public boolean hasSymbol(String name) {
-        boolean result = caseInsensitivesymbols.containsKey(name);
+        boolean result = caseInsensitiveSymbols.containsKey(name);
         if (result == false && caseSensitive) {
             result = symbols.containsKey(name);
         }

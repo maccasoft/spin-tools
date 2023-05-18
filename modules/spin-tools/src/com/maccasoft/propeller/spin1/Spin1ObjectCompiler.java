@@ -868,7 +868,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
             }
             String fileName = token.getText().substring(1, token.getText().length() - 1);
 
-            ObjectInfo info = compiler.getObjectInfo(fileName);
+            ObjectInfo info = compiler.getObjectInfo(fileName, Collections.emptyMap());
             if (info == null) {
                 logMessage(new CompilerException("object " + token + " not found", token));
                 return;
@@ -878,7 +878,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
                 return;
             }
 
-            objects.put(name, new ObjectInfo(info.compiler, count));
+            objects.put(name, new ObjectInfo(info, count));
 
             for (Entry<String, Expression> entry : info.compiler.getPublicSymbols().entrySet()) {
                 if (!(entry.getValue() instanceof Method)) {

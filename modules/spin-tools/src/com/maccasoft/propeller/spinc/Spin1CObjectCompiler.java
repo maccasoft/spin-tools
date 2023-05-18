@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spinc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -256,7 +257,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
 
                 String fileName = token.getText().substring(1, token.getText().length() - 1);
 
-                ObjectInfo info = compiler.getObjectInfo(fileName);
+                ObjectInfo info = compiler.getObjectInclude(fileName, Collections.emptyMap());
                 if (info == null) {
                     logMessage(new CompilerException("object " + token + " not found", token));
                     return;
@@ -581,7 +582,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
 
             ObjectInfo info = objects.get(type);
             if (info == null) {
-                info = this.compiler.getObjectInfo(type);
+                info = this.compiler.getObjectInfo(type, Collections.emptyMap());
                 if (info == null) {
                     logMessage(new CompilerException("object '" + type + "' not found", token));
                     return;
@@ -606,7 +607,7 @@ public class Spin1CObjectCompiler extends Spin1PAsmCompiler implements ObjectCom
                 throw new CompilerException("expecting end of statement", iter.next());
             }
 
-            objects.put(identifier.getText(), new ObjectInfo(info.compiler, size));
+            objects.put(identifier.getText(), new ObjectInfo(info, size));
 
             try {
                 int count = size.getNumber().intValue();
