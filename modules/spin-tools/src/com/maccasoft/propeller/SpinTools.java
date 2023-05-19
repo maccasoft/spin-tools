@@ -1867,11 +1867,17 @@ public class SpinTools {
                         archiveStream.putNextEntry(new ZipEntry(file.getName()));
                     }
 
-                    EditorTab tab = findFileEditorTab(file);
-                    if (tab != null) {
-                        archiveStream.write(tab.getEditorText().getBytes());
+                    boolean found = false;
+                    for (int i = 0; i < tabFolder.getItemCount(); i++) {
+                        EditorTab tab = (EditorTab) tabFolder.getItem(i).getData();
+                        File localFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText());
+                        if (localFile.equals(file)) {
+                            archiveStream.write(tab.getEditorText().getBytes());
+                            found = true;
+                            break;
+                        }
                     }
-                    else {
+                    if (!found) {
                         archiveStream.write(FileUtils.loadBinaryFromFile(file));
                     }
                 }
