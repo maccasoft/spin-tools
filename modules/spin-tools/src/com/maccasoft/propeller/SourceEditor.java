@@ -663,46 +663,50 @@ public class SourceEditor {
                         Node parent = context.getParent();
                         int index = parent.getChilds().indexOf(context);
                         while (index > 0) {
-                            DataLineNode obj = (DataLineNode) parent.getChild(index);
-                            if (obj.label != null) {
-                                if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                    SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
-                                    display.asyncExec(new Runnable() {
+                            if (parent.getChild(index) instanceof DataLineNode) {
+                                DataLineNode obj = (DataLineNode) parent.getChild(index);
+                                if (obj.label != null) {
+                                    if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
+                                        SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
+                                        display.asyncExec(new Runnable() {
 
-                                        @Override
-                                        public void run() {
-                                            fireNavigateToEvent(element);
-                                        }
+                                            @Override
+                                            public void run() {
+                                                fireNavigateToEvent(element);
+                                            }
 
-                                    });
-                                    fired = true;
-                                    break;
-                                }
-                                if (!obj.label.getText().startsWith(".") && !obj.label.getText().startsWith(":")) {
-                                    break;
+                                        });
+                                        fired = true;
+                                        break;
+                                    }
+                                    if (!obj.label.getText().startsWith(".") && !obj.label.getText().startsWith(":")) {
+                                        break;
+                                    }
                                 }
                             }
                             index--;
                         }
                         index = parent.getChilds().indexOf(context) + 1;
                         while (index < parent.getChildCount()) {
-                            DataLineNode obj = (DataLineNode) parent.getChild(index);
-                            if (obj.label != null) {
-                                if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
-                                    SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
-                                    display.asyncExec(new Runnable() {
+                            if (parent.getChild(index) instanceof DataLineNode) {
+                                DataLineNode obj = (DataLineNode) parent.getChild(index);
+                                if (obj.label != null) {
+                                    if (obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
+                                        SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
+                                        display.asyncExec(new Runnable() {
 
-                                        @Override
-                                        public void run() {
-                                            fireNavigateToEvent(element);
-                                        }
+                                            @Override
+                                            public void run() {
+                                                fireNavigateToEvent(element);
+                                            }
 
-                                    });
-                                    fired = true;
-                                    break;
-                                }
-                                if (!obj.label.getText().startsWith(".") && !obj.label.getText().startsWith(":")) {
-                                    break;
+                                        });
+                                        fired = true;
+                                        break;
+                                    }
+                                    if (!obj.label.getText().startsWith(".") && !obj.label.getText().startsWith(":")) {
+                                        break;
+                                    }
                                 }
                             }
                             index++;
@@ -714,6 +718,9 @@ public class SourceEditor {
                         for (Node node : root.getChilds()) {
                             if (node instanceof ConstantsNode) {
                                 for (Node child : node.getChilds()) {
+                                    if (!(child instanceof ConstantNode)) {
+                                        continue;
+                                    }
                                     ConstantNode obj = (ConstantNode) child;
                                     if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
@@ -731,6 +738,9 @@ public class SourceEditor {
                             }
                             else if (node instanceof DataNode) {
                                 for (Node child : node.getChilds()) {
+                                    if (!(child instanceof DataLineNode)) {
+                                        continue;
+                                    }
                                     DataLineNode obj = (DataLineNode) child;
                                     if (obj.label != null && obj.label.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.label.line, obj.label.column);
@@ -765,6 +775,9 @@ public class SourceEditor {
                             }
                             else if (node instanceof ConstantsNode) {
                                 for (Node child : node.getChilds()) {
+                                    if (!(child instanceof ConstantNode)) {
+                                        continue;
+                                    }
                                     ConstantNode obj = (ConstantNode) child;
                                     if (obj.identifier != null && obj.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                                         SourceElement element = new SourceElement(null, obj.identifier.line, obj.identifier.column);
