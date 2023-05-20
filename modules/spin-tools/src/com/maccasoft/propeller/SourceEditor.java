@@ -55,6 +55,8 @@ import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.events.VerifyEvent;
@@ -422,11 +424,19 @@ public class SourceEditor {
             }
         });
 
+        styledText.getVerticalBar().addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                styledText.redraw();
+            }
+        });
+
         styledText.getContent().addTextChangeListener(new TextChangeListener() {
 
             @Override
             public void textSet(TextChangedEvent event) {
-
+                styledText.redraw();
             }
 
             @Override
@@ -471,7 +481,7 @@ public class SourceEditor {
 
             @Override
             public void textChanged(TextChangedEvent event) {
-
+                styledText.redraw();
             }
         });
 
@@ -1291,35 +1301,41 @@ public class SourceEditor {
 
             @Override
             public void verifyKey(VerifyEvent e) {
-                if (proposalAdapter.isProposalPopupOpen()) {
-                    switch (e.keyCode) {
-                        case SWT.CR:
-                        case SWT.PAGE_DOWN:
-                        case SWT.PAGE_UP:
-                        case SWT.HOME:
-                        case SWT.END:
-                        case SWT.ARROW_LEFT:
-                        case SWT.ARROW_RIGHT:
-                            e.doit = false;
-                            return;
-                    }
-                }
                 try {
-                    if (e.keyCode == SWT.CR) {
-                        doAutoIndent();
-                        e.doit = false;
+                    if (proposalAdapter.isProposalPopupOpen()) {
+                        switch (e.keyCode) {
+                            case SWT.CR:
+                            case SWT.TAB:
+                            case SWT.PAGE_DOWN:
+                            case SWT.PAGE_UP:
+                            case SWT.HOME:
+                            case SWT.END:
+                            case SWT.ARROW_LEFT:
+                            case SWT.ARROW_RIGHT:
+                                e.doit = false;
+                                return;
+                        }
                     }
-                    else if (e.keyCode == SWT.TAB) {
-                        e.doit = false;
-                        if ((e.stateMask & SWT.CTRL) != 0) {
-                            return;
-                        }
-                        if ((e.stateMask & SWT.SHIFT) != 0) {
-                            doBacktab();
+                    else {
+                        switch (e.keyCode) {
+                            case SWT.CR:
+                                doAutoIndent();
+                                e.doit = false;
+                                break;
+                            case SWT.TAB:
+                                if ((e.stateMask & SWT.MODIFIER_MASK) == SWT.MOD2) {
+                                    doBacktab();
 
-                        }
-                        else {
-                            doTab();
+                                }
+                                else if ((e.stateMask & SWT.MODIFIER_MASK) == 0) {
+                                    doTab();
+                                }
+                                e.doit = false;
+                                break;
+                            case SWT.PAGE_DOWN:
+                            case SWT.PAGE_UP:
+                                styledText.redraw();
+                                break;
                         }
                     }
                 } catch (Exception ex) {
@@ -2213,7 +2229,7 @@ public class SourceEditor {
     }
 
     public void redraw() {
-        styledText.redrawRange(0, styledText.getCharCount(), false);
+        styledText.redraw();
         ruler.redraw();
         overview.redraw();
     }
