@@ -1022,6 +1022,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         tokens.add(new TokenMarker(token, TokenId.STRING));
                     }
                     else {
+                        int dot = token.getText().indexOf('.');
                         TokenId id = locals.get(token.getText());
                         if (id == null && token.getText().startsWith("@")) {
                             id = locals.get(token.getText().substring(1));
@@ -1049,9 +1050,32 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                                 }
                             }
                         }
+                        if (id == null && dot != -1) {
+                            String left = token.getText().substring(0, dot);
+                            TokenId leftId = locals.get(left);
+                            if (leftId == null && left.startsWith("@")) {
+                                leftId = locals.get(left.substring(1));
+                            }
+                            if (leftId == null) {
+                                leftId = symbols.get(left);
+                                if (leftId == null && left.startsWith("@")) {
+                                    leftId = symbols.get(left.substring(1));
+                                }
+                            }
+                            if (leftId != null) {
+                                tokens.add(new TokenMarker(token.start, token.start + dot, leftId));
+                            }
+
+                            switch (token.getText().substring(dot + 1).toUpperCase()) {
+                                case "LONG":
+                                case "WORD":
+                                case "BYTE":
+                                    tokens.add(new TokenMarker(token.start + dot + 1, token.stop, TokenId.TYPE));
+                                    break;
+                            }
+                        }
                         if (id != null) {
-                            if ((id == TokenId.METHOD_PUB || id == TokenId.CONSTANT) && token.getText().contains(".")) {
-                                int dot = token.getText().indexOf('.');
+                            if ((id == TokenId.METHOD_PUB || id == TokenId.CONSTANT) && dot != -1) {
                                 tokens.add(new TokenMarker(token.start, token.start + dot - 1, TokenId.OBJECT));
                                 tokens.add(new TokenMarker(token.start + dot + 1, token.stop, id));
                             }
