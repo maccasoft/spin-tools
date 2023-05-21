@@ -916,24 +916,25 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                     String qualifiedName = node.getText() + node.getChild(1).getText();
 
                     expression = context.getLocalSymbol(qualifiedName);
-                    if (expression != null) {
-                        Method methodExpression = (Method) expression;
-                        int parameters = methodExpression.getArgumentsCount();
-                        if (node.getChild(1).getChildCount() != parameters) {
-                            throw new CompilerException("expected " + parameters + " argument(s), found " + node.getChild(1).getChildCount(), node.getToken());
-                        }
-                        source.add(new Bytecode(context, new byte[] {
-                            (byte) (push ? 0b00000000 : 0b00000001),
-                        }, "ANCHOR"));
-                        for (int i = 0; i < parameters; i++) {
-                            source.addAll(compileBytecodeExpression(context, method, node.getChild(1).getChild(i), true));
-                        }
-                        source.addAll(compileConstantExpression(context, method, node.getChild(0)));
-                        source.add(new CallSub(context, methodExpression, true));
-                        Spin1Method calledMethod = (Spin1Method) methodExpression.getData(Spin1Method.class.getName());
-                        calledMethod.setCalledBy(method);
-                        return source;
+                    if (!(expression instanceof Method)) {
+                        throw new CompilerException("syntax error", node.getToken());
                     }
+                    Method methodExpression = (Method) expression;
+                    int parameters = methodExpression.getArgumentsCount();
+                    if (node.getChild(1).getChildCount() != parameters) {
+                        throw new CompilerException("expected " + parameters + " argument(s), found " + node.getChild(1).getChildCount(), node.getToken());
+                    }
+                    source.add(new Bytecode(context, new byte[] {
+                        (byte) (push ? 0b00000000 : 0b00000001),
+                    }, "ANCHOR"));
+                    for (int i = 0; i < parameters; i++) {
+                        source.addAll(compileBytecodeExpression(context, method, node.getChild(1).getChild(i), true));
+                    }
+                    source.addAll(compileConstantExpression(context, method, node.getChild(0)));
+                    source.add(new CallSub(context, methodExpression, true));
+                    Spin1Method calledMethod = (Spin1Method) methodExpression.getData(Spin1Method.class.getName());
+                    calledMethod.setCalledBy(method);
+                    return source;
                 }
                 else if (isAddress(node.getText())) {
                     boolean popIndex = false;

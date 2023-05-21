@@ -1406,37 +1406,38 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                     if (expression == null && isAddress(qualifiedName)) {
                         expression = context.getLocalSymbol(qualifiedName.substring(1));
                     }
-                    if (expression != null) {
-                        Method methodExpression = (Method) expression;
-                        if (isAddress(node.getText())) {
-                            source.addAll(compileConstantExpression(context, method, node.getChild(0)));
-                            source.add(new SubAddress(context, methodExpression, true));
-                            Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
-                            calledMethod.setCalledBy(method);
-                        }
-                        else {
-                            Spin2StatementNode childNode = node.getChild(1);
-
-                            int expected = methodExpression.getArgumentsCount();
-                            int actual = getArgumentsCount(context, childNode);
-                            if (expected != actual) {
-                                throw new CompilerException("expected " + expected + " argument(s), found " + actual, node.getToken());
-                            }
-                            if (push && methodExpression.getReturnsCount() == 0) {
-                                throw new RuntimeException("method doesn't return any value");
-                            }
-
-                            source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
-                            for (int i = 0; i < childNode.getChildCount(); i++) {
-                                source.addAll(compileConstantExpression(context, method, childNode.getChild(i)));
-                            }
-                            source.addAll(compileConstantExpression(context, method, node.getChild(0)));
-                            source.add(new CallSub(context, methodExpression, true));
-                            Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
-                            calledMethod.setCalledBy(method);
-                        }
-                        return source;
+                    if (!(expression instanceof Method)) {
+                        throw new CompilerException("syntax error", node.getToken());
                     }
+                    Method methodExpression = (Method) expression;
+                    if (isAddress(node.getText())) {
+                        source.addAll(compileConstantExpression(context, method, node.getChild(0)));
+                        source.add(new SubAddress(context, methodExpression, true));
+                        Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
+                        calledMethod.setCalledBy(method);
+                    }
+                    else {
+                        Spin2StatementNode childNode = node.getChild(1);
+
+                        int expected = methodExpression.getArgumentsCount();
+                        int actual = getArgumentsCount(context, childNode);
+                        if (expected != actual) {
+                            throw new CompilerException("expected " + expected + " argument(s), found " + actual, node.getToken());
+                        }
+                        if (push && methodExpression.getReturnsCount() == 0) {
+                            throw new RuntimeException("method doesn't return any value");
+                        }
+
+                        source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
+                        for (int i = 0; i < childNode.getChildCount(); i++) {
+                            source.addAll(compileConstantExpression(context, method, childNode.getChild(i)));
+                        }
+                        source.addAll(compileConstantExpression(context, method, node.getChild(0)));
+                        source.add(new CallSub(context, methodExpression, true));
+                        Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
+                        calledMethod.setCalledBy(method);
+                    }
+                    return source;
                 }
                 else if (expression instanceof Method) {
                     if (isAddress(node.getText())) {
