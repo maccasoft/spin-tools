@@ -21,6 +21,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
 
@@ -152,6 +153,7 @@ public abstract class SourceTokenMarker {
 
     protected boolean caseSensitive;
     protected String constantSeparator;
+    protected String localLabelPrefix;
 
     protected Map<String, TokenId> externals = new CaseInsensitiveMap<>();
     protected Map<String, TokenId> symbols = new CaseInsensitiveMap<>();
@@ -163,6 +165,8 @@ public abstract class SourceTokenMarker {
 
     public void setSourceRoot(Node root) {
         this.root = root;
+        this.constantSeparator = "";
+        this.localLabelPrefix = "";
     }
 
     public boolean isCaseSensitive() {
@@ -534,7 +538,37 @@ public abstract class SourceTokenMarker {
         }
 
         boolean address = textToken.startsWith("@");
-        String token = address ? textToken.substring(1) : textToken;
+        String filterText = address ? textToken.substring(1) : textToken;
+
+        context.accept(new NodeVisitor() {
+
+            @Override
+            public boolean visitMethod(MethodNode node) {
+                for (Node child : node.getParameters()) {
+                    String text = child.getText();
+                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    }
+                }
+
+                for (Node child : node.getLocalVariables()) {
+                    String text = child.getText();
+                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    }
+                }
+
+                for (Node child : node.getReturnVariables()) {
+                    String text = child.getText();
+                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                    }
+                }
+
+                return false;
+            }
+
+        });
 
         root.accept(new NodeVisitor() {
 
@@ -542,7 +576,7 @@ public abstract class SourceTokenMarker {
             public boolean visitMethod(MethodNode node) {
                 if (node.getName() != null && !contextMethodName.equals(node.getName().getText())) {
                     String text = node.getName().getText();
-                    if (text.toUpperCase().contains(token)) {
+                    if (StringUtils.containsIgnoreCase(text, filterText)) {
                         String content = getMethodInsert(node);
                         int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
                         proposals.add(new ContentProposal(content, text, getMethodDocument(node), cursorPosition));
@@ -555,7 +589,7 @@ public abstract class SourceTokenMarker {
             public boolean visitFunction(FunctionNode node) {
                 if (node.getIdentifier() != null && !contextMethodName.equals(node.getIdentifier().getText())) {
                     String text = node.getIdentifier().getText();
-                    if (text.toUpperCase().contains(token)) {
+                    if (StringUtils.containsIgnoreCase(text, filterText)) {
                         String content = getMethodInsert(node);
                         int cursorPosition = content.endsWith("()") ? content.length() : (content.indexOf('(') + 1);
                         proposals.add(new ContentProposal(content, text, "", cursorPosition));
@@ -580,7 +614,7 @@ public abstract class SourceTokenMarker {
                         if (iter.hasNext()) {
                             Token file = iter.next();
                             String name = file.getText().substring(1, file.getText().length() - 1);
-                            if (name.toUpperCase().contains(token)) {
+                            if (StringUtils.containsIgnoreCase(name, filterText)) {
                                 proposals.add(new ContentProposal(name, name, ""));
                             }
                         }
@@ -594,26 +628,20 @@ public abstract class SourceTokenMarker {
                     return;
                 }
                 String text = node.name.getText();
-                if (text.toUpperCase().contains(token)) {
-                    if (node.count != null) {
-                        proposals.add(new ContentProposal(text + "[0]", text, ""));
-                    }
-                    else {
-                        proposals.add(new ContentProposal(text, text, ""));
-                    }
+                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                    proposals.add(new ContentProposal(text, text, ""));
                 }
-                return;
             }
 
         });
 
-        int dot = token.indexOf('.');
+        int dot = filterText.indexOf('.');
         if (dot != -1) {
-            String objectName = token.substring(0, dot);
+            String objectName = filterText.substring(0, dot);
             if (objectName.indexOf('[') != -1) {
                 objectName = objectName.substring(0, objectName.indexOf('['));
             }
-            String refName = objectName + token.substring(dot);
+            String refName = objectName + filterText.substring(dot);
             root.accept(new NodeVisitor() {
 
                 @Override
@@ -630,7 +658,7 @@ public abstract class SourceTokenMarker {
                             public boolean visitFunction(FunctionNode node) {
                                 if (node.getIdentifier() != null) {
                                     String text = name + "." + node.getIdentifier().getText();
-                                    if (text.toUpperCase().contains(refName)) {
+                                    if (StringUtils.containsIgnoreCase(text, refName)) {
                                         proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                     }
                                 }
@@ -644,7 +672,7 @@ public abstract class SourceTokenMarker {
                                 }
                                 if ("PUB".equalsIgnoreCase(node.getType().getText())) {
                                     String text = name + "." + node.getName().getText();
-                                    if (text.toUpperCase().contains(refName)) {
+                                    if (StringUtils.containsIgnoreCase(text, refName)) {
                                         proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                     }
                                 }
@@ -671,7 +699,7 @@ public abstract class SourceTokenMarker {
                         public boolean visitFunction(FunctionNode node) {
                             if (node.getIdentifier() != null) {
                                 String text = objectNode.name.getText() + "." + node.getIdentifier().getText();
-                                if (text.toUpperCase().contains(refName)) {
+                                if (StringUtils.containsIgnoreCase(text, refName)) {
                                     proposals.add(new ContentProposal(getMethodInsert(node), text, ""));
                                 }
                             }
@@ -685,95 +713,11 @@ public abstract class SourceTokenMarker {
                             }
                             if ("PUB".equalsIgnoreCase(node.getType().getText())) {
                                 String text = objectNode.name.getText() + "." + node.getName().getText();
-                                if (text.toUpperCase().contains(refName)) {
+                                if (StringUtils.containsIgnoreCase(text, refName)) {
                                     proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
                                 }
                             }
                             return false;
-                        }
-
-                    });
-                }
-            });
-        }
-
-        context.accept(new NodeVisitor() {
-
-            @Override
-            public boolean visitMethod(MethodNode node) {
-                for (Node child : node.getParameters()) {
-                    String text = child.getText();
-                    if (text.toUpperCase().contains(token)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
-                    }
-                }
-
-                for (Node child : node.getReturnVariables()) {
-                    String text = child.getText();
-                    if (text.toUpperCase().contains(token)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
-                    }
-                }
-
-                for (Node child : node.getLocalVariables()) {
-                    String text = child.getText();
-                    if (text.toUpperCase().contains(token)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
-                    }
-                }
-
-                return false;
-            }
-
-        });
-
-        root.accept(new NodeVisitor() {
-
-            @Override
-            public void visitConstant(ConstantNode node) {
-                if (node.identifier != null) {
-                    String text = node.identifier.getText();
-                    if (text.toUpperCase().contains(token)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
-                    }
-                }
-            }
-
-            @Override
-            public void visitVariable(VariableNode node) {
-                if (node.getIdentifier() != null) {
-                    String text = node.getIdentifier().getText();
-                    if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
-                        proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
-                    }
-                }
-            }
-
-        });
-
-        if (token.indexOf(constantSeparator) != -1) {
-            root.accept(new NodeVisitor() {
-
-                @Override
-                public void visitObject(ObjectNode objectNode) {
-                    if (objectNode.name == null || objectNode.file == null) {
-                        return;
-                    }
-                    String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
-                    Node objectRoot = getObjectTree(fileName);
-                    if (objectRoot == null) {
-                        return;
-                    }
-                    objectRoot.accept(new NodeVisitor() {
-
-                        @Override
-                        public void visitConstant(ConstantNode node) {
-                            if (node.identifier != null) {
-                                String text = objectNode.name.getText() + constantSeparator + node.identifier.getText();
-                                if (text.toUpperCase().contains(token)) {
-                                    proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
-                                }
-                            }
                         }
 
                     });
@@ -787,9 +731,125 @@ public abstract class SourceTokenMarker {
             public void visitDataLine(DataLineNode node) {
                 if (node.label != null) {
                     String text = node.label.getText();
-                    if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
+                    if (!text.startsWith(localLabelPrefix) && StringUtils.containsIgnoreCase(text, filterText)) {
                         proposals.add(new ContentProposal(text, text, null));
                     }
+                }
+            }
+
+        });
+
+        return proposals;
+    }
+
+    public List<IContentProposal> getObjectsProposals(Node context, String textToken) {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+        if (root == null) {
+            return proposals;
+        }
+
+        textToken = textToken.startsWith("@") ? textToken.substring(1) : textToken;
+
+        int dot = textToken.indexOf('.');
+        if (dot != -1) {
+            String objectName = textToken.substring(0, dot);
+            if (objectName.indexOf('[') != -1) {
+                objectName = objectName.substring(0, objectName.indexOf('['));
+            }
+            textToken = objectName + textToken.substring(dot);
+        }
+
+        String filterText = textToken;
+
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitVariable(VariableNode node) {
+                if (node.getType() == null || node.getIdentifier() == null) {
+                    return;
+                }
+                Node objectRoot = getObjectTree(node.getType().getText());
+                if (objectRoot != null) {
+                    String name = node.getIdentifier().getText();
+                    if (StringUtils.containsIgnoreCase(name, filterText)) {
+                        proposals.add(new ContentProposal(name, name, ""));
+                    }
+                    if (dot != -1) {
+                        objectRoot.accept(new NodeVisitor() {
+
+                            @Override
+                            public boolean visitFunction(FunctionNode node) {
+                                if (node.getIdentifier() != null) {
+                                    String text = name + "." + node.getIdentifier().getText();
+                                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                        proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
+                                    }
+                                }
+                                return false;
+                            }
+
+                            @Override
+                            public boolean visitMethod(MethodNode node) {
+                                if (node.getType() == null || node.getName() == null) {
+                                    return false;
+                                }
+                                if ("PUB".equalsIgnoreCase(node.getType().getText())) {
+                                    String text = name + "." + node.getName().getText();
+                                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                        proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
+                                    }
+                                }
+                                return false;
+                            }
+
+                        });
+                    }
+                }
+            }
+
+            @Override
+            public void visitObject(ObjectNode objectNode) {
+                if (objectNode.name == null || objectNode.file == null) {
+                    return;
+                }
+                String name = objectNode.name.getText();
+                if (StringUtils.containsIgnoreCase(name, filterText)) {
+                    proposals.add(new ContentProposal(name, name, ""));
+                }
+                if (dot != -1) {
+                    String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                    Node objectRoot = getObjectTree(fileName);
+                    if (objectRoot == null) {
+                        return;
+                    }
+                    objectRoot.accept(new NodeVisitor() {
+
+                        @Override
+                        public boolean visitFunction(FunctionNode node) {
+                            if (node.getIdentifier() != null) {
+                                String text = name + "." + node.getIdentifier().getText();
+                                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                    proposals.add(new ContentProposal(getMethodInsert(node), text, ""));
+                                }
+                            }
+                            return false;
+                        }
+
+                        @Override
+                        public boolean visitMethod(MethodNode node) {
+                            if (node.getType() == null || node.getName() == null) {
+                                return false;
+                            }
+                            if ("PUB".equalsIgnoreCase(node.getType().getText())) {
+                                String text = name + "." + node.getName().getText();
+                                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                    proposals.add(new ContentProposal(getMethodInsert(node), text, getMethodDocument(node)));
+                                }
+                            }
+                            return false;
+                        }
+
+                    });
                 }
             }
 
@@ -822,11 +882,13 @@ public abstract class SourceTokenMarker {
         return null;
     }
 
-    public List<IContentProposal> getConstantsProposals(Node context, String token) {
+    public List<IContentProposal> getConstantsProposals(Node context, String filterText) {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
         if (root == null) {
             return proposals;
         }
+
+        int dot = filterText.indexOf(constantSeparator);
 
         root.accept(new NodeVisitor() {
 
@@ -836,7 +898,7 @@ public abstract class SourceTokenMarker {
                     DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
                     if (define.getIdentifier() != null) {
                         String text = define.getIdentifier().getText();
-                        if (text.toUpperCase().contains(token)) {
+                        if (StringUtils.containsIgnoreCase(text, filterText)) {
                             proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                         }
                     }
@@ -847,80 +909,83 @@ public abstract class SourceTokenMarker {
             public void visitConstant(ConstantNode node) {
                 if (node.identifier != null) {
                     String text = node.identifier.getText();
-                    if (text.toUpperCase().contains(token)) {
+                    if (StringUtils.containsIgnoreCase(text, filterText)) {
                         proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
                     }
                 }
             }
 
         });
-        root.accept(new NodeVisitor() {
 
-            @Override
-            public void visitDirective(DirectiveNode node) {
-                if (node instanceof DirectiveNode.IncludeNode) {
-                    DirectiveNode.IncludeNode include = (DirectiveNode.IncludeNode) node;
-                    if (include.getFile() == null) {
-                        return;
-                    }
+        if (dot != -1) {
+            root.accept(new NodeVisitor() {
 
-                    Node objectRoot = getObjectTree(include.getFileName());
-                    if (objectRoot != null) {
-                        objectRoot.accept(new NodeVisitor() {
+                @Override
+                public void visitDirective(DirectiveNode node) {
+                    if (node instanceof DirectiveNode.IncludeNode) {
+                        DirectiveNode.IncludeNode include = (DirectiveNode.IncludeNode) node;
+                        if (include.getFile() == null) {
+                            return;
+                        }
 
-                            @Override
-                            public void visitDirective(DirectiveNode node) {
-                                if (node instanceof DirectiveNode.DefineNode) {
-                                    DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
-                                    if (define.getIdentifier() != null) {
-                                        String text = define.getIdentifier().getText();
-                                        if (text.toUpperCase().contains(token)) {
-                                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                        Node objectRoot = getObjectTree(include.getFileName());
+                        if (objectRoot != null) {
+                            objectRoot.accept(new NodeVisitor() {
+
+                                @Override
+                                public void visitDirective(DirectiveNode node) {
+                                    if (node instanceof DirectiveNode.DefineNode) {
+                                        DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
+                                        if (define.getIdentifier() != null) {
+                                            String text = define.getIdentifier().getText();
+                                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                                proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            @Override
-                            public void visitConstant(ConstantNode node) {
-                                if (node.identifier != null) {
-                                    String text = node.identifier.getText();
-                                    if (text.toUpperCase().contains(token)) {
-                                        proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
+                                @Override
+                                public void visitConstant(ConstantNode node) {
+                                    if (node.identifier != null) {
+                                        String text = node.identifier.getText();
+                                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                            proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
+                                        }
                                     }
                                 }
-                            }
 
-                        });
-                    }
-                }
-            }
-
-            @Override
-            public void visitObject(ObjectNode objectNode) {
-                if (objectNode.name == null || objectNode.file == null) {
-                    return;
-                }
-                String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
-                Node objectRoot = getObjectTree(fileName);
-                if (objectRoot == null) {
-                    return;
-                }
-                objectRoot.accept(new NodeVisitor() {
-
-                    @Override
-                    public void visitConstant(ConstantNode node) {
-                        if (node.identifier != null) {
-                            String text = objectNode.name.getText() + "." + node.identifier.getText();
-                            if (text.toUpperCase().contains(token)) {
-                                proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
-                            }
+                            });
                         }
                     }
+                }
 
-                });
-            }
-        });
+                @Override
+                public void visitObject(ObjectNode objectNode) {
+                    if (objectNode.name == null || objectNode.file == null) {
+                        return;
+                    }
+                    String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                    Node objectRoot = getObjectTree(fileName);
+                    if (objectRoot == null) {
+                        return;
+                    }
+                    objectRoot.accept(new NodeVisitor() {
+
+                        @Override
+                        public void visitConstant(ConstantNode node) {
+                            if (node.identifier != null) {
+                                String text = objectNode.name.getText() + constantSeparator + node.identifier.getText();
+                                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                    proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
+                                }
+                            }
+                        }
+
+                    });
+                }
+            });
+        }
 
         return proposals;
     }
@@ -1055,64 +1120,58 @@ public abstract class SourceTokenMarker {
         return node;
     }
 
-    public List<IContentProposal> getPAsmProposals(Node ref, String token) {
-        List<String> pasmLabels = new ArrayList<String>();
+    public List<IContentProposal> getPAsmProposals(Node ref, String filterText) {
         List<IContentProposal> proposals = new ArrayList<IContentProposal>();
-
-        if (root != null) {
-            root.accept(new NodeVisitor() {
-
-                @Override
-                public void visitConstant(ConstantNode node) {
-                    if (node.identifier != null) {
-                        String text = node.identifier.getText();
-                        if (text.toUpperCase().contains(token)) {
-                            proposals.add(new ContentProposal(text, text, null));
-                        }
-                    }
-                }
-
-                @Override
-                public boolean visitData(DataNode node) {
-                    String lastLabel = "";
-
-                    for (Node child : node.getChilds()) {
-                        DataLineNode lineNode = (DataLineNode) child;
-                        if (lineNode.label != null) {
-                            String text = lineNode.label.getText();
-                            if (text.startsWith(".")) {
-                                pasmLabels.add(lastLabel + text);
-                            }
-                            else {
-                                lastLabel = text;
-                            }
-                        }
-                    }
-
-                    return true;
-                }
-
-            });
+        if (root == null) {
+            return proposals;
         }
 
-        for (Node node : root.getChilds()) {
-            if (node instanceof DataNode) {
+        List<String> pasmLabels = new ArrayList<String>();
+        int dot = filterText.indexOf(constantSeparator);
+
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public boolean visitData(DataNode node) {
                 String lastLabel = "";
+
                 for (Node child : node.getChilds()) {
                     DataLineNode lineNode = (DataLineNode) child;
                     if (lineNode.label != null) {
                         String text = lineNode.label.getText();
-                        if (!text.startsWith(".")) {
+                        if (text.startsWith(localLabelPrefix)) {
+                            pasmLabels.add(lastLabel + text);
+                        }
+                        else {
+                            lastLabel = text;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+        });
+
+        for (Node node : root.getChilds()) {
+            if (node instanceof DataNode) {
+                String lastLabel = "";
+
+                for (Node child : node.getChilds()) {
+                    DataLineNode lineNode = (DataLineNode) child;
+                    if (lineNode.label != null) {
+                        String text = lineNode.label.getText();
+                        if (!text.startsWith(localLabelPrefix)) {
                             lastLabel = text;
                         }
                     }
                     if (lineNode == ref) {
-                        String s1 = lastLabel + ".";
+                        String s1 = lastLabel + localLabelPrefix;
                         for (String s : pasmLabels) {
-                            if (s.startsWith(s1)) {
-                                if (s.substring(s1.length() - 1).toUpperCase().contains(token)) {
+                            if (StringUtils.startsWithIgnoreCase(s, s1)) {
+                                if (StringUtils.containsIgnoreCase(s.substring(s1.length() - 1), filterText)) {
                                     String text = s.substring(s1.length() - 1);
-                                    if (text.toUpperCase().contains(token)) {
+                                    if (StringUtils.containsIgnoreCase(text, filterText)) {
                                         proposals.add(new ContentProposal(text, text, null));
                                     }
                                 }
@@ -1130,13 +1189,101 @@ public abstract class SourceTokenMarker {
                     DataLineNode lineNode = (DataLineNode) child;
                     if (lineNode.label != null) {
                         String text = lineNode.label.getText();
-                        if (!text.startsWith(".") && text.toUpperCase().contains(token)) {
+                        if (!text.startsWith(localLabelPrefix) && StringUtils.containsIgnoreCase(text, filterText)) {
                             proposals.add(new ContentProposal(text, text, null));
                         }
                     }
                 }
             }
         }
+
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitConstant(ConstantNode node) {
+                if (node.identifier != null) {
+                    String text = node.identifier.getText();
+                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        proposals.add(new ContentProposal(text, text, null));
+                    }
+                }
+            }
+
+        });
+
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitDirective(DirectiveNode node) {
+                if (node instanceof DirectiveNode.IncludeNode) {
+                    DirectiveNode.IncludeNode include = (DirectiveNode.IncludeNode) node;
+                    if (include.getFile() == null) {
+                        return;
+                    }
+
+                    Node objectRoot = getObjectTree(include.getFileName());
+                    if (objectRoot != null && dot != -1) {
+                        objectRoot.accept(new NodeVisitor() {
+
+                            @Override
+                            public void visitDirective(DirectiveNode node) {
+                                if (node instanceof DirectiveNode.DefineNode) {
+                                    DirectiveNode.DefineNode define = (DirectiveNode.DefineNode) node;
+                                    if (define.getIdentifier() != null) {
+                                        String text = define.getIdentifier().getText();
+                                        if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                            proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                                        }
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void visitConstant(ConstantNode node) {
+                                if (node.identifier != null) {
+                                    String text = node.identifier.getText();
+                                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                        proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
+                                    }
+                                }
+                            }
+
+                        });
+                    }
+                }
+            }
+
+            @Override
+            public void visitObject(ObjectNode node) {
+                if (node.name == null || node.file == null) {
+                    return;
+                }
+                String name = node.name.getText();
+                if (StringUtils.containsIgnoreCase(name, filterText)) {
+                    proposals.add(new ContentProposal(name, name, ""));
+                }
+                if (dot != -1) {
+                    String fileName = node.file.getText().substring(1, node.file.getText().length() - 1);
+                    Node objectRoot = getObjectTree(fileName);
+                    if (objectRoot == null) {
+                        return;
+                    }
+                    objectRoot.accept(new NodeVisitor() {
+
+                        @Override
+                        public void visitConstant(ConstantNode node) {
+                            if (node.identifier != null) {
+                                String text = name + constantSeparator + node.identifier.getText();
+                                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                    proposals.add(new ContentProposal(node.identifier.getText(), text, "<b>" + node.getText() + "</b>"));
+                                }
+                            }
+                        }
+
+                    });
+                }
+            }
+        });
 
         return proposals;
     }

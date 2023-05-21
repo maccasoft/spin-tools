@@ -767,6 +767,7 @@ public class CTokenMarker extends SourceTokenMarker {
     public CTokenMarker(SourceProvider sourceProvider) {
         super(sourceProvider);
         this.constantSeparator = "";
+        this.localLabelPrefix = ".";
     }
 
     public boolean isP1() {

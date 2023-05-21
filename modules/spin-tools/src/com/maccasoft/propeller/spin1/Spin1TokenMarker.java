@@ -199,6 +199,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
     public Spin1TokenMarker(SourceProvider sourceProvider) {
         super(sourceProvider);
         this.constantSeparator = "#";
+        this.localLabelPrefix = ":";
     }
 
     @Override

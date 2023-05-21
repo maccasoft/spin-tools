@@ -173,9 +173,7 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
 
     <section class="ConstantsNode,ExpressionNode,StatementNode,DataLineNode">
         <entry name="CLKFREQ"><![CDATA[<b>CLKFREQ | _CLKFREQ</b><p>Clock frequency value</p>]]></entry>
-        <entry name="_CLKFREQ"><![CDATA[<b>CLKFREQ | _CLKFREQ</b><p>Clock frequency value</p>]]></entry>
         <entry name="CLKMODE"><![CDATA[<b>CLKMODE | _CLKMODE</b><p>Clock mode value</p>]]></entry>
-        <entry name="_CLKMODE"><![CDATA[<b>CLKMODE | _CLKMODE</b><p>Clock mode value</p>]]></entry>
 
         <entry name="P_TRUE_A"><![CDATA[<b>P_TRUE_A</b><p>True A input</p>]]></entry>
         <entry name="P_INVERT_A"><![CDATA[<b>P_INVERT_A</b><p>Invert A input</p>]]></entry>

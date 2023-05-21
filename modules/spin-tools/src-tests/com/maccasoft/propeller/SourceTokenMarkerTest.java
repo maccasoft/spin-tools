@@ -91,7 +91,7 @@ public class SourceTokenMarkerTest {
 
         Node context = subject.getRoot().getChild(0);
 
-        List<IContentProposal> result = subject.getMethodProposals(context, "abcd_".toUpperCase());
+        List<IContentProposal> result = subject.getMethodProposals(context, "abcd_");
 
         Assertions.assertEquals(2, result.size());
 
@@ -183,7 +183,7 @@ public class SourceTokenMarkerTest {
 
         Node context = subject.getRoot().getChild(1);
 
-        List<IContentProposal> result = subject.getMethodProposals(context, "object.".toUpperCase());
+        List<IContentProposal> result = subject.getMethodProposals(context, "object.");
 
         Assertions.assertEquals(2, result.size());
 
@@ -231,7 +231,7 @@ public class SourceTokenMarkerTest {
 
         Node context = subject.getRoot().getChild(1);
 
-        List<IContentProposal> result = subject.getMethodProposals(context, "obj".toUpperCase());
+        List<IContentProposal> result = subject.getMethodProposals(context, "obj");
 
         Assertions.assertEquals(1, result.size());
 
@@ -275,7 +275,7 @@ public class SourceTokenMarkerTest {
 
         Node context = subject.getRoot().getChild(1);
 
-        List<IContentProposal> result = subject.getMethodProposals(context, "object.me".toUpperCase());
+        List<IContentProposal> result = subject.getMethodProposals(context, "object.me");
 
         Assertions.assertEquals(1, result.size());
 
@@ -319,7 +319,7 @@ public class SourceTokenMarkerTest {
 
         Node context = subject.getRoot().getChild(1);
 
-        List<IContentProposal> result = subject.getMethodProposals(context, "@object.".toUpperCase());
+        List<IContentProposal> result = subject.getMethodProposals(context, "@object.");
 
         Assertions.assertEquals(2, result.size());
 
@@ -379,7 +379,7 @@ public class SourceTokenMarkerTest {
 
         Node context = subject.getRoot().getChild(1);
 
-        List<IContentProposal> result = subject.getMethodProposals(context, "object[0].".toUpperCase());
+        List<IContentProposal> result = subject.getMethodProposals(context, "object[0].");
 
         Assertions.assertEquals(2, result.size());
 
@@ -439,7 +439,7 @@ public class SourceTokenMarkerTest {
 
         Node context = subject.getRoot().getChild(1);
 
-        List<IContentProposal> result = subject.getMethodProposals(context, "object[byte[a][0]].".toUpperCase());
+        List<IContentProposal> result = subject.getMethodProposals(context, "object[byte[a][0]].");
 
         Assertions.assertEquals(2, result.size());
 
@@ -487,7 +487,7 @@ public class SourceTokenMarkerTest {
 
         Node context = subject.getRoot().getChild(1);
 
-        List<IContentProposal> result = subject.getMethodProposals(context, "object#".toUpperCase());
+        List<IContentProposal> result = subject.getConstantsProposals(context, "object#");
 
         Assertions.assertEquals(2, result.size());
 
@@ -535,7 +535,7 @@ public class SourceTokenMarkerTest {
 
         Node context = subject.getRoot().getChild(1);
 
-        List<IContentProposal> result = subject.getMethodProposals(context, "object.".toUpperCase());
+        List<IContentProposal> result = subject.getConstantsProposals(context, "object.");
 
         Assertions.assertEquals(2, result.size());
 

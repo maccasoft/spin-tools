@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.w3c.dom.Document;
@@ -114,7 +115,7 @@ public class EditorHelp {
                                 if ("entry".equals(element.getTagName())) {
                                     String[] key = element.getAttribute("name").split(",");
                                     for (int n = 0; n < key.length; n++) {
-                                        if (key[n].toUpperCase().startsWith(token)) {
+                                        if (StringUtils.startsWithIgnoreCase(key[n], token)) {
                                             String insert = element.getAttribute("insert");
                                             if (insert != null && !"".equals(insert)) {
                                                 list.add(new ContentProposal(insert, key[n], element.getTextContent()));
@@ -173,7 +174,7 @@ public class EditorHelp {
 
             @Override
             public boolean accept(File dir, String name) {
-                return name.toLowerCase().endsWith(sourceFilter);
+                return StringUtils.endsWithIgnoreCase(name, sourceFilter);
             }
 
         });
@@ -181,7 +182,7 @@ public class EditorHelp {
             for (int i = 0; i < list.length; i++) {
                 String name = list[i].getName();
                 name = name.substring(0, name.indexOf(sourceFilter));
-                if (name.toUpperCase().startsWith(prefix)) {
+                if (StringUtils.startsWithIgnoreCase(name, prefix)) {
                     prefixProposals.add(new ContentProposal(name, name, null));
                     included.add(list[i]);
                 }
@@ -189,7 +190,7 @@ public class EditorHelp {
             for (int i = 0; i < list.length; i++) {
                 String name = list[i].getName();
                 name = name.substring(0, name.indexOf(sourceFilter));
-                if (name.toUpperCase().contains(prefix) && !included.contains(list[i])) {
+                if (StringUtils.containsIgnoreCase(name, prefix) && !included.contains(list[i])) {
                     containsProposal.add(new ContentProposal(name, name, null));
                     included.add(list[i]);
                 }

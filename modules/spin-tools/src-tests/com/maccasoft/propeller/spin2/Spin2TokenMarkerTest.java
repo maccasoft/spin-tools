@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
+import com.maccasoft.propeller.model.SourceProvider;
 
 class Spin2TokenMarkerTest {
 
@@ -30,7 +31,7 @@ class Spin2TokenMarkerTest {
             + "CON\n"
             + "";
 
-        Spin2TokenMarker subject = new Spin2TokenMarker();
+        Spin2TokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
         Iterator<TokenMarker> iter = subject.getTokens().iterator();
 
@@ -48,7 +49,7 @@ class Spin2TokenMarkerTest {
             + "     DisableFlow = 4\n"
             + "";
 
-        Spin2TokenMarker subject = new Spin2TokenMarker();
+        Spin2TokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
         Iterator<TokenMarker> iter = subject.getTokens().iterator();
 
@@ -82,7 +83,7 @@ class Spin2TokenMarkerTest {
             + "     EnableFlow = 4\n"
             + "";
 
-        Spin2TokenMarker subject = new Spin2TokenMarker();
+        Spin2TokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
         Iterator<TokenMarker> iter = subject.getTokens().iterator();
 
@@ -112,7 +113,7 @@ class Spin2TokenMarkerTest {
             + "     DisableFlow = 4\n"
             + "";
 
-        Spin2TokenMarker subject = new Spin2TokenMarker();
+        Spin2TokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
 
         Set<TokenMarker> result = subject.getLineTokens(0, 54);
@@ -140,7 +141,7 @@ class Spin2TokenMarkerTest {
             + "CON\n"
             + "";
 
-        Spin2TokenMarker subject = new Spin2TokenMarker();
+        Spin2TokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
 
         Set<TokenMarker> result = subject.getLineTokens(0, 1);
@@ -162,7 +163,7 @@ class Spin2TokenMarkerTest {
             + "CON\n"
             + "";
 
-        Spin2TokenMarker subject = new Spin2TokenMarker();
+        Spin2TokenMarker subject = new Spin2TokenMarker(SourceProvider.NULL);
         subject.refreshTokens(text);
 
         Set<TokenMarker> result = subject.getLineTokens(text.length(), text.length());

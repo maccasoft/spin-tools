@@ -2066,69 +2066,69 @@ public class SourceEditor {
         int lineIndex = styledText.getLineAtOffset(styledText.getCaretOffset());
         Node node = tokenMarker.getContextAtLine(lineIndex);
 
-        String token = getFilterText(node, contents, position).toUpperCase();
+        String filterText = getFilterText(node, contents, position);
 
         if (position == 0) {
-            proposals.addAll(helpProvider.fillProposals("Root", token));
+            proposals.addAll(helpProvider.fillProposals("Root", filterText));
             if (tokenMarker instanceof CTokenMarker) {
-                if (node == null || (node instanceof DirectiveNode) || (node instanceof VariableNode)) {
-                    proposals.addAll(helpProvider.fillSourceProposals(token));
+                if (node == null) {
+                    proposals.addAll(helpProvider.fillSourceProposals(filterText));
                 }
             }
         }
-        else {
-            if (node instanceof DirectiveNode.IncludeNode) {
-                proposals.addAll(helpProvider.fillSourceProposals(token));
-            }
-            else if (node instanceof ObjectNode) {
-                proposals.addAll(helpProvider.fillSourceProposals(token));
-            }
-            else if (node instanceof VariableNode) {
-                if (tokenMarker instanceof CTokenMarker) {
-                    VariableNode line = (VariableNode) node;
-                    position = styledText.getCaretOffset();
-                    if (line.type != null && position >= line.type.start && position <= line.type.stop + 1) {
-                        proposals.addAll(helpProvider.fillSourceProposals(token));
-                    }
-                }
-            }
-            else if (node instanceof DataLineNode) {
-                DataLineNode line = (DataLineNode) node;
-                position = styledText.getCaretOffset();
 
-                if (node.getStartToken().line != lineIndex || (line.condition == null && line.instruction == null)) {
-                    proposals.addAll(helpProvider.fillProposals("Condition", token));
-                    proposals.addAll(helpProvider.fillProposals("Instruction", token));
-                }
-                else if (line.condition != null && position >= line.condition.start && position <= line.condition.stop + 1) {
-                    proposals.addAll(helpProvider.fillProposals("Condition", token));
-                }
-                else if (line.condition != null && line.instruction == null && position > line.condition.stop) {
-                    proposals.addAll(helpProvider.fillProposals("Instruction", token));
-                }
-                else if (line.instruction != null && position >= line.instruction.start && position <= line.instruction.stop + 1) {
-                    proposals.addAll(helpProvider.fillProposals("Instruction", token));
-                }
-                else if (line.instruction != null && line.condition == null && position < line.instruction.start) {
-                    proposals.addAll(helpProvider.fillProposals("Condition", token));
-                }
-                else if (line.instruction != null && position > line.instruction.stop + 1) {
-                    proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), token));
-                    if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
-                        proposals.addAll(tokenMarker.getMethodProposals(node.getParent(), token));
-                    }
-                    else {
-                        proposals.addAll(tokenMarker.getPAsmProposals(node, token));
-                    }
+        if (node instanceof DirectiveNode.IncludeNode) {
+            proposals.addAll(helpProvider.fillSourceProposals(filterText));
+        }
+        else if (node instanceof ObjectNode) {
+            proposals.addAll(helpProvider.fillSourceProposals(filterText));
+        }
+        else if (node instanceof VariableNode) {
+            if (tokenMarker instanceof CTokenMarker) {
+                VariableNode line = (VariableNode) node;
+                position = styledText.getCaretOffset();
+                if (line.type != null && position >= line.type.start && position <= line.type.stop + 1) {
+                    proposals.addAll(helpProvider.fillSourceProposals(filterText));
                 }
             }
-            else if (node != null) {
-                proposals.addAll(tokenMarker.getConstantsProposals(node, token));
-                if ((node instanceof StatementNode) || (node instanceof MethodNode) || (node instanceof FunctionNode)) {
-                    proposals.addAll(tokenMarker.getMethodProposals(node, token));
-                }
-                proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), token));
+        }
+        else if (node instanceof DataLineNode) {
+            DataLineNode line = (DataLineNode) node;
+            position = styledText.getCaretOffset();
+
+            if (node.getStartToken().line != lineIndex || (line.condition == null && line.instruction == null)) {
+                proposals.addAll(helpProvider.fillProposals("Condition", filterText));
+                proposals.addAll(helpProvider.fillProposals("Instruction", filterText));
             }
+            else if (line.condition != null && position >= line.condition.start && position <= line.condition.stop + 1) {
+                proposals.addAll(helpProvider.fillProposals("Condition", filterText));
+            }
+            else if (line.condition != null && line.instruction == null && position > line.condition.stop) {
+                proposals.addAll(helpProvider.fillProposals("Instruction", filterText));
+            }
+            else if (line.instruction != null && position >= line.instruction.start && position <= line.instruction.stop + 1) {
+                proposals.addAll(helpProvider.fillProposals("Instruction", filterText));
+            }
+            else if (line.instruction != null && line.condition == null && position < line.instruction.start) {
+                proposals.addAll(helpProvider.fillProposals("Condition", filterText));
+            }
+            else if (line.instruction != null && position > line.instruction.stop + 1) {
+                if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
+                    proposals.addAll(tokenMarker.getMethodProposals(node.getParent(), filterText));
+                    proposals.addAll(tokenMarker.getConstantsProposals(node, filterText));
+                }
+                else {
+                    proposals.addAll(tokenMarker.getPAsmProposals(node, filterText));
+                }
+                proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), filterText));
+            }
+        }
+        else if (node != null) {
+            if ((node instanceof StatementNode) || (node instanceof MethodNode) || (node instanceof FunctionNode)) {
+                proposals.addAll(tokenMarker.getMethodProposals(node, filterText));
+            }
+            proposals.addAll(tokenMarker.getConstantsProposals(node, filterText));
+            proposals.addAll(helpProvider.fillProposals(node.getClass().getSimpleName(), filterText));
         }
 
         return proposals.toArray(new IContentProposal[proposals.size()]);

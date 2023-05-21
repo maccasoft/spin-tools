@@ -637,13 +637,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         modczOperands.put("_SET", TokenId.PASM_INSTRUCTION);
     }
 
-    Spin2TokenMarker() {
-        super(SourceProvider.NULL);
-    }
-
     public Spin2TokenMarker(SourceProvider sourceProvider) {
         super(sourceProvider);
         this.constantSeparator = ".";
+        this.localLabelPrefix = ".";
     }
 
     @Override

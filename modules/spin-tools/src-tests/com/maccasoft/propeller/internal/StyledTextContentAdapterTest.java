@@ -59,16 +59,19 @@ class StyledTextContentAdapterTest {
     }
 
     @Test
-    void testGetControlContents() {
-        control = new StyledText(shell, SWT.NONE);
-        control.setText(""
+    void testGetKeywordControlContents() {
+        String text = ""
             + "PUB start\n"
             + "\n"
-            + "    method1\n"
+            + "    meth|od1\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
-            + "\n");
-        control.setCaretOffset(19);
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
 
@@ -77,232 +80,431 @@ class StyledTextContentAdapterTest {
     }
 
     @Test
-    void testSetShorterControlContents() {
-        control = new StyledText(shell, SWT.NONE);
-        control.setText(""
+    void testGetObjectKeywordControlContents() {
+        String text = ""
             + "PUB start\n"
             + "\n"
-            + "    method1\n"
+            + "    object.met|hod1\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
-            + "\n");
-        control.setCaretOffset(19);
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+
+        Assertions.assertEquals("    object.method1", subject.getControlContents(control));
+        Assertions.assertEquals(14, subject.getCursorPosition(control));
+    }
+
+    @Test
+    void testSetShorterControlContents() {
+        String text = ""
+            + "PUB start\n"
+            + "\n"
+            + "    meth|od1\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        String expectedText = ""
+            + "PUB start\n"
+            + "\n"
+            + "    short|\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, "short", subject.getCursorPosition(control));
 
-        Assertions.assertEquals(""
-            + "PUB start\n"
-            + "\n"
-            + "    short\n"
-            + "    repeat\n"
-            + "        method2(arg0)\n"
-            + "\n", control.getText());
-        Assertions.assertEquals(20, control.getCaretOffset());
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
     }
 
     @Test
     void testSetLongerControlContents() {
-        control = new StyledText(shell, SWT.NONE);
-        control.setText(""
+        String text = ""
             + "PUB start\n"
             + "\n"
-            + "    method1\n"
+            + "    meth|od1\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
-            + "\n");
-        control.setCaretOffset(19);
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        String expectedText = ""
+            + "PUB start\n"
+            + "\n"
+            + "    longmethod|\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, "longmethod", subject.getCursorPosition(control));
 
-        Assertions.assertEquals(""
-            + "PUB start\n"
-            + "\n"
-            + "    longmethod\n"
-            + "    repeat\n"
-            + "        method2(arg0)\n"
-            + "\n", control.getText());
-        Assertions.assertEquals(25, control.getCaretOffset());
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
     }
 
     @Test
     void testSetArgumentTemplateContents() {
-        control = new StyledText(shell, SWT.NONE);
-        control.setText(""
+        String text = ""
             + "PUB start\n"
             + "\n"
-            + "    method1\n"
+            + "    meth|od1\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
-            + "\n");
-        control.setCaretOffset(19);
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
 
-        Assertions.assertEquals(""
+        String expectedText = ""
             + "PUB start\n"
             + "\n"
-            + "    method(arg0,arg1)\n"
+            + "    method(|arg0,arg1)\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
-            + "\n", control.getText());
-        Assertions.assertEquals(22, control.getCaretOffset());
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
     }
 
     @Test
     void testSetControlContentsKeepExistingArguments() {
-        control = new StyledText(shell, SWT.NONE);
-        control.setText(""
+        String text = ""
             + "PUB start\n"
             + "\n"
             + "    method1\n"
             + "    repeat\n"
-            + "        method2(arg0)\n"
-            + "\n");
-        control.setCaretOffset(46);
+            + "        meth|od2(arg0)\n"
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
 
-        Assertions.assertEquals(""
+        String expectedText = ""
             + "PUB start\n"
             + "\n"
             + "    method1\n"
             + "    repeat\n"
-            + "        method(arg0)\n"
-            + "\n", control.getText());
-        Assertions.assertEquals(49, control.getCaretOffset());
+            + "        method(|arg0)\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
     }
 
     @Test
     void testSetObjectArray() {
-        control = new StyledText(shell, SWT.NONE);
-        control.setText(""
+        String text = ""
             + "PUB start\n"
             + "\n"
-            + "    object[1].start()\n"
+            + "    obj|ect[1].start()\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
-            + "\n");
-        control.setCaretOffset(18);
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, "array[0]", subject.getCursorPosition(control));
 
-        Assertions.assertEquals(""
+        String expectedText = ""
             + "PUB start\n"
             + "\n"
-            + "    array[1].start()\n"
+            + "    array[|1].start()\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
-            + "\n", control.getText());
-        Assertions.assertEquals(21, control.getCaretOffset());
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
     }
 
     @Test
     void testSetObjectMethod() {
-        control = new StyledText(shell, SWT.NONE);
-        control.setText(""
+        String text = ""
             + "PUB start\n"
             + "\n"
-            + "    object.\n"
+            + "    object.|\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
-            + "\n");
-        control.setCaretOffset(22);
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
 
-        Assertions.assertEquals(""
+        String expectedText = ""
             + "PUB start\n"
             + "\n"
-            + "    object.method(arg0,arg1)\n"
+            + "    object.method(|arg0,arg1)\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
-            + "\n", control.getText());
-        Assertions.assertEquals(29, control.getCaretOffset());
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
+    }
+
+    @Test
+    void testSetObjectConstant() {
+        String text = ""
+            + "PUB start\n"
+            + "\n"
+            + "    a := object#|\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "CONSTANT", subject.getCursorPosition(control));
+
+        String expectedText = ""
+            + "PUB start\n"
+            + "\n"
+            + "    a := object#CONSTANT|\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
+    }
+
+    @Test
+    void testSetObjectAndMethod() {
+        String text = ""
+            + "PUB start\n"
+            + "\n"
+            + "    obj|\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "object.method(arg0,arg1)", subject.getCursorPosition(control));
+
+        String expectedText = ""
+            + "PUB start\n"
+            + "\n"
+            + "    object.method(|arg0,arg1)\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
+    }
+
+    @Test
+    void testSetObjectAndConstant() {
+        String text = ""
+            + "PUB start\n"
+            + "\n"
+            + "    a := obj|\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "object#CONSTANT", subject.getCursorPosition(control));
+
+        String expectedText = ""
+            + "PUB start\n"
+            + "\n"
+            + "    a := object#CONSTANT|\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
     }
 
     @Test
     void testSetObjectArrayMethod() {
-        control = new StyledText(shell, SWT.NONE);
-        control.setText(""
+        String text = ""
             + "PUB start\n"
             + "\n"
-            + "    object[0].\n"
+            + "    object[0].|\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
-            + "\n");
-        control.setCaretOffset(25);
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, "method(arg0,arg1)", subject.getCursorPosition(control));
 
-        Assertions.assertEquals(""
+        String expectedText = ""
             + "PUB start\n"
             + "\n"
-            + "    object[0].method(arg0,arg1)\n"
+            + "    object[0].method(|arg0,arg1)\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
-            + "\n", control.getText());
-        Assertions.assertEquals(32, control.getCaretOffset());
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
+    }
+
+    @Test
+    void testSetObjectAndArrayMethod() {
+        String text = ""
+            + "PUB start\n"
+            + "\n"
+            + "    obj|\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "object[0].method(arg0,arg1)", subject.getCursorPosition(control));
+
+        String expectedText = ""
+            + "PUB start\n"
+            + "\n"
+            + "    object[0].method(|arg0,arg1)\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
     }
 
     @Test
     void testSetSpin1LocalLabel() {
-        control = new StyledText(shell, SWT.NONE);
-        control.setText(""
+        String text = ""
             + "DAT\n"
             + "\n"
-            + "    jmp #:\n"
+            + "    jmp #:|\n"
             + "    ret\n"
             + ":local\n"
             + "    ret\n"
-            + "\n");
-        control.setCaretOffset(15);
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, ":local", subject.getCursorPosition(control));
 
-        Assertions.assertEquals(""
+        String expectedText = ""
             + "DAT\n"
             + "\n"
-            + "    jmp #:local\n"
+            + "    jmp #:local|\n"
             + "    ret\n"
             + ":local\n"
             + "    ret\n"
-            + "\n", control.getText());
-        Assertions.assertEquals(20, control.getCaretOffset());
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
     }
 
     @Test
     void testSetSpin2LocalLabel() {
-        control = new StyledText(shell, SWT.NONE);
-        control.setText(""
+        String text = ""
             + "DAT\n"
             + "\n"
-            + "    jmp #.\n"
+            + "    jmp #.|\n"
             + "    ret\n"
-            + ".local\n"
+            + ":local\n"
             + "    ret\n"
-            + "\n");
-        control.setCaretOffset(15);
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
 
         StyledTextContentAdapter subject = new StyledTextContentAdapter();
         subject.setControlContents(control, ".local", subject.getCursorPosition(control));
 
-        Assertions.assertEquals(""
+        String expectedText = ""
             + "DAT\n"
             + "\n"
-            + "    jmp #.local\n"
+            + "    jmp #.local|\n"
             + "    ret\n"
-            + ".local\n"
+            + ":local\n"
             + "    ret\n"
-            + "\n", control.getText());
-        Assertions.assertEquals(20, control.getCaretOffset());
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
     }
 
 }
