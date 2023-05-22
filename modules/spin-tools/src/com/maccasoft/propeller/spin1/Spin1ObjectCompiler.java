@@ -1758,7 +1758,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
             conditionStack.pop();
         }
         else {
-            throw new CompilerException("unsupported directive", token);
+            logMessage(new CompilerException("unsupported directive", token));
         }
     }
 

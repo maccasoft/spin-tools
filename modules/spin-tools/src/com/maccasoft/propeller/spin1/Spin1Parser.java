@@ -157,12 +157,7 @@ public class Spin1Parser extends Parser {
             if (sections.contains(token.getText().toUpperCase())) {
                 return;
             }
-            if (token.column == 0 && "#".equalsIgnoreCase(token.getText())) {
-                parsePreprocessor(node);
-            }
-            else {
-                parseConstant(node);
-            }
+            parseConstant(node);
         }
     }
 

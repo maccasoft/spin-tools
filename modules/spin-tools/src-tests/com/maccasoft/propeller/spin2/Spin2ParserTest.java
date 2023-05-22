@@ -189,7 +189,27 @@ class Spin2ParserTest {
     }
 
     @Test
-    void testEnumAssignments() throws Exception {
+    void testEnum() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "CON\n"
+            + "    #0,a,b,c,d\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- ConstantNode [#0]\n"
+            + "        +-- start = ExpressionNode [0]\n"
+            + "    +-- ConstantNode identifier=a [a]\n"
+            + "    +-- ConstantNode identifier=b [b]\n"
+            + "    +-- ConstantNode identifier=c [c]\n"
+            + "    +-- ConstantNode identifier=d [d]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testConLineEnum() throws Exception {
         Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
             + "CON  #0,a,b,c,d\n"
             + ""));
@@ -812,6 +832,30 @@ class Spin2ParserTest {
             + "    +-- DirectiveNode [#endif]\n"
             + "    +-- ConstantNode identifier=C [C = 3]\n"
             + "        +-- expression = ExpressionNode [3]\n"
+            + "", tree(root));
+    }
+
+    @Test
+    void testConstantsEnumAndPreprocessor() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "CON\n"
+            + "#ifdef P\n"
+            + "#0,a,b,c,d\n"
+            + "#endif\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- DirectiveNode [#ifdef P]\n"
+            + "    +-- ConstantNode [#0]\n"
+            + "        +-- start = ExpressionNode [0]\n"
+            + "    +-- ConstantNode identifier=a [a]\n"
+            + "    +-- ConstantNode identifier=b [b]\n"
+            + "    +-- ConstantNode identifier=c [c]\n"
+            + "    +-- ConstantNode identifier=d [d]\n"
+            + "    +-- DirectiveNode [#endif]\n"
             + "", tree(root));
     }
 
