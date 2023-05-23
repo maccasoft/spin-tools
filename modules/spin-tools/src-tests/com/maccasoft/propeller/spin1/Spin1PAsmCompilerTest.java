@@ -269,24 +269,21 @@ class Spin1PAsmCompilerTest {
     void testByte() throws Exception {
         String text = ""
             + "DAT             org   $000\n"
-            + "                byte    0\n"
             + "                byte    1\n"
             + "                byte    2\n"
-            + "                byte    3\n"
-            + "                byte    4\n"
+            + "                byte    3[2], 4[3]\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header (var size 0)\n"
-            + "00000 00000       09 00          Object size\n"
+            + "00000 00000       0B 00          Object size\n"
             + "00002 00002       01             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004   000                                    org     $000\n"
-            + "00004 00004   000 00                                 byte    0\n"
-            + "00005 00005   000 01                                 byte    1\n"
-            + "00006 00006   000 02                                 byte    2\n"
-            + "00007 00007   000 03                                 byte    3\n"
-            + "00008 00008   001 04                                 byte    4\n"
+            + "00004 00004   000 01                                 byte    1\n"
+            + "00005 00005   000 02                                 byte    2\n"
+            + "00006 00006   000 03 03 04 04                        byte    3[2], 4[3]\n"
+            + "0000A 0000A   001 04                     byte    3[2], 4[3]\n"
             + "", compile(text));
     }
 
@@ -294,24 +291,47 @@ class Spin1PAsmCompilerTest {
     void testWord() throws Exception {
         String text = ""
             + "DAT             org   $000\n"
-            + "                word    0\n"
             + "                word    1\n"
             + "                word    2\n"
-            + "                word    3\n"
-            + "                word    4\n"
+            + "                word    3[2], 4[3]\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header (var size 0)\n"
-            + "00000 00000       0E 00          Object size\n"
+            + "00000 00000       12 00          Object size\n"
             + "00002 00002       01             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004   000                                    org     $000\n"
-            + "00004 00004   000 00 00                              word    0\n"
-            + "00006 00006   000 01 00                              word    1\n"
-            + "00008 00008   001 02 00                              word    2\n"
-            + "0000A 0000A   001 03 00                              word    3\n"
-            + "0000C 0000C   002 04 00                              word    4\n"
+            + "00004 00004   000 01 00                              word    1\n"
+            + "00006 00006   000 02 00                              word    2\n"
+            + "00008 00008   001 03 00 03 00                        word    3[2], 4[3]\n"
+            + "0000C 0000C   002 04 00 04 00   \n"
+            + "00010 00010   003 04 00\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testLong() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                long    1\n"
+            + "                long    2\n"
+            + "                long    3[2], 4[3]\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       20 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                                    org     $000\n"
+            + "00004 00004   000 01 00 00 00                        long    1\n"
+            + "00008 00008   001 02 00 00 00                        long    2\n"
+            + "0000C 0000C   002 03 00 00 00                        long    3[2], 4[3]\n"
+            + "00010 00010   003 03 00 00 00   \n"
+            + "00014 00014   004 04 00 00 00   \n"
+            + "00018 00018   005 04 00 00 00   \n"
+            + "0001C 0001C   006 04 00 00 00\n"
             + "", compile(text));
     }
 

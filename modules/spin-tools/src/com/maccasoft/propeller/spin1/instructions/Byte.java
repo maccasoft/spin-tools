@@ -40,7 +40,7 @@ public class Byte extends Spin1PAsmInstructionFactory {
         public int getSize() {
             int size = 0;
             for (Spin1PAsmExpression exp : arguments) {
-                if (exp.getExpression() instanceof CharacterLiteral) {
+                if (exp.getExpression().isString()) {
                     size += ((CharacterLiteral) exp.getExpression()).getString().length();
                 }
                 else {
@@ -62,9 +62,11 @@ public class Byte extends Spin1PAsmInstructionFactory {
                     }
                     else {
                         byte[] value = exp.getByte();
-                        for (int i = 0; i < exp.getCount(); i++) {
-                            os.write(value);
+                        byte[] buffer = new byte[value.length * exp.getCount()];
+                        for (int i = 0; i < buffer.length; i += value.length) {
+                            System.arraycopy(value, 0, buffer, i, value.length);
                         }
+                        os.write(buffer);
                     }
                 } catch (CompilerException e) {
                     msgs.addMessage(e);

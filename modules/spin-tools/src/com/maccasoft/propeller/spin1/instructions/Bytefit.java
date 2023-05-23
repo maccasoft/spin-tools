@@ -39,7 +39,7 @@ public class Bytefit extends Byte {
         public int getSize() {
             int size = 0;
             for (Spin1PAsmExpression exp : arguments) {
-                if (exp.getExpression() instanceof CharacterLiteral) {
+                if (exp.getExpression().isString()) {
                     size += ((CharacterLiteral) exp.getExpression()).getString().length();
                 }
                 else {
@@ -60,13 +60,15 @@ public class Bytefit extends Byte {
                         os.write(exp.getExpression().getString().getBytes());
                     }
                     else {
-                        int value = exp.getInteger();
-                        if (value < -0x80 || value > 0xFF) {
+                        if (exp.getInteger() < -0x80 || exp.getInteger() > 0xFF) {
                             throw new CompilerException("Byte value must range from -$80 to $FF", exp.getExpression().getData());
                         }
-                        for (int i = 0; i < exp.getCount(); i++) {
-                            os.write(value);
+                        byte[] value = exp.getByte();
+                        byte[] buffer = new byte[value.length * exp.getCount()];
+                        for (int i = 0; i < buffer.length; i += value.length) {
+                            System.arraycopy(value, 0, buffer, i, value.length);
                         }
+                        os.write(buffer);
                     }
                 } catch (CompilerException e) {
                     msgs.addMessage(e);
