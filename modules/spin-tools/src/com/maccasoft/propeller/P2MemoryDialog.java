@@ -443,7 +443,7 @@ public class P2MemoryDialog extends Dialog {
 
                     for (int i = 0; i < BYTES_PER_ROW && addr < data.length; i++) {
                         e.gc.drawString(String.format("%02X", data[addr] & 0xFF), x1, y, true);
-                        if (data[addr] >= 0x20 && data[addr] <= 0x7F) {
+                        if (data[addr] >= 0x20 && data[addr] < 0x7F) {
                             e.gc.drawString(String.format("%c", data[addr] & 0xFF), x2, y, true);
                         }
                         else {
