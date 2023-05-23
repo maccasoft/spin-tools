@@ -663,6 +663,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                     } catch (Exception e) {
                         logMessage(new CompilerException("expression syntax error", builder.tokens));
                     }
+                    enumIncrement = new NumberLiteral(1);
                     if ("[".equals(token.getText())) {
                         builder = new Spin2ExpressionBuilder(scope);
                         while (iter.hasNext()) {

@@ -22,7 +22,7 @@ import com.maccasoft.propeller.model.Node;
 class Spin1ObjectCompilerTest {
 
     @Test
-    void testEnumConstants() throws Exception {
+    void testEnum() throws Exception {
         String text = ""
             + "CON\n"
             + "   A, B, C\n"
@@ -80,6 +80,65 @@ class Spin1ObjectCompilerTest {
             + "00020 00020       38 0A          CONSTANT (F + 4)\n"
             + "00022 00022       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
             + "00023 00023       32             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testEnumStep() throws Exception {
+        String text = ""
+            + "CON\n"
+            + "   #10[5], A, B, C\n"
+            + "   D, E[2], F\n"
+            + "   #1, G, H, I\n"
+            + "\n"
+            + "PUB main | v\n"
+            + "  v := A\n"
+            + "  v := B\n"
+            + "  v := C\n"
+            + "  v := D\n"
+            + "  v := E\n"
+            + "  v := F\n"
+            + "  v := G\n"
+            + "  v := H\n"
+            + "  v := I\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       24 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       08 00 04 00    Function main @ $0008 (local size 4)\n"
+            + "' PUB main | v\n"
+            + "'   v := A\n"
+            + "00008 00008       38 0A          CONSTANT (10)\n"
+            + "0000A 0000A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'   v := B\n"
+            + "0000B 0000B       38 0F          CONSTANT (15)\n"
+            + "0000D 0000D       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'   v := C\n"
+            + "0000E 0000E       38 14          CONSTANT (20)\n"
+            + "00010 00010       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'   v := D\n"
+            + "00011 00011       38 19          CONSTANT (25)\n"
+            + "00013 00013       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'   v := E\n"
+            + "00014 00014       38 1E          CONSTANT (30)\n"
+            + "00016 00016       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'   v := F\n"
+            + "00017 00017       38 28          CONSTANT (40)\n"
+            + "00019 00019       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'   v := G\n"
+            + "0001A 0001A       36             CONSTANT (1)\n"
+            + "0001B 0001B       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'   v := H\n"
+            + "0001C 0001C       38 02          CONSTANT (2)\n"
+            + "0001E 0001E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'   v := I\n"
+            + "0001F 0001F       38 03          CONSTANT (3)\n"
+            + "00021 00021       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00022 00022       32             RETURN\n"
+            + "00023 00023       00             Padding\n"
             + "", compile(text));
     }
 
