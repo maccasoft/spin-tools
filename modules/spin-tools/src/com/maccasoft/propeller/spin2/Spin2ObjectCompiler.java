@@ -927,18 +927,18 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                         } catch (CompilerException e) {
                             logMessage(e);
                         } catch (Exception e) {
-                            logMessage(new CompilerException(e, builder.tokens));
+                            logMessage(new CompilerException(e, builder.getTokens()));
                         }
                         break;
                     }
                     builder.addToken(token);
                 }
                 if (!"]".equals(token.getText())) {
-                    logMessage(new CompilerException("expecting '['", token));
+                    logMessage(new CompilerException("expecting ']'", token));
                     return;
                 }
                 if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting object file", token));
+                    logMessage(new CompilerException("expecting object file", node));
                     return;
                 }
                 token = iter.next();
@@ -949,21 +949,25 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                 return;
             }
             if (!iter.hasNext()) {
-                logMessage(new CompilerException("syntax error", node));
+                logMessage(new CompilerException("expecting object file", node));
                 return;
             }
-            token = iter.next();
-            if (token.type != Token.STRING) {
-                logMessage(new CompilerException("expecting file name", token));
+            Token fileToken = iter.next();
+            if (fileToken.type != Token.STRING) {
+                logMessage(new CompilerException("expecting object file", fileToken));
                 return;
             }
-            String fileName = token.getText().substring(1, token.getText().length() - 1);
+            String fileName = fileToken.getText().substring(1, fileToken.getText().length() - 1);
 
             Map<String, Expression> parameters = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
             if (iter.hasNext()) {
                 token = iter.next();
                 if (!"|".equals(token.getText())) {
                     logMessage(new CompilerException("syntax error", token));
+                    return;
+                }
+                if (!iter.hasNext()) {
+                    logMessage(new CompilerException("expecting parameters", token));
                     return;
                 }
                 while (iter.hasNext()) {
@@ -974,7 +978,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                     }
                     String identifier = token.getText();
                     if (!iter.hasNext()) {
-                        logMessage(new CompilerException("expecting expression", identifier));
+                        logMessage(new CompilerException("expecting expression", token));
                         break;
                     }
                     token = iter.next();
@@ -994,7 +998,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                             } catch (CompilerException e) {
                                 logMessage(e);
                             } catch (Exception e) {
-                                logMessage(new CompilerException(e, node));
+                                logMessage(new CompilerException(e, builder.getTokens()));
                             }
                         } catch (CompilerException e) {
                             logMessage(e);
@@ -1019,11 +1023,11 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
 
             ObjectInfo info = compiler.getObjectInfo(fileName, parameters);
             if (info == null) {
-                logMessage(new CompilerException("object " + token + " not found", token));
+                logMessage(new CompilerException("object " + fileName + " not found", fileToken));
                 return;
             }
             if (info.hasErrors()) {
-                logMessage(new CompilerException("object " + token + " has errors", token));
+                logMessage(new CompilerException("object " + fileName + " has errors", fileToken));
                 return;
             }
 
