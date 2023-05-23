@@ -231,6 +231,10 @@ public class Spin2ExpressionBuilder {
     }
 
     public Expression getExpression() {
+        if (tokens.size() == 0) {
+            throw new RuntimeException("expecting expression");
+        }
+
         Expression node = parseLevel(parseAtom(), 0);
 
         Token token = peek();

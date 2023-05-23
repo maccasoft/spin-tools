@@ -107,7 +107,13 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
 
             @Override
             public void visitDirective(DirectiveNode node) {
-                compileDirective(node);
+                try {
+                    compileDirective(node);
+                } catch (CompilerException e) {
+                    logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, node));
+                }
             }
 
             @Override
