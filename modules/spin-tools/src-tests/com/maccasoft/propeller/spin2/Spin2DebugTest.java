@@ -60,6 +60,39 @@ class Spin2DebugTest {
     }
 
     @Test
+    void testRepeatDebug() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    repeat\n"
+            + "        debug(udec(a))\n"
+            + "        a := 1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       12 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     repeat\n"
+            + "'         debug(udec(a))\n"
+            + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0000A 0000A       43 04 01       DEBUG #1\n"
+            + "'         a := 1\n"
+            + "0000D 0000D       A2             CONSTANT (1)\n"
+            + "0000E 0000E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000F 0000F       12 79          JMP $00009 (-7)\n"
+            + "00011 00011       04             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
+            + "' Debug data\n"
+            + "00B24 00000       09 00         \n"
+            + "00B26 00002       04 00         \n"
+            + "00B28 00004       04 41 61 00 00\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testRegister() {
         Context context = new Context();
         context.addSymbol("rega", new NumberLiteral(1));

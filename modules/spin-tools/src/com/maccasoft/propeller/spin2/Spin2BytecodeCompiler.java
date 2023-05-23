@@ -231,6 +231,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     }
 
                     @Override
+                    public int getSize() {
+                        return index == -1 ? 0 : 3;
+                    }
+
+                    @Override
                     public byte[] getBytes() {
                         if (index == -1) {
                             return new byte[0];
