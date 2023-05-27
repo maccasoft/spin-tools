@@ -86,6 +86,21 @@ class Spin2FormatterTest {
     }
 
     @Test
+    void testObjectMethod() {
+        Formatter subject = new Spin2Formatter();
+        String text = subject.format(""
+            + "PUB main()\n"
+            + "object.method(a,b,c)\n"
+            + "object[1].method(a,b,c)\n"
+            + "");
+        Assertions.assertEquals(""
+            + "PUB main()\n"
+            + "    object.method(a, b, c)\n"
+            + "    object[1].method(a, b, c)\n"
+            + "", text);
+    }
+
+    @Test
     void testMethod() {
         Formatter subject = new Spin2Formatter();
         String text = subject.format(""

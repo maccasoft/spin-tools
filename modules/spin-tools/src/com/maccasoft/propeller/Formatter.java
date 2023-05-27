@@ -1031,7 +1031,7 @@ public abstract class Formatter {
         }
         else {
             char lc = sb.lastChar();
-            if (lc != ' ' && lc != '(' && lc != '[' && lc != '#' && lc != '.' && lc != '\\' && lc != '+' && lc != '-' && lc != '~' && lc != '!') {
+            if (lc != ' ' && lc != '(' && lc != '[' && lc != ']' && lc != '#' && lc != '.' && lc != '\\' && lc != '+' && lc != '-' && lc != '~' && lc != '!') {
                 sb.append(" ");
             }
             sb.append(token);

@@ -1783,26 +1783,39 @@ public class SourceEditor {
         int caretLine = styledText.getLineAtOffset(caretOffset);
         int caretColumn = caretOffset - styledText.getOffsetAtLine(caretLine);
 
-        String text = styledText.getSelectionText();
-        if (!text.isEmpty()) {
-            text = formatter.format(text);
-            Point selection = styledText.getSelection();
-            styledText.replaceTextRange(selection.x, selection.y - selection.x + 1, text);
-        }
-        else {
-            text = formatter.format(styledText.getText());
-            styledText.setText(text);
-        }
+        styledText.setRedraw(false);
+        styledText.removeCaretListener(caretListener);
+        try {
+            ignoreModify = true;
 
-        if (caretLine > styledText.getLineCount()) {
-            caretLine = styledText.getLineCount() - 1;
+            String text = styledText.getSelectionText();
+            if (!text.isEmpty()) {
+                text = formatter.format(text);
+                Point selection = styledText.getSelection();
+                styledText.replaceTextRange(selection.x, selection.y - selection.x + 1, text);
+            }
+            else {
+                text = formatter.format(styledText.getText());
+                styledText.setText(text);
+            }
+
+            if (caretLine > styledText.getLineCount()) {
+                caretLine = styledText.getLineCount() - 1;
+            }
+
+            styledText.setTopPixel(topPixel);
+            styledText.setCaretOffset(styledText.getOffsetAtLine(caretLine) + caretColumn);
+
+            modified = true;
+            ignoreModify = false;
+            styledText.redraw();
+
+            styledText.notifyListeners(SWT.Modify, new Event());
+
+        } finally {
+            styledText.setRedraw(true);
+            styledText.addCaretListener(caretListener);
         }
-
-        styledText.setTopPixel(topPixel);
-        styledText.setCaretOffset(styledText.getOffsetAtLine(caretLine) + caretColumn);
-
-        modified = true;
-        styledText.redraw();
     }
 
     public Node getNodeAtOffset(int offset) {
