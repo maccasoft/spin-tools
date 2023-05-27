@@ -2093,7 +2093,7 @@ public class SourceEditor {
                                                 for (Node objectChildNode : objectNode.getChilds()) {
                                                     if (objectChildNode instanceof ConstantNode) {
                                                         ConstantNode constant = (ConstantNode) objectChildNode;
-                                                        if (constant.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
+                                                        if (constant.identifier != null && constant.identifier.equals(itemName, tokenMarker.isCaseSensitive())) {
                                                             return new NavigationTarget(token.substring(dot + 1, token.stop - token.start), obj, constant.identifier);
                                                         }
                                                     }
