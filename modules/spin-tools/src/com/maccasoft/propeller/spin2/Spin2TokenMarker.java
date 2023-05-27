@@ -971,6 +971,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         locals.put("@@" + child.identifier.getText(), TokenId.METHOD_LOCAL);
                         tokens.add(new TokenMarker(child.identifier, TokenId.METHOD_LOCAL));
                     }
+                    if (child.size != null) {
+                        markTokens(child.size, 0, null);
+                    }
                 }
 
                 for (Node child : node.getChilds()) {
