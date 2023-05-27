@@ -159,6 +159,8 @@ public abstract class SourceTokenMarker {
     protected Map<String, TokenId> symbols = new CaseInsensitiveMap<>();
     protected Map<String, TokenId> locals = new CaseInsensitiveMap<>();
 
+    protected Map<String, Node> cache = new HashMap<>();
+
     public SourceTokenMarker(SourceProvider sourceProvider) {
         this.sourceProvider = sourceProvider;
     }
@@ -1212,9 +1214,9 @@ public abstract class SourceTokenMarker {
     }
 
     protected Node getObjectTree(String fileName) {
-        Node node = null;
+        Node node = cache.get(fileName);
 
-        if (sourceProvider != null) {
+        if (node == null && sourceProvider != null) {
             node = sourceProvider.getParsedSource(fileName);
             if (node == null) {
                 File file = sourceProvider.getFile(fileName);
@@ -1222,6 +1224,7 @@ public abstract class SourceTokenMarker {
                     try {
                         String suffix = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
                         node = Parser.parse(suffix, FileUtils.loadFromFile(file));
+                        cache.put(fileName, node);
                     } catch (Exception e) {
                         // Do nothing
                     }

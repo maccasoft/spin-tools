@@ -222,6 +222,7 @@ public class Spin1TokenMarker extends SourceTokenMarker {
     public void refreshCompilerTokens(List<CompilerException> messages) {
         tokens.clear();
         externals.clear();
+        cache.clear();
 
         for (Token token : root.getComments()) {
             tokens.add(new TokenMarker(token, TokenId.COMMENT));

@@ -669,6 +669,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
     public void refreshCompilerTokens(List<CompilerException> messages) {
         tokens.clear();
         externals.clear();
+        cache.clear();
 
         for (Token token : root.getComments()) {
             if (token.type == Token.NEXT_LINE) {

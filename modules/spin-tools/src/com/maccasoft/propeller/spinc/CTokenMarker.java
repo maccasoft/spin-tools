@@ -805,11 +805,10 @@ public class CTokenMarker extends SourceTokenMarker {
 
     @Override
     public void refreshCompilerTokens(List<CompilerException> messages) {
-        Map<String, Node> cache = new HashMap<>();
-
         tokens.clear();
         externals.clear();
         alias.clear();
+        cache.clear();
 
         for (Token token : root.getComments()) {
             tokens.add(new TokenMarker(token, TokenId.COMMENT));
@@ -823,11 +822,7 @@ public class CTokenMarker extends SourceTokenMarker {
                     DirectiveNode.IncludeNode include = (DirectiveNode.IncludeNode) node;
                     if (include.getFile() != null) {
                         String fileName = include.getFile().getText().substring(1, include.getFile().getText().length() - 1);
-                        Node objectRoot = cache.get(fileName);
-                        if (objectRoot == null) {
-                            objectRoot = getObjectTree(fileName);
-                            cache.put(fileName, objectRoot);
-                        }
+                        Node objectRoot = getObjectTree(fileName);
                         if (objectRoot != null) {
                             for (Node child : objectRoot.getChilds()) {
                                 if (child instanceof DirectiveNode.DefineNode) {
