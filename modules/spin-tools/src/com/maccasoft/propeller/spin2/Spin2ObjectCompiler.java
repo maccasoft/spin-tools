@@ -70,7 +70,6 @@ import com.maccasoft.propeller.spin2.bytecode.Jmp;
 import com.maccasoft.propeller.spin2.bytecode.Jnz;
 import com.maccasoft.propeller.spin2.bytecode.Jz;
 import com.maccasoft.propeller.spin2.bytecode.Tjz;
-import com.maccasoft.propeller.spin2.bytecode.VariableOp;
 import com.maccasoft.propeller.spin2.instructions.Alignl;
 import com.maccasoft.propeller.spin2.instructions.Alignw;
 import com.maccasoft.propeller.spin2.instructions.Empty;
@@ -1541,10 +1540,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                             line.addSource(compileConstantExpression(line.getScope(), method, from));
 
                             Expression expression = line.getScope().getLocalSymbol(counter.getText());
-                            if (expression == null) {
-                                throw new CompilerException("undefined symbol " + counter.getText(), counter.getToken());
-                            }
-                            line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Setup, false, (Variable) expression));
+                            line.addSource(compileVariableSetup(context, method, expression, counter));
                             line.addSource(new Bytecode(line.getScope(), step != null ? 0x7C : 0x7B, "REPEAT"));
 
                             Spin2MethodLine nextLine = new Spin2MethodLine(context);
@@ -1553,7 +1549,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                             line.addChild(loopLine);
                             line.addChilds(compileStatement(new Context(context), method, line, node));
 
-                            nextLine.addSource(new VariableOp(line.getScope(), VariableOp.Op.Setup, false, (Variable) expression));
+                            nextLine.addSource(compileVariableSetup(context, method, expression, counter));
                             nextLine.addSource(new Bytecode(line.getScope(), 0x7D, "REPEAT_LOOP"));
                             line.addChild(nextLine);
                         }

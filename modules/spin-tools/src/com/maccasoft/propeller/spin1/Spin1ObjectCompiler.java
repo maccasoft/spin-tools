@@ -1344,6 +1344,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
                             }
                             else if (expression instanceof Variable) {
                                 line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Write, (Variable) expression));
+                                ((Variable) expression).setCalledBy(method);
                             }
                             else {
                                 throw new RuntimeException("unsupported " + counter);
