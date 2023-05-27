@@ -2114,7 +2114,7 @@ public class SourceEditor {
             }
             else if (line.instruction != null && position > line.instruction.stop + 1) {
                 if (node.getParent() instanceof StatementNode || node.getParent() instanceof MethodNode) {
-                    proposals.addAll(tokenMarker.getMethodProposals(node.getParent(), filterText));
+                    proposals.addAll(tokenMarker.getInlinePAsmProposals(node, filterText));
                     proposals.addAll(tokenMarker.getConstantsProposals(node, filterText));
                 }
                 else {

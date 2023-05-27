@@ -573,6 +573,20 @@ public abstract class SourceTokenMarker {
         root.accept(new NodeVisitor() {
 
             @Override
+            public void visitVariable(VariableNode node) {
+                if (node.getIdentifier() != null && !contextMethodName.equals(node.getIdentifier().getText())) {
+                    String text = node.getIdentifier().getText();
+                    if (StringUtils.containsIgnoreCase(text, filterText)) {
+                        proposals.add(new ContentProposal(text, node.getIdentifier().getText(), null));
+                    }
+                }
+            }
+
+        });
+
+        root.accept(new NodeVisitor() {
+
+            @Override
             public boolean visitMethod(MethodNode node) {
                 if (node.getName() != null && !contextMethodName.equals(node.getName().getText())) {
                     String text = node.getName().getText();
@@ -738,6 +752,104 @@ public abstract class SourceTokenMarker {
             }
 
         });
+
+        return proposals;
+    }
+
+    public List<IContentProposal> getInlinePAsmProposals(Node context, String filterText) {
+        List<IContentProposal> proposals = new ArrayList<IContentProposal>();
+        if (root == null) {
+            return proposals;
+        }
+
+        Node method = context;
+        while (!(method instanceof MethodNode) && !(method instanceof FunctionNode) && method.getParent() != null) {
+            method = method.getParent();
+        }
+        for (Node node : method.getChilds()) {
+            if (node instanceof MethodNode.ParameterNode) {
+                MethodNode.ParameterNode child = (MethodNode.ParameterNode) node;
+                String text = child.getIdentifier().getText();
+                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                    proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                }
+            }
+            else if (node instanceof MethodNode.LocalVariableNode) {
+                MethodNode.LocalVariableNode child = (MethodNode.LocalVariableNode) node;
+                String text = child.getIdentifier().getText();
+                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                    proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                }
+            }
+            else if (node instanceof MethodNode.ReturnNode) {
+                MethodNode.ReturnNode child = (MethodNode.ReturnNode) node;
+                String text = child.getIdentifier().getText();
+                if (StringUtils.containsIgnoreCase(text, filterText)) {
+                    proposals.add(new ContentProposal(text, text, "<b>" + node.getText() + "</b>"));
+                }
+            }
+        }
+
+        List<String> pasmLabels = new ArrayList<String>();
+
+        String lastLabel = "";
+
+        for (Node child : context.getParent().getChilds()) {
+            if (!(child instanceof DataLineNode)) {
+                continue;
+            }
+            DataLineNode lineNode = (DataLineNode) child;
+            if (lineNode.label != null) {
+                String text = lineNode.label.getText();
+                if (text.startsWith(localLabelPrefix)) {
+                    pasmLabels.add(lastLabel + text);
+                }
+                else {
+                    lastLabel = text;
+                }
+            }
+        }
+
+        lastLabel = "";
+        for (Node child : context.getParent().getChilds()) {
+            if (!(child instanceof DataLineNode)) {
+                continue;
+            }
+            DataLineNode lineNode = (DataLineNode) child;
+            if (lineNode.label != null) {
+                String text = lineNode.label.getText();
+                if (!text.startsWith(localLabelPrefix)) {
+                    lastLabel = text;
+                }
+            }
+            if (lineNode == context) {
+                String s1 = lastLabel + localLabelPrefix;
+                for (String s : pasmLabels) {
+                    if (StringUtils.startsWithIgnoreCase(s, s1)) {
+                        if (StringUtils.containsIgnoreCase(s.substring(s1.length() - 1), filterText)) {
+                            String text = s.substring(s1.length() - 1);
+                            if (StringUtils.containsIgnoreCase(text, filterText)) {
+                                proposals.add(new ContentProposal(text, text, null));
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+        }
+
+        for (Node child : context.getParent().getChilds()) {
+            if (!(child instanceof DataLineNode)) {
+                continue;
+            }
+            DataLineNode lineNode = (DataLineNode) child;
+            if (lineNode.label != null) {
+                String text = lineNode.label.getText();
+                if (!text.startsWith(localLabelPrefix) && StringUtils.containsIgnoreCase(text, filterText)) {
+                    proposals.add(new ContentProposal(text, text, null));
+                }
+            }
+        }
 
         return proposals;
     }
