@@ -45,13 +45,13 @@ import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.DirectiveNode;
-import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TokenIterator;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1Object.Spin1LinkDataObject;
@@ -933,7 +933,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
     Spin1Method compileMethod(MethodNode node) {
         Context localScope = new Context(scope);
 
-        Iterator<Token> iter = node.getTokens().iterator();
+        TokenIterator iter = node.iterator();
         Token token = iter.next(); // First token is PUB/PRI already checked
 
         if (!iter.hasNext()) {
@@ -950,158 +950,178 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
         method.setComment(node.getText());
         method.setData(node);
 
-        for (Node child : node.getParameters()) {
-            token = child.getToken(0);
-            if (token.type == 0) {
-                Token identifier = token;
-                Expression expression = localScope.getLocalSymbol(identifier.getText());
-                if (expression instanceof LocalVariable) {
-                    logMessage(new CompilerException("symbol '" + identifier + "' already defined", child));
-                }
-                else {
-                    if (expression != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, "parameter '" + identifier + "' hides global variable", child));
-                    }
-                    LocalVariable var = method.addParameter("LONG", identifier.getText(), new NumberLiteral(1));
-                    var.setData(identifier);
-                }
-            }
-            else {
-                logMessage(new CompilerException("expecting identifier", token));
-            }
-            if (child.getTokenCount() > 1) {
-                Node error = new Node(child.getTokens().subList(1, child.getTokenCount()));
-                logMessage(new CompilerException("unexpected '" + error + "'", error));
-            }
-        }
-
-        if (iter.hasNext()) {
+        while (iter.hasNext()) {
             token = iter.next();
             if ("(".equals(token.getText())) {
-                if (method.getParametersCount() == 0) {
-                    logMessage(new CompilerException("expecting parameter name", token));
+                if (!iter.hasNext()) {
+                    logMessage(new CompilerException("expecting parameter(s)", token.substring(token.stop - token.start)));
                 }
-                else {
-                    while (iter.hasNext()) {
+                while (iter.hasNext()) {
+                    Token identifier = iter.next();
+                    if (")".equals(identifier.getText())) {
+                        break;
+                    }
+                    if (Spin1Model.isType(identifier.getText())) {
+                        logMessage(new CompilerException("type not allowed", identifier));
+                    }
+                    else if (identifier.type == 0) {
+                        Expression expression = localScope.getLocalSymbol(identifier.getText());
+                        if (expression instanceof LocalVariable) {
+                            logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
+                        }
+                        else {
+                            if (expression != null) {
+                                logMessage(new CompilerException(CompilerException.WARNING, "parameter '" + identifier + "' hides global variable", identifier));
+                            }
+                            LocalVariable var = method.addParameter("LONG", identifier.getText(), new NumberLiteral(1));
+                            var.setData(identifier);
+                        }
+                    }
+                    else {
+                        logMessage(new CompilerException("invalid identifier", identifier));
+                    }
+                    if (iter.hasNext()) {
                         token = iter.next();
                         if (")".equals(token.getText())) {
                             break;
                         }
-                    }
-                    if (!")".equals(token.getText())) {
-                        logMessage(new CompilerException("expecting ',' or ')'", token));
-                    }
-                }
-            }
-        }
-
-        for (Node child : node.getReturnVariables()) {
-            token = child.getToken(0);
-            if (token.type == 0) {
-                Token identifier = token;
-                if ("RESULT".equalsIgnoreCase(identifier.getText())) {
-                    continue;
-                }
-                Expression expression = localScope.getLocalSymbol(identifier.getText());
-                if (expression instanceof LocalVariable) {
-                    logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", child));
-                }
-                else {
-                    if (expression != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, "return variable '" + identifier.getText() + "' hides global variable", child));
-                    }
-                    LocalVariable var = method.addReturnVariable(identifier.getText());
-                    var.setData(identifier);
-                }
-            }
-            else {
-                logMessage(new CompilerException("expecting identifier", token));
-            }
-            if (child.getTokenCount() > 1) {
-                Node error = new Node(child.getTokens().subList(1, child.getTokenCount()));
-                logMessage(new CompilerException("unexpected '" + error + "'", error));
-            }
-        }
-
-        for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {
-            String type = "LONG";
-            iter = child.getTokens().iterator();
-
-            token = iter.next();
-            if (Spin1Model.isType(token.getText())) {
-                type = token.getText().toUpperCase();
-                if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting identifier", token));
-                    continue;
-                }
-                token = iter.next();
-            }
-            if (token.type == 0) {
-                Token identifier = token;
-                Expression size = new NumberLiteral(1);
-
-                if (iter.hasNext()) {
-                    token = iter.next();
-                    if ("[".equals(token.getText())) {
-                        if (!iter.hasNext()) {
-                            logMessage(new CompilerException("expecting expression", token));
-                            continue;
-                        }
-                        Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
-                        while (iter.hasNext()) {
-                            token = iter.next();
-                            if ("]".equals(token.getText())) {
-                                try {
-                                    size = builder.getExpression();
-                                    size.getNumber().intValue();
-                                } catch (CompilerException e) {
-                                    logMessage(e);
-                                } catch (Exception e) {
-                                    logMessage(new CompilerException(e, builder.tokens));
-                                }
-                                break;
+                        else if (",".equals(token.getText())) {
+                            if (!iter.hasNext()) {
+                                logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
                             }
-                            builder.addToken(token);
                         }
-                        if (!"]".equals(token.getText())) {
-                            logMessage(new CompilerException("expecting '['", token));
-                            continue;
+                        else {
+                            logMessage(new CompilerException("expecting ',' or ')'", token));
                         }
                     }
                     else {
-                        Node error = new Node();
-                        error.addToken(token);
-                        iter.forEachRemaining(t -> error.addToken(t));
-                        logMessage(new CompilerException("unexpected '" + error + "'", error));
+                        logMessage(new CompilerException("expecting ',' or ')'", identifier.substring(identifier.stop - identifier.start)));
                     }
                 }
-
-                Expression expression = localScope.getLocalSymbol(identifier.getText());
-                if (expression instanceof LocalVariable) {
-                    logMessage(new CompilerException("symbol '" + identifier + "' already defined", child));
+            }
+            else if ("|".equals(token.getText())) {
+                if (!iter.hasNext()) {
+                    logMessage(new CompilerException("expecting local variable(s)", token.substring(token.stop - token.start)));
                 }
-                else {
-                    if (expression != null) {
-                        logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier + "' hides global variable", child));
+                while (iter.hasNext()) {
+                    Token identifier = iter.next();
+
+                    String type = "LONG";
+                    if (Spin1Model.isType(identifier.getText())) {
+                        type = identifier.getText().toUpperCase();
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
+                        }
+                        identifier = iter.next();
                     }
-                    LocalVariable var = method.addLocalVariable(type, identifier.getText(), size); // new LocalVariable(type, identifier.getText(), size, offset);
-                    var.setData(identifier);
-                }
+                    if (identifier.type == 0) {
+                        Expression size = new NumberLiteral(1);
 
-                if (iter.hasNext()) {
-                    Node error = new Node();
-                    iter.forEachRemaining(t -> error.addToken(t));
-                    logMessage(new CompilerException("unexpected '" + error + "'", error));
+                        if (iter.hasNext() && "[".equals(iter.peekNext().getText())) {
+                            token = iter.next();
+                            if (!iter.hasNext()) {
+                                logMessage(new CompilerException("expecting expression", token.substring(token.stop - token.start)));
+                            }
+                            Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                            while (iter.hasNext()) {
+                                token = iter.next();
+                                if ("]".equals(token.getText())) {
+                                    try {
+                                        size = builder.getExpression();
+                                        size.getNumber().intValue();
+                                    } catch (CompilerException e) {
+                                        logMessage(e);
+                                    } catch (Exception e) {
+                                        logMessage(new CompilerException(e, builder.getTokens()));
+                                    }
+                                    break;
+                                }
+                                builder.addToken(token);
+                            }
+                            if (!"]".equals(token.getText())) {
+                                logMessage(new CompilerException("expecting ']'", token));
+                            }
+                        }
+
+                        Expression expression = localScope.getLocalSymbol(identifier.getText());
+                        if (expression instanceof LocalVariable) {
+                            logMessage(new CompilerException("symbol '" + identifier + "' already defined", identifier));
+                        }
+                        else {
+                            if (expression != null) {
+                                logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier + "' hides global variable", identifier));
+                            }
+                            LocalVariable var = method.addLocalVariable(type, identifier.getText(), size); // new LocalVariable(type, identifier.getText(), size, offset);
+                            var.setData(identifier);
+                        }
+                    }
+                    else {
+                        logMessage(new CompilerException("invalid identifier", identifier));
+                    }
+
+                    if (iter.hasNext()) {
+                        if (":".equals(iter.peekNext().getText())) {
+                            break;
+                        }
+                        token = iter.next();
+                        if (",".equals(token.getText())) {
+                            if (!iter.hasNext()) {
+                                logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
+                            }
+                        }
+                        else {
+                            logMessage(new CompilerException("expecting ',' or ':'", token));
+                        }
+                    }
+                }
+            }
+            else if (":".equals(token.getText())) {
+                if (!iter.hasNext()) {
+                    logMessage(new CompilerException("expecting return variable(s)", token.substring(token.stop - token.start)));
+                }
+                while (iter.hasNext()) {
+                    Token identifier = iter.next();
+                    if (Spin1Model.isType(identifier.getText())) {
+                        logMessage(new CompilerException("type not allowed", identifier));
+                    }
+                    else if (identifier.type == 0) {
+                        if (!"RESULT".equalsIgnoreCase(identifier.getText())) {
+                            Expression expression = localScope.getLocalSymbol(identifier.getText());
+                            if (expression instanceof LocalVariable) {
+                                logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", identifier));
+                            }
+                            else {
+                                if (expression != null) {
+                                    logMessage(new CompilerException(CompilerException.WARNING, "return variable '" + identifier.getText() + "' hides global variable", identifier));
+                                }
+                                LocalVariable var = method.addReturnVariable(identifier.getText());
+                                var.setData(identifier);
+                            }
+                        }
+                    }
+                    else {
+                        logMessage(new CompilerException("invalid identifier", identifier));
+                    }
+
+                    if (iter.hasNext()) {
+                        if ("|".equals(iter.peekNext().getText())) {
+                            break;
+                        }
+                        token = iter.next();
+                        if (",".equals(token.getText())) {
+                            if (!iter.hasNext()) {
+                                logMessage(new CompilerException("expecting identifier", token.substring(token.stop - token.start)));
+                            }
+                        }
+                        else {
+                            logMessage(new CompilerException("expecting ',' or ':'", token));
+                        }
+                    }
                 }
             }
             else {
-                logMessage(new CompilerException("expecting identifier", token));
-            }
-        }
-
-        for (Node child : node.getChilds()) {
-            if (child instanceof ErrorNode) {
-                logMessage(new CompilerException("unexpected '" + child + "'", child));
+                logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
+                break;
             }
         }
 

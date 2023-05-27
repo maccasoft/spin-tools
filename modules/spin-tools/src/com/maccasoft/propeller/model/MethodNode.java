@@ -34,7 +34,6 @@ public class MethodNode extends Node {
         @Override
         public void addToken(Token token) {
             tokens.add(token);
-            parent.addToken(token);
         }
 
         public Token getType() {
@@ -58,7 +57,6 @@ public class MethodNode extends Node {
         @Override
         public void addToken(Token token) {
             tokens.add(token);
-            parent.addToken(token);
         }
 
         public Token getIdentifier() {
@@ -80,7 +78,6 @@ public class MethodNode extends Node {
         @Override
         public void addToken(Token token) {
             tokens.add(token);
-            parent.addToken(token);
         }
 
         public Token getType() {

@@ -24,7 +24,7 @@ public class Spin1TokenStream extends TokenStream {
         int nested = 0;
         int state = Token.START;
         boolean escape = false;
-        Token token = EOF_TOKEN;
+        Token token = null;
 
         for (; index < text.length(); index++, column++) {
             char ch = text.charAt(index);
@@ -282,8 +282,8 @@ public class Spin1TokenStream extends TokenStream {
             }
         }
 
-        if (token == EOF_TOKEN) {
-            token.start = token.stop = text.length() - 1;
+        if (token == null) {
+            token = new Token(this, text.length() - 1, Token.EOF);
         }
 
         return token;

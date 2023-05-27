@@ -12,8 +12,6 @@ package com.maccasoft.propeller.model;
 
 public abstract class TokenStream {
 
-    protected final Token EOF_TOKEN = new Token(null, 0, Token.EOF);
-
     protected final String text;
 
     protected int index = 0;

@@ -338,7 +338,6 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PUB name=go [PUB go to]\n"
-            + "    +-- ErrorNode [to]\n"
             + "", tree(root));
 
         root = new Spin1Parser(new Spin1TokenStream(""
@@ -347,7 +346,6 @@ class Spin1ParserTest {
         Assertions.assertEquals(""
             + "Node []\n"
             + "+-- MethodNode type=PUB name=go [PUB go to]\n"
-            + "    +-- ErrorNode [to]\n"
             + "", tree(root));
 
         root = new Spin1Parser(new Spin1TokenStream(""
@@ -358,7 +356,6 @@ class Spin1ParserTest {
             + "+-- MethodNode type=PUB name=go [PUB go(a,b) to]\n"
             + "    +-- ParameterNode identifier=a [a]\n"
             + "    +-- ParameterNode identifier=b [b]\n"
-            + "    +-- ErrorNode [to]\n"
             + "", tree(root));
     }
 

@@ -19,7 +19,6 @@ import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DataNode;
 import com.maccasoft.propeller.model.DirectiveNode;
-import com.maccasoft.propeller.model.ErrorNode;
 import com.maccasoft.propeller.model.ExpressionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
@@ -480,13 +479,11 @@ public class Spin2Parser extends Parser {
     }
 
     void parseMethod() {
-        MethodNode node = new MethodNode(root, stream.nextToken());
-
         int state = 1;
         MethodNode.ParameterNode param = null;
         MethodNode.ReturnNode ret = null;
         MethodNode.LocalVariableNode local = null;
-        ErrorNode error = null;
+        MethodNode node = new MethodNode(root, stream.nextToken());
 
         Token token;
         while ((token = nextToken()).type != Token.EOF) {
@@ -519,10 +516,6 @@ public class Spin2Parser extends Parser {
                         state = 9;
                         break;
                     }
-                    if (error == null) {
-                        error = new ErrorNode(node);
-                    }
-                    error.addToken(token);
                     break;
 
                 case 4:
@@ -550,10 +543,6 @@ public class Spin2Parser extends Parser {
                         state = 9;
                         break;
                     }
-                    if (error == null) {
-                        error = new ErrorNode(node);
-                    }
-                    error.addToken(token);
                     break;
 
                 case 7:
