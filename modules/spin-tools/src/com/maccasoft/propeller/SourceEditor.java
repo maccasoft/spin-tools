@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.fieldassist.IContentProposal;
@@ -1311,9 +1312,9 @@ public class SourceEditor {
         int caretOffset = styledText.getCaretOffset();
         int lineNumber = styledText.getLineAtOffset(caretOffset);
         int lineStart = styledText.getOffsetAtLine(lineNumber);
-        String lineText = styledText.getLine(lineNumber);
         int currentColumn = caretOffset - lineStart;
 
+        String lineText = styledText.getLine(lineNumber);
         String leftText = lineText.substring(0, currentColumn);
         String rightText = lineText.substring(currentColumn);
 
@@ -1325,26 +1326,26 @@ public class SourceEditor {
         while (indentColumn < leftText.length() && Character.isWhitespace(leftText.charAt(indentColumn))) {
             indentColumn++;
         }
+        String indent = StringUtils.repeat(' ', indentColumn);
+        sb.append(indent);
+
         if (indentColumn < leftText.length()) {
-            String trimmedText = leftText.substring(indentColumn).toUpperCase();
-            if (startsWithBlock(trimmedText)) {
-                Node node = tokenMarker.getContextAtLine(lineNumber);
-                int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
-                while (tabStops == null) {
-                    if ((node = node.getParent()) == null) {
-                        break;
-                    }
-                    tabStops = Preferences.getInstance().getTabStops(node.getClass());
-                }
+            if (startsWithBlock(leftText.trim())) {
+                boolean tabstopMatch = false;
 
                 indentColumn++;
 
-                boolean tabstopMatch = false;
-                for (int i = 0; i < tabStops.length; i++) {
-                    if (tabStops[i] >= indentColumn) {
-                        indentColumn = tabStops[i];
-                        tabstopMatch = true;
-                        break;
+                Node node = tokenMarker.getSectionAtLine(lineNumber);
+                if (node != null) {
+                    int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
+                    if (tabStops != null) {
+                        for (int i = 0; i < tabStops.length; i++) {
+                            if (tabStops[i] >= indentColumn) {
+                                indentColumn = tabStops[i];
+                                tabstopMatch = true;
+                                break;
+                            }
+                        }
                     }
                 }
 
@@ -1354,13 +1355,37 @@ public class SourceEditor {
                         indentColumn++;
                     }
                 }
+
+                sb.append(StringUtils.repeat(' ', indentColumn - indent.length()));
             }
-        }
-        for (int i = 0; i < indentColumn; i++) {
-            sb.append(" ");
         }
 
         caretOffset = lineStart + sb.length();
+
+        if (tokenMarker instanceof CTokenMarker) {
+            if (leftText.stripTrailing().endsWith("{")) {
+                String text = styledText.getText();
+
+                int nested = 0;
+
+                int index = 0;
+                while (index < text.length()) {
+                    if (text.charAt(index) == '{') {
+                        nested++;
+                    }
+                    else if (text.charAt(index) == '}') {
+                        nested--;
+                    }
+                    index++;
+                }
+                if (nested != 0) {
+                    sb.append(styledText.getLineDelimiter());
+                    sb.append(indent);
+                    sb.append("}");
+                }
+            }
+        }
+
         sb.append(rightText);
 
         styledText.setRedraw(false);
@@ -1373,28 +1398,31 @@ public class SourceEditor {
     }
 
     boolean startsWithBlock(String text) {
-        if (text.startsWith("IF") || text.startsWith("ELSE") || text.startsWith("CASE")) {
+        String s = text.strip();
+
+        if (s.equals("IF") || s.equals("ELSE") || s.equals("CASE")) {
             return true;
         }
         if (tokenMarker instanceof CTokenMarker) {
             if (text.endsWith(";")) {
                 return false;
             }
-            if (text.startsWith("FOR") || text.startsWith("DO") || text.startsWith("WHILE") || text.startsWith("SWITCH")) {
+            if (s.equals("FOR") || s.equals("DO") || s.equals("WHILE") || s.equals("SWITCH")) {
                 return true;
             }
-            if (text.endsWith("{")) {
+            if (text.endsWith("{") || text.endsWith(":")) {
                 return true;
             }
         }
         else {
-            if (text.startsWith("CON") || text.startsWith("VAR") || text.startsWith("OBJ") || text.startsWith("PUB") || text.startsWith("PRI")) {
+            if (s.equals("CON") || s.equals("VAR") || s.equals("OBJ") || s.equals("PUB") || s.equals("PRI")) {
                 return true;
             }
-            if (text.startsWith("REPEAT")) {
+            if (s.equals("REPEAT") || s.equals("IFNOT") || s.equals("ELSEIF") || s.equals("ELSEIFNOT")) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -1407,15 +1435,9 @@ public class SourceEditor {
         boolean tabstopMatch = false;
         int nextTabColumn = currentColumn + 1;
 
-        Node node = tokenMarker.getContextAtLine(lineNumber);
+        Node node = tokenMarker.getSectionAtLine(lineNumber);
         if (node != null) {
             int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
-            while (tabStops == null) {
-                if ((node = node.getParent()) == null) {
-                    break;
-                }
-                tabStops = Preferences.getInstance().getTabStops(node.getClass());
-            }
             if (tabStops != null) {
                 for (int i = 0; i < tabStops.length; i++) {
                     if (tabStops[i] >= nextTabColumn) {
@@ -1464,15 +1486,9 @@ public class SourceEditor {
         boolean tabstopMatch = false;
         int previousTabColumn = currentColumn - 1;
 
-        Node node = tokenMarker.getContextAtLine(lineNumber);
+        Node node = tokenMarker.getSectionAtLine(lineNumber);
         if (node != null) {
             int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
-            while (tabStops == null) {
-                if ((node = node.getParent()) == null) {
-                    break;
-                }
-                tabStops = Preferences.getInstance().getTabStops(node.getClass());
-            }
             if (tabStops != null) {
                 for (int i = tabStops.length - 1; i >= 0; i--) {
                     if (previousTabColumn >= tabStops[i]) {

@@ -294,6 +294,23 @@ public abstract class SourceTokenMarker {
         return null;
     }
 
+    public Node getSectionAtLine(int lineIndex) {
+        Node result = null;
+
+        if (root != null) {
+            for (Node node : root.getChilds()) {
+                if (node.getTokenCount() != 0) {
+                    if (lineIndex < node.getStartToken().line) {
+                        break;
+                    }
+                    result = node;
+                }
+            }
+        }
+
+        return result;
+    }
+
     public Node getContextAtLine(int lineIndex) {
         if (root == null) {
             return null;
