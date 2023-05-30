@@ -12,11 +12,12 @@ package com.maccasoft.propeller.internal;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 public class FileUtils {
 
-    public static String loadFromFile(File file) throws Exception {
+    public static String loadFromFile(File file) throws IOException {
         FileInputStream is = new FileInputStream(file);
         byte[] data = new byte[is.available()];
         is.read(data);

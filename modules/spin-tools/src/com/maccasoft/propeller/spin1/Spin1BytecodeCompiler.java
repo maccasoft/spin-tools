@@ -10,12 +10,14 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
@@ -78,8 +80,12 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
 
     List<Spin1Bytecode> stringData;
 
-    public Spin1BytecodeCompiler(Context scope, Spin1Compiler compiler) {
-        super(scope, compiler);
+    public Spin1BytecodeCompiler(Context scope, Spin1Compiler compiler, File file) {
+        this(scope, compiler, null, file);
+    }
+
+    public Spin1BytecodeCompiler(Context scope, Spin1Compiler compiler, ObjectCompiler parent, File file) {
+        super(scope, compiler, parent, file);
         this.stringData = new ArrayList<>();
     }
 
@@ -785,32 +791,46 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                     }
                     if (expression instanceof SpinObject) {
-                        if (node.getChildCount() != 2) {
-                            throw new RuntimeException("syntax error" + node);
+                        Spin1StatementNode indexNode = null;
+                        Spin1StatementNode methodNode = null;
+
+                        int n = 0;
+                        if (n < node.getChildCount()) {
+                            if (node.getChild(n) instanceof Spin1StatementNode.Index) {
+                                indexNode = node.getChild(n++);
+                            }
                         }
-                        if (!(node.getChild(0) instanceof Spin1StatementNode.Index)) {
-                            throw new CompilerException("syntax error", node.getChild(0).getToken());
+                        if (n < node.getChildCount()) {
+                            methodNode = node.getChild(n++);
+                        }
+                        if (n < node.getChildCount() || methodNode == null) {
+                            throw new CompilerException("syntax error", node.getTokens());
                         }
 
-                        String qualifiedName = node.getText() + node.getChild(1).getText();
+                        String qualifiedName = node.getText() + methodNode.getText();
 
                         expression = context.getLocalSymbol(qualifiedName);
+                        if (expression == null) {
+                            throw new CompilerException("undefined symbol " + methodNode.getText(), methodNode.getToken());
+                        }
                         if (!(expression instanceof Method)) {
-                            throw new CompilerException("syntax error", node.getToken());
+                            throw new CompilerException(methodNode.getText() + " is not a method", methodNode.getToken());
                         }
                         Method methodExpression = (Method) expression;
                         int parameters = methodExpression.getArgumentsCount();
-                        if (node.getChild(1).getChildCount() != parameters) {
-                            throw new CompilerException("expected " + parameters + " argument(s), found " + node.getChild(1).getChildCount(), node.getToken());
+                        if (methodNode.getChildCount() != parameters) {
+                            throw new CompilerException("expected " + parameters + " argument(s), found " + methodNode.getChildCount(), methodNode.getTokens());
                         }
                         source.add(new Bytecode(context, new byte[] {
                             (byte) (push ? 0b00000000 : 0b00000001),
                         }, "ANCHOR"));
                         for (int i = 0; i < parameters; i++) {
-                            source.addAll(compileBytecodeExpression(context, method, node.getChild(1).getChild(i), true));
+                            source.addAll(compileBytecodeExpression(context, method, methodNode.getChild(i), true));
                         }
-                        source.addAll(compileConstantExpression(context, method, node.getChild(0)));
-                        source.add(new CallSub(context, methodExpression, true));
+                        if (indexNode != null) {
+                            source.addAll(compileConstantExpression(context, method, indexNode));
+                        }
+                        source.add(new CallSub(context, methodExpression, indexNode != null));
                         Spin1Method calledMethod = (Spin1Method) methodExpression.getData(Spin1Method.class.getName());
                         calledMethod.setCalledBy(method);
                         return source;

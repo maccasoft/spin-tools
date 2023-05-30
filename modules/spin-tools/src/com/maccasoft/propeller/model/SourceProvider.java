@@ -12,12 +12,14 @@ package com.maccasoft.propeller.model;
 
 import java.io.File;
 
+import com.maccasoft.propeller.internal.FileUtils;
+
 public abstract class SourceProvider {
 
     public static final SourceProvider NULL = new SourceProvider() {
 
         @Override
-        public Node getParsedSource(String name) {
+        public Node getParsedSource(File file) {
             return null;
         }
 
@@ -28,7 +30,18 @@ public abstract class SourceProvider {
 
     };
 
-    public abstract Node getParsedSource(String name);
+    public Node getParsedSource(File file) {
+        try {
+            String fileName = file.getName();
+            if (fileName.indexOf('.') != -1) {
+                String suffix = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
+                return Parser.parse(suffix, FileUtils.loadFromFile(file));
+            }
+        } catch (Exception e) {
+            // Do nothing
+        }
+        return null;
+    }
 
     public abstract File getFile(String name);
 

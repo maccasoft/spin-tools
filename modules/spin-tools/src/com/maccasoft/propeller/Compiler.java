@@ -22,7 +22,6 @@ import java.util.Objects;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
-import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.SourceProvider;
 
 public abstract class Compiler {
@@ -39,6 +38,13 @@ public abstract class Compiler {
         public ObjectInfo(File file, ObjectCompiler compiler, Map<String, Expression> parameters) {
             this.file = file;
             this.compiler = compiler;
+            this.parameters = parameters;
+        }
+
+        public ObjectInfo(File file, ObjectCompiler compiler, Expression count, Map<String, Expression> parameters) {
+            this.file = file;
+            this.compiler = compiler;
+            this.count = count;
             this.parameters = parameters;
         }
 
@@ -117,16 +123,11 @@ public abstract class Compiler {
             return null;
         }
 
-        @Override
-        public Node getParsedSource(String name) {
-            return null;
-        }
-
     }
 
     protected ObjectTree tree;
 
-    final List<SourceProvider> sourceProviders = new ArrayList<SourceProvider>();
+    protected SourceProvider sourceProvider;
 
     boolean caseSensitive;
 
@@ -138,8 +139,8 @@ public abstract class Compiler {
         this.caseSensitive = caseSensitive;
     }
 
-    public void addSourceProvider(SourceProvider provider) {
-        sourceProviders.add(provider);
+    public void setSourceProvider(SourceProvider sourceProvider) {
+        this.sourceProvider = sourceProvider;
     }
 
     public boolean isRemoveUnusedMethods() {
@@ -162,7 +163,7 @@ public abstract class Compiler {
 
     public abstract SpinObject compile(File rootFile, Node root);
 
-    public ObjectInfo getObjectInfo(String fileName, Map<String, Expression> parameters) {
+    public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
         return null;
     }
 
@@ -174,59 +175,16 @@ public abstract class Compiler {
         return Collections.emptyList();
     }
 
-    public Node getParsedObject(String fileName, String... extensions) {
-        for (String suffix : extensions) {
-            Node node = getParsedSource(fileName + suffix);
-            if (node != null) {
-                return node;
-            }
-        }
-
-        Node node = getParsedSource(fileName);
-        if (node != null) {
-            return node;
-        }
-
-        for (String suffix : extensions) {
-            String text = getSource(fileName + suffix);
-            if (text != null) {
-                Parser parser = Parser.getInstance(suffix, text);
-                return parser.parse();
-            }
-        }
-
-        String text = getSource(fileName);
-
-        if (text != null) {
-            int dotIndex = fileName.lastIndexOf('.');
-            if (dotIndex != -1) {
-                Parser parser = Parser.getInstance(fileName.substring(dotIndex), text);
-                if (parser != null) {
-                    return parser.parse();
-                }
-            }
-        }
-
-        if (text != null && extensions.length != 0) {
-            Parser parser = Parser.getInstance(extensions[0], text);
-            if (parser != null) {
-                return parser.parse();
-            }
-        }
-
-        return null;
-    }
-
     public File getFile(String name, String... extensions) {
-        for (SourceProvider p : sourceProviders) {
+        if (sourceProvider != null) {
             for (String suffix : extensions) {
-                File file = p.getFile(name + suffix);
+                File file = sourceProvider.getFile(name + suffix);
                 if (file != null) {
                     return file;
                 }
             }
 
-            File file = p.getFile(name);
+            File file = sourceProvider.getFile(name);
             if (file != null) {
                 return file;
             }
@@ -235,9 +193,9 @@ public abstract class Compiler {
         return null;
     }
 
-    protected Node getParsedSource(String name) {
-        for (SourceProvider p : sourceProviders) {
-            Node node = p.getParsedSource(name);
+    public Node getParsedSource(File file) {
+        if (sourceProvider != null) {
+            Node node = sourceProvider.getParsedSource(file);
             if (node != null) {
                 return node;
             }
@@ -246,8 +204,8 @@ public abstract class Compiler {
     }
 
     protected String getSource(String name) {
-        for (SourceProvider p : sourceProviders) {
-            File file = p.getFile(name);
+        if (sourceProvider != null) {
+            File file = sourceProvider.getFile(name);
             if (file != null) {
                 try {
                     return FileUtils.loadFromFile(file);
@@ -261,8 +219,8 @@ public abstract class Compiler {
     }
 
     protected byte[] getResource(String name) {
-        for (SourceProvider p : sourceProviders) {
-            File file = p.getFile(name);
+        if (sourceProvider != null) {
+            File file = sourceProvider.getFile(name);
             if (file != null) {
                 try {
                     return FileUtils.loadBinaryFromFile(file);
@@ -280,6 +238,14 @@ public abstract class Compiler {
     }
 
     public ObjectTree getObjectTree() {
+        return tree;
+    }
+
+    protected ObjectTree buildFrom(ObjectCompiler root) {
+        ObjectTree tree = new ObjectTree(root.getFile(), root.getFile().getName());
+        for (ObjectCompiler child : root.childs) {
+            tree.add(buildFrom(child));
+        }
         return tree;
     }
 

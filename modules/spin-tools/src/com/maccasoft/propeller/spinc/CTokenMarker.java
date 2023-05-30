@@ -848,11 +848,7 @@ public class CTokenMarker extends SourceTokenMarker {
             @Override
             public void visitVariable(VariableNode node) {
                 String objectName = node.getType().getText();
-                Node objectRoot = cache.get(objectName);
-                if (objectRoot == null) {
-                    objectRoot = getObjectTree(objectName);
-                    cache.put(objectName, objectRoot);
-                }
+                Node objectRoot = getObjectTree(objectName);
                 if (objectRoot != null) {
                     symbols.put(node.getType().getText(), TokenId.TYPE);
                     if (node.getIdentifier() != null) {

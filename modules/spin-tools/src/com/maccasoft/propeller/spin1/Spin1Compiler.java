@@ -33,7 +33,6 @@ public class Spin1Compiler extends Compiler {
     boolean removeUnusedMethods;
     boolean openspinCompatible;
 
-    protected Spin1Preprocessor preprocessor;
     protected List<ObjectInfo> childObjects = new ArrayList<>();
 
     boolean errors;
@@ -129,11 +128,12 @@ public class Spin1Compiler extends Compiler {
 
     class Spin1ObjectCompilerProxy extends Spin1ObjectCompiler {
 
-        String fileName;
+        public Spin1ObjectCompilerProxy(File file) {
+            super(Spin1Compiler.this, file);
+        }
 
-        public Spin1ObjectCompilerProxy(String fileName) {
-            super(Spin1Compiler.this);
-            this.fileName = fileName;
+        public Spin1ObjectCompilerProxy(ObjectCompiler parent, File file) {
+            super(Spin1Compiler.this, parent, file);
         }
 
         @Override
@@ -143,7 +143,7 @@ public class Spin1Compiler extends Compiler {
 
         @Override
         protected void logMessage(CompilerException message) {
-            message.fileName = fileName;
+            message.fileName = getFile().getName();
             if (message.hasChilds()) {
                 for (CompilerException msg : message.getChilds()) {
                     logMessage(msg);
@@ -160,15 +160,12 @@ public class Spin1Compiler extends Compiler {
     public Spin1Object compileObject(File rootFile, Node root) {
         int memoryOffset = 16;
 
-        preprocessor = new Spin1Preprocessor(this);
-        preprocessor.process(rootFile, root);
-
-        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFile.getName());
+        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFile);
         objectCompiler.compileObject(root);
 
-        objectCompiler.compilePass2();
+        objectCompiler.compileStep2();
         for (ObjectInfo info : childObjects) {
-            info.compiler.compilePass2();
+            info.compiler.compileStep2();
         }
 
         Spin1Object object = objectCompiler.generateObject(memoryOffset);
@@ -222,38 +219,42 @@ public class Spin1Compiler extends Compiler {
             }
         }
 
-        tree = preprocessor.getObjectTree();
+        tree = buildFrom(objectCompiler);
 
         return object;
 
     }
 
     @Override
-    public ObjectInfo getObjectInfo(String fileName, Map<String, Expression> parameters) {
-        File objectFile = getFile(fileName, ".spin");
-        if (objectFile != null) {
-            Node objectRoot = getParsedObject(objectFile.getName(), ".spin");
-            if (objectRoot != null) {
-                ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(fileName);
-                ObjectInfo info = new ObjectInfo(objectFile, objectCompiler, parameters);
-                int index = childObjects.indexOf(info);
-                if (index != -1) {
-                    info = childObjects.remove(index);
-                }
-                childObjects.add(info);
-                objectCompiler.compileObject(objectRoot);
-                return info;
+    public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
+        Node objectRoot = getParsedSource(file);
+        ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(parent, file);
+
+        while (parent != null) {
+            if (file.equals(parent.getFile())) {
+                throw new Exception("illegal circular reference");
             }
+            parent = parent.getParent();
         }
-        return null;
+
+        ObjectInfo info = new ObjectInfo(file, objectCompiler, parameters);
+
+        int index = childObjects.indexOf(info);
+        if (index != -1) {
+            info = childObjects.remove(index);
+        }
+        childObjects.add(info);
+        objectCompiler.compileObject(objectRoot);
+
+        return info;
     }
 
     public ObjectInfo getObjectInclude(String fileName, Map<String, Expression> parameters) {
         File objectFile = getFile(fileName, ".spin");
         if (objectFile != null) {
-            Node objectRoot = getParsedObject(objectFile.getName(), ".spin");
+            Node objectRoot = getParsedSource(objectFile);
             if (objectRoot != null) {
-                ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(fileName);
+                ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(objectFile);
                 ObjectInfo info = new ObjectInfo(objectFile, objectCompiler, parameters);
                 int index = childObjects.indexOf(info);
                 if (index != -1) {

@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin1;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -70,7 +71,7 @@ import com.maccasoft.propeller.spin1.bytecode.VariableOp;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
 
-public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements ObjectCompiler {
+public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     List<Variable> variables = new ArrayList<>();
     List<Spin1Method> methods = new ArrayList<>();
@@ -84,8 +85,12 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
     Map<String, Expression> publicSymbols = new HashMap<>();
     List<LinkDataObject> objectLinks = new ArrayList<>();
 
-    public Spin1ObjectCompiler(Spin1Compiler compiler) {
-        super(new Spin1GlobalContext(compiler.isCaseSensitive()), compiler);
+    public Spin1ObjectCompiler(Spin1Compiler compiler, File file) {
+        this(compiler, null, file);
+    }
+
+    public Spin1ObjectCompiler(Spin1Compiler compiler, ObjectCompiler parent, File file) {
+        super(new Spin1GlobalContext(compiler.isCaseSensitive()), compiler, parent, file);
 
         scope.addDefinition("__P1__", new NumberLiteral(1));
         scope.addDefinition("__P2__", new NumberLiteral(0));
@@ -95,12 +100,12 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
 
     @Override
     public Spin1Object compileObject(Node root) {
-        compile(root);
-        return generateObject();
+        compileStep1(root);
+        return generateObject(0);
     }
 
     @Override
-    public void compile(Node root) {
+    public void compileStep1(Node root) {
         objectVarSize = 0;
 
         root.accept(new NodeVisitor() {
@@ -125,7 +130,9 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
 
             @Override
             public void visitConstant(ConstantNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
                 if (!skipNode(node)) {
                     compileConstant(node);
                 }
@@ -133,12 +140,16 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
 
             @Override
             public void visitVariable(VariableNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
             }
 
             @Override
             public void visitObject(ObjectNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
                 if (!skipNode(node)) {
                     compileObject(node);
                 }
@@ -146,19 +157,25 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
 
             @Override
             public boolean visitMethod(MethodNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
                 return true;
             }
 
             @Override
             public boolean visitStatement(StatementNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
                 return true;
             }
 
             @Override
             public void visitDataLine(DataLineNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
             }
 
         });
@@ -363,7 +380,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
     }
 
     @Override
-    public void compilePass2() {
+    public void compileStep2() {
 
         for (Variable var : variables) {
             if (!var.isReferenced() && var.getData() != null) {
@@ -452,11 +469,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
     @Override
     public List<LinkDataObject> getObjectLinks() {
         return objectLinks;
-    }
-
-    @Override
-    public Spin1Object generateObject() {
-        return generateObject(0);
     }
 
     @Override
@@ -816,21 +828,21 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
 
     void compileObject(ObjectNode node) {
         try {
-            Iterator<Token> iter = node.getTokens().iterator();
+            TokenIterator iter = node.iterator();
 
             Token token = iter.next();
             String name = token.getText();
             Expression count = new NumberLiteral(1);
 
             if (!iter.hasNext()) {
-                logMessage(new CompilerException("syntax error", node));
+                logMessage(new CompilerException("expecting file name", token.substring(token.stop - token.start)));
                 return;
             }
             token = iter.next();
 
             if ("[".equals(token.getText())) {
                 if (!iter.hasNext()) {
-                    logMessage(new CompilerException("syntax error", node));
+                    logMessage(new CompilerException("expecting expression", token.substring(token.stop - token.start)));
                     return;
                 }
                 Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
@@ -850,11 +862,11 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
                     builder.addToken(token);
                 }
                 if (!"]".equals(token.getText())) {
-                    logMessage(new CompilerException("expecting '['", token));
+                    logMessage(new CompilerException("expecting ']'", token));
                     return;
                 }
                 if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting object file", token));
+                    logMessage(new CompilerException("expecting file name", token.substring(token.stop - token.start)));
                     return;
                 }
                 token = iter.next();
@@ -865,7 +877,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
                 return;
             }
             if (!iter.hasNext()) {
-                logMessage(new CompilerException("syntax error", node));
+                logMessage(new CompilerException("expecting file name", token.substring(token.stop - token.start)));
                 return;
             }
             token = iter.next();
@@ -873,18 +885,24 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
                 logMessage(new CompilerException("expecting file name", token));
                 return;
             }
-            String fileName = token.getText().substring(1, token.getText().length() - 1);
 
-            ObjectInfo info = compiler.getObjectInfo(fileName, Collections.emptyMap());
+            if (iter.hasNext()) {
+                token = iter.next();
+                logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
+            }
+
+            String fileName = token.getText().substring(1, token.getText().length() - 1);
+            File file = compiler.getFile(fileName, ".spin");
+            if (file == null) {
+                logMessage(new CompilerException("object " + token + " not found", token));
+                return;
+            }
+
+            ObjectInfo info = compiler.getObjectInfo(this, file, Collections.emptyMap());
             if (info == null) {
                 logMessage(new CompilerException("object " + token + " not found", token));
                 return;
             }
-            if (info.hasErrors()) {
-                logMessage(new CompilerException("object " + token + " has errors", token));
-                return;
-            }
-
             objects.put(name, new ObjectInfo(info, count));
 
             for (Entry<String, Expression> entry : info.compiler.getPublicSymbols().entrySet()) {
@@ -894,10 +912,14 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler implements Object
                 }
             }
 
-            if (iter.hasNext()) {
-                Node error = new Node();
-                iter.forEachRemaining(t -> error.addToken(t));
-                logMessage(new CompilerException("unexpected '" + error + "'", error));
+            if (info.hasErrors()) {
+                for (CompilerException msg : compiler.getMessages()) {
+                    if (file.getName().equals(msg.getFileName()) && "illegal circular reference".equals(msg.getMessage())) {
+                        logMessage(new CompilerException(msg.getMessage(), token));
+                        return;
+                    }
+                }
+                logMessage(new CompilerException("object " + token + " has errors", token));
             }
 
         } catch (CompilerException e) {

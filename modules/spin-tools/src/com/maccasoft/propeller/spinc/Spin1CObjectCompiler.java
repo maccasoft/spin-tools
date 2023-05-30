@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spinc;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,7 +67,7 @@ import com.maccasoft.propeller.spin1.bytecode.Jz;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
 
-public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler implements ObjectCompiler {
+public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
     int objectVarSize;
 
@@ -83,8 +84,12 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler implements Obje
 
     Map<String, Node> structures = new HashMap<>();
 
-    public Spin1CObjectCompiler(Spin1Compiler compiler) {
-        super(new Context(new Spin1GlobalContext(true)), compiler);
+    public Spin1CObjectCompiler(Spin1Compiler compiler, File file) {
+        this(compiler, null, file);
+    }
+
+    public Spin1CObjectCompiler(Spin1Compiler compiler, ObjectCompiler parent, File file) {
+        super(new Context(new Spin1GlobalContext(true)), compiler, parent, file);
 
         this.scope.addDefinition("__P1__", new NumberLiteral(1));
         this.scope.addDefinition("__P2__", new NumberLiteral(0));
@@ -93,12 +98,12 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler implements Obje
 
     @Override
     public Spin1Object compileObject(Node root) {
-        compile(root);
-        return generateObject();
+        compileStep1(root);
+        return generateObject(0);
     }
 
     @Override
-    public void compile(Node root) {
+    public void compileStep1(Node root) {
         objectVarSize = 0;
 
         for (Node node : new ArrayList<>(root.getChilds())) {
@@ -563,78 +568,94 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler implements Obje
                 throw new CompilerException("expecting identifier", identifier);
             }
 
-            ObjectInfo info = objects.get(type);
-            if (info == null) {
-                info = this.compiler.getObjectInfo(type, Collections.emptyMap());
-                if (info == null) {
-                    logMessage(new CompilerException("object '" + type + "' not found", token));
-                    return;
-                }
-                if (info.hasErrors()) {
-                    logMessage(new CompilerException("object '" + type + "' has errors", token));
-                    return;
-                }
-            }
-
-            Expression size = new NumberLiteral(1);
-
-            if (iter.hasNext() && "[".equals(iter.peekNext().getText())) {
-                token = iter.next();
-                if (!iter.hasNext()) {
-                    throw new CompilerException("expecting expression", token);
-                }
-                size = buildIndexExpression(iter);
-            }
-
-            if (iter.hasNext()) {
-                throw new CompilerException("expecting end of statement", iter.next());
-            }
-
-            objects.put(identifier.getText(), new ObjectInfo(info, size));
-
             try {
-                int count = size.getNumber().intValue();
-
-                LinkDataObject linkData = new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize());
-                for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
-                    if (objEntry.getValue() instanceof Method) {
-                        String qualifiedName = identifier.getText() + "." + objEntry.getKey();
-                        Method objectMethod = (Method) objEntry.getValue();
-                        Method method = new Method(objectMethod.getName(), objectMethod.getArgumentsCount(), objectMethod.getReturnsCount()) {
-
-                            @Override
-                            public int getIndex() {
-                                return objectMethod.getIndex();
+                ObjectInfo info = objects.get(type);
+                if (info == null) {
+                    File file = compiler.getFile(type, ".c", ".spin");
+                    if (file != null) {
+                        info = compiler.getObjectInfo(this, file, Collections.emptyMap());
+                    }
+                    if (info == null) {
+                        logMessage(new CompilerException("object '" + type + "' not found", token));
+                        return;
+                    }
+                    if (info.hasErrors()) {
+                        for (CompilerException msg : compiler.getMessages()) {
+                            if (file.getName().equals(msg.getFileName()) && "illegal circular reference".equals(msg.getMessage())) {
+                                logMessage(new CompilerException(msg.getMessage(), token));
+                                return;
                             }
-
-                            @Override
-                            public int getObjectIndex() {
-                                return objectLinks.indexOf(linkData) + methods.size() + 1;
-                            }
-
-                        };
-                        method.setData(Spin1Method.class.getName(), objectMethod.getData(Spin1Method.class.getName()));
-                        scope.addSymbol(qualifiedName, method);
+                        }
+                        logMessage(new CompilerException("object '" + type + "' has errors", token));
+                        return;
                     }
                 }
-                scope.addSymbol(identifier.getText(), new SpinObject(identifier.getText(), count) {
 
-                    @Override
-                    public int getIndex() {
-                        return objectLinks.indexOf(linkData) + methods.size() + 1;
+                Expression size = new NumberLiteral(1);
+
+                if (iter.hasNext() && "[".equals(iter.peekNext().getText())) {
+                    token = iter.next();
+                    if (!iter.hasNext()) {
+                        throw new CompilerException("expecting expression", token);
+                    }
+                    size = buildIndexExpression(iter);
+                }
+
+                if (iter.hasNext()) {
+                    throw new CompilerException("expecting end of statement", iter.next());
+                }
+
+                objects.put(identifier.getText(), new ObjectInfo(info, size));
+
+                try {
+                    int count = size.getNumber().intValue();
+
+                    LinkDataObject linkData = new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize());
+                    for (Entry<String, Expression> objEntry : info.compiler.getPublicSymbols().entrySet()) {
+                        if (objEntry.getValue() instanceof Method) {
+                            String qualifiedName = identifier.getText() + "." + objEntry.getKey();
+                            Method objectMethod = (Method) objEntry.getValue();
+                            Method method = new Method(objectMethod.getName(), objectMethod.getArgumentsCount(), objectMethod.getReturnsCount()) {
+
+                                @Override
+                                public int getIndex() {
+                                    return objectMethod.getIndex();
+                                }
+
+                                @Override
+                                public int getObjectIndex() {
+                                    return objectLinks.indexOf(linkData) + methods.size() + 1;
+                                }
+
+                            };
+                            method.setData(Spin1Method.class.getName(), objectMethod.getData(Spin1Method.class.getName()));
+                            scope.addSymbol(qualifiedName, method);
+                        }
+                    }
+                    scope.addSymbol(identifier.getText(), new SpinObject(identifier.getText(), count) {
+
+                        @Override
+                        public int getIndex() {
+                            return objectLinks.indexOf(linkData) + methods.size() + 1;
+                        }
+
+                    });
+                    objectLinks.add(linkData);
+
+                    for (int i = 1; i < count; i++) {
+                        objectLinks.add(new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize()));
                     }
 
-                });
-                objectLinks.add(linkData);
-
-                for (int i = 1; i < count; i++) {
-                    objectLinks.add(new Spin1LinkDataObject(info.compiler, info.compiler.getVarSize()));
+                } catch (CompilerException e) {
+                    logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, info.count.getData()));
                 }
 
             } catch (CompilerException e) {
                 logMessage(e);
             } catch (Exception e) {
-                logMessage(new CompilerException(e, info.count.getData()));
+                logMessage(new CompilerException(e, node));
             }
 
             return;
@@ -1444,7 +1465,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler implements Obje
     }
 
     @Override
-    public void compilePass2() {
+    public void compileStep2() {
 
         for (Variable var : variables) {
             if (!var.isReferenced() && var.getData() != null) {
@@ -1533,11 +1554,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler implements Obje
     @Override
     public List<LinkDataObject> getObjectLinks() {
         return objectLinks;
-    }
-
-    @Override
-    public Spin1Object generateObject() {
-        return generateObject(0);
     }
 
     @Override

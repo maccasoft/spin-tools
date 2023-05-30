@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin2;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -505,7 +506,7 @@ class Spin2DebugTest {
 
         Spin2Compiler compiler = new Spin2Compiler();
         compiler.setDebugEnabled(true);
-        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(compiler);
+        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(compiler, new File("test.spin2"));
         Spin2Object obj = objectCompiler.compileObject(root);
         obj.setDebugData(compiler.generateDebugData());
         obj.setDebugger(new Spin2Debugger());

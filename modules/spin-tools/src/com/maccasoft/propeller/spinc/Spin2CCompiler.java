@@ -33,7 +33,6 @@ import com.maccasoft.propeller.spin2.Spin2Interpreter;
 import com.maccasoft.propeller.spin2.Spin2Object;
 import com.maccasoft.propeller.spin2.Spin2ObjectCompiler;
 import com.maccasoft.propeller.spin2.Spin2PAsmDebugLine;
-import com.maccasoft.propeller.spin2.Spin2Preprocessor;
 import com.maccasoft.propeller.spin2.Spin2StatementNode;
 
 public class Spin2CCompiler extends Spin2Compiler {
@@ -70,11 +69,12 @@ public class Spin2CCompiler extends Spin2Compiler {
 
     class Spin2CObjectCompilerProxy extends Spin2CObjectCompiler {
 
-        String fileName;
+        public Spin2CObjectCompilerProxy(File file) {
+            super(Spin2CCompiler.this, file);
+        }
 
-        public Spin2CObjectCompilerProxy(String fileName) {
-            super(Spin2CCompiler.this);
-            this.fileName = fileName;
+        public Spin2CObjectCompilerProxy(ObjectCompiler parent, File file) {
+            super(Spin2CCompiler.this, parent, file);
         }
 
         @Override
@@ -84,7 +84,7 @@ public class Spin2CCompiler extends Spin2Compiler {
 
         @Override
         protected void logMessage(CompilerException message) {
-            message.fileName = fileName;
+            message.fileName = getFile().getName();
             if (message.hasChilds()) {
                 for (CompilerException msg : message.getChilds()) {
                     logMessage(msg);
@@ -100,11 +100,12 @@ public class Spin2CCompiler extends Spin2Compiler {
 
     class Spin2ObjectCompilerProxy extends Spin2ObjectCompiler {
 
-        String fileName;
+        public Spin2ObjectCompilerProxy(File file) {
+            super(Spin2CCompiler.this, file);
+        }
 
-        public Spin2ObjectCompilerProxy(String fileName) {
-            super(Spin2CCompiler.this);
-            this.fileName = fileName;
+        public Spin2ObjectCompilerProxy(ObjectCompiler parent, File file) {
+            super(Spin2CCompiler.this, parent, file);
         }
 
         @Override
@@ -114,7 +115,7 @@ public class Spin2CCompiler extends Spin2Compiler {
 
         @Override
         protected void logMessage(CompilerException message) {
-            message.fileName = fileName;
+            message.fileName = getFile().getName();
             if (message.hasChilds()) {
                 for (CompilerException msg : message.getChilds()) {
                     logMessage(msg);
@@ -130,15 +131,12 @@ public class Spin2CCompiler extends Spin2Compiler {
 
     @Override
     protected Spin2Object compileObject(File rootFile, Node root) {
-        preprocessor = new Spin2Preprocessor(this);
-        preprocessor.process(rootFile, root);
-
-        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompilerProxy(rootFile.getName());
+        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompilerProxy(rootFile);
         objectCompiler.compileObject(root);
 
-        objectCompiler.compilePass2();
+        objectCompiler.compileStep2();
         for (ObjectInfo info : childObjects) {
-            info.compiler.compilePass2();
+            info.compiler.compileStep2();
         }
 
         int memoryOffset = 0;
@@ -194,7 +192,7 @@ public class Spin2CCompiler extends Spin2Compiler {
             object.setDebugData(debugObject);
         }
 
-        tree = preprocessor.getObjectTree();
+        tree = buildFrom(objectCompiler);
 
         return object;
 
@@ -241,29 +239,34 @@ public class Spin2CCompiler extends Spin2Compiler {
     }
 
     @Override
-    public ObjectInfo getObjectInfo(String fileName, Map<String, Expression> parameters) {
-        File objectFile = getFile(fileName, ".c", ".spin2");
-        if (objectFile != null) {
-            Node objectRoot = getParsedObject(objectFile.getName(), ".c", ".spin2");
-            if (objectRoot != null) {
-                ObjectCompiler objectCompiler;
-                if (objectFile.getName().toLowerCase().endsWith(".c")) {
-                    objectCompiler = new Spin2CObjectCompilerProxy(fileName);
-                }
-                else {
-                    objectCompiler = new Spin2ObjectCompilerProxy(fileName);
-                }
-                ObjectInfo info = new ObjectInfo(objectFile, objectCompiler, parameters);
-                int index = childObjects.indexOf(info);
-                if (index != -1) {
-                    info = childObjects.remove(index);
-                }
-                childObjects.add(info);
-                objectCompiler.compileObject(objectRoot);
-                return info;
-            }
+    public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
+        Node objectRoot = getParsedSource(file);
+
+        ObjectCompiler objectCompiler;
+        if (file.getName().toLowerCase().endsWith(".c")) {
+            objectCompiler = new Spin2CObjectCompilerProxy(parent, file);
         }
-        return null;
+        else {
+            objectCompiler = new Spin2ObjectCompilerProxy(parent, file);
+        }
+
+        while (parent != null) {
+            if (file.equals(parent.getFile())) {
+                throw new Exception("illegal circular reference");
+            }
+            parent = parent.getParent();
+        }
+
+        ObjectInfo info = new ObjectInfo(file, objectCompiler, parameters);
+
+        int index = childObjects.indexOf(info);
+        if (index != -1) {
+            info = childObjects.remove(index);
+        }
+        childObjects.add(info);
+        objectCompiler.compileObject(objectRoot);
+
+        return info;
     }
 
 }

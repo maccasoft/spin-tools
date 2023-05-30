@@ -51,6 +51,15 @@ public class ObjectTree {
         return childs.toArray(new ObjectTree[0]);
     }
 
+    public boolean contains(File file) {
+        for (int i = 0; i < childs.size(); i++) {
+            if (childs.get(i).getFile().equals(file)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public String toString() {
         return toString(0);

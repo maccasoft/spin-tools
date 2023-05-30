@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spinc;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.expressions.Abs;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.Addbits;
@@ -402,8 +404,12 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
         //assignOperators.put("FRAC=", new Descriptor(0xB6, 0xDD, "FRAC_ASSIGN"));
     }
 
-    public Spin2CBytecodeCompiler(Context scope, Spin2Compiler compiler) {
-        super(scope, compiler);
+    public Spin2CBytecodeCompiler(Context scope, Spin2Compiler compiler, File file) {
+        super(scope, compiler, file);
+    }
+
+    public Spin2CBytecodeCompiler(Context scope, Spin2Compiler compiler, ObjectCompiler parent, File file) {
+        super(scope, compiler, parent, file);
     }
 
     public List<Spin2Bytecode> compileBytecodeExpression(Context context, Spin2Method method, Spin2StatementNode node, boolean push) {

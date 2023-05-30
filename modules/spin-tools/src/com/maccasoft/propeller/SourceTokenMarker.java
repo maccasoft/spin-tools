@@ -25,7 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jface.fieldassist.ContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposal;
 
-import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -37,7 +36,6 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.ObjectsNode;
-import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
@@ -159,7 +157,7 @@ public abstract class SourceTokenMarker {
     protected Map<String, TokenId> symbols = new CaseInsensitiveMap<>();
     protected Map<String, TokenId> locals = new CaseInsensitiveMap<>();
 
-    protected Map<String, Node> cache = new HashMap<>();
+    protected Map<File, Node> cache = new HashMap<>();
 
     public SourceTokenMarker(SourceProvider sourceProvider) {
         this.sourceProvider = sourceProvider;
@@ -989,28 +987,44 @@ public abstract class SourceTokenMarker {
         return proposals;
     }
 
-    String getMethodInsert(Node node) {
-        Iterator<Token> iter = node.getTokens().iterator();
-        Token token = iter.next();
-        TokenStream stream = token.getStream();
+    protected String getMethodInsert(MethodNode node) {
+        StringBuilder sb = new StringBuilder();
 
-        if (iter.hasNext()) {
-            Token start = iter.next();
-            Token stop = start;
-            while (iter.hasNext()) {
-                Token next = iter.next();
-                if (")".equals(next.getText())) {
-                    stop = next;
-                    break;
-                }
-                if (":".equals(next.getText()) || "|".equals(next.getText())) {
-                    break;
-                }
+        sb.append(node.name.getText());
+        sb.append("(");
+
+        int i = 0;
+        while (i < node.getParametersCount()) {
+            if (i != 0) {
+                sb.append(", ");
             }
-            return stream.getSource(start.start, stop.stop).trim();
+            sb.append(node.getParameter(i).identifier.getText());
+            i++;
         }
 
-        return null;
+        sb.append(")");
+
+        return sb.toString();
+    }
+
+    protected String getMethodInsert(FunctionNode node) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(node.identifier.getText());
+        sb.append("(");
+
+        int i = 0;
+        while (i < node.getParametersCount()) {
+            if (i != 0) {
+                sb.append(", ");
+            }
+            sb.append(node.getParameter(i).identifier.getText());
+            i++;
+        }
+
+        sb.append(")");
+
+        return sb.toString();
     }
 
     public List<IContentProposal> getConstantsProposals(Node context, String filterText) {
@@ -1231,24 +1245,16 @@ public abstract class SourceTokenMarker {
     }
 
     protected Node getObjectTree(String fileName) {
-        Node node = cache.get(fileName);
-
+        File file = sourceProvider.getFile(fileName);
+        Node node = cache.get(file);
         if (node == null && sourceProvider != null) {
-            node = sourceProvider.getParsedSource(fileName);
-            if (node == null) {
-                File file = sourceProvider.getFile(fileName);
-                if (file != null && fileName.lastIndexOf('.') != -1) {
-                    try {
-                        String suffix = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
-                        node = Parser.parse(suffix, FileUtils.loadFromFile(file));
-                        cache.put(fileName, node);
-                    } catch (Exception e) {
-                        // Do nothing
-                    }
+            if (file != null) {
+                node = sourceProvider.getParsedSource(file);
+                if (node != null) {
+                    cache.put(file, node);
                 }
             }
         }
-
         return node;
     }
 

@@ -21,10 +21,9 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin2.Spin2Object;
-import com.maccasoft.propeller.spin2.Spin2Parser;
-import com.maccasoft.propeller.spin2.Spin2TokenStream;
 
 class Spin2CCompilerTest {
 
@@ -40,7 +39,7 @@ class Spin2CCompilerTest {
         CParser parser = new CParser(stream);
         Node root = parser.parse();
 
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler());
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
         compiler.compileObject(root);
 
         Assertions.assertEquals(0b00_00, compiler.getScope().getLocalSymbol("CLKMODE_").getNumber().intValue() & 0b11_11);
@@ -61,7 +60,7 @@ class Spin2CCompilerTest {
         CParser parser = new CParser(stream);
         Node root = parser.parse();
 
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler());
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
         compiler.compileObject(root);
 
         Assertions.assertEquals(250_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -83,7 +82,7 @@ class Spin2CCompilerTest {
         CParser parser = new CParser(stream);
         Node root = parser.parse();
 
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler());
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
         compiler.compileObject(root);
 
         Assertions.assertEquals(148_500_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -105,7 +104,7 @@ class Spin2CCompilerTest {
         CParser parser = new CParser(stream);
         Node root = parser.parse();
 
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler());
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
         compiler.compileObject(root);
 
         Assertions.assertEquals(100_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -126,7 +125,7 @@ class Spin2CCompilerTest {
         CParser parser = new CParser(stream);
         Node root = parser.parse();
 
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler());
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
         compiler.compileObject(root);
 
         Assertions.assertEquals(16_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -148,7 +147,7 @@ class Spin2CCompilerTest {
         CParser parser = new CParser(stream);
         Node root = parser.parse();
 
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler());
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
         compiler.compileObject(root);
 
         Assertions.assertEquals(297_500_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -169,7 +168,7 @@ class Spin2CCompilerTest {
         CParser parser = new CParser(stream);
         Node root = parser.parse();
 
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler());
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
         compiler.compileObject(root);
 
         Assertions.assertEquals(16_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -190,7 +189,7 @@ class Spin2CCompilerTest {
         CParser parser = new CParser(stream);
         Node root = parser.parse();
 
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler());
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
         compiler.compileObject(root);
 
         Assertions.assertEquals(20_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -211,7 +210,7 @@ class Spin2CCompilerTest {
         CParser parser = new CParser(stream);
         Node root = parser.parse();
 
-        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler());
+        Spin2CObjectCompiler compiler = new Spin2CObjectCompiler(new Spin2CCompiler(), new File("test.spin2"));
         compiler.compileObject(root);
 
         Assertions.assertEquals(20_000_000, compiler.getScope().getLocalSymbol("CLKFREQ_").getNumber().intValue());
@@ -576,7 +575,7 @@ class Spin2CCompilerTest {
         Node root = subject.parse();
 
         Spin2CCompiler compiler = new Spin2CCompiler();
-        compiler.addSourceProvider(new SourceProvider() {
+        compiler.setSourceProvider(new SourceProvider() {
 
             @Override
             public File getFile(String name) {
@@ -587,14 +586,14 @@ class Spin2CCompilerTest {
             }
 
             @Override
-            public Node getParsedSource(String name) {
-                String text = sources.get(name);
+            public Node getParsedSource(File file) {
+                String text = sources.get(file.getName());
                 if (text == null) {
                     return null;
                 }
-                Spin2TokenStream stream = new Spin2TokenStream(text);
-                Spin2Parser subject = new Spin2Parser(stream);
-                return subject.parse();
+                String suffix = file.getName().substring(file.getName().lastIndexOf('.'));
+                Parser parser = Parser.getInstance(suffix, text);
+                return parser.parse();
             }
 
         });

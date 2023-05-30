@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin1;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 
 import org.junit.jupiter.api.Assertions;
@@ -2922,7 +2923,7 @@ class Spin1ObjectCompilerTest {
 
         Spin1Compiler compiler = new Spin1Compiler();
         compiler.setOpenspinCompatible(openspinCompatible);
-        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompiler(compiler);
+        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompiler(compiler, new File("test.spin"));
         Spin1Object obj = objectCompiler.compileObject(root);
 
         for (CompilerException msg : objectCompiler.getMessages()) {

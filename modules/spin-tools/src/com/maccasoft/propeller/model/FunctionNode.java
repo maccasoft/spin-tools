@@ -164,7 +164,11 @@ public class FunctionNode extends Node {
         return parameters;
     }
 
-    public Node getParameter(int index) {
+    public int getParametersCount() {
+        return parameters.size();
+    }
+
+    public ParameterNode getParameter(int index) {
         return parameters.get(index);
     }
 
@@ -172,7 +176,7 @@ public class FunctionNode extends Node {
         return returnVariables;
     }
 
-    public Node getReturnVariable(int index) {
+    public ReturnNode getReturnVariable(int index) {
         return returnVariables.get(index);
     }
 

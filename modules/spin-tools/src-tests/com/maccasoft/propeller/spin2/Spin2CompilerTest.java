@@ -22,6 +22,7 @@ import org.junit.jupiter.api.function.Executable;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.SourceProvider;
 
 class Spin2CompilerTest {
@@ -2067,7 +2068,7 @@ class Spin2CompilerTest {
         Node root = subject.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();
-        compiler.addSourceProvider(new SourceProvider() {
+        compiler.setSourceProvider(new SourceProvider() {
 
             @Override
             public File getFile(String name) {
@@ -2078,14 +2079,14 @@ class Spin2CompilerTest {
             }
 
             @Override
-            public Node getParsedSource(String name) {
-                String text = sources.get(name);
+            public Node getParsedSource(File file) {
+                String text = sources.get(file.getName());
                 if (text == null) {
                     return null;
                 }
-                Spin2TokenStream stream = new Spin2TokenStream(text);
-                Spin2Parser subject = new Spin2Parser(stream);
-                return subject.parse();
+                String suffix = file.getName().substring(file.getName().lastIndexOf('.'));
+                Parser parser = Parser.getInstance(suffix, text);
+                return parser.parse();
             }
 
         });

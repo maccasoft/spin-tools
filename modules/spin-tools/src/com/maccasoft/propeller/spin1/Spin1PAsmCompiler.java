@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
@@ -26,7 +28,7 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin1.instructions.FileInc;
 
-public abstract class Spin1PAsmCompiler {
+public abstract class Spin1PAsmCompiler extends ObjectCompiler {
 
     protected Context scope;
     protected Spin1Compiler compiler;
@@ -35,7 +37,14 @@ public abstract class Spin1PAsmCompiler {
 
     protected List<Spin1PAsmLine> source = new ArrayList<>();
 
-    public Spin1PAsmCompiler(Context scope, Spin1Compiler compiler) {
+    List<Node> excludedNodes = new ArrayList<>();
+
+    public Spin1PAsmCompiler(Context scope, Spin1Compiler compiler, File file) {
+        this(scope, compiler, null, file);
+    }
+
+    public Spin1PAsmCompiler(Context scope, Spin1Compiler compiler, ObjectCompiler parent, File file) {
+        super(parent, file);
         this.scope = scope;
         this.compiler = compiler;
     }
@@ -77,7 +86,8 @@ public abstract class Spin1PAsmCompiler {
                         int index = 0;
                         for (Spin1PAsmExpression argument : pasmLine.getArguments()) {
                             String fileName = argument.getString();
-                            Node includedNode = compiler.getParsedObject(fileName, ".spin");
+                            File includeFile = compiler.getFile(fileName, ".spin");
+                            Node includedNode = compiler.getParsedSource(includeFile);
                             try {
                                 if (includedNode == null) {
                                     throw new RuntimeException("file \"" + fileName + "\" not found");
@@ -104,8 +114,7 @@ public abstract class Spin1PAsmCompiler {
     }
 
     protected boolean skipNode(Node node) {
-        Boolean skip = (Boolean) node.getData("__skip__");
-        return skip != null && skip.booleanValue();
+        return excludedNodes.contains(node);
     }
 
     protected Spin1PAsmLine compileDataLine(Context lineScope, DataLineNode node) {

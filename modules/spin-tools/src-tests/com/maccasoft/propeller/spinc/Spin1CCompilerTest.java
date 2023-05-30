@@ -21,10 +21,9 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.spin1.Spin1Object;
-import com.maccasoft.propeller.spin1.Spin1Parser;
-import com.maccasoft.propeller.spin1.Spin1TokenStream;
 
 class Spin1CCompilerTest {
 
@@ -336,7 +335,7 @@ class Spin1CCompilerTest {
         Node root = subject.parse();
 
         Spin1CCompiler compiler = new Spin1CCompiler();
-        compiler.addSourceProvider(new SourceProvider() {
+        compiler.setSourceProvider(new SourceProvider() {
 
             @Override
             public File getFile(String name) {
@@ -347,14 +346,14 @@ class Spin1CCompilerTest {
             }
 
             @Override
-            public Node getParsedSource(String name) {
-                String text = sources.get(name);
+            public Node getParsedSource(File file) {
+                String text = sources.get(file.getName());
                 if (text == null) {
                     return null;
                 }
-                Spin1TokenStream stream = new Spin1TokenStream(text);
-                Spin1Parser subject = new Spin1Parser(stream);
-                return subject.parse();
+                String suffix = file.getName().substring(file.getName().lastIndexOf('.'));
+                Parser parser = Parser.getInstance(suffix, text);
+                return parser.parse();
             }
 
         });

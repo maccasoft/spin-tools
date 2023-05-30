@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spin2;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -79,7 +80,7 @@ import com.maccasoft.propeller.spin2.instructions.Orgh;
 import com.maccasoft.propeller.spin2.instructions.Res;
 import com.maccasoft.propeller.spin2.instructions.Word;
 
-public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements ObjectCompiler {
+public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
     List<Variable> variables = new ArrayList<>();
     List<Spin2Method> methods = new ArrayList<>();
@@ -93,8 +94,12 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
     Map<String, Expression> publicSymbols;
     List<LinkDataObject> objectLinks = new ArrayList<>();
 
-    public Spin2ObjectCompiler(Spin2Compiler compiler) {
-        super(new Spin2GlobalContext(compiler.isCaseSensitive()), compiler);
+    public Spin2ObjectCompiler(Spin2Compiler compiler, File file) {
+        this(compiler, null, file);
+    }
+
+    public Spin2ObjectCompiler(Spin2Compiler compiler, ObjectCompiler parent, File file) {
+        super(new Spin2GlobalContext(compiler.isCaseSensitive()), compiler, parent, file);
 
         scope.addDefinition("__P1__", new NumberLiteral(0));
         scope.addDefinition("__P2__", new NumberLiteral(1));
@@ -104,12 +109,12 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
 
     @Override
     public Spin2Object compileObject(Node root) {
-        compile(root);
-        return generateObject();
+        compileStep1(root);
+        return generateObject(0);
     }
 
     @Override
-    public void compile(Node root) {
+    public void compileStep1(Node root) {
         publicSymbols = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
 
         root.accept(new NodeVisitor() {
@@ -134,7 +139,9 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
 
             @Override
             public void visitConstant(ConstantNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
                 if (!skipNode(node)) {
                     compileConstant(node);
                 }
@@ -142,12 +149,16 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
 
             @Override
             public void visitVariable(VariableNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
             }
 
             @Override
             public void visitObject(ObjectNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
                 if (!skipNode(node)) {
                     compileObject(node);
                 }
@@ -155,19 +166,25 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
 
             @Override
             public boolean visitMethod(MethodNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
                 return true;
             }
 
             @Override
             public boolean visitStatement(StatementNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
                 return true;
             }
 
             @Override
             public void visitDataLine(DataLineNode node) {
-                node.setData("__skip__", !conditionStack.isEmpty() && conditionStack.peek().skip);
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
             }
 
         });
@@ -349,7 +366,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
     }
 
     @Override
-    public void compilePass2() {
+    public void compileStep2() {
 
         for (Variable var : variables) {
             if (!var.isReferenced() && var.getData() != null) {
@@ -439,11 +456,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
     @Override
     public List<LinkDataObject> getObjectLinks() {
         return objectLinks;
-    }
-
-    @Override
-    public Spin2Object generateObject() {
-        return generateObject(0);
     }
 
     @Override
@@ -906,21 +918,21 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
 
     void compileObject(ObjectNode node) {
         try {
-            Iterator<Token> iter = node.getTokens().iterator();
+            TokenIterator iter = node.iterator();
 
             Token token = iter.next();
             String name = token.getText();
             Expression count = new NumberLiteral(1);
 
             if (!iter.hasNext()) {
-                logMessage(new CompilerException("syntax error", node));
+                logMessage(new CompilerException("expecting file name", token.substring(token.stop - token.start)));
                 return;
             }
             token = iter.next();
 
             if ("[".equals(token.getText())) {
                 if (!iter.hasNext()) {
-                    logMessage(new CompilerException("syntax error", node));
+                    logMessage(new CompilerException("expecting expression", token.substring(token.stop - token.start)));
                     return;
                 }
                 Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
@@ -944,7 +956,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                     return;
                 }
                 if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting object file", node));
+                    logMessage(new CompilerException("expecting file name", token.substring(token.stop - token.start)));
                     return;
                 }
                 token = iter.next();
@@ -955,26 +967,24 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                 return;
             }
             if (!iter.hasNext()) {
-                logMessage(new CompilerException("expecting object file", node));
+                logMessage(new CompilerException("expecting file name", token.substring(token.stop - token.start)));
                 return;
             }
             Token fileToken = iter.next();
             if (fileToken.type != Token.STRING) {
-                logMessage(new CompilerException("expecting object file", fileToken));
+                logMessage(new CompilerException("expecting file name", fileToken));
                 return;
             }
-            String fileName = fileToken.getText().substring(1, fileToken.getText().length() - 1);
 
             Map<String, Expression> parameters = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
             if (iter.hasNext()) {
                 token = iter.next();
                 if (!"|".equals(token.getText())) {
-                    logMessage(new CompilerException("syntax error", token));
+                    logMessage(new CompilerException("expecting '|'", token));
                     return;
                 }
                 if (!iter.hasNext()) {
-                    logMessage(new CompilerException("expecting parameters", token));
-                    return;
+                    logMessage(new CompilerException("expecting parameter", token.substring(token.stop - token.start)));
                 }
                 while (iter.hasNext()) {
                     token = iter.next();
@@ -984,56 +994,65 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                     }
                     String identifier = token.getText();
                     if (!iter.hasNext()) {
-                        logMessage(new CompilerException("expecting expression", token));
+                        logMessage(new CompilerException("expecting expression", token.substring(token.stop - token.start)));
                         break;
                     }
                     token = iter.next();
-                    if ("=".equals(token.getText())) {
-                        Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                    if (!"=".equals(token.getText())) {
+                        logMessage(new CompilerException("expecting '='", token));
+                        break;
+                    }
+                    Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                    try {
                         while (iter.hasNext()) {
-                            token = iter.next();
-                            if (",".equals(token.getText())) {
+                            if (",".equals(iter.peekNext().getText())) {
                                 break;
                             }
-                            builder.addToken(token);
+                            builder.addToken(iter.next());
                         }
+                        Expression expression = builder.getExpression();
                         try {
-                            Expression expression = builder.getExpression();
-                            try {
-                                parameters.put(identifier, expression);
-                            } catch (CompilerException e) {
-                                logMessage(e);
-                            } catch (Exception e) {
-                                logMessage(new CompilerException(e, builder.getTokens()));
-                            }
+                            parameters.put(identifier, expression);
                         } catch (CompilerException e) {
                             logMessage(e);
                         } catch (Exception e) {
-                            if (builder.tokens.size() == 0) {
-                                logMessage(new CompilerException("expecting expression", token));
-                            }
-                            else {
-                                logMessage(new CompilerException("expression syntax error", builder.tokens));
+                            logMessage(new CompilerException(e, builder.getTokens()));
+                        }
+                    } catch (CompilerException e) {
+                        logMessage(e);
+                    } catch (Exception e) {
+                        logMessage(new CompilerException(e, builder.tokens));
+                    }
+
+                    if (iter.hasNext()) {
+                        token = iter.next();
+                        if (",".equals(token.getText())) {
+                            if (!iter.hasNext()) {
+                                logMessage(new CompilerException("expecting parameter", token.substring(token.stop - token.start)));
                             }
                         }
-                    }
-                    else {
-                        logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
-                        break;
-                    }
-                    if (!",".equals(token.getText())) {
-                        break;
+                        else {
+                            logMessage(new CompilerException("expecting ','", token));
+                        }
                     }
                 }
             }
 
-            ObjectInfo info = compiler.getObjectInfo(fileName, parameters);
-            if (info == null) {
-                logMessage(new CompilerException("object " + fileName + " not found", fileToken));
+            if (iter.hasNext()) {
+                token = iter.next();
+                logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
+            }
+
+            String fileName = fileToken.getText().substring(1, fileToken.getText().length() - 1);
+            File file = compiler.getFile(fileName, ".spin2");
+            if (file == null) {
+                logMessage(new CompilerException("object " + fileToken + " not found", fileToken));
                 return;
             }
-            if (info.hasErrors()) {
-                logMessage(new CompilerException("object " + fileName + " has errors", fileToken));
+
+            ObjectInfo info = compiler.getObjectInfo(this, file, parameters);
+            if (info == null) {
+                logMessage(new CompilerException("object " + fileName + " not found", fileToken));
                 return;
             }
 
@@ -1046,10 +1065,14 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler implements Object
                 }
             }
 
-            if (iter.hasNext()) {
-                Node error = new Node();
-                iter.forEachRemaining(t -> error.addToken(t));
-                logMessage(new CompilerException("unexpected '" + error + "'", error));
+            if (info.hasErrors()) {
+                for (CompilerException msg : compiler.getMessages()) {
+                    if (file.getName().equals(msg.getFileName()) && "illegal circular reference".equals(msg.getMessage())) {
+                        logMessage(new CompilerException(msg.getMessage(), fileToken));
+                        return;
+                    }
+                }
+                logMessage(new CompilerException("object " + fileName + " has errors", fileToken));
             }
 
         } catch (CompilerException e) {

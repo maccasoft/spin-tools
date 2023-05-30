@@ -350,7 +350,7 @@ class Spin1LibraryTest {
         Node root = subject.parse();
 
         Spin1Compiler compiler = new Spin1Compiler();
-        compiler.addSourceProvider(new FileSourceProvider(new File[] {
+        compiler.setSourceProvider(new FileSourceProvider(new File[] {
             source.getParentFile(),
             new File(path)
         }));

@@ -190,7 +190,7 @@ public class SpinCompiler {
                 compiler = new Spin1Compiler();
             }
             compiler.setCaseSensitive(caseSensitive);
-            compiler.addSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
+            compiler.setSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
             compiler.setDebugEnabled(cmd.hasOption('d'));
             compiler.setRemoveUnusedMethods(true);
             try {

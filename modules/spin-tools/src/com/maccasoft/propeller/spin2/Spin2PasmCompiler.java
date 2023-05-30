@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
@@ -30,7 +32,7 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.spin2.instructions.FileInc;
 
-public abstract class Spin2PasmCompiler {
+public abstract class Spin2PasmCompiler extends ObjectCompiler {
 
     protected Context scope;
     protected Spin2Compiler compiler;
@@ -40,7 +42,14 @@ public abstract class Spin2PasmCompiler {
     protected List<Spin2PAsmLine> source = new ArrayList<>();
     protected List<Spin2PAsmDebugLine> debugSource = new ArrayList<>();
 
-    public Spin2PasmCompiler(Context scope, Spin2Compiler compiler) {
+    List<Node> excludedNodes = new ArrayList<>();
+
+    public Spin2PasmCompiler(Context scope, Spin2Compiler compiler, File file) {
+        this(scope, compiler, null, file);
+    }
+
+    public Spin2PasmCompiler(Context scope, Spin2Compiler compiler, ObjectCompiler parent, File file) {
+        super(parent, file);
         this.scope = scope;
         this.compiler = compiler;
     }
@@ -87,7 +96,8 @@ public abstract class Spin2PasmCompiler {
                         int index = 0;
                         for (Spin2PAsmExpression argument : pasmLine.getArguments()) {
                             String fileName = argument.getString();
-                            Node includedNode = compiler.getParsedObject(fileName, ".spin2");
+                            File includeFile = compiler.getFile(fileName, ".spin2");
+                            Node includedNode = compiler.getParsedSource(includeFile);
                             try {
                                 if (includedNode == null) {
                                     throw new RuntimeException("file \"" + fileName + "\" not found");
@@ -114,8 +124,7 @@ public abstract class Spin2PasmCompiler {
     }
 
     protected boolean skipNode(Node node) {
-        Boolean skip = (Boolean) node.getData("__skip__");
-        return skip != null && skip.booleanValue();
+        return excludedNodes.contains(node);
     }
 
     protected Spin2PAsmLine compileInlineDataLine(Context scope, Context lineScope, DataLineNode node) {
@@ -172,9 +181,9 @@ public abstract class Spin2PasmCompiler {
                         expression = expressionBuilder.getExpression();
                         expression.setData(param);
                     } catch (CompilerException e) {
-                        throw e;
+                        logMessage(e);
                     } catch (Exception e) {
-                        throw new CompilerException(e, param);
+                        logMessage(new CompilerException(e, param));
                     }
                 }
             }
@@ -184,9 +193,9 @@ public abstract class Spin2PasmCompiler {
                     count = expressionBuilder.getExpression();
                     count.setData(param.count);
                 } catch (CompilerException e) {
-                    throw e;
+                    logMessage(e);
                 } catch (Exception e) {
-                    throw new CompilerException(e, param.count);
+                    logMessage(new CompilerException(e, param));
                 }
             }
             if (expression != null) {

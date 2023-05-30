@@ -10,6 +10,8 @@
 
 package com.maccasoft.propeller;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,24 +19,47 @@ import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Node;
 
-public interface ObjectCompiler {
+public abstract class ObjectCompiler {
 
-    public SpinObject compileObject(Node root);
+    ObjectCompiler parent;
+    File file;
 
-    public void compile(Node root);
+    List<ObjectCompiler> childs = new ArrayList<>();
 
-    public void compilePass2();
+    public ObjectCompiler(File file) {
+        this.file = file;
+    }
 
-    public boolean hasErrors();
+    public ObjectCompiler(ObjectCompiler parent, File file) {
+        this.parent = parent;
+        this.file = file;
+        if (parent != null) {
+            parent.childs.add(this);
+        }
+    }
 
-    public Map<String, Expression> getPublicSymbols();
+    public ObjectCompiler getParent() {
+        return parent;
+    }
 
-    public int getVarSize();
+    public File getFile() {
+        return file;
+    }
 
-    public SpinObject generateObject();
+    public abstract SpinObject compileObject(Node root);
 
-    public SpinObject generateObject(int memoryOffset);
+    public abstract void compileStep1(Node root);
 
-    public List<LinkDataObject> getObjectLinks();
+    public abstract void compileStep2();
+
+    public abstract boolean hasErrors();
+
+    public abstract Map<String, Expression> getPublicSymbols();
+
+    public abstract int getVarSize();
+
+    public abstract SpinObject generateObject(int memoryOffset);
+
+    public abstract List<LinkDataObject> getObjectLinks();
 
 }

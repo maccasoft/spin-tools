@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spinc;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.expressions.Abs;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.And;
@@ -224,8 +226,12 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
 
     List<Spin1Bytecode> stringData;
 
-    public Spin1CBytecodeCompiler(Context scope, Spin1Compiler compiler) {
-        super(scope, compiler);
+    public Spin1CBytecodeCompiler(Context scope, Spin1Compiler compiler, File file) {
+        this(scope, compiler, null, file);
+    }
+
+    public Spin1CBytecodeCompiler(Context scope, Spin1Compiler compiler, ObjectCompiler parent, File file) {
+        super(scope, compiler, parent, file);
         this.stringData = new ArrayList<>();
     }
 

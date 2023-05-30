@@ -11,6 +11,7 @@
 package com.maccasoft.propeller.spinc;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 
 import org.junit.jupiter.api.Assertions;
@@ -2465,7 +2466,7 @@ class Spin2CObjectCompilerTest {
 
         Spin2CCompiler compiler = new Spin2CCompiler();
         compiler.setDebugEnabled(debugEnabled);
-        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompiler(compiler);
+        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompiler(compiler, new File("test.spin2"));
         Spin2Object obj = objectCompiler.compileObject(root);
         if (debugEnabled) {
             obj.setDebugData(compiler.generateDebugData());

@@ -658,4 +658,28 @@ public class Spin1TokenMarker extends SourceTokenMarker {
 
         });
     }
+
+    @Override
+    protected String getMethodInsert(MethodNode node) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(node.name.getText());
+        if (node.getParametersCount() != 0) {
+            sb.append("(");
+
+            int i = 0;
+            while (i < node.getParametersCount()) {
+                if (i != 0) {
+                    sb.append(", ");
+                }
+                sb.append(node.getParameter(i).identifier.getText());
+                i++;
+            }
+
+            sb.append(")");
+        }
+
+        return sb.toString();
+    }
+
 }

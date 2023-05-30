@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,6 +56,7 @@ import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectsNode;
+import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariablesNode;
@@ -299,44 +301,25 @@ public class EditorTab implements FindReplaceTarget {
         }
 
         @Override
-        public Node getParsedSource(String name) {
-            File localFile = file != null ? new File(file.getParentFile(), name) : new File(name);
+        public Node getParsedSource(File file) {
+            AtomicReference<Parser> parser = new AtomicReference<>();
+            Display.getDefault().syncExec(new Runnable() {
 
-            Node node = sourcePool.getParsedSource(localFile);
-            if (node == null) {
-                for (File file : collectedSearchPaths) {
-                    localFile = new File(file, name);
-                    if ((node = sourcePool.getParsedSource(localFile)) != null) {
-                        break;
+                @Override
+                public void run() {
+                    EditorTab editorTab = getTabForFile(file);
+                    if (editorTab != null) {
+                        String name = editorTab.getText();
+                        String suffix = name.substring(name.lastIndexOf('.')).toLowerCase();
+                        String text = editorTab.getEditor().getStyledText().getText();
+                        parser.set(Parser.getInstance(suffix, text));
                     }
                 }
+            });
+            if (parser.get() != null) {
+                return parser.get().parse();
             }
-            if (node == null) {
-                for (int i = 0; i < searchPaths.length; i++) {
-                    localFile = new File(searchPaths[i], name);
-                    if ((node = sourcePool.getParsedSource(localFile)) != null) {
-                        break;
-                    }
-                }
-            }
-
-            if (node != null && localFile.getParentFile() != null) {
-                File parent = localFile.getParentFile();
-                int i = 0;
-                while (i < searchPaths.length) {
-                    if (parent.equals(searchPaths[i])) {
-                        break;
-                    }
-                    i++;
-                }
-                if (i >= searchPaths.length && !collectedSearchPaths.contains(parent)) {
-                    collectedSearchPaths.add(parent);
-                }
-
-                dependencies.add(localFile);
-            }
-
-            return node;
+            return super.getParsedSource(file);
         }
 
         @Override
@@ -371,6 +354,21 @@ public class EditorTab implements FindReplaceTarget {
                 }
             }
 
+            return null;
+        }
+
+        EditorTab getTabForFile(File file) {
+            CTabItem[] tabItems = tabItem.getParent().getItems();
+            for (int i = 0; i < tabItems.length; i++) {
+                if (tabItems[i] == tabItem) {
+                    continue;
+                }
+                EditorTab editorTab = (EditorTab) tabItems[i].getData();
+                File editorTabFile = editorTab.getFile() != null ? editorTab.getFile() : new File(editorTab.getText()).getAbsoluteFile();
+                if (editorTabFile.equals(file)) {
+                    return editorTab;
+                }
+            }
             return null;
         }
 
@@ -509,11 +507,11 @@ public class EditorTab implements FindReplaceTarget {
                         Compiler compiler = null;
                         if (tabItemText.toLowerCase().endsWith(".spin")) {
                             compiler = new Spin1Compiler(preferences.getSpin1CaseSensitiveSymbols());
-                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
+                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
                         }
                         else if (tabItemText.toLowerCase().endsWith(".spin2")) {
                             compiler = new Spin2Compiler(preferences.getSpin2CaseSensitiveSymbols());
-                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
                         }
                         else if (tabItemText.toLowerCase().endsWith(".c")) {
                             for (Node node : root.getChilds()) {
@@ -528,11 +526,11 @@ public class EditorTab implements FindReplaceTarget {
                                                     if (index < node.getTokenCount()) {
                                                         if ("P1".equals(node.getToken(index).getText())) {
                                                             compiler = new Spin1CCompiler(preferences.getSpin1CaseSensitiveSymbols());
-                                                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
+                                                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
                                                         }
                                                         else if ("P2".equals(node.getToken(index).getText())) {
                                                             compiler = new Spin2CCompiler(preferences.getSpin2CaseSensitiveSymbols());
-                                                            compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+                                                            compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
                                                         }
                                                     }
                                                     break;
@@ -544,7 +542,7 @@ public class EditorTab implements FindReplaceTarget {
                             }
                             if (compiler == null) {
                                 compiler = new Spin2CCompiler();
-                                compiler.addSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+                                compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
                             }
                         }
                         if (compiler != null) {

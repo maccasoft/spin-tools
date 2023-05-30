@@ -260,7 +260,7 @@ class Spin2LibraryTest {
         Node root = subject.parse();
 
         Spin2Compiler compiler = new Spin2Compiler();
-        compiler.addSourceProvider(new FileSourceProvider(new File[] {
+        compiler.setSourceProvider(new FileSourceProvider(new File[] {
             source.getParentFile(),
             new File(path)
         }));

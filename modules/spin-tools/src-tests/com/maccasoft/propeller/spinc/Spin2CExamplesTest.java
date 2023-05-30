@@ -150,7 +150,7 @@ class Spin2CExamplesTest {
 
         Spin2CCompiler compiler = new Spin2CCompiler();
         compiler.setDebugEnabled(debugEnabled);
-        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompiler(compiler);
+        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompiler(compiler, new File("test.spin2"));
         Spin2Object obj = objectCompiler.compileObject(root);
         if (debugEnabled) {
             obj.setDebugData(compiler.generateDebugData());
@@ -178,7 +178,7 @@ class Spin2CExamplesTest {
         Node root = subject.parse();
 
         Spin2CCompiler compiler = new Spin2CCompiler();
-        compiler.addSourceProvider(new FileSourceProvider(new File[] {
+        compiler.setSourceProvider(new FileSourceProvider(new File[] {
             source.getParentFile(),
             new File(path),
             new File(libraryPath)
