@@ -79,9 +79,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     int objectVarSize;
 
-    boolean errors;
-    List<CompilerException> messages = new ArrayList<>();
-
     Map<String, Expression> publicSymbols = new HashMap<>();
     List<LinkDataObject> objectLinks = new ArrayList<>();
 
@@ -1902,32 +1899,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
     @Override
     public Context getScope() {
         return scope;
-    }
-
-    @Override
-    protected void logMessage(CompilerException message) {
-        if (message.hasChilds()) {
-            for (CompilerException msg : message.getChilds()) {
-                if (msg.type == CompilerException.ERROR) {
-                    errors = true;
-                }
-            }
-        }
-        else {
-            if (message.type == CompilerException.ERROR) {
-                errors = true;
-            }
-        }
-        messages.add(message);
-    }
-
-    @Override
-    public boolean hasErrors() {
-        return errors;
-    }
-
-    public List<CompilerException> getMessages() {
-        return messages;
     }
 
 }

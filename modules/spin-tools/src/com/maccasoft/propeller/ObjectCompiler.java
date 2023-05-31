@@ -26,6 +26,9 @@ public abstract class ObjectCompiler {
 
     List<ObjectCompiler> childs = new ArrayList<>();
 
+    boolean errors;
+    List<CompilerException> messages = new ArrayList<>();
+
     public ObjectCompiler(File file) {
         this.file = file;
     }
@@ -52,8 +55,6 @@ public abstract class ObjectCompiler {
 
     public abstract void compileStep2();
 
-    public abstract boolean hasErrors();
-
     public abstract Map<String, Expression> getPublicSymbols();
 
     public abstract int getVarSize();
@@ -61,5 +62,31 @@ public abstract class ObjectCompiler {
     public abstract SpinObject generateObject(int memoryOffset);
 
     public abstract List<LinkDataObject> getObjectLinks();
+
+    protected void logMessage(CompilerException message) {
+        message.fileName = file.getName();
+        if (message.hasChilds()) {
+            for (CompilerException msg : message.getChilds()) {
+                msg.fileName = file.getName();
+                if (msg.type == CompilerException.ERROR) {
+                    errors = true;
+                }
+            }
+        }
+        else {
+            if (message.type == CompilerException.ERROR) {
+                errors = true;
+            }
+        }
+        messages.add(message);
+    }
+
+    public boolean hasErrors() {
+        return errors;
+    }
+
+    public List<CompilerException> getMessages() {
+        return messages;
+    }
 
 }

@@ -2126,7 +2126,4 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         }
     }
 
-    @Override
-    protected abstract void logMessage(CompilerException message);
-
 }

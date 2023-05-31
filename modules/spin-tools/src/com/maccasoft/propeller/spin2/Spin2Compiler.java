@@ -43,8 +43,8 @@ public class Spin2Compiler extends Compiler {
 
     protected List<ObjectInfo> childObjects = new ArrayList<>();
 
-    boolean errors;
-    List<CompilerException> messages = new ArrayList<CompilerException>();
+    protected boolean errors;
+    protected List<CompilerException> messages = new ArrayList<CompilerException>();
 
     public Spin2Compiler() {
 
@@ -106,71 +106,8 @@ public class Spin2Compiler extends Compiler {
         return obj;
     }
 
-    class Spin2ObjectCompilerProxy extends Spin2ObjectCompiler {
-
-        public Spin2ObjectCompilerProxy(File file) {
-            super(Spin2Compiler.this, file);
-        }
-
-        public Spin2ObjectCompilerProxy(ObjectCompiler parent, File file) {
-            super(Spin2Compiler.this, parent, file);
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            return Spin2Compiler.this.getBinaryFile(fileName);
-        }
-
-        @Override
-        protected void logMessage(CompilerException message) {
-            message.fileName = getFile().getName();
-            if (message.hasChilds()) {
-                for (CompilerException msg : message.getChilds()) {
-                    logMessage(msg);
-                }
-            }
-            else {
-                Spin2Compiler.this.logMessage(message);
-                super.logMessage(message);
-            }
-        }
-
-    }
-
-    class Spin2CObjectCompilerProxy extends Spin2CObjectCompiler {
-
-        public Spin2CObjectCompilerProxy(File file) {
-            super(Spin2Compiler.this, file);
-        }
-
-        public Spin2CObjectCompilerProxy(ObjectCompiler parent, File file) {
-            super(Spin2Compiler.this, parent, file);
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            return Spin2Compiler.this.getBinaryFile(fileName);
-        }
-
-        @Override
-        protected void logMessage(CompilerException message) {
-            message.fileName = getFile().getName();
-            if (message.hasChilds()) {
-                for (CompilerException msg : message.getChilds()) {
-                    msg.fileName = getFile().getName();
-                    Spin2Compiler.this.logMessage(msg);
-                }
-            }
-            else {
-                Spin2Compiler.this.logMessage(message);
-            }
-            super.logMessage(message);
-        }
-
-    }
-
     protected Spin2Object compileObject(File rootFile, Node root) {
-        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompilerProxy(rootFile);
+        Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(this, rootFile);
         objectCompiler.compileObject(root);
 
         objectCompiler.compileStep2();
@@ -233,6 +170,13 @@ public class Spin2Compiler extends Compiler {
 
         tree = buildFrom(objectCompiler);
 
+        errors = objectCompiler.hasErrors();
+
+        messages.addAll(objectCompiler.getMessages());
+        for (ObjectInfo info : childObjects) {
+            messages.addAll(info.compiler.getMessages());
+        }
+
         return object;
 
     }
@@ -287,10 +231,10 @@ public class Spin2Compiler extends Compiler {
 
         ObjectCompiler objectCompiler;
         if (file.getName().toLowerCase().endsWith(".c")) {
-            objectCompiler = new Spin2CObjectCompilerProxy(parent, file);
+            objectCompiler = new Spin2CObjectCompiler(this, parent, file);
         }
         else {
-            objectCompiler = new Spin2ObjectCompilerProxy(parent, file);
+            objectCompiler = new Spin2ObjectCompiler(this, parent, file);
         }
 
         while (parent != null) {
@@ -327,10 +271,10 @@ public class Spin2Compiler extends Compiler {
             if (objectRoot != null) {
                 ObjectCompiler objectCompiler;
                 if (objectFile.getName().toLowerCase().endsWith(".c")) {
-                    objectCompiler = new Spin2CObjectCompilerProxy(objectFile);
+                    objectCompiler = new Spin2CObjectCompiler(this, objectFile);
                 }
                 else {
-                    objectCompiler = new Spin2ObjectCompilerProxy(objectFile);
+                    objectCompiler = new Spin2ObjectCompiler(this, objectFile);
                 }
                 ObjectInfo info = new ObjectInfo(objectFile, objectCompiler, parameters);
                 int index = childObjects.indexOf(info);

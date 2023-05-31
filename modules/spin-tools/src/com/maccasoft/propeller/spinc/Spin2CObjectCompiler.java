@@ -82,9 +82,6 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     List<Spin2Method> methods = new ArrayList<>();
     Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<>());
 
-    boolean errors;
-    List<CompilerException> messages = new ArrayList<CompilerException>();
-
     Map<String, Expression> publicSymbols = new HashMap<String, Expression>();
     List<LinkDataObject> objectLinks = new ArrayList<>();
 
@@ -1913,43 +1910,8 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     }
 
     @Override
-    protected void logMessage(CompilerException message) {
-        if (message.hasChilds()) {
-            for (CompilerException msg : message.getChilds()) {
-                if (msg.type == CompilerException.ERROR) {
-                    errors = true;
-                }
-            }
-        }
-        else {
-            if (message.type == CompilerException.ERROR) {
-                errors = true;
-            }
-        }
-        messages.add(message);
-    }
-
-    protected Node getParsedSource(String fileName) {
-        return null;
-    }
-
-    @Override
     protected void compileDatInclude(Node root) {
 
-    }
-
-    @Override
-    protected byte[] getBinaryFile(String fileName) {
-        return null;
-    }
-
-    @Override
-    public boolean hasErrors() {
-        return errors;
-    }
-
-    public List<CompilerException> getMessages() {
-        return messages;
     }
 
 }

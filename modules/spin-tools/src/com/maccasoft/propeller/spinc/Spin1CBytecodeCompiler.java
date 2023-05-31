@@ -1762,7 +1762,4 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
         return stringData;
     }
 
-    @Override
-    protected abstract void logMessage(CompilerException message);
-
 }

@@ -352,8 +352,8 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
 
     protected abstract void compileDatInclude(Node root);
 
-    protected abstract byte[] getBinaryFile(String fileName);
-
-    protected abstract void logMessage(CompilerException message);
+    protected byte[] getBinaryFile(String fileName) {
+        return compiler.getBinaryFile(fileName);
+    }
 
 }

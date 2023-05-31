@@ -35,8 +35,8 @@ public class Spin1Compiler extends Compiler {
 
     protected List<ObjectInfo> childObjects = new ArrayList<>();
 
-    boolean errors;
-    List<CompilerException> messages = new ArrayList<CompilerException>();
+    protected boolean errors;
+    protected List<CompilerException> messages = new ArrayList<CompilerException>();
 
     public Spin1Compiler() {
 
@@ -126,41 +126,10 @@ public class Spin1Compiler extends Compiler {
         return object;
     }
 
-    class Spin1ObjectCompilerProxy extends Spin1ObjectCompiler {
-
-        public Spin1ObjectCompilerProxy(File file) {
-            super(Spin1Compiler.this, file);
-        }
-
-        public Spin1ObjectCompilerProxy(ObjectCompiler parent, File file) {
-            super(Spin1Compiler.this, parent, file);
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            return Spin1Compiler.this.getBinaryFile(fileName);
-        }
-
-        @Override
-        protected void logMessage(CompilerException message) {
-            message.fileName = getFile().getName();
-            if (message.hasChilds()) {
-                for (CompilerException msg : message.getChilds()) {
-                    logMessage(msg);
-                }
-            }
-            else {
-                Spin1Compiler.this.logMessage(message);
-                super.logMessage(message);
-            }
-        }
-
-    }
-
     public Spin1Object compileObject(File rootFile, Node root) {
         int memoryOffset = 16;
 
-        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(rootFile);
+        Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompiler(this, rootFile);
         objectCompiler.compileObject(root);
 
         objectCompiler.compileStep2();
@@ -221,6 +190,13 @@ public class Spin1Compiler extends Compiler {
 
         tree = buildFrom(objectCompiler);
 
+        errors = objectCompiler.hasErrors();
+
+        messages.addAll(objectCompiler.getMessages());
+        for (ObjectInfo info : childObjects) {
+            messages.addAll(info.compiler.getMessages());
+        }
+
         return object;
 
     }
@@ -228,7 +204,7 @@ public class Spin1Compiler extends Compiler {
     @Override
     public ObjectInfo getObjectInfo(ObjectCompiler parent, File file, Map<String, Expression> parameters) throws Exception {
         Node objectRoot = getParsedSource(file);
-        ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(parent, file);
+        ObjectCompiler objectCompiler = new Spin1ObjectCompiler(this, parent, file);
 
         while (parent != null) {
             if (file.equals(parent.getFile())) {
@@ -254,7 +230,7 @@ public class Spin1Compiler extends Compiler {
         if (objectFile != null) {
             Node objectRoot = getParsedSource(objectFile);
             if (objectRoot != null) {
-                ObjectCompiler objectCompiler = new Spin1ObjectCompilerProxy(objectFile);
+                ObjectCompiler objectCompiler = new Spin1ObjectCompiler(this, objectFile);
                 ObjectInfo info = new ObjectInfo(objectFile, objectCompiler, parameters);
                 int index = childObjects.indexOf(info);
                 if (index != -1) {

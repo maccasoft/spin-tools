@@ -259,6 +259,4 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
         return compiler.getBinaryFile(fileName);
     }
 
-    protected abstract void logMessage(CompilerException message);
-
 }

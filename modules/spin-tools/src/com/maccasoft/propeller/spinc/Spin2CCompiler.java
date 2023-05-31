@@ -67,71 +67,9 @@ public class Spin2CCompiler extends Spin2Compiler {
         }
     }
 
-    class Spin2CObjectCompilerProxy extends Spin2CObjectCompiler {
-
-        public Spin2CObjectCompilerProxy(File file) {
-            super(Spin2CCompiler.this, file);
-        }
-
-        public Spin2CObjectCompilerProxy(ObjectCompiler parent, File file) {
-            super(Spin2CCompiler.this, parent, file);
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            return Spin2CCompiler.this.getBinaryFile(fileName);
-        }
-
-        @Override
-        protected void logMessage(CompilerException message) {
-            message.fileName = getFile().getName();
-            if (message.hasChilds()) {
-                for (CompilerException msg : message.getChilds()) {
-                    logMessage(msg);
-                }
-            }
-            else {
-                Spin2CCompiler.this.logMessage(message);
-                super.logMessage(message);
-            }
-        }
-
-    }
-
-    class Spin2ObjectCompilerProxy extends Spin2ObjectCompiler {
-
-        public Spin2ObjectCompilerProxy(File file) {
-            super(Spin2CCompiler.this, file);
-        }
-
-        public Spin2ObjectCompilerProxy(ObjectCompiler parent, File file) {
-            super(Spin2CCompiler.this, parent, file);
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            return Spin2CCompiler.this.getBinaryFile(fileName);
-        }
-
-        @Override
-        protected void logMessage(CompilerException message) {
-            message.fileName = getFile().getName();
-            if (message.hasChilds()) {
-                for (CompilerException msg : message.getChilds()) {
-                    logMessage(msg);
-                }
-            }
-            else {
-                Spin2CCompiler.this.logMessage(message);
-                super.logMessage(message);
-            }
-        }
-
-    }
-
     @Override
     protected Spin2Object compileObject(File rootFile, Node root) {
-        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompilerProxy(rootFile);
+        Spin2CObjectCompiler objectCompiler = new Spin2CObjectCompiler(this, rootFile);
         objectCompiler.compileObject(root);
 
         objectCompiler.compileStep2();
@@ -194,6 +132,13 @@ public class Spin2CCompiler extends Spin2Compiler {
 
         tree = buildFrom(objectCompiler);
 
+        errors = objectCompiler.hasErrors();
+
+        messages.addAll(objectCompiler.getMessages());
+        for (ObjectInfo info : childObjects) {
+            messages.addAll(info.compiler.getMessages());
+        }
+
         return object;
 
     }
@@ -243,11 +188,11 @@ public class Spin2CCompiler extends Spin2Compiler {
         Node objectRoot = getParsedSource(file);
 
         ObjectCompiler objectCompiler;
-        if (file.getName().toLowerCase().endsWith(".c")) {
-            objectCompiler = new Spin2CObjectCompilerProxy(parent, file);
+        if (file.getName().toLowerCase().endsWith(".spin2")) {
+            objectCompiler = new Spin2ObjectCompiler(this, parent, file);
         }
         else {
-            objectCompiler = new Spin2ObjectCompilerProxy(parent, file);
+            objectCompiler = new Spin2CObjectCompiler(this, parent, file);
         }
 
         while (parent != null) {

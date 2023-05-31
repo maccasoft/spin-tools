@@ -58,73 +58,11 @@ public class Spin1CCompiler extends Spin1Compiler {
         }
     }
 
-    class Spin1CObjectCompilerProxy extends Spin1CObjectCompiler {
-
-        public Spin1CObjectCompilerProxy(File file) {
-            super(Spin1CCompiler.this, file);
-        }
-
-        public Spin1CObjectCompilerProxy(ObjectCompiler parent, File file) {
-            super(Spin1CCompiler.this, parent, file);
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            return Spin1CCompiler.this.getBinaryFile(fileName);
-        }
-
-        @Override
-        protected void logMessage(CompilerException message) {
-            message.fileName = getFile().getName();
-            if (message.hasChilds()) {
-                for (CompilerException msg : message.getChilds()) {
-                    logMessage(msg);
-                }
-            }
-            else {
-                Spin1CCompiler.this.logMessage(message);
-                super.logMessage(message);
-            }
-        }
-
-    }
-
-    class Spin1ObjectCompilerProxy extends Spin1ObjectCompiler {
-
-        public Spin1ObjectCompilerProxy(File file) {
-            super(Spin1CCompiler.this, file);
-        }
-
-        public Spin1ObjectCompilerProxy(ObjectCompiler parent, File file) {
-            super(Spin1CCompiler.this, parent, file);
-        }
-
-        @Override
-        protected byte[] getBinaryFile(String fileName) {
-            return Spin1CCompiler.this.getBinaryFile(fileName);
-        }
-
-        @Override
-        protected void logMessage(CompilerException message) {
-            message.fileName = getFile().getName();
-            if (message.hasChilds()) {
-                for (CompilerException msg : message.getChilds()) {
-                    logMessage(msg);
-                }
-            }
-            else {
-                Spin1CCompiler.this.logMessage(message);
-                super.logMessage(message);
-            }
-        }
-
-    }
-
     @Override
     public Spin1Object compileObject(File rootFile, Node root) {
         int memoryOffset = 16;
 
-        Spin1CObjectCompiler objectCompiler = new Spin1CObjectCompilerProxy(rootFile);
+        Spin1CObjectCompiler objectCompiler = new Spin1CObjectCompiler(this, rootFile);
         objectCompiler.compileObject(root);
 
         objectCompiler.compileStep2();
@@ -185,6 +123,13 @@ public class Spin1CCompiler extends Spin1Compiler {
 
         tree = buildFrom(objectCompiler);
 
+        errors = objectCompiler.hasErrors();
+
+        messages.addAll(objectCompiler.getMessages());
+        for (ObjectInfo info : childObjects) {
+            messages.addAll(info.compiler.getMessages());
+        }
+
         return object;
 
     }
@@ -195,10 +140,10 @@ public class Spin1CCompiler extends Spin1Compiler {
 
         ObjectCompiler objectCompiler;
         if (file.getName().toLowerCase().endsWith(".spin")) {
-            objectCompiler = new Spin1ObjectCompilerProxy(parent, file);
+            objectCompiler = new Spin1ObjectCompiler(this, parent, file);
         }
         else {
-            objectCompiler = new Spin1CObjectCompilerProxy(parent, file);
+            objectCompiler = new Spin1CObjectCompiler(this, parent, file);
         }
 
         while (parent != null) {
