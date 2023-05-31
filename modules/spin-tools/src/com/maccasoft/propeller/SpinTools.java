@@ -1398,7 +1398,8 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                handleUpload(false, false, sourcePool.isDebugEnabled());
+                boolean openTerminal = (e.stateMask & SWT.MOD2) != 0;
+                handleUpload(false, openTerminal, sourcePool.isDebugEnabled());
             }
         });
 
@@ -1409,7 +1410,8 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                handleUpload(true, false, sourcePool.isDebugEnabled());
+                boolean openTerminal = (e.stateMask & SWT.MOD2) != 0;
+                handleUpload(true, openTerminal, sourcePool.isDebugEnabled());
             }
         });
 
