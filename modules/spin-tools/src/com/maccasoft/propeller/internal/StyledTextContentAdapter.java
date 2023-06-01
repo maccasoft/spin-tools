@@ -47,37 +47,46 @@ public class StyledTextContentAdapter implements IControlContentAdapter, IContro
             start--;
         }
         while (position < contents.length()) {
-            if (!isIdentifierPart(contents.charAt(position)) && contents.charAt(start - 1) != prefix) {
+            if (!isIdentifierPart(contents.charAt(position))) {
                 break;
             }
             position++;
         }
 
-        if (position < contents.length() && contents.charAt(position) != '(' && contents.charAt(position) != '[') {
-            e = position + 1;
-            while (e < contents.length() && contents.charAt(e) == ' ') {
-                e++;
-            }
-            if (e < contents.length() && (contents.charAt(e) == '(' || contents.charAt(e) == '[')) {
-                position = e;
-            }
+        char args = '\0';
+        if (text.indexOf('(') != -1) {
+            args = '(';
         }
-
-        if (position < contents.length() && (contents.charAt(position) == '(' || contents.charAt(position) == '[')) {
-            if ((e = text.indexOf('(')) != -1) {
-                text = text.substring(0, e + 1);
-                position++;
-            }
-            if ((e = text.indexOf('[')) != -1) {
-                text = text.substring(0, e + 1);
-                position++;
-            }
+        else if (text.indexOf('[') != -1) {
+            args = '[';
         }
+        if (args != '\0') {
+            if (position < contents.length() && contents.charAt(position) != args) {
+                e = position + 1;
+                while (e < contents.length() && contents.charAt(e) == ' ') {
+                    e++;
+                }
+                if (e < contents.length() && contents.charAt(e) == args) {
+                    position = e;
+                }
+            }
 
-        if (position + lineOffset > start + lineOffset) {
-            contents = styledText.getText(start + lineOffset, position + lineOffset);
-            if (!contents.startsWith(".") && (e = contents.indexOf('.')) != -1) {
-                start += e + 1;
+            if (position < contents.length() && contents.charAt(position) == args) {
+                if ((e = text.indexOf('(')) != -1) {
+                    text = text.substring(0, e + 1);
+                    position++;
+                }
+                if ((e = text.indexOf('[')) != -1) {
+                    text = text.substring(0, e + 1);
+                    position++;
+                }
+            }
+
+            if (position + lineOffset > start + lineOffset) {
+                contents = styledText.getText(start + lineOffset, position + lineOffset);
+                if (!contents.startsWith(".") && (e = contents.indexOf('.')) != -1) {
+                    start += e + 1;
+                }
             }
         }
 

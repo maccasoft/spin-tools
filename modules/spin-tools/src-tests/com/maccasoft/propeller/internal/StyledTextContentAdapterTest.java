@@ -287,6 +287,37 @@ class StyledTextContentAdapterTest {
     }
 
     @Test
+    void testSetObjectName() {
+        String text = ""
+            + "PUB start\n"
+            + "\n"
+            + "    obj|ect.method(arg0,arg1)\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "object2", subject.getCursorPosition(control));
+
+        String expectedText = ""
+            + "PUB start\n"
+            + "\n"
+            + "    object2|.method(arg0,arg1)\n"
+            + "    repeat\n"
+            + "        method2(arg0)\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
+    }
+
+    @Test
     void testSetObjectConstant() {
         String text = ""
             + "PUB start\n"
@@ -434,6 +465,37 @@ class StyledTextContentAdapterTest {
             + "    object[0].method(|arg0,arg1)\n"
             + "    repeat\n"
             + "        method2(arg0)\n"
+            + "\n";
+        int expectedCaretOffset = expectedText.indexOf("|");
+
+        Assertions.assertEquals(expectedText.replace("|", ""), control.getText());
+        Assertions.assertEquals(expectedCaretOffset, control.getCaretOffset());
+    }
+
+    @Test
+    void testReplaceAtLineStart() {
+        String text = ""
+            + "PUB start\n"
+            + "\n"
+            + "obj|ect.method(arg0,arg1)\n"
+            + "repeat\n"
+            + "    method2(arg0)\n"
+            + "\n";
+        int caretOffset = text.indexOf("|");
+
+        control = new StyledText(shell, SWT.NONE);
+        control.setText(text.replace("|", ""));
+        control.setCaretOffset(caretOffset);
+
+        StyledTextContentAdapter subject = new StyledTextContentAdapter();
+        subject.setControlContents(control, "object2", subject.getCursorPosition(control));
+
+        String expectedText = ""
+            + "PUB start\n"
+            + "\n"
+            + "object2|.method(arg0,arg1)\n"
+            + "repeat\n"
+            + "    method2(arg0)\n"
             + "\n";
         int expectedCaretOffset = expectedText.indexOf("|");
 
