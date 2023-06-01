@@ -1312,16 +1312,14 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
     List<Spin2MethodLine> compileStatement(Context context, Spin2Method method, Spin2MethodLine parent, Node statementNode) {
         List<Spin2MethodLine> lines = new ArrayList<>();
-
         Spin2MethodLine previousLine = null;
 
-        Iterator<Node> nodeIterator = new ArrayList<>(statementNode.getChilds()).iterator();
+        List<Node> statements = buildFilteredStatements(statementNode);
+
+        Iterator<Node> nodeIterator = statements.iterator();
         while (nodeIterator.hasNext()) {
             Node node = nodeIterator.next();
             try {
-                if (skipNode(node)) {
-                    continue;
-                }
                 if (node instanceof StatementNode) {
                     Spin2MethodLine line = compileStatement(context, method, parent, node, previousLine);
                     if (line != null) {
@@ -1370,6 +1368,21 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         }
 
         return lines;
+    }
+
+    List<Node> buildFilteredStatements(Node statementNode) {
+        List<Node> list = new ArrayList<>();
+        for (Node node : statementNode.getChilds()) {
+            if (skipNode(node)) {
+                if (node instanceof StatementNode) {
+                    list.addAll(buildFilteredStatements(node));
+                }
+            }
+            else {
+                list.add(node);
+            }
+        }
+        return list;
     }
 
     Spin2MethodLine compileStatement(Context context, Spin2Method method, Spin2MethodLine parent, Node node, Spin2MethodLine previousLine) {

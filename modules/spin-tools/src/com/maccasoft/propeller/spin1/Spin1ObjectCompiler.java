@@ -1158,16 +1158,14 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     List<Spin1MethodLine> compileStatement(Context context, Spin1Method method, Spin1MethodLine parent, Node statementNode) {
         List<Spin1MethodLine> lines = new ArrayList<>();
-
         Spin1MethodLine previousLine = null;
 
-        Iterator<Node> nodeIterator = new ArrayList<>(statementNode.getChilds()).iterator();
+        List<Node> statements = buildFilteredStatements(statementNode);
+
+        Iterator<Node> nodeIterator = statements.iterator();
         while (nodeIterator.hasNext()) {
             Node node = nodeIterator.next();
             try {
-                if (skipNode(node)) {
-                    continue;
-                }
                 if (node instanceof StatementNode) {
                     Spin1MethodLine line = compileStatement(context, method, parent, node, previousLine);
                     if (line != null) {
@@ -1183,6 +1181,21 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         }
 
         return lines;
+    }
+
+    List<Node> buildFilteredStatements(Node statementNode) {
+        List<Node> list = new ArrayList<>();
+        for (Node node : statementNode.getChilds()) {
+            if (skipNode(node)) {
+                if (node instanceof StatementNode) {
+                    list.addAll(buildFilteredStatements(node));
+                }
+            }
+            else {
+                list.add(node);
+            }
+        }
+        return list;
     }
 
     Spin1MethodLine compileStatement(Context context, Spin1Method method, Spin1MethodLine parent, Node node, Spin1MethodLine previousLine) {

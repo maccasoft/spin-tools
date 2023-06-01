@@ -5736,6 +5736,35 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testConditionalsCrossingBlocks() throws Exception {
+        String text = ""
+            + "PUB start() | a\n"
+            + "\n"
+            + "#if 0\n"
+            + "    if CLKFREQ >= 40_000_000\n"
+            + "        b := 1_000\n"
+            + "#endif\n"
+            + "        a := 1_000\n"
+            + "\n"
+            + "    repeat\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       10 00 00 00    End\n"
+            + "' PUB start() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'         a := 1_000\n"
+            + "00009 00009       46 E8 03       CONSTANT (1_000)\n"
+            + "0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     repeat\n"
+            + "0000D 0000D       12 7F          JMP $0000D (-1)\n"
+            + "0000F 0000F       04             RETURN\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
