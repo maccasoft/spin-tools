@@ -61,10 +61,14 @@ public class ObjectNode extends Node {
         if (file == null) {
             return null;
         }
-        if (file.type != Token.STRING) {
-            return file.getText();
+        String text = file.getText();
+        if (text.startsWith("\"")) {
+            text = text.substring(1);
         }
-        return file.getText().substring(1, file.getText().length() - 1);
+        if (text.endsWith("\"")) {
+            text = text.substring(0, text.length() - 1);
+        }
+        return text;
     }
 
 }

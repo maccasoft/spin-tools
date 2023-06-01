@@ -689,7 +689,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     return;
                 }
 
-                String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                String fileName = objectNode.getFileName();
                 Node objectRoot = getObjectTree(fileName);
                 if (objectRoot != null) {
                     objectRoot.accept(new NodeVisitor() {

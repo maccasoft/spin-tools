@@ -877,9 +877,9 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 logMessage(new CompilerException("expecting file name", token.substring(token.stop - token.start)));
                 return;
             }
-            token = iter.next();
-            if (token.type != Token.STRING) {
-                logMessage(new CompilerException("expecting file name", token));
+            Token fileToken = iter.next();
+            if (fileToken.type != Token.STRING) {
+                logMessage(new CompilerException("expecting file name", fileToken));
                 return;
             }
 
@@ -888,16 +888,25 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
             }
 
-            String fileName = token.getText().substring(1, token.getText().length() - 1);
+            String fileName = fileToken.getText();
+            if (fileName.startsWith("\"")) {
+                fileName = fileName.substring(1);
+            }
+            if (!fileName.endsWith("\"")) {
+                logMessage(new CompilerException("unterminated string", fileToken));
+                return;
+            }
+            fileName = fileName.substring(0, fileName.length() - 1);
+
             File file = compiler.getFile(fileName, ".spin");
             if (file == null) {
-                logMessage(new CompilerException("object " + token + " not found", token));
+                logMessage(new CompilerException("object " + fileName + " not found", fileToken));
                 return;
             }
 
             ObjectInfo info = compiler.getObjectInfo(this, file, Collections.emptyMap());
             if (info == null) {
-                logMessage(new CompilerException("object " + token + " not found", token));
+                logMessage(new CompilerException("object " + fileName + " not found", fileToken));
                 return;
             }
             objects.put(name, new ObjectInfo(info, count));
@@ -912,11 +921,11 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             if (info.hasErrors()) {
                 for (CompilerException msg : compiler.getMessages()) {
                     if (file.getName().equals(msg.getFileName()) && "illegal circular reference".equals(msg.getMessage())) {
-                        logMessage(new CompilerException(msg.getMessage(), token));
+                        logMessage(new CompilerException(msg.getMessage(), fileToken));
                         return;
                     }
                 }
-                logMessage(new CompilerException("object " + token + " has errors", token));
+                logMessage(new CompilerException("object " + fileName + " has errors", fileToken));
             }
 
         } catch (CompilerException e) {

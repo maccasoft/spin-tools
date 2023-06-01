@@ -1040,10 +1040,19 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
             }
 
-            String fileName = fileToken.getText().substring(1, fileToken.getText().length() - 1);
+            String fileName = fileToken.getText();
+            if (fileName.startsWith("\"")) {
+                fileName = fileName.substring(1);
+            }
+            if (!fileName.endsWith("\"")) {
+                logMessage(new CompilerException("unterminated string", fileToken));
+                return;
+            }
+            fileName = fileName.substring(0, fileName.length() - 1);
+
             File file = compiler.getFile(fileName, ".spin2");
             if (file == null) {
-                logMessage(new CompilerException("object " + fileToken + " not found", fileToken));
+                logMessage(new CompilerException("object " + fileName + " not found", fileToken));
                 return;
             }
 

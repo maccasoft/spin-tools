@@ -461,7 +461,7 @@ public abstract class SourceTokenMarker {
                     if (!node.name.getText().equalsIgnoreCase(s[0])) {
                         return;
                     }
-                    String fileName = node.file.getText().substring(1, node.file.getText().length() - 1);
+                    String fileName = node.getFileName();
                     Node objectRoot = getObjectTree(fileName);
                     if (objectRoot != null) {
                         objectRoot.accept(new NodeVisitor() {
@@ -719,7 +719,7 @@ public abstract class SourceTokenMarker {
                     if (objectNode.name == null || objectNode.file == null) {
                         return;
                     }
-                    String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                    String fileName = objectNode.getFileName();
                     Node objectRoot = getObjectTree(fileName);
                     if (objectRoot == null) {
                         return;
@@ -946,7 +946,7 @@ public abstract class SourceTokenMarker {
                     proposals.add(new ContentProposal(name, name, ""));
                 }
                 if (dot != -1) {
-                    String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                    String fileName = objectNode.getFileName();
                     Node objectRoot = getObjectTree(fileName);
                     if (objectRoot == null) {
                         return;
@@ -1110,7 +1110,7 @@ public abstract class SourceTokenMarker {
                     if (objectNode.name == null || objectNode.file == null) {
                         return;
                     }
-                    String fileName = objectNode.file.getText().substring(1, objectNode.file.getText().length() - 1);
+                    String fileName = objectNode.getFileName();
                     Node objectRoot = getObjectTree(fileName);
                     if (objectRoot == null) {
                         return;
@@ -1401,7 +1401,7 @@ public abstract class SourceTokenMarker {
                     proposals.add(new ContentProposal(name, name, ""));
                 }
                 if (dot != -1) {
-                    String fileName = node.file.getText().substring(1, node.file.getText().length() - 1);
+                    String fileName = node.getFileName();
                     Node objectRoot = getObjectTree(fileName);
                     if (objectRoot == null) {
                         return;

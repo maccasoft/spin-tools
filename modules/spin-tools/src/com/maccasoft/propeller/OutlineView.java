@@ -259,16 +259,16 @@ public class OutlineView {
                             sb.append(node.name.getText());
                             sb.append(" : ");
                             if (node.file != null) {
-                                sb.append(node.file.getText());
+                                sb.append(node.getFileName());
                             }
                             range.length = sb.length() - range.start;
                             styles.add(range);
                         }
                         else {
                             sb.append(node.name.getText());
+                            sb.append(" : ");
                             if (node.file != null) {
-                                sb.append(" : ");
-                                appendText(node.file.getText(), stringStyle);
+                                appendText(node.getFileName(), stringStyle);
                             }
                         }
                     }
