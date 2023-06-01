@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,7 +55,6 @@ import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.MethodNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectsNode;
-import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.VariablesNode;
@@ -302,22 +300,9 @@ public class EditorTab implements FindReplaceTarget {
 
         @Override
         public Node getParsedSource(File file) {
-            AtomicReference<Parser> parser = new AtomicReference<>();
-            Display.getDefault().syncExec(new Runnable() {
-
-                @Override
-                public void run() {
-                    EditorTab editorTab = getTabForFile(file);
-                    if (editorTab != null) {
-                        String name = editorTab.getText();
-                        String suffix = name.substring(name.lastIndexOf('.')).toLowerCase();
-                        String text = editorTab.getEditor().getStyledText().getText();
-                        parser.set(Parser.getInstance(suffix, text));
-                    }
-                }
-            });
-            if (parser.get() != null) {
-                return parser.get().parse();
+            Node root = sourcePool.getParsedSource(file);
+            if (root != null) {
+                return root;
             }
             return super.getParsedSource(file);
         }
