@@ -22,9 +22,11 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -106,7 +108,7 @@ import jssc.SerialPortException;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools IDE";
-    public static final String APP_VERSION = "0.28.1";
+    public static final String APP_VERSION = "0.29.0";
 
     static final File defaultSpin1Examples = new File(System.getProperty("APP_DIR"), "examples/P1").getAbsoluteFile();
     static final File defaultSpin2Examples = new File(System.getProperty("APP_DIR"), "examples/P2").getAbsoluteFile();
@@ -117,11 +119,13 @@ public class SpinTools {
     SashForm sashForm;
     SashForm browserSashForm;
     SashForm editorSashForm;
+    SashForm centralSashForm;
 
     ObjectBrowser objectBrowser;
     FileBrowser fileBrowser;
     CTabFolder tabFolder;
     StackContainer outlineViewContainer;
+    ConsoleView debugConsoleView;
 
     StatusLine statusLine;
 
@@ -129,6 +133,9 @@ public class SpinTools {
     MenuItem blockSelectionItem;
     ToolItem topObjectToolItem;
     MenuItem topObjectTabItem;
+
+    MenuItem debugConsoleItem;
+    ToolItem debugConsoleToolItem;
 
     SourcePool sourcePool;
     SerialPortList serialPortList;
@@ -361,7 +368,9 @@ public class SpinTools {
 
         browserSashForm = new SashForm(sashForm, SWT.VERTICAL);
 
-        editorSashForm = new SashForm(sashForm, SWT.HORIZONTAL);
+        centralSashForm = new SashForm(sashForm, SWT.VERTICAL);
+
+        editorSashForm = new SashForm(centralSashForm, SWT.HORIZONTAL);
 
         objectBrowser = new ObjectBrowser(browserSashForm);
         objectBrowser.setVisible(preferences.getShowObjectBrowser());
@@ -376,6 +385,9 @@ public class SpinTools {
         outlineViewContainer = new StackContainer(editorSashForm, SWT.BORDER);
         outlineViewContainer.setVisible(preferences.getShowEditorOutline());
 
+        debugConsoleView = new ConsoleView(centralSashForm);
+        debugConsoleView.setVisible(false);
+
         int[] weights = preferences.getWeights("sashForm");
         sashForm.setWeights(weights != null ? weights : new int[] {
             200, 800
@@ -383,6 +395,10 @@ public class SpinTools {
         weights = preferences.getWeights("browserSashForm");
         browserSashForm.setWeights(weights != null ? weights : new int[] {
             200, 800
+        });
+        weights = preferences.getWeights("centralSashForm");
+        centralSashForm.setWeights(weights != null ? weights : new int[] {
+            800, 200
         });
         weights = preferences.getWeights("editorSashForm");
         editorSashForm.setWeights(weights != null ? weights : new int[] {
@@ -1387,7 +1403,8 @@ public class SpinTools {
 
             @Override
             public void widgetSelected(SelectionEvent e) {
-                handleUpload(false, true, true);
+                boolean openTerminal = (e.stateMask & SWT.MOD2) != 0;
+                handleUpload(false, openTerminal, true);
             }
         });
 
@@ -1435,6 +1452,19 @@ public class SpinTools {
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }
+            }
+        });
+
+        debugConsoleToolItem = new ToolItem(toolBar, SWT.CHECK);
+        debugConsoleToolItem.setImage(ImageRegistry.getImageFromResources("application-text.png"));
+        debugConsoleToolItem.setToolTipText("Toggle Debug Console");
+        debugConsoleToolItem.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                debugConsoleView.setVisible(debugConsoleToolItem.getSelection());
+                debugConsoleItem.setSelection(debugConsoleToolItem.getSelection());
+                centralSashForm.layout();
             }
         });
 
@@ -1829,8 +1859,8 @@ public class SpinTools {
 
         Date now = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd", Locale.US);
-        SimpleDateFormat timeFormat = new SimpleDateFormat("kk.mm", Locale.US);
-        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("EEEE, LLLL d, yyyy 'at' kk:mm", Locale.US);
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH.mm", Locale.US);
+        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("EEEE, LLLL d, yyyy 'at' HH:mm", Locale.US);
 
         String rootFileName = editorTab.getText();
         String archiveName = String.format("%s - Archive [Date %s Time %s].zip",
@@ -2238,7 +2268,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleUpload(false, true, true);
+                handleUpload(false, false, true);
             }
         });
 
@@ -2271,7 +2301,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                handleUpload(true, true, true);
+                handleUpload(true, false, true);
             }
         });
 
@@ -2286,6 +2316,18 @@ public class SpinTools {
             public void handleEvent(Event e) {
                 boolean enabled = ((MenuItem) e.widget).getSelection();
                 sourcePool.setDebugEnabled(enabled);
+            }
+        });
+
+        debugConsoleItem = new MenuItem(menu, SWT.CHECK);
+        debugConsoleItem.setText("Toggle Debug Console");
+        debugConsoleItem.addListener(SWT.Selection, new Listener() {
+
+            @Override
+            public void handleEvent(Event e) {
+                debugConsoleView.setVisible(debugConsoleItem.getSelection());
+                debugConsoleToolItem.setSelection(debugConsoleItem.getSelection());
+                centralSashForm.layout();
             }
         });
 
@@ -2521,6 +2563,9 @@ public class SpinTools {
         if (obj == null) {
             return;
         }
+        if (obj instanceof Spin1Object) {
+            forceDebug = false;
+        }
 
         boolean isDebug = (obj instanceof Spin2Object) && ((Spin2Object) obj).getDebugger() != null;
         if (isDebug != forceDebug) {
@@ -2531,49 +2576,64 @@ public class SpinTools {
                 return;
             }
             obj = editorTab.getObject();
-            isDebug = (obj instanceof Spin2Object) && ((Spin2Object) obj).getDebugger() != null;
+            isDebug = forceDebug;
         }
 
         if (obj instanceof Spin2Object) {
             ((Spin2Object) obj).setClockSetter(preferences.getSpin2ClockSetter());
         }
 
-        SerialTerminal serialTerminal = getSerialTerminal();
-        if (serialTerminal == null && (openTerminal || isDebug)) {
-            serialTerminal = new SerialTerminal();
-            serialTerminal.open();
+        if (isDebug) {
+            debugConsoleView.clear();
+            if (!debugConsoleView.getVisible()) {
+                debugConsoleView.setVisible(true);
+                debugConsoleItem.setSelection(true);
+                debugConsoleToolItem.setSelection(true);
+                centralSashForm.layout();
+            }
         }
-        if (serialTerminal != null) {
-            serialPort = serialTerminal.getSerialPort();
-            if (serialPort == null) {
-                serialPort = new SerialPort(serialPortList.getSelection());
+        debugConsoleView.setEnabled(isDebug);
+
+        SerialTerminal serialTerminal = getSerialTerminal();
+        if (openTerminal) {
+            if (serialTerminal == null) {
+                serialTerminal = new SerialTerminal();
+                serialTerminal.open();
             }
-            serialTerminal.setSerialPort(serialPort, isDebug ? ((Spin2Object) obj).getDebugBaud() : serialTerminal.getBaudRate());
-            if (openTerminal) {
-                serialTerminal.setFocus();
-            }
-            if (isDebug) {
-                serialTerminal.clear();
-                serialTerminal.setTerminalType(1);
-            }
-            else {
-                serialTerminal.setTerminalType(preferences.getTerminalType());
-            }
-            serialPortShared = true;
+            serialTerminal.setFocus();
         }
 
+        serialPort = debugConsoleView.getSerialPort();
+        if (serialPort == null && serialTerminal != null) {
+            serialPort = serialTerminal.getSerialPort();
+        }
         if (serialPort == null) {
             serialPort = new SerialPort(serialPortList.getSelection());
         }
+
+        debugConsoleView.setSerialPort(null);
+        debugConsoleView.closeLogFile();
 
         if (serialTerminal != null) {
             serialTerminal.setSerialPort(null);
         }
 
+        if (isDebug || serialTerminal != null) {
+            serialPortShared = true;
+        }
+
         SerialPort uploadPort = doUpload(obj, writeToFlash, serialPort, serialPortShared);
 
-        if (serialTerminal != null) {
-            serialTerminal.setSerialPort(uploadPort != null ? uploadPort : serialPort, isDebug ? ((Spin2Object) obj).getDebugBaud() : serialTerminal.getBaudRate());
+        if (isDebug) {
+            File debugFolder = editorTab.getFile() != null ? editorTab.getFile().getParentFile() : new File("").getAbsoluteFile();
+            String fileName = editorTab.getText();
+            Date date = Calendar.getInstance().getTime();
+            DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd.HHmmss");
+            debugConsoleView.setLogFile(debugFolder, String.format("%s.%s.log", fileName, dateFormat.format(date)));
+            debugConsoleView.setSerialPort(uploadPort != null ? uploadPort : serialPort);
+        }
+        else if (serialTerminal != null) {
+            serialTerminal.setSerialPort(uploadPort != null ? uploadPort : serialPort);
         }
 
         if (uploadPort != null) {

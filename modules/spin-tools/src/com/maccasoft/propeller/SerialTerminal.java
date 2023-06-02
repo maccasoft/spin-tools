@@ -1450,10 +1450,6 @@ public class SerialTerminal {
     }
 
     public void setSerialPort(SerialPort serialPort) {
-        setSerialPort(serialPort, serialBaudRate);
-    }
-
-    public void setSerialPort(SerialPort serialPort, int serialBaudRate) {
         try {
             if (this.serialPort != null && this.serialPort != serialPort) {
                 if (this.serialPort.isOpened()) {
@@ -1462,13 +1458,6 @@ public class SerialTerminal {
             }
 
             if (serialPort != null) {
-                baudRate.removeSelectionListener(baudRateSelectionListener);
-                try {
-                    baudRate.select(baudRates.indexOf(serialBaudRate));
-                } finally {
-                    baudRate.addSelectionListener(baudRateSelectionListener);
-                }
-
                 shell.setText(WINDOW_TITLE + " on " + serialPort.getPortName());
                 if (!serialPort.isOpened()) {
                     serialPort.openPort();

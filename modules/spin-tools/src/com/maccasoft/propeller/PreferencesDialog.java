@@ -91,6 +91,12 @@ public class PreferencesDialog extends Dialog {
     Button terminalLineInput;
     Button terminalLocalEcho;
 
+    Text consoleFont;
+    Spinner consoleFontSize;
+    Button consoleFontBrowse;
+    Spinner consoleMaxLines;
+    Button consoleWriteLogFile;
+
     Preferences preferences;
     FontData defaultFont;
     Font fontBold;
@@ -109,6 +115,7 @@ public class PreferencesDialog extends Dialog {
     String oldTerminalFont;
     boolean oldTerminalLineInput;
     boolean oldTerminalLocalEcho;
+    String oldConsoleFont;
 
     static int lastPage;
 
@@ -400,6 +407,7 @@ public class PreferencesDialog extends Dialog {
         stack.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         createGeneralPage(stack);
+        createConsolePage(stack);
         createEditorPage(stack);
         createSpin1CompilerPage(stack);
         createSpin2CompilerPage(stack);
@@ -432,6 +440,7 @@ public class PreferencesDialog extends Dialog {
         oldTerminalFont = preferences.getTerminalFont();
         oldTerminalLineInput = preferences.getTerminalLineInput();
         oldTerminalLocalEcho = preferences.getTerminalLocalEcho();
+        oldConsoleFont = preferences.getConsoleFont();
 
         return composite;
     }
@@ -930,6 +939,84 @@ public class PreferencesDialog extends Dialog {
         });
     }
 
+    void createConsolePage(Composite parent) {
+        Composite composite = createPage(parent, "Console");
+
+        Label label = new Label(composite, SWT.NONE);
+        label.setText("Font");
+
+        Composite container = new Composite(composite, SWT.NONE);
+        GridLayout layout = new GridLayout(3, false);
+        layout.marginWidth = layout.marginHeight = 0;
+        container.setLayout(layout);
+        container.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        consoleFont = new Text(container, SWT.BORDER);
+        consoleFont.setLayoutData(new GridData(convertWidthInCharsToPixels(35), SWT.DEFAULT));
+        consoleFontSize = new Spinner(container, SWT.NONE);
+        consoleFontSize.setValues(1, 1, 72, 0, 1, 1);
+        consoleFontSize.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                String s = StringConverter.asString(new FontData(consoleFont.getText(), consoleFontSize.getSelection(), SWT.NONE));
+                if (s.equals(StringConverter.asString(defaultFont))) {
+                    s = null;
+                }
+                preferences.setConsoleFont(s);
+            }
+        });
+
+        consoleFontBrowse = new Button(container, SWT.PUSH);
+        GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+        int widthHint = convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
+        Point minSize = consoleFontBrowse.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+        data.widthHint = Math.max(widthHint, minSize.x);
+        consoleFontBrowse.setLayoutData(data);
+
+        consoleFontBrowse.setText("Select");
+        consoleFontBrowse.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                FontDialog dlg = new FontDialog(getShell());
+                dlg.setText("Console font");
+                dlg.setFontList(new FontData[] {
+                    new FontData(consoleFont.getText(), consoleFontSize.getSelection(), SWT.NONE)
+                });
+                FontData result = dlg.open();
+                if (result != null) {
+                    result.setStyle(SWT.NONE);
+
+                    consoleFont.setText(result.getName());
+                    consoleFontSize.setSelection(result.getHeight());
+
+                    String s = StringConverter.asString(result);
+                    if (s.equals(StringConverter.asString(defaultFont))) {
+                        s = null;
+                    }
+                    preferences.setConsoleFont(s);
+                }
+            }
+        });
+        FontData fontData = defaultFont;
+        String s = preferences.getConsoleFont();
+        if (s != null) {
+            fontData = StringConverter.asFontData(s);
+        }
+        consoleFont.setText(fontData.getName());
+        consoleFontSize.setSelection(fontData.getHeight());
+
+        label = new Label(composite, SWT.NONE);
+        label.setText("Max. Lines");
+        consoleMaxLines = new Spinner(composite, SWT.NONE);
+        consoleMaxLines.setValues(preferences.getConsoleMaxLines(), 1, 999999, 0, 1, 10);
+
+        new Label(composite, SWT.NONE);
+        consoleWriteLogFile = new Button(composite, SWT.CHECK);
+        consoleWriteLogFile.setText("Write to Log File");
+        consoleWriteLogFile.setSelection(preferences.getConsoleWriteLogFile());
+    }
+
     Composite createPage(Composite parent, String text) {
         Composite composite = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(2, false);
@@ -972,6 +1059,8 @@ public class PreferencesDialog extends Dialog {
         preferences.setTerminalLineInput(oldTerminalLineInput);
         preferences.setTerminalLocalEcho(oldTerminalLocalEcho);
 
+        preferences.setConsoleFont(oldConsoleFont);
+
         super.cancelPressed();
     }
 
@@ -994,6 +1083,9 @@ public class PreferencesDialog extends Dialog {
         preferences.setSpin1Template(spin1Template.getSelection());
         preferences.setSpin2LibraryPath(spin2Paths.getFileItems());
         preferences.setSpin2Template(spin2Template.getSelection());
+
+        preferences.setConsoleMaxLines(consoleMaxLines.getSelection());
+        preferences.setConsoleWriteLogFile(consoleWriteLogFile.getSelection());
 
         super.okPressed();
     }

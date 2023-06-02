@@ -56,6 +56,9 @@ public class Preferences {
     public static final String PROP_TERMINAL_FONT = "terminalFont";
     public static final String PROP_TERMINAL_LINE_INPUT = "terminalLineInput";
     public static final String PROP_TERMINAL_LOCAL_ECHO = "terminalLocalEcho";
+    public static final String PROP_CONSOLE_FONT = "consoleFont";
+    public static final String PROP_CONSOLE_MAX_LINES = "consoleMaxLines";
+    public static final String PROP_CONSOLE_WRITE_LOG_FILE = "consoleWriteLogFile";
 
     public static final String PREFERENCES_NAME = ".spin-tools";
 
@@ -126,6 +129,7 @@ public class Preferences {
             reloadOpenTabs = true;
 
             terminal = new TerminalPreferences();
+            console = new ConsolePreferences();
         }
 
         public Bounds window;
@@ -163,6 +167,8 @@ public class Preferences {
 
         public TerminalPreferences terminal;
 
+        public ConsolePreferences console;
+
         public SearchPreferences search;
 
     }
@@ -179,6 +185,18 @@ public class Preferences {
         public int type;
         public String font;
         public int baudRate;
+
+    }
+
+    public static class ConsolePreferences {
+        public ConsolePreferences() {
+            maxLines = 500;
+            writeLogFile = true;
+        }
+
+        public String font;
+        int maxLines;
+        boolean writeLogFile;
 
     }
 
@@ -636,6 +654,32 @@ public class Preferences {
 
     public void setTerminalLocalEcho(boolean terminalLocalEcho) {
         changeSupport.firePropertyChange(PROP_TERMINAL_LOCAL_ECHO, preferences.terminal.localEcho, preferences.terminal.localEcho = terminalLocalEcho);
+    }
+
+    public String getConsoleFont() {
+        return preferences.console.font;
+    }
+
+    public void setConsoleFont(String terminalFont) {
+        if (preferences.console.font != terminalFont) {
+            changeSupport.firePropertyChange(PROP_CONSOLE_FONT, preferences.console.font, preferences.console.font = terminalFont);
+        }
+    }
+
+    public int getConsoleMaxLines() {
+        return preferences.console.maxLines;
+    }
+
+    public void setConsoleMaxLines(int maxLines) {
+        changeSupport.firePropertyChange(PROP_CONSOLE_MAX_LINES, preferences.console.maxLines, preferences.console.maxLines = maxLines);
+    }
+
+    public boolean getConsoleWriteLogFile() {
+        return preferences.console.writeLogFile;
+    }
+
+    public void setConsoleWriteLogFile(boolean writeLogFile) {
+        changeSupport.firePropertyChange(PROP_CONSOLE_WRITE_LOG_FILE, preferences.console.writeLogFile, preferences.console.writeLogFile = writeLogFile);
     }
 
     public SearchPreferences getSearchPreferences() {

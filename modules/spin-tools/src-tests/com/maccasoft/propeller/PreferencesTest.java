@@ -57,7 +57,8 @@ class PreferencesTest {
             + "    \"localEcho\" : false,\n"
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
-            + "  }\n"
+            + "  },\n"
+            + "  \"console\" : { }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -92,7 +93,8 @@ class PreferencesTest {
             + "    \"localEcho\" : false,\n"
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
-            + "  }\n"
+            + "  },\n"
+            + "  \"console\" : { }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -161,7 +163,8 @@ class PreferencesTest {
             + "    \"localEcho\" : false,\n"
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
-            + "  }\n"
+            + "  },\n"
+            + "  \"console\" : { }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -197,7 +200,8 @@ class PreferencesTest {
             + "    \"localEcho\" : false,\n"
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
-            + "  }\n"
+            + "  },\n"
+            + "  \"console\" : { }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -232,7 +236,8 @@ class PreferencesTest {
             + "    \"localEcho\" : false,\n"
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
-            + "  }\n"
+            + "  },\n"
+            + "  \"console\" : { }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -264,7 +269,8 @@ class PreferencesTest {
             + "    \"localEcho\" : false,\n"
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
-            + "  }\n"
+            + "  },\n"
+            + "  \"console\" : { }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -300,7 +306,8 @@ class PreferencesTest {
             + "    \"localEcho\" : false,\n"
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
-            + "  }\n"
+            + "  },\n"
+            + "  \"console\" : { }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -380,7 +387,8 @@ class PreferencesTest {
             + "    \"localEcho\" : false,\n"
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
-            + "  }\n"
+            + "  },\n"
+            + "  \"console\" : { }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 

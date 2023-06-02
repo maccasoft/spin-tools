@@ -11,191 +11,246 @@
 
 package com.maccasoft.propeller;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.PrintStream;
 
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.custom.ST;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
-import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Label;
+
+import jssc.SerialPort;
+import jssc.SerialPortEvent;
+import jssc.SerialPortEventListener;
 
 public class ConsoleView {
 
+    Display display;
     Composite container;
     StyledText console;
 
-    OutputStream outputStream = new OutputStream() {
+    SerialPort serialPort;
+    PrintStream os;
 
-        final Color errorColor = Display.getDefault().getSystemColor(SWT.COLOR_RED);
-        int moreLinesToMark = 0;
+    Preferences preferences;
 
-        StringBuilder lineBuilder = new StringBuilder();
+    Font font;
+    int maxLines;
+    boolean writeLogFile;
+
+    File logFile;
+    StringBuilder lineBuilder = new StringBuilder();
+
+    final PropertyChangeListener preferencesChangeListener = new PropertyChangeListener() {
 
         @Override
-        public void write(int b) throws IOException {
-
-        }
-
-        @Override
-        public void write(final byte[] b, final int off, final int len) throws IOException {
-            Display.getDefault().syncExec(new Runnable() {
-
-                @Override
-                public void run() {
-                    appendLine(new String(b, off, len));
-                    updateStyle();
-                }
-            });
-        }
-
-        void appendLine(String s) {
-            for (int i = 0; i < s.length(); i++) {
-                char c = s.charAt(i);
-                if (c == '\r') {
-                    int ofs = getLastLineOffset();
-                    console.replaceTextRange(ofs, console.getCharCount() - ofs, lineBuilder.toString());
-                    lineBuilder = new StringBuilder();
-                }
-                else if (c == '\n') {
-                    if (lineBuilder.length() > 0) {
-                        int ofs = getLastLineOffset();
-                        console.replaceTextRange(ofs, console.getCharCount() - ofs, lineBuilder.toString());
-                        lineBuilder = new StringBuilder();
+        public void propertyChange(PropertyChangeEvent evt) {
+            switch (evt.getPropertyName()) {
+                case Preferences.PROP_CONSOLE_FONT:
+                    Font textFont = JFaceResources.getTextFont();
+                    FontData fontData = textFont.getFontData()[0];
+                    if (evt.getNewValue() != null) {
+                        fontData = StringConverter.asFontData(evt.getNewValue().toString());
                     }
-                    console.append("\n");
-                }
-                else {
-                    lineBuilder.append(c);
-                }
-            }
-            if (lineBuilder.length() > 0) {
-                int ofs = getLastLineOffset();
-                console.replaceTextRange(ofs, console.getCharCount() - ofs, lineBuilder.toString());
-            }
 
-            console.setCaretOffset(console.getCharCount());
-            if (console.getLineCount() > 0) {
-                console.setTopIndex(console.getLineCount() - 1);
+                    Font newFont = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
+                    console.setFont(newFont);
+                    console.redraw();
+
+                    if (font != null) {
+                        font.dispose();
+                    }
+                    font = newFont;
+                    break;
+                case Preferences.PROP_CONSOLE_MAX_LINES:
+                    maxLines = ((Integer) evt.getNewValue()).intValue();
+                    break;
+                case Preferences.PROP_CONSOLE_WRITE_LOG_FILE:
+                    writeLogFile = ((Boolean) evt.getNewValue()).booleanValue();
+                    if (!writeLogFile && os != null) {
+                        if (os != null) {
+                            os.close();
+                        }
+                        os = null;
+                    }
+                    else if (writeLogFile && os == null) {
+                        try {
+                            os = new PrintStream(logFile);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
             }
         }
+    };
 
-        int getLastLineOffset() {
-            int index = console.getLineCount() - 1;
-            return console.getOffsetAtLine(index);
-        }
+    SerialPortEventListener serialEventListener = new SerialPortEventListener() {
 
-        void updateStyle() {
-            int count = console.getLineCount();
-            if (count != 0) {
-                count--;
-            }
-
-            for (int i = 0; i < count; i++) {
-                String line = console.getLine(i);
-                if (line.contains(": error :")) {
-                    int start = console.getOffsetAtLine(i);
-                    console.setStyleRange(new StyleRange(start, line.length(), errorColor, null));
-                    moreLinesToMark += 3;
-                }
-                else if (line.contains("Error : ")) {
-                    int start = console.getOffsetAtLine(i);
-                    console.setStyleRange(new StyleRange(start, line.length(), errorColor, null));
-                    moreLinesToMark += 2;
-                }
-                else if (moreLinesToMark > 0) {
-                    int start = console.getOffsetAtLine(i);
-                    console.setStyleRange(new StyleRange(start, line.length(), errorColor, null));
-                    moreLinesToMark--;
-                }
-            }
-        }
+        int index = 0, max = 0;
+        byte[] buf = new byte[4];
 
         @Override
-        public void flush() throws IOException {
+        public void serialEvent(SerialPortEvent event) {
+            switch (event.getEventType()) {
+                case SerialPort.MASK_RXCHAR:
+                    try {
+                        byte[] rx = serialPort.readBytes();
+                        for (int i = 0; i < rx.length; i++) {
+                            byte b = rx[i];
+                            if (index == 0) {
+                                if ((b & 0b111_00000) == 0b110_00000) {
+                                    buf[index++] = b;
+                                    max = 2;
+                                }
+                                else if ((b & 0b1111_0000) == 0b1110_0000) {
+                                    buf[index++] = b;
+                                    max = 3;
+                                }
+                                else if ((b & 0b11111_000) == 0b11110_000) {
+                                    buf[index++] = b;
+                                    max = 4;
+                                }
+                                else if (b == '\n') {
+                                    String text = lineBuilder.toString();
+                                    if (os != null) {
+                                        os.println(text);
+                                        os.flush();
+                                    }
+                                    display.asyncExec(new Runnable() {
 
-        }
-
-        @Override
-        public void close() throws IOException {
-
+                                        @Override
+                                        public void run() {
+                                            console.append(text);
+                                            console.append(System.lineSeparator());
+                                            while (console.getLineCount() > maxLines) {
+                                                int length = console.getOffsetAtLine(console.getLineCount() - maxLines);
+                                                console.replaceTextRange(0, length, "");
+                                            }
+                                            console.invokeAction(ST.TEXT_END);
+                                        }
+                                    });
+                                    lineBuilder = new StringBuilder();
+                                }
+                                else if (b != '\r') {
+                                    lineBuilder.append((char) b);
+                                }
+                            }
+                            else {
+                                buf[index++] = b;
+                                if (index >= max) {
+                                    lineBuilder.append(new String(buf, 0, max));
+                                    index = 0;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+            }
         }
 
     };
-
-    OutputStream errorStream = new OutputStream() {
-
-        final Color errorColor = Display.getDefault().getSystemColor(SWT.COLOR_RED);
-
-        @Override
-        public void write(int b) throws IOException {
-
-        }
-
-        @Override
-        public void write(final byte[] b, final int off, final int len) throws IOException {
-            Display.getDefault().syncExec(new Runnable() {
-
-                @Override
-                public void run() {
-                    int start = console.getCharCount();
-
-                    console.append(new String(b, off, len));
-                    console.setCaretOffset(console.getCharCount());
-                    if (console.getLineCount() > 0) {
-                        console.setTopIndex(console.getLineCount() - 1);
-                    }
-
-                    console.setStyleRange(new StyleRange(start, len, errorColor, null));
-                }
-            });
-        }
-
-        @Override
-        public void flush() throws IOException {
-
-        }
-
-        @Override
-        public void close() throws IOException {
-
-        }
-
-    };
-
-    private Font consoleFont;
 
     public ConsoleView(Composite parent) {
-        container = new Composite(parent, SWT.NONE);
+        display = parent.getDisplay();
+        preferences = Preferences.getInstance();
+
+        container = new Composite(parent, SWT.BORDER);
         container.setLayout(new GridLayout(1, false));
         container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-        Label label = new Label(container, SWT.NONE);
-        label.setText("Console");
-        label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        Font textFont = JFaceResources.getTextFont();
+        FontData fontData = textFont.getFontData()[0];
+        if (Preferences.getInstance().getConsoleFont() != null) {
+            fontData = StringConverter.asFontData(Preferences.getInstance().getTerminalFont());
+        }
+        font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
 
         console = new StyledText(container, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
         console.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         console.setMargins(5, 5, 5, 5);
         console.setTabs(4);
+        console.setFont(font);
+        console.setForeground(display.getSystemColor(SWT.COLOR_WIDGET_DISABLED_FOREGROUND));
 
-        consoleFont = JFaceResources.getTextFont();
-        console.setFont(consoleFont);
+        console.addKeyListener(new KeyAdapter() {
+
+            @Override
+            public void keyPressed(KeyEvent event) {
+                if (event.character != 0) {
+                    try {
+                        if (serialPort != null && serialPort.isOpened()) {
+                            serialPort.writeByte((byte) event.character);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        maxLines = preferences.getConsoleMaxLines();
+        writeLogFile = preferences.getConsoleWriteLogFile();
+
+        preferences.addPropertyChangeListener(preferencesChangeListener);
+
         console.addDisposeListener(new DisposeListener() {
 
             @Override
-            public void widgetDisposed(DisposeEvent e) {
-                consoleFont.dispose();
+            public void widgetDisposed(DisposeEvent event) {
+                preferences.removePropertyChangeListener(preferencesChangeListener);
+                if (os != null) {
+                    os.close();
+                }
+                if (serialPort != null) {
+                    try {
+                        serialPort.removeEventListener();
+                        if (serialPort.isOpened()) {
+                            serialPort.closePort();
+                        }
+                    } catch (Exception e) {
+
+                    }
+                }
+                font.dispose();
             }
         });
+    }
+
+    public void setEnabled(boolean enabled) {
+        if (enabled) {
+            console.setForeground(null);
+        }
+        else {
+            console.setForeground(display.getSystemColor(SWT.COLOR_WIDGET_DISABLED_FOREGROUND));
+        }
+    }
+
+    public boolean getVisible() {
+        return container.getVisible();
+    }
+
+    public void setVisible(boolean visible) {
+        container.setVisible(visible);
+    }
+
+    public void setFocus() {
+        console.setFocus();
     }
 
     public Composite getControl() {
@@ -207,15 +262,58 @@ public class ConsoleView {
     }
 
     public void clear() {
-        console.setText("\r\n");
+        console.setText("");
     }
 
-    public OutputStream getOutputStream() {
-        return outputStream;
+    public SerialPort getSerialPort() {
+        return serialPort;
     }
 
-    public OutputStream getErrorStream() {
-        return errorStream;
+    public void setSerialPort(SerialPort serialPort) {
+        try {
+            if (this.serialPort != null && this.serialPort != serialPort) {
+                if (this.serialPort.isOpened()) {
+                    this.serialPort.removeEventListener();
+                }
+            }
+
+            lineBuilder = new StringBuilder();
+            if (serialPort != null) {
+                if (this.serialPort != serialPort) {
+                    serialPort.addEventListener(serialEventListener);
+                }
+            }
+
+            this.serialPort = serialPort;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setLogFile(File location, String fileName) {
+        try {
+            if (os != null) {
+                os.close();
+                os = null;
+            }
+            logFile = new File(location, fileName);
+            if (writeLogFile) {
+                os = new PrintStream(logFile);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void closeLogFile() {
+        try {
+            if (os != null) {
+                os.close();
+            }
+            os = null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }
