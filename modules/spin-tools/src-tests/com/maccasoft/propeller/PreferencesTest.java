@@ -58,7 +58,10 @@ class PreferencesTest {
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
             + "  },\n"
-            + "  \"console\" : { }\n"
+            + "  \"console\" : {\n"
+            + "    \"maxLines\" : 500,\n"
+            + "    \"writeLogFile\" : true\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -94,7 +97,10 @@ class PreferencesTest {
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
             + "  },\n"
-            + "  \"console\" : { }\n"
+            + "  \"console\" : {\n"
+            + "    \"maxLines\" : 500,\n"
+            + "    \"writeLogFile\" : true\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -164,7 +170,10 @@ class PreferencesTest {
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
             + "  },\n"
-            + "  \"console\" : { }\n"
+            + "  \"console\" : {\n"
+            + "    \"maxLines\" : 500,\n"
+            + "    \"writeLogFile\" : true\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -201,7 +210,10 @@ class PreferencesTest {
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
             + "  },\n"
-            + "  \"console\" : { }\n"
+            + "  \"console\" : {\n"
+            + "    \"maxLines\" : 500,\n"
+            + "    \"writeLogFile\" : true\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -237,7 +249,10 @@ class PreferencesTest {
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
             + "  },\n"
-            + "  \"console\" : { }\n"
+            + "  \"console\" : {\n"
+            + "    \"maxLines\" : 500,\n"
+            + "    \"writeLogFile\" : true\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -270,7 +285,10 @@ class PreferencesTest {
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
             + "  },\n"
-            + "  \"console\" : { }\n"
+            + "  \"console\" : {\n"
+            + "    \"maxLines\" : 500,\n"
+            + "    \"writeLogFile\" : true\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -307,7 +325,10 @@ class PreferencesTest {
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
             + "  },\n"
-            + "  \"console\" : { }\n"
+            + "  \"console\" : {\n"
+            + "    \"maxLines\" : 500,\n"
+            + "    \"writeLogFile\" : true\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -388,7 +409,10 @@ class PreferencesTest {
             + "    \"type\" : 0,\n"
             + "    \"baudRate\" : 115200\n"
             + "  },\n"
-            + "  \"console\" : { }\n"
+            + "  \"console\" : {\n"
+            + "    \"maxLines\" : 500,\n"
+            + "    \"writeLogFile\" : true\n"
+            + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 

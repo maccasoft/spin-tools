@@ -195,8 +195,8 @@ public class Preferences {
         }
 
         public String font;
-        int maxLines;
-        boolean writeLogFile;
+        public int maxLines;
+        public boolean writeLogFile;
 
     }
 
