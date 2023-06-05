@@ -13,15 +13,14 @@ package com.maccasoft.propeller.spin1.bytecode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.expressions.LocalVariable;
-import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.LocalVariable;
 
 class VariableOpTest {
 
     @Test
     void testReadLocalVarLongShort() {
-        LocalVariable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 4);
+        LocalVariable var = new LocalVariable("LONG", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, var);
 
@@ -31,7 +30,7 @@ class VariableOpTest {
 
     @Test
     void testReadLocalVarLong() {
-        LocalVariable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 64);
+        LocalVariable var = new LocalVariable("LONG", "a", 1, 64);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, var);
 
@@ -41,7 +40,7 @@ class VariableOpTest {
 
     @Test
     void testReadLocalVarWord() {
-        LocalVariable var = new LocalVariable("WORD", "a", new NumberLiteral(1), 4);
+        LocalVariable var = new LocalVariable("WORD", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, var);
 
@@ -51,7 +50,7 @@ class VariableOpTest {
 
     @Test
     void testReadLocalVarByte() {
-        LocalVariable var = new LocalVariable("BYTE", "a", new NumberLiteral(1), 4);
+        LocalVariable var = new LocalVariable("BYTE", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, var);
 
@@ -61,7 +60,7 @@ class VariableOpTest {
 
     @Test
     void testWriteLocalVarLong() {
-        LocalVariable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 4);
+        LocalVariable var = new LocalVariable("LONG", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, var);
 
@@ -71,7 +70,7 @@ class VariableOpTest {
 
     @Test
     void testWriteLocalVarWord() {
-        LocalVariable var = new LocalVariable("WORD", "a", new NumberLiteral(1), 4);
+        LocalVariable var = new LocalVariable("WORD", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, var);
 
@@ -81,7 +80,7 @@ class VariableOpTest {
 
     @Test
     void testWriteLocalVarByte() {
-        LocalVariable var = new LocalVariable("BYTE", "a", new NumberLiteral(1), 4);
+        LocalVariable var = new LocalVariable("BYTE", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, var);
 
@@ -91,7 +90,7 @@ class VariableOpTest {
 
     @Test
     void testModifyLocalVarLong() {
-        LocalVariable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 4);
+        LocalVariable var = new LocalVariable("LONG", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Assign, var);
 
@@ -101,7 +100,7 @@ class VariableOpTest {
 
     @Test
     void testModifyLocalVarWord() {
-        LocalVariable var = new LocalVariable("WORD", "a", new NumberLiteral(1), 4);
+        LocalVariable var = new LocalVariable("WORD", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Assign, var);
 
@@ -111,7 +110,7 @@ class VariableOpTest {
 
     @Test
     void testModifyLocalVarByte() {
-        LocalVariable var = new LocalVariable("BYTE", "a", new NumberLiteral(1), 4);
+        LocalVariable var = new LocalVariable("BYTE", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Assign, var);
 

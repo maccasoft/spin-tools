@@ -124,7 +124,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                                 logMessage(new CompilerException("structure " + symbol + " redefinition", typeNode.getIdentifier()));
                             }
 
-                            StructureVariable var = new StructureVariable("BYTE", "struct " + symbol, new NumberLiteral(1), 0, false);
+                            StructureVariable var = new StructureVariable("BYTE", "struct " + symbol, 1, 0, false);
                             for (Node child : node.getChilds()) {
                                 if (child instanceof TypeDefinitionNode.Definition) {
                                     compileStructureDefinition(var, child);
@@ -503,7 +503,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             if (target.getVariable(identifier.getText()) != null) {
                 logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", identifier));
             }
-            target.addVariable(type, identifier.getText(), size);
+            target.addVariable(type, identifier.getText(), size.getNumber().intValue());
 
             if (iter.hasNext()) {
                 token = iter.next();
@@ -550,7 +550,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 size = buildIndexExpression(iter);
             }
 
-            StructureVariable var = new StructureVariable("BYTE", identifier.getText(), size, objectVarSize, false);
+            StructureVariable var = new StructureVariable("BYTE", identifier.getText(), size.getNumber().intValue(), objectVarSize, false);
             scope.addSymbol(identifier.getText(), var);
             variables.add(var);
             var.setData(node.getIdentifier());
@@ -694,7 +694,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
 
             try {
                 String identifierText = identifier.getText();
-                Variable var = new Variable(type, identifierText, size, objectVarSize);
+                Variable var = new Variable(type, identifierText, size.getNumber().intValue(), objectVarSize);
                 scope.addSymbol(identifierText, var);
                 variables.add(var);
                 var.setData(identifier);
@@ -827,7 +827,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }
             Token identifier = token;
 
-            LocalVariable var = method.addParameter(paramType.toUpperCase(), identifier.getText(), new NumberLiteral(1));
+            LocalVariable var = method.addParameter(paramType.toUpperCase(), identifier.getText(), 1);
             var.setData(identifier);
 
             if (!iter.hasNext()) {
@@ -969,7 +969,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                         }
                     }
 
-                    LocalVariable variable = method.addLocalVariable(typeText, identifierText, size);
+                    LocalVariable variable = method.addLocalVariable(typeText, identifierText, size.getNumber().intValue());
                     variable.setData(identifier);
 
                     boolean add = true;
@@ -1077,7 +1077,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     }
                     try {
                         String identifierText = identifier.getText();
-                        LocalVariable variable = method.addLocalVariable(type, identifierText, new NumberLiteral(1));
+                        LocalVariable variable = method.addLocalVariable(type, identifierText, 1);
                         variable.setData(identifier);
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, identifier));
@@ -1437,12 +1437,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             int address = 0x1E0;
             for (LocalVariable var : method.getAllLocalVariables()) {
                 rootScope.addSymbol(var.getName(), new NumberLiteral(address));
-                if (var.getSize() != null) {
-                    address += var.getSize().getNumber().intValue();
-                }
-                else {
-                    address += 1;
-                }
+                address += var.getSize();
                 if (address >= 0x1F0) {
                     break;
                 }

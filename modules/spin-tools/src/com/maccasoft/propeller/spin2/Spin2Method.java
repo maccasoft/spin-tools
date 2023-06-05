@@ -16,9 +16,7 @@ import java.util.List;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.Context;
-import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
-import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.spin2.bytecode.Constant;
 
 public class Spin2Method {
@@ -63,7 +61,7 @@ public class Spin2Method {
         return label;
     }
 
-    public LocalVariable addParameter(String type, String name, Expression size) {
+    public LocalVariable addParameter(String type, String name, int size) {
         LocalVariable var = new LocalVariable(type, name, size, 0) {
 
             @Override
@@ -78,7 +76,7 @@ public class Spin2Method {
     }
 
     public LocalVariable addReturnVariable(String type, String name) {
-        LocalVariable var = new LocalVariable(type, name, new NumberLiteral(1), 0) {
+        LocalVariable var = new LocalVariable(type, name, 1, 0) {
 
             @Override
             public int getOffset() {
@@ -91,7 +89,7 @@ public class Spin2Method {
         return var;
     }
 
-    public LocalVariable addLocalVariable(String type, String name, Expression size) {
+    public LocalVariable addLocalVariable(String type, String name, int size) {
         LocalVariable var = new LocalVariable(type, name, size, 0) {
 
             @Override
@@ -102,15 +100,14 @@ public class Spin2Method {
                     if (var == this) {
                         break;
                     }
-                    int count = 4;
-                    int varSize = var.getSize() != null ? var.getSize().getNumber().intValue() : 1;
+                    int typeSize = 4;
                     if ("WORD".equalsIgnoreCase(var.getType())) {
-                        count = 2;
+                        typeSize = 2;
                     }
                     else if ("BYTE".equalsIgnoreCase(var.getType())) {
-                        count = 1;
+                        typeSize = 1;
                     }
-                    offset += count * varSize;
+                    offset += typeSize * var.getSize();
                 }
 
                 return offset;
@@ -181,21 +178,14 @@ public class Spin2Method {
         int count = 0;
 
         for (LocalVariable var : localVariables) {
-            int size = 4;
+            int typeSize = 4;
             if ("WORD".equalsIgnoreCase(var.getType())) {
-                size = 2;
+                typeSize = 2;
             }
             else if ("BYTE".equalsIgnoreCase(var.getType())) {
-                size = 1;
+                typeSize = 1;
             }
-            if (var.getSize() != null) {
-                try {
-                    size = size * var.getSize().getNumber().intValue();
-                } catch (Exception e) {
-                    // Do nothing
-                }
-            }
-            count += size;
+            count += typeSize * var.getSize();
         }
 
         return (count + 3) >> 2;
@@ -205,21 +195,14 @@ public class Spin2Method {
         int count = parameters.size() * 4 + returns.size() * 4;
 
         for (LocalVariable var : localVariables) {
-            int size = 4;
+            int typeSize = 4;
             if ("WORD".equalsIgnoreCase(var.getType())) {
-                size = 2;
+                typeSize = 2;
             }
             else if ("BYTE".equalsIgnoreCase(var.getType())) {
-                size = 1;
+                typeSize = 1;
             }
-            if (var.getSize() != null) {
-                try {
-                    size = size * var.getSize().getNumber().intValue();
-                } catch (Exception e) {
-                    // Do nothing
-                }
-            }
-            count += size;
+            count += typeSize * var.getSize();
         }
 
         return count;

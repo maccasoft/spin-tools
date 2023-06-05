@@ -790,7 +790,7 @@ public abstract class Spin2CBytecodeCompiler extends Spin2PasmCompiler {
                             expression = context.getLocalSymbol(typeText);
                             if (expression instanceof Variable) {
                                 Variable variable = (Variable) expression;
-                                source.add(new Constant(context, new NumberLiteral(variable.getTypeSize() * variable.getSize().getNumber().intValue())));
+                                source.add(new Constant(context, new NumberLiteral(variable.getTypeSize() * variable.getSize())));
                             }
                             else {
                                 throw new CompilerException("invalid type", node.getChild(0).getTokens());

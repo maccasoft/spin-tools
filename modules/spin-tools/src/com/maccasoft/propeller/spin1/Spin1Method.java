@@ -16,9 +16,7 @@ import java.util.List;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.Context;
-import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
-import com.maccasoft.propeller.expressions.NumberLiteral;
 
 public class Spin1Method {
 
@@ -51,7 +49,7 @@ public class Spin1Method {
         this.returns = new ArrayList<>();
         this.localVariables = new ArrayList<>();
 
-        LocalVariable defaultReturn = new LocalVariable("LONG", "RESULT", new NumberLiteral(1), 0);
+        LocalVariable defaultReturn = new LocalVariable("LONG", "RESULT", 1, 0);
         scope.addBuiltinSymbol(defaultReturn.getName(), defaultReturn);
         this.returns.add(defaultReturn);
     }
@@ -64,7 +62,7 @@ public class Spin1Method {
         return label;
     }
 
-    public LocalVariable addParameter(String type, String name, Expression size) {
+    public LocalVariable addParameter(String type, String name, int size) {
         LocalVariable var = new LocalVariable(type, name, size, 0) {
 
             @Override
@@ -79,12 +77,12 @@ public class Spin1Method {
     }
 
     public LocalVariable addReturnVariable(String name) {
-        LocalVariable var = new LocalVariable("LONG", name, new NumberLiteral(1), 0);
+        LocalVariable var = new LocalVariable("LONG", name, 1, 0);
         scope.addSymbol(name, var);
         return var;
     }
 
-    public LocalVariable addLocalVariable(String type, String name, Expression size) {
+    public LocalVariable addLocalVariable(String type, String name, int size) {
         LocalVariable var = new LocalVariable(type, name, size, 0) {
 
             @Override
@@ -92,20 +90,19 @@ public class Spin1Method {
                 int offset = 4 + parameters.size() * 4;
 
                 for (LocalVariable var : localVariables) {
-                    int count = 1;
+                    int typeSize = 1;
                     if ("WORD".equalsIgnoreCase(var.getType())) {
-                        count = 2;
+                        typeSize = 2;
                         offset = (offset + 1) & ~1;
                     }
                     else if (!"BYTE".equalsIgnoreCase(var.getType())) {
-                        count = 4;
+                        typeSize = 4;
                         offset = (offset + 3) & ~3;
                     }
                     if (var == this) {
                         break;
                     }
-                    int varSize = var.getSize() != null ? var.getSize().getNumber().intValue() : 1;
-                    offset += count * varSize;
+                    offset += typeSize * var.getSize();
                 }
 
                 return offset;
@@ -167,19 +164,16 @@ public class Spin1Method {
         int count = 0;
 
         for (LocalVariable var : localVariables) {
-            int size = 1;
+            int typeSize = 1;
             if ("WORD".equalsIgnoreCase(var.getType())) {
-                size = 2;
+                typeSize = 2;
                 count = (count + 1) & ~1;
             }
             else if (!"BYTE".equalsIgnoreCase(var.getType())) {
-                size = 4;
+                typeSize = 4;
                 count = (count + 3) & ~3;
             }
-            if (var.getSize() != null) {
-                size = size * var.getSize().getNumber().intValue();
-            }
-            count += size;
+            count += typeSize * var.getSize();
         }
 
         return (count + 3) & ~3;

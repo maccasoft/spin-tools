@@ -12,7 +12,7 @@ package com.maccasoft.propeller.expressions;
 
 public class LocalVariable extends Variable {
 
-    public LocalVariable(String type, String name, Expression size, int offset) {
+    public LocalVariable(String type, String name, int size, int offset) {
         super(type, name, size, offset);
     }
 

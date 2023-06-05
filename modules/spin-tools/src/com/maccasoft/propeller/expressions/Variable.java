@@ -17,18 +17,18 @@ public class Variable extends Expression {
 
     private String type;
     private String name;
-    private Expression size;
+    private int size;
     private int offset;
 
     private Set<Object> calledBy = new HashSet<>();
 
-    public Variable(String type, String name, Expression size) {
+    public Variable(String type, String name, int size) {
         this.type = type.toUpperCase();
         this.name = name;
         this.size = size;
     }
 
-    public Variable(String type, String name, Expression size, int offset) {
+    public Variable(String type, String name, int size, int offset) {
         this.type = type.toUpperCase();
         this.name = name;
         this.size = size;
@@ -86,7 +86,7 @@ public class Variable extends Expression {
         return name;
     }
 
-    public Expression getSize() {
+    public int getSize() {
         return size;
     }
 

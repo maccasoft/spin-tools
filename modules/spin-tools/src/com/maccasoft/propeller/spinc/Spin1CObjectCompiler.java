@@ -117,7 +117,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                                 logMessage(new CompilerException("structure " + symbol + " redefinition", typeNode.getIdentifier()));
                             }
 
-                            StructureVariable var = new StructureVariable("BYTE", "struct " + symbol, new NumberLiteral(1), 0, true);
+                            StructureVariable var = new StructureVariable("BYTE", "struct " + symbol, 1, 0, true);
                             for (Node child : node.getChilds()) {
                                 if (child instanceof TypeDefinitionNode.Definition) {
                                     compileStructureDefinition(var, child);
@@ -489,7 +489,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
             if (target.getVariable(identifier.getText()) != null) {
                 logMessage(new CompilerException("symbol '" + identifier.getText() + "' already defined", identifier));
             }
-            target.addVariable(type, identifier.getText(), size);
+            target.addVariable(type, identifier.getText(), size.getNumber().intValue());
 
             if (iter.hasNext()) {
                 token = iter.next();
@@ -536,7 +536,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                 size = buildIndexExpression(iter);
             }
 
-            StructureVariable var = new StructureVariable("BYTE", identifier.getText(), size, objectVarSize, true);
+            StructureVariable var = new StructureVariable("BYTE", identifier.getText(), size.getNumber().intValue(), objectVarSize, true);
             scope.addSymbol(identifier.getText(), var);
             variables.add(var);
             var.setData(node.getIdentifier());
@@ -699,7 +699,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     objectVarSize = (objectVarSize + 3) & ~3;
                 }
 
-                Variable var = new Variable(type, identifier.getText(), size, objectVarSize);
+                Variable var = new Variable(type, identifier.getText(), size.getNumber().intValue(), objectVarSize);
                 scope.addSymbol(identifierText, var);
                 variables.add(var);
                 var.setData(identifier);
@@ -825,7 +825,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
             }
             Token identifier = token;
 
-            LocalVariable var = method.addParameter(paramType.toUpperCase(), identifier.getText(), new NumberLiteral(1));
+            LocalVariable var = method.addParameter(paramType.toUpperCase(), identifier.getText(), 1);
             var.setData(identifier);
 
             if (!iter.hasNext()) {
@@ -967,7 +967,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                         }
                     }
 
-                    LocalVariable variable = method.addLocalVariable(typeText, identifierText, size);
+                    LocalVariable variable = method.addLocalVariable(typeText, identifierText, size.getNumber().intValue());
                     variable.setData(identifier);
 
                     boolean add = true;
@@ -1073,7 +1073,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     }
                     try {
                         String identifierText = identifier.getText();
-                        LocalVariable variable = method.addLocalVariable(type, identifierText, new NumberLiteral(1));
+                        LocalVariable variable = method.addLocalVariable(type, identifierText, 1);
                         variable.setData(identifier);
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, identifier));

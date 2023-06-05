@@ -19,13 +19,13 @@ public class StructureVariable extends Variable {
     boolean align;
     Map<String, Variable> elements = new HashMap<>();
 
-    public StructureVariable(String type, String name, Expression size, int offset, boolean align) {
+    public StructureVariable(String type, String name, int size, int offset, boolean align) {
         super(type, name, size, offset);
         this.align = align;
     }
 
-    public Variable addVariable(String type, String name, Expression size) {
-        int varSize = size.getNumber().intValue();
+    public Variable addVariable(String type, String name, int size) {
+        int varSize = size;
         if ("WORD".equalsIgnoreCase(type)) {
             varSize = varSize * 2;
             if (align) {

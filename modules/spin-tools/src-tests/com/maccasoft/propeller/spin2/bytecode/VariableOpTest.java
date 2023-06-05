@@ -13,16 +13,15 @@ package com.maccasoft.propeller.spin2.bytecode;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.maccasoft.propeller.expressions.LocalVariable;
-import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.LocalVariable;
+import com.maccasoft.propeller.expressions.Variable;
 
 class VariableOpTest {
 
     @Test
     void testReadLocalVarLongShort() {
-        Variable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 4);
+        Variable var = new LocalVariable("LONG", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();
@@ -34,7 +33,7 @@ class VariableOpTest {
 
     @Test
     void testReadLocalVarLong() {
-        Variable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 0x40);
+        Variable var = new LocalVariable("LONG", "a", 1, 0x40);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();
@@ -46,7 +45,7 @@ class VariableOpTest {
 
     @Test
     void testWriteLocalVarLongShort() {
-        Variable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 4);
+        Variable var = new LocalVariable("LONG", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, false, var);
         byte[] code = op.getBytes();
@@ -58,7 +57,7 @@ class VariableOpTest {
 
     @Test
     void testWriteLocalVarLong() {
-        Variable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 0x40);
+        Variable var = new LocalVariable("LONG", "a", 1, 0x40);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, false, var);
         byte[] code = op.getBytes();
@@ -70,7 +69,7 @@ class VariableOpTest {
 
     @Test
     void testReadLocalVarByteShort() {
-        Variable var = new LocalVariable("BYTE", "a", new NumberLiteral(1), 4);
+        Variable var = new LocalVariable("BYTE", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();
@@ -82,7 +81,7 @@ class VariableOpTest {
 
     @Test
     void testReadLocalVarWordShort() {
-        Variable var = new LocalVariable("WORD", "a", new NumberLiteral(1), 4);
+        Variable var = new LocalVariable("WORD", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();
@@ -94,7 +93,7 @@ class VariableOpTest {
 
     @Test
     void testSetupLocalVarLongShort() {
-        Variable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 4);
+        Variable var = new LocalVariable("LONG", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Setup, false, var);
         byte[] code = op.getBytes();
@@ -106,7 +105,7 @@ class VariableOpTest {
 
     @Test
     void testSetupLocalVarLong() {
-        Variable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 0x40);
+        Variable var = new LocalVariable("LONG", "a", 1, 0x40);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Setup, false, var);
         byte[] code = op.getBytes();
@@ -118,7 +117,7 @@ class VariableOpTest {
 
     @Test
     void testSetupLocalVarByteShort() {
-        Variable var = new LocalVariable("BYTE", "a", new NumberLiteral(1), 4);
+        Variable var = new LocalVariable("BYTE", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Setup, false, var);
         byte[] code = op.getBytes();
@@ -130,7 +129,7 @@ class VariableOpTest {
 
     @Test
     void testSetupLocalVarWordShort() {
-        Variable var = new LocalVariable("WORD", "a", new NumberLiteral(1), 4);
+        Variable var = new LocalVariable("WORD", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Setup, false, var);
         byte[] code = op.getBytes();
@@ -142,7 +141,7 @@ class VariableOpTest {
 
     @Test
     void testReadLocalVarLongIndexed() {
-        Variable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 0x4);
+        Variable var = new LocalVariable("LONG", "a", 1, 0x4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, true, var);
         byte[] code = op.getBytes();
@@ -154,7 +153,7 @@ class VariableOpTest {
 
     @Test
     void testReadLocalVarWordIndexed() {
-        Variable var = new LocalVariable("WORD", "a", new NumberLiteral(1), 0x4);
+        Variable var = new LocalVariable("WORD", "a", 1, 0x4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, true, var);
         byte[] code = op.getBytes();
@@ -166,7 +165,7 @@ class VariableOpTest {
 
     @Test
     void testReadLocalVarByteIndexed() {
-        Variable var = new LocalVariable("BYTE", "a", new NumberLiteral(1), 0x4);
+        Variable var = new LocalVariable("BYTE", "a", 1, 0x4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, true, var);
         byte[] code = op.getBytes();
@@ -178,7 +177,7 @@ class VariableOpTest {
 
     @Test
     void testReadVarLongShort() {
-        Variable var = new Variable("LONG", "a", new NumberLiteral(1), 4);
+        Variable var = new Variable("LONG", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();
@@ -190,7 +189,7 @@ class VariableOpTest {
 
     @Test
     void testReadVarLong() {
-        Variable var = new Variable("LONG", "a", new NumberLiteral(1), 0x40);
+        Variable var = new Variable("LONG", "a", 1, 0x40);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();
@@ -202,7 +201,7 @@ class VariableOpTest {
 
     @Test
     void testWriteVarLongShort() {
-        Variable var = new Variable("LONG", "a", new NumberLiteral(1), 4);
+        Variable var = new Variable("LONG", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, false, var);
         byte[] code = op.getBytes();
@@ -214,7 +213,7 @@ class VariableOpTest {
 
     @Test
     void testWriteVarLong() {
-        Variable var = new Variable("LONG", "a", new NumberLiteral(1), 0x40);
+        Variable var = new Variable("LONG", "a", 1, 0x40);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Write, false, var);
         byte[] code = op.getBytes();
@@ -226,7 +225,7 @@ class VariableOpTest {
 
     @Test
     void testAddressVarLongShort() {
-        Variable var = new Variable("LONG", "a", new NumberLiteral(1), 4);
+        Variable var = new Variable("LONG", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Address, false, var);
         byte[] code = op.getBytes();
@@ -238,7 +237,7 @@ class VariableOpTest {
 
     @Test
     void testAddressVarLong() {
-        Variable var = new Variable("LONG", "a", new NumberLiteral(1), 0x40);
+        Variable var = new Variable("LONG", "a", 1, 0x40);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Address, false, var);
         byte[] code = op.getBytes();
@@ -250,7 +249,7 @@ class VariableOpTest {
 
     @Test
     void testAddressLocalVarLongShort() {
-        Variable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 4);
+        Variable var = new LocalVariable("LONG", "a", 1, 4);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Address, false, var);
         byte[] code = op.getBytes();
@@ -262,7 +261,7 @@ class VariableOpTest {
 
     @Test
     void testAddressLocalVarLong() {
-        Variable var = new LocalVariable("LONG", "a", new NumberLiteral(1), 0x40);
+        Variable var = new LocalVariable("LONG", "a", 1, 0x40);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Address, false, var);
         byte[] code = op.getBytes();
@@ -274,7 +273,7 @@ class VariableOpTest {
 
     @Test
     void testReadUnalignedVarLong() {
-        Variable var = new Variable("LONG", "a", new NumberLiteral(1), 0x02);
+        Variable var = new Variable("LONG", "a", 1, 0x02);
 
         VariableOp op = new VariableOp(new Context(), VariableOp.Op.Read, false, var);
         byte[] code = op.getBytes();

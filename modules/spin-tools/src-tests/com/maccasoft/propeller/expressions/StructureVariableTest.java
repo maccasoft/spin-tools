@@ -17,14 +17,14 @@ class StructureVariableTest {
 
     @Test
     void testAlignedDefinition() {
-        StructureVariable subject = new StructureVariable("struct", "data", new NumberLiteral(1), 0, true);
-        subject.addVariable("INT", "a", new NumberLiteral(1));
-        subject.addVariable("WORD", "b", new NumberLiteral(1));
-        subject.addVariable("WORD", "c", new NumberLiteral(1));
-        subject.addVariable("BYTE", "d", new NumberLiteral(1));
-        subject.addVariable("BYTE", "e", new NumberLiteral(1));
-        subject.addVariable("BYTE", "f", new NumberLiteral(1));
-        subject.addVariable("BYTE", "g", new NumberLiteral(1));
+        StructureVariable subject = new StructureVariable("struct", "data", 1, 0, true);
+        subject.addVariable("INT", "a", 1);
+        subject.addVariable("WORD", "b", 1);
+        subject.addVariable("WORD", "c", 1);
+        subject.addVariable("BYTE", "d", 1);
+        subject.addVariable("BYTE", "e", 1);
+        subject.addVariable("BYTE", "f", 1);
+        subject.addVariable("BYTE", "g", 1);
 
         Assertions.assertEquals(0, subject.getOffset());
         Assertions.assertEquals(12, subject.getTypeSize());
@@ -40,14 +40,14 @@ class StructureVariableTest {
 
     @Test
     void testUnalignedDefinition() {
-        StructureVariable subject = new StructureVariable("struct", "data", new NumberLiteral(1), 0, true);
-        subject.addVariable("BYTE", "a", new NumberLiteral(1));
-        subject.addVariable("BYTE", "b", new NumberLiteral(1));
-        subject.addVariable("INT", "c", new NumberLiteral(1));
-        subject.addVariable("WORD", "d", new NumberLiteral(1));
-        subject.addVariable("BYTE", "e", new NumberLiteral(1));
-        subject.addVariable("WORD", "f", new NumberLiteral(1));
-        subject.addVariable("BYTE", "g", new NumberLiteral(1));
+        StructureVariable subject = new StructureVariable("struct", "data", 1, 0, true);
+        subject.addVariable("BYTE", "a", 1);
+        subject.addVariable("BYTE", "b", 1);
+        subject.addVariable("INT", "c", 1);
+        subject.addVariable("WORD", "d", 1);
+        subject.addVariable("BYTE", "e", 1);
+        subject.addVariable("WORD", "f", 1);
+        subject.addVariable("BYTE", "g", 1);
 
         Assertions.assertEquals(0, subject.getOffset());
         Assertions.assertEquals(16, subject.getTypeSize());

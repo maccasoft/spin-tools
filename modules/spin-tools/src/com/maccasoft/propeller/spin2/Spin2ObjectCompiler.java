@@ -842,56 +842,55 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     if (Spin2Model.isType(token.getText())) {
                         type = token.getText().toUpperCase();
                         if (!iter.hasNext()) {
-                            logMessage(new CompilerException("expecting identifier", token));
-                            return;
+                            throw new CompilerException("expecting identifier", token);
                         }
                         token = iter.next();
                     }
 
                     Token identifier = token;
-                    Expression size = new NumberLiteral(1);
+                    int varSize = 1;
 
                     if (iter.hasNext()) {
                         token = iter.next();
-                        if ("[".equals(token.getText())) {
-                            if (!iter.hasNext()) {
-                                logMessage(new CompilerException("expecting expression", token));
-                                return;
-                            }
-                            Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
-                            while (iter.hasNext()) {
-                                token = iter.next();
-                                if ("]".equals(token.getText())) {
-                                    try {
-                                        size = builder.getExpression();
-                                    } catch (CompilerException e) {
-                                        logMessage(e);
-                                    } catch (Exception e) {
-                                        logMessage(new CompilerException(e, builder.tokens));
-                                    }
-                                    break;
-                                }
-                                builder.addToken(token);
-                            }
-                            if (!"]".equals(token.getText())) {
-                                logMessage(new CompilerException("expecting '['", token));
-                                return;
-                            }
+                        if (!"[".equals(token.getText())) {
+                            throw new CompilerException("unexpected", token);
                         }
-                        else {
-                            Node error = new Node();
-                            iter.forEachRemaining(t -> error.addToken(t));
-                            logMessage(new CompilerException("unexpected '" + error + "'", error));
+                        if (!iter.hasNext()) {
+                            throw new CompilerException("expecting expression", token);
+                        }
+                        Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                        while (iter.hasNext()) {
+                            token = iter.next();
+                            if ("]".equals(token.getText())) {
+                                try {
+                                    Expression expression = builder.getExpression();
+                                    if (!expression.isConstant()) {
+                                        throw new Exception("not a constant expression");
+                                    }
+                                    varSize = expression.getNumber().intValue();
+                                } catch (CompilerException e) {
+                                    logMessage(e);
+                                } catch (Exception e) {
+                                    logMessage(new CompilerException(e, builder.getTokens()));
+                                }
+                                break;
+                            }
+                            builder.addToken(token);
+                        }
+                        if (!"]".equals(token.getText())) {
+                            throw new CompilerException("expecting ']'", token);
+                        }
+                        if (iter.hasNext()) {
+                            throw new CompilerException("unexpected", iter.next());
                         }
                     }
 
                     try {
-                        Variable var = new Variable(type, identifier.getText(), size, objectVarSize);
+                        Variable var = new Variable(type, identifier.getText(), varSize, objectVarSize);
                         scope.addSymbol(identifier.getText(), var);
                         variables.add(var);
                         var.setData(identifier);
 
-                        int varSize = size.getNumber().intValue();
                         if ("WORD".equalsIgnoreCase(type)) {
                             varSize = varSize * 2;
                         }
@@ -901,12 +900,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         objectVarSize += varSize;
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, identifier));
-                    }
-
-                    if (iter.hasNext()) {
-                        Node error = new Node();
-                        iter.forEachRemaining(t -> error.addToken(t));
-                        logMessage(new CompilerException("unexpected '" + error + "'", error));
                     }
                 }
             } catch (CompilerException e) {
@@ -1161,7 +1154,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             if (expression != null) {
                                 logMessage(new CompilerException(CompilerException.WARNING, "parameter '" + identifier + "' hides global variable", identifier));
                             }
-                            LocalVariable var = method.addParameter("LONG", identifier.getText(), new NumberLiteral(1));
+                            LocalVariable var = method.addParameter("LONG", identifier.getText(), 1);
                             var.setData(identifier);
                         }
                     }
@@ -1239,7 +1232,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             if (expression != null) {
                                 logMessage(new CompilerException(CompilerException.WARNING, "local variable '" + identifier + "' hides global variable", identifier));
                             }
-                            LocalVariable var = method.addLocalVariable(type, identifier.getText(), size); // new LocalVariable(type, identifier.getText(), size, offset);
+                            LocalVariable var = method.addLocalVariable(type, identifier.getText(), size.getNumber().intValue()); // new LocalVariable(type, identifier.getText(), size, offset);
                             var.setData(identifier);
                         }
                     }
@@ -1343,12 +1336,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         int address = 0x1E0;
                         for (LocalVariable var : method.getAllLocalVariables()) {
                             scope.addSymbol(var.getName(), new NumberLiteral(address));
-                            if (var.getSize() != null) {
-                                address += var.getSize().getNumber().intValue();
-                            }
-                            else {
-                                address += 1;
-                            }
+                            address += var.getSize();
                             var.setCalledBy(method);
                             if (address >= 0x1F0) {
                                 break;

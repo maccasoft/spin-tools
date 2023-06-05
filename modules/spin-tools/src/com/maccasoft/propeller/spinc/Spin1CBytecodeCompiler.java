@@ -435,7 +435,7 @@ public abstract class Spin1CBytecodeCompiler extends Spin1PAsmCompiler {
                             expression = context.getLocalSymbol(typeText);
                             if (expression instanceof Variable) {
                                 Variable variable = (Variable) expression;
-                                source.add(new Constant(context, new NumberLiteral(variable.getTypeSize() * variable.getSize().getNumber().intValue()), false));
+                                source.add(new Constant(context, new NumberLiteral(variable.getTypeSize() * variable.getSize()), false));
                             }
                             else {
                                 throw new CompilerException("invalid type", node.getChild(0).getTokens());
