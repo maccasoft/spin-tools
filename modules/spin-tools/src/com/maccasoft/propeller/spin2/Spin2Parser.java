@@ -37,7 +37,8 @@ public class Spin2Parser extends Parser {
     }));
 
     private static final Set<String> preprocessor = new HashSet<>(Arrays.asList(new String[] {
-        "define", "ifdef", "elifdef", "elseifdef", "ifndef", "elifndef", "elseifndef", "else", "if", "elif", "elseif", "endif"
+        "define", "ifdef", "elifdef", "elseifdef", "ifndef", "elifndef", "elseifndef", "else", "if", "elif", "elseif", "endif",
+        "error", "warning"
     }));
 
     final Spin2TokenStream stream;
@@ -118,6 +119,23 @@ public class Spin2Parser extends Parser {
                     }
                     node.addToken(token);
                 }
+            }
+        }
+        else if ("error".equals(stream.peekNext().getText()) || "warning".equals(stream.peekNext().getText())) {
+            DirectiveNode node = new DirectiveNode(parent);
+            node.addToken(token);
+            node.addToken(stream.nextToken());
+
+            Token message = stream.nextToken();
+            if (message.type != Token.EOF && message.type != Token.NL) {
+                while ((token = nextToken()).type != Token.EOF) {
+                    if (token.type == Token.NL) {
+                        break;
+                    }
+                    message = message.merge(token);
+                }
+                message.type = Token.STRING;
+                node.addToken(message);
             }
         }
         else {

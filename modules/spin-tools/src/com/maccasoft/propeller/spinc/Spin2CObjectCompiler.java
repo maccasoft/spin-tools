@@ -379,6 +379,16 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }
             return;
         }
+        else if ("error".equals(token.getText())) {
+            if (!skip) {
+                throw new CompilerException(CompilerException.ERROR, node.getText(), node);
+            }
+        }
+        else if ("warning".equals(token.getText())) {
+            if (!skip) {
+                throw new CompilerException(CompilerException.WARNING, node.getText(), node);
+            }
+        }
         else if ("pragma".equals(token.getText())) {
             // Ignore
         }

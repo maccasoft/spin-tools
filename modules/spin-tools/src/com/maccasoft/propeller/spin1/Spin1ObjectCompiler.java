@@ -1662,6 +1662,16 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 scope.addDefinition(identifier, list);
             }
         }
+        else if ("error".equals(token.getText())) {
+            if (!skip) {
+                throw new CompilerException(CompilerException.ERROR, node.getText(), node);
+            }
+        }
+        else if ("warning".equals(token.getText())) {
+            if (!skip) {
+                throw new CompilerException(CompilerException.WARNING, node.getText(), node);
+            }
+        }
         else if ("ifdef".equals(token.getText())) {
             if (!skip) {
                 if (!iter.hasNext()) {

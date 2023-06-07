@@ -110,11 +110,26 @@ public class CParser extends Parser {
                         DirectiveNode node = new DirectiveNode(root);
                         node.addToken(token);
                         node.addToken(directive);
-                        while ((token = nextToken()).type != Token.EOF) {
-                            if (token.type == Token.NL) {
-                                break;
+                        if ("error".equals(directive.getText()) || "warning".equals(directive.getText())) {
+                            Token message = stream.nextToken();
+                            if (message.type != Token.EOF && message.type != Token.NL) {
+                                while ((token = nextToken()).type != Token.EOF) {
+                                    if (token.type == Token.NL) {
+                                        break;
+                                    }
+                                    message = message.merge(token);
+                                }
+                                message.type = Token.STRING;
+                                node.addToken(message);
                             }
-                            node.addToken(token);
+                        }
+                        else {
+                            while ((token = nextToken()).type != Token.EOF) {
+                                if (token.type == Token.NL) {
+                                    break;
+                                }
+                                node.addToken(token);
+                            }
                         }
                     }
                 }
@@ -262,11 +277,26 @@ public class CParser extends Parser {
                                 DirectiveNode child = new DirectiveNode(node);
                                 child.addToken(token);
                                 child.addToken(directive);
-                                while ((token = nextToken()).type != Token.EOF) {
-                                    if (token.type == Token.NL) {
-                                        break;
+                                if ("error".equals(directive.getText()) || "warning".equals(directive.getText())) {
+                                    Token message = stream.nextToken();
+                                    if (message.type != Token.EOF && message.type != Token.NL) {
+                                        while ((token = nextToken()).type != Token.EOF) {
+                                            if (token.type == Token.NL) {
+                                                break;
+                                            }
+                                            message = message.merge(token);
+                                        }
+                                        message.type = Token.STRING;
+                                        child.addToken(message);
                                     }
-                                    child.addToken(token);
+                                }
+                                else {
+                                    while ((token = nextToken()).type != Token.EOF) {
+                                        if (token.type == Token.NL) {
+                                            break;
+                                        }
+                                        child.addToken(token);
+                                    }
                                 }
                             }
                             else {
@@ -456,11 +486,26 @@ public class CParser extends Parser {
                     node = new DirectiveNode(parent);
                     node.addToken(token);
                     node.addToken(directive);
-                    while ((token = nextToken()).type != Token.EOF) {
-                        if (token.type == Token.NL) {
-                            break;
+                    if ("error".equals(directive.getText()) || "warning".equals(directive.getText())) {
+                        Token message = stream.nextToken();
+                        if (message.type != Token.EOF && message.type != Token.NL) {
+                            while ((token = nextToken()).type != Token.EOF) {
+                                if (token.type == Token.NL) {
+                                    break;
+                                }
+                                message = message.merge(token);
+                            }
+                            message.type = Token.STRING;
+                            node.addToken(message);
                         }
-                        node.addToken(token);
+                    }
+                    else {
+                        while ((token = nextToken()).type != Token.EOF) {
+                            if (token.type == Token.NL) {
+                                break;
+                            }
+                            node.addToken(token);
+                        }
                     }
                 }
                 else {
