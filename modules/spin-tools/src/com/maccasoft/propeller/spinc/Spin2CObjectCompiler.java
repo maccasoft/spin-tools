@@ -43,6 +43,7 @@ import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.FunctionNode;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.NodeVisitor;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
@@ -110,10 +111,53 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     public void compileStep1(Node root) {
         objectVarSize = 4;
 
+        root.accept(new NodeVisitor() {
+
+            @Override
+            public void visitDirective(DirectiveNode node) {
+                try {
+                    compileDirective(node);
+                } catch (CompilerException e) {
+                    logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, node));
+                }
+            }
+
+            @Override
+            public void visitVariable(VariableNode node) {
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
+            }
+
+            @Override
+            public boolean visitFunction(FunctionNode node) {
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
+                return true;
+            }
+
+            @Override
+            public boolean visitStatement(StatementNode node) {
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
+                return true;
+            }
+
+        });
+
+        while (!conditionStack.isEmpty()) {
+            Condition c = conditionStack.pop();
+            logMessage(new CompilerException("unbalanced conditional directive", c.node));
+        }
+
         for (Node node : new ArrayList<>(root.getChilds())) {
             try {
-                if (node instanceof DirectiveNode) {
-                    compileDirective((DirectiveNode) node);
+                if (skipNode(node)) {
+                    continue;
                 }
                 else if (node instanceof TypeDefinitionNode) {
                     if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
@@ -231,6 +275,22 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
         return null;
     }
 
+    class Condition {
+
+        final Node node;
+        final boolean evaluated;
+        final boolean skip;
+
+        public Condition(Node node, boolean evaluated, boolean skip) {
+            this.node = node;
+            this.evaluated = evaluated;
+            this.skip = skip;
+        }
+
+    }
+
+    Stack<Condition> conditionStack = new Stack<>();
+
     void compileDirective(DirectiveNode node) {
         Token token;
         boolean skip = !conditionStack.isEmpty() && conditionStack.peek().skip;
@@ -322,28 +382,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
         else if ("pragma".equals(token.getText())) {
             // Ignore
         }
-        else {
-            compileConditionalDirective(token, iter);
-        }
-    }
-
-    class Condition {
-
-        final boolean evaluated;
-        final boolean skip;
-
-        public Condition(boolean evaluated, boolean skip) {
-            this.evaluated = evaluated;
-            this.skip = skip;
-        }
-
-    }
-    Stack<Condition> conditionStack = new Stack<>();
-
-    void compileConditionalDirective(Token token, Iterator<Token> iter) {
-        boolean skip = !conditionStack.isEmpty() && conditionStack.peek().skip;
-
-        if ("ifdef".equals(token.getText())) {
+        else if ("ifdef".equals(token.getText())) {
             if (!skip) {
                 if (!iter.hasNext()) {
                     throw new CompilerException("expecting identifier", new Token(token.getStream(), token.stop));
@@ -353,10 +392,10 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     throw new CompilerException("invalid identifier", new Token(token.getStream(), token.stop));
                 }
                 skip = !scope.isDefined(identifier.getText());
-                conditionStack.push(new Condition(true, skip));
+                conditionStack.push(new Condition(node, true, skip));
             }
             else {
-                conditionStack.push(new Condition(false, skip));
+                conditionStack.push(new Condition(node, false, skip));
             }
         }
         else if ("ifndef".equals(token.getText())) {
@@ -369,10 +408,10 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     throw new CompilerException("invalid identifier", new Token(token.getStream(), token.stop));
                 }
                 skip = scope.isDefined(identifier.getText());
-                conditionStack.push(new Condition(true, skip));
+                conditionStack.push(new Condition(node, true, skip));
             }
             else {
-                conditionStack.push(new Condition(false, skip));
+                conditionStack.push(new Condition(node, false, skip));
             }
         }
         else if ("else".equals(token.getText())) {
@@ -381,10 +420,10 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }
             if (conditionStack.peek().evaluated) {
                 skip = !conditionStack.pop().skip;
-                conditionStack.push(new Condition(true, skip));
+                conditionStack.push(new Condition(node, true, skip));
             }
             else {
-                conditionStack.push(new Condition(false, skip));
+                conditionStack.push(new Condition(node, false, skip));
             }
         }
         else if ("if".equals(token.getText())) {
@@ -413,10 +452,10 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                     throw new RuntimeException("expression is not constant");
                 }
                 skip = expression.getNumber().intValue() == 0;
-                conditionStack.push(new Condition(true, skip));
+                conditionStack.push(new Condition(node, true, skip));
             }
             else {
-                conditionStack.push(new Condition(false, skip));
+                conditionStack.push(new Condition(node, false, skip));
             }
         }
         else if ("elif".equals(token.getText())) {
@@ -451,10 +490,10 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 }
                 skip = expression.getNumber().intValue() == 0;
 
-                conditionStack.push(new Condition(true, skip));
+                conditionStack.push(new Condition(node, true, skip));
             }
             else {
-                conditionStack.push(new Condition(false, skip));
+                conditionStack.push(new Condition(node, false, skip));
             }
         }
         else if ("endif".equals(token.getText())) {
@@ -874,18 +913,10 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
         while (nodeIterator.hasNext()) {
             Node node = nodeIterator.next();
             try {
-                if (node instanceof DirectiveNode) {
-                    Token token;
-
-                    Iterator<Token> iter = node.getTokens().iterator();
-                    token = iter.next();
-                    if (!iter.hasNext()) {
-                        throw new CompilerException("expecting directive", new Token(token.getStream(), token.stop));
-                    }
-                    token = iter.next();
-                    compileConditionalDirective(token, iter);
+                if (skipNode(node)) {
+                    continue;
                 }
-                else if (node instanceof StatementNode) {
+                if (node instanceof StatementNode) {
                     if (conditionStack.isEmpty() || !conditionStack.peek().skip) {
                         Spin2MethodLine line = compileStatement(method, context, parent, node, previousLine);
                         if (line != null) {
@@ -1273,6 +1304,9 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
 
             boolean hasDefault = false;
             for (Node child : node.getChilds()) {
+                if (skipNode(child)) {
+                    continue;
+                }
                 if (child instanceof StatementNode) {
                     Spin2MethodLine targetLine = new Spin2MethodLine(context);
 

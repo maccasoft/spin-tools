@@ -42,7 +42,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
     protected List<Spin2PAsmLine> source = new ArrayList<>();
     protected List<Spin2PAsmDebugLine> debugSource = new ArrayList<>();
 
-    List<Node> excludedNodes = new ArrayList<>();
+    protected List<Node> excludedNodes = new ArrayList<>();
 
     public Spin2PasmCompiler(Context scope, Spin2Compiler compiler, File file) {
         this(scope, compiler, null, file);

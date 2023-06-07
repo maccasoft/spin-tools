@@ -37,7 +37,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
 
     protected List<Spin1PAsmLine> source = new ArrayList<>();
 
-    List<Node> excludedNodes = new ArrayList<>();
+    protected List<Node> excludedNodes = new ArrayList<>();
 
     public Spin1PAsmCompiler(Context scope, Spin1Compiler compiler, File file) {
         this(scope, compiler, null, file);

@@ -257,12 +257,20 @@ public class CParser extends Parser {
 
                     while ((token = nextTokenSkipNL()).type != Token.EOF) {
                         if ("#".equals(token.getText())) {
-                            DirectiveNode child = new DirectiveNode(node);
-                            child.addToken(token);
-                            while ((token = nextToken()).type != Token.EOF) {
-                                if (token.type == Token.NL) {
-                                    break;
+                            Token directive = nextToken();
+                            if (directive.type != Token.EOF && directive.type != Token.NL) {
+                                DirectiveNode child = new DirectiveNode(node);
+                                child.addToken(token);
+                                child.addToken(directive);
+                                while ((token = nextToken()).type != Token.EOF) {
+                                    if (token.type == Token.NL) {
+                                        break;
+                                    }
+                                    child.addToken(token);
                                 }
+                            }
+                            else {
+                                DirectiveNode child = new DirectiveNode(node);
                                 child.addToken(token);
                             }
                         }
@@ -443,12 +451,20 @@ public class CParser extends Parser {
 
         if ((token = nextTokenSkipNL()).type != Token.EOF) {
             if ("#".equals(token.getText())) {
-                node = new DirectiveNode(parent);
-                node.addToken(token);
-                while ((token = nextToken()).type != Token.EOF) {
-                    if (token.type == Token.NL) {
-                        break;
+                Token directive = stream.nextToken();
+                if (directive.type != Token.EOF && directive.type != Token.NL) {
+                    node = new DirectiveNode(parent);
+                    node.addToken(token);
+                    node.addToken(directive);
+                    while ((token = nextToken()).type != Token.EOF) {
+                        if (token.type == Token.NL) {
+                            break;
+                        }
+                        node.addToken(token);
                     }
+                }
+                else {
+                    node = new DirectiveNode(parent);
                     node.addToken(token);
                 }
             }
