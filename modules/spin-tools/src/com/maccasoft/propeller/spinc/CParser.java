@@ -52,97 +52,7 @@ public class CParser extends Parser {
                 }
             }
             else if ("#".equals(token.getText())) {
-                Token directive = nextToken();
-                if (directive.type != Token.EOF && directive.type != Token.NL) {
-                    if ("include".equals(directive.getText())) {
-                        Token file = nextToken();
-                        if ("<".equals(file.getText())) {
-                            Token t;
-                            while ((t = nextToken()).type != Token.EOF) {
-                                if (t.type == Token.NL) {
-                                    break;
-                                }
-                                file = file.merge(t);
-                                if (">".equals(t.getText())) {
-                                    break;
-                                }
-                            }
-                            file.type = Token.STRING;
-                        }
-                        Node node = new DirectiveNode.IncludeNode(root, file.type == Token.STRING && file.getText().length() > 2 ? file : null);
-                        node.addToken(token);
-                        node.addToken(directive);
-                        if (file.type != Token.EOF && file.type != Token.NL) {
-                            node.addToken(file);
-                        }
-                        while ((token = nextToken()).type != Token.EOF) {
-                            if (token.type == Token.NL) {
-                                break;
-                            }
-                            node.addToken(token);
-                        }
-                    }
-                    else if ("define".equals(directive.getText())) {
-                        Token identifier = nextToken();
-                        DirectiveNode.DefineNode node = new DirectiveNode.DefineNode(root, identifier.type == Token.KEYWORD ? identifier : null);
-                        node.addToken(token);
-                        node.addToken(directive);
-                        if (identifier.type == Token.KEYWORD) {
-                            node.addToken(identifier);
-                            while ((token = nextToken()).type != Token.EOF) {
-                                if (token.type == Token.NL) {
-                                    break;
-                                }
-                                node.addDefinition(token);
-                            }
-                        }
-                        else if (identifier.type != Token.EOF && identifier.type != Token.NL) {
-                            node.addToken(identifier);
-                            while ((token = nextToken()).type != Token.EOF) {
-                                if (token.type == Token.NL) {
-                                    break;
-                                }
-                                node.addToken(token);
-                            }
-                        }
-                    }
-                    else {
-                        DirectiveNode node = new DirectiveNode(root);
-                        node.addToken(token);
-                        node.addToken(directive);
-                        if ("error".equals(directive.getText()) || "warning".equals(directive.getText())) {
-                            Token message = stream.nextToken();
-                            if (message.type != Token.EOF && message.type != Token.NL) {
-                                while ((token = nextToken()).type != Token.EOF) {
-                                    if (token.type == Token.NL) {
-                                        break;
-                                    }
-                                    message = message.merge(token);
-                                }
-                                message.type = Token.STRING;
-                                node.addToken(message);
-                            }
-                        }
-                        else {
-                            while ((token = nextToken()).type != Token.EOF) {
-                                if (token.type == Token.NL) {
-                                    break;
-                                }
-                                node.addToken(token);
-                            }
-                        }
-                    }
-                }
-                else {
-                    DirectiveNode node = new DirectiveNode(root);
-                    node.addToken(token);
-                    while ((token = nextToken()).type != Token.EOF) {
-                        if (token.type == Token.NL) {
-                            break;
-                        }
-                        node.addToken(token);
-                    }
-                }
+                parsePreprocessor(root, token);
                 commentToken = null;
             }
             else if ("struct".equals(token.getText())) {
@@ -272,37 +182,7 @@ public class CParser extends Parser {
 
                     while ((token = nextTokenSkipNL()).type != Token.EOF) {
                         if ("#".equals(token.getText())) {
-                            Token directive = nextToken();
-                            if (directive.type != Token.EOF && directive.type != Token.NL) {
-                                DirectiveNode child = new DirectiveNode(node);
-                                child.addToken(token);
-                                child.addToken(directive);
-                                if ("error".equals(directive.getText()) || "warning".equals(directive.getText())) {
-                                    Token message = stream.nextToken();
-                                    if (message.type != Token.EOF && message.type != Token.NL) {
-                                        while ((token = nextToken()).type != Token.EOF) {
-                                            if (token.type == Token.NL) {
-                                                break;
-                                            }
-                                            message = message.merge(token);
-                                        }
-                                        message.type = Token.STRING;
-                                        child.addToken(message);
-                                    }
-                                }
-                                else {
-                                    while ((token = nextToken()).type != Token.EOF) {
-                                        if (token.type == Token.NL) {
-                                            break;
-                                        }
-                                        child.addToken(token);
-                                    }
-                                }
-                            }
-                            else {
-                                DirectiveNode child = new DirectiveNode(node);
-                                child.addToken(token);
-                            }
+                            parsePreprocessor(node, token);
                         }
                         else {
                             node.addToken(token);
@@ -481,37 +361,7 @@ public class CParser extends Parser {
 
         if ((token = nextTokenSkipNL()).type != Token.EOF) {
             if ("#".equals(token.getText())) {
-                Token directive = stream.nextToken();
-                if (directive.type != Token.EOF && directive.type != Token.NL) {
-                    node = new DirectiveNode(parent);
-                    node.addToken(token);
-                    node.addToken(directive);
-                    if ("error".equals(directive.getText()) || "warning".equals(directive.getText())) {
-                        Token message = stream.nextToken();
-                        if (message.type != Token.EOF && message.type != Token.NL) {
-                            while ((token = nextToken()).type != Token.EOF) {
-                                if (token.type == Token.NL) {
-                                    break;
-                                }
-                                message = message.merge(token);
-                            }
-                            message.type = Token.STRING;
-                            node.addToken(message);
-                        }
-                    }
-                    else {
-                        while ((token = nextToken()).type != Token.EOF) {
-                            if (token.type == Token.NL) {
-                                break;
-                            }
-                            node.addToken(token);
-                        }
-                    }
-                }
-                else {
-                    node = new DirectiveNode(parent);
-                    node.addToken(token);
-                }
+                node = parsePreprocessor(parent, token);
             }
             else {
                 node = new StatementNode(parent);
@@ -709,6 +559,97 @@ public class CParser extends Parser {
                 }
             }
         }
+    }
+
+    DirectiveNode parsePreprocessor(Node parent, Token token) {
+        Token directive = nextToken();
+
+        if ("include".equals(directive.getText())) {
+            Token file = nextToken();
+            if ("<".equals(file.getText())) {
+                Token t;
+                while ((t = nextToken()).type != Token.EOF) {
+                    if (t.type == Token.NL) {
+                        break;
+                    }
+                    file = file.merge(t);
+                    if (">".equals(t.getText())) {
+                        break;
+                    }
+                }
+                file.type = Token.STRING;
+            }
+            DirectiveNode node = new DirectiveNode.IncludeNode(parent, file.type == Token.STRING && file.getText().length() > 2 ? file : null);
+            node.addToken(token);
+            node.addToken(directive);
+            if (file.type != Token.EOF && file.type != Token.NL) {
+                node.addToken(file);
+            }
+            while ((token = nextToken()).type != Token.EOF) {
+                if (token.type == Token.NL) {
+                    break;
+                }
+                node.addToken(token);
+            }
+            return node;
+        }
+        else if ("define".equals(directive.getText())) {
+            Token identifier = nextToken();
+            DirectiveNode.DefineNode node = new DirectiveNode.DefineNode(parent, identifier.type == Token.KEYWORD ? identifier : null);
+            node.addToken(token);
+            node.addToken(directive);
+            if (identifier.type == Token.KEYWORD) {
+                node.addToken(identifier);
+                while ((token = nextToken()).type != Token.EOF) {
+                    if (token.type == Token.NL) {
+                        break;
+                    }
+                    node.addDefinition(token);
+                }
+            }
+            else if (identifier.type != Token.EOF && identifier.type != Token.NL) {
+                node.addToken(identifier);
+                while ((token = nextToken()).type != Token.EOF) {
+                    if (token.type == Token.NL) {
+                        break;
+                    }
+                    node.addToken(token);
+                }
+            }
+            return node;
+        }
+        else if ("error".equals(directive.getText()) || "warning".equals(directive.getText())) {
+            DirectiveNode node = new DirectiveNode(parent);
+            node.addToken(token);
+            node.addToken(directive);
+
+            Token message = stream.nextToken();
+            if (message.type != Token.EOF && message.type != Token.NL) {
+                while ((token = nextToken()).type != Token.EOF) {
+                    if (token.type == Token.NL) {
+                        break;
+                    }
+                    message = message.merge(token);
+                }
+                message.type = Token.STRING;
+                node.addToken(message);
+            }
+
+            return node;
+        }
+
+        DirectiveNode node = new DirectiveNode(parent);
+        node.addToken(token);
+        if (directive.type != Token.EOF && directive.type != Token.NL) {
+            node.addToken(directive);
+            while ((token = nextToken()).type != Token.EOF) {
+                if (token.type == Token.NL) {
+                    break;
+                }
+                node.addToken(token);
+            }
+        }
+        return node;
     }
 
     void parseDatLine(Node parent) {
