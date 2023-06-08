@@ -1615,9 +1615,10 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     class Condition {
 
-        final Node node;
-        final boolean evaluated;
-        final boolean skip;
+        Node node;
+        boolean evaluated;
+        boolean skip;
+        boolean flipped;
 
         public Condition(Node node, boolean evaluated, boolean skip) {
             this.node = node;
@@ -1692,16 +1693,23 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             if (conditionStack.isEmpty()) {
                 throw new CompilerException("misplaced #" + token.getText(), token);
             }
-            if (conditionStack.peek().evaluated) {
-                conditionStack.pop();
-
-                Token identifier = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
-                    throw new CompilerException("invalid identifier", identifier);
+            Condition condition = conditionStack.peek();
+            if (condition.evaluated) {
+                if (!condition.flipped) {
+                    condition.skip = !condition.skip;
+                    condition.flipped = true;
                 }
-                skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
+                if (!condition.skip) {
+                    conditionStack.pop();
 
-                conditionStack.push(new Condition(node, true, skip));
+                    Token identifier = iter.next();
+                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                        throw new CompilerException("invalid identifier", identifier);
+                    }
+                    skip = !(scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText()));
+
+                    conditionStack.push(new Condition(node, true, skip));
+                }
             }
             else {
                 conditionStack.push(new Condition(node, false, skip));
@@ -1727,16 +1735,23 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             if (conditionStack.isEmpty()) {
                 throw new CompilerException("misplaced #" + token.getText(), token);
             }
-            if (conditionStack.peek().evaluated) {
-                conditionStack.pop();
-
-                Token identifier = iter.next();
-                if (token.type != 0 && token.type != Token.KEYWORD) {
-                    throw new CompilerException("invalid identifier", identifier);
+            Condition condition = conditionStack.peek();
+            if (condition.evaluated) {
+                if (!condition.flipped) {
+                    condition.skip = !condition.skip;
+                    condition.flipped = true;
                 }
-                skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());
+                if (!condition.skip) {
+                    conditionStack.pop();
 
-                conditionStack.push(new Condition(node, true, skip));
+                    Token identifier = iter.next();
+                    if (token.type != 0 && token.type != Token.KEYWORD) {
+                        throw new CompilerException("invalid identifier", identifier);
+                    }
+                    skip = scope.isDefined(identifier.getText()) || scope.hasSymbol(identifier.getText());
+
+                    conditionStack.push(new Condition(node, true, skip));
+                }
             }
             else {
                 conditionStack.push(new Condition(node, false, skip));
@@ -1746,9 +1761,12 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             if (conditionStack.isEmpty()) {
                 throw new CompilerException("misplaced #" + token.getText(), token);
             }
-            if (conditionStack.peek().evaluated) {
-                skip = !conditionStack.pop().skip;
-                conditionStack.push(new Condition(node, true, skip));
+            Condition condition = conditionStack.peek();
+            if (condition.evaluated) {
+                if (!condition.flipped) {
+                    condition.skip = !condition.skip;
+                    condition.flipped = true;
+                }
             }
             else {
                 conditionStack.push(new Condition(node, false, skip));
@@ -1790,35 +1808,42 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             if (conditionStack.isEmpty()) {
                 throw new CompilerException("misplaced #" + token.getText(), token);
             }
-            if (conditionStack.peek().evaluated) {
-                conditionStack.pop();
+            Condition condition = conditionStack.peek();
+            if (condition.evaluated) {
+                if (!condition.flipped) {
+                    condition.skip = !condition.skip;
+                    condition.flipped = true;
+                }
+                if (!condition.skip) {
+                    conditionStack.pop();
 
-                Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
-                while (iter.hasNext()) {
-                    token = iter.next();
-                    if ("defined".equals(token.getText())) {
-                        builder.addToken(token);
-                        if (iter.hasNext()) {
-                            builder.addTokenLiteral(iter.next());
+                    Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                    while (iter.hasNext()) {
+                        token = iter.next();
+                        if ("defined".equals(token.getText())) {
+                            builder.addToken(token);
+                            if (iter.hasNext()) {
+                                builder.addTokenLiteral(iter.next());
+                            }
+                            if (iter.hasNext()) {
+                                builder.addTokenLiteral(iter.next());
+                            }
+                            if (iter.hasNext()) {
+                                builder.addTokenLiteral(iter.next());
+                            }
                         }
-                        if (iter.hasNext()) {
-                            builder.addTokenLiteral(iter.next());
-                        }
-                        if (iter.hasNext()) {
-                            builder.addTokenLiteral(iter.next());
+                        else {
+                            builder.addToken(token);
                         }
                     }
-                    else {
-                        builder.addToken(token);
+                    Expression expression = builder.getExpression();
+                    if (!expression.isConstant()) {
+                        throw new RuntimeException("expression is not constant");
                     }
-                }
-                Expression expression = builder.getExpression();
-                if (!expression.isConstant()) {
-                    throw new RuntimeException("expression is not constant");
-                }
-                skip = expression.getNumber().intValue() == 0;
+                    skip = expression.getNumber().intValue() == 0;
 
-                conditionStack.push(new Condition(node, true, skip));
+                    conditionStack.push(new Condition(node, true, skip));
+                }
             }
             else {
                 conditionStack.push(new Condition(node, false, skip));
