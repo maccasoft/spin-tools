@@ -1597,7 +1597,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
             }, "INLINE-EXEC"));
         }
         else {
-            if (!compiler.isDebugEnabled() && "debug".equals(token.getText())) {
+            if (!isDebugEnabled() && "debug".equals(token.getText())) {
                 return null;
             }
             Spin2CTreeBuilder builder = new Spin2CTreeBuilder(scope);

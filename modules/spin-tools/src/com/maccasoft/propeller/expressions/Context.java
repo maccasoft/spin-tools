@@ -113,6 +113,9 @@ public class Context {
 
     public boolean isDefined(String identifier) {
         boolean result = caseSensitive ? defines.containsKey(identifier) : caseInsensitiveDefines.containsKey(identifier);
+        if (result == false) {
+            result = caseSensitive ? symbols.containsKey(identifier) : caseInsensitiveSymbols.containsKey(identifier);
+        }
         if (result == false && parent != null) {
             return parent.isDefined(identifier);
         }

@@ -68,7 +68,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                 }
                 if (child instanceof DataLineNode) {
                     DataLineNode node = (DataLineNode) child;
-                    if (!compiler.isDebugEnabled() && node.instruction != null && "DEBUG".equalsIgnoreCase(node.instruction.getText())) {
+                    if (!isDebugEnabled() && node.instruction != null && "DEBUG".equalsIgnoreCase(node.instruction.getText())) {
                         if (node.label == null) {
                             continue;
                         }
@@ -203,7 +203,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
             }
         }
 
-        if (!compiler.isDebugEnabled() && mnemonic != null && "DEBUG".equalsIgnoreCase(mnemonic)) {
+        if (!isDebugEnabled() && mnemonic != null && "DEBUG".equalsIgnoreCase(mnemonic)) {
             condition = mnemonic = null;
             parameters.clear();
             modifier = null;
@@ -348,6 +348,10 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
             return false;
         }
         return index >= tokens.size();
+    }
+
+    protected boolean isDebugEnabled() {
+        return compiler.isDebugEnabled() && !scope.isDefined("DEBUG_DISABLED");
     }
 
     protected abstract void compileDatInclude(Node root);

@@ -1858,7 +1858,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 line.addChild(endLine);
             }
             else {
-                if (!compiler.isDebugEnabled() && "DEBUG".equalsIgnoreCase(token.getText())) {
+                if (!isDebugEnabled() && "DEBUG".equalsIgnoreCase(token.getText())) {
                     return null;
                 }
 
