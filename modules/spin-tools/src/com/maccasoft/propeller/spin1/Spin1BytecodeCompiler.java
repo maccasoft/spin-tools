@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -13,7 +13,6 @@ package com.maccasoft.propeller.spin1;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
@@ -89,12 +88,20 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
         this.stringData = new ArrayList<>();
     }
 
-    public List<Spin1Bytecode> compileBytecodeExpression(Context context, Spin1Method method, Spin1StatementNode node) {
-        return compileBytecodeExpression(context, method, node, false);
-    }
-
     public List<Spin1Bytecode> compileBytecodeExpression(Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
         List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
+
+        if (push && compiler.isFoldConstants() && !("-".equals(node.getText()) && node.getChildCount() == 1)) {
+            try {
+                Expression expression = buildConstantExpression(context, node);
+                if (expression.isConstant()) {
+                    source.add(new Constant(context, expression, compiler.isOpenspinCompatible()));
+                    return source;
+                }
+            } catch (Exception e) {
+                // Do nothing, fall-through
+            }
+        }
 
         try {
             Descriptor desc = Spin1Bytecode.getDescriptor(node.getText());
@@ -355,21 +362,9 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 if (node.getChildCount() != 2) {
                     throw new RuntimeException("expression syntax error " + node.getText());
                 }
-                if (compiler.isOpenspinCompatible()) {
-                    source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
-                    source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
-                    source.add(new MathOp(context, node.getText(), push));
-                }
-                else {
-                    try {
-                        Expression expression = buildConstantExpression(context, node);
-                        source.add(new Constant(context, expression, compiler.isOpenspinCompatible()));
-                    } catch (Exception e) {
-                        source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
-                        source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
-                        source.add(new MathOp(context, node.getText(), push));
-                    }
-                }
+                source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
+                source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
+                source.add(new MathOp(context, node.getText(), push));
             }
             else if ("?".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() == 1) {
@@ -828,7 +823,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             source.addAll(compileBytecodeExpression(context, method, methodNode.getChild(i), true));
                         }
                         if (indexNode != null) {
-                            source.addAll(compileConstantExpression(context, method, indexNode));
+                            source.addAll(compileBytecodeExpression(context, method, indexNode, true));
                         }
                         source.add(new CallSub(context, methodExpression, indexNode != null));
                         Spin1Method calledMethod = (Spin1Method) methodExpression.getData(Spin1Method.class.getName());
@@ -1153,20 +1148,6 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
 
     protected boolean isAbsoluteAddress(String text) {
         return text.startsWith("@@");
-    }
-
-    List<Spin1Bytecode> compileConstantExpression(Context context, Spin1Method method, Spin1StatementNode node) {
-        if (!compiler.isOpenspinCompatible()) {
-            try {
-                Expression expression = buildConstantExpression(context, node);
-                if (expression.isConstant()) {
-                    return Collections.singletonList(new Constant(context, expression, compiler.isOpenspinCompatible()));
-                }
-            } catch (Exception e) {
-
-            }
-        }
-        return compileBytecodeExpression(context, method, node, true);
     }
 
     Expression buildConstantExpression(Context context, Spin1StatementNode node) {

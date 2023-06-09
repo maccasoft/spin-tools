@@ -27,8 +27,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_0_0_00_000, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(12_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_0_0_00_000, subject.clkMode);
+        Assertions.assertEquals(12_000_000, subject.clkFreq);
     }
 
     @Test
@@ -38,8 +38,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_0_0_00_000, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(12_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_0_0_00_000, subject.clkMode);
+        Assertions.assertEquals(12_000_000, subject.clkFreq);
     }
 
     @Test
@@ -49,8 +49,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_0_0_00_001, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(20_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_0_0_00_001, subject.clkMode);
+        Assertions.assertEquals(20_000, subject.clkFreq);
     }
 
     @Test
@@ -61,8 +61,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_0_1_00_010, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(5_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_0_1_00_010, subject.clkMode);
+        Assertions.assertEquals(5_000_000, subject.clkFreq);
     }
 
     @Test
@@ -73,8 +73,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_00_011, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(5_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_00_011, subject.clkMode);
+        Assertions.assertEquals(5_000_000, subject.clkFreq);
     }
 
     @Test
@@ -85,8 +85,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_00_100, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(10_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_00_100, subject.clkMode);
+        Assertions.assertEquals(10_000_000, subject.clkFreq);
     }
 
     @Test
@@ -97,8 +97,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_00_101, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(20_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_00_101, subject.clkMode);
+        Assertions.assertEquals(20_000_000, subject.clkFreq);
     }
 
     @Test
@@ -109,8 +109,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_00_110, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(40_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_00_110, subject.clkMode);
+        Assertions.assertEquals(40_000_000, subject.clkFreq);
     }
 
     @Test
@@ -121,8 +121,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_00_111, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(80_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_00_111, subject.clkMode);
+        Assertions.assertEquals(80_000_000, subject.clkFreq);
     }
 
     @Test
@@ -133,8 +133,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_01_011, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(5_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_01_011, subject.clkMode);
+        Assertions.assertEquals(5_000_000, subject.clkFreq);
     }
 
     @Test
@@ -145,8 +145,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_01_100, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(10_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_01_100, subject.clkMode);
+        Assertions.assertEquals(10_000_000, subject.clkFreq);
     }
 
     @Test
@@ -157,8 +157,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_01_101, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(20_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_01_101, subject.clkMode);
+        Assertions.assertEquals(20_000_000, subject.clkFreq);
     }
 
     @Test
@@ -169,8 +169,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_01_110, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(40_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_01_110, subject.clkMode);
+        Assertions.assertEquals(40_000_000, subject.clkFreq);
     }
 
     @Test
@@ -181,8 +181,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_01_111, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(80_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_01_111, subject.clkMode);
+        Assertions.assertEquals(80_000_000, subject.clkFreq);
     }
 
     @Test
@@ -193,8 +193,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_10_011, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(5_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_10_011, subject.clkMode);
+        Assertions.assertEquals(5_000_000, subject.clkFreq);
     }
 
     @Test
@@ -205,8 +205,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_10_100, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(10_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_10_100, subject.clkMode);
+        Assertions.assertEquals(10_000_000, subject.clkFreq);
     }
 
     @Test
@@ -217,8 +217,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_10_101, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(20_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_10_101, subject.clkMode);
+        Assertions.assertEquals(20_000_000, subject.clkFreq);
     }
 
     @Test
@@ -229,8 +229,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_10_110, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(40_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_10_110, subject.clkMode);
+        Assertions.assertEquals(40_000_000, subject.clkFreq);
     }
 
     @Test
@@ -241,8 +241,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_10_111, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(80_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_10_111, subject.clkMode);
+        Assertions.assertEquals(80_000_000, subject.clkFreq);
     }
 
     @Test
@@ -253,8 +253,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_11_011, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(5_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_11_011, subject.clkMode);
+        Assertions.assertEquals(5_000_000, subject.clkFreq);
     }
 
     @Test
@@ -265,8 +265,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_11_100, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(10_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_11_100, subject.clkMode);
+        Assertions.assertEquals(10_000_000, subject.clkFreq);
     }
 
     @Test
@@ -277,8 +277,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_11_101, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(20_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_11_101, subject.clkMode);
+        Assertions.assertEquals(20_000_000, subject.clkFreq);
     }
 
     @Test
@@ -289,8 +289,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_11_110, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(40_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_11_110, subject.clkMode);
+        Assertions.assertEquals(40_000_000, subject.clkFreq);
     }
 
     @Test
@@ -301,8 +301,8 @@ class Spin1ClockModeTest {
 
         subject.determineClock();
 
-        Assertions.assertEquals(0b0_1_1_11_111, subject.scope.getSymbol("CLKMODE").getNumber().intValue());
-        Assertions.assertEquals(80_000_000, subject.scope.getSymbol("CLKFREQ").getNumber().intValue());
+        Assertions.assertEquals(0b0_1_1_11_111, subject.clkMode);
+        Assertions.assertEquals(80_000_000, subject.clkFreq);
     }
 
 }

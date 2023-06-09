@@ -32,6 +32,7 @@ public class Spin1Compiler extends Compiler {
 
     boolean removeUnusedMethods;
     boolean openspinCompatible;
+    boolean foldConstants;
 
     protected List<ObjectInfo> childObjects = new ArrayList<>();
 
@@ -44,6 +45,11 @@ public class Spin1Compiler extends Compiler {
 
     public Spin1Compiler(boolean caseSensitive) {
         super(caseSensitive);
+    }
+
+    public Spin1Compiler(boolean caseSensitive, boolean foldConstants) {
+        super(caseSensitive);
+        this.foldConstants = foldConstants;
     }
 
     @Override
@@ -62,6 +68,14 @@ public class Spin1Compiler extends Compiler {
 
     public void setOpenspinCompatible(boolean openspinCompatible) {
         this.openspinCompatible = openspinCompatible;
+    }
+
+    public boolean isFoldConstants() {
+        return foldConstants;
+    }
+
+    public void setFoldConstants(boolean foldConstants) {
+        this.foldConstants = foldConstants;
     }
 
     @Override

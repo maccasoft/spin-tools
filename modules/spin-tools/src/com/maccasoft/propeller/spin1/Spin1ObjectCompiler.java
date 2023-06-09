@@ -77,6 +77,9 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
     List<Spin1Method> methods = new ArrayList<>();
     Map<String, ObjectInfo> objects = ListOrderedMap.listOrderedMap(new HashMap<>());
 
+    int clkMode;
+    int xinFreq;
+    int clkFreq;
     int objectVarSize;
 
     Map<String, Expression> publicSymbols = new HashMap<>();
@@ -184,6 +187,12 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
         try {
             determineClock();
+            if (!scope.hasSymbol("_CLKFREQ")) {
+                scope.addSymbol("_CLKFREQ", new NumberLiteral(clkFreq));
+            }
+            if (!scope.hasSymbol("_XINFREQ")) {
+                scope.addSymbol("_XINFREQ", new NumberLiteral(xinFreq));
+            }
         } catch (CompilerException e) {
             logMessage(e);
         }
@@ -473,8 +482,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         int address = 0, hubAddress = 0;
         Spin1Object object = new Spin1Object();
 
-        object.setClkFreq(scope.getLocalSymbol("CLKFREQ").getNumber().intValue());
-        object.setClkMode(scope.getLocalSymbol("CLKMODE").getNumber().intValue());
+        object.setClkFreq(clkFreq);
+        object.setClkMode(clkMode);
 
         object.writeComment("Object header (var size " + objectVarSize + ")");
 
@@ -1371,7 +1380,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                         }
 
                         if (from != null && to != null) {
-                            line.addSource(compileConstantExpression(line.getScope(), method, from));
+                            line.addSource(compileBytecodeExpression(line.getScope(), method, from, true));
 
                             Expression expression = line.getScope().getLocalSymbol(counter.getText());
                             if (expression == null) {
@@ -1393,17 +1402,17 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                             line.addChilds(compileStatement(new Context(context), method, line, node));
 
                             if (step != null) {
-                                nextLine.addSource(compileConstantExpression(line.getScope(), method, step));
+                                nextLine.addSource(compileBytecodeExpression(line.getScope(), method, step, true));
                             }
-                            nextLine.addSource(compileConstantExpression(line.getScope(), method, from));
-                            nextLine.addSource(compileConstantExpression(line.getScope(), method, to));
+                            nextLine.addSource(compileBytecodeExpression(line.getScope(), method, from, true));
+                            nextLine.addSource(compileBytecodeExpression(line.getScope(), method, to, true));
 
                             nextLine.addSource(new VariableOp(line.getScope(), VariableOp.Op.Assign, (Variable) expression));
                             nextLine.addSource(new RepeatLoop(line.getScope(), step != null, new ContextLiteral(loopLine.getScope())));
                             line.addChild(nextLine);
                         }
                         else {
-                            line.addSource(compileConstantExpression(line.getScope(), method, counter));
+                            line.addSource(compileBytecodeExpression(line.getScope(), method, counter, true));
                             line.addSource(new Tjz(line.getScope(), new ContextLiteral(quitLine.getScope())));
                             line.setData("pop", Integer.valueOf(4));
 
@@ -1453,7 +1462,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 while (iter.hasNext()) {
                     builder.addToken(iter.next());
                 }
-                conditionLine.addSource(compileConstantExpression(line.getScope(), method, builder.getRoot()));
+                conditionLine.addSource(compileBytecodeExpression(line.getScope(), method, builder.getRoot(), true));
 
                 if ("WHILE".equals(text)) {
                     conditionLine.addSource(new Jnz(previousLine.getScope(), new ContextLiteral(previousLine.getScope())));
@@ -1599,14 +1608,14 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             }
         }
         else if ("..".equals(arg.getText())) {
-            line.addSource(compileConstantExpression(line.getScope(), method, arg.getChild(0)));
-            line.addSource(compileConstantExpression(line.getScope(), method, arg.getChild(1)));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg.getChild(0), true));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg.getChild(1), true));
             if (target != null) {
                 line.addSource(new CaseRangeJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
         }
         else {
-            line.addSource(compileConstantExpression(line.getScope(), method, arg));
+            line.addSource(compileBytecodeExpression(line.getScope(), method, arg, true));
             if (target != null) {
                 line.addSource(new CaseJmp(line.getScope(), new ContextLiteral(target.getScope())));
             }
@@ -1862,23 +1871,12 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
     void determineClock() {
         Expression _clkmode = scope.getLocalSymbol("_CLKMODE");
-        if (_clkmode == null) {
-            _clkmode = scope.getLocalSymbol("_clkmode");
-        }
-
         Expression _clkfreq = scope.getLocalSymbol("_CLKFREQ");
-        if (_clkfreq == null) {
-            _clkfreq = scope.getLocalSymbol("_clkfreq");
-        }
-
         Expression _xinfreq = scope.getLocalSymbol("_XINFREQ");
-        if (_xinfreq == null) {
-            _xinfreq = scope.getLocalSymbol("_xinfreq");
-        }
 
         if (_clkmode == null && _clkfreq == null && _xinfreq == null) {
-            scope.addSymbol("CLKMODE", new NumberLiteral(0));
-            scope.addSymbol("CLKFREQ", new NumberLiteral(12_000_000));
+            clkMode = 0;
+            clkFreq = 12_000_000;
             return;
         }
 
@@ -1897,9 +1895,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             if (_clkfreq != null || _xinfreq != null) {
                 throw new CompilerException("_CLKFREQ / _XINFREQ not allowed with RCFAST / RCSLOW", _clkfreq != null ? _clkfreq.getData() : _xinfreq.getData());
             }
-
-            scope.addSymbol("CLKMODE", new NumberLiteral(mode == 2 ? 1 : 0));
-            scope.addSymbol("CLKFREQ", new NumberLiteral(mode == 2 ? 20_000 : 12_000_000));
+            clkMode = mode == 2 ? 1 : 0;
+            clkFreq = mode == 2 ? 20_000 : 12_000_000;
             return;
         }
 
@@ -1909,20 +1906,20 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
         try {
             int bitPos = getBitPos((mode >> 2) & 0x0F);
-            int clkmode = (bitPos << 3) | 0x22;
+            clkMode = (bitPos << 3) | 0x22;
 
             int freqshift = 0;
             if ((mode & 0x7C0) != 0) {
                 freqshift = getBitPos(mode >> 6);
-                clkmode += freqshift + 0x41;
+                clkMode += freqshift + 0x41;
             }
             if (_xinfreq != null) {
-                scope.addSymbol("CLKFREQ", new NumberLiteral(_xinfreq.getNumber().intValue() << freqshift));
+                clkFreq = _xinfreq.getNumber().intValue() << freqshift;
             }
             else {
-                scope.addSymbol("CLKFREQ", _clkfreq);
+                clkFreq = _clkfreq.getNumber().intValue();
+                xinFreq = _clkfreq.getNumber().intValue() >> freqshift;
             }
-            scope.addSymbol("CLKMODE", new NumberLiteral(clkmode));
         } catch (Exception e) {
             throw new CompilerException(e, _clkmode.getData());
         }

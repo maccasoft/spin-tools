@@ -491,7 +491,7 @@ public class EditorTab implements FindReplaceTarget {
 
                         Compiler compiler = null;
                         if (tabItemText.toLowerCase().endsWith(".spin")) {
-                            compiler = new Spin1Compiler(preferences.getSpin1CaseSensitiveSymbols());
+                            compiler = new Spin1Compiler(preferences.getSpin1CaseSensitiveSymbols(), true);
                             compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
                         }
                         else if (tabItemText.toLowerCase().endsWith(".spin2")) {
