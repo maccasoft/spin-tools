@@ -93,10 +93,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         super(scope, compiler, parent, file);
     }
 
-    public List<Spin2Bytecode> compileBytecodeExpression(Context context, Spin2Method method, Spin2StatementNode node) {
-        return compileBytecodeExpression(context, method, node, false);
-    }
-
     public List<Spin2Bytecode> compileBytecodeExpression(Context context, Spin2Method method, Spin2StatementNode node, boolean push) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
@@ -1078,6 +1074,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                 source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Address, popIndex, expression, index));
                             }
                         }
+                        else if (expression.isConstant()) {
+                            if (node.getChildCount() != 0) {
+                                throw new RuntimeException("syntax error");
+                            }
+                            source.add(new Constant(context, expression));
+                        }
                         else if (expression instanceof Register) {
                             source.addAll(compileVariableRead(context, method, expression, node, push));
                         }
@@ -1091,12 +1093,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                         }
                         else if (expression instanceof ContextLiteral) {
                             source.addAll(compileVariableRead(context, method, expression, node, push));
-                        }
-                        else if (expression.isConstant()) {
-                            if (node.getChildCount() != 0) {
-                                throw new RuntimeException("syntax error");
-                            }
-                            source.add(new Constant(context, expression));
                         }
                         else {
                             if (node.getChildCount() != 0) {
