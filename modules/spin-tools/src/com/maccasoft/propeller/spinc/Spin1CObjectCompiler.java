@@ -86,7 +86,11 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
     }
 
     public Spin1CObjectCompiler(Spin1Compiler compiler, ObjectCompiler parent, File file) {
-        super(new Context(new Spin1GlobalContext(true)), compiler, parent, file);
+        super(new Spin1GlobalContext(true), compiler, parent, file);
+
+        if (parent != null) {
+            scope.addDefinitions(parent.getScope().getDefinitions());
+        }
 
         this.scope.addDefinition("__P1__", new NumberLiteral(1));
         this.scope.addDefinition("__P2__", new NumberLiteral(0));
@@ -1858,11 +1862,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         }
 
         return bitPos;
-    }
-
-    @Override
-    public Context getScope() {
-        return scope;
     }
 
     @Override

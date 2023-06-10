@@ -30,7 +30,6 @@ import com.maccasoft.propeller.spin1.instructions.FileInc;
 
 public abstract class Spin1PAsmCompiler extends ObjectCompiler {
 
-    protected Context scope;
     protected Spin1Compiler compiler;
 
     private Map<Spin1PAsmLine, Context> pendingAlias = new HashMap<Spin1PAsmLine, Context>();
@@ -44,13 +43,8 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
     }
 
     public Spin1PAsmCompiler(Context scope, Spin1Compiler compiler, ObjectCompiler parent, File file) {
-        super(parent, file);
-        this.scope = scope;
+        super(parent, file, scope);
         this.compiler = compiler;
-    }
-
-    public Context getScope() {
-        return scope;
     }
 
     protected void compileDatBlock(Node parent) {

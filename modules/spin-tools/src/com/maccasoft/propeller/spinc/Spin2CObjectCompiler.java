@@ -92,7 +92,11 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
     }
 
     public Spin2CObjectCompiler(Spin2Compiler compiler, ObjectCompiler parent, File file) {
-        super(new Spin2GlobalContext(compiler.isCaseSensitive()), compiler, parent, file);
+        super(new Spin2GlobalContext(true), compiler, parent, file);
+
+        if (parent != null) {
+            scope.addDefinitions(parent.getScope().getDefinitions());
+        }
 
         this.scope.addDefinition("__P1__", new NumberLiteral(0));
         this.scope.addDefinition("__P2__", new NumberLiteral(1));

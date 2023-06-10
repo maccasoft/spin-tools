@@ -18,7 +18,6 @@ public class Context {
     Map<String, Expression> caseInsensitiveSymbols = new CaseInsensitiveMap<>();
 
     Map<String, List<Token>> defines = new HashMap<>();
-    Map<String, List<Token>> caseInsensitiveDefines = new CaseInsensitiveMap<>();
 
     Integer address;
     Integer objectAddress;
@@ -112,7 +111,7 @@ public class Context {
     }
 
     public boolean isDefined(String identifier) {
-        boolean result = caseSensitive ? defines.containsKey(identifier) : caseInsensitiveDefines.containsKey(identifier);
+        boolean result = defines.containsKey(identifier);
         if (result == false) {
             result = caseSensitive ? symbols.containsKey(identifier) : caseInsensitiveSymbols.containsKey(identifier);
         }
@@ -123,12 +122,7 @@ public class Context {
     }
 
     public void addDefinition(String identifier, List<Token> definition) {
-        if (caseSensitive) {
-            defines.put(identifier, definition);
-        }
-        else {
-            caseInsensitiveDefines.put(identifier, definition);
-        }
+        defines.put(identifier, definition);
     }
 
     public void addDefinition(String identifier, Expression expression) {
@@ -137,11 +131,19 @@ public class Context {
     }
 
     public List<Token> getDefinition(String identifier) {
-        List<Token> result = caseSensitive ? defines.get(identifier) : caseInsensitiveDefines.get(identifier);
+        List<Token> result = defines.get(identifier);
         if (result == null && parent != null) {
             result = parent.getDefinition(identifier);
         }
         return result;
+    }
+
+    public void addDefinitions(Map<String, List<Token>> defines) {
+        this.defines.putAll(defines);
+    }
+
+    public Map<String, List<Token>> getDefinitions() {
+        return defines;
     }
 
     public boolean hasSymbol(String name) {

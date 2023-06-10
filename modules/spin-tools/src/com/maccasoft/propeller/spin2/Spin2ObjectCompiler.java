@@ -104,6 +104,10 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     public Spin2ObjectCompiler(Spin2Compiler compiler, ObjectCompiler parent, File file, Map<String, Expression> parameters) {
         super(new Spin2GlobalContext(compiler.isCaseSensitive()), compiler, parent, file);
 
+        if (parent != null) {
+            scope.addDefinitions(parent.getScope().getDefinitions());
+        }
+
         scope.addDefinition("__P1__", new NumberLiteral(0));
         scope.addDefinition("__P2__", new NumberLiteral(1));
         scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
@@ -312,13 +316,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         exp.setData(method.getClass().getName(), method);
 
                         try {
-                            if (publicSymbols.containsKey(method.getLabel())) {
-                                logMessage(new CompilerException("symbol " + method.getLabel() + " already defined", method.getLabel()));
-                            }
-                            else {
-                                scope.addSymbol(method.getLabel(), exp);
-                                publicSymbols.put(method.getLabel(), exp);
-                            }
+                            scope.addSymbol(method.getLabel(), exp);
+                            publicSymbols.put(method.getLabel(), exp);
                         } catch (Exception e) {
                             logMessage(new CompilerException(e.getMessage(), node));
                         }
@@ -2387,11 +2386,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
         scope.addBuiltinSymbol("CLKMODE_", new NumberLiteral(clkmode));
         scope.addBuiltinSymbol("CLKFREQ_", new NumberLiteral(finalfreq));
-    }
-
-    @Override
-    public Context getScope() {
-        return scope;
     }
 
 }

@@ -210,7 +210,7 @@ public class Spin2ExpressionBuilder {
     }
 
     public void addToken(Token token) {
-        if (token.type == Token.KEYWORD) {
+        if (token.type == 0 || token.type == Token.KEYWORD) {
             List<Token> l = context.getDefinition(token.getText());
             if (l != null && l.size() != 0) {
                 if (dependencies.contains(token.getText())) {

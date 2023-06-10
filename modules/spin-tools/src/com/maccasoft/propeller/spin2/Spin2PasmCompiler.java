@@ -34,7 +34,6 @@ import com.maccasoft.propeller.spin2.instructions.FileInc;
 
 public abstract class Spin2PasmCompiler extends ObjectCompiler {
 
-    protected Context scope;
     protected Spin2Compiler compiler;
 
     private Map<Spin2PAsmLine, Context> pendingAlias = new HashMap<Spin2PAsmLine, Context>();
@@ -49,13 +48,8 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
     }
 
     public Spin2PasmCompiler(Context scope, Spin2Compiler compiler, ObjectCompiler parent, File file) {
-        super(parent, file);
-        this.scope = scope;
+        super(parent, file, scope);
         this.compiler = compiler;
-    }
-
-    public Context getScope() {
-        return scope;
     }
 
     protected void compileDatBlock(Node parent) {

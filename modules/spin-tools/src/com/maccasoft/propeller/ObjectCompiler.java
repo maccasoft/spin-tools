@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Node;
 
@@ -23,19 +24,23 @@ public abstract class ObjectCompiler {
 
     ObjectCompiler parent;
     File file;
+    protected Context scope;
 
     List<ObjectCompiler> childs = new ArrayList<>();
 
     boolean errors;
     List<CompilerException> messages = new ArrayList<>();
 
-    public ObjectCompiler(File file) {
+    public ObjectCompiler(File file, Context scope) {
+        this.parent = null;
         this.file = file;
+        this.scope = new Context(scope);
     }
 
-    public ObjectCompiler(ObjectCompiler parent, File file) {
+    public ObjectCompiler(ObjectCompiler parent, File file, Context scope) {
         this.parent = parent;
         this.file = file;
+        this.scope = new Context(scope);
         if (parent != null) {
             parent.childs.add(this);
         }
@@ -47,6 +52,10 @@ public abstract class ObjectCompiler {
 
     public File getFile() {
         return file;
+    }
+
+    public Context getScope() {
+        return scope;
     }
 
     public abstract SpinObject compileObject(Node root);

@@ -1044,6 +1044,55 @@ class Spin1CompilerTest {
             + "", compile("main.spin", sources));
     }
 
+    @Test
+    void testPreprocessorDefineInheritance() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin", ""
+            + "#define VALUE 2\n"
+            + "\n"
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := o.start()\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin", ""
+            + "PUB start : r\n"
+            + "\n"
+            + "    r := VALUE\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       01             Object count\n"
+            + "00004 00004       0C 00 04 00    Function main @ $000C (local size 4)\n"
+            + "00008 00008       14 00 00 00    Object \"text2.spin\" @ $0014 (variables @ $0000)\n"
+            + "' PUB main | a\n"
+            + "'     a := o.start()\n"
+            + "0000C 0000C       00             ANCHOR\n"
+            + "0000D 0000D       06 02 01       CALL_OBJ_SUB\n"
+            + "00010 00010       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "00011 00011       32             RETURN\n"
+            + "00012 00012       00 00          Padding\n"
+            + "' Object \"text2.spin\" header (var size 0)\n"
+            + "00014 00000       0C 00          Object size\n"
+            + "00016 00002       02             Method count + 1\n"
+            + "00017 00003       00             Object count\n"
+            + "00018 00004       08 00 00 00    Function start @ $0008 (local size 0)\n"
+            + "' PUB start : r\n"
+            + "'     r := VALUE\n"
+            + "0001C 00008       38 02          CONSTANT (2)\n"
+            + "0001E 0000A       61             VAR_WRITE LONG DBASE+$0000 (short)\n"
+            + "0001F 0000B       32             RETURN\n"
+            + "", compile("main.spin", sources));
+    }
+
     String compile(String rootFile, Map<String, String> sources) throws Exception {
         return compile(rootFile, sources, false);
     }
