@@ -345,7 +345,14 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
     }
 
     protected boolean isDebugEnabled() {
-        return compiler.isDebugEnabled() && !scope.isDefined("DEBUG_DISABLED");
+        if (compiler.isDebugEnabled()) {
+            Expression debugDisabled = scope.getLocalSymbol("DEBUG_DISABLED");
+            if (debugDisabled != null) {
+                return debugDisabled.getNumber().intValue() == 0;
+            }
+            return true;
+        }
+        return false;
     }
 
     protected abstract void compileDatInclude(Node root);

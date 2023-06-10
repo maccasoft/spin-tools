@@ -1233,12 +1233,67 @@ class Spin2CompilerTest {
     }
 
     @Test
-    void testDebugDisabled() throws Exception {
+    void testObjectDebugDisabled() throws Exception {
         Map<String, String> sources = new HashMap<String, String>();
         sources.put("main.spin2", ""
             + "OBJ\n"
             + "\n"
-            + "    o : \"text2\" | DEBUG_DISABLED=1\n"
+            + "    o : \"text2\"\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    debug(udec(a))\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "DEBUG_DISABLED = true\n"
+            + "\n"
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "    debug(udec(a,b,c))\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       18 00 00 00    Object \"text2.spin2\" @ $00018\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "0000C 0000C       16 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00010 00010       01             (stack size)\n"
+            + "'     debug(udec(a))\n"
+            + "00011 00011       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00012 00012       43 04 01       DEBUG #1\n"
+            + "00015 00015       04             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "00018 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
+            + "0001C 00004       0E 00 00 00    End\n"
+            + "' PUB start(a, b) | c\n"
+            + "00020 00008       01             (stack size)\n"
+            + "'     c := a + b\n"
+            + "00021 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00022 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00023 0000B       8A             ADD\n"
+            + "00024 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "00025 0000D       04             RETURN\n"
+            + "00026 0000E       00 00          Padding\n"
+            + "' Debug data\n"
+            + "00000 00000       09 00         \n"
+            + "00002 00002       04 00         \n"
+            + "00004 00004       04 41 61 00 00\n"
+            + "", compile("main.spin2", sources, false, true));
+    }
+
+    @Test
+    void testDisableObjectDebugParameter() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\" | DEBUG_DISABLED=true\n"
             + "\n"
             + "PUB main() | a\n"
             + "\n"
@@ -1282,6 +1337,69 @@ class Spin2CompilerTest {
             + "00000 00000       09 00         \n"
             + "00002 00002       04 00         \n"
             + "00004 00004       04 41 61 00 00\n"
+            + "", compile("main.spin2", sources, false, true));
+    }
+
+    @Test
+    void testEnableObjectDebugParameter() throws Exception {
+        Map<String, String> sources = new HashMap<String, String>();
+        sources.put("main.spin2", ""
+            + "OBJ\n"
+            + "\n"
+            + "    o : \"text2\" | DEBUG_DISABLED=false\n"
+            + "\n"
+            + "PUB main() | a\n"
+            + "\n"
+            + "    debug(udec(a))\n"
+            + "\n"
+            + "");
+        sources.put("text2.spin2", ""
+            + "DEBUG_DISABLED = true\n"
+            + "\n"
+            + "PUB start(a, b) | c\n"
+            + "\n"
+            + "    c := a + b\n"
+            + "    debug(udec(a,b,c))\n"
+            + "\n"
+            + "");
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       18 00 00 00    Object \"text2.spin2\" @ $00018\n"
+            + "00004 00004       04 00 00 00    Variables @ $00004\n"
+            + "00008 00008       10 00 00 80    Method main @ $00010 (0 parameters, 0 returns)\n"
+            + "0000C 0000C       16 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00010 00010       01             (stack size)\n"
+            + "'     debug(udec(a))\n"
+            + "00011 00011       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00012 00012       43 04 02       DEBUG #2\n"
+            + "00015 00015       04             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
+            + "' Object \"text2.spin2\" header (var size 4)\n"
+            + "00018 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
+            + "0001C 00004       14 00 00 00    End\n"
+            + "' PUB start(a, b) | c\n"
+            + "00020 00008       01             (stack size)\n"
+            + "'     c := a + b\n"
+            + "00021 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00022 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00023 0000B       8A             ADD\n"
+            + "00024 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "'     debug(udec(a,b,c))\n"
+            + "00025 0000D       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "00026 0000E       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00027 0000F       E2             VAR_READ LONG DBASE+$00002 (short)\n"
+            + "00028 00010       43 0C 01       DEBUG #1\n"
+            + "0002B 00013       04             RETURN\n"
+            + "' Debug data\n"
+            + "00000 00000       16 00         \n"
+            + "00002 00002       06 00         \n"
+            + "00004 00004       11 00         \n"
+            + "00006 00006       04 41 61 00 40\n"
+            + "0000B 0000B       62 00 40 63 00\n"
+            + "00010 00010       00\n"
+            + "00011 00011       04 41 61 00 00\n"
             + "", compile("main.spin2", sources, false, true));
     }
 
