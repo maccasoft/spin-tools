@@ -234,7 +234,7 @@ public class Spin2Compiler extends Compiler {
             objectCompiler = new Spin2CObjectCompiler(this, parent, file);
         }
         else {
-            objectCompiler = new Spin2ObjectCompiler(this, parent, file);
+            objectCompiler = new Spin2ObjectCompiler(this, parent, file, parameters);
         }
 
         while (parent != null) {
@@ -251,7 +251,6 @@ public class Spin2Compiler extends Compiler {
             info = childObjects.remove(index);
         }
         childObjects.add(info);
-        ((Spin2ObjectCompiler) objectCompiler).getScope().addAll(parameters);
         objectCompiler.compileObject(objectRoot);
 
         if (index != -1) {

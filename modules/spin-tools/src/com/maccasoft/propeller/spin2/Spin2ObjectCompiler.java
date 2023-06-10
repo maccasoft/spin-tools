@@ -91,17 +91,26 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     Map<String, Expression> publicSymbols;
     List<LinkDataObject> objectLinks = new ArrayList<>();
 
+    Map<String, Expression> parameters;
+
     public Spin2ObjectCompiler(Spin2Compiler compiler, File file) {
-        this(compiler, null, file);
+        this(compiler, null, file, Collections.emptyMap());
     }
 
     public Spin2ObjectCompiler(Spin2Compiler compiler, ObjectCompiler parent, File file) {
+        this(compiler, parent, file, Collections.emptyMap());
+    }
+
+    public Spin2ObjectCompiler(Spin2Compiler compiler, ObjectCompiler parent, File file, Map<String, Expression> parameters) {
         super(new Spin2GlobalContext(compiler.isCaseSensitive()), compiler, parent, file);
 
         scope.addDefinition("__P1__", new NumberLiteral(0));
         scope.addDefinition("__P2__", new NumberLiteral(1));
         scope.addDefinition("__SPINTOOLS__", new NumberLiteral(1));
         scope.addDefinition("__debug__", new NumberLiteral(compiler.isDebugEnabled() ? 1 : 0));
+
+        this.parameters = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
+        this.parameters.putAll(parameters);
     }
 
     @Override
@@ -112,7 +121,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
     @Override
     public void compileStep1(Node root) {
-        publicSymbols = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
+        publicSymbols = new HashMap<>();
 
         root.accept(new NodeVisitor() {
 
@@ -189,6 +198,16 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         while (!conditionStack.isEmpty()) {
             Condition c = conditionStack.pop();
             logMessage(new CompilerException("unbalanced conditional directive", c.node));
+        }
+
+        for (Entry<String, Expression> entry : parameters.entrySet()) {
+            try {
+                scope.addSymbol(entry.getKey(), entry.getValue());
+            } catch (CompilerException e) {
+                logMessage(e);
+            } catch (Exception e) {
+                logMessage(new CompilerException(e, entry.getValue().getData()));
+            }
         }
 
         computeClockMode();
@@ -712,15 +731,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     Token identifier = token;
                     if (!iter.hasNext()) {
                         try {
-                            if (publicSymbols.containsKey(identifier.getText())) {
-                                logMessage(new CompilerException("symbol " + identifier.getText() + " already defined", identifier));
+                            if (parameters.containsKey(identifier.getText())) {
+                                scope.addSymbol(identifier.getText(), parameters.remove(identifier.getText()));
                             }
                             else {
-                                if (!scope.hasSymbol(identifier.getText())) {
-                                    scope.addSymbol(identifier.getText(), enumValue);
-                                }
-                                publicSymbols.put(identifier.getText(), scope.getLocalSymbol(identifier.getText()));
+                                scope.addSymbol(identifier.getText(), enumValue);
                             }
+                            publicSymbols.put(identifier.getText(), scope.getLocalSymbol(identifier.getText()));
                         } catch (CompilerException e) {
                             logMessage(e);
                         } catch (Exception e) {
@@ -737,15 +754,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         token = iter.next();
                         if ("[".equals(token.getText())) {
                             try {
-                                if (publicSymbols.containsKey(identifier.getText())) {
-                                    logMessage(new CompilerException("symbol " + identifier.getText() + " already defined", identifier));
+                                if (parameters.containsKey(identifier.getText())) {
+                                    scope.addSymbol(identifier.getText(), parameters.remove(identifier.getText()));
                                 }
                                 else {
-                                    if (!scope.hasSymbol(identifier.getText())) {
-                                        scope.addSymbol(identifier.getText(), enumValue);
-                                    }
-                                    publicSymbols.put(identifier.getText(), scope.getLocalSymbol(identifier.getText()));
+                                    scope.addSymbol(identifier.getText(), enumValue);
                                 }
+                                publicSymbols.put(identifier.getText(), scope.getLocalSymbol(identifier.getText()));
                             } catch (CompilerException e) {
                                 logMessage(e);
                             } catch (Exception e) {
@@ -787,15 +802,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             try {
                                 Expression expression = builder.getExpression();
                                 try {
-                                    if (publicSymbols.containsKey(identifier.getText())) {
-                                        logMessage(new CompilerException("symbol " + identifier.getText() + " already defined", identifier));
+                                    if (parameters.containsKey(identifier.getText())) {
+                                        scope.addSymbol(identifier.getText(), parameters.remove(identifier.getText()));
                                     }
                                     else {
-                                        if (!scope.hasSymbol(identifier.getText())) {
-                                            scope.addSymbol(identifier.getText(), expression);
-                                        }
-                                        publicSymbols.put(identifier.getText(), scope.getLocalSymbol(identifier.getText()));
+                                        scope.addSymbol(identifier.getText(), expression);
                                     }
+                                    publicSymbols.put(identifier.getText(), scope.getLocalSymbol(identifier.getText()));
                                 } catch (CompilerException e) {
                                     logMessage(e);
                                 } catch (Exception e) {
