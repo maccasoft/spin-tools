@@ -27,7 +27,6 @@
         <file><source>build/linux/install.sh</source><fileMode>755</fileMode></file>
         <file><source>build/linux/uninstall.sh</source><fileMode>755</fileMode></file>
         <file><source>LICENSE</source></file>
-        <file><source>CC-BY-3.0.txt</source></file>
     </files>
     <fileSets>
         <fileSet>

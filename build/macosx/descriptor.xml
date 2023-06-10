@@ -17,7 +17,6 @@
     </dependencySets>
     <files>
         <file><source>LICENSE</source></file>
-        <file><source>CC-BY-3.0.txt</source></file>
     </files>
     <fileSets>
         <fileSet>

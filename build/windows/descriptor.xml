@@ -19,7 +19,6 @@
         <file><source>target/spinc.exe</source></file>
         <file><source>target/spinide.exe</source></file>
         <file><source>LICENSE</source></file>
-        <file><source>CC-BY-3.0.txt</source></file>
     </files>
     <fileSets>
         <fileSet>
