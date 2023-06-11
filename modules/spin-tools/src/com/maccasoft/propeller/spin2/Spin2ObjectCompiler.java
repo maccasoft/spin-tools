@@ -1341,28 +1341,22 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     lines.add(line);
                     previousLine = line;
 
-                    Context savedContext = scope;
-                    try {
-                        scope = line.getScope();
+                    Context lineScope = line.getScope();
 
-                        int address = 0x1E0;
-                        for (LocalVariable var : method.getAllLocalVariables()) {
-                            scope.addSymbol(var.getName(), new NumberLiteral(address));
-                            address += var.getSize();
-                            var.setCalledBy(method);
-                            if (address >= 0x1F0) {
-                                break;
-                            }
+                    int address = 0x1E0;
+                    for (LocalVariable var : method.getAllLocalVariables()) {
+                        lineScope.addSymbol(var.getName(), new NumberLiteral(address));
+                        address += var.getSize();
+                        var.setCalledBy(method);
+                        if (address >= 0x1F0) {
+                            break;
                         }
-
-                        Spin2PAsmLine pasmLine = compileDataLine(scope, (DataLineNode) node);
-                        line.addSource(new InlinePAsm(line.getScope(), pasmLine));
-
-                        compileInlinePAsmStatements(nodeIterator, line);
-
-                    } finally {
-                        scope = savedContext;
                     }
+
+                    Spin2PAsmLine pasmLine = compileDataLine(scope, lineScope, (DataLineNode) node);
+                    line.addSource(new InlinePAsm(line.getScope(), pasmLine));
+
+                    compileInlinePAsmStatements(nodeIterator, line);
                 }
             } catch (CompilerException e) {
                 logMessage(e);
@@ -1908,7 +1902,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
                     lineScope = rootScope;
                 }
-                Spin2PAsmLine pasmLine = compileInlineDataLine(rootScope, lineScope, (DataLineNode) node);
+                Spin2PAsmLine pasmLine = compileDataLine(rootScope, lineScope, (DataLineNode) node);
                 line.addSource(new InlinePAsm(rootScope, pasmLine));
                 if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
                     lineScope = pasmLine.getScope();

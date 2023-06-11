@@ -62,7 +62,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                         lineScope = scope;
                     }
 
-                    Spin1PAsmLine pasmLine = compileDataLine(lineScope, node);
+                    Spin1PAsmLine pasmLine = compileDataLine(scope, lineScope, node);
                     pasmLine.setData(node);
                     source.addAll(pasmLine.expand());
 
@@ -111,7 +111,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
         return excludedNodes.contains(node);
     }
 
-    protected Spin1PAsmLine compileDataLine(Context lineScope, DataLineNode node) {
+    protected Spin1PAsmLine compileDataLine(Context globalScope, Context lineScope, DataLineNode node) {
         String label = node.label != null ? node.label.getText() : null;
         String condition = node.condition != null ? node.condition.getText() : null;
         String mnemonic = node.instruction != null ? node.instruction.getText() : null;
@@ -200,7 +200,7 @@ public abstract class Spin1PAsmCompiler extends ObjectCompiler {
                     type = "BYTE";
                 }
 
-                Context labelScope = pasmLine.isLocalLabel() ? lineScope : scope;
+                Context labelScope = pasmLine.isLocalLabel() ? lineScope : globalScope;
                 labelScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
                 labelScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
                 labelScope.addSymbol("@@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));

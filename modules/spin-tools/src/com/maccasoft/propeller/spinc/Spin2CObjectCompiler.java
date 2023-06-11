@@ -1559,7 +1559,7 @@ public class Spin2CObjectCompiler extends Spin2CBytecodeCompiler {
                 if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
                     lineScope = rootScope;
                 }
-                Spin2PAsmLine pasmLine = compileInlineDataLine(rootScope, lineScope, lineNode);
+                Spin2PAsmLine pasmLine = compileDataLine(rootScope, lineScope, lineNode);
                 if (lineNode.label != null && !lineNode.label.getText().startsWith(".")) {
                     lineScope = pasmLine.getScope();
                 }

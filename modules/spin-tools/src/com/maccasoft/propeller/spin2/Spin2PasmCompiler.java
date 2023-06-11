@@ -72,7 +72,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                         lineScope = scope;
                     }
 
-                    Spin2PAsmLine pasmLine = compileDataLine(lineScope, node);
+                    Spin2PAsmLine pasmLine = compileDataLine(scope, lineScope, node);
                     pasmLine.setData(node);
                     source.addAll(pasmLine.expand());
 
@@ -121,17 +121,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         return excludedNodes.contains(node);
     }
 
-    protected Spin2PAsmLine compileInlineDataLine(Context scope, Context lineScope, DataLineNode node) {
-        Context savedContext = this.scope;
-        this.scope = scope;
-        try {
-            return compileDataLine(lineScope, node);
-        } finally {
-            this.scope = savedContext;
-        }
-    }
-
-    protected Spin2PAsmLine compileDataLine(Context lineScope, DataLineNode node) {
+    protected Spin2PAsmLine compileDataLine(Context globalScope, Context lineScope, DataLineNode node) {
         String label = node.label != null ? node.label.getText() : null;
         String condition = node.condition != null ? node.condition.getText() : null;
         String mnemonic = node.instruction != null ? node.instruction.getText() : null;
@@ -150,7 +140,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
             Expression expression = null, count = null;
 
             if (parameters.size() == 1 && Spin2InstructionObject.ptrInstructions.contains(mnemonic.toLowerCase()) && isPtrExpression(param.getTokens())) {
-                expression = new Identifier(param.getText(), scope);
+                expression = new Identifier(param.getText(), globalScope);
                 expression.setData(param);
             }
             else {
@@ -268,7 +258,7 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                     type = "BYTE";
                 }
 
-                Context labelScope = pasmLine.isLocalLabel() ? lineScope : scope;
+                Context labelScope = pasmLine.isLocalLabel() ? lineScope : globalScope;
                 labelScope.addSymbol(pasmLine.getLabel(), new DataVariable(pasmLine.getScope(), type));
                 labelScope.addSymbol("#" + pasmLine.getLabel(), new RegisterAddress(pasmLine.getScope(), type));
                 labelScope.addSymbol("@" + pasmLine.getLabel(), new ObjectContextLiteral(pasmLine.getScope(), type));
