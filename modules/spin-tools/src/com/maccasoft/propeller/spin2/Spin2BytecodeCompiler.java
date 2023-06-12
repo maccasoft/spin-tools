@@ -1160,7 +1160,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             throw new RuntimeException("string not allowed");
         }
 
-        Expression expression = context.getLocalSymbol(node.getText());
+        String nodeText = node.getText();
+        if ("CLKFREQ".equalsIgnoreCase(nodeText) || "CLKMODE".equalsIgnoreCase(nodeText)) {
+            throw new RuntimeException("not a constant (" + nodeText + ")");
+        }
+
+        Expression expression = context.getLocalSymbol(nodeText);
         if (expression != null) {
             if (node.getChildCount() == 0) {
                 if (expression.isConstant()) {
@@ -1173,7 +1178,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             throw new RuntimeException("not a constant (" + expression + ")");
         }
 
-        switch (node.getText().toUpperCase()) {
+        switch (nodeText.toUpperCase()) {
             case ">>":
                 return new ShiftRight(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "<<":

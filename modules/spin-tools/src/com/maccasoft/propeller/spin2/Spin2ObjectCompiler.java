@@ -365,8 +365,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
             }
         }
         if (methods.size() != 0) {
-            scope.addBuiltinSymbol("@CLKMODE", new NumberLiteral(0x40));
-            scope.addBuiltinSymbol("@CLKFREQ", new NumberLiteral(0x44));
+            scope.addBuiltinSymbol("CLKMODE", new NumberLiteral(0x40, 16));
+            scope.addBuiltinSymbol("CLKFREQ", new NumberLiteral(0x44, 16));
         }
 
         for (Spin2Method method : methods) {

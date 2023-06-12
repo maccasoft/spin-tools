@@ -201,6 +201,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         } catch (CompilerException e) {
             logMessage(e);
         }
+        scope.addBuiltinSymbol("CLKMODE", new NumberLiteral(0x00, 16));
+        scope.addBuiltinSymbol("CLKFREQ", new NumberLiteral(0x04, 16));
 
         Iterator<Entry<String, Expression>> iter = publicSymbols.entrySet().iterator();
         while (iter.hasNext()) {
