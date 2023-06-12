@@ -512,6 +512,25 @@ public class Spin1Parser extends Parser {
                         param.identifier = token;
                     }
                     param.addToken(token);
+                    if ("=".equals(token.getText())) {
+                        state = 5;
+                    }
+                    break;
+                case 5:
+                    if (",".equals(token.getText())) {
+                        param = null;
+                        state = 4;
+                        break;
+                    }
+                    if (")".equals(token.getText())) {
+                        state = 6;
+                        break;
+                    }
+                    if (param.defaultValue == null) {
+                        param.defaultValue = new ExpressionNode(param);
+                    }
+                    param.defaultValue.addToken(token);
+                    param.addToken(token);
                     break;
 
                 case 6:

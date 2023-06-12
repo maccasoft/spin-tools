@@ -919,34 +919,27 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                             throw new CompilerException(methodNode.getText() + " is not a method", methodNode.getToken());
                         }
                         Method methodExpression = (Method) expression;
+                        Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
                         if (isAddress(node.getText())) {
                             if (indexNode != null) {
                                 source.addAll(compileConstantExpression(context, method, indexNode));
                             }
                             source.add(new SubAddress(context, methodExpression, indexNode != null));
-                            Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
                             calledMethod.setCalledBy(method);
                         }
                         else {
-                            int expected = methodExpression.getArgumentsCount();
-                            int actual = getArgumentsCount(context, methodNode);
-                            if (expected != actual) {
-                                throw new CompilerException("expected " + expected + " argument(s), found " + actual, methodNode.getTokens());
-                            }
-                            if (push && methodExpression.getReturnsCount() == 0) {
-                                throw new RuntimeException("method doesn't return any value");
-                            }
-
                             source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
-                            for (int i = 0; i < methodNode.getChildCount(); i++) {
-                                source.addAll(compileConstantExpression(context, method, methodNode.getChild(i)));
-                            }
+
+                            source.addAll(compileMethodArguments(context, method, calledMethod, methodNode));
                             if (indexNode != null) {
                                 source.addAll(compileConstantExpression(context, method, indexNode));
                             }
                             source.add(new CallSub(context, methodExpression, indexNode != null));
-                            Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
                             calledMethod.setCalledBy(method);
+
+                            if (push && methodExpression.getReturnsCount() == 0) {
+                                throw new RuntimeException("method doesn't return any value");
+                            }
                         }
                         return source;
                     }
@@ -1706,20 +1699,15 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
         if (symbol instanceof Method) {
             Method methodExpression = (Method) symbol;
-            int expected = methodExpression.getArgumentsCount();
-            int actual = getArgumentsCount(context, node);
-            if (expected != actual) {
-                throw new CompilerException("expected " + expected + " argument(s), found " + actual, node.getTokens());
-            }
-            if (push && !trap && methodExpression.getReturnsCount() == 0) {
+            Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
+
+            source.addAll(compileMethodArguments(context, method, calledMethod, node));
+            source.add(new CallSub(context, methodExpression));
+            calledMethod.setCalledBy(method);
+
+            if (push && !trap && calledMethod.getReturnsCount() == 0) {
                 throw new RuntimeException("method doesn't return any value");
             }
-            for (int i = 0; i < node.getChildCount(); i++) {
-                source.addAll(compileConstantExpression(context, method, node.getChild(i)));
-            }
-            source.add(new CallSub(context, methodExpression));
-            Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
-            calledMethod.setCalledBy(method);
         }
         else {
             int i = 0;
@@ -1780,6 +1768,40 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             source.add(new Bytecode(context, new byte[] {
                 (byte) 0x0B,
             }, "CALL_PTR"));
+        }
+
+        return source;
+    }
+
+    List<Spin2Bytecode> compileMethodArguments(Context context, Spin2Method method, Spin2Method calledMethod, Spin2StatementNode argsNode) {
+        List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
+
+        int actual = 0;
+        for (int i = 0; i < argsNode.getChildCount(); i++) {
+            source.addAll(compileConstantExpression(context, method, argsNode.getChild(i)));
+            Expression child = context.getLocalSymbol(argsNode.getChild(i).getText());
+            if (child != null && (child instanceof Method) && !argsNode.getChild(i).getText().startsWith("@")) {
+                actual += ((Method) child).getReturnsCount();
+                continue;
+            }
+            Spin2Bytecode.Descriptor descriptor = Spin2Bytecode.getDescriptor(argsNode.getChild(i).getText().toUpperCase());
+            if (descriptor != null) {
+                actual += descriptor.getReturns();
+                continue;
+            }
+            actual++;
+        }
+        while (actual < calledMethod.getParametersCount()) {
+            Expression value = calledMethod.getParameters().get(actual).getValue();
+            if (value == null) {
+                break;
+            }
+            source.add(new Constant(context, value));
+            actual++;
+        }
+
+        if (actual != calledMethod.getParametersCount()) {
+            logMessage(new CompilerException("expected " + calledMethod.getParametersCount() + " argument(s), found " + actual, argsNode.getTokens()));
         }
 
         return source;

@@ -25,6 +25,7 @@ public class MethodNode extends Node {
 
         public Token type;
         public Token identifier;
+        public ExpressionNode defaultValue;
 
         public ParameterNode(MethodNode parent) {
             super(parent);
@@ -42,6 +43,10 @@ public class MethodNode extends Node {
 
         public Token getIdentifier() {
             return identifier;
+        }
+
+        public ExpressionNode getDefaultValue() {
+            return defaultValue;
         }
     }
 
@@ -136,6 +141,14 @@ public class MethodNode extends Node {
 
     public int getParametersCount() {
         return parameters.size();
+    }
+
+    public int getMinParametersCount() {
+        int count = parameters.size();
+        while (count > 0 && parameters.get(count - 1).getDefaultValue() != null) {
+            count--;
+        }
+        return count;
     }
 
     public ParameterNode getParameter(int index) {

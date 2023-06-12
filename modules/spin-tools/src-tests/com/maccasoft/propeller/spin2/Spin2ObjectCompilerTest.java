@@ -1729,27 +1729,91 @@ class Spin2ObjectCompilerTest {
         String text = ""
             + "PUB main()\n"
             + "\n"
-            + "    function(1)\n"
+            + "    function(1, 2)\n"
             + "\n"
-            + "PUB function(a)\n"
+            + "PUB function(a, b)\n"
             + "\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header (var size 4)\n"
             + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
-            + "00004 00004       12 00 00 81    Method function @ $00012 (1 parameters, 0 returns)\n"
-            + "00008 00008       14 00 00 00    End\n"
+            + "00004 00004       13 00 00 82    Method function @ $00013 (2 parameters, 0 returns)\n"
+            + "00008 00008       15 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "0000C 0000C       00             (stack size)\n"
+            + "'     function(1, 2)\n"
+            + "0000D 0000D       00             ANCHOR\n"
+            + "0000E 0000E       A2             CONSTANT (1)\n"
+            + "0000F 0000F       A3             CONSTANT (2)\n"
+            + "00010 00010       0A 01          CALL_SUB (1)\n"
+            + "00012 00012       04             RETURN\n"
+            + "' PUB function(a, b)\n"
+            + "00013 00013       00             (stack size)\n"
+            + "00014 00014       04             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMethodDefaultArgument() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    function(1)\n"
+            + "\n"
+            + "PUB function(a, b = 2)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       13 00 00 82    Method function @ $00013 (2 parameters, 0 returns)\n"
+            + "00008 00008       15 00 00 00    End\n"
             + "' PUB main()\n"
             + "0000C 0000C       00             (stack size)\n"
             + "'     function(1)\n"
             + "0000D 0000D       00             ANCHOR\n"
             + "0000E 0000E       A2             CONSTANT (1)\n"
-            + "0000F 0000F       0A 01          CALL_SUB (1)\n"
-            + "00011 00011       04             RETURN\n"
-            + "' PUB function(a)\n"
-            + "00012 00012       00             (stack size)\n"
-            + "00013 00013       04             RETURN\n"
+            + "0000F 0000F       A3             CONSTANT (2)\n"
+            + "00010 00010       0A 01          CALL_SUB (1)\n"
+            + "00012 00012       04             RETURN\n"
+            + "' PUB function(a, b = 2)\n"
+            + "00013 00013       00             (stack size)\n"
+            + "00014 00014       04             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMethodDefaultArgumentOverride() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "    function(1, 3)\n"
+            + "\n"
+            + "PUB function(a, b = 2)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       0C 00 00 80    Method main @ $0000C (0 parameters, 0 returns)\n"
+            + "00004 00004       13 00 00 82    Method function @ $00013 (2 parameters, 0 returns)\n"
+            + "00008 00008       15 00 00 00    End\n"
+            + "' PUB main()\n"
+            + "0000C 0000C       00             (stack size)\n"
+            + "'     function(1, 3)\n"
+            + "0000D 0000D       00             ANCHOR\n"
+            + "0000E 0000E       A2             CONSTANT (1)\n"
+            + "0000F 0000F       A4             CONSTANT (3)\n"
+            + "00010 00010       0A 01          CALL_SUB (1)\n"
+            + "00012 00012       04             RETURN\n"
+            + "' PUB function(a, b = 2)\n"
+            + "00013 00013       00             (stack size)\n"
+            + "00014 00014       04             RETURN\n"
+            + "00015 00015       00 00 00       Padding\n"
             + "", compile(text));
     }
 

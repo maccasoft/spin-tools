@@ -12,8 +12,19 @@ package com.maccasoft.propeller.expressions;
 
 public class LocalVariable extends Variable {
 
+    Expression value;
+
     public LocalVariable(String type, String name, int size, int offset) {
         super(type, name, size, offset);
+    }
+
+    public LocalVariable(String type, String name, Expression value, int size, int offset) {
+        super(type, name, size, offset);
+        this.value = value;
+    }
+
+    public Expression getValue() {
+        return value;
     }
 
 }

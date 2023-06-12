@@ -70,6 +70,7 @@ import com.maccasoft.propeller.spin1.bytecode.Tjz;
 import com.maccasoft.propeller.spin1.bytecode.VariableOp;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
+import com.maccasoft.propeller.spin2.Spin2ExpressionBuilder;
 
 public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
 
@@ -253,7 +254,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 try {
                     Spin1Method method = compileMethod((MethodNode) node);
                     if (method != null) {
-                        Method exp = new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount()) {
+                        Method exp = new Method(method.getLabel(), method.getMinParameters(), method.getParametersCount(), method.getReturnsCount()) {
 
                             @Override
                             public int getIndex() {
@@ -288,7 +289,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 try {
                     Spin1Method method = compileMethod((MethodNode) node);
                     if (method != null) {
-                        Method exp = new Method(method.getLabel(), method.getParametersCount(), method.getReturnsCount()) {
+                        Method exp = new Method(method.getLabel(), method.getMinParameters(), method.getParametersCount(), method.getReturnsCount()) {
 
                             @Override
                             public int getIndex() {
@@ -327,7 +328,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     if (objEntry.getValue() instanceof Method) {
                         String qualifiedName = name + "." + objEntry.getKey();
                         Method objectMethod = (Method) objEntry.getValue();
-                        Method method = new Method(objectMethod.getName(), objectMethod.getArgumentsCount(), objectMethod.getReturnsCount()) {
+                        Method method = new Method(objectMethod.getName(), objectMethod.getMinArgumentsCount(), objectMethod.getArgumentsCount(), objectMethod.getReturnsCount()) {
 
                             @Override
                             public int getIndex() {
@@ -1008,7 +1009,33 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                             if (expression != null) {
                                 logMessage(new CompilerException(CompilerException.WARNING, "parameter '" + identifier + "' hides global variable", identifier));
                             }
-                            LocalVariable var = method.addParameter("LONG", identifier.getText(), 1);
+
+                            Expression value = null;
+                            if ("=".equals(iter.peekNext().getText())) {
+                                iter.next();
+                                Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
+                                while (iter.hasNext()) {
+                                    token = iter.peekNext();
+                                    if (",".equals(token.getText()) || ")".equals(token.getText())) {
+                                        break;
+                                    }
+                                    builder.addToken(iter.next());
+                                }
+                                try {
+                                    value = builder.getExpression();
+                                } catch (CompilerException e) {
+                                    logMessage(e);
+                                } catch (Exception e) {
+                                    logMessage(new CompilerException(e, node));
+                                }
+                            }
+                            if (value == null && method.getParametersCount() != 0) {
+                                if (method.getParameter(method.getParametersCount() - 1).getValue() != null) {
+                                    logMessage(new CompilerException("expecting default value", identifier));
+                                }
+                            }
+
+                            LocalVariable var = method.addParameter("LONG", identifier.getText(), value);
                             var.setData(identifier);
                         }
                     }

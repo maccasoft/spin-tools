@@ -361,12 +361,12 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     tokens.add(new TokenMarker(node.getName(), id));
                 }
 
-                for (Node child : node.getParameters()) {
-                    tokens.add(new TokenMarker(child, TokenId.METHOD_LOCAL));
+                for (MethodNode.ParameterNode child : node.getParameters()) {
+                    tokens.add(new TokenMarker(child.getIdentifier(), TokenId.METHOD_LOCAL));
                 }
 
-                for (Node child : node.getReturnVariables()) {
-                    tokens.add(new TokenMarker(child, TokenId.METHOD_RETURN));
+                for (MethodNode.ReturnNode child : node.getReturnVariables()) {
+                    tokens.add(new TokenMarker(child.getIdentifier(), TokenId.METHOD_RETURN));
                 }
 
                 return true;
@@ -470,6 +470,12 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     locals.put(child.getText(), TokenId.METHOD_RETURN);
                     locals.put("@" + child.getText(), TokenId.METHOD_RETURN);
                     locals.put("@@" + child.getText(), TokenId.METHOD_RETURN);
+                }
+
+                for (MethodNode.ParameterNode child : node.getParameters()) {
+                    if (child.defaultValue != null) {
+                        markTokens(child, 1, null);
+                    }
                 }
 
                 for (MethodNode.LocalVariableNode child : node.getLocalVariables()) {

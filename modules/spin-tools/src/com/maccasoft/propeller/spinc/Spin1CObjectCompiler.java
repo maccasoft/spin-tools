@@ -940,7 +940,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
             }
             Token identifier = token;
 
-            LocalVariable var = method.addParameter(paramType.toUpperCase(), identifier.getText(), 1);
+            LocalVariable var = method.addParameter(paramType.toUpperCase(), identifier.getText(), null);
             var.setData(identifier);
 
             if (!iter.hasNext()) {

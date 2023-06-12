@@ -16,6 +16,7 @@ import java.util.List;
 import org.apache.commons.lang3.BitField;
 
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
 
 public class Spin1Method {
@@ -62,8 +63,8 @@ public class Spin1Method {
         return label;
     }
 
-    public LocalVariable addParameter(String type, String name, int size) {
-        LocalVariable var = new LocalVariable(type, name, size, 0) {
+    public LocalVariable addParameter(String type, String name, Expression value) {
+        LocalVariable var = new LocalVariable(type, name, value, 1, 0) {
 
             @Override
             public int getOffset() {
@@ -148,12 +149,24 @@ public class Spin1Method {
         return returns.size();
     }
 
+    public LocalVariable getParameter(int index) {
+        return parameters.get(index);
+    }
+
     public List<LocalVariable> getParameters() {
         return parameters;
     }
 
     public int getParametersCount() {
         return parameters.size();
+    }
+
+    public int getMinParameters() {
+        int count = parameters.size();
+        while (count > 0 && parameters.get(count - 1).getValue() != null) {
+            count--;
+        }
+        return count;
     }
 
     public List<LocalVariable> getLocalVariables() {

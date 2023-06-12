@@ -1143,6 +1143,66 @@ class Spin1ObjectCompilerTest {
     }
 
     @Test
+    void testMethodDefaultArgument() throws Exception {
+        String text = ""
+            + "PUB main\n"
+            + "\n"
+            + "    function1(1)\n"
+            + "\n"
+            + "PUB function1(a, b = 2)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       03             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       0C 00 00 00    Function main @ $000C (local size 0)\n"
+            + "00008 00008       13 00 00 00    Function function1 @ $0013 (local size 0)\n"
+            + "' PUB main\n"
+            + "'     function1(1)\n"
+            + "0000C 0000C       01             ANCHOR\n"
+            + "0000D 0000D       36             CONSTANT (1)\n"
+            + "0000E 0000E       38 02          CONSTANT (2)\n"
+            + "00010 00010       05 02          CALL_SUB\n"
+            + "00012 00012       32             RETURN\n"
+            + "' PUB function1(a, b = 2)\n"
+            + "00013 00013       32             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testMethodDefaultArgumentOverride() throws Exception {
+        String text = ""
+            + "PUB main\n"
+            + "\n"
+            + "    function1(1, 3)\n"
+            + "\n"
+            + "PUB function1(a, b = 2)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       14 00          Object size\n"
+            + "00002 00002       03             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       0C 00 00 00    Function main @ $000C (local size 0)\n"
+            + "00008 00008       13 00 00 00    Function function1 @ $0013 (local size 0)\n"
+            + "' PUB main\n"
+            + "'     function1(1, 3)\n"
+            + "0000C 0000C       01             ANCHOR\n"
+            + "0000D 0000D       36             CONSTANT (1)\n"
+            + "0000E 0000E       38 03          CONSTANT (3)\n"
+            + "00010 00010       05 02          CALL_SUB\n"
+            + "00012 00012       32             RETURN\n"
+            + "' PUB function1(a, b = 2)\n"
+            + "00013 00013       32             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testMethodReturn() throws Exception {
         String text = ""
             + "PUB main\n"

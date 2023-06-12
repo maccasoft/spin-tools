@@ -375,6 +375,22 @@ class Spin1ParserTest {
     }
 
     @Test
+    void testMethodParameterDefaultValue() throws Exception {
+        Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
+            + "PUB StartTx(pin, baud = 115_200)\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- MethodNode type=PUB name=StartTx [PUB StartTx(pin, baud = 115_200)]\n"
+            + "    +-- ParameterNode identifier=pin [pin]\n"
+            + "    +-- ParameterNode identifier=baud [baud = 115_200]\n"
+            + "        +-- defaultValue = ExpressionNode [115_200]\n"
+            + "", tree(root));
+    }
+
+    @Test
     void testMethodInvalidParameters() throws Exception {
         Spin1Parser subject = new Spin1Parser(new Spin1TokenStream(""
             + "PUB StartTx(pin baud)\n"

@@ -13,17 +13,30 @@ package com.maccasoft.propeller.expressions;
 public class Method extends Expression {
 
     String name;
+    int minArguments;
     int arguments;
     int returns;
 
     public Method(String name, int arguments, int returns) {
         this.name = name;
+        this.minArguments = arguments;
         this.arguments = arguments;
+        this.returns = returns;
+    }
+
+    public Method(String name, int minArguments, int maxArguments, int returns) {
+        this.name = name;
+        this.minArguments = minArguments;
+        this.arguments = maxArguments;
         this.returns = returns;
     }
 
     public String getName() {
         return name;
+    }
+
+    public int getMinArgumentsCount() {
+        return minArguments;
     }
 
     public int getArgumentsCount() {
