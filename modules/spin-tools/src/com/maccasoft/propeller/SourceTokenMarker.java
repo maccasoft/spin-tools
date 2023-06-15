@@ -1274,6 +1274,9 @@ public abstract class SourceTokenMarker {
                 String lastLabel = "";
 
                 for (Node child : node.getChilds()) {
+                    if (!(child instanceof DataLineNode)) {
+                        continue;
+                    }
                     DataLineNode lineNode = (DataLineNode) child;
                     if (lineNode.label != null) {
                         String text = lineNode.label.getText();
@@ -1296,6 +1299,9 @@ public abstract class SourceTokenMarker {
                 String lastLabel = "";
 
                 for (Node child : node.getChilds()) {
+                    if (!(child instanceof DataLineNode)) {
+                        continue;
+                    }
                     DataLineNode lineNode = (DataLineNode) child;
                     if (lineNode.label != null) {
                         String text = lineNode.label.getText();
@@ -1324,6 +1330,9 @@ public abstract class SourceTokenMarker {
         for (Node node : root.getChilds()) {
             if (node instanceof DataNode) {
                 for (Node child : node.getChilds()) {
+                    if (!(child instanceof DataLineNode)) {
+                        continue;
+                    }
                     DataLineNode lineNode = (DataLineNode) child;
                     if (lineNode.label != null) {
                         String text = lineNode.label.getText();
