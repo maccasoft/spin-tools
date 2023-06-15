@@ -384,6 +384,114 @@ public class SourceEditorTest {
         Assertions.assertEquals(13, marker.stop);
     }
 
+    @Test
+    public void testTabAlignEmptySpace() throws Exception {
+        String text = ""
+            + "DAT\n"
+            + "            nop             ' comment\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new SourceTokenMarker(null) {
+
+            @Override
+            public void refreshTokens(String text) {
+            }
+        });
+        subject.styledText.setText(text);
+        subject.styledText.setCaretOffset(4);
+        subject.styledText.setCaret(subject.alignCaret);
+
+        subject.doTab();
+        Assertions.assertEquals(text, subject.styledText.getText());
+        Assertions.assertEquals(4 + 4, subject.styledText.getCaretOffset());
+
+        subject.doTab();
+        Assertions.assertEquals(text, subject.styledText.getText());
+        Assertions.assertEquals(4 + 8, subject.styledText.getCaretOffset());
+    }
+
+    @Test
+    public void testTabAlignWord() throws Exception {
+        String text = ""
+            + "DAT\n"
+            + "            nop             ' comment\n"
+            + "";
+        String expected = ""
+            + "DAT\n"
+            + "                nop         ' comment\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new SourceTokenMarker(null) {
+
+            @Override
+            public void refreshTokens(String text) {
+            }
+        });
+        subject.styledText.setText(text);
+        subject.styledText.setCaretOffset(16);
+        subject.styledText.setCaret(subject.alignCaret);
+
+        subject.doTab();
+        Assertions.assertEquals(expected, subject.styledText.getText());
+        Assertions.assertEquals(16 + 4, subject.styledText.getCaretOffset());
+    }
+
+    @Test
+    public void testBacktabAlignEmptySpace() throws Exception {
+        String text = ""
+            + "DAT\n"
+            + "            nop             ' comment\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new SourceTokenMarker(null) {
+
+            @Override
+            public void refreshTokens(String text) {
+            }
+        });
+        subject.styledText.setText(text);
+        subject.styledText.setCaretOffset(4 + 8);
+        subject.styledText.setCaret(subject.alignCaret);
+
+        subject.doBacktab();
+        Assertions.assertEquals(text, subject.styledText.getText());
+        Assertions.assertEquals(4 + 4, subject.styledText.getCaretOffset());
+
+        subject.doBacktab();
+        Assertions.assertEquals(text, subject.styledText.getText());
+        Assertions.assertEquals(4, subject.styledText.getCaretOffset());
+    }
+
+    @Test
+    public void testBacktabAlignWord() throws Exception {
+        String text = ""
+            + "DAT\n"
+            + "            nop             ' comment\n"
+            + "";
+        String expected = ""
+            + "DAT\n"
+            + "        nop                 ' comment\n"
+            + "";
+
+        SourceEditor subject = new SourceEditor(shell);
+        subject.setTokenMarker(new SourceTokenMarker(null) {
+
+            @Override
+            public void refreshTokens(String text) {
+            }
+        });
+        subject.styledText.setText(text);
+        subject.styledText.setCaretOffset(16);
+        subject.styledText.setCaret(subject.alignCaret);
+
+        subject.doBacktab();
+        Assertions.assertEquals(expected, subject.styledText.getText());
+        Assertions.assertEquals(16 - 4, subject.styledText.getCaretOffset());
+    }
+
     void adjust(TokenMarker entry, TextChangingEvent event) {
         if (event.replaceCharCount != 0) {
             if (event.start + event.replaceCharCount <= entry.start) {

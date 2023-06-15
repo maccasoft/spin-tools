@@ -66,6 +66,7 @@ import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.graphics.TextStyle;
@@ -129,6 +130,7 @@ public class SourceEditor {
 
     Caret insertCaret;
     Caret overwriteCaret;
+    Caret alignCaret;
     boolean modified;
 
     int[] sectionCount = new int[6];
@@ -255,30 +257,32 @@ public class SourceEditor {
             public void invokeAction(int action) {
                 switch (action) {
                     case ST.LINE_START:
-                        SourceEditor.this.doLineStart(false);
+                        doLineStart(false);
                         break;
                     case ST.LINE_END:
-                        SourceEditor.this.doLineEnd(false);
+                        doLineEnd(false);
                         break;
                     case ST.SELECT_LINE_START:
-                        SourceEditor.this.doLineStart(true);
+                        doLineStart(true);
                         break;
                     case ST.SELECT_LINE_END:
-                        SourceEditor.this.doLineEnd(true);
-                        break;
-                    case ST.PASTE:
-                        SourceEditor.this.paste();
+                        doLineEnd(true);
                         break;
                     case ST.TOGGLE_OVERWRITE:
                         if (styledText.getCaret() == insertCaret) {
+                            alignCaret.setLocation(styledText.getCaret().getLocation());
+                            styledText.setCaret(alignCaret);
+                        }
+                        else if (styledText.getCaret() == alignCaret) {
                             overwriteCaret.setLocation(styledText.getCaret().getLocation());
                             styledText.setCaret(overwriteCaret);
+                            super.invokeAction(action);
                         }
                         else {
                             insertCaret.setLocation(styledText.getCaret().getLocation());
                             styledText.setCaret(insertCaret);
+                            super.invokeAction(action);
                         }
-                        super.invokeAction(action);
                         break;
                     default:
                         super.invokeAction(action);
@@ -292,6 +296,7 @@ public class SourceEditor {
 
         insertCaret = new Caret(styledText, SWT.NULL);
         overwriteCaret = new Caret(styledText, SWT.NULL);
+        alignCaret = new Caret(styledText, SWT.NULL);
 
         overview = new OverviewRuler(container);
         overview.setStyledText(styledText);
@@ -797,6 +802,37 @@ public class SourceEditor {
                             case SWT.PAGE_UP:
                                 styledText.redraw();
                                 break;
+                            case SWT.BS:
+                            case SWT.DEL:
+                                if (styledText.getCaret() == alignCaret) {
+                                    int caretOffset = styledText.getCaretOffset();
+                                    int lineNumber = styledText.getLineAtOffset(caretOffset);
+                                    int lineStart = styledText.getOffsetAtLine(lineNumber);
+                                    int currentColumn = caretOffset - lineStart;
+                                    String text = styledText.getLine(lineNumber);
+                                    int i = text.indexOf("  ", currentColumn);
+                                    if (i != -1) {
+                                        styledText.setCaretOffset(lineStart + i);
+                                        styledText.insert(" ");
+                                        styledText.setCaretOffset(caretOffset);
+                                    }
+                                }
+                                break;
+                            default:
+                                if (e.character != 0 && styledText.getCaret() == alignCaret) {
+                                    int caretOffset = styledText.getCaretOffset();
+                                    int lineNumber = styledText.getLineAtOffset(caretOffset);
+                                    int lineStart = styledText.getOffsetAtLine(lineNumber);
+                                    int currentColumn = caretOffset - lineStart;
+                                    String text = styledText.getLine(lineNumber);
+                                    int i = text.indexOf("  ", currentColumn);
+                                    if (i != -1) {
+                                        styledText.setSelection(lineStart + i, lineStart + i + 1);
+                                        styledText.insert("");
+                                        styledText.setCaretOffset(caretOffset);
+                                    }
+                                }
+                                break;
                         }
                     }
                 } catch (Exception ex) {
@@ -1004,6 +1040,7 @@ public class SourceEditor {
                 currentLineBackground.dispose();
                 insertCaret.dispose();
                 overwriteCaret.dispose();
+                alignCaret.dispose();
             }
         });
 
@@ -1057,6 +1094,22 @@ public class SourceEditor {
 
         insertCaret.setSize(2, styledText.getLineHeight());
         overwriteCaret.setSize(charSize.x, styledText.getLineHeight());
+
+        Image oldImage = alignCaret.getImage();
+        Image image = new Image(display, charSize.x, styledText.getLineHeight());
+        gc = new GC(image);
+        try {
+            gc.setBackground(display.getSystemColor(SWT.COLOR_BLACK));
+            gc.fillRectangle(0, 0, charSize.x, styledText.getLineHeight() - 2);
+            gc.setBackground(display.getSystemColor(SWT.COLOR_WHITE));
+            gc.fillRectangle(0, styledText.getLineHeight() - 2, charSize.x, 2);
+        } finally {
+            gc.dispose();
+        }
+        alignCaret.setImage(image);
+        if (oldImage != null) {
+            oldImage.dispose();
+        }
 
         if (oldFont != null) {
             oldFont.dispose();
@@ -1456,15 +1509,36 @@ public class SourceEditor {
             }
         }
 
+        String text = styledText.getLine(lineNumber);
+
+        if (styledText.getCaret() != insertCaret) {
+            while (currentColumn < nextTabColumn && currentColumn < text.length() && text.charAt(currentColumn) == ' ') {
+                currentColumn++;
+            }
+        }
+
         StringBuilder sb = new StringBuilder();
+
+        int start = caretOffset - lineStart;
         while (currentColumn < nextTabColumn) {
             sb.append(" ");
+            if (styledText.getCaret() == alignCaret && start < text.length()) {
+                int i = text.indexOf("  ", start);
+                if (i != -1) {
+                    styledText.setSelection(lineStart + i, lineStart + i + 1);
+                    styledText.insert("");
+                    text = text.substring(0, i) + text.substring(i + 1);
+                }
+            }
             currentColumn++;
         }
 
         styledText.setRedraw(false);
         try {
-            styledText.insert(sb.toString());
+            if (sb.length() != 0) {
+                styledText.setSelection(caretOffset, caretOffset);
+                styledText.insert(sb.toString());
+            }
             styledText.setCaretOffset(lineStart + nextTabColumn);
             styledText.showSelection();
         } finally {
@@ -1482,6 +1556,7 @@ public class SourceEditor {
         if (currentColumn == 0) {
             return;
         }
+        int start = currentColumn;
 
         boolean tabstopMatch = false;
         int previousTabColumn = currentColumn - 1;
@@ -1512,6 +1587,14 @@ public class SourceEditor {
             }
         }
 
+        if (styledText.getCaret() != insertCaret) {
+            String line = styledText.getLine(lineNumber);
+            while (currentColumn > 0 && currentColumn > previousTabColumn && line.charAt(currentColumn) == ' ') {
+                currentColumn--;
+                caretOffset--;
+            }
+        }
+
         while (currentColumn > 0 && currentColumn > previousTabColumn) {
             if (!Character.isWhitespace(lineText.charAt(currentColumn - 1))) {
                 break;
@@ -1519,10 +1602,28 @@ public class SourceEditor {
             currentColumn--;
         }
 
+        String text = styledText.getLine(lineNumber);
+
         styledText.setRedraw(false);
         try {
-            styledText.setSelection(lineStart + currentColumn, caretOffset);
-            styledText.insert("");
+            if ((lineStart + currentColumn) < caretOffset) {
+                if (styledText.getCaret() == alignCaret) {
+                    int i = text.indexOf("  ", start);
+                    if (i == -1) {
+                        i = text.indexOf(" '", start);
+                        if (i == -1) {
+                            i = text.indexOf(" {", start);
+                        }
+                    }
+                    if (i != -1) {
+                        styledText.setSelection(lineStart + i, lineStart + i);
+                        styledText.insert(" ".repeat(caretOffset - (lineStart + currentColumn)));
+                    }
+                }
+                styledText.setSelection(lineStart + currentColumn, caretOffset);
+                styledText.insert("");
+            }
+            styledText.setCaretOffset(lineStart + currentColumn);
             styledText.showSelection();
         } finally {
             styledText.setRedraw(true);
