@@ -212,6 +212,9 @@ public class P2MemoryDialog extends Dialog {
             public void handleEvent(Event e) {
                 Rectangle bounds = ((Control) e.widget).getBounds();
 
+                e.gc.setBackground(stackFreeBackground);
+                e.gc.fillRectangle(0, 0, bounds.width, bounds.height);
+
                 int interpreterPixels = (int) (bounds.width * pbase / (double) data.length);
                 int codePixels = (int) (bounds.width * (vbase - pbase) / (double) data.length);
                 int variablesPixels = (int) (bounds.width * (dbase - vbase) / (double) data.length);
@@ -225,9 +228,6 @@ public class P2MemoryDialog extends Dialog {
                 x += codePixels;
                 e.gc.setBackground(variablesBackground);
                 e.gc.fillRectangle(x, 0, variablesPixels, bounds.height);
-                x += variablesPixels;
-                e.gc.setBackground(stackFreeBackground);
-                e.gc.fillRectangle(x, 0, bounds.width - x, bounds.height);
             }
 
         });

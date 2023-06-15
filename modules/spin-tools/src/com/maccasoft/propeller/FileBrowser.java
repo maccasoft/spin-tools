@@ -31,6 +31,7 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -385,4 +386,13 @@ public class FileBrowser {
         System.arraycopy(elements, 0, result, 0, elements.length);
         return result;
     }
+
+    public void setBackground(Color color) {
+        viewer.getControl().setBackground(color);
+    }
+
+    public void setForeground(Color color) {
+        viewer.getControl().setForeground(color);
+    }
+
 }

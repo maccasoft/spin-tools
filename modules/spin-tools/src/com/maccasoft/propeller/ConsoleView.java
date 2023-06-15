@@ -25,10 +25,10 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
@@ -39,7 +39,6 @@ import jssc.SerialPortEventListener;
 public class ConsoleView {
 
     Display display;
-    Composite container;
     StyledText console;
 
     SerialPort serialPort;
@@ -48,8 +47,11 @@ public class ConsoleView {
     Preferences preferences;
 
     Font font;
+    Color foreground;
+    Color disabledForeground;
     int maxLines;
     boolean writeLogFile;
+    boolean enabled;
 
     File logFile;
     StringBuilder lineBuilder = new StringBuilder();
@@ -170,9 +172,7 @@ public class ConsoleView {
         display = parent.getDisplay();
         preferences = Preferences.getInstance();
 
-        container = new Composite(parent, SWT.BORDER);
-        container.setLayout(new GridLayout(1, false));
-        container.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        enabled = false;
 
         Font textFont = JFaceResources.getTextFont();
         FontData fontData = textFont.getFontData()[0];
@@ -181,12 +181,14 @@ public class ConsoleView {
         }
         font = new Font(display, fontData.getName(), fontData.getHeight(), SWT.NONE);
 
-        console = new StyledText(container, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
+        disabledForeground = display.getSystemColor(SWT.COLOR_WIDGET_DISABLED_FOREGROUND);
+
+        console = new StyledText(parent, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
         console.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         console.setMargins(5, 5, 5, 5);
         console.setTabs(4);
         console.setFont(font);
-        console.setForeground(display.getSystemColor(SWT.COLOR_WIDGET_DISABLED_FOREGROUND));
+        console.setForeground(disabledForeground);
 
         console.addKeyListener(new KeyAdapter() {
 
@@ -233,20 +235,16 @@ public class ConsoleView {
     }
 
     public void setEnabled(boolean enabled) {
-        if (enabled) {
-            console.setForeground(null);
-        }
-        else {
-            console.setForeground(display.getSystemColor(SWT.COLOR_WIDGET_DISABLED_FOREGROUND));
-        }
+        this.enabled = enabled;
+        console.setForeground(enabled ? foreground : disabledForeground);
     }
 
     public boolean getVisible() {
-        return container.getVisible();
+        return console.getVisible();
     }
 
     public void setVisible(boolean visible) {
-        container.setVisible(visible);
+        console.setVisible(visible);
     }
 
     public void setFocus() {
@@ -254,7 +252,7 @@ public class ConsoleView {
     }
 
     public Composite getControl() {
-        return container;
+        return console;
     }
 
     public StyledText getStyledText() {
@@ -313,6 +311,24 @@ public class ConsoleView {
             os = null;
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void setBackground(Color color) {
+        console.setBackground(color);
+    }
+
+    public void setForeground(Color color) {
+        foreground = color;
+        if (enabled) {
+            console.setForeground(color);
+        }
+    }
+
+    public void setDisabledForeground(Color color) {
+        disabledForeground = color;
+        if (!enabled) {
+            console.setForeground(color);
         }
     }
 

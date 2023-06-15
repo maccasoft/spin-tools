@@ -25,6 +25,7 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
@@ -222,6 +223,14 @@ public class ObjectBrowser {
 
     public Tree getTree() {
         return viewer.getTree();
+    }
+
+    public void setBackground(Color color) {
+        viewer.getControl().setBackground(color);
+    }
+
+    public void setForeground(Color color) {
+        viewer.getControl().setForeground(color);
     }
 
 }

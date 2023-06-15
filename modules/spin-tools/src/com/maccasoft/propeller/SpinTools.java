@@ -93,7 +93,6 @@ import com.maccasoft.propeller.internal.BusyIndicator;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.InternalErrorDialog;
-import com.maccasoft.propeller.internal.StackContainer;
 import com.maccasoft.propeller.internal.TempDirectory;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ObjectNode;
@@ -124,7 +123,7 @@ public class SpinTools {
     ObjectBrowser objectBrowser;
     FileBrowser fileBrowser;
     CTabFolder tabFolder;
-    StackContainer outlineViewContainer;
+    OutlineViewStack outlineViewStack;
     ConsoleView debugConsoleView;
 
     StatusLine statusLine;
@@ -286,7 +285,7 @@ public class SpinTools {
                     sashForm.layout(true, true);
                     break;
                 case Preferences.PROP_SHOW_EDITOR_OUTLINE:
-                    outlineViewContainer.setVisible((Boolean) evt.getNewValue());
+                    outlineViewStack.setVisible((Boolean) evt.getNewValue());
                     sashForm.layout(true, true);
                     break;
                 case Preferences.PROP_ROOTS:
@@ -327,8 +326,8 @@ public class SpinTools {
                 topObjectToolItem.setSelection(false);
                 topObjectTabItem.setSelection(false);
             }
-            if (outlineViewContainer.getTopControl() == outlineView.getControl()) {
-                outlineViewContainer.setTopControl(null);
+            if (outlineViewStack.getTopView() == outlineView) {
+                outlineViewStack.setTopView(null);
             }
             outlineView.dispose();
         }
@@ -378,15 +377,20 @@ public class SpinTools {
         fileBrowser = new FileBrowser(browserSashForm);
         fileBrowser.setVisible(preferences.getShowBrowser());
 
-        tabFolder = new CTabFolder(editorSashForm, SWT.BORDER);
+        tabFolder = new CTabFolder(editorSashForm, SWT.BORDER | SWT.FLAT);
         tabFolder.setMaximizeVisible(false);
         tabFolder.setMinimizeVisible(false);
 
-        outlineViewContainer = new StackContainer(editorSashForm, SWT.BORDER);
-        outlineViewContainer.setVisible(preferences.getShowEditorOutline());
+        outlineViewStack = new OutlineViewStack(editorSashForm, SWT.BORDER);
+        outlineViewStack.setVisible(preferences.getShowEditorOutline());
 
         debugConsoleView = new ConsoleView(centralSashForm);
         debugConsoleView.setVisible(false);
+
+        statusLine = new StatusLine(container);
+        GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
+        layoutData.heightHint = 24;
+        statusLine.setLayoutData(layoutData);
 
         int[] weights = preferences.getWeights("sashForm");
         sashForm.setWeights(weights != null ? weights : new int[] {
@@ -473,11 +477,6 @@ public class SpinTools {
             }
 
         });
-
-        statusLine = new StatusLine(container);
-        GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
-        layoutData.heightHint = 24;
-        statusLine.setLayoutData(layoutData);
 
         sourcePool = new SourcePool();
 
@@ -570,7 +569,7 @@ public class SpinTools {
                             public void run() {
                                 EditorTab editorTab = new EditorTab(tabFolder, topObjectFile, sourcePool);
 
-                                OutlineView outlineView = new OutlineView(outlineViewContainer.getContainer());
+                                OutlineView outlineView = outlineViewStack.createNew();
                                 outlineView.addOpenListener(openListener);
                                 editorTab.setOutlineView(outlineView);
 
@@ -612,7 +611,7 @@ public class SpinTools {
                                 public void run() {
                                     EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
 
-                                    OutlineView outlineView = new OutlineView(outlineViewContainer.getContainer());
+                                    OutlineView outlineView = outlineViewStack.createNew();
                                     outlineView.addOpenListener(openListener);
                                     editorTab.setOutlineView(outlineView);
 
@@ -1656,7 +1655,7 @@ public class SpinTools {
     EditorTab openNewTab(File fileToOpen) {
         EditorTab editorTab = new EditorTab(tabFolder, fileToOpen, sourcePool);
 
-        OutlineView outlineView = new OutlineView(outlineViewContainer.getContainer());
+        OutlineView outlineView = outlineViewStack.createNew();
         outlineView.addOpenListener(openListener);
         editorTab.setOutlineView(outlineView);
 
@@ -1689,7 +1688,7 @@ public class SpinTools {
     EditorTab openNewTab(String name, String text) {
         EditorTab editorTab = new EditorTab(tabFolder, name, sourcePool);
 
-        OutlineView outlineView = new OutlineView(outlineViewContainer.getContainer());
+        OutlineView outlineView = outlineViewStack.createNew();
         outlineView.addOpenListener(openListener);
         editorTab.setOutlineView(outlineView);
 
@@ -1707,7 +1706,7 @@ public class SpinTools {
             public void run() {
                 try {
                     tabFolder.setSelection(tabFolder.getItemCount() - 1);
-                    outlineViewContainer.setTopControl(editorTab.getOutlineView().getControl());
+                    outlineViewStack.setTopView(editorTab.getOutlineView());
                     editorTab.setEditorText(text);
                     editorTab.setFocus();
                     updateCaretPosition();
@@ -3157,7 +3156,7 @@ public class SpinTools {
             if (getTargetObjectEditorTab() == editorTab) {
                 objectBrowser.setInput(editorTab.getObjectTree(), editorTab.isTopObject());
             }
-            outlineViewContainer.setTopControl(editorTab.getOutlineView().getControl());
+            outlineViewStack.setTopView(editorTab.getOutlineView());
             if (findReplaceDialog != null) {
                 findReplaceDialog.setTarget(editorTab);
             }
@@ -3172,7 +3171,7 @@ public class SpinTools {
             if (getTargetObjectEditorTab() == null) {
                 objectBrowser.setInput(null, false);
             }
-            outlineViewContainer.setTopControl(null);
+            outlineViewStack.setTopView(null);
             if (findReplaceDialog != null) {
                 findReplaceDialog.setTarget(null);
             }
@@ -3279,7 +3278,7 @@ public class SpinTools {
                     shell.setSize(rect.width, rect.height);
 
                     FillLayout layout = new FillLayout();
-                    layout.marginWidth = layout.marginHeight = 5;
+                    layout.marginWidth = layout.marginHeight = 4;
                     shell.setLayout(layout);
 
                     new SpinTools(shell);

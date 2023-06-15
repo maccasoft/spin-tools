@@ -43,8 +43,7 @@ public class LineNumbersRuler {
     private int scrollBarSelection;
     private int lineCount;
 
-    private Color textColor;
-    private Color highlightColor;
+    private Color highlightForeground;
     private Set<Integer> highlight = new HashSet<Integer>();
 
     final PaintListener paintListener = new PaintListener() {
@@ -87,8 +86,7 @@ public class LineNumbersRuler {
 
         scrollBarSelection = lineCount = -1;
 
-        textColor = canvas.getForeground();
-        highlightColor = Display.getDefault().getSystemColor(SWT.COLOR_RED);
+        highlightForeground = Display.getDefault().getSystemColor(SWT.COLOR_RED);
     }
 
     public void setText(StyledText text) {
@@ -97,6 +95,7 @@ public class LineNumbersRuler {
     }
 
     void onPaintControl(GC gc) {
+        Color foreground = canvas.getForeground();
         Rectangle rect = canvas.getClientArea();
 
         gc.setClipping(0, text.getTopMargin(), rect.width, rect.height - text.getTopMargin() - text.getBottomMargin());
@@ -111,7 +110,7 @@ public class LineNumbersRuler {
                 break;
             }
             String s = Integer.toString(lineNumber + 1);
-            gc.setForeground(highlight.contains(lineNumber) ? highlightColor : textColor);
+            gc.setForeground(highlight.contains(lineNumber) ? highlightForeground : foreground);
             gc.drawString(s, rect.width - gc.stringExtent(s).x - rightMargin, y);
             lineNumber++;
         }
@@ -143,6 +142,21 @@ public class LineNumbersRuler {
     }
 
     public void redraw() {
+        canvas.redraw();
+    }
+
+    public void setBackground(Color color) {
+        canvas.setBackground(color);
+        canvas.redraw();
+    }
+
+    public void setForeground(Color color) {
+        canvas.setForeground(color);
+        canvas.redraw();
+    }
+
+    public void setHighlightForeground(Color color) {
+        highlightForeground = color;
         canvas.redraw();
     }
 

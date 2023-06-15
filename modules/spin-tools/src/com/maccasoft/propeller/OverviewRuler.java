@@ -45,10 +45,10 @@ public class OverviewRuler {
     StyledText styledText;
     Cursor handCursor;
 
-    private Color errorColor;
-    private Color errorBackgroundColor;
-    private Color warningColor;
-    private Color warningBackgroundColor;
+    private Color errorForeground;
+    private Color errorBackground;
+    private Color warningForeground;
+    private Color warningBackground;
     private Map<Integer, String> errorHighlight = new TreeMap<Integer, String>();
     private Map<Integer, String> warningHighlight = new TreeMap<Integer, String>();
 
@@ -77,16 +77,16 @@ public class OverviewRuler {
 
                 for (int line : warningHighlight.keySet()) {
                     int y = (int) (line * lineStep) + offset;
-                    e.gc.setForeground(warningColor);
-                    e.gc.setBackground(warningBackgroundColor);
+                    e.gc.setForeground(warningForeground);
+                    e.gc.setBackground(warningBackground);
                     e.gc.fillRectangle(0, y, rect.width, HEIGHT);
                     e.gc.drawRectangle(0, y, rect.width - 1, HEIGHT);
                 }
 
                 for (int line : errorHighlight.keySet()) {
                     int y = (int) (line * lineStep) + offset;
-                    e.gc.setForeground(errorColor);
-                    e.gc.setBackground(errorBackgroundColor);
+                    e.gc.setForeground(errorForeground);
+                    e.gc.setBackground(errorBackground);
                     e.gc.fillRectangle(0, y, rect.width, HEIGHT);
                     e.gc.drawRectangle(0, y, rect.width - 1, HEIGHT);
                 }
@@ -200,10 +200,10 @@ public class OverviewRuler {
         layoutData.widthHint = 12;
         canvas.setLayoutData(layoutData);
 
-        errorColor = ColorRegistry.getColor(0xFE, 0x2D, 0x98);
-        errorBackgroundColor = ColorRegistry.getColor(0xF9, 0xBA, 0xD9);
-        warningColor = ColorRegistry.getColor(0xF6, 0xD4, 0x56);
-        warningBackgroundColor = ColorRegistry.getColor(0xFC, 0xF1, 0xCB);
+        errorForeground = ColorRegistry.getColor(0xFE, 0x2D, 0x98);
+        errorBackground = ColorRegistry.getColor(0xF9, 0xBA, 0xD9);
+        warningForeground = ColorRegistry.getColor(0xF6, 0xD4, 0x56);
+        warningBackground = ColorRegistry.getColor(0xFC, 0xF1, 0xCB);
     }
 
     public void setStyledText(StyledText styledText) {
@@ -282,6 +282,32 @@ public class OverviewRuler {
             }
         }
         return false;
+    }
+
+    public void setBackground(Color color) {
+        canvas.setBackground(color);
+        canvas.redraw();
+    }
+
+    public void setForeground(Color color) {
+        canvas.setForeground(color);
+        canvas.redraw();
+    }
+
+    public void setErrorForeground(Color color) {
+        this.errorForeground = color;
+    }
+
+    public void setErrorBackground(Color color) {
+        this.errorBackground = color;
+    }
+
+    public void setWarningForeground(Color color) {
+        this.warningForeground = color;
+    }
+
+    public void setWarningBackground(Color color) {
+        this.warningBackground = color;
     }
 
 }

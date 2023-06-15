@@ -118,6 +118,7 @@ public class SourceEditor {
 
     boolean showIndentLines;
     int indentLinesSize;
+    Color indentLinesForeground;
 
     Font font;
     Font fontBold;
@@ -242,7 +243,7 @@ public class SourceEditor {
 
         container = new Composite(parent, SWT.NO_FOCUS);
         GridLayout containerLayout = new GridLayout(3, false);
-        containerLayout.horizontalSpacing = 1;
+        containerLayout.horizontalSpacing = 0;
         containerLayout.marginWidth = containerLayout.marginHeight = 0;
         container.setLayout(containerLayout);
 
@@ -928,7 +929,7 @@ public class SourceEditor {
 
                     if (hoverHighlight && hoverTarget != null) {
                         Rectangle r = styledText.getTextBounds(hoverTarget.start, hoverTarget.stop);
-                        gc.setForeground(ColorRegistry.getColor(0x00, 0x00, 0x00));
+                        gc.setForeground(styledText.getForeground());
                         gc.drawLine(r.x, r.y + r.height, r.x + r.width, r.y + r.height);
                     }
                 } catch (Exception ex) {
@@ -1072,17 +1073,17 @@ public class SourceEditor {
         styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(font, ColorRegistry.getColor(0x80, 0x80, 0x00), null));
         styleMap.put(TokenId.METHOD_RETURN, new TextStyle(font, ColorRegistry.getColor(0x90, 0x00, 0x00), null));
 
-        styleMap.put(TokenId.TYPE, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.TYPE, new TextStyle(fontBold, null, null));
         styleMap.put(TokenId.KEYWORD, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x80, 0x00), null));
-        styleMap.put(TokenId.FUNCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.FUNCTION, new TextStyle(fontBold, null, null));
         styleMap.put(TokenId.OBJECT, new TextStyle(font, ColorRegistry.getColor(0x00, 0x00, 0xC0), null));
 
         styleMap.put(TokenId.DIRECTIVE, new TextStyle(font, ColorRegistry.getColor(0x00, 0x80, 0x00), null));
 
-        styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(fontItalic, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
-        styleMap.put(TokenId.PASM_CONDITION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(fontItalic, null, null));
+        styleMap.put(TokenId.PASM_CONDITION, new TextStyle(fontBold, null, null));
         styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x80, 0x00, 0x00), null));
-        styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null));
+        styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(fontBold, null, null));
 
         ruler.setFont(font);
         styledText.setFont(font);
@@ -1099,9 +1100,9 @@ public class SourceEditor {
         Image image = new Image(display, charSize.x, styledText.getLineHeight());
         gc = new GC(image);
         try {
-            gc.setBackground(display.getSystemColor(SWT.COLOR_BLACK));
+            gc.setBackground(new Color(0, 0, 0));
             gc.fillRectangle(0, 0, charSize.x, styledText.getLineHeight() - 2);
-            gc.setBackground(display.getSystemColor(SWT.COLOR_WHITE));
+            gc.setBackground(new Color(255, 255, 255));
             gc.fillRectangle(0, styledText.getLineHeight() - 2, charSize.x, 2);
         } finally {
             gc.dispose();
@@ -2287,6 +2288,24 @@ public class SourceEditor {
         }
 
         return null;
+    }
+
+    public void setBackground(Color color) {
+        styledText.setBackground(color);
+    }
+
+    public void setForeground(Color color) {
+        styledText.setForeground(color);
+    }
+
+    public void setCurrentLineBackground(Color color) {
+        currentLineBackground = color;
+        styledText.redraw();
+    }
+
+    public void setIndentLinesForeground(Color color) {
+        indentLinesForeground = color;
+        styledText.redraw();
     }
 
 }

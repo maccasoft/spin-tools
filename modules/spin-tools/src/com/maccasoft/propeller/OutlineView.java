@@ -28,6 +28,7 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.TextStyle;
@@ -540,10 +541,10 @@ public class OutlineView {
         fontBold = new Font(viewer.getControl().getDisplay(), fd[0]);
 
         commentStyle = new TextStyle(null, ColorRegistry.getColor(0x7E, 0x7E, 0x7E), null);
-        sectionStyle = new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null);
+        sectionStyle = new TextStyle(fontBold, null, null);
         methodLocalStyle = new TextStyle(null, ColorRegistry.getColor(0x80, 0x80, 0x00), null);
         methodReturnStyle = new TextStyle(null, ColorRegistry.getColor(0x90, 0x00, 0x00), null);
-        typeStyle = new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0x00), null);
+        typeStyle = new TextStyle(fontBold, null, null);
         stringStyle = new TextStyle(null, ColorRegistry.getColor(0x7E, 0x00, 0x7E), null);
     }
 
@@ -700,6 +701,14 @@ public class OutlineView {
 
     public void refresh() {
         viewer.refresh();
+    }
+
+    public void setBackground(Color color) {
+        viewer.getControl().setBackground(color);
+    }
+
+    public void setForeground(Color color) {
+        viewer.getControl().setForeground(color);
     }
 
 }

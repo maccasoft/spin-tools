@@ -210,15 +210,18 @@ public class P1MemoryDialog extends Dialog {
             public void handleEvent(Event e) {
                 Rectangle bounds = ((Control) e.widget).getBounds();
 
+                e.gc.setBackground(stackFreeBackground);
+                e.gc.fillRectangle(0, 0, bounds.width, bounds.height);
+
                 int codePixels = (int) (bounds.width * (vbase - pbase) / 32768.0);
                 int variablesPixels = (int) (bounds.width * (dbase - vbase) / 32768.0);
 
+                int x = 0;
                 e.gc.setBackground(codeBackground);
-                e.gc.fillRectangle(0, 0, codePixels, bounds.height);
+                e.gc.fillRectangle(x, 0, codePixels, bounds.height);
+                x += codePixels;
                 e.gc.setBackground(variablesBackground);
-                e.gc.fillRectangle(codePixels, 0, variablesPixels, bounds.height);
-                e.gc.setBackground(stackFreeBackground);
-                e.gc.fillRectangle(codePixels + variablesPixels, 0, bounds.width - (codePixels + variablesPixels), bounds.height);
+                e.gc.fillRectangle(x, 0, variablesPixels, bounds.height);
             }
 
         });
