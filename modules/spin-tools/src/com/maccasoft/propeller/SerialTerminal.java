@@ -58,6 +58,7 @@ import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -825,6 +826,10 @@ public class SerialTerminal {
                 case Preferences.PROP_TERMINAL_LOCAL_ECHO:
                     localEcho = (Boolean) evt.getNewValue();
                     break;
+
+                case Preferences.PROP_THEME:
+                    applyTheme((String) evt.getNewValue());
+                    break;
             }
         }
     };
@@ -870,6 +875,7 @@ public class SerialTerminal {
         shell.setLayout(layout);
 
         createContents(shell);
+        applyTheme(preferences.getTheme());
 
         Rectangle rect = preferences.getTerminalWindow();
         if (rect != null) {
@@ -924,6 +930,7 @@ public class SerialTerminal {
         GridLayout layout = new GridLayout(1, false);
         layout.marginWidth = layout.marginHeight = 0;
         container.setLayout(layout);
+        container.setBackgroundMode(SWT.INHERIT_DEFAULT);
 
         createLineInputGroup(container);
 
@@ -1182,7 +1189,10 @@ public class SerialTerminal {
 
     void createLineInputGroup(Composite parent) {
         lineInputGroup = new Composite(parent, SWT.NONE);
-        lineInputGroup.setLayout(new GridLayout(1, false));
+        GridLayout layout = new GridLayout(1, false);
+        layout.marginTop = layout.marginHeight;
+        layout.marginHeight = 0;
+        lineInputGroup.setLayout(layout);
         lineInputGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
         lineInput = new Combo(lineInputGroup, SWT.BORDER | SWT.DROP_DOWN);
@@ -1630,6 +1640,64 @@ public class SerialTerminal {
         } finally {
             clipboard.dispose();
         }
+    }
+
+    public void applyTheme(String id) {
+        Color widgetForeground = null;
+        Color widgetBackground = null;
+        Color listForeground = null;
+        Color listBackground = null;
+
+        if ("win32".equals(Platform.PLATFORM) && id == null) {
+            if (Display.isSystemDarkTheme()) {
+                id = "dark";
+            }
+        }
+
+        if (id == null) {
+            widgetBackground = ColorRegistry.getColor(ColorRegistry.WIDGET_BACKGROUND);
+            widgetForeground = ColorRegistry.getColor(ColorRegistry.WIDGET_FOREGROUND);
+        }
+        else if ("dark".equals(id)) {
+            widgetForeground = new Color(0xF0, 0xF0, 0xF0);
+            widgetBackground = new Color(0x50, 0x55, 0x57);
+            listForeground = new Color(0xA7, 0xA7, 0xA7);
+            listBackground = new Color(0x2B, 0x2B, 0x2B);
+        }
+        else if ("light".equals(id)) {
+            widgetForeground = new Color(0x00, 0x00, 0x00);
+            if ("win32".equals(Platform.PLATFORM)) {
+                widgetBackground = new Color(0xF0, 0xF0, 0xF0);
+            }
+            else {
+                widgetBackground = new Color(0xFA, 0xFA, 0xFA);
+            }
+            listForeground = new Color(0x00, 0x00, 0x00);
+            listBackground = new Color(0xFE, 0xFE, 0xFE);
+        }
+
+        canvas.getParent().setBackground(widgetBackground);
+
+        lineInput.setBackground(listBackground);
+        lineInput.setForeground(listForeground);
+
+        terminalType.setForeground(listForeground);
+        terminalType.setBackground(listBackground);
+        baudRate.setBackground(listBackground);
+        baudRate.setForeground(listForeground);
+        //dtr.setBackground(widgetBackground);
+        dtr.setForeground(widgetForeground);
+        //dsr.setBackground(widgetBackground);
+        dsr.setForeground(widgetForeground);
+        //rts.setBackground(widgetBackground);
+        rts.setForeground(widgetForeground);
+        //cts.setBackground(widgetBackground);
+        cts.setForeground(widgetForeground);
+
+        monitor.setBackground(widgetBackground);
+        monitor.setForeground(widgetForeground);
+        taqoz.setBackground(widgetBackground);
+        taqoz.setForeground(widgetForeground);
     }
 
     public static void main(String[] args) {

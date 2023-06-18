@@ -59,6 +59,7 @@ public class Preferences {
     public static final String PROP_CONSOLE_FONT = "consoleFont";
     public static final String PROP_CONSOLE_MAX_LINES = "consoleMaxLines";
     public static final String PROP_CONSOLE_WRITE_LOG_FILE = "consoleWriteLogFile";
+    public static final String PROP_THEME = "theme";
 
     public static final String PREFERENCES_NAME = ".spin-tools";
 
@@ -170,6 +171,8 @@ public class Preferences {
         public ConsolePreferences console;
 
         public SearchPreferences search;
+
+        public String theme;
 
     }
 
@@ -687,6 +690,14 @@ public class Preferences {
             preferences.search = new SearchPreferences();
         }
         return preferences.search;
+    }
+
+    public String getTheme() {
+        return preferences.theme;
+    }
+
+    public void setTheme(String theme) {
+        changeSupport.firePropertyChange(PROP_THEME, preferences.theme, preferences.theme = theme);
     }
 
     public void save() throws IOException {

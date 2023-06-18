@@ -70,6 +70,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.graphics.TextStyle;
+import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -134,6 +135,7 @@ public class SourceEditor {
     Caret alignCaret;
     boolean modified;
 
+    Color[][] sectionColor = new Color[6][2];
     int[] sectionCount = new int[6];
 
     SourceTokenMarker tokenMarker;
@@ -225,6 +227,10 @@ public class SourceEditor {
                 case Preferences.PROP_SHOW_SECTIONS_BACKGROUND:
                     styledText.redraw();
                     break;
+                case Preferences.PROP_THEME:
+                    applyTheme((String) evt.getNewValue());
+                    styledText.redraw();
+                    break;
             }
         }
     };
@@ -248,7 +254,6 @@ public class SourceEditor {
         container.setLayout(containerLayout);
 
         currentLine = 0;
-        currentLineBackground = new Color(display, 0xE8, 0xF2, 0xFE);
 
         ruler = new LineNumbersRuler(container);
 
@@ -631,7 +636,12 @@ public class SourceEditor {
                     FillLayout layout = new FillLayout();
                     layout.marginHeight = layout.marginWidth = 5;
                     popupWindow.setLayout(layout);
+                    popupWindow.setForeground(textForeground);
+                    popupWindow.setBackground(textBackground);
+                    popupWindow.setBackgroundMode(SWT.INHERIT_DEFAULT);
+
                     Label content = new Label(popupWindow, SWT.NONE);
+                    content.setForeground(textForeground);
                     content.setText(marker.getError());
                     popupWindow.pack();
 
@@ -687,10 +697,16 @@ public class SourceEditor {
                         FillLayout layout = new FillLayout();
                         layout.marginHeight = layout.marginWidth = 0;
                         popupWindow.setLayout(layout);
+                        popupWindow.setLayout(layout);
+                        popupWindow.setForeground(textForeground);
+                        popupWindow.setBackground(textBackground);
+                        popupWindow.setBackgroundMode(SWT.INHERIT_DEFAULT);
 
                         StyledText content = new StyledText(popupWindow, SWT.READ_ONLY | SWT.V_SCROLL | SWT.WRAP);
                         content.setMargins(5, 5, 5, 5);
                         content.setCaret(null);
+                        content.setForeground(textForeground);
+                        content.setBackground(textBackground);
                         HTMLStyledTextDecorator htmlText = new HTMLStyledTextDecorator(content);
                         htmlText.setText(text);
 
@@ -1061,29 +1077,7 @@ public class SourceEditor {
         fontItalic = new Font(display, fontData.getName(), fontData.getHeight(), SWT.ITALIC);
         fontBoldItalic = new Font(display, fontData.getName(), fontData.getHeight(), SWT.BOLD | SWT.ITALIC);
 
-        styleMap.put(TokenId.COMMENT, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x7E, 0x7E), null));
-        styleMap.put(TokenId.SECTION, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
-
-        styleMap.put(TokenId.NUMBER, new TextStyle(font, ColorRegistry.getColor(0x00, 0x66, 0x99), null));
-        styleMap.put(TokenId.STRING, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x00, 0x7E), null));
-        styleMap.put(TokenId.CONSTANT, new TextStyle(font, ColorRegistry.getColor(0x7E, 0x00, 0x7E), null));
-
-        styleMap.put(TokenId.METHOD_PUB, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
-        styleMap.put(TokenId.METHOD_PRI, new TextStyle(fontBoldItalic, ColorRegistry.getColor(0x00, 0x00, 0xA0), null));
-        styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(font, ColorRegistry.getColor(0x80, 0x80, 0x00), null));
-        styleMap.put(TokenId.METHOD_RETURN, new TextStyle(font, ColorRegistry.getColor(0x90, 0x00, 0x00), null));
-
-        styleMap.put(TokenId.TYPE, new TextStyle(fontBold, null, null));
-        styleMap.put(TokenId.KEYWORD, new TextStyle(fontBold, ColorRegistry.getColor(0x00, 0x80, 0x00), null));
-        styleMap.put(TokenId.FUNCTION, new TextStyle(fontBold, null, null));
-        styleMap.put(TokenId.OBJECT, new TextStyle(font, ColorRegistry.getColor(0x00, 0x00, 0xC0), null));
-
-        styleMap.put(TokenId.DIRECTIVE, new TextStyle(font, ColorRegistry.getColor(0x00, 0x80, 0x00), null));
-
-        styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(fontItalic, null, null));
-        styleMap.put(TokenId.PASM_CONDITION, new TextStyle(fontBold, null, null));
-        styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(fontBold, ColorRegistry.getColor(0x80, 0x00, 0x00), null));
-        styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(fontBold, null, null));
+        applyTheme(preferences.getTheme());
 
         ruler.setFont(font);
         styledText.setFont(font);
@@ -1117,6 +1111,132 @@ public class SourceEditor {
             oldFontBold.dispose();
             oldFontItalic.dispose();
             oldFontBoldItalic.dispose();
+        }
+    }
+
+    Color textBackground;
+    Color textForeground;
+    Color rulersBackground;
+    Color rulersForeground;
+
+    void applyTheme(String id) {
+        textBackground = null;
+        textForeground = null;
+        rulersBackground = null;
+        rulersForeground = null;
+
+        styleMap.clear();
+
+        if ("win32".equals(Platform.PLATFORM) && id == null) {
+            if (Display.isSystemDarkTheme()) {
+                id = "dark";
+            }
+        }
+
+        if (id == null) {
+            id = Display.isSystemDarkTheme() ? "dark" : "light";
+            rulersBackground = ColorRegistry.getColor(ColorRegistry.WIDGET_BACKGROUND);
+            rulersForeground = ColorRegistry.getColor(ColorRegistry.WIDGET_FOREGROUND);
+            textBackground = ColorRegistry.getColor(ColorRegistry.LIST_BACKGROUND);
+            textForeground = ColorRegistry.getColor(ColorRegistry.LIST_FOREGROUND);
+        }
+        else if ("dark".equals(id)) {
+            textBackground = new Color(0x2A, 0x2A, 0x2A);
+            textForeground = new Color(0xC7, 0xC7, 0xC7);
+            rulersBackground = new Color(0x3B, 0x3B, 0x3B);
+            rulersForeground = new Color(0x78, 0x92, 0x9B);
+        }
+        else if ("light".equals(id)) {
+            textBackground = new Color(0xFE, 0xFE, 0xFE);
+            textForeground = new Color(0x00, 0x00, 0x00);
+            if ("win32".equals(Platform.PLATFORM)) {
+                rulersBackground = new Color(0xF0, 0xF0, 0xF0);
+            }
+            else {
+                rulersBackground = new Color(0xFA, 0xFA, 0xFA);
+            }
+            rulersForeground = new Color(0x3B, 0x3B, 0x3B);
+        }
+
+        ruler.setBackground(rulersBackground);
+        ruler.setForeground(rulersForeground);
+        styledText.setBackground(textBackground);
+        styledText.setForeground(textForeground);
+        overview.setBackground(rulersBackground);
+        overview.setForeground(rulersForeground);
+
+        if ("dark".equals(id)) {
+            currentLineBackground = new Color(display, 0x3B, 0x3B, 0x3B);
+
+            sectionColor = new Color[6][2];
+
+            styleMap.put(TokenId.COMMENT, new TextStyle(font, new Color(0x7E, 0x7E, 0x7E), null));
+            styleMap.put(TokenId.SECTION, new TextStyle(fontBold, new Color(0x12, 0x90, 0xC3), null));
+
+            styleMap.put(TokenId.NUMBER, new TextStyle(font, new Color(0x68, 0x97, 0xBB), null));
+            styleMap.put(TokenId.STRING, new TextStyle(font, new Color(0x17, 0xC6, 0xA3), null));
+            styleMap.put(TokenId.CONSTANT, new TextStyle(font, new Color(0xCC, 0x81, 0xBA), null));
+
+            styleMap.put(TokenId.METHOD_PUB, new TextStyle(fontBold, new Color(0x12, 0x90, 0xC3), null));
+            styleMap.put(TokenId.METHOD_PRI, new TextStyle(fontBoldItalic, new Color(0x12, 0x90, 0xC3), null));
+            styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(font, new Color(0xAF, 0xAF, 0x00), null));
+            styleMap.put(TokenId.METHOD_RETURN, new TextStyle(font, new Color(0xCC, 0x6C, 0x1D), null));
+
+            styleMap.put(TokenId.TYPE, new TextStyle(fontBold, new Color(0x12, 0x90, 0xC3), null));
+            styleMap.put(TokenId.KEYWORD, new TextStyle(fontBold, new Color(0x00, 0xA0, 0x00), null));
+            styleMap.put(TokenId.FUNCTION, new TextStyle(fontBold, new Color(0xA7, 0xEC, 0x21), null));
+            styleMap.put(TokenId.OBJECT, new TextStyle(font, new Color(0x66, 0xE1, 0xF8), null));
+            styleMap.put(TokenId.VARIABLE, new TextStyle(font, new Color(0x66, 0xE1, 0xF8), null));
+
+            styleMap.put(TokenId.DIRECTIVE, new TextStyle(font, new Color(0x20, 0x80, 0x20), null));
+
+            //styleMap.put(TokenId.PASM_LABEL, new TextStyle(fontBold, null, null));
+            styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(fontItalic, null, null));
+            styleMap.put(TokenId.PASM_CONDITION, new TextStyle(fontBold, null, null));
+            styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(fontBold, new Color(0xCC, 0x6C, 0x1D), null));
+            styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(fontBold, null, null));
+        }
+        else if ("light".equals(id)) {
+            currentLineBackground = new Color(display, 0xE8, 0xF2, 0xFE);
+
+            sectionColor[0][0] = getColor(255, 248, 192, 0);
+            sectionColor[0][1] = getColor(255, 248, 192, -6);
+            sectionColor[1][0] = getColor(255, 223, 191, 0);
+            sectionColor[1][1] = getColor(255, 223, 191, -6);
+            sectionColor[2][0] = getColor(255, 191, 191, 0);
+            sectionColor[2][1] = getColor(255, 191, 191, -6);
+            sectionColor[3][0] = getColor(191, 223, 255, 0);
+            sectionColor[3][1] = getColor(191, 223, 255, -6);
+            sectionColor[4][0] = getColor(191, 248, 255, 0);
+            sectionColor[4][1] = getColor(191, 248, 255, -6);
+            sectionColor[5][0] = getColor(191, 255, 200, 0);
+            sectionColor[5][1] = getColor(191, 255, 200, -6);
+
+            styleMap.put(TokenId.COMMENT, new TextStyle(font, new Color(0x7E, 0x7E, 0x7E), null));
+            styleMap.put(TokenId.SECTION, new TextStyle(fontBold, new Color(0x00, 0x00, 0xA0), null));
+
+            styleMap.put(TokenId.NUMBER, new TextStyle(font, new Color(0x00, 0x66, 0x99), null));
+            styleMap.put(TokenId.STRING, new TextStyle(font, new Color(0x7E, 0x00, 0x7E), null));
+            styleMap.put(TokenId.CONSTANT, new TextStyle(font, new Color(0x7E, 0x00, 0x7E), null));
+
+            styleMap.put(TokenId.METHOD_PUB, new TextStyle(fontBold, new Color(0x00, 0x00, 0xA0), null));
+            styleMap.put(TokenId.METHOD_PRI, new TextStyle(fontBoldItalic, new Color(0x00, 0x00, 0xA0), null));
+            styleMap.put(TokenId.METHOD_LOCAL, new TextStyle(font, new Color(0x80, 0x80, 0x00), null));
+            styleMap.put(TokenId.METHOD_RETURN, new TextStyle(font, new Color(0x90, 0x00, 0x00), null));
+
+            styleMap.put(TokenId.TYPE, new TextStyle(fontBold, null, null));
+            styleMap.put(TokenId.KEYWORD, new TextStyle(fontBold, new Color(0x00, 0x80, 0x00), null));
+            styleMap.put(TokenId.FUNCTION, new TextStyle(fontBold, null, null));
+            styleMap.put(TokenId.OBJECT, new TextStyle(font, new Color(0x00, 0x00, 0xC0), null));
+            styleMap.put(TokenId.VARIABLE, new TextStyle(font, new Color(0x00, 0x00, 0xC0), null));
+
+            styleMap.put(TokenId.DIRECTIVE, new TextStyle(font, new Color(0x00, 0x80, 0x00), null));
+
+            //styleMap.put(TokenId.PASM_LABEL, new TextStyle(fontBold, null, null));
+            styleMap.put(TokenId.PASM_LOCAL_LABEL, new TextStyle(fontItalic, null, null));
+            styleMap.put(TokenId.PASM_CONDITION, new TextStyle(fontBold, null, null));
+            styleMap.put(TokenId.PASM_INSTRUCTION, new TextStyle(fontBold, new Color(0x80, 0x00, 0x00), null));
+            styleMap.put(TokenId.PASM_MODIFIER, new TextStyle(fontBold, null, null));
         }
     }
 
@@ -1828,39 +1948,29 @@ public class SourceEditor {
         }
 
         if (node instanceof VariablesNode) {
-            result = getColor(255, 223, 191, sectionCount[1] == 0 ? 0 : -6);
-            if (node != null) {
-                sectionCount[1] = sectionCount[1] == 0 ? 1 : 0;
-            }
+            result = sectionColor[1][sectionCount[1]];
+            sectionCount[1] = sectionCount[1] == 0 ? 1 : 0;
         }
         else if (node instanceof ObjectsNode) {
-            result = getColor(255, 191, 191, sectionCount[2] == 0 ? 0 : -6);
-            if (node != null) {
-                sectionCount[2] = sectionCount[2] == 0 ? 1 : 0;
-            }
+            result = sectionColor[2][sectionCount[2]];
+            sectionCount[2] = sectionCount[2] == 0 ? 1 : 0;
         }
         else if (node instanceof MethodNode) {
             if (((MethodNode) node).isPublic()) {
-                result = getColor(191, 223, 255, sectionCount[3] == 0 ? 0 : -6);
-                if (node != null) {
-                    sectionCount[3] = sectionCount[3] == 0 ? 1 : 0;
-                }
+                result = sectionColor[3][sectionCount[3]];
+                sectionCount[3] = sectionCount[3] == 0 ? 1 : 0;
             }
             else {
-                result = getColor(191, 248, 255, sectionCount[4] == 0 ? 0 : -6);
-                if (node != null) {
-                    sectionCount[4] = sectionCount[4] == 0 ? 1 : 0;
-                }
+                result = sectionColor[4][sectionCount[4]];
+                sectionCount[4] = sectionCount[4] == 0 ? 1 : 0;
             }
         }
         else if (node instanceof DataNode) {
-            result = getColor(191, 255, 200, sectionCount[5] == 0 ? 0 : -6);
-            if (node != null) {
-                sectionCount[5] = sectionCount[5] == 0 ? 1 : 0;
-            }
+            result = sectionColor[5][sectionCount[5]];
+            sectionCount[5] = sectionCount[5] == 0 ? 1 : 0;
         }
         else {
-            result = getColor(255, 248, 192, sectionCount[0] == 0 ? 0 : -6);
+            result = sectionColor[0][sectionCount[0]];
             if (node != null) {
                 sectionCount[0] = sectionCount[0] == 0 ? 1 : 0;
             }

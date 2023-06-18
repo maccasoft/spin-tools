@@ -14,15 +14,34 @@ package com.maccasoft.propeller.internal;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
 
 public class ColorRegistry {
 
-    private static Map<RGB, Color> map = new HashMap<RGB, Color>();
+    public static final String LIST_BACKGROUND = "LIST_BACKGROUND";
+    public static final String LIST_FOREGROUND = "LIST_FOREGROUND";
+    public static final String WIDGET_BACKGROUND = "WIDGET_BACKGROUND";
+    public static final String WIDGET_FOREGROUND = "WIDGET_FOREGROUND";
+
+    private static Map<String, Color> colorMap = new HashMap<>();
+    private static Map<RGB, Color> map = new HashMap<>();
 
     ColorRegistry() {
+
+    }
+
+    public static void initSystemDefaults() {
+        colorMap.put(LIST_BACKGROUND, Display.getDefault().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+        colorMap.put(LIST_FOREGROUND, Display.getDefault().getSystemColor(SWT.COLOR_LIST_FOREGROUND));
+        colorMap.put(WIDGET_BACKGROUND, Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
+        colorMap.put(WIDGET_FOREGROUND, Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_FOREGROUND));
+    }
+
+    public static Color getColor(String key) {
+        return colorMap.get(key);
     }
 
     public static Color getColor(int r, int g, int b) {
@@ -32,7 +51,7 @@ public class ColorRegistry {
     public static Color getColor(RGB rgb) {
         Color result = map.get(rgb);
         if (result == null) {
-            result = new Color(Display.getDefault(), rgb);
+            result = new Color(rgb);
             map.put(rgb, result);
         }
         return result;
@@ -63,10 +82,4 @@ public class ColorRegistry {
         return getColor(r, g, b);
     }
 
-    public static void dispose() {
-        for (Color color : map.values()) {
-            color.dispose();
-        }
-        map.clear();
-    }
 }

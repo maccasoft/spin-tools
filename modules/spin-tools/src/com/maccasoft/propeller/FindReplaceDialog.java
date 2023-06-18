@@ -24,20 +24,26 @@ import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Spinner;
+import org.eclipse.swt.widgets.Text;
 
 import com.maccasoft.propeller.Preferences.Bounds;
 import com.maccasoft.propeller.Preferences.SearchPreferences;
+import com.maccasoft.propeller.internal.ColorRegistry;
 
 public class FindReplaceDialog extends Dialog {
 
@@ -105,6 +111,7 @@ public class FindReplaceDialog extends Dialog {
         layout.makeColumnsEqualWidth = true;
         panel.setLayout(layout);
         setGridData(panel, SWT.FILL, true, SWT.FILL, true);
+        panel.setBackgroundMode(SWT.INHERIT_DEFAULT);
 
         Composite inputPanel = createInputPanel(panel);
         setGridData(inputPanel, SWT.FILL, true, SWT.TOP, false);
@@ -122,6 +129,10 @@ public class FindReplaceDialog extends Dialog {
 
         initFindStringFromSelection();
         fNeedsInitialFindBeforeReplace = true;
+
+        if ("win32".equals(Platform.PLATFORM) || theme != null) {
+            applyTheme(parent);
+        }
 
         return panel;
     }
@@ -369,12 +380,12 @@ public class FindReplaceDialog extends Dialog {
         setGridData(fFindNextButton, SWT.FILL, true, SWT.FILL, false);
 
         /*Button fSelectAllButton = makeButton(panel, "Select All", 106, false, new SelectionAdapter() {
-
+        
             @Override
             public void widgetSelected(SelectionEvent e) {
-
+        
             }
-
+        
         });
         setGridData(fSelectAllButton, SWT.FILL, true, SWT.FILL, false);*/
 
@@ -626,6 +637,94 @@ public class FindReplaceDialog extends Dialog {
 
     public String getFindString() {
         return findString;
+    }
+
+    String theme;
+    Color widgetForeground;
+    Color widgetBackground;
+    Color listForeground;
+    Color listBackground;
+    Color labelForeground;
+    Color buttonBackground;
+
+    public void setTheme(String id) {
+        theme = id;
+
+        widgetForeground = null;
+        widgetBackground = null;
+        listForeground = null;
+        listBackground = null;
+        labelForeground = null;
+        buttonBackground = null;
+
+        if ("win32".equals(Platform.PLATFORM) && id == null) {
+            if (Display.isSystemDarkTheme()) {
+                id = "dark";
+            }
+        }
+
+        if (id == null) {
+            listBackground = ColorRegistry.getColor(ColorRegistry.LIST_BACKGROUND);
+            listForeground = ColorRegistry.getColor(ColorRegistry.LIST_FOREGROUND);
+            widgetBackground = ColorRegistry.getColor(ColorRegistry.WIDGET_BACKGROUND);
+            widgetForeground = ColorRegistry.getColor(ColorRegistry.WIDGET_FOREGROUND);
+        }
+        else if ("dark".equals(id)) {
+            widgetForeground = new Color(0xF0, 0xF0, 0xF0);
+            widgetBackground = new Color(0x50, 0x55, 0x57);
+            listForeground = new Color(0xA7, 0xA7, 0xA7);
+            listBackground = new Color(0x2B, 0x2B, 0x2B);
+            labelForeground = new Color(0xD7, 0xD7, 0xD7);
+            buttonBackground = new Color(0x50, 0x55, 0x57);
+        }
+        else if ("light".equals(id)) {
+            widgetForeground = new Color(0x00, 0x00, 0x00);
+            if ("win32".equals(Platform.PLATFORM)) {
+                widgetBackground = new Color(0xF0, 0xF0, 0xF0);
+            }
+            else {
+                widgetBackground = new Color(0xFA, 0xFA, 0xFA);
+            }
+            listForeground = new Color(0x00, 0x00, 0x00);
+            listBackground = new Color(0xFE, 0xFE, 0xFE);
+            labelForeground = new Color(0x00, 0x00, 0x00);
+            buttonBackground = new Color(0xFA, 0xFA, 0xFA);
+        }
+    }
+
+    void applyTheme(Control control) {
+        if (control instanceof List) {
+            control.setForeground(listForeground);
+            control.setBackground(listBackground);
+        }
+        else if (control instanceof Button) {
+            if (control != getShell().getDefaultButton()) {
+                control.setForeground(widgetForeground);
+                control.setBackground(buttonBackground);
+            }
+        }
+        else if (control instanceof Text) {
+            control.setForeground(listForeground);
+            control.setBackground(listBackground);
+        }
+        else if (control instanceof Spinner) {
+            control.setForeground(listForeground);
+            control.setBackground(listBackground);
+        }
+        else if (control instanceof Combo) {
+            control.setForeground(listForeground);
+            control.setBackground(listBackground);
+        }
+        else if (control instanceof Label) {
+            control.setForeground(widgetForeground);
+        }
+        else if (control instanceof Composite) {
+            control.setBackground(widgetBackground);
+            Control[] children = ((Composite) control).getChildren();
+            for (int i = 0; i < children.length; i++) {
+                applyTheme(children[i]);
+            }
+        }
     }
 
 }

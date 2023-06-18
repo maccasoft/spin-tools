@@ -35,7 +35,6 @@ import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
-import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataLineNode;
@@ -540,12 +539,12 @@ public class OutlineView {
         fd[0].setStyle(SWT.BOLD);
         fontBold = new Font(viewer.getControl().getDisplay(), fd[0]);
 
-        commentStyle = new TextStyle(null, ColorRegistry.getColor(0x7E, 0x7E, 0x7E), null);
+        commentStyle = new TextStyle(null, new Color(0x7E, 0x7E, 0x7E), null);
         sectionStyle = new TextStyle(fontBold, null, null);
-        methodLocalStyle = new TextStyle(null, ColorRegistry.getColor(0x80, 0x80, 0x00), null);
-        methodReturnStyle = new TextStyle(null, ColorRegistry.getColor(0x90, 0x00, 0x00), null);
+        methodLocalStyle = new TextStyle(null, new Color(0x80, 0x80, 0x00), null);
+        methodReturnStyle = new TextStyle(null, new Color(0x90, 0x00, 0x00), null);
         typeStyle = new TextStyle(fontBold, null, null);
-        stringStyle = new TextStyle(null, ColorRegistry.getColor(0x7E, 0x00, 0x7E), null);
+        stringStyle = new TextStyle(null, new Color(0x7E, 0x00, 0x7E), null);
     }
 
     public void setLayoutData(Object layoutData) {

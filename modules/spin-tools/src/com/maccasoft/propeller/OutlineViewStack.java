@@ -48,8 +48,10 @@ public class OutlineViewStack {
 
     public OutlineView createNew() {
         OutlineView view = new OutlineView(container);
-        map.put(view.getControl(), view);
+        view.setForeground(container.getForeground());
+        view.setBackground(container.getBackground());
         view.getControl().addDisposeListener(disposeListener);
+        map.put(view.getControl(), view);
         return view;
     }
 
@@ -82,7 +84,7 @@ public class OutlineViewStack {
 
     public void setForeground(Color color) {
         for (OutlineView view : map.values()) {
-            view.setBackground(color);
+            view.setForeground(color);
         }
         container.setForeground(color);
     }

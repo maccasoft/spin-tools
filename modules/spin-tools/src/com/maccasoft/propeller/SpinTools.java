@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -69,9 +70,11 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -90,6 +93,7 @@ import org.eclipse.swt.widgets.ToolItem;
 
 import com.maccasoft.propeller.Preferences.SearchPreferences;
 import com.maccasoft.propeller.internal.BusyIndicator;
+import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.InternalErrorDialog;
@@ -123,6 +127,7 @@ public class SpinTools {
     ObjectBrowser objectBrowser;
     FileBrowser fileBrowser;
     CTabFolder tabFolder;
+    ToolBar tabFolderToolBar;
     OutlineViewStack outlineViewStack;
     ConsoleView debugConsoleView;
 
@@ -291,6 +296,9 @@ public class SpinTools {
                 case Preferences.PROP_ROOTS:
                     fileBrowser.setVisiblePaths((File[]) evt.getNewValue());
                     break;
+                case Preferences.PROP_THEME:
+                    applyTheme((String) evt.getNewValue());
+                    break;
             }
         }
     };
@@ -340,6 +348,22 @@ public class SpinTools {
 
         preferences = Preferences.getInstance();
 
+        boolean dark = "dark".equals(preferences.getTheme());
+        if ("win32".contentEquals(Platform.PLATFORM) && Display.isSystemDarkTheme() && preferences.getTheme() == null) {
+            dark = true;
+        }
+        if (dark) {
+            try {
+                @SuppressWarnings("rawtypes")
+                Class clazz = Class.forName("org.eclipse.swt.internal." + Platform.PLATFORM + ".OS");
+                @SuppressWarnings("unchecked")
+                Method method = clazz.getMethod("setTheme", boolean.class);
+                method.invoke(null, true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         Rectangle bounds = preferences.getWindowBounds();
         if (bounds != null) {
             shell.setBounds(bounds);
@@ -354,6 +378,7 @@ public class SpinTools {
 
         Composite container = new Composite(shell, SWT.NONE);
         GridLayout layout = new GridLayout(1, false);
+        layout.horizontalSpacing = layout.verticalSpacing = 0;
         layout.marginWidth = layout.marginHeight = 0;
         container.setLayout(layout);
 
@@ -381,6 +406,8 @@ public class SpinTools {
         tabFolder.setMaximizeVisible(false);
         tabFolder.setMinimizeVisible(false);
 
+        createTabFolderMenu();
+
         outlineViewStack = new OutlineViewStack(editorSashForm, SWT.BORDER);
         outlineViewStack.setVisible(preferences.getShowEditorOutline());
 
@@ -391,6 +418,10 @@ public class SpinTools {
         GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
         layoutData.heightHint = 24;
         statusLine.setLayoutData(layoutData);
+
+        if ("win32".equals(Platform.PLATFORM) || preferences.getTheme() != null) {
+            applyTheme(preferences.getTheme());
+        }
 
         int[] weights = preferences.getWeights("sashForm");
         sashForm.setWeights(weights != null ? weights : new int[] {
@@ -429,8 +460,6 @@ public class SpinTools {
             }
         });
         fileBrowser.addOpenListener(openListener);
-
-        createTabFolderMenu();
 
         tabFolder.addTraverseListener(new TraverseListener() {
 
@@ -659,6 +688,86 @@ public class SpinTools {
                 });
             }
         }, true);
+    }
+
+    void applyTheme(String id) {
+        Color widgetForeground = null;
+        Color widgetBackground = null;
+        Color listForeground = null;
+        Color listBackground = null;
+        Color tabfolderBackground = null;
+
+        if ("win32".equals(Platform.PLATFORM) && id == null) {
+            if (Display.isSystemDarkTheme()) {
+                id = "dark";
+            }
+        }
+
+        if (id == null) {
+            listBackground = ColorRegistry.getColor(ColorRegistry.LIST_BACKGROUND);
+            listForeground = ColorRegistry.getColor(ColorRegistry.LIST_FOREGROUND);
+            widgetBackground = ColorRegistry.getColor(ColorRegistry.WIDGET_BACKGROUND);
+            widgetForeground = ColorRegistry.getColor(ColorRegistry.WIDGET_FOREGROUND);
+            tabfolderBackground = widgetBackground;
+        }
+        else if ("dark".equals(id)) {
+            widgetForeground = new Color(0xF0, 0xF0, 0xF0);
+            widgetBackground = new Color(0x50, 0x55, 0x57);
+            listForeground = new Color(0xA7, 0xA7, 0xA7);
+            listBackground = new Color(0x2B, 0x2B, 0x2B);
+            tabfolderBackground = new Color(0x43, 0x44, 0x47);
+        }
+        else if ("light".equals(id)) {
+            widgetForeground = new Color(0x00, 0x00, 0x00);
+            if ("win32".equals(Platform.PLATFORM)) {
+                widgetBackground = new Color(0xF0, 0xF0, 0xF0);
+            }
+            else {
+                widgetBackground = new Color(0xFA, 0xFA, 0xFA);
+            }
+            listForeground = new Color(0x00, 0x00, 0x00);
+            listBackground = new Color(0xFE, 0xFE, 0xFE);
+            tabfolderBackground = widgetBackground;
+        }
+
+        shell.setBackground(widgetBackground);
+
+        toolBar.setBackground(widgetBackground);
+        ToolItem[] items = toolBar.getItems();
+        for (int i = 0; i < items.length; i++) {
+            items[i].setBackground(widgetBackground);
+        }
+
+        sashForm.setBackground(widgetBackground);
+        browserSashForm.setBackground(widgetBackground);
+        editorSashForm.setBackground(widgetBackground);
+        centralSashForm.setBackground(widgetBackground);
+
+        objectBrowser.setBackground(listBackground);
+        objectBrowser.setForeground(listForeground);
+
+        fileBrowser.setBackground(listBackground);
+        fileBrowser.setForeground(listForeground);
+
+        tabFolder.setForeground(widgetForeground);
+        tabFolder.setBackground(tabfolderBackground);
+        tabFolder.setSelectionForeground(widgetForeground);
+        tabFolder.setSelectionBackground(listBackground);
+
+        tabFolderToolBar.setBackground(tabfolderBackground);
+        items = tabFolderToolBar.getItems();
+        for (int i = 0; i < items.length; i++) {
+            items[i].setBackground(tabfolderBackground);
+        }
+
+        outlineViewStack.setBackground(listBackground);
+        outlineViewStack.setForeground(listForeground);
+
+        debugConsoleView.setBackground(listBackground);
+        debugConsoleView.setForeground(widgetForeground);
+
+        statusLine.setForeground(widgetForeground);
+        statusLine.setBackground(widgetBackground);
     }
 
     void createFileMenu(Menu parent) {
@@ -1238,6 +1347,7 @@ public class SpinTools {
                 }
 
                 findReplaceDialog = new FindReplaceDialog(shell);
+                findReplaceDialog.setTheme(preferences.getTheme());
                 findReplaceDialog.setTarget((EditorTab) tabItem.getData());
                 findReplaceDialog.open();
             }
@@ -2097,6 +2207,7 @@ public class SpinTools {
                 }
 
                 findReplaceDialog = new FindReplaceDialog(shell);
+                findReplaceDialog.setTheme(preferences.getTheme());
                 findReplaceDialog.setTarget((EditorTab) tabItem.getData());
                 findReplaceDialog.open();
             }
@@ -2122,6 +2233,7 @@ public class SpinTools {
                     }
 
                     findReplaceDialog = new FindReplaceDialog(shell);
+                    findReplaceDialog.setTheme(preferences.getTheme());
                     findReplaceDialog.setTarget((EditorTab) tabItem.getData());
                     findReplaceDialog.open();
                     return;
@@ -2150,6 +2262,7 @@ public class SpinTools {
                     }
 
                     findReplaceDialog = new FindReplaceDialog(shell);
+                    findReplaceDialog.setTheme(preferences.getTheme());
                     findReplaceDialog.setTarget((EditorTab) tabItem.getData());
                     findReplaceDialog.open();
                     return;
@@ -2212,7 +2325,7 @@ public class SpinTools {
 
             @Override
             public void handleEvent(Event e) {
-                PreferencesDialog dlg = new PreferencesDialog(shell);
+                PreferencesDialog dlg = new PreferencesDialog(shell, preferences);
                 dlg.open();
             }
         });
@@ -2424,6 +2537,7 @@ public class SpinTools {
                 }
 
             };
+            dlg.setTheme(preferences.getTheme());
             dlg.setObject((Spin1Object) object, editorTab.getObjectTree(), editorTab.isTopObject());
             dlg.open();
         }
@@ -2449,6 +2563,7 @@ public class SpinTools {
                 }
 
             };
+            dlg.setTheme(preferences.getTheme());
             dlg.setObject((Spin2Object) object, editorTab.getObjectTree(), editorTab.isTopObject());
             dlg.open();
         }
@@ -2881,6 +2996,7 @@ public class SpinTools {
             @Override
             public void handleEvent(Event e) {
                 AboutDialog dlg = new AboutDialog(shell);
+                dlg.setTheme(preferences.getTheme());
                 dlg.open();
             }
         });
@@ -2893,8 +3009,9 @@ public class SpinTools {
     }
 
     void createTabFolderMenu() {
-        final ToolBar toolBar = new ToolBar(tabFolder, SWT.FLAT);
-        final Menu menu = new Menu(toolBar);
+        tabFolderToolBar = new ToolBar(tabFolder, SWT.FLAT);
+
+        Menu menu = new Menu(tabFolderToolBar);
 
         MenuItem item = new MenuItem(menu, SWT.PUSH);
         item.setText("Next Tab\tCtrl+Tab");
@@ -2961,7 +3078,7 @@ public class SpinTools {
 
         final int entriesTokeep = menu.getItemCount();
 
-        final ToolItem menuToolItem = new ToolItem(toolBar, SWT.PUSH);
+        final ToolItem menuToolItem = new ToolItem(tabFolderToolBar, SWT.PUSH);
         menuToolItem.setImage(ImageRegistry.getImageFromResources("vertical-dots.png"));
         menuToolItem.addListener(SWT.Selection, new Listener() {
 
@@ -2989,13 +3106,13 @@ public class SpinTools {
 
                 Rectangle rect = menuToolItem.getBounds();
                 Point pt = new Point(rect.x, rect.y + rect.height);
-                pt = toolBar.toDisplay(pt);
+                pt = tabFolderToolBar.toDisplay(pt);
                 menu.setLocation(pt.x, pt.y);
                 menu.setVisible(true);
             }
         });
 
-        tabFolder.setTopRight(toolBar);
+        tabFolder.setTopRight(tabFolderToolBar);
     }
 
     private void handleNextTab() {
@@ -3232,6 +3349,8 @@ public class SpinTools {
 
     public static void main(String[] args) {
         final Display display = new Display();
+
+        ColorRegistry.initSystemDefaults();
 
         display.setErrorHandler(new Consumer<Error>() {
 

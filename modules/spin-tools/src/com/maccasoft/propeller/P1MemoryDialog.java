@@ -36,8 +36,10 @@ import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -48,7 +50,6 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
 
-import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.spin1.Spin1Object;
 
 public class P1MemoryDialog extends Dialog {
@@ -56,6 +57,13 @@ public class P1MemoryDialog extends Dialog {
     public static final int BYTES_PER_ROW = 16;
 
     Display display;
+    Color widgetForeground;
+    Color widgetBackground;
+    Color listForeground;
+    Color listBackground;
+    Color tabfolderBackground;
+    Color labelForeground;
+    Color buttonBackground;
 
     ObjectBrowser objectTree;
     CTabFolder tabFolder;
@@ -86,10 +94,76 @@ public class P1MemoryDialog extends Dialog {
         super(parentShell);
     }
 
+    public void setTheme(String id) {
+        Display display = Display.getDefault();
+
+        if ("win32".equals(Platform.PLATFORM) && id == null) {
+            if (Display.isSystemDarkTheme()) {
+                id = "dark";
+            }
+        }
+
+        if (id == null) {
+            widgetForeground = display.getSystemColor(SWT.COLOR_WIDGET_FOREGROUND);
+            widgetBackground = display.getSystemColor(SWT.COLOR_WIDGET_BACKGROUND);
+            listForeground = display.getSystemColor(SWT.COLOR_LIST_FOREGROUND);
+            listBackground = display.getSystemColor(SWT.COLOR_LIST_BACKGROUND);
+
+            if (Display.isSystemDarkTheme()) {
+                codeBackground = new Color(121, 0, 0);
+                variablesBackground = new Color(121, 121, 0);
+                stackFreeBackground = new Color(0, 121, 121);
+            }
+            else {
+                codeBackground = new Color(255, 191, 191);
+                variablesBackground = new Color(255, 248, 192);
+                stackFreeBackground = new Color(191, 223, 255);
+            }
+        }
+        else if ("dark".equals(id)) {
+            widgetForeground = new Color(0xF0, 0xF0, 0xF0);
+            widgetBackground = new Color(0x50, 0x55, 0x57);
+            listForeground = new Color(0xA7, 0xA7, 0xA7);
+            listBackground = new Color(0x2B, 0x2B, 0x2B);
+            tabfolderBackground = new Color(0x43, 0x44, 0x47);
+            labelForeground = new Color(0xD7, 0xD7, 0xD7);
+            buttonBackground = new Color(0x50, 0x55, 0x57);
+
+            codeBackground = new Color(121, 0, 0);
+            variablesBackground = new Color(121, 121, 0);
+            stackFreeBackground = new Color(0, 121, 121);
+        }
+        else if ("light".equals(id)) {
+            widgetForeground = new Color(0x00, 0x00, 0x00);
+            if ("win32".equals(Platform.PLATFORM)) {
+                widgetBackground = new Color(0xF0, 0xF0, 0xF0);
+            }
+            else {
+                widgetBackground = new Color(0xFA, 0xFA, 0xFA);
+            }
+            listForeground = new Color(0x00, 0x00, 0x00);
+            listBackground = new Color(0xFE, 0xFE, 0xFE);
+            tabfolderBackground = widgetBackground;
+            labelForeground = new Color(0x00, 0x00, 0x00);
+            buttonBackground = new Color(0xFA, 0xFA, 0xFA);
+
+            codeBackground = new Color(255, 191, 191);
+            variablesBackground = new Color(255, 248, 192);
+            stackFreeBackground = new Color(191, 223, 255);
+        }
+    }
+
     @Override
     protected void configureShell(Shell newShell) {
         super.configureShell(newShell);
         newShell.setText("Program Informations");
+    }
+
+    @Override
+    protected Control createButtonBar(Composite parent) {
+        parent.setBackground(widgetBackground);
+        parent.setBackgroundMode(SWT.INHERIT_DEFAULT);
+        return super.createButtonBar(parent);
     }
 
     @Override
@@ -100,7 +174,7 @@ public class P1MemoryDialog extends Dialog {
         layout.marginWidth = layout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
         content.setLayout(layout);
         content.setLayoutData(new GridData(GridData.FILL_BOTH));
-        content.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+        content.setBackground(listBackground);
         content.setBackgroundMode(SWT.INHERIT_FORCE);
 
         applyDialogFont(content);
@@ -117,16 +191,16 @@ public class P1MemoryDialog extends Dialog {
         format = NumberFormat.getInstance();
         format.setGroupingUsed(true);
 
-        codeBackground = ColorRegistry.getColor(255, 191, 191);
-        variablesBackground = ColorRegistry.getColor(255, 248, 192);
-        stackFreeBackground = ColorRegistry.getColor(191, 223, 255);
-
         createInfoGroup(content);
 
         tabFolder = new CTabFolder(content, SWT.BORDER);
         tabFolder.setMaximizeVisible(false);
         tabFolder.setMinimizeVisible(false);
         tabFolder.setTabHeight(24);
+        tabFolder.setForeground(widgetForeground);
+        tabFolder.setBackground(tabfolderBackground);
+        tabFolder.setSelectionForeground(widgetForeground);
+        tabFolder.setSelectionBackground(listBackground);
 
         CTabItem tabItem = new CTabItem(tabFolder, SWT.NONE);
         tabItem.setText("Memory");
@@ -177,6 +251,16 @@ public class P1MemoryDialog extends Dialog {
         super.createButtonsForButtonBar(parent);
     }
 
+    @Override
+    protected Button createButton(Composite parent, int id, String label, boolean defaultButton) {
+        Button control = super.createButton(parent, id, label, defaultButton);
+        if (!defaultButton) {
+            control.setForeground(widgetForeground);
+            control.setBackground(buttonBackground);
+        }
+        return control;
+    }
+
     public void createInfoGroup(Composite parent) {
         Composite container = new Composite(parent, SWT.NONE);
         container.setLayout(new GridLayout(1, false));
@@ -185,6 +269,8 @@ public class P1MemoryDialog extends Dialog {
         objectTree = new ObjectBrowser(container);
         objectTree.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         ((GridData) objectTree.getLayoutData()).heightHint = objectTree.getTree().getItemHeight() * 10;
+        objectTree.setBackground(listBackground);
+        objectTree.setForeground(listForeground);
         objectTree.setInput(tree, topObject);
 
         Composite group = new Composite(container, SWT.NONE);
@@ -192,11 +278,14 @@ public class P1MemoryDialog extends Dialog {
         group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         Label label = new Label(group, SWT.NONE);
         label.setText("$0000");
+        label.setForeground(labelForeground);
         label = new Label(group, SWT.CENTER);
         label.setText("HUB RAM Usage");
+        label.setForeground(labelForeground);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label = new Label(group, SWT.NONE);
         label.setText("$7FFF");
+        label.setForeground(labelForeground);
 
         label = new Label(group, SWT.BORDER);
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, false);
@@ -233,9 +322,11 @@ public class P1MemoryDialog extends Dialog {
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label.setText("Code / Data");
+        label.setForeground(labelForeground);
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
         label.setText(String.format("%d longs", (vbase - pbase) / 4));
+        label.setForeground(labelForeground);
         label = new Label(group, SWT.BORDER);
         label.setBackground(codeBackground);
         label.setLayoutData(new GridData(convertWidthInCharsToPixels(5), SWT.DEFAULT));
@@ -243,18 +334,22 @@ public class P1MemoryDialog extends Dialog {
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label.setText("Variables");
+        label.setForeground(labelForeground);
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
         label.setText(String.format("%d longs", (dbase - vbase) / 4));
+        label.setForeground(labelForeground);
         label = new Label(group, SWT.BORDER);
         label.setLayoutData(new GridData(convertWidthInCharsToPixels(5), SWT.DEFAULT));
         label.setBackground(variablesBackground);
 
         label = new Label(group, SWT.NONE);
         label.setText("Stack / Free");
+        label.setForeground(labelForeground);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label = new Label(group, SWT.NONE);
         label.setText(String.format("%d longs", (data.length - dbase) / 4));
+        label.setForeground(labelForeground);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
         label = new Label(group, SWT.BORDER);
         label.setBackground(stackFreeBackground);
@@ -270,6 +365,7 @@ public class P1MemoryDialog extends Dialog {
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(convertWidthInCharsToPixels(30), SWT.DEFAULT));
         label.setText("Clock Mode");
+        label.setForeground(labelForeground);
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
         if (clkmode == 0x00) {
@@ -318,10 +414,12 @@ public class P1MemoryDialog extends Dialog {
                 label.setText(pll);
             }
         }
+        label.setForeground(labelForeground);
 
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label.setText("Clock Freq.");
+        label.setForeground(labelForeground);
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
         if (clkmode == 0x00) {
@@ -333,9 +431,11 @@ public class P1MemoryDialog extends Dialog {
         else {
             label.setText(format.format(clkfreq) + " Hz");
         }
+        label.setForeground(labelForeground);
 
         label = new Label(group, SWT.NONE);
         label.setText("XIN Freq.");
+        label.setForeground(labelForeground);
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
         label = new Label(group, SWT.NONE);
         label.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
@@ -361,25 +461,27 @@ public class P1MemoryDialog extends Dialog {
                     break;
             }
         }
+        label.setForeground(labelForeground);
     }
 
     Control createMemoryView(Composite parent) {
         Composite container = new Composite(parent, SWT.NONE);
         container.setLayout(new GridLayout(1, false));
+        container.setBackground(listBackground);
 
         canvas = new Canvas(container, SWT.V_SCROLL | SWT.DOUBLE_BUFFERED) {
 
             @Override
             public Point computeSize(int wHint, int hHint, boolean changed) {
                 int halfWidth = (int) (fontMetrics.getAverageCharacterWidth() / 2);
-                int width = (int) (fontMetrics.getAverageCharacterWidth() * (4 + 1 + 3 * BYTES_PER_ROW + BYTES_PER_ROW) + halfWidth);
+                int width = (int) (fontMetrics.getAverageCharacterWidth() * (5 + 1 + 3 * BYTES_PER_ROW + BYTES_PER_ROW) + halfWidth);
                 return super.computeSize(width, fontMetrics.getHeight() * 32, changed);
             }
 
         };
         canvas.setFont(font);
-        canvas.setBackground(display.getSystemColor(SWT.COLOR_LIST_BACKGROUND));
-        //canvas.setForeground(display.getSystemColor(SWT.COLOR_LIST_FOREGROUND));
+        canvas.setBackground(listBackground);
+        canvas.setForeground(listForeground);
 
         ScrollBar verticalBar = canvas.getVerticalBar();
         verticalBar.addSelectionListener(new SelectionAdapter() {
@@ -472,6 +574,7 @@ public class P1MemoryDialog extends Dialog {
             public void controlMoved(ControlEvent e) {
             }
         });
+
         canvas.addKeyListener(new KeyListener() {
 
             @Override
@@ -569,6 +672,7 @@ public class P1MemoryDialog extends Dialog {
     Control createListingView(Composite parent) {
         Composite container = new Composite(parent, SWT.NONE);
         container.setLayout(new GridLayout(1, false));
+        container.setBackground(listBackground);
 
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
         gridData.heightHint = fontMetrics.getHeight() * 30;
@@ -576,10 +680,12 @@ public class P1MemoryDialog extends Dialog {
 
         styledText = new StyledText(container, SWT.FULL_SELECTION | SWT.H_SCROLL | SWT.V_SCROLL);
         styledText.setLayoutData(gridData);
-        styledText.setMargins(5, 5, 5, 5);
+        //styledText.setMargins(5, 5, 5, 5);
         styledText.setTabs(8);
         styledText.setFont(font);
         styledText.setEditable(false);
+        styledText.setBackground(listBackground);
+        styledText.setForeground(listForeground);
 
         styledText.addKeyListener(new KeyListener() {
 

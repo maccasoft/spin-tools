@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,7 +19,9 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.program.Program;
@@ -35,14 +37,51 @@ import com.maccasoft.propeller.internal.ImageRegistry;
 
 public class AboutDialog extends Dialog {
 
+    Color widgetBackground;
+    Color listForeground;
+    Color listBackground;
+
     public AboutDialog(Shell parentShell) {
         super(parentShell);
+    }
+
+    public void setTheme(String id) {
+        widgetBackground = null;
+        listForeground = null;
+        listBackground = null;
+
+        if (id == null) {
+            widgetBackground = Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND);
+            listBackground = Display.getDefault().getSystemColor(SWT.COLOR_LIST_BACKGROUND);
+        }
+        else if ("dark".equals(id)) {
+            widgetBackground = new Color(0x50, 0x55, 0x57);
+            listForeground = new Color(0xA7, 0xA7, 0xA7);
+            listBackground = new Color(0x2B, 0x2B, 0x2B);
+        }
+        else if ("light".equals(id)) {
+            if ("win32".equals(Platform.PLATFORM)) {
+                widgetBackground = new Color(0xF0, 0xF0, 0xF0);
+            }
+            else {
+                widgetBackground = new Color(0xFA, 0xFA, 0xFA);
+            }
+            listForeground = new Color(0x00, 0x00, 0x00);
+            listBackground = new Color(0xFE, 0xFE, 0xFE);
+        }
     }
 
     @Override
     protected void configureShell(Shell newShell) {
         super.configureShell(newShell);
         newShell.setText("About " + SpinTools.APP_TITLE);
+    }
+
+    @Override
+    protected Control createButtonBar(Composite parent) {
+        parent.setBackground(widgetBackground);
+        parent.setBackgroundMode(SWT.INHERIT_DEFAULT);
+        return super.createButtonBar(parent);
     }
 
     @Override
@@ -54,14 +93,13 @@ public class AboutDialog extends Dialog {
         layout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
         content.setLayout(layout);
         content.setLayoutData(new GridData(GridData.FILL_BOTH));
-        content.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
+        content.setBackground(listBackground);
         content.setBackgroundMode(SWT.INHERIT_FORCE);
 
         applyDialogFont(content);
 
         Label label = new Label(content, SWT.NONE);
         label.setLayoutData(new GridData(SWT.TOP, SWT.RIGHT, false, false));
-
         label.setImage(ImageRegistry.getImageFromResources("about.png"));
 
         String title = SpinTools.APP_TITLE + " " + SpinTools.APP_VERSION;
@@ -84,6 +122,7 @@ public class AboutDialog extends Dialog {
         text.setCaret(null);
         text.setMargins(0, layout.verticalSpacing, convertHorizontalDLUsToPixels(7), layout.verticalSpacing);
         text.setText(message);
+        text.setForeground(listForeground);
 
         final List<StyleRange> linkRanges = new ArrayList<StyleRange>();
 
@@ -154,4 +193,5 @@ public class AboutDialog extends Dialog {
     protected void createButtonsForButtonBar(Composite parent) {
         createButton(parent, IDialogConstants.OK_ID, IDialogConstants.CLOSE_LABEL, true);
     }
+
 }

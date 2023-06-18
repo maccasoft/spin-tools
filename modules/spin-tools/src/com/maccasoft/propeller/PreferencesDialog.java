@@ -13,9 +13,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.SWT;
@@ -26,15 +28,19 @@ import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.FontDialog;
 import org.eclipse.swt.widgets.Group;
@@ -44,6 +50,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 
+import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.model.ConstantsNode;
 import com.maccasoft.propeller.model.DataNode;
@@ -57,6 +64,7 @@ public class PreferencesDialog extends Dialog {
     Composite stack;
     StackLayout stackLayout;
 
+    Combo theme;
     Button showBrowser;
     PathList roots;
     Button showToolbar;
@@ -101,6 +109,13 @@ public class PreferencesDialog extends Dialog {
     FontData defaultFont;
     Font fontBold;
 
+    Color widgetForeground;
+    Color widgetBackground;
+    Color listForeground;
+    Color listBackground;
+    Color labelForeground;
+
+    String oldTheme;
     boolean oldShowToolbar;
     boolean oldShowObjectBrowser;
     boolean oldShowBrowser;
@@ -203,7 +218,7 @@ public class PreferencesDialog extends Dialog {
             list = new List(group, SWT.SINGLE | SWT.BORDER | SWT.V_SCROLL);
             GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
             gridData.widthHint = convertWidthInCharsToPixels(50);
-            gridData.heightHint = convertHeightInCharsToPixels(12) + list.getBorderWidth() * 2;
+            gridData.heightHint = convertHeightInCharsToPixels(10) + list.getBorderWidth() * 2;
             list.setLayoutData(gridData);
             list.addSelectionListener(new SelectionAdapter() {
 
@@ -352,11 +367,6 @@ public class PreferencesDialog extends Dialog {
 
     }
 
-    public PreferencesDialog(Shell parentShell) {
-        super(parentShell);
-        preferences = Preferences.getInstance();
-    }
-
     PreferencesDialog(Shell parentShell, Preferences preferences) {
         super(parentShell);
         this.preferences = preferences;
@@ -369,6 +379,15 @@ public class PreferencesDialog extends Dialog {
     }
 
     @Override
+    protected Control createContents(Composite parent) {
+        Control contents = super.createContents(parent);
+        if ("win32".equals(Platform.PLATFORM) || preferences.getTheme() != null) {
+            applyTheme(parent, preferences.getTheme());
+        }
+        return contents;
+    }
+
+    @Override
     protected Control createDialogArea(Composite parent) {
         Composite composite = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(2, false);
@@ -378,6 +397,7 @@ public class PreferencesDialog extends Dialog {
         layout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
         composite.setLayout(layout);
         composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        composite.setBackgroundMode(SWT.INHERIT_DEFAULT);
         applyDialogFont(composite);
 
         Font textFont = JFaceResources.getTextFont();
@@ -397,7 +417,7 @@ public class PreferencesDialog extends Dialog {
         pages = new List(composite, SWT.SIMPLE | SWT.BORDER);
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, false, true);
         gridData.widthHint = convertWidthInCharsToPixels(20);
-        gridData.heightHint = convertHeightInCharsToPixels(20);
+        gridData.heightHint = convertHeightInCharsToPixels(10);
         pages.setLayoutData(gridData);
 
         stack = new Composite(composite, SWT.NONE);
@@ -426,6 +446,7 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
+        oldTheme = preferences.getTheme();
         oldShowToolbar = preferences.getShowToolbar();
         oldShowObjectBrowser = preferences.getShowObjectBrowser();
         oldShowBrowser = preferences.getShowBrowser();
@@ -448,9 +469,42 @@ public class PreferencesDialog extends Dialog {
     void createGeneralPage(Composite parent) {
         Composite composite = createPage(parent, "General");
 
+        Label label = new Label(composite, SWT.NONE);
+        label.setText("Theme");
+        theme = new Combo(composite, SWT.DROP_DOWN | SWT.READ_ONLY);
+        theme.setItems("System", "Dark", "Light");
+        if ("dark".equals(preferences.getTheme())) {
+            theme.select(1);
+        }
+        else if ("light".equals(preferences.getTheme())) {
+            theme.select(2);
+        }
+        else {
+            theme.select(0);
+        }
+        theme.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                switch (theme.getSelectionIndex()) {
+                    case 0:
+                        preferences.setTheme(null);
+                        break;
+                    case 1:
+                        preferences.setTheme("dark");
+                        break;
+                    case 2:
+                        preferences.setTheme("light");
+                        break;
+                }
+                applyTheme(getContents(), preferences.getTheme());
+            }
+
+        });
+
+        label = new Label(composite, SWT.NONE);
         showToolbar = new Button(composite, SWT.CHECK);
         showToolbar.setText("Show toolbar");
-        showToolbar.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
         showToolbar.setSelection(preferences.getShowToolbar());
         showToolbar.addSelectionListener(new SelectionAdapter() {
 
@@ -461,9 +515,9 @@ public class PreferencesDialog extends Dialog {
 
         });
 
+        label = new Label(composite, SWT.NONE);
         showObjectBrowser = new Button(composite, SWT.CHECK);
         showObjectBrowser.setText("Show object browser");
-        showObjectBrowser.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
         showObjectBrowser.setSelection(preferences.getShowObjectBrowser());
         showObjectBrowser.addSelectionListener(new SelectionAdapter() {
 
@@ -474,9 +528,9 @@ public class PreferencesDialog extends Dialog {
 
         });
 
+        label = new Label(composite, SWT.NONE);
         showBrowser = new Button(composite, SWT.CHECK);
         showBrowser.setText("Show file browser");
-        showBrowser.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false, 2, 1));
         showBrowser.setSelection(preferences.getShowBrowser());
         showBrowser.addSelectionListener(new SelectionAdapter() {
 
@@ -487,12 +541,12 @@ public class PreferencesDialog extends Dialog {
 
         });
 
-        Label label = new Label(composite, SWT.NONE);
+        label = new Label(composite, SWT.NONE);
         label.setText("File browser visible paths");
         label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 
         roots = new PathList(composite, false);
-        roots.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+        roots.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
 
         if (preferences.getRoots() != null) {
             java.util.List<String> list = new ArrayList<>(); // Arrays.asList(preferences.getRoots());
@@ -1039,8 +1093,91 @@ public class PreferencesDialog extends Dialog {
         return composite;
     }
 
+    Color buttonBackground;
+
+    void applyTheme(Control control, String id) {
+        widgetForeground = null;
+        widgetBackground = null;
+        listForeground = null;
+        listBackground = null;
+        labelForeground = null;
+        buttonBackground = null;
+
+        if ("win32".equals(Platform.PLATFORM) && id == null) {
+            if (Display.isSystemDarkTheme()) {
+                id = "dark";
+            }
+        }
+
+        if (id == null) {
+            listBackground = ColorRegistry.getColor(ColorRegistry.LIST_BACKGROUND);
+            listForeground = ColorRegistry.getColor(ColorRegistry.LIST_FOREGROUND);
+            widgetBackground = ColorRegistry.getColor(ColorRegistry.WIDGET_BACKGROUND);
+            widgetForeground = ColorRegistry.getColor(ColorRegistry.WIDGET_FOREGROUND);
+        }
+        else if ("dark".equals(id)) {
+            widgetForeground = new Color(0xF0, 0xF0, 0xF0);
+            widgetBackground = new Color(0x50, 0x55, 0x57);
+            listForeground = new Color(0xA7, 0xA7, 0xA7);
+            listBackground = new Color(0x2B, 0x2B, 0x2B);
+            labelForeground = new Color(0xD7, 0xD7, 0xD7);
+            buttonBackground = new Color(0x50, 0x55, 0x57);
+        }
+        else if ("light".equals(id)) {
+            widgetForeground = new Color(0x00, 0x00, 0x00);
+            if ("win32".equals(Platform.PLATFORM)) {
+                widgetBackground = new Color(0xF0, 0xF0, 0xF0);
+            }
+            else {
+                widgetBackground = new Color(0xFA, 0xFA, 0xFA);
+            }
+            listForeground = new Color(0x00, 0x00, 0x00);
+            listBackground = new Color(0xFE, 0xFE, 0xFE);
+            labelForeground = new Color(0x00, 0x00, 0x00);
+            buttonBackground = new Color(0xFA, 0xFA, 0xFA);
+        }
+
+        applyTheme(control);
+    }
+
+    void applyTheme(Control control) {
+        if (control instanceof List) {
+            control.setForeground(listForeground);
+            control.setBackground(listBackground);
+        }
+        else if (control instanceof Button) {
+            if (control != getShell().getDefaultButton()) {
+                control.setForeground(widgetForeground);
+                control.setBackground(buttonBackground);
+            }
+        }
+        else if (control instanceof Text) {
+            control.setForeground(listForeground);
+            control.setBackground(listBackground);
+        }
+        else if (control instanceof Spinner) {
+            control.setForeground(listForeground);
+            control.setBackground(listBackground);
+        }
+        else if (control instanceof Combo) {
+            control.setForeground(listForeground);
+            control.setBackground(listBackground);
+        }
+        else if (control instanceof Label) {
+            control.setForeground(widgetForeground);
+        }
+        else if (control instanceof Composite) {
+            control.setBackground(widgetBackground);
+            Control[] children = ((Composite) control).getChildren();
+            for (int i = 0; i < children.length; i++) {
+                applyTheme(children[i]);
+            }
+        }
+    }
+
     @Override
     protected void cancelPressed() {
+        preferences.setTheme(oldTheme);
         preferences.setShowToolbar(oldShowToolbar);
         preferences.setShowObjectBrowser(oldShowObjectBrowser);
         preferences.setShowBrowser(oldShowBrowser);
@@ -1086,6 +1223,10 @@ public class PreferencesDialog extends Dialog {
 
         preferences.setConsoleMaxLines(consoleMaxLines.getSelection());
         preferences.setConsoleWriteLogFile(consoleWriteLogFile.getSelection());
+
+        if (!Objects.equals(oldTheme, preferences.getTheme())) {
+            MessageDialog.openWarning(getShell(), SpinTools.APP_TITLE, "Close and reopen the application for the theme changes to take full effect.");
+        }
 
         super.okPressed();
     }

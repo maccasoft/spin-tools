@@ -26,7 +26,6 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.ScrollBar;
 
 public class LineNumbersRuler {
@@ -71,8 +70,6 @@ public class LineNumbersRuler {
 
     public LineNumbersRuler(Composite parent) {
         canvas = new Canvas(parent, SWT.DOUBLE_BUFFERED | SWT.NO_FOCUS);
-        canvas.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
-        canvas.setForeground(Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_FOREGROUND));
         canvas.setLayoutData(layoutData = new GridData(SWT.FILL, SWT.FILL, false, true));
         canvas.addPaintListener(paintListener);
 
@@ -86,7 +83,7 @@ public class LineNumbersRuler {
 
         scrollBarSelection = lineCount = -1;
 
-        highlightForeground = Display.getDefault().getSystemColor(SWT.COLOR_RED);
+        highlightForeground = new Color(0xF0, 0x00, 0x00);
     }
 
     public void setText(StyledText text) {
