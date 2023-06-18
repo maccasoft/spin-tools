@@ -849,13 +849,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                         tokens.add(new TokenMarker(node.label, TokenId.PASM_LOCAL_LABEL));
                     }
                     else {
-                        TokenId id = symbols.get(s);
-                        if (id == null) {
-                            symbols.put(s, TokenId.PASM_LABEL);
-                            symbols.put("@" + s, TokenId.PASM_LABEL);
-                            symbols.put("@@" + s, TokenId.PASM_LABEL);
-                            tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
-                        }
+                        symbols.put(s, TokenId.PASM_LABEL);
+                        symbols.put("@" + s, TokenId.PASM_LABEL);
+                        symbols.put("@@" + s, TokenId.PASM_LABEL);
+                        tokens.add(new TokenMarker(node.label, TokenId.PASM_LABEL));
                         lastLabel = s;
                     }
                 }
@@ -863,17 +860,11 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                     tokens.add(new TokenMarker(node.condition, TokenId.PASM_CONDITION));
                 }
                 if (node.instruction != null) {
-                    TokenId id = keywords.get(node.instruction.getText().toUpperCase());
-                    if (id == null || id != TokenId.TYPE) {
-                        if (Spin2Model.isPAsmInstruction(node.instruction.getText())) {
-                            id = TokenId.PASM_INSTRUCTION;
-                        }
+                    if (Spin2Model.isPAsmInstruction(node.instruction.getText())) {
+                        tokens.add(new TokenMarker(node.instruction, TokenId.PASM_INSTRUCTION));
                     }
-                    if ("debug".equalsIgnoreCase(node.instruction.getText())) {
-                        id = TokenId.KEYWORD;
-                    }
-                    tokens.add(new TokenMarker(node.instruction, id));
-                    if ("debug".equalsIgnoreCase(node.instruction.getText())) {
+                    else if ("debug".equalsIgnoreCase(node.instruction.getText())) {
+                        tokens.add(new TokenMarker(node.instruction, TokenId.KEYWORD));
                         for (int i = 1; i < node.getTokens().size(); i++) {
                             Token token = node.getToken(i);
                             if (token.type == Token.NUMBER) {
@@ -886,7 +877,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                                 tokens.add(new TokenMarker(token, TokenId.STRING));
                             }
                             else {
-                                id = debugKeywords.get(token.getText().toUpperCase());
+                                TokenId id = debugKeywords.get(token.getText().toUpperCase());
                                 if (id != null) {
                                     tokens.add(new TokenMarker(token, id));
                                 }

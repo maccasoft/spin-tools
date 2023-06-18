@@ -401,13 +401,9 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                     tokens.add(new TokenMarker(node.condition, TokenId.PASM_CONDITION));
                 }
                 if (node.instruction != null) {
-                    TokenId id = keywords.get(node.instruction.getText());
-                    if (id == null || id != TokenId.TYPE) {
-                        if (Spin1Model.isPAsmInstruction(node.instruction.getText())) {
-                            id = TokenId.PASM_INSTRUCTION;
-                        }
+                    if (Spin1Model.isPAsmInstruction(node.instruction.getText())) {
+                        tokens.add(new TokenMarker(node.instruction, TokenId.PASM_INSTRUCTION));
                     }
-                    tokens.add(new TokenMarker(node.instruction, id));
                 }
                 if (node.modifier != null) {
                     tokens.add(new TokenMarker(node.modifier, TokenId.PASM_MODIFIER));
