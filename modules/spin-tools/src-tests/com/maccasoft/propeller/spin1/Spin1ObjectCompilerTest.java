@@ -3003,6 +3003,50 @@ class Spin1ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testConstant() throws Exception {
+        String text = ""
+            + "PUB main | a\n"
+            + "\n"
+            + "    a := @start\n"
+            + "    a := constant(@start)\n"
+            + "\n"
+            + "    a := @end - @start\n"
+            + "    a := constant(@end - @start)\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "start   long    0\n"
+            + "end\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       1C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       0C 00 04 00    Function main @ $000C (local size 4)\n"
+            + "00008 00008   000 00 00 00 00    start               long    0\n"
+            + "0000C 0000C   001                end                 \n"
+            + "' PUB main | a\n"
+            + "'     a := @start\n"
+            + "0000C 0000C       C7 08          MEM_ADDRESS LONG PBASE+$0008\n"
+            + "0000E 0000E       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := constant(@start)\n"
+            + "0000F 0000F       38 08          CONSTANT (8)\n"
+            + "00011 00011       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := @end - @start\n"
+            + "00012 00012       C7 0C          MEM_ADDRESS LONG PBASE+$000C\n"
+            + "00014 00014       C7 08          MEM_ADDRESS LONG PBASE+$0008\n"
+            + "00016 00016       ED             SUBTRACT\n"
+            + "00017 00017       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'     a := constant(@end - @start)\n"
+            + "00018 00018       38 04          CONSTANT (12 - 8)\n"
+            + "0001A 0001A       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "0001B 0001B       32             RETURN\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
@@ -3014,6 +3058,7 @@ class Spin1ObjectCompilerTest {
 
         Spin1Compiler compiler = new Spin1Compiler();
         compiler.setOpenspinCompatible(openspinCompatible);
+        compiler.setFoldConstants(true);
         Spin1ObjectCompiler objectCompiler = new Spin1ObjectCompiler(compiler, new File("test.spin"));
         Spin1Object obj = objectCompiler.compileObject(root);
 
