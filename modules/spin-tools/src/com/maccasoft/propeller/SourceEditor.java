@@ -1184,7 +1184,7 @@ public class SourceEditor {
 
             styleMap.put(TokenId.TYPE, new TextStyle(fontBold, new Color(0x12, 0x90, 0xC3), null));
             styleMap.put(TokenId.KEYWORD, new TextStyle(fontBold, new Color(0x00, 0xA0, 0x00), null));
-            styleMap.put(TokenId.FUNCTION, new TextStyle(fontBold, new Color(0xA7, 0xEC, 0x21), null));
+            styleMap.put(TokenId.FUNCTION, new TextStyle(fontBold, new Color(0x00, 0xA0, 0x00), null));
             styleMap.put(TokenId.OBJECT, new TextStyle(font, new Color(0x66, 0xE1, 0xF8), null));
             styleMap.put(TokenId.VARIABLE, new TextStyle(font, new Color(0x66, 0xE1, 0xF8), null));
 

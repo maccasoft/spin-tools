@@ -20,10 +20,14 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
+import com.maccasoft.propeller.internal.ColorRegistry;
+
 public class OutlineViewStack {
 
     Composite container;
     StackLayout layout;
+    Color foreground;
+    Color background;
 
     Map<Control, OutlineView> map = new HashMap<>();
 
@@ -42,14 +46,19 @@ public class OutlineViewStack {
     public OutlineViewStack(Composite parent, int style) {
         layout = new StackLayout();
 
+        background = ColorRegistry.getColor(ColorRegistry.LIST_BACKGROUND);
+        foreground = ColorRegistry.getColor(ColorRegistry.LIST_FOREGROUND);
+
         container = new Composite(parent, style);
         container.setLayout(layout);
+        container.setBackground(background);
+        container.setForeground(foreground);
     }
 
     public OutlineView createNew() {
         OutlineView view = new OutlineView(container);
-        view.setForeground(container.getForeground());
-        view.setBackground(container.getBackground());
+        view.setForeground(foreground);
+        view.setBackground(background);
         view.getControl().addDisposeListener(disposeListener);
         map.put(view.getControl(), view);
         return view;
@@ -76,6 +85,7 @@ public class OutlineViewStack {
     }
 
     public void setBackground(Color color) {
+        background = color;
         for (OutlineView view : map.values()) {
             view.setBackground(color);
         }
@@ -83,6 +93,7 @@ public class OutlineViewStack {
     }
 
     public void setForeground(Color color) {
+        foreground = color;
         for (OutlineView view : map.values()) {
             view.setForeground(color);
         }
