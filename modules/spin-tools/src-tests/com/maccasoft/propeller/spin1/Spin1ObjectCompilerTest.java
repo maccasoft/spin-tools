@@ -3047,6 +3047,50 @@ class Spin1ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testClkModeAndFreq() throws Exception {
+        String text = ""
+            + "_XINFREQ = 5_000_000\n"
+            + "_CLKMODE = XTAL1 + PLL16X\n"
+            + "\n"
+            + "PUB start | a, b\n"
+            + "\n"
+            + "        a := CLKMODE\n"
+            + "        b := CLKFREQ\n"
+            + "\n"
+            + "DAT     org    $000\n"
+            + "\n"
+            + "        rdlong c, #@CLKMODE\n"
+            + "        rdlong d, #@CLKFREQ\n"
+            + "\n"
+            + "c       res    1\n"
+            + "d       res    1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       18 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       10 00 08 00    Function start @ $0010 (local size 8)\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 00 04 FC 08                        rdlong  c, #@CLKMODE\n"
+            + "0000C 0000C   001 04 06 FC 08                        rdlong  d, #@CLKFREQ\n"
+            + "00010 00010   002                c                   res     1\n"
+            + "00010 00010   003                d                   res     1\n"
+            + "' PUB start | a, b\n"
+            + "'         a := CLKMODE\n"
+            + "00010 00010       38 04          ADDRESS ($0004)\n"
+            + "00012 00012       80             MEM_READ BYTE POP\n"
+            + "00013 00013       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'         b := CLKFREQ\n"
+            + "00014 00014       35             CONSTANT (0)\n"
+            + "00015 00015       C0             MEM_READ LONG POP\n"
+            + "00016 00016       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "00017 00017       32             RETURN\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

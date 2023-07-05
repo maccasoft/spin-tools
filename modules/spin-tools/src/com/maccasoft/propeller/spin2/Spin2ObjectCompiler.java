@@ -39,6 +39,7 @@ import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.NumberLiteral;
+import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Variable;
@@ -364,10 +365,18 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
             }
         }
-        if (methods.size() != 0) {
-            scope.addBuiltinSymbol("CLKMODE", new NumberLiteral(0x40, 16));
-            scope.addBuiltinSymbol("CLKFREQ", new NumberLiteral(0x44, 16));
-        }
+
+        ObjectContextLiteral clkMode = new ObjectContextLiteral(new Context(scope), "LONG");
+        clkMode.getContext().setAddress(0x40);
+        clkMode.getContext().setMemoryAddress(0x40);
+        clkMode.getContext().setObjectAddress(0x40);
+        scope.addBuiltinSymbol("@CLKMODE", clkMode);
+
+        ObjectContextLiteral clkFreq = new ObjectContextLiteral(new Context(scope), "LONG");
+        clkFreq.getContext().setAddress(0x44);
+        clkFreq.getContext().setMemoryAddress(0x44);
+        clkFreq.getContext().setObjectAddress(0x44);
+        scope.addBuiltinSymbol("@CLKFREQ", clkFreq);
 
         for (Spin2Method method : methods) {
             Node node = (Node) method.getData();

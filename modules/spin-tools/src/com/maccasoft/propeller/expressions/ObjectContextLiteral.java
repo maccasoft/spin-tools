@@ -15,6 +15,10 @@ public class ObjectContextLiteral extends Literal {
         this.type = type;
     }
 
+    public Context getContext() {
+        return context;
+    }
+
     @Override
     public boolean isConstant() {
         return false;

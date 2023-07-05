@@ -121,6 +121,13 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     throw new RuntimeException("expected 0 or 1 argument(s), found " + actual);
                 }
             }
+            else if ("CLKMODE".equalsIgnoreCase(node.getText())) {
+                if (node.getChildCount() != 0) {
+                    throw new CompilerException("syntax error", node);
+                }
+                source.add(new Constant(context, new NumberLiteral(0x40, 16)));
+                source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.Pop, MemoryOp.Op.Read, null));
+            }
             else if ("COGINIT".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 3) {
                     throw new RuntimeException("expected " + 3 + " argument(s), found " + node.getChildCount());

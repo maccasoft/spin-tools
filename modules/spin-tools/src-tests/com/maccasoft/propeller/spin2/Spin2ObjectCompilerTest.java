@@ -5829,6 +5829,48 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testClkModeAndFreq() throws Exception {
+        String text = ""
+            + "_CLKFREQ = 250_000_000\n"
+            + "\n"
+            + "PUB start() | a, b\n"
+            + "\n"
+            + "        a := CLKMODE\n"
+            + "        b := CLKFREQ\n"
+            + "\n"
+            + "DAT     org    $000\n"
+            + "\n"
+            + "        rdlong c, #@CLKMODE\n"
+            + "        rdlong d, #@CLKFREQ\n"
+            + "\n"
+            + "c       res    1\n"
+            + "d       res    1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       10 00 00 80    Method start @ $00010 (0 parameters, 0 returns)\n"
+            + "00004 00004       1A 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 40 04 04 FB                        rdlong  c, #@CLKMODE\n"
+            + "0000C 0000C   001 44 06 04 FB                        rdlong  d, #@CLKFREQ\n"
+            + "00010 00010   002                c                   res     1\n"
+            + "00010 00010   003                d                   res     1\n"
+            + "' PUB start() | a, b\n"
+            + "00010 00010       02             (stack size)\n"
+            + "'         a := CLKMODE\n"
+            + "00011 00011       44 40          CONSTANT ($40)\n"
+            + "00013 00013       68 80          MEM_READ LONG\n"
+            + "00015 00015       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'         b := CLKFREQ\n"
+            + "00016 00016       19 58          CLKFREQ\n"
+            + "00018 00018       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "00019 00019       04             RETURN\n"
+            + "0001A 0001A       00 00          Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

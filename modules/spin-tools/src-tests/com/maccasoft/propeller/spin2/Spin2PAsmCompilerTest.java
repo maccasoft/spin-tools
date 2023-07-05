@@ -636,6 +636,27 @@ class Spin2PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testClkFreq() throws Exception {
+        String text = ""
+            + "_CLKFREQ = 250_000_000\n"
+            + "\n"
+            + "DAT     org    $000\n"
+            + "\n"
+            + "        mov    a, ##_CLKFREQ\n"
+            + "\n"
+            + "a       res    1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 59 73 07 FF                        mov     a, ##_CLKFREQ\n"
+            + "00004 00004   001 80 04 04 F6\n"
+            + "00008 00008   002                a                   res     1\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }
