@@ -542,7 +542,7 @@ public class SourceEditor {
                 }
                 if (styledText.getLineAtOffset(event.lineOffset) == currentLine) {
                     if (event.lineBackground != null) {
-                        event.lineBackground = ColorRegistry.getDimColor(event.lineBackground, -6);
+                        event.lineBackground = ColorRegistry.getDimColor(event.lineBackground, -12);
                     }
                     else {
                         event.lineBackground = currentLineBackground;
