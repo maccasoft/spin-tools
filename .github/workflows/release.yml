@@ -1,34 +1,73 @@
-name: Release Build
+name: Release
 
 on:
   push:
     tags: [ '*' ]
 
 jobs:
-  release:
+  linux:
 
     runs-on: ubuntu-latest
-    container:
-        image: maccasoft/build-agent
 
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'oracle'
+        java-version: '17'
+        cache: 'maven'
 
     - name: Maven build
       run: |
-        Xvfb :1 -ac -screen 0 1280x1024x8 -nolisten tcp &
-        mvn --batch-mode package
+        mvn --batch-mode -DskipTests package
 
     - name: Upload
       uses: softprops/action-gh-release@v1
       with:
         files: |
           target/spin-tools-linux*
+
+  windows:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'oracle'
+        java-version: '17'
+        cache: 'maven'
+
+    - name: Maven build
+      run: |
+        mvn --batch-mode -DskipTests package
+
+    - name: Upload
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
           target/spin-tools-windows*
+
+  macos:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'oracle'
+        java-version: '17'
+        cache: 'maven'
+
+    - name: Maven build
+      run: |
+        mvn --batch-mode -DskipTests package
+
+    - name: Upload
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
           target/spin-tools-macos*
 
-    - name: Create Tests Summary
-      uses: test-summary/action@dist
-      with:
-        paths: modules/com.maccasoft.spin.tools/target/surefire-reports/**/*.xml
-      if: always()
