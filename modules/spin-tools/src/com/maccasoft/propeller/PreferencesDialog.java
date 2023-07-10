@@ -173,7 +173,7 @@ public class PreferencesDialog extends Dialog {
 
             });
 
-            filterIndex = SpinTools.filterExtensions.length - 1;
+            filterIndex = 0;
         }
 
         public void setFilterIndex(int index) {
@@ -578,7 +578,7 @@ public class PreferencesDialog extends Dialog {
         label.setText("Template");
         spin1Template = new FileSelector(composite);
         spin1Template.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        spin1Template.setFilterIndex(1);
+        spin1Template.setFilterIndex(2);
         spin1Template.setSelection(preferences.getSpin1Template());
 
         new Label(composite, SWT.NONE);
@@ -615,7 +615,7 @@ public class PreferencesDialog extends Dialog {
         label.setText("Template");
         spin2Template = new FileSelector(composite);
         spin2Template.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        spin2Template.setFilterIndex(2);
+        spin2Template.setFilterIndex(3);
         spin2Template.setSelection(preferences.getSpin2Template());
 
         new Label(composite, SWT.NONE);

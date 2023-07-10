@@ -152,16 +152,16 @@ public class SpinTools {
     FindReplaceDialog findReplaceDialog;
 
     public static final String[] filterNames = new String[] {
+        "All Source Files",
         "C Files",
         "Spin1 Files",
-        "Spin2 Files",
-        "All Source Files"
+        "Spin2 Files"
     };
     public static final String[] filterExtensions = new String[] {
+        "*.spin;*.spin2;*.c",
         "*.c",
         "*.spin",
-        "*.spin2",
-        "*.spin;*.spin2;*.c",
+        "*.spin2"
     };
 
     final CaretListener caretListener = new CaretListener() {
@@ -1634,7 +1634,7 @@ public class SpinTools {
         dlg.setText("Open Source File");
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
-        dlg.setFilterIndex(filterExtensions.length - 1);
+        dlg.setFilterIndex(0);
 
         File filterPath = null;
 
@@ -1667,7 +1667,7 @@ public class SpinTools {
         dlg.setText("Open Source File");
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
-        dlg.setFilterIndex(filterExtensions.length - 1);
+        dlg.setFilterIndex(0);
 
         if (filterPath != null) {
             dlg.setFilterPath(filterPath);
@@ -1880,7 +1880,7 @@ public class SpinTools {
         dlg.setText("Save Source File");
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
-        dlg.setFilterIndex(filterExtensions.length - 1);
+        dlg.setFilterIndex(0);
 
         dlg.setFileName(editorTab.getText());
         dlg.setOverwrite(true);
@@ -2628,7 +2628,7 @@ public class SpinTools {
             "Listing Files"
         };
         String[] filterExtensions = new String[] {
-            "*.lst"
+            "*.lst;*.txt"
         };
         dlg.setFilterNames(filterNames);
         dlg.setFilterExtensions(filterExtensions);
