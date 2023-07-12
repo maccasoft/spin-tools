@@ -108,6 +108,7 @@ public class SerialTerminal {
     Button rts;
     Button cts;
 
+    Button clear;
     Button monitor;
     Button taqoz;
 
@@ -1365,9 +1366,29 @@ public class SerialTerminal {
         FontMetrics fontMetrics = gc.getFontMetrics();
         gc.dispose();
 
+        clear = new Button(container, SWT.PUSH);
+        clear.setText("Clear");
+        GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+        data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics,
+            IDialogConstants.BUTTON_WIDTH),
+            clear.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+        clear.setLayoutData(data);
+        clear.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    clear();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                setFocus();
+            }
+        });
+
         monitor = new Button(container, SWT.PUSH);
         monitor.setText("Monitor");
-        GridData data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
+        data = new GridData(GridData.HORIZONTAL_ALIGN_FILL);
         data.widthHint = Math.max(Dialog.convertHorizontalDLUsToPixels(fontMetrics,
             IDialogConstants.BUTTON_WIDTH),
             monitor.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
@@ -1518,6 +1539,7 @@ public class SerialTerminal {
         rts.setEnabled(serialPort != null);
         cts.setEnabled(serialPort != null);
 
+        clear.setEnabled(serialPort != null);
         monitor.setEnabled(serialPort != null);
         taqoz.setEnabled(serialPort != null);
     }
@@ -1712,6 +1734,8 @@ public class SerialTerminal {
         //cts.setBackground(widgetBackground);
         cts.setForeground(widgetForeground);
 
+        clear.setBackground(widgetBackground);
+        clear.setForeground(widgetForeground);
         monitor.setBackground(widgetBackground);
         monitor.setForeground(widgetForeground);
         taqoz.setBackground(widgetBackground);
