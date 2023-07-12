@@ -719,6 +719,24 @@ public class SerialTerminal {
                     }
                     break;
 
+                case 11: // CE: Clear To End of Line
+                    for (int x = cx; x < screenWidth; x++) {
+                        screen[cy][x].foreground = foreground;
+                        screen[cy][x].background = background;
+                        screen[cy][x].character = ' ';
+                    }
+                    break;
+
+                case 12: // CB: Clear Lines Below
+                    for (int y = cy; y < screenHeight; y++) {
+                        for (int x = 0; x < screenWidth; x++) {
+                            screen[y][x].foreground = foreground;
+                            screen[y][x].background = background;
+                            screen[y][x].character = ' ';
+                        }
+                    }
+                    break;
+
                 case 16: // CS: Clear Screen
                     for (int y = 0; y < screenHeight; y++) {
                         for (int x = 0; x < screenWidth; x++) {
