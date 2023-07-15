@@ -3058,6 +3058,9 @@ class Spin1ObjectCompilerTest {
             + "        a := CLKMODE\n"
             + "        b := CLKFREQ\n"
             + "\n"
+            + "        a := @CLKMODE\n"
+            + "        b := @CLKFREQ\n"
+            + "\n"
             + "DAT     org    $000\n"
             + "\n"
             + "        rdlong c, #@CLKMODE\n"
@@ -3069,7 +3072,7 @@ class Spin1ObjectCompilerTest {
 
         Assertions.assertEquals(""
             + "' Object header (var size 0)\n"
-            + "00000 00000       18 00          Object size\n"
+            + "00000 00000       20 00          Object size\n"
             + "00002 00002       02             Method count + 1\n"
             + "00003 00003       00             Object count\n"
             + "00004 00004       10 00 08 00    Function start @ $0010 (local size 8)\n"
@@ -3087,7 +3090,14 @@ class Spin1ObjectCompilerTest {
             + "00014 00014       35             CONSTANT (0)\n"
             + "00015 00015       C0             MEM_READ LONG POP\n"
             + "00016 00016       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
-            + "00017 00017       32             RETURN\n"
+            + "'         a := @CLKMODE\n"
+            + "00017 00017       35             CONSTANT (0)\n"
+            + "00018 00018       65             VAR_WRITE LONG DBASE+$0004 (short)\n"
+            + "'         b := @CLKFREQ\n"
+            + "00019 00019       38 04          CONSTANT (4)\n"
+            + "0001B 0001B       69             VAR_WRITE LONG DBASE+$0008 (short)\n"
+            + "0001C 0001C       32             RETURN\n"
+            + "0001D 0001D       00 00 00       Padding\n"
             + "", compile(text));
     }
 

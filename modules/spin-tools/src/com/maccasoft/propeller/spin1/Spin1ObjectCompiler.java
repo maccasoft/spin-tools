@@ -39,7 +39,6 @@ import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.NumberLiteral;
-import com.maccasoft.propeller.expressions.ObjectContextLiteral;
 import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.ConstantNode;
@@ -203,17 +202,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
             logMessage(e);
         }
 
-        ObjectContextLiteral clkMode = new ObjectContextLiteral(new Context(scope), "LONG");
-        clkMode.getContext().setAddress(0x00);
-        clkMode.getContext().setMemoryAddress(0x00);
-        clkMode.getContext().setObjectAddress(0x00);
-        scope.addBuiltinSymbol("@CLKMODE", clkMode);
-
-        ObjectContextLiteral clkFreq = new ObjectContextLiteral(new Context(scope), "LONG");
-        clkFreq.getContext().setAddress(0x04);
-        clkFreq.getContext().setMemoryAddress(0x04);
-        clkFreq.getContext().setObjectAddress(0x04);
-        scope.addBuiltinSymbol("@CLKFREQ", clkFreq);
+        scope.addBuiltinSymbol("@CLKMODE", new NumberLiteral(0x00));
+        scope.addBuiltinSymbol("@CLKFREQ", new NumberLiteral(0x04));
 
         Iterator<Entry<String, Expression>> iter = publicSymbols.entrySet().iterator();
         while (iter.hasNext()) {
