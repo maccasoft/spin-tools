@@ -497,7 +497,63 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
 
                 Spin2StatementNode childNode = node.getChild(0);
-                if ("BYTE".equalsIgnoreCase(childNode.getText()) || "WORD".equalsIgnoreCase(childNode.getText()) || "LONG".equalsIgnoreCase(childNode.getText())) {
+
+                String[] s = childNode.getText().split("[\\.]");
+                if (s.length == 2 && ("BYTE".equalsIgnoreCase(s[1]) || "WORD".equalsIgnoreCase(s[1]) || "LONG".equalsIgnoreCase(s[1]))) {
+                    Spin2StatementNode indexNode = null;
+                    Spin2StatementNode bitfieldNode = null;
+
+                    Expression expression = context.getLocalSymbol(s[0]);
+                    if (expression == null) {
+                        throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
+                    }
+
+                    int n = 0;
+                    if (n < childNode.getChildCount() && (childNode.getChild(n) instanceof Spin2StatementNode.Index)) {
+                        indexNode = childNode.getChild(n++);
+                    }
+                    if (n < childNode.getChildCount() && ".".equals(childNode.getChild(n).getText())) {
+                        n++;
+                        if (n >= childNode.getChildCount()) {
+                            throw new CompilerException("expected bitfield expression", childNode.getToken());
+                        }
+                        if (!(childNode.getChild(n) instanceof Spin2StatementNode.Index)) {
+                            throw new RuntimeException("syntax error");
+                        }
+                        bitfieldNode = childNode.getChild(n++);
+                    }
+                    if (n < childNode.getChildCount()) {
+                        throw new RuntimeException("syntax error");
+                    }
+
+                    if (indexNode != null) {
+                        source.addAll(compileBytecodeExpression(context, method, indexNode, true));
+                    }
+
+                    int bitfield = -1;
+                    if (bitfieldNode != null) {
+                        bitfield = compileBitfield(context, method, bitfieldNode, source);
+                    }
+
+                    MemoryOp.Size ss = MemoryOp.Size.Long;
+                    if ("BYTE".equalsIgnoreCase(s[1])) {
+                        ss = MemoryOp.Size.Byte;
+                    }
+                    else if ("WORD".equalsIgnoreCase(s[1])) {
+                        ss = MemoryOp.Size.Word;
+                    }
+                    MemoryOp.Base bb = MemoryOp.Base.PBase;
+                    if (expression instanceof Variable) {
+                        bb = expression instanceof LocalVariable ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                        ((Variable) expression).setCalledBy(method);
+                    }
+                    source.add(new MemoryOp(context, ss, bb, MemoryOp.Op.Setup, indexNode != null, expression, 0));
+
+                    if (bitfieldNode != null) {
+                        source.add(new BitField(context, BitField.Op.Setup, bitfield));
+                    }
+                }
+                else if ("BYTE".equalsIgnoreCase(childNode.getText()) || "WORD".equalsIgnoreCase(childNode.getText()) || "LONG".equalsIgnoreCase(childNode.getText())) {
                     Spin2StatementNode indexNode = null;
                     Spin2StatementNode bitfieldNode = null;
 

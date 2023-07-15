@@ -3494,12 +3494,14 @@ class Spin2ObjectCompilerTest {
             + "    a := --byte[b]\n"
             + "    ++a[1]\n"
             + "    --b[2]\n"
+            + "    ++a.byte[b]\n"
+            + "    --b.byte[a]\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header (var size 4)\n"
             + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
-            + "00004 00004       26 00 00 00    End\n"
+            + "00004 00004       2E 00 00 00    End\n"
             + "' PUB start() | a, b\n"
             + "00008 00008       02             (stack size)\n"
             + "'     ++a\n"
@@ -3534,8 +3536,16 @@ class Spin2ObjectCompilerTest {
             + "'     --b[2]\n"
             + "00022 00022       5F 0C          VAR_SETUP LONG DBASE+$00001 (short)\n"
             + "00024 00024       84             PRE_DEC\n"
-            + "00025 00025       04             RETURN\n"
-            + "00026 00026       00 00          Padding\n"
+            + "'     ++a.byte[b]\n"
+            + "00025 00025       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "00026 00026       56 00          MEM_SETUP BYTE INDEXED DBASE+$00000\n"
+            + "00028 00028       83             PRE_INC\n"
+            + "'     --b.byte[a]\n"
+            + "00029 00029       E0             VAR_READ LONG DBASE+$00000 (short)\n"
+            + "0002A 0002A       56 04          MEM_SETUP BYTE INDEXED DBASE+$00004\n"
+            + "0002C 0002C       84             PRE_DEC\n"
+            + "0002D 0002D       04             RETURN\n"
+            + "0002E 0002E       00 00          Padding\n"
             + "", compile(text));
     }
 

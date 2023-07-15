@@ -438,7 +438,45 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 }
                 Spin1Bytecode.Type type = Spin1Bytecode.Type.Long;
                 Spin1StatementNode childNode = node.getChild(0);
-                if ("BYTE".equalsIgnoreCase(childNode.getText()) || "WORD".equalsIgnoreCase(childNode.getText()) || "LONG".equalsIgnoreCase(childNode.getText())) {
+
+                String[] s = childNode.getText().split("[\\.]");
+                if (s.length == 2 && ("BYTE".equalsIgnoreCase(s[1]) || "WORD".equalsIgnoreCase(s[1]) || "LONG".equalsIgnoreCase(s[1]))) {
+                    boolean popIndex = false;
+
+                    Expression expression = context.getLocalSymbol(s[0]);
+                    if (expression == null) {
+                        throw new RuntimeException("undefined symbol " + s[0]);
+                    }
+
+                    int n = 0;
+                    if (n < childNode.getChildCount()) {
+                        source.addAll(compileBytecodeExpression(context, method, childNode.getChild(n++), true));
+                        popIndex = true;
+                    }
+                    if (n < childNode.getChildCount()) {
+                        throw new RuntimeException("unexpected expression");
+                    }
+
+                    MemoryOp.Base bb = MemoryOp.Base.PBase;
+                    if (expression instanceof Variable) {
+                        bb = (expression instanceof LocalVariable) ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
+                        ((Variable) expression).setCalledBy(method);
+                    }
+
+                    if ("BYTE".equalsIgnoreCase(s[1])) {
+                        source.add(new MemoryOp(context, MemoryOp.Size.Byte, popIndex, bb, MemoryOp.Op.Assign, expression));
+                        type = Spin1Bytecode.Type.Byte;
+                    }
+                    else if ("WORD".equalsIgnoreCase(s[1])) {
+                        source.add(new MemoryOp(context, MemoryOp.Size.Word, popIndex, bb, MemoryOp.Op.Assign, expression));
+                        type = Spin1Bytecode.Type.Word;
+                    }
+                    else if ("LONG".equalsIgnoreCase(s[1])) {
+                        source.add(new MemoryOp(context, MemoryOp.Size.Long, popIndex, bb, MemoryOp.Op.Assign, expression));
+                        type = Spin1Bytecode.Type.Long;
+                    }
+                }
+                else if ("BYTE".equalsIgnoreCase(childNode.getText()) || "WORD".equalsIgnoreCase(childNode.getText()) || "LONG".equalsIgnoreCase(childNode.getText())) {
                     boolean popIndex = false;
 
                     if (childNode.getChildCount() == 0) {
