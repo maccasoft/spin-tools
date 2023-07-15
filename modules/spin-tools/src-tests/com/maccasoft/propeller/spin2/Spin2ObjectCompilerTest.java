@@ -3713,12 +3713,12 @@ class Spin2ObjectCompilerTest {
             + "00008 00008       03             (stack size)\n"
             + "'     a := b.byte[c]\n"
             + "00009 00009       E2             VAR_READ LONG DBASE+$00002 (short)\n"
-            + "0000A 0000A       54 04 80       MEM_READ BYTE INDEXED DBASE+$00004\n"
+            + "0000A 0000A       56 04 80       MEM_READ BYTE INDEXED DBASE+$00004\n"
             + "0000D 0000D       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
             + "'     b.byte[c] := a\n"
             + "0000E 0000E       E0             VAR_READ LONG DBASE+$00000 (short)\n"
             + "0000F 0000F       E2             VAR_READ LONG DBASE+$00002 (short)\n"
-            + "00010 00010       54 04 81       MEM_WRITE BYTE INDEXED DBASE+$00004\n"
+            + "00010 00010       56 04 81       MEM_WRITE BYTE INDEXED DBASE+$00004\n"
             + "00013 00013       04             RETURN\n"
             + "", compile(text));
     }

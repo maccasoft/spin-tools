@@ -13,11 +13,11 @@ package com.maccasoft.propeller.spin2.bytecode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.expressions.Context;
 
 public class MemoryOp extends Spin2Bytecode {
 
@@ -139,7 +139,7 @@ public class MemoryOp extends Spin2Bytecode {
                     break;
                 case DBase:
                     if (ss == Size.Byte) {
-                        os.write(pop ? 0x54 : 0x53);
+                        os.write(pop ? 0x56 : 0x53);
                     }
                     else if (ss == Size.Word) {
                         os.write(pop ? 0x5C : 0x59);
