@@ -1697,6 +1697,8 @@ public class SerialTerminal {
         if (id == null) {
             widgetBackground = ColorRegistry.getColor(ColorRegistry.WIDGET_BACKGROUND);
             widgetForeground = ColorRegistry.getColor(ColorRegistry.WIDGET_FOREGROUND);
+            listBackground = ColorRegistry.getColor(ColorRegistry.LIST_BACKGROUND);
+            listForeground = ColorRegistry.getColor(ColorRegistry.LIST_FOREGROUND);
         }
         else if ("dark".equals(id)) {
             widgetForeground = new Color(0xF0, 0xF0, 0xF0);
