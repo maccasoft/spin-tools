@@ -171,6 +171,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 Expression expression = context.getLocalSymbol(node.getChild(0).getText());
                 if (expression instanceof Method) {
                     Spin1StatementNode methodNode = node.getChild(0);
+                    Spin1Method calledMethod = (Spin1Method) expression.getData(Spin1Method.class.getName());
                     if (methodNode.getChildCount() != ((Method) expression).getArgumentsCount()) {
                         throw new RuntimeException("expected " + ((Method) expression).getArgumentsCount() + " argument(s), found " + methodNode.getChildCount());
                     }
@@ -187,6 +188,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     }, compiler.isOpenspinCompatible()));
                     source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
                     source.add(new Bytecode(context, 0x15, "MARK_INTERPRETED"));
+                    calledMethod.setCalledBy(method);
                 }
                 else {
                     source.add(new Constant(context, new NumberLiteral(-1), compiler.isOpenspinCompatible()));
