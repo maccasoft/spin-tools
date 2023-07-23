@@ -349,6 +349,8 @@ public class SerialTerminal {
                             redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
                         }
                     }
+                    screen[cy][cx].foreground = foreground;
+                    screen[cy][cx].background = background;
                     screen[cy][cx].character = c;
                     cx++;
                     break;
@@ -361,7 +363,7 @@ public class SerialTerminal {
     class ANSI extends TTY {
 
         int state = 0;
-        int argc, fg = 7, bg = 0;
+        int idx, argc, fg = 7, bg = 0;
         int[] args = new int[16];
         char prefix;
         int savedCx, savedCy;
@@ -390,7 +392,7 @@ public class SerialTerminal {
             switch (state) {
                 case 0:
                     if (c == 0x1B) {
-                        argc = -1;
+                        argc = idx = 0;
                         args[0] = 0;
                         prefix = 0;
                         state = 1;
@@ -446,15 +448,16 @@ public class SerialTerminal {
                         case '7':
                         case '8':
                         case '9':
-                            if (argc == -1) {
+                            if (idx == argc) {
                                 argc++;
-                                args[argc] = 0;
+                                args[idx] = 0;
                             }
-                            args[argc] = args[argc] * 10 + (c - '0');
+                            args[idx] = args[idx] * 10 + (c - '0');
                             break;
                         case ';':
                             argc++;
-                            args[argc] = 0;
+                            idx++;
+                            args[idx] = 0;
                             break;
                         case '?':
                             prefix = c;
@@ -579,6 +582,12 @@ public class SerialTerminal {
                                 }
                                 else if (args[i] >= 40 && args[i] <= 47) {
                                     bg = args[i] - 40;
+                                }
+                                else if (args[i] >= 90 && args[i] <= 97) {
+                                    fg = (args[i] - 90) | 8;
+                                }
+                                else if (args[i] >= 100 && args[i] <= 107) {
+                                    bg = (args[i] - 100) | 8;
                                 }
                             }
                             if (argc == 0) {
