@@ -1675,10 +1675,17 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 source.addAll(compileConstantExpression(context, method, indexNode));
             }
 
-            source.add(new Bytecode(context, new byte[] {
-                (byte) (indexNode == null ? 0x4D : 0x4E),
-                (byte) 0x81
-            }, "FIELD_WRITE"));
+            if (push && !write) {
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) (indexNode == null ? 0x4D : 0x4E),
+                }, "FIELD_SETUP"));
+            }
+            else {
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) (indexNode == null ? 0x4D : 0x4E),
+                    (byte) 0x81
+                }, "FIELD_WRITE"));
+            }
         }
         else {
             Expression expression = context.getLocalSymbol(node.getText());
@@ -2126,17 +2133,19 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
         }
         else {
+            if (postEffectNode != null && ("~".equalsIgnoreCase(postEffectNode.getText()) || "~~".equalsIgnoreCase(postEffectNode.getText()))) {
+                if ("~".equalsIgnoreCase(postEffectNode.getText())) {
+                    source.add(new Constant(context, new NumberLiteral(0)));
+                }
+                else {
+                    source.add(new Constant(context, new NumberLiteral(-1)));
+                }
+            }
             if (popIndex) {
                 source.addAll(compileBytecodeExpression(context, method, indexNode, true));
             }
             if (postEffectNode != null) {
                 if ("~".equalsIgnoreCase(postEffectNode.getText()) || "~~".equalsIgnoreCase(postEffectNode.getText())) {
-                    if ("~".equalsIgnoreCase(postEffectNode.getText())) {
-                        source.add(new Constant(context, new NumberLiteral(0)));
-                    }
-                    else {
-                        source.add(new Constant(context, new NumberLiteral(-1)));
-                    }
                     if (expression instanceof Register) {
                         source.add(new RegisterOp(context, push ? RegisterOp.Op.Setup : RegisterOp.Op.Write, popIndex, expression, index));
                     }
