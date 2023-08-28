@@ -66,6 +66,9 @@ public class Rep extends Spin2PAsmInstructionFactory {
                 if (addr >= 0x400) {
                     offset /= 4;
                 }
+                if (src.isLongLiteral()) {
+                    offset--;
+                }
                 value = l.setBoolean(value, true);
                 value = d.setValue(value, dst.isLiteral() ? offset : offset - 1);
             }
