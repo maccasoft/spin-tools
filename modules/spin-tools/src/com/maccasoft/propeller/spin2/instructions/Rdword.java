@@ -56,21 +56,31 @@ public class Rdword extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
+            CompilerException errors = new CompilerException();
+
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1010111);
             value = cz.setValue(value, encodeEffect(effect));
-            if (isPtr(src)) {
+
+            if (dst.getInteger() > 0x1FF) {
+                errors.addMessage(new CompilerException("destination register/constant cannot exceed $1FF", dst.getExpression().getData()));
+            }
+            value = d.setValue(value, dst.getInteger());
+
+            if (src.isPtr()) {
                 value = i.setBoolean(value, true);
-                value = s.setValue(value, encodePtr(src));
             }
             else {
                 if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
                     throw new CompilerException("Source constant cannot exceed $FF", src.getExpression().getData());
                 }
                 value = i.setBoolean(value, src.isLiteral());
-                value = s.setValue(value, src.getInteger());
             }
-            value = d.setValue(value, dst.getInteger());
+            value = s.setValue(value, src.getInteger());
+
+            if (errors.hasChilds()) {
+                throw errors;
+            }
             return src.isLongLiteral() ? getBytes(encodeAugs(condition, src.getInteger()), value) : getBytes(value);
         }
 

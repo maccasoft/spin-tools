@@ -61,25 +61,32 @@ public class Wrword extends Spin2PAsmInstructionFactory {
 
         @Override
         public byte[] getBytes() {
+            CompilerException errors = new CompilerException();
+
             int value = e.setValue(0, condition == null ? 0b1111 : conditions.get(condition.toLowerCase()));
             value = o.setValue(value, 0b1100010);
             value = c.setValue(value, 1);
             value = l.setBoolean(value, dst.isLiteral());
-            if (isPtr(src)) {
+
+            if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
+                throw new CompilerException("Destination register/constant cannot exceed $1FF", dst.getExpression().getData());
+            }
+            value = d.setValue(value, dst.getInteger());
+
+            if (src.isPtr()) {
                 value = i.setValue(value, 1);
-                value = s.setValue(value, encodePtr(src));
             }
             else {
                 if ((src.isLiteral() && !src.isLongLiteral()) && src.getInteger() > 0xFF) {
                     throw new CompilerException("Source constant cannot exceed $FF", src.getExpression().getData());
                 }
                 value = i.setBoolean(value, src.isLiteral());
-                value = s.setValue(value, src.getInteger());
             }
-            if (!dst.isLongLiteral() && dst.getInteger() > 0x1FF) {
-                throw new CompilerException("Destination register/constant cannot exceed $1FF", dst.getExpression().getData());
+            value = s.setValue(value, src.getInteger());
+
+            if (errors.hasChilds()) {
+                throw errors;
             }
-            value = d.setValue(value, dst.getInteger());
             if (dst.isLongLiteral() && src.isLongLiteral()) {
                 return getBytes(encodeAugd(condition, dst.getInteger()), encodeAugs(condition, src.getInteger()), value);
             }

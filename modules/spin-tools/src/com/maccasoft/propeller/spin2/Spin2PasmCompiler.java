@@ -22,7 +22,6 @@ import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
-import com.maccasoft.propeller.expressions.Identifier;
 import com.maccasoft.propeller.expressions.MemoryContextLiteral;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.ObjectContextLiteral;
@@ -30,6 +29,7 @@ import com.maccasoft.propeller.expressions.RegisterAddress;
 import com.maccasoft.propeller.model.DataLineNode;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.spin2.Spin2PAsmExpression.PtrExpression;
 import com.maccasoft.propeller.spin2.instructions.FileInc;
 
 public abstract class Spin2PasmCompiler extends ObjectCompiler {
@@ -138,13 +138,19 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
             int index = 0;
             String prefix = null;
             Expression expression = null, count = null;
+            Token token;
 
-            if (parameters.size() == 1 && Spin2InstructionObject.ptrInstructions.contains(mnemonic.toLowerCase()) && isPtrExpression(param.getTokens())) {
-                expression = new Identifier(param.getText(), globalScope);
-                expression.setData(param);
+            if (parameters.size() == 1 && Spin2InstructionObject.ptrInstructions.contains(mnemonic.toLowerCase())) {
+                try {
+                    expression = getPtrExpression(localScope, param);
+                } catch (CompilerException e) {
+                    logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, param));
+                }
             }
-            else {
-                Token token;
+
+            if (expression == null) {
                 if (index < param.getTokens().size()) {
                     token = param.getToken(index);
                     if (token.getText().startsWith("#")) {
@@ -170,16 +176,16 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
                         logMessage(new CompilerException(e, param));
                     }
                 }
-            }
-            if (param.count != null) {
-                try {
-                    Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(localScope, param.count.getTokens());
-                    count = expressionBuilder.getExpression();
-                    count.setData(param.count);
-                } catch (CompilerException e) {
-                    logMessage(e);
-                } catch (Exception e) {
-                    logMessage(new CompilerException(e, param));
+                if (param.count != null) {
+                    try {
+                        Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(localScope, param.count.getTokens());
+                        count = expressionBuilder.getExpression();
+                        count.setData(param.count);
+                    } catch (CompilerException e) {
+                        logMessage(e);
+                    } catch (Exception e) {
+                        logMessage(new CompilerException(e, param));
+                    }
                 }
             }
             if (expression != null) {
@@ -308,30 +314,59 @@ public abstract class Spin2PasmCompiler extends ObjectCompiler {
         return pasmLine;
     }
 
-    boolean isPtrExpression(List<Token> tokens) {
-        int index = 0;
+    PtrExpression getPtrExpression(Context scope, DataLineNode.ParameterNode param) {
+        Token pre = null, ptr, post = null;
+        boolean immediate = false;
+        Expression index = null;
+        Token token;
+        int idx = 0;
 
-        if (index >= tokens.size()) {
-            return false;
-        }
-        Token token = tokens.get(index++);
-        if ("++".equals(token.getText()) || "--".equals(token.getText())) {
-            if (index >= tokens.size()) {
-                return false;
+        if (idx < param.getTokenCount()) {
+            token = param.getToken(idx);
+            if ("++".equals(token.getText()) || "--".equals(token.getText())) {
+                pre = param.getToken(idx++);
             }
-            token = tokens.get(index++);
         }
-        if (!("PTRA".equalsIgnoreCase(token.getText()) || "PTRB".equalsIgnoreCase(token.getText()))) {
-            return false;
+
+        if (idx < param.getTokenCount()) {
+            ptr = param.getToken(idx++);
+            if (!("PTRA".equalsIgnoreCase(ptr.getText()) || "PTRB".equalsIgnoreCase(ptr.getText()))) {
+                return null;
+            }
+            if (idx < param.getTokenCount()) {
+                token = param.getTokens().get(idx);
+                if ("++".equals(token.getText()) || "--".equals(token.getText())) {
+                    post = param.getTokens().get(idx++);
+                }
+            }
+
+            if (idx < param.getTokenCount()) {
+                throw new CompilerException("syntax error", param.getTokens());
+            }
+
+            if (param.count != null) {
+                idx = 0;
+                if (idx < param.count.getTokenCount()) {
+                    token = param.count.getToken(idx);
+                    if ("##".equals(token.getText())) {
+                        immediate = true;
+                        idx++;
+                    }
+                }
+                Spin2ExpressionBuilder expressionBuilder = new Spin2ExpressionBuilder(scope);
+                while (idx < param.count.getTokenCount()) {
+                    expressionBuilder.addToken(param.count.getToken(idx++));
+                }
+                index = expressionBuilder.getExpression();
+                index.setData(param.count);
+            }
+
+            PtrExpression expression = new PtrExpression(pre != null ? pre.getText() : null, ptr.getText(), post != null ? post.getText() : null, immediate, index);
+            expression.setData(param);
+            return expression;
         }
-        if (index >= tokens.size()) {
-            return true;
-        }
-        token = tokens.get(index++);
-        if (!("++".equals(token.getText()) || "--".equals(token.getText()) || "[".equals(token.getText()))) {
-            return false;
-        }
-        return index >= tokens.size();
+
+        return null;
     }
 
     protected boolean isDebugEnabled() {
