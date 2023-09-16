@@ -97,7 +97,6 @@ import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.internal.ImageRegistry;
 import com.maccasoft.propeller.internal.InternalErrorDialog;
-import com.maccasoft.propeller.internal.TempDirectory;
 import com.maccasoft.propeller.model.DirectiveNode;
 import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.VariableNode;
@@ -111,7 +110,7 @@ import jssc.SerialPortException;
 public class SpinTools {
 
     public static final String APP_TITLE = "Spin Tools IDE";
-    public static final String APP_VERSION = "0.30.3";
+    public static final String APP_VERSION = "0.31.0";
 
     static final File defaultSpin1Examples = new File(System.getProperty("APP_DIR"), "examples/P1").getAbsoluteFile();
     static final File defaultSpin2Examples = new File(System.getProperty("APP_DIR"), "examples/P2").getAbsoluteFile();
@@ -3410,7 +3409,6 @@ public class SpinTools {
                         }
                     }
 
-                    TempDirectory.clean();
                 } catch (Exception e) {
                     e.printStackTrace();
                     return;

@@ -59,12 +59,7 @@ public class TempDirectory {
         String name = prefix + Long.toString(n) + suffix;
         File f = new File(dir, name);
         if (!name.equals(f.getName())) {
-            if (System.getSecurityManager() != null) {
-                throw new IOException("Unable to create temporary file");
-            }
-            else {
-                throw new IOException("Unable to create temporary file, " + f);
-            }
+            throw new IOException("Unable to create temporary file, " + f);
         }
         return f;
     }
