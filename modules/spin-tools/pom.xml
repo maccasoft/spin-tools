@@ -35,7 +35,7 @@
             </dependencies>
         </profile>
         <profile>
-            <id>mac</id>
+            <id>macosx</id>
             <activation>
                 <os><family>mac</family></os>
             </activation>

@@ -8,10 +8,6 @@
     <baseDirectory>spin-tools</baseDirectory>
     <dependencySets>
         <dependencySet>
-            <excludes>
-                <exclude>org.eclipse.platform:org.eclipse.swt.gtk.linux.x86_64</exclude>
-                <exclude>org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64</exclude>
-            </excludes>
             <outputDirectory>lib</outputDirectory>
         </dependencySet>
     </dependencySets>

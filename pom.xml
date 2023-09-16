@@ -22,153 +22,161 @@
             <version>0.30.3</version>
             <scope>runtime</scope>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.platform</groupId>
-            <artifactId>org.eclipse.swt.gtk.linux.x86_64</artifactId>
-            <version>3.123.0</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.platform</groupId>
-            <artifactId>org.eclipse.swt.win32.win32.x86_64</artifactId>
-            <version>3.123.0</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.platform</groupId>
-            <artifactId>org.eclipse.swt.cocoa.macosx.x86_64</artifactId>
-            <version>3.123.0</version>
-            <scope>runtime</scope>
-        </dependency>
     </dependencies>
-    <build>
-        <finalName>spin-tools</finalName>
-        <plugins>
-            <plugin>
-                <groupId>com.akathist.maven.plugins.launch4j</groupId>
-                <artifactId>launch4j-maven-plugin</artifactId>
-                <version>2.1.3</version>
-                <executions>
-                    <execution>
-                        <id>make-windows-executable</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>launch4j</goal>
-                        </goals>
-                        <configuration>
-                            <infile>build/windows/config.xml</infile>
-                            <outfile>target/spinide.exe</outfile>
-                            <versionInfo>
-                                <fileVersion>${project.version}.0</fileVersion>
-                                <txtFileVersion>${project.version}.0</txtFileVersion>
-                                <productVersion>${project.version}.0</productVersion>
-                                <txtProductVersion>${project.version}.0</txtProductVersion>
-                            </versionInfo>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>make-windows-cli-executable</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>launch4j</goal>
-                        </goals>
-                        <configuration>
-                            <infile>build/windows/config-cli.xml</infile>
-                            <outfile>target/spinc.exe</outfile>
-                            <versionInfo>
-                                <fileVersion>${project.version}.0</fileVersion>
-                                <txtFileVersion>${project.version}.0</txtFileVersion>
-                                <productVersion>${project.version}.0</productVersion>
-                                <txtProductVersion>${project.version}.0</txtProductVersion>
-                            </versionInfo>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.1.0</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.evolvedbinary.appbundler</groupId>
-                        <artifactId>appbundler</artifactId>
-                        <version>1.1.0</version>
-                    </dependency>
-                </dependencies>
-                <executions>
-                    <execution>
-                        <id>make-macosx-executable</id>
-                        <phase>package</phase>
-                        <configuration>
-                            <target>
-                                <taskdef name="bundleapp"
-                                    classname="com.oracle.appbundler.AppBundlerTask" />
-                                <bundleapp
-                                    outputdirectory="target"
-                                    name="Spin Tools IDE"
-                                    displayname="Spin Tools IDE"
-                                    identifier="com.maccasoft.propeller"
-                                    icon="build/macosx/app.icns"
-                                    shortversion="${project.version}"
-                                    signature="????"
-                                    copyright="Marco Maccaferri"
-                                    applicationCategory="public.app-category.developer-tools"
-                                    mainclassname="com.maccasoft.propeller.SpinTools"
-                                    jvmrequired="11">
-                                    <option value="-DAPP_DIR=$APP_ROOT/Contents/Java" />
-                                    <option value="-Dcom.apple.macos.useScreenMenuBar=true" />
-                                    <option value="-Xms128M" />
-                                    <option value="-Xmx512M" />
-                                    <option value="-XstartOnFirstThread" />
-                                </bundleapp>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <id>make-linux-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
+    <profiles>
+        <profile>
+            <id>linux</id>
+            <activation>
+                <os><name>linux</name></os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
                         <configuration>
                             <descriptors>
                                 <descriptor>build/linux/descriptor.xml</descriptor>
                             </descriptors>
                         </configuration>
-                    </execution>
-                    <execution>
-                        <id>make-windows-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os><family>windows</family></os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                        <artifactId>launch4j-maven-plugin</artifactId>
+                        <version>2.1.3</version>
+                        <executions>
+                            <execution>
+                                <id>make-windows-executable</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>launch4j</goal>
+                                </goals>
+                                <configuration>
+                                    <infile>build/windows/config.xml</infile>
+                                    <outfile>target/spinide.exe</outfile>
+                                    <versionInfo>
+                                        <fileVersion>${project.version}.0</fileVersion>
+                                        <txtFileVersion>${project.version}.0</txtFileVersion>
+                                        <productVersion>${project.version}.0</productVersion>
+                                        <txtProductVersion>${project.version}.0</txtProductVersion>
+                                    </versionInfo>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-windows-cli-executable</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>launch4j</goal>
+                                </goals>
+                                <configuration>
+                                    <infile>build/windows/config-cli.xml</infile>
+                                    <outfile>target/spinc.exe</outfile>
+                                    <versionInfo>
+                                        <fileVersion>${project.version}.0</fileVersion>
+                                        <txtFileVersion>${project.version}.0</txtFileVersion>
+                                        <productVersion>${project.version}.0</productVersion>
+                                        <txtProductVersion>${project.version}.0</txtProductVersion>
+                                    </versionInfo>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
                         <configuration>
                             <descriptors>
                                 <descriptor>build/windows/descriptor.xml</descriptor>
                             </descriptors>
                         </configuration>
-                    </execution>
-                    <execution>
-                        <id>make-macosx-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>macosx</id>
+            <activation>
+                <os><family>mac</family></os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.evolvedbinary.appbundler</groupId>
+                                <artifactId>appbundler</artifactId>
+                                <version>1.2.0</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>make-macosx-executable</id>
+                                <phase>package</phase>
+                                <configuration>
+                                    <target>
+                                        <taskdef name="bundleapp"
+                                            classname="com.oracle.appbundler.AppBundlerTask" />
+                                        <bundleapp
+                                            outputdirectory="target"
+                                            name="Spin Tools IDE"
+                                            displayname="Spin Tools IDE"
+                                            identifier="com.maccasoft.propeller"
+                                            icon="build/macosx/app.icns"
+                                            shortversion="${project.version}"
+                                            signature="????"
+                                            copyright="Marco Maccaferri"
+                                            applicationCategory="public.app-category.developer-tools"
+                                            mainclassname="com.maccasoft.propeller.SpinTools"
+                                            jvmrequired="11">
+                                            <option value="-DAPP_DIR=$APP_ROOT/Contents/Java" />
+                                            <option value="-Dcom.apple.macos.useScreenMenuBar=true" />
+                                            <option value="-Xms128M" />
+                                            <option value="-Xmx512M" />
+                                            <option value="-XstartOnFirstThread" />
+                                        </bundleapp>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
                         <configuration>
                             <descriptors>
                                 <descriptor>build/macosx/descriptor.xml</descriptor>
                             </descriptors>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+    <build>
+        <finalName>spin-tools</finalName>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
