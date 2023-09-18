@@ -104,6 +104,12 @@ public class Spin2TokenStream extends TokenStream {
                     break;
                 case Token.BLOCK_COMMENT:
                     token.stop++;
+                    if (ch == '\r' && index + 1 < text.length()) {
+                        if (text.charAt(index + 1) == '\n') {
+                            token.stop++;
+                            index++;
+                        }
+                    }
                     if (ch == '\r' || ch == '\n') {
                         column = 0;
                         line++;

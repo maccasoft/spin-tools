@@ -17,6 +17,8 @@ import java.io.InputStream;
 
 public class FileUtils {
 
+    static final String EOL_PATTERN = "\\r\\n|\\r|\\n";
+
     public static String loadFromFile(File file) throws IOException {
         FileInputStream is = new FileInputStream(file);
         byte[] data = new byte[is.available()];
@@ -32,7 +34,7 @@ public class FileUtils {
             data = s.getBytes("UTF-8");
         }
 
-        return new String(data).replace("\r\n", "\n").replace("\r", "\n");
+        return new String(data).replaceAll(EOL_PATTERN, System.lineSeparator());
     }
 
     public static byte[] loadBinaryFromFile(File file) throws Exception {

@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import com.maccasoft.propeller.model.Token;
+
 class Spin2TokenStreamTest {
 
     @Test
@@ -784,6 +786,57 @@ class Spin2TokenStreamTest {
         assertEquals(2, subject.nextToken().line); // NL
         assertEquals(3, subject.nextToken().line); // c
         assertEquals(3, subject.nextToken().line); // NL
+    }
+
+    @Test
+    void testBlockCommentLFLineNumbers() {
+        Spin2TokenStream subject = new Spin2TokenStream("{ \n }\nA\n");
+
+        Token token = subject.nextToken();
+        assertEquals("{ \n }", token.getText());
+        assertEquals(0, token.line);
+
+        token = subject.nextToken();
+        assertEquals("", token.getText());
+        assertEquals(1, token.line);
+
+        token = subject.nextToken();
+        assertEquals("A", token.getText());
+        assertEquals(2, token.line);
+    }
+
+    @Test
+    void testBlockCommentCRLineNumbers() {
+        Spin2TokenStream subject = new Spin2TokenStream("{ \r }\rA\r");
+
+        Token token = subject.nextToken();
+        assertEquals("{ \r }", token.getText());
+        assertEquals(0, token.line);
+
+        token = subject.nextToken();
+        assertEquals("", token.getText());
+        assertEquals(1, token.line);
+
+        token = subject.nextToken();
+        assertEquals("A", token.getText());
+        assertEquals(2, token.line);
+    }
+
+    @Test
+    void testBlockCommentCFLFLineNumbers() {
+        Spin2TokenStream subject = new Spin2TokenStream("{ \r\n }\r\nA\r\n");
+
+        Token token = subject.nextToken();
+        assertEquals("{ \r\n }", token.getText());
+        assertEquals(0, token.line);
+
+        token = subject.nextToken();
+        assertEquals("", token.getText());
+        assertEquals(1, token.line);
+
+        token = subject.nextToken();
+        assertEquals("A", token.getText());
+        assertEquals(2, token.line);
     }
 
     @Test

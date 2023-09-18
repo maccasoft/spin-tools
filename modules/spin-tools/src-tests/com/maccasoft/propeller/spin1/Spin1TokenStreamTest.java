@@ -744,11 +744,45 @@ class Spin1TokenStreamTest {
     }
 
     @Test
-    void testBlockCommentLineNumbers() {
+    void testBlockCommentLFLineNumbers() {
         Spin1TokenStream subject = new Spin1TokenStream("{ \n }\nA\n");
 
         Token token = subject.nextToken();
         assertEquals("{ \n }", token.getText());
+        assertEquals(0, token.line);
+
+        token = subject.nextToken();
+        assertEquals("", token.getText());
+        assertEquals(1, token.line);
+
+        token = subject.nextToken();
+        assertEquals("A", token.getText());
+        assertEquals(2, token.line);
+    }
+
+    @Test
+    void testBlockCommentCRLineNumbers() {
+        Spin1TokenStream subject = new Spin1TokenStream("{ \r }\rA\r");
+
+        Token token = subject.nextToken();
+        assertEquals("{ \r }", token.getText());
+        assertEquals(0, token.line);
+
+        token = subject.nextToken();
+        assertEquals("", token.getText());
+        assertEquals(1, token.line);
+
+        token = subject.nextToken();
+        assertEquals("A", token.getText());
+        assertEquals(2, token.line);
+    }
+
+    @Test
+    void testBlockCommentCFLFLineNumbers() {
+        Spin1TokenStream subject = new Spin1TokenStream("{ \r\n }\r\nA\r\n");
+
+        Token token = subject.nextToken();
+        assertEquals("{ \r\n }", token.getText());
         assertEquals(0, token.line);
 
         token = subject.nextToken();
