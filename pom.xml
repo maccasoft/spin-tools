@@ -138,7 +138,7 @@
                                             copyright="Marco Maccaferri"
                                             applicationCategory="public.app-category.developer-tools"
                                             mainclassname="com.maccasoft.propeller.SpinTools"
-                                            jvmrequired="11">
+                                            jvmrequired="17">
                                             <option value="-DAPP_DIR=$APP_ROOT/Contents/Java" />
                                             <option value="-Dcom.apple.macos.useScreenMenuBar=true" />
                                             <option value="-Xms128M" />

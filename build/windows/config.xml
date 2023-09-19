@@ -11,7 +11,7 @@
     </classPath>
     <jre>
         <path>java</path>
-        <minVersion>11</minVersion>
+        <minVersion>17</minVersion>
         <runtimeBits>64</runtimeBits>
         <opt>-Dfile.encoding="UTF-8"</opt>
         <opt>-DAPP_DIR="%EXEDIR%"</opt>

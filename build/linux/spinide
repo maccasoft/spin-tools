@@ -3,8 +3,6 @@
 APPDIR="$(dirname -- "$(readlink -f -- "${0}")" )"
 
 for LIB in \
-    "$APPDIR"/java/lib/rt.jar \
-    "$APPDIR"/java/lib/tools.jar \
     "$APPDIR"/lib/*.jar \
     ;
 do
