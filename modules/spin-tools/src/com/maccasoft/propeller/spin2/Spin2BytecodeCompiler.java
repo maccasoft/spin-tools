@@ -1917,10 +1917,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 Expression exp1 = buildConstantExpression(context, node.getChild(0));
                 Expression exp2 = buildConstantExpression(context, node.getChild(1));
                 if (exp1.isConstant() && exp2.isConstant()) {
-                    int lowest = Math.min(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                    int highest = Math.max(exp1.getNumber().intValue(), exp2.getNumber().intValue());
-                    Expression exp = new Addbits(new NumberLiteral(lowest), new NumberLiteral(highest - lowest));
-                    bitfield = exp.getNumber().intValue();
+                    int arg0 = exp1.getNumber().intValue();
+                    int arg1 = exp2.getNumber().intValue();
+                    bitfield = ((arg0 - arg1) & 0x1F) << 5 | arg1;
                 }
             } catch (Exception e) {
                 // Do nothing
@@ -1931,7 +1930,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 source.addAll(compileBytecodeExpression(context, method, node.getChild(1), true));
                 source.add(new Bytecode(context, new byte[] {
                     (byte) 0x9F, (byte) 0x94
-                }, "ADDBITS"));
+                }, "BITRANGE"));
             }
         }
         else {
