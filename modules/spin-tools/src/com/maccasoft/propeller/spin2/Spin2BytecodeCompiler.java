@@ -1578,6 +1578,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             if (bitfieldNode != null) {
                 source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
             }
+            else if (write) {
+                source.add(new Bytecode(context, 0x82, "WRITE"));
+            }
         }
         else if ("REG".equalsIgnoreCase(node.getText())) {
             indexNode = null;
@@ -1657,6 +1660,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             if (bitfieldNode != null) {
                 source.add(new BitField(context, push && !write ? BitField.Op.Setup : BitField.Op.Write, push, bitfield));
             }
+            else if (write) {
+                source.add(new Bytecode(context, 0x82, "WRITE"));
+            }
         }
         else if ("FIELD".equalsIgnoreCase(node.getText()) && node.getChildCount() != 0) {
             indexNode = null;
@@ -1683,8 +1689,8 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             else {
                 source.add(new Bytecode(context, new byte[] {
                     (byte) (indexNode == null ? 0x4D : 0x4E),
-                    (byte) 0x81
-                }, "FIELD_WRITE"));
+                    (byte) (push ? 0x82 : 0x81)
+                }, push ? "FIELD_WRITE (push)" : "FIELD_WRITE"));
             }
         }
         else {
