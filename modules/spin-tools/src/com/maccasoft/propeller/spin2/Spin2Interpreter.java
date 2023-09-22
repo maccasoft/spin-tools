@@ -14,9 +14,9 @@ import java.io.InputStream;
 
 public class Spin2Interpreter {
 
-    int debugnop0E4C; // _debugnop1_     dirh    #63-63                  'write clkfreq to rx pin long repository'
-    int debugnop0E50; // _debugnop2_     wxpin   z,#63-63
-    int debugnop0E54; // _debugnop3_     dirl    #63-63                  '(these 3 are NOP'd by compiler if not DEBUG, else fixed with debug_pin_rx)
+    int debugnop0E54; // _debugnop1_     dirh    #63-63                  'write clkfreq to rx pin long repository'
+    int debugnop0E58; // _debugnop2_     wxpin   z,#63-63
+    int debugnop0E5C; // _debugnop3_     dirl    #63-63                  '(these 3 are NOP'd by compiler if not DEBUG, else fixed with debug_pin_rx)
     byte[] code = new byte[0];
 
     public Spin2Interpreter() {
@@ -25,9 +25,9 @@ public class Spin2Interpreter {
             code = new byte[is.available()];
             is.read(code);
             writeLong(0x003C, 0x00000100);
-            debugnop0E4C = readLong(0x0E4C);
-            debugnop0E50 = readLong(0x0E50);
             debugnop0E54 = readLong(0x0E54);
+            debugnop0E58 = readLong(0x0E58);
+            debugnop0E5C = readLong(0x0E5C);
             setPBase(code.length);
         } catch (Exception e) {
             e.printStackTrace();
@@ -99,22 +99,22 @@ public class Spin2Interpreter {
         int augd = Spin2InstructionObject.e.setValue(0, 0b1111);
         augd = Spin2InstructionObject.o.setValue(augd, 0b1111100);
         augd = Spin2InstructionObject.x.setValue(augd, delay >> 9);
-        writeLong(0x0E4C, augd);
+        writeLong(0x0E54, augd);
 
         int waitx = Spin2InstructionObject.e.setValue(0, 0b1111);
         waitx = Spin2InstructionObject.o.setValue(waitx, 0b1101011);
         waitx = Spin2InstructionObject.i.setBoolean(waitx, true);
         waitx = Spin2InstructionObject.d.setValue(waitx, delay);
         waitx = Spin2InstructionObject.s.setValue(waitx, 0b000011111);
-        writeLong(0x0E50, waitx);
+        writeLong(0x0E58, waitx);
 
-        writeLong(0x0E54, 0x00000000);
+        writeLong(0x0E5C, 0x00000000);
     }
 
     public void setDebugPins(int tx, int rx) {
-        writeLong(0x0E4C, Spin2InstructionObject.d.setValue(debugnop0E4C, rx));
-        writeLong(0x0E50, Spin2InstructionObject.s.setValue(debugnop0E50, rx));
         writeLong(0x0E54, Spin2InstructionObject.d.setValue(debugnop0E54, rx));
+        writeLong(0x0E58, Spin2InstructionObject.s.setValue(debugnop0E58, rx));
+        writeLong(0x0E5C, Spin2InstructionObject.d.setValue(debugnop0E5C, rx));
     }
 
 }

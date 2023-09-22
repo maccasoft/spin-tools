@@ -1,5 +1,5 @@
 '************************************
-'*  Spin2 Interpreter - 2022.11.19  *
+'*  Spin2 Interpreter - 2023.09.21  *
 '************************************
 '
 CON     bc_setup_reg_1D8_1F8    = $B0
@@ -118,7 +118,7 @@ bc_float        word    @float_         'FLOAT(integer)                 (push)  
 '*  Interpreter - cog registers  *
 '*********************************
 '
-                org     $122            'start of reg code (user area below)
+                org     $120            'start of reg code (user area below)
 reg_code
 '
 '
@@ -130,11 +130,6 @@ return_         jmp     #returnh        'continue in hub
 ' ABORT                                 (1 long)
 '
 abort_          jmp     #aborth         'continue in hub
-'
-'
-' Add pbase to x                        (1 long)
-'
-addbase _ret_   add     x,pbase
 '
 '
 ' Miscellaneous                         (17 longs)
@@ -158,7 +153,52 @@ cogatn_         cogatn  x               '            | | | | k
         _ret_   popa    x               '            g h i j k
 '
 '
-' Variable assignments / math operators (85 longs)
+' Miscellaneous                         (29 longs)
+'
+debug_          pusha   x               'a                      a: DEBUG()
+popx            rfvar   x               'a b                    b: pop #rfvar
+                sub     ptra,x          'a b                    c: PINLOW(pins)
+pinl_           drvl    x               '| | c                  d: PINHIGH(pins)
+pinh_           drvh    x               '| | | d                e: PINTOGGLE(pins)
+pint_           drvnot  x               '| | | | e              f: PINFLOAT(pins)
+pinf_           fltl    x               '| | | | | f g          g: PINCLEAR(pins)
+                wrpin   #0,x            '| | | | | | g          h: AKPIN(pins)
+akpin_          akpin   x               '| | | | | | | h
+pop1    _ret_   popa    x               '| b c d e f g h
+                popa    x               'a                      (continued in string_ + branch + hub_code)
+'
+'
+' STRING()
+'
+string_         rfbyte  w               'a b                    b: STRING() - push string address and jump over string
+        _ret_   brk     w               'a |
+                pusha   x               '  b
+                add     pb,#1           '  b
+                mov     x,pb            '  b                    (continued in branch + hub_code)
+'
+'
+' Branches - jmp, jz, jnz, tjz, djnz
+'
+branch          rfvars  w               '  | c d e f g          c: jmp  - branch
+                test    x       wz      '  | | d e f |          d: jz   - test, pop, branch if z
+                popa    x               '  | | d e | |          e: jnz  - test, pop, branch if nz
+        if_nz   ret                     '  | | d | f |          f: tjz  - test, if z then pop and branch
+                sub     x,#1    wz      '  | | | | | g          g: djnz - dec, if z then pop, else branch
+        if_z    popa    x               '  | | | | f g
+        if_z    ret                     '  | | | e | g
+                add     pb,w            '  b c d e f g          (continued in hub_code)
+'
+'
+' Call hub bytecode routine
+'
+hub_code        rfbyte  pa              '  | | | | | |          get function index byte
+                getptr  pb              '  | | | | | |          get updated bytecode pointer
+                rdword  v,pa    wcz     '  | | | | | |          lookup function address
+                call    v               '  | | | | | |          call function in hub, c/z/v[31]=0
+resume  _ret_   rdfast  #0,pb           '  b c d e f g          resume bytecode stream
+'
+'
+' Variable assignments / math operators (21 longs)
 '
 una_iso         mov     w,x             '       m                               a: !!
 una_psh         pusha   x               'push   | n                             b: !
@@ -180,8 +220,11 @@ op_ones         ones    x               'ONES   x x | | | | | | | h | | |
                 alti    wr              'wr     m n | | | | | | | | | | |
                 ret                     'wr,op  m n a b c d e f g h i j k       m: ?= var       (isolated)
         _ret_   mov     x,w             'iso    m |                             n: ?= var       (push)
-        _ret_   zerox   x,sz            'push     n                             x: use a..j
-
+        _ret_   zerox   x,sz            'push     n                             x: use a..k
+'
+'
+' Variable assignments / math operators (16 longs)
+'
 sha_mod         mov     w,x             '       x x a b c d e       i j         a: >>
 rev_mod         not     w,x             '       x x | | | | | f g h | |         b: <<
                 alti    rd              'rd     m n | | | | | | | | | |         c: SAR
@@ -198,7 +241,10 @@ rev_mod         not     w,x             '       x x | | | | | f g h | |         
                 ret                     'wr,op  m n a b c d e f g h i j         m: var ?= exp   (isolated)
         _ret_   popa    x               'iso    m |                             n: var ?= exp   (push)
         _ret_   zerox   x,sz            'push     n                             x: use a..j
-
+'
+'
+' Variable assignments / math operators (19 longs)
+'
 add_mod         and     x,#$1F          'addpb                      i j         a: &&
                 shl     x,#5            'addb                       i |         b: ^^
                 shl     x,#6            'addp                       | j         c: ||
@@ -218,38 +264,9 @@ log_mod         mov     w,x     wz      '       x x a b c d e f g h i j         
                 ret                     'wr,op  m n a b c d e f g h i j         m: var ?= exp   (isolated)
         _ret_   popa    x               'iso    m |                             n: var ?= exp   (push)
         _ret_   zerox   x,sz            'push     n                             x: use a..h
-
-mul_mod         abs     w,x     wc      'C=ys   x x   b   d     g               a: *
-muu_mod         mov     w,x             '       x x a | c | e f | h             b: /
-                alti    rd              'rd     m n | | | | | | | |             c: +/
-                popa    x               'rd,op  m n a b c d e f g h             d: //
-                testb   x,#31   wz      'Z=xs   x x | b | d | | g |             e: +//
-                abs     x               '       x x | b | d | | g |             f: SCA
-                rep     #99,#1          '       x x a b c d e f g h             g: SCAS         use REP to protect cordic operation until call/ret/_ret_
-                qmul    x,w             '*,SCAx x x a | | | | f g |             h: FRAC
-                qdiv    x,w             '/,//   x x | b c d e | | |
-                qfrac   x,w             'FRAC   x x | | | | | | | h
-                getqx   x               '       x x a b c | | | | h
-    if_c_ne_z   neg     x               '*,/    x x | b | | | | | |
-                getqy   x               '       x x | | | d e f g |
-    if_z        neg     x               '//     x x | | | d | | | |
-                getqx   w               'SCAS   x x | | | | | | g |
-                call    #\.scas         'SCAS   x x | | | | | | g |
-                alti    wr              'wr     m n | | | | | | | |
-                ret                     'wr,op  m n a b c d e f g h             m: var ?= exp   (isolated)
-        _ret_   popa    x               'iso    m |                             n: var ?= exp   (push)
-        _ret_   zerox   x,sz            'push     n                             x: use a..h
-
-.scas if_c_eq_z jmp     #.scas2         'adjust 64-bit product for SCAS
-                neg     w       wz      'conditionally negate {x,w}
-    if_nz       not     x
-    if_z        neg     x
-.scas2          shl     x,#2            'x = {x,w}[61:30]
-                shr     w,#32-2
-        _ret_   or      x,w
 '
 '
-' Variable pre/post modifiers           (17 longs, must be in regs)
+' Variable pre/post modifiers           (28 longs, must be in regs)
 '
 mod_iso         mov     w,x             'iso    a b         g   i   k l         a: ++var, var++ (isolated)
 mod_psh         pusha   x               'push   | | c d e f | h | j | | m       b: --var, var-- (isolated)
@@ -258,19 +275,20 @@ rd_field        call    #\rdf           'rd     a b c d e f g h i j k l m       
                 xoro32  x               '??     | | | | | | | | | | | l m       e: var++        (push)
                 mov     v,x             'post   | | | | e f | h | j k l m       f: var--        (push)
                 add     x,#1            '++     a | c | e | | | | | | | |       g: var!!        (isolated)
-                sub     x,#1            '--     | b | d | f | | | | | | |       h: var!!        (push)
-                zerox   x,sz            'ptr    | | c d | | | | | | | | |       i: var!         (isolated)
-                muxz    x,_FFFFFFFF     '!!     | | | | | | g h | | | | |       j: var!         (push)
-                not     x               '!      | | | | | | | | i j | | |       k: var\new      (swap)
-                mov     x,w             'swap   | | | | | | | | | | k | |       l: ??var        (isolated)
-                alti    wr              'wr     a b c d e f g h i j k l m       m: ??var        (push)
-wr_field        call    #\wrf           'wr     a b c d e f g h i j k l m                                       (pipeline spacer)
-        _ret_   mov     x,w             'iso    a b | | | | g | i | | l |
-        _ret_   mov     x,v             'iso        | | e f   h   j k   m
-                ret                     'main       c d
+repvarin        sub     x,#1            '--     | b | d | f | | | | | | |  n    h: var!!        (push)
+                zerox   x,sz            'ptr    | | c d | | | | | | | | |  |    i: var!         (isolated)
+                pusha   x               '0..n-1 | | | | | | | | | | | | |  n    j: var!         (push)
+                muxz    x,_FFFFFFFF     '!!     | | | | | | g h | | | | |  n    k: var\new      (swap)
+                not     x               '!      | | | | | | | | i j | | |  |    l: ??var        (isolated)
+                mov     x,w             'swap   | | | | | | | | | | k | |  |    m: ??var        (push)
+                alti    wr              'wr     a b c d e f g h i j k l m  |
+wr_field        call    #\wrf           'wr     a b c d e f g h i j k l m  |                                    (pipeline spacer)
+        _ret_   mov     x,w             'iso    a b | | | | g | i | | l |  |
+        _ret_   mov     x,v             'iso        | | e f   h   j k   m  |
+                ret                     'main       c d                    |    n: REPEAT-var init, 0..n-1      (followed by repvari1)
 '
 '
-' REPEAT-var init                       (10 longs, must be in regs)
+' REPEAT-var init                       (must be in regs)
 '
 '  x            initial
 '  ptra[-1]     delta
@@ -502,51 +520,6 @@ callgo          rdfast  #0,x            'a b c d e f g h        return from hub,
         _ret_   wrlong  #0,ptra++       'a b c d e f g h
 '
 '
-' Miscellaneous                         (29 longs)
-'
-debug_          pusha   x               'a                      a: DEBUG()
-popx            rfvar   x               'a b                    b: pop #rfvar
-                sub     ptra,x          'a b                    c: PINLOW(pins)
-pinl_           drvl    x               '| | c                  d: PINHIGH(pins)
-pinh_           drvh    x               '| | | d                e: PINTOGGLE(pins)
-pint_           drvnot  x               '| | | | e              f: PINFLOAT(pins)
-pinf_           fltl    x               '| | | | | f g          g: PINCLEAR(pins)
-                wrpin   #0,x            '| | | | | | g          h: AKPIN(pins)
-akpin_          akpin   x               '| | | | | | | h
-pop1    _ret_   popa    x               '| b c d e f g h
-                popa    x               'a                      (continued in string_ + branch + hub_code)
-'
-'
-' STRING()
-'
-string_         rfbyte  w               'a b                    b: STRING() - push string address and jump over string
-        _ret_   brk     w               'a |
-                pusha   x               '  b
-                add     pb,#1           '  b
-                mov     x,pb            '  b                    (continued in branch + hub_code)
-'
-'
-' Branches - jmp, jz, jnz, tjz, djnz
-'
-branch          rfvars  w               '  | c d e f g          c: jmp  - branch
-                test    x       wz      '  | | d e f |          d: jz   - test, pop, branch if z
-                popa    x               '  | | d e | |          e: jnz  - test, pop, branch if nz
-        if_nz   ret                     '  | | d | f |          f: tjz  - test, if z then pop and branch
-                sub     x,#1    wz      '  | | | | | g          g: djnz - dec, if z then pop, else branch
-        if_z    popa    x               '  | | | | f g
-        if_z    ret                     '  | | | e | g
-                add     pb,w            '  b c d e f g          (continued in hub_code)
-'
-'
-' Call hub bytecode routine
-'
-hub_code        rfbyte  pa              '  | | | | | |          get function index byte
-                getptr  pb              '  | | | | | |          get updated bytecode pointer
-                rdword  v,pa    wcz     '  | | | | | |          lookup function address
-                call    v               '  | | | | | |          call function in hub, c/z/v[31]=0
-resume  _ret_   rdfast  #0,pb           '  b c d e f g          resume bytecode stream
-'
-'
 ' Setup reg variable                    (11 longs)
 '
 reg_im          signx   pa,#3           'a              a: setup reg[$1D8..$1DF]/[$1F8..$1FF]
@@ -564,7 +537,7 @@ reg_ap          rfvars  pa              '| b c
 
                 mov     sz,#31          'a b c
 
-        _ret_   setq2   #$0E0           'a b c          (next bytecode is a variable operator)
+        _ret_   setq2   #$0E1           'a b c          (next bytecode is a variable operator)
 '
 '
 ' Setup hub variable                    (22 longs)
@@ -597,7 +570,7 @@ hub_p           mov     ad,x            '| | | | | | | | | | | | | | | | | | | |
                 mov     sz,#15          '| | | | | | | | i j k l m n | | | | | | | v | | y |    z: setup long[pop address]
                 mov     sz,#31          'a b | | | | | | | | | | | | o p q r s t | | w | | z
 
-        _ret_   setq2   #$0E0           'a b c d e f g h i j k l m n o p q r s t u v w x y z    (next bytecode is a variable operator)
+        _ret_   setq2   #$0E1           'a b c d e f g h i j k l m n o p q r s t u v w x y z    (next bytecode is a variable operator)
 '
 '
 ' Setup bitfield                        (13 longs)
@@ -620,7 +593,7 @@ bit_p           mov     fb,x            '| | c
                 mov     rd,rd_field     'a b c
                 mov     wr,wr_field     'a b c
 
-        _ret_   setq2   #$0E0           'a b c          (next bytecode is a variable operator)
+        _ret_   setq2   #$0E1           'a b c          (next bytecode is a variable operator)
 '
 '
 ' Variable read/write                   (10 longs)
@@ -641,12 +614,50 @@ var_wr          alti    wr              '  | | d e
         _ret_   zerox   x,sz            '    c   e      (ret for c, ret+zerox for e)
 '
 '
-' Variable operator bytecodes at $27B - triggered via '_ret_ setq2 #$0E0'
+' Variable assignments / math operators (27 longs)
+'
+mul_mod         abs     w,x     wc      'C=ys   x x   b   d     g               a: *
+muu_mod         mov     w,x             '       x x a | c | e f | h             b: /
+                alti    rd              'rd     m n | | | | | | | |             c: +/
+                popa    x               'rd,op  m n a b c d e f g h             d: //
+                testb   x,#31   wz      'Z=xs   x x | b | d | | g |             e: +//
+                abs     x               '       x x | b | d | | g |             f: SCA
+                rep     #99,#1          '       x x a b c d e f g h             g: SCAS         use REP to protect cordic operation until call/ret/_ret_
+                qmul    x,w             '*,SCAx x x a | | | | f g |             h: FRAC
+                qdiv    x,w             '/,//   x x | b c d e | | |
+                qfrac   x,w             'FRAC   x x | | | | | | | h
+                getqx   x               '       x x a b c | | | | h
+    if_c_ne_z   neg     x               '*,/    x x | b | | | | | |
+                getqy   x               '       x x | | | d e f g |
+    if_z        neg     x               '//     x x | | | d | | | |
+                getqx   w               'SCAS   x x | | | | | | g |
+                call    #\.scas         'SCAS   x x | | | | | | g |
+                alti    wr              'wr     m n | | | | | | | |
+                ret                     'wr,op  m n a b c d e f g h             m: var ?= exp   (isolated)
+        _ret_   popa    x               'iso    m |                             n: var ?= exp   (push)
+        _ret_   zerox   x,sz            'push     n                             x: use a..h
+
+.scas if_c_eq_z jmp     #.scas2         'adjust 64-bit product for SCAS
+                neg     w       wz      'conditionally negate {x,w}
+    if_nz       not     x
+    if_z        neg     x
+.scas2          shl     x,#2            'x = {x,w}[61:30]
+                shr     w,#32-2
+        _ret_   or      x,w
+'
+'
+' Add pbase to x                        (1 long)
+'
+addbase _ret_   add     x,pbase
+'
+'
+' Variable operator bytecodes at $27A - triggered via '_ret_ setq2 #$0E1'
 '
 altcodes
-                orgf    $27B
+                orgf    $27A
 
-bc_repeat_var_init_1    long  repvari1  |                     %0 << 10  '7B     REPEAT-var init, step=1
+bc_repeat_var_init_n    long  repvarin  |          %011111110010 << 10  '7A Z=0 REPEAT-var init, 0..n-1
+bc_repeat_var_init_1    long  repvari1  |                     %0 << 10  '7B     REPEAT-var init, step 1
 bc_repeat_var_init      long  repvari   |                     %0 << 10  '7C     REPEAT-var init
 bc_repeat_var_loop      long  repvarl   |                     %0 << 10  '7D     REPEAT-var loop
 
@@ -656,19 +667,19 @@ bc_read                 long  var_rd    |            %0111001110 << 10  '80     
 bc_write                long  var_wr    |                     %0 << 10  '81     write var       (isolated)
 bc_write_push           long  var_wr    |                  %0100 << 10  '82     write var       (push)
 
-bc_var_inc              long  mod_iso   |       %000111110110010 << 10  '83     ++var, var++    (isolated)
-bc_var_dec              long  mod_iso   |       %000111101110010 << 10  '84     --var, var--    (isolated)
-bc_var_preinc_push      long  mod_psh   |     %0110011101011000_ << 10  '85     ++var           (push)
-bc_var_predec_push      long  mod_psh   |     %0110011100111000_ << 10  '86     --var           (push)
-bc_var_postinc_push     long  mod_psh   |      %010011111001000_ << 10  '87     var++           (push)
-bc_var_postdec_push     long  mod_psh   |      %010011110101000_ << 10  '88     var--           (push)
-bc_var_lognot           long  mod_iso   |       %000110111110010 << 10  '89     var!!           (isolated)
-bc_var_lognot_push      long  mod_psh   |      %010011011101000_ << 10  '8A     var!!           (push)
-bc_var_bitnot           long  mod_iso   |       %000101111110010 << 10  '8B     var!            (isolated)
-bc_var_bitnot_push      long  mod_psh   |      %010010111101000_ << 10  '8C     var!            (push)
-bc_var_swap             long  mod_iso   |      %0100011111010010 << 10  '8D     var\new         (swap)
-bc_var_rnd              long  mod_iso   |       %000111111000010 << 10  '8E     ??var           (isolated)
-bc_var_rnd_push         long  mod_psh   |      %010011111100000_ << 10  '8F     ??var           (push)
+bc_var_inc              long  mod_iso   |      %0001111110110010 << 10  '83     ++var, var++    (isolated)
+bc_var_dec              long  mod_iso   |      %0001111101110010 << 10  '84     --var, var--    (isolated)
+bc_var_preinc_push      long  mod_psh   |    %01100111101011000_ << 10  '85     ++var           (push)
+bc_var_predec_push      long  mod_psh   |    %01100111100111000_ << 10  '86     --var           (push)
+bc_var_postinc_push     long  mod_psh   |     %0100111111001000_ << 10  '87     var++           (push)
+bc_var_postdec_push     long  mod_psh   |     %0100111110101000_ << 10  '88     var--           (push)
+bc_var_lognot           long  mod_iso   |      %0001101111110010 << 10  '89     var!!           (isolated)
+bc_var_lognot_push      long  mod_psh   |     %0100110111101000_ << 10  '8A     var!!           (push)
+bc_var_bitnot           long  mod_iso   |      %0001011111110010 << 10  '8B     var!            (isolated)
+bc_var_bitnot_push      long  mod_psh   |     %0100101111101000_ << 10  '8C     var!            (push)
+bc_var_swap             long  mod_iso   |     %01000111111010010 << 10  '8D     var\new         (swap)
+bc_var_rnd              long  mod_iso   |      %0001111111000010 << 10  '8E     ??var           (isolated)
+bc_var_rnd_push         long  mod_psh   |     %0100111111100000_ << 10  '8F     ??var           (push)
 
 bc_lognot_write         long  una_iso   |  %00011111111011110010 << 10  '90     !!= var         (isolated)
 bc_bitnot_write         long  una_iso   |  %00011111110111110010 << 10  '91     != var          (isolated)
@@ -1023,7 +1034,7 @@ bc_setup_local_0_15_    long  hub_im    |  %11011011110110111110 << 10  'Dx *   
 bc_read_local_0_15_     long  var_rd    |                %010000 << 10  'Ex     read  long[dbase][0..15]
 bc_write_local_0_15_    long  var_wr_im |               %0111000 << 10  'Fx     write long[dbase][0..15]  (isolated)
 
-                                        '* must end in '_ret_ setq2 #$0E0' to invoke variable operator bytecodes
+                                        '* must end in '_ret_ setq2 #$0E1' to invoke variable operator bytecodes
 '
 '
 ' a: ^@anyvar                           (4 longs)
