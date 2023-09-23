@@ -62,6 +62,9 @@ For CASE_FAST to compile, the match values/ranges must be unique constants which
 <code><b>REPEAT &lt;count&gt;</b>
     &lt;indented code&gt;</code>
 
+<code><b>REPEAT &lt;positive_count&gt; WITH &lt;variable&gt;</b>
+    &lt;indented code&gt;</code>
+
 <code><b>REPEAT &lt;variable> FROM &lt;first&gt; TO &lt;last&gt;</b>
     &lt;indented code&gt;</code>
 

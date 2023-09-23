@@ -1538,12 +1538,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         Spin2StatementNode from = null;
                         Spin2StatementNode to = null;
                         Spin2StatementNode step = null;
+                        Spin2StatementNode with = null;
 
                         Spin2TreeBuilder builder = new Spin2TreeBuilder(context);
                         builder.addToken(token);
                         while (iter.hasNext()) {
                             token = iter.next();
-                            if ("FROM".equalsIgnoreCase(token.getText())) {
+                            if ("FROM".equalsIgnoreCase(token.getText()) || "WITH".equalsIgnoreCase(token.getText())) {
                                 break;
                             }
                             builder.addToken(token);
@@ -1585,6 +1586,16 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 }
                             }
                         }
+                        else if ("WITH".equalsIgnoreCase(token.getText())) {
+                            builder = new Spin2TreeBuilder(context);
+                            while (iter.hasNext()) {
+                                builder.addToken(iter.next());
+                            }
+                            with = builder.getRoot();
+                            if (with.getChildCount() != 0) {
+                                throw new CompilerException("syntax error", builder.getTokens());
+                            }
+                        }
 
                         if (from != null && to != null) {
                             line.setData("pop", Integer.valueOf(16));
@@ -1613,6 +1624,34 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             nextLine.addSource(new Bytecode(line.getScope(), 0x7D, "REPEAT_LOOP"));
                             line.addChild(nextLine);
                         }
+                        else if (with != null) {
+                            line.setData("pop", Integer.valueOf(16));
+
+                            Spin2MethodLine loopLine = new Spin2MethodLine(context);
+
+                            line.addSource(new Address(line.getScope(), new ContextLiteral(loopLine.getScope())));
+
+                            try {
+                                Expression expression = buildConstantExpression(line.getScope(), counter);
+                                line.addSource(new Constant(line.getScope(), expression));
+                            } catch (Exception e) {
+                                line.addSource(compileBytecodeExpression(line.getScope(), method, counter, true));
+                            }
+
+                            Expression expression = line.getScope().getLocalSymbol(with.getText());
+                            line.addSource(compileVariableSetup(context, method, expression, with));
+                            line.addSource(new Bytecode(line.getScope(), 0x7A, "REPEAT"));
+
+                            Spin2MethodLine nextLine = new Spin2MethodLine(context);
+                            line.setData("next", nextLine);
+
+                            line.addChild(loopLine);
+                            line.addChilds(compileStatement(new Context(context), method, line, node));
+
+                            nextLine.addSource(compileVariableSetup(context, method, expression, with));
+                            nextLine.addSource(new Bytecode(line.getScope(), 0x7D, "REPEAT_LOOP"));
+                            line.addChild(nextLine);
+                        }
                         else {
                             try {
                                 Expression expression = buildConstantExpression(line.getScope(), counter);
@@ -1621,6 +1660,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 line.addSource(compileBytecodeExpression(line.getScope(), method, counter, true));
                                 line.addSource(new Tjz(line.getScope(), new ContextLiteral(quitLine.getScope())));
                             }
+
                             line.setData("pop", Integer.valueOf(4));
 
                             Spin2MethodLine nextLine = new Spin2MethodLine(context);

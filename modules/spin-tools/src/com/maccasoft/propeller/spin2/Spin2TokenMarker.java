@@ -152,6 +152,7 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("TO", TokenId.KEYWORD);
         keywords.put("STEP", TokenId.KEYWORD);
         keywords.put("WHILE", TokenId.KEYWORD);
+        keywords.put("WITH", TokenId.KEYWORD);
         keywords.put("UNTIL", TokenId.KEYWORD);
         keywords.put("NEXT", TokenId.KEYWORD);
         keywords.put("QUIT", TokenId.KEYWORD);
