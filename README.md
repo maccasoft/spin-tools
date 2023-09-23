@@ -17,5 +17,5 @@ Integrated Development Environment for the Parallax Propeller 1 and 2 multicore 
  * Includes a set of libraries and examples ready to use
  * Multiplatform, available for Linux, Windows and MacOS
 
- **Note:** requires Java SE 11 or later runtime already installed.
+ **Note:** requires Java SE 17 or later runtime already installed.
  
