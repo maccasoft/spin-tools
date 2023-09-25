@@ -868,4 +868,36 @@ class Spin2TokenStreamTest {
         assertEquals("a", subject.nextToken().getText());
     }
 
+    @Test
+    void testContinuationLineNumber() {
+        Spin2TokenStream subject = new Spin2TokenStream("repeat a ... { multiline\r\ncomment}\n       from 1 ...\r\n       to 10\n");
+
+        Token token = subject.nextToken();
+        assertEquals("repeat", token.getText());
+        assertEquals(0, token.line);
+        assertEquals(0, token.column);
+        token = subject.nextToken();
+        assertEquals("a", token.getText());
+        token = subject.nextToken();
+        assertEquals("... { multiline\r\n"
+            + "comment}\n"
+            + "", token.getText());
+
+        token = subject.nextToken();
+        assertEquals("from", token.getText());
+        assertEquals(2, token.line);
+        assertEquals(7, token.column);
+        token = subject.nextToken();
+        assertEquals("1", token.getText());
+        token = subject.nextToken();
+        assertEquals("...\r\n", token.getText());
+
+        token = subject.nextToken();
+        assertEquals("to", token.getText());
+        assertEquals(3, token.line);
+        assertEquals(7, token.column);
+        token = subject.nextToken();
+        assertEquals("10", token.getText());
+    }
+
 }

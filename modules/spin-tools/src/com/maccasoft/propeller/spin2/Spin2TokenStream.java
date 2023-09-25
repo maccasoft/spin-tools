@@ -467,13 +467,19 @@ public class Spin2TokenStream extends TokenStream {
                     return token;
                 case Token.NEXT_LINE:
                     token.stop++;
+                    if (ch == '\r' && index + 1 < text.length()) {
+                        if (text.charAt(index + 1) == '\n') {
+                            token.stop++;
+                            index++;
+                        }
+                    }
                     if (ch == '\r' || ch == '\n') {
+                        column = 0;
+                        line++;
                         if (nested == 0) {
                             index++;
                             return token;
                         }
-                        column = 0;
-                        line++;
                     }
                     else if (ch == '{') {
                         nested++;
