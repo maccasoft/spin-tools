@@ -24,15 +24,15 @@ import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.ITreeViewerListener;
-import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.StyledCellLabelProvider;
 import org.eclipse.jface.viewers.TreeExpansionEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
@@ -56,24 +56,6 @@ public class FileBrowser {
         public File[] getElements() {
             return File.listRoots();
         }
-    }
-
-    class FileLabelProvider extends LabelProvider {
-
-        @Override
-        public String getText(Object element) {
-            String name = ((File) element).getName();
-            if (name == null || name.length() == 0) {
-                name = ((File) element).getPath();
-            }
-            return name;
-        }
-
-        @Override
-        public Image getImage(Object element) {
-            return ImageRegistry.getImageForFile((File) element);
-        }
-
     }
 
     class FileTreeContentProvider implements ITreeContentProvider {
@@ -231,7 +213,22 @@ public class FileBrowser {
         hiddenExtensions.add(".binary");
 
         viewer = new TreeViewer(parent);
-        viewer.setLabelProvider(new FileLabelProvider());
+        viewer.setLabelProvider(new StyledCellLabelProvider() {
+
+            @Override
+            public void update(ViewerCell cell) {
+                File element = (File) cell.getElement();
+
+                String name = element.getName();
+                if (name == null || name.length() == 0) {
+                    name = element.getPath();
+                }
+                cell.setText(name);
+
+                cell.setImage(ImageRegistry.getImageForFile(element));
+            }
+
+        });
         viewer.setComparator(new FileComparator());
         viewer.setContentProvider(new FileTreeContentProvider());
         viewer.setUseHashlookup(true);
