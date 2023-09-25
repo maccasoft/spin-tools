@@ -700,6 +700,7 @@ public class SerialTerminal {
                 case 8: // BS: BackSpace
                     if (cx > 0) {
                         cx--;
+                        screen[cy][cx].character = ' ';
                     }
                     break;
 
