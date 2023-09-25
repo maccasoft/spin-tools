@@ -94,10 +94,10 @@ public class Spin2Debug {
 
                     switch (cmd) {
                         case "FDEC":
-                            compileSpinStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG);
+                            compileSpinStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | flags);
                             break;
                         case "FDEC_ARRAY":
-                            compileSpinArrayStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | DBC_FLAG_ARRAY);
+                            compileSpinArrayStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
                             break;
 
                         case "UDEC":
@@ -356,13 +356,13 @@ public class Spin2Debug {
 
                     switch (cmd) {
                         case "FDEC":
-                            compileSimpleStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG);
+                            compileSimpleStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | flags);
                             break;
                         case "FDEC_REG_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_FLP | DBC_FLAG_ARRAY);
+                            compileArrayStatement(node, os, DBC_TYPE_FLP | DBC_FLAG_ARRAY | flags);
                             break;
                         case "FDEC_ARRAY":
-                            compileArrayStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | DBC_FLAG_ARRAY);
+                            compileArrayStatement(node, os, DBC_TYPE_FLP | DBC_SIZE_LONG | DBC_FLAG_ARRAY | flags);
                             break;
 
                         case "UDEC":

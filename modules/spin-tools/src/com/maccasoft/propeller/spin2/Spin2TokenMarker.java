@@ -467,6 +467,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         debugKeywords.put("FDEC_REG_ARRAY", TokenId.FUNCTION);
         debugKeywords.put("FDEC_ARRAY", TokenId.FUNCTION);
 
+        debugKeywords.put("FDEC_", TokenId.FUNCTION);
+        debugKeywords.put("FDEC_REG_ARRAY_", TokenId.FUNCTION);
+        debugKeywords.put("FDEC_ARRAY_", TokenId.FUNCTION);
+
         debugKeywords.put("UDEC", TokenId.FUNCTION);
         debugKeywords.put("UDEC_BYTE", TokenId.FUNCTION);
         debugKeywords.put("UDEC_WORD", TokenId.FUNCTION);
