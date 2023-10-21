@@ -397,7 +397,18 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     source.add(new Bytecode(context, 0x79, "NEGATE"));
                 }
             }
-            else if ("+".equalsIgnoreCase(node.getText()) && node.getChildCount() == 1) {
+            else if ("-.".equalsIgnoreCase(node.getText()) && node.getChildCount() == 1) {
+                try {
+                    Expression expression = buildConstantExpression(context, node);
+                    source.add(new Constant(context, expression));
+                } catch (Exception e) {
+                    source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
+                    source.add(new Bytecode(context, new byte[] {
+                        0x19, (byte) 0x94
+                    }, "FLOAT_NEGATE"));
+                }
+            }
+            else if (("+".equalsIgnoreCase(node.getText()) || "+.".equalsIgnoreCase(node.getText())) && node.getChildCount() == 1) {
                 try {
                     Expression expression = buildConstantExpression(context, node);
                     source.add(new Constant(context, expression));

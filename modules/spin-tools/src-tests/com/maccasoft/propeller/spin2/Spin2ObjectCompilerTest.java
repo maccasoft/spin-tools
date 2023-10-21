@@ -5669,6 +5669,30 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testUnaryFloat() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    a := -. b\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       0E 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     a := -. b\n"
+            + "00009 00009       E1             VAR_READ LONG DBASE+$00001 (short)\n"
+            + "0000A 0000A       19 94          FLOAT_NEGATE\n"
+            + "0000C 0000C       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0000D 0000D       04             RETURN\n"
+            + "0000E 0000E       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testFieldPointer() throws Exception {
         String text = ""
             + "VAR\n"

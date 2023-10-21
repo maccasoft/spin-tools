@@ -182,6 +182,8 @@ public class Spin2TreeBuilder {
         unary.add("QLOG=");
         unary.add("QEXP");
         unary.add("QEXP=");
+        unary.add("+.");
+        unary.add("-.");
     }
 
     static Set<String> postEffect = new HashSet<>();
