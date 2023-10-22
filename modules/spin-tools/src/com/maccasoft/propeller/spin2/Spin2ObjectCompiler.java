@@ -1552,10 +1552,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         counter = builder.getRoot();
 
                         if ("FROM".equalsIgnoreCase(token.getText())) {
-                            if (counter.getChildCount() != 0) {
-                                throw new CompilerException("syntax error", builder.getTokens());
-                            }
-
                             builder = new Spin2TreeBuilder(context);
                             while (iter.hasNext()) {
                                 token = iter.next();
@@ -1610,8 +1606,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             }
                             line.addSource(compileConstantExpression(line.getScope(), method, from));
 
-                            Expression expression = line.getScope().getLocalSymbol(counter.getText());
-                            line.addSource(compileVariableSetup(context, method, expression, counter));
+                            line.addSource(leftAssign(context, method, counter, true, false));
                             line.addSource(new Bytecode(line.getScope(), step != null ? 0x7C : 0x7B, "REPEAT"));
 
                             Spin2MethodLine nextLine = new Spin2MethodLine(context);
@@ -1620,7 +1615,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             line.addChild(loopLine);
                             line.addChilds(compileStatement(new Context(context), method, line, node));
 
-                            nextLine.addSource(compileVariableSetup(context, method, expression, counter));
+                            nextLine.addSource(leftAssign(context, method, counter, true, false));
                             nextLine.addSource(new Bytecode(line.getScope(), 0x7D, "REPEAT_LOOP"));
                             line.addChild(nextLine);
                         }
@@ -1638,8 +1633,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 line.addSource(compileBytecodeExpression(line.getScope(), method, counter, true));
                             }
 
-                            Expression expression = line.getScope().getLocalSymbol(with.getText());
-                            line.addSource(compileVariableSetup(context, method, expression, with));
+                            line.addSource(leftAssign(context, method, with, true, false));
                             line.addSource(new Bytecode(line.getScope(), 0x7A, "REPEAT"));
 
                             Spin2MethodLine nextLine = new Spin2MethodLine(context);
@@ -1648,7 +1642,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                             line.addChild(loopLine);
                             line.addChilds(compileStatement(new Context(context), method, line, node));
 
-                            nextLine.addSource(compileVariableSetup(context, method, expression, with));
+                            nextLine.addSource(leftAssign(context, method, with, true, false));
                             nextLine.addSource(new Bytecode(line.getScope(), 0x7D, "REPEAT_LOOP"));
                             line.addChild(nextLine);
                         }

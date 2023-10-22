@@ -67,7 +67,6 @@ import com.maccasoft.propeller.spin1.bytecode.Jnz;
 import com.maccasoft.propeller.spin1.bytecode.Jz;
 import com.maccasoft.propeller.spin1.bytecode.RepeatLoop;
 import com.maccasoft.propeller.spin1.bytecode.Tjz;
-import com.maccasoft.propeller.spin1.bytecode.VariableOp;
 import com.maccasoft.propeller.spin1.instructions.Org;
 import com.maccasoft.propeller.spin1.instructions.Res;
 import com.maccasoft.propeller.spin2.Spin2ExpressionBuilder;
@@ -1378,10 +1377,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                         counter = builder.getRoot();
 
                         if ("FROM".equalsIgnoreCase(token.getText())) {
-                            if (counter.getChildCount() != 0) {
-                                throw new CompilerException("syntax error", builder.getTokens());
-                            }
-
                             builder = new Spin1TreeBuilder(context);
                             while (iter.hasNext()) {
                                 token = iter.next();
@@ -1416,17 +1411,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                         if (from != null && to != null) {
                             line.addSource(compileBytecodeExpression(line.getScope(), method, from, true));
 
-                            Expression expression = line.getScope().getLocalSymbol(counter.getText());
-                            if (expression == null) {
-                                throw new CompilerException("undefined symbol " + counter.getText(), counter.getToken());
-                            }
-                            else if (expression instanceof Variable) {
-                                line.addSource(new VariableOp(line.getScope(), VariableOp.Op.Write, (Variable) expression));
-                                ((Variable) expression).setCalledBy(method);
-                            }
-                            else {
-                                throw new RuntimeException("unsupported " + counter);
-                            }
+                            line.addSource(leftAssign(context, method, counter, false));
 
                             Spin1MethodLine nextLine = new Spin1MethodLine(context);
                             line.setData("next", nextLine);
@@ -1441,7 +1426,7 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                             nextLine.addSource(compileBytecodeExpression(line.getScope(), method, from, true));
                             nextLine.addSource(compileBytecodeExpression(line.getScope(), method, to, true));
 
-                            nextLine.addSource(new VariableOp(line.getScope(), VariableOp.Op.Assign, (Variable) expression));
+                            nextLine.addSource(leftAssign(context, method, counter, true));
                             nextLine.addSource(new RepeatLoop(line.getScope(), step != null, new ContextLiteral(loopLine.getScope())));
                             line.addChild(nextLine);
                         }

@@ -1342,7 +1342,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
         throw new RuntimeException("unknown " + node.getText());
     }
 
-    List<Spin1Bytecode> leftAssign(Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
+    protected List<Spin1Bytecode> leftAssign(Context context, Spin1Method method, Spin1StatementNode node, boolean push) {
         List<Spin1Bytecode> source = new ArrayList<Spin1Bytecode>();
 
         String[] s = node.getText().split("[\\.]");
@@ -1422,10 +1422,8 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 }
             }
         }
-        else if (node.getType() == Token.OPERATOR) {
-            source.addAll(leftAssign(context, method, node.getChild(1), true));
-            source.add(new Bytecode(context, 0x80, "WRITE"));
-            source.addAll(leftAssign(context, method, node.getChild(0), node.getChild(0).getType() == Token.OPERATOR));
+        else if (node.getType() != 0 && node.getType() != Token.KEYWORD) {
+            throw new CompilerException("syntax error", node.getToken());
         }
         else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
             source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));

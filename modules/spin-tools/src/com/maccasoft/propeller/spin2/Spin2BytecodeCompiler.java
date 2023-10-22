@@ -1414,7 +1414,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         throw new RuntimeException("unknown " + node.getText());
     }
 
-    List<Spin2Bytecode> leftAssign(Context context, Spin2Method method, Spin2StatementNode node, boolean push, boolean write) {
+    protected List<Spin2Bytecode> leftAssign(Context context, Spin2Method method, Spin2StatementNode node, boolean push, boolean write) {
         Spin2StatementNode indexNode = null;
         Spin2StatementNode bitfieldNode = null;
         Spin2StatementNode postEffectNode = null;
@@ -1521,9 +1521,8 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 source.addAll(leftAssign(context, method, node.getChild(i), push, false));
             }
         }
-        else if (node.getType() == Token.OPERATOR) {
-            source.addAll(leftAssign(context, method, node.getChild(1), true, true));
-            source.addAll(leftAssign(context, method, node.getChild(0), node.getChild(0).getType() == Token.OPERATOR, false));
+        else if (node.getType() != 0 && node.getType() != Token.KEYWORD) {
+            throw new CompilerException("syntax error", node.getToken());
         }
         else if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
             indexNode = null;
