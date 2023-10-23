@@ -10,9 +10,11 @@
 
 package com.maccasoft.propeller.spin2.bytecode;
 
+import java.io.ByteArrayOutputStream;
+
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.spin2.Spin2Bytecode;
-import com.maccasoft.propeller.expressions.Context;
 
 public class SubAddress extends Spin2Bytecode {
 
@@ -32,26 +34,36 @@ public class SubAddress extends Spin2Bytecode {
 
     @Override
     public int getSize() {
-        return method.getObjectIndex() == -1 ? 2 : 3;
+        int objectIndex = method.getObjectIndex();
+        int methodIndex = method.getIndex();
+        if (objectIndex == -1) {
+            return 1 + Constant.wrVar(methodIndex).length;
+        }
+        else {
+            return 1 + Constant.wrVar(objectIndex).length + Constant.wrVar(methodIndex).length;
+        }
     }
 
     @Override
     public byte[] getBytes() {
         int objectIndex = method.getObjectIndex();
         int methodIndex = method.getIndex();
-        if (objectIndex == -1) {
-            return new byte[] {
-                (byte) 0x11,
-                (byte) methodIndex
-            };
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try {
+            if (objectIndex == -1) {
+                os.write(0x11);
+            }
+            else {
+                os.write(indexed ? 0x10 : 0x0F);
+                os.write(Constant.wrVar(objectIndex));
+            }
+            os.write(Constant.wrVar(methodIndex));
+
+        } catch (Exception e) {
+            // Do nothing
         }
-        else {
-            return new byte[] {
-                (byte) (indexed ? 0x10 : 0x0F),
-                (byte) objectIndex,
-                (byte) methodIndex
-            };
-        }
+        return os.toByteArray();
     }
 
     @Override
