@@ -611,6 +611,32 @@ class Spin1TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void testRangeExpression() {
+        String text = "a..b - 1";
+        Assertions.assertEquals(""
+            + "[..]\n"
+            + " +-- [a]\n"
+            + " +-- [-]\n"
+            + "      +-- [b]\n"
+            + "      +-- [1]\n"
+            + "", parse(text));
+    }
+
+    @Test
+    void testIndexRangeExpression() {
+        String text = "a[0]..b[1] - 2";
+        Assertions.assertEquals(""
+            + "[..]\n"
+            + " +-- [a]\n"
+            + "      +-- [0]\n"
+            + " +-- [-]\n"
+            + "      +-- [b]\n"
+            + "           +-- [1]\n"
+            + "      +-- [2]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin1TreeBuilder builder = new Spin1TreeBuilder(new Context());
 

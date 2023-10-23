@@ -377,7 +377,7 @@ public class Spin2TreeBuilder {
                             return node;
                         }
                     }
-                    else if (peek().getText().startsWith(".")) {
+                    else if (peek().type != Token.OPERATOR && peek().getText().startsWith(".")) {
                         node.addChild(parseAtom());
                         if (peek() == null) {
                             return node;
