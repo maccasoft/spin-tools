@@ -1833,14 +1833,16 @@ public class SourceEditor {
         Rectangle rect = styledText.getClientArea();
         int topLine = styledText.getLineIndex(0);
         int bottomLine = styledText.getLineIndex(rect.height);
-        int pageSize = bottomLine - topLine;
-        while (line < topLine) {
-            topLine -= pageSize;
-            bottomLine -= pageSize;
-        }
-        while (line > bottomLine) {
-            topLine += pageSize;
-            bottomLine += pageSize;
+        int pageSize = bottomLine - topLine - 1;
+        if (pageSize > 0) {
+            while (line < topLine) {
+                topLine -= pageSize;
+                bottomLine -= pageSize;
+            }
+            while (line > bottomLine) {
+                topLine += pageSize;
+                bottomLine += pageSize;
+            }
         }
 
         styledText.setCaretOffset(styledText.getOffsetAtLine(line) + column);
@@ -2231,7 +2233,7 @@ public class SourceEditor {
             int line = styledText.getLineAtOffset(offset);
             int lineOffset = styledText.getOffsetAtLine(line);
             String lineText = styledText.getLine(line);
-            int endIndex = token.start - lineOffset;
+            int endIndex = token.start - lineOffset - 1;
             if (endIndex > 0) {
                 if (lineText.charAt(endIndex) == ']') {
                     int depth = -1;
