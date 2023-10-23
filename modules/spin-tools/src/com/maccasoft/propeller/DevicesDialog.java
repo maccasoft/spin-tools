@@ -309,8 +309,10 @@ public class DevicesDialog extends Dialog {
 
             void hwreset(SerialPort serialPort) throws SerialPortException {
                 serialPort.setDTR(true);
+                serialPort.setRTS(true);
                 msleep(25);
                 serialPort.setDTR(false);
+                serialPort.setRTS(false);
                 msleep(25);
                 skipIncomingBytes(serialPort);
                 serialPort.purgePort(SerialPort.PURGE_TXABORT |

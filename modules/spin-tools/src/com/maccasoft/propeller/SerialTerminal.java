@@ -1626,8 +1626,10 @@ public class SerialTerminal {
 
     void hwreset() throws SerialPortException {
         serialPort.setDTR(true);
+        serialPort.setRTS(true);
         msleep(25);
         serialPort.setDTR(false);
+        serialPort.setRTS(false);
         msleep(25);
         skipIncomingBytes();
         serialPort.purgePort(SerialPort.PURGE_TXABORT |
