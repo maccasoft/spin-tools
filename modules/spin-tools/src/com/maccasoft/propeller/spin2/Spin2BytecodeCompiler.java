@@ -29,7 +29,9 @@ import com.maccasoft.propeller.expressions.Compare;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
+import com.maccasoft.propeller.expressions.Decod;
 import com.maccasoft.propeller.expressions.Divide;
+import com.maccasoft.propeller.expressions.Encod;
 import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.GreaterOrEquals;
@@ -43,6 +45,7 @@ import com.maccasoft.propeller.expressions.LessThan;
 import com.maccasoft.propeller.expressions.LessThanUnsigned;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.LogicalAnd;
+import com.maccasoft.propeller.expressions.LogicalNot;
 import com.maccasoft.propeller.expressions.LogicalOr;
 import com.maccasoft.propeller.expressions.LogicalXor;
 import com.maccasoft.propeller.expressions.MemoryContextLiteral;
@@ -1282,6 +1285,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 return new Xor(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
             case "|":
                 return new Or(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "!":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Not(buildConstantExpression(context, node.getChild(0), registerConstant));
 
             case "*":
             case "*.":
@@ -1329,6 +1337,12 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             case "^^":
             case "XOR":
                 return new LogicalXor(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+            case "!!":
+            case "NOT":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new LogicalNot(buildConstantExpression(context, node.getChild(0), registerConstant));
 
             case "<":
             case "<.":
@@ -1361,12 +1375,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             case "<=>":
                 return new Compare(buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
 
-            case "!":
-                if (node.getChildCount() == 1) {
-                    return new Not(buildConstantExpression(context, node.getChild(0), registerConstant));
-                }
-                throw new RuntimeException("unary operator with " + node.getChildCount() + " arguments");
-
             case "?": {
                 Expression right = buildConstantExpression(context, node.getChild(1), registerConstant);
                 if (!(right instanceof IfElse)) {
@@ -1376,6 +1384,17 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
             case ":":
                 return new IfElse(null, buildConstantExpression(context, node.getChild(0), registerConstant), buildConstantExpression(context, node.getChild(1), registerConstant));
+
+            case "ENCOD":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Encod(buildConstantExpression(context, node.getChild(0), registerConstant));
+            case "DECOD":
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("misplaced unary operator (" + node.getText() + ")");
+                }
+                return new Decod(buildConstantExpression(context, node.getChild(0), registerConstant));
 
             case "TRUNC":
                 if (node.getChildCount() != 1) {
