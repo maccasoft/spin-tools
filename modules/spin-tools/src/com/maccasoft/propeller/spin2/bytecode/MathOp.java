@@ -227,7 +227,7 @@ public class MathOp extends Spin2Bytecode {
 
     @Override
     public int getSize() {
-        return 1;
+        return push ? op.push_value.length : op.value.length;
     }
 
     @Override
