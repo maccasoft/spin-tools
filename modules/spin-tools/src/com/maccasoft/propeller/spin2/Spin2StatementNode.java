@@ -24,6 +24,8 @@ public class Spin2StatementNode {
     Token firstToken;
     Token lastToken;
 
+    boolean method;
+
     protected Map<String, Spin2StatementNode> properties = new HashMap<String, Spin2StatementNode>();
     protected List<Spin2StatementNode> childs = new ArrayList<Spin2StatementNode>();
 
@@ -43,22 +45,7 @@ public class Spin2StatementNode {
             this.childs.addAll(node.childs);
             this.data = node.data;
             this.keyedData = node.keyedData;
-        }
-    }
-
-    public static class Method extends Spin2StatementNode {
-
-        public Method(Token token) {
-            super(token);
-        }
-
-        public Method(Spin2StatementNode node) {
-            super(node.token);
-            this.token.type = Token.FUNCTION;
-            this.properties.putAll(node.properties);
-            this.childs.addAll(node.childs);
-            this.data = node.data;
-            this.keyedData = node.keyedData;
+            this.method = node.method;
         }
     }
 
@@ -70,6 +57,7 @@ public class Spin2StatementNode {
             this.childs.addAll(node.childs);
             this.data = node.data;
             this.keyedData = node.keyedData;
+            this.method = node.method;
         }
 
         public Argument(Token token) {
@@ -79,6 +67,11 @@ public class Spin2StatementNode {
 
     public Spin2StatementNode(Token token) {
         this.token = token;
+    }
+
+    public Spin2StatementNode(Token token, boolean method) {
+        this.token = token;
+        this.method = method;
     }
 
     public int getType() {
@@ -187,6 +180,14 @@ public class Spin2StatementNode {
 
     public void setData(String key, Object data) {
         this.keyedData.put(key, data);
+    }
+
+    public boolean isMethod() {
+        return method;
+    }
+
+    public void setMethod(boolean method) {
+        this.method = method;
     }
 
     @Override

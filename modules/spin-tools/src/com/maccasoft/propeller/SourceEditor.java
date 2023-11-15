@@ -653,44 +653,44 @@ public class SourceEditor {
                 }
 
                 if (token != null && helpProvider != null) {
-                    String text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
-                    if (text == null) {
-                        text = tokenMarker.getMethod(token.getText());
-                        if (text == null && token.getText().startsWith("@")) {
-                            text = tokenMarker.getMethod(token.getText().substring(1));
-                        }
-                        if (text == null && token.getText().startsWith(".")) {
-                            int line = styledText.getLineAtOffset(offset);
-                            int lineOffset = styledText.getOffsetAtLine(line);
-                            String lineText = styledText.getLine(line);
-                            int endIndex = token.start - lineOffset - 1;
-                            if (lineText.charAt(endIndex) == ']') {
-                                int depth = -1;
-                                while (endIndex >= 0) {
-                                    if (lineText.charAt(endIndex) == ']') {
-                                        depth++;
+                    String text = tokenMarker.getMethod(token.getText());
+                    if (text == null && token.getText().startsWith("@")) {
+                        text = tokenMarker.getMethod(token.getText().substring(1));
+                    }
+                    if (text == null && token.getText().startsWith(".")) {
+                        int line = styledText.getLineAtOffset(offset);
+                        int lineOffset = styledText.getOffsetAtLine(line);
+                        String lineText = styledText.getLine(line);
+                        int endIndex = token.start - lineOffset - 1;
+                        if (lineText.charAt(endIndex) == ']') {
+                            int depth = -1;
+                            while (endIndex >= 0) {
+                                if (lineText.charAt(endIndex) == ']') {
+                                    depth++;
+                                }
+                                else if (lineText.charAt(endIndex) == '[') {
+                                    if (depth == 0) {
+                                        break;
                                     }
-                                    else if (lineText.charAt(endIndex) == '[') {
-                                        if (depth == 0) {
-                                            break;
-                                        }
-                                        depth--;
-                                    }
-                                    endIndex--;
+                                    depth--;
                                 }
                                 endIndex--;
                             }
-                            if (endIndex >= 0) {
-                                Token objectToken = tokenMarker.getTokenAt(endIndex + lineOffset);
-                                if (objectToken != null) {
-                                    String qualifiedName = objectToken.getText() + token.getText();
-                                    text = tokenMarker.getMethod(qualifiedName);
-                                    if (text == null && qualifiedName.startsWith("@")) {
-                                        text = tokenMarker.getMethod(qualifiedName.substring(1));
-                                    }
+                            endIndex--;
+                        }
+                        if (endIndex >= 0) {
+                            Token objectToken = tokenMarker.getTokenAt(endIndex + lineOffset);
+                            if (objectToken != null) {
+                                String qualifiedName = objectToken.getText() + token.getText();
+                                text = tokenMarker.getMethod(qualifiedName);
+                                if (text == null && qualifiedName.startsWith("@")) {
+                                    text = tokenMarker.getMethod(qualifiedName.substring(1));
                                 }
                             }
                         }
+                    }
+                    if (text == null) {
+                        text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
                     }
                     if (text != null && !"".equals(text)) {
                         popupWindow = new Shell(styledText.getShell(), SWT.RESIZE | SWT.ON_TOP);

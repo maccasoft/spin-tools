@@ -298,7 +298,7 @@ public class Spin2CTreeBuilder {
         }
 
         if ("sizeof".equals(token.getText())) {
-            Spin2StatementNode node = new Spin2StatementNode.Method(next());
+            Spin2StatementNode node = new Spin2StatementNode(next(), true);
             token = peek();
             if (token != null && "(".equals(token.getText())) {
                 next();
@@ -406,7 +406,7 @@ public class Spin2CTreeBuilder {
                 }
                 else if ("(".equals(peek().getText())) {
                     next();
-                    node = new Spin2StatementNode.Method(node);
+                    node.setMethod(true);
                     if (peek() != null && ")".equals(peek().getText())) {
                         token = next();
                         if (peek() != null && peek().column == token.column + 1) {

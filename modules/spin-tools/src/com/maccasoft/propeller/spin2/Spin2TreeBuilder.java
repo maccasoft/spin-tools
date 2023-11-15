@@ -409,7 +409,7 @@ public class Spin2TreeBuilder {
                 }
                 else if ("(".equals(peek().getText())) {
                     next();
-                    node = new Spin2StatementNode.Method(node);
+                    node.method = true;
                     if (peek() != null && ")".equals(peek().getText())) {
                         token = next();
                         if (peek() != null && peek().column == token.column + 1) {
