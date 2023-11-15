@@ -71,6 +71,10 @@ public class Spin2StatementNode {
             this.data = node.data;
             this.keyedData = node.keyedData;
         }
+
+        public Argument(Token token) {
+            super(token);
+        }
     }
 
     public Spin2StatementNode(Token token) {

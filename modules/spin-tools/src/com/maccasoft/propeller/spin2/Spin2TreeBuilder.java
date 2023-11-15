@@ -396,6 +396,11 @@ public class Spin2TreeBuilder {
                         }
                     }
                 }
+                else if ("byte".equalsIgnoreCase(node.getText()) || "word".equalsIgnoreCase(node.getText()) || "long".equalsIgnoreCase(node.getText())) {
+                    node.addChild(parseLevel(parseAtom(), 0, false));
+                    return node;
+                }
+
                 if (postEffect.contains(peek().getText())) {
                     Token postToken = peek();
                     if (!"?".equals(postToken.getText()) || postToken.start == (token.stop + 1)) {

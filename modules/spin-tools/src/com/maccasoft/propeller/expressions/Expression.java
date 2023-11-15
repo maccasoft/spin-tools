@@ -61,6 +61,30 @@ public abstract class Expression {
         throw new RuntimeException("Not a number.");
     }
 
+    public byte[] getByte() {
+        return new byte[] {
+            getNumber().byteValue()
+        };
+    }
+
+    public byte[] getWord() {
+        int value = getNumber().intValue();
+        return new byte[] {
+            (byte) (value & 0xFF),
+            (byte) ((value >> 8) & 0xFF)
+        };
+    }
+
+    public byte[] getLong() {
+        int value = getNumber().intValue();
+        return new byte[] {
+            (byte) (value & 0xFF),
+            (byte) ((value >> 8) & 0xFF),
+            (byte) ((value >> 16) & 0xFF),
+            (byte) ((value >> 24) & 0xFF)
+        };
+    }
+
     public boolean isString() {
         return false;
     }

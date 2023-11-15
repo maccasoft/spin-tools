@@ -147,6 +147,21 @@ class Spin2TreeBuilderTest {
     }
 
     @Test
+    void testFunctionArgumentsOverride() {
+        String text = "a := function(1, byte 2, word 3)";
+        Assertions.assertEquals(""
+            + "[:=]\n"
+            + " +-- [a]\n"
+            + " +-- [function]\n"
+            + "      +-- [1]\n"
+            + "      +-- [byte]\n"
+            + "           +-- [2]\n"
+            + "      +-- [word]\n"
+            + "           +-- [3]\n"
+            + "", parse(text));
+    }
+
+    @Test
     void testFunctionExpressionAssignment() {
         String text = "a := function1() + function2() * function3()";
         Assertions.assertEquals(""

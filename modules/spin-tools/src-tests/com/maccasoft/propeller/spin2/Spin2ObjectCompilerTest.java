@@ -5088,6 +5088,88 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testLString() throws Exception {
+        String text = ""
+            + "PUB main() | a\n"
+            + "\n"
+            + "    a := lstring(\"1234\", 13, 10)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       14 00 00 00    End\n"
+            + "' PUB main() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     a := lstring(\"1234\", 13, 10)\n"
+            + "00009 00009       9E 07 06 31 32 LSTRING\n"
+            + "0000E 0000E       33 34 0D 0A\n"
+            + "00012 00012       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00013 00013       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testBytesWordsLongs() throws Exception {
+        String text = ""
+            + "PUB main() | a, b, c\n"
+            + "\n"
+            + "    a := bytes(\"1234\", 13, 10)\n"
+            + "    b := words(\"1234\", 13, 10)\n"
+            + "    c := longs(\"1234\", 13, 10)\n"
+            + "\n"
+            + "    a := bytes(\"1234\", long 13, 10)\n"
+            + "    b := words(\"1234\", byte 13, 10)\n"
+            + "    c := longs(\"1234\", word 13, 10)\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       70 00 00 00    End\n"
+            + "' PUB main() | a, b, c\n"
+            + "00008 00008       03             (stack size)\n"
+            + "'     a := bytes(\"1234\", 13, 10)\n"
+            + "00009 00009       9E 06 31 32 33 BYTES\n"
+            + "0000E 0000E       34 0D 0A\n"
+            + "00011 00011       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     b := words(\"1234\", 13, 10)\n"
+            + "00012 00012       9E 0C 31 00 32 WORDS\n"
+            + "00017 00017       00 33 00 34 00\n"
+            + "0001C 0001C       0D 00 0A 00\n"
+            + "00020 00020       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "'     c := longs(\"1234\", 13, 10)\n"
+            + "00021 00021       9E 18 31 00 00 LONGS\n"
+            + "00026 00026       00 32 00 00 00\n"
+            + "0002B 0002B       33 00 00 00 34\n"
+            + "00030 00030       00 00 00 0D 00\n"
+            + "00035 00035       00 00 0A 00 00\n"
+            + "0003A 0003A       00\n"
+            + "0003B 0003B       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "'     a := bytes(\"1234\", long 13, 10)\n"
+            + "0003C 0003C       9E 09 31 32 33 BYTES\n"
+            + "00041 00041       34 0D 00 00 00\n"
+            + "00046 00046       0A\n"
+            + "00047 00047       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     b := words(\"1234\", byte 13, 10)\n"
+            + "00048 00048       9E 0B 31 00 32 WORDS\n"
+            + "0004D 0004D       00 33 00 34 00\n"
+            + "00052 00052       0D 0A 00\n"
+            + "00055 00055       F1             VAR_WRITE LONG DBASE+$00001 (short)\n"
+            + "'     c := longs(\"1234\", word 13, 10)\n"
+            + "00056 00056       9E 16 31 00 00 LONGS\n"
+            + "0005B 0005B       00 32 00 00 00\n"
+            + "00060 00060       33 00 00 00 34\n"
+            + "00065 00065       00 00 00 0D 00\n"
+            + "0006A 0006A       0A 00 00 00\n"
+            + "0006E 0006E       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
+            + "0006F 0006F       04             RETURN\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testLookup() throws Exception {
         String text = ""
             + "PUB main() | a, b\n"

@@ -124,6 +124,10 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("STRCOMP", TokenId.FUNCTION);
         keywords.put("STRCOPY", TokenId.FUNCTION);
         keywords.put("STRING", TokenId.FUNCTION);
+        keywords.put("LSTRING", TokenId.FUNCTION);
+        keywords.put("BYTES", TokenId.FUNCTION);
+        keywords.put("WORDS", TokenId.FUNCTION);
+        keywords.put("LONGS", TokenId.FUNCTION);
         keywords.put("GETCRC", TokenId.FUNCTION);
 
         keywords.put("LOOKUP", TokenId.FUNCTION);
