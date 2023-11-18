@@ -12,8 +12,8 @@ package com.maccasoft.propeller.spin1.bytecode;
 
 import org.apache.commons.lang3.BitField;
 
-import com.maccasoft.propeller.spin1.Spin1Bytecode;
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.spin1.Spin1Bytecode;
 
 public class RegisterOp extends Spin1Bytecode {
 
@@ -35,19 +35,26 @@ public class RegisterOp extends Spin1Bytecode {
 
     @Override
     public int getSize() {
-        return 2;
+        return value != 0 ? 2 : 1;
     }
 
     @Override
     public byte[] getBytes() {
-        int b1 = 0b1_00_00000;
-        b1 = op_oo.setValue(b1, oo.ordinal());
-        b1 = op_xxxxx.setValue(b1, value - 0x1E0);
+        if (value != 0) {
+            int b1 = 0b1_00_00000;
+            b1 = op_oo.setValue(b1, oo.ordinal());
+            b1 = op_xxxxx.setValue(b1, value - 0x1E0);
 
-        return new byte[] {
-            (byte) 0b00111111,
-            (byte) b1
-        };
+            return new byte[] {
+                (byte) 0b00111111,
+                (byte) b1
+            };
+        }
+        else {
+            return new byte[] {
+                (byte) (0b001001_00 + oo.ordinal())
+            };
+        }
     }
 
     @Override
@@ -65,7 +72,7 @@ public class RegisterOp extends Spin1Bytecode {
                 break;
         }
         sb.append(" ");
-        sb.append(String.format("$%03X", value));
+        sb.append(value != 0 ? String.format("$%03X", value) : "SPR");
         return sb.toString();
     }
 

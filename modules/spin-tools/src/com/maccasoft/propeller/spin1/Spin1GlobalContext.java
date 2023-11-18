@@ -23,6 +23,7 @@ public class Spin1GlobalContext extends Context {
     public Spin1GlobalContext(boolean caseSensitive) {
         super(caseSensitive);
 
+        addBuiltinSymbol("SPR", new Register(0x000));
         addBuiltinSymbol("PAR", new Register(0x1F0));
         addBuiltinSymbol("CNT", new Register(0x1F1));
         addBuiltinSymbol("INA", new Register(0x1F2));

@@ -438,113 +438,52 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 if (node.getChildCount() != 1) {
                     throw new CompilerException("expression syntax error", node.getToken());
                 }
+                source.addAll(leftAssign(context, method, node.getChild(0), true));
+
                 Spin1Bytecode.Type type = Spin1Bytecode.Type.Long;
                 Spin1StatementNode childNode = node.getChild(0);
 
                 String[] s = childNode.getText().split("[\\.]");
                 if (s.length == 2 && ("BYTE".equalsIgnoreCase(s[1]) || "WORD".equalsIgnoreCase(s[1]) || "LONG".equalsIgnoreCase(s[1]))) {
-                    boolean popIndex = false;
-
-                    Expression expression = context.getLocalSymbol(s[0]);
-                    if (expression == null) {
-                        throw new RuntimeException("undefined symbol " + s[0]);
-                    }
-
-                    int n = 0;
-                    if (n < childNode.getChildCount()) {
-                        source.addAll(compileBytecodeExpression(context, method, childNode.getChild(n++), true));
-                        popIndex = true;
-                    }
-                    if (n < childNode.getChildCount()) {
-                        throw new RuntimeException("unexpected expression");
-                    }
-
-                    MemoryOp.Base bb = MemoryOp.Base.PBase;
-                    if (expression instanceof Variable) {
-                        bb = (expression instanceof LocalVariable) ? MemoryOp.Base.DBase : MemoryOp.Base.VBase;
-                        ((Variable) expression).setCalledBy(method);
-                    }
-
                     if ("BYTE".equalsIgnoreCase(s[1])) {
-                        source.add(new MemoryOp(context, MemoryOp.Size.Byte, popIndex, bb, MemoryOp.Op.Assign, expression));
                         type = Spin1Bytecode.Type.Byte;
                     }
                     else if ("WORD".equalsIgnoreCase(s[1])) {
-                        source.add(new MemoryOp(context, MemoryOp.Size.Word, popIndex, bb, MemoryOp.Op.Assign, expression));
                         type = Spin1Bytecode.Type.Word;
                     }
                     else if ("LONG".equalsIgnoreCase(s[1])) {
-                        source.add(new MemoryOp(context, MemoryOp.Size.Long, popIndex, bb, MemoryOp.Op.Assign, expression));
                         type = Spin1Bytecode.Type.Long;
                     }
                 }
                 else if ("BYTE".equalsIgnoreCase(childNode.getText()) || "WORD".equalsIgnoreCase(childNode.getText()) || "LONG".equalsIgnoreCase(childNode.getText())) {
-                    boolean popIndex = false;
-
-                    if (childNode.getChildCount() == 0) {
-                        throw new RuntimeException("expected index expression");
-                    }
-                    source.addAll(compileBytecodeExpression(context, method, childNode.getChild(0), true));
-
-                    int n = 1;
-                    if (n < childNode.getChildCount()) {
-                        source.addAll(compileBytecodeExpression(context, method, childNode.getChild(n++), true));
-                        popIndex = true;
-                    }
-                    if (n < childNode.getChildCount()) {
-                        throw new RuntimeException("unexpected expression");
-                    }
-
                     if ("BYTE".equalsIgnoreCase(childNode.getText())) {
-                        source.add(new MemoryOp(context, MemoryOp.Size.Byte, popIndex, MemoryOp.Base.Pop, MemoryOp.Op.Assign, null));
                         type = Spin1Bytecode.Type.Byte;
                     }
                     else if ("WORD".equalsIgnoreCase(childNode.getText())) {
-                        source.add(new MemoryOp(context, MemoryOp.Size.Word, popIndex, MemoryOp.Base.Pop, MemoryOp.Op.Assign, null));
                         type = Spin1Bytecode.Type.Word;
                     }
                     else if ("LONG".equalsIgnoreCase(childNode.getText())) {
-                        source.add(new MemoryOp(context, MemoryOp.Size.Long, popIndex, MemoryOp.Base.Pop, MemoryOp.Op.Assign, null));
                         type = Spin1Bytecode.Type.Long;
                     }
                 }
                 else {
                     Expression expression = context.getLocalSymbol(childNode.getText());
-                    if (expression == null) {
-                        throw new RuntimeException("undefined symbol " + childNode.getText());
-                    }
                     if (expression instanceof Variable) {
                         type = Spin1Bytecode.Type.fromString(((Variable) expression).getType());
-                        if (childNode.getChildCount() != 0) {
-                            source.addAll(leftAssign(context, method, node.getChild(0), true));
-                        }
-                        else {
-                            source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
-                            ((Variable) expression).setCalledBy(method);
-                        }
                     }
                     else if (expression instanceof ContextLiteral) {
-                        MemoryOp.Size ss = MemoryOp.Size.Long;
                         if (expression instanceof DataVariable) {
                             switch (((DataVariable) expression).getType()) {
                                 case "BYTE":
-                                    ss = MemoryOp.Size.Byte;
                                     type = Spin1Bytecode.Type.Word;
                                     break;
                                 case "WORD":
-                                    ss = MemoryOp.Size.Word;
                                     type = Spin1Bytecode.Type.Byte;
                                     break;
                             }
                         }
-                        if (childNode.getChildCount() != 0) {
-                            source.addAll(leftAssign(context, method, node.getChild(0), true));
-                        }
-                        else {
-                            source.add(new MemoryOp(context, ss, false, MemoryOp.Base.PBase, MemoryOp.Op.Assign, expression));
-                        }
                     }
-                    else {
+                    else if (!(expression instanceof Register)) {
                         throw new CompilerException("unsupported operation on " + node.getChild(0).getText(), node.getChild(0).getToken());
                     }
                 }
@@ -992,27 +931,74 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
                     }
                     else if (expression instanceof Register) {
-                        if (node.getChildCount() != 0) {
-                            boolean range = "..".equals(node.getChild(0).getText());
-                            source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
-                            if (node.getChildCount() == 2) {
-                                source.add(new RegisterBitOp(context, RegisterBitOp.Op.Assign, range, expression.getNumber().intValue()));
-                                if ("~".equalsIgnoreCase(node.getChild(1).getText())) {
-                                    source.add(new Bytecode(context, 0b0_00110_00, "POST_CLEAR"));
-                                }
-                                else if ("~~".equalsIgnoreCase(node.getChild(1).getText())) {
-                                    source.add(new Bytecode(context, 0b0_00111_00, "POST_SET"));
-                                }
-                                else {
-                                    throw new CompilerException("invalid operator", node.getToken());
-                                }
+                        boolean popIndex = false;
+                        boolean range = false;
+                        Spin1StatementNode postEffectNode = null;
+
+                        int n = 0;
+                        if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
+                            if (isBitmapRegister(node)) {
+                                range = "..".equals(node.getChild(n).getText());
+                                source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
+                                popIndex = true;
                             }
-                            else {
-                                source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Read : RegisterBitOp.Op.Write, range, expression.getNumber().intValue()));
+                            else if ("SPR".equalsIgnoreCase(node.getText())) {
+                                source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
                             }
+                        }
+                        if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+                            postEffectNode = node.getChild(n++);
+                        }
+                        if (n < node.getChildCount()) {
+                            throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getTokens());
+                        }
+
+                        if (range || popIndex) {
+                            source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Read : RegisterBitOp.Op.Assign, range, expression.getNumber().intValue()));
+                        }
+                        else if (postEffectNode != null) {
+                            source.add(new RegisterOp(context, push ? RegisterOp.Op.Read : RegisterOp.Op.Assign, expression.getNumber().intValue()));
                         }
                         else {
                             source.add(new RegisterOp(context, RegisterOp.Op.Read, expression.getNumber().intValue()));
+                        }
+
+                        if (postEffectNode != null) {
+                            if ("++".equals(postEffectNode.getText())) {
+                                int code = 0b0_0101_11_0;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "POST_INC"));
+                            }
+                            else if ("--".equals(postEffectNode.getText())) {
+                                int code = 0b0_0111_11_0;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "POST_DEC"));
+                            }
+                            else if ("~".equals(postEffectNode.getText())) {
+                                int code = 0b0_00110_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "POST_CLEAR"));
+                            }
+                            else if ("~~".equals(postEffectNode.getText())) {
+                                int code = 0b0_00111_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "POST_SET"));
+                            }
+                            else if ("?".equals(postEffectNode.getText())) {
+                                int code = 0b0_00011_00;
+                                if (push) {
+                                    code |= 0b10000000;
+                                }
+                                source.add(new Bytecode(context, code, "RANDOM_REVERSE"));
+                            }
                         }
                     }
                     else if (expression instanceof Variable) {
@@ -1448,13 +1434,74 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
             }
             if (expression instanceof Register) {
-                if (node.getChildCount() == 1) {
-                    boolean range = "..".equals(node.getChild(0).getText());
-                    source.addAll(compileBytecodeExpression(context, method, node.getChild(0), true));
+                boolean popIndex = false;
+                boolean range = false;
+                Spin1StatementNode postEffectNode = null;
+
+                int n = 0;
+                if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
+                    if (isBitmapRegister(node)) {
+                        range = "..".equals(node.getChild(n).getText());
+                        source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
+                        popIndex = true;
+                    }
+                    else if ("SPR".equalsIgnoreCase(node.getText())) {
+                        source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
+                    }
+                }
+                if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
+                    postEffectNode = node.getChild(n++);
+                }
+                if (n < node.getChildCount()) {
+                    throw new CompilerException("unexpected " + node.getChild(n).getText(), node.getChild(n).getTokens());
+                }
+
+                if (range || popIndex) {
                     source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Assign : RegisterBitOp.Op.Write, range, expression.getNumber().intValue()));
+                }
+                else if (postEffectNode != null) {
+                    source.add(new RegisterOp(context, push ? RegisterOp.Op.Assign : RegisterOp.Op.Write, expression.getNumber().intValue()));
                 }
                 else {
                     source.add(new RegisterOp(context, push ? RegisterOp.Op.Assign : RegisterOp.Op.Write, expression.getNumber().intValue()));
+                }
+
+                if (postEffectNode != null) {
+                    if ("++".equals(postEffectNode.getText())) {
+                        int code = 0b0_0101_11_0;
+                        if (push) {
+                            code |= 0b10000000;
+                        }
+                        source.add(new Bytecode(context, code, "POST_INC"));
+                    }
+                    else if ("--".equals(postEffectNode.getText())) {
+                        int code = 0b0_0111_11_0;
+                        if (push) {
+                            code |= 0b10000000;
+                        }
+                        source.add(new Bytecode(context, code, "POST_DEC"));
+                    }
+                    else if ("~".equals(postEffectNode.getText())) {
+                        int code = 0b0_00110_00;
+                        if (push) {
+                            code |= 0b10000000;
+                        }
+                        source.add(new Bytecode(context, code, "POST_CLEAR"));
+                    }
+                    else if ("~~".equals(postEffectNode.getText())) {
+                        int code = 0b0_00111_00;
+                        if (push) {
+                            code |= 0b10000000;
+                        }
+                        source.add(new Bytecode(context, code, "POST_SET"));
+                    }
+                    else if ("?".equals(postEffectNode.getText())) {
+                        int code = 0b0_00011_00;
+                        if (push) {
+                            code |= 0b10000000;
+                        }
+                        source.add(new Bytecode(context, code, "RANDOM_REVERSE"));
+                    }
                 }
             }
             else if (expression instanceof Variable) {
@@ -1489,6 +1536,19 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
         }
 
         return source;
+    }
+
+    boolean isBitmapRegister(Spin1StatementNode node) {
+        if ("INA".equalsIgnoreCase(node.getText()) || "INB".equalsIgnoreCase(node.getText())) {
+            return true;
+        }
+        if ("OUTA".equalsIgnoreCase(node.getText()) || "OUTB".equalsIgnoreCase(node.getText())) {
+            return true;
+        }
+        if ("DIRA".equalsIgnoreCase(node.getText()) || "DIRB".equalsIgnoreCase(node.getText())) {
+            return true;
+        }
+        return false;
     }
 
     boolean isPostEffect(Spin1StatementNode node) {
