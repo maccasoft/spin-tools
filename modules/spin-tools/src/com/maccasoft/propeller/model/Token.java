@@ -81,6 +81,7 @@ public class Token {
         Token result = new Token();
         result.stream = stream;
         result.line = line;
+        result.column = column;
         result.start = start < token.start ? start : token.start;
         result.stop = stop > token.stop ? stop : token.stop;
         result.type = type == token.type ? type : 0;
@@ -91,6 +92,7 @@ public class Token {
         Token result = new Token();
         result.stream = stream;
         result.line = line;
+        result.column = column + start;
         result.start = this.start + start;
         result.stop = this.stop;
         result.type = this.type;
@@ -101,6 +103,7 @@ public class Token {
         Token result = new Token();
         result.stream = stream;
         result.line = line;
+        result.column = column + start;
         result.start = this.start + start;
         result.stop = this.start + stop;
         result.type = this.type;
