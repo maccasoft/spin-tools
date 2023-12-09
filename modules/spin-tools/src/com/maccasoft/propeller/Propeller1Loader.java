@@ -35,7 +35,6 @@ public class Propeller1Loader {
     byte LFSR;
 
     private boolean shared;
-    private int wv = 100;
 
     public Propeller1Loader(SerialPort serialPort, boolean shared) {
         this.serialPort = serialPort;
@@ -361,7 +360,7 @@ public class Propeller1Loader {
     protected void verifyRam() throws SerialPortException, IOException {
         int n, rc = 0;
 
-        for (n = 0; n < wv; n++) {
+        for (n = 0; n < 100; n++) {
             serialPort.writeInt(0xF9);
             if ((rc = getBit(110)) != -1) {
                 break;
@@ -369,7 +368,7 @@ public class Propeller1Loader {
         }
 
         // Check for a Timeout or Checksum Error
-        if (n >= wv) {
+        if (n >= 100) {
             throw new IOException("Timeout");
         }
 
@@ -382,7 +381,7 @@ public class Propeller1Loader {
         int n, rc;
 
         // Check for EEPROM program finished
-        for (n = 0; n < wv; n++) {
+        for (n = 0; n < 500; n++) {
             msleep(20);
             serialPort.writeInt(0xF9);
             if ((rc = getBit(110)) != -1) {
@@ -392,7 +391,7 @@ public class Propeller1Loader {
                 break;
             }
         }
-        if (n >= wv) {
+        if (n >= 500) {
             throw new IOException("EEPROM programming timeout");
         }
     }
@@ -401,7 +400,7 @@ public class Propeller1Loader {
         int n, rc;
 
         // Check for EEPROM program verify
-        for (n = 0; n < wv; n++) {
+        for (n = 0; n < 500; n++) {
             msleep(20);
             serialPort.writeInt(0xF9);
             if ((rc = getBit(110)) != -1) {
@@ -411,7 +410,7 @@ public class Propeller1Loader {
                 break;
             }
         }
-        if (n >= wv) {
+        if (n >= 500) {
             throw new IOException("EEPROM verify timeout");
         }
     }
