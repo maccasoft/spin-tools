@@ -26,6 +26,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.UnrecognizedOptionException;
 
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.DirectiveNode;
@@ -50,6 +51,7 @@ public class SpinCompiler {
     static Pattern unusedMethodPattern = Pattern.compile("(.*)warning : (method|parameter|variable|local variable) \"(.*)\" is not used");
 
     static boolean quiet;
+    static boolean filterUnusedMethodWarning = false;
 
     public static void main(String[] args) {
         File binaryFile = null, listingFile = null;
@@ -88,11 +90,12 @@ public class SpinCompiler {
 
             CommandLine cmd = new DefaultParser().parse(options, args);
             quiet = cmd.hasOption('q') && cmd.getArgList().size() == 1;
+            filterUnusedMethodWarning = cmd.hasOption('u');
+
+            println(APP_TITLE + " - Version " + APP_VERSION);
+            println("Copyright (c) 2021-23 Marco Maccaferri and others. All rights reserved.");
 
             if (cmd.getArgList().size() != 1) {
-                println(APP_TITLE + " - Version " + APP_VERSION);
-                println("Copyright (c) 2021-23 Marco Maccaferri and others. All rights reserved.");
-
                 HelpFormatter help = new HelpFormatter();
                 help.setOptionComparator(null);
                 help.printHelp("spinc [options] <file.spin | file.spin2 | file.c>", null, options, null, false);
@@ -195,14 +198,10 @@ public class SpinCompiler {
             compiler.setRemoveUnusedMethods(true);
             try {
                 compiler.compile(fileToCompile, binaryData, listingStream);
-                print(compiler.getObjectTree());
+                print(compiler.getObjectTree().toString());
 
-                boolean filterUnusedMethodWarning = cmd.hasOption('u');
                 for (CompilerException e : compiler.getMessages()) {
-                    String msg = e.toString();
-                    if (!filterUnusedMethodWarning || !unusedMethodPattern.matcher(msg).matches()) {
-                        println(e);
-                    }
+                    println(e);
                 }
             } finally {
                 if (listingStream != null) {
@@ -518,6 +517,8 @@ public class SpinCompiler {
                 println("Done.");
             }
 
+        } catch (UnrecognizedOptionException e) {
+            System.out.println(e.getMessage());
         } catch (CompilerException e) {
             println(e);
         } catch (Exception e) {
@@ -539,16 +540,17 @@ public class SpinCompiler {
         }
     }
 
-    static void println(Object obj) {
+    static void println(CompilerException obj) {
         if (!quiet) {
-            System.out.println(obj);
-            System.out.flush();
-        }
-    }
-
-    static void print(Object obj) {
-        if (!quiet) {
-            System.out.print(obj);
+            String msg = obj.getText();
+            if (!msg.isEmpty()) {
+                if (!filterUnusedMethodWarning || !unusedMethodPattern.matcher(msg).matches()) {
+                    System.out.println(msg);
+                }
+            }
+            for (CompilerException e : obj.getChilds()) {
+                println(e);
+            }
             System.out.flush();
         }
     }

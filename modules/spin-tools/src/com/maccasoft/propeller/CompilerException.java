@@ -173,6 +173,35 @@ public class CompilerException extends RuntimeException {
         return childs.toArray(new CompilerException[0]);
     }
 
+    public String getText() {
+        StringBuilder sb = new StringBuilder();
+
+        String msg = getMessage();
+        if (msg != null) {
+            if (fileName != null) {
+                sb.append(fileName);
+                sb.append(": ");
+                sb.append(line);
+                sb.append(":");
+                sb.append(column);
+                sb.append(" : ");
+            }
+            if (type == WARNING) {
+                sb.append("warning");
+            }
+            else if (type == ERROR) {
+                sb.append("error");
+            }
+            else {
+                sb.append("note");
+            }
+            sb.append(" : ");
+            sb.append(msg);
+        }
+
+        return sb.toString();
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
