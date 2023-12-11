@@ -820,6 +820,34 @@ class Spin2PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testValueSizeOverride() throws Exception {
+        String text = ""
+            + "DAT             org     $000\n"
+            + "\n"
+            + "                byte    $FFAA, $BB995511\n"
+            + "                byte    word $FFAA, long $BB995511\n"
+            + "                word    $FFAA, long $BB995511\n"
+            + "\n"
+            + "                bytefit word $FFAA, long $BB995511\n"
+            + "                wordfit $FFAA, long $BB995511\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 AA 11                              byte    $FFAA, $BB995511\n"
+            + "00002 00002   000 AA FF 11 55                        byte    word $FFAA, long $BB995511\n"
+            + "00006 00006   001 99 BB\n"
+            + "00008 00008   002 AA FF 11 55                        word    $FFAA, long $BB995511\n"
+            + "0000C 0000C   003 99 BB\n"
+            + "0000E 0000E   003 AA FF 11 55                        bytefit word $FFAA, long $BB995511\n"
+            + "00012 00012   004 99 BB\n"
+            + "00014 00014   005 AA FF 11 55                        wordfit $FFAA, long $BB995511\n"
+            + "00018 00018   006 99 BB\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

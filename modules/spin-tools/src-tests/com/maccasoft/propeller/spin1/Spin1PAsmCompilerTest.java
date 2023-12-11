@@ -312,6 +312,100 @@ class Spin1PAsmCompilerTest {
     }
 
     @Test
+    void testBytefit() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                bytefit $00\n"
+            + "                bytefit $01\n"
+            + "                bytefit $02\n"
+            + "                bytefit -$80\n"
+            + "                bytefit $FF\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       09 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                                    org     $000\n"
+            + "00004 00004   000 00                                 bytefit $00\n"
+            + "00005 00005   000 01                                 bytefit $01\n"
+            + "00006 00006   000 02                                 bytefit $02\n"
+            + "00007 00007   000 80                                 bytefit -$80\n"
+            + "00008 00008   001 FF                                 bytefit $FF\n"
+            + "", compile(text));
+
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                bytefit -$81\n"
+                    + "");
+            }
+        });
+
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                bytefit $100\n"
+                    + "");
+            }
+        });
+    }
+
+    @Test
+    void testWordfit() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "                wordfit $0000\n"
+            + "                wordfit $0001\n"
+            + "                wordfit $0002\n"
+            + "                wordfit -$8000\n"
+            + "                wordfit $FFFF\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       0E 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                                    org     $000\n"
+            + "00004 00004   000 00 00                              wordfit $0000\n"
+            + "00006 00006   000 01 00                              wordfit $0001\n"
+            + "00008 00008   001 02 00                              wordfit $0002\n"
+            + "0000A 0000A   001 00 80                              wordfit -$8000\n"
+            + "0000C 0000C   002 FF FF                              wordfit $FFFF\n"
+            + "", compile(text));
+
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                wordfit -$8001\n"
+                    + "");
+            }
+        });
+
+        Assertions.assertThrows(CompilerException.class, new Executable() {
+
+            @Override
+            public void execute() throws Throwable {
+                compile(""
+                    + "DAT             org   $000\n"
+                    + "                wordfit $10000\n"
+                    + "");
+            }
+        });
+    }
+
+    @Test
     void testLong() throws Exception {
         String text = ""
             + "DAT             org   $000\n"
@@ -354,6 +448,37 @@ class Spin1PAsmCompilerTest {
             + "00004 00004   000 0C 04 FC A0                        mov     a, #@@a\n"
             + "00008 00008   001 00 00 7C 5C                        ret\n"
             + "0000C 0000C   002                a                   res     1\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testValueSizeOverride() throws Exception {
+        String text = ""
+            + "DAT             org     $000\n"
+            + "\n"
+            + "                byte    $FFAA, $BB995511\n"
+            + "                byte    word $FFAA, long $BB995511\n"
+            + "                word    $FFAA, long $BB995511\n"
+            + "\n"
+            + "                bytefit word $FFAA, long $BB995511\n"
+            + "                wordfit $FFAA, long $BB995511\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       1E 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                                    org     $000\n"
+            + "00004 00004   000 AA 11                              byte    $FFAA, $BB995511\n"
+            + "00006 00006   000 AA FF 11 55                        byte    word $FFAA, long $BB995511\n"
+            + "0000A 0000A   001 99 BB\n"
+            + "0000C 0000C   002 AA FF 11 55                        word    $FFAA, long $BB995511\n"
+            + "00010 00010   003 99 BB\n"
+            + "00012 00012   003 AA FF 11 55                        bytefit word $FFAA, long $BB995511\n"
+            + "00016 00016   004 99 BB\n"
+            + "00018 00018   005 AA FF 11 55                        wordfit $FFAA, long $BB995511\n"
+            + "0001C 0001C   006 99 BB\n"
             + "", compile(text));
     }
 

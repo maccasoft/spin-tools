@@ -16,6 +16,7 @@ import java.util.List;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.Type;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 
@@ -43,7 +44,15 @@ public class Wordfit extends Word {
                     size += 2 * ((CharacterLiteral) exp.getExpression()).getString().length();
                 }
                 else {
-                    size += 2 * exp.getCount();
+                    int typeSize = 2;
+                    if (exp.getExpression() instanceof Type) {
+                        switch (((Type) exp.getExpression()).getType().toUpperCase()) {
+                            case "LONG":
+                                typeSize = 4;
+                                break;
+                        }
+                    }
+                    size += exp.getCount() * typeSize;
                 }
             }
             return size;
@@ -64,7 +73,23 @@ public class Wordfit extends Word {
                         }
                     }
                     else {
-                        if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
+                        if (exp.getExpression() instanceof Type) {
+                            switch (((Type) exp.getExpression()).getType().toUpperCase()) {
+                                case "BYTE":
+                                    if (exp.getInteger() < -0x80 || exp.getInteger() > 0xFF) {
+                                        throw new CompilerException("Byte value must range from -$80 to $FF", exp.getExpression().getData());
+                                    }
+                                    break;
+                                case "LONG":
+                                    break;
+                                default:
+                                    if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
+                                        throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
+                                    }
+                                    break;
+                            }
+                        }
+                        else if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
                             throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
                         }
                         byte[] value = exp.getWord();

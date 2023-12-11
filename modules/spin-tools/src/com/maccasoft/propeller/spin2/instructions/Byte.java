@@ -16,6 +16,7 @@ import java.util.List;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.Context;
+import com.maccasoft.propeller.expressions.Type;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
 import com.maccasoft.propeller.spin2.Spin2PAsmExpression;
 import com.maccasoft.propeller.spin2.Spin2PAsmInstructionFactory;
@@ -44,7 +45,18 @@ public class Byte extends Spin2PAsmInstructionFactory {
                     size += ((CharacterLiteral) exp.getExpression()).getString().length();
                 }
                 else {
-                    size += exp.getCount();
+                    int typeSize = 1;
+                    if (exp.getExpression() instanceof Type) {
+                        switch (((Type) exp.getExpression()).getType().toUpperCase()) {
+                            case "WORD":
+                                typeSize = 2;
+                                break;
+                            case "LONG":
+                                typeSize = 4;
+                                break;
+                        }
+                    }
+                    size += exp.getCount() * typeSize;
                 }
             }
             return size;

@@ -27,7 +27,7 @@ public class Spin1Model extends SpinModel {
         "MUXZ", "NEG", "NEGC", "NEGNC", "NEGNZ", "NEGZ", "NOP", "ONES", "OR", "RCL", "RCR", "RDBYTE", "RDLONG", "RDWORD", "RET",
         "REV", "ROL", "ROR", "SAR", "SHL", "SHR", "SUB", "SUBABS", "SUBS", "SUBSX", "SUBX", "SUMC", "SUMNC", "SUMNZ", "SUMZ",
         "TEST", "TESTN", "TJNZ", "TJZ", "WAITCNT", "WAITPEQ", "WAITPNE", "WAITVID", "WRBYTE", "WRLONG", "WRWORD", "XOR",
-        "LONG", "WORD", "BYTE"
+        "LONG", "WORD", "BYTE", "WORDFIT", "BYTEFIT"
     }));
 
     static Set<String> conditions = new HashSet<>(Arrays.asList(new String[] {

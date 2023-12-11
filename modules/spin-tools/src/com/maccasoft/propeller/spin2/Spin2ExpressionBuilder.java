@@ -72,6 +72,7 @@ import com.maccasoft.propeller.expressions.Signx;
 import com.maccasoft.propeller.expressions.Sqrt;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
+import com.maccasoft.propeller.expressions.Type;
 import com.maccasoft.propeller.expressions.UnsignedDivide;
 import com.maccasoft.propeller.expressions.UnsignedModulo;
 import com.maccasoft.propeller.expressions.Xor;
@@ -459,6 +460,11 @@ public class Spin2ExpressionBuilder {
                 default:
                     throw new CompilerException("invalid unary operator " + token.getText(), token);
             }
+        }
+
+        if ("BYTE".equalsIgnoreCase(token.getText()) || "WORD".equalsIgnoreCase(token.getText()) || "LONG".equalsIgnoreCase(token.getText())) {
+            token = next();
+            return new Type(token.getText(), parseLevel(parseAtom(), 0));
         }
 
         if ("(".equals(token.getText())) {

@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin2;
 
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Expression;
+import com.maccasoft.propeller.expressions.Type;
 
 public class Spin2PAsmExpression {
 
@@ -197,6 +198,22 @@ public class Spin2PAsmExpression {
         else {
             value = expression.getNumber().intValue();
         }
+        if (expression instanceof Type) {
+            switch (((Type) expression).getType().toUpperCase()) {
+                case "WORD":
+                    return new byte[] {
+                        (byte) (value & 0xFF),
+                        (byte) ((value >> 8) & 0xFF)
+                    };
+                case "LONG":
+                    return new byte[] {
+                        (byte) (value & 0xFF),
+                        (byte) ((value >> 8) & 0xFF),
+                        (byte) ((value >> 16) & 0xFF),
+                        (byte) ((value >> 24) & 0xFF)
+                    };
+            }
+        }
         return new byte[] {
             (byte) (value & 0xFF)
         };
@@ -209,6 +226,17 @@ public class Spin2PAsmExpression {
         }
         else {
             value = expression.getNumber().intValue();
+        }
+        if (expression instanceof Type) {
+            switch (((Type) expression).getType().toUpperCase()) {
+                case "LONG":
+                    return new byte[] {
+                        (byte) (value & 0xFF),
+                        (byte) ((value >> 8) & 0xFF),
+                        (byte) ((value >> 16) & 0xFF),
+                        (byte) ((value >> 24) & 0xFF)
+                    };
+            }
         }
         return new byte[] {
             (byte) (value & 0xFF),
