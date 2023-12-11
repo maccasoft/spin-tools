@@ -36,6 +36,7 @@ import com.maccasoft.propeller.expressions.LimitMax;
 import com.maccasoft.propeller.expressions.LimitMin;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.LogicalAnd;
+import com.maccasoft.propeller.expressions.LogicalNot;
 import com.maccasoft.propeller.expressions.LogicalOr;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.expressions.Modulo;
@@ -1081,6 +1082,11 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 return new LogicalAnd(buildConstantExpression(context, node.getChild(0), force), buildConstantExpression(context, node.getChild(1), force));
             case "OR":
                 return new LogicalOr(buildConstantExpression(context, node.getChild(0), force), buildConstantExpression(context, node.getChild(1), force));
+            case "NOT":
+                if (node.getChildCount() == 1) {
+                    return new LogicalNot(buildConstantExpression(context, node.getChild(0), force));
+                }
+                throw new RuntimeException("unary operator with " + node.getChildCount() + " arguments");
 
             case "?": {
                 Expression left = buildConstantExpression(context, node.getChild(0), force);

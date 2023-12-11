@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.expressions.Abs;
 import com.maccasoft.propeller.expressions.Add;
 import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
@@ -339,6 +340,8 @@ public class Spin1ExpressionBuilder {
                     return new Not(parseAtom());
                 case "|<":
                     return new Decod(parseAtom());
+                case "||":
+                    return new Abs(parseAtom());
                 default:
                     throw new CompilerException("invalid unary operator " + token.getText(), token);
             }
