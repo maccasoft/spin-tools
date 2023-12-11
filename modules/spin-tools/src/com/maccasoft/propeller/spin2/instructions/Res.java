@@ -21,12 +21,22 @@ public class Res extends Spin2PAsmInstructionFactory {
 
     @Override
     public Spin2InstructionObject createObject(Context context, String condition, List<Spin2PAsmExpression> arguments, String effect) {
-        return new Empty_(context, arguments.get(0));
+        if (arguments.size() == 0) {
+            return new Empty_(context);
+        }
+        if (arguments.size() == 1) {
+            return new Empty_(context, arguments.get(0));
+        }
+        throw new RuntimeException("expected 0 or 1 arguments, found " + arguments.size());
     }
 
     public static class Empty_ extends Spin2InstructionObject {
 
         Spin2PAsmExpression argument;
+
+        public Empty_(Context context) {
+            super(context);
+        }
 
         public Empty_(Context context, Spin2PAsmExpression argument) {
             super(context);
@@ -36,7 +46,7 @@ public class Res extends Spin2PAsmInstructionFactory {
         @Override
         public int resolve(int address, boolean hubMode) {
             context.setAddress(hubMode ? address : address >> 2);
-            return address + argument.getInteger() * 4;
+            return address + ((argument != null ? argument.getInteger() : 1) << 2);
         }
 
         @Override

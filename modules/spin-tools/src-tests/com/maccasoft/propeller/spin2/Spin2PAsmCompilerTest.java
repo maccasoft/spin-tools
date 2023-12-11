@@ -218,18 +218,20 @@ class Spin2PAsmCompilerTest {
     @Test
     void testRes() throws Exception {
         String text = ""
-            + "DAT             org   $000\n"
+            + "DAT             org     $000\n"
             + "                long    0\n"
-            + "                res    1\n"
-            + "                res    2\n"
+            + "                res\n"
+            + "                res     1\n"
+            + "                res     2\n"
             + "";
 
         Assertions.assertEquals(""
             + "' Object header (var size 4)\n"
             + "00000 00000   000                                    org     $000\n"
             + "00000 00000   000 00 00 00 00                        long    0\n"
-            + "00004 00004   001                                    res     1\n"
-            + "00004 00004   002                                    res     2\n"
+            + "00004 00004   001                                    res\n"
+            + "00004 00004   002                                    res     1\n"
+            + "00004 00004   003                                    res     2\n"
             + "", compile(text));
     }
 

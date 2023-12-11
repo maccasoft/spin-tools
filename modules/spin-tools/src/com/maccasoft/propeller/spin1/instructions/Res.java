@@ -49,7 +49,7 @@ public class Res extends Spin1PAsmInstructionFactory {
             }
             context.setAddress(address >> 2);
             context.setMemoryAddress(memoryAddress);
-            return address + (argument.getInteger() << 2);
+            return address + ((argument != null ? argument.getInteger() : 1) << 2);
         }
 
         @Override
