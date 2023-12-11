@@ -306,15 +306,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             }
             else if ("-".equals(node.getText()) && node.getChildCount() == 1) {
                 if (node.getChild(0).getToken().type == Token.NUMBER) {
-                    Spin1Bytecode bc1 = new Constant(context, new Negative(new NumberLiteral(node.getChild(0).getText())), compiler.isOpenspinCompatible());
-                    Spin1Bytecode bc2 = new Constant(context, new Subtract(new NumberLiteral(node.getChild(0).getText()), new NumberLiteral(1)), compiler.isOpenspinCompatible());
-                    if (bc1.getSize() <= (bc2.getSize() + 1)) {
-                        source.add(bc1);
-                    }
-                    else {
-                        source.add(bc2);
-                        source.add(new Bytecode(context, 0b111_00111 | (push ? 0b10000000 : 0b00000000), "COMPLEMENT"));
-                    }
+                    source.add(new Constant(context, new Negative(new NumberLiteral(node.getChild(0).getText())), compiler.isOpenspinCompatible()));
                 }
                 else {
                     Expression expression = context.getLocalSymbol(node.getChild(0).getText());

@@ -10,9 +10,9 @@
 
 package com.maccasoft.propeller.spin1.bytecode;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.expressions.Context;
 
 public class Constant extends Spin1Bytecode {
 
@@ -37,14 +37,14 @@ public class Constant extends Spin1Bytecode {
 
     @Override
     public byte[] getBytes() {
-        if (expression.getNumber() instanceof Double) {
-            int value = Float.floatToIntBits(expression.getNumber().floatValue());
-            return new byte[] {
-                0x37 + 4, (byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value
-            };
-        }
+        int value;
 
-        int value = expression.getNumber().intValue();
+        if (expression.getNumber() instanceof Double) {
+            value = Float.floatToIntBits(expression.getNumber().floatValue());
+        }
+        else {
+            value = expression.getNumber().intValue();
+        }
 
         if (value == -1 || value == 0 || value == 1) {
             return new byte[] {
@@ -75,6 +75,12 @@ public class Constant extends Spin1Bytecode {
         if ((value & 0xFFFFFF00) == 0xFFFFFF00) {
             return new byte[] {
                 0x37 + 1, (byte) (value ^ 0xFF), (byte) 0xE7
+            };
+        }
+        if ((value & 0xFFFF0000) == 0xFFFF0000) {
+            value ^= 0xFFFF;
+            return new byte[] {
+                0x37 + 2, (byte) (value >> 8), (byte) value, (byte) 0xE7
             };
         }
 
