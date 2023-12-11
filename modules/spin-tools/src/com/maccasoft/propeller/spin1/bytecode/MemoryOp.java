@@ -12,13 +12,13 @@ package com.maccasoft.propeller.spin1.bytecode;
 
 import org.apache.commons.lang3.BitField;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.ContextLiteral;
 import com.maccasoft.propeller.expressions.DataVariable;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.expressions.Context;
 
 public class MemoryOp extends Spin1Bytecode {
 
@@ -129,7 +129,7 @@ public class MemoryOp extends Spin1Bytecode {
         if (bb == Base.PBase && (expression instanceof ContextLiteral)) {
             value = ((ContextLiteral) expression).getContext().getObjectAddress();
         }
-        if (value < 127) {
+        if (value <= 127) {
             return new byte[] {
                 (byte) b0,
                 (byte) value,

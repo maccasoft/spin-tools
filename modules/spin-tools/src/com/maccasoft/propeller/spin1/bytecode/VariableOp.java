@@ -12,10 +12,10 @@ package com.maccasoft.propeller.spin1.bytecode;
 
 import org.apache.commons.lang3.BitField;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.LocalVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.expressions.Context;
 
 public class VariableOp extends Spin1Bytecode {
 
@@ -97,7 +97,7 @@ public class VariableOp extends Spin1Bytecode {
             b0 = mop_bb.setValue(b0, b.ordinal() + 2);
             b0 = mop_oo.setValue(b0, oo.ordinal());
 
-            if (value.getOffset() < 127) {
+            if (value.getOffset() <= 127) {
                 return new byte[] {
                     (byte) b0,
                     (byte) value.getOffset(),
