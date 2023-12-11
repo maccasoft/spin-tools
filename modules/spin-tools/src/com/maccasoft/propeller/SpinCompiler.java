@@ -132,12 +132,12 @@ public class SpinCompiler {
             }
 
             if (binaryFile == null) {
-                binaryFile = new File(outName + ".binary");
+                binaryFile = new File(fileToCompile.getParentFile(), outName + ".binary");
             }
             ByteArrayOutputStream binaryData = new ByteArrayOutputStream();
 
             if (listingFile == null) {
-                listingFile = new File(outName + ".lst");
+                listingFile = new File(fileToCompile.getParentFile(), outName + ".lst");
             }
             PrintStream listingStream = cmd.hasOption('l') ? new PrintStream(new FileOutputStream(listingFile)) : null;
 
