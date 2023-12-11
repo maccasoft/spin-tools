@@ -279,7 +279,7 @@ public class Spin2TreeBuilder {
             }
             token = next();
 
-            Spin2StatementNode right = parseAtom();
+            Spin2StatementNode right = left == null ? parseLevel(parseAtom(), p.intValue() + 1, comma) : parseAtom();
             for (;;) {
                 Token nextToken = peek();
                 if (nextToken == null) {

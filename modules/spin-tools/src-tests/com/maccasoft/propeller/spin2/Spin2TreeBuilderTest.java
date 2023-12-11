@@ -679,6 +679,21 @@ class Spin2TreeBuilderTest {
             + "", parse(text));
     }
 
+    @Test
+    void testUnaryPriority() {
+        String text = "not a := b and (c == b)";
+        Assertions.assertEquals(""
+            + "[not]\n"
+            + " +-- [:=]\n"
+            + "      +-- [a]\n"
+            + "      +-- [and]\n"
+            + "           +-- [b]\n"
+            + "           +-- [==]\n"
+            + "                +-- [c]\n"
+            + "                +-- [b]\n"
+            + "", parse(text));
+    }
+
     String parse(String text) {
         Spin2TreeBuilder builder = new Spin2TreeBuilder(new Context());
 
