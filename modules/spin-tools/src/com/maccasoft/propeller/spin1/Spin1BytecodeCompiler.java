@@ -407,25 +407,20 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 }
             }
             else if ("\\".equalsIgnoreCase(node.getText())) {
+                if (node.getChildCount() != 1) {
+                    throw new RuntimeException("expression syntax error");
+                }
                 Expression expression = context.getLocalSymbol(node.getChild(0).getText());
-                if (!(expression instanceof Method)) {
-                    throw new RuntimeException("invalid symbol " + node.getText());
+
+                if (expression instanceof Method) {
+                    source.addAll(compileMethodCall(context, method, expression, node.getChild(0), push, true));
                 }
-
-                Spin1StatementNode argsNode = node.getChild(0);
-                if (argsNode.getChildCount() == 1 && ",".equals(argsNode.getChild(0).getText())) {
-                    argsNode = argsNode.getChild(0);
+                else if (expression instanceof SpinObject) {
+                    source.addAll(compileMethodCall(context, method, expression, node.getChild(0), push, true));
                 }
-
-                Method methodExpression = (Method) expression;
-                Spin1Method calledMethod = (Spin1Method) methodExpression.getData(Spin1Method.class.getName());
-
-                source.add(new Bytecode(context, new byte[] {
-                    (byte) (push ? 0b00000010 : 0b00000011),
-                }, "ANCHOR (TRY)"));
-                source.addAll(compileMethodArguments(context, method, calledMethod, argsNode));
-                source.add(new CallSub(context, methodExpression));
-                calledMethod.setCalledBy(method);
+                else {
+                    throw new CompilerException("symbol " + node.getChild(0).getText() + " is not a method", node.getChild(0).getToken());
+                }
             }
             else if ("++".equalsIgnoreCase(node.getText()) || "--".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() != 1) {
@@ -685,44 +680,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
                     }
                     if (expression instanceof SpinObject) {
-                        Spin1StatementNode indexNode = null;
-                        Spin1StatementNode methodNode = null;
-
-                        int n = 0;
-                        if (n < node.getChildCount()) {
-                            if (node.getChild(n) instanceof Spin1StatementNode.Index) {
-                                indexNode = node.getChild(n++);
-                            }
-                        }
-                        if (n < node.getChildCount()) {
-                            methodNode = node.getChild(n++);
-                        }
-                        if (n < node.getChildCount() || methodNode == null) {
-                            throw new CompilerException("syntax error", node.getTokens());
-                        }
-
-                        String qualifiedName = node.getText() + methodNode.getText();
-
-                        expression = context.getLocalSymbol(qualifiedName);
-                        if (expression == null) {
-                            throw new CompilerException("undefined symbol " + methodNode.getText(), methodNode.getToken());
-                        }
-                        if (!(expression instanceof Method)) {
-                            throw new CompilerException(methodNode.getText() + " is not a method", methodNode.getToken());
-                        }
-                        Method methodExpression = (Method) expression;
-                        Spin1Method calledMethod = (Spin1Method) methodExpression.getData(Spin1Method.class.getName());
-
-                        source.add(new Bytecode(context, new byte[] {
-                            (byte) (push ? 0b00000000 : 0b00000001),
-                        }, "ANCHOR"));
-                        source.addAll(compileMethodArguments(context, method, calledMethod, methodNode));
-                        if (indexNode != null) {
-                            source.addAll(compileBytecodeExpression(context, method, indexNode, true));
-                        }
-                        source.add(new CallSub(context, methodExpression, indexNode != null));
-                        calledMethod.setCalledBy(method);
-
+                        source.addAll(compileMethodCall(context, method, expression, node, push, false));
                         return source;
                     }
                     else if (isAddress(node.getText())) {
@@ -900,14 +858,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         }
                     }
                     else if (expression instanceof Method) {
-                        Method methodExpression = (Method) expression;
-                        Spin1Method calledMethod = (Spin1Method) methodExpression.getData(Spin1Method.class.getName());
-                        source.add(new Bytecode(context, new byte[] {
-                            (byte) (push ? 0b00000000 : 0b00000001),
-                        }, "ANCHOR"));
-                        source.addAll(compileMethodArguments(context, method, calledMethod, node));
-                        source.add(new CallSub(context, methodExpression));
-                        calledMethod.setCalledBy(method);
+                        source.addAll(compileMethodCall(context, method, expression, node, push, false));
                     }
                     else if (expression.isConstant()) {
                         if (node.getChildCount() != 0) {
@@ -1265,6 +1216,75 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             return true;
         }
         return false;
+    }
+
+    List<Spin1Bytecode> compileMethodCall(Context context, Spin1Method method, Expression expression, Spin1StatementNode node, boolean push, boolean trap) {
+        List<Spin1Bytecode> source = new ArrayList<>();
+
+        if (trap) {
+            source.add(new Bytecode(context, push ? 0b00000010 : 0b00000011, "ANCHOR (TRY)"));
+        }
+        else {
+            source.add(new Bytecode(context, push ? 0b00000000 : 0b00000001, "ANCHOR"));
+        }
+
+        if (expression instanceof Method) {
+            Method methodExpression = (Method) expression;
+            Spin1Method calledMethod = (Spin1Method) methodExpression.getData(Spin1Method.class.getName());
+
+            source.addAll(compileMethodArguments(context, method, calledMethod, node));
+            source.add(new CallSub(context, methodExpression));
+            calledMethod.setCalledBy(method);
+
+            if (push && !trap && calledMethod.getReturnsCount() == 0) {
+                throw new RuntimeException("method doesn't return any value");
+            }
+        }
+        else if (expression instanceof SpinObject) {
+            Spin1StatementNode indexNode = null;
+            Spin1StatementNode methodNode = null;
+
+            int n = 0;
+            if (n < node.getChildCount()) {
+                if (node.getChild(n) instanceof Spin1StatementNode.Index) {
+                    indexNode = node.getChild(n++);
+                }
+            }
+            if (n < node.getChildCount()) {
+                methodNode = node.getChild(n++);
+            }
+            if (n < node.getChildCount() || methodNode == null) {
+                throw new CompilerException("syntax error", node.getTokens());
+            }
+
+            String qualifiedName = node.getText() + methodNode.getText();
+
+            expression = context.getLocalSymbol(qualifiedName);
+            if (expression == null) {
+                throw new CompilerException("undefined symbol " + methodNode.getText(), methodNode.getToken());
+            }
+            if (!(expression instanceof Method)) {
+                throw new CompilerException(methodNode.getText() + " is not a method", methodNode.getToken());
+            }
+            Method methodExpression = (Method) expression;
+            Spin1Method calledMethod = (Spin1Method) methodExpression.getData(Spin1Method.class.getName());
+
+            source.addAll(compileMethodArguments(context, method, calledMethod, methodNode));
+            if (indexNode != null) {
+                source.addAll(compileBytecodeExpression(context, method, indexNode, true));
+            }
+            source.add(new CallSub(context, methodExpression, indexNode != null));
+            calledMethod.setCalledBy(method);
+
+            if (push && methodExpression.getReturnsCount() == 0) {
+                throw new RuntimeException("method doesn't return any value");
+            }
+        }
+        else {
+            throw new CompilerException(node.getText() + " is not a method", node.getToken());
+        }
+
+        return source;
     }
 
     boolean isPostEffect(Spin1StatementNode node) {

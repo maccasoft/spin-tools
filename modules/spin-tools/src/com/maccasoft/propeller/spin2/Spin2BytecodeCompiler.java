@@ -311,57 +311,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 }
                 if (expression != null) {
                     if (expression instanceof SpinObject) {
-                        Spin2StatementNode indexNode = null;
-                        Spin2StatementNode methodNode = null;
-
-                        int n = 0;
-                        if (n < node.getChildCount()) {
-                            if (node.getChild(n) instanceof Spin2StatementNode.Index) {
-                                indexNode = node.getChild(n++);
-                            }
-                        }
-                        if (n < node.getChildCount()) {
-                            methodNode = node.getChild(n++);
-                        }
-                        if (n < node.getChildCount() || methodNode == null) {
-                            throw new CompilerException("syntax error", node.getTokens());
-                        }
-
-                        String qualifiedName = node.getText() + methodNode.getText();
-
-                        expression = context.getLocalSymbol(qualifiedName);
-                        if (expression == null && isAddress(qualifiedName)) {
-                            expression = context.getLocalSymbol(qualifiedName.substring(1));
-                        }
-                        if (expression == null) {
-                            throw new CompilerException("undefined symbol " + methodNode.getText(), methodNode.getToken());
-                        }
-                        if (!(expression instanceof Method)) {
-                            throw new CompilerException(methodNode.getText() + " is not a method", methodNode.getToken());
-                        }
-                        Method methodExpression = (Method) expression;
-                        Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
-                        if (isAddress(node.getText())) {
-                            if (indexNode != null) {
-                                source.addAll(compileConstantExpression(context, method, indexNode));
-                            }
-                            source.add(new SubAddress(context, methodExpression, indexNode != null));
-                            calledMethod.setCalledBy(method);
-                        }
-                        else {
-                            source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
-
-                            source.addAll(compileMethodArguments(context, method, calledMethod, methodNode));
-                            if (indexNode != null) {
-                                source.addAll(compileConstantExpression(context, method, indexNode));
-                            }
-                            source.add(new CallSub(context, methodExpression, indexNode != null));
-                            calledMethod.setCalledBy(method);
-
-                            if (push && methodExpression.getReturnsCount() == 0) {
-                                throw new RuntimeException("method doesn't return any value");
-                            }
-                        }
+                        source.addAll(compileMethodCall(context, method, expression, node, push, false));
                         return source;
                     }
                     else if (expression instanceof Method) {
@@ -904,6 +854,9 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     Expression expression = context.getLocalSymbol(node.getChild(0).getText());
 
                     if (expression instanceof Method) {
+                        source.addAll(compileMethodCall(context, method, expression, node.getChild(0), push, true));
+                    }
+                    else if (expression instanceof SpinObject) {
                         source.addAll(compileMethodCall(context, method, expression, node.getChild(0), push, true));
                     }
                     else if (expression instanceof Variable) {
@@ -1899,84 +1852,144 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
     List<Spin2Bytecode> compileMethodCall(Context context, Spin2Method method, Expression symbol, Spin2StatementNode node, boolean push, boolean trap) {
         List<Spin2Bytecode> source = new ArrayList<Spin2Bytecode>();
 
-        if (trap) {
-            source.add(new Bytecode(context, push ? 0x03 : 0x02, "ANCHOR_TRAP"));
-        }
-        else {
-            source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
-        }
+        if (symbol instanceof SpinObject) {
+            Spin2StatementNode indexNode = null;
+            Spin2StatementNode methodNode = null;
 
-        if (symbol instanceof Method) {
+            int n = 0;
+            if (n < node.getChildCount()) {
+                if (node.getChild(n) instanceof Spin2StatementNode.Index) {
+                    indexNode = node.getChild(n++);
+                }
+            }
+            if (n < node.getChildCount()) {
+                methodNode = node.getChild(n++);
+            }
+            if (n < node.getChildCount() || methodNode == null) {
+                throw new CompilerException("syntax error", node.getTokens());
+            }
+
+            String qualifiedName = node.getText() + methodNode.getText();
+
+            symbol = context.getLocalSymbol(qualifiedName);
+            if (symbol == null && isAddress(qualifiedName)) {
+                symbol = context.getLocalSymbol(qualifiedName.substring(1));
+            }
+            if (symbol == null) {
+                throw new CompilerException("undefined symbol " + methodNode.getText(), methodNode.getToken());
+            }
+            if (!(symbol instanceof Method)) {
+                throw new CompilerException(methodNode.getText() + " is not a method", methodNode.getToken());
+            }
             Method methodExpression = (Method) symbol;
             Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
+            if (isAddress(node.getText())) {
+                if (indexNode != null) {
+                    source.addAll(compileConstantExpression(context, method, indexNode));
+                }
+                source.add(new SubAddress(context, methodExpression, indexNode != null));
+                calledMethod.setCalledBy(method);
+            }
+            else {
+                if (trap) {
+                    source.add(new Bytecode(context, push ? 0x03 : 0x02, "ANCHOR_TRAP"));
+                }
+                else {
+                    source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
+                }
 
-            source.addAll(compileMethodArguments(context, method, calledMethod, node));
-            source.add(new CallSub(context, methodExpression));
-            calledMethod.setCalledBy(method);
+                source.addAll(compileMethodArguments(context, method, calledMethod, methodNode));
+                if (indexNode != null) {
+                    source.addAll(compileConstantExpression(context, method, indexNode));
+                }
+                source.add(new CallSub(context, methodExpression, indexNode != null));
+                calledMethod.setCalledBy(method);
 
-            if (push && !trap && calledMethod.getReturnsCount() == 0) {
-                throw new RuntimeException("method doesn't return any value");
+                if (push && methodExpression.getReturnsCount() == 0) {
+                    throw new RuntimeException("method doesn't return any value");
+                }
             }
         }
         else {
-            int i = 0;
-            Spin2StatementNode indexNode = null;
-            if (i < node.getChildCount()) {
-                if (node.getChild(i) instanceof Spin2StatementNode.Index) {
-                    indexNode = node.getChild(i++);
-                }
-            }
-            while (i < node.getChildCount()) {
-                if (!(node.getChild(i) instanceof Spin2StatementNode.Argument)) {
-                    throw new CompilerException("syntax error", node.getChild(i).getTokens());
-                }
-                source.addAll(compileConstantExpression(context, method, node.getChild(i++)));
-            }
-
-            int index = 0;
-            boolean hasIndex = false;
-            boolean popIndex = indexNode != null;
-
-            if (indexNode != null) {
-                try {
-                    Expression exp = buildConstantExpression(context, indexNode);
-                    if (exp.isConstant()) {
-                        index = exp.getNumber().intValue();
-                        hasIndex = true;
-                        popIndex = false;
-                    }
-                } catch (Exception e) {
-                    // Do nothing
-                }
-                if (popIndex) {
-                    source.addAll(compileBytecodeExpression(context, method, indexNode, true));
-                }
-            }
-
-            if (symbol instanceof Variable) {
-                switch (((Variable) symbol).getType()) {
-                    case "BYTE":
-                    case "WORD":
-                        throw new RuntimeException("method pointers must be long");
-                }
-                source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) symbol, hasIndex, index));
-                ((Variable) symbol).setCalledBy(method);
-            }
-            else if (symbol instanceof DataVariable) {
-                switch (((DataVariable) symbol).getType()) {
-                    case "BYTE":
-                    case "WORD":
-                        throw new RuntimeException("method pointers must be long");
-                }
-                source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.PBase, MemoryOp.Op.Read, popIndex, symbol, index));
+            if (trap) {
+                source.add(new Bytecode(context, push ? 0x03 : 0x02, "ANCHOR_TRAP"));
             }
             else {
-                throw new CompilerException("unsupported operation on " + node.getText(), node.getToken());
+                source.add(new Bytecode(context, push ? 0x01 : 0x00, "ANCHOR"));
             }
 
-            source.add(new Bytecode(context, new byte[] {
-                (byte) 0x0B,
-            }, "CALL_PTR"));
+            if (symbol instanceof Method) {
+                Method methodExpression = (Method) symbol;
+                Spin2Method calledMethod = (Spin2Method) methodExpression.getData(Spin2Method.class.getName());
+
+                source.addAll(compileMethodArguments(context, method, calledMethod, node));
+                source.add(new CallSub(context, methodExpression));
+                calledMethod.setCalledBy(method);
+
+                if (push && !trap && calledMethod.getReturnsCount() == 0) {
+                    throw new RuntimeException("method doesn't return any value");
+                }
+            }
+            else {
+                int i = 0;
+                Spin2StatementNode indexNode = null;
+                if (i < node.getChildCount()) {
+                    if (node.getChild(i) instanceof Spin2StatementNode.Index) {
+                        indexNode = node.getChild(i++);
+                    }
+                }
+                while (i < node.getChildCount()) {
+                    if (!(node.getChild(i) instanceof Spin2StatementNode.Argument)) {
+                        throw new CompilerException("syntax error", node.getChild(i).getTokens());
+                    }
+                    source.addAll(compileConstantExpression(context, method, node.getChild(i++)));
+                }
+
+                int index = 0;
+                boolean hasIndex = false;
+                boolean popIndex = indexNode != null;
+
+                if (indexNode != null) {
+                    try {
+                        Expression exp = buildConstantExpression(context, indexNode);
+                        if (exp.isConstant()) {
+                            index = exp.getNumber().intValue();
+                            hasIndex = true;
+                            popIndex = false;
+                        }
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                    if (popIndex) {
+                        source.addAll(compileBytecodeExpression(context, method, indexNode, true));
+                    }
+                }
+
+                if (symbol instanceof Variable) {
+                    switch (((Variable) symbol).getType()) {
+                        case "BYTE":
+                        case "WORD":
+                            throw new RuntimeException("method pointers must be long");
+                    }
+                    source.add(new VariableOp(context, VariableOp.Op.Read, popIndex, (Variable) symbol, hasIndex, index));
+                    ((Variable) symbol).setCalledBy(method);
+                }
+                else if (symbol instanceof DataVariable) {
+                    switch (((DataVariable) symbol).getType()) {
+                        case "BYTE":
+                        case "WORD":
+                            throw new RuntimeException("method pointers must be long");
+                    }
+                    source.add(new MemoryOp(context, MemoryOp.Size.Long, MemoryOp.Base.PBase, MemoryOp.Op.Read, popIndex, symbol, index));
+                }
+                else {
+                    throw new CompilerException("unsupported operation on " + node.getText(), node.getToken());
+                }
+
+                source.add(new Bytecode(context, new byte[] {
+                    (byte) 0x0B,
+                }, "CALL_PTR"));
+            }
         }
 
         return source;

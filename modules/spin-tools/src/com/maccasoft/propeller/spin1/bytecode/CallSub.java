@@ -10,9 +10,9 @@
 
 package com.maccasoft.propeller.spin1.bytecode;
 
+import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.spin1.Spin1Bytecode;
-import com.maccasoft.propeller.expressions.Context;
 
 public class CallSub extends Spin1Bytecode {
 
@@ -57,8 +57,8 @@ public class CallSub extends Spin1Bytecode {
     @Override
     public String toString() {
         int objectIndex = method.getObjectIndex();
-        /*int methodIndex = method.getOffset() + 1;
-        if (objectIndex == 0) {
+        int methodIndex = method.getIndex();
+        if (objectIndex == -1) {
             return String.format("CALL_SUB (%d)", methodIndex);
         }
         else {
@@ -66,12 +66,6 @@ public class CallSub extends Spin1Bytecode {
                 return String.format("CALL_OBJ_SUB (%d.%d) (indexed)", objectIndex, methodIndex);
             }
             return String.format("CALL_OBJ_SUB (%d.%d)", objectIndex, methodIndex);
-        }*/
-        if (objectIndex == -1) {
-            return "CALL_SUB";
-        }
-        else {
-            return "CALL_OBJ_SUB";
         }
     }
 
