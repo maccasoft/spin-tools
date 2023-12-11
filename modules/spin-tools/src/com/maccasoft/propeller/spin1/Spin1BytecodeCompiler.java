@@ -764,13 +764,13 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
 
                         int n = 0;
                         if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
-                            if (isBitmapRegister(node)) {
+                            if ("SPR".equalsIgnoreCase(node.getText())) {
+                                source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
+                            }
+                            else {
                                 range = "..".equals(node.getChild(n).getText());
                                 source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
                                 popIndex = true;
-                            }
-                            else if ("SPR".equalsIgnoreCase(node.getText())) {
-                                source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
                             }
                         }
                         if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
@@ -784,7 +784,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             source.add(new RegisterBitOp(context, push ? RegisterBitOp.Op.Read : RegisterBitOp.Op.Assign, range, expression.getNumber().intValue()));
                         }
                         else if (postEffectNode != null) {
-                            source.add(new RegisterOp(context, push ? RegisterOp.Op.Read : RegisterOp.Op.Assign, expression.getNumber().intValue()));
+                            source.add(new RegisterOp(context, RegisterOp.Op.Assign, expression.getNumber().intValue()));
                         }
                         else {
                             source.add(new RegisterOp(context, RegisterOp.Op.Read, expression.getNumber().intValue()));
@@ -1141,13 +1141,13 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
 
                 int n = 0;
                 if (n < node.getChildCount() && (node.getChild(n) instanceof Spin1StatementNode.Index)) {
-                    if (isBitmapRegister(node)) {
+                    if ("SPR".equalsIgnoreCase(node.getText())) {
+                        source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
+                    }
+                    else {
                         range = "..".equals(node.getChild(n).getText());
                         source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
                         popIndex = true;
-                    }
-                    else if ("SPR".equalsIgnoreCase(node.getText())) {
-                        source.addAll(compileBytecodeExpression(context, method, node.getChild(n++), true));
                     }
                 }
                 if (n < node.getChildCount() && isPostEffect(node.getChild(n))) {
@@ -1203,19 +1203,6 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
         }
 
         return source;
-    }
-
-    boolean isBitmapRegister(Spin1StatementNode node) {
-        if ("INA".equalsIgnoreCase(node.getText()) || "INB".equalsIgnoreCase(node.getText())) {
-            return true;
-        }
-        if ("OUTA".equalsIgnoreCase(node.getText()) || "OUTB".equalsIgnoreCase(node.getText())) {
-            return true;
-        }
-        if ("DIRA".equalsIgnoreCase(node.getText()) || "DIRB".equalsIgnoreCase(node.getText())) {
-            return true;
-        }
-        return false;
     }
 
     List<Spin1Bytecode> compileMethodCall(Context context, Spin1Method method, Expression expression, Spin1StatementNode node, boolean push, boolean trap) {
