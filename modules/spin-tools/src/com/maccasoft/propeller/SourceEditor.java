@@ -690,7 +690,17 @@ public class SourceEditor {
                         }
                     }
                     if (text == null) {
-                        text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
+                        int line = styledText.getLineAtOffset(offset);
+                        int lineOffset = styledText.getOffsetAtLine(line);
+                        String lineText = styledText.getLine(line);
+
+                        int index = token.stop - lineOffset + 1;
+                        while (index < lineText.length() && Character.isWhitespace(lineText.charAt(index))) {
+                            index++;
+                        }
+                        if (index < lineText.length() && lineText.charAt(index) != '[') {
+                            text = helpProvider.getString(context != null ? context.getClass().getSimpleName() : null, token.getText().toLowerCase());
+                        }
                     }
                     if (text != null && !"".equals(text)) {
                         popupWindow = new Shell(styledText.getShell(), SWT.RESIZE | SWT.ON_TOP);

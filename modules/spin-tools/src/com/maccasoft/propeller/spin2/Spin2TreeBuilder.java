@@ -196,6 +196,13 @@ public class Spin2TreeBuilder {
         postEffect.add("~~");
     }
 
+    static Set<String> typeFunctions = new HashSet<>();
+    static {
+        typeFunctions.add("byte");
+        typeFunctions.add("word");
+        typeFunctions.add("long");
+    }
+
     Context scope;
 
     int index;
@@ -396,18 +403,11 @@ public class Spin2TreeBuilder {
                         }
                     }
                 }
-                else if ("byte".equalsIgnoreCase(node.getText()) || "word".equalsIgnoreCase(node.getText()) || "long".equalsIgnoreCase(node.getText())) {
+                else if (typeFunctions.contains(node.getText().toLowerCase()) && peek() != null && peek().type != Token.OPERATOR) {
                     node.addChild(parseLevel(parseAtom(), 0, false));
                     return node;
                 }
-
-                if (postEffect.contains(peek().getText())) {
-                    Token postToken = peek();
-                    if (!"?".equals(postToken.getText()) || postToken.start == (token.stop + 1)) {
-                        node.addChild(new Spin2StatementNode(next()));
-                    }
-                }
-                else if ("(".equals(peek().getText())) {
+                if ("(".equals(peek().getText())) {
                     next();
                     node.method = true;
                     if (peek() != null && ")".equals(peek().getText())) {
@@ -453,6 +453,13 @@ public class Spin2TreeBuilder {
                             throw new CompilerException("expecting )", token);
                         }
                         next();
+                    }
+                }
+
+                if (postEffect.contains(peek().getText())) {
+                    Token postToken = peek();
+                    if (!"?".equals(postToken.getText()) || postToken.start == (token.stop + 1)) {
+                        node.addChild(new Spin2StatementNode(next()));
                     }
                 }
             }

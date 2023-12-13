@@ -650,20 +650,6 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
 
                     return source;
                 }
-                if (("BYTES".equalsIgnoreCase(node.getText()) || "WORDS".equalsIgnoreCase(node.getText()) || "LONGS".equalsIgnoreCase(node.getText()))) {
-                    byte[] code = compileTypes(context, node, node.getText().substring(0, node.getText().length() - 1));
-                    if (code.length > 255) {
-                        logMessage(new CompilerException(CompilerException.ERROR, "data cannot exceed 255 bytes", node.getTokens()));
-                    }
-
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    os.write(0x9E);
-                    os.write(code.length);
-                    os.writeBytes(code);
-                    source.add(new Bytecode(context, os.toByteArray(), node.getText().toUpperCase()));
-
-                    return source;
-                }
                 if ("DEBUG".equalsIgnoreCase(node.getText())) {
                     int stack = 0;
                     for (Spin2StatementNode child : node.getChilds()) {
@@ -999,6 +985,22 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     source.add(new Bytecode(context, push ? 0x8F : 0x8E, "PRE_RND" + (push ? " (push)" : "")));
                 }
                 return source;
+            }
+            if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())) {
+                if (node.isMethod() && node.getChildCount() != 0 && !(node.getChild(0) instanceof Spin2StatementNode.Index)) {
+                    byte[] code = compileTypes(context, node, node.getText());
+                    if (code.length > 255) {
+                        logMessage(new CompilerException(CompilerException.ERROR, "data cannot exceed 255 bytes", node.getTokens()));
+                    }
+
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    os.write(0x9E);
+                    os.write(code.length);
+                    os.writeBytes(code);
+                    source.add(new Bytecode(context, os.toByteArray(), node.getText().toUpperCase() + "S"));
+
+                    return source;
+                }
             }
             if ("BYTE".equalsIgnoreCase(node.getText()) || "WORD".equalsIgnoreCase(node.getText()) || "LONG".equalsIgnoreCase(node.getText())
                 || "@BYTE".equalsIgnoreCase(node.getText()) || "@WORD".equalsIgnoreCase(node.getText()) || "@LONG".equalsIgnoreCase(node.getText())
@@ -2374,68 +2376,72 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         while (iter.hasNext()) {
             Spin2StatementNode child = iter.next();
 
-            String overrideType = type;
-            if ("BYTE".equalsIgnoreCase(child.getText()) || "WORD".equalsIgnoreCase(child.getText()) || "LONG".equalsIgnoreCase(child.getText())) {
-                overrideType = child.getText();
-                if (child.getChildCount() != 1) {
-                    throw new CompilerException("syntax error", child.getToken());
+            if (child.isMethod()) {
+                if ("BYTE".equalsIgnoreCase(child.getText()) || "WORD".equalsIgnoreCase(child.getText()) || "LONG".equalsIgnoreCase(child.getText())) {
+                    byte[] code = compileTypes(context, child, child.getText().substring(0, child.getText().length() - 1));
+                    os.write(code);
                 }
-                child = child.getChild(0);
-            }
-            else if ("BYTES".equalsIgnoreCase(child.getText()) || "WORDS".equalsIgnoreCase(child.getText()) || "LONGS".equalsIgnoreCase(child.getText())) {
-                type = overrideType = child.getText().substring(0, child.getText().length() - 1);
-                if (child.getChildCount() != 1) {
-                    throw new CompilerException("syntax error", child.getToken());
-                }
-                child = child.getChild(0);
-            }
-
-            if (child.getType() == Token.STRING) {
-                String s = child.getText().substring(1);
-                byte[] b = s.substring(0, s.length() - 1).getBytes();
-                for (int i = 0; i < b.length; i++) {
-                    os.write(b[i]);
-                    if ("WORD".equalsIgnoreCase(overrideType)) {
-                        os.write(0x00);
-                    }
-                    else if ("LONG".equalsIgnoreCase(overrideType)) {
-                        os.write(0x00);
-                        os.write(0x00);
-                        os.write(0x00);
-                    }
+                else {
+                    throw new CompilerException("expression is not constant", child.getTokens());
                 }
             }
             else {
-                Expression expression;
-                if (child.getType() == Token.NUMBER) {
-                    expression = new NumberLiteral(child.getText());
+                String overrideType = type;
+                if ("BYTE".equalsIgnoreCase(child.getText()) || "WORD".equalsIgnoreCase(child.getText()) || "LONG".equalsIgnoreCase(child.getText())) {
+                    overrideType = child.getText();
+                    if (child.getChildCount() != 1) {
+                        throw new CompilerException("syntax error", child.getToken());
+                    }
+                    child = child.getChild(0);
+                }
+
+                if (child.getType() == Token.STRING) {
+                    String s = child.getText().substring(1);
+                    byte[] b = s.substring(0, s.length() - 1).getBytes();
+                    for (int i = 0; i < b.length; i++) {
+                        os.write(b[i]);
+                        if ("WORD".equalsIgnoreCase(overrideType)) {
+                            os.write(0x00);
+                        }
+                        else if ("LONG".equalsIgnoreCase(overrideType)) {
+                            os.write(0x00);
+                            os.write(0x00);
+                            os.write(0x00);
+                        }
+                    }
                 }
                 else {
-                    try {
-                        expression = buildConstantExpression(context, child);
-                        if (!expression.isConstant()) {
+                    Expression expression;
+                    if (child.getType() == Token.NUMBER) {
+                        expression = new NumberLiteral(child.getText());
+                    }
+                    else {
+                        try {
+                            expression = buildConstantExpression(context, child);
+                            if (!expression.isConstant()) {
+                                throw new CompilerException("expression is not constant", child.getTokens());
+                            }
+                        } catch (CompilerException e) {
+                            throw e;
+                        } catch (Exception e) {
                             throw new CompilerException("expression is not constant", child.getTokens());
                         }
-                    } catch (CompilerException e) {
-                        throw e;
-                    } catch (Exception e) {
-                        throw new CompilerException("expression is not constant", child.getTokens());
                     }
-                }
-                if ("BYTE".equalsIgnoreCase(overrideType)) {
-                    if (expression.getNumber().intValue() < -0x80 || expression.getNumber().intValue() > 0xFF) {
-                        logMessage(new CompilerException(CompilerException.WARNING, "byte value range from -$80 to $FF", child.getTokens()));
+                    if ("BYTE".equalsIgnoreCase(overrideType)) {
+                        if (expression.getNumber().intValue() < -0x80 || expression.getNumber().intValue() > 0xFF) {
+                            logMessage(new CompilerException(CompilerException.WARNING, "byte value range from -$80 to $FF", child.getTokens()));
+                        }
+                        os.write(expression.getByte());
                     }
-                    os.write(expression.getByte());
-                }
-                else if ("WORD".equalsIgnoreCase(overrideType)) {
-                    if (expression.getNumber().intValue() < -0x8000 || expression.getNumber().intValue() > 0xFFFF) {
-                        logMessage(new CompilerException(CompilerException.WARNING, "word value range from -$8000 to $FFFF", child.getTokens()));
+                    else if ("WORD".equalsIgnoreCase(overrideType)) {
+                        if (expression.getNumber().intValue() < -0x8000 || expression.getNumber().intValue() > 0xFFFF) {
+                            logMessage(new CompilerException(CompilerException.WARNING, "word value range from -$8000 to $FFFF", child.getTokens()));
+                        }
+                        os.write(expression.getWord());
                     }
-                    os.write(expression.getWord());
-                }
-                else if ("LONG".equalsIgnoreCase(overrideType)) {
-                    os.write(expression.getLong());
+                    else if ("LONG".equalsIgnoreCase(overrideType)) {
+                        os.write(expression.getLong());
+                    }
                 }
             }
         }
