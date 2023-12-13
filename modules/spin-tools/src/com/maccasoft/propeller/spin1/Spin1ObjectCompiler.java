@@ -533,12 +533,20 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
         hubAddress = object.getSize();
 
         for (Spin1PAsmLine line : source) {
-            if (line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Long) {
+            if ((line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Word)
+                || (line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Wordfit)) {
+                hubAddress = (hubAddress + 1) & ~1;
+                address = (address + 1) & ~1;
+            }
+            else if (line.getMnemonic() != null && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte)
+                && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Bytefit)) {
                 hubAddress = (hubAddress + 3) & ~3;
+                address = (address + 3) & ~3;
             }
             line.getScope().setObjectAddress(hubAddress);
             if ((line.getInstructionFactory() instanceof Org) || (line.getInstructionFactory() instanceof Res)) {
                 hubAddress = (hubAddress + 3) & ~3;
+                address = (address + 3) & ~3;
             }
             try {
                 address = line.resolve(address, memoryOffset + hubAddress);

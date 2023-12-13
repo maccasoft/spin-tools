@@ -484,6 +484,43 @@ class Spin1PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testAlignment() throws Exception {
+        String text = ""
+            + "PUB null\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "                byte    1, 2, 3\n"
+            + "                long    4\n"
+            + "\n"
+            + "                byte    5, 6\n"
+            + "                mov     a, b\n"
+            + "                \n"
+            + "a               res     1\n"
+            + "b               res     1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       1C 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       18 00 00 00    Function null @ $0018 (local size 0)\n"
+            + "00008 00008   000 01 02 03                           byte    1, 2, 3\n"
+            + "0000B 0000B       00             (filler)\n"
+            + "0000C 0000C   001 04 00 00 00                        long    4\n"
+            + "00010 00010   002 05 06                              byte    5, 6\n"
+            + "00012 00012       00 00          (filler)\n"
+            + "00014 00014   003 05 08 BC A0                        mov     a, b\n"
+            + "00018 00018   004                a                   res     1\n"
+            + "00018 00018   005                b                   res     1\n"
+            + "' PUB null\n"
+            + "00018 00018       32             RETURN\n"
+            + "00019 00019       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

@@ -850,6 +850,61 @@ class Spin2PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testAlignment() throws Exception {
+        String text = ""
+            + "DAT\n"
+            + "\n"
+            + "                byte    1, 2, 3\n"
+            + "                long    4\n"
+            + "\n"
+            + "                byte    5, 6\n"
+            + "                mov     a, b\n"
+            + "                \n"
+            + "a               long    1\n"
+            + "b               long    1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000 00000 01 02 03                           byte    1, 2, 3\n"
+            + "00003 00003 00003 04 00 00 00                        long    4\n"
+            + "00007 00007 00007 05 06                              byte    5, 6\n"
+            + "00009 00009 00009 11 1A 00 F6                        mov     a, b\n"
+            + "0000D 0000D 0000D 01 00 00 00    a                   long    1\n"
+            + "00011 00011 00011 01 00 00 00    b                   long    1\n"
+            + "", compile(text));
+    }
+
+    @Test
+    void testOrgAlignment() throws Exception {
+        String text = ""
+            + "DAT\n"
+            + "                org     $000\n"
+            + "\n"
+            + "                byte    1, 2, 3\n"
+            + "                long    4\n"
+            + "\n"
+            + "                byte    5, 6\n"
+            + "                mov     a, b\n"
+            + "                \n"
+            + "a               long    1\n"
+            + "b               long    1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 01 02 03                           byte    1, 2, 3\n"
+            + "00003 00003   000 04 00 00 00                        long    4\n"
+            + "00007 00007   001 05 06                              byte    5, 6\n"
+            + "00009 00009       00 00 00       (filler)\n"
+            + "0000C 0000C   003 05 08 00 F6                        mov     a, b\n"
+            + "00010 00010   004 01 00 00 00    a                   long    1\n"
+            + "00014 00014   005 01 00 00 00    b                   long    1\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

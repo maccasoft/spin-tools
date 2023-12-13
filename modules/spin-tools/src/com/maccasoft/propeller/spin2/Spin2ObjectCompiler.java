@@ -78,7 +78,6 @@ import com.maccasoft.propeller.spin2.instructions.Fit;
 import com.maccasoft.propeller.spin2.instructions.Org;
 import com.maccasoft.propeller.spin2.instructions.Orgh;
 import com.maccasoft.propeller.spin2.instructions.Res;
-import com.maccasoft.propeller.spin2.instructions.Word;
 
 public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
@@ -531,7 +530,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         boolean spinMode = methods.size() != 0;
 
         for (Spin2PAsmLine line : source) {
-            if (!hubMode && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Byte) && !(line.getInstructionFactory() instanceof Word)) {
+            if (!hubMode && isInstruction(line.getMnemonic())
+                && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin2.instructions.Long)) {
                 if (hubAddress != -1) {
                     hubAddress = (hubAddress + 3) & ~3;
                 }
@@ -672,6 +672,19 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         }
 
         return object;
+    }
+
+    boolean isInstruction(String mnemonic) {
+        if (mnemonic == null) {
+            return false;
+        }
+        if ("long".equalsIgnoreCase(mnemonic) || "word".equalsIgnoreCase(mnemonic) || "byte".equalsIgnoreCase(mnemonic)) {
+            return false;
+        }
+        if ("longfit".equalsIgnoreCase(mnemonic) || "wordfit".equalsIgnoreCase(mnemonic) || "bytefit".equalsIgnoreCase(mnemonic)) {
+            return false;
+        }
+        return true;
     }
 
     Expression enumValue = new NumberLiteral(0);
