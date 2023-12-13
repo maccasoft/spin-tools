@@ -363,19 +363,13 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             }
             else if ("?".equalsIgnoreCase(node.getText())) {
                 if (node.getChildCount() == 1) {
-                    Expression expression = context.getLocalSymbol(node.getChild(0).getText());
-                    if (expression == null) {
-                        throw new RuntimeException("undefined symbol " + node.getChild(0).getText());
+                    source.addAll(leftAssign(context, method, node.getChild(0), true));
+
+                    int code = 0b0_00010_00;
+                    if (push) {
+                        code |= 0b10000000;
                     }
-                    if (expression instanceof Variable) {
-                        int code = 0b0_00010_00;
-                        if (push) {
-                            code |= 0b10000000;
-                        }
-                        source.add(new VariableOp(context, VariableOp.Op.Assign, (Variable) expression));
-                        source.add(new Bytecode(context, code, "RANDOM_FORWARD"));
-                        ((Variable) expression).setCalledBy(method);
-                    }
+                    source.add(new Bytecode(context, code, "RANDOM_FORWARD"));
                 }
                 else {
                     if (node.getChildCount() != 2) {
