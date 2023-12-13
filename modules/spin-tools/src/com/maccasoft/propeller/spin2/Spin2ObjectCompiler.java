@@ -1655,7 +1655,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                                 line.addSource(new Tjz(line.getScope(), new ContextLiteral(quitLine.getScope())));
                             }
 
-                            line.setData("pop", Integer.valueOf(4));
+                            line.setData("pop", Integer.valueOf(0));
 
                             Spin2MethodLine nextLine = new Spin2MethodLine(context);
                             line.setData("next", nextLine);
@@ -1718,63 +1718,53 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 previousLine.getChilds().remove(quitLine);
                 line.addChild(quitLine);
             }
-            else if ("NEXT".equals(text)) {
-                line = new Spin2MethodLine(context, parent, text, node);
-
-                while (parent != null && parent.getData("next") == null) {
-                    parent = parent.getParent();
-                }
-                if (parent == null || parent.getData("next") == null) {
-                    throw new CompilerException("misplaced next", node);
-                }
-
-                Spin2MethodLine nextLine = (Spin2MethodLine) parent.getData("next");
-                line.addSource(new Jmp(line.getScope(), new ContextLiteral(nextLine.getScope())));
-            }
-            else if ("QUIT".equalsIgnoreCase(text)) {
+            else if ("QUIT".equals(text) || "NEXT".equals(text)) {
                 int pop = 0;
-                boolean hasCase = false;
+                String key = text.toLowerCase();
 
                 line = new Spin2MethodLine(context, parent, text, node);
 
-                while (parent != null) {
-                    if ("CASE".equalsIgnoreCase(parent.getStatement()) || "CASE_FAST".equalsIgnoreCase(parent.getStatement())) {
-                        hasCase = true;
-                    }
-
+                while (parent != null && parent.getData(key) == null) {
                     if (parent.getData("pop") != null) {
                         pop += ((Integer) parent.getData("pop")).intValue();
                     }
-                    if (parent.getData("quit") != null) {
-                        break;
-                    }
                     parent = parent.getParent();
                 }
-                if (parent == null || parent.getData("quit") == null) {
-                    throw new CompilerException("misplaced quit", node);
+                if (parent == null || parent.getData(key) == null) {
+                    throw new CompilerException("misplaced " + text, node);
                 }
 
-                Spin2MethodLine nextLine = (Spin2MethodLine) parent.getData("quit");
-                if (!hasCase && pop == 4) {
-                    line.addSource(new Jnz(line.getScope(), new ContextLiteral(nextLine.getScope())));
+                if ("QUIT".equals(text) && parent.getData("pop") != null) {
+                    pop += ((Integer) parent.getData("pop")).intValue();
+                }
+
+                if (pop != 0) {
+                    try {
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        if (pop == 4) {
+                            os.write(0x17);
+                        }
+                        else {
+                            os.write(0x18);
+                            os.write(Constant.wrVars(pop - 4));
+                        }
+                        line.addSource(new Bytecode(line.getScope(), os.toByteArray(), String.format("POP %d", pop)));
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                }
+
+                Spin2MethodLine nextLine = (Spin2MethodLine) parent.getData(key);
+                if ("NEXT".equals(text)) {
+                    line.addSource(new Jmp(line.getScope(), new ContextLiteral(nextLine.getScope())));
                 }
                 else {
-                    if (pop != 0) {
-                        try {
-                            ByteArrayOutputStream os = new ByteArrayOutputStream();
-                            if (pop == 4) {
-                                os.write(0x17);
-                            }
-                            else {
-                                os.write(0x18);
-                                os.write(Constant.wrVars(pop - 4));
-                            }
-                            line.addSource(new Bytecode(line.getScope(), os.toByteArray(), String.format("POP %d", pop)));
-                        } catch (Exception e) {
-                            // Do nothing
-                        }
+                    if (parent.getData("pop") != null && ((Integer) parent.getData("pop")).intValue() == 0) {
+                        line.addSource(new Jnz(line.getScope(), new ContextLiteral(nextLine.getScope())));
                     }
-                    line.addSource(new Jmp(line.getScope(), new ContextLiteral(nextLine.getScope())));
+                    else {
+                        line.addSource(new Jmp(line.getScope(), new ContextLiteral(nextLine.getScope())));
+                    }
                 }
             }
             else if ("CASE".equalsIgnoreCase(text)) {
