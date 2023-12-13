@@ -5114,6 +5114,33 @@ class Spin2ObjectCompilerTest {
     }
 
     @Test
+    void testStringConstant() throws Exception {
+        String text = ""
+            + "PUB main() | a, b\n"
+            + "\n"
+            + "    a := %\"ABCD\"\n"
+            + "    a := %\"123\"\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method main @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       16 00 00 00    End\n"
+            + "' PUB main() | a, b\n"
+            + "00008 00008       02             (stack size)\n"
+            + "'     a := %\"ABCD\"\n"
+            + "00009 00009       48 41 42 43 44 CONSTANT (%\"ABCD\")\n"
+            + "0000E 0000E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := %\"123\"\n"
+            + "0000F 0000F       48 31 32 33 00 CONSTANT (%\"123\")\n"
+            + "00014 00014       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "00015 00015       04             RETURN\n"
+            + "00016 00016       00 00          Padding\n"
+            + "", compile(text));
+    }
+
+    @Test
     void testByteWordLongFunction() throws Exception {
         String text = ""
             + "PUB main() | a, b, c\n"

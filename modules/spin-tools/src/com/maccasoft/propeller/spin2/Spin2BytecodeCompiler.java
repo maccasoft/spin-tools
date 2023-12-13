@@ -125,6 +125,25 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     os.writeBytes(code);
                     source.add(new Bytecode(context, os.toByteArray(), "STRING"));
                 }
+                else if (s.startsWith("%")) {
+                    s = s.substring(2, s.length() - 1);
+                    if (s.length() > 4) {
+                        throw new CompilerException("no more than 4 characters can be packed into a long", node.getTokens());
+                    }
+
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    os.write(0x48);
+
+                    int i = 0;
+                    while (i < s.length()) {
+                        os.write(s.charAt(i++));
+                    }
+                    while (i < 4) {
+                        os.write(0x00);
+                        i++;
+                    }
+                    source.add(new Bytecode(context, os.toByteArray(), "CONSTANT (" + node.getText() + ")"));
+                }
                 else {
                     s = s.substring(1, s.length() - 1);
                     if (s.length() == 1) {
