@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -246,15 +247,15 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                 source.add(end);
             }
             else if ("STRING".equalsIgnoreCase(node.getText())) {
-                StringBuilder sb = new StringBuilder();
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
                 for (Spin1StatementNode child : node.getChilds()) {
                     if (child.getType() == Token.STRING) {
                         String s = child.getText().substring(1);
-                        sb.append(s.substring(0, s.length() - 1));
+                        os.write(s.substring(0, s.length() - 1).getBytes());
                     }
                     else if (child.getType() == Token.NUMBER) {
                         NumberLiteral expression = new NumberLiteral(child.getText());
-                        sb.append((char) expression.getNumber().intValue());
+                        os.write(expression.getNumber().intValue());
                     }
                     else {
                         try {
@@ -262,14 +263,14 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             if (!expression.isConstant()) {
                                 throw new CompilerException("expression is not constant", child.getToken());
                             }
-                            sb.append((char) expression.getNumber().intValue());
+                            os.write(expression.getNumber().intValue());
                         } catch (Exception e) {
                             throw new CompilerException("expression is not constant", child.getToken());
                         }
                     }
                 }
-                sb.append((char) 0x00);
-                Spin1Bytecode target = addStringData(new Bytecode(context, sb.toString().getBytes(), "STRING".toUpperCase()));
+                os.write(0x00);
+                Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
                 source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
             }
             else if ("REBOOT".equalsIgnoreCase(node.getText())) {
@@ -286,9 +287,10 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             else if (node.getType() == Token.STRING) {
                 String s = node.getText();
                 if (s.startsWith("@")) {
-                    s = s.substring(2, s.length() - 1);
-                    s += (char) 0x00;
-                    Spin1Bytecode target = addStringData(new Bytecode(context, s.getBytes(), "STRING".toUpperCase()));
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    os.write(s.substring(2, s.length() - 1).getBytes());
+                    os.write(0x00);
+                    Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
                     source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, new ContextLiteral(target.getContext())));
                 }
                 else {
@@ -298,8 +300,10 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         source.add(new Constant(context, expression, compiler.isOpenspinCompatible()));
                     }
                     else {
-                        s += (char) 0x00;
-                        Spin1Bytecode target = addStringData(new Bytecode(context, s.getBytes(), "STRING".toUpperCase()));
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        os.write(s.getBytes());
+                        os.write(0x00);
+                        Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
                         source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, new ContextLiteral(target.getContext())));
                     }
                 }
