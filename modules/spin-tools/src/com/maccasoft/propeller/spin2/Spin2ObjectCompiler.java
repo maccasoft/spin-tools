@@ -2052,18 +2052,24 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 if (!expression.isConstant()) {
                     throw new CompilerException("expression is not constant", arg.getChild(0));
                 }
-                int value = expression.getNumber().intValue();
-                map.put(value, target);
-            } catch (Exception e) {
-                throw new CompilerException(e, arg);
-            }
-            try {
-                Expression expression = buildConstantExpression(line.getScope(), arg.getChild(1));
+                int first = expression.getNumber().intValue();
+
+                expression = buildConstantExpression(line.getScope(), arg.getChild(1));
                 if (!expression.isConstant()) {
                     throw new CompilerException("expression is not constant", arg.getChild(1));
                 }
-                int value = expression.getNumber().intValue();
-                map.put(value, target);
+                int last = expression.getNumber().intValue();
+
+                if (last < first) {
+                    for (int value = last; value <= first; value++) {
+                        map.put(value, target);
+                    }
+                }
+                else {
+                    for (int value = first; value <= last; value++) {
+                        map.put(value, target);
+                    }
+                }
             } catch (Exception e) {
                 throw new CompilerException(e, arg);
             }
