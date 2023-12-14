@@ -457,10 +457,10 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         if (expression instanceof DataVariable) {
                             switch (((DataVariable) expression).getType()) {
                                 case "BYTE":
-                                    type = Spin1Bytecode.Type.Word;
+                                    type = Spin1Bytecode.Type.Byte;
                                     break;
                                 case "WORD":
-                                    type = Spin1Bytecode.Type.Byte;
+                                    type = Spin1Bytecode.Type.Word;
                                     break;
                             }
                         }
