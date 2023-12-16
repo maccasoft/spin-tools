@@ -3148,7 +3148,7 @@ class Spin2ObjectCompilerTest {
             + "' PUB main() | a\n"
             + "00008 00008       01             (stack size)\n"
             + "'     SEND(1,2,3)\n"
-            + "00009 00009       0E 03 01 02 03 SEND\n"
+            + "00009 00009       0E 03 01 02 03 SEND_BYTES\n"
             + "0000E 0000E       04             RETURN\n"
             + "0000F 0000F       00             Padding\n"
             + "", compile(text));
@@ -3172,10 +3172,7 @@ class Spin2ObjectCompilerTest {
             + "'     SEND(a,2,3)\n"
             + "00009 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
             + "0000A 0000A       0D             SEND\n"
-            + "0000B 0000B       A3             CONSTANT (2)\n"
-            + "0000C 0000C       0D             SEND\n"
-            + "0000D 0000D       A4             CONSTANT (3)\n"
-            + "0000E 0000E       0D             SEND\n"
+            + "0000B 0000B       0E 02 02 03    SEND_BYTES\n"
             + "0000F 0000F       04             RETURN\n"
             + "", compile(text));
     }

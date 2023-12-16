@@ -178,27 +178,77 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     if (node.getChildCount() == 0) {
                         throw new RuntimeException("syntax error");
                     }
-                    boolean bytes = true;
-                    for (Spin2StatementNode child : node.getChilds()) {
-                        if (child.getType() != Token.NUMBER) {
-                            bytes = false;
-                            break;
+
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    int i = 0;
+                    while (i < node.getChildCount()) {
+                        Spin2StatementNode child = node.getChild(i++);
+
+                        boolean isByte = false;
+                        if (child.getType() == Token.STRING) {
+                            String s = child.getText();
+                            os.write(s.substring(1, s.length() - 1).getBytes());
+                            isByte = true;
+                        }
+                        else {
+                            try {
+                                Expression expression = buildConstantExpression(context, child);
+                                if (expression.isConstant()) {
+                                    int value = expression.getNumber().intValue();
+                                    if (value >= 0x00 && value <= 0xFF) {
+                                        os.write(value);
+                                        isByte = true;
+                                    }
+                                }
+                            } catch (Exception e) {
+                                // Do nothing
+                            }
+                        }
+                        if (!isByte) {
+                            if (os.size() == 1) {
+                                source.addAll(compileConstantExpression(context, method, node.getChild(i - 1)));
+                                source.add(new Bytecode(context, 0x0D, node.getText().toUpperCase()));
+                                os = new ByteArrayOutputStream();
+                            }
+                            else if (os.size() != 0) {
+                                byte[] code = new byte[os.size() + 2];
+                                code[0] = 0x0E;
+                                code[1] = (byte) os.size();
+                                System.arraycopy(os.toByteArray(), 0, code, 2, os.size());
+                                source.add(new Bytecode(context, code, node.getText().toUpperCase() + "_BYTES"));
+                                os = new ByteArrayOutputStream();
+                            }
+
+                            boolean popValue = false;
+
+                            Method methodExpression = getMethodExpression(context, child);
+                            if (methodExpression != null) {
+                                if (methodExpression.getReturnsCount() > 1) {
+                                    throw new CompilerException("send parameter cannot return multiple values", child.getTokens());
+                                }
+                                popValue = methodExpression.getReturnsCount() != 0;
+                                source.addAll(compileMethodCall(context, method, methodExpression, child, popValue, false));
+                            }
+                            else {
+                                source.addAll(compileConstantExpression(context, method, child));
+                                popValue = true;
+                            }
+
+                            if (popValue) {
+                                source.add(new Bytecode(context, 0x0D, node.getText().toUpperCase()));
+                            }
                         }
                     }
-                    if (bytes) {
-                        byte[] code = new byte[node.getChildCount() + 2];
+                    if (os.size() == 1) {
+                        source.addAll(compileConstantExpression(context, method, node.getChild(i - 1)));
+                        source.add(new Bytecode(context, 0x0D, node.getText().toUpperCase()));
+                    }
+                    else if (os.size() != 0) {
+                        byte[] code = new byte[os.size() + 2];
                         code[0] = 0x0E;
-                        code[1] = (byte) node.getChildCount();
-                        for (int i = 0; i < node.getChildCount(); i++) {
-                            code[i + 2] = (byte) new NumberLiteral(node.getChild(i).getText()).getNumber().intValue();
-                        }
-                        source.add(new Bytecode(context, code, node.getText().toUpperCase()));
-                    }
-                    else {
-                        for (Spin2StatementNode child : node.getChilds()) {
-                            source.addAll(compileBytecodeExpression(context, method, child, true));
-                            source.add(new Bytecode(context, 0x0D, node.getText().toUpperCase()));
-                        }
+                        code[1] = (byte) os.size();
+                        System.arraycopy(os.toByteArray(), 0, code, 2, os.size());
+                        source.add(new Bytecode(context, code, node.getText().toUpperCase() + "_BYTES"));
                     }
                     return source;
                 }
@@ -1868,6 +1918,46 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         }
 
         return source;
+    }
+
+    Method getMethodExpression(Context context, Spin2StatementNode node) {
+        Expression symbol = context.getLocalSymbol(node.getText());
+
+        if (symbol instanceof SpinObject) {
+            Spin2StatementNode methodNode = null;
+
+            int n = 0;
+            if (n < node.getChildCount()) {
+                if (node.getChild(n) instanceof Spin2StatementNode.Index) {
+                    node.getChild(n++);
+                }
+            }
+            if (n < node.getChildCount()) {
+                methodNode = node.getChild(n++);
+            }
+            if (n < node.getChildCount() || methodNode == null) {
+                throw new CompilerException("syntax error", node.getTokens());
+            }
+
+            String qualifiedName = node.getText() + methodNode.getText();
+
+            symbol = context.getLocalSymbol(qualifiedName);
+            if (symbol == null && isAddress(qualifiedName)) {
+                symbol = context.getLocalSymbol(qualifiedName.substring(1));
+            }
+            if (symbol == null) {
+                throw new CompilerException("undefined symbol " + methodNode.getText(), methodNode.getToken());
+            }
+            if (!(symbol instanceof Method)) {
+                throw new CompilerException(methodNode.getText() + " is not a method", methodNode.getToken());
+            }
+            return (Method) symbol;
+        }
+        if (symbol instanceof Method) {
+            return (Method) symbol;
+        }
+
+        return null;
     }
 
     List<Spin2Bytecode> compileMethodCall(Context context, Spin2Method method, Expression symbol, Spin2StatementNode node, boolean push, boolean trap) {
