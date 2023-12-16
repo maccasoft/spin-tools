@@ -281,6 +281,14 @@ public class Spin2TokenStream extends TokenStream {
                                         column++;
                                     }
                                 }
+                                if (Character.toUpperCase(text.charAt(token.start + 1)) == 'B') {
+                                    if (Character.toUpperCase(text.charAt(token.start + 2)) == 'S') {
+                                        token.stop++;
+                                        token.type = Token.OPERATOR;
+                                        index++;
+                                        column++;
+                                    }
+                                }
                             }
                             if (Character.toUpperCase(text.charAt(token.start)) == 'X') {
                                 if (Character.toUpperCase(text.charAt(token.start + 1)) == 'O') {
