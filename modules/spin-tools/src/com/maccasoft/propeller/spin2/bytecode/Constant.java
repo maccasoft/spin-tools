@@ -57,7 +57,7 @@ public class Constant extends Spin2Bytecode {
             (byte) ((value & 0x7F) | 0x80),
             (byte) (((value >> 7) & 0x7F) | 0x80),
             (byte) (((value >> 14) & 0x7F) | 0x80),
-            (byte) ((value >> 21) & 0x7F)
+            (byte) (value >> 21)
         };
     }
 
@@ -98,7 +98,7 @@ public class Constant extends Spin2Bytecode {
             (byte) ((value & 0x7F) | 0x80),
             (byte) (((value >> 7) & 0x7F) | 0x80),
             (byte) (((value >> 14) & 0x7F) | 0x80),
-            (byte) ((value >> 21) & 0x7F)
+            (byte) (value >> 21)
         };
     }
 

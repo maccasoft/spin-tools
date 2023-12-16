@@ -13,6 +13,7 @@ package com.maccasoft.propeller.spin2;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Type;
+import com.maccasoft.propeller.spin2.bytecode.Constant;
 
 public class Spin2PAsmExpression {
 
@@ -212,6 +213,10 @@ public class Spin2PAsmExpression {
                         (byte) ((value >> 16) & 0xFF),
                         (byte) ((value >> 24) & 0xFF)
                     };
+                case "FVAR":
+                    return Constant.wrVar(value);
+                case "FVARS":
+                    return Constant.wrVars(value);
             }
         }
         return new byte[] {
@@ -236,6 +241,10 @@ public class Spin2PAsmExpression {
                         (byte) ((value >> 16) & 0xFF),
                         (byte) ((value >> 24) & 0xFF)
                     };
+                case "FVAR":
+                    return Constant.wrVar(value);
+                case "FVARS":
+                    return Constant.wrVars(value);
             }
         }
         return new byte[] {
@@ -251,6 +260,14 @@ public class Spin2PAsmExpression {
         }
         else {
             value = expression.getNumber().intValue();
+        }
+        if (expression instanceof Type) {
+            switch (((Type) expression).getType().toUpperCase()) {
+                case "FVAR":
+                    return Constant.wrVar(value);
+                case "FVARS":
+                    return Constant.wrVars(value);
+            }
         }
         return new byte[] {
             (byte) (value & 0xFF),

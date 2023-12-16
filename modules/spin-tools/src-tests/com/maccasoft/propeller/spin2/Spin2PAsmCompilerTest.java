@@ -905,6 +905,23 @@ class Spin2PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testFVarOverride() throws Exception {
+        String text = ""
+            + "DAT             org     $000\n"
+            + "\n"
+            + "                byte    99, fvar 99\n"
+            + "                byte    -99, fvars -99\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 63 63                              byte    99, fvar 99\n"
+            + "00002 00002   000 9D 9D 7F                           byte    -99, fvars -99\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

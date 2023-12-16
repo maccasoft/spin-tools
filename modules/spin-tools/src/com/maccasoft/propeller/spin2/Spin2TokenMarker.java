@@ -1182,6 +1182,9 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                             if (id == null) {
                                 id = keywords.get(token.getText());
                             }
+                            if (id == null && ("fvar".equalsIgnoreCase(token.getText()) || "fvars".equalsIgnoreCase(token.getText()))) {
+                                id = TokenId.TYPE;
+                            }
                             if (id == null && inline) {
                                 if (isModcz) {
                                     id = modczOperands.get(token.getText().toUpperCase());

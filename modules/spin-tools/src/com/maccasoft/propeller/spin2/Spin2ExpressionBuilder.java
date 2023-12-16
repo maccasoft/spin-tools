@@ -466,6 +466,10 @@ public class Spin2ExpressionBuilder {
             token = next();
             return new Type(token.getText(), parseLevel(parseAtom(), 0));
         }
+        if ("FVAR".equalsIgnoreCase(token.getText()) || "FVARS".equalsIgnoreCase(token.getText())) {
+            token = next();
+            return new Type(token.getText(), parseLevel(parseAtom(), 0));
+        }
 
         if ("(".equals(token.getText())) {
             next();
