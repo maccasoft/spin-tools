@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-22 Marco Maccaferri and others.
+ * Copyright (c) 2021-23 Marco Maccaferri and others.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under
@@ -37,13 +37,12 @@ public class Byte extends Spin2PAsmInstructionFactory {
 
         @Override
         public int getSize() {
-            int size = 0;
             try {
-                size = getBytes().length;
+                return getBytes().length;
             } catch (Exception e) {
-
+                // Do nothing
             }
-            return size;
+            return 0;
         }
 
         @Override
@@ -53,16 +52,9 @@ public class Byte extends Spin2PAsmInstructionFactory {
 
             for (Spin2PAsmExpression exp : arguments) {
                 try {
-                    if (exp.getExpression().isString()) {
-                        os.write(exp.getExpression().getString().getBytes());
-                    }
-                    else {
-                        byte[] value = exp.getByte();
-                        byte[] buffer = new byte[value.length * exp.getCount()];
-                        for (int i = 0; i < buffer.length; i += value.length) {
-                            System.arraycopy(value, 0, buffer, i, value.length);
-                        }
-                        os.write(buffer);
+                    byte[] value = exp.getByte();
+                    for (int i = 0; i < exp.getCount(); i++) {
+                        os.write(value);
                     }
                 } catch (CompilerException e) {
                     msgs.addMessage(e);

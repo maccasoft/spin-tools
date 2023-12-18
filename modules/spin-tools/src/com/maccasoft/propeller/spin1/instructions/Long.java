@@ -14,7 +14,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.spin1.Spin1InstructionObject;
 import com.maccasoft.propeller.spin1.Spin1PAsmExpression;
@@ -46,16 +45,12 @@ public class Long extends Spin1PAsmInstructionFactory {
 
         @Override
         public int getSize() {
-            int size = 0;
-            for (Spin1PAsmExpression exp : arguments) {
-                if (exp.getExpression().isString()) {
-                    size += 4 * ((CharacterLiteral) exp.getExpression()).getString().length();
-                }
-                else {
-                    size += 4 * exp.getCount();
-                }
+            try {
+                return getBytes().length;
+            } catch (Exception e) {
+                // Do nothing
             }
-            return size;
+            return 0;
         }
 
         @Override
@@ -65,22 +60,9 @@ public class Long extends Spin1PAsmInstructionFactory {
 
             for (Spin1PAsmExpression exp : arguments) {
                 try {
-                    if (exp.getExpression().isString()) {
-                        byte[] b = exp.getExpression().getString().getBytes();
-                        for (int i = 0; i < b.length; i++) {
-                            os.write(b[i]);
-                            os.write(0);
-                            os.write(0);
-                            os.write(0);
-                        }
-                    }
-                    else {
-                        byte[] value = exp.getLong();
-                        byte[] buffer = new byte[value.length * exp.getCount()];
-                        for (int i = 0; i < buffer.length; i += value.length) {
-                            System.arraycopy(value, 0, buffer, i, value.length);
-                        }
-                        os.write(buffer);
+                    byte[] value = exp.getLong();
+                    for (int i = 0; i < exp.getCount(); i++) {
+                        os.write(value);
                     }
                 } catch (CompilerException e) {
                     msgs.addMessage(e);

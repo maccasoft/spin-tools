@@ -31,6 +31,22 @@ public abstract class BinaryOperator extends Expression {
     }
 
     @Override
+    public boolean isString() {
+        return term1.isString() || term2.isString();
+    }
+
+    @Override
+    public String getString() {
+        if (term1.isString()) {
+            return term1.getString();
+        }
+        if (term2.isString()) {
+            return term2.getString();
+        }
+        return super.getString();
+    }
+
+    @Override
     public String toString() {
         return "" + term1 + " " + getLexeme() + " " + term2;
     }

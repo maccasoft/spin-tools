@@ -521,6 +521,48 @@ class Spin1PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testStringExpressions() throws Exception {
+        String text = ""
+            + "PUB null\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "                byte    \"1234\" | $80\n"
+            + "                word    \"1234\" | $80\n"
+            + "                long    \"1234\" | $80\n"
+            + "\n"
+            + "                byte    \"1234\" | $180\n"
+            + "                word    \"1234\" | $180\n"
+            + "                long    \"1234\" | $180\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       44 00          Object size\n"
+            + "00002 00002       02             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004       40 00 00 00    Function null @ $0040 (local size 0)\n"
+            + "00008 00008   000 31 32 33 B4                        byte    \"1234\" | $80\n"
+            + "0000C 0000C   001 31 00 32 00                        word    \"1234\" | $80\n"
+            + "00010 00010   002 33 00 B4 00\n"
+            + "00014 00014   003 31 00 00 00                        long    \"1234\" | $80\n"
+            + "00018 00018   004 32 00 00 00   \n"
+            + "0001C 0001C   005 33 00 00 00   \n"
+            + "00020 00020   006 B4 00 00 00\n"
+            + "00024 00024   007 31 32 33 B4                        byte    \"1234\" | $180\n"
+            + "00028 00028   008 31 00 32 00                        word    \"1234\" | $180\n"
+            + "0002C 0002C   009 33 00 B4 01\n"
+            + "00030 00030   00A 31 00 00 00                        long    \"1234\" | $180\n"
+            + "00034 00034   00B 32 00 00 00   \n"
+            + "00038 00038   00C 33 00 00 00   \n"
+            + "0003C 0003C   00D B4 01 00 00\n"
+            + "' PUB null\n"
+            + "00040 00040       32             RETURN\n"
+            + "00041 00041       00 00 00       Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

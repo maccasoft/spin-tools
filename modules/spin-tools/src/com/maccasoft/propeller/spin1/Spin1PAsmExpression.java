@@ -52,73 +52,128 @@ public class Spin1PAsmExpression {
     }
 
     public byte[] getByte() {
-        int value;
-        if (expression.getNumber() instanceof Double) {
-            value = Float.floatToIntBits(expression.getNumber().floatValue());
+        int[] value;
+        if (expression.isString()) {
+            byte[] b = expression.getString().getBytes();
+
+            value = new int[b.length];
+            for (int i = 0; i < value.length; i++) {
+                value[i] = b[i] & 0xFF;
+            }
+            value[b.length - 1] = expression.getNumber().intValue();
+        }
+        else if (expression.getNumber() instanceof Double) {
+            value = new int[] {
+                Float.floatToIntBits(expression.getNumber().floatValue())
+            };
         }
         else {
-            value = expression.getNumber().intValue();
+            value = new int[] {
+                expression.getNumber().intValue()
+            };
         }
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
-                case "WORD":
-                    return new byte[] {
-                        (byte) (value & 0xFF),
-                        (byte) ((value >> 8) & 0xFF)
-                    };
-                case "LONG":
-                    return new byte[] {
-                        (byte) (value & 0xFF),
-                        (byte) ((value >> 8) & 0xFF),
-                        (byte) ((value >> 16) & 0xFF),
-                        (byte) ((value >> 24) & 0xFF)
-                    };
+                case "WORD": {
+                    byte[] r = new byte[value.length * 2];
+                    for (int s = 0, d = 0; s < value.length; s++) {
+                        r[d++] = (byte) value[s];
+                        r[d++] = (byte) (value[s] >> 8);
+                    }
+                    return r;
+                }
+                case "LONG": {
+                    byte[] r = new byte[value.length * 4];
+                    for (int s = 0, d = 0; s < value.length; s++) {
+                        r[d++] = (byte) value[s];
+                        r[d++] = (byte) (value[s] >> 8);
+                        r[d++] = (byte) (value[s] >> 16);
+                        r[d++] = (byte) (value[s] >> 24);
+                    }
+                    return r;
+                }
             }
         }
-        return new byte[] {
-            (byte) (value & 0xFF)
-        };
+        byte[] r = new byte[value.length];
+        for (int s = 0, d = 0; s < value.length; s++) {
+            r[d++] = (byte) value[s];
+        }
+        return r;
     }
 
     public byte[] getWord() {
-        int value;
-        if (expression.getNumber() instanceof Double) {
-            value = Float.floatToIntBits(expression.getNumber().floatValue());
+        int[] value;
+        if (expression.isString()) {
+            byte[] b = expression.getString().getBytes();
+
+            value = new int[b.length];
+            for (int i = 0; i < value.length; i++) {
+                value[i] = b[i] & 0xFF;
+            }
+            value[b.length - 1] = expression.getNumber().intValue();
+        }
+        else if (expression.getNumber() instanceof Double) {
+            value = new int[] {
+                Float.floatToIntBits(expression.getNumber().floatValue())
+            };
         }
         else {
-            value = expression.getNumber().intValue();
+            value = new int[] {
+                expression.getNumber().intValue()
+            };
         }
         if (expression instanceof Type) {
             switch (((Type) expression).getType().toUpperCase()) {
-                case "LONG":
-                    return new byte[] {
-                        (byte) (value & 0xFF),
-                        (byte) ((value >> 8) & 0xFF),
-                        (byte) ((value >> 16) & 0xFF),
-                        (byte) ((value >> 24) & 0xFF)
-                    };
+                case "LONG": {
+                    byte[] r = new byte[value.length * 4];
+                    for (int s = 0, d = 0; s < value.length; s++) {
+                        r[d++] = (byte) value[s];
+                        r[d++] = (byte) (value[s] >> 8);
+                        r[d++] = (byte) (value[s] >> 16);
+                        r[d++] = (byte) (value[s] >> 24);
+                    }
+                    return r;
+                }
             }
         }
-        return new byte[] {
-            (byte) (value & 0xFF),
-            (byte) ((value >> 8) & 0xFF)
-        };
+
+        byte[] r = new byte[value.length * 2];
+        for (int s = 0, d = 0; s < value.length; s++) {
+            r[d++] = (byte) value[s];
+            r[d++] = (byte) (value[s] >> 8);
+        }
+        return r;
     }
 
     public byte[] getLong() {
-        int value;
-        if (expression.getNumber() instanceof Double) {
-            value = Float.floatToIntBits(expression.getNumber().floatValue());
+        int[] value;
+        if (expression.isString()) {
+            byte[] b = expression.getString().getBytes();
+
+            value = new int[b.length];
+            for (int i = 0; i < value.length; i++) {
+                value[i] = b[i] & 0xFF;
+            }
+            value[b.length - 1] = expression.getNumber().intValue();
+        }
+        else if (expression.getNumber() instanceof Double) {
+            value = new int[] {
+                Float.floatToIntBits(expression.getNumber().floatValue())
+            };
         }
         else {
-            value = expression.getNumber().intValue();
+            value = new int[] {
+                expression.getNumber().intValue()
+            };
         }
-        return new byte[] {
-            (byte) (value & 0xFF),
-            (byte) ((value >> 8) & 0xFF),
-            (byte) ((value >> 16) & 0xFF),
-            (byte) ((value >> 24) & 0xFF)
-        };
+        byte[] r = new byte[value.length * 4];
+        for (int s = 0, d = 0; s < value.length; s++) {
+            r[d++] = (byte) value[s];
+            r[d++] = (byte) (value[s] >> 8);
+            r[d++] = (byte) (value[s] >> 16);
+            r[d++] = (byte) (value[s] >> 24);
+        }
+        return r;
     }
 
     public String getString() {

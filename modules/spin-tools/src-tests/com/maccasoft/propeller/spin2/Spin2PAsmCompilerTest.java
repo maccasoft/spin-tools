@@ -922,6 +922,40 @@ class Spin2PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testStringExpressions() throws Exception {
+        String text = ""
+            + "DAT             org     $000\n"
+            + "\n"
+            + "                byte    \"1234\" | $80\n"
+            + "                word    \"1234\" | $80\n"
+            + "                long    \"1234\" | $80\n"
+            + "\n"
+            + "                byte    \"1234\" | $180\n"
+            + "                word    \"1234\" | $180\n"
+            + "                long    \"1234\" | $180\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 31 32 33 B4                        byte    \"1234\" | $80\n"
+            + "00004 00004   001 31 00 32 00                        word    \"1234\" | $80\n"
+            + "00008 00008   002 33 00 B4 00\n"
+            + "0000C 0000C   003 31 00 00 00                        long    \"1234\" | $80\n"
+            + "00010 00010   004 32 00 00 00   \n"
+            + "00014 00014   005 33 00 00 00   \n"
+            + "00018 00018   006 B4 00 00 00\n"
+            + "0001C 0001C   007 31 32 33 B4                        byte    \"1234\" | $180\n"
+            + "00020 00020   008 31 00 32 00                        word    \"1234\" | $180\n"
+            + "00024 00024   009 33 00 B4 01\n"
+            + "00028 00028   00A 31 00 00 00                        long    \"1234\" | $180\n"
+            + "0002C 0002C   00B 32 00 00 00   \n"
+            + "00030 00030   00C 33 00 00 00   \n"
+            + "00034 00034   00D B4 01 00 00\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

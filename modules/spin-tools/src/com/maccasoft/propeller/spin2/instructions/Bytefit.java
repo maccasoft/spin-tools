@@ -14,7 +14,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
-import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Type;
 import com.maccasoft.propeller.spin2.Spin2InstructionObject;
@@ -38,27 +37,12 @@ public class Bytefit extends Byte {
 
         @Override
         public int getSize() {
-            int size = 0;
-            for (Spin2PAsmExpression exp : arguments) {
-                if (exp.getExpression().isString()) {
-                    size += ((CharacterLiteral) exp.getExpression()).getString().length();
-                }
-                else {
-                    int typeSize = 1;
-                    if (exp.getExpression() instanceof Type) {
-                        switch (((Type) exp.getExpression()).getType().toUpperCase()) {
-                            case "WORD":
-                                typeSize = 2;
-                                break;
-                            case "LONG":
-                                typeSize = 4;
-                                break;
-                        }
-                    }
-                    size += exp.getCount() * typeSize;
-                }
+            try {
+                return getBytes().length;
+            } catch (Exception e) {
+                // Do nothing
             }
-            return size;
+            return 0;
         }
 
         @Override
@@ -68,35 +52,28 @@ public class Bytefit extends Byte {
 
             for (Spin2PAsmExpression exp : arguments) {
                 try {
-                    if (exp.getExpression().isString()) {
-                        os.write(exp.getExpression().getString().getBytes());
+                    if (exp.getExpression() instanceof Type) {
+                        switch (((Type) exp.getExpression()).getType().toUpperCase()) {
+                            case "WORD":
+                                if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
+                                    throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
+                                }
+                                break;
+                            case "LONG":
+                                break;
+                            default:
+                                if (exp.getInteger() < -0x80 || exp.getInteger() > 0xFF) {
+                                    throw new CompilerException("Byte value must range from -$80 to $FF", exp.getExpression().getData());
+                                }
+                                break;
+                        }
                     }
-                    else {
-                        if (exp.getExpression() instanceof Type) {
-                            switch (((Type) exp.getExpression()).getType().toUpperCase()) {
-                                case "WORD":
-                                    if (exp.getInteger() < -0x8000 || exp.getInteger() > 0xFFFF) {
-                                        throw new CompilerException("Word value must range from -$8000 to $FFFF", exp.getExpression().getData());
-                                    }
-                                    break;
-                                case "LONG":
-                                    break;
-                                default:
-                                    if (exp.getInteger() < -0x80 || exp.getInteger() > 0xFF) {
-                                        throw new CompilerException("Byte value must range from -$80 to $FF", exp.getExpression().getData());
-                                    }
-                                    break;
-                            }
-                        }
-                        else if (exp.getInteger() < -0x80 || exp.getInteger() > 0xFF) {
-                            throw new CompilerException("Byte value must range from -$80 to $FF", exp.getExpression().getData());
-                        }
-                        byte[] value = exp.getByte();
-                        byte[] buffer = new byte[value.length * exp.getCount()];
-                        for (int i = 0; i < buffer.length; i += value.length) {
-                            System.arraycopy(value, 0, buffer, i, value.length);
-                        }
-                        os.write(buffer);
+                    else if (exp.getInteger() < -0x80 || exp.getInteger() > 0xFF) {
+                        throw new CompilerException("Byte value must range from -$80 to $FF", exp.getExpression().getData());
+                    }
+                    byte[] value = exp.getByte();
+                    for (int i = 0; i < exp.getCount(); i++) {
+                        os.write(value);
                     }
                 } catch (CompilerException e) {
                     msgs.addMessage(e);
