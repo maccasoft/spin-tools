@@ -182,7 +182,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                     ByteArrayOutputStream os = new ByteArrayOutputStream();
                     int i = 0;
                     while (i < node.getChildCount()) {
-                        Spin2StatementNode child = node.getChild(i++);
+                        Spin2StatementNode child = node.getChild(i);
 
                         boolean isByte = false;
                         if (child.getType() == Token.STRING) {
@@ -238,6 +238,7 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                 source.add(new Bytecode(context, 0x0D, node.getText().toUpperCase()));
                             }
                         }
+                        i++;
                     }
                     if (os.size() == 1) {
                         source.addAll(compileConstantExpression(context, method, node.getChild(i - 1)));
