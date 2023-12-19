@@ -58,7 +58,7 @@ public abstract class Expression {
     }
 
     public Number getNumber() {
-        throw new RuntimeException("Not a number.");
+        throw new RuntimeException("not a number");
     }
 
     public byte[] getByte() {
@@ -90,7 +90,11 @@ public abstract class Expression {
     }
 
     public String getString() {
-        throw new RuntimeException("Not a string.");
+        throw new RuntimeException("not a string");
+    }
+
+    public int[] getStringValues() {
+        throw new RuntimeException("unsupported operation");
     }
 
     public boolean isGroup() {

@@ -54,13 +54,7 @@ public class Spin1PAsmExpression {
     public byte[] getByte() {
         int[] value;
         if (expression.isString()) {
-            byte[] b = expression.getString().getBytes();
-
-            value = new int[b.length];
-            for (int i = 0; i < value.length; i++) {
-                value[i] = b[i] & 0xFF;
-            }
-            value[b.length - 1] = expression.getNumber().intValue();
+            value = expression.getStringValues();
         }
         else if (expression.getNumber() instanceof Double) {
             value = new int[] {
@@ -104,13 +98,7 @@ public class Spin1PAsmExpression {
     public byte[] getWord() {
         int[] value;
         if (expression.isString()) {
-            byte[] b = expression.getString().getBytes();
-
-            value = new int[b.length];
-            for (int i = 0; i < value.length; i++) {
-                value[i] = b[i] & 0xFF;
-            }
-            value[b.length - 1] = expression.getNumber().intValue();
+            value = expression.getStringValues();
         }
         else if (expression.getNumber() instanceof Double) {
             value = new int[] {
@@ -148,13 +136,7 @@ public class Spin1PAsmExpression {
     public byte[] getLong() {
         int[] value;
         if (expression.isString()) {
-            byte[] b = expression.getString().getBytes();
-
-            value = new int[b.length];
-            for (int i = 0; i < value.length; i++) {
-                value[i] = b[i] & 0xFF;
-            }
-            value[b.length - 1] = expression.getNumber().intValue();
+            value = expression.getStringValues();
         }
         else if (expression.getNumber() instanceof Double) {
             value = new int[] {

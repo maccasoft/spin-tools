@@ -19,6 +19,18 @@ public class CharacterLiteral extends Literal {
     }
 
     @Override
+    public int[] getStringValues() {
+        byte[] b = str.getBytes();
+
+        int[] r = new int[b.length];
+        for (int i = 0; i < r.length; i++) {
+            r[i] = b[i] & 0xFF;
+        }
+
+        return r;
+    }
+
+    @Override
     public boolean isNumber() {
         return str.length() == 1;
     }

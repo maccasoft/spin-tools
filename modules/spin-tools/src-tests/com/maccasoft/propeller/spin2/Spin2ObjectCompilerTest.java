@@ -6338,6 +6338,55 @@ class Spin2ObjectCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testStringExpressions() throws Exception {
+        String text = ""
+            + "PUB start() | a\n"
+            + "\n"
+            + "    a := string(\"1234\" | $80)\n"
+            + "    a := string($80 | \"1234\")\n"
+            + "    a := string(\"1234\" + \"5678\")\n"
+            + "\n"
+            + "    a := \"1234\" | $80\n"
+            + "    a := $80 | \"1234\"\n"
+            + "    a := \"1234\" + \"5678\"\n"
+            + "\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       08 00 00 80    Method start @ $00008 (0 parameters, 0 returns)\n"
+            + "00004 00004       40 00 00 00    End\n"
+            + "' PUB start() | a\n"
+            + "00008 00008       01             (stack size)\n"
+            + "'     a := string(\"1234\" | $80)\n"
+            + "00009 00009       9E 05 31 32 33 STRING\n"
+            + "0000E 0000E       B4 00\n"
+            + "00010 00010       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := string($80 | \"1234\")\n"
+            + "00011 00011       9E 05 B1 32 33 STRING\n"
+            + "00016 00016       34 00\n"
+            + "00018 00018       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := string(\"1234\" + \"5678\")\n"
+            + "00019 00019       9E 08 31 32 33 STRING\n"
+            + "0001E 0001E       69 36 37 38 00\n"
+            + "00023 00023       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := \"1234\" | $80\n"
+            + "00024 00024       9E 05 31 32 33 STRING\n"
+            + "00029 00029       B4 00\n"
+            + "0002B 0002B       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := $80 | \"1234\"\n"
+            + "0002C 0002C       9E 05 B1 32 33 STRING\n"
+            + "00031 00031       34 00\n"
+            + "00033 00033       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "'     a := \"1234\" + \"5678\"\n"
+            + "00034 00034       9E 08 31 32 33 STRING\n"
+            + "00039 00039       69 36 37 38 00\n"
+            + "0003E 0003E       F0             VAR_WRITE LONG DBASE+$00000 (short)\n"
+            + "0003F 0003F       04             RETURN\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

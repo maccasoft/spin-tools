@@ -695,10 +695,18 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                                     throw new CompilerException("expression is not constant", child.getTokens());
                                 }
                             }
-                            if (expression.getNumber().intValue() < -0x80 || expression.getNumber().intValue() > 0xFF) {
-                                logMessage(new CompilerException(CompilerException.WARNING, "byte value range from -$80 to $FF", child.getTokens()));
+                            if (expression.isString()) {
+                                int[] s = expression.getStringValues();
+                                for (int i = 0; i < s.length; i++) {
+                                    sb.write((byte) s[i]);
+                                }
                             }
-                            sb.write(expression.getByte());
+                            else {
+                                if (expression.getNumber().intValue() < -0x80 || expression.getNumber().intValue() > 0xFF) {
+                                    logMessage(new CompilerException(CompilerException.WARNING, "byte value range from -$80 to $FF", child.getTokens()));
+                                }
+                                sb.write(expression.getByte());
+                            }
                         }
                     }
                     if (sb.size() > 254) {
@@ -1324,6 +1332,16 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
         try {
             Expression expression = buildConstantExpression(context, node);
             if (expression.isConstant()) {
+                if (expression.isString()) {
+                    int[] s = expression.getStringValues();
+                    byte[] code = new byte[s.length + 3];
+                    code[0] = (byte) 0x9E;
+                    code[1] = (byte) (s.length + 1);
+                    for (int i = 0; i < s.length; i++) {
+                        code[i + 2] = (byte) s[i];
+                    }
+                    return Collections.singletonList(new Bytecode(context, code, "STRING"));
+                }
                 return Collections.singletonList(new Constant(context, expression));
             }
         } catch (Exception e) {
@@ -1341,12 +1359,11 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             return new NumberLiteral(node.getText());
         }
         else if (node.getType() == Token.STRING) {
-            String s = node.getText().substring(1);
-            s = s.substring(0, s.length() - 1);
-            if (s.length() == 1) {
-                return new CharacterLiteral(s);
+            String s = node.getText();
+            if (!s.startsWith("\"")) {
+                throw new RuntimeException("not a constant (" + node.getText() + ")");
             }
-            throw new RuntimeException("string not allowed");
+            return new CharacterLiteral(s.substring(1, s.length() - 1));
         }
 
         String nodeText = node.getText();

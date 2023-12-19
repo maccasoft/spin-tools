@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.maccasoft.propeller.CompilerException;
@@ -97,8 +98,17 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             try {
                 Expression expression = buildConstantExpression(context, node);
                 if (expression.isConstant()) {
-                    source.add(new Constant(context, expression, compiler.isOpenspinCompatible()));
-                    return source;
+                    if (expression.isString()) {
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        int[] s = expression.getStringValues();
+                        for (int i = 0; i < s.length; i++) {
+                            os.write((byte) s[i]);
+                        }
+                        os.write(0x00);
+                        Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
+                        return Collections.singletonList(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
+                    }
+                    return Collections.singletonList(new Constant(context, expression, compiler.isOpenspinCompatible()));
                 }
             } catch (Exception e) {
                 // Do nothing, fall-through
@@ -263,7 +273,18 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                             if (!expression.isConstant()) {
                                 throw new CompilerException("expression is not constant", child.getToken());
                             }
-                            os.write(expression.getNumber().intValue());
+                            if (expression.isString()) {
+                                int[] s = expression.getStringValues();
+                                for (int i = 0; i < s.length; i++) {
+                                    os.write((byte) s[i]);
+                                }
+                            }
+                            else {
+                                if (expression.getNumber().intValue() < -0x80 || expression.getNumber().intValue() > 0xFF) {
+                                    logMessage(new CompilerException(CompilerException.WARNING, "byte value range from -$80 to $FF", child.getTokens()));
+                                }
+                                os.write(expression.getByte());
+                            }
                         } catch (Exception e) {
                             throw new CompilerException("expression is not constant", child.getToken());
                         }
@@ -291,7 +312,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                     os.write(s.substring(2, s.length() - 1).getBytes());
                     os.write(0x00);
                     Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
-                    source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, new ContextLiteral(target.getContext())));
+                    source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
                 }
                 else {
                     s = s.substring(1, s.length() - 1);
@@ -304,7 +325,7 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
                         os.write(s.getBytes());
                         os.write(0x00);
                         Spin1Bytecode target = addStringData(new Bytecode(context, os.toByteArray(), "STRING".toUpperCase()));
-                        source.add(new MemoryOp(context, MemoryOp.Size.Byte, false, MemoryOp.Base.PBase, MemoryOp.Op.Address, new ContextLiteral(target.getContext())));
+                        source.add(new MemoryRef(context, MemoryRef.Size.Byte, false, MemoryRef.Base.PBase, MemoryRef.Op.Address, new ContextLiteral(target.getContext())));
                     }
                 }
             }
@@ -921,12 +942,11 @@ public abstract class Spin1BytecodeCompiler extends Spin1PAsmCompiler {
             return new NumberLiteral(node.getText());
         }
         else if (node.getType() == Token.STRING) {
-            String s = node.getText().substring(1);
-            s = s.substring(0, s.length() - 1);
-            if (s.length() == 1) {
-                return new CharacterLiteral(s);
+            String s = node.getText();
+            if (!s.startsWith("\"")) {
+                throw new RuntimeException("not a constant (" + node.getText() + ")");
             }
-            throw new RuntimeException("string not allowed");
+            return new CharacterLiteral(s.substring(1, s.length() - 1));
         }
 
         String nodeText = node.getText();
