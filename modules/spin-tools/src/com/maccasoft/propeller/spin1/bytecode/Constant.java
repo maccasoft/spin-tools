@@ -52,23 +52,29 @@ public class Constant extends Spin1Bytecode {
             };
         }
 
-        if (openspinCompatibility || (value & 0xFFFFFF00) != 0) {
-            for (int i = 0; i < 128; i++) {
-                int testVal = 2;
-                testVal <<= (i & 0x1F); // mask i, so that we only actually shift 0 to 31
+        if (!openspinCompatibility) {
+            if ((value & 0xFFFFFF00) == 0x00000000) {
+                return new byte[] {
+                    0x37 + 1, (byte) value
+                };
+            }
+        }
 
-                if ((i & 0x20) != 0) {// i in range 32 to 63 or 96 to 127
-                    testVal--;
-                }
-                if ((i & 0x40) != 0) {// i in range 64 to 127
-                    testVal = ~testVal;
-                }
+        for (int i = 0; i < 128; i++) {
+            int testVal = 2;
+            testVal <<= (i & 0x1F); // mask i, so that we only actually shift 0 to 31
 
-                if (testVal == value) {
-                    return new byte[] {
-                        0x37, (byte) i
-                    };
-                }
+            if ((i & 0x20) != 0) { // i in range 32 to 63 or 96 to 127
+                testVal--;
+            }
+            if ((i & 0x40) != 0) { // i in range 64 to 127
+                testVal = ~testVal;
+            }
+
+            if (testVal == value) {
+                return new byte[] {
+                    0x37, (byte) i
+                };
             }
         }
 

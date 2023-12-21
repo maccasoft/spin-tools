@@ -37,7 +37,7 @@ public class CharacterLiteral extends Literal {
 
     @Override
     public Number getNumber() {
-        return Long.valueOf(str.charAt(str.length() - 1));
+        return Long.valueOf(str.charAt(0));
     }
 
     @Override
