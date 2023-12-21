@@ -22,6 +22,19 @@
             </dependencies>
         </profile>
         <profile>
+            <id>linux-aarch64</id>
+            <activation>
+                <os><name>linux</name><arch>aarch64</arch></os>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.eclipse.platform</groupId>
+                    <artifactId>org.eclipse.swt.gtk.linux.aarch64</artifactId>
+                    <version>3.124.100</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>windows</id>
             <activation>
                 <os><family>windows</family><arch>amd64</arch></os>
@@ -37,25 +50,12 @@
         <profile>
             <id>macosx</id>
             <activation>
-                <os><family>mac</family><arch>amd64</arch></os>
+                <os><family>mac</family><arch>x86_64</arch></os>
             </activation>
             <dependencies>
                 <dependency>
                     <groupId>org.eclipse.platform</groupId>
                     <artifactId>org.eclipse.swt.cocoa.macosx.x86_64</artifactId>
-                    <version>3.124.100</version>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
-            <id>raspberry</id>
-            <activation>
-                <os><name>linux</name><arch>aarch64</arch></os>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>org.eclipse.platform</groupId>
-                    <artifactId>org.eclipse.swt.gtk.linux.aarch64</artifactId>
                     <version>3.124.100</version>
                 </dependency>
             </dependencies>

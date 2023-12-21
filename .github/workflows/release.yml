@@ -5,31 +5,13 @@ on:
     tags: [ '*' ]
 
 jobs:
-  linux:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-java@v3
-      with:
-        distribution: 'oracle'
-        java-version: '17'
-        cache: 'maven'
-
-    - name: Maven build
-      run: |
-        mvn --batch-mode -DskipTests package
-
-    - name: Upload
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          target/spin-tools-linux*
-
-  windows:
-
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
@@ -39,35 +21,11 @@ jobs:
         java-version: '17'
         cache: 'maven'
 
-    - name: Maven build
-      run: |
+    - run: |
         mvn --batch-mode -DskipTests package
 
-    - name: Upload
-      uses: softprops/action-gh-release@v1
+    - uses: softprops/action-gh-release@v1
       with:
         files: |
-          target/spin-tools-windows*
-
-  macos:
-
-    runs-on: macos-latest
-
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-java@v3
-      with:
-        distribution: 'oracle'
-        java-version: '17'
-        cache: 'maven'
-
-    - name: Maven build
-      run: |
-        mvn --batch-mode -DskipTests package
-
-    - name: Upload
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          target/spin-tools-macos*
+          target/spin-tools-ide*
 

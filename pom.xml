@@ -48,6 +48,28 @@
             </build>
         </profile>
         <profile>
+            <id>linux-aarch64</id>
+            <activation>
+                <os><name>linux</name><arch>aarch64</arch></os>
+            </activation>
+            <properties>
+                <project.arch>aarch64</project.arch>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>build/linux/descriptor.xml</descriptor>
+                                <descriptor>build/linux/descriptor_jre.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>windows</id>
             <activation>
                 <os><family>windows</family><arch>amd64</arch></os>
@@ -113,7 +135,7 @@
         <profile>
             <id>macosx</id>
             <activation>
-                <os><family>mac</family><arch>amd64</arch></os>
+                <os><family>mac</family><arch>x86_64</arch></os>
             </activation>
             <properties>
                 <project.arch>x86_64</project.arch>
@@ -198,28 +220,6 @@
                             <descriptors>
                                 <descriptor>build/macosx/descriptor.xml</descriptor>
                                 <descriptor>build/macosx/descriptor_jre.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>raspberry</id>
-            <activation>
-                <os><name>linux</name><arch>aarch64</arch></os>
-            </activation>
-            <properties>
-                <project.arch>aarch64</project.arch>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>build/linux/descriptor.xml</descriptor>
-                                <descriptor>build/linux/descriptor_jre.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </plugin>
