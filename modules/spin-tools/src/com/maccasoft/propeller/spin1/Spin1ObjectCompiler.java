@@ -539,7 +539,8 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                 address = (address + 1) & ~1;
             }
             else if (line.getMnemonic() != null && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Byte)
-                && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Bytefit)) {
+                && !(line.getInstructionFactory() instanceof com.maccasoft.propeller.spin1.instructions.Bytefit)
+                && !"FILE".equalsIgnoreCase(line.getMnemonic())) {
                 hubAddress = (hubAddress + 3) & ~3;
                 address = (address + 3) & ~3;
             }
