@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-23 Marco Maccaferri and others.
+ * Copyright (c) 2021-24 Marco Maccaferri and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -109,7 +109,7 @@ public class AboutDialog extends Dialog {
         final String fugueLink = "https://p.yusukekamiyamane.com/";
         final String cc = "Creative Commons\r\nAttribution 3.0";
         final String ccLink = "https://creativecommons.org/licenses/by/3.0/";
-        final String message = title + "\r\n" + "Copyright (c) 2021-23 Marco Maccaferri and others. All rights reserved.\r\n"
+        final String message = title + "\r\n" + "Copyright (c) 2021-24 Marco Maccaferri and others. All rights reserved.\r\n"
             + "\r\n"
             + "Spin2 Interpreter: 2023.09.25\r\n"
             + "\r\n"
