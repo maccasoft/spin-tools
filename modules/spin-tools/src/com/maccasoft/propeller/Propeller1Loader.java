@@ -302,14 +302,6 @@ public class Propeller1Loader {
 
     protected void bufferUpload(int type, byte[] binaryImage, String text) throws SerialPortException, IOException {
         int n;
-
-        binaryImage[5] = 0;
-        byte sum = 0;
-        for (int i = 0; i < binaryImage.length; i++) {
-            sum += binaryImage[i];
-        }
-        binaryImage[5] = (byte) (0x14 - sum);
-
         int longcount = binaryImage.length / 4;
 
         // send type

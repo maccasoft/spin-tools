@@ -13,7 +13,6 @@ package com.maccasoft.propeller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -2606,7 +2605,7 @@ public class SpinTools {
                 if (object instanceof Spin2Object) {
                     ((Spin2Object) object).setClockSetter(preferences.getSpin2ClockSetter());
                 }
-                object.generateBinary(os);
+                os.write(object.getBinary());
                 os.close();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -2791,9 +2790,6 @@ public class SpinTools {
                     monitor.beginTask("Upload", IProgressMonitor.UNKNOWN);
 
                     try {
-                        ByteArrayOutputStream os = new ByteArrayOutputStream();
-                        obj.generateBinary(os);
-
                         Propeller1Loader loader = new Propeller1Loader(serialPort, serialPortShared) {
 
                             @Override
@@ -2836,7 +2832,7 @@ public class SpinTools {
                             }
                         });
 
-                        byte[] image = os.toByteArray();
+                        byte[] image = obj.getBinary();
                         loader.upload(image, writeToFlash ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY);
 
                     } catch (Exception e) {
@@ -2869,9 +2865,6 @@ public class SpinTools {
                     monitor.beginTask("Upload", IProgressMonitor.UNKNOWN);
 
                     try {
-                        ByteArrayOutputStream os = new ByteArrayOutputStream();
-                        obj.generateBinary(os);
-
                         Propeller2Loader loader = new Propeller2Loader(serialPort, serialPortShared) {
 
                             @Override
@@ -2908,7 +2901,8 @@ public class SpinTools {
                             }
                         });
 
-                        loader.upload(os.toByteArray(), writeToFlash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM);
+                        byte[] image = obj.getBinary();
+                        loader.upload(image, writeToFlash ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM);
 
                     } catch (Exception e) {
                         e.printStackTrace();

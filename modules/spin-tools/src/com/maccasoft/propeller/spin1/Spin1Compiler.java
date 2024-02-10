@@ -96,7 +96,7 @@ public class Spin1Compiler extends Compiler {
             object.generateListing(listing);
         }
         if (binary != null) {
-            object.generateBinary(binary);
+            binary.write(object.getBinary());
         }
     }
 

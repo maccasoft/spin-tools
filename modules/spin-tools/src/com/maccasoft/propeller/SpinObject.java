@@ -466,15 +466,7 @@ public abstract class SpinObject {
 
     public byte[] getBinary() throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        for (DataObject obj : data) {
-            if (obj instanceof ObjectDataObject) {
-                byte[] bytes = ((ObjectDataObject) obj).getObject().getBinary();
-                os.write(bytes);
-            }
-            else if (obj.bytes != null) {
-                os.write(obj.bytes);
-            }
-        }
+        generateBinary(os);
         return os.toByteArray();
     }
 
