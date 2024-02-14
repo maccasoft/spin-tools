@@ -956,6 +956,52 @@ class Spin2PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testCallPaPb() throws Exception {
+        String text = ""
+            + "PUB main()\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "                org $000\n"
+            + "\n"
+            + "a               long    0\n"
+            + "\n"
+            + "DAT\n"
+            + "\n"
+            + "                orgh\n"
+            + "\n"
+            + ".loop           callpa a, #.label\n"
+            + "                nop\n"
+            + "                callpb a, #.label\n"
+            + "                nop\n"
+            + "                jmp    #.loop\n"
+            + "\n"
+            + ".label          nop\n"
+            + "                ret\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000       28 00 00 80    Method main @ $00028 (0 parameters, 0 returns)\n"
+            + "00004 00004       2A 00 00 00    End\n"
+            + "00008 00008   000                                    org     $000\n"
+            + "00008 00008   000 00 00 00 00    a                   long    0\n"
+            + "0000C 0000C 00400                                    orgh\n"
+            + "0000C 0000C 00400 04 00 44 FB    .loop               callpa  a, #.label\n"
+            + "00010 00010 00404 00 00 00 00                        nop\n"
+            + "00014 00014 00408 02 00 54 FB                        callpb  a, #.label\n"
+            + "00018 00018 0040C 00 00 00 00                        nop\n"
+            + "0001C 0001C 00410 EC FF 9F FD                        jmp     #.loop\n"
+            + "00020 00020 00414 00 00 00 00    .label              nop\n"
+            + "00024 00024 00418 2D 00 64 FD                        ret\n"
+            + "' PUB main()\n"
+            + "00028 00028       00             (stack size)\n"
+            + "00029 00029       04             RETURN\n"
+            + "0002A 0002A       00 00          Padding\n"
+            + "", compile(text));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

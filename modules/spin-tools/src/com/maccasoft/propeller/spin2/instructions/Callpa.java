@@ -81,7 +81,7 @@ public class Callpa extends Spin2PAsmInstructionFactory {
                 if ((ours < 0x400 && addr >= 0x400) || (ours >= 0x400 && addr < 0x400)) {
                     throw new CompilerException("relative addresses cann't cross between cog and hub domains", src.getExpression().getData());
                 }
-                int offset = addr - ours - 1;
+                int offset = (addr < 0x400 ? (addr - ours) : (addr - ours) / 4) - 1;
                 if (!src.isLongLiteral() && (offset < -256 || offset > 255)) {
                     throw new CompilerException("relative offset out of range", src.getExpression().getData());
                 }
