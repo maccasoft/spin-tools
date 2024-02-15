@@ -322,7 +322,7 @@
         </profile>
     </profiles>
     <build>
-        <finalName>spin-tools-ide</finalName>
+        <finalName>spin-tools-${project.version}</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
