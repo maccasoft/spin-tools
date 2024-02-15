@@ -1288,9 +1288,6 @@ public class SourceEditor {
         styledText.setRedraw(false);
         styledText.removeCaretListener(caretListener);
         try {
-            text = text.replaceAll("[ \\t]+(\r\n|\n|\r)", "$1");
-            text = replaceTabs(text, styledText.getTabs());
-
             ignoreModify = true;
             currentLine = 0;
             styledText.setText(text);
@@ -1305,29 +1302,6 @@ public class SourceEditor {
             styledText.setRedraw(true);
             styledText.addCaretListener(caretListener);
         }
-    }
-
-    String replaceTabs(String text, int tabs) {
-        final StringBuilder spaces = new StringBuilder(tabs);
-        for (int i = 0; i < tabs; i++) {
-            spaces.append(' ');
-        }
-
-        int i = 0;
-        while ((i = text.indexOf('\t', i)) != -1) {
-            int s = i;
-            while (s > 0) {
-                s--;
-                if (text.charAt(s) == '\r' || text.charAt(s) == '\n') {
-                    s++;
-                    break;
-                }
-            }
-            int n = ((i - s) % tabs);
-            text = text.substring(0, i) + spaces.substring(0, tabs - n) + text.substring(i + 1);
-        }
-
-        return text;
     }
 
     public String getText() {
@@ -1611,17 +1585,38 @@ public class SourceEditor {
     }
 
     void doTab() {
-        int caretOffset = styledText.getCaretOffset();
-        int lineNumber = styledText.getLineAtOffset(caretOffset);
-        int lineStart = styledText.getOffsetAtLine(lineNumber);
-        int currentColumn = caretOffset - lineStart;
+        Point editorSelection = styledText.getSelection();
+        if (editorSelection.x != editorSelection.y) {
+            int lineNumber = styledText.getLineAtOffset(editorSelection.x);
+            int lineStart = styledText.getOffsetAtLine(lineNumber);
+            String text = styledText.getText(editorSelection.x, editorSelection.y - 1);
 
-        boolean tabstopMatch = false;
-        int nextTabColumn = currentColumn + 1;
+            int[] tabStops = null;
+            Node node = tokenMarker.getSectionAtLine(lineNumber);
+            if (node != null) {
+                tabStops = Preferences.getInstance().getTabStops(node.getClass());
+            }
 
-        Node node = tokenMarker.getSectionAtLine(lineNumber);
-        if (node != null) {
-            int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
+            int currentColumn = Integer.MAX_VALUE;
+
+            int index = 0;
+            do {
+                int count = index == 0 ? editorSelection.x - styledText.getOffsetAtLine(lineNumber) : 0;
+                while (index < text.length() && text.charAt(index) == ' ') {
+                    count++;
+                    index++;
+                }
+                currentColumn = Math.min(currentColumn, count);
+
+                index = text.indexOf(styledText.getLineDelimiter(), index);
+                if (index != -1) {
+                    index += styledText.getLineDelimiter().length();
+                }
+            } while (index != -1 && index < text.length());
+
+            boolean tabstopMatch = false;
+            int nextTabColumn = currentColumn + 1;
+
             if (tabStops != null) {
                 for (int i = 0; i < tabStops.length; i++) {
                     if (tabStops[i] >= nextTabColumn) {
@@ -1631,70 +1626,146 @@ public class SourceEditor {
                     }
                 }
             }
-        }
 
-        if (!tabstopMatch) {
-            int defaultTabStop = 4;
-            while ((nextTabColumn % defaultTabStop) != 0) {
-                nextTabColumn++;
-            }
-        }
-
-        String text = styledText.getLine(lineNumber);
-
-        if (styledText.getCaret() != insertCaret) {
-            while (currentColumn < nextTabColumn && currentColumn < text.length() && text.charAt(currentColumn) == ' ') {
-                currentColumn++;
-            }
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        int start = caretOffset - lineStart;
-        while (currentColumn < nextTabColumn) {
-            sb.append(" ");
-            if (styledText.getCaret() == alignCaret && start < text.length()) {
-                int i = text.indexOf("  ", start);
-                if (i != -1) {
-                    styledText.setSelection(lineStart + i, lineStart + i + 1);
-                    styledText.insert("");
-                    text = text.substring(0, i) + text.substring(i + 1);
+            if (!tabstopMatch) {
+                int defaultTabStop = 4;
+                while ((nextTabColumn % defaultTabStop) != 0) {
+                    nextTabColumn++;
                 }
             }
-            currentColumn++;
-        }
 
-        styledText.setRedraw(false);
-        try {
-            if (sb.length() != 0) {
-                styledText.setSelection(caretOffset, caretOffset);
-                styledText.insert(sb.toString());
+            String spaces = (nextTabColumn - currentColumn) > 0 ? " ".repeat(nextTabColumn - currentColumn) : "";
+            Point textSelection = new Point(editorSelection.x, editorSelection.y);
+
+            index = 0;
+            do {
+                while (index < text.length() && text.charAt(index) == ' ') {
+                    index++;
+                }
+                text = text.substring(0, index) + spaces + text.substring(index);
+
+                if (index == 0 && editorSelection.x != lineStart) {
+                    textSelection.x += spaces.length();
+                }
+                textSelection.y += spaces.length();
+
+                index = text.indexOf(styledText.getLineDelimiter(), index);
+                if (index != -1) {
+                    index += styledText.getLineDelimiter().length();
+                }
+
+            } while (index != -1 && index < text.length());
+
+            styledText.setRedraw(false);
+            try {
+                styledText.replaceTextRange(editorSelection.x, editorSelection.y - editorSelection.x, text);
+                styledText.setSelection(textSelection.x, textSelection.y);
+                styledText.showSelection();
+            } finally {
+                styledText.setRedraw(true);
             }
-            styledText.setCaretOffset(lineStart + nextTabColumn);
-            styledText.showSelection();
-        } finally {
-            styledText.setRedraw(true);
+        }
+        else {
+            int caretOffset = styledText.getCaretOffset();
+            int lineNumber = styledText.getLineAtOffset(caretOffset);
+            int lineStart = styledText.getOffsetAtLine(lineNumber);
+            int currentColumn = caretOffset - lineStart;
+
+            boolean tabstopMatch = false;
+            int nextTabColumn = currentColumn + 1;
+
+            Node node = tokenMarker.getSectionAtLine(lineNumber);
+            if (node != null) {
+                int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
+                if (tabStops != null) {
+                    for (int i = 0; i < tabStops.length; i++) {
+                        if (tabStops[i] >= nextTabColumn) {
+                            nextTabColumn = tabStops[i];
+                            tabstopMatch = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!tabstopMatch) {
+                int defaultTabStop = 4;
+                while ((nextTabColumn % defaultTabStop) != 0) {
+                    nextTabColumn++;
+                }
+            }
+
+            String text = styledText.getLine(lineNumber);
+
+            if (styledText.getCaret() != insertCaret) {
+                while (currentColumn < nextTabColumn && currentColumn < text.length() && text.charAt(currentColumn) == ' ') {
+                    currentColumn++;
+                }
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            int start = caretOffset - lineStart;
+            while (currentColumn < nextTabColumn) {
+                sb.append(" ");
+                if (styledText.getCaret() == alignCaret && start < text.length()) {
+                    int i = text.indexOf("  ", start);
+                    if (i != -1) {
+                        styledText.setSelection(lineStart + i, lineStart + i + 1);
+                        styledText.insert("");
+                        text = text.substring(0, i) + text.substring(i + 1);
+                    }
+                }
+                currentColumn++;
+            }
+
+            styledText.setRedraw(false);
+            try {
+                if (sb.length() != 0) {
+                    styledText.setSelection(caretOffset, caretOffset);
+                    styledText.insert(sb.toString());
+                }
+                styledText.setCaretOffset(lineStart + nextTabColumn);
+                styledText.showSelection();
+            } finally {
+                styledText.setRedraw(true);
+            }
         }
     }
 
     void doBacktab() {
-        int caretOffset = styledText.getCaretOffset();
-        int lineNumber = styledText.getLineAtOffset(caretOffset);
-        int lineStart = styledText.getOffsetAtLine(lineNumber);
-        String lineText = styledText.getLine(lineNumber);
+        Point editorSelection = styledText.getSelection();
+        if (editorSelection.x != editorSelection.y) {
+            int lineNumber = styledText.getLineAtOffset(editorSelection.x);
+            int lineStart = styledText.getOffsetAtLine(lineNumber);
+            String text = styledText.getText(lineStart, editorSelection.y - 1);
 
-        int currentColumn = caretOffset - lineStart;
-        if (currentColumn == 0) {
-            return;
-        }
-        int start = currentColumn;
+            int[] tabStops = null;
+            Node node = tokenMarker.getSectionAtLine(lineNumber);
+            if (node != null) {
+                tabStops = Preferences.getInstance().getTabStops(node.getClass());
+            }
 
-        boolean tabstopMatch = false;
-        int previousTabColumn = currentColumn - 1;
+            int currentColumn = Integer.MAX_VALUE;
 
-        Node node = tokenMarker.getSectionAtLine(lineNumber);
-        if (node != null) {
-            int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
+            int index = 0;
+            do {
+                int count = index == 0 ? editorSelection.x - styledText.getOffsetAtLine(lineNumber) : 0;
+                while (index < text.length() && text.charAt(index) == ' ') {
+                    count++;
+                    index++;
+                }
+                currentColumn = Math.min(currentColumn, count);
+
+                index = text.indexOf(styledText.getLineDelimiter(), index);
+                if (index != -1) {
+                    index += styledText.getLineDelimiter().length();
+                }
+            } while (index != -1 && index < text.length());
+
+            boolean tabstopMatch = false;
+            int previousTabColumn = currentColumn - 1;
+
             if (tabStops != null) {
                 for (int i = tabStops.length - 1; i >= 0; i--) {
                     if (previousTabColumn >= tabStops[i]) {
@@ -1708,56 +1779,131 @@ public class SourceEditor {
                     tabstopMatch = true;
                 }
             }
-        }
 
-        if (!tabstopMatch) {
-            int defaultTabStop = 4;
-            previousTabColumn = currentColumn - 1;
-            while ((previousTabColumn % defaultTabStop) != 0) {
-                previousTabColumn--;
+            if (!tabstopMatch) {
+                int defaultTabStop = 4;
+                previousTabColumn = currentColumn - 1;
+                while ((previousTabColumn % defaultTabStop) != 0) {
+                    previousTabColumn--;
+                }
+            }
+
+            int spaces = currentColumn - previousTabColumn;
+            if (spaces < 0) {
+                spaces = 0;
+            }
+            Point textSelection = new Point(editorSelection.x, editorSelection.y);
+
+            index = 0;
+            do {
+                while (index < text.length() && text.charAt(index) == ' ') {
+                    index++;
+                }
+                text = text.substring(0, index - spaces) + text.substring(index);
+
+                if ((lineStart + index) == editorSelection.x && editorSelection.x != lineStart) {
+                    textSelection.x -= spaces;
+                }
+                textSelection.y -= spaces;
+
+                index = text.indexOf(styledText.getLineDelimiter(), index - spaces);
+                if (index != -1) {
+                    index += styledText.getLineDelimiter().length();
+                }
+
+            } while (index != -1 && index < text.length());
+
+            styledText.setRedraw(false);
+            try {
+                styledText.replaceTextRange(lineStart, editorSelection.y - lineStart, text);
+                styledText.setSelection(textSelection.x, textSelection.y);
+                styledText.showSelection();
+            } finally {
+                styledText.setRedraw(true);
             }
         }
+        else {
+            int caretOffset = styledText.getCaretOffset();
+            int lineNumber = styledText.getLineAtOffset(caretOffset);
+            int lineStart = styledText.getOffsetAtLine(lineNumber);
+            String lineText = styledText.getLine(lineNumber);
 
-        if (styledText.getCaret() != insertCaret) {
-            String line = styledText.getLine(lineNumber);
-            while (currentColumn > 0 && currentColumn > previousTabColumn && line.charAt(currentColumn) == ' ') {
-                currentColumn--;
-                caretOffset--;
+            int currentColumn = caretOffset - lineStart;
+            if (currentColumn == 0) {
+                return;
             }
-        }
+            int start = currentColumn;
 
-        while (currentColumn > 0 && currentColumn > previousTabColumn) {
-            if (!Character.isWhitespace(lineText.charAt(currentColumn - 1))) {
-                break;
-            }
-            currentColumn--;
-        }
+            boolean tabstopMatch = false;
+            int previousTabColumn = currentColumn - 1;
 
-        String text = styledText.getLine(lineNumber);
-
-        styledText.setRedraw(false);
-        try {
-            if ((lineStart + currentColumn) < caretOffset) {
-                if (styledText.getCaret() == alignCaret) {
-                    int i = text.indexOf("  ", start);
-                    if (i == -1) {
-                        i = text.indexOf(" '", start);
-                        if (i == -1) {
-                            i = text.indexOf(" {", start);
+            Node node = tokenMarker.getSectionAtLine(lineNumber);
+            if (node != null) {
+                int[] tabStops = Preferences.getInstance().getTabStops(node.getClass());
+                if (tabStops != null) {
+                    for (int i = tabStops.length - 1; i >= 0; i--) {
+                        if (previousTabColumn >= tabStops[i]) {
+                            previousTabColumn = tabStops[i];
+                            tabstopMatch = true;
+                            break;
                         }
                     }
-                    if (i != -1) {
-                        styledText.setSelection(lineStart + i, lineStart + i);
-                        styledText.insert(" ".repeat(caretOffset - (lineStart + currentColumn)));
+                    if (!tabstopMatch && tabStops.length > 0) {
+                        previousTabColumn = 0;
+                        tabstopMatch = true;
                     }
                 }
-                styledText.setSelection(lineStart + currentColumn, caretOffset);
-                styledText.insert("");
             }
-            styledText.setCaretOffset(lineStart + currentColumn);
-            styledText.showSelection();
-        } finally {
-            styledText.setRedraw(true);
+
+            if (!tabstopMatch) {
+                int defaultTabStop = 4;
+                previousTabColumn = currentColumn - 1;
+                while ((previousTabColumn % defaultTabStop) != 0) {
+                    previousTabColumn--;
+                }
+            }
+
+            if (styledText.getCaret() != insertCaret) {
+                String line = styledText.getLine(lineNumber);
+                while (currentColumn > 0 && currentColumn > previousTabColumn && line.charAt(currentColumn) == ' ') {
+                    currentColumn--;
+                    caretOffset--;
+                }
+            }
+
+            while (currentColumn > 0 && currentColumn > previousTabColumn) {
+                if (!Character.isWhitespace(lineText.charAt(currentColumn - 1))) {
+                    break;
+                }
+                currentColumn--;
+            }
+
+            String text = styledText.getLine(lineNumber);
+
+            styledText.setRedraw(false);
+            try {
+                if ((lineStart + currentColumn) < caretOffset) {
+                    if (styledText.getCaret() == alignCaret) {
+                        int i = text.indexOf("  ", start);
+                        if (i == -1) {
+                            i = text.indexOf(" '", start);
+                            if (i == -1) {
+                                i = text.indexOf(" {", start);
+                            }
+                        }
+                        if (i != -1) {
+                            styledText.setSelection(lineStart + i, lineStart + i);
+                            styledText.insert(" ".repeat(caretOffset - (lineStart + currentColumn)));
+                        }
+                    }
+                    styledText.setSelection(lineStart + currentColumn, caretOffset);
+                    styledText.insert("");
+                }
+                styledText.setCaretOffset(lineStart + currentColumn);
+                styledText.showSelection();
+            } finally {
+                styledText.setRedraw(true);
+            }
         }
     }
 
