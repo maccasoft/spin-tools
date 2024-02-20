@@ -1,0 +1,411 @@
+'' =================================================================================================
+''
+''   File....... jm_p2_flash.spin2
+''   Purpose.... Basic interface for SPI flash memory connected to P2
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020-2024 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 15 NOV 2023
+''
+'' =================================================================================================
+
+{
+   Use of this object should be done with caution and understanding of how flash memory operates.
+   Erasing anything in the first 512K of the flash could "brick" your application.
+
+   Documentation:
+   -- https://www.winbond.com/resource-files/w25q32jv%20revg%2003272018%20plus.pdf
+}
+
+
+con { fixed io pins }
+
+  PGM_RX   = 63  { I }                                          ' programming / debug
+  PGM_TX   = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' flash storage
+  SF_SCLK  = 60  { O }
+  SF_MOSI  = 59  { O }
+  SF_MISO  = 58  { I }
+
+  LED2     = 57  { O }                                          ' Eval and Edge LEDs
+  LED1     = 56  { O }
+
+
+pub null()
+
+'' This is not an application
+
+
+pub start(khz) | m, x
+
+'' Configure SPI for coms with flash
+'' -- khz is clock frequency in kilohertz
+
+  pinh(SF_CS)                                                   ' deselect flash
+
+  m := P_SYNC_RX                                                ' spi rx mode
+  m |= ((SF_SCLK-SF_MISO) & %111) << 24                         ' add SCLK offset (B pin)
+  x := %0_00000 | (8-1)                                         ' sample ahead of b pin rise, 8 bits
+  pinstart(SF_MISO, m, x, 0)                                    ' configure smart pin
+  pinf(SF_MISO)                                                 ' reset/disable until used
+
+  m := P_SYNC_TX | P_OE                                         ' spi tx mode
+  m |= ((SF_SCLK-SF_MOSI) & %111) << 24                         ' add SCLK offset (B pin)
+  x := %1_00000 | (8-1)                                         ' start/stop mode, 8 bits
+  pinstart(SF_MOSI, m, x, 0)                                    ' activate smart pin
+  pinf(SF_MOSI)                                                 ' reset/disable until used
+
+  m := P_PULSE | P_OE | P_INVERT_OUTPUT                         ' spi clock (mode 3)
+  x.word[0] := 2 #> (clkfreq / (khz * 1_000)) <# $FFFF          ' ticks in period
+  x.word[1] := x.word[0] >> 1                                   ' ticks in low cycle (50%)
+  pinstart(SF_SCLK, m, x, 0)
+
+
+pub unique_id() : result1, result0
+
+'' Returns 64-bit uniquie ID of device
+
+  pinl(SF_CS)                                                   ' select
+  shiftout($4B,  8)                                             ' command
+  shiftout($00, 32)                                             ' 32 dummy bits
+  result1 := shiftin(32)                                        ' 64-bit id
+  result0 := shiftin(32)
+  pinh(SF_CS)                                                   ' deselect
+
+
+pub device_type() : result
+
+'' Returns manufacturer and device IDs
+'' -- manufacturer ID in result.byte[1]
+'' -- device ID in result.byte[0]
+
+  pinl(SF_CS)
+  shiftout($90_00_00_00, 32)                                    ' command + 24 dummy bits
+  result := shiftin(16)                                         ' man/device ids
+  pinh(SF_CS)
+
+
+pub jedec_info() : result
+
+'' Returns JEDEC ID
+'' -- manufacturer id in result.byte[2]
+'' -- device id in result.byte[1]
+'' -- device capacity in result.byte[0]
+
+  pinl(SF_CS)
+  shiftout($9F, 8)
+  result := shiftin(24)
+  pinh(SF_CS)
+
+
+pub rd_byte(addr) : b
+
+'' Reads byte from flash
+
+  rd_block(addr, 1, @b)
+
+
+pub rd_word(addr) : w
+
+'' Reads word from flash
+
+  rd_block(addr, 2, @w)
+
+
+pub rd_long(addr) : l
+
+'' Reads long from flash
+
+  rd_block(addr, 4, @l)
+
+
+pub rd_page(addr, p_dest) : result
+
+'' Reads page from flash
+'' -- addr is beginning address of page
+'' -- p_dest is pointer to 256-byte buffer
+
+  addr &= $FFFF_FF00                                            ' force to page boundary
+
+  rd_block(addr, 256, p_dest)
+
+  return addr
+
+
+pub rd_block(addr, n, p_dest) | x
+
+'' Read n bytes from address in flash
+'' -- output is to buffer at p_dest
+
+  org
+                        setbyte   addr, #RD_DATA, #3            ' add command to address
+                        rev       addr                          ' reverse for S/P LSBFIRST output
+
+                        drvl      #SF_CS                        ' select flash
+                        nop
+
+.set_addr               wxpin     #%1_11111, #SF_MOSI           ' 32 bit output
+                        wypin     addr, #SF_MOSI                ' set address for read
+                        drvl      #SF_MOSI                      ' arm SPI TX
+                        wypin     #32, #SF_SCLK                 ' clock 32 bits out
+                        nop                                     ' give clock time to start
+                        testp     #SF_SCLK              wc      ' wait for clocking to finish
+        if_nc           jmp       #$-1
+                        fltl      #SF_MOSI                      ' disable SPI TX
+
+.get_byte               fltl      #SF_MISO                      ' reset/clear SDI
+                        wxpin     #(8-1), #SF_MISO              ' read 8 bits
+                        drvl      #SF_MISO                      ' arm SPI RX
+                        wypin     #8, #SF_SCLK                  ' clock 8 bits in
+                        nop                                     ' give clock time to start
+                        testp     #SF_SCLK              wc      ' wait for clocking to finish
+        if_nc           jmp       #$-1
+                        rdpin     x, #SF_MISO                   ' get the value
+                        rev       x                             ' restore MSBFIRST order
+                        zerox     x, #7                         ' clean up (redundant?)
+                        wrbyte    x, p_dest                     ' write to hub
+                        add       p_dest, #1                    ' bump hub pointer
+                        djnz      n, #.get_byte                 ' continue until done
+
+    _ret_               drvh      #SF_CS                        ' done, deselect
+  end
+
+
+pub enable_write(state)
+
+'' Enable/disable writing to flash
+
+  state := (state <> 0) ? WR_ENABLE : WR_DISABLE
+
+  pinl(SF_CS)
+  shiftout(state, 8)
+  pinh(SF_CS)
+
+
+pub erase(addr, cmd, wait) : result
+
+  case cmd
+    SECTOR_ERASE : addr &= $FFFF_F000 {4k}                      ' force to boundary
+    BLK_32_ERASE : addr &= $FFFF_8000
+    BLK_64_ERASE : addr &= $FFFF_0000
+    other        : return -1                                    ' bad command
+
+  enable_write(true)                                            ' allow writes
+
+  addr.byte[3] := cmd                                           ' set command
+
+  pinl(SF_CS)                                                   ' start erasure
+  shiftout(addr, 32)
+  pinh(SF_CS)
+
+  if (wait)                                                     ' wait here until done?
+    repeat while (busy())
+
+  return addr
+
+
+pub busy() : result
+
+'' Returns state of busy flag
+
+  pinl(SF_CS)
+  shiftout(RD_STATUS1, 8)
+  result := shiftin(8)
+  pinh(SF_CS)
+
+  return (result & SR1_BUSY) ? true : false
+
+
+pub wr_byte(addr, b)
+
+'' Writes byte to flash
+
+  wr_block(addr, 1, @b)
+
+
+pub wr_word(addr, w)
+
+'' Writes word to flash
+
+  wr_block(addr, 2, @w)
+
+
+pub wr_long(addr, l)
+
+'' Writes long to flash
+
+  wr_block(addr, 4, @l)
+
+
+pub wr_page(addr, p_src) : result
+
+'' Writes page to flash
+'' -- addr is beginning address of page
+'' -- p_src is pointer to 256-byte buffer
+
+  addr &= $FFFFFF00                                             ' force to page boundary
+
+  wr_block(addr, 256, p_src)
+
+  return addr
+
+
+pub wr_block(addr, n, p_src) | b
+
+'' Write n bytes to address in flash
+'' -- input is buffer at p_src
+'' -- cells must be erased ($FF) before writing
+
+  enable_write(true)
+
+  org
+                        setbyte   addr, #WR_DATA, #3                    ' add command to address
+                        rev       addr                                  ' reverse for S/P LSBFIRST output
+
+                        drvl      #SF_CS                                ' select flash
+                        nop
+
+.set_addr               wxpin     #%1_11111, #SF_MOSI                   ' 32 bit output
+                        wypin     addr, #SF_MOSI                        ' set address for write
+                        drvl      #SF_MOSI                              ' arm SPI TX
+                        wypin     #32, #SF_SCLK                         ' clock 32 bits out
+                        nop                                             ' give clock time to start
+                        testp     #SF_SCLK                      wc      ' wait for clocking to finish
+        if_nc           jmp       #$-1
+                        fltl      #SF_MOSI                              ' disable SPI TX
+
+.set_byte               rdbyte    b, p_src                              ' read byte from hub
+                        ror       b, #8                                 ' move msb to bit 31
+                        rev       b                                     ' reverse for S/P LSBFIRST output
+                        wxpin     #%1_00111, #SF_MOSI                   ' 8 bit output
+                        wypin     b, #SF_MOSI                           ' write byte b
+                        drvl      #SF_MOSI                              ' arm SPI TX
+                        wypin     #8, #SF_SCLK                          ' clock 8 bits out
+                        nop                                             ' give clock time to start
+                        testp     #SF_SCLK                      wc      ' wait for clocking to finish
+        if_nc           jmp       #$-1
+                        fltl      #SF_MOSI                              ' disable SPI TX
+                        add       p_src, #1                             ' bump hub pointer
+                        djnz      n, #.set_byte
+
+        _ret_           drvh      #SF_CS                                ' done, deselect
+  end
+
+
+pri shiftout(value, bits) | x
+
+'' Shift out bits from value
+
+  org
+                        ror       value, bits                   ' msb to bit32
+                        rev       value                         ' reverse for S/P LSBFIRST output
+
+                        mov       x, bits                       ' set # of output bits
+                        sub       x, #1
+                        or        x, #%1_00000
+                        wxpin     x, #SF_MOSI
+                        wypin     value, #SF_MOSI               ' set output value
+                        drvl      #SF_MOSI                      ' arm SPI TX
+                        wypin     bits, #SF_SCLK                ' clock bits out
+                        nop
+                        testp     #SF_SCLK              wc      ' wait for clocking to finish
+        if_nc           jmp       #$-1
+                        fltl      #SF_MOSI                      ' disable SPI TX
+  end
+
+
+pri shiftin(bits) : value | x
+
+'' Shift in bits to value
+
+  org
+                        fltl      #SF_MISO                      ' reset/clear SDI
+                        mov       x, bits                       ' set # of input bits
+                        sub       x, #1
+                        wxpin     x, #SF_MISO
+                        drvl      #SF_MISO
+
+                        wypin     bits, #SF_SCLK                ' clock bits in
+                        nop
+                        testp     #SF_SCLK              wc      ' wait for clocking to finish
+        if_nc           jmp       #$-1
+
+                        rdpin     value, #SF_MISO               ' get the value
+                        rev       value                         ' restore MSBFIRST order
+                        cmp       bits, #32             wcz     ' 32 bits?
+        if_b            sub       bits, #1                      '  no, clear other bits
+        if_b            zerox     value, bits
+  end
+
+
+
+con { flash interface }
+
+  ' status register
+
+  SR3_HOLD     = %10000000
+  SR3_DRV1     = %01000000
+  SR3_DRV0     = %00100000
+  SR3_R20      = %00010000                                      ' reserved
+  SR3_R19      = %00001000                                      ' reserved
+  SR3_WPS      = %00000100
+  SR3_R17      = %00000010                                      ' reserved
+  SR3_R16      = %00000001                                      ' reserved
+
+  SR2_SUS      = %10000000
+  SR2_CMP      = %01000000
+  SR2_LB3      = %00100000
+  SR2_LB2      = %00010000
+  SR2_LB1      = %00001000
+  SR2_R10      = %00000100                                      ' reserved
+  SR2_QE       = %00000010
+  SR2_SRL      = %00000001
+
+  SR1_SRP      = %10000000                                      ' status register protect
+  SR1_SEC      = %01000000                                      ' sector protect
+  SR1_TB       = %00100000                                      ' top/bottom protect
+  SR1_BP2      = %00010000                                      ' block protect
+  SR1_BP1      = %00001000                                      ' block protect
+  SR1_BP0      = %00000100                                      ' block protect
+  SR1_WEL      = %00000010                                      ' write enable latch
+  SR1_BUSY     = %00000001
+
+  RD_DATA      = $03
+  RD_STATUS1   = $05
+
+  WR_DATA      = $02
+  WR_DISABLE   = $04
+  WR_ENABLE    = $06
+
+  SECTOR_ERASE = $20
+  BLK_32_ERASE = $52
+  BLK_64_ERASE = $D8
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

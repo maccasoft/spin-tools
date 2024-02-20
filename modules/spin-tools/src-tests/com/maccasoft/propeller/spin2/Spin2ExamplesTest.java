@@ -111,6 +111,11 @@ class Spin2ExamplesTest {
     }
 
     @Test
+    void test_jm_flash_explorer() throws Exception {
+        compileAndCompare(new File(path, "jm_flash_explorer.spin2"), new File(path, "jm_flash_explorer.binary"));
+    }
+
+    @Test
     void test_jm_format_strings_demo() throws Exception {
         compileAndCompare(new File(path, "jm_format_strings_demo.spin2"), new File(path, "jm_format_strings_demo.binary"));
     }

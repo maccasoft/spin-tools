@@ -9,9 +9,8 @@
 ''               -- see below for terms of use
 ''   E-mail..... jon.mcphalen@gmail.com
 ''   Started....
-''   Updated.... 24 JUN 2021
-''
-''   {$P2}
+''   Updated.... 12 NOV 2023
+''               -- added pstr() for new Spin2 lstring() (embedded Pascal string) method
 ''
 '' =================================================================================================
 
@@ -27,13 +26,13 @@
    The smart pin uarts use a 16-bit value for baud timing which can limit low baud rates for
    some system frequencies -- beware of these limits when connecting to older devices.
 
-    Baud     20MHz    40MHz    80MHz    100MHz    200MHz    300MHz
-   ------    -----    -----    -----    ------    ------    ------
-      300       No       No       No        No        No        No
-      600      Yes       No       No        No        No        No
-     1200      Yes      Yes       No        No        No        No
-     2400      Yes      Yes      Yes       Yes        No        No
-     4800      Yes      Yes      Yes       Yes       Yes       Yes
+    Baud     10MHz    20MHz    40MHz    80MHz    100MHz    200MHz    300MHz     Max
+   ------    -----    -----    -----    -----    ------    ------    ------    ------
+      300     Yes       No       No       No        No        No        No      19MHz
+      600     Yes      Yes       No       No        No        No        No      39MHz
+     1200     Yes      Yes      Yes       No        No        No        No      78MHz
+     2400     Yes      Yes      Yes      Yes       Yes        No        No     157MHz
+     4800     Yes      Yes      Yes      Yes       Yes       Yes       Yes     314MHz
 
 }}
 
@@ -43,37 +42,41 @@ con { fixed io pins }
   PGM_RX   = 63  { I }                                          ' programming / debug
   PGM_TX   = 62  { O }
 
-  SF_CS    = 61  { O }                                          ' serial flash
-  SF_SCK   = 60  { O }
-  SF_SDO   = 59  { O }
-  SF_SDI   = 58  { I }
+  SF_CS    = 61  { O }                                          ' flash storage
+  SF_SCLK  = 60  { O }
+  SF_MOSI  = 59  { O }
+  SF_MISO  = 58  { I }
+
+  LED2     = 57  { O }                                          ' Eval and Edge LEDs
+  LED1     = 56  { O }
 
 
 con { pst / formatting }
 
-  HOME     =  1
-  CRSR_XY  =  2
-  CRSR_LF  =  3
-  CRSR_RT  =  4
-  CRSR_UP  =  5
-  CRSR_DN  =  6
-  BELL     =  7
-  BKSP     =  8
-  TAB      =  9
-  LF       = 10
-  CLR_EOL  = 11
-  CLR_DN   = 12
-  CR       = 13
-  CRSR_X   = 14
-  CRSR_Y   = 15
-  CLS      = 16
+  HOME     =  1                                                 ' \x01 - proposed @"" modifiers
+  CRSR_XY  =  2                                                 ' \x02
+  CRSR_LF  =  3                                                 ' \x03
+  CRSR_RT  =  4                                                 ' \x04
+  CRSR_UP  =  5                                                 ' \x05
+  CRSR_DN  =  6                                                 ' \x06
+  BELL     =  7                                                 ' \a
+  BKSP     =  8                                                 ' \b
+  TAB      =  9                                                 ' \t
+  LF       = 10                                                 ' \n
+  CLR_EOL  = 11                                                 ' \x0B
+  CLR_DN   = 12                                                 ' \f
+  CR       = 13                                                 ' \r
+  CRSR_X   = 14                                                 ' \x0E
+  CRSR_Y   = 15                                                 ' \x0F
+  CLS      = 16                                                 ' \x10
 
   EOF      = -1
 
 
 con
 
-  BUF_SIZE = 128
+  RXBUF_SIZE = 256
+  TXBUF_SIZE = 128
 
 
 obj
@@ -95,17 +98,15 @@ var
   long  txhead                                                  ' tx head index
   long  txtail                                                  ' tx tail index
 
-  long  txdelay                                                 ' ticks to transmit one byte
+' long  ms1                                                     ' ticks in 1ms
 
-  byte  rxbuf[BUF_SIZE]                                         ' buffers
-  byte  txbuf[BUF_SIZE]
-
-  byte  pbuf[80]                                                ' padded strings
+  byte  rxbuf[RXBUF_SIZE]                                       ' buffers
+  byte  txbuf[RXBUF_SIZE]
 
 
 pub null()
 
-'' This is not a top-level object
+'' This is not an application
 
 
 pub tstart(baud) : result
@@ -133,7 +134,7 @@ pub start(rxpin, txpin, mode, baud) : result | baudcfg, spmode
   rxhub := @rxbuf                                               ' point to buffers
   txhub := @txbuf
 
-  txdelay := clkfreq / baud * 11                                ' tix to transmit one byte
+' ms1 := clkfreq / 1000                                         ' ticks in 1ms
 
   baudcfg := muldiv64(clkfreq, $1_0000, baud) & $FFFFFC00       ' set bit timing
   baudcfg |= (8-1)                                              ' set bits (8)
@@ -152,7 +153,7 @@ pub start(rxpin, txpin, mode, baud) : result | baudcfg, spmode
       %11 : spmode |= P_INVERT_OUTPUT | P_LOW_FLOAT             ' requires external pull-down
     pinstart(txp, spmode, baudcfg, 0)
 
-  cog := coginit(COGEXEC_NEW, @uart_mgr, @rxp) + 1              ' start uart manager cog
+  cog := coginit(cogexec_new, @uart_mgr, @rxp) + 1              ' start uart manager cog
 
   return cog
 
@@ -178,7 +179,7 @@ pub rx() : b
   repeat while (rxtail == rxhead)                               ' hold while buffer empty
 
   b := rxbuf[rxtail]                                            ' get a byte
-  if (++rxtail == BUF_SIZE)                                     ' update tail pointer
+  if (++rxtail == RXBUF_SIZE)                                   ' update tail pointer
     rxtail := 0
 
 
@@ -189,21 +190,21 @@ pub rxcheck() : b
 
   if (rxtail <> rxhead)                                         ' something in buffer?
     b := rxbuf[rxtail]                                          ' get it
-    if (++rxtail == BUF_SIZE)                                   ' update tail pointer
+    if (++rxtail == RXBUF_SIZE)                                 ' update tail pointer
       rxtail := 0
   else
     b := EOF                                                    ' mark no byte available
 
 
-pub rxtime(ms) : b | mstix, t
+pub rxtime(ms) : b | t
 
-'' Wait ms milliseconds for a byte to be received
-'' -- returns -1 if no byte received, $00..$FF if byte
+'' Wait up to ms milliseconds for a byte to be received
+'' -- returns -1 if no byte received, $00..$FF if byte available
 
-  mstix := clkfreq / 1000
+  return rxtix(clkfreq / 1000 * ms)                             ' convert ms to ticks
 
-  t := getct()
-  repeat until ((b := rxcheck()) >= 0) || (((getct()-t) / mstix) >= ms)
+' t := getct()
+' repeat until ((b := rxcheck()) >= 0) || (((getct()-t) / ms1) >= ms)
 
 
 pub rxtix(tix) : b | t
@@ -222,7 +223,7 @@ pub available() : count
   if (rxtail <> rxhead)                                         ' if byte(s) available
     count := rxhead - rxtail                                    ' get count
     if (count < 0)
-      count += BUF_SIZE                                         ' fix for wrap around
+      count += RXBUF_SIZE                                       ' fix for wrap around
 
 
 pub rxflush()
@@ -239,13 +240,12 @@ pub tx(b) | n
 
   repeat
     n := txhead - txtail                                        ' bytes in buffer
-    if (n < 0)                                                  ' fix for index wrap-around
-      n += BUF_SIZE
-    if (n < BUF_SIZE-1)
+    n += (n < 0) ? TXBUF_SIZE : 0                               ' fix for index wrap-around
+    if (n < TXBUF_SIZE-1)
       quit
 
   txbuf[txhead] := b                                            ' move to buffer
-  if (++txhead == BUF_SIZE)                                     ' update head pointer
+  if (++txhead == TXBUF_SIZE)                                   ' update head pointer
     txhead := 0
 
 
@@ -265,6 +265,16 @@ pub str(p_str)
     tx(byte[p_str++])
 
 
+pub pstr(p_pstr)
+
+'' Emit l-string at p_pstr
+'' -- p_pstr is pointer to Pascal-type string
+''    * length byte followed by data bytes
+
+  repeat (p_pstr++)
+    tx(byte[p_pstr++])
+
+
 pub substr(p_str, len) | b
 
 '' Emit len characters of string at p_str
@@ -281,7 +291,7 @@ pub substr(p_str, len) | b
 pub padstr(p_str, width, padchar) | len, afw
 
 '' Emit p_str as padded field of width characters
-'' -- pad is character to use to fill out field
+'' -- padchar is character to use to fill out field
 '' -- positive width causes right alignment
 '' -- negative width causes left alignment
 
@@ -302,10 +312,10 @@ pub padstr(p_str, width, padchar) | len, afw
 pub txflush()
 
 '' Wait for transmit buffer to empty
-'' -- will delay one byte period after buffer is empty
+'' -- holds one busy flag for last byte
 
   repeat until (txtail == txhead)                               ' let buffer empty
-  waitct(getct() + txdelay)                                     ' delay for last byte
+  repeat while (rdpin(txp) & $8000_0000)                        ' delay for last byte
 
 
 con { formatted strings commands }
@@ -320,7 +330,9 @@ con { formatted strings commands }
       \t          tab (horizontal)
       \n          new line (vertical tab)
       \r          carriage return
-      \nnn        arbitrary ASCII value (nnn is decimal)
+      \xnn        arbitrary ASCII character (nn is hexadecimal) ' added 17 AUG 21
+      \nnn        arbitrary ASCII character (nnn is decimal)
+
 
     Formatted arguments
 
@@ -395,51 +407,47 @@ pub fstr6(p_str, arg1, arg2, arg3, arg4, arg5, arg6)
   format(p_str, @arg1)
 
 
-pub format(p_str, p_args) | idx, c, asc, field, digits
+pri format(p_str, p_args) : idx | c, asc, fwidth, digits
 
 '' Emit formatted string with escape sequences and embedded values
 '' -- p_str is a pointer to the format control string
 '' -- p_args is pointer to array of longs that hold field values
 ''    * field values can be numbers, characters, or pointers to strings
 
-  idx := 0                                                     ' value index
-
   repeat
     c := byte[p_str++]
     if (c == 0)
-      return
+      return 0
 
     elseif (c == "\")
       c := lower(byte[p_str++])
-      if (c == "\")
-        tx("\")
-      elseif (c == "%")
-        tx("%")
-      elseif (c == "q")
-        tx(34)
-      elseif (c == "b")
-        tx(BKSP)
-      elseif (c == "t")
-        tx(TAB)
-      elseif (c == "n")
-        tx(LF)
-      elseif (c == "r")
-        tx(CR)
-      elseif ((c >= "0") and (c <= "9"))
-        --p_str
-        p_str, asc, _ := get_nargs(p_str)
-        if ((asc >= 0) and (asc <= 255))
-          tx(asc)
+      case c
+        "\" : tx("\")
+        "%" : tx("%")
+        "q" : tx(34)                                            ' double quote
+        "b" : tx(BKSP)
+        "t" : tx(TAB)
+        "n" : tx(LF)
+        "r" : tx(CR)
+
+        "x" :
+          p_str, asc := get_hex(p_str)
+          if ((asc >= 0) && (asc <= 255))
+            tx(asc)
+
+        "0".."9" : p_str, asc, _ := get_nargs(--p_str)
+          if ((asc >= 0) && (asc <= 255))
+            tx(asc)
 
     elseif (c == "%")
-      p_str, field, digits := get_nargs(p_str)
+      p_str, fwidth, digits := get_nargs(p_str)
       c := lower(byte[p_str++])
-      if (lookdown(c : "dufbqoxDUFBQOX"))
-        str(nstr.fmt_number(long[p_args][idx++], c, digits, field, " "))
+      if (lookdown(c : "dufbqox"))
+        str(nstr.fmt_number(long[p_args][idx++], c, digits, fwidth, " "))
       elseif (c == "s")
-        str(nstr.padstr(long[p_args][idx++], field, " "))
+        str(nstr.padstr(long[p_args][idx++], fwidth, " "))
       elseif (c == "c")
-        txn(long[p_args][idx++], (abs(field)) #> 1)
+        txn(long[p_args][idx++], (abs(fwidth)) #> 1)
 
     else
       tx(c)
@@ -451,6 +459,21 @@ pub lower(c) : result
     c += 32
 
   return c
+
+
+pri get_hex(p_str) : p_str1, value | c                          ' added 17 AUG 2021 for \xNN
+
+'' Extract 1- or 2-digit hex value from p_str
+
+  repeat 2
+    c := lower(byte[p_str++])
+    c := lookdown(c : "0".."9", "a".."f")
+    if (c > 0)
+      value := (value << 4) | (c-1)
+    else
+      quit
+
+  p_str1 := p_str
 
 
 pri get_nargs(p_str) : p_str1, val1, val2 | c, sign
@@ -484,7 +507,7 @@ pri get_nargs(p_str) : p_str1, val1, val2 | c, sign
       else
         quit
 
-  p_str1 := p_str - 1                                           ' back up to non-digit
+  p_str1 := p_str-1                                             ' back up to non-digit
 
 
 pub fmt_number(value, base, digits, width, pad)
@@ -638,62 +661,62 @@ pub jbin(value, digits, width, pad)
 
 dat { smart pin uart/buffer manager }
 
-                org
+                        org
 
-uart_mgr        setq      #4-1                                  ' get 4 parameters from hub
-                rdlong    rxd, ptra
-
-
-uart_main       testb     rxd, #31                      wc      ' rx in use?
-    if_nc       call      #rx_serial
-
-                testb     txd, #31                      wc      ' tx in use?
-    if_nc       call      #tx_serial
-
-                jmp       #uart_main
+uart_mgr                setq      #4-1                          ' get 4 parameters from hub
+                        rdlong    rxd, ptra
 
 
-rx_serial       testp     rxd                           wc      ' anything waiting?
-    if_nc       ret
+uart_main               testb     rxd, #31              wc      ' rx in use?
+        if_nc           call      #rx_serial
 
-                rdpin     t3, rxd                               ' read new byte
-                shr       t3, #24                               ' align lsb
-                mov       t1, p_rxbuf                           ' t1 := @rxbuf
-                rdlong    t2, ptra[4]                           ' t2 := rxhead
-                add       t1, t2
-                wrbyte    t3, t1                                ' rxbuf[rxhead] := t3
-                incmod    t2, #(BUF_SIZE-1)                     ' update head index
-    _ret_       wrlong    t2, ptra[4]                           ' write head index back to hub
+                        testb     txd, #31              wc      ' tx in use?
+        if_nc           call      #tx_serial
+
+                        jmp       #uart_main
 
 
-tx_serial       rdpin     t1, txd                       wc      ' check busy flag
-    if_c        ret                                             '  abort if busy
+rx_serial               testp     rxd                   wc      ' anything waiting?
+        if_nc           ret
 
-                rdlong    t1, ptra[6]                           ' t1 = txhead
-                rdlong    t2, ptra[7]                           ' t2 = txtail
-                cmp       t1, t2                        wz      ' byte(s) to tx?
-    if_e        ret
+                        rdpin     t3, rxd                       ' read new byte
+                        shr       t3, #24                       ' align lsb
+                        mov       t1, p_rxbuf                   ' t1 := @rxbuf
+                        rdlong    t2, ptra[4]                   ' t2 := rxhead
+                        add       t1, t2
+                        wrbyte    t3, t1                        ' rxbuf[rxhead] := t3
+                        incmod    t2, #(RXBUF_SIZE-1)           ' update head index
+        _ret_           wrlong    t2, ptra[4]                   ' write head index back to hub
 
-                mov       t1, p_txbuf                           ' start of tx buffer
-                add       t1, t2                                ' add tail index
-                rdbyte    t3, t1                                ' t3 := txbuf[txtail]
-                wypin     t3, txd                               ' load into sp uart
-                incmod    t2, #(BUF_SIZE-1)                     ' update tail index
-    _ret_       wrlong    t2, ptra[7]                           ' write tail index back to hub
+
+tx_serial               rdpin     t1, txd               wc      ' check busy flag
+        if_c            ret                                     '  abort if busy
+
+                        rdlong    t1, ptra[6]                   ' t1 = txhead
+                        rdlong    t2, ptra[7]                   ' t2 = txtail
+                        cmp       t1, t2                wz      ' byte(s) to tx?
+        if_e            ret
+
+                        mov       t1, p_txbuf                   ' start of tx buffer
+                        add       t1, t2                        ' add tail index
+                        rdbyte    t3, t1                        ' t3 := txbuf[txtail]
+                        wypin     t3, txd                       ' load into sp uart
+                        incmod    t2, #(TXBUF_SIZE-1)           ' update tail index
+        _ret_           wrlong    t2, ptra[7]                   ' write tail index back to hub
 
 
 ' --------------------------------------------------------------------------------------------------
 
-rxd             res       1                                     ' receive pin
-txd             res       1                                     ' transmit pin
-p_rxbuf         res       1                                     ' pointer to rxbuf
-p_txbuf         res       1                                     ' pointer to txbuf
+rxd                     res       1                             ' receive pin
+txd                     res       1                             ' transmit pin
+p_rxbuf                 res       1                             ' pointer to rxbuf
+p_txbuf                 res       1                             ' pointer to txbuf
 
-t1              res       1                                     ' work vars
-t2              res       1
-t3              res       1
+t1                      res       1                             ' work vars
+t2                      res       1
+t3                      res       1
 
-                fit       472
+                        fit       496
 
 
 con { license }

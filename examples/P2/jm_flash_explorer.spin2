@@ -1,0 +1,217 @@
+'' =================================================================================================
+''
+''   File....... jm_flash_explorer.spin2
+''   Purpose.... Display and modify P2 flash
+''                -- USE WITH CAUTION (do not modify flash below $10_0000)
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2020-2024 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started....
+''   Updated.... 27 JAN 2021
+''
+'' =================================================================================================
+
+
+
+con { timing }
+
+  CLK_FREQ = 200_000_000                                        ' system freq as a constant
+  MS_001   = CLK_FREQ / 1_000                                   ' ticks in 1ms
+  US_001   = CLK_FREQ / 1_000_000                               ' ticks in 1us
+
+' _xtlfreq = 20_000_000                                         ' 19_200_000 for "irregular" Edge
+  _clkfreq = CLK_FREQ                                           ' set system clock
+
+
+con { download / debug }
+
+' download_baud = 230_400
+' debug_baud    = download_baud
+
+
+con { terminal }
+
+  BR_TERM  = 230_400                                            ' terminal baud rate
+
+
+con { fixed io pins }
+
+  PGM_RX   = 63  { I }                                          ' programming / debug
+  PGM_TX   = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' flash storage
+  SF_SCLK  = 60  { O }
+  SF_MOSI  = 59  { O }
+  SF_MISO  = 58  { I }
+
+  LED2     = 57  { O }                                          ' Eval and Edge LEDs
+  LED1     = 56  { O }
+
+
+con { app io pins }
+
+
+con
+
+  #true,  ON, OFF
+  #false, NO, YES
+
+  #0, T_FLASH, T_BUF
+
+
+obj
+
+' main                                                          ' * master Spin cog
+  flash : "jm_p2_flash"                                         '   high-speed flash IO
+  term  : "jm_fullduplexserial"                                 ' * serial IO for terminal
+
+' * uses cog when loaded
+
+
+dat { pre-initialized }
+
+
+var { globals }
+
+  long  whoami0                                                 ' unique id
+  long  whoami1
+
+  word  id                                                      ' manufacturer / device
+
+  long  jedec                                                   ' JEDEC info
+
+  byte  pagebuf[256]                                            ' RAM buffer for page reads/writes
+
+
+pub main() | p_str, addr, t
+
+  setup()
+  wait_for_terminal(true, 250)
+
+  term.fstr0(string("P2 Flash Explorer \r\r"))
+
+  whoami1, whoami0 := flash.unique_id()
+  term.fstr2(string("Unique ID...... %0.8x %0.8x\r\r"), whoami1, whoami0)
+
+  id := flash.device_type()
+  term.fstr1(string("Manufacturer... %2.2x\r"), id.byte[1])
+  term.fstr1(string("Device......... %2.2x\r\r"), id.byte[0])
+
+  jedec := flash.jedec_info()
+  term.fstr1(string("Manufacturer... %2.2x\r"), jedec.byte[2])
+  term.fstr1(string("Mem Type....... %2.2x\r"), jedec.byte[1])
+  term.fstr2(string("Capacity....... %2.2x (%d bytes)\r\r"), jedec.byte[0], 1 << jedec.byte[0])
+
+  term.tx(13)
+
+  term.str(string("Flash", 13))
+  dump($00_0000, 64, T_FLASH)                                   ' show start of flash
+
+  term.str(string("RAM", 13))
+  dump(0, 64, T_BUF)                                            ' show initial page buffer
+
+  addr := $10_0000
+
+  flash.rd_page(addr, @pagebuf)                                 ' read from flash to page buffer
+
+  term.fstr1(string("RAM (after page read from $%.6x)\r"), addr)
+  dump(0, 64, T_BUF)                                            ' show page buffer with flash contents
+
+  p_str := string("Propeller P2")                               ' create a string
+
+  bytemove(@pagebuf, p_str, strsize(p_str)+1)                   ' copy to page buffer (RAM)
+
+  term.str(string("Modifed RAM", 13))
+  dump(0, 64, T_BUF)                                            ' show updated page buffer
+
+  t := getct()
+  flash.erase(addr, flash.SECTOR_ERASE, true)                   ' erase -- wait until done
+  t := getct() - t - 40
+  term.fstr1(string("Erase time: %.3fms\r\r"), t/US_001)
+
+  t := getct()
+  flash.wr_page(addr, @pagebuf)                                 ' write to flash
+  repeat while flash.busy()
+  t := getct() - t - 40
+  term.fstr1(string("Write time: %.3fms\r\r"), t/US_001)
+
+  term.fstr1(string("Flash (after page write to $%.6x)\r"), addr)
+  dump(addr, 64, T_FLASH)
+
+  repeat
+    waitct(0)
+
+
+pub dump(addr, count, src) | x, b, byte asc[17]
+
+'' Display count bytes from flash or page buffer, starting at address
+'' -- display as hex and ASCII
+
+  addr &= $FF_FFF0                                              ' force to 16-byte boundary
+  count := (count + 15) >> 4                                    ' convert to display lines
+
+  asc[16] := 0                                                  ' string terminator
+
+  repeat count
+    term.fstr2(string("$%.2x_%.4x  "), addr >> 16, addr)        ' starting address for this line
+    repeat x from 0 to 15
+      if (src == T_FLASH)
+        b := flash.rd_byte(addr+x)                              ' read from flash
+      else
+        b := pagebuf[addr+x]                                    ' read from page buffer
+      term.fstr1(string("%.2x "), b)                            ' display as hex
+      asc[x] := ((b >= 32) && (b <= 127)) ? b : "."             ' build ASCII string
+      if ((x & %11) == %11)                                     ' add pad between longs
+        term.tx(" ")
+    term.fstr1(string("  %s\r"), @asc)                          '  and display at tend of line
+    waitms(1)                                                   ' prevent PST buffer overrrun
+    addr += 16                                                  ' next line
+
+  term.tx(13)
+
+
+pub setup()
+
+'' Configure IO and objects for application
+
+  flash.start(20_000)                                           ' connect to flash (20MHz)
+
+  term.tstart(BR_TERM)                                          ' start terminal io
+
+
+pub wait_for_terminal(clear, delay)
+
+'' Wait for terminal to be open and key pressed
+
+  term.rxflush()
+  term.rx()
+  if (clear)
+    term.tx(term.CLS)
+    waitms(delay #> 0)
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

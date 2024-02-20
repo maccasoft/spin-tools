@@ -3,30 +3,30 @@
 ''   File....... jm_nstr.spin2
 ''   Purpose.... Convert numbers to strings
 ''   Authors.... Jon McPhalen
-''               -- Copyright (c) 2020-2021 Jon McPhalen
+''               -- Copyright (c) 2020-2023 Jon McPhalen
 ''               -- see below for terms of use
 ''   E-mail..... jon.mcphalen@gmail.com
 ''   Started....
-''   Updated.... 23 JUN 2021
+''   Updated.... 08 MAY 2022
 ''
 '' =================================================================================================
 
 
 con
 
-  NBUF_SIZE = 48
+  NBUF_SIZE =  48
   PBUF_SIZE = 128
 
 
 var
 
-  byte  nbuf[NBUF_SIZE]                                         ' number conversions
-  byte  pbuf[PBUF_SIZE]                                         ' padded strings
+  byte  nbuf[NBUF_SIZE]
+  byte  pbuf[PBUF_SIZE]
 
 
 pub null()
 
-'' This is not a top level object
+'' This is not an application
 
 
 pub fmt_number(value, radix, digits, width, pad) : p_str        ' *** changed 23 JUN 2021 ***
@@ -49,7 +49,7 @@ pub fmt_number(value, radix, digits, width, pad) : p_str        ' *** changed 23
     other        : p_str := string("?")
 
 
-pub dec(value, digits) : p_str | sign, len
+pub dec(value, digits) : p_str
 
 '' Convert decimal value to string
 '' -- digits is 0 (auto size) to 10
@@ -130,7 +130,6 @@ pub itoa(value, radix, digits) : p_str | sign, len, d
     10    : digits := 0 #> digits <# 10
     16    : digits := 0 #> digits <#  8
     other :
-      byte[p_str] := 0
       return
 
   if ((radix == 10) && (value < 0))                             ' deal with negative decimals

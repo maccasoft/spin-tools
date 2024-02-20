@@ -57,6 +57,11 @@ class Spin2LibraryTest {
     }
 
     @Test
+    void test_jm_at24c32() throws Exception {
+        compileAndCompare(new File(path, "jm_at24c32.spin2"), new File(path, "jm_at24c32.binary"));
+    }
+
+    @Test
     void test_jm_click_4_20ma_rx() throws Exception {
         compileAndCompare(new File(path, "jm_click_4-20ma_rx.spin2"), new File(path, "jm_click_4-20ma_rx.binary"));
     }
@@ -94,6 +99,11 @@ class Spin2LibraryTest {
     @Test
     void test_jm_dmx_tx() throws Exception {
         compileAndCompare(new File(path, "jm_dmx_tx.spin2"), new File(path, "jm_dmx_tx.binary"));
+    }
+
+    @Test
+    void test_jm_ds3231() throws Exception {
+        compileAndCompare(new File(path, "jm_ds3231.spin2"), new File(path, "jm_ds3231.binary"));
     }
 
     @Test
