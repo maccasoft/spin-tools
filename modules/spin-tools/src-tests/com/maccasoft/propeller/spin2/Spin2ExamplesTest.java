@@ -36,6 +36,16 @@ class Spin2ExamplesTest {
     }
 
     @Test
+    void test_cgsm_flash_file_demo() throws Exception {
+        compileAndCompare(new File(path, "cgsm_flash_file_demo.spin2"), new File(path, "cgsm_flash_file_demo.binary"));
+    }
+
+    @Test
+    void test_flash_fs_demo() throws Exception {
+        compileAndCompare(new File(path, "flash_fs_demo.spin2"), new File(path, "flash_fs_demo.binary"));
+    }
+
+    @Test
     void test_jm_1_wire_demo() throws Exception {
         compileAndCompare(new File(path, "jm_1-wire_demo.spin2"), new File(path, "jm_1-wire_demo.binary"));
     }

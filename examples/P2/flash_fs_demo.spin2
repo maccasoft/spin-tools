@@ -1,0 +1,138 @@
+'' =================================================================================================
+''
+''   File....... flash_fs_demo.spin2
+''   Purpose.... This object is a short demo of interactions with the flash file system driver for the P2
+''               it manages all but the first 512KB of the flash chip (where the boot image is stored)
+''               it provides a standard (ANSI C like) file system interface to the flash chip
+''   Author..... Chip Gracey
+''               -- see below for terms of use
+''   E-mail.....cgracey@parallax.com
+''   Started.... AUG 2023
+''   Updated.... 26 AUG 2023
+''
+'' =================================================================================================
+
+CON     _CLKFREQ        = 320_000_000
+
+OBJ
+    Flash : "flash_fs"
+
+PUB go() : status
+
+  status := Flash.format()              'Comment out this line to not erase all files
+  if status < 0
+    showError(@"format()", status)
+    return
+
+  status := Flash.mount()
+  if status < 0
+    showError(@"mount()", status)
+    return
+
+  ShowStats()                   'Do a bunch of file stuff while reporting status, along the way
+  ShowFiles()
+
+  WriteZStringToFile(@"file1", @file1)
+  WriteZStringToFile(@"file2", @file2)
+  WriteZStringToFile(@"file3", @file3)
+
+  ShowStats()
+  ShowFiles()
+
+  if Flash.exists(@"file3") and not Flash.exists(@"Apples")
+    status := Flash.rename(@"file3",@"Apples")
+    if status < 0
+      showError(@"rename()", status)
+
+  status := Flash.delete(@"file1")
+  if status < 0
+    showError(@"delete()", status)
+
+  ShowStats()
+  ShowFiles()
+
+  Flash.unmount()
+  debug("Done")
+  repeat
+
+PRI showError(pCaller, errorCode)
+    debug("EEEE ", zstr_(pCaller), " error: ", zstr_(Flash.string_for_error(errorCode)))
+
+PRI ShowStats() | BlocksUsed, BlocksFree, Files
+
+  BlocksUsed, BlocksFree, Files := Flash.stats()
+  debug(udec(BlocksUsed, BlocksFree, Files))
+
+
+PRI ShowFiles() | ID, ByteCount, handle, Ptr, x, byte Filename[127+1], byte Buff[30]
+  repeat
+    Flash.Directory(@ID, @Filename, @ByteCount)                 'get next file
+    if Filename[0]                                              'is there a filename?
+      ReadFile(@Filename, @Buff, 30)                            'read file
+      debug(zstr(@Filename), udec(ByteCount, ID), zstr(@Buff))  'show filename, bytes, ID, and file contents
+    else
+      quit                                                      'no more files, quit
+
+
+PRI ReadFile(pFilename, pStr, maxlen) | handle, byteCount
+
+  handle := Flash.open(pFilename,"R")                          'open file for reading
+  if handle >= 0
+    byteCount := Flash.rd_str(handle, pStr, maxlen)             'read bytes of zstring
+    if byteCount < 0
+        showError(@"rd_str()", byteCount)
+    'debug("- read str(", udec_(byteCount), ")=[", zstr_(pStr), "]")      'show filename, bytes, ID, and file contents
+
+    Flash.Close(handle)                                         'close file
+
+
+PRI WriteZStringToFile(pFilename, pStr) | handle, status
+
+  debug("Writing: ", zstr_(pFilename))
+
+  handle := Flash.open(pFilename, "W")                         'open file for writing
+  if handle >= 0
+    status := Flash.wr_str(handle, pStr)
+    if status < 0
+        showError(@"wr_str()", status)
+
+    status := Flash.close(handle)                               'close file
+    if status < 0
+        showError(@"close()", status)
+  else
+    showError(@"open_write()", handle)
+
+DAT
+
+file1   byte    "The car goes.",0
+file2   byte    "His cat meows.",0
+file3   byte    "My boat floats.",0
+
+con { license }
+
+{{
+  =================================================================================================
+
+  Terms of Use: MIT License
+
+  Copyright (c) 2023 Chip Gracey
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+  =================================================================================================
+}}

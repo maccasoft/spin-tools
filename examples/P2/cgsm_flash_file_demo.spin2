@@ -1,0 +1,690 @@
+'' =================================================================================================
+''
+''   File....... cgsm_flash_file_demo.spin2
+''   Purpose.... Demo of Chip Gracey / Stephen Moraco P2 flash filesystem
+''   Author..... Jon "JonnyMac" McPhalen
+''               Copyright (c) 2023 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started.... 15 AUG 2023
+''   Updated.... 23 SEP 2023
+''
+'' =================================================================================================
+
+{
+   Get latest version of flash_fs.spin2 from
+   -- https://github.com/ironsheep/P2-FLASH-FS
+}
+
+
+con { timing }
+
+  CLK_FREQ = 200_000_000                                        ' system freq as a constant
+  MS_001   = CLK_FREQ / 1_000                                   ' ticks in 1ms
+  US_001   = CLK_FREQ / 1_000_000                               ' ticks in 1us
+
+' _xtlfreq = 20_000_000                                         ' 19_200_000 for "irregular" Edge
+  _clkfreq = CLK_FREQ                                           ' set system clock
+
+
+con { download / debug }
+
+' download_baud = 230_400
+' debug_baud    = download_baud
+
+
+con { terminal }
+
+  BR_TERM  = 230_400                                            ' terminal baud rate
+
+
+con { fixed io pins }
+
+  PGM_RX   = 63  { I }                                          ' programming / debug
+  PGM_TX   = 62  { O }
+
+  SF_CS    = 61  { O }                                          ' flash storage
+  SF_SCLK  = 60  { O }
+  SF_MOSI  = 59  { O }
+  SF_MISO  = 58  { I }
+
+  LED2     = 57  { O }                                          ' Eval and Edge LEDs
+  LED1     = 56  { O }
+
+
+con { app io pins }
+
+
+con
+
+  #true,  ON, OFF
+  #false, NO, YES
+
+
+obj
+
+' main                                                          ' * master Spin cog
+  cli   : "jm_parser"                                           '   command line input & parsing
+  flash : "flash_fs"                                            '   CG/SM flash file driver
+  term  : "jm_fullduplexserial"                                 ' * serial IO for terminal
+
+' * uses cog when loaded
+
+
+var
+
+  byte  buffer[flash.BLOCK_SIZE]
+
+  byte  ntokens
+
+
+pub main() | len, idx
+
+  setup()
+  wait_for_terminal(false, 0)                                   ' can comment out for Spin Tools or FlexProp
+
+  term.tx(term.CLS)
+  term.fstr0(@"P2 Flash Filesystem Demo\r")
+  term.fstr0(@"- type 'help' for command\r")
+
+  version_note(140)                                             ' demo tested w/P2FFS v1.4.0
+
+  repeat
+    term.str(@s_Prompt)                                         ' prompt user
+    len := get_command()                                        ' get input
+    if (len > 0)                                                ' if command entered
+      ntokens := cli.parse()                                    ' parse and count tokens
+      if (ntokens)                                              ' if !0 tokens
+        idx := cli.token_index(lcstr(cli.token(0)), @Commands)  ' lookup first in commands table
+        run_command(idx)                                        ' run command code
+
+
+pub get_command() : len | c
+
+'' Enter command from terminal window
+
+  cli.reset()                                                   ' prep cli for new entry
+
+  repeat
+    c := term.rx()                                              ' get char from serial
+    c := (c == 9) ? " " : c                                     ' convert tab to space
+    if (c == 8)                                                 ' fix backspace
+      term.str(string(8, " ", 8))                               '  for Spin Tools terminal
+    else
+      term.tx(c)                                                ' echo to terminal
+    if cli.enqueue(c)                                           ' and to cli queue
+      quit                                                      '  if terminated, we're done
+
+  return cli.buffer_len()                                       ' report length of input
+
+
+pub version_note(v)
+
+  if (flash.LIB_VERSION <> v)
+    term.fstr1(@"\rNote: Demo checked with P2FFS %s\r", version_str(v))
+    term.fstr1(@"      P2FFS version is %s\r", version_str(flash.LIB_VERSION))
+    term.fstr0(@"      Check source/docs for updates\r")
+
+
+con { command handlers }
+
+
+pub run_command(idx)
+
+'' Run command at index i of Commands list
+
+  if (idx < 0)
+    term.fstr1(@"'%s' is not recognized as a command\r", cli.token(0))
+    return
+
+  case idx
+    00     : show_help()                                        ' help
+    01     : show_version()                                     ' version
+    02, 03 : do_cls()                                           ' cls, clear
+    04     : do_mount()                                         ' mount
+    05     : do_format()                                        ' format
+    06     : do_stats()                                         ' stats
+    07, 08 : do_dir()                                           ' dir, ls
+    09, 10 : do_type()                                          ' type, cat
+    11, 12 : do_rename()                                        ' ren, mv
+    13, 14 : do_copy()                                          ' copy, cp
+    15, 16 : do_delete()                                        ' del, rm
+    17     : do_demo_files()                                    ' demo
+    18, 19 : show_snum()                                        ' snum, uid
+    other  : not_implemented()
+
+
+pub show_help()
+
+'' Show available commands
+
+  if (ntokens <> 1)
+    bad_syntax()
+    return
+
+  term.str(@s_Help)
+
+
+pub show_version() : ver
+
+'' Show flash filesystem version number in M.m.b form           ' Major, minor, bug fix
+
+  if (ntokens <> 1)
+    bad_syntax()
+    return
+
+  term.fstr1(@"P2FFS %s\r", version_str(flash.version()))
+
+
+pub do_cls()
+
+'' Clear terminal window
+
+  if (ntokens <> 1)
+    bad_syntax()
+    return
+
+  term.tx(term.CLS)
+
+
+pub do_mount() | ec
+
+'' Mount P2FFS
+
+  if (ntokens <> 1)
+    bad_syntax()
+    return
+
+  if (flash.mounted())
+    term.fstr0(@"P2FFS is already mounted\r")
+    if (are_you_sure() == false)
+      return
+
+  flash.mount()
+  ec := flash.error()
+  if (ec == flash.OKAY)
+    term.fstr0(@"Mounted\r")
+  else
+    term.fstr1(@"Error mounting flash: %d\r", ec)
+
+
+pub do_format()
+
+'' Format P2FFS
+'' -- required before use
+'' -- will remove existing files
+
+  if (ntokens <> 1)
+    bad_syntax()
+    return
+
+  if (check_mount() == false)                                   ' must be mounted
+    return
+
+  if (are_you_sure() == true)                                   ' if answer is Yes
+    term.fstr0(@"Formatting flash...\r")                        '  message
+    flash.format()                                              '  reformat flash
+
+
+pub do_stats() | used, free, fcount, fsize
+
+'' Display P2FFS statistics
+
+  if (ntokens <> 1)
+    bad_syntax()
+    return
+
+  if (check_mount() == false)                                   ' must be mounted
+    return
+
+  used, free, fcount := flash.stats()                           ' get blocks and files
+
+  fsize := flash.BLOCKS * flash.BLOCK_SIZE
+
+  term.fstr2(@"P2FFS size... %d (%.1fMB)\r", fsize, fsize*10/(1024*1024))
+  term.fstr1(@"Files........ %d\r", fcount)
+  term.fstr1(@"Blocks....... %d\r", flash.BLOCKS)
+  term.fstr1(@"- size....... %d\r", flash.BLOCK_SIZE)
+  term.fstr1(@"- used....... %d\r", used)
+  term.fstr1(@"- free....... %d\r", free)
+
+
+pub do_dir() | free, fcount, total, id, size
+
+'' List files in P2FFS and total bytes in files
+
+  if (ntokens <> 1)
+    bad_syntax()
+    return
+
+  if (check_mount() == false)                                   ' must be mounted
+    return
+
+  longfill(@free, 0, 5)                                         ' clear locals (for FlexProp)
+
+  _, free, fcount := flash.stats()                              ' get free blocks and file count
+
+  if (fcount > 0)
+    term.str(@s_FileHeader)                                     ' show directory header
+    repeat
+      flash.directory(@id, @buffer, @size)                      ' get file details
+      if (buffer[0])                                            ' if not done
+        term.fstr3(@"%4d    %8d    %s\r", id, size, @buffer)    ' show file details
+        total += size                                           ' update total bytes used
+      else
+        term.tx(13)                                             ' whitespace pad
+        quit                                                    ' done
+
+  ' show bytes used and approximate bytes free
+
+  term.fstr2(@"%4d file(s)        %d bytes\r", fcount, total)
+  term.fstr1(@"                    %d bytes free\r", free * flash.BYTES_IN_HEAD_BLOCK)
+
+
+pub do_type() | p_filename
+
+'' Show contents of text file in P2FFS
+'' -- do not use with binary files
+
+  if (ntokens <> 2)
+    bad_syntax()
+    return
+
+  if (check_mount() == false)                                   ' must be mounted
+    return
+
+  p_filename := cli.token(1)
+
+  if (flash.exists(p_filename) == true)                         ' if present
+    read_file(p_filename, @buffer)                              '  get contents into buffer
+    term.str(@buffer)                                           '  display
+    term.tx(13)
+  else
+    term.str(@s_NotFound)
+
+
+pub do_rename() | p_file1, p_file2
+
+  if (ntokens <> 3)
+    bad_syntax()
+    return
+
+  if (check_mount() == false)                                   ' must be mounted
+    return
+
+  p_file1 := cli.token(1)
+
+  if (flash.exists(p_file1) == false)                           ' present?
+    term.str(@s_NotFound)                                       '   no, error message
+    return                                                      '   and exit
+
+  p_file2 := cli.token(2)
+
+  if (strcomp(p_file1, p_file2))                                ' same name, don't bother
+    return
+
+  if (flash.exists(p_file2) == true)                            ' present?
+    term.fstr1(@"%s already exists\r", p_file2)                 '  yes, error message
+    return                                                      '   and exit
+
+  flash.rename(p_file1, p_file2)                                ' okay, rename the file
+
+
+pub do_copy() | p_file1, p_file2, ow, h0, h1, b
+
+'' Copy file1 to file2
+'' -- minimal error handling
+
+  if (ntokens <> 3)
+    bad_syntax()
+    return
+
+  if (check_mount() == false)                                   ' must be mounted
+    return
+
+  p_file1 := cli.token(1)
+  p_file2 := cli.token(2)
+
+  if (flash.exists(p_file1) <> true)                            ' present?
+    term.str(@s_NotFound)                                       ' no
+    return
+
+  if (strcomp(p_file1, p_file2))
+    term.fstr0(@"The file cannot be copied onto itself\r")
+    return
+
+  if (flash.exists(p_file2) == true)                            ' already present?
+    term.fstr1(@"Overwrite %s\r", p_file2)                      ' warning
+    ow := are_you_sure()                                        ' okay to overwrite?
+    if (ow == false)                                            ' if no, abort
+      return
+
+  h0 := flash.open(p_file1, "r")                                ' open source file
+  h1 := flash.open(p_file2, "w")                                ' open/create destination file
+
+  repeat
+    b := flash.rd_byte(h0)                                      ' get byte from source
+    if (flash.error() == flash.OKAY)                            ' did we?                                              '
+      flash.wr_byte(h1, b)                                      ' yes, write to destination
+    else
+      quit                                                      ' no, we're done
+
+  flash.close(h0)                                               ' close the files
+  flash.close(h1)
+
+
+pub do_delete() | p_filename
+
+  if (ntokens <> 2)
+    bad_syntax()
+    return
+
+  if (check_mount() == false)                                   ' must be mounted
+    return
+
+  p_filename := cli.token(1)
+
+  if (flash.exists(p_filename) <> true)                         ' is it present?
+    term.str(@s_NotFound)
+  else
+    flash.delete(p_filename)                                    ' yes, delete it
+
+
+pub do_demo_files()
+
+  if (ntokens <> 1)
+    bad_syntax()
+    return
+
+  if (check_mount() == false)                                   ' must be mounted
+    return
+
+  write_file(@"file1",  @file1)
+  write_file(@"file2",  @file2)
+  write_file(@"file3",  @file3)
+  write_file(@"P2",     @P2)
+  write_file(@"USA",    @USA)
+  write_file(@"Fruits", @Fruits)
+
+
+pri write_file(p_filename, p_buf) | len, handle
+
+'' Writes text at p_buf to file
+
+  len := strsize(p_buf)                                         ' verify valid input
+  if (len <= 0)
+    return
+
+  term.fstr2(@"Writing %d bytes to %s\r", len, p_filename)      ' show user size stats
+
+  handle := flash.open(p_filename, "w")                         ' open the file for (re)writing
+
+  if (flash.error() <> flash.OKAY)                              ' ensure file was opened
+    term.str(@s_OpenError)
+    return
+
+  repeat len                                                    ' write bytes from p_buf
+    flash.wr_byte(handle, byte[p_buf++])
+
+  flash.close(handle)                                           ' close file -- done!
+
+
+pri read_file(p_filename, p_buf) | handle, b
+
+'' Read text file into buffer @ p_buf
+
+  handle := flash.open(p_filename, "r")                         ' open the file
+
+  if (flash.error() <> flash.OKAY)                              ' ensure file was opened
+    term.str(@s_OpenError)
+    return
+
+  repeat
+    b := flash.rd_byte(handle)                                  ' get byte from file
+    if (flash.error() == flash.OKAY)                            ' if no problem
+      byte[p_buf++] := b                                        ' write to buffer
+    else
+      byte[p_buf++] := 0                                        ' terminate buffer
+      quit                                                      '  and exit
+
+  flash.close(handle)                                           ' close the file
+
+
+pub show_snum() | id1, id0
+
+'' Show flash 64-bit unique id
+
+  if (ntokens <> 1)
+    bad_syntax()
+    return
+
+  if (check_mount() == false)                                   ' must be mounted
+    return
+
+  id1, id0 := flash.serial_number()                             ' get 64-bit UID from flash
+  term.fstr2(@"Flash SN/UID: %.8x_%.8x\r", id1, id0)            ' display
+
+
+pub not_implemented()
+
+  term.fstr1(@"%s is not implemented\r", cli.token(0))
+
+
+pri version_str(v) : p_str
+
+  s_Version[0] := "0" + (v /  100)
+  s_Version[2] := "0" + (v // 100 / 10)
+  s_Version[4] := "0" + (v //  10)
+
+  return @s_Version
+
+
+con { helpers }
+
+
+pub check_mount() : status
+
+'' Returns true if P2FFS is mounted
+'' -- displays error message if not
+
+  status := flash.mounted()
+  if (status == false)
+    term.str(@s_NotMounted)
+
+
+pub bad_command(p_str)
+
+'' Display error message if command is not known
+
+  term.fstr1(@"%s is not a valid command\r", p_str)
+
+
+pub bad_syntax() | p_str
+
+  term.str(@s_Syntax)
+
+
+pub are_you_sure() : response | byte buf[4], i, c
+
+'' Return true if user enters 'yes' or 'y'
+'' -- not case sensitive
+
+  term.str(@"Are you sure? [y/n] ")                             ' prompt user
+
+  bytefill(@buf, 0, 4)
+  i := 0
+
+  repeat
+    c := term.rx()
+    case c
+      08 :
+        if (i > 0)
+          term.str(string(8, " ", 8))
+          buf[--i] := 0
+
+      9, 13, " " :
+        term.tx(13)
+        quit
+
+      other :
+        if (i < 3)
+          term.tx(c)
+          buf[i++] := cli.lcase(c)
+
+  if (strcomp(@buf, @"yes"))                                    ' is is "yes"?
+    return true
+
+  if ((strsize(@buf) == 1) && (buf[0] == "y"))                  ' is it "y"?
+    return true
+
+  return false
+
+
+pub lcstr(p_str) : p_lcstr | c
+
+'' Converts p_str to lowercase
+
+  p_lcstr := p_str                                              ' return original pointer
+
+  repeat strsize(p_str)
+    c := byte[p_str]
+    if (c >= "A") && (c <= "Z")
+      byte[p_str] := c + 32
+    ++p_str
+
+
+con { strings / lists }
+
+dat { help }
+
+  s_Help        byte    13
+                byte    "  help       display this help ", 13
+                byte    "  version    display P2FFS version", 13
+                byte    "  cls        clear terminal window", 13
+                byte    "  clear      clear terminal window", 13
+                byte    "  mount      mount flash filesystem", 13
+                byte    "  format     format flash", 13
+                byte    "  stats      display P2FFS statistics", 13
+                byte    "  dir        list files in P2FFS", 13
+                byte    "  ls         list files in P2FFS", 13
+                byte    "  type       display contests of file (type filename)", 13
+                byte    "  cat        display contests of file (cat filename)", 13
+                byte    "  ren        change file name (ren oldname newname)", 13
+                byte    "  mv         change file name (mv oldname newname)", 13
+                byte    "  copy       copy from src to dest (copy srcfile destfile)", 13
+                byte    "  cp         copy from src to dest (copy srcfile destfile)", 13
+                byte    "  del        delete file (del filename)", 13
+                byte    "  rm         delete file (rm filename)", 13
+                byte    "  demo       create demo files in flash", 13
+                byte    "  snum       display flash serial number", 13
+                byte    "  uid        display flash serial number", 13
+                byte    0
+
+
+dat { valid commands }
+
+' Caution: Only one null (0) allowed between command word and next command
+
+  Commands      byte    '
+  {00}          byte    "help",    0                            ' show commands list
+  {01}          byte    "version", 0                            ' show filesystem version #
+  {02}          byte    "cls",     0                            ' clear terminal
+  {03}          byte    "clear",   0                            ' clear terminal
+  {04}          byte    "mount",   0                            ' connect to flash
+  {05}          byte    "format",  0                            ' format flash (gives warning)
+  {06}          byte    "stats",   0                            ' stats from ffs driver
+  {07}          byte    "dir",     0                            ' list files
+  {08}          byte    "ls",      0                            ' list files
+  {09}          byte    "type",    0                            ' show contents of text file
+  {10}          byte    "cat",     0                            ' show contents of text file
+  {11}          byte    "ren",     0                            ' rename oldname to newname
+  {12}          byte    "mv",      0                            ' rename oldname to newname
+  {13}          byte    "copy",    0                            ' copy file1 to file2
+  {14}          byte    "cp",      0                            ' copy file1 to file2
+  {15}          byte    "del",     0                            ' delete file
+  {16}          byte    "rm",      0                            ' delete file
+  {17}          byte    "demo",    0                            ' build demo files in new flash
+  {18}          byte    "snum",    0                            ' get flash serial number
+  {19}          byte    "uid",     0                            ' get flash serial number
+                byte    0
+
+
+dat { misc strings }
+
+  s_Prompt      byte    13, "P2FFS> ", 0
+
+  s_Version     byte    "0.0.0", 0
+
+  s_FileHeader  byte    " ID       Size      Name                            ", 13
+                byte    "----    --------    --------------------------------", 13, 0
+
+  s_NotMounted  byte    "Flash not mounted", 13, 0
+  s_NotFound    byte    "The system cannot find the file specified", 13, 0
+  s_Syntax      byte    "The syntax of the command is incorrect", 13, 0
+  s_OpenError   byte    "Error opening file", 13, 0
+
+
+
+dat { demo file data }
+
+  file1         byte    "The car goes.", 0
+  file2         byte    "His cat meows.", 0
+  file3         byte    "My boat floats.", 0
+  P2            byte    "Propeller 2 from Parallax", 0
+  USA           byte    "Made in the United States of America", 0
+  Fruits        byte    "Apples, Oranges, Pears", 0
+
+
+
+con { P2 setup / configuration }
+
+
+dat
+
+  separators    byte    " ", 9, 0                               ' separate with space or tab
+
+
+pub setup()
+
+'' Configure IO and objects for application
+
+  term.tstart(BR_TERM)                                          ' start terminal io
+
+  cli.start(13, cli.NONE, @separators)                          ' setup parser
+
+
+pub wait_for_terminal(clear, delay)
+
+'' Wait for terminal to be open and key pressed
+
+  term.rxflush()
+  term.rx()
+  if (clear)
+    term.tx(term.CLS)
+    waitms(delay #> 0)
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}

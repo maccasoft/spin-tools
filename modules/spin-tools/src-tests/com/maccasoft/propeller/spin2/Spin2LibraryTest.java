@@ -42,6 +42,11 @@ class Spin2LibraryTest {
     }
 
     @Test
+    void test_flash_fs() throws Exception {
+        compileAndCompare(new File(path, "flash_fs.spin2"), new File(path, "flash_fs.binary"));
+    }
+
+    @Test
     void test_jm_1_wire() throws Exception {
         compileAndCompare(new File(path, "jm_1-wire.spin2"), new File(path, "jm_1-wire.binary"));
     }
@@ -164,6 +169,11 @@ class Spin2LibraryTest {
     @Test
     void test_jm_max7219_ez() throws Exception {
         compileAndCompare(new File(path, "jm_max7219_ez.spin2"), new File(path, "jm_max7219_ez.binary"));
+    }
+
+    @Test
+    void test_jm_parser() throws Exception {
+        compileAndCompare(new File(path, "jm_parser.spin2"), new File(path, "jm_parser.binary"));
     }
 
     @Test

@@ -1,0 +1,306 @@
+'' =================================================================================================
+''
+''   File....... jm_parser.spin2
+''   Purpose.... Command input and parsing
+''   Author..... Jon McPhalen
+''               Copyright (c) 2023 Jon McPhalen
+''               -- see below for terms of use
+''   E-mail..... jon.mcphalen@gmail.com
+''   Started.... 19 SEP 2023
+''   Updated.... 23 SEP 2023
+''
+'' =================================================================================================
+
+{
+  General Use (after start())
+  - call reset()
+  - enter command string with enqueue() or enqueue_str()
+  - call parse() (will return # tokens in string)
+  - tcount() will retrn # tokens after last parse
+  - use token() to return pointer to specific token (string)
+  - call token_index() to compare token to list of known words
+    * converts token string to index (for case)
+    * returns 0..N, or -1 if not found in list
+}
+
+
+con
+
+  VERSION  = 2_0_0
+
+  BUF_SIZE = 128
+  MAX_TKNS =  10
+
+  #0, NONE, LOWER, UPPER
+
+
+var
+
+  byte  buffer[BUF_SIZE]                                        ' command buffer
+  byte  bidx                                                    ' current entry position in buffer
+
+  long  p_token[MAX_TKNS]                                       ' pointers to tokens in buffer
+  byte  ntokens                                                 ' # tokens in buffer (after parsing)
+
+  byte  tchar                                                   ' terminating character (usually CR)
+  byte  alphacase                                               ' 0 = none, 1 = lower, 2 = upper
+  byte  sepchars[16]                                            ' valid token separator chars
+
+
+pub null()
+
+'' This is not an application
+
+
+pub start(tc, uc, p_sep)
+
+'' Prep parser
+'' -- tc is input terminating character (usually CR)
+'' -- uc is use of case (0 = no change, 1 = lower, 2 = upper)
+'' -- p_sep is pointer to string of separator chracters
+
+  tchar := tc                                                   ' get terminating character
+
+  if (uc == LOWER) || (uc == UPPER)                             ' get alpha case option
+    alphacase := uc
+  else
+    alphacase := NONE
+
+  bytefill(@sepchars, 0, 16)                                    ' clear separators
+  bytemove(@sepchars, p_sep, strsize(p_sep) <# 15)              ' copy up to 15 separator chars
+
+  reset()
+
+
+pub reset()
+
+'' Reset input buffer and tokens
+
+  bytefill(@buffer, 0, BUF_SIZE)                                ' clear input buffer
+  bidx := 0
+
+  longfill(@p_token, 0, MAX_TKNS)                               ' clear tokens
+  ntokens := 0
+
+
+pub enqueue(c) : done
+
+'' Add c to input buffer
+'' -- returns true when terminating char encountered
+
+  if (c == 0) || (c == tchar)                                   ' end of input?
+    buffer[bidx] := 0                                           '  terminate buffer
+    return true                                                 '  let caller know
+
+  if (c == 8) && (bidx > 0)                                     ' if backspace and chars in buffer
+    buffer[--bidx] := 0                                         '  erase last
+    return false
+
+  if (bidx < BUF_SIZE-2)                                        ' room in buffer
+    if (alphacase == LOWER)                                     '  case setting?
+      c := lcase(c)
+    elseif (alphacase == UPPER)
+      c := ucase(c)
+    buffer[bidx++] := c                                         ' add to buffer
+
+  return false                                                  ' not done
+
+
+pub enqueue_str(p_str) : done
+
+'' Add p_str to input buffer
+'' -- returns true if terminating char in p_str
+
+  repeat strsize(p_str)
+    if enqueue(byte[p_str++])
+      return true
+
+
+pub lcase(c) : lc
+
+'' Convert c to lowercase
+
+  if (c >= "A") && (c <= "Z")
+    return c + 32
+  else
+    return c
+
+
+pub ucase(c) : uc
+
+'' Convert c to uppercase
+
+  if (c >= "a") && (c <= "z")
+    return c - 32
+  else
+    return c
+
+
+pub buffer_len() : len
+
+'' Returns length of raw input buffer
+'' -- will change after parse() if tokens in buffer
+
+  return bidx
+
+
+pub raw_buffer() : p_str
+
+'' Returns pointer to buffer
+'' -- after parse() buffer will end after first token
+
+  return @buffer
+
+
+pub parse() : count | p_str, len, i
+
+'' Parse buffer into separate tokens
+'' -- returns token count, 0..MAX_TKNS
+
+  longfill(@p_token, 0, MAX_TKNS)                               ' clear old tokens
+  ntokens := 0
+
+  if (strsize(@buffer) == 0)                                    ' abort if nothing to parse
+    bidx := 0
+    return
+
+  p_str := @buffer                                              ' point to start of input
+
+  repeat i from 0 to MAX_TKNS-1                                 ' iterate through possible tokens
+    p_str, len := get_token(p_str)                              ' get start of token and length
+    if (len == 0)                                               ' if 0, done
+      quit
+    else
+      p_token[i] := p_str                                       ' save token pointer
+      ++ntokens                                                 ' bump token count
+      if (len > 0)                                              ' if not last (positive len)
+        p_str += len+1                                          '  move past this token
+      else
+        quit
+
+  bidx := strsize(@buffer)                                      ' end of buffer is end of 1st token
+
+  return ntokens
+
+
+pri get_token(p_str) : p_head, len | c, p_tail
+
+'' Returns pointer and length of first token in p_str
+'' -- if end of p_str found, len returned as 0 (no token) or negative value (last token)
+
+  if (strsize(p_str) == 0)
+    return p_str, 0
+
+  p_head := p_str
+
+  repeat                                                        ' skip leading spaces
+    c := byte[p_head]
+    if (c == 0)                                                 ' unexpected end
+      return p_head, 0                                          '  return no token (len = 0)
+    elseif separator(c)                                         ' if sep
+      p_head++                                                  '  skip
+    else                                                        ' else token
+      quit                                                      '  done with front loop
+
+  p_tail := p_head
+
+  repeat                                                        ' iterate token chars
+    c := byte[p_tail]
+    if (c == 0)                                                 ' end of input?
+      return p_head, -len                                       '  yes return token pointer & last len
+    elseif separator(c)                                         ' end of token?
+      byte[p_tail] := 0                                         '  yes, mark
+      return p_head, len                                        '  return token pointer & len
+    else
+      ++p_tail                                                  ' keep going
+      ++len
+
+
+pri separator(c) : result | i
+
+'' Return !0 if spacer character
+
+  repeat i from 0 to strsize(@sepchars)-1
+    if (c == sepchars[i])
+      return i+1
+
+
+pub tcount() : result
+
+'' Returns count of tokens after last parse
+
+  return ntokens
+
+
+pub token(i) : p_str
+
+'' Returns pointer to token[i]
+'' -- valid token pointer will be >0
+'' -- 0 if i out of range or token not defined
+
+  if (i >= 0) && (i < MAX_TKNS)
+    return p_token[i]
+
+
+pub token_index(p_str, p_list) : idx | len
+
+'' Searches for p_str in p_list of known tokens (see below)
+'' -- case sensitive!
+'' -- returns 0..N if found
+'' -- returns -1 if p_str not in p_list
+
+  repeat
+    len := strsize(p_list)                                      ' more in list?
+    if (len > 0)
+      if (strcomp(p_str, p_list))                               ' check current list item
+        return idx                                              ' if match, return index
+      else
+        p_list += len + 1                                       ' no match, skip to next
+        ++idx                                                   ' and bump index
+    else
+      return -1                                                 ' not found
+
+{
+  Example command list
+  -- put into DAT section of application
+  -- command strings separated by single null (0)
+     * put one additional null (0) at end of list
+  -- reference this list with @Commands
+     * labels allow individual string access (e.g. strcomp())
+
+dat
+
+  Commands      byte
+  Cmd0          byte    "cmd0",    0                            ' returns  0
+  Cmd1          byte    "cmd1",    0                            ' returns  1
+  Cmd2          byte    "cmd2",    0                            ' returns  2
+  CmdHelp       byte    "help",    0                            ' returns  3
+  CmdVersion    byte    "version", 0                            ' returns  4
+  CmdInvalid    byte    0                                       ' returns -1
+}
+
+
+con { license }
+
+{{
+
+  Terms of Use: MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify,
+  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to the following
+  conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+  OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+}}
