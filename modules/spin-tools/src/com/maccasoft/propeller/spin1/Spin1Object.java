@@ -10,8 +10,6 @@
 
 package com.maccasoft.propeller.spin1;
 
-import java.io.IOException;
-
 import com.maccasoft.propeller.SpinObject;
 
 public class Spin1Object extends SpinObject {
@@ -58,20 +56,6 @@ public class Spin1Object extends SpinObject {
 
     public void setDcurr(int dcurr) {
         this.dcurr = dcurr;
-    }
-
-    @Override
-    public byte[] getBinary() throws IOException {
-        byte[] binary = super.getBinary();
-
-        binary[5] = 0;
-        byte sum = 0;
-        for (int i = 0; i < binary.length; i++) {
-            sum += binary[i];
-        }
-        binary[5] = (byte) (0x14 - sum);
-
-        return binary;
     }
 
 }

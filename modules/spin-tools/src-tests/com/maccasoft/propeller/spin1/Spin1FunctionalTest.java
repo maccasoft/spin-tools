@@ -45,7 +45,7 @@ public class Spin1FunctionalTest {
         Assertions.assertEquals(""
             + "00000 00000       00 B4 C4 04    CLKFREQ\n"
             + "00004 00004       6F             CLKMODE\n"
-            + "00005 00005       00             Checksum\n"
+            + "00005 00005       7B             Checksum\n"
             + "00006 00006       10 00          PBASE\n"
             + "00008 00008       34 00          VBASE\n"
             + "0000A 0000A       3C 00          DBASE\n"

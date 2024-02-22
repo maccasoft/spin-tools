@@ -771,11 +771,10 @@ public class P2MemoryDialog extends Dialog {
         this.object = object;
 
         try {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            object.generateBinary(os);
+            byte[] binaryData = object.getBinary();
 
             data = new byte[512 * 1024];
-            System.arraycopy(os.toByteArray(), 0, data, 0, Math.min(data.length, os.size()));
+            System.arraycopy(binaryData, 0, data, 0, Math.min(data.length, binaryData.length));
 
             clkfreq = object.getClkFreq();
             clkmode = object.getClkMode();

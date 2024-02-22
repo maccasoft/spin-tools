@@ -761,17 +761,10 @@ public class P1MemoryDialog extends Dialog {
         this.object = object;
 
         try {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            object.generateBinary(os);
+            byte[] binaryData = object.getBinary();
 
             data = new byte[32 * 1024];
-            System.arraycopy(os.toByteArray(), 0, data, 0, Math.min(data.length, os.size()));
-
-            byte sum = 0;
-            for (int i = 0; i < data.length; i++) {
-                sum += data[i];
-            }
-            data[5] = (byte) (0x14 - sum);
+            System.arraycopy(binaryData, 0, data, 0, Math.min(data.length, binaryData.length));
 
             clkfreq = object.getClkFreq();
             clkmode = object.getClkMode();

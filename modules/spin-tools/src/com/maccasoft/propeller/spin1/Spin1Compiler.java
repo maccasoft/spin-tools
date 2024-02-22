@@ -12,6 +12,7 @@ package com.maccasoft.propeller.spin1;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import com.maccasoft.propeller.Compiler;
 import com.maccasoft.propeller.CompilerException;
 import com.maccasoft.propeller.ObjectCompiler;
 import com.maccasoft.propeller.SpinObject;
+import com.maccasoft.propeller.SpinObject.ByteDataObject;
 import com.maccasoft.propeller.SpinObject.LinkDataObject;
 import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
@@ -96,7 +98,7 @@ public class Spin1Compiler extends Compiler {
             object.generateListing(listing);
         }
         if (binary != null) {
-            binary.write(object.getBinary());
+            object.generateBinary(binary);
         }
     }
 
@@ -110,7 +112,7 @@ public class Spin1Compiler extends Compiler {
 
         object.writeLong(object.getClkFreq(), "CLKFREQ");
         object.writeByte(object.getClkMode(), "CLKMODE");
-        object.writeByte(0, "Checksum");
+        ByteDataObject checksum = object.writeByte(0, "Checksum");
 
         WordDataObject pbase = object.writeWord(0, "PBASE");
         WordDataObject vbase = object.writeWord(0, "VBASE");
@@ -136,6 +138,19 @@ public class Spin1Compiler extends Compiler {
 
         offset = 4 + obj.getDcurr();
         dcurr.setValue(dbase.getValue() + offset);
+
+        try {
+            byte[] data = object.getBinary();
+
+            byte sum = 0;
+            for (int i = 0; i < data.length; i++) {
+                sum += data[i];
+            }
+            checksum.setValue(0x14 - sum);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         return object;
     }

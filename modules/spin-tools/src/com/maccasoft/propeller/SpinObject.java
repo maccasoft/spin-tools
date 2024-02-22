@@ -455,8 +455,7 @@ public abstract class SpinObject {
     public void generateBinary(OutputStream os) throws IOException {
         for (DataObject obj : data) {
             if (obj instanceof ObjectDataObject) {
-                byte[] bytes = ((ObjectDataObject) obj).getObject().getBinary();
-                os.write(bytes);
+                ((ObjectDataObject) obj).getObject().generateBinary(os);
             }
             else if (obj.bytes != null) {
                 os.write(obj.bytes);

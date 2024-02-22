@@ -363,19 +363,6 @@ class Spin1LibraryTest {
         }
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        obj.generateBinary(os);
-
-        byte[] actual = os.toByteArray();
-
-        byte sum = 0;
-        for (int i = 0; i < actual.length; i++) {
-            sum += actual[i];
-        }
-        actual[5] = (byte) (0x14 - sum);
-
-        expected[5] = actual[5] = 0;
-
-        os = new ByteArrayOutputStream();
         obj.generateListing(new PrintStream(os));
         String actualListing = os.toString();
 
