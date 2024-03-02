@@ -458,6 +458,8 @@ public class Spin2TokenMarker extends SourceTokenMarker {
         keywords.put("OUTB", TokenId.PASM_INSTRUCTION);
         keywords.put("INA", TokenId.PASM_INSTRUCTION);
         keywords.put("INB", TokenId.PASM_INSTRUCTION);
+
+        keywords.put("defined", TokenId.DIRECTIVE);
     }
 
     static Map<String, TokenId> debugKeywords = new CaseInsensitiveMap<>();

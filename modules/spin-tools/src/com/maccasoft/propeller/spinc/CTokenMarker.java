@@ -75,6 +75,8 @@ public class CTokenMarker extends SourceTokenMarker {
         keywords.put("@@BYTE", TokenId.TYPE);
         keywords.put("@@WORD", TokenId.TYPE);
         keywords.put("@@LONG", TokenId.TYPE);
+
+        keywords.put("defined", TokenId.DIRECTIVE);
     }
 
     static Map<String, TokenId> spin1Keywords = new CaseInsensitiveMap<>();

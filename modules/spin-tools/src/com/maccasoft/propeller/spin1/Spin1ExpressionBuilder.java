@@ -24,6 +24,7 @@ import com.maccasoft.propeller.expressions.And;
 import com.maccasoft.propeller.expressions.CharacterLiteral;
 import com.maccasoft.propeller.expressions.Context;
 import com.maccasoft.propeller.expressions.Decod;
+import com.maccasoft.propeller.expressions.Defined;
 import com.maccasoft.propeller.expressions.Divide;
 import com.maccasoft.propeller.expressions.Equals;
 import com.maccasoft.propeller.expressions.Expression;
@@ -365,6 +366,26 @@ public class Spin1ExpressionBuilder {
 
         if (token.type != Token.OPERATOR) {
             token = next();
+
+            switch (token.getText()) {
+                case "defined": {
+                    token = next();
+                    if (token == null || !"(".equals(token.getText())) {
+                        throw new CompilerException("expecting (", token == null ? tokens.get(tokens.size() - 1) : token);
+                    }
+                    token = next();
+                    if (token == null) {
+                        throw new CompilerException("expecting identifier", token == null ? tokens.get(tokens.size() - 1) : token);
+                    }
+                    Expression expression = new Defined(token.getText(), context);
+                    token = next();
+                    if (token == null || !")".equals(token.getText())) {
+                        throw new CompilerException("expecting )", token == null ? tokens.get(tokens.size() - 1) : token);
+                    }
+                    return expression;
+                }
+            }
+
             switch (token.getText().toUpperCase()) {
                 case "FLOAT": {
                     token = next();

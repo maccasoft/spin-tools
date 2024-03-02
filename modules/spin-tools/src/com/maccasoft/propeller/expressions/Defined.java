@@ -31,7 +31,10 @@ public class Defined extends Literal {
 
     @Override
     public Number getNumber() {
-        return Long.valueOf(context.hasSymbol(identifier) ? 1 : 0);
+        if (context.isDefined(identifier)) {
+            return Long.valueOf(-1);
+        }
+        return Long.valueOf(context.hasSymbol(identifier) ? -1 : 0);
     }
 
     @Override

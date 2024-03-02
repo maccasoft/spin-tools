@@ -160,6 +160,8 @@ public class Spin1TokenMarker extends SourceTokenMarker {
         keywords.put("VSCL", TokenId.KEYWORD);
         keywords.put("PAR", TokenId.KEYWORD);
         keywords.put("SPR", TokenId.KEYWORD);
+
+        keywords.put("defined", TokenId.DIRECTIVE);
     }
 
     static Map<String, TokenId> pasmKeywords = new CaseInsensitiveMap<>();
@@ -281,14 +283,6 @@ public class Spin1TokenMarker extends SourceTokenMarker {
                 }
                 if (index < node.getTokenCount()) {
                     tokens.add(new TokenMarker(node.getToken(index++), TokenId.DIRECTIVE));
-                }
-
-                if (node instanceof DirectiveNode.DefineNode) {
-                    Token identifier = ((DirectiveNode.DefineNode) node).getIdentifier();
-                    if (identifier != null) {
-                        symbols.put(identifier.getText(), TokenId.CONSTANT);
-                        tokens.add(new TokenMarker(identifier, TokenId.CONSTANT));
-                    }
                 }
             }
 
