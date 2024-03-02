@@ -63,7 +63,7 @@ public abstract class ObjectCompiler {
 
     public abstract void compileStep1(Node root);
 
-    public abstract void compileStep2();
+    public abstract void compileStep2(boolean keepFirst);
 
     public abstract Map<String, Expression> getPublicSymbols();
 

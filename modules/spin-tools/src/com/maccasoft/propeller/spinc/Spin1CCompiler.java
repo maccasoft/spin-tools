@@ -65,9 +65,9 @@ public class Spin1CCompiler extends Spin1Compiler {
         Spin1CObjectCompiler objectCompiler = new Spin1CObjectCompiler(this, rootFile);
         objectCompiler.compileObject(root);
 
-        objectCompiler.compileStep2();
+        objectCompiler.compileStep2(true);
         for (ObjectInfo info : childObjects) {
-            info.compiler.compileStep2();
+            info.compiler.compileStep2(false);
         }
 
         Spin1Object object = objectCompiler.generateObject(memoryOffset);

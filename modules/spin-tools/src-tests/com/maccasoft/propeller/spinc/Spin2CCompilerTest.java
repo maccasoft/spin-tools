@@ -438,17 +438,6 @@ class Spin2CCompilerTest {
             + "00019 00019       04             RETURN\n"
             + "0001A 0001A       00 00          Padding\n"
             + "' Object \"text2.spin2\" header (var size 4)\n"
-            + "0001C 00000       08 00 00 82    Method start @ $00008 (2 parameters, 0 returns)\n"
-            + "00020 00004       0E 00 00 00    End\n"
-            + "' PUB start(a, b) | c\n"
-            + "00024 00008       01             (stack size)\n"
-            + "'     c := a + b\n"
-            + "00025 00009       E0             VAR_READ LONG DBASE+$00000 (short)\n"
-            + "00026 0000A       E1             VAR_READ LONG DBASE+$00001 (short)\n"
-            + "00027 0000B       8A             ADD\n"
-            + "00028 0000C       F2             VAR_WRITE LONG DBASE+$00002 (short)\n"
-            + "00029 0000D       04             RETURN\n"
-            + "0002A 0000E       00 00          Padding\n"
             + "", compile("main.c", sources, true, false));
     }
 

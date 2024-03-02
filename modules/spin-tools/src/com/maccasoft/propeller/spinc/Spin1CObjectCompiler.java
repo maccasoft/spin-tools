@@ -1572,7 +1572,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
     }
 
     @Override
-    public void compileStep2() {
+    public void compileStep2(boolean keepFirst) {
 
         for (Variable var : variables) {
             if (!var.isReferenced() && var.getData() != null) {
@@ -1586,7 +1586,9 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                 do {
                     loop = false;
                     Iterator<Spin1Method> methodsIterator = methods.iterator();
-                    methodsIterator.next();
+                    if (keepFirst) {
+                        methodsIterator.next();
+                    }
                     while (methodsIterator.hasNext()) {
                         Spin1Method method = methodsIterator.next();
                         if (!method.isReferenced()) {
@@ -1612,20 +1614,22 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
 
             Iterator<Spin1Method> methodsIterator = methods.iterator();
 
-            Spin1Method method = methodsIterator.next();
-            for (Variable var : method.getParameters()) {
-                if (!var.isReferenced() && var.getData() != null) {
-                    logMessage(new CompilerException(CompilerException.WARNING, "parameter \"" + var.getName() + "\" is not used", var.getData()));
+            if (keepFirst) {
+                Spin1Method method = methodsIterator.next();
+                for (Variable var : method.getParameters()) {
+                    if (!var.isReferenced() && var.getData() != null) {
+                        logMessage(new CompilerException(CompilerException.WARNING, "parameter \"" + var.getName() + "\" is not used", var.getData()));
+                    }
                 }
-            }
-            for (Variable var : method.getLocalVariables()) {
-                if (!var.isReferenced() && var.getData() != null) {
-                    logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
+                for (Variable var : method.getLocalVariables()) {
+                    if (!var.isReferenced() && var.getData() != null) {
+                        logMessage(new CompilerException(CompilerException.WARNING, "local variable \"" + var.getName() + "\" is not used", var.getData()));
+                    }
                 }
             }
 
             while (methodsIterator.hasNext()) {
-                method = methodsIterator.next();
+                Spin1Method method = methodsIterator.next();
                 if (!method.isReferenced()) {
                     FunctionNode node = (FunctionNode) method.getData();
                     logMessage(new CompilerException(CompilerException.WARNING, "method \"" + method.getLabel() + "\" is not used", node.getIdentifier()));

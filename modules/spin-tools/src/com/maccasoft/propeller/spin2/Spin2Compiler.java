@@ -110,9 +110,9 @@ public class Spin2Compiler extends Compiler {
         Spin2ObjectCompiler objectCompiler = new Spin2ObjectCompiler(this, rootFile);
         objectCompiler.compileObject(root);
 
-        objectCompiler.compileStep2();
+        objectCompiler.compileStep2(true);
         for (ObjectInfo info : childObjects) {
-            info.compiler.compileStep2();
+            info.compiler.compileStep2(false);
         }
 
         int memoryOffset = 0;
