@@ -12,8 +12,6 @@ package com.maccasoft.propeller.spinc;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +44,7 @@ public class Spin2CCompiler extends Spin2Compiler {
     }
 
     @Override
-    public void compile(File file, OutputStream binary, PrintStream listing) throws Exception {
+    public Spin2Object compile(File file) throws Exception {
         String text = getSource(file.getAbsolutePath());
         if (text == null) {
             throw new FileNotFoundException();
@@ -59,12 +57,7 @@ public class Spin2CCompiler extends Spin2Compiler {
             throw new CompilerException(getMessages());
         }
 
-        if (listing != null) {
-            object.generateListing(listing);
-        }
-        if (binary != null) {
-            object.generateBinary(binary);
-        }
+        return object;
     }
 
     @Override

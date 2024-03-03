@@ -469,6 +469,24 @@ public abstract class SpinObject {
         return os.toByteArray();
     }
 
+    public void generateDatBinary(OutputStream os) throws IOException {
+        for (DataObject obj : data) {
+            if (obj instanceof ObjectDataObject) {
+                byte[] bytes = ((ObjectDataObject) obj).getObject().getDatBinary();
+                os.write(bytes);
+            }
+            else if (obj instanceof PAsmDataObject) {
+                os.write(obj.bytes);
+            }
+        }
+    }
+
+    public byte[] getDatBinary() throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        generateDatBinary(os);
+        return os.toByteArray();
+    }
+
     public void generateListing(PrintStream ps) {
         generateListing(0, ps);
     }

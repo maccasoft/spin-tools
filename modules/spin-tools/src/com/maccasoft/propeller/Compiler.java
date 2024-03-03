@@ -11,8 +11,6 @@
 package com.maccasoft.propeller;
 
 import java.io.File;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -159,7 +157,7 @@ public abstract class Compiler {
 
     }
 
-    public abstract void compile(File file, OutputStream binary, PrintStream listing) throws Exception;
+    public abstract SpinObject compile(File file) throws Exception;
 
     public abstract SpinObject compile(File rootFile, Node root);
 

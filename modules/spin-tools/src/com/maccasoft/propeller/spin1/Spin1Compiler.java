@@ -13,8 +13,6 @@ package com.maccasoft.propeller.spin1;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +79,7 @@ public class Spin1Compiler extends Compiler {
     }
 
     @Override
-    public void compile(File file, OutputStream binary, PrintStream listing) throws Exception {
+    public Spin1Object compile(File file) throws Exception {
         String text = getSource(file.getAbsolutePath());
         if (text == null) {
             throw new FileNotFoundException();
@@ -94,12 +92,7 @@ public class Spin1Compiler extends Compiler {
             throw new CompilerException(messages);
         }
 
-        if (listing != null) {
-            object.generateListing(listing);
-        }
-        if (binary != null) {
-            object.generateBinary(binary);
-        }
+        return object;
     }
 
     @Override

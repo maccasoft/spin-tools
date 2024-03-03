@@ -10,7 +10,6 @@
 
 package com.maccasoft.propeller;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -64,6 +63,7 @@ public class SpinCompiler {
             options.addOption(Option.builder("o").desc("output file name").hasArg().argName("file").build());
 
             options.addOption(new Option("b", false, "output binary file"));
+            options.addOption(new Option("c", false, "output only DAT sections"));
             options.addOption(new Option("l", false, "output listing file"));
             options.addOption(new Option("d", false, "enable debug (P2 only)"));
 
@@ -135,14 +135,17 @@ public class SpinCompiler {
             }
 
             if (binaryFile == null) {
-                binaryFile = new File(fileToCompile.getParentFile(), outName + ".binary");
+                if (cmd.hasOption('c')) {
+                    binaryFile = new File(fileToCompile.getParentFile(), outName + ".dat");
+                }
+                else {
+                    binaryFile = new File(fileToCompile.getParentFile(), outName + ".binary");
+                }
             }
-            ByteArrayOutputStream binaryData = new ByteArrayOutputStream();
 
             if (listingFile == null) {
                 listingFile = new File(fileToCompile.getParentFile(), outName + ".lst");
             }
-            PrintStream listingStream = cmd.hasOption('l') ? new PrintStream(new FileOutputStream(listingFile)) : null;
 
             println("Compiling...");
 
@@ -199,28 +202,39 @@ public class SpinCompiler {
             compiler.setSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
             compiler.setDebugEnabled(cmd.hasOption('d'));
             compiler.setRemoveUnusedMethods(cmd.hasOption('u'));
-            try {
-                compiler.compile(fileToCompile, binaryData, listingStream);
-                print(compiler.getObjectTree().toString());
 
-                for (CompilerException e : compiler.getMessages()) {
-                    println(e);
-                }
-            } finally {
-                if (listingStream != null) {
-                    listingStream.close();
-                }
-            }
+            SpinObject object = compiler.compile(fileToCompile);
 
+            byte[] binaryData = null;
             if (cmd.hasOption('b')) {
+                binaryData = object.getBinary();
+            }
+            if (cmd.hasOption('c')) {
+                binaryData = object.getDatBinary();
+            }
+            if (binaryData != null) {
                 FileOutputStream os = new FileOutputStream(binaryFile);
-                os.write(binaryData.toByteArray());
+                os.write(binaryData);
                 os.close();
             }
 
-            println("Program size is " + binaryData.size() + " bytes");
+            if (cmd.hasOption('l')) {
+                PrintStream os = new PrintStream(new FileOutputStream(listingFile));
+                object.generateListing(os);
+                os.close();
+            }
 
-            if (cmd.hasOption('r') || cmd.hasOption('f')) {
+            print(compiler.getObjectTree().toString());
+
+            for (CompilerException e : compiler.getMessages()) {
+                println(e);
+            }
+
+            if (binaryData != null) {
+                println("Program size is " + binaryData.length + " bytes");
+            }
+
+            if (binaryData != null && (cmd.hasOption('r') || cmd.hasOption('f'))) {
                 SerialPort serialPort = cmd.hasOption('p') ? new SerialPort(cmd.getOptionValue('p')) : null;
 
                 println("Uploading...");
@@ -318,7 +332,7 @@ public class SpinCompiler {
                     if (serialPort == null) {
                         loader.detect();
                     }
-                    loader.upload(binaryData.toByteArray(), cmd.hasOption("f") ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY);
+                    loader.upload(binaryData, cmd.hasOption("f") ? Propeller1Loader.DOWNLOAD_RUN_EEPROM : Propeller1Loader.DOWNLOAD_RUN_BINARY);
                     serialPort = loader.getSerialPort();
                 }
                 else {
@@ -384,7 +398,7 @@ public class SpinCompiler {
                     if (serialPort == null) {
                         loader.detect();
                     }
-                    loader.upload(binaryData.toByteArray(), cmd.hasOption("f") ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM);
+                    loader.upload(binaryData, cmd.hasOption("f") ? Propeller2Loader.DOWNLOAD_RUN_FLASH : Propeller2Loader.DOWNLOAD_RUN_RAM);
                     serialPort = loader.getSerialPort();
                 }
 
