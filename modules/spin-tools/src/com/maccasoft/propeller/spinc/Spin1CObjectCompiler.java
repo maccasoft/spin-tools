@@ -91,6 +91,7 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
         if (parent != null) {
             scope.addDefinitions(parent.getScope().getDefinitions());
         }
+        scope.addDefinitions(compiler.getDefines());
 
         this.scope.addDefinition("__P1__", new NumberLiteral(1));
         this.scope.addDefinition("__P2__", new NumberLiteral(0));

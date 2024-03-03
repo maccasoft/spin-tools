@@ -13,6 +13,7 @@ package com.maccasoft.propeller;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,6 +22,7 @@ import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.SourceProvider;
+import com.maccasoft.propeller.model.Token;
 
 public abstract class Compiler {
 
@@ -128,6 +130,7 @@ public abstract class Compiler {
     protected SourceProvider sourceProvider;
 
     boolean caseSensitive;
+    Map<String, List<Token>> defines = new HashMap<>();
 
     public Compiler() {
 
@@ -253,6 +256,16 @@ public abstract class Compiler {
 
     public void setCaseSensitive(boolean caseSensitive) {
         this.caseSensitive = caseSensitive;
+    }
+
+    public abstract void addDefine(String key, String value);
+
+    public void addDefine(String key, List<Token> value) {
+        this.defines.put(key, value);
+    }
+
+    public Map<String, List<Token>> getDefines() {
+        return defines;
     }
 
 }

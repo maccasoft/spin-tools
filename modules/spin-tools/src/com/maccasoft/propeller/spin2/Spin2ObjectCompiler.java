@@ -106,6 +106,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         if (parent != null) {
             scope.addDefinitions(parent.getScope().getDefinitions());
         }
+        scope.addDefinitions(compiler.getDefines());
 
         scope.addDefinition("__P1__", new NumberLiteral(0));
         scope.addDefinition("__P2__", new NumberLiteral(1));

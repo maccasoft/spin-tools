@@ -27,6 +27,8 @@ import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.expressions.Method;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TokenStream;
 import com.maccasoft.propeller.spinc.Spin2CObjectCompiler;
 
 public class Spin2Compiler extends Compiler {
@@ -65,6 +67,18 @@ public class Spin2Compiler extends Compiler {
     @Override
     public void setDebugEnabled(boolean enabled) {
         this.debugEnabled = enabled;
+    }
+
+    @Override
+    public void addDefine(String identifier, String value) {
+        Token token;
+
+        List<Token> list = new ArrayList<>();
+        TokenStream stream = new Spin2TokenStream(value);
+        while ((token = stream.nextToken()).type != Token.EOF) {
+            list.add(token);
+        }
+        addDefine(identifier, list);
     }
 
     @Override

@@ -27,6 +27,8 @@ import com.maccasoft.propeller.SpinObject.LongDataObject;
 import com.maccasoft.propeller.SpinObject.WordDataObject;
 import com.maccasoft.propeller.expressions.Expression;
 import com.maccasoft.propeller.model.Node;
+import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TokenStream;
 
 public class Spin1Compiler extends Compiler {
 
@@ -76,6 +78,18 @@ public class Spin1Compiler extends Compiler {
 
     public void setFoldConstants(boolean foldConstants) {
         this.foldConstants = foldConstants;
+    }
+
+    @Override
+    public void addDefine(String identifier, String value) {
+        Token token;
+
+        List<Token> list = new ArrayList<>();
+        TokenStream stream = new Spin1TokenStream(value);
+        while ((token = stream.nextToken()).type != Token.EOF) {
+            list.add(token);
+        }
+        addDefine(identifier, list);
     }
 
     @Override

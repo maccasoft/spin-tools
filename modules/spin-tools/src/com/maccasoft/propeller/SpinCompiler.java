@@ -17,6 +17,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
@@ -59,6 +60,7 @@ public class SpinCompiler {
         try {
             Options options = new Options();
             options.addOption(Option.builder("L").desc("add a directory to the library path").hasArg().argName("path").build());
+            options.addOption(Option.builder("D").desc("add a define").hasArg().argName("define").build());
 
             options.addOption(Option.builder("o").desc("output file name").hasArg().argName("file").build());
 
@@ -68,8 +70,8 @@ public class SpinCompiler {
             options.addOption(new Option("d", false, "enable debug (P2 only)"));
 
             OptionGroup targetOptions = new OptionGroup();
-            targetOptions.addOption(new Option("p1", false, "compiler for P1 target (C source only)"));
-            targetOptions.addOption(new Option("p2", false, "compiler for P2 target (C source only)"));
+            targetOptions.addOption(new Option("p1", false, "compile for P1 target (C source only)"));
+            targetOptions.addOption(new Option("p2", false, "compile for P2 target (C source only)"));
             options.addOptionGroup(targetOptions);
 
             OptionGroup uploadOptions = new OptionGroup();
@@ -202,6 +204,27 @@ public class SpinCompiler {
             compiler.setSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
             compiler.setDebugEnabled(cmd.hasOption('d'));
             compiler.setRemoveUnusedMethods(cmd.hasOption('u'));
+
+            if (cmd.hasOption('D')) {
+                Pattern p1 = Pattern.compile("([A-Za-z_][A-Za-z0-9_]+)=(.+)");
+                Pattern p2 = Pattern.compile("([A-Za-z_][A-Za-z0-9_]+)");
+                for (String s : cmd.getOptionValues('D')) {
+                    Matcher m = p1.matcher(s);
+                    if (m.matches()) {
+                        compiler.addDefine(m.group(1), m.group(2));
+                    }
+                    else {
+                        m = p2.matcher(s);
+                        if (m.matches()) {
+                            compiler.addDefine(m.group(1), "");
+                        }
+                        else {
+                            println("Invalid command line option: " + s);
+                            System.exit(1);
+                        }
+                    }
+                }
+            }
 
             SpinObject object = compiler.compile(fileToCompile);
 
