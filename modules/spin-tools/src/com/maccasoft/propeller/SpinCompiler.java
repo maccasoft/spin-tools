@@ -77,14 +77,16 @@ public class SpinCompiler {
             uploadOptions.addOption(new Option("f", false, "upload program to flash/eeprom and run"));
             options.addOptionGroup(uploadOptions);
 
+            options.addOption(new Option("u", false, "enable unused methods removal"));
+
+            options.addOption(new Option("C", "x-case", false, "case-sensitive spin symbols"));
+            options.addOption(new Option(null, "x-openspin", false, "enable OpenSpin compatibility (P1)"));
+
             options.addOption(Option.builder("p").desc("serial port").hasArg().argName("port").build());
             OptionGroup terminalOptions = new OptionGroup();
             terminalOptions.addOption(Option.builder("t").desc("enter terminal mode after upload (optional baud rate)").hasArg().argName("baud").optionalArg(true).build());
             terminalOptions.addOption(Option.builder("T").desc("enter PST terminal mode after upload (optional baud rate)").hasArg().argName("baud").optionalArg(true).build());
             options.addOptionGroup(terminalOptions);
-
-            options.addOption("u", false, "suppress unused methods warning");
-            options.addOption("c", false, "case-sensitive symbols");
 
             options.addOption("q", false, "quiet mode");
 
@@ -97,6 +99,7 @@ public class SpinCompiler {
 
             if (cmd.getArgList().size() != 1) {
                 HelpFormatter help = new HelpFormatter();
+                help.setWidth(-1);
                 help.setOptionComparator(null);
                 help.printHelp("spinc [options] <file.spin | file.spin2 | file.c>", null, options, null, false);
                 System.exit(1);
@@ -143,7 +146,6 @@ public class SpinCompiler {
 
             println("Compiling...");
 
-            boolean caseSensitive = cmd.hasOption('c');
             String suffix = name.substring(name.lastIndexOf('.')).toLowerCase();
 
             Compiler compiler = null;
@@ -191,11 +193,12 @@ public class SpinCompiler {
             }
             else {
                 compiler = new Spin1Compiler();
+                ((Spin1Compiler) compiler).setOpenspinCompatible(cmd.hasOption("x-openspin"));
             }
-            compiler.setCaseSensitive(caseSensitive);
+            compiler.setCaseSensitive(cmd.hasOption("C") || cmd.hasOption("x-case"));
             compiler.setSourceProvider(new Compiler.FileSourceProvider(libraryPaths.toArray(new File[libraryPaths.size()])));
             compiler.setDebugEnabled(cmd.hasOption('d'));
-            compiler.setRemoveUnusedMethods(true);
+            compiler.setRemoveUnusedMethods(cmd.hasOption('u'));
             try {
                 compiler.compile(fileToCompile, binaryData, listingStream);
                 print(compiler.getObjectTree().toString());
