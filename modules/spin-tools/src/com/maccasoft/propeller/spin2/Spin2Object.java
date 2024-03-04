@@ -10,6 +10,7 @@
 
 package com.maccasoft.propeller.spin2;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -209,6 +210,18 @@ public class Spin2Object extends SpinObject {
         code[index + 1] = (byte) (value >> 8);
         code[index + 2] = (byte) (value >> 16);
         code[index + 3] = (byte) (value >> 24);
+    }
+
+    public byte[] getFlash() throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        generateBinary(os);
+
+        int count = (512 * 1024) - os.size();
+        if (count > 0) {
+            os.write(new byte[count]);
+        }
+
+        return os.toByteArray();
     }
 
 }

@@ -10,6 +10,9 @@
 
 package com.maccasoft.propeller.spin1;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import com.maccasoft.propeller.SpinObject;
 
 public class Spin1Object extends SpinObject {
@@ -56,6 +59,18 @@ public class Spin1Object extends SpinObject {
 
     public void setDcurr(int dcurr) {
         this.dcurr = dcurr;
+    }
+
+    public byte[] getEEprom() throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        generateBinary(os);
+
+        int count = (32 * 1024) - os.size();
+        if (count > 0) {
+            os.write(new byte[count]);
+        }
+
+        return os.toByteArray();
     }
 
 }

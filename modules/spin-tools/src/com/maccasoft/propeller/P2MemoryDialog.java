@@ -11,9 +11,12 @@
 package com.maccasoft.propeller;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.NumberFormat;
+import java.util.List;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -45,6 +48,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.ScrollBar;
@@ -113,9 +117,9 @@ public class P2MemoryDialog extends Dialog {
             listBackground = display.getSystemColor(SWT.COLOR_LIST_BACKGROUND);
 
             if (Display.isSystemDarkTheme()) {
-                codeBackground = new Color(121, 0, 0);
-                variablesBackground = new Color(121, 121, 0);
-                stackFreeBackground = new Color(0, 121, 121);
+                codeBackground = ColorRegistry.getColor(121, 0, 0);
+                variablesBackground = ColorRegistry.getColor(121, 121, 0);
+                stackFreeBackground = ColorRegistry.getColor(0, 121, 121);
             }
             else {
                 codeBackground = ColorRegistry.getColor(255, 191, 191);
@@ -124,31 +128,31 @@ public class P2MemoryDialog extends Dialog {
             }
         }
         else if ("dark".equals(id)) {
-            widgetForeground = new Color(0xF0, 0xF0, 0xF0);
-            widgetBackground = new Color(0x50, 0x55, 0x57);
-            listForeground = new Color(0xA7, 0xA7, 0xA7);
-            listBackground = new Color(0x2B, 0x2B, 0x2B);
-            tabfolderBackground = new Color(0x43, 0x44, 0x47);
-            labelForeground = new Color(0xD7, 0xD7, 0xD7);
-            buttonBackground = new Color(0x50, 0x55, 0x57);
+            widgetForeground = ColorRegistry.getColor(0xF0, 0xF0, 0xF0);
+            widgetBackground = ColorRegistry.getColor(0x50, 0x55, 0x57);
+            listForeground = ColorRegistry.getColor(0xA7, 0xA7, 0xA7);
+            listBackground = ColorRegistry.getColor(0x2B, 0x2B, 0x2B);
+            tabfolderBackground = ColorRegistry.getColor(0x43, 0x44, 0x47);
+            labelForeground = ColorRegistry.getColor(0xD7, 0xD7, 0xD7);
+            buttonBackground = ColorRegistry.getColor(0x50, 0x55, 0x57);
 
-            codeBackground = new Color(121, 0, 0);
-            variablesBackground = new Color(121, 121, 0);
-            stackFreeBackground = new Color(0, 121, 121);
+            codeBackground = ColorRegistry.getColor(121, 0, 0);
+            variablesBackground = ColorRegistry.getColor(121, 121, 0);
+            stackFreeBackground = ColorRegistry.getColor(0, 121, 121);
         }
         else if ("light".equals(id)) {
-            widgetForeground = new Color(0x00, 0x00, 0x00);
+            widgetForeground = ColorRegistry.getColor(0x00, 0x00, 0x00);
             if ("win32".equals(Platform.PLATFORM)) {
-                widgetBackground = new Color(0xF0, 0xF0, 0xF0);
+                widgetBackground = ColorRegistry.getColor(0xF0, 0xF0, 0xF0);
             }
             else {
-                widgetBackground = new Color(0xFA, 0xFA, 0xFA);
+                widgetBackground = ColorRegistry.getColor(0xFA, 0xFA, 0xFA);
             }
-            listForeground = new Color(0x00, 0x00, 0x00);
-            listBackground = new Color(0xFE, 0xFE, 0xFE);
+            listForeground = ColorRegistry.getColor(0x00, 0x00, 0x00);
+            listBackground = ColorRegistry.getColor(0xFE, 0xFE, 0xFE);
             tabfolderBackground = widgetBackground;
-            labelForeground = new Color(0x00, 0x00, 0x00);
-            buttonBackground = new Color(0xFA, 0xFA, 0xFA);
+            labelForeground = ColorRegistry.getColor(0x00, 0x00, 0x00);
+            buttonBackground = ColorRegistry.getColor(0xFA, 0xFA, 0xFA);
 
             codeBackground = ColorRegistry.getColor(255, 191, 191);
             variablesBackground = ColorRegistry.getColor(255, 248, 192);
@@ -771,10 +775,7 @@ public class P2MemoryDialog extends Dialog {
         this.object = object;
 
         try {
-            byte[] binaryData = object.getBinary();
-
-            data = new byte[512 * 1024];
-            System.arraycopy(binaryData, 0, data, 0, Math.min(data.length, binaryData.length));
+            data = object.getFlash();
 
             clkfreq = object.getClkFreq();
             clkmode = object.getClkMode();
@@ -822,11 +823,61 @@ public class P2MemoryDialog extends Dialog {
     }
 
     protected void doSaveBinary() {
-
+        File fileToSave = getFileToWrite();
+        try {
+            FileOutputStream os = new FileOutputStream(fileToSave);
+            object.setClockSetter(Preferences.getInstance().getSpin2ClockSetter());
+            os.write(object.getBinary());
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     protected void doSaveListing() {
+        File fileToSave = getFileToWrite();
+        try {
+            PrintStream os = new PrintStream(new FileOutputStream(fileToSave));
+            object.generateListing(os);
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
+    protected File getFileToWrite() {
+        FileDialog dlg = new FileDialog(getShell(), SWT.SAVE);
+        dlg.setOverwrite(true);
+        dlg.setText("Save Binary File");
+        String[] filterNames = new String[] {
+            "Binary Files"
+        };
+        String[] filterExtensions = new String[] {
+            "*.bin;*.binary"
+        };
+        dlg.setFilterNames(filterNames);
+        dlg.setFilterExtensions(filterExtensions);
+
+        String name = tree.getName();
+        int i = name.lastIndexOf('.');
+        dlg.setFileName(name.substring(0, i) + ".binary");
+
+        List<String> lru = Preferences.getInstance().getLru();
+
+        File filterPath = tree.getFile();
+        if (filterPath == null && lru.size() != 0) {
+            filterPath = new File(lru.get(0));
+        }
+        if (filterPath != null) {
+            dlg.setFilterPath(filterPath.getParent());
+        }
+
+        String fileName = dlg.open();
+        if (fileName != null) {
+            return new File(fileName);
+        }
+
+        return null;
     }
 
 }
