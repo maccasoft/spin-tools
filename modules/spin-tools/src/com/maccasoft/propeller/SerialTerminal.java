@@ -136,7 +136,7 @@ public class SerialTerminal {
 
     static List<Integer> baudRates = Arrays.asList(new Integer[] {
         300, 600, 1200, 2400, 4800, 9600, 19200, 31250, 38400, 57600, 115200,
-        230400, 250000, 460800, 9216000, 1000000, 1500000, 2000000, 3000000
+        230400, 250000, 460800, 921600, 1000000, 1500000, 1843200, 2000000, 3000000
     });
 
     TerminalEmulation emulation;
@@ -1775,6 +1775,19 @@ public class SerialTerminal {
             }
 
         });
+
+        for (int i = baudRates.size() - 1; i >= 0; i--) {
+            int dteRate = baudRates.get(i);
+            int brg1 = ((48000000 / 4) / dteRate) - 1; // (48000000 / (4 * dteRate)) - 1;
+            int brg2 = ((48000000 / 4) / dteRate) - 1; // (48000000 / (4 * dteRate)) - 1;
+            int actualRate1 = 48000000 / (4 * (brg1 + 1));
+            int actualRate2 = 48000000 / (4 * (brg2 + 1));
+            double diff1 = Math.abs((double) (actualRate1 - dteRate) / dteRate * 100.0);
+            double diff2 = Math.abs((double) (actualRate2 - dteRate) / dteRate * 100.0);
+            System.out.println(String.format("    { %8d, 0x%02X, 0x%02X, 0x%02X, 0x%02X }, // %8d %-2.2f %8d %-2.2f", dteRate, (brg1 >> 8) & 0xFF, brg1 & 0xFF, (brg2 >> 8) & 0xFF, brg2 & 0xFF,
+                actualRate1, diff1, actualRate2, diff2));
+        }
+        System.out.println(String.format("    { %8d, 0x%02X, 0x%02X }", 0, 0, 0));
 
         Realm.runWithDefault(DisplayRealm.getRealm(display), new Runnable() {
 
