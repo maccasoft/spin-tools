@@ -92,6 +92,8 @@ public class SerialTerminal {
     public static final int CURSOR_FLASH = 0x01;
     public static final int CURSOR_SOLID = 0x00;
 
+    public static final int CURSOR_DISPLAY = 0x1000;
+
     public static final int FRAME_TIMER = 16;
 
     Display display;
@@ -184,7 +186,7 @@ public class SerialTerminal {
             counter++;
             if (counter >= 15) {
                 if ((cursorState & CURSOR_FLASH) != 0) {
-                    if ((cursorState ^= CURSOR_ON) != 0) {
+                    if ((cursorState ^= CURSOR_DISPLAY) != 0) {
                         redraw(Math.min(cx, screenWidth - 1) * characterWidth, cy * characterHeight, characterWidth, characterHeight);
                     }
                 }
@@ -610,6 +612,24 @@ public class SerialTerminal {
                             state = 0;
                             break;
 
+                        case 'h':
+                            if (prefix == '?') {
+                                if (args[0] == 25) {
+                                    cursorState |= CURSOR_ON;
+                                }
+                                break;
+                            }
+                            break;
+
+                        case 'l':
+                            if (prefix == '?') {
+                                if (args[0] == 25) {
+                                    cursorState &= ~CURSOR_ON;
+                                }
+                                break;
+                            }
+                            break;
+
                         default:
                             state = 0;
                             break;
@@ -874,7 +894,7 @@ public class SerialTerminal {
         serialBaudRate = preferences.getTerminalBaudRate();
         localEcho = preferences.getTerminalLocalEcho();
 
-        cursorState = CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
+        cursorState = CURSOR_DISPLAY | CURSOR_ON | CURSOR_FLASH | CURSOR_ULINE;
 
         Font textFont = JFaceResources.getTextFont();
         FontData fontData = textFont.getFontData()[0];
@@ -1096,7 +1116,7 @@ public class SerialTerminal {
                     }
                 }
 
-                if ((cursorState & CURSOR_ON) != 0) {
+                if ((cursorState & (CURSOR_DISPLAY | CURSOR_ON)) == (CURSOR_DISPLAY | CURSOR_ON)) {
                     int h = characterHeight;
                     if ((cursorState & CURSOR_ULINE) != 0) {
                         h = characterHeight / 4;
