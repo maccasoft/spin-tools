@@ -35,7 +35,29 @@ public class FileUtils {
             data = s.getBytes("UTF-8");
         }
 
-        return new String(data).replaceAll(EOL_PATTERN, System.lineSeparator());
+        String text = new String(data).replaceAll(EOL_PATTERN, System.lineSeparator());
+
+        return replaceTabs(text, 8);
+    }
+
+    public static String replaceTabs(String text, int tabs) {
+        String spaces = " ".repeat(tabs);
+
+        int i = 0;
+        while ((i = text.indexOf('\t', i)) != -1) {
+            int s = i;
+            while (s > 0) {
+                s--;
+                if (text.charAt(s) == '\r' || text.charAt(s) == '\n') {
+                    s++;
+                    break;
+                }
+            }
+            int n = ((i - s) % tabs);
+            text = text.substring(0, i) + spaces.substring(0, tabs - n) + text.substring(i + 1);
+        }
+
+        return text;
     }
 
     public static byte[] loadBinaryFromFile(File file) throws Exception {

@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
 
 class Spin2ExamplesTest {
@@ -186,7 +187,7 @@ class Spin2ExamplesTest {
     }
 
     void compileAndCompare(File source, File binary) throws Exception {
-        String text = loadFromFile(source);
+        String text = FileUtils.replaceTabs(loadFromFile(source), 8);
         byte[] expected = loadBinaryFromFile(binary);
 
         Spin2TokenStream stream = new Spin2TokenStream(text);

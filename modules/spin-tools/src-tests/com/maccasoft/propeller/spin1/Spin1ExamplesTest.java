@@ -10,11 +10,9 @@
 
 package com.maccasoft.propeller.spin1;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.io.PrintStream;
 
@@ -23,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import com.maccasoft.propeller.Compiler.FileSourceProvider;
 import com.maccasoft.propeller.CompilerException;
+import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.model.Node;
 
 class Spin1ExamplesTest {
@@ -340,7 +339,7 @@ class Spin1ExamplesTest {
     }
 
     void compileAndCompare(File source, File binary) throws Exception {
-        String text = loadFromFile(source);
+        String text = FileUtils.loadFromFile(source);
         byte[] expected = loadBinaryFromFile(binary);
 
         Spin1TokenStream stream = new Spin1TokenStream(text);
@@ -372,24 +371,6 @@ class Spin1ExamplesTest {
         String expectedListing = os.toString();
 
         Assertions.assertEquals(expectedListing, actualListing);
-    }
-
-    String loadFromFile(File file) {
-        String line;
-        StringBuilder sb = new StringBuilder();
-
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-                sb.append("\n");
-            }
-            reader.close();
-        } catch (Exception e) {
-            throw new RuntimeException("error reading file " + file, e);
-        }
-
-        return sb.toString();
     }
 
     byte[] loadBinaryFromFile(File file) {

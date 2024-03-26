@@ -86,6 +86,7 @@ import com.maccasoft.propeller.SourceTokenMarker.TokenId;
 import com.maccasoft.propeller.SourceTokenMarker.TokenMarker;
 import com.maccasoft.propeller.internal.ColorRegistry;
 import com.maccasoft.propeller.internal.ContentProposalAdapter;
+import com.maccasoft.propeller.internal.FileUtils;
 import com.maccasoft.propeller.internal.HTMLStyledTextDecorator;
 import com.maccasoft.propeller.internal.IContentProposalListener2;
 import com.maccasoft.propeller.internal.StyledTextContentAdapter;
@@ -342,6 +343,10 @@ public class SourceEditor {
 
             @Override
             public void verifyText(VerifyEvent e) {
+                if (e.text.indexOf('\t') != -1) {
+                    e.text = FileUtils.replaceTabs(e.text, styledText.getTabs());
+                }
+
                 String replacedText = styledText.getTextRange(e.start, e.end - e.start);
                 if (!ignoreUndo) {
                     if (currentChange == null || currentChange.isExpired()) {
