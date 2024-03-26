@@ -60,6 +60,8 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.FocusAdapter;
+import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.MenuEvent;
 import org.eclipse.swt.events.MenuListener;
 import org.eclipse.swt.events.MouseAdapter;
@@ -458,6 +460,17 @@ public class SpinTools {
         });
         fileBrowser.addOpenListener(openListener);
 
+        tabFolder.addFocusListener(new FocusAdapter() {
+
+            @Override
+            public void focusGained(FocusEvent event) {
+                CTabItem tabItem = tabFolder.getSelection();
+                if (tabItem != null) {
+                    EditorTab editorTab = (EditorTab) tabItem.getData();
+                    editorTab.setFocus();
+                }
+            }
+        });
         tabFolder.addTraverseListener(new TraverseListener() {
 
             @Override

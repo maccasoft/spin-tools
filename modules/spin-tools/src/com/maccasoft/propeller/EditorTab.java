@@ -609,6 +609,9 @@ public class EditorTab implements FindReplaceTarget {
         tabItem = new CTabItem(folder, SWT.NONE);
         tabItem.setShowClose(true);
         tabItem.setText(tabItemText);
+        if (file != null) {
+            tabItem.setToolTipText(file.getAbsolutePath());
+        }
         tabItem.setData(this);
 
         FontData[] fontData = tabItem.getFont().getFontData();
@@ -753,6 +756,9 @@ public class EditorTab implements FindReplaceTarget {
         File localFile = this.file != null ? this.file : new File(tabItemText).getAbsoluteFile();
         sourcePool.removeParsedSource(localFile);
 
+        if (file != null) {
+            tabItem.setToolTipText(file.getAbsolutePath());
+        }
         this.file = file;
 
         if (tabItemText.toLowerCase().endsWith(".spin")) {
