@@ -421,9 +421,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     conditionStack.push(new Condition(node, true, skip));
                 }
             }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
-            }
         }
         else if ("ifndef".equals(token.getText())) {
             if (!skip) {
@@ -463,9 +460,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     conditionStack.push(new Condition(node, true, skip));
                 }
             }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
-            }
         }
         else if ("else".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
@@ -477,9 +471,6 @@ public class Spin1CObjectCompiler extends Spin1CBytecodeCompiler {
                     condition.skip = !condition.skip;
                     condition.flipped = true;
                 }
-            }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
             }
         }
         else if ("if".equals(token.getText())) {

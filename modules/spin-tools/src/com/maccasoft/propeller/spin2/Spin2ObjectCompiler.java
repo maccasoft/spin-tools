@@ -2192,9 +2192,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     conditionStack.push(new Condition(node, true, skip));
                 }
             }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
-            }
         }
         else if ("ifndef".equals(token.getText())) {
             if (!skip) {
@@ -2234,9 +2231,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     conditionStack.push(new Condition(node, true, skip));
                 }
             }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
-            }
         }
         else if ("else".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
@@ -2248,9 +2242,6 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     condition.skip = !condition.skip;
                     condition.flipped = true;
                 }
-            }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
             }
         }
         else if ("if".equals(token.getText())) {

@@ -563,6 +563,79 @@ class Spin1PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testPreprocessorConditional() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "#ifdef _TEST\n"
+            + "                mov   a, #1\n"
+            + "#endif\n"
+            + "                ret\n"
+            + "a               res   1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       08 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                                    org     $000\n"
+            + "00004 00004   000 00 00 7C 5C                        ret\n"
+            + "00008 00008   001                a                   res     1\n"
+            + "", compile(text, false));
+    }
+
+    @Test
+    void testPreprocessorElseConditional() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "#ifdef _TEST\n"
+            + "                mov   a, #1\n"
+            + "#else\n"
+            + "                mov   a, #2\n"
+            + "#endif\n"
+            + "                ret\n"
+            + "a               res   1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       0C 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                                    org     $000\n"
+            + "00004 00004   000 02 04 FC A0                        mov     a, #2\n"
+            + "00008 00008   001 00 00 7C 5C                        ret\n"
+            + "0000C 0000C   002                a                   res     1\n"
+            + "", compile(text, false));
+    }
+
+    @Test
+    void testPreprocessorNestedConditional() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "#ifdef _DEBUG\n"
+            + "#ifdef _TEST\n"
+            + "                mov   a, #1\n"
+            + "#else\n"
+            + "                mov   a, #2\n"
+            + "#endif\n"
+            + "#endif\n"
+            + "                ret\n"
+            + "a               res   1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 0)\n"
+            + "00000 00000       08 00          Object size\n"
+            + "00002 00002       01             Method count + 1\n"
+            + "00003 00003       00             Object count\n"
+            + "00004 00004   000                                    org     $000\n"
+            + "00004 00004   000 00 00 7C 5C                        ret\n"
+            + "00008 00008   001                a                   res     1\n"
+            + "", compile(text, false));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

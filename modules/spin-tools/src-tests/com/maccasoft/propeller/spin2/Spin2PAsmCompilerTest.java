@@ -1002,6 +1002,70 @@ class Spin2PAsmCompilerTest {
             + "", compile(text));
     }
 
+    @Test
+    void testPreprocessorConditional() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "#ifdef _TEST\n"
+            + "                mov   a, #1\n"
+            + "#endif\n"
+            + "                ret\n"
+            + "a               res   1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 2D 00 64 FD                        ret\n"
+            + "00004 00004   001                a                   res     1\n"
+            + "", compile(text, false));
+    }
+
+    @Test
+    void testPreprocessorElseConditional() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "#ifdef _TEST\n"
+            + "                mov   a, #1\n"
+            + "#else\n"
+            + "                mov   a, #2\n"
+            + "#endif\n"
+            + "                ret\n"
+            + "a               res   1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 02 04 04 F6                        mov     a, #2\n"
+            + "00004 00004   001 2D 00 64 FD                        ret\n"
+            + "00008 00008   002                a                   res     1\n"
+            + "", compile(text, false));
+    }
+
+    @Test
+    void testPreprocessorNestedConditional() throws Exception {
+        String text = ""
+            + "DAT             org   $000\n"
+            + "#ifdef _DEBUG\n"
+            + "#ifdef _TEST\n"
+            + "                mov   a, #1\n"
+            + "#else\n"
+            + "                mov   a, #2\n"
+            + "#endif\n"
+            + "#endif\n"
+            + "                ret\n"
+            + "a               res   1\n"
+            + "";
+
+        Assertions.assertEquals(""
+            + "' Object header (var size 4)\n"
+            + "00000 00000   000                                    org     $000\n"
+            + "00000 00000   000 2D 00 64 FD                        ret\n"
+            + "00004 00004   001                a                   res     1\n"
+            + "", compile(text, false));
+    }
+
     String compile(String text) throws Exception {
         return compile(text, false);
     }

@@ -1748,9 +1748,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     conditionStack.push(new Condition(node, true, skip));
                 }
             }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
-            }
         }
         else if ("ifndef".equals(token.getText())) {
             if (!skip) {
@@ -1790,9 +1787,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     conditionStack.push(new Condition(node, true, skip));
                 }
             }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
-            }
         }
         else if ("else".equals(token.getText())) {
             if (conditionStack.isEmpty()) {
@@ -1804,9 +1798,6 @@ public class Spin1ObjectCompiler extends Spin1BytecodeCompiler {
                     condition.skip = !condition.skip;
                     condition.flipped = true;
                 }
-            }
-            else {
-                conditionStack.push(new Condition(node, false, skip));
             }
         }
         else if ("if".equals(token.getText())) {
