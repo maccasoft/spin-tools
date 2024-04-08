@@ -24,6 +24,12 @@ public class StructureVariable extends Variable {
         this.align = align;
     }
 
+    public void addVariable(Variable var) {
+        elements.put(var.getName(), var);
+
+        typeSize += var.getTypeSize() * var.getSize();
+    }
+
     public Variable addVariable(String type, String name, int size) {
         int varSize = size;
         if ("WORD".equalsIgnoreCase(type)) {
@@ -40,6 +46,34 @@ public class StructureVariable extends Variable {
         }
 
         Variable var = new Variable(type, name, size, getOffset() + typeSize) {
+
+            @Override
+            public void setCalledBy(Object method) {
+                StructureVariable.this.setCalledBy(method);
+            }
+
+            @Override
+            public void removeCalledBy(Object method) {
+                StructureVariable.this.removeCalledBy(method);
+            }
+
+            @Override
+            public boolean isReferenced() {
+                return StructureVariable.this.isReferenced();
+            }
+
+        };
+        elements.put(name, var);
+
+        typeSize += varSize;
+
+        return var;
+    }
+
+    public Variable addVariable(String type, int varTypeSize, String name, int size) {
+        int varSize = size * varTypeSize;
+
+        Variable var = new Variable("BYTE", name, size, getOffset() + typeSize) {
 
             @Override
             public void setCalledBy(Object method) {

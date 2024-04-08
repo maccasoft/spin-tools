@@ -56,6 +56,14 @@ public class TypeDefinitionNode extends Node {
     public Token type;
     public Token identifier;
 
+    public TypeDefinitionNode(Node parent, Token identifier) {
+        super(parent);
+        this.identifier = identifier;
+        if (identifier != null) {
+            tokens.add(identifier);
+        }
+    }
+
     public TypeDefinitionNode(Node parent, Token type, Token identifier) {
         super(parent);
         this.type = type;

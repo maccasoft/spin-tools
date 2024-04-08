@@ -33,6 +33,7 @@ import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
@@ -770,6 +771,12 @@ public class Spin2TokenMarker extends SourceTokenMarker {
             }
 
             @Override
+            public void visitTypeDefinition(TypeDefinitionNode node) {
+                symbols.put(node.getIdentifier().getText(), TokenId.TYPE);
+                tokens.add(new TokenMarker(node.getIdentifier(), TokenId.CONSTANT));
+            }
+
+            @Override
             public boolean visitVariables(VariablesNode node) {
                 tokens.add(new TokenMarker(node.getTokens().get(0), TokenId.SECTION));
                 return true;
@@ -919,6 +926,35 @@ public class Spin2TokenMarker extends SourceTokenMarker {
                 }
                 if (node.getMultiplier() != null) {
                     markTokens(node.getMultiplier(), 0, null);
+                }
+            }
+
+            @Override
+            public void visitTypeDefinition(TypeDefinitionNode node) {
+                List<Token> list = node.getTokens();
+
+                int i = 1;
+                while (i < list.size()) {
+                    Token token = list.get(i++);
+                    if (token.type == Token.NUMBER) {
+                        tokens.add(new TokenMarker(token, TokenId.NUMBER));
+                    }
+                    else if (token.type == Token.OPERATOR) {
+                        tokens.add(new TokenMarker(token, TokenId.OPERATOR));
+                    }
+                    else {
+                        TokenId id = keywords.get(token.getText());
+                        if (id == null || id != TokenId.TYPE) {
+                            id = symbols.get(token.getText());
+                            if (id != null && id == TokenId.TYPE) {
+                                id = TokenId.CONSTANT;
+                            }
+                            else if (id == null || id != TokenId.TYPE) {
+                                id = TokenId.VARIABLE;
+                            }
+                        }
+                        tokens.add(new TokenMarker(token, id));
+                    }
                 }
             }
 

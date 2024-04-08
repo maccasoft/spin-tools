@@ -73,6 +73,7 @@ import com.maccasoft.propeller.expressions.ShiftRight;
 import com.maccasoft.propeller.expressions.Signx;
 import com.maccasoft.propeller.expressions.SpinObject;
 import com.maccasoft.propeller.expressions.Sqrt;
+import com.maccasoft.propeller.expressions.StructureVariable;
 import com.maccasoft.propeller.expressions.Subtract;
 import com.maccasoft.propeller.expressions.Trunc;
 import com.maccasoft.propeller.expressions.UnsignedDivide;
@@ -379,6 +380,30 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
                 if (expression instanceof ObjectContextLiteral) {
                     expression = context.getLocalSymbol(node.getText().substring(1));
                 }
+
+                if (expression == null) {
+                    String[] segments = node.getText().split("\\.");
+                    if (segments != null && segments.length > 1) {
+                        int i = 0;
+                        expression = context.getLocalSymbol(segments[i++]);
+                        if (!(expression instanceof StructureVariable)) {
+                            throw new CompilerException("syntax error", node.getToken());
+                        }
+                        while (i < segments.length) {
+                            expression = ((StructureVariable) expression).getVariable(segments[i++]);
+                            if (!(expression instanceof StructureVariable)) {
+                                break;
+                            }
+                        }
+                        if ((expression instanceof StructureVariable)) {
+                            throw new CompilerException("syntax error", node.getToken());
+                        }
+                        if (i < segments.length) {
+                            throw new CompilerException("syntax error", node.getToken());
+                        }
+                    }
+                }
+
                 if (expression != null) {
                     if (expression instanceof SpinObject) {
                         source.addAll(compileMethodCall(context, method, expression, node, push, false));
@@ -1846,7 +1871,32 @@ public abstract class Spin2BytecodeCompiler extends Spin2PasmCompiler {
             }
         }
         else {
-            Expression expression = context.getLocalSymbol(node.getText());
+            Expression expression = null;
+
+            String[] segments = node.getText().split("\\.");
+            if (segments != null && segments.length > 1) {
+                int i = 0;
+                expression = context.getLocalSymbol(segments[i++]);
+                if (!(expression instanceof StructureVariable)) {
+                    throw new CompilerException("syntax error", node.getToken());
+                }
+                while (i < segments.length) {
+                    expression = ((StructureVariable) expression).getVariable(segments[i++]);
+                    if (!(expression instanceof StructureVariable)) {
+                        break;
+                    }
+                }
+                if ((expression instanceof StructureVariable)) {
+                    throw new CompilerException("syntax error", node.getToken());
+                }
+                if (i < segments.length) {
+                    throw new CompilerException("syntax error", node.getToken());
+                }
+            }
+            else {
+                expression = context.getLocalSymbol(node.getText());
+            }
+
             if (expression == null) {
                 throw new CompilerException("undefined symbol " + node.getText(), node.getToken());
             }

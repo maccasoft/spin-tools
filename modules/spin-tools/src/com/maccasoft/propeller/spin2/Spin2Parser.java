@@ -27,6 +27,7 @@ import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.Parser;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 
@@ -181,6 +182,7 @@ public class Spin2Parser extends Parser {
     void parseConstant(Node parent) {
         int state = 0;
         ConstantNode node = null;
+        TypeDefinitionNode typeDefinitionNode = null;
 
         Token token;
         while ((token = nextToken()).type != Token.EOF) {
@@ -209,8 +211,16 @@ public class Spin2Parser extends Parser {
                         state = 2;
                     }
                     if (node == null) {
-                        node = new ConstantNode(parent, token);
-                        state = 4;
+                        if ("(".equals(stream.peekNext().getText())) {
+                            typeDefinitionNode = new TypeDefinitionNode(parent, token);
+                            typeDefinitionNode.addToken(nextToken());
+                            state = 7;
+                            break;
+                        }
+                        else {
+                            node = new ConstantNode(parent, token);
+                            state = 4;
+                        }
                     }
                     node.addToken(token);
                     break;
@@ -282,6 +292,32 @@ public class Spin2Parser extends Parser {
                     }
                     node.multiplier.addToken(token);
                     break;
+                case 7:
+                    typeDefinitionNode.addToken(token);
+                    if (")".equals(token.getText())) {
+                        typeDefinitionNode = null;
+                        node = null;
+                        state = 1;
+                        break;
+                    }
+                    typeDefinitionNode.addChild(new Node());
+                    typeDefinitionNode.getChild(typeDefinitionNode.getChildCount() - 1).addToken(token);
+                    state = 8;
+                    break;
+                case 8:
+                    typeDefinitionNode.addToken(token);
+                    if (")".equals(token.getText())) {
+                        typeDefinitionNode = null;
+                        node = null;
+                        state = 1;
+                        break;
+                    }
+                    if (",".equals(token.getText())) {
+                        state = 7;
+                        break;
+                    }
+                    typeDefinitionNode.getChild(typeDefinitionNode.getChildCount() - 1).addToken(token);
+                    break;
             }
         }
     }
@@ -337,6 +373,16 @@ public class Spin2Parser extends Parser {
                         node.type = token;
                         state = 2;
                         break;
+                    }
+                    else if (token.type == 0 || token.type == Token.KEYWORD) {
+                        Token next = stream.peekNext();
+                        if (next != null && (next.type == 0 || next.type == Token.KEYWORD)) {
+                            node = new VariableNode(parent);
+                            node.addToken(token);
+                            node.type = token;
+                            state = 2;
+                            break;
+                        }
                     }
                     // fall-through
                 case 2:

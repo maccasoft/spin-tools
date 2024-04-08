@@ -18,6 +18,7 @@ public class ConstantNode extends Node {
     public ExpressionNode step;
     public ExpressionNode expression;
     public ExpressionNode multiplier;
+    public Node definition;
 
     public ConstantNode(Node parent) {
         super(parent);

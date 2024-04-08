@@ -938,6 +938,28 @@ class Spin2ParserTest {
             + "", tree(root));
     }
 
+    @Test
+    void testStructure() throws Exception {
+        Spin2Parser subject = new Spin2Parser(new Spin2TokenStream(""
+            + "CON\n"
+            + "    sPoint(x, y)\n"
+            + "    sLine(sPoint a, sPoint b, BYTE color)\n"
+            + ""));
+
+        Node root = subject.parse();
+        Assertions.assertEquals(""
+            + "Node []\n"
+            + "+-- ConstantsNode [CON]\n"
+            + "    +-- TypeDefinitionNode identifier=sPoint [sPoint(x, y)]\n"
+            + "        +-- Node [x]\n"
+            + "        +-- Node [y]\n"
+            + "    +-- TypeDefinitionNode identifier=sLine [sLine(sPoint a, sPoint b, BYTE color)]\n"
+            + "        +-- Node [sPoint a]\n"
+            + "        +-- Node [sPoint b]\n"
+            + "        +-- Node [BYTE color]\n"
+            + "", tree(root));
+    }
+
     String tree(Node root) throws Exception {
         return tree(root, 0);
     }

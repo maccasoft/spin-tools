@@ -41,6 +41,7 @@ import com.maccasoft.propeller.expressions.Multiply;
 import com.maccasoft.propeller.expressions.NumberLiteral;
 import com.maccasoft.propeller.expressions.Register;
 import com.maccasoft.propeller.expressions.SpinObject;
+import com.maccasoft.propeller.expressions.StructureVariable;
 import com.maccasoft.propeller.expressions.Variable;
 import com.maccasoft.propeller.model.ConstantNode;
 import com.maccasoft.propeller.model.ConstantsNode;
@@ -54,11 +55,13 @@ import com.maccasoft.propeller.model.ObjectNode;
 import com.maccasoft.propeller.model.StatementNode;
 import com.maccasoft.propeller.model.Token;
 import com.maccasoft.propeller.model.TokenIterator;
+import com.maccasoft.propeller.model.TypeDefinitionNode;
 import com.maccasoft.propeller.model.VariableNode;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1ExpressionBuilder;
 import com.maccasoft.propeller.spin1.Spin1Model;
 import com.maccasoft.propeller.spin2.Spin2Object.Spin2LinkDataObject;
+import com.maccasoft.propeller.spin2.Spin2Struct.Spin2StructMember;
 import com.maccasoft.propeller.spin2.bytecode.Address;
 import com.maccasoft.propeller.spin2.bytecode.Bytecode;
 import com.maccasoft.propeller.spin2.bytecode.CaseFastJmp;
@@ -91,6 +94,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
     List<LinkDataObject> objectLinks = new ArrayList<>();
 
     Map<String, Expression> parameters;
+    Map<String, Spin2Struct> structures;
 
     public Spin2ObjectCompiler(Spin2Compiler compiler, File file) {
         this(compiler, null, file, Collections.emptyMap());
@@ -115,6 +119,8 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
 
         this.parameters = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
         this.parameters.putAll(parameters);
+
+        structures = compiler.isCaseSensitive() ? new HashMap<>() : new CaseInsensitiveMap<>();
     }
 
     @Override
@@ -154,6 +160,16 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 }
                 if (!skipNode(node)) {
                     compileConstant(node);
+                }
+            }
+
+            @Override
+            public void visitTypeDefinition(TypeDefinitionNode node) {
+                if (!conditionStack.isEmpty() && conditionStack.peek().skip) {
+                    excludedNodes.add(node);
+                }
+                if (!skipNode(node)) {
+                    compileTypeDefinition(node);
                 }
             }
 
@@ -856,6 +872,75 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
         }
     }
 
+    void compileTypeDefinition(TypeDefinitionNode node) {
+        try {
+            Iterator<Token> iter = node.getTokens().iterator();
+
+            Token identifier = iter.next();
+            if (identifier.type != 0) {
+                logMessage(new CompilerException("expecting identifier", identifier));
+                return;
+            }
+
+            Token token = iter.next();
+            if ("(".equals(token.getText())) {
+                if (structures.containsKey(identifier.getText())) {
+                    logMessage(new CompilerException("structure " + identifier.getText() + " already defined", identifier));
+                }
+
+                Spin2Struct struct = new Spin2Struct();
+                while (iter.hasNext()) {
+                    token = iter.next();
+                    if (")".equals(token.getText())) {
+                        break;
+                    }
+
+                    Token type = null;
+                    if (Spin2Model.isType(token.getText())) {
+                        type = token;
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting identifier", token));
+                            break;
+                        }
+                        token = iter.next();
+                    }
+                    else if (structures.containsKey(token.getText())) {
+                        type = token;
+                        if (!iter.hasNext()) {
+                            logMessage(new CompilerException("expecting identifier", token));
+                            break;
+                        }
+                        token = iter.next();
+                    }
+
+                    struct.addMember(type, token, null);
+
+                    if (!iter.hasNext()) {
+                        logMessage(new CompilerException("expecting more", token));
+                        break;
+                    }
+                    token = iter.next();
+                    if (")".equals(token.getText())) {
+                        break;
+                    }
+                    if (!",".equals(token.getText())) {
+                        logMessage(new CompilerException("expecting comma", token));
+                        break;
+                    }
+                }
+                structures.put(identifier.getText(), struct);
+            }
+            else {
+                logMessage(new CompilerException("unexpected '" + token.getText() + "'", token));
+            }
+
+        } catch (CompilerException e) {
+            logMessage(e);
+        } catch (Exception e) {
+            logMessage(new CompilerException(e, node));
+        }
+    }
+
     void compileVarBlock(Node parent) {
         String type = "LONG";
 
@@ -875,6 +960,13 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         }
                         token = iter.next();
                     }
+                    else if (structures.containsKey(token.getText())) {
+                        type = token.getText();
+                        if (!iter.hasNext()) {
+                            throw new CompilerException("expecting identifier", token);
+                        }
+                        token = iter.next();
+                    }
 
                     Token identifier = token;
                     int varSize = 1;
@@ -887,7 +979,7 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                         if (!iter.hasNext()) {
                             throw new CompilerException("expecting expression", token);
                         }
-                        Spin1ExpressionBuilder builder = new Spin1ExpressionBuilder(scope);
+                        Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope);
                         while (iter.hasNext()) {
                             token = iter.next();
                             if ("]".equals(token.getText())) {
@@ -915,18 +1007,21 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                     }
 
                     try {
-                        Variable var = new Variable(type, identifier.getText(), varSize, objectVarSize);
+                        Variable var;
+                        Spin2Struct struct = structures.get(type);
+                        if (struct != null) {
+                            var = new StructureVariable(type, identifier.getText(), varSize, objectVarSize, false);
+                            compileStructureVariable((StructureVariable) var, struct);
+                        }
+                        else {
+                            var = new Variable(type, identifier.getText(), varSize, objectVarSize);
+                        }
+
                         scope.addSymbol(identifier.getText(), var);
                         variables.add(var);
                         var.setData(identifier);
 
-                        if ("WORD".equalsIgnoreCase(type)) {
-                            varSize = varSize * 2;
-                        }
-                        else if (!"BYTE".equalsIgnoreCase(type)) {
-                            varSize = varSize * 4;
-                        }
-                        objectVarSize += varSize;
+                        objectVarSize += var.getTypeSize() * var.getSize();
                     } catch (Exception e) {
                         logMessage(new CompilerException(e, identifier));
                     }
@@ -935,6 +1030,44 @@ public class Spin2ObjectCompiler extends Spin2BytecodeCompiler {
                 logMessage(e);
             } catch (Exception e) {
                 logMessage(new CompilerException(e, node));
+            }
+        }
+    }
+
+    void compileStructureVariable(StructureVariable target, Spin2Struct struct) {
+        for (Spin2StructMember member : struct.getMembers()) {
+            String memberType = "LONG";
+            if (member.getType() != null) {
+                memberType = member.getType().getText();
+            }
+
+            int memberSize = 1;
+            if (member.getSize() != null) {
+                Spin2ExpressionBuilder builder = new Spin2ExpressionBuilder(scope, member.getSize().getTokens());
+                try {
+                    Expression expression = builder.getExpression();
+                    if (!expression.isConstant()) {
+                        throw new Exception("not a constant expression");
+                    }
+                    memberSize = expression.getNumber().intValue();
+                } catch (CompilerException e) {
+                    logMessage(e);
+                } catch (Exception e) {
+                    logMessage(new CompilerException(e, builder.getTokens()));
+                }
+            }
+
+            if (!Spin2Model.isType(memberType)) {
+                Spin2Struct memberStruct = structures.get(memberType);
+                if (memberStruct == null) {
+                    logMessage(new CompilerException("undefined type " + memberType, member.getType()));
+                }
+                StructureVariable var = new StructureVariable(memberType, member.getIdentifier().getText(), memberSize, target.getOffset() + target.getTypeSize(), false);
+                compileStructureVariable(var, memberStruct);
+                target.addVariable(var);
+            }
+            else {
+                target.addVariable(memberType, member.getIdentifier().getText(), memberSize);
             }
         }
     }
