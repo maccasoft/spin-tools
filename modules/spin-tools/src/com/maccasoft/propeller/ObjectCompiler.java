@@ -77,18 +77,15 @@ public abstract class ObjectCompiler {
         message.fileName = file.getName();
         if (message.hasChilds()) {
             for (CompilerException msg : message.getChilds()) {
-                msg.fileName = file.getName();
-                if (msg.type == CompilerException.ERROR) {
-                    errors = true;
-                }
+                logMessage(msg);
             }
         }
         else {
             if (message.type == CompilerException.ERROR) {
                 errors = true;
             }
+            messages.add(message);
         }
-        messages.add(message);
     }
 
     public boolean hasErrors() {
