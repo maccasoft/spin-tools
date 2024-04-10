@@ -31,7 +31,7 @@ public class MemoryContextLiteral extends Literal {
 
     @Override
     public Number getNumber() {
-        return context.getMemoryAddress();
+        return Long.valueOf(context.getMemoryAddress());
     }
 
     @Override
