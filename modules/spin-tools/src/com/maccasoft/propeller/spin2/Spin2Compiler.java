@@ -40,6 +40,7 @@ public class Spin2Compiler extends Compiler {
     protected Spin2Debug debug = new Spin2Debug();
 
     protected Spin2Interpreter interpreter;
+    protected Spin2Debugger debugger;
 
     protected List<ObjectInfo> childObjects = new ArrayList<>();
 
@@ -106,8 +107,8 @@ public class Spin2Compiler extends Compiler {
             obj.setInterpreter(interpreter);
         }
 
-        if (debugEnabled) {
-            obj.setDebugger(new Spin2Debugger());
+        if (debugger != null) {
+            obj.setDebugger(debugger);
         }
 
         return obj;
@@ -164,20 +165,28 @@ public class Spin2Compiler extends Compiler {
             }
         }
 
+        int stackFree = 512 * 1024;
+
         if (interpreter != null) {
             interpreter.setVBase((interpreter.getPBase() + object.getSize()) | (objectCompiler.getObjectLinks().size() << 21));
             interpreter.setDBase(interpreter.getPBase() + object.getSize() + object.getVarSize());
             interpreter.setClearLongs(255 + ((object.getVarSize() + 3) / 4));
+            stackFree -= interpreter.getDBase();
         }
 
         if (debugEnabled) {
+            debugger = new Spin2Debugger();
             Spin2Object debugObject = generateDebugData();
             object.setDebugData(debugObject);
+            stackFree -= debugger.getSize() + debugObject.getSize();
         }
 
         tree = buildFrom(objectCompiler);
 
         errors = objectCompiler.hasErrors();
+        if (stackFree < 0) {
+            logMessage(new CompilerException(rootFile.getName(), "program exceeds runtime memory limit by " + Math.abs(stackFree) + " longs.", null));
+        }
 
         messages.addAll(objectCompiler.getMessages());
         for (ObjectInfo info : childObjects) {

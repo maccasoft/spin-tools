@@ -206,6 +206,10 @@ public class Spin1Compiler extends Compiler {
             }
         }
 
+        tree = buildFrom(objectCompiler);
+
+        errors = objectCompiler.hasErrors();
+
         int stackRequired = 16;
         if (objectCompiler.getScope().hasSymbol("_STACK")) {
             stackRequired = objectCompiler.getScope().getLocalSymbol("_STACK").getNumber().intValue();
@@ -215,18 +219,14 @@ public class Spin1Compiler extends Compiler {
         }
 
         if (stackRequired > 0x2000) {
-            logMessage(new CompilerException(rootFile.getName(), "_STACK and _FREE must sum to under 8k longs."));
+            logMessage(new CompilerException(rootFile.getName(), "_STACK and _FREE must sum to under 8k longs.", null));
         }
         else {
             int requiredSize = object.getSize() + object.getVarSize() + (stackRequired << 2);
             if (requiredSize >= 0x8000) {
-                logMessage(new CompilerException(rootFile.getName(), "object exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs."));
+                logMessage(new CompilerException(rootFile.getName(), "program exceeds runtime memory limit by " + ((requiredSize - 0x8000) >> 2) + " longs.", null));
             }
         }
-
-        tree = buildFrom(objectCompiler);
-
-        errors = objectCompiler.hasErrors();
 
         messages.addAll(objectCompiler.getMessages());
         for (ObjectInfo info : childObjects) {
