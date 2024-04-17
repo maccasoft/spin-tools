@@ -177,11 +177,15 @@ public class Preferences {
         public String[] spin1LibraryPath;
         public boolean spin1CaseSensitiveSymbols;
         public String spin1Template;
+        @JsonInclude(Include.NON_ABSENT)
+        public Map<String, String> spin1Defines;
 
         public String[] spin2LibraryPath;
         public boolean spin2CaseSensitiveSymbols;
         public boolean spin2ClockSetter;
         public String spin2Template;
+        @JsonInclude(Include.NON_ABSENT)
+        public Map<String, String> spin2Defines;
 
         public List<String> lru;
 
@@ -581,6 +585,22 @@ public class Preferences {
         changeSupport.firePropertyChange(PROP_SPIN1_CASE_SENSITIVE_SYMBOLS, preferences.spin1CaseSensitiveSymbols, preferences.spin1CaseSensitiveSymbols = spin1CaseSensitiveSymbols);
     }
 
+    public Map<String, String> getSpin1Defines() {
+        return preferences.spin1Defines != null ? preferences.spin1Defines : new HashMap<>();
+    }
+
+    public void setSpin1Defines(Map<String, String> spin1Defines) {
+        if (spin1Defines.isEmpty()) {
+            preferences.spin1Defines = null;
+        }
+        else {
+            if (preferences.spin1Defines == null) {
+                preferences.spin1Defines = new HashMap<>();
+            }
+            preferences.spin1Defines.putAll(spin1Defines);
+        }
+    }
+
     public File[] getSpin2LibraryPath() {
         if (preferences.spin2LibraryPath != null) {
             List<File> l = new ArrayList<>();
@@ -632,6 +652,22 @@ public class Preferences {
 
     public void setSpin2Template(File spin2Template) {
         preferences.spin2Template = spin2Template != null ? spin2Template.getAbsolutePath() : null;
+    }
+
+    public Map<String, String> getSpin2Defines() {
+        return preferences.spin2Defines != null ? preferences.spin2Defines : new HashMap<>();
+    }
+
+    public void setSpin2Defines(Map<String, String> spin2Defines) {
+        if (spin2Defines.isEmpty()) {
+            preferences.spin2Defines = null;
+        }
+        else {
+            if (preferences.spin2Defines == null) {
+                preferences.spin2Defines = new HashMap<>();
+            }
+            preferences.spin2Defines.putAll(spin2Defines);
+        }
     }
 
     public int[] getTabStops(Class<?> clazz) {

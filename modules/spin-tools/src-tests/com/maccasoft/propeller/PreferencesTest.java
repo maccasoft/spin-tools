@@ -15,6 +15,8 @@ import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -441,6 +443,58 @@ class PreferencesTest {
 
         Assertions.assertFalse(notify.get());
         Assertions.assertArrayEquals(data, subject.preferences.roots);
+    }
+
+    @Test
+    void testSpin1Defines() throws Exception {
+        Preferences subject = new Preferences();
+
+        Map<String, String> defines = new HashMap<>();
+        defines.put("KEY", "VALUE");
+        defines.put("EMPTY_KEY", "");
+        subject.setSpin1Defines(defines);
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
+        mapper.writeValue(os, subject.preferences);
+
+        Assertions.assertEquals(""
+            + "{\n"
+            + "  \"spin1Defines\" : {\n"
+            + "    \"EMPTY_KEY\" : \"\",\n"
+            + "    \"KEY\" : \"VALUE\"\n"
+            + "  }\n"
+            + "}", os.toString().replaceAll("\\r\\n", "\n"));
+    }
+
+    @Test
+    void testSpin2Defines() throws Exception {
+        Preferences subject = new Preferences();
+
+        Map<String, String> defines = new HashMap<>();
+        defines.put("KEY", "VALUE");
+        defines.put("EMPTY_KEY", "");
+        subject.setSpin2Defines(defines);
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
+        mapper.writeValue(os, subject.preferences);
+
+        Assertions.assertEquals(""
+            + "{\n"
+            + "  \"spin2Defines\" : {\n"
+            + "    \"EMPTY_KEY\" : \"\",\n"
+            + "    \"KEY\" : \"VALUE\"\n"
+            + "  }\n"
+            + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
 }

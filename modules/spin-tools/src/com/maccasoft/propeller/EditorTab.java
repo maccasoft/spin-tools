@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -57,13 +58,16 @@ import com.maccasoft.propeller.model.Node;
 import com.maccasoft.propeller.model.ObjectsNode;
 import com.maccasoft.propeller.model.SourceProvider;
 import com.maccasoft.propeller.model.Token;
+import com.maccasoft.propeller.model.TokenStream;
 import com.maccasoft.propeller.model.VariablesNode;
 import com.maccasoft.propeller.spin1.Spin1Compiler;
 import com.maccasoft.propeller.spin1.Spin1Formatter;
 import com.maccasoft.propeller.spin1.Spin1TokenMarker;
+import com.maccasoft.propeller.spin1.Spin1TokenStream;
 import com.maccasoft.propeller.spin2.Spin2Compiler;
 import com.maccasoft.propeller.spin2.Spin2Formatter;
 import com.maccasoft.propeller.spin2.Spin2TokenMarker;
+import com.maccasoft.propeller.spin2.Spin2TokenStream;
 import com.maccasoft.propeller.spinc.CTokenMarker;
 import com.maccasoft.propeller.spinc.Spin1CCompiler;
 import com.maccasoft.propeller.spinc.Spin2CCompiler;
@@ -493,10 +497,30 @@ public class EditorTab implements FindReplaceTarget {
                         if (tabItemText.toLowerCase().endsWith(".spin")) {
                             compiler = new Spin1Compiler(preferences.getSpin1CaseSensitiveSymbols(), true);
                             compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin1LibraryPath()));
+
+                            for (Entry<String, String> entry : preferences.getSpin1Defines().entrySet()) {
+                                Token token;
+                                TokenStream stream = new Spin1TokenStream(entry.getValue());
+                                List<Token> list = new ArrayList<>();
+                                while ((token = stream.nextToken()).type != Token.EOF) {
+                                    list.add(token);
+                                }
+                                compiler.addDefine(entry.getKey(), list);
+                            }
                         }
                         else if (tabItemText.toLowerCase().endsWith(".spin2")) {
                             compiler = new Spin2Compiler(preferences.getSpin2CaseSensitiveSymbols());
                             compiler.setSourceProvider(new EditorTabSourceProvider(preferences.getSpin2LibraryPath()));
+
+                            for (Entry<String, String> entry : preferences.getSpin2Defines().entrySet()) {
+                                Token token;
+                                TokenStream stream = new Spin2TokenStream(entry.getValue());
+                                List<Token> list = new ArrayList<>();
+                                while ((token = stream.nextToken()).type != Token.EOF) {
+                                    list.add(token);
+                                }
+                                compiler.addDefine(entry.getKey(), list);
+                            }
                         }
                         else if (tabItemText.toLowerCase().endsWith(".c")) {
                             for (Node node : root.getChilds()) {
