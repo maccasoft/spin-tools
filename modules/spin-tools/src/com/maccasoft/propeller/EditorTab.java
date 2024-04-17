@@ -533,6 +533,7 @@ public class EditorTab implements FindReplaceTarget {
                         if (compiler != null) {
                             compiler.setRemoveUnusedMethods(true);
                             compiler.setDebugEnabled(debug || sourcePool.isDebugEnabled());
+
                             try {
                                 object = compiler.compile(localFile, root);
                                 objectTree = compiler.getObjectTree();

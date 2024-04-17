@@ -39,37 +39,20 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
-            + "{\n"
-            + "  \"showLineNumbers\" : true,\n"
-            + "  \"showIndentLines\" : true,\n"
-            + "  \"indentLinesSize\" : 0,\n"
-            + "  \"showEditorOutline\" : true,\n"
-            + "  \"spin1CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2ClockSetter\" : false,\n"
-            + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminal\" : {\n"
-            + "    \"lineInput\" : false,\n"
-            + "    \"localEcho\" : false,\n"
-            + "    \"type\" : 0,\n"
-            + "    \"baudRate\" : 115200\n"
-            + "  },\n"
-            + "  \"console\" : {\n"
-            + "    \"maxLines\" : 500,\n"
-            + "    \"writeLogFile\" : true\n"
-            + "  }\n"
-            + "}", os.toString().replaceAll("\\r\\n", "\n"));
+            + "{ }", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
     @Test
     void testSetSpin1LibraryPath() throws Exception {
+        File path = new File("spin1/path");
+
         Preferences subject = new Preferences();
         subject.setSpin1LibraryPath(new File[] {
-            new File("spin1/path")
+            path
         });
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -77,30 +60,12 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
             + "{\n"
-            + "  \"showLineNumbers\" : true,\n"
-            + "  \"showIndentLines\" : true,\n"
-            + "  \"indentLinesSize\" : 0,\n"
-            + "  \"showEditorOutline\" : true,\n"
-            + "  \"spin1LibraryPath\" : [ \"" + new File("spin1/path").getAbsolutePath() + "\" ],\n"
-            + "  \"spin1CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2ClockSetter\" : false,\n"
-            + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminal\" : {\n"
-            + "    \"lineInput\" : false,\n"
-            + "    \"localEcho\" : false,\n"
-            + "    \"type\" : 0,\n"
-            + "    \"baudRate\" : 115200\n"
-            + "  },\n"
-            + "  \"console\" : {\n"
-            + "    \"maxLines\" : 500,\n"
-            + "    \"writeLogFile\" : true\n"
-            + "  }\n"
+            + "  \"spin1LibraryPath\" : [ \"" + path.getAbsolutePath() + "\" ]\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -151,37 +116,20 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
-            + "{\n"
-            + "  \"showLineNumbers\" : true,\n"
-            + "  \"showIndentLines\" : true,\n"
-            + "  \"indentLinesSize\" : 0,\n"
-            + "  \"showEditorOutline\" : true,\n"
-            + "  \"spin1CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2ClockSetter\" : false,\n"
-            + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminal\" : {\n"
-            + "    \"lineInput\" : false,\n"
-            + "    \"localEcho\" : false,\n"
-            + "    \"type\" : 0,\n"
-            + "    \"baudRate\" : 115200\n"
-            + "  },\n"
-            + "  \"console\" : {\n"
-            + "    \"maxLines\" : 500,\n"
-            + "    \"writeLogFile\" : true\n"
-            + "  }\n"
-            + "}", os.toString().replaceAll("\\r\\n", "\n"));
+            + "{ }", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
     @Test
     void testSetSpin1LibraryWithDefaultPath() throws Exception {
+        File path = new File("spin1/path");
+
         Preferences subject = new Preferences();
         subject.setSpin1LibraryPath(new File[] {
-            new File("spin1/path"),
+            path,
             Preferences.defaultSpin1LibraryPath
         });
 
@@ -190,38 +138,22 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
             + "{\n"
-            + "  \"showLineNumbers\" : true,\n"
-            + "  \"showIndentLines\" : true,\n"
-            + "  \"indentLinesSize\" : 0,\n"
-            + "  \"showEditorOutline\" : true,\n"
-            + "  \"spin1LibraryPath\" : [ \"" + new File("spin1/path").getAbsolutePath() + "\", null ],\n"
-            + "  \"spin1CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2ClockSetter\" : false,\n"
-            + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminal\" : {\n"
-            + "    \"lineInput\" : false,\n"
-            + "    \"localEcho\" : false,\n"
-            + "    \"type\" : 0,\n"
-            + "    \"baudRate\" : 115200\n"
-            + "  },\n"
-            + "  \"console\" : {\n"
-            + "    \"maxLines\" : 500,\n"
-            + "    \"writeLogFile\" : true\n"
-            + "  }\n"
+            + "  \"spin1LibraryPath\" : [ \"" + path.getAbsolutePath() + "\", null ]\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
     @Test
     void testSetSpin2LibraryPath() throws Exception {
+        File path = new File("spin2/path");
+
         Preferences subject = new Preferences();
         subject.setSpin2LibraryPath(new File[] {
-            new File("spin2/path")
+            path
         });
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -229,30 +161,12 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
             + "{\n"
-            + "  \"showLineNumbers\" : true,\n"
-            + "  \"showIndentLines\" : true,\n"
-            + "  \"indentLinesSize\" : 0,\n"
-            + "  \"showEditorOutline\" : true,\n"
-            + "  \"spin1CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2LibraryPath\" : [ \"" + new File("spin2/path").getAbsolutePath() + "\" ],\n"
-            + "  \"spin2CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2ClockSetter\" : false,\n"
-            + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminal\" : {\n"
-            + "    \"lineInput\" : false,\n"
-            + "    \"localEcho\" : false,\n"
-            + "    \"type\" : 0,\n"
-            + "    \"baudRate\" : 115200\n"
-            + "  },\n"
-            + "  \"console\" : {\n"
-            + "    \"maxLines\" : 500,\n"
-            + "    \"writeLogFile\" : true\n"
-            + "  }\n"
+            + "  \"spin2LibraryPath\" : [ \"" + path.getAbsolutePath() + "\" ]\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -266,37 +180,20 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
-            + "{\n"
-            + "  \"showLineNumbers\" : true,\n"
-            + "  \"showIndentLines\" : true,\n"
-            + "  \"indentLinesSize\" : 0,\n"
-            + "  \"showEditorOutline\" : true,\n"
-            + "  \"spin1CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2ClockSetter\" : false,\n"
-            + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminal\" : {\n"
-            + "    \"lineInput\" : false,\n"
-            + "    \"localEcho\" : false,\n"
-            + "    \"type\" : 0,\n"
-            + "    \"baudRate\" : 115200\n"
-            + "  },\n"
-            + "  \"console\" : {\n"
-            + "    \"maxLines\" : 500,\n"
-            + "    \"writeLogFile\" : true\n"
-            + "  }\n"
-            + "}", os.toString().replaceAll("\\r\\n", "\n"));
+            + "{ }", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
     @Test
     void testSetSpin2LibraryWithDefaultPath() throws Exception {
+        File path = new File("spin2/path");
+
         Preferences subject = new Preferences();
         subject.setSpin2LibraryPath(new File[] {
-            new File("spin2/path"),
+            path,
             Preferences.defaultSpin2LibraryPath
         });
 
@@ -305,30 +202,12 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
             + "{\n"
-            + "  \"showLineNumbers\" : true,\n"
-            + "  \"showIndentLines\" : true,\n"
-            + "  \"indentLinesSize\" : 0,\n"
-            + "  \"showEditorOutline\" : true,\n"
-            + "  \"spin1CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2LibraryPath\" : [ \"" + new File("spin2/path").getAbsolutePath() + "\", null ],\n"
-            + "  \"spin2CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2ClockSetter\" : false,\n"
-            + "  \"reloadOpenTabs\" : true,\n"
-            + "  \"terminal\" : {\n"
-            + "    \"lineInput\" : false,\n"
-            + "    \"localEcho\" : false,\n"
-            + "    \"type\" : 0,\n"
-            + "    \"baudRate\" : 115200\n"
-            + "  },\n"
-            + "  \"console\" : {\n"
-            + "    \"maxLines\" : 500,\n"
-            + "    \"writeLogFile\" : true\n"
-            + "  }\n"
+            + "  \"spin2LibraryPath\" : [ \"" + path.getAbsolutePath() + "\", null ]\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }
 
@@ -387,31 +266,13 @@ class PreferencesTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(os, subject.preferences);
 
         Assertions.assertEquals(""
             + "{\n"
-            + "  \"showLineNumbers\" : true,\n"
-            + "  \"showIndentLines\" : true,\n"
-            + "  \"indentLinesSize\" : 0,\n"
-            + "  \"showEditorOutline\" : true,\n"
-            + "  \"spin1CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2CaseSensitiveSymbols\" : false,\n"
-            + "  \"spin2ClockSetter\" : false,\n"
-            + "  \"reloadOpenTabs\" : true,\n"
             + "  \"sectionTabStops\" : {\n"
             + "    \"pub\" : [ 8, 16 ]\n"
-            + "  },\n"
-            + "  \"terminal\" : {\n"
-            + "    \"lineInput\" : false,\n"
-            + "    \"localEcho\" : false,\n"
-            + "    \"type\" : 0,\n"
-            + "    \"baudRate\" : 115200\n"
-            + "  },\n"
-            + "  \"console\" : {\n"
-            + "    \"maxLines\" : 500,\n"
-            + "    \"writeLogFile\" : true\n"
             + "  }\n"
             + "}", os.toString().replaceAll("\\r\\n", "\n"));
     }

@@ -20,9 +20,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.eclipse.swt.graphics.Rectangle;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -116,8 +118,29 @@ public class Preferences {
             this.height = height;
         }
 
+        @Override
+        public int hashCode() {
+            return Objects.hash(height, width, x, y);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            Bounds other = (Bounds) obj;
+            return height == other.height && width == other.width && x == other.x && y == other.y;
+        }
+
     }
 
+    @JsonInclude(Include.NON_DEFAULT)
     public static class SerializedPreferences {
 
         public SerializedPreferences() {
@@ -150,13 +173,16 @@ public class Preferences {
         public int indentLinesSize;
         public boolean showEditorOutline;
         public String port;
+
         public String[] spin1LibraryPath;
         public boolean spin1CaseSensitiveSymbols;
         public String spin1Template;
+
         public String[] spin2LibraryPath;
         public boolean spin2CaseSensitiveSymbols;
         public boolean spin2ClockSetter;
         public String spin2Template;
+
         public List<String> lru;
 
         public boolean reloadOpenTabs;
@@ -176,7 +202,9 @@ public class Preferences {
 
     }
 
+    @JsonInclude(Include.NON_DEFAULT)
     public static class TerminalPreferences {
+
         public TerminalPreferences() {
             baudRate = 115200;
         }
@@ -189,9 +217,36 @@ public class Preferences {
         public String font;
         public int baudRate;
 
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + Arrays.hashCode(history);
+            result = prime * result + Objects.hash(baudRate, font, lineInput, localEcho, type, window);
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            TerminalPreferences other = (TerminalPreferences) obj;
+            return baudRate == other.baudRate && Objects.equals(font, other.font) && Arrays.equals(history, other.history) && lineInput == other.lineInput && localEcho == other.localEcho
+                && type == other.type && Objects.equals(window, other.window);
+        }
+
     }
 
+    @JsonInclude(Include.NON_DEFAULT)
     public static class ConsolePreferences {
+
         public ConsolePreferences() {
             maxLines = 500;
             writeLogFile = true;
@@ -201,15 +256,44 @@ public class Preferences {
         public int maxLines;
         public boolean writeLogFile;
 
+        @Override
+        public int hashCode() {
+            return Objects.hash(font, maxLines, writeLogFile);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            ConsolePreferences other = (ConsolePreferences) obj;
+            return Objects.equals(font, other.font) && maxLines == other.maxLines && writeLogFile == other.writeLogFile;
+        }
+
     }
 
+    @JsonInclude(Include.NON_DEFAULT)
     public static class SearchPreferences {
+
+        public SearchPreferences() {
+            findHistory = new ArrayList<String>();
+            replaceHistory = new ArrayList<String>();
+            forwardSearch = true;
+            wrapSearch = true;
+        }
+
         public Bounds window;
-        public List<String> findHistory = new ArrayList<String>();
-        public List<String> replaceHistory = new ArrayList<String>();
-        public boolean forwardSearch = true;
+        public List<String> findHistory;
+        public List<String> replaceHistory;
+        public boolean forwardSearch;
         public boolean caseSensitiveSearch;
-        public boolean wrapSearch = true;
+        public boolean wrapSearch;
         public boolean wholeWordSearch;
         public boolean regexSearch;
 
@@ -704,7 +788,7 @@ public class Preferences {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_DEFAULT);
         mapper.writeValue(preferencesFile, preferences);
     }
 }
